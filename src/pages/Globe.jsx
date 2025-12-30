@@ -210,23 +210,43 @@ export default function GlobePage() {
   const [activeLayer, setActiveLayer] = useState('pins');
   const [activeMode, setActiveMode] = useState(null);
   const [selectedBeacon, setSelectedBeacon] = useState(null);
+  const [showTokenInput, setShowTokenInput] = useState(false);
+  const [tokenInput, setTokenInput] = useState('');
 
-  // Get Mapbox token from environment
-  const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
+  // Get Mapbox token from localStorage or environment
+  const [mapboxToken, setMapboxToken] = useState(() => {
+    return localStorage.getItem('mapbox_token') || import.meta.env.VITE_MAPBOX_TOKEN || '';
+  });
 
-  // Show error if no token
+  const handleSaveToken = () => {
+    localStorage.setItem('mapbox_token', tokenInput);
+    setMapboxToken(tokenInput);
+    setShowTokenInput(false);
+  };
+
+  // Show token input if no token
   if (!mapboxToken) {
     return (
       <div className="w-full h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-white text-2xl font-bold mb-4">MAPBOX TOKEN REQUIRED</h1>
-          <p className="text-white/60 text-sm mb-2">Add to your .env.local file:</p>
-          <code className="block bg-white/10 text-[#FF1493] px-4 py-2 rounded text-sm">
-            VITE_MAPBOX_TOKEN=your_token_here
-          </code>
-          <p className="text-white/40 text-xs mt-4">
-            Get a free token at mapbox.com/account/access-tokens
+        <div className="max-w-md w-full px-6">
+          <h1 className="text-white text-2xl font-bold mb-4 text-center">MAPBOX TOKEN REQUIRED</h1>
+          <p className="text-white/60 text-sm mb-4 text-center">
+            Get a free token at <a href="https://account.mapbox.com/access-tokens" target="_blank" rel="noopener noreferrer" className="text-[#FF1493] hover:underline">mapbox.com</a>
           </p>
+          <input
+            type="text"
+            value={tokenInput}
+            onChange={(e) => setTokenInput(e.target.value)}
+            placeholder="pk.eyJ1IjoieW91ci10b2tlbiIsImEiOiJ..."
+            className="w-full bg-white/10 text-white px-4 py-3 rounded-lg mb-4 border border-white/20 focus:border-[#FF1493] focus:outline-none"
+          />
+          <button
+            onClick={handleSaveToken}
+            disabled={!tokenInput}
+            className="w-full bg-[#FF1493] text-white py-3 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#FF1493]/90"
+          >
+            SAVE TOKEN
+          </button>
         </div>
       </div>
     );
@@ -310,7 +330,44 @@ export default function GlobePage() {
         <p className="text-white/30 text-[10px] tracking-[0.15em] uppercase font-medium">
           DRAG • ZOOM • CLICK BEACONS
         </p>
+        <button
+          onClick={() => setShowTokenInput(true)}
+          className="text-white/20 hover:text-white/40 text-[9px] mt-2 underline"
+        >
+          Change Mapbox Token
+        </button>
       </motion.div>
+
+      {/* Token change modal */}
+      {showTokenInput && (
+        <div className="absolute inset-0 z-50 bg-black/80 flex items-center justify-center backdrop-blur-sm">
+          <div className="max-w-md w-full px-6">
+            <h2 className="text-white text-xl font-bold mb-4">UPDATE MAPBOX TOKEN</h2>
+            <input
+              type="text"
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+              placeholder={mapboxToken}
+              className="w-full bg-white/10 text-white px-4 py-3 rounded-lg mb-4 border border-white/20 focus:border-[#FF1493] focus:outline-none"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowTokenInput(false)}
+                className="flex-1 bg-white/10 text-white py-3 rounded-lg font-bold hover:bg-white/20"
+              >
+                CANCEL
+              </button>
+              <button
+                onClick={handleSaveToken}
+                disabled={!tokenInput}
+                className="flex-1 bg-[#FF1493] text-white py-3 rounded-lg font-bold disabled:opacity-50 hover:bg-[#FF1493]/90"
+              >
+                SAVE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
