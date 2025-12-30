@@ -11,6 +11,7 @@ import FloatingPanel from '../components/ui/FloatingPanel';
 import { activityTracker } from '../components/globe/ActivityTracker';
 import { Settings, BarChart3, Menu, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 export default function GlobePage() {
   const queryClient = useQueryClient();
 
