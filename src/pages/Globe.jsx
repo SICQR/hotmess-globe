@@ -14,7 +14,7 @@ export default function GlobePage() {
   // Fetch beacons and cities from Supabase
   const { data: beacons = [], isLoading: beaconsLoading } = useQuery({
     queryKey: ['beacons'],
-    queryFn: () => base44.entities.Beacon.filter({ active: true }, '-created_date'),
+    queryFn: () => base44.entities.Beacon.filter({ active: true, status: 'published' }, '-created_date'),
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 

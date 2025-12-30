@@ -16,6 +16,7 @@ import OrganizerDashboard from './pages/OrganizerDashboard';
 import Profile from './pages/Profile';
 import Scan from './pages/Scan';
 import Settings from './pages/Settings';
+import EditBeacon from './pages/EditBeacon';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +39,7 @@ export const PAGES = {
     "Profile": Profile,
     "Scan": Scan,
     "Settings": Settings,
+    "EditBeacon": EditBeacon,
 }
 
 export const pagesConfig = {

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '../utils';
-import { MapPin, ArrowLeft, ArrowRight, Upload, Calendar, Image, Video } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Upload, Calendar, Image, Video, Save, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,43 +12,51 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 
-export default function CreateBeacon() {
+export default function EditBeacon() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const beaconId = searchParams.get('id');
   const [step, setStep] = useState(1);
   const [uploading, setUploading] = useState(false);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    kind: 'event',
-    lat: 51.5074,
-    lng: -0.1278,
-    city: 'London',
-    intensity: 0.5,
-    xp_scan: 100,
-    mode: 'crowd',
-    active: true,
-    sponsored: false,
-    event_date: '',
-    image_url: '',
-    video_url: '',
-    status: 'published',
-    capacity: null,
-    ticket_url: '',
-    venue_name: ''
+  const { data: beacon, isLoading } = useQuery({
+    queryKey: ['beacon', beaconId],
+    queryFn: async () => {
+      const beacons = await base44.entities.Beacon.list();
+      return beacons.find(b => b.id === beaconId);
+    },
+    enabled: !!beaconId
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Beacon.create(data),
+  const [formData, setFormData] = useState(null);
+
+  useEffect(() => {
+    if (beacon) {
+      setFormData(beacon);
+    }
+  }, [beacon]);
+
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.entities.Beacon.update(beaconId, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['beacons']);
-      toast.success('Event created and live on all views!');
-      navigate(createPageUrl('Beacons'));
+      queryClient.invalidateQueries(['beacon', beaconId]);
+      toast.success('Event updated successfully!');
+      navigate(createPageUrl('OrganizerDashboard'));
     },
     onError: (error) => {
-      console.error('Failed to create beacon:', error);
-      toast.error('Failed to create event');
+      console.error('Failed to update beacon:', error);
+      toast.error('Failed to update event');
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => base44.entities.Beacon.delete(beaconId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['beacons']);
+      toast.success('Event deleted');
+      navigate(createPageUrl('OrganizerDashboard'));
     }
   });
 
@@ -92,22 +100,22 @@ export default function CreateBeacon() {
       toast.error('Please fill in required fields');
       return;
     }
-    createMutation.mutate(formData);
+    updateMutation.mutate(formData);
   };
 
-  const nextStep = () => {
-    if (step === 1 && (!formData.title || !formData.description)) {
-      toast.error('Please complete Step 1');
-      return;
+  const handleDelete = () => {
+    if (confirm('Are you sure you want to delete this event? This cannot be undone.')) {
+      deleteMutation.mutate();
     }
-    if (step === 2 && (!formData.city || !formData.event_date)) {
-      toast.error('Please complete Step 2');
-      return;
-    }
-    setStep(step + 1);
   };
 
-  const prevStep = () => setStep(step - 1);
+  if (isLoading || !formData) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-white/60">Loading event...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
@@ -119,31 +127,45 @@ export default function CreateBeacon() {
           className="mb-8"
         >
           <Button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(createPageUrl('OrganizerDashboard'))}
             variant="ghost"
             className="mb-4 text-white/60 hover:text-white"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            Back to Dashboard
           </Button>
-          <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">
-            Create Event
-          </h1>
-          <p className="text-white/60">Multi-step event creation for organizers</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">
+                Edit Event
+              </h1>
+              <p className="text-white/60">{beacon.title}</p>
+            </div>
+            <Button
+              onClick={handleDelete}
+              variant="ghost"
+              className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </Button>
+          </div>
         </motion.div>
 
         {/* Progress */}
         <div className="mb-8 flex items-center justify-center gap-2">
           {[1, 2, 3, 4].map(s => (
             <div key={s} className="flex items-center">
-              <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold ${
-                s === step ? 'border-[#FF1493] bg-[#FF1493] text-black' :
-                s < step ? 'border-[#39FF14] bg-[#39FF14] text-black' :
-                'border-white/20 text-white/40'
-              }`}>
+              <button
+                onClick={() => setStep(s)}
+                className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold transition-all ${
+                  s === step ? 'border-[#FF1493] bg-[#FF1493] text-black' :
+                  'border-white/20 text-white/40 hover:border-white/40'
+                }`}
+              >
                 {s}
-              </div>
-              {s < 4 && <div className={`w-12 h-1 ${s < step ? 'bg-[#39FF14]' : 'bg-white/20'}`} />}
+              </button>
+              {s < 4 && <div className="w-12 h-1 bg-white/20" />}
             </div>
           ))}
         </div>
@@ -159,7 +181,7 @@ export default function CreateBeacon() {
                 exit={{ opacity: 0, x: -20 }}
                 className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
               >
-                <h2 className="text-2xl font-black uppercase mb-4">Step 1: Basic Info</h2>
+                <h2 className="text-2xl font-black uppercase mb-4">Basic Info</h2>
                 
                 <div>
                   <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
@@ -168,19 +190,17 @@ export default function CreateBeacon() {
                   <Input
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g. FOLD • Saturday Night Session"
                     className="bg-black border-white/20 text-white"
                   />
                 </div>
 
                 <div>
                   <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
-                    Description *
+                    Description
                   </label>
                   <Textarea
-                    value={formData.description}
+                    value={formData.description || ''}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Tell people what makes this event special..."
                     className="bg-black border-white/20 text-white h-32"
                   />
                 </div>
@@ -188,7 +208,7 @@ export default function CreateBeacon() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
-                      Event Type *
+                      Type
                     </label>
                     <Select value={formData.kind} onValueChange={(value) => setFormData({ ...formData, kind: value })}>
                       <SelectTrigger className="bg-black border-white/20 text-white">
@@ -225,8 +245,24 @@ export default function CreateBeacon() {
                   </div>
                 </div>
 
+                <div>
+                  <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
+                    Status
+                  </label>
+                  <Select value={formData.status || 'published'} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                    <SelectTrigger className="bg-black border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="pt-4 flex justify-end">
-                  <Button type="button" onClick={nextStep} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
+                  <Button type="button" onClick={() => setStep(2)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
                     Next <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -241,16 +277,16 @@ export default function CreateBeacon() {
                 exit={{ opacity: 0, x: -20 }}
                 className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
               >
-                <h2 className="text-2xl font-black uppercase mb-4">Step 2: Location & Time</h2>
+                <h2 className="text-2xl font-black uppercase mb-4">Location & Time</h2>
 
                 <div>
                   <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
-                    Event Date & Time *
+                    Event Date & Time
                   </label>
                   <Input
                     type="datetime-local"
-                    value={formData.event_date}
+                    value={formData.event_date || ''}
                     onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
                     className="bg-black border-white/20 text-white"
                   />
@@ -261,7 +297,7 @@ export default function CreateBeacon() {
                     Venue Name
                   </label>
                   <Input
-                    value={formData.venue_name}
+                    value={formData.venue_name || ''}
                     onChange={(e) => setFormData({ ...formData, venue_name: e.target.value })}
                     placeholder="e.g. Fabric London"
                     className="bg-black border-white/20 text-white"
@@ -270,12 +306,11 @@ export default function CreateBeacon() {
 
                 <div>
                   <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
-                    City *
+                    City
                   </label>
                   <Input
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    placeholder="e.g. London"
                     className="bg-black border-white/20 text-white"
                   />
                 </div>
@@ -309,10 +344,10 @@ export default function CreateBeacon() {
                 </div>
 
                 <div className="pt-4 flex justify-between">
-                  <Button type="button" onClick={prevStep} variant="outline" className="border-white/20 text-white rounded-none">
+                  <Button type="button" onClick={() => setStep(1)} variant="outline" className="border-white/20 text-white rounded-none">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
-                  <Button type="button" onClick={nextStep} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
+                  <Button type="button" onClick={() => setStep(3)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
                     Next <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -327,7 +362,7 @@ export default function CreateBeacon() {
                 exit={{ opacity: 0, x: -20 }}
                 className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
               >
-                <h2 className="text-2xl font-black uppercase mb-4">Step 3: Media & Promo</h2>
+                <h2 className="text-2xl font-black uppercase mb-4">Media & Promo</h2>
 
                 <div>
                   <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block flex items-center gap-2">
@@ -361,7 +396,7 @@ export default function CreateBeacon() {
                 <div>
                   <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block flex items-center gap-2">
                     <Video className="w-4 h-4" />
-                    Event Video (Optional)
+                    Event Video
                   </label>
                   <div className="space-y-3">
                     <Button
@@ -388,10 +423,10 @@ export default function CreateBeacon() {
                 </div>
 
                 <div className="pt-4 flex justify-between">
-                  <Button type="button" onClick={prevStep} variant="outline" className="border-white/20 text-white rounded-none">
+                  <Button type="button" onClick={() => setStep(2)} variant="outline" className="border-white/20 text-white rounded-none">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
-                  <Button type="button" onClick={nextStep} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
+                  <Button type="button" onClick={() => setStep(4)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
                     Next <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -406,7 +441,7 @@ export default function CreateBeacon() {
                 exit={{ opacity: 0, x: -20 }}
                 className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
               >
-                <h2 className="text-2xl font-black uppercase mb-4">Step 4: Engagement</h2>
+                <h2 className="text-2xl font-black uppercase mb-4">Engagement</h2>
 
                 <div>
                   <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block flex items-center justify-between">
@@ -420,7 +455,6 @@ export default function CreateBeacon() {
                     step={5}
                     className="w-full"
                   />
-                  <p className="text-xs text-white/40 mt-2">How crowded/active will this event be?</p>
                 </div>
 
                 <div>
@@ -433,7 +467,6 @@ export default function CreateBeacon() {
                     onChange={(e) => setFormData({ ...formData, xp_scan: parseInt(e.target.value) })}
                     className="bg-black border-white/20 text-white"
                   />
-                  <p className="text-xs text-white/40 mt-2">XP users earn for scanning this beacon</p>
                 </div>
 
                 <div>
@@ -443,8 +476,8 @@ export default function CreateBeacon() {
                   <Input
                     type="number"
                     value={formData.capacity || ''}
-                    onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || null })}
-                    placeholder="Maximum attendees (optional)"
+                    onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
+                    placeholder="Maximum attendees"
                     className="bg-black border-white/20 text-white"
                   />
                 </div>
@@ -454,7 +487,7 @@ export default function CreateBeacon() {
                     Ticket URL
                   </label>
                   <Input
-                    value={formData.ticket_url}
+                    value={formData.ticket_url || ''}
                     onChange={(e) => setFormData({ ...formData, ticket_url: e.target.value })}
                     placeholder="https://..."
                     className="bg-black border-white/20 text-white"
@@ -463,8 +496,8 @@ export default function CreateBeacon() {
 
                 <div className="flex items-center justify-between p-4 bg-black rounded-lg border border-white/20">
                   <div>
-                    <label className="text-sm font-bold uppercase tracking-wider">Sponsored Event</label>
-                    <p className="text-xs text-white/40">Feature this event prominently</p>
+                    <label className="text-sm font-bold uppercase tracking-wider">Sponsored</label>
+                    <p className="text-xs text-white/40">Feature prominently</p>
                   </div>
                   <Button
                     type="button"
@@ -475,31 +508,17 @@ export default function CreateBeacon() {
                   </Button>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-black rounded-lg border border-white/20">
-                  <div>
-                    <label className="text-sm font-bold uppercase tracking-wider">Save as Draft</label>
-                    <p className="text-xs text-white/40">Publish later</p>
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, status: formData.status === 'draft' ? 'published' : 'draft' })}
-                    className={`rounded-none ${formData.status === 'draft' ? 'bg-white/20 text-white' : 'bg-[#39FF14] text-black'}`}
-                  >
-                    {formData.status === 'draft' ? 'DRAFT' : 'PUBLISH'}
-                  </Button>
-                </div>
-
                 <div className="pt-4 flex justify-between">
-                  <Button type="button" onClick={prevStep} variant="outline" className="border-white/20 text-white rounded-none">
+                  <Button type="button" onClick={() => setStep(3)} variant="outline" className="border-white/20 text-white rounded-none">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
                   <Button
                     type="submit"
-                    disabled={createMutation.isPending}
+                    disabled={updateMutation.isPending}
                     className="bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black rounded-none"
                   >
-                    <MapPin className="w-4 h-4 mr-2" />
-                    {createMutation.isPending ? 'Creating...' : 'Create Event'}
+                    <Save className="w-4 h-4 mr-2" />
+                    {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               </motion.div>

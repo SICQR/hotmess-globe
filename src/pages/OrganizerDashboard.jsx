@@ -151,24 +151,56 @@ export default function OrganizerDashboard() {
         >
           <h2 className="text-2xl font-black uppercase tracking-tight mb-4">My Events</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {myBeacons.map((beacon, idx) => (
-              <Link key={beacon.id} to={createPageUrl(`BeaconDetail?id=${beacon.id}`)}>
+            {myBeacons.map((beacon, idx) => {
+              const beaconInteractions = myInteractions.filter(i => i.beacon_id === beacon.id).length;
+              const beaconCheckIns = myCheckIns.filter(c => c.beacon_id === beacon.id).length;
+              const statusColor = beacon.status === 'draft' ? 'bg-white/20' : beacon.status === 'archived' ? 'bg-red-500/20' : 'bg-[#39FF14]/20';
+              
+              return (
                 <motion.div
+                  key={beacon.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 + idx * 0.05 }}
-                  className="bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 transition-all"
+                  className="bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 transition-all group"
                 >
-                  <h3 className="font-bold mb-2">{beacon.title}</h3>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-white/60">{beacon.city}</span>
-                    <span className="text-[#FFEB3B] font-bold">
-                      {myInteractions.filter(i => i.beacon_id === beacon.id).length} interactions
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="font-bold flex-1">{beacon.title}</h3>
+                    <span className={`text-[8px] uppercase tracking-wider px-2 py-1 rounded ${statusColor}`}>
+                      {beacon.status || 'published'}
                     </span>
                   </div>
+                  
+                  {beacon.image_url && (
+                    <img src={beacon.image_url} alt={beacon.title} className="w-full h-32 object-cover rounded-lg mb-3" />
+                  )}
+                  
+                  <div className="space-y-2 text-sm mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-white/60">{beacon.city}</span>
+                      <span className="text-[#FFEB3B] font-bold">{beaconInteractions} scans</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-white/60">Check-ins</span>
+                      <span className="text-[#00D9FF] font-bold">{beaconCheckIns}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Link to={createPageUrl(`BeaconDetail?id=${beacon.id}`)} className="flex-1">
+                      <Button variant="outline" className="w-full border-white/20 text-white rounded-none text-xs">
+                        VIEW
+                      </Button>
+                    </Link>
+                    <Link to={createPageUrl(`EditBeacon?id=${beacon.id}`)} className="flex-1">
+                      <Button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black rounded-none text-xs font-bold">
+                        EDIT
+                      </Button>
+                    </Link>
+                  </div>
                 </motion.div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         </motion.div>
       </div>
