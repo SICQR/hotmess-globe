@@ -18,8 +18,8 @@ export default function AgeGate({ onVerified }) {
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black overflow-hidden flex flex-col items-center justify-center">
-      {/* BACKGROUND IMAGE - HIGH MASC EDITORIAL */}
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1920&q=80')] bg-cover bg-center opacity-60 grayscale scale-110 blur-[2px]" />
+      {/* BACKGROUND IMAGE - HIGH CONTRAST EDITORIAL */}
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1920&q=95')] bg-cover bg-center opacity-50 grayscale contrast-125 scale-110" />
       
       {/* VIGNETTE OVERLAY */}
       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black opacity-90" />

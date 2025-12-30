@@ -5,6 +5,7 @@ import { createPageUrl } from '../../utils';
 import { ShoppingBag, Star, Package, Award, Ticket, Shirt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
 
 const TYPE_ICONS = {
   physical: Package,
@@ -24,10 +25,12 @@ const TYPE_COLORS = {
   merch: '#FF1493',
 };
 
-export default function ProductCard({ product, index = 0, onBuy }) {
+export default function ProductCard({ product, index = 0, onBuy, currentUserXP = 0 }) {
   const Icon = TYPE_ICONS[product.product_type] || ShoppingBag;
   const color = TYPE_COLORS[product.product_type] || '#FF1493';
   const isOutOfStock = product.status === 'sold_out' || (product.inventory_count !== undefined && product.inventory_count <= 0);
+  const isLocked = product.min_xp_level && currentUserXP < product.min_xp_level;
+  const isOfficial = product.category === 'official' || product.tags?.includes('official');
 
   return (
     <motion.div
@@ -35,81 +38,85 @@ export default function ProductCard({ product, index = 0, onBuy }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       whileHover={{ scale: 1.02 }}
-      className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:border-white/20 transition-all"
     >
       <Link to={createPageUrl(`ProductDetail?id=${product.id}`)}>
-        <div 
-          className="h-48 flex items-center justify-center relative"
-          style={{ backgroundColor: `${color}20` }}
+        <OSCard 
+          locked={isLocked}
+          xpRequired={product.min_xp_level}
         >
-          {product.image_urls && product.image_urls.length > 0 ? (
-            <img 
-              src={product.image_urls[0]} 
-              alt={product.name} 
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <Icon className="w-20 h-20" style={{ color }} />
-          )}
-          
-          {isOutOfStock && (
-            <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
-              <span className="text-white/60 font-bold uppercase tracking-wider">Sold Out</span>
+          {/* Editorial Product Photography */}
+          <div 
+            className="h-48 flex items-center justify-center relative"
+            style={{ backgroundColor: `${color}20` }}
+          >
+            {product.image_urls && product.image_urls.length > 0 ? (
+              <OSCardImage 
+                src={product.image_urls[0]} 
+                alt={product.name}
+                locked={isLocked}
+                grayscale={isLocked || !isOfficial}
+              />
+            ) : (
+              <Icon className="w-20 h-20" style={{ color }} />
+            )}
+            
+            {/* Corner Ribbon for 3rd Party */}
+            {!isOfficial && (
+              <div className="absolute top-3 right-3">
+                <OSCardBadge color="#00D9FF">STREET DROP</OSCardBadge>
+              </div>
+            )}
+            
+            {isOutOfStock && !isLocked && (
+              <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+                <span className="text-white/60 font-bold uppercase tracking-wider">Sold Out</span>
+              </div>
+            )}
+          </div>
+
+          <div className="p-6">
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="text-xl font-bold hover:text-[#FF1493] transition-colors">{product.name}</h3>
+              <OSCardBadge color={color}>
+                {product.product_type}
+              </OSCardBadge>
             </div>
-          )}
-          
-          {product.min_xp_level && (
-            <Badge className="absolute top-2 right-2 bg-[#FFEB3B] text-black">
-              LVL {Math.floor(product.min_xp_level / 1000) + 1}+
-            </Badge>
-          )}
-        </div>
+
+            {product.description && (
+              <p className="text-sm text-white/60 mb-3 line-clamp-2">{product.description}</p>
+            )}
+
+            {product.average_rating && (
+              <div className="flex items-center gap-1 mb-3">
+                <Star className="w-4 h-4 fill-[#FFEB3B] text-[#FFEB3B]" />
+                <span className="text-sm font-semibold">{product.average_rating.toFixed(1)}</span>
+                <span className="text-xs text-white/40">({product.sales_count || 0} sales)</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-black" style={{ color }}>
+                {product.price_xp.toLocaleString()} XP
+                {product.price_gbp && (
+                  <span className="text-sm text-white/40 ml-2">+ £{product.price_gbp}</span>
+                )}
+              </div>
+              <Button
+                size="sm"
+                className="text-black font-bold"
+                style={{ backgroundColor: color }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onBuy?.(product);
+                }}
+                disabled={isOutOfStock || isLocked}
+              >
+                {isLocked ? 'LOCKED' : isOutOfStock ? 'Sold Out' : 'Buy'}
+              </Button>
+            </div>
+          </div>
+        </OSCard>
       </Link>
-
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-2">
-          <Link to={createPageUrl(`ProductDetail?id=${product.id}`)}>
-            <h3 className="text-xl font-bold hover:text-[#FF1493] transition-colors">{product.name}</h3>
-          </Link>
-          <Badge 
-            variant="outline" 
-            className="text-xs uppercase tracking-wider"
-            style={{ borderColor: color, color }}
-          >
-            {product.product_type}
-          </Badge>
-        </div>
-
-        {product.description && (
-          <p className="text-sm text-white/60 mb-3 line-clamp-2">{product.description}</p>
-        )}
-
-        {product.average_rating && (
-          <div className="flex items-center gap-1 mb-3">
-            <Star className="w-4 h-4 fill-[#FFEB3B] text-[#FFEB3B]" />
-            <span className="text-sm font-semibold">{product.average_rating.toFixed(1)}</span>
-            <span className="text-xs text-white/40">({product.sales_count || 0} sales)</span>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <div className="text-2xl font-black" style={{ color }}>
-            {product.price_xp.toLocaleString()} XP
-          </div>
-          <Button
-            size="sm"
-            className="text-black font-bold"
-            style={{ backgroundColor: color }}
-            onClick={(e) => {
-              e.preventDefault();
-              onBuy?.(product);
-            }}
-            disabled={isOutOfStock}
-          >
-            {isOutOfStock ? 'Sold Out' : 'Buy'}
-          </Button>
-        </div>
-      </div>
     </motion.div>
   );
 }
