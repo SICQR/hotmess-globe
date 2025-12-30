@@ -155,6 +155,8 @@ export default function EnhancedGlobe3D({
       metalness: 0.2
     });
 
+    const beaconMeshes = [];
+
     beacons.forEach(beacon => {
       const pos = latLngToVector3(beacon.lat, beacon.lng, globeRadius * 1.01);
       const mesh = new THREE.Mesh(beaconGeo, beaconMat);
@@ -241,8 +243,6 @@ export default function EnhancedGlobe3D({
       isDragging = true;
       previousMousePosition = { x: e.clientX, y: e.clientY };
     };
-
-    const beaconMeshes = [];
 
     const onMouseMove = (e) => {
       if (isDragging) {
