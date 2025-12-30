@@ -8,7 +8,7 @@ import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LiveGlobe3D from '../components/globe/LiveGlobe3D';
 import OSHud from '../components/home/OSHud';
-import RadioPlayer from '../components/home/RadioPlayer';
+import RadioTerminal from '../components/home/RadioTerminal';
 import RightNowOverlay from '../components/home/RightNowOverlay';
 
 export default function Home() {
@@ -65,71 +65,107 @@ export default function Home() {
         />
       </div>
 
-      {/* Overlay Content */}
-      <div className="relative z-10 pt-24 pb-32 pointer-events-none">
-        <div className="max-w-7xl mx-auto px-4">
-          {/* Hero Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-black/60 backdrop-blur-xl border-2 border-[#FF1493] rounded-none p-8 mb-6 max-w-2xl pointer-events-auto"
-          >
-            <div className="text-sm text-[#FF1493] font-mono uppercase tracking-wider mb-2">
-              NIGHT PULSE CONTROL
-            </div>
-            <h1 className="text-5xl font-black uppercase tracking-tight mb-4">
-              LONDON<br />
-              <span className="text-[#FF1493]">AFTER DARK</span>
-            </h1>
-            <p className="text-white/80 mb-6 leading-relaxed">
-              Real-time nightlife intelligence. Track events, connect with your tribe, 
-              and navigate the city's underground pulse. Industrial brutalism meets 
-              nocturnal connectivity.
-            </p>
-            <div className="flex flex-wrap gap-3">
+      {/* Overlay Content - Editorial Layout */}
+      <div className="relative z-10 pt-24 pb-32 px-8 pointer-events-none">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
+          
+          {/* MAIN EDITORIAL COLUMN */}
+          <div className="md:col-span-8 space-y-20 pointer-events-auto">
+            <motion.header
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <h2 className="text-[12vw] md:text-[8vw] font-black italic leading-[0.8] tracking-tighter uppercase text-white mb-6">
+                The Night <br /> 
+                <span className="text-transparent" style={{ WebkitTextStroke: '2px #FF1493' }}>
+                  Is Ours.
+                </span>
+              </h2>
+            </motion.header>
+
+            <motion.section 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-8 border-l-4 border-white pl-8 bg-black/60 backdrop-blur-xl p-8"
+            >
+              <div className="space-y-4">
+                <p className="text-2xl font-bold italic uppercase tracking-tighter text-[#FF1493]">01. Discovery</p>
+                <p className="text-sm text-white/60 leading-relaxed uppercase">
+                  Access the pulse of every venue in London. Real-time heatmaps, verified check-ins, and secure intelligence.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <p className="text-2xl font-bold italic uppercase tracking-tighter text-[#FF1493]">02. Status</p>
+                <p className="text-sm text-white/60 leading-relaxed uppercase">
+                  Earn Sweat (XP) through presence. Level up to unlock the most exclusive drops and private rooms.
+                </p>
+              </div>
+            </motion.section>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-wrap gap-4"
+            >
               <Link to={createPageUrl('Beacons')}>
-                <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase tracking-wider rounded-none">
-                  <MapPin className="w-4 h-4 mr-2" />
+                <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase tracking-wider rounded-none px-8 py-6 text-lg italic shadow-[0_0_30px_rgba(255,20,147,0.5)]">
+                  <MapPin className="w-5 h-5 mr-2" />
                   EXPLORE BEACONS
                 </Button>
               </Link>
               <Button 
                 onClick={() => setShowRightNow(true)}
                 variant="outline"
-                className="border-2 border-white/20 text-white hover:bg-white/10 font-black uppercase tracking-wider rounded-none"
+                className="border-2 border-white/40 text-white hover:bg-white hover:text-black font-black uppercase tracking-wider rounded-none px-8 py-6 text-lg italic transition-all"
               >
                 VIEW RIGHT NOW →
               </Button>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
 
-          {/* Stats Cards */}
+          {/* SIDEBAR INTELLIGENCE */}
           {currentUser && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl pointer-events-auto"
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="md:col-span-4 space-y-8 bg-white/5 backdrop-blur-xl border border-white/10 p-6 self-start pointer-events-auto"
             >
-              <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-none p-4">
-                <div className="text-xs text-white/40 uppercase tracking-wider font-mono mb-1">ACTIVE</div>
-                <div className="text-2xl font-black text-[#FF1493]">{activeUsers.length}</div>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#FF1493]">Global Intel</p>
+              <div className="space-y-4 font-mono text-xs">
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-white/40 uppercase">Active Users</span>
+                  <span className="text-white font-bold">{activeUsers.length}</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-white/40 uppercase">Live Beacons</span>
+                  <span className="text-white font-bold">{recentBeacons.length}</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-white/40 uppercase">Your Level</span>
+                  <span className="text-white font-bold">{Math.floor((currentUser.xp || 0) / 1000) + 1}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/40 uppercase">Your XP</span>
+                  <span className="text-[#FFEB3B] font-bold">{currentUser.xp || 0}</span>
+                </div>
               </div>
-              <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-none p-4">
-                <div className="text-xs text-white/40 uppercase tracking-wider font-mono mb-1">LIVE BEACONS</div>
-                <div className="text-2xl font-black text-[#FF1493]">{recentBeacons.length}</div>
-              </div>
-              <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-none p-4 col-span-2 md:col-span-1">
-                <div className="text-xs text-white/40 uppercase tracking-wider font-mono mb-1">YOUR XP</div>
-                <div className="text-2xl font-black text-[#FFEB3B]">{currentUser.xp || 0}</div>
-              </div>
+              <Button 
+                onClick={() => window.location.href = createPageUrl('Globe')}
+                className="w-full bg-white text-black py-4 font-black uppercase text-xs tracking-widest hover:bg-[#00D9FF] hover:text-black transition-all"
+              >
+                View Live Globe
+              </Button>
             </motion.div>
           )}
+
         </div>
       </div>
 
-      {/* Radio Player */}
-      <RadioPlayer />
+      {/* Radio Terminal */}
+      <RadioTerminal />
 
       {/* Right Now Overlay */}
       <RightNowOverlay
