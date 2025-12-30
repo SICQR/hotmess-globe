@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Flame, Activity, Building2, Clock, Eye, EyeOff } from 'lucide-react';
+import { MapPin, Flame, Activity, Building2, Clock, Eye, EyeOff, Zap } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
@@ -9,6 +9,7 @@ const LAYER_OPTIONS = [
   { id: 'heat', label: 'Heat', icon: Flame },
   { id: 'activity', label: 'Streams', icon: Activity },
   { id: 'cities', label: 'Cities', icon: Building2 },
+  { id: 'intents', label: 'Moods', icon: Zap },
 ];
 
 const MODE_OPTIONS = [
