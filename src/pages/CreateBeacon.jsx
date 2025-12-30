@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
+import { snapToGrid } from '../components/utils/locationPrivacy';
 
 export default function CreateBeacon() {
   const navigate = useNavigate();
