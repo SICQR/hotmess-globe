@@ -16,22 +16,13 @@ import { base44 } from '@/api/base44Client';
 export default function PanicButton() {
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const handlePanic = async () => {
-    try {
-      // Sign out
-      await base44.auth.logout();
-      
-      // Clear local storage
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Redirect to neutral site
-      window.location.href = 'https://www.google.com';
-    } catch (error) {
-      console.error('Panic exit failed:', error);
-      // Force redirect anyway
-      window.location.href = 'https://www.google.com';
-    }
+  const handlePanic = () => {
+    // Clear everything first
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Force immediate redirect without waiting for logout
+    window.location.replace('https://www.google.com');
   };
 
   return (
