@@ -134,9 +134,9 @@ function BeaconDetail({ beacon, onClose }) {
 
 function ActivityFeed({ activities, onBeaconSelect }) {
   return (
-    <div className="flex-1 rounded-2xl bg-black/90 border border-white/10 backdrop-blur-xl overflow-hidden flex flex-col">
+    <div className="rounded-2xl bg-black/90 border border-white/10 backdrop-blur-xl overflow-hidden flex flex-col max-h-96">
       {/* Header */}
-      <div className="p-4 border-b border-white/10">
+      <div className="p-3 border-b border-white/10">
         <div className="flex items-center justify-between">
           <h4 className="text-[10px] tracking-[0.4em] text-white/60 font-medium uppercase">
             LIVE FEED
@@ -151,7 +151,7 @@ function ActivityFeed({ activities, onBeaconSelect }) {
       </div>
 
       {/* Feed */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="overflow-y-auto max-h-80">
         <AnimatePresence>
           {activities.length === 0 ? (
             <div className="p-8 text-center">
@@ -224,7 +224,7 @@ export default function GlobeDataPanel({
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="absolute top-6 right-6 bottom-6 w-96 z-20 flex flex-col gap-4"
+      className="flex flex-col gap-3 max-h-[calc(100vh-100px)] overflow-hidden"
     >
       <AnimatePresence mode="wait">
         {selectedBeacon && (

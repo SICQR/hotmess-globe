@@ -311,45 +311,29 @@ export default function GlobePage() {
 
   return (
     <div className="relative w-full min-h-screen bg-black overflow-hidden">
-      {/* Hero Section */}
+      {/* Hero Section - Compact */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="absolute top-0 left-0 right-0 z-30 pt-12 pb-6 px-8 bg-gradient-to-b from-black via-black/50 to-transparent pointer-events-none"
+        className="absolute top-8 left-8 z-30 pointer-events-none"
       >
-        <div className="max-w-7xl mx-auto">
-          <motion.h1 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-white text-5xl md:text-6xl font-black tracking-tight mb-4"
-          >
-            Where the world connects
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-white/60 text-lg md:text-xl max-w-2xl"
-          >
-            Real-time nightlife activity across {DEMO_CITIES.length} cities. Track live events, drops, and connections as they happen around the globe.
-          </motion.p>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mt-8 flex items-center gap-6 pointer-events-auto"
-          >
-            <button className="px-6 py-3 bg-[#FF1493] hover:bg-[#FF1493]/90 text-white font-bold rounded-lg transition-colors shadow-lg shadow-[#FF1493]/20">
-              Get Started →
-            </button>
-            <button className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-colors backdrop-blur-sm border border-white/20">
-              Learn More
-            </button>
-          </motion.div>
-        </div>
+        <motion.h1 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-white text-3xl font-black tracking-tight mb-2"
+        >
+          HOTMESS LONDON
+        </motion.h1>
+        <motion.p 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="text-white/50 text-sm tracking-wider uppercase"
+        >
+          Live Global Activity
+        </motion.p>
       </motion.div>
 
       {/* Globe */}
@@ -377,13 +361,15 @@ export default function GlobePage() {
         liveCount={filteredBeacons.length}
       />
 
-      {/* Data Panel */}
-      <GlobeDataPanel
-        selectedBeacon={selectedBeacon}
-        recentActivity={recentActivity}
-        onClose={handleClose}
-        onBeaconSelect={handleBeaconClick}
-      />
+      {/* Data Panel - Compact */}
+      <div className="absolute top-6 right-6 z-20 w-80">
+        <GlobeDataPanel
+          selectedBeacon={selectedBeacon}
+          recentActivity={recentActivity}
+          onClose={handleClose}
+          onBeaconSelect={handleBeaconClick}
+        />
+      </div>
 
       {/* Stats Bar */}
       <motion.div
