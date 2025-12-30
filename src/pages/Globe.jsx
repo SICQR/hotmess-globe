@@ -4,10 +4,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { createClient } from '@supabase/supabase-js';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
-import GlobeControls from '../components/globe/GlobeControls';
+import CompactGlobeControls from '../components/globe/CompactGlobeControls';
 import GlobeDataPanel from '../components/globe/GlobeDataPanel';
 import GlobeSearch from '../components/globe/GlobeSearch';
+import FloatingPanel from '../components/ui/FloatingPanel';
 import { activityTracker } from '../components/globe/ActivityTracker';
+import { Settings, BarChart3 } from 'lucide-react';
 export default function GlobePage() {
   const queryClient = useQueryClient();
 
@@ -138,8 +140,8 @@ export default function GlobePage() {
   const [beaconType, setBeaconType] = useState(null);
   const [minIntensity, setMinIntensity] = useState(0);
   const [recencyFilter, setRecencyFilter] = useState('all');
-  const [showControls, setShowControls] = useState(false);
-  const [showPanel, setShowPanel] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [showPanel, setShowPanel] = useState(true);
   const [searchResults, setSearchResults] = useState(null);
   const [radiusSearch, setRadiusSearch] = useState(null);
   const [userActivities, setUserActivities] = useState([]);
@@ -291,93 +293,7 @@ export default function GlobePage() {
 
   return (
     <div className="relative w-full min-h-screen bg-black overflow-hidden">
-      {/* Hero Section & Search - Responsive */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="absolute top-4 md:top-8 left-4 md:left-8 right-4 md:right-auto z-30 pointer-events-auto"
-      >
-        <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-8 mb-4">
-          <div className="pointer-events-none">
-            <motion.h1 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-white text-xl md:text-3xl font-black tracking-tight mb-1 md:mb-2"
-            >
-              HOTMESS LONDON
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-white/50 text-xs md:text-sm tracking-wider uppercase"
-            >
-              Live Global Activity
-            </motion.p>
-          </div>
-          
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="flex-1 md:flex-initial md:min-w-[400px]"
-          >
-            <GlobeSearch
-              beacons={beacons}
-              cities={cities}
-              onSearchResults={handleSearchResults}
-              onClearSearch={handleClearSearch}
-              onRadiusSearch={handleRadiusSearch}
-            />
-          </motion.div>
-        </div>
-        
-        {/* Search/Radius indicator */}
-        {(searchResults || radiusSearch) && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 px-4 py-2 bg-[#FF1493]/20 border border-[#FF1493]/40 rounded-xl backdrop-blur-xl"
-          >
-            <span className="text-[#FF1493] text-xs font-semibold uppercase tracking-wider">
-              {radiusSearch 
-                ? `${radiusSearch.beacons.length} beacons within ${radiusSearch.radiusKm}km of ${radiusSearch.center.name || radiusSearch.center.title}`
-                : `${(searchResults?.beacons.length || 0) + (searchResults?.cities.length || 0)} results for "${searchResults?.query}"`
-              }
-            </span>
-            <button
-              onClick={handleClearSearch}
-              className="ml-auto text-white/60 hover:text-white"
-            >
-              ✕
-            </button>
-          </motion.div>
-        )}
-      </motion.div>
-
-      {/* Mobile Menu Buttons */}
-      <div className="absolute top-20 right-4 z-40 flex gap-2 md:hidden pointer-events-auto">
-        <button
-          onClick={() => setShowControls(!showControls)}
-          className="p-3 bg-black/90 border border-white/20 rounded-xl backdrop-blur-xl"
-        >
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-          </svg>
-        </button>
-        <button
-          onClick={() => setShowPanel(!showPanel)}
-          className="p-3 bg-black/90 border border-white/20 rounded-xl backdrop-blur-xl"
-        >
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Globe */}
+      {/* Globe - Full Screen */}
       <div className="relative w-full h-screen">
         <EnhancedGlobe3D
           beacons={filteredBeacons}
@@ -390,109 +306,106 @@ export default function GlobePage() {
         />
       </div>
 
-      {/* Controls - Desktop always visible, Mobile drawer */}
-      <div className={`
-        fixed md:absolute top-0 left-0 h-full md:h-auto
-        transform transition-transform duration-300 ease-in-out z-50
-        ${showControls ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
-        <div className="h-full md:h-auto overflow-y-auto md:overflow-visible bg-black/95 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none">
-          <div className="md:hidden flex justify-between items-center p-4 border-b border-white/10">
-            <span className="text-white font-bold tracking-wider uppercase text-sm">Controls</span>
-            <button onClick={() => setShowControls(false)} className="text-white/60 hover:text-white">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+      {/* Compact Header */}
+      <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <h1 className="text-white text-lg md:text-xl font-black tracking-tight hidden md:block">
+            HOTMESS
+          </h1>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-black/90 border border-white/10 rounded-lg backdrop-blur-xl">
+            <div className="w-2 h-2 rounded-full bg-[#FF1493] animate-pulse" />
+            <span className="text-xs font-bold">{filteredBeacons.length}</span>
+          </div>
+        </div>
+
+        <div className="flex-1 max-w-md">
+          <GlobeSearch
+            beacons={beacons}
+            cities={cities}
+            onSearchResults={handleSearchResults}
+            onClearSearch={handleClearSearch}
+            onRadiusSearch={handleRadiusSearch}
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowControls(!showControls)}
+            className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
+              showControls ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setShowPanel(!showPanel)}
+            className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
+              showPanel ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Search Results Indicator */}
+      {(searchResults || radiusSearch) && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-16 left-4 right-4 z-30 flex items-center justify-center"
+        >
+          <div className="flex items-center gap-2 px-4 py-2 bg-[#FF1493]/20 border border-[#FF1493]/40 rounded-lg backdrop-blur-xl">
+            <span className="text-[#FF1493] text-xs font-semibold">
+              {radiusSearch 
+                ? `${radiusSearch.beacons.length} within ${radiusSearch.radiusKm}km`
+                : `${(searchResults?.beacons.length || 0) + (searchResults?.cities.length || 0)} results`
+              }
+            </span>
+            <button onClick={handleClearSearch} className="text-white/60 hover:text-white">
+              ✕
             </button>
           </div>
-          <GlobeControls
+        </motion.div>
+      )}
+
+      {/* Floating Controls Panel */}
+      {showControls && (
+        <FloatingPanel 
+          title="Controls" 
+          position="left" 
+          width="w-72"
+          onClose={() => setShowControls(false)}
+        >
+          <CompactGlobeControls
             activeLayers={activeLayers}
             onLayersChange={setActiveLayers}
             activeMode={activeMode}
             onModeChange={setActiveMode}
-            beaconType={beaconType}
-            onBeaconTypeChange={setBeaconType}
             minIntensity={minIntensity}
             onMinIntensityChange={setMinIntensity}
-            recencyFilter={recencyFilter}
-            onRecencyFilterChange={setRecencyFilter}
-            liveCount={filteredBeacons.length}
             activityVisibility={activityVisibility}
             onActivityVisibilityToggle={handleActivityVisibilityToggle}
           />
-        </div>
-      </div>
-
-      {/* Mobile overlay */}
-      {(showControls || showPanel) && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => {
-            setShowControls(false);
-            setShowPanel(false);
-          }}
-        />
+        </FloatingPanel>
       )}
 
-      {/* Data Panel - Desktop and Mobile drawer */}
-      <div className={`
-        fixed md:absolute top-0 md:top-6 right-0 md:right-6 
-        h-full md:h-auto w-full md:w-80 z-50 md:z-20
-        transform transition-transform duration-300 ease-in-out
-        ${showPanel ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
-      `}>
-        <div className="h-full md:h-auto bg-black/95 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none flex flex-col">
-          <div className="md:hidden flex justify-between items-center p-4 border-b border-white/10 sticky top-0 bg-black/95 z-10">
-            <span className="text-white font-bold tracking-wider uppercase text-sm">Activity</span>
-            <button onClick={() => setShowPanel(false)} className="text-white/60 hover:text-white">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div className="p-4 md:p-0 overflow-y-auto flex-1">
-            <GlobeDataPanel
-              selectedBeacon={selectedBeacon}
-              recentActivity={recentActivity}
-              onClose={handleClose}
-              onBeaconSelect={handleBeaconClick}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Bar - Responsive */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.0 }}
-        className="absolute bottom-4 md:bottom-8 left-4 md:left-8 right-4 md:right-8 z-10"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-6 px-4 md:px-6 py-3 md:py-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl md:rounded-2xl">
-            <div className="flex items-center justify-around md:justify-start md:gap-6 lg:gap-8">
-              <div className="text-center md:text-left">
-                <div className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase mb-0.5 md:mb-1">Live</div>
-                <div className="text-white text-lg md:text-2xl font-bold">{filteredBeacons.length}</div>
-              </div>
-              <div className="text-center md:text-left">
-                <div className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase mb-0.5 md:mb-1">Cities</div>
-                <div className="text-white text-lg md:text-2xl font-bold">{cities.length}</div>
-              </div>
-              <div className="text-center md:text-left">
-                <div className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase mb-0.5 md:mb-1">Arcs</div>
-                <div className="text-white text-lg md:text-2xl font-bold">{Math.max(0, filteredBeacons.length - 1)}</div>
-              </div>
-            </div>
-            <div className="hidden md:flex items-center gap-4">
-              <p className="text-white/40 text-xs tracking-wider uppercase">
-                Drag • Zoom • Hover Arcs
-              </p>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
+      {/* Floating Activity Panel */}
+      {showPanel && (
+        <FloatingPanel 
+          title="Activity" 
+          position="right" 
+          width="w-80"
+          onClose={() => setShowPanel(false)}
+        >
+          <GlobeDataPanel
+            selectedBeacon={selectedBeacon}
+            recentActivity={recentActivity}
+            onClose={handleClose}
+            onBeaconSelect={handleBeaconClick}
+          />
+        </FloatingPanel>
+      )}
     </div>
   );
 }
