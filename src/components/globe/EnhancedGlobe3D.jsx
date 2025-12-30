@@ -40,6 +40,7 @@ export default function EnhancedGlobe3D({
   beacons = [],
   cities = [],
   activeLayers = ['pins'],
+  userActivities = [],
   onBeaconClick,
   highlightedIds = [],
   className = ''
@@ -301,6 +302,76 @@ export default function EnhancedGlobe3D({
       globe.add(cityGroup);
     }
 
+    // User activity trails - real-time user actions
+    const userTrails = [];
+    if (userActivities.length > 0) {
+      userActivities.forEach((activity, idx) => {
+        if (!activity.location || !activity.location.lat || !activity.location.lng) return;
+
+        const pos = latLngToVector3(activity.location.lat, activity.location.lng, globeRadius * 1.015);
+        
+        // Activity pulse
+        const age = Date.now() - new Date(activity.created_date).getTime();
+        const ageSeconds = age / 1000;
+        const opacity = Math.max(0, 1 - (ageSeconds / 60)); // Fade over 60 seconds
+        
+        if (opacity <= 0) return;
+
+        // Color based on action type
+        const colors = {
+          search: 0x00d9ff,
+          filter: 0xb026ff,
+          beacon_click: 0xff1493,
+          city_click: 0xffeb3b,
+          layer_toggle: 0x39ff14
+        };
+        const color = colors[activity.action_type] || 0x00d9ff;
+
+        // Create pulsing ring
+        const ringGeo = new THREE.RingGeometry(0.02, 0.03, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: color,
+          transparent: true,
+          opacity: opacity * 0.6,
+          side: THREE.DoubleSide,
+          blending: THREE.AdditiveBlending
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.position.copy(pos);
+        ring.lookAt(camera.position);
+        globe.add(ring);
+        userTrails.push(ring);
+
+        // Expanding wave effect
+        const waveSize = 0.03 + (ageSeconds * 0.01);
+        const waveGeo = new THREE.RingGeometry(waveSize * 0.8, waveSize, 32);
+        const waveMat = new THREE.MeshBasicMaterial({
+          color: color,
+          transparent: true,
+          opacity: opacity * 0.3,
+          side: THREE.DoubleSide,
+          blending: THREE.AdditiveBlending
+        });
+        const wave = new THREE.Mesh(waveGeo, waveMat);
+        wave.position.copy(pos);
+        wave.lookAt(camera.position);
+        globe.add(wave);
+        userTrails.push(wave);
+
+        // User indicator
+        const markerGeo = new THREE.SphereGeometry(0.012, 16, 16);
+        const markerMat = new THREE.MeshBasicMaterial({
+          color: color,
+          transparent: true,
+          opacity: opacity
+        });
+        const marker = new THREE.Mesh(markerGeo, markerMat);
+        marker.position.copy(pos);
+        globe.add(marker);
+        userTrails.push(marker);
+      });
+    }
+
     // Activity streams layer - animated arcs
     const arcs = [];
     if (showActivity && beacons.length >= 2) {
@@ -522,7 +593,7 @@ export default function EnhancedGlobe3D({
       mount.removeChild(renderer.domElement);
       renderer.dispose();
     };
-  }, [beacons, cities, activeLayers, highlightedIds]);
+  }, [beacons, cities, activeLayers, highlightedIds, userActivities]);
 
   return (
     <>

@@ -7,6 +7,7 @@ import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import GlobeControls from '../components/globe/GlobeControls';
 import GlobeDataPanel from '../components/globe/GlobeDataPanel';
 import GlobeSearch from '../components/globe/GlobeSearch';
+import { activityTracker } from '../components/globe/ActivityTracker';
 export default function GlobePage() {
   const queryClient = useQueryClient();
 
@@ -79,6 +80,58 @@ export default function GlobePage() {
     };
   }, [queryClient]);
 
+  // Real-time subscriptions for user activities
+  useEffect(() => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) return;
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Fetch recent activities
+    const fetchActivities = async () => {
+      try {
+        const activities = await base44.entities.UserActivity.filter(
+          { visible: true },
+          '-created_date',
+          50
+        );
+        setUserActivities(activityTracker.pruneOldActivities(activities));
+      } catch (error) {
+        console.error('Failed to fetch activities:', error);
+      }
+    };
+
+    fetchActivities();
+
+    const activityChannel = supabase
+      .channel('user-activities-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'UserActivity' },
+        (payload) => {
+          if (payload.new.visible) {
+            setUserActivities((old) => {
+              const updated = [payload.new, ...old];
+              return activityTracker.pruneOldActivities(updated);
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Prune old activities every 10 seconds
+    const pruneInterval = setInterval(() => {
+      setUserActivities((old) => activityTracker.pruneOldActivities(old));
+    }, 10000);
+
+    return () => {
+      supabase.removeChannel(activityChannel);
+      clearInterval(pruneInterval);
+    };
+  }, []);
+
   const [activeLayers, setActiveLayers] = useState(['pins']);
   const [activeMode, setActiveMode] = useState(null);
   const [selectedBeacon, setSelectedBeacon] = useState(null);
@@ -89,6 +142,8 @@ export default function GlobePage() {
   const [showPanel, setShowPanel] = useState(false);
   const [searchResults, setSearchResults] = useState(null);
   const [radiusSearch, setRadiusSearch] = useState(null);
+  const [userActivities, setUserActivities] = useState([]);
+  const [activityVisibility, setActivityVisibility] = useState(activityTracker.isEnabled());
 
   // Filter beacons by mode, type, intensity, recency, and search (must be before conditional return)
   const filteredBeacons = useMemo(() => {
@@ -149,7 +204,16 @@ export default function GlobePage() {
 
   const handleBeaconClick = useCallback((beacon) => {
     setSelectedBeacon(beacon);
-    setShowPanel(true); // Auto-open panel on mobile when beacon clicked
+    setShowPanel(true);
+    
+    // Track activity
+    activityTracker.trackActivity('beacon_click', { 
+      beacon_id: beacon.id, 
+      beacon_title: beacon.title 
+    }, {
+      lat: beacon.lat,
+      lng: beacon.lng
+    });
   }, []);
 
   const handleCityClick = useCallback((city) => {
@@ -167,12 +231,23 @@ export default function GlobePage() {
     setSearchResults(results);
     setRadiusSearch(null);
     
+    // Track search activity
+    if (results.beacons.length > 0 || results.cities.length > 0) {
+      const firstResult = results.beacons[0] || results.cities[0];
+      activityTracker.trackActivity('search', { 
+        query: results.query,
+        result_count: results.beacons.length + results.cities.length
+      }, firstResult ? {
+        lat: firstResult.lat,
+        lng: firstResult.lng
+      } : null);
+    }
+    
     // If single beacon or city, focus on it
     if (results.beacons.length === 1) {
       setSelectedBeacon(results.beacons[0]);
       setShowPanel(true);
     } else if (results.cities.length === 1) {
-      // Zoom to city (handled by globe component)
       console.log('Focus on city:', results.cities[0]);
     }
   }, []);
@@ -185,7 +260,23 @@ export default function GlobePage() {
   const handleRadiusSearch = useCallback((results) => {
     setRadiusSearch(results);
     setSearchResults(null);
+    
+    // Track radius search
+    activityTracker.trackActivity('filter', {
+      type: 'radius',
+      radius_km: results.radiusKm,
+      result_count: results.beacons.length
+    }, {
+      lat: results.center.lat,
+      lng: results.center.lng
+    });
   }, []);
+
+  const handleActivityVisibilityToggle = useCallback(() => {
+    const newVisibility = !activityVisibility;
+    setActivityVisibility(newVisibility);
+    activityTracker.setEnabled(newVisibility);
+  }, [activityVisibility]);
 
   if (beaconsLoading || citiesLoading) {
     return (
@@ -292,6 +383,7 @@ export default function GlobePage() {
           beacons={filteredBeacons}
           cities={cities}
           activeLayers={activeLayers}
+          userActivities={userActivities}
           onBeaconClick={handleBeaconClick}
           highlightedIds={searchResults?.beacons.map(b => b.id) || radiusSearch?.beacons.map(b => b.id) || []}
           className="w-full h-full"
@@ -325,6 +417,8 @@ export default function GlobePage() {
             recencyFilter={recencyFilter}
             onRecencyFilterChange={setRecencyFilter}
             liveCount={filteredBeacons.length}
+            activityVisibility={activityVisibility}
+            onActivityVisibilityToggle={handleActivityVisibilityToggle}
           />
         </div>
       </div>

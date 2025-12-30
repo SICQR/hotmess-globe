@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Flame, Activity, Building2, Zap, Clock } from 'lucide-react';
+import { MapPin, Flame, Activity, Building2, Zap, Clock, Eye, EyeOff } from 'lucide-react';
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
 
 const LAYER_OPTIONS = [
   { id: 'pins', label: 'BEACONS', icon: MapPin, description: 'Show beacon markers' },
@@ -49,7 +50,9 @@ export default function GlobeControls({
   minIntensity = 0,
   onMinIntensityChange,
   recencyFilter = 'all',
-  onRecencyFilterChange
+  onRecencyFilterChange,
+  activityVisibility = true,
+  onActivityVisibilityToggle
 }) {
   const handleLayerToggle = (layerId) => {
     const newLayers = activeLayers.includes(layerId)
