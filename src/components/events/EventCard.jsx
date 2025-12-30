@@ -2,11 +2,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { Calendar, MapPin, Users, Clock, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, ExternalLink, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
 
-export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0 }) {
+export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, recommendationScore }) {
   const eventDate = event.event_date ? new Date(event.event_date) : null;
   const isPast = eventDate && eventDate < new Date();
 
@@ -27,6 +27,12 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0 }) 
       transition={{ delay }}
       className="group relative"
     >
+      {recommendationScore && recommendationScore > 40 && (
+        <div className="absolute -top-2 -right-2 z-10 bg-[#FF1493] border-2 border-white px-2 py-1 flex items-center gap-1">
+          <Sparkles className="w-3 h-3" />
+          <span className="text-[10px] font-black uppercase">Top Match</span>
+        </div>
+      )}
       <Link to={createPageUrl(`BeaconDetail?id=${event.id}`)}>
         <OSCard className={isPast ? 'opacity-60' : ''}>
           {/* Editorial Image */}
