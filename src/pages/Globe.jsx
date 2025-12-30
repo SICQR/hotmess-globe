@@ -276,106 +276,17 @@ export default function GlobePage() {
   }
 
   return (
-    <div className="relative w-full h-screen bg-gradient-to-br from-black via-[#0a0015] to-black overflow-hidden">
-      {/* Animated background glow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.15, 0.25, 0.15],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="absolute top-1/4 left-1/4 w-[800px] h-[800px] bg-[#FF1493] blur-[150px] rounded-full"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.1, 0.2, 0.1],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2
-          }}
-          className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-[#B026FF] blur-[150px] rounded-full"
-        />
-      </div>
-
-      {/* Globe with enhanced contrast */}
-      <div className="absolute inset-0" style={{ filter: 'contrast(1.15) brightness(1.1)' }}>
-        <NightPulseGlobe
-          mapboxToken={mapboxToken}
-          beacons={filteredBeacons}
-          cities={DEMO_CITIES}
-          activeLayer={activeLayer}
-          onBeaconClick={handleBeaconClick}
-          onCityClick={handleCityClick}
-          className="w-full h-full"
-        />
-      </div>
-
-      {/* Hero overlay with CTAs */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        className="absolute inset-0 flex items-center justify-center z-30 text-center pointer-events-none"
-      >
-        <motion.div
-          animate={{
-            textShadow: [
-              '0 0 40px rgba(255,20,147,0.5)',
-              '0 0 80px rgba(255,20,147,0.8)',
-              '0 0 40px rgba(255,20,147,0.5)',
-            ]
-          }}
-          transition={{ duration: 3, repeat: Infinity }}
-          className="mb-8"
-        >
-          <h1 className="text-white text-7xl md:text-9xl font-black tracking-[0.15em] leading-none mb-4">
-            HOTMESS
-          </h1>
-          <p className="text-[#FF1493] text-xl md:text-2xl tracking-[0.4em] font-bold uppercase">
-            GLOBAL NIGHTLIFE • LIVE NOW
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center pointer-events-auto"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(255,20,147,0.8)' }}
-            whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 bg-[#FF1493] text-white text-lg font-black tracking-[0.15em] rounded-full uppercase shadow-[0_0_30px_rgba(255,20,147,0.6)] hover:bg-[#FF1493]/90 transition-all"
-          >
-            EXPLORE LIVE
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 bg-white/10 text-white text-lg font-black tracking-[0.15em] rounded-full uppercase border-2 border-white/30 backdrop-blur-xl hover:bg-white/20 transition-all"
-          >
-            DROP PIN
-          </motion.button>
-        </motion.div>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="mt-8 text-white/50 text-sm tracking-[0.2em] uppercase"
-        >
-          {filteredBeacons.length} LIVE BEACONS • 12 CITIES • REAL-TIME
-        </motion.p>
-      </motion.div>
+    <div className="relative w-full h-screen bg-black overflow-hidden">
+      {/* Globe */}
+      <NightPulseGlobe
+        mapboxToken={mapboxToken}
+        beacons={filteredBeacons}
+        cities={DEMO_CITIES}
+        activeLayer={activeLayer}
+        onBeaconClick={handleBeaconClick}
+        onCityClick={handleCityClick}
+        className="w-full h-full"
+      />
 
       {/* Controls */}
       <GlobeControls
@@ -394,21 +305,36 @@ export default function GlobePage() {
         onBeaconSelect={handleBeaconClick}
       />
 
-      {/* Bottom instructions */}
+      {/* Branding */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8 }}
+        className="absolute bottom-8 left-8 z-10"
+      >
+        <h1 className="text-white text-4xl font-black tracking-[0.2em] leading-none mb-2">
+          HOTMESS
+        </h1>
+        <p className="text-[#FF1493] text-[11px] tracking-[0.5em] font-medium uppercase">
+          NIGHT PULSE
+        </p>
+      </motion.div>
+
+      {/* Instructions */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.8 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-center"
+        transition={{ delay: 1.2 }}
+        className="absolute bottom-8 right-8 z-10 text-right"
       >
-        <p className="text-white/30 text-xs tracking-[0.2em] uppercase font-medium mb-2">
+        <p className="text-white/30 text-[10px] tracking-[0.15em] uppercase font-medium">
           DRAG • ZOOM • CLICK BEACONS
         </p>
         <button
           onClick={() => setShowTokenInput(true)}
-          className="text-white/20 hover:text-white/40 text-[9px] underline"
+          className="text-white/20 hover:text-white/40 text-[9px] mt-2 underline"
         >
-          Settings
+          Change Mapbox Token
         </button>
       </motion.div>
 
