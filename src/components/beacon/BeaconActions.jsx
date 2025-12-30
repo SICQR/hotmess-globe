@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 export default function BeaconActions({ beacon }) {
   const [user, setUser] = useState(null);
   const [checkInNote, setCheckInNote] = useState('');
+  const [photoFile, setPhotoFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -57,8 +59,9 @@ export default function BeaconActions({ beacon }) {
   const checkInMutation = useMutation({
     mutationFn: (data) => base44.entities.BeaconCheckIn.create(data),
     onSuccess: () => {
-      toast.success('Checked in!');
+      toast.success('Checked in with photo!');
       setCheckInNote('');
+      setPhotoFile(null);
       
       // Track interaction
       base44.entities.UserInteraction.create({
@@ -71,14 +74,30 @@ export default function BeaconActions({ beacon }) {
     }
   });
 
-  const handleCheckIn = () => {
+  const handleCheckIn = async () => {
     if (!user) return;
+    
+    let photoUrl = null;
+    if (photoFile) {
+      setUploading(true);
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: photoFile });
+        photoUrl = file_url;
+      } catch (error) {
+        toast.error('Photo upload failed');
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
+    
     checkInMutation.mutate({
       user_email: user.email,
       user_name: user.full_name,
       beacon_id: beacon.id,
       beacon_title: beacon.title,
-      note: checkInNote
+      note: checkInNote,
+      photo_url: photoUrl
     });
   };
 
@@ -120,18 +139,36 @@ export default function BeaconActions({ beacon }) {
             <DialogTitle>Check In</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-white/40 mb-2">
+                Upload Event Photo
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                className="w-full text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:border-2 file:border-white file:bg-[#FF1493] file:text-black file:font-black file:uppercase file:text-xs hover:file:bg-white file:cursor-pointer"
+              />
+              {photoFile && (
+                <p className="text-xs text-[#00D9FF] mt-2 font-mono">
+                  ✓ {photoFile.name}
+                </p>
+              )}
+            </div>
+            
             <Textarea
               value={checkInNote}
               onChange={(e) => setCheckInNote(e.target.value)}
               placeholder="How's the vibe? (optional)"
               className="bg-white/5 border-white/20 text-white"
             />
+            
             <Button
               onClick={handleCheckIn}
-              disabled={checkInMutation.isPending}
-              className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black"
+              disabled={checkInMutation.isPending || uploading}
+              className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black border-2 border-white"
             >
-              {checkInMutation.isPending ? 'Checking in...' : 'Check In'}
+              {uploading ? 'UPLOADING PHOTO...' : checkInMutation.isPending ? 'CHECKING IN...' : 'CHECK IN'}
             </Button>
           </div>
         </DialogContent>

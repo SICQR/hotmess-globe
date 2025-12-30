@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import CommentsSection from '../components/beacon/CommentsSection';
 import BeaconActions from '../components/beacon/BeaconActions';
 import EventRSVP from '../components/events/EventRSVP';
+import RelatedEvents from '../components/events/RelatedEvents';
 
 export default function BeaconDetail() {
   const [searchParams] = useSearchParams();
@@ -214,6 +215,16 @@ export default function BeaconDetail() {
             )}
           </div>
         </div>
+
+        {/* Related Events */}
+        {beacon.kind === 'event' && (
+          <div className="mb-8">
+            <RelatedEvents 
+              currentEvent={beacon} 
+              userPreferences={currentUser?.event_preferences || []} 
+            />
+          </div>
+        )}
 
         {/* Comments Section */}
         <CommentsSection beaconId={beaconId} />
