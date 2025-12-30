@@ -327,7 +327,8 @@ export default function GlobePage() {
   }
 
   return (
-    <div className="relative w-full min-h-screen bg-black overflow-hidden">{/* Live indicator */}
+    <div className="relative w-full min-h-screen bg-black overflow-hidden">
+      {/* Live indicator */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
