@@ -40,6 +40,7 @@ export default function EnhancedGlobe3D({
   beacons = [],
   cities = [],
   onBeaconClick,
+  highlightedIds = [],
   className = ''
 }) {
   const mountRef = useRef(null);
@@ -147,36 +148,44 @@ export default function EnhancedGlobe3D({
 
     // Beacons
     const beaconGeo = new THREE.SphereGeometry(0.015, 16, 16);
-    const beaconMat = new THREE.MeshStandardMaterial({
-      color: 0xff1493,
-      emissive: 0xff1493,
-      emissiveIntensity: 0.8,
-      roughness: 0.4,
-      metalness: 0.2
-    });
-
     const beaconMeshes = [];
 
     beacons.forEach(beacon => {
-      const pos = latLngToVector3(beacon.lat, beacon.lng, globeRadius * 1.01);
+      const isHighlighted = highlightedIds.includes(beacon.id);
+
+      const beaconMat = new THREE.MeshStandardMaterial({
+        color: isHighlighted ? 0xffeb3b : 0xff1493,
+        emissive: isHighlighted ? 0xffeb3b : 0xff1493,
+        emissiveIntensity: isHighlighted ? 1.2 : 0.8,
+        roughness: 0.4,
+        metalness: 0.2
+      });
+
       const mesh = new THREE.Mesh(beaconGeo, beaconMat);
+      const pos = latLngToVector3(beacon.lat, beacon.lng, globeRadius * 1.01);
       mesh.position.copy(pos);
       mesh.userData = { type: 'beacon', beacon };
+
+      // Scale up highlighted beacons
+      if (isHighlighted) {
+        mesh.scale.setScalar(1.5);
+      }
+
       globe.add(mesh);
       beaconMeshes.push(mesh);
 
       // Glow sprite
       const spriteMat = new THREE.SpriteMaterial({
-        color: 0xff1493,
+        color: isHighlighted ? 0xffeb3b : 0xff1493,
         transparent: true,
-        opacity: 0.6,
+        opacity: isHighlighted ? 0.9 : 0.6,
         blending: THREE.AdditiveBlending
       });
       const sprite = new THREE.Sprite(spriteMat);
-      sprite.scale.set(0.25, 0.25, 1);
+      sprite.scale.set(isHighlighted ? 0.4 : 0.25, isHighlighted ? 0.4 : 0.25, 1);
       sprite.position.copy(pos);
       globe.add(sprite);
-    });
+      });
 
     // Animated arcs with shader
     const arcMaterial = new THREE.ShaderMaterial({

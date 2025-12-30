@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import GlobeControls from '../components/globe/GlobeControls';
 import GlobeDataPanel from '../components/globe/GlobeDataPanel';
+import GlobeSearch from '../components/globe/GlobeSearch';
 export default function GlobePage() {
   const queryClient = useQueryClient();
 
@@ -86,13 +87,27 @@ export default function GlobePage() {
   const [recencyFilter, setRecencyFilter] = useState('all');
   const [showControls, setShowControls] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
+  const [searchResults, setSearchResults] = useState(null);
+  const [radiusSearch, setRadiusSearch] = useState(null);
 
-  // Filter beacons by mode, type, intensity, and recency (must be before conditional return)
+  // Filter beacons by mode, type, intensity, recency, and search (must be before conditional return)
   const filteredBeacons = useMemo(() => {
     let filtered = beacons.map(b => ({
       ...b,
       ts: new Date(b.created_date).getTime() // Convert created_date to timestamp
     }));
+
+    // Apply search filter first
+    if (searchResults) {
+      const searchIds = new Set(searchResults.beacons.map(b => b.id));
+      filtered = filtered.filter(b => searchIds.has(b.id));
+    }
+
+    // Apply radius search
+    if (radiusSearch) {
+      const radiusIds = new Set(radiusSearch.beacons.map(b => b.id));
+      filtered = filtered.filter(b => radiusIds.has(b.id));
+    }
 
     // Filter by mode
     if (activeMode) {
@@ -125,7 +140,7 @@ export default function GlobePage() {
     }
 
     return filtered;
-  }, [beacons, activeMode, beaconType, minIntensity, recencyFilter]);
+  }, [beacons, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch]);
 
   // Sort by most recent
   const recentActivity = useMemo(() => {
@@ -148,6 +163,30 @@ export default function GlobePage() {
     }
   }, []);
 
+  const handleSearchResults = useCallback((results) => {
+    setSearchResults(results);
+    setRadiusSearch(null);
+    
+    // If single beacon or city, focus on it
+    if (results.beacons.length === 1) {
+      setSelectedBeacon(results.beacons[0]);
+      setShowPanel(true);
+    } else if (results.cities.length === 1) {
+      // Zoom to city (handled by globe component)
+      console.log('Focus on city:', results.cities[0]);
+    }
+  }, []);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchResults(null);
+    setRadiusSearch(null);
+  }, []);
+
+  const handleRadiusSearch = useCallback((results) => {
+    setRadiusSearch(results);
+    setSearchResults(null);
+  }, []);
+
   if (beaconsLoading || citiesLoading) {
     return (
       <div className="relative w-full min-h-screen bg-black flex items-center justify-center">
@@ -161,33 +200,74 @@ export default function GlobePage() {
 
   return (
     <div className="relative w-full min-h-screen bg-black overflow-hidden">
-      {/* Hero Section - Responsive */}
+      {/* Hero Section & Search - Responsive */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="absolute top-4 md:top-8 left-4 md:left-8 z-30 pointer-events-none"
+        className="absolute top-4 md:top-8 left-4 md:left-8 right-4 md:right-auto z-30 pointer-events-auto"
       >
-        <motion.h1 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-white text-xl md:text-3xl font-black tracking-tight mb-1 md:mb-2"
-        >
-          HOTMESS LONDON
-        </motion.h1>
-        <motion.p 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="text-white/50 text-xs md:text-sm tracking-wider uppercase"
-        >
-          Live Global Activity
-        </motion.p>
+        <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-8 mb-4">
+          <div className="pointer-events-none">
+            <motion.h1 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-white text-xl md:text-3xl font-black tracking-tight mb-1 md:mb-2"
+            >
+              HOTMESS LONDON
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-white/50 text-xs md:text-sm tracking-wider uppercase"
+            >
+              Live Global Activity
+            </motion.p>
+          </div>
+          
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex-1 md:flex-initial md:min-w-[400px]"
+          >
+            <GlobeSearch
+              beacons={beacons}
+              cities={cities}
+              onSearchResults={handleSearchResults}
+              onClearSearch={handleClearSearch}
+              onRadiusSearch={handleRadiusSearch}
+            />
+          </motion.div>
+        </div>
+        
+        {/* Search/Radius indicator */}
+        {(searchResults || radiusSearch) && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 px-4 py-2 bg-[#FF1493]/20 border border-[#FF1493]/40 rounded-xl backdrop-blur-xl"
+          >
+            <span className="text-[#FF1493] text-xs font-semibold uppercase tracking-wider">
+              {radiusSearch 
+                ? `${radiusSearch.beacons.length} beacons within ${radiusSearch.radiusKm}km of ${radiusSearch.center.name || radiusSearch.center.title}`
+                : `${(searchResults?.beacons.length || 0) + (searchResults?.cities.length || 0)} results for "${searchResults?.query}"`
+              }
+            </span>
+            <button
+              onClick={handleClearSearch}
+              className="ml-auto text-white/60 hover:text-white"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Mobile Menu Buttons */}
-      <div className="absolute top-4 right-4 z-40 flex gap-2 md:hidden pointer-events-auto">
+      <div className="absolute top-20 right-4 z-40 flex gap-2 md:hidden pointer-events-auto">
         <button
           onClick={() => setShowControls(!showControls)}
           className="p-3 bg-black/90 border border-white/20 rounded-xl backdrop-blur-xl"
@@ -212,6 +292,7 @@ export default function GlobePage() {
           beacons={filteredBeacons}
           cities={cities}
           onBeaconClick={handleBeaconClick}
+          highlightedIds={searchResults?.beacons.map(b => b.id) || radiusSearch?.beacons.map(b => b.id) || []}
           className="w-full h-full"
         />
       </div>
