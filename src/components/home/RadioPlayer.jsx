@@ -140,6 +140,16 @@ export default function RadioPlayer() {
           <div className="text-[10px] text-white/40 mt-0.5">10 XP every 5 minutes</div>
         </div>
       )}
+
+      {/* SoundCloud Link */}
+      <a
+        href="https://soundcloud.com/rawconvictrecords"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block text-center text-xs text-white/40 hover:text-[#FF1493] transition-colors mt-2"
+      >
+        MORE ON SOUNDCLOUD →
+      </a>
     </div>
   );
 }
