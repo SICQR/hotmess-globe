@@ -17,6 +17,7 @@ import Profile from './pages/Profile';
 import Scan from './pages/Scan';
 import Settings from './pages/Settings';
 import EditBeacon from './pages/EditBeacon';
+import ExperienceMockups from './pages/ExperienceMockups';
 import __Layout from './Layout.jsx';
 
 
@@ -40,6 +41,7 @@ export const PAGES = {
     "Scan": Scan,
     "Settings": Settings,
     "EditBeacon": EditBeacon,
+    "ExperienceMockups": ExperienceMockups,
 }
 
 export const pagesConfig = {
