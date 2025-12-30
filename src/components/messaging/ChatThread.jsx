@@ -13,6 +13,7 @@ export default function ChatThread({ thread, currentUser, onBack }) {
   const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef(null);
   const queryClient = useQueryClient();
+  const isTelegramEncrypted = thread.telegram_chat_id || thread.thread_type === 'dm';
 
   const { data: messages = [] } = useQuery({
     queryKey: ['messages', thread.id],
@@ -139,13 +140,19 @@ export default function ChatThread({ thread, currentUser, onBack }) {
               </div>
               <div>
                 <p className="font-bold">{otherUsers[0].full_name}</p>
-                <p className="text-xs text-white/40 uppercase">{thread.thread_type}</p>
+                <p className="text-xs text-white/40 uppercase flex items-center gap-1">
+                  {thread.thread_type}
+                  {isTelegramEncrypted && <span className="text-[#00D9FF]">• E2E</span>}
+                </p>
               </div>
             </>
           ) : (
             <div>
               <p className="font-bold">{otherUsers.map(u => u.full_name).join(', ')}</p>
-              <p className="text-xs text-white/40 uppercase">Group • {thread.thread_type}</p>
+              <p className="text-xs text-white/40 uppercase flex items-center gap-1">
+                Group • {thread.thread_type}
+                {isTelegramEncrypted && <span className="text-[#00D9FF]">• E2E</span>}
+              </p>
             </div>
           )}
         </div>
