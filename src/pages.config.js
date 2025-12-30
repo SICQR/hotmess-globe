@@ -14,6 +14,8 @@ import Calendar from './pages/Calendar';
 import MapView from './pages/MapView';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import Bookmarks from './pages/Bookmarks';
+import Network from './pages/Network';
+import Messages from './pages/Messages';
 import __Layout from './Layout.jsx';
 
 
@@ -34,6 +36,8 @@ export const PAGES = {
     "MapView": MapView,
     "OrganizerDashboard": OrganizerDashboard,
     "Bookmarks": Bookmarks,
+    "Network": Network,
+    "Messages": Messages,
 }
 
 export const pagesConfig = {

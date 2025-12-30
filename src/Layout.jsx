@@ -10,6 +10,8 @@ const NAV_ITEMS = [
   { name: 'Map', icon: Map, path: 'MapView' },
   { name: 'Calendar', icon: CalendarIcon, path: 'Calendar' },
   { name: 'Beacons', icon: MapPin, path: 'Beacons' },
+  { name: 'Network', icon: Users, path: 'Network' },
+  { name: 'Messages', icon: MessageCircle, path: 'Messages' },
   { name: 'AI Chat', icon: MessageCircle, path: 'Chat' },
   { name: 'Organizer', icon: TrendingUp, path: 'OrganizerDashboard' },
   { name: 'Scan', icon: Scan, path: 'Scan' },
