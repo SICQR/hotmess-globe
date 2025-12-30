@@ -13,6 +13,7 @@ import Profile from './pages/Profile';
 import Calendar from './pages/Calendar';
 import MapView from './pages/MapView';
 import OrganizerDashboard from './pages/OrganizerDashboard';
+import Bookmarks from './pages/Bookmarks';
 import __Layout from './Layout.jsx';
 
 
@@ -32,6 +33,7 @@ export const PAGES = {
     "Calendar": Calendar,
     "MapView": MapView,
     "OrganizerDashboard": OrganizerDashboard,
+    "Bookmarks": Bookmarks,
 }
 
 export const pagesConfig = {

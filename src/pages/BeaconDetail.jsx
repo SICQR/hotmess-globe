@@ -7,6 +7,8 @@ import { createPageUrl } from '../utils';
 import { MapPin, Zap, Clock, ArrowLeft, Users, Calendar, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import CommentsSection from '../components/beacon/CommentsSection';
+import BeaconActions from '../components/beacon/BeaconActions';
 
 export default function BeaconDetail() {
   const [searchParams] = useSearchParams();
@@ -87,6 +89,7 @@ export default function BeaconDetail() {
               {beacon.kind}
             </span>
             <h1 className="text-3xl md:text-5xl font-black mb-2">{beacon.title}</h1>
+            <BeaconActions beacon={beacon} />
           </div>
         </div>
       </div>
@@ -180,6 +183,9 @@ export default function BeaconDetail() {
             )}
           </div>
         </div>
+
+        {/* Comments Section */}
+        <CommentsSection beaconId={beaconId} />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, Map, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X, MessageCircle, Calendar as CalendarIcon, MapPin, TrendingUp } from 'lucide-react';
+import { Home, Globe as GlobeIcon, Map, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X, MessageCircle, Calendar as CalendarIcon, MapPin, TrendingUp, Bookmark } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const NAV_ITEMS = [
@@ -14,7 +14,9 @@ const NAV_ITEMS = [
   { name: 'Organizer', icon: TrendingUp, path: 'OrganizerDashboard' },
   { name: 'Scan', icon: Scan, path: 'Scan' },
   { name: 'Community', icon: Users, path: 'Community' },
+  { name: 'Bookmarks', icon: Bookmark, path: 'Bookmarks' },
   { name: 'Leaderboard', icon: Trophy, path: 'Leaderboard' },
+  { name: 'Settings', icon: Settings, path: 'Settings' },
 ];
 
 export default function Layout({ children, currentPageName }) {
