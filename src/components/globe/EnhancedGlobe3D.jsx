@@ -39,6 +39,7 @@ function createArc(from, to, radius) {
 export default function EnhancedGlobe3D({
   beacons = [],
   cities = [],
+  activeLayers = ['pins'],
   onBeaconClick,
   highlightedIds = [],
   className = ''
@@ -46,6 +47,11 @@ export default function EnhancedGlobe3D({
   const mountRef = useRef(null);
   const hoveredArcRef = useRef(null);
   const [arcTooltip, setArcTooltip] = React.useState(null);
+  
+  const showPins = activeLayers.includes('pins');
+  const showHeat = activeLayers.includes('heat');
+  const showActivity = activeLayers.includes('activity');
+  const showCities = activeLayers.includes('cities');
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -146,49 +152,157 @@ export default function EnhancedGlobe3D({
       globe.add(new THREE.Line(geo, gridMat));
     }
 
-    // Beacons
+    // Beacon pins layer
     const beaconGeo = new THREE.SphereGeometry(0.015, 16, 16);
     const beaconMeshes = [];
 
-    beacons.forEach(beacon => {
-      const isHighlighted = highlightedIds.includes(beacon.id);
+    if (showPins) {
+      beacons.forEach(beacon => {
+        const isHighlighted = highlightedIds.includes(beacon.id);
 
-      const beaconMat = new THREE.MeshStandardMaterial({
-        color: isHighlighted ? 0xffeb3b : 0xff1493,
-        emissive: isHighlighted ? 0xffeb3b : 0xff1493,
-        emissiveIntensity: isHighlighted ? 1.2 : 0.8,
-        roughness: 0.4,
-        metalness: 0.2
+        const beaconMat = new THREE.MeshStandardMaterial({
+          color: isHighlighted ? 0xffeb3b : 0xff1493,
+          emissive: isHighlighted ? 0xffeb3b : 0xff1493,
+          emissiveIntensity: isHighlighted ? 1.2 : 0.8,
+          roughness: 0.4,
+          metalness: 0.2
+        });
+
+        const mesh = new THREE.Mesh(beaconGeo, beaconMat);
+        const pos = latLngToVector3(beacon.lat, beacon.lng, globeRadius * 1.01);
+        mesh.position.copy(pos);
+        mesh.userData = { type: 'beacon', beacon };
+
+        // Scale up highlighted beacons
+        if (isHighlighted) {
+          mesh.scale.setScalar(1.5);
+        }
+
+        globe.add(mesh);
+        beaconMeshes.push(mesh);
+
+        // Glow sprite
+        const spriteMat = new THREE.SpriteMaterial({
+          color: isHighlighted ? 0xffeb3b : 0xff1493,
+          transparent: true,
+          opacity: isHighlighted ? 0.9 : 0.6,
+          blending: THREE.AdditiveBlending
+        });
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.scale.set(isHighlighted ? 0.4 : 0.25, isHighlighted ? 0.4 : 0.25, 1);
+        sprite.position.copy(pos);
+        globe.add(sprite);
+      });
+    }
+
+    // Heatmap layer - beacon density visualization
+    const heatmapGroup = new THREE.Group();
+    if (showHeat && beacons.length > 0) {
+      // Create density clusters
+      const clusters = new Map();
+      const clusterRadius = 5; // degrees
+      
+      beacons.forEach(beacon => {
+        const key = `${Math.floor(beacon.lat / clusterRadius)}_${Math.floor(beacon.lng / clusterRadius)}`;
+        if (!clusters.has(key)) {
+          clusters.set(key, []);
+        }
+        clusters.get(key).push(beacon);
       });
 
-      const mesh = new THREE.Mesh(beaconGeo, beaconMat);
-      const pos = latLngToVector3(beacon.lat, beacon.lng, globeRadius * 1.01);
-      mesh.position.copy(pos);
-      mesh.userData = { type: 'beacon', beacon };
+      // Render heat zones
+      clusters.forEach((clusterBeacons, key) => {
+        const avgLat = clusterBeacons.reduce((sum, b) => sum + b.lat, 0) / clusterBeacons.length;
+        const avgLng = clusterBeacons.reduce((sum, b) => sum + b.lng, 0) / clusterBeacons.length;
+        const density = clusterBeacons.length;
+        const avgIntensity = clusterBeacons.reduce((sum, b) => sum + (b.intensity || 0.5), 0) / clusterBeacons.length;
+        
+        const pos = latLngToVector3(avgLat, avgLng, globeRadius * 1.01);
+        
+        // Heat zone sphere
+        const heatSize = Math.min(0.1 + (density * 0.02), 0.4);
+        const heatGeo = new THREE.SphereGeometry(heatSize, 16, 16);
+        const heatMat = new THREE.MeshBasicMaterial({
+          color: density > 5 ? 0xff073a : density > 2 ? 0xff6b35 : 0xff1493,
+          transparent: true,
+          opacity: 0.3 + (avgIntensity * 0.3),
+          blending: THREE.AdditiveBlending
+        });
+        const heatMesh = new THREE.Mesh(heatGeo, heatMat);
+        heatMesh.position.copy(pos);
+        heatmapGroup.add(heatMesh);
 
-      // Scale up highlighted beacons
-      if (isHighlighted) {
-        mesh.scale.setScalar(1.5);
-      }
-
-      globe.add(mesh);
-      beaconMeshes.push(mesh);
-
-      // Glow sprite
-      const spriteMat = new THREE.SpriteMaterial({
-        color: isHighlighted ? 0xffeb3b : 0xff1493,
-        transparent: true,
-        opacity: isHighlighted ? 0.9 : 0.6,
-        blending: THREE.AdditiveBlending
+        // Outer glow
+        const glowGeo = new THREE.SphereGeometry(heatSize * 1.5, 16, 16);
+        const glowMat = new THREE.MeshBasicMaterial({
+          color: density > 5 ? 0xff073a : density > 2 ? 0xff6b35 : 0xff1493,
+          transparent: true,
+          opacity: 0.15,
+          blending: THREE.AdditiveBlending,
+          side: THREE.BackSide
+        });
+        const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+        glowMesh.position.copy(pos);
+        heatmapGroup.add(glowMesh);
       });
-      const sprite = new THREE.Sprite(spriteMat);
-      sprite.scale.set(isHighlighted ? 0.4 : 0.25, isHighlighted ? 0.4 : 0.25, 1);
-      sprite.position.copy(pos);
-      globe.add(sprite);
-      });
+      
+      globe.add(heatmapGroup);
+    }
 
-    // Animated arcs with shader
-    const arcMaterial = new THREE.ShaderMaterial({
+    // City tier overlay layer
+    const cityGroup = new THREE.Group();
+    if (showCities && cities.length > 0) {
+      cities.forEach(city => {
+        const pos = latLngToVector3(city.lat, city.lng, globeRadius * 1.02);
+        
+        // Tier ring size based on tier (1=large, 3=small)
+        const ringSize = city.tier === 1 ? 0.08 : city.tier === 2 ? 0.05 : 0.03;
+        const ringColor = city.tier === 1 ? 0x00d9ff : city.tier === 2 ? 0xb026ff : 0xff6b35;
+        
+        // Ring geometry
+        const ringGeo = new THREE.RingGeometry(ringSize * 0.8, ringSize, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: ringColor,
+          transparent: true,
+          opacity: city.active ? 0.6 : 0.3,
+          side: THREE.DoubleSide,
+          blending: THREE.AdditiveBlending
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.position.copy(pos);
+        ring.lookAt(camera.position);
+        cityGroup.add(ring);
+
+        // City marker
+        const markerGeo = new THREE.SphereGeometry(0.02, 16, 16);
+        const markerMat = new THREE.MeshStandardMaterial({
+          color: ringColor,
+          emissive: ringColor,
+          emissiveIntensity: city.active ? 1.0 : 0.5
+        });
+        const marker = new THREE.Mesh(markerGeo, markerMat);
+        marker.position.copy(pos);
+        cityGroup.add(marker);
+
+        // Glow for active cities
+        if (city.active) {
+          const glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+            color: ringColor,
+            transparent: true,
+            opacity: 0.5,
+            blending: THREE.AdditiveBlending
+          }));
+          glowSprite.scale.set(ringSize * 3, ringSize * 3, 1);
+          glowSprite.position.copy(pos);
+          cityGroup.add(glowSprite);
+        }
+      });
+      
+      globe.add(cityGroup);
+    }
+
+    // Activity streams layer - animated arcs
+    const arcMaterial = showActivity ? new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
         uColor: { value: new THREE.Color(0xff1493) },
@@ -223,7 +337,7 @@ export default function EnhancedGlobe3D({
     });
 
     const arcs = [];
-    if (beacons.length >= 2) {
+    if (showActivity && beacons.length >= 2) {
       const sorted = [...beacons].sort((a, b) => (a.ts || 0) - (b.ts || 0));
       const recent = sorted.slice(-12);
       
@@ -239,6 +353,8 @@ export default function EnhancedGlobe3D({
         globe.add(tube);
         arcs.push(tube);
       }
+    } else if (!showActivity) {
+      // Clear arc material if activity layer is off
     }
 
     // Interaction
@@ -408,7 +524,7 @@ export default function EnhancedGlobe3D({
       mount.removeChild(renderer.domElement);
       renderer.dispose();
     };
-  }, [beacons, cities]);
+  }, [beacons, cities, activeLayers, highlightedIds]);
 
   return (
     <>

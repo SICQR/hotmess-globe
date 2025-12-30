@@ -4,10 +4,10 @@ import { MapPin, Flame, Activity, Building2, Zap, Clock } from 'lucide-react';
 import { Slider } from "@/components/ui/slider";
 
 const LAYER_OPTIONS = [
-  { id: 'pins', label: 'BEACONS', icon: MapPin },
-  { id: 'heat', label: 'HEAT', icon: Flame },
-  { id: 'activity', label: 'ACTIVITY', icon: Activity },
-  { id: 'cities', label: 'CITIES', icon: Building2 },
+  { id: 'pins', label: 'BEACONS', icon: MapPin, description: 'Show beacon markers' },
+  { id: 'heat', label: 'HEATMAP', icon: Flame, description: 'Beacon density visualization' },
+  { id: 'activity', label: 'STREAMS', icon: Activity, description: 'Live activity trails' },
+  { id: 'cities', label: 'CITIES', icon: Building2, description: 'City tier overlays' },
 ];
 
 const MODE_OPTIONS = [
@@ -39,6 +39,8 @@ const RECENCY_OPTIONS = [
 export default function GlobeControls({
   activeLayer,
   onLayerChange,
+  activeLayers = [],
+  onLayersChange,
   activeMode,
   onModeChange,
   liveCount = 0,
@@ -49,6 +51,12 @@ export default function GlobeControls({
   recencyFilter = 'all',
   onRecencyFilterChange
 }) {
+  const handleLayerToggle = (layerId) => {
+    const newLayers = activeLayers.includes(layerId)
+      ? activeLayers.filter(l => l !== layerId)
+      : [...activeLayers, layerId];
+    onLayersChange?.(newLayers);
+  };
   return (
     <div className="md:absolute md:top-6 md:left-6 md:z-20 flex flex-col gap-4 p-4 md:p-0">
       {/* Live indicator */}
@@ -91,43 +99,45 @@ export default function GlobeControls({
           LAYERS
         </div>
         <div className="flex flex-col gap-1">
-          {LAYER_OPTIONS.map(({ id, label, icon: Icon }) => {
-            const isActive = activeLayer === id;
+          {LAYER_OPTIONS.map(({ id, label, icon: Icon, description }) => {
+            const isActive = activeLayers.includes(id);
             return (
               <motion.button
                 key={id}
-                onClick={() => onLayerChange?.(id)}
+                onClick={() => handleLayerToggle(id)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
+                  flex items-start gap-3 px-3 py-2.5 rounded-xl transition-all
                   ${isActive 
                     ? 'bg-[#FF1493]/20 border border-[#FF1493]/40' 
                     : 'hover:bg-white/5 border border-transparent'
                   }
                 `}
               >
-                <Icon 
-                  className="w-4 h-4" 
-                  style={{ 
-                    color: isActive ? '#FF1493' : 'rgba(255, 255, 255, 0.5)' 
-                  }}
-                />
-                <span 
-                  className="text-[10px] tracking-[0.25em] font-semibold uppercase"
-                  style={{ 
-                    color: isActive ? '#FF1493' : 'rgba(255, 255, 255, 0.5)' 
-                  }}
-                >
-                  {label}
-                </span>
-                {isActive && (
-                  <motion.div
-                    layoutId="layer-indicator"
-                    className="w-1.5 h-1.5 rounded-full bg-[#FF1493] ml-auto"
-                    style={{ boxShadow: '0 0 8px #FF1493' }}
-                  />
-                )}
+                <div className={`
+                  w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5
+                  ${isActive ? 'bg-[#FF1493]' : 'bg-white/10'}
+                `}>
+                  {isActive ? (
+                    <div className="w-2 h-2 rounded-full bg-black" />
+                  ) : (
+                    <Icon className="w-3 h-3 text-white/40" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div 
+                    className="text-[10px] tracking-[0.25em] font-semibold uppercase"
+                    style={{ 
+                      color: isActive ? '#FF1493' : 'rgba(255, 255, 255, 0.5)' 
+                    }}
+                  >
+                    {label}
+                  </div>
+                  <div className="text-[8px] text-white/30 mt-0.5">
+                    {description}
+                  </div>
+                </div>
               </motion.button>
             );
           })}

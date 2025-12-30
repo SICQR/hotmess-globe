@@ -79,7 +79,7 @@ export default function GlobePage() {
     };
   }, [queryClient]);
 
-  const [activeLayer, setActiveLayer] = useState('pins');
+  const [activeLayers, setActiveLayers] = useState(['pins']);
   const [activeMode, setActiveMode] = useState(null);
   const [selectedBeacon, setSelectedBeacon] = useState(null);
   const [beaconType, setBeaconType] = useState(null);
@@ -291,6 +291,7 @@ export default function GlobePage() {
         <EnhancedGlobe3D
           beacons={filteredBeacons}
           cities={cities}
+          activeLayers={activeLayers}
           onBeaconClick={handleBeaconClick}
           highlightedIds={searchResults?.beacons.map(b => b.id) || radiusSearch?.beacons.map(b => b.id) || []}
           className="w-full h-full"
@@ -313,8 +314,8 @@ export default function GlobePage() {
             </button>
           </div>
           <GlobeControls
-            activeLayer={activeLayer}
-            onLayerChange={setActiveLayer}
+            activeLayers={activeLayers}
+            onLayersChange={setActiveLayers}
             activeMode={activeMode}
             onModeChange={setActiveMode}
             beaconType={beaconType}
