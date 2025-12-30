@@ -13,7 +13,7 @@ export default function OSHud({ user, onModuleChange }) {
 
   const modules = [
     { id: 'pulse', icon: Globe, label: 'PULSE', path: '/' },
-    { id: 'now', icon: Radio, label: 'NOW', path: '/right-now' },
+    { id: 'radio', icon: Radio, label: 'RADIO', path: '/radio' },
     { id: 'connect', icon: Flame, label: 'CONNECT', path: '/network' },
     { id: 'market', icon: ShoppingBag, label: 'MARKET', path: '/marketplace' },
     { id: 'profile', icon: User, label: 'PROFILE', path: user ? `/profile?email=${user.email}` : '/settings' },
