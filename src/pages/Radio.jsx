@@ -177,7 +177,7 @@ export default function Radio() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
+              className="space-y-8"
             >
               {/* Banner */}
               <div className="relative h-64 bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-2 border-[#FF1493] rounded-none overflow-hidden">
@@ -197,67 +197,73 @@ export default function Radio() {
                 </div>
               </div>
 
-              {/* Full Profile Widget */}
-              <div className="bg-white/5 border border-white/10 rounded-none p-6">
-                <h3 className="text-xl font-black uppercase mb-4">LATEST RELEASES & TRACKS</h3>
+              {/* Featured Widget */}
+              <div className="bg-white/5 border border-white/10 rounded-none overflow-hidden">
+                <div className="p-6 border-b border-white/10">
+                  <h3 className="text-xl font-black uppercase">FEATURED TRACKS</h3>
+                </div>
                 <iframe
                   width="100%"
                   height="450"
                   scrolling="no"
                   frameBorder="no"
                   allow="autoplay"
-                  src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords&color=%23ff1493&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"
+                  src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords&color=%23ff1493&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true"
+                  className="w-full"
                 />
               </div>
 
-              {/* All Tracks Feed */}
-              <div className="bg-white/5 border border-white/10 rounded-none p-6">
-                <h3 className="text-xl font-black uppercase mb-4">FULL TRACK FEED</h3>
-                <iframe
-                  width="100%"
-                  height="600"
-                  scrolling="yes"
-                  frameBorder="no"
-                  allow="autoplay"
-                  src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords/tracks&color=%23ff1493&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false"
-                />
+              {/* All Tracks */}
+              <div className="bg-white/5 border border-white/10 rounded-none overflow-hidden">
+                <div className="p-6 border-b border-white/10">
+                  <h3 className="text-xl font-black uppercase">ALL RELEASES</h3>
+                </div>
+                <div className="p-6">
+                  <iframe
+                    width="100%"
+                    height="800"
+                    scrolling="yes"
+                    frameBorder="no"
+                    allow="autoplay"
+                    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords/tracks&color=%23ff1493&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false"
+                    className="w-full"
+                  />
+                </div>
               </div>
 
-              {/* Playlists & Albums */}
-              <div className="bg-white/5 border border-white/10 rounded-none p-6">
-                <h3 className="text-xl font-black uppercase mb-4">PLAYLISTS & ALBUMS</h3>
-                <iframe
-                  width="100%"
-                  height="600"
-                  scrolling="yes"
-                  frameBorder="no"
-                  allow="autoplay"
-                  src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords/sets&color=%23ff1493&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false"
-                />
+              {/* Playlists */}
+              <div className="bg-white/5 border border-white/10 rounded-none overflow-hidden">
+                <div className="p-6 border-b border-white/10">
+                  <h3 className="text-xl font-black uppercase">PLAYLISTS & SETS</h3>
+                </div>
+                <div className="p-6">
+                  <iframe
+                    width="100%"
+                    height="800"
+                    scrolling="yes"
+                    frameBorder="no"
+                    allow="autoplay"
+                    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords/sets&color=%23ff1493&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false"
+                    className="w-full"
+                  />
+                </div>
               </div>
 
-              {/* Call to Action */}
-              <div className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-2 border-[#FF1493] rounded-none p-8 text-center">
-                <h3 className="text-2xl font-black uppercase mb-4">FOLLOW RAW CONVICT RECORDS</h3>
-                <p className="text-white/80 mb-6">Stay updated with the latest underground releases</p>
-                <div className="flex flex-wrap gap-4 justify-center">
-                  <a
-                    href="https://soundcloud.com/rawconvictrecords"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#FF5500] hover:bg-[#FF5500]/90 text-white font-black rounded-none uppercase tracking-wider text-sm transition-colors"
-                  >
-                    <Music className="w-5 h-5" />
-                    Follow on SoundCloud
-                  </a>
-                  <a
-                    href="https://www.instagram.com/rawconvictrecords"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#833AB4] to-[#E1306C] hover:opacity-90 text-white font-black rounded-none uppercase tracking-wider text-sm transition-opacity"
-                  >
-                    Follow on Instagram
-                  </a>
+              {/* Likes & Reposts */}
+              <div className="bg-white/5 border border-white/10 rounded-none overflow-hidden">
+                <div className="p-6 border-b border-white/10">
+                  <h3 className="text-xl font-black uppercase">LIKES & REPOSTS</h3>
+                </div>
+                <div className="p-6">
+                  <iframe
+                    width="100%"
+                    height="800"
+                    scrolling="yes"
+                    frameBorder="no"
+                    allow="autoplay"
+                    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords/likes&color=%23ff1493&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false"
+                    className="w-full"
+                  />
                 </div>
               </div>
             </motion.div>
@@ -268,23 +274,41 @@ export default function Radio() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/5 border border-white/10 rounded-none p-6"
+              className="space-y-6"
             >
-              <h2 className="text-2xl font-black uppercase mb-4">FEATURED DJ MIXES</h2>
-              <p className="text-white/60 mb-6">
-                Curated sets from London's underground. More coming soon.
-              </p>
-              
-              {/* Placeholder for future DJ mix embeds */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="bg-white/5 border border-white/10 rounded-none p-6 flex items-center justify-center h-48">
-                    <div className="text-center">
-                      <Music className="w-12 h-12 text-white/20 mx-auto mb-2" />
-                      <p className="text-white/40 text-sm">Mix #{i} Coming Soon</p>
-                    </div>
-                  </div>
-                ))}
+              {/* Playlists/Sets from RAW Convict */}
+              <div className="bg-white/5 border border-white/10 rounded-none overflow-hidden">
+                <div className="p-6 border-b border-white/10">
+                  <h2 className="text-2xl font-black uppercase">DJ SETS & MIXES</h2>
+                  <p className="text-white/60 mt-2">Curated sets from RAW Convict Records artists</p>
+                </div>
+                <div className="p-6">
+                  <iframe
+                    width="100%"
+                    height="800"
+                    scrolling="yes"
+                    frameBorder="no"
+                    allow="autoplay"
+                    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords/sets&color=%23ff1493&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Popular Tracks Widget */}
+              <div className="bg-white/5 border border-white/10 rounded-none overflow-hidden">
+                <div className="p-6 border-b border-white/10">
+                  <h2 className="text-2xl font-black uppercase">POPULAR TRACKS</h2>
+                </div>
+                <iframe
+                  width="100%"
+                  height="450"
+                  scrolling="no"
+                  frameBorder="no"
+                  allow="autoplay"
+                  src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords/popular-tracks&color=%23ff1493&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=true"
+                  className="w-full"
+                />
               </div>
             </motion.div>
           </TabsContent>
