@@ -37,17 +37,26 @@ export default function AgeGate({ onVerified }) {
             <Shield className="w-16 h-16 text-[#FF1493]" />
           </div>
           
-          <h1 className="text-3xl font-black text-center mb-2 text-white">
-            AGE VERIFICATION
+          <h1 className="text-4xl font-black text-center mb-2 text-white uppercase tracking-tight">
+            MEN ONLY. 18+.
           </h1>
-          <p className="text-center text-white/60 mb-8">
-            HOTMESS LONDON is an 18+ platform for adults only
+          <p className="text-center text-[#FF1493] mb-2 font-bold uppercase tracking-wide text-sm">
+            IF THAT'S YOU — ENTER.
+          </p>
+          <p className="text-center text-white/40 mb-8 text-xs">
+            IF NOT — BOUNCE.
           </p>
 
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-red-400">
-              <strong>Legal Notice:</strong> By entering, you confirm you are 18+ and agree to comply with all applicable laws.
+          <div className="bg-red-500/10 border-2 border-red-500/60 rounded-none p-4 mb-6">
+            <div className="flex items-start gap-3 mb-3">
+              <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-red-400 font-bold uppercase tracking-wider">
+                THE HARD LINE
+              </div>
+            </div>
+            <div className="text-xs text-white/80 leading-relaxed">
+              By entering, you confirm you are a man, you are 18+, and you enter willingly. 
+              You agree to comply with all applicable laws. This is the Consent-to-DB lock.
             </div>
           </div>
 
@@ -72,15 +81,24 @@ export default function AgeGate({ onVerified }) {
             )}
           </div>
 
-          <Button
-            onClick={handleVerify}
-            className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black text-lg py-6"
-          >
-            VERIFY & ENTER
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              onClick={handleVerify}
+              className="flex-1 bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black text-lg py-6 uppercase tracking-wider rounded-none"
+            >
+              ENTER
+            </Button>
+            <Button
+              onClick={() => window.location.href = 'https://www.google.com'}
+              variant="outline"
+              className="flex-1 border-2 border-white/20 text-white hover:bg-white/10 font-black text-lg py-6 uppercase tracking-wider rounded-none"
+            >
+              LEAVE
+            </Button>
+          </div>
 
-          <p className="text-center text-xs text-white/40 mt-6">
-            This verification is required by law for adult-oriented platforms
+          <p className="text-center text-xs text-white/40 mt-6 uppercase tracking-wide">
+            LEGAL COMPLIANCE REQUIRED BY LAW
           </p>
         </div>
       </motion.div>
