@@ -7,6 +7,7 @@ import Community from './pages/Community';
 import CreateBeacon from './pages/CreateBeacon';
 import EditBeacon from './pages/EditBeacon';
 import EditProfile from './pages/EditProfile';
+import Events from './pages/Events';
 import ExperienceMockups from './pages/ExperienceMockups';
 import Globe from './pages/Globe';
 import Home from './pages/Home';
@@ -19,11 +20,10 @@ import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
+import Radio from './pages/Radio';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
-import Radio from './pages/Radio';
-import Events from './pages/Events';
 import __Layout from './Layout.jsx';
 
 
@@ -37,6 +37,7 @@ export const PAGES = {
     "CreateBeacon": CreateBeacon,
     "EditBeacon": EditBeacon,
     "EditProfile": EditProfile,
+    "Events": Events,
     "ExperienceMockups": ExperienceMockups,
     "Globe": Globe,
     "Home": Home,
@@ -49,11 +50,10 @@ export const PAGES = {
     "OrganizerDashboard": OrganizerDashboard,
     "ProductDetail": ProductDetail,
     "Profile": Profile,
+    "Radio": Radio,
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
-    "Radio": Radio,
-    "Events": Events,
 }
 
 export const pagesConfig = {

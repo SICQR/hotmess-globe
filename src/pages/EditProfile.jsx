@@ -4,20 +4,34 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Save, User, Music, Sparkles, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Save, User, Music, Sparkles, Link as LinkIcon, Upload, Briefcase, Zap, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 const VIBE_OPTIONS = ['techno', 'house', 'drag', 'indie', 'late_night', 'chill', 'wild', 'artsy'];
+const EVENT_VIBES = ['techno', 'house', 'drag', 'late_night', 'underground', 'warehouse', 'rooftop', 'intimate'];
+const ACTIVITY_STATUSES = [
+  { value: 'online', label: 'Online', color: '#00D9FF' },
+  { value: 'busy', label: 'Busy', color: '#FF6B35' },
+  { value: 'looking_for_collabs', label: 'Looking for Collaborators', color: '#39FF14' },
+  { value: 'at_event', label: 'At Event', color: '#FF1493' },
+  { value: 'offline', label: 'Offline', color: '#666' },
+];
+const SKILLS = ['DJ', 'Producer', 'Designer', 'Photographer', 'Videographer', 'Promoter', 'Artist', 'Performer'];
 
 export default function EditProfile() {
   const [currentUser, setCurrentUser] = useState(null);
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [preferredVibes, setPreferredVibes] = useState([]);
+  const [eventPreferences, setEventPreferences] = useState([]);
+  const [activityStatus, setActivityStatus] = useState('offline');
+  const [skills, setSkills] = useState([]);
+  const [portfolio, setPortfolio] = useState([]);
   const [musicTaste, setMusicTaste] = useState('');
   const [socialLinks, setSocialLinks] = useState({
     instagram: '',
@@ -37,6 +51,10 @@ export default function EditProfile() {
         setBio(user.bio || '');
         setAvatarUrl(user.avatar_url || '');
         setPreferredVibes(user.preferred_vibes || []);
+        setEventPreferences(user.event_preferences || []);
+        setActivityStatus(user.activity_status || 'offline');
+        setSkills(user.skills || []);
+        setPortfolio(user.portfolio || []);
         setMusicTaste((user.music_taste || []).join(', '));
         setSocialLinks(user.social_links || {
           instagram: '',
@@ -91,6 +109,10 @@ export default function EditProfile() {
       bio,
       avatar_url: avatarUrl,
       preferred_vibes: preferredVibes,
+      event_preferences: eventPreferences,
+      activity_status: activityStatus,
+      skills,
+      portfolio,
       music_taste: musicArray,
       social_links: socialLinks
     });
@@ -100,6 +122,32 @@ export default function EditProfile() {
     setPreferredVibes(prev =>
       prev.includes(vibe) ? prev.filter(v => v !== vibe) : [...prev, vibe]
     );
+  };
+
+  const toggleEventVibe = (vibe) => {
+    setEventPreferences(prev =>
+      prev.includes(vibe) ? prev.filter(v => v !== vibe) : [...prev, vibe]
+    );
+  };
+
+  const toggleSkill = (skill) => {
+    setSkills(prev =>
+      prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
+    );
+  };
+
+  const addPortfolioItem = () => {
+    setPortfolio(prev => [...prev, { title: '', description: '', type: 'track', url: '', image_url: '' }]);
+  };
+
+  const updatePortfolioItem = (index, field, value) => {
+    setPortfolio(prev => prev.map((item, i) => 
+      i === index ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const removePortfolioItem = (index) => {
+    setPortfolio(prev => prev.filter((_, i) => i !== index));
   };
 
   if (!currentUser) {
@@ -126,17 +174,14 @@ export default function EditProfile() {
             Back
           </Button>
 
-          <h1 className="text-3xl font-black uppercase mb-8">Edit Profile</h1>
+          <h1 className="text-4xl font-black uppercase mb-2">Edit Profile</h1>
+          <p className="text-white/40 text-sm uppercase tracking-wider mb-8">Customize your hotmess presence</p>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Avatar Section */}
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <User className="w-5 h-5 text-[#FF1493]" />
-                <Label className="text-lg font-bold uppercase">Profile Picture</Label>
-              </div>
-              <div className="flex items-center gap-6">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Avatar & Bio */}
+            <div className="bg-black border-2 border-white p-6">
+              <div className="flex items-center gap-6 mb-6">
+                <div className="w-24 h-24 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden border-2 border-white">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
@@ -148,11 +193,10 @@ export default function EditProfile() {
                     type="button"
                     onClick={() => document.getElementById('avatar-upload-edit').click()}
                     disabled={uploading}
-                    variant="outline"
-                    className="border-white/20 text-white"
+                    className="bg-white text-black hover:bg-[#FF1493] font-bold"
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    {uploading ? 'Uploading...' : 'Upload New'}
+                    {uploading ? 'Uploading...' : 'Upload Photo'}
                   </Button>
                   <input
                     id="avatar-upload-edit"
@@ -161,44 +205,60 @@ export default function EditProfile() {
                     onChange={handleAvatarUpload}
                     className="hidden"
                   />
-                  <p className="text-xs text-white/40 mt-2">JPG, PNG or GIF (max 5MB)</p>
                 </div>
-              </div>
-            </div>
-
-            {/* Bio Section */}
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <User className="w-5 h-5 text-[#FF1493]" />
-                <Label className="text-lg font-bold uppercase">Bio</Label>
               </div>
               <Textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                placeholder="Tell us about yourself..."
+                placeholder="Tell the night about yourself..."
                 rows={4}
                 maxLength={300}
-                className="bg-black border-white/20"
+                className="bg-white/5 border-2 border-white/20 text-white"
               />
-              <p className="text-xs text-white/40 mt-2">{bio.length}/300 characters</p>
+              <p className="text-xs text-white/40 mt-2 font-mono">{bio.length}/300</p>
             </div>
 
-            {/* Vibes Section */}
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="w-5 h-5 text-[#FFEB3B]" />
-                <Label className="text-lg font-bold uppercase">Preferred Vibes</Label>
+            {/* Activity Status */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Activity Status</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {ACTIVITY_STATUSES.map(({ value, label, color }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setActivityStatus(value)}
+                    className={`px-4 py-3 text-xs font-black uppercase border-2 transition-all ${
+                      activityStatus === value
+                        ? 'border-white text-black'
+                        : 'bg-white/5 border-white/10 text-white/60 hover:border-white/30'
+                    }`}
+                    style={activityStatus === value ? { backgroundColor: color } : {}}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <div 
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: activityStatus === value ? '#fff' : color }}
+                      />
+                      {label}
+                    </div>
+                  </button>
+                ))}
               </div>
+            </div>
+
+            {/* Vibes */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Preferred Vibes</Label>
               <div className="flex flex-wrap gap-2">
                 {VIBE_OPTIONS.map(vibe => (
                   <button
                     key={vibe}
                     type="button"
                     onClick={() => toggleVibe(vibe)}
-                    className={`px-4 py-2 rounded-lg font-bold uppercase text-sm transition-all ${
+                    className={`px-4 py-2 text-xs font-black uppercase border-2 transition-all ${
                       preferredVibes.includes(vibe)
-                        ? 'bg-[#FF1493] text-black'
-                        : 'bg-white/5 border border-white/20 text-white hover:bg-white/10'
+                        ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                        : 'bg-white/5 border-white/20 text-white/60 hover:border-white/40'
                     }`}
                   >
                     {vibe}
@@ -207,79 +267,154 @@ export default function EditProfile() {
               </div>
             </div>
 
-            {/* Music Taste Section */}
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Music className="w-5 h-5 text-[#B026FF]" />
-                <Label className="text-lg font-bold uppercase">Music Taste</Label>
+            {/* Event Preferences */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Event Preferences</Label>
+              <div className="flex flex-wrap gap-2">
+                {EVENT_VIBES.map(vibe => (
+                  <button
+                    key={vibe}
+                    type="button"
+                    onClick={() => toggleEventVibe(vibe)}
+                    className={`px-4 py-2 text-xs font-black uppercase border-2 transition-all ${
+                      eventPreferences.includes(vibe)
+                        ? 'bg-[#00D9FF] border-[#00D9FF] text-black'
+                        : 'bg-white/5 border-white/20 text-white/60 hover:border-white/40'
+                    }`}
+                  >
+                    {vibe}
+                  </button>
+                ))}
               </div>
+            </div>
+
+            {/* Skills */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Skills & Talents</Label>
+              <div className="flex flex-wrap gap-2">
+                {SKILLS.map(skill => (
+                  <button
+                    key={skill}
+                    type="button"
+                    onClick={() => toggleSkill(skill)}
+                    className={`px-4 py-2 text-xs font-black uppercase border-2 transition-all ${
+                      skills.includes(skill)
+                        ? 'bg-[#39FF14] border-[#39FF14] text-black'
+                        : 'bg-white/5 border-white/20 text-white/60 hover:border-white/40'
+                    }`}
+                  >
+                    {skill}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Music Taste */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Music Taste</Label>
               <Input
                 value={musicTaste}
                 onChange={(e) => setMusicTaste(e.target.value)}
-                placeholder="e.g., Techno, House, Amelie Lens, Nina Kraviz"
-                className="bg-black border-white/20"
+                placeholder="Techno, House, Amelie Lens, Nina Kraviz"
+                className="bg-white/5 border-2 border-white/20 text-white"
               />
-              <p className="text-xs text-white/40 mt-2">Separate with commas</p>
+              <p className="text-xs text-white/40 mt-2 uppercase">Separate with commas</p>
             </div>
 
-            {/* Social Links Section */}
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <LinkIcon className="w-5 h-5 text-[#00D9FF]" />
-                <Label className="text-lg font-bold uppercase">Social Links</Label>
+            {/* Portfolio */}
+            <div className="bg-black border-2 border-white p-6">
+              <div className="flex items-center justify-between mb-4">
+                <Label className="text-xs uppercase tracking-widest text-white/40">Portfolio / Creations</Label>
+                <Button
+                  type="button"
+                  onClick={addPortfolioItem}
+                  size="sm"
+                  className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Item
+                </Button>
               </div>
-              <p className="text-xs text-white/40 mb-4">
-                🔒 Only visible to users you've completed a Telegram handshake with
-              </p>
               <div className="space-y-4">
-                <div>
-                  <Label className="text-sm text-white/60 mb-2 block">Instagram</Label>
-                  <Input
-                    value={socialLinks.instagram}
-                    onChange={(e) => setSocialLinks({...socialLinks, instagram: e.target.value})}
-                    placeholder="@username"
-                    className="bg-black border-white/20"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm text-white/60 mb-2 block">Twitter/X</Label>
-                  <Input
-                    value={socialLinks.twitter}
-                    onChange={(e) => setSocialLinks({...socialLinks, twitter: e.target.value})}
-                    placeholder="@username"
-                    className="bg-black border-white/20"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm text-white/60 mb-2 block">Spotify</Label>
-                  <Input
-                    value={socialLinks.spotify}
-                    onChange={(e) => setSocialLinks({...socialLinks, spotify: e.target.value})}
-                    placeholder="Profile URL or username"
-                    className="bg-black border-white/20"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm text-white/60 mb-2 block">SoundCloud</Label>
-                  <Input
-                    value={socialLinks.soundcloud}
-                    onChange={(e) => setSocialLinks({...socialLinks, soundcloud: e.target.value})}
-                    placeholder="Profile URL or username"
-                    className="bg-black border-white/20"
-                  />
-                </div>
+                {portfolio.map((item, idx) => (
+                  <div key={idx} className="bg-white/5 border-2 border-white/10 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-white/60 uppercase font-bold">Item {idx + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => removePortfolioItem(idx)}
+                        className="text-xs text-red-400 hover:text-red-300 font-bold uppercase"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <Input
+                      placeholder="Title"
+                      value={item.title}
+                      onChange={(e) => updatePortfolioItem(idx, 'title', e.target.value)}
+                      className="bg-white/5 border-white/20 text-white"
+                    />
+                    <Textarea
+                      placeholder="Description"
+                      value={item.description}
+                      onChange={(e) => updatePortfolioItem(idx, 'description', e.target.value)}
+                      className="bg-white/5 border-white/20 text-white h-20"
+                    />
+                    <Select value={item.type} onValueChange={(val) => updatePortfolioItem(idx, 'type', val)}>
+                      <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="track">Track</SelectItem>
+                        <SelectItem value="mix">Mix</SelectItem>
+                        <SelectItem value="event">Event</SelectItem>
+                        <SelectItem value="design">Design</SelectItem>
+                        <SelectItem value="photo">Photo</SelectItem>
+                        <SelectItem value="video">Video</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      placeholder="URL (SoundCloud, Instagram, etc.)"
+                      value={item.url}
+                      onChange={(e) => updatePortfolioItem(idx, 'url', e.target.value)}
+                      className="bg-white/5 border-white/20 text-white"
+                    />
+                    <Input
+                      placeholder="Image URL (optional)"
+                      value={item.image_url}
+                      onChange={(e) => updatePortfolioItem(idx, 'image_url', e.target.value)}
+                      className="bg-white/5 border-white/20 text-white"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Social Links */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Social Links</Label>
+              <p className="text-xs text-white/40 mb-4 uppercase">🔒 Only visible after handshake</p>
+              <div className="space-y-4">
+                {['instagram', 'twitter', 'spotify', 'soundcloud'].map(platform => (
+                  <Input
+                    key={platform}
+                    value={socialLinks[platform]}
+                    onChange={(e) => setSocialLinks({...socialLinks, [platform]: e.target.value})}
+                    placeholder={platform.charAt(0).toUpperCase() + platform.slice(1)}
+                    className="bg-white/5 border-2 border-white/20 text-white"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Submit */}
             <Button
               type="submit"
               disabled={updateProfileMutation.isPending}
-              className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black text-lg py-6"
+              className="w-full bg-[#FF1493] hover:bg-white text-black font-black text-lg py-6 border-2 border-white shadow-[0_0_10px_#FF1493]"
             >
-              {updateProfileMutation.isPending ? (
-                'SAVING...'
-              ) : (
+              {updateProfileMutation.isPending ? 'SAVING...' : (
                 <>
                   <Save className="w-5 h-5 mr-2" />
                   SAVE PROFILE

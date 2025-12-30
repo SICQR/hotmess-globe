@@ -239,6 +239,24 @@ export default function Profile() {
                   <Users className="w-4 h-4 text-[#00D9FF]" />
                   <span className="font-bold">{following.length} Following</span>
                 </div>
+                {profileUser.activity_status && profileUser.activity_status !== 'offline' && (
+                  <div className={`flex items-center gap-2 px-3 py-1 border-2 ${
+                    profileUser.activity_status === 'online' ? 'bg-[#00D9FF]/20 border-[#00D9FF]' :
+                    profileUser.activity_status === 'busy' ? 'bg-[#FF6B35]/20 border-[#FF6B35]' :
+                    profileUser.activity_status === 'looking_for_collabs' ? 'bg-[#39FF14]/20 border-[#39FF14]' :
+                    'bg-[#FF1493]/20 border-[#FF1493]'
+                  }`}>
+                    <div className={`w-2 h-2 rounded-full animate-pulse ${
+                      profileUser.activity_status === 'online' ? 'bg-[#00D9FF]' :
+                      profileUser.activity_status === 'busy' ? 'bg-[#FF6B35]' :
+                      profileUser.activity_status === 'looking_for_collabs' ? 'bg-[#39FF14]' :
+                      'bg-[#FF1493]'
+                    }`} />
+                    <span className="text-xs font-black uppercase">
+                      {profileUser.activity_status.replace('_', ' ')}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             {!isOwnProfile && currentUser && (
@@ -325,6 +343,86 @@ export default function Profile() {
             </div>
           )}
         </motion.div>
+
+        {/* Skills */}
+        {profileUser.skills && profileUser.skills.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mb-6"
+          >
+            <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Skills & Talents</h3>
+            <div className="flex flex-wrap gap-2">
+              {profileUser.skills.map((skill, idx) => (
+                <div key={idx} className="px-3 py-1.5 bg-[#39FF14]/20 border-2 border-[#39FF14] text-[#39FF14] text-xs font-black uppercase">
+                  {skill}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Event Preferences */}
+        {profileUser.event_preferences && profileUser.event_preferences.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.17 }}
+            className="mb-6"
+          >
+            <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Event Preferences</h3>
+            <div className="flex flex-wrap gap-2">
+              {profileUser.event_preferences.map((vibe, idx) => (
+                <div key={idx} className="px-3 py-1.5 bg-[#00D9FF]/20 border-2 border-[#00D9FF] text-[#00D9FF] text-xs font-black uppercase">
+                  {vibe}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Portfolio / Creations */}
+        {profileUser.portfolio && profileUser.portfolio.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.19 }}
+            className="mb-6"
+          >
+            <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Portfolio & Creations</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {profileUser.portfolio.map((item, idx) => (
+                <a
+                  key={idx}
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group bg-black border-2 border-white hover:border-[#FF1493] transition-all overflow-hidden"
+                >
+                  {item.image_url && (
+                    <div className="h-40 overflow-hidden">
+                      <img 
+                        src={item.image_url} 
+                        alt={item.title}
+                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
+                      />
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-black text-sm">{item.title}</h4>
+                      <span className="text-[10px] uppercase text-white/40 font-bold">{item.type}</span>
+                    </div>
+                    {item.description && (
+                      <p className="text-xs text-white/60 line-clamp-2">{item.description}</p>
+                    )}
+                  </div>
+                </a>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Highlights Section */}
         {highlights.length > 0 && (
