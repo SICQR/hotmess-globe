@@ -7,24 +7,22 @@ import PanicButton from '@/components/safety/PanicButton';
 import Gatekeeper from '@/components/auth/Gatekeeper';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
 
-const NAV_ITEMS = [
-  { name: 'Home', icon: Home, path: 'Home' },
+const PRIMARY_NAV = [
+  { name: 'Pulse', icon: Home, path: 'Home' },
   { name: 'Globe', icon: GlobeIcon, path: 'Globe' },
-  { name: 'Radio', icon: Users, path: 'Radio' },
-  { name: 'Map', icon: Map, path: 'MapView' },
   { name: 'Events', icon: CalendarIcon, path: 'Events' },
-  { name: 'Calendar', icon: CalendarIcon, path: 'Calendar' },
-  { name: 'Beacons', icon: MapPin, path: 'Beacons' },
-  { name: 'Marketplace', icon: ShoppingBag, path: 'Marketplace' },
-  { name: 'Network', icon: Users, path: 'Network' },
+  { name: 'Market', icon: ShoppingBag, path: 'Marketplace' },
+  { name: 'Connect', icon: Users, path: 'Network' },
   { name: 'Messages', icon: MessageCircle, path: 'Messages', showBadge: true },
-  { name: 'AI Chat', icon: MessageCircle, path: 'Chat' },
-  { name: 'Organizer', icon: TrendingUp, path: 'OrganizerDashboard' },
+];
+
+const SECONDARY_NAV = [
+  { name: 'Beacons', icon: MapPin, path: 'Beacons' },
+  { name: 'Radio', icon: Users, path: 'Radio' },
+  { name: 'Calendar', icon: CalendarIcon, path: 'Calendar' },
   { name: 'Scan', icon: Scan, path: 'Scan' },
   { name: 'Community', icon: Users, path: 'Community' },
-  { name: 'Bookmarks', icon: Bookmark, path: 'Bookmarks' },
   { name: 'Leaderboard', icon: Trophy, path: 'Leaderboard' },
-  { name: 'Settings', icon: Settings, path: 'Settings' },
 ];
 
 export default function Layout({ children, currentPageName }) {
@@ -44,6 +42,7 @@ export default function Layout({ children, currentPageName }) {
     fetchUser();
   }, []);
 
+  const [showSecondary, setShowSecondary] = useState(false);
   const isActive = (pageName) => currentPageName === pageName;
 
   const isGlobePage = currentPageName === 'Globe';
@@ -71,17 +70,84 @@ export default function Layout({ children, currentPageName }) {
           {/* Mobile Menu */}
           {mobileMenuOpen && (
             <div className="md:hidden fixed inset-0 z-40 bg-black/95 backdrop-blur-xl pt-16">
-              <div className="flex flex-col gap-1 p-4">
-                {NAV_ITEMS.map(({ name, icon: Icon, path, showBadge }) => (
+              <div className="flex flex-col p-4">
+                <div className="mb-2">
+                  <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-2 px-3">PRIMARY</p>
+                  {PRIMARY_NAV.map(({ name, icon: Icon, path, showBadge }) => (
+                    <Link
+                      key={path}
+                      to={createPageUrl(path)}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`
+                        flex items-center gap-3 px-3 py-2.5 mb-1 transition-all
+                        ${isActive(path)
+                          ? 'bg-[#FF1493] text-black border-2 border-[#FF1493]'
+                          : 'text-white/60 hover:text-white hover:bg-white/5 border-2 border-white/10'
+                        }
+                      `}
+                    >
+                      {showBadge && user ? (
+                        <NotificationBadge user={user} />
+                      ) : (
+                        <Icon className="w-4 h-4" />
+                      )}
+                      <span className="font-black uppercase tracking-wider text-xs">{name}</span>
+                    </Link>
+                  ))}
+                </div>
+                <div>
+                  <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-2 px-3 mt-4">MORE</p>
+                  {SECONDARY_NAV.map(({ name, icon: Icon, path }) => (
+                    <Link
+                      key={path}
+                      to={createPageUrl(path)}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`
+                        flex items-center gap-3 px-3 py-2 mb-1 transition-all
+                        ${isActive(path)
+                          ? 'text-[#FF1493] border-l-2 border-[#FF1493]'
+                          : 'text-white/40 hover:text-white/60 border-l-2 border-white/5'
+                        }
+                      `}
+                    >
+                      <Icon className="w-3 h-3" />
+                      <span className="font-bold uppercase tracking-wider text-[10px]">{name}</span>
+                    </Link>
+                  ))}
+                </div>
+                <Link 
+                  to={createPageUrl('Settings')}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mt-6 flex items-center gap-2 px-3 py-2 text-white/40 hover:text-white/60 border-t border-white/10 pt-4"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="text-xs uppercase tracking-wider font-bold">Settings</span>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Desktop Sidebar - Smart Nav */}
+          <div className="hidden md:flex md:fixed md:left-0 md:top-0 md:bottom-0 md:w-56 md:flex-col md:bg-black md:backdrop-blur-xl md:border-r-2 md:border-white md:z-40">
+            <div className="p-4 border-b-2 border-white/20">
+              <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
+                HOT<span className="text-[#FF1493]">MESS</span>
+              </Link>
+              <p className="text-[8px] text-white/40 uppercase tracking-wider mt-1">LONDON OS</p>
+            </div>
+
+            <nav className="flex-1 px-2 py-4 overflow-y-auto">
+              {/* Primary Navigation */}
+              <div className="mb-6">
+                {PRIMARY_NAV.map(({ name, icon: Icon, path, showBadge }) => (
                   <Link
                     key={path}
                     to={createPageUrl(path)}
-                    onClick={() => setMobileMenuOpen(false)}
                     className={`
-                      flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all
+                      flex items-center gap-2 px-3 py-2.5 mb-1 transition-all border-2
                       ${isActive(path)
-                        ? 'bg-[#FF1493] text-black'
-                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                        ? 'bg-[#FF1493] text-black border-[#FF1493] shadow-[0_0_10px_#FF1493]'
+                        : 'text-white/60 hover:text-white hover:bg-white/5 border-white/10 hover:border-white/30'
                       }
                     `}
                   >
@@ -90,55 +156,54 @@ export default function Layout({ children, currentPageName }) {
                     ) : (
                       <Icon className="w-4 h-4" />
                     )}
-                    <span className="font-semibold uppercase tracking-wider text-xs">{name}</span>
+                    <span className="font-black uppercase tracking-wider text-[10px]">{name}</span>
                   </Link>
                 ))}
               </div>
-            </div>
-          )}
 
-          {/* Desktop Sidebar - Compact */}
-          <div className="hidden md:flex md:fixed md:left-0 md:top-0 md:bottom-0 md:w-56 md:flex-col md:bg-black/95 md:backdrop-blur-xl md:border-r md:border-white/10 md:z-40">
-            <div className="p-4">
-              <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
-                HOTMESS
-              </Link>
-            </div>
+              {/* Secondary Toggle */}
+              <button
+                onClick={() => setShowSecondary(!showSecondary)}
+                className="w-full text-left px-3 py-2 text-white/40 hover:text-white/60 text-[8px] uppercase tracking-widest font-black mb-2 transition-all"
+              >
+                {showSecondary ? '▼' : '▶'} MORE
+              </button>
 
-            <nav className="flex-1 px-2 overflow-y-auto">
-              {NAV_ITEMS.map(({ name, icon: Icon, path, showBadge }) => (
-                <Link
-                  key={path}
-                  to={createPageUrl(path)}
-                  className={`
-                    flex items-center gap-2 px-3 py-2 rounded-lg mb-0.5 transition-all
-                    ${isActive(path)
-                      ? 'bg-[#FF1493] text-black'
-                      : 'text-white/60 hover:text-white hover:bg-white/5'
-                    }
-                  `}
-                >
-                  {showBadge && user ? (
-                    <NotificationBadge user={user} />
-                  ) : (
-                    <Icon className="w-4 h-4" />
-                  )}
-                  <span className="font-semibold uppercase tracking-wider text-[10px]">{name}</span>
-                </Link>
-              ))}
+              {/* Secondary Navigation */}
+              {showSecondary && (
+                <div className="space-y-1">
+                  {SECONDARY_NAV.map(({ name, icon: Icon, path }) => (
+                    <Link
+                      key={path}
+                      to={createPageUrl(path)}
+                      className={`
+                        flex items-center gap-2 px-3 py-1.5 transition-all
+                        ${isActive(path)
+                          ? 'text-[#FF1493] border-l-2 border-[#FF1493]'
+                          : 'text-white/40 hover:text-white/60 border-l-2 border-white/5'
+                        }
+                      `}
+                    >
+                      <Icon className="w-3 h-3" />
+                      <span className="font-bold uppercase tracking-wider text-[9px]">{name}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </nav>
 
             {user && (
-              <div className="p-3 border-t border-white/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0">
+              <div className="p-3 border-t-2 border-white/20">
+                <Link to={createPageUrl('Settings')} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                  <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
                     <span className="text-xs font-bold">{user.full_name?.[0] || 'U'}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold truncate">{user.full_name}</p>
-                    <p className="text-[10px] text-white/40">LVL {Math.floor((user.xp || 0) / 1000) + 1}</p>
+                    <p className="text-xs font-black truncate">{user.full_name}</p>
+                    <p className="text-[9px] text-[#FFEB3B] font-mono">LVL {Math.floor((user.xp || 0) / 1000) + 1} • {user.xp || 0} XP</p>
                   </div>
-                </div>
+                  <Settings className="w-3 h-3 text-white/40" />
+                </Link>
               </div>
             )}
           </div>
