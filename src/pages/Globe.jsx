@@ -150,7 +150,7 @@ export default function GlobePage() {
       <div className="relative w-full h-screen">
         <EnhancedGlobe3D
           beacons={filteredBeacons}
-          cities={DEMO_CITIES}
+          cities={cities}
           onBeaconClick={handleBeaconClick}
           className="w-full h-full"
         />
