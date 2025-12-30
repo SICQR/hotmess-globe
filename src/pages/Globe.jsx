@@ -310,17 +310,60 @@ export default function GlobePage() {
   }
 
   return (
-    <div className="relative w-full h-screen bg-black overflow-hidden">
+    <div className="relative w-full min-h-screen bg-black overflow-hidden">
+      {/* Hero Section */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="absolute top-0 left-0 right-0 z-30 pt-12 pb-6 px-8 bg-gradient-to-b from-black via-black/50 to-transparent pointer-events-none"
+      >
+        <div className="max-w-7xl mx-auto">
+          <motion.h1 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-white text-5xl md:text-6xl font-black tracking-tight mb-4"
+          >
+            Where the world connects
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-white/60 text-lg md:text-xl max-w-2xl"
+          >
+            Real-time nightlife activity across {DEMO_CITIES.length} cities. Track live events, drops, and connections as they happen around the globe.
+          </motion.p>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-8 flex items-center gap-6 pointer-events-auto"
+          >
+            <button className="px-6 py-3 bg-[#FF1493] hover:bg-[#FF1493]/90 text-white font-bold rounded-lg transition-colors shadow-lg shadow-[#FF1493]/20">
+              Get Started →
+            </button>
+            <button className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-colors backdrop-blur-sm border border-white/20">
+              Learn More
+            </button>
+          </motion.div>
+        </div>
+      </motion.div>
+
       {/* Globe */}
-      <NightPulseGlobe
-        mapboxToken={mapboxToken}
-        beacons={filteredBeacons}
-        cities={DEMO_CITIES}
-        activeLayer={activeLayer}
-        onBeaconClick={handleBeaconClick}
-        onCityClick={handleCityClick}
-        className="w-full h-full"
-      />
+      <div className="relative w-full h-screen">
+        <NightPulseGlobe
+          mapboxToken={mapboxToken}
+          beacons={filteredBeacons}
+          cities={DEMO_CITIES}
+          activeLayer={activeLayer}
+          onBeaconClick={handleBeaconClick}
+          onCityClick={handleCityClick}
+          className="w-full h-full"
+        />
+      </div>
 
       {/* Controls */}
       <GlobeControls
@@ -345,37 +388,42 @@ export default function GlobePage() {
         onBeaconSelect={handleBeaconClick}
       />
 
-      {/* Branding */}
+      {/* Stats Bar */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="absolute bottom-8 left-8 z-10"
+        transition={{ delay: 1.0 }}
+        className="absolute bottom-8 left-8 right-8 z-10"
       >
-        <h1 className="text-white text-4xl font-black tracking-[0.2em] leading-none mb-2">
-          HOTMESS
-        </h1>
-        <p className="text-[#FF1493] text-[11px] tracking-[0.5em] font-medium uppercase">
-          NIGHT PULSE
-        </p>
-      </motion.div>
-
-      {/* Instructions */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
-        className="absolute bottom-8 right-8 z-10 text-right"
-      >
-        <p className="text-white/30 text-[10px] tracking-[0.15em] uppercase font-medium">
-          DRAG • ZOOM • CLICK BEACONS
-        </p>
-        <button
-          onClick={() => setShowTokenInput(true)}
-          className="text-white/20 hover:text-white/40 text-[9px] mt-2 underline"
-        >
-          Change Mapbox Token
-        </button>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-wrap items-center justify-between gap-6 px-6 py-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl">
+            <div className="flex items-center gap-8">
+              <div>
+                <div className="text-white/50 text-xs tracking-wider uppercase mb-1">Live Now</div>
+                <div className="text-white text-2xl font-bold">{filteredBeacons.length}</div>
+              </div>
+              <div>
+                <div className="text-white/50 text-xs tracking-wider uppercase mb-1">Cities</div>
+                <div className="text-white text-2xl font-bold">{DEMO_CITIES.length}</div>
+              </div>
+              <div>
+                <div className="text-white/50 text-xs tracking-wider uppercase mb-1">Active Arcs</div>
+                <div className="text-white text-2xl font-bold">{Math.max(0, filteredBeacons.length - 1)}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <p className="text-white/40 text-xs tracking-wider uppercase">
+                Drag • Zoom • Hover Arcs
+              </p>
+              <button
+                onClick={() => setShowTokenInput(true)}
+                className="text-white/30 hover:text-white/50 text-xs underline transition-colors"
+              >
+                Settings
+              </button>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       {/* Token change modal */}
