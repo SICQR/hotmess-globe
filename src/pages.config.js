@@ -14,13 +14,13 @@ import MapView from './pages/MapView';
 import Marketplace from './pages/Marketplace';
 import Messages from './pages/Messages';
 import Network from './pages/Network';
+import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
+import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
 import Scan from './pages/Scan';
-import Settings from './pages/Settings';
 import SellerDashboard from './pages/SellerDashboard';
-import ProductDetail from './pages/ProductDetail';
-import OrderHistory from './pages/OrderHistory';
+import Settings from './pages/Settings';
 import __Layout from './Layout.jsx';
 
 
@@ -41,13 +41,13 @@ export const PAGES = {
     "Marketplace": Marketplace,
     "Messages": Messages,
     "Network": Network,
+    "OrderHistory": OrderHistory,
     "OrganizerDashboard": OrganizerDashboard,
+    "ProductDetail": ProductDetail,
     "Profile": Profile,
     "Scan": Scan,
-    "Settings": Settings,
     "SellerDashboard": SellerDashboard,
-    "ProductDetail": ProductDetail,
-    "OrderHistory": OrderHistory,
+    "Settings": Settings,
 }
 
 export const pagesConfig = {
