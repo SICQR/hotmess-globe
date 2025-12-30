@@ -13,8 +13,8 @@ export default function RadioPlayer() {
   const xpTimerRef = useRef(null);
   const lastXpUpdateRef = useRef(Date.now());
 
-  // RAW Convict Radio stream URL - replace with actual stream URL
-  const STREAM_URL = 'https://stream.example.com/raw-convict-radio'; // Replace with real URL
+  // RAW Convict Radio stream URL
+  const STREAM_URL = 'https://listen.radioking.com/radio/736103/stream/802454';
 
   useEffect(() => {
     // Create audio element
