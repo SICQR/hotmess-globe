@@ -9,7 +9,8 @@ import GlobeDataPanel from '../components/globe/GlobeDataPanel';
 import GlobeSearch from '../components/globe/GlobeSearch';
 import FloatingPanel from '../components/ui/FloatingPanel';
 import { activityTracker } from '../components/globe/ActivityTracker';
-import { Settings, BarChart3, Menu, Home } from 'lucide-react';
+import NearbyGrid from '../components/globe/NearbyGrid';
+import { Settings, BarChart3, Menu, Home, Grid3x3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 export default function GlobePage() {
@@ -154,6 +155,23 @@ export default function GlobePage() {
   const [radiusSearch, setRadiusSearch] = useState(null);
   const [userActivities, setUserActivities] = useState([]);
   const [activityVisibility, setActivityVisibility] = useState(activityTracker.isEnabled());
+  const [showNearbyGrid, setShowNearbyGrid] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+
+  // Get user's location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => console.log('Location access denied')
+      );
+    }
+  }, []);
 
   // Filter beacons by mode, type, intensity, recency, and search (must be before conditional return)
   const filteredBeacons = useMemo(() => {
@@ -341,7 +359,24 @@ export default function GlobePage() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowControls(!showControls)}
+            onClick={() => {
+              setShowNearbyGrid(!showNearbyGrid);
+              if (!showNearbyGrid) {
+                setShowControls(false);
+                setShowPanel(false);
+              }
+            }}
+            className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
+              showNearbyGrid ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+            }`}
+          >
+            <Grid3x3 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              setShowControls(!showControls);
+              if (!showControls) setShowNearbyGrid(false);
+            }}
             className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
               showControls ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
             }`}
@@ -349,7 +384,10 @@ export default function GlobePage() {
             <Settings className="w-4 h-4" />
           </button>
           <button
-            onClick={() => setShowPanel(!showPanel)}
+            onClick={() => {
+              setShowPanel(!showPanel);
+              if (!showPanel) setShowNearbyGrid(false);
+            }}
             className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
               showPanel ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
             }`}
@@ -415,6 +453,18 @@ export default function GlobePage() {
             onClose={handleClose}
             onBeaconSelect={handleBeaconClick}
           />
+        </FloatingPanel>
+      )}
+
+      {/* Nearby Grid Panel */}
+      {showNearbyGrid && (
+        <FloatingPanel 
+          title="Nearby People" 
+          position="right" 
+          width="w-96"
+          onClose={() => setShowNearbyGrid(false)}
+        >
+          <NearbyGrid userLocation={userLocation} />
         </FloatingPanel>
       )}
     </div>
