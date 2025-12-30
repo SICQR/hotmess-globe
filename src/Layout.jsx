@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { name: 'Globe', icon: GlobeIcon, path: 'Globe' },
   { name: 'Radio', icon: Users, path: 'Radio' },
   { name: 'Map', icon: Map, path: 'MapView' },
+  { name: 'Events', icon: CalendarIcon, path: 'Events' },
   { name: 'Calendar', icon: CalendarIcon, path: 'Calendar' },
   { name: 'Beacons', icon: MapPin, path: 'Beacons' },
   { name: 'Marketplace', icon: ShoppingBag, path: 'Marketplace' },

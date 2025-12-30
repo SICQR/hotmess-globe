@@ -9,11 +9,25 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import CommentsSection from '../components/beacon/CommentsSection';
 import BeaconActions from '../components/beacon/BeaconActions';
+import EventRSVP from '../components/events/EventRSVP';
 
 export default function BeaconDetail() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const beaconId = searchParams.get('id');
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const { data: beacons = [] } = useQuery({
     queryKey: ['beacons'],
@@ -151,6 +165,14 @@ export default function BeaconDetail() {
 
           {/* Sidebar */}
           <div className="space-y-4">
+            {/* Event RSVP */}
+            {beacon.kind === 'event' && currentUser && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <h3 className="text-sm uppercase tracking-wider text-white/40 mb-4">Event RSVP</h3>
+                <EventRSVP event={beacon} currentUser={currentUser} />
+              </div>
+            )}
+
             {beacon.xp_scan && (
               <div className="bg-gradient-to-br from-[#FFEB3B]/20 to-[#FF6B35]/20 border border-[#FFEB3B]/40 rounded-xl p-6">
                 <div className="flex items-center gap-2 mb-3">
