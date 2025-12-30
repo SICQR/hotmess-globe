@@ -4,12 +4,14 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { Calendar, MapPin, Clock, Users, Filter, Search } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, Filter, Search, Map, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format, isAfter, isBefore, startOfDay, endOfDay, addDays } from 'date-fns';
 import EventCard from '../components/events/EventCard';
+import PersonalizedRecommendations from '../components/events/PersonalizedRecommendations';
+import EventsMapView from '../components/events/EventsMapView';
 
 export default function Events() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -18,17 +20,39 @@ export default function Events() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'map'
+  const [userLocation, setUserLocation] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
+        
+        // Set user location if available
+        if (user.lat && user.lng) {
+          setUserLocation({ lat: user.lat, lng: user.lng });
+        }
       } catch (error) {
         console.error('Failed to fetch user:', error);
       }
     };
     fetchUser();
+
+    // Get browser location as fallback
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          if (!userLocation) {
+            setUserLocation({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            });
+          }
+        },
+        (error) => console.log('Location access denied:', error)
+      );
+    }
   }, []);
 
   const { data: events = [] } = useQuery({
@@ -127,17 +151,37 @@ export default function Events() {
 
   const myRsvpIds = new Set(rsvps.map(r => r.event_id));
 
+  if (viewMode === 'map') {
+    return (
+      <EventsMapView
+        events={filteredEvents}
+        userLocation={userLocation}
+        radius={10}
+        onClose={() => setViewMode('grid')}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-6xl font-black italic mb-2">
-            EVENTS<span className="text-[#FF1493]">.</span>
-          </h1>
-          <p className="text-white/60 text-sm uppercase tracking-wider">
-            Discover what's happening in London tonight
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl md:text-6xl font-black italic mb-2">
+              EVENTS<span className="text-[#FF1493]">.</span>
+            </h1>
+            <p className="text-white/60 text-sm uppercase tracking-wider">
+              Discover what's happening in London tonight
+            </p>
+          </div>
+          <Button
+            onClick={() => setViewMode('map')}
+            className="bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black border-2 border-white"
+          >
+            <Map className="w-4 h-4 mr-2" />
+            MAP VIEW
+          </Button>
         </div>
 
         {/* Filters */}
@@ -217,6 +261,15 @@ export default function Events() {
             )}
           </div>
         </div>
+
+        {/* Personalized Recommendations */}
+        {currentUser && (
+          <PersonalizedRecommendations
+            currentUser={currentUser}
+            allEvents={events}
+            allRsvps={allRsvps}
+          />
+        )}
 
         {/* Event Grid */}
         {filteredEvents.length > 0 ? (
