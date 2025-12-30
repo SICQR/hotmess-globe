@@ -218,13 +218,36 @@ export default function GlobePage() {
     return localStorage.getItem('mapbox_token') || import.meta.env.VITE_MAPBOX_TOKEN || '';
   });
 
-  const handleSaveToken = () => {
+  // Filter beacons by mode (must be before conditional return)
+  const filteredBeacons = useMemo(() => {
+    if (!activeMode) return DEMO_BEACONS;
+    return DEMO_BEACONS.filter(b => b.mode === activeMode);
+  }, [activeMode]);
+
+  // Sort by most recent
+  const recentActivity = useMemo(() => {
+    return [...filteredBeacons].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  }, [filteredBeacons]);
+
+  const handleBeaconClick = useCallback((beacon) => {
+    setSelectedBeacon(beacon);
+  }, []);
+
+  const handleCityClick = useCallback((city) => {
+    console.log('City clicked:', city);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setSelectedBeacon(null);
+  }, []);
+
+  const handleSaveToken = useCallback(() => {
     localStorage.setItem('mapbox_token', tokenInput);
     setMapboxToken(tokenInput);
     setShowTokenInput(false);
-  };
+  }, [tokenInput]);
 
-  // Show token input if no token
+  // Show token input if no token (after all hooks)
   if (!mapboxToken) {
     return (
       <div className="w-full h-screen bg-black flex items-center justify-center">
@@ -251,29 +274,6 @@ export default function GlobePage() {
       </div>
     );
   }
-
-  // Filter beacons by mode
-  const filteredBeacons = useMemo(() => {
-    if (!activeMode) return DEMO_BEACONS;
-    return DEMO_BEACONS.filter(b => b.mode === activeMode);
-  }, [activeMode]);
-
-  // Sort by most recent
-  const recentActivity = useMemo(() => {
-    return [...filteredBeacons].sort((a, b) => (b.ts || 0) - (a.ts || 0));
-  }, [filteredBeacons]);
-
-  const handleBeaconClick = useCallback((beacon) => {
-    setSelectedBeacon(beacon);
-  }, []);
-
-  const handleCityClick = useCallback((city) => {
-    console.log('City clicked:', city);
-  }, []);
-
-  const handleClose = useCallback(() => {
-    setSelectedBeacon(null);
-  }, []);
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
