@@ -6,6 +6,7 @@ import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '../utils';
 import { Zap, MapPin, TrendingUp, Users, ArrowRight, Globe, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import AIRecommendations from '../components/recommendations/AIRecommendations';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -135,11 +136,23 @@ export default function Home() {
           </Link>
         </div>
 
+        {/* AI Recommendations */}
+        {user && recentBeacons.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mb-8"
+          >
+            <AIRecommendations user={user} beacons={recentBeacons} limit={3} />
+          </motion.div>
+        )}
+
         {/* Recent Beacons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.5 }}
         >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -159,7 +172,7 @@ export default function Home() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 + idx * 0.05 }}
+                  transition={{ delay: 0.5 + idx * 0.05 }}
                   whileHover={{ scale: 1.02 }}
                   className="bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 transition-all cursor-pointer"
                 >

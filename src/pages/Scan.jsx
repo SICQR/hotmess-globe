@@ -21,6 +21,16 @@ export default function Scan() {
       const user = await base44.auth.me();
       const newXp = (user.xp || 0) + (beacon.xp_scan || 100);
       await base44.auth.updateMe({ xp: newXp });
+      
+      // Track interaction
+      await base44.entities.UserInteraction.create({
+        user_email: user.email,
+        interaction_type: 'scan',
+        beacon_id: beacon.id,
+        beacon_kind: beacon.kind,
+        beacon_mode: beacon.mode
+      });
+      
       return { beacon, earnedXp: beacon.xp_scan || 100 };
     },
     onSuccess: (data) => {

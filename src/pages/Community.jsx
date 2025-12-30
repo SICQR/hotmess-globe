@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { Users, MessageCircle, Heart, Share2, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AIRecommendations from '../components/recommendations/AIRecommendations';
 
 const FEED_POSTS = [
   { id: 1, user: 'Alex', content: 'Just hit level 10! 🎉', likes: 24, comments: 5, time: '2h ago' },
@@ -12,6 +15,25 @@ const FEED_POSTS = [
 ];
 
 export default function Community() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const { data: beacons = [] } = useQuery({
+    queryKey: ['beacons-community'],
+    queryFn: () => base44.entities.Beacon.filter({ active: true }, '-created_date', 20),
+  });
+
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
@@ -60,6 +82,18 @@ export default function Community() {
             <div className="text-xs text-white/60 uppercase tracking-wider">Posts Today</div>
           </motion.div>
         </div>
+
+        {/* AI Recommendations in Community */}
+        {user && beacons.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mb-8"
+          >
+            <AIRecommendations user={user} beacons={beacons} limit={4} />
+          </motion.div>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="feed" className="mb-8">
