@@ -72,18 +72,23 @@ export default function EnhancedGlobe3D({
     const globe = new THREE.Group();
     scene.add(globe);
 
-    // Sphere
+    // Sphere with Earth texture
     const sphereGeo = new THREE.SphereGeometry(globeRadius, 64, 64);
+
+    // Load Earth texture
+    const textureLoader = new THREE.TextureLoader();
+    const earthTexture = textureLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg');
+
     const sphereMat = new THREE.MeshStandardMaterial({
-      color: 0x0a2540,
-      roughness: 0.9,
-      metalness: 0.1
+      map: earthTexture,
+      roughness: 0.8,
+      metalness: 0.2
     });
     const sphere = new THREE.Mesh(sphereGeo, sphereMat);
     globe.add(sphere);
 
-    // Grid lines
-    const gridMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15 });
+    // Grid lines (subtle overlay)
+    const gridMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08 });
     for (let i = 1; i < 18; i++) {
       const lat = -80 + (160 * i) / 18;
       const r = globeRadius * Math.cos((lat * Math.PI) / 180);
