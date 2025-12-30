@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import ProductForm from '../components/marketplace/ProductForm';
+import SalesAnalytics from '../components/seller/SalesAnalytics';
+import PromotionManager from '../components/seller/PromotionManager';
+import PayoutManager from '../components/seller/PayoutManager';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -40,6 +43,34 @@ export default function SellerDashboard() {
     queryFn: () => base44.entities.Order.filter({ seller_email: currentUser.email }, '-created_date'),
     enabled: !!currentUser,
   });
+
+  const { data: orderItems = [] } = useQuery({
+    queryKey: ['order-items'],
+    queryFn: () => base44.entities.OrderItem.list(),
+  });
+
+  const { data: promotions = [] } = useQuery({
+    queryKey: ['promotions', currentUser?.email],
+    queryFn: () => base44.entities.Promotion.filter({ seller_email: currentUser.email }, '-created_date'),
+    enabled: !!currentUser,
+  });
+
+  const { data: payouts = [] } = useQuery({
+    queryKey: ['seller-payouts', currentUser?.email],
+    queryFn: () => base44.entities.SellerPayout.filter({ seller_email: currentUser.email }, '-created_date'),
+    enabled: !!currentUser,
+  });
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list(),
+  });
+
+  // Enrich orders with their items
+  const enrichedOrders = orders.map(order => ({
+    ...order,
+    items: orderItems.filter(item => item.order_id === order.id)
+  }));
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Product.create({ ...data, seller_email: currentUser.email }),
@@ -170,6 +201,9 @@ export default function SellerDashboard() {
           <TabsList className="bg-white/5 border border-white/10 mb-6">
             <TabsTrigger value="products">My Products</TabsTrigger>
             <TabsTrigger value="orders">Orders ({orders.length})</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="promotions">Promotions</TabsTrigger>
+            <TabsTrigger value="payouts">Payouts</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products">
@@ -294,6 +328,31 @@ export default function SellerDashboard() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <SalesAnalytics
+              orders={enrichedOrders}
+              products={products}
+              allUsers={allUsers}
+            />
+          </TabsContent>
+
+          <TabsContent value="promotions">
+            <PromotionManager
+              promotions={promotions}
+              products={products}
+              sellerEmail={currentUser?.email}
+            />
+          </TabsContent>
+
+          <TabsContent value="payouts">
+            <PayoutManager
+              payouts={payouts}
+              orders={enrichedOrders}
+              sellerEmail={currentUser?.email}
+              stripeConnectId={currentUser?.stripe_connect_id}
+            />
           </TabsContent>
         </Tabs>
       </div>
