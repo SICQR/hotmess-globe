@@ -52,6 +52,7 @@ export default function EnhancedGlobe3D({
     const mount = mountRef.current;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#000000');
+    scene.fog = new THREE.Fog('#000000', 8, 12);
 
     const camera = new THREE.PerspectiveCamera(45, mount.clientWidth / mount.clientHeight, 0.1, 200);
     camera.position.z = 4.5;
@@ -73,26 +74,54 @@ export default function EnhancedGlobe3D({
     scene.add(globe);
 
     // Sphere with Earth texture
-    const sphereGeo = new THREE.SphereGeometry(globeRadius, 64, 64);
+    const sphereGeo = new THREE.SphereGeometry(globeRadius, 128, 128);
 
-    // Load Earth texture
+    // Load Earth textures
     const textureLoader = new THREE.TextureLoader();
     const earthTexture = textureLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg');
+    const bumpTexture = textureLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-topology.png');
 
     const sphereMat = new THREE.MeshStandardMaterial({
       map: earthTexture,
-      roughness: 0.8,
-      metalness: 0.2
+      bumpMap: bumpTexture,
+      bumpScale: 0.05,
+      roughness: 0.7,
+      metalness: 0.1
     });
     const sphere = new THREE.Mesh(sphereGeo, sphereMat);
     globe.add(sphere);
 
-    // Grid lines (subtle overlay)
-    const gridMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08 });
+    // Atmosphere glow
+    const atmosphereGeo = new THREE.SphereGeometry(globeRadius * 1.1, 64, 64);
+    const atmosphereMat = new THREE.ShaderMaterial({
+      transparent: true,
+      side: THREE.BackSide,
+      vertexShader: `
+        varying vec3 vNormal;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vNormal;
+        void main() {
+          float intensity = pow(0.6 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+          gl_FragColor = vec4(0.3, 0.6, 1.0, 1.0) * intensity;
+        }
+      `,
+      blending: THREE.AdditiveBlending
+    });
+    const atmosphere = new THREE.Mesh(atmosphereGeo, atmosphereMat);
+    globe.add(atmosphere);
+
+    // Subtle grid lines overlay
+    const gridMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05 });
+    // Latitude lines
     for (let i = 1; i < 18; i++) {
       const lat = -80 + (160 * i) / 18;
-      const r = globeRadius * Math.cos((lat * Math.PI) / 180);
-      const y = globeRadius * Math.sin((lat * Math.PI) / 180);
+      const r = (globeRadius * 1.002) * Math.cos((lat * Math.PI) / 180);
+      const y = (globeRadius * 1.002) * Math.sin((lat * Math.PI) / 180);
       const points = [];
       for (let j = 0; j <= 128; j++) {
         const angle = (j / 128) * Math.PI * 2;
@@ -100,6 +129,20 @@ export default function EnhancedGlobe3D({
       }
       const geo = new THREE.BufferGeometry().setFromPoints(points);
       globe.add(new THREE.LineLoop(geo, gridMat));
+    }
+    // Longitude lines
+    for (let i = 0; i < 24; i++) {
+      const lng = (i / 24) * Math.PI * 2;
+      const points = [];
+      for (let j = 0; j <= 64; j++) {
+        const lat = -Math.PI / 2 + (j / 64) * Math.PI;
+        const x = (globeRadius * 1.002) * Math.cos(lat) * Math.cos(lng);
+        const y = (globeRadius * 1.002) * Math.sin(lat);
+        const z = (globeRadius * 1.002) * Math.cos(lat) * Math.sin(lng);
+        points.push(new THREE.Vector3(x, y, z));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      globe.add(new THREE.Line(geo, gridMat));
     }
 
     // Beacons
