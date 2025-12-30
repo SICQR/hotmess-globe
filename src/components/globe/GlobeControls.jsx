@@ -50,7 +50,7 @@ export default function GlobeControls({
   onRecencyFilterChange
 }) {
   return (
-    <div className="absolute top-6 left-6 z-20 flex flex-col gap-4">
+    <div className="md:absolute md:top-6 md:left-6 md:z-20 flex flex-col gap-4 p-4 md:p-0">
       {/* Live indicator */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}

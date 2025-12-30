@@ -215,6 +215,8 @@ export default function GlobePage() {
   const [beaconType, setBeaconType] = useState(null);
   const [minIntensity, setMinIntensity] = useState(0);
   const [recencyFilter, setRecencyFilter] = useState('all');
+  const [showControls, setShowControls] = useState(false);
+  const [showPanel, setShowPanel] = useState(false);
 
   // Get Mapbox token from localStorage or environment
   const [mapboxToken, setMapboxToken] = useState(() => {
@@ -311,18 +313,18 @@ export default function GlobePage() {
 
   return (
     <div className="relative w-full min-h-screen bg-black overflow-hidden">
-      {/* Hero Section - Compact */}
+      {/* Hero Section - Responsive */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="absolute top-8 left-8 z-30 pointer-events-none"
+        className="absolute top-4 md:top-8 left-4 md:left-8 z-30 pointer-events-none"
       >
         <motion.h1 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-white text-3xl font-black tracking-tight mb-2"
+          className="text-white text-xl md:text-3xl font-black tracking-tight mb-1 md:mb-2"
         >
           HOTMESS LONDON
         </motion.h1>
@@ -330,11 +332,31 @@ export default function GlobePage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="text-white/50 text-sm tracking-wider uppercase"
+          className="text-white/50 text-xs md:text-sm tracking-wider uppercase"
         >
           Live Global Activity
         </motion.p>
       </motion.div>
+
+      {/* Mobile Menu Buttons */}
+      <div className="absolute top-4 right-4 z-40 flex gap-2 md:hidden pointer-events-auto">
+        <button
+          onClick={() => setShowControls(!showControls)}
+          className="p-3 bg-black/90 border border-white/20 rounded-xl backdrop-blur-xl"
+        >
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+          </svg>
+        </button>
+        <button
+          onClick={() => setShowPanel(!showPanel)}
+          className="p-3 bg-black/90 border border-white/20 rounded-xl backdrop-blur-xl"
+        >
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
 
       {/* Globe */}
       <div className="relative w-full h-screen">
@@ -346,55 +368,99 @@ export default function GlobePage() {
         />
       </div>
 
-      {/* Controls */}
-      <GlobeControls
-        activeLayer={activeLayer}
-        onLayerChange={setActiveLayer}
-        activeMode={activeMode}
-        onModeChange={setActiveMode}
-        beaconType={beaconType}
-        onBeaconTypeChange={setBeaconType}
-        minIntensity={minIntensity}
-        onMinIntensityChange={setMinIntensity}
-        recencyFilter={recencyFilter}
-        onRecencyFilterChange={setRecencyFilter}
-        liveCount={filteredBeacons.length}
-      />
-
-      {/* Data Panel - Compact */}
-      <div className="absolute top-6 right-6 z-20 w-80">
-        <GlobeDataPanel
-          selectedBeacon={selectedBeacon}
-          recentActivity={recentActivity}
-          onClose={handleClose}
-          onBeaconSelect={handleBeaconClick}
-        />
+      {/* Controls - Desktop always visible, Mobile drawer */}
+      <div className={`
+        fixed md:absolute top-0 left-0 h-full md:h-auto
+        transform transition-transform duration-300 ease-in-out z-50
+        ${showControls ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
+        <div className="h-full md:h-auto overflow-y-auto md:overflow-visible bg-black/95 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none">
+          <div className="md:hidden flex justify-between items-center p-4 border-b border-white/10">
+            <span className="text-white font-bold tracking-wider uppercase text-sm">Controls</span>
+            <button onClick={() => setShowControls(false)} className="text-white/60 hover:text-white">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <GlobeControls
+            activeLayer={activeLayer}
+            onLayerChange={setActiveLayer}
+            activeMode={activeMode}
+            onModeChange={setActiveMode}
+            beaconType={beaconType}
+            onBeaconTypeChange={setBeaconType}
+            minIntensity={minIntensity}
+            onMinIntensityChange={setMinIntensity}
+            recencyFilter={recencyFilter}
+            onRecencyFilterChange={setRecencyFilter}
+            liveCount={filteredBeacons.length}
+          />
+        </div>
       </div>
 
-      {/* Stats Bar */}
+      {/* Mobile overlay */}
+      {(showControls || showPanel) && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => {
+            setShowControls(false);
+            setShowPanel(false);
+          }}
+        />
+      )}
+
+      {/* Data Panel - Desktop and Mobile drawer */}
+      <div className={`
+        fixed md:absolute top-0 md:top-6 right-0 md:right-6 
+        h-full md:h-auto w-full md:w-80 z-50 md:z-20
+        transform transition-transform duration-300 ease-in-out
+        ${showPanel ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+      `}>
+        <div className="h-full md:h-auto bg-black/95 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none">
+          <div className="md:hidden flex justify-between items-center p-4 border-b border-white/10">
+            <span className="text-white font-bold tracking-wider uppercase text-sm">Activity</span>
+            <button onClick={() => setShowPanel(false)} className="text-white/60 hover:text-white">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="p-4 md:p-0">
+            <GlobeDataPanel
+              selectedBeacon={selectedBeacon}
+              recentActivity={recentActivity}
+              onClose={handleClose}
+              onBeaconSelect={handleBeaconClick}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Bar - Responsive */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.0 }}
-        className="absolute bottom-8 left-8 right-8 z-10"
+        className="absolute bottom-4 md:bottom-8 left-4 md:left-8 right-4 md:right-8 z-10"
       >
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-wrap items-center justify-between gap-6 px-6 py-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl">
-            <div className="flex items-center gap-8">
-              <div>
-                <div className="text-white/50 text-xs tracking-wider uppercase mb-1">Live Now</div>
-                <div className="text-white text-2xl font-bold">{filteredBeacons.length}</div>
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 md:gap-6 px-4 md:px-6 py-3 md:py-4 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl md:rounded-2xl">
+            <div className="flex items-center justify-around md:justify-start md:gap-6 lg:gap-8">
+              <div className="text-center md:text-left">
+                <div className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase mb-0.5 md:mb-1">Live</div>
+                <div className="text-white text-lg md:text-2xl font-bold">{filteredBeacons.length}</div>
               </div>
-              <div>
-                <div className="text-white/50 text-xs tracking-wider uppercase mb-1">Cities</div>
-                <div className="text-white text-2xl font-bold">{DEMO_CITIES.length}</div>
+              <div className="text-center md:text-left">
+                <div className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase mb-0.5 md:mb-1">Cities</div>
+                <div className="text-white text-lg md:text-2xl font-bold">{DEMO_CITIES.length}</div>
               </div>
-              <div>
-                <div className="text-white/50 text-xs tracking-wider uppercase mb-1">Active Arcs</div>
-                <div className="text-white text-2xl font-bold">{Math.max(0, filteredBeacons.length - 1)}</div>
+              <div className="text-center md:text-left">
+                <div className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase mb-0.5 md:mb-1">Arcs</div>
+                <div className="text-white text-lg md:text-2xl font-bold">{Math.max(0, filteredBeacons.length - 1)}</div>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-4">
               <p className="text-white/40 text-xs tracking-wider uppercase">
                 Drag • Zoom • Hover Arcs
               </p>
