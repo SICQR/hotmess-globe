@@ -9,6 +9,10 @@ import Leaderboard from './pages/Leaderboard';
 import Settings from './pages/Settings';
 import CreateBeacon from './pages/CreateBeacon';
 import Chat from './pages/Chat';
+import Profile from './pages/Profile';
+import Calendar from './pages/Calendar';
+import MapView from './pages/MapView';
+import OrganizerDashboard from './pages/OrganizerDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +28,10 @@ export const PAGES = {
     "Settings": Settings,
     "CreateBeacon": CreateBeacon,
     "Chat": Chat,
+    "Profile": Profile,
+    "Calendar": Calendar,
+    "MapView": MapView,
+    "OrganizerDashboard": OrganizerDashboard,
 }
 
 export const pagesConfig = {
