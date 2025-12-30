@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Users, MessageCircle, Heart, Share2, TrendingUp } from 'lucide-react';
+import { Users, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AIRecommendations from '../components/recommendations/AIRecommendations';
-
-const FEED_POSTS = [
-  { id: 1, user: 'Alex', content: 'Just hit level 10! 🎉', likes: 24, comments: 5, time: '2h ago' },
-  { id: 2, user: 'Sam', content: 'Best event last night at Shoreditch! Who else was there?', likes: 42, comments: 12, time: '4h ago' },
-  { id: 3, user: 'Jordan', content: 'New beacon spotted in Camden! 📍', likes: 18, comments: 3, time: '6h ago' },
-  { id: 4, user: 'Casey', content: 'Looking for squad to hit the next drop 🔥', likes: 31, comments: 8, time: '8h ago' },
-];
+import { toast } from 'sonner';
+import PostCard from '../components/community/PostCard';
+import TrendingSummary from '../components/community/TrendingSummary';
+import PersonalizedFeed from '../components/community/PersonalizedFeed';
 
 export default function Community() {
   const [user, setUser] = useState(null);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [newPost, setNewPost] = useState({ content: '', category: 'general' });
+  const [filteredPosts, setFilteredPosts] = useState([]);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -29,10 +31,103 @@ export default function Community() {
     fetchUser();
   }, []);
 
-  const { data: beacons = [] } = useQuery({
-    queryKey: ['beacons-community'],
-    queryFn: () => base44.entities.Beacon.filter({ active: true }, '-created_date', 20),
+  const { data: posts = [] } = useQuery({
+    queryKey: ['community-posts'],
+    queryFn: () => base44.entities.CommunityPost.filter({ moderation_status: 'approved' }, '-created_date', 50),
   });
+
+  const { data: userLikes = [] } = useQuery({
+    queryKey: ['user-likes', user?.email],
+    queryFn: () => base44.entities.PostLike.filter({ user_email: user.email }),
+    enabled: !!user,
+  });
+
+  // AI Content Moderation on Post Creation
+  const createPostMutation = useMutation({
+    mutationFn: async (postData) => {
+      // AI moderation check
+      const moderationPrompt = `Analyze this community post for inappropriate content:
+
+"${postData.content}"
+
+Check for:
+- Hate speech, harassment, threats
+- Spam or promotional content
+- NSFW/explicit content
+- Misinformation
+
+Return a JSON with: approved (boolean), reason (string if not approved), sentiment (positive/neutral/negative)`;
+
+      const moderation = await base44.integrations.Core.InvokeLLM({
+        prompt: moderationPrompt,
+        add_context_from_internet: false,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            approved: { type: "boolean" },
+            reason: { type: "string" },
+            sentiment: { type: "string" }
+          }
+        }
+      });
+
+      const post = await base44.entities.CommunityPost.create({
+        ...postData,
+        user_email: user.email,
+        user_name: user.full_name || user.email,
+        moderation_status: moderation.approved ? 'approved' : 'flagged',
+        moderation_reason: moderation.reason || null,
+        ai_sentiment: moderation.sentiment || 'neutral',
+      });
+
+      return { post, moderation };
+    },
+    onSuccess: ({ moderation }) => {
+      queryClient.invalidateQueries(['community-posts']);
+      setNewPost({ content: '', category: 'general' });
+      setShowCreatePost(false);
+      if (moderation.approved) {
+        toast.success('Post published!');
+      } else {
+        toast.warning('Post flagged for review: ' + moderation.reason);
+      }
+    },
+  });
+
+  const likeMutation = useMutation({
+    mutationFn: async (postId) => {
+      const existingLike = userLikes.find(l => l.post_id === postId);
+      if (existingLike) {
+        await base44.entities.PostLike.delete(existingLike.id);
+        const post = posts.find(p => p.id === postId);
+        await base44.entities.CommunityPost.update(postId, {
+          likes_count: Math.max(0, (post.likes_count || 0) - 1)
+        });
+      } else {
+        await base44.entities.PostLike.create({ user_email: user.email, post_id: postId });
+        const post = posts.find(p => p.id === postId);
+        await base44.entities.CommunityPost.update(postId, {
+          likes_count: (post.likes_count || 0) + 1
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['community-posts']);
+      queryClient.invalidateQueries(['user-likes']);
+    },
+  });
+
+  const handleCreatePost = () => {
+    if (!newPost.content.trim()) {
+      toast.error('Please enter content');
+      return;
+    }
+    createPostMutation.mutate(newPost);
+  };
+
+  useEffect(() => {
+    setFilteredPosts(posts);
+  }, [posts]);
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
@@ -67,9 +162,9 @@ export default function Community() {
             transition={{ delay: 0.15 }}
             className="bg-gradient-to-br from-[#00D9FF]/20 to-[#39FF14]/20 border border-[#00D9FF]/40 rounded-xl p-4 text-center"
           >
-            <TrendingUp className="w-6 h-6 text-[#00D9FF] mx-auto mb-2" />
-            <div className="text-2xl font-black">156</div>
-            <div className="text-xs text-white/60 uppercase tracking-wider">Active Now</div>
+            <Sparkles className="w-6 h-6 text-[#00D9FF] mx-auto mb-2" />
+            <div className="text-2xl font-black">{posts.length}</div>
+            <div className="text-xs text-white/60 uppercase tracking-wider">Total Posts</div>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -77,90 +172,100 @@ export default function Community() {
             transition={{ delay: 0.2 }}
             className="bg-gradient-to-br from-[#FFEB3B]/20 to-[#FF6B35]/20 border border-[#FFEB3B]/40 rounded-xl p-4 text-center"
           >
-            <Heart className="w-6 h-6 text-[#FFEB3B] mx-auto mb-2" />
-            <div className="text-2xl font-black">892</div>
-            <div className="text-xs text-white/60 uppercase tracking-wider">Posts Today</div>
+            <Users className="w-6 h-6 text-[#FFEB3B] mx-auto mb-2" />
+            <div className="text-2xl font-black">{posts.filter(p => p.ai_sentiment === 'positive').length}</div>
+            <div className="text-xs text-white/60 uppercase tracking-wider">Positive Vibes</div>
           </motion.div>
         </div>
 
-        {/* AI Recommendations in Community */}
-        {user && beacons.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mb-8"
+        {/* AI Trending Summary */}
+        {posts.length >= 5 && <TrendingSummary posts={posts} />}
+
+        {/* Create Post */}
+        {user && !showCreatePost && (
+          <Button
+            onClick={() => setShowCreatePost(true)}
+            className="w-full mb-6 bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
           >
-            <AIRecommendations user={user} beacons={beacons} limit={4} />
+            <Plus className="w-4 h-4 mr-2" />
+            Create Post
+          </Button>
+        )}
+
+        {showCreatePost && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6"
+          >
+            <Textarea
+              value={newPost.content}
+              onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+              placeholder="Share something with the community..."
+              rows={4}
+              className="mb-4"
+            />
+            <div className="flex items-center justify-between">
+              <Select
+                value={newPost.category}
+                onValueChange={(value) => setNewPost({ ...newPost, category: value })}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="events">Events</SelectItem>
+                  <SelectItem value="marketplace">Marketplace</SelectItem>
+                  <SelectItem value="beacons">Beacons</SelectItem>
+                  <SelectItem value="squads">Squads</SelectItem>
+                  <SelectItem value="achievements">Achievements</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => setShowCreatePost(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreatePost}
+                  disabled={createPostMutation.isPending}
+                  className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+                >
+                  Post
+                </Button>
+              </div>
+            </div>
           </motion.div>
         )}
 
-        {/* Tabs */}
-        <Tabs defaultValue="feed" className="mb-8">
-          <TabsList className="bg-white/5 border border-white/10 mb-6">
-            <TabsTrigger value="feed" className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black">
-              Feed
-            </TabsTrigger>
-            <TabsTrigger value="trending" className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black">
-              Trending
-            </TabsTrigger>
-            <TabsTrigger value="friends" className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black">
-              Friends
-            </TabsTrigger>
-          </TabsList>
+        {/* Personalized Filtering */}
+        {user && <PersonalizedFeed user={user} posts={posts} onFilterChange={setFilteredPosts} />}
 
-          <TabsContent value="feed" className="space-y-4">
-            {FEED_POSTS.map((post, idx) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className="bg-white/5 border border-white/10 rounded-xl p-6"
-              >
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center">
-                    <span className="font-bold">{post.user[0]}</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold">{post.user}</span>
-                      <span className="text-xs text-white/40">{post.time}</span>
-                    </div>
-                    <p className="text-white/80">{post.content}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6 pt-4 border-t border-white/10">
-                  <button className="flex items-center gap-2 text-sm text-white/60 hover:text-[#FF1493] transition-colors">
-                    <Heart className="w-4 h-4" />
-                    <span>{post.likes}</span>
-                  </button>
-                  <button className="flex items-center gap-2 text-sm text-white/60 hover:text-[#00D9FF] transition-colors">
-                    <MessageCircle className="w-4 h-4" />
-                    <span>{post.comments}</span>
-                  </button>
-                  <button className="flex items-center gap-2 text-sm text-white/60 hover:text-[#FFEB3B] transition-colors">
-                    <Share2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </TabsContent>
-
-          <TabsContent value="trending">
-            <div className="text-center py-20">
-              <TrendingUp className="w-16 h-16 text-white/20 mx-auto mb-4" />
-              <p className="text-white/40">Trending posts coming soon</p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="friends">
+        {/* Feed */}
+        <div className="space-y-4">
+          {filteredPosts.length === 0 ? (
             <div className="text-center py-20">
               <Users className="w-16 h-16 text-white/20 mx-auto mb-4" />
-              <p className="text-white/40">Friends feature coming soon</p>
+              <p className="text-white/40 text-lg mb-2">No posts yet</p>
+              <p className="text-white/60 text-sm">Be the first to share something!</p>
             </div>
-          </TabsContent>
-        </Tabs>
+          ) : (
+            filteredPosts.map((post, idx) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                index={idx}
+                userHasLiked={userLikes.some(l => l.post_id === post.id)}
+                onLike={(postId) => user && likeMutation.mutate(postId)}
+                onComment={(postId) => toast.info('Comments coming soon')}
+                onShare={(postId) => {
+                  navigator.clipboard.writeText(window.location.href);
+                  toast.success('Link copied!');
+                }}
+              />
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
