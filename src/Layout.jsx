@@ -3,6 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { Home, Globe as GlobeIcon, Map, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X, MessageCircle, Calendar as CalendarIcon, MapPin, TrendingUp, Bookmark } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import PanicButton from '@/components/safety/PanicButton';
+import Gatekeeper from '@/components/auth/Gatekeeper';
 
 const NAV_ITEMS = [
   { name: 'Home', icon: Home, path: 'Home' },
@@ -44,7 +46,8 @@ export default function Layout({ children, currentPageName }) {
   const isGlobePage = currentPageName === 'Globe';
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <Gatekeeper>
+      <div className="min-h-screen bg-black text-white">
       {!isGlobePage && (
         <>
           {/* Mobile Header */}
@@ -135,6 +138,10 @@ export default function Layout({ children, currentPageName }) {
       <div className={isGlobePage ? '' : 'md:ml-56 pt-14 md:pt-0'}>
         {children}
       </div>
-    </div>
-  );
-}
+
+      {/* Panic Button */}
+      {user && <PanicButton />}
+      </div>
+      </Gatekeeper>
+      );
+      }

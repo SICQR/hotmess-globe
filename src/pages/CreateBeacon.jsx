@@ -40,7 +40,15 @@ export default function CreateBeacon() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Beacon.create(data),
+    mutationFn: (data) => {
+      // Apply location privacy for non-Care beacons
+      if (data.mode !== 'care' && data.lat && data.lng) {
+        const snapped = snapToGrid(data.lat, data.lng);
+        data.lat = snapped.lat;
+        data.lng = snapped.lng;
+      }
+      return base44.entities.Beacon.create(data);
+    },
     onSuccess: (newBeacon) => {
       queryClient.invalidateQueries(['beacons']);
       toast.success('Event created and live on all views!');
