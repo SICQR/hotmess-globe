@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import HandshakeButton from '../components/social/HandshakeButton';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -189,13 +190,21 @@ export default function Profile() {
               </div>
             </div>
             {!isOwnProfile && currentUser && (
-              <Button
-                onClick={() => isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}
-                className={isFollowing ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-[#FF1493] hover:bg-[#FF1493]/90 text-black'}
-              >
-                {isFollowing ? <UserMinus className="w-4 h-4 mr-2" /> : <UserPlus className="w-4 h-4 mr-2" />}
-                {isFollowing ? 'Unfollow' : 'Follow'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}
+                  variant="outline"
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  {isFollowing ? <UserMinus className="w-4 h-4 mr-2" /> : <UserPlus className="w-4 h-4 mr-2" />}
+                  {isFollowing ? 'Unfollow' : 'Follow'}
+                </Button>
+                <HandshakeButton
+                  targetUser={profileUser}
+                  currentUser={currentUser}
+                  className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black"
+                />
+              </div>
             )}
           </div>
         </motion.div>
