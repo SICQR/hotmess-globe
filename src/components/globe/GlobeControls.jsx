@@ -293,6 +293,44 @@ export default function GlobeControls({
           })}
         </div>
       </motion.div>
+
+      {/* Activity Visibility Toggle */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.6 }}
+        className="rounded-2xl bg-black/90 border border-white/10 backdrop-blur-xl p-3"
+      >
+        <div className="text-[8px] tracking-[0.4em] text-white/40 font-medium uppercase px-2 mb-2">
+          My Activity
+        </div>
+        <Button
+          onClick={onActivityVisibilityToggle}
+          variant="ghost"
+          className={`
+            w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all
+            ${activityVisibility 
+              ? 'bg-[#00D9FF]/20 border border-[#00D9FF]/40 text-[#00D9FF]' 
+              : 'bg-white/5 border border-white/10 text-white/50'
+            }
+          `}
+        >
+          <span className="text-[10px] tracking-[0.25em] font-semibold uppercase">
+            {activityVisibility ? 'Visible' : 'Hidden'}
+          </span>
+          {activityVisibility ? (
+            <Eye className="w-4 h-4" />
+          ) : (
+            <EyeOff className="w-4 h-4" />
+          )}
+        </Button>
+        <div className="text-[8px] text-white/30 mt-2 px-2">
+          {activityVisibility 
+            ? 'Others can see your activity' 
+            : 'Your activity is private'
+          }
+        </div>
+      </motion.div>
     </div>
   );
 }
