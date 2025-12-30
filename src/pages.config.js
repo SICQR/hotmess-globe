@@ -6,6 +6,7 @@ import Chat from './pages/Chat';
 import Community from './pages/Community';
 import CreateBeacon from './pages/CreateBeacon';
 import EditBeacon from './pages/EditBeacon';
+import EditProfile from './pages/EditProfile';
 import ExperienceMockups from './pages/ExperienceMockups';
 import Globe from './pages/Globe';
 import Home from './pages/Home';
@@ -21,7 +22,6 @@ import Profile from './pages/Profile';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
-import EditProfile from './pages/EditProfile';
 import __Layout from './Layout.jsx';
 
 
@@ -34,6 +34,7 @@ export const PAGES = {
     "Community": Community,
     "CreateBeacon": CreateBeacon,
     "EditBeacon": EditBeacon,
+    "EditProfile": EditProfile,
     "ExperienceMockups": ExperienceMockups,
     "Globe": Globe,
     "Home": Home,
@@ -49,7 +50,6 @@ export const PAGES = {
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
-    "EditProfile": EditProfile,
 }
 
 export const pagesConfig = {

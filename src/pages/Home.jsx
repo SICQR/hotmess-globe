@@ -1,21 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { Zap, MapPin, TrendingUp, Users, ArrowRight, Globe, Flame } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import AIRecommendations from '../components/recommendations/AIRecommendations';
+import LiveGlobe3D from '../components/globe/LiveGlobe3D';
+import OSHud from '../components/home/OSHud';
+import RadioPlayer from '../components/home/RadioPlayer';
+import RightNowOverlay from '../components/home/RightNowOverlay';
 
 export default function Home() {
-  const [user, setUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showRightNow, setShowRightNow] = useState(false);
+
+  const { data: recentBeacons = [] } = useQuery({
+    queryKey: ['recent-beacons'],
+    queryFn: async () => {
+      const beacons = await base44.entities.Beacon.filter({ active: true }, '-created_date', 20);
+      return beacons;
+    }
+  });
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list()
+  });
+
+  // Simulate "active now" users - in production, this would check last_active timestamp
+  const activeUsers = allUsers
+    .filter(u => u.xp && u.xp > 0)
+    .slice(0, 12);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const currentUser = await base44.auth.me();
-        setUser(currentUser);
+        const user = await base44.auth.me();
+        setCurrentUser(user);
       } catch (error) {
         console.error('Failed to fetch user:', error);
       }
@@ -23,184 +45,98 @@ export default function Home() {
     fetchUser();
   }, []);
 
-  const { data: recentBeacons = [] } = useQuery({
-    queryKey: ['recent-beacons'],
-    queryFn: () => base44.entities.Beacon.filter({ active: true }, '-created_date', 6),
-  });
-
-  const xp = user?.xp || 0;
-  const level = Math.floor(xp / 1000) + 1;
-  const xpToNextLevel = (level * 1000) - xp;
-  const xpProgress = ((xp % 1000) / 1000) * 100;
+  const handleBeaconClick = (beacon) => {
+    window.location.href = createPageUrl(`BeaconDetail?id=${beacon.id}`);
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Hero Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-2">
-            Welcome to <span className="text-[#FF1493]">HOTMESS</span>
-          </h1>
-          <p className="text-white/60 text-lg">The nightlife OS for queer cities</p>
-        </motion.div>
+    <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden">
+      {/* OS HUD */}
+      <OSHud user={currentUser} onModuleChange={(id) => {
+        if (id === 'now') setShowRightNow(true);
+      }} />
 
-        {/* XP Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/40 rounded-2xl p-6 mb-6"
-        >
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Zap className="w-5 h-5 text-[#FF1493]" />
-                <span className="text-sm text-white/60 uppercase tracking-wider">Your XP</span>
-              </div>
-              <div className="text-3xl font-black">{xp.toLocaleString()} XP</div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-white/60 uppercase tracking-wider mb-1">Level</div>
-              <div className="text-3xl font-black text-[#FF1493]">{level}</div>
-            </div>
-          </div>
-          <div className="mb-2">
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-[#FF1493] to-[#B026FF]"
-                style={{ width: `${xpProgress}%` }}
-              />
-            </div>
-          </div>
-          <p className="text-xs text-white/40">
-            {xpToNextLevel} XP to level {level + 1}
-          </p>
-        </motion.div>
+      {/* Main Content - Globe Background */}
+      <div className="fixed inset-0 pt-16 pb-20">
+        <LiveGlobe3D
+          beacons={recentBeacons}
+          onBeaconClick={handleBeaconClick}
+          layers={{ pins: true, heat: true, trails: false, cities: true }}
+        />
+      </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Link to={createPageUrl('Globe')}>
+      {/* Overlay Content */}
+      <div className="relative z-10 pt-24 pb-32 pointer-events-none">
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Hero Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-black/60 backdrop-blur-xl border-2 border-[#FF1493] rounded-none p-8 mb-6 max-w-2xl pointer-events-auto"
+          >
+            <div className="text-sm text-[#FF1493] font-mono uppercase tracking-wider mb-2">
+              NIGHT PULSE CONTROL
+            </div>
+            <h1 className="text-5xl font-black uppercase tracking-tight mb-4">
+              LONDON<br />
+              <span className="text-[#FF1493]">AFTER DARK</span>
+            </h1>
+            <p className="text-white/80 mb-6 leading-relaxed">
+              Real-time nightlife intelligence. Track events, connect with your tribe, 
+              and navigate the city's underground pulse. Industrial brutalism meets 
+              nocturnal connectivity.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link to={createPageUrl('Beacons')}>
+                <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase tracking-wider rounded-none">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  EXPLORE BEACONS
+                </Button>
+              </Link>
+              <Button 
+                onClick={() => setShowRightNow(true)}
+                variant="outline"
+                className="border-2 border-white/20 text-white hover:bg-white/10 font-black uppercase tracking-wider rounded-none"
+              >
+                VIEW RIGHT NOW →
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Stats Cards */}
+          {currentUser && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              whileHover={{ scale: 1.05 }}
-              className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all cursor-pointer"
+              className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl pointer-events-auto"
             >
-              <Globe className="w-8 h-8 text-[#FF1493] mb-3" />
-              <div className="text-sm font-semibold uppercase tracking-wider">Explore Globe</div>
+              <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-none p-4">
+                <div className="text-xs text-white/40 uppercase tracking-wider font-mono mb-1">ACTIVE</div>
+                <div className="text-2xl font-black text-[#FF1493]">{activeUsers.length}</div>
+              </div>
+              <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-none p-4">
+                <div className="text-xs text-white/40 uppercase tracking-wider font-mono mb-1">LIVE BEACONS</div>
+                <div className="text-2xl font-black text-[#FF1493]">{recentBeacons.length}</div>
+              </div>
+              <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-none p-4 col-span-2 md:col-span-1">
+                <div className="text-xs text-white/40 uppercase tracking-wider font-mono mb-1">YOUR XP</div>
+                <div className="text-2xl font-black text-[#FFEB3B]">{currentUser.xp || 0}</div>
+              </div>
             </motion.div>
-          </Link>
-
-          <Link to={createPageUrl('Scan')}>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              whileHover={{ scale: 1.05 }}
-              className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all cursor-pointer"
-            >
-              <Zap className="w-8 h-8 text-[#FFEB3B] mb-3" />
-              <div className="text-sm font-semibold uppercase tracking-wider">Scan Beacon</div>
-            </motion.div>
-          </Link>
-
-          <Link to={createPageUrl('Beacons')}>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              whileHover={{ scale: 1.05 }}
-              className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all cursor-pointer"
-            >
-              <MapPin className="w-8 h-8 text-[#00D9FF] mb-3" />
-              <div className="text-sm font-semibold uppercase tracking-wider">Browse Events</div>
-            </motion.div>
-          </Link>
-
-          <Link to={createPageUrl('Marketplace')}>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-              whileHover={{ scale: 1.05 }}
-              className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all cursor-pointer"
-            >
-              <TrendingUp className="w-8 h-8 text-[#39FF14] mb-3" />
-              <div className="text-sm font-semibold uppercase tracking-wider">Marketplace</div>
-            </motion.div>
-          </Link>
+          )}
         </div>
-
-        {/* AI Recommendations */}
-        {user && recentBeacons.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mb-8"
-          >
-            <AIRecommendations user={user} beacons={recentBeacons} limit={3} />
-          </motion.div>
-        )}
-
-        {/* Recent Beacons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Flame className="w-5 h-5 text-[#FF1493]" />
-              <h2 className="text-2xl font-black uppercase tracking-tight">Live Now</h2>
-            </div>
-            <Link to={createPageUrl('Beacons')}>
-              <Button variant="ghost" className="text-white/60 hover:text-white">
-                View All <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentBeacons.map((beacon, idx) => (
-              <Link key={beacon.id} to={createPageUrl(`BeaconDetail?id=${beacon.id}`)}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + idx * 0.05 }}
-                  whileHover={{ scale: 1.02 }}
-                  className="bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 transition-all cursor-pointer"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <span
-                      className="px-2 py-1 rounded text-xs font-bold uppercase tracking-wider"
-                      style={{
-                        backgroundColor: beacon.kind === 'hookup' ? '#FF073A' : '#FF1493',
-                        color: '#000'
-                      }}
-                    >
-                      {beacon.kind}
-                    </span>
-                    {beacon.xp_scan && (
-                      <span className="text-xs text-[#FFEB3B] font-bold">+{beacon.xp_scan} XP</span>
-                    )}
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">{beacon.title}</h3>
-                  <div className="flex items-center gap-2 text-sm text-white/60">
-                    <MapPin className="w-4 h-4" />
-                    <span>{beacon.city}</span>
-                  </div>
-                </motion.div>
-              </Link>
-            ))}
-          </div>
-        </motion.div>
       </div>
+
+      {/* Radio Player */}
+      <RadioPlayer />
+
+      {/* Right Now Overlay */}
+      <RightNowOverlay
+        isOpen={showRightNow}
+        onClose={() => setShowRightNow(false)}
+        users={activeUsers}
+      />
     </div>
   );
 }
