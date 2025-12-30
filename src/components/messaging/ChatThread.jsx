@@ -17,7 +17,7 @@ export default function ChatThread({ thread, currentUser, onBack }) {
   const { data: messages = [] } = useQuery({
     queryKey: ['messages', thread.id],
     queryFn: () => base44.entities.Message.filter({ thread_id: thread.id }, 'created_date'),
-    refetchInterval: 2000, // Poll every 2 seconds for new messages
+    refetchInterval: 1500, // Real-time polling for new messages
   });
 
   const { data: allUsers = [] } = useQuery({
@@ -37,10 +37,18 @@ export default function ChatThread({ thread, currentUser, onBack }) {
         read_by: [currentUser.email],
       });
 
-      // Update thread's last message
+      // Update thread's last message and increment unread count for others
+      const newUnreadCount = { ...thread.unread_count };
+      thread.participant_emails.forEach(email => {
+        if (email !== currentUser.email) {
+          newUnreadCount[email] = (newUnreadCount[email] || 0) + 1;
+        }
+      });
+
       await base44.entities.ChatThread.update(thread.id, {
         last_message: data.content,
         last_message_at: new Date().toISOString(),
+        unread_count: newUnreadCount,
       });
 
       return message;
@@ -88,18 +96,29 @@ export default function ChatThread({ thread, currentUser, onBack }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Mark messages as read
+  // Mark messages as read and update thread unread count
   useEffect(() => {
     const unreadMessages = messages.filter(
       m => m.sender_email !== currentUser.email && !m.read_by.includes(currentUser.email)
     );
 
-    unreadMessages.forEach(msg => {
-      base44.entities.Message.update(msg.id, {
-        read_by: [...msg.read_by, currentUser.email],
+    if (unreadMessages.length > 0) {
+      unreadMessages.forEach(msg => {
+        base44.entities.Message.update(msg.id, {
+          read_by: [...msg.read_by, currentUser.email],
+        });
       });
-    });
-  }, [messages, currentUser.email]);
+
+      // Update thread unread count
+      base44.entities.ChatThread.update(thread.id, {
+        unread_count: {
+          ...thread.unread_count,
+          [currentUser.email]: 0,
+        },
+      });
+      queryClient.invalidateQueries(['chat-threads']);
+    }
+  }, [messages, currentUser.email, thread.id]);
 
   const otherParticipants = thread.participant_emails.filter(email => email !== currentUser.email);
   const otherUsers = allUsers.filter(u => otherParticipants.includes(u.email));

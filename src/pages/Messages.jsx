@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { MessageCircle } from 'lucide-react';
 import ChatThread from '../components/messaging/ChatThread';
 import ThreadList from '../components/messaging/ThreadList';
+import GroupChatManager from '../components/messaging/GroupChatManager';
 
 export default function Messages() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -29,6 +30,7 @@ export default function Messages() {
       return allThreads.filter(t => t.participant_emails.includes(currentUser.email));
     },
     enabled: !!currentUser,
+    refetchInterval: 3000, // Real-time polling for new threads
   });
 
   const { data: allUsers = [] } = useQuery({
@@ -63,6 +65,13 @@ export default function Messages() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
+            <div className="mb-4">
+              <GroupChatManager
+                currentUser={currentUser}
+                allUsers={allUsers}
+              />
+            </div>
+            
             <ThreadList
               threads={threads}
               currentUser={currentUser}

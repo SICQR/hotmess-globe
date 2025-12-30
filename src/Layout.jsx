@@ -5,6 +5,7 @@ import { Home, Globe as GlobeIcon, Map, ShoppingBag, Users, Scan, Trophy, Settin
 import { base44 } from '@/api/base44Client';
 import PanicButton from '@/components/safety/PanicButton';
 import Gatekeeper from '@/components/auth/Gatekeeper';
+import NotificationBadge from '@/components/messaging/NotificationBadge';
 
 const NAV_ITEMS = [
   { name: 'Home', icon: Home, path: 'Home' },
@@ -14,7 +15,7 @@ const NAV_ITEMS = [
   { name: 'Beacons', icon: MapPin, path: 'Beacons' },
   { name: 'Marketplace', icon: ShoppingBag, path: 'Marketplace' },
   { name: 'Network', icon: Users, path: 'Network' },
-  { name: 'Messages', icon: MessageCircle, path: 'Messages' },
+  { name: 'Messages', icon: MessageCircle, path: 'Messages', showBadge: true },
   { name: 'AI Chat', icon: MessageCircle, path: 'Chat' },
   { name: 'Organizer', icon: TrendingUp, path: 'OrganizerDashboard' },
   { name: 'Scan', icon: Scan, path: 'Scan' },
@@ -69,7 +70,7 @@ export default function Layout({ children, currentPageName }) {
           {mobileMenuOpen && (
             <div className="md:hidden fixed inset-0 z-40 bg-black/95 backdrop-blur-xl pt-16">
               <div className="flex flex-col gap-1 p-4">
-                {NAV_ITEMS.map(({ name, icon: Icon, path }) => (
+                {NAV_ITEMS.map(({ name, icon: Icon, path, showBadge }) => (
                   <Link
                     key={path}
                     to={createPageUrl(path)}
@@ -82,7 +83,11 @@ export default function Layout({ children, currentPageName }) {
                       }
                     `}
                   >
-                    <Icon className="w-4 h-4" />
+                    {showBadge && user ? (
+                      <NotificationBadge user={user} />
+                    ) : (
+                      <Icon className="w-4 h-4" />
+                    )}
                     <span className="font-semibold uppercase tracking-wider text-xs">{name}</span>
                   </Link>
                 ))}
@@ -99,7 +104,7 @@ export default function Layout({ children, currentPageName }) {
             </div>
 
             <nav className="flex-1 px-2 overflow-y-auto">
-              {NAV_ITEMS.map(({ name, icon: Icon, path }) => (
+              {NAV_ITEMS.map(({ name, icon: Icon, path, showBadge }) => (
                 <Link
                   key={path}
                   to={createPageUrl(path)}
@@ -111,7 +116,11 @@ export default function Layout({ children, currentPageName }) {
                     }
                   `}
                 >
-                  <Icon className="w-4 h-4" />
+                  {showBadge && user ? (
+                    <NotificationBadge user={user} />
+                  ) : (
+                    <Icon className="w-4 h-4" />
+                  )}
                   <span className="font-semibold uppercase tracking-wider text-[10px]">{name}</span>
                 </Link>
               ))}
