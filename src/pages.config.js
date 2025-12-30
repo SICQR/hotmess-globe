@@ -8,6 +8,7 @@ import Community from './pages/Community';
 import Leaderboard from './pages/Leaderboard';
 import Settings from './pages/Settings';
 import CreateBeacon from './pages/CreateBeacon';
+import Chat from './pages/Chat';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +23,7 @@ export const PAGES = {
     "Leaderboard": Leaderboard,
     "Settings": Settings,
     "CreateBeacon": CreateBeacon,
+    "Chat": Chat,
 }
 
 export const pagesConfig = {

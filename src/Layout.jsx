@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, Map, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X } from 'lucide-react';
+import { Home, Globe as GlobeIcon, Map, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X, MessageCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const NAV_ITEMS = [
   { name: 'Home', icon: Home, path: 'Home' },
   { name: 'Globe', icon: GlobeIcon, path: 'Globe' },
   { name: 'Beacons', icon: Map, path: 'Beacons' },
+  { name: 'AI Chat', icon: MessageCircle, path: 'Chat' },
   { name: 'Marketplace', icon: ShoppingBag, path: 'Marketplace' },
   { name: 'Community', icon: Users, path: 'Community' },
   { name: 'Scan', icon: Scan, path: 'Scan' },
