@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import NightPulseGlobe from '../components/globe/NightPulseGlobe';
+import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import GlobeControls from '../components/globe/GlobeControls';
 import GlobeDataPanel from '../components/globe/GlobeDataPanel';
 
@@ -354,13 +354,10 @@ export default function GlobePage() {
 
       {/* Globe */}
       <div className="relative w-full h-screen">
-        <NightPulseGlobe
-          mapboxToken={mapboxToken}
+        <EnhancedGlobe3D
           beacons={filteredBeacons}
           cities={DEMO_CITIES}
-          activeLayer={activeLayer}
           onBeaconClick={handleBeaconClick}
-          onCityClick={handleCityClick}
           className="w-full h-full"
         />
       </div>
