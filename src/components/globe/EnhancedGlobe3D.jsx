@@ -161,6 +161,7 @@ export default function EnhancedGlobe3D({
       mesh.position.copy(pos);
       mesh.userData = { type: 'beacon', beacon };
       globe.add(mesh);
+      beaconMeshes.push(mesh);
 
       // Glow sprite
       const spriteMat = new THREE.SpriteMaterial({
@@ -241,6 +242,8 @@ export default function EnhancedGlobe3D({
       previousMousePosition = { x: e.clientX, y: e.clientY };
     };
 
+    const beaconMeshes = [];
+
     const onMouseMove = (e) => {
       if (isDragging) {
         const deltaX = e.clientX - previousMousePosition.x;
@@ -252,24 +255,32 @@ export default function EnhancedGlobe3D({
         velocity.y = deltaY * 0.005;
         previousMousePosition = { x: e.clientX, y: e.clientY };
       } else {
-        // Arc hover detection
         const rect = renderer.domElement.getBoundingClientRect();
         const mouse = new THREE.Vector2(
           ((e.clientX - rect.left) / rect.width) * 2 - 1,
           -((e.clientY - rect.top) / rect.height) * 2 + 1
         );
-        
+
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(mouse, camera);
+
+        // Check beacons first
+        const beaconIntersects = raycaster.intersectObjects(beaconMeshes);
+        if (beaconIntersects.length > 0) {
+          renderer.domElement.style.cursor = 'pointer';
+          return;
+        }
+
+        // Then check arcs
         const intersects = raycaster.intersectObjects(arcs);
-        
+
         if (hoveredArcRef.current && intersects.length === 0) {
           hoveredArcRef.current.userData.material.uniforms.uHover.value = 0.0;
           hoveredArcRef.current = null;
           renderer.domElement.style.cursor = 'grab';
           setArcTooltip(null);
         }
-        
+
         if (intersects.length > 0) {
           const arc = intersects[0].object;
           if (hoveredArcRef.current !== arc) {
@@ -279,7 +290,7 @@ export default function EnhancedGlobe3D({
             hoveredArcRef.current = arc;
             arc.userData.material.uniforms.uHover.value = 1.0;
             renderer.domElement.style.cursor = 'pointer';
-            
+
             setArcTooltip({
               x: e.clientX,
               y: e.clientY,
@@ -294,12 +305,36 @@ export default function EnhancedGlobe3D({
               to: arc.userData.to
             });
           }
+        } else {
+          renderer.domElement.style.cursor = 'grab';
         }
       }
     };
 
     const onMouseUp = () => {
       isDragging = false;
+    };
+
+    const onClick = (e) => {
+      if (Math.abs(e.clientX - previousMousePosition.x) > 5 || 
+          Math.abs(e.clientY - previousMousePosition.y) > 5) {
+        return; // Was dragging, not clicking
+      }
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
+      );
+
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(beaconMeshes);
+
+      if (intersects.length > 0 && onBeaconClick) {
+        const beacon = intersects[0].object.userData.beacon;
+        onBeaconClick(beacon);
+      }
     };
 
     const onWheel = (e) => {
@@ -309,6 +344,7 @@ export default function EnhancedGlobe3D({
 
     renderer.domElement.addEventListener('mousedown', onMouseDown);
     renderer.domElement.addEventListener('mousemove', onMouseMove);
+    renderer.domElement.addEventListener('click', onClick);
     window.addEventListener('mouseup', onMouseUp);
     renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
 
@@ -357,6 +393,7 @@ export default function EnhancedGlobe3D({
       window.removeEventListener('resize', handleResize);
       renderer.domElement.removeEventListener('mousedown', onMouseDown);
       renderer.domElement.removeEventListener('mousemove', onMouseMove);
+      renderer.domElement.removeEventListener('click', onClick);
       window.removeEventListener('mouseup', onMouseUp);
       renderer.domElement.removeEventListener('wheel', onWheel);
       mount.removeChild(renderer.domElement);

@@ -260,6 +260,7 @@ export default function GlobePage() {
 
   const handleBeaconClick = useCallback((beacon) => {
     setSelectedBeacon(beacon);
+    setShowPanel(true); // Auto-open panel on mobile when beacon clicked
   }, []);
 
   const handleCityClick = useCallback((city) => {
@@ -268,6 +269,9 @@ export default function GlobePage() {
 
   const handleClose = useCallback(() => {
     setSelectedBeacon(null);
+    if (window.innerWidth < 768) {
+      setShowPanel(false); // Close panel on mobile when closing beacon
+    }
   }, []);
 
   return (
