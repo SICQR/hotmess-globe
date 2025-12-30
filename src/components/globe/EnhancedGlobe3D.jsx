@@ -302,42 +302,42 @@ export default function EnhancedGlobe3D({
     }
 
     // Activity streams layer - animated arcs
-    const arcMaterial = showActivity ? new THREE.ShaderMaterial({
-      uniforms: {
-        uTime: { value: 0 },
-        uColor: { value: new THREE.Color(0xff1493) },
-        uHover: { value: 0.0 }
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform float uTime;
-        uniform vec3 uColor;
-        uniform float uHover;
-        varying vec2 vUv;
-        
-        void main() {
-          float progress = mod(uTime * 0.5 + vUv.x * 2.0, 1.0);
-          float glow = smoothstep(0.0, 0.1, progress) * smoothstep(0.3, 0.2, progress);
-          float fade = (1.0 - vUv.x) * 0.8;
-          float baseAlpha = 0.4 + uHover * 0.4;
-          float alpha = (baseAlpha + glow * 0.6) * fade;
-          gl_FragColor = vec4(uColor, alpha);
-        }
-      `,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    });
-
     const arcs = [];
     if (showActivity && beacons.length >= 2) {
+      const arcMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0 },
+          uColor: { value: new THREE.Color(0xff1493) },
+          uHover: { value: 0.0 }
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform float uTime;
+          uniform vec3 uColor;
+          uniform float uHover;
+          varying vec2 vUv;
+          
+          void main() {
+            float progress = mod(uTime * 0.5 + vUv.x * 2.0, 1.0);
+            float glow = smoothstep(0.0, 0.1, progress) * smoothstep(0.3, 0.2, progress);
+            float fade = (1.0 - vUv.x) * 0.8;
+            float baseAlpha = 0.4 + uHover * 0.4;
+            float alpha = (baseAlpha + glow * 0.6) * fade;
+            gl_FragColor = vec4(uColor, alpha);
+          }
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+
       const sorted = [...beacons].sort((a, b) => (a.ts || 0) - (b.ts || 0));
       const recent = sorted.slice(-12);
       
@@ -353,8 +353,6 @@ export default function EnhancedGlobe3D({
         globe.add(tube);
         arcs.push(tube);
       }
-    } else if (!showActivity) {
-      // Clear arc material if activity layer is off
     }
 
     // Interaction
