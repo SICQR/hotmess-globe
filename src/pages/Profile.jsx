@@ -11,6 +11,9 @@ import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import HandshakeButton from '../components/social/HandshakeButton';
+import QuickActions from '../components/profile/QuickActions';
+import MutualConnections from '../components/profile/MutualConnections';
+import ProfileStats from '../components/profile/ProfileStats';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -260,21 +263,11 @@ export default function Profile() {
               </div>
             </div>
             {!isOwnProfile && currentUser && (
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}
-                  variant="outline"
-                  className="border-white/20 text-white hover:bg-white/10"
-                >
-                  {isFollowing ? <UserMinus className="w-4 h-4 mr-2" /> : <UserPlus className="w-4 h-4 mr-2" />}
-                  {isFollowing ? 'Unfollow' : 'Follow'}
-                </Button>
-                <HandshakeButton
-                  targetUser={profileUser}
-                  currentUser={currentUser}
-                  className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black"
-                />
-              </div>
+              <QuickActions 
+                profileUser={profileUser}
+                currentUser={currentUser}
+                isOwnProfile={isOwnProfile}
+              />
             )}
           </div>
 
@@ -343,6 +336,39 @@ export default function Profile() {
             </div>
           )}
         </motion.div>
+
+        {/* Stats Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-6"
+        >
+          <ProfileStats
+            xp={profileUser.xp}
+            level={level}
+            followersCount={followers.length}
+            followingCount={following.length}
+            checkInsCount={checkIns.length}
+            achievementsCount={achievements.length}
+            city={profileUser.city}
+          />
+        </motion.div>
+
+        {/* Mutual Connections */}
+        {!isOwnProfile && currentUser && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12 }}
+            className="mb-6"
+          >
+            <MutualConnections
+              profileUserEmail={profileUser.email}
+              currentUserEmail={currentUser.email}
+            />
+          </motion.div>
+        )}
 
         {/* Skills */}
         {profileUser.skills && profileUser.skills.length > 0 && (
