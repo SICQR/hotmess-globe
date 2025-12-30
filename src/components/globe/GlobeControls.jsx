@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Flame, Activity, Building2 } from 'lucide-react';
+import { MapPin, Flame, Activity, Building2, Zap, Clock } from 'lucide-react';
+import { Slider } from "@/components/ui/slider";
 
 const LAYER_OPTIONS = [
   { id: 'pins', label: 'BEACONS', icon: MapPin },
@@ -18,12 +19,35 @@ const MODE_OPTIONS = [
   { id: 'care', label: 'CARE', color: '#39FF14' },
 ];
 
+const BEACON_TYPE_OPTIONS = [
+  { id: 'event', label: 'EVENT', color: '#FF1493' },
+  { id: 'venue', label: 'VENUE', color: '#FF1493' },
+  { id: 'hookup', label: 'HOOKUP', color: '#FF073A' },
+  { id: 'drop', label: 'DROP', color: '#FF6B35' },
+  { id: 'popup', label: 'POPUP', color: '#B026FF' },
+  { id: 'private', label: 'PRIVATE', color: '#00D9FF' },
+];
+
+const RECENCY_OPTIONS = [
+  { id: 'all', label: 'ALL TIME' },
+  { id: '5m', label: '5 MIN', minutes: 5 },
+  { id: '15m', label: '15 MIN', minutes: 15 },
+  { id: '30m', label: '30 MIN', minutes: 30 },
+  { id: '1h', label: '1 HOUR', minutes: 60 },
+];
+
 export default function GlobeControls({
   activeLayer,
   onLayerChange,
   activeMode,
   onModeChange,
-  liveCount = 0
+  liveCount = 0,
+  beaconType,
+  onBeaconTypeChange,
+  minIntensity = 0,
+  onMinIntensityChange,
+  recencyFilter = 'all',
+  onRecencyFilterChange
 }) {
   return (
     <div className="absolute top-6 left-6 z-20 flex flex-col gap-4">

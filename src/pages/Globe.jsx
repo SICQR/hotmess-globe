@@ -212,17 +212,51 @@ export default function GlobePage() {
   const [selectedBeacon, setSelectedBeacon] = useState(null);
   const [showTokenInput, setShowTokenInput] = useState(false);
   const [tokenInput, setTokenInput] = useState('');
+  const [beaconType, setBeaconType] = useState(null);
+  const [minIntensity, setMinIntensity] = useState(0);
+  const [recencyFilter, setRecencyFilter] = useState('all');
 
   // Get Mapbox token from localStorage or environment
   const [mapboxToken, setMapboxToken] = useState(() => {
     return localStorage.getItem('mapbox_token') || import.meta.env.VITE_MAPBOX_TOKEN || '';
   });
 
-  // Filter beacons by mode (must be before conditional return)
+  // Filter beacons by mode, type, intensity, and recency (must be before conditional return)
   const filteredBeacons = useMemo(() => {
-    if (!activeMode) return DEMO_BEACONS;
-    return DEMO_BEACONS.filter(b => b.mode === activeMode);
-  }, [activeMode]);
+    let filtered = DEMO_BEACONS;
+
+    // Filter by mode
+    if (activeMode) {
+      filtered = filtered.filter(b => b.mode === activeMode);
+    }
+
+    // Filter by beacon type (kind)
+    if (beaconType) {
+      filtered = filtered.filter(b => b.kind === beaconType);
+    }
+
+    // Filter by minimum intensity
+    if (minIntensity > 0) {
+      filtered = filtered.filter(b => (b.intensity || 0) >= minIntensity);
+    }
+
+    // Filter by recency
+    if (recencyFilter !== 'all') {
+      const recencyMinutes = {
+        '5m': 5,
+        '15m': 15,
+        '30m': 30,
+        '1h': 60
+      }[recencyFilter];
+
+      if (recencyMinutes) {
+        const cutoffTime = Date.now() - recencyMinutes * 60 * 1000;
+        filtered = filtered.filter(b => (b.ts || 0) >= cutoffTime);
+      }
+    }
+
+    return filtered;
+  }, [activeMode, beaconType, minIntensity, recencyFilter]);
 
   // Sort by most recent
   const recentActivity = useMemo(() => {
@@ -294,6 +328,12 @@ export default function GlobePage() {
         onLayerChange={setActiveLayer}
         activeMode={activeMode}
         onModeChange={setActiveMode}
+        beaconType={beaconType}
+        onBeaconTypeChange={setBeaconType}
+        minIntensity={minIntensity}
+        onMinIntensityChange={setMinIntensity}
+        recencyFilter={recencyFilter}
+        onRecencyFilterChange={setRecencyFilter}
         liveCount={filteredBeacons.length}
       />
 
