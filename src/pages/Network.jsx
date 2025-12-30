@@ -115,17 +115,49 @@ export default function Network() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-3 mb-8">
-          <Users className="w-8 h-8 text-[#39FF14]" />
-          <div>
-            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight">
-              Network
-            </h1>
-            <p className="text-white/60">{convicts.length} Convicts • {mySquads.length} Squads</p>
+    <div className="min-h-screen bg-black text-white">
+      {/* Hero Banner with Editorial Image */}
+      <div className="relative h-[60vh] md:h-[70vh] overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: 'url(https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1920&q=80)',
+            filter: 'brightness(0.4) contrast(1.2)'
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+        
+        <div className="relative h-full flex items-end pb-12 md:pb-20 px-4 md:px-8">
+          <div className="max-w-7xl mx-auto w-full">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <Users className="w-10 h-10 md:w-12 md:h-12 text-[#39FF14]" />
+                <div className="h-12 w-1 bg-[#39FF14]" />
+                <div>
+                  <div className="text-xs md:text-sm uppercase tracking-[0.3em] text-[#39FF14] font-bold">
+                    YOUR TRIBE
+                  </div>
+                  <div className="text-white/60 text-xs md:text-sm">
+                    {convicts.length} CONVICTS • {mySquads.length} SQUADS
+                  </div>
+                </div>
+              </div>
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tight leading-none">
+                NETWORK
+              </h1>
+              <p className="text-lg md:text-xl text-white/70 max-w-2xl font-light">
+                Connect with the underground. Find your crew. Build your collective.
+              </p>
+            </motion.div>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-4 md:p-8 -mt-8">
 
         <Tabs defaultValue="convicts">
           <TabsList className="bg-white/5 border border-white/10 mb-6">
@@ -151,33 +183,50 @@ export default function Network() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-gradient-to-br from-[#39FF14]/10 to-[#00D9FF]/10 border-2 border-[#39FF14] rounded-none p-5"
+                  className="group relative overflow-hidden border-2 border-[#39FF14] rounded-none"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-[#39FF14] to-[#00D9FF] flex items-center justify-center text-black text-xl font-black">
-                        {convict.full_name?.[0] || 'C'}
-                      </div>
-                      <div>
-                        <h3 className="font-black text-lg">{convict.full_name}</h3>
-                        <div className="flex items-center gap-2 text-xs text-[#39FF14]">
-                          <Zap className="w-3 h-3" />
-                          <span>LVL {Math.floor((convict.xp || 0) / 1000) + 1}</span>
-                        </div>
+                  {/* Background Image */}
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                    style={{
+                      backgroundImage: `url(https://images.unsplash.com/photo-${1500000000000 + idx}?w=400&h=400&q=80&fit=crop)`,
+                      filter: 'brightness(0.3) grayscale(0.8)'
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent" />
+                  
+                  {/* Content Overlay */}
+                  <div className="relative p-5 h-full flex flex-col justify-end min-h-[300px]">
+                    <div className="mb-auto flex justify-end">
+                      <div className="px-3 py-1 bg-[#39FF14] text-black font-black text-xs uppercase tracking-wider">
+                        LVL {Math.floor((convict.xp || 0) / 1000) + 1}
                       </div>
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Link to={createPageUrl(`Profile?email=${convict.email}`)} className="flex-1">
-                      <Button variant="outline" className="w-full border-[#39FF14] text-[#39FF14] hover:bg-[#39FF14]/10 font-black rounded-none">
-                        PROFILE
-                      </Button>
-                    </Link>
-                    <Link to={createPageUrl(`Messages?to=${convict.email}`)} className="flex-1">
-                      <Button className="w-full bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black rounded-none">
-                        TERMINAL
-                      </Button>
-                    </Link>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <h3 className="text-3xl font-black uppercase leading-tight mb-1">
+                          {convict.full_name}
+                        </h3>
+                        <div className="flex items-center gap-2 text-sm text-[#39FF14]">
+                          <Zap className="w-4 h-4" />
+                          <span className="font-bold">{convict.xp || 0} XP</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Link to={createPageUrl(`Profile?email=${convict.email}`)} className="flex-1">
+                          <Button variant="outline" className="w-full border-[#39FF14] text-[#39FF14] hover:bg-[#39FF14]/10 font-black rounded-none">
+                            PROFILE
+                          </Button>
+                        </Link>
+                        <Link to={createPageUrl(`Messages?to=${convict.email}`)} className="flex-1">
+                          <Button className="w-full bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black rounded-none">
+                            MSG
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -200,22 +249,48 @@ export default function Network() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="border-2 rounded-none p-5"
+                    className="group relative overflow-hidden border-2 rounded-none min-h-[280px]"
                     style={{ borderColor: SQUAD_COLORS[squad.interest] }}
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-black text-xl mb-1">{squad.name}</h3>
-                        <p className="text-sm text-white/60 mb-2">{squad.description}</p>
-                        <div className="flex items-center gap-2 text-xs uppercase tracking-wider" style={{ color: SQUAD_COLORS[squad.interest] }}>
-                          <Radio className="w-3 h-3" />
-                          <span>{squad.interest}</span>
+                    {/* Background Image */}
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                      style={{
+                        backgroundImage: `url(https://images.unsplash.com/photo-${1540000000000 + idx * 10000}?w=800&h=400&q=80&fit=crop)`,
+                        filter: 'brightness(0.25) saturate(1.2)'
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
+                    <div 
+                      className="absolute inset-0 opacity-20"
+                      style={{ 
+                        background: `linear-gradient(135deg, ${SQUAD_COLORS[squad.interest]}20, transparent)`
+                      }}
+                    />
+                    
+                    {/* Content Overlay */}
+                    <div className="relative p-6 h-full flex flex-col justify-between">
+                      <div className="flex justify-between items-start">
+                        <div 
+                          className="px-3 py-1.5 font-black text-xs uppercase tracking-[0.2em] text-black"
+                          style={{ backgroundColor: SQUAD_COLORS[squad.interest] }}
+                        >
+                          {squad.interest}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-white/80">
+                          <Users className="w-4 h-4" />
+                          <span className="font-bold">{members.length}</span>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-white/60">
-                      <Users className="w-4 h-4" />
-                      <span>{members.length} members</span>
+                      
+                      <div>
+                        <h3 className="text-3xl md:text-4xl font-black uppercase leading-tight mb-2">
+                          {squad.name}
+                        </h3>
+                        <p className="text-sm text-white/70 leading-relaxed">
+                          {squad.description}
+                        </p>
+                      </div>
                     </div>
                   </motion.div>
                 );
