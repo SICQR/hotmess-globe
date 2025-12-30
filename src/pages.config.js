@@ -21,6 +21,7 @@ import Profile from './pages/Profile';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
+import EditProfile from './pages/EditProfile';
 import __Layout from './Layout.jsx';
 
 
@@ -48,6 +49,7 @@ export const PAGES = {
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
+    "EditProfile": EditProfile,
 }
 
 export const pagesConfig = {

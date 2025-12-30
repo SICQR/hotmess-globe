@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { User, MapPin, Zap, Users, UserPlus, UserMinus, Calendar, Award, Camera, Star, Pin, Trophy, Shield } from 'lucide-react';
+import { User, MapPin, Zap, Users, UserPlus, UserMinus, Calendar, Award, Camera, Star, Pin, Trophy, Shield, Edit, Music, Sparkles, Lock, Instagram, Twitter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
@@ -91,6 +91,21 @@ export default function Profile() {
   const isFollowing = following.some(f => f.following_email === userEmail);
   const isOwnProfile = currentUser?.email === userEmail;
 
+  // Check if current user has handshake with profile user
+  const { data: handshakeExists } = useQuery({
+    queryKey: ['handshake-check', currentUser?.email, userEmail],
+    queryFn: async () => {
+      if (!currentUser || isOwnProfile) return true;
+      const sessions = await base44.entities.BotSession.list();
+      return sessions.some(s => 
+        ((s.initiator_email === currentUser.email && s.target_email === userEmail) ||
+         (s.initiator_email === userEmail && s.target_email === currentUser.email)) &&
+        s.status === 'accepted'
+      );
+    },
+    enabled: !!currentUser && !!userEmail,
+  });
+
   const followMutation = useMutation({
     mutationFn: () => base44.entities.UserFollow.create({
       follower_email: currentUser.email,
@@ -168,8 +183,41 @@ export default function Profile() {
               {profileUser.full_name?.[0] || 'U'}
             </div>
             <div className="flex-1">
-              <h1 className="text-3xl font-black mb-2">{profileUser.full_name}</h1>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-black">{profileUser.full_name}</h1>
+                {isOwnProfile && (
+                  <Link to={createPageUrl('EditProfile')}>
+                    <Button variant="ghost" size="sm" className="text-[#FF1493]">
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                  </Link>
+                )}
+              </div>
               <p className="text-white/60 mb-4">{profileUser.bio || 'No bio yet'}</p>
+
+              {/* Vibes */}
+              {profileUser.preferred_vibes && profileUser.preferred_vibes.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {profileUser.preferred_vibes.map(vibe => (
+                    <span
+                      key={vibe}
+                      className="px-2 py-1 rounded-lg bg-[#FFEB3B]/20 border border-[#FFEB3B]/40 text-[#FFEB3B] text-xs font-bold uppercase"
+                    >
+                      {vibe}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Music Taste */}
+              {profileUser.music_taste && profileUser.music_taste.length > 0 && (
+                <div className="flex items-start gap-2 mb-3 text-sm">
+                  <Music className="w-4 h-4 text-[#B026FF] flex-shrink-0 mt-0.5" />
+                  <p className="text-white/80">{profileUser.music_taste.join(', ')}</p>
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4 text-[#FFEB3B]" />
@@ -207,6 +255,71 @@ export default function Profile() {
               </div>
             )}
           </div>
+
+          {/* Social Links - Behind Handshake */}
+          {profileUser.social_links && Object.values(profileUser.social_links).some(v => v) && (
+            <div className="mt-4 pt-4 border-t border-white/10">
+              {handshakeExists ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Lock className="w-4 h-4 text-[#00D9FF]" />
+                    <p className="text-xs text-white/40 uppercase">Social Links (Connected)</p>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {profileUser.social_links.instagram && (
+                      <a
+                        href={`https://instagram.com/${profileUser.social_links.instagram.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#833AB4] to-[#E1306C] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
+                      >
+                        <Instagram className="w-4 h-4" />
+                        Instagram
+                      </a>
+                    )}
+                    {profileUser.social_links.twitter && (
+                      <a
+                        href={`https://twitter.com/${profileUser.social_links.twitter.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 bg-black rounded-lg text-white text-sm border border-white/20 hover:bg-white/10 transition-colors"
+                      >
+                        <Twitter className="w-4 h-4" />
+                        Twitter
+                      </a>
+                    )}
+                    {profileUser.social_links.spotify && (
+                      <a
+                        href={profileUser.social_links.spotify.startsWith('http') ? profileUser.social_links.spotify : `https://open.spotify.com/user/${profileUser.social_links.spotify}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 bg-[#1DB954] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
+                      >
+                        <Music className="w-4 h-4" />
+                        Spotify
+                      </a>
+                    )}
+                    {profileUser.social_links.soundcloud && (
+                      <a
+                        href={profileUser.social_links.soundcloud.startsWith('http') ? profileUser.social_links.soundcloud : `https://soundcloud.com/${profileUser.social_links.soundcloud}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 bg-[#FF5500] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
+                      >
+                        <Music className="w-4 h-4" />
+                        SoundCloud
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-white/40">
+                  <Lock className="w-4 h-4" />
+                  <p>Complete Telegram handshake to view social links</p>
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
 
         {/* Highlights Section */}
