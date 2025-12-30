@@ -43,7 +43,7 @@ export default function EditBeacon() {
       queryClient.invalidateQueries(['beacons']);
       queryClient.invalidateQueries(['beacon', beaconId]);
       toast.success('Event updated successfully!');
-      navigate(createPageUrl('OrganizerDashboard'));
+      navigate(createPageUrl(`BeaconDetail?id=${beaconId}`));
     },
     onError: (error) => {
       console.error('Failed to update beacon:', error);

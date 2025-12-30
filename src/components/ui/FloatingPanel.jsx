@@ -10,7 +10,6 @@ export default function FloatingPanel({
   position = 'left',
   width = 'w-80'
 }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [isMinimized, setIsMinimized] = useState(false);
 
   const positionClasses = {
@@ -19,8 +18,6 @@ export default function FloatingPanel({
     'top-left': 'left-4 top-4',
     'top-right': 'right-4 top-4'
   };
-
-  if (!isOpen) return null;
 
   return (
     <motion.div

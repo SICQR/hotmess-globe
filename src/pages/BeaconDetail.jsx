@@ -71,14 +71,23 @@ export default function BeaconDetail() {
       <div className="relative h-64 bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-b border-white/10">
         <div className="absolute inset-0 flex items-end">
           <div className="w-full p-6 md:p-8">
-            <Button
-              onClick={() => navigate(-1)}
-              variant="ghost"
-              className="mb-4 text-white/60 hover:text-white"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
+            <div className="flex items-center gap-2 mb-4">
+              <Button
+                onClick={() => navigate(-1)}
+                variant="ghost"
+                className="text-white/60 hover:text-white"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button
+                onClick={() => navigate(createPageUrl('Beacons'))}
+                variant="ghost"
+                className="text-white/60 hover:text-white"
+              >
+                All Beacons
+              </Button>
+            </div>
             <span
               className="inline-block px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider mb-3"
               style={{

@@ -9,7 +9,8 @@ import GlobeDataPanel from '../components/globe/GlobeDataPanel';
 import GlobeSearch from '../components/globe/GlobeSearch';
 import FloatingPanel from '../components/ui/FloatingPanel';
 import { activityTracker } from '../components/globe/ActivityTracker';
-import { Settings, BarChart3 } from 'lucide-react';
+import { Settings, BarChart3, Menu, Home } from 'lucide-react';
+import { Link } from 'react-router-dom';
 export default function GlobePage() {
   const queryClient = useQueryClient();
 
@@ -307,11 +308,13 @@ export default function GlobePage() {
       </div>
 
       {/* Compact Header */}
-      <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-white text-lg md:text-xl font-black tracking-tight hidden md:block">
-            HOTMESS
-          </h1>
+      <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between gap-2 md:gap-4">
+        <div className="flex items-center gap-2">
+          <Link to={createPageUrl('Home')}>
+            <button className="p-2 rounded-lg bg-black/90 border border-white/10 backdrop-blur-xl hover:bg-white/10 transition-all">
+              <Home className="w-4 h-4" />
+            </button>
+          </Link>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-black/90 border border-white/10 rounded-lg backdrop-blur-xl">
             <div className="w-2 h-2 rounded-full bg-[#FF1493] animate-pulse" />
             <span className="text-xs font-bold">{filteredBeacons.length}</span>

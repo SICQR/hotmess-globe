@@ -41,10 +41,10 @@ export default function CreateBeacon() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Beacon.create(data),
-    onSuccess: () => {
+    onSuccess: (newBeacon) => {
       queryClient.invalidateQueries(['beacons']);
       toast.success('Event created and live on all views!');
-      navigate(createPageUrl('Beacons'));
+      navigate(createPageUrl(`BeaconDetail?id=${newBeacon.id}`));
     },
     onError: (error) => {
       console.error('Failed to create beacon:', error);
