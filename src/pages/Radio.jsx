@@ -179,8 +179,27 @@ export default function Radio() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
+              {/* Banner */}
+              <div className="relative h-64 bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-2 border-[#FF1493] rounded-none overflow-hidden">
+                <img
+                  src="https://i1.sndcdn.com/visuals-000000164488-oG7j49-original.jpg"
+                  alt="RAW Convict Records"
+                  className="w-full h-full object-cover opacity-60"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent flex items-end p-8">
+                  <div>
+                    <h2 className="text-4xl font-black uppercase mb-2">RAW CONVICT RECORDS</h2>
+                    <p className="text-white/80 uppercase tracking-wider">UNDERGROUND • TECHNO • HOUSE • DRAG</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Full Profile Widget */}
               <div className="bg-white/5 border border-white/10 rounded-none p-6">
-                <h2 className="text-2xl font-black uppercase mb-4">RAW CONVICT RECORDS PROFILE</h2>
+                <h3 className="text-xl font-black uppercase mb-4">LATEST RELEASES & TRACKS</h3>
                 <iframe
                   width="100%"
                   height="450"
@@ -189,14 +208,55 @@ export default function Radio() {
                   allow="autoplay"
                   src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords&color=%23ff1493&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"
                 />
-                <div className="mt-4">
+              </div>
+
+              {/* All Tracks Feed */}
+              <div className="bg-white/5 border border-white/10 rounded-none p-6">
+                <h3 className="text-xl font-black uppercase mb-4">FULL TRACK FEED</h3>
+                <iframe
+                  width="100%"
+                  height="600"
+                  scrolling="yes"
+                  frameBorder="no"
+                  allow="autoplay"
+                  src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords/tracks&color=%23ff1493&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false"
+                />
+              </div>
+
+              {/* Playlists & Albums */}
+              <div className="bg-white/5 border border-white/10 rounded-none p-6">
+                <h3 className="text-xl font-black uppercase mb-4">PLAYLISTS & ALBUMS</h3>
+                <iframe
+                  width="100%"
+                  height="600"
+                  scrolling="yes"
+                  frameBorder="no"
+                  allow="autoplay"
+                  src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords/sets&color=%23ff1493&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=false"
+                />
+              </div>
+
+              {/* Call to Action */}
+              <div className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-2 border-[#FF1493] rounded-none p-8 text-center">
+                <h3 className="text-2xl font-black uppercase mb-4">FOLLOW RAW CONVICT RECORDS</h3>
+                <p className="text-white/80 mb-6">Stay updated with the latest underground releases</p>
+                <div className="flex flex-wrap gap-4 justify-center">
                   <a
                     href="https://soundcloud.com/rawconvictrecords"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#FF1493] hover:underline text-sm font-bold uppercase"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#FF5500] hover:bg-[#FF5500]/90 text-white font-black rounded-none uppercase tracking-wider text-sm transition-colors"
                   >
-                    View on SoundCloud →
+                    <Music className="w-5 h-5" />
+                    Follow on SoundCloud
+                  </a>
+                  <a
+                    href="https://www.instagram.com/rawconvictrecords"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#833AB4] to-[#E1306C] hover:opacity-90 text-white font-black rounded-none uppercase tracking-wider text-sm transition-opacity"
+                  >
+                    Follow on Instagram
                   </a>
                 </div>
               </div>
