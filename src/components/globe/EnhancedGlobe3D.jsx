@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { createMoodBlobs, animateMoodBlobs } from './MoodBlobs';
 
 // Convert lat/lng to 3D position
 function latLngToVector3(lat, lng, radius) {
@@ -41,6 +42,7 @@ export default function EnhancedGlobe3D({
   cities = [],
   activeLayers = ['pins'],
   userActivities = [],
+  userIntents = [],
   onBeaconClick,
   highlightedIds = [],
   className = ''
@@ -300,6 +302,12 @@ export default function EnhancedGlobe3D({
       });
       
       globe.add(cityGroup);
+    }
+
+    // Mood blobs - fuzzy GPS user intents
+    let moodBlobGroup = null;
+    if (activeLayers.includes('intents') && userIntents.length > 0) {
+      moodBlobGroup = createMoodBlobs(userIntents, globeRadius, globe);
     }
 
     // User activity trails - real-time user actions
@@ -565,9 +573,14 @@ export default function EnhancedGlobe3D({
         if (arc.userData.material?.uniforms?.uTime) {
           arc.userData.material.uniforms.uTime.value = time;
         }
-      });
+        });
 
-      renderer.render(scene, camera);
+        // Animate mood blobs
+        if (moodBlobGroup) {
+        animateMoodBlobs(moodBlobGroup, time);
+        }
+
+        renderer.render(scene, camera);
     };
     animate();
 

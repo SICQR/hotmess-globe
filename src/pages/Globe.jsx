@@ -28,6 +28,12 @@ export default function GlobePage() {
     refetchInterval: 60000 // Refresh every minute
   });
 
+  const { data: userIntents = [] } = useQuery({
+    queryKey: ['user-intents-globe'],
+    queryFn: () => base44.entities.UserIntent.filter({ visible: true }, '-created_date', 100),
+    refetchInterval: 30000 // Refresh every 30 seconds
+  });
+
   // Real-time subscriptions for beacons
   useEffect(() => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -302,6 +308,7 @@ export default function GlobePage() {
           cities={cities}
           activeLayers={activeLayers}
           userActivities={userActivities}
+          userIntents={userIntents}
           onBeaconClick={handleBeaconClick}
           highlightedIds={searchResults?.beacons.map(b => b.id) || radiusSearch?.beacons.map(b => b.id) || []}
           className="w-full h-full"

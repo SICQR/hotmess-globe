@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
+import AIMatchmaker from '../components/social/AIMatchmaker';
 
 export default function Network() {
   const [user, setUser] = useState(null);
@@ -159,8 +160,11 @@ export default function Network() {
 
       <div className="max-w-7xl mx-auto p-4 md:p-8 -mt-8">
 
-        <Tabs defaultValue="convicts">
+        <Tabs defaultValue="matches">
           <TabsList className="bg-white/5 border border-white/10 mb-6">
+            <TabsTrigger value="matches">
+              AI Matches
+            </TabsTrigger>
             <TabsTrigger value="convicts">
               Convicts ({convicts.length})
             </TabsTrigger>
@@ -174,6 +178,10 @@ export default function Network() {
               Live Feed
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="matches">
+            <AIMatchmaker currentUser={user} />
+          </TabsContent>
 
           <TabsContent value="convicts">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
