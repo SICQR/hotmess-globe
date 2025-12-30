@@ -1,11 +1,14 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { createClient } from '@supabase/supabase-js';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import GlobeControls from '../components/globe/GlobeControls';
 import GlobeDataPanel from '../components/globe/GlobeDataPanel';
 export default function GlobePage() {
+  const queryClient = useQueryClient();
+
   // Fetch beacons and cities from Supabase
   const { data: beacons = [], isLoading: beaconsLoading } = useQuery({
     queryKey: ['beacons'],
@@ -18,6 +21,63 @@ export default function GlobePage() {
     queryFn: () => base44.entities.City.list(),
     refetchInterval: 60000 // Refresh every minute
   });
+
+  // Real-time subscriptions for beacons
+  useEffect(() => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('Supabase credentials not found - real-time updates disabled');
+      return;
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const channel = supabase
+      .channel('beacons-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'Beacon' },
+        (payload) => {
+          console.log('New beacon inserted:', payload.new);
+          queryClient.setQueryData(['beacons'], (old = []) => {
+            if (payload.new.active) {
+              return [payload.new, ...old];
+            }
+            return old;
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'Beacon' },
+        (payload) => {
+          console.log('Beacon updated:', payload.new);
+          queryClient.setQueryData(['beacons'], (old = []) => {
+            return old.map(beacon => 
+              beacon.id === payload.new.id ? payload.new : beacon
+            );
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'Beacon' },
+        (payload) => {
+          console.log('Beacon deleted:', payload.old);
+          queryClient.setQueryData(['beacons'], (old = []) => {
+            return old.filter(beacon => beacon.id !== payload.old.id);
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const [activeLayer, setActiveLayer] = useState('pins');
   const [activeMode, setActiveMode] = useState(null);
   const [selectedBeacon, setSelectedBeacon] = useState(null);
