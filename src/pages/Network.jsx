@@ -167,11 +167,18 @@ export default function Network() {
                       </div>
                     </div>
                   </div>
-                  <Link to={createPageUrl(`Messages?to=${convict.email}`)}>
-                    <Button className="w-full bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black rounded-none">
-                      TERMINAL →
-                    </Button>
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link to={createPageUrl(`Profile?email=${convict.email}`)} className="flex-1">
+                      <Button variant="outline" className="w-full border-[#39FF14] text-[#39FF14] hover:bg-[#39FF14]/10 font-black rounded-none">
+                        PROFILE
+                      </Button>
+                    </Link>
+                    <Link to={createPageUrl(`Messages?to=${convict.email}`)} className="flex-1">
+                      <Button className="w-full bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black rounded-none">
+                        TERMINAL
+                      </Button>
+                    </Link>
+                  </div>
                 </motion.div>
               ))}
               {convicts.length === 0 && (
