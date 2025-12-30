@@ -324,7 +324,7 @@ export default function GlobePage() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 text-center pointer-events-none"
+        className="absolute inset-0 flex items-center justify-center z-30 text-center pointer-events-none"
       >
         <motion.div
           animate={{
