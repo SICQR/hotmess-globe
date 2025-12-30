@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import GlobeControls from '../components/globe/GlobeControls';
 import GlobeDataPanel from '../components/globe/GlobeDataPanel';
@@ -219,9 +221,33 @@ export default function GlobePage() {
   const [showCityDiscovery, setShowCityDiscovery] = useState(false);
   const [selectedCity, setSelectedCity] = useState(null);
 
+  // Real-time data feeds with auto-refetch every 5 seconds
+  const { data: beacons = [], isLoading: beaconsLoading } = useQuery({
+    queryKey: ['beacons'],
+    queryFn: async () => {
+      const data = await base44.entities.Beacon.list('-ts', 100);
+      return data.map(b => ({
+        ...b,
+        ts: b.ts || Date.now(),
+        intensity: b.intensity || 0.5
+      }));
+    },
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
+    initialData: DEMO_BEACONS
+  });
+
+  const { data: cities = [], isLoading: citiesLoading } = useQuery({
+    queryKey: ['cities'],
+    queryFn: () => base44.entities.City.list('name', 100),
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+    initialData: DEMO_CITIES
+  });
+
   // Filter beacons by mode, type, intensity, recency, and city
   const filteredBeacons = useMemo(() => {
-    let filtered = DEMO_BEACONS;
+    let filtered = beacons.filter(b => b.active !== false);
 
     // Filter by selected city
     if (selectedCity) {
@@ -259,7 +285,7 @@ export default function GlobePage() {
     }
 
     return filtered;
-  }, [selectedCity, activeMode, beaconType, minIntensity, recencyFilter]);
+  }, [beacons, selectedCity, activeMode, beaconType, minIntensity, recencyFilter]);
 
   // Sort by most recent
   const recentActivity = useMemo(() => {
@@ -284,8 +310,41 @@ export default function GlobePage() {
     setSelectedCity(null);
   }, []);
 
+  // Loading state
+  if (beaconsLoading && beacons.length === 0) {
+    return (
+      <div className="w-full h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-12 h-12 border-4 border-[#FF1493] border-t-transparent rounded-full mx-auto mb-4"
+          />
+          <p className="text-white/60 text-sm tracking-wider uppercase">Loading live data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="relative w-full min-h-screen bg-black overflow-hidden">
+    <div className="relative w-full min-h-screen bg-black overflow-hidden">{/* Live indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="absolute top-20 md:top-8 right-4 md:right-8 z-30 pointer-events-none"
+      >
+        <div className="flex items-center gap-2 px-3 py-2 bg-black/90 border border-white/10 rounded-full backdrop-blur-xl">
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], opacity: [1, 0.6, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-2 h-2 rounded-full bg-[#FF1493]"
+            style={{ boxShadow: '0 0 10px #FF1493' }}
+          />
+          <span className="text-white/80 text-xs tracking-wider uppercase font-semibold">
+            Live
+          </span>
+        </div>
+      </motion.div>
       {/* Hero Section - Responsive */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -363,7 +422,7 @@ export default function GlobePage() {
       <div className="relative w-full h-screen">
         <EnhancedGlobe3D
           beacons={filteredBeacons}
-          cities={DEMO_CITIES}
+          cities={cities}
           onBeaconClick={handleBeaconClick}
           onCityClick={handleCityClick}
           className="w-full h-full"
@@ -422,8 +481,8 @@ export default function GlobePage() {
         md:rounded-2xl md:overflow-hidden md:border md:border-white/10 md:shadow-2xl
       `}>
         <CityDiscovery
-          cities={DEMO_CITIES}
-          beacons={DEMO_BEACONS}
+          cities={cities}
+          beacons={beacons}
           onCitySelect={handleCityClick}
           onClose={() => setShowCityDiscovery(false)}
         />
@@ -499,7 +558,7 @@ export default function GlobePage() {
               </div>
               <div className="text-center md:text-left">
                 <div className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase mb-0.5 md:mb-1">Cities</div>
-                <div className="text-white text-lg md:text-2xl font-bold">{DEMO_CITIES.length}</div>
+                <div className="text-white text-lg md:text-2xl font-bold">{cities.length}</div>
               </div>
               <div className="text-center md:text-left">
                 <div className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase mb-0.5 md:mb-1">Arcs</div>
