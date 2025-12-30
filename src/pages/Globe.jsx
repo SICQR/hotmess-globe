@@ -1,212 +1,23 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import GlobeControls from '../components/globe/GlobeControls';
 import GlobeDataPanel from '../components/globe/GlobeDataPanel';
-
-// Demo data - replace with Supabase real-time queries
-const DEMO_BEACONS = [
-  { 
-    id: 'b1', 
-    title: 'VAULT FESTIVAL', 
-    description: 'Underground techno in the arches',
-    kind: 'event', 
-    lat: 51.5074, 
-    lng: -0.1278, 
-    city: 'LONDON', 
-    intensity: 0.95, 
-    ts: Date.now(),
-    xp_scan: 50,
-    mode: 'crowd'
-  },
-  { 
-    id: 'b2', 
-    title: 'BERGHAIN SUNDAY', 
-    description: 'The most infamous Sunday session',
-    kind: 'event', 
-    lat: 52.5109, 
-    lng: 13.4432, 
-    city: 'BERLIN', 
-    intensity: 1.0, 
-    ts: Date.now() - 1000 * 60 * 15,
-    xp_scan: 100,
-    mode: 'crowd'
-  },
-  { 
-    id: 'b3', 
-    title: 'UNDER', 
-    description: 'Late night connections',
-    kind: 'hookup', 
-    lat: 40.7128, 
-    lng: -74.006, 
-    city: 'NEW YORK', 
-    intensity: 0.85, 
-    ts: Date.now() - 1000 * 60 * 5,
-    xp_scan: 30,
-    mode: 'hookup'
-  },
-  { 
-    id: 'b4', 
-    title: 'ARC TOKYO', 
-    description: 'Warehouse rave under the highway',
-    kind: 'event', 
-    lat: 35.6762, 
-    lng: 139.6503, 
-    city: 'TOKYO', 
-    intensity: 0.8, 
-    ts: Date.now() - 1000 * 60 * 30,
-    xp_scan: 75,
-    mode: 'crowd'
-  },
-  { 
-    id: 'b5', 
-    title: 'TRADE', 
-    description: 'After hours til dawn',
-    kind: 'event', 
-    lat: 25.7617, 
-    lng: -80.1918, 
-    city: 'MIAMI', 
-    intensity: 0.75, 
-    ts: Date.now() - 1000 * 60 * 45,
-    xp_scan: 50,
-    mode: 'hookup'
-  },
-  { 
-    id: 'b6', 
-    title: 'LE DEPOT', 
-    description: 'Iconic cruising club',
-    kind: 'venue', 
-    lat: 48.8566, 
-    lng: 2.3522, 
-    city: 'PARIS', 
-    intensity: 0.7, 
-    ts: Date.now() - 1000 * 60 * 20,
-    xp_scan: 25,
-    mode: 'hookup'
-  },
-  { 
-    id: 'b7', 
-    title: 'GARAGE NOORD', 
-    description: 'Industrial techno warehouse',
-    kind: 'event', 
-    lat: 52.3676, 
-    lng: 4.9041, 
-    city: 'AMSTERDAM', 
-    intensity: 0.65, 
-    ts: Date.now() - 1000 * 60 * 60,
-    xp_scan: 50,
-    mode: 'crowd'
-  },
-  { 
-    id: 'b8', 
-    title: 'NASIMI BEACH', 
-    description: 'Luxury poolside sessions',
-    kind: 'event', 
-    lat: 25.2048, 
-    lng: 55.2708, 
-    city: 'DUBAI', 
-    sponsored: true, 
-    intensity: 0.9, 
-    ts: Date.now() - 1000 * 60 * 10,
-    xp_scan: 100,
-    mode: 'ticket'
-  },
-  { 
-    id: 'b9', 
-    title: 'ARQ', 
-    description: 'Multi-level madness',
-    kind: 'venue', 
-    lat: -33.8688, 
-    lng: 151.2093, 
-    city: 'SYDNEY', 
-    intensity: 0.6, 
-    ts: Date.now() - 1000 * 60 * 90,
-    xp_scan: 25,
-    mode: 'crowd'
-  },
-  { 
-    id: 'b10', 
-    title: 'THE WEEK', 
-    description: 'Massive multi-floor complex',
-    kind: 'venue', 
-    lat: -23.5505, 
-    lng: -46.6333, 
-    city: 'SÃO PAULO', 
-    intensity: 0.72, 
-    ts: Date.now() - 1000 * 60 * 35,
-    xp_scan: 50,
-    mode: 'crowd'
-  },
-  { 
-    id: 'b11', 
-    title: 'DJ STATION', 
-    description: 'Multi-floor dance complex',
-    kind: 'venue', 
-    lat: 13.7563, 
-    lng: 100.5018, 
-    city: 'BANGKOK', 
-    intensity: 0.55, 
-    ts: Date.now() - 1000 * 60 * 55,
-    xp_scan: 25,
-    mode: 'crowd'
-  },
-  { 
-    id: 'b12', 
-    title: 'TANTRIC', 
-    description: 'Rooftop sessions',
-    kind: 'event', 
-    lat: 1.3521, 
-    lng: 103.8198, 
-    city: 'SINGAPORE', 
-    intensity: 0.78, 
-    ts: Date.now() - 1000 * 60 * 25,
-    xp_scan: 50,
-    mode: 'ticket'
-  },
-  { 
-    id: 'b13', 
-    title: 'THE EAGLE', 
-    description: 'Classic leather bar',
-    kind: 'venue', 
-    lat: 51.5074, 
-    lng: -0.1278, 
-    city: 'LONDON', 
-    intensity: 0.5, 
-    ts: Date.now() - 1000 * 60 * 120,
-    xp_scan: 25,
-    mode: 'hookup'
-  },
-  { 
-    id: 'b14', 
-    title: 'UNION', 
-    description: 'Raw industrial energy',
-    kind: 'drop', 
-    lat: 52.5200, 
-    lng: 13.4050, 
-    city: 'BERLIN', 
-    intensity: 0.82, 
-    ts: Date.now() - 1000 * 60 * 8,
-    xp_scan: 50,
-    mode: 'drop'
-  },
-];
-
-const DEMO_CITIES = [
-  { name: 'LONDON', lat: 51.5074, lng: -0.1278, tier: 1, active: true },
-  { name: 'BERLIN', lat: 52.52, lng: 13.405, tier: 1, active: true },
-  { name: 'NEW YORK', lat: 40.7128, lng: -74.006, tier: 1, active: true },
-  { name: 'PARIS', lat: 48.8566, lng: 2.3522, tier: 1, active: false },
-  { name: 'AMSTERDAM', lat: 52.3676, lng: 4.9041, tier: 1, active: false },
-  { name: 'TOKYO', lat: 35.6762, lng: 139.6503, tier: 1, active: false },
-  { name: 'MIAMI', lat: 25.7617, lng: -80.1918, tier: 1, active: false },
-  { name: 'SYDNEY', lat: -33.8688, lng: 151.2093, tier: 1, active: false },
-  { name: 'SÃO PAULO', lat: -23.5505, lng: -46.6333, tier: 1, active: false },
-  { name: 'DUBAI', lat: 25.2048, lng: 55.2708, tier: 1, active: false },
-  { name: 'BANGKOK', lat: 13.7563, lng: 100.5018, tier: 2, active: false },
-  { name: 'SINGAPORE', lat: 1.3521, lng: 103.8198, tier: 2, active: false },
-];
-
 export default function GlobePage() {
+  // Fetch beacons and cities from Supabase
+  const { data: beacons = [], isLoading: beaconsLoading } = useQuery({
+    queryKey: ['beacons'],
+    queryFn: () => base44.entities.Beacon.filter({ active: true }, '-created_date'),
+    refetchInterval: 30000 // Refresh every 30 seconds
+  });
+
+  const { data: cities = [], isLoading: citiesLoading } = useQuery({
+    queryKey: ['cities'],
+    queryFn: () => base44.entities.City.list(),
+    refetchInterval: 60000 // Refresh every minute
+  });
   const [activeLayer, setActiveLayer] = useState('pins');
   const [activeMode, setActiveMode] = useState(null);
   const [selectedBeacon, setSelectedBeacon] = useState(null);
@@ -218,7 +29,10 @@ export default function GlobePage() {
 
   // Filter beacons by mode, type, intensity, and recency (must be before conditional return)
   const filteredBeacons = useMemo(() => {
-    let filtered = DEMO_BEACONS;
+    let filtered = beacons.map(b => ({
+      ...b,
+      ts: new Date(b.created_date).getTime() // Convert created_date to timestamp
+    }));
 
     // Filter by mode
     if (activeMode) {
@@ -251,7 +65,7 @@ export default function GlobePage() {
     }
 
     return filtered;
-  }, [activeMode, beaconType, minIntensity, recencyFilter]);
+  }, [beacons, activeMode, beaconType, minIntensity, recencyFilter]);
 
   // Sort by most recent
   const recentActivity = useMemo(() => {
@@ -273,6 +87,17 @@ export default function GlobePage() {
       setShowPanel(false); // Close panel on mobile when closing beacon
     }
   }, []);
+
+  if (beaconsLoading || citiesLoading) {
+    return (
+      <div className="relative w-full min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[#FF1493]/30 border-t-[#FF1493] rounded-full animate-spin" />
+          <p className="text-white/60 text-sm tracking-wider uppercase">Loading Globe...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full min-h-screen bg-black overflow-hidden">
@@ -380,8 +205,8 @@ export default function GlobePage() {
         transform transition-transform duration-300 ease-in-out
         ${showPanel ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
       `}>
-        <div className="h-full md:h-auto bg-black/95 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none">
-          <div className="md:hidden flex justify-between items-center p-4 border-b border-white/10">
+        <div className="h-full md:h-auto bg-black/95 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none flex flex-col">
+          <div className="md:hidden flex justify-between items-center p-4 border-b border-white/10 sticky top-0 bg-black/95 z-10">
             <span className="text-white font-bold tracking-wider uppercase text-sm">Activity</span>
             <button onClick={() => setShowPanel(false)} className="text-white/60 hover:text-white">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -389,7 +214,7 @@ export default function GlobePage() {
               </svg>
             </button>
           </div>
-          <div className="p-4 md:p-0">
+          <div className="p-4 md:p-0 overflow-y-auto flex-1">
             <GlobeDataPanel
               selectedBeacon={selectedBeacon}
               recentActivity={recentActivity}
@@ -416,7 +241,7 @@ export default function GlobePage() {
               </div>
               <div className="text-center md:text-left">
                 <div className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase mb-0.5 md:mb-1">Cities</div>
-                <div className="text-white text-lg md:text-2xl font-bold">{DEMO_CITIES.length}</div>
+                <div className="text-white text-lg md:text-2xl font-bold">{cities.length}</div>
               </div>
               <div className="text-center md:text-left">
                 <div className="text-white/50 text-[10px] md:text-xs tracking-wider uppercase mb-0.5 md:mb-1">Arcs</div>
