@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import GlobeControls from '../components/globe/GlobeControls';
 import GlobeDataPanel from '../components/globe/GlobeDataPanel';
+import CityDiscovery from '../components/globe/CityDiscovery';
 
 // Demo data - replace with Supabase real-time queries
 const DEMO_BEACONS = [
@@ -215,10 +216,17 @@ export default function GlobePage() {
   const [recencyFilter, setRecencyFilter] = useState('all');
   const [showControls, setShowControls] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
+  const [showCityDiscovery, setShowCityDiscovery] = useState(false);
+  const [selectedCity, setSelectedCity] = useState(null);
 
-  // Filter beacons by mode, type, intensity, and recency (must be before conditional return)
+  // Filter beacons by mode, type, intensity, recency, and city
   const filteredBeacons = useMemo(() => {
     let filtered = DEMO_BEACONS;
+
+    // Filter by selected city
+    if (selectedCity) {
+      filtered = filtered.filter(b => b.city === selectedCity.name);
+    }
 
     // Filter by mode
     if (activeMode) {
@@ -251,7 +259,7 @@ export default function GlobePage() {
     }
 
     return filtered;
-  }, [activeMode, beaconType, minIntensity, recencyFilter]);
+  }, [selectedCity, activeMode, beaconType, minIntensity, recencyFilter]);
 
   // Sort by most recent
   const recentActivity = useMemo(() => {
@@ -263,11 +271,17 @@ export default function GlobePage() {
   }, []);
 
   const handleCityClick = useCallback((city) => {
-    console.log('City clicked:', city);
+    setSelectedCity(city);
+    setShowCityDiscovery(false);
+    setShowPanel(true);
   }, []);
 
   const handleClose = useCallback(() => {
     setSelectedBeacon(null);
+  }, []);
+
+  const handleClearCityFilter = useCallback(() => {
+    setSelectedCity(null);
   }, []);
 
   return (
@@ -308,6 +322,15 @@ export default function GlobePage() {
           </svg>
         </button>
         <button
+          onClick={() => setShowCityDiscovery(!showCityDiscovery)}
+          className="p-3 bg-black/90 border border-white/20 rounded-xl backdrop-blur-xl"
+        >
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+        <button
           onClick={() => setShowPanel(!showPanel)}
           className="p-3 bg-black/90 border border-white/20 rounded-xl backdrop-blur-xl"
         >
@@ -317,12 +340,32 @@ export default function GlobePage() {
         </button>
       </div>
 
+      {/* Desktop City Discovery Button */}
+      <motion.button
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.4 }}
+        onClick={() => setShowCityDiscovery(!showCityDiscovery)}
+        className="hidden md:block absolute top-6 left-1/2 -translate-x-1/2 z-30 px-4 py-2.5 bg-black/90 border border-white/20 rounded-xl backdrop-blur-xl hover:border-[#FF1493]/40 transition-colors pointer-events-auto"
+      >
+        <div className="flex items-center gap-2 text-white">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span className="text-xs tracking-wider uppercase font-semibold">
+            Discover Cities
+          </span>
+        </div>
+      </motion.button>
+
       {/* Globe */}
       <div className="relative w-full h-screen">
         <EnhancedGlobe3D
           beacons={filteredBeacons}
           cities={DEMO_CITIES}
           onBeaconClick={handleBeaconClick}
+          onCityClick={handleCityClick}
           className="w-full h-full"
         />
       </div>
@@ -359,15 +402,32 @@ export default function GlobePage() {
       </div>
 
       {/* Mobile overlay */}
-      {(showControls || showPanel) && (
+      {(showControls || showPanel || showCityDiscovery) && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
           onClick={() => {
             setShowControls(false);
             setShowPanel(false);
+            setShowCityDiscovery(false);
           }}
         />
       )}
+
+      {/* City Discovery Panel */}
+      <div className={`
+        fixed md:absolute top-0 md:top-20 left-1/2 md:-translate-x-1/2
+        h-full md:h-[calc(100vh-200px)] w-full md:w-96 md:max-h-[600px] z-50 md:z-30
+        transform transition-transform duration-300 ease-in-out
+        ${showCityDiscovery ? 'translate-x-0' : 'translate-x-full md:translate-y-[-150%]'}
+        md:rounded-2xl md:overflow-hidden md:border md:border-white/10 md:shadow-2xl
+      `}>
+        <CityDiscovery
+          cities={DEMO_CITIES}
+          beacons={DEMO_BEACONS}
+          onCitySelect={handleCityClick}
+          onClose={() => setShowCityDiscovery(false)}
+        />
+      </div>
 
       {/* Data Panel - Desktop and Mobile drawer */}
       <div className={`
@@ -386,6 +446,33 @@ export default function GlobePage() {
             </button>
           </div>
           <div className="p-4 md:p-0">
+            {/* City Filter Badge */}
+            {selectedCity && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-3 p-3 bg-[#FF1493]/10 border border-[#FF1493]/30 rounded-xl flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-[#FF1493]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <div>
+                    <div className="text-[10px] text-white/40 uppercase tracking-wider">Filtered by</div>
+                    <div className="text-white text-sm font-bold">{selectedCity.name}</div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleClearCityFilter}
+                  className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </motion.div>
+            )}
             <GlobeDataPanel
               selectedBeacon={selectedBeacon}
               recentActivity={recentActivity}

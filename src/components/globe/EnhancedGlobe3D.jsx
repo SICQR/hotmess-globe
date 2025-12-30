@@ -40,6 +40,7 @@ export default function EnhancedGlobe3D({
   beacons = [],
   cities = [],
   onBeaconClick,
+  onCityClick,
   className = ''
 }) {
   const mountRef = useRef(null);
