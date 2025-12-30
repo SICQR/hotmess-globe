@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import MessageButton from '../components/social/MessageButton';
+import ComplementaryProducts from '../components/marketplace/ComplementaryProducts';
 
 export default function ProductDetail() {
   const [searchParams] = useSearchParams();
@@ -110,6 +111,27 @@ export default function ProductDetail() {
       toast.success('Review submitted!');
     },
   });
+
+  // Track product view
+  useEffect(() => {
+    if (!product || !currentUser) return;
+
+    const trackView = async () => {
+      try {
+        await base44.entities.ProductView.create({
+          user_email: currentUser.email,
+          product_id: product.id,
+          product_name: product.name,
+          product_category: product.category,
+          product_tags: product.tags || [],
+        });
+      } catch (error) {
+        console.error('Failed to track view:', error);
+      }
+    };
+
+    trackView();
+  }, [product?.id, currentUser?.email]);
 
   const handlePurchase = () => {
     if (!currentUser) {
@@ -381,8 +403,13 @@ export default function ProductDetail() {
               </div>
             </div>
           </TabsContent>
-        </Tabs>
-      </div>
-    </div>
-  );
-}
+          </Tabs>
+
+          <ComplementaryProducts 
+          product={product} 
+          onBuy={handlePurchase}
+          />
+          </div>
+          </div>
+          );
+          }

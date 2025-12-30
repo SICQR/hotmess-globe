@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ProductCard from '../components/marketplace/ProductCard';
+import AIRecommendations from '../components/marketplace/AIRecommendations';
 import { toast } from 'sonner';
 
 export default function Marketplace() {
@@ -200,6 +201,13 @@ export default function Marketplace() {
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-6">
+            {currentUser && activeTab === 'all' && !searchQuery && (
+              <AIRecommendations 
+                currentUser={currentUser} 
+                onBuy={handleBuy}
+              />
+            )}
+            
             {filteredProducts.length === 0 ? (
               <div className="text-center py-20">
                 <ShoppingBag className="w-16 h-16 text-white/20 mx-auto mb-4" />
