@@ -137,6 +137,17 @@ export default function Layout({ children, currentPageName }) {
             </div>
 
             <nav className="flex-1 px-2 py-4 overflow-y-auto">
+              {/* Admin Link */}
+              {user && user.role === 'admin' && (
+                <Link
+                  to={createPageUrl('AdminDashboard')}
+                  className="flex items-center gap-2 px-3 py-2.5 mb-4 transition-all border-2 bg-red-600/20 border-red-600 text-red-400 hover:bg-red-600/30"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="font-black uppercase tracking-wider text-[10px]">ADMIN</span>
+                </Link>
+              )}
+
               {/* Primary Navigation */}
               <div className="mb-6">
                 {PRIMARY_NAV.map(({ name, icon: Icon, path, showBadge }) => (

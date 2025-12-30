@@ -55,7 +55,7 @@ export default function UserManagement() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-black border-2 border-white p-6">
           <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">TOTAL USERS</p>
           <p className="text-4xl font-black">{users.length}</p>
@@ -63,6 +63,10 @@ export default function UserManagement() {
         <div className="bg-black border-2 border-white p-6">
           <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">ADMINS</p>
           <p className="text-4xl font-black text-[#FF1493]">{users.filter(u => u.role === 'admin').length}</p>
+        </div>
+        <div className="bg-black border-2 border-red-600 p-6">
+          <p className="text-[10px] text-red-400 uppercase tracking-widest mb-2">BANNED</p>
+          <p className="text-4xl font-black text-red-500">{users.filter(u => u.role === 'banned').length}</p>
         </div>
         <div className="bg-black border-2 border-white p-6">
           <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">ACTIVE TODAY</p>
@@ -145,6 +149,21 @@ export default function UserManagement() {
                   onClick={() => setEditingUser(user)}
                 >
                   <Edit className="w-4 h-4" />
+                </Button>
+                <Button 
+                  size="icon" 
+                  variant="ghost"
+                  className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-600/10"
+                  onClick={() => {
+                    if (confirm(`Ban ${user.full_name}? This will set their role to 'banned' and prevent access.`)) {
+                      updateUserMutation.mutate({ 
+                        email: user.email, 
+                        data: { role: 'banned' } 
+                      });
+                    }
+                  }}
+                >
+                  <Ban className="w-4 h-4" />
                 </Button>
               </div>
             </motion.div>
