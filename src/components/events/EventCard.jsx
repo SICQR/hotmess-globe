@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { Calendar, MapPin, Users, Clock, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
+import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
 
 export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0 }) {
   const eventDate = event.event_date ? new Date(event.event_date) : null;
@@ -27,16 +28,15 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0 }) 
       className="group relative"
     >
       <Link to={createPageUrl(`BeaconDetail?id=${event.id}`)}>
-        <div className={`bg-white/5 border-2 rounded-none overflow-hidden transition-all hover:scale-[1.02] ${
-          isPast ? 'border-white/10 opacity-60' : 'border-white/20 hover:border-[#FF1493]'
-        }`}>
-          {/* Image */}
+        <OSCard className={isPast ? 'opacity-60' : ''}>
+          {/* Editorial Image */}
           {event.image_url && (
-            <div className="relative h-48 overflow-hidden">
-              <img 
+            <div className="relative h-48">
+              <OSCardImage 
                 src={event.image_url} 
                 alt={event.title}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                grayscale={!isPast}
+                className="group-hover:scale-110 transition-transform duration-500"
               />
               {isPast && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -53,16 +53,9 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0 }) 
 
           <div className="p-5">
             {/* Mode Badge */}
-            <div 
-              className="inline-block px-2 py-1 text-[10px] font-black uppercase tracking-wider mb-3"
-              style={{ 
-                backgroundColor: `${color}20`,
-                border: `2px solid ${color}`,
-                color: color
-              }}
-            >
+            <OSCardBadge color={color}>
               {event.mode || 'EVENT'}
-            </div>
+            </OSCardBadge>
 
             {/* Title */}
             <h3 className="text-xl font-black mb-2 line-clamp-2 group-hover:text-[#FF1493] transition-colors">
@@ -127,7 +120,7 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0 }) 
               </a>
             )}
           </div>
-        </div>
+        </OSCard>
       </Link>
     </motion.div>
   );
