@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import LiveGlobe3D from '../components/globe/LiveGlobe3D';
+import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import OSHud from '../components/home/OSHud';
 import RadioTerminal from '../components/home/RadioTerminal';
 import RightNowOverlay from '../components/home/RightNowOverlay';
@@ -58,10 +58,14 @@ export default function Home() {
 
       {/* Main Content - Globe Background */}
       <div className="fixed inset-0 pt-16 pb-20">
-        <LiveGlobe3D
+        <EnhancedGlobe3D
           beacons={recentBeacons}
+          cities={[]}
+          activeLayers={['pins', 'heat', 'cities']}
+          userActivities={[]}
+          userIntents={[]}
           onBeaconClick={handleBeaconClick}
-          layers={{ pins: true, heat: true, trails: false, cities: true }}
+          highlightedIds={[]}
         />
       </div>
 
