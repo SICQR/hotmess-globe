@@ -44,6 +44,7 @@ export default function EnhancedGlobe3D({
 }) {
   const mountRef = useRef(null);
   const hoveredArcRef = useRef(null);
+  const [arcTooltip, setArcTooltip] = React.useState(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -218,6 +219,7 @@ export default function EnhancedGlobe3D({
           hoveredArcRef.current.userData.material.uniforms.uHover.value = 0.0;
           hoveredArcRef.current = null;
           renderer.domElement.style.cursor = 'grab';
+          setArcTooltip(null);
         }
         
         if (intersects.length > 0) {
@@ -229,6 +231,20 @@ export default function EnhancedGlobe3D({
             hoveredArcRef.current = arc;
             arc.userData.material.uniforms.uHover.value = 1.0;
             renderer.domElement.style.cursor = 'pointer';
+            
+            setArcTooltip({
+              x: e.clientX,
+              y: e.clientY,
+              from: arc.userData.from,
+              to: arc.userData.to
+            });
+          } else {
+            setArcTooltip({
+              x: e.clientX,
+              y: e.clientY,
+              from: arc.userData.from,
+              to: arc.userData.to
+            });
           }
         }
       }
@@ -301,10 +317,40 @@ export default function EnhancedGlobe3D({
   }, [beacons, cities]);
 
   return (
-    <div 
-      ref={mountRef} 
-      className={className}
-      style={{ width: '100%', height: '100%', position: 'relative' }}
-    />
+    <>
+      <div 
+        ref={mountRef} 
+        className={className}
+        style={{ width: '100%', height: '100%', position: 'relative' }}
+      />
+      {arcTooltip && (
+        <div
+          style={{
+            position: 'fixed',
+            left: arcTooltip.x + 15,
+            top: arcTooltip.y - 40,
+            zIndex: 1000,
+            pointerEvents: 'none'
+          }}
+          className="px-4 py-3 bg-black/95 border border-[#FF1493]/40 rounded-xl backdrop-blur-xl"
+        >
+          <div className="flex items-center gap-3 text-sm">
+            <div className="flex flex-col items-end">
+              <span className="text-white/50 text-xs tracking-wider uppercase">FROM</span>
+              <span className="text-white font-bold tracking-wide">{arcTooltip.from.city || arcTooltip.from.title}</span>
+            </div>
+            <div className="text-[#FF1493] text-lg">→</div>
+            <div className="flex flex-col items-start">
+              <span className="text-white/50 text-xs tracking-wider uppercase">TO</span>
+              <span className="text-white font-bold tracking-wide">{arcTooltip.to.city || arcTooltip.to.title}</span>
+            </div>
+          </div>
+          <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between gap-4 text-xs">
+            <span className="text-white/40 tracking-wide uppercase">Connection</span>
+            <span className="text-[#FF1493] font-semibold">{arcTooltip.to.kind || 'EVENT'}</span>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
