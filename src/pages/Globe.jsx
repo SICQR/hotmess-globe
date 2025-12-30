@@ -212,7 +212,25 @@ export default function GlobePage() {
   const [selectedBeacon, setSelectedBeacon] = useState(null);
 
   // Get Mapbox token from environment
-  const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN || 'YOUR_MAPBOX_TOKEN';
+  const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
+
+  // Show error if no token
+  if (!mapboxToken) {
+    return (
+      <div className="w-full h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-white text-2xl font-bold mb-4">MAPBOX TOKEN REQUIRED</h1>
+          <p className="text-white/60 text-sm mb-2">Add to your .env.local file:</p>
+          <code className="block bg-white/10 text-[#FF1493] px-4 py-2 rounded text-sm">
+            VITE_MAPBOX_TOKEN=your_token_here
+          </code>
+          <p className="text-white/40 text-xs mt-4">
+            Get a free token at mapbox.com/account/access-tokens
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Filter beacons by mode
   const filteredBeacons = useMemo(() => {

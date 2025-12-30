@@ -82,8 +82,12 @@ export default function NightPulseGlobe({
 
   // Initialize Mapbox
   useEffect(() => {
-    if (!mapboxToken || !mapContainerRef.current) return;
+    if (!mapboxToken || !mapContainerRef.current) {
+      console.error('NightPulseGlobe: Missing mapboxToken or container ref');
+      return;
+    }
 
+    console.log('NightPulseGlobe: Initializing map...');
     mapboxgl.accessToken = mapboxToken;
 
     const map = new mapboxgl.Map({
@@ -97,8 +101,17 @@ export default function NightPulseGlobe({
       antialias: true
     });
 
+    map.on('load', () => {
+      console.log('NightPulseGlobe: Map loaded successfully');
+    });
+
+    map.on('error', (e) => {
+      console.error('NightPulseGlobe: Map error', e);
+    });
+
     // Globe atmosphere
     map.on('style.load', () => {
+      console.log('NightPulseGlobe: Style loaded, setting fog...');
       map.setFog({
         color: '#000000',
         'high-color': '#1a1a1a',
@@ -352,11 +365,27 @@ export default function NightPulseGlobe({
         .mapboxgl-popup-tip {
           display: none !important;
         }
+        .mapboxgl-ctrl-logo {
+          display: none !important;
+        }
+        .mapboxgl-ctrl-attrib {
+          background: rgba(0, 0, 0, 0.5) !important;
+          color: rgba(255, 255, 255, 0.4) !important;
+          font-size: 10px !important;
+        }
       `}</style>
       <div 
         ref={mapContainerRef} 
         className={className}
-        style={{ width: '100%', height: '100%' }}
+        style={{ 
+          width: '100%', 
+          height: '100%',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0
+        }}
       />
     </>
   );
