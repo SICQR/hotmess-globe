@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import MessageButton from '../components/social/MessageButton';
 
 const STATUS_CONFIG = {
   pending: { color: '#FFEB3B', icon: Clock },
@@ -50,6 +51,11 @@ export default function OrderHistory() {
     queryFn: () => base44.entities.OrderItem.list(),
   });
 
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list(),
+  });
+
   const isLoading = loadingBuyer || loadingSeller;
 
   if (isLoading) {
@@ -67,6 +73,8 @@ export default function OrderHistory() {
     const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
     const Icon = config.icon;
     const orderItems = allOrderItems.filter(item => item.order_id === order.id);
+    const otherPartyEmail = isSeller ? order.buyer_email : order.seller_email;
+    const otherParty = allUsers.find(u => u.email === otherPartyEmail);
 
     return (
       <motion.div
@@ -126,6 +134,18 @@ export default function OrderHistory() {
           <div className="mt-4 pt-4 border-t border-white/10">
             <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Notes</p>
             <p className="text-sm text-white/80">{order.notes}</p>
+          </div>
+        )}
+
+        {otherParty && currentUser && (
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <MessageButton
+              targetUser={otherParty}
+              currentUser={currentUser}
+              threadType="order"
+              metadata={{ order_id: order.id }}
+              className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+            />
           </div>
         )}
       </motion.div>

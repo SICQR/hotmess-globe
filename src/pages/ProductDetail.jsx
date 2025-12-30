@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import MessageButton from '../components/social/MessageButton';
 
 export default function ProductDetail() {
   const [searchParams] = useSearchParams();
@@ -252,19 +253,30 @@ export default function ProductDetail() {
               </Button>
 
               {seller && (
-                <Link to={createPageUrl(`Profile?email=${seller.email}`)}>
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center">
-                        <span className="font-bold">{seller.full_name?.[0] || 'S'}</span>
-                      </div>
-                      <div>
-                        <p className="text-sm text-white/40 uppercase tracking-wider">Seller</p>
-                        <p className="font-bold">{seller.full_name}</p>
+                <div className="space-y-2">
+                  <Link to={createPageUrl(`Profile?email=${seller.email}`)}>
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center">
+                          <span className="font-bold">{seller.full_name?.[0] || 'S'}</span>
+                        </div>
+                        <div>
+                          <p className="text-sm text-white/40 uppercase tracking-wider">Seller</p>
+                          <p className="font-bold">{seller.full_name}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                  {currentUser && currentUser.email !== seller.email && (
+                    <MessageButton
+                      targetUser={seller}
+                      currentUser={currentUser}
+                      threadType="order"
+                      metadata={{ product_id: product.id }}
+                      className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+                    />
+                  )}
+                </div>
               )}
             </div>
           </div>
