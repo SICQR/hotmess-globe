@@ -16,6 +16,7 @@ const VIBE_OPTIONS = ['techno', 'house', 'drag', 'indie', 'late_night', 'chill',
 export default function EditProfile() {
   const [currentUser, setCurrentUser] = useState(null);
   const [bio, setBio] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [preferredVibes, setPreferredVibes] = useState([]);
   const [musicTaste, setMusicTaste] = useState('');
   const [socialLinks, setSocialLinks] = useState({
@@ -24,6 +25,7 @@ export default function EditProfile() {
     spotify: '',
     soundcloud: ''
   });
+  const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -33,6 +35,7 @@ export default function EditProfile() {
         const user = await base44.auth.me();
         setCurrentUser(user);
         setBio(user.bio || '');
+        setAvatarUrl(user.avatar_url || '');
         setPreferredVibes(user.preferred_vibes || []);
         setMusicTaste((user.music_taste || []).join(', '));
         setSocialLinks(user.social_links || {
@@ -62,6 +65,23 @@ export default function EditProfile() {
     }
   });
 
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setAvatarUrl(file_url);
+      toast.success('Avatar uploaded!');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast.error('Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -69,6 +89,7 @@ export default function EditProfile() {
     
     updateProfileMutation.mutate({
       bio,
+      avatar_url: avatarUrl,
       preferred_vibes: preferredVibes,
       music_taste: musicArray,
       social_links: socialLinks
@@ -108,6 +129,43 @@ export default function EditProfile() {
           <h1 className="text-3xl font-black uppercase mb-8">Edit Profile</h1>
 
           <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Avatar Section */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <User className="w-5 h-5 text-[#FF1493]" />
+                <Label className="text-lg font-bold uppercase">Profile Picture</Label>
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl font-bold">{currentUser?.full_name?.[0] || 'U'}</span>
+                  )}
+                </div>
+                <div>
+                  <Button
+                    type="button"
+                    onClick={() => document.getElementById('avatar-upload-edit').click()}
+                    disabled={uploading}
+                    variant="outline"
+                    className="border-white/20 text-white"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {uploading ? 'Uploading...' : 'Upload New'}
+                  </Button>
+                  <input
+                    id="avatar-upload-edit"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                  <p className="text-xs text-white/40 mt-2">JPG, PNG or GIF (max 5MB)</p>
+                </div>
+              </div>
+            </div>
+
             {/* Bio Section */}
             <div className="bg-white/5 border border-white/10 rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">

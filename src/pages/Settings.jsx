@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { User, Bell, Shield, Palette, LogOut, Save } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { User, Bell, Shield, Palette, LogOut, Save, Edit, Upload, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { createPageUrl } from '../utils';
 
 export default function Settings() {
   const [user, setUser] = useState(null);
   const [fullName, setFullName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [locationPrivacy, setLocationPrivacy] = useState('fuzzy');
   const [notifications, setNotifications] = useState(true);
   const [publicProfile, setPublicProfile] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -19,6 +26,8 @@ export default function Settings() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
         setFullName(currentUser.full_name || '');
+        setAvatarUrl(currentUser.avatar_url || '');
+        setLocationPrivacy(currentUser.location_privacy_mode || 'fuzzy');
       } catch (error) {
         console.error('Failed to fetch user:', error);
       }
@@ -26,9 +35,30 @@ export default function Settings() {
     fetchUser();
   }, []);
 
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setAvatarUrl(file_url);
+      await base44.auth.updateMe({ avatar_url: file_url });
+      toast.success('Avatar updated!');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast.error('Failed to upload avatar');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     try {
-      await base44.auth.updateMe({ full_name: fullName });
+      await base44.auth.updateMe({ 
+        full_name: fullName,
+        location_privacy_mode: locationPrivacy
+      });
       toast.success('Settings saved successfully');
     } catch (error) {
       console.error('Failed to save:', error);
@@ -70,12 +100,54 @@ export default function Settings() {
           transition={{ delay: 0.1 }}
           className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <User className="w-5 h-5 text-[#FF1493]" />
-            <h2 className="text-xl font-bold uppercase tracking-wider">Profile</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <User className="w-5 h-5 text-[#FF1493]" />
+              <h2 className="text-xl font-bold uppercase tracking-wider">Profile</h2>
+            </div>
+            <Link to={createPageUrl('EditProfile')}>
+              <Button variant="outline" className="border-white/20 text-white">
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Full Profile
+              </Button>
+            </Link>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* Avatar Upload */}
+            <div>
+              <label className="text-sm text-white/60 uppercase tracking-wider mb-3 block">
+                Profile Picture
+              </label>
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl font-bold">{user.full_name?.[0] || 'U'}</span>
+                  )}
+                </div>
+                <div>
+                  <Button
+                    onClick={() => document.getElementById('avatar-upload').click()}
+                    disabled={uploading}
+                    variant="outline"
+                    className="border-white/20 text-white"
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    {uploading ? 'Uploading...' : 'Change Avatar'}
+                  </Button>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div>
               <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
                 Full Name
@@ -98,10 +170,17 @@ export default function Settings() {
               />
             </div>
 
-            <div className="pt-4">
+            <div className="pt-4 flex gap-3">
               <Button onClick={handleSave} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
                 <Save className="w-4 h-4 mr-2" />
                 Save Changes
+              </Button>
+              <Button
+                onClick={() => navigate(createPageUrl(`Profile?email=${user.email}`))}
+                variant="outline"
+                className="border-white/20 text-white"
+              >
+                View Profile
               </Button>
             </div>
           </div>
@@ -142,13 +221,38 @@ export default function Settings() {
             <h2 className="text-xl font-bold uppercase tracking-wider">Privacy</h2>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
+            <div>
+              <label className="text-sm text-white/60 uppercase tracking-wider mb-3 block">
+                Location Privacy
+              </label>
+              <Select value={locationPrivacy} onValueChange={setLocationPrivacy}>
+                <SelectTrigger className="bg-black border-white/20 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="precise">Precise - Show exact location</SelectItem>
+                  <SelectItem value="fuzzy">Fuzzy - Show approximate area (recommended)</SelectItem>
+                  <SelectItem value="hidden">Hidden - Don't show location</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-white/40 mt-2">
+                Controls how your location is displayed on beacons and check-ins
+              </p>
+            </div>
+
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-semibold">Public Profile</p>
                 <p className="text-sm text-white/60">Show your profile to other users</p>
               </div>
               <Switch checked={publicProfile} onCheckedChange={setPublicProfile} />
+            </div>
+
+            <div className="bg-[#00D9FF]/10 border border-[#00D9FF]/40 rounded-lg p-4">
+              <p className="text-xs text-white/80 leading-relaxed">
+                🔒 <span className="font-bold">Social Links Privacy:</span> Your social media links are only visible to users you've completed a Telegram handshake with. Edit them in your full profile.
+              </p>
             </div>
           </div>
         </motion.div>

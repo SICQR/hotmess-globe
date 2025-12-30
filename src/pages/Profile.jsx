@@ -179,8 +179,12 @@ export default function Profile() {
           className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/40 rounded-2xl p-8 mb-6"
         >
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-4xl font-bold">
-              {profileUser.full_name?.[0] || 'U'}
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-4xl font-bold overflow-hidden">
+              {profileUser.avatar_url ? (
+                <img src={profileUser.avatar_url} alt={profileUser.full_name} className="w-full h-full object-cover" />
+              ) : (
+                profileUser.full_name?.[0] || 'U'
+              )}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
