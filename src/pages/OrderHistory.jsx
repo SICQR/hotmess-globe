@@ -1,0 +1,200 @@
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { Package, Calendar, DollarSign, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
+
+const STATUS_CONFIG = {
+  pending: { color: '#FFEB3B', icon: Clock },
+  processing: { color: '#00D9FF', icon: Package },
+  shipped: { color: '#B026FF', icon: Package },
+  delivered: { color: '#39FF14', icon: CheckCircle },
+  cancelled: { color: '#FF073A', icon: XCircle },
+  refunded: { color: '#FF6B35', icon: XCircle },
+};
+
+export default function OrderHistory() {
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const { data: buyerOrders = [], isLoading: loadingBuyer } = useQuery({
+    queryKey: ['buyer-orders', currentUser?.email],
+    queryFn: () => base44.entities.Order.filter({ buyer_email: currentUser.email }, '-created_date'),
+    enabled: !!currentUser,
+  });
+
+  const { data: sellerOrders = [], isLoading: loadingSeller } = useQuery({
+    queryKey: ['seller-orders', currentUser?.email],
+    queryFn: () => base44.entities.Order.filter({ seller_email: currentUser.email }, '-created_date'),
+    enabled: !!currentUser,
+  });
+
+  const { data: allOrderItems = [] } = useQuery({
+    queryKey: ['order-items'],
+    queryFn: () => base44.entities.OrderItem.list(),
+  });
+
+  const isLoading = loadingBuyer || loadingSeller;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <Package className="w-12 h-12 text-white/40 mx-auto mb-4 animate-pulse" />
+          <p className="text-white/60">Loading orders...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const renderOrder = (order, idx, isSeller = false) => {
+    const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
+    const Icon = config.icon;
+    const orderItems = allOrderItems.filter(item => item.order_id === order.id);
+
+    return (
+      <motion.div
+        key={order.id}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: idx * 0.05 }}
+        className="bg-white/5 border border-white/10 rounded-xl p-6"
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <Icon className="w-5 h-5" style={{ color: config.color }} />
+              <h3 className="font-bold">Order #{order.id.slice(0, 8)}</h3>
+              <Badge style={{ backgroundColor: config.color, color: '#000' }}>
+                {order.status}
+              </Badge>
+            </div>
+            <p className="text-sm text-white/60">
+              {isSeller ? `Buyer: ${order.buyer_email}` : `Seller: ${order.seller_email}`}
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-black text-[#FFEB3B] mb-1">
+              {order.total_xp.toLocaleString()} XP
+            </div>
+            <p className="text-xs text-white/40">
+              {format(new Date(order.created_date), 'MMM d, yyyy')}
+            </p>
+          </div>
+        </div>
+
+        {orderItems.length > 0 && (
+          <div className="space-y-2 mt-4 pt-4 border-t border-white/10">
+            {orderItems.map(item => (
+              <div key={item.id} className="flex items-center justify-between text-sm">
+                <Link 
+                  to={createPageUrl(`ProductDetail?id=${item.product_id}`)}
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  {item.product_name} x{item.quantity}
+                </Link>
+                <span className="text-white/40">{item.price_xp.toLocaleString()} XP</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {order.tracking_number && (
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Tracking</p>
+            <p className="font-mono text-sm">{order.tracking_number}</p>
+          </div>
+        )}
+
+        {order.notes && (
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Notes</p>
+            <p className="text-sm text-white/80">{order.notes}</p>
+          </div>
+        )}
+      </motion.div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">
+            Order History
+          </h1>
+          <p className="text-white/60">Track your purchases and sales</p>
+        </motion.div>
+
+        <Tabs defaultValue="purchases">
+          <TabsList className="bg-white/5 border border-white/10 mb-6">
+            <TabsTrigger value="purchases">
+              Purchases ({buyerOrders.length})
+            </TabsTrigger>
+            <TabsTrigger value="sales">
+              Sales ({sellerOrders.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="purchases">
+            {buyerOrders.length === 0 ? (
+              <div className="text-center py-20">
+                <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                <p className="text-white/40 text-lg mb-4">No purchases yet</p>
+                <Link 
+                  to={createPageUrl('Marketplace')}
+                  className="text-[#FF1493] hover:underline"
+                >
+                  Browse Marketplace
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {buyerOrders.map((order, idx) => renderOrder(order, idx, false))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="sales">
+            {sellerOrders.length === 0 ? (
+              <div className="text-center py-20">
+                <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                <p className="text-white/40 text-lg mb-4">No sales yet</p>
+                <Link 
+                  to={createPageUrl('SellerDashboard')}
+                  className="text-[#FF1493] hover:underline"
+                >
+                  Start Selling
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {sellerOrders.map((order, idx) => renderOrder(order, idx, true))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}

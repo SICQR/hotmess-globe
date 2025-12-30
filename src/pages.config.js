@@ -5,6 +5,8 @@ import Calendar from './pages/Calendar';
 import Chat from './pages/Chat';
 import Community from './pages/Community';
 import CreateBeacon from './pages/CreateBeacon';
+import EditBeacon from './pages/EditBeacon';
+import ExperienceMockups from './pages/ExperienceMockups';
 import Globe from './pages/Globe';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
@@ -16,8 +18,9 @@ import OrganizerDashboard from './pages/OrganizerDashboard';
 import Profile from './pages/Profile';
 import Scan from './pages/Scan';
 import Settings from './pages/Settings';
-import EditBeacon from './pages/EditBeacon';
-import ExperienceMockups from './pages/ExperienceMockups';
+import SellerDashboard from './pages/SellerDashboard';
+import ProductDetail from './pages/ProductDetail';
+import OrderHistory from './pages/OrderHistory';
 import __Layout from './Layout.jsx';
 
 
@@ -29,6 +32,8 @@ export const PAGES = {
     "Chat": Chat,
     "Community": Community,
     "CreateBeacon": CreateBeacon,
+    "EditBeacon": EditBeacon,
+    "ExperienceMockups": ExperienceMockups,
     "Globe": Globe,
     "Home": Home,
     "Leaderboard": Leaderboard,
@@ -40,8 +45,9 @@ export const PAGES = {
     "Profile": Profile,
     "Scan": Scan,
     "Settings": Settings,
-    "EditBeacon": EditBeacon,
-    "ExperienceMockups": ExperienceMockups,
+    "SellerDashboard": SellerDashboard,
+    "ProductDetail": ProductDetail,
+    "OrderHistory": OrderHistory,
 }
 
 export const pagesConfig = {

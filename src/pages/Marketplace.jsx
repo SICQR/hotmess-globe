@@ -1,53 +1,195 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Ticket, Shirt, Trophy, Sparkles, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { createPageUrl } from '../utils';
+import { ShoppingBag, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-const MARKETPLACE_ITEMS = [
-  { id: 1, name: 'VIP Pass', price: 5000, type: 'ticket', icon: Ticket, color: '#FFEB3B' },
-  { id: 2, name: 'HOTMESS Merch', price: 2000, type: 'merch', icon: Shirt, color: '#FF1493' },
-  { id: 3, name: 'Exclusive Badge', price: 3000, type: 'badge', icon: Trophy, color: '#00D9FF' },
-  { id: 4, name: 'Premium Event', price: 10000, type: 'ticket', icon: Sparkles, color: '#B026FF' },
-  { id: 5, name: 'Limited Edition Tee', price: 4000, type: 'merch', icon: Shirt, color: '#FF6B35' },
-  { id: 6, name: 'Founder Badge', price: 15000, type: 'badge', icon: Trophy, color: '#39FF14' },
-];
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ProductCard from '../components/marketplace/ProductCard';
+import { toast } from 'sonner';
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [currentUser, setCurrentUser] = useState(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const filteredItems = activeTab === 'all' 
-    ? MARKETPLACE_ITEMS 
-    : MARKETPLACE_ITEMS.filter(item => item.type === activeTab);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const { data: allProducts = [], isLoading } = useQuery({
+    queryKey: ['marketplace-products'],
+    queryFn: () => base44.entities.Product.filter({ status: 'active' }, '-created_date'),
+  });
+
+  const purchaseMutation = useMutation({
+    mutationFn: async (product) => {
+      const order = await base44.entities.Order.create({
+        buyer_email: currentUser.email,
+        seller_email: product.seller_email,
+        total_xp: product.price_xp,
+        status: 'pending',
+        payment_method: 'xp',
+      });
+
+      await base44.entities.OrderItem.create({
+        order_id: order.id,
+        product_id: product.id,
+        product_name: product.name,
+        quantity: 1,
+        price_xp: product.price_xp,
+      });
+
+      const newXp = (currentUser.xp || 0) - product.price_xp;
+      await base44.auth.updateMe({ xp: newXp });
+
+      await base44.entities.Product.update(product.id, {
+        sales_count: (product.sales_count || 0) + 1,
+        inventory_count: Math.max(0, (product.inventory_count || 0) - 1),
+      });
+
+      return order;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['marketplace-products']);
+      toast.success('Purchase successful!');
+      navigate(createPageUrl('OrderHistory'));
+    },
+    onError: () => {
+      toast.error('Purchase failed');
+    },
+  });
+
+  const handleBuy = (product) => {
+    if (!currentUser) {
+      toast.error('Please log in to purchase');
+      return;
+    }
+
+    if ((currentUser.xp || 0) < product.price_xp) {
+      toast.error('Insufficient XP');
+      return;
+    }
+
+    if (product.min_xp_level && (currentUser.xp || 0) < product.min_xp_level) {
+      toast.error(`Requires Level ${Math.floor(product.min_xp_level / 1000) + 1}+`);
+      return;
+    }
+
+    const isOutOfStock = product.status === 'sold_out' || (product.inventory_count !== undefined && product.inventory_count <= 0);
+    if (isOutOfStock) {
+      toast.error('Product sold out');
+      return;
+    }
+
+    purchaseMutation.mutate(product);
+  };
+
+  let filteredProducts = activeTab === 'all' 
+    ? allProducts 
+    : allProducts.filter(p => p.product_type === activeTab);
+
+  if (searchQuery) {
+    filteredProducts = filteredProducts.filter(p => 
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  }
+
+  if (sortBy === 'price_low') {
+    filteredProducts = [...filteredProducts].sort((a, b) => a.price_xp - b.price_xp);
+  } else if (sortBy === 'price_high') {
+    filteredProducts = [...filteredProducts].sort((a, b) => b.price_xp - a.price_xp);
+  } else if (sortBy === 'popular') {
+    filteredProducts = [...filteredProducts].sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0));
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <ShoppingBag className="w-12 h-12 text-white/40 mx-auto mb-4 animate-pulse" />
+          <p className="text-white/60">Loading marketplace...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">
                 Marketplace
               </h1>
-              <p className="text-white/60">Spend your XP on exclusive items and experiences</p>
+              <p className="text-white/60">Buy and sell exclusive items</p>
             </div>
-            <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+            <Button 
+              onClick={() => navigate(createPageUrl('SellerDashboard'))}
+              className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Sell Item
             </Button>
           </div>
+
+          {/* Search and Filters */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products..."
+                className="pl-10"
+              />
+            </div>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full md:w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="popular">Most Popular</SelectItem>
+                <SelectItem value="price_low">Price: Low to High</SelectItem>
+                <SelectItem value="price_high">Price: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </motion.div>
 
-        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList className="bg-white/5 border border-white/10">
             <TabsTrigger value="all" className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black">
-              All Items
+              All ({allProducts.length})
+            </TabsTrigger>
+            <TabsTrigger value="physical" className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
+              Physical
+            </TabsTrigger>
+            <TabsTrigger value="digital" className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-black">
+              Digital
             </TabsTrigger>
             <TabsTrigger value="ticket" className="data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black">
               Tickets
@@ -55,58 +197,28 @@ export default function Marketplace() {
             <TabsTrigger value="merch" className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black">
               Merch
             </TabsTrigger>
-            <TabsTrigger value="badge" className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
-              Badges
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredItems.map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    whileHover={{ scale: 1.02 }}
-                    className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:border-white/20 transition-all cursor-pointer"
-                  >
-                    <div 
-                      className="h-48 flex items-center justify-center"
-                      style={{ backgroundColor: `${item.color}20` }}
-                    >
-                      <Icon className="w-20 h-20" style={{ color: item.color }} />
-                    </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold mb-2">{item.name}</h3>
-                      <div className="flex items-center justify-between">
-                        <div className="text-2xl font-black" style={{ color: item.color }}>
-                          {item.price.toLocaleString()} XP
-                        </div>
-                        <Button
-                          size="sm"
-                          className="text-black font-bold"
-                          style={{ backgroundColor: item.color }}
-                        >
-                          Buy
-                        </Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-20">
+                <ShoppingBag className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                <p className="text-white/40 text-lg">No products found</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProducts.map((product, idx) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    index={idx}
+                    onBuy={handleBuy}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
-
-        {filteredItems.length === 0 && (
-          <div className="text-center py-20">
-            <ShoppingBag className="w-16 h-16 text-white/20 mx-auto mb-4" />
-            <p className="text-white/40 text-lg">No items found</p>
-          </div>
-        )}
       </div>
     </div>
   );
