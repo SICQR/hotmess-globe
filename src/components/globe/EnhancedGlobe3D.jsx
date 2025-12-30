@@ -162,11 +162,12 @@ export default function EnhancedGlobe3D({
     if (showPins) {
       beacons.forEach(beacon => {
         const isHighlighted = highlightedIds.includes(beacon.id);
+        const isCareBeacon = beacon.mode === 'care';
 
         const beaconMat = new THREE.MeshStandardMaterial({
-          color: isHighlighted ? 0xffeb3b : 0xff1493,
-          emissive: isHighlighted ? 0xffeb3b : 0xff1493,
-          emissiveIntensity: isHighlighted ? 1.2 : 0.8,
+          color: isCareBeacon ? 0x00d9ff : (isHighlighted ? 0xffeb3b : 0xff1493),
+          emissive: isCareBeacon ? 0x00d9ff : (isHighlighted ? 0xffeb3b : 0xff1493),
+          emissiveIntensity: isCareBeacon ? 1.5 : (isHighlighted ? 1.2 : 0.8),
           roughness: 0.4,
           metalness: 0.2
         });
@@ -185,14 +186,15 @@ export default function EnhancedGlobe3D({
         beaconMeshes.push(mesh);
 
         // Glow sprite
+        const spriteColor = isCareBeacon ? 0x00d9ff : (isHighlighted ? 0xffeb3b : 0xff1493);
         const spriteMat = new THREE.SpriteMaterial({
-          color: isHighlighted ? 0xffeb3b : 0xff1493,
+          color: spriteColor,
           transparent: true,
-          opacity: isHighlighted ? 0.9 : 0.6,
+          opacity: isCareBeacon ? 1.0 : (isHighlighted ? 0.9 : 0.6),
           blending: THREE.AdditiveBlending
         });
         const sprite = new THREE.Sprite(spriteMat);
-        sprite.scale.set(isHighlighted ? 0.4 : 0.25, isHighlighted ? 0.4 : 0.25, 1);
+        sprite.scale.set(isCareBeacon ? 0.5 : (isHighlighted ? 0.4 : 0.25), isCareBeacon ? 0.5 : (isHighlighted ? 0.4 : 0.25), 1);
         sprite.position.copy(pos);
         globe.add(sprite);
       });
