@@ -24,6 +24,8 @@ import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
 import Connect from './pages/Connect';
+import Onboarding from './pages/Onboarding';
+import Checkout from './pages/Checkout';
 import __Layout from './Layout.jsx';
 
 
@@ -54,6 +56,8 @@ export const PAGES = {
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
     "Connect": Connect,
+    "Onboarding": Onboarding,
+    "Checkout": Checkout,
 }
 
 export const pagesConfig = {

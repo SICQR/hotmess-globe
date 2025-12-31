@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { MapPin, Zap } from 'lucide-react';
 import CompatibilityBadge, { calculateCompatibility } from './CompatibilityBadge';
+import ReportButton from '../moderation/ReportButton';
 
 export default function DiscoveryCard({ user, userTags = [], userTribes = [], currentUserTags = [], index }) {
   const compatibility = calculateCompatibility(currentUserTags, userTags);
@@ -72,10 +73,15 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
               </div>
             )}
 
-            {/* XP */}
-            <div className="absolute top-4 right-4 flex items-center gap-1 px-2 py-1 bg-black/80 border border-[#FFEB3B]">
-              <Zap className="w-3 h-3 text-[#FFEB3B]" />
-              <span className="text-[10px] font-bold text-[#FFEB3B]">{user.xp || 0}</span>
+            {/* XP & Report */}
+            <div className="absolute top-4 right-4 flex flex-col gap-2">
+              <div className="flex items-center gap-1 px-2 py-1 bg-black/80 border border-[#FFEB3B]">
+                <Zap className="w-3 h-3 text-[#FFEB3B]" />
+                <span className="text-[10px] font-bold text-[#FFEB3B]">{user.xp || 0}</span>
+              </div>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <ReportButton itemType="user" itemId={user.email} variant="ghost" />
+              </div>
             </div>
           </div>
         </div>

@@ -14,6 +14,8 @@ import HandshakeButton from '../components/social/HandshakeButton';
 import QuickActions from '../components/profile/QuickActions';
 import MutualConnections from '../components/profile/MutualConnections';
 import ProfileStats from '../components/profile/ProfileStats';
+import ReportButton from '../components/moderation/ReportButton';
+import BlockButton from '../components/moderation/BlockButton';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -263,11 +265,17 @@ export default function Profile() {
               </div>
             </div>
             {!isOwnProfile && currentUser && (
-              <QuickActions 
-                profileUser={profileUser}
-                currentUser={currentUser}
-                isOwnProfile={isOwnProfile}
-              />
+              <div className="flex flex-col gap-2">
+                <QuickActions 
+                  profileUser={profileUser}
+                  currentUser={currentUser}
+                  isOwnProfile={isOwnProfile}
+                />
+                <div className="flex gap-2">
+                  <BlockButton userEmail={profileUser.email} />
+                  <ReportButton itemType="user" itemId={profileUser.email} variant="outline" />
+                </div>
+              </div>
             )}
           </div>
 

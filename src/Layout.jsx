@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, Map, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X, MessageCircle, Calendar as CalendarIcon, MapPin, TrendingUp, Bookmark } from 'lucide-react';
+import { Home, Globe as GlobeIcon, Map, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X, MessageCircle, Calendar as CalendarIcon, MapPin, TrendingUp, Bookmark, Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import PanicButton from '@/components/safety/PanicButton';
 import Gatekeeper from '@/components/auth/Gatekeeper';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
 import GlobalAssistant from '@/components/ai/GlobalAssistant';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
+import GlobalSearch from '@/components/search/GlobalSearch';
 
 const PRIMARY_NAV = [
   { name: 'Pulse', icon: Home, path: 'Home' },
@@ -30,6 +31,7 @@ const SECONDARY_NAV = [
 export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -66,6 +68,12 @@ export default function Layout({ children, currentPageName }) {
                 HOTMESS
               </Link>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowSearch(true)}
+                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
                 {user && <NotificationCenter currentUser={user} />}
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -244,6 +252,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Global AI Assistant */}
       {user && <GlobalAssistant />}
+
+      {/* Global Search */}
+      {user && <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />}
       </div>
       </Gatekeeper>
       );
