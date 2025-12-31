@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Send, Image, Paperclip, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon } from 'lucide-react';
+import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
@@ -11,7 +11,9 @@ import { toast } from 'sonner';
 export default function ChatThread({ thread, currentUser, onBack }) {
   const [messageText, setMessageText] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [isTyping, setIsTyping] = useState({});
   const messagesEndRef = useRef(null);
+  const typingTimeoutRef = useRef({});
   const queryClient = useQueryClient();
   const isTelegramEncrypted = thread.telegram_chat_id || thread.thread_type === 'dm';
 
@@ -19,6 +21,22 @@ export default function ChatThread({ thread, currentUser, onBack }) {
     queryKey: ['messages', thread.id],
     queryFn: () => base44.entities.Message.filter({ thread_id: thread.id }, 'created_date'),
     refetchInterval: 1000, // Real-time polling
+  });
+
+  const { data: typingIndicators = [] } = useQuery({
+    queryKey: ['typing', thread.id],
+    queryFn: async () => {
+      const activities = await base44.entities.UserActivity.filter(
+        { activity_type: 'typing' },
+        '-created_date',
+        50
+      );
+      return activities.filter(a => 
+        a.metadata?.thread_id === thread.id &&
+        new Date(a.created_date).getTime() > Date.now() - 5000 // Last 5 seconds
+      );
+    },
+    refetchInterval: 1000,
   });
 
   const { data: allUsers = [] } = useQuery({
@@ -50,6 +68,32 @@ export default function ChatThread({ thread, currentUser, onBack }) {
         last_message_at: new Date().toISOString(),
         unread_count: newUnreadCount,
       });
+
+      // Send push notification to other participants
+      thread.participant_emails.forEach(async (email) => {
+        if (email !== currentUser.email) {
+          try {
+            await base44.entities.Notification.create({
+              user_email: email,
+              type: 'message',
+              title: `New message from ${currentUser.full_name}`,
+              message: data.content.substring(0, 100),
+              link: `/Messages?thread=${thread.id}`,
+              metadata: { thread_id: thread.id, sender: currentUser.email }
+            });
+          } catch (err) {
+            console.error('Failed to send notification:', err);
+          }
+        }
+      });
+
+      // Browser push notification
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(`New message from ${currentUser.full_name}`, {
+          body: data.content.substring(0, 100),
+          icon: currentUser.avatar_url || '/icon.png'
+        });
+      }
 
       return message;
     },
@@ -92,9 +136,64 @@ export default function ChatThread({ thread, currentUser, onBack }) {
     }
   };
 
+  const handleVideoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('Video too large (max 50MB)');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      
+      sendMutation.mutate({
+        content: 'Video',
+        message_type: 'video',
+        metadata: { video_url: file_url },
+      });
+      
+      toast.success('Video sent');
+    } catch (error) {
+      toast.error('Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleTyping = () => {
+    // Broadcast typing indicator
+    base44.entities.UserActivity.create({
+      user_email: currentUser.email,
+      activity_type: 'typing',
+      metadata: { thread_id: thread.id }
+    }).catch(() => {});
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Process typing indicators
+  useEffect(() => {
+    const typingUsers = {};
+    typingIndicators.forEach((indicator) => {
+      if (indicator.user_email !== currentUser.email) {
+        typingUsers[indicator.user_email] = true;
+      }
+    });
+    setIsTyping(typingUsers);
+  }, [typingIndicators, currentUser.email]);
 
   // Mark messages as read
   useEffect(() => {
@@ -226,6 +325,16 @@ export default function ChatThread({ thread, currentUser, onBack }) {
                         />
                       </div>
                     )}
+
+                    {msg.message_type === 'video' && msg.metadata?.video_url && (
+                      <div className="border-2 border-white overflow-hidden mb-2">
+                        <video 
+                          src={msg.metadata.video_url} 
+                          controls
+                          className="max-w-full grayscale hover:grayscale-0 transition-all"
+                        />
+                      </div>
+                    )}
                     
                     {msg.message_type === 'text' && (
                       <div
@@ -245,15 +354,50 @@ export default function ChatThread({ thread, currentUser, onBack }) {
                       </div>
                     )}
                     
-                    <p className={`text-[10px] text-white/40 mt-1 font-mono ${isOwn ? 'text-right' : 'text-left'}`}>
-                      {format(new Date(msg.created_date), 'HH:mm')}
-                    </p>
+                    <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                      <p className="text-[10px] text-white/40 font-mono">
+                        {format(new Date(msg.created_date), 'HH:mm')}
+                      </p>
+                      {isOwn && (
+                        <>
+                          {msg.read_by.length === 1 ? (
+                            <Check className="w-3 h-3 text-white/40" />
+                          ) : (
+                            <CheckCheck className="w-3 h-3 text-[#00D9FF]" />
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>
             );
           })}
         </AnimatePresence>
+
+        {/* Typing Indicator */}
+        {Object.keys(isTyping).length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex justify-start"
+          >
+            <div className="flex gap-3 items-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
+                <span className="text-xs font-bold">...</span>
+              </div>
+              <div className="bg-black border-2 border-white px-4 py-2.5 rounded-lg">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -283,9 +427,35 @@ export default function ChatThread({ thread, currentUser, onBack }) {
             </Button>
           </label>
 
+          <input
+            type="file"
+            accept="video/*"
+            onChange={handleVideoUpload}
+            className="hidden"
+            id="video-upload"
+            disabled={uploading}
+          />
+          <label htmlFor="video-upload">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="icon" 
+              disabled={uploading} 
+              asChild
+              className="text-white/60 hover:text-white hover:bg-white/10 border-2 border-white/20 hover:border-white"
+            >
+              <span>
+                <Video className="w-5 h-5" />
+              </span>
+            </Button>
+          </label>
+
           <Input
             value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
+            onChange={(e) => {
+              setMessageText(e.target.value);
+              handleTyping();
+            }}
             placeholder="TYPE MESSAGE..."
             className="flex-1 bg-black border-2 border-white/20 text-white placeholder:text-white/40 placeholder:uppercase placeholder:font-mono placeholder:text-xs focus:border-white"
           />

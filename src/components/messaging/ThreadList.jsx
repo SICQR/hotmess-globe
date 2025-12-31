@@ -22,10 +22,21 @@ const THREAD_TYPE_COLORS = {
   beacon: '#39FF14',
 };
 
-export default function ThreadList({ threads, currentUser, allUsers, onSelectThread }) {
+export default function ThreadList({ threads, currentUser, allUsers, onSelectThread, onNewMessage }) {
   return (
-    <div className="space-y-2">
-      {threads.map((thread, idx) => {
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b-2 border-white/20">
+        <button
+          onClick={onNewMessage}
+          className="w-full bg-[#FF1493] hover:bg-white text-black hover:text-black font-black uppercase text-sm py-3 border-2 border-white transition-all"
+        >
+          <MessageCircle className="w-4 h-4 inline mr-2" />
+          New Message
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto space-y-2 p-2">
+        {threads.map((thread, idx) => {
         const Icon = THREAD_TYPE_ICONS[thread.thread_type] || MessageCircle;
         const color = THREAD_TYPE_COLORS[thread.thread_type] || '#FF1493';
         
@@ -104,6 +115,7 @@ export default function ThreadList({ threads, currentUser, allUsers, onSelectThr
           <p className="text-white/20 text-xs font-mono mt-1">START A NEW MESSAGE</p>
         </div>
       )}
+      </div>
     </div>
   );
 }
