@@ -4,6 +4,7 @@ import { Heart, MessageCircle, Share2, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import ExpiryBadge from './ExpiryBadge';
+import { base44 } from '@/api/base44Client';
 
 const CATEGORY_COLORS = {
   general: '#FF1493',
@@ -82,7 +83,19 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
       </div>
       <div className="flex items-center gap-6 pt-4 border-t border-white/10">
         <button
-          onClick={() => onLike(post.id)}
+          onClick={async () => {
+            await onLike(post.id);
+            // Notify post author of like
+            if (post.user_email !== userHasLiked) {
+              await base44.entities.Notification.create({
+                user_email: post.user_email,
+                type: 'post_like',
+                title: 'New Like',
+                message: `Someone liked your post`,
+                link: 'Community'
+              }).catch(() => {}); // Silent fail
+            }
+          }}
           className={`flex items-center gap-2 text-sm transition-colors ${
             userHasLiked
               ? 'text-[#FF1493]'

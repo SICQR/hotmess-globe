@@ -7,6 +7,7 @@ import PanicButton from '@/components/safety/PanicButton';
 import Gatekeeper from '@/components/auth/Gatekeeper';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
 import GlobalAssistant from '@/components/ai/GlobalAssistant';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 
 const PRIMARY_NAV = [
   { name: 'Pulse', icon: Home, path: 'Home' },
@@ -64,12 +65,15 @@ export default function Layout({ children, currentPageName }) {
               <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
                 HOTMESS
               </Link>
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-              >
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
+              <div className="flex items-center gap-2">
+                {user && <NotificationCenter currentUser={user} />}
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                >
+                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -136,9 +140,12 @@ export default function Layout({ children, currentPageName }) {
           {/* Desktop Sidebar - Smart Nav */}
           <div className="hidden md:flex md:fixed md:left-0 md:top-0 md:bottom-0 md:w-56 md:flex-col md:bg-black md:backdrop-blur-xl md:border-r-2 md:border-white md:z-40">
             <div className="p-4 border-b-2 border-white/20">
-              <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
-                HOT<span className="text-[#FF1493]">MESS</span>
-              </Link>
+              <div className="flex items-center justify-between mb-1">
+                <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
+                  HOT<span className="text-[#FF1493]">MESS</span>
+                </Link>
+                {user && <NotificationCenter currentUser={user} />}
+              </div>
               <p className="text-[8px] text-white/40 uppercase tracking-wider mt-1">LONDON OS</p>
             </div>
 

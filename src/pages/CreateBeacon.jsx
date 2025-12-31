@@ -56,7 +56,21 @@ export default function CreateBeacon() {
         data.is_verified = false;
       }
       
-      return base44.entities.Beacon.create(data);
+      const newBeacon = await base44.entities.Beacon.create(data);
+      
+      // Notify admins of new shadow beacon
+      if (data.is_shadow) {
+        await base44.entities.Notification.create({
+          user_email: 'admin',
+          type: 'shadow_beacon',
+          title: 'New Beacon Pending Approval',
+          message: `${user.full_name || user.email} submitted "${data.title}" for review.`,
+          link: 'AdminDashboard',
+          metadata: { beacon_id: newBeacon.id }
+        });
+      }
+      
+      return newBeacon;
     },
     onSuccess: (newBeacon) => {
       queryClient.invalidateQueries(['beacons']);

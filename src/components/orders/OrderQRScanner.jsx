@@ -26,6 +26,16 @@ export default function OrderQRScanner({ order, currentUser }) {
         qr_scanned_at: new Date().toISOString(),
         status: 'delivered'
       });
+      
+      // Notify seller
+      await base44.entities.Notification.create({
+        user_email: order.seller_email,
+        type: 'order',
+        title: 'Order Delivered',
+        message: `Buyer confirmed receipt of order #${order.id.slice(0, 8)}. Payment released!`,
+        link: 'OrderHistory',
+        metadata: { order_id: order.id }
+      });
 
       return order;
     },

@@ -74,7 +74,21 @@ export default function OrderHistory() {
   }
 
   const releaseEscrowMutation = useMutation({
-    mutationFn: (orderId) => base44.entities.Order.update(orderId, { status: 'processing' }),
+    mutationFn: async (order) => {
+      await base44.entities.Order.update(order.id, { status: 'processing' });
+      
+      // Notify seller
+      await base44.entities.Notification.create({
+        user_email: order.seller_email,
+        type: 'escrow_release',
+        title: 'Payment Released',
+        message: `Buyer released payment for order #${order.id.slice(0, 8)}. Funds will be available soon.`,
+        link: `OrderHistory`,
+        metadata: { order_id: order.id }
+      });
+      
+      return order;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['buyer-orders']);
       queryClient.invalidateQueries(['seller-orders']);
@@ -165,7 +179,7 @@ export default function OrderHistory() {
             <Button
               onClick={() => {
                 if (confirm('Release payment to seller? This action cannot be undone.')) {
-                  releaseEscrowMutation.mutate(order.id);
+                  releaseEscrowMutation.mutate(order);
                 }
               }}
               disabled={releaseEscrowMutation.isPending}

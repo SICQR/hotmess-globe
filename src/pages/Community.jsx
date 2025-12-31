@@ -84,6 +84,18 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
         ai_sentiment: moderation.sentiment || 'neutral',
         expires_at: expiresAt,
       });
+      
+      // Notify admins if flagged
+      if (!moderation.approved) {
+        await base44.entities.Notification.create({
+          user_email: 'admin',
+          type: 'flagged_post',
+          title: 'Post Flagged by AI',
+          message: `Post by ${user.full_name || user.email} flagged: ${moderation.reason}`,
+          link: 'AdminDashboard',
+          metadata: { post_id: post.id }
+        });
+      }
 
       return { post, moderation };
     },
