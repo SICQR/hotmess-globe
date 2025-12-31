@@ -11,6 +11,7 @@ import NotificationCenter from '@/components/notifications/NotificationCenter';
 import GlobalSearch from '@/components/search/GlobalSearch';
 import OfflineIndicator from '@/components/ui/OfflineIndicator';
 import EventReminders from '@/components/events/EventReminders';
+import { TaxonomyProvider } from '@/components/taxonomy/provider';
 
 const PRIMARY_NAV = [
   { name: 'Pulse', icon: Home, path: 'Home' },
@@ -60,8 +61,9 @@ export default function Layout({ children, currentPageName }) {
   const isGlobePage = currentPageName === 'Globe';
 
   return (
-    <Gatekeeper>
-      <OfflineIndicator />
+    <TaxonomyProvider>
+      <Gatekeeper>
+        <OfflineIndicator />
       <div className="min-h-screen bg-black text-white">
       {!isGlobePage && (
         <>
@@ -264,5 +266,6 @@ export default function Layout({ children, currentPageName }) {
       {user && <EventReminders currentUser={user} />}
       </div>
       </Gatekeeper>
-      );
-      }
+    </TaxonomyProvider>
+  );
+}
