@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -6,11 +6,13 @@ import { Users, Zap, Heart, Filter } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import DiscoveryCard from '../components/discovery/DiscoveryCard';
-import DiscoveryFilters from '../components/discovery/DiscoveryFilters';
+import FiltersDrawer from '../components/discovery/FiltersDrawer';
 import RightNowModal from '../components/discovery/RightNowModal';
 import EmptyState from '../components/ui/EmptyState';
 import { ListSkeleton } from '../components/ui/LoadingSkeleton';
 import TutorialTooltip from '../components/tutorial/TutorialTooltip';
+import { valuesToSearchParams, searchParamsToValues, valuesToApiPayload, applyLocalFilters } from '../components/discovery/queryBuilder';
+import { useTaxonomy } from '../components/taxonomy/useTaxonomy';
 
 export default function Connect() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -19,7 +21,27 @@ export default function Connect() {
   const [showRightNow, setShowRightNow] = useState(false);
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 12;
-  const [filters, setFilters] = useState({});
+  const { cfg, idx } = useTaxonomy();
+
+  // Build defaults from taxonomy config
+  const defaults = useMemo(() => {
+    if (!cfg) return {};
+    const d = {};
+    for (const t of cfg.filters.quickToggles) d[t.id] = t.default;
+    for (const g of cfg.filters.groups) {
+      for (const f of g.fields) {
+        d[f.id] = typeof f.default !== "undefined" ? f.default : null;
+      }
+    }
+    return d;
+  }, [cfg]);
+
+  // Initialize filters from URL params
+  const [filters, setFilters] = useState(() => {
+    if (!cfg) return {};
+    const sp = new URLSearchParams(window.location.search);
+    return searchParamsToValues(sp, defaults);
+  });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -55,39 +77,60 @@ export default function Connect() {
     queryFn: () => base44.entities.RightNowStatus.filter({ active: true })
   });
 
-  if (!currentUser) return null;
+  if (!currentUser || !cfg) return null;
 
-  // Filter users
-  let filteredUsers = allUsers.filter(u => u.email !== currentUser.email);
+  // Build profile objects for filtering
+  const profiles = useMemo(() => {
+    return allUsers
+      .filter(u => u.email !== currentUser.email)
+      .map(u => {
+        const uTags = userTags.filter(t => t.user_email === u.email);
+        const uTribes = userTribes.filter(t => t.user_email === u.email);
+        
+        return {
+          ...u,
+          onlineNow: u.activity_status === 'online' || u.activity_status === 'at_event',
+          rightNow: rightNowStatuses.some(s => 
+            s.user_email === u.email && 
+            s.active && 
+            new Date(s.expires_at) > new Date()
+          ),
+          hasFace: !!u.avatar_url,
+          age: u.age || 25,
+          tribes: uTribes.map(t => t.tribe_id),
+          tags: uTags.map(t => t.tag_id),
+          distanceKm: u.city === currentUser.city ? 5 : 50, // Mock distance
+        };
+      });
+  }, [allUsers, currentUser, userTags, userTribes, rightNowStatuses]);
 
-  // Right Now lane - only show users with active status and not expired
+  // Apply lane filter
+  let laneFiltered = profiles;
   if (lane === 'right_now') {
-    const now = new Date();
-    const rightNowEmails = rightNowStatuses
-      .filter(s => s.active && new Date(s.expires_at) > now)
-      .map(s => s.user_email);
-    filteredUsers = filteredUsers.filter(u => rightNowEmails.includes(u.email));
+    laneFiltered = profiles.filter(p => p.rightNow);
   }
 
-  // Apply filters
-  if (filters.onlineNow) {
-    filteredUsers = filteredUsers.filter(u => u.activity_status === 'online' || u.activity_status === 'at_event');
-  }
-  if (filters.chemFree) {
-    const chemFreeTagIds = ['sober', 'chem_free', 'cali_sober', 'recovery_friendly'];
-    const chemFreeUsers = userTags
-      .filter(t => chemFreeTagIds.includes(t.tag_id))
-      .map(t => t.user_email);
-    filteredUsers = filteredUsers.filter(u => chemFreeUsers.includes(u.email));
-  }
-  if (filters.hasFace) {
-    filteredUsers = filteredUsers.filter(u => u.avatar_url);
-  }
-  if (filters.nearMe && currentUser.city) {
-    filteredUsers = filteredUsers.filter(u => u.city === currentUser.city);
-  }
+  // Apply query builder filters
+  const filteredUsers = useMemo(() => {
+    return applyLocalFilters(laneFiltered, filters, { taxonomyIndex: idx });
+  }, [laneFiltered, filters, idx]);
 
   const currentUserTags = userTags.filter(t => t.user_email === currentUser.email);
+
+  // Handle filter apply
+  const handleFiltersApply = (values) => {
+    setFilters(values);
+    setPage(1);
+    
+    // Sync to URL
+    const sp = valuesToSearchParams(values);
+    const nextUrl = `${window.location.pathname}?${sp.toString()}`;
+    window.history.replaceState({}, "", nextUrl);
+
+    // Log API payload for debugging
+    const payload = valuesToApiPayload(values);
+    console.log("API payload:", payload);
+  };
 
   // Pagination
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
@@ -95,6 +138,9 @@ export default function Connect() {
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE
   );
+
+  // Map back to user objects for display
+  const displayUsers = paginatedUsers.map(p => allUsers.find(u => u.email === p.email)).filter(Boolean);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -159,8 +205,11 @@ export default function Connect() {
 
       {/* Grid */}
       <div className="max-w-7xl mx-auto p-6">
+        <div className="mb-4 text-sm text-white/60">
+          {filteredUsers.length} {filteredUsers.length === 1 ? 'result' : 'results'}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {paginatedUsers.map((user, idx) => {
+          {displayUsers.map((user, idx) => {
             const userTagsData = userTags.filter(t => t.user_email === user.email);
             const userTribesData = userTribes.filter(t => t.user_email === user.email);
             return (
@@ -220,14 +269,13 @@ export default function Connect() {
         currentUser={currentUser}
       />
 
-      {showFilters && (
-        <DiscoveryFilters
-          isOpen={showFilters}
-          onClose={() => setShowFilters(false)}
-          filters={filters}
-          onFiltersChange={setFilters}
-        />
-      )}
+      <FiltersDrawer
+        open={showFilters}
+        onClose={() => setShowFilters(false)}
+        laneId={lane}
+        initialValues={filters}
+        onApply={handleFiltersApply}
+      />
 
       <TutorialTooltip page="connect" />
     </div>
