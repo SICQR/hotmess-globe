@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { MapPin, Zap, Crown } from 'lucide-react';
 import CompatibilityBadge, { calculateCompatibility } from './CompatibilityBadge';
 import ReportButton from '../moderation/ReportButton';
+import LazyImage from '../ui/LazyImage';
 
 export default function DiscoveryCard({ user, userTags = [], userTribes = [], currentUserTags = [], index }) {
-  const compatibility = calculateCompatibility(currentUserTags, userTags);
-  const essentials = userTags.filter(t => t.is_essential).slice(0, 3);
+  const compatibility = useMemo(() => calculateCompatibility(currentUserTags, userTags), [currentUserTags, userTags]);
+  const essentials = useMemo(() => userTags.filter(t => t.is_essential).slice(0, 3), [userTags]);
+  const topTribes = useMemo(() => userTribes.slice(0, 2), [userTribes]);
 
   return (
     <motion.div
@@ -26,7 +28,12 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
               const photoUrl = primaryPhoto || firstPhoto || user.avatar_url;
               
               return photoUrl ? (
-                <img src={photoUrl} alt={user.full_name} className="w-full h-full object-cover" />
+                <LazyImage
+                  src={photoUrl}
+                  alt={user.full_name}
+                  className="w-full h-full object-cover"
+                  containerClassName="w-full h-full absolute inset-0"
+                />
               ) : (
                 user.full_name?.[0] || 'U'
               );
@@ -73,9 +80,9 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
             )}
 
             {/* Tribes */}
-            {userTribes.length > 0 && (
+            {topTribes.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
-                {userTribes.slice(0, 2).map(tribe => (
+                {topTribes.map(tribe => (
                   <span
                     key={tribe.tribe_id}
                     className="px-2 py-0.5 bg-[#00D9FF] text-black text-[10px] font-bold uppercase"

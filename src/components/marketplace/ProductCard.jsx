@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
@@ -6,6 +6,7 @@ import { ShoppingBag, Star, Package, Award, Ticket, Shirt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
+import LazyImage from '../ui/LazyImage';
 
 const TYPE_ICONS = {
   physical: Package,
@@ -28,9 +29,18 @@ const TYPE_COLORS = {
 export default function ProductCard({ product, index = 0, onBuy, currentUserXP = 0 }) {
   const Icon = TYPE_ICONS[product.product_type] || ShoppingBag;
   const color = TYPE_COLORS[product.product_type] || '#FF1493';
-  const isOutOfStock = product.status === 'sold_out' || (product.inventory_count !== undefined && product.inventory_count <= 0);
-  const isLocked = product.min_xp_level && currentUserXP < product.min_xp_level;
-  const isOfficial = product.category === 'official' || product.tags?.includes('official');
+  const isOutOfStock = useMemo(() => 
+    product.status === 'sold_out' || (product.inventory_count !== undefined && product.inventory_count <= 0),
+    [product.status, product.inventory_count]
+  );
+  const isLocked = useMemo(() => 
+    product.min_xp_level && currentUserXP < product.min_xp_level,
+    [product.min_xp_level, currentUserXP]
+  );
+  const isOfficial = useMemo(() => 
+    product.category === 'official' || product.tags?.includes('official'),
+    [product.category, product.tags]
+  );
 
   return (
     <motion.div
@@ -50,11 +60,11 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
             style={{ backgroundColor: `${color}20` }}
           >
             {product.image_urls && product.image_urls.length > 0 ? (
-              <OSCardImage 
-                src={product.image_urls[0]} 
+              <LazyImage
+                src={product.image_urls[0]}
                 alt={product.name}
-                locked={isLocked}
-                grayscale={isLocked || !isOfficial}
+                className={`w-full h-full object-cover ${isLocked || !isOfficial ? 'grayscale' : ''}`}
+                containerClassName="w-full h-full"
               />
             ) : (
               <Icon className="w-20 h-20" style={{ color }} />
