@@ -25,37 +25,7 @@ export default function Connect() {
   const ITEMS_PER_PAGE = 12;
   const { cfg, idx } = useTaxonomy();
 
-  // Build defaults from taxonomy config
-  const defaults = useMemo(() => {
-    if (!cfg) return {};
-    const d = {};
-    for (const t of cfg.filters.quickToggles) d[t.id] = t.default;
-    for (const g of cfg.filters.groups) {
-      for (const f of g.fields) {
-        d[f.id] = typeof f.default !== "undefined" ? f.default : null;
-      }
-    }
-    return d;
-  }, [cfg]);
-
-  // Initialize filters from URL params
-  const [filters, setFilters] = useState({});
-
-  // Initialize filters when cfg is ready
-  useEffect(() => {
-    if (cfg && Object.keys(filters).length === 0) {
-      const sp = new URLSearchParams(window.location.search);
-      setFilters(searchParamsToValues(sp, defaults));
-    }
-  }, [cfg, defaults]);
-
-  useEffect(() => {
-    if (currentUser) {
-      setLane(currentUser.discovery_lane || 'browse');
-    }
-  }, [currentUser]);
-
-  // Use global cached users
+  // Use global cached users - MUST be before any conditional returns
   const { data: allUsers = [] } = useAllUsers();
 
   const { data: userTags = [] } = useQuery({
@@ -73,11 +43,21 @@ export default function Connect() {
     queryFn: () => base44.entities.RightNowStatus.filter({ active: true })
   });
 
-  // CRITICAL: ALL hooks must be called before conditional returns
-  const currentUserTags = useMemo(() => {
-    if (!currentUser) return [];
-    return userTags.filter(t => t.user_email === currentUser.email);
-  }, [currentUser, userTags]);
+  // Build defaults from taxonomy config
+  const defaults = useMemo(() => {
+    if (!cfg) return {};
+    const d = {};
+    for (const t of cfg.filters.quickToggles) d[t.id] = t.default;
+    for (const g of cfg.filters.groups) {
+      for (const f of g.fields) {
+        d[f.id] = typeof f.default !== "undefined" ? f.default : null;
+      }
+    }
+    return d;
+  }, [cfg]);
+
+  // Initialize filters from URL params
+  const [filters, setFilters] = useState({});
 
   // Apply query builder filters with memoization and debouncing for performance
   const [debouncedFilters, setDebouncedFilters] = useState(filters);
@@ -87,9 +67,29 @@ export default function Connect() {
     []
   );
 
+  // Initialize filters when cfg is ready
+  useEffect(() => {
+    if (cfg && Object.keys(filters).length === 0) {
+      const sp = new URLSearchParams(window.location.search);
+      setFilters(searchParamsToValues(sp, defaults));
+    }
+  }, [cfg, defaults, filters]);
+
+  useEffect(() => {
+    if (currentUser) {
+      setLane(currentUser.discovery_lane || 'browse');
+    }
+  }, [currentUser]);
+
   useEffect(() => {
     debouncedSetFilters(filters);
   }, [filters, debouncedSetFilters]);
+
+  // ALL hooks must be called before conditional returns
+  const currentUserTags = useMemo(() => {
+    if (!currentUser) return [];
+    return userTags.filter(t => t.user_email === currentUser.email);
+  }, [currentUser, userTags]);
 
   // Early return AFTER all hooks
   if (!currentUser || !cfg) {

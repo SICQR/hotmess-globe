@@ -23,10 +23,10 @@ import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
 import ProfileSetup from './pages/ProfileSetup';
 import Radio from './pages/Radio';
+import RightNowDashboard from './pages/RightNowDashboard';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
-import RightNowDashboard from './pages/RightNowDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -56,10 +56,10 @@ export const PAGES = {
     "Profile": Profile,
     "ProfileSetup": ProfileSetup,
     "Radio": Radio,
+    "RightNowDashboard": RightNowDashboard,
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
-    "RightNowDashboard": RightNowDashboard,
 }
 
 export const pagesConfig = {
