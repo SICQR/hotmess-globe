@@ -74,6 +74,18 @@ export default function Connect() {
     return userTags.filter(t => t.user_email === currentUser.email);
   }, [currentUser, userTags]);
 
+  // Apply query builder filters with memoization and debouncing for performance
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+  
+  const debouncedSetFilters = useMemo(
+    () => debounce((newFilters) => setDebouncedFilters(newFilters), 150),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSetFilters(filters);
+  }, [filters, debouncedSetFilters]);
+
   if (!currentUser || !cfg) return null;
 
   // Build profile objects for filtering
@@ -106,18 +118,6 @@ export default function Connect() {
   if (lane === 'right_now') {
     laneFiltered = profiles.filter(p => p.rightNow);
   }
-
-  // Apply query builder filters with memoization and debouncing for performance
-  const [debouncedFilters, setDebouncedFilters] = useState(filters);
-  
-  const debouncedSetFilters = useMemo(
-    () => debounce((newFilters) => setDebouncedFilters(newFilters), 150),
-    []
-  );
-
-  useEffect(() => {
-    debouncedSetFilters(filters);
-  }, [filters, debouncedSetFilters]);
 
   const filteredUsers = useMemo(() => {
     return applyLocalFilters(laneFiltered, debouncedFilters, { taxonomyIndex: idx });
