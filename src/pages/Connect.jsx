@@ -73,15 +73,7 @@ export default function Connect() {
     queryFn: () => base44.entities.RightNowStatus.filter({ active: true })
   });
 
-  // CRITICAL: Early return must happen after ALL hooks are called
-  if (!currentUser || !cfg) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-white/40">Loading...</div>
-      </div>
-    );
-  }
-
+  // CRITICAL: ALL hooks must be called before conditional returns
   const currentUserTags = useMemo(() => {
     if (!currentUser) return [];
     return userTags.filter(t => t.user_email === currentUser.email);
@@ -98,6 +90,15 @@ export default function Connect() {
   useEffect(() => {
     debouncedSetFilters(filters);
   }, [filters, debouncedSetFilters]);
+
+  // Early return AFTER all hooks
+  if (!currentUser || !cfg) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-white/40">Loading...</div>
+      </div>
+    );
+  }
 
   // Build profile objects for filtering
   const profiles = useMemo(() => {
