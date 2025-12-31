@@ -19,8 +19,8 @@ function TagPill({ active, children, onClick, title }) {
       onClick={onClick}
       title={title}
       className={clsx(
-        "rounded-full border px-3 py-1 text-sm transition",
-        active ? "bg-zinc-900 text-white border-zinc-900" : "bg-white hover:bg-zinc-50"
+        "border-2 px-3 py-1 text-xs font-bold uppercase tracking-wider transition",
+        active ? "bg-black text-white border-black" : "bg-white text-black border-black/20 hover:border-black"
       )}
     >
       {children}
@@ -36,13 +36,13 @@ function Toggle({ checked, onClick }) {
       aria-checked={!!checked}
       onClick={onClick}
       className={clsx(
-        "h-7 w-12 rounded-full border transition relative",
-        checked ? "bg-zinc-900 border-zinc-900" : "bg-white"
+        "h-7 w-12 border-2 transition relative",
+        checked ? "bg-black border-black" : "bg-white border-black/20"
       )}
     >
       <span
         className={clsx(
-          "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition",
+          "absolute top-0.5 h-5 w-5 bg-white shadow-sm transition border border-black/20",
           checked ? "left-5" : "left-0.5"
         )}
       />
@@ -303,13 +303,13 @@ export function FiltersDrawer({
         type="button"
       />
 
-      <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b px-5 py-4">
+      <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b-2 border-black px-5 py-4">
           <div>
-            <div className="text-lg font-bold text-zinc-900">Filters</div>
-            <div className="text-xs text-zinc-600">Pick your lane. Keep it respectful.</div>
+            <div className="text-lg font-black uppercase tracking-wider text-black">Filters</div>
+            <div className="text-xs uppercase tracking-widest text-black/60">Pick your lane. Keep it respectful.</div>
           </div>
-          <button type="button" onClick={onClose} className="rounded-xl border px-3 py-2 text-sm hover:bg-zinc-50">
+          <button type="button" onClick={onClose} className="border-2 border-black px-3 py-2 text-xs font-bold uppercase hover:bg-black hover:text-white transition">
             Close
           </button>
         </div>
@@ -318,7 +318,7 @@ export function FiltersDrawer({
           {/* Presets */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-900">Presets</h3>
+              <h3 className="text-xs font-black uppercase tracking-widest text-black">Presets</h3>
             </div>
             <div className="flex flex-wrap gap-2">
               {allPresets.map((p) => (
@@ -333,10 +333,10 @@ export function FiltersDrawer({
               ))}
             </div>
             <div className="flex items-center gap-2 pt-2">
-              <button type="button" onClick={savePreset} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+              <button type="button" onClick={savePreset} className="border-2 border-black px-4 py-2 text-xs font-bold uppercase hover:bg-black hover:text-white transition">
                 Save as preset
               </button>
-              <button type="button" onClick={clearAll} className="rounded-xl border px-4 py-2 text-sm hover:bg-zinc-50">
+              <button type="button" onClick={clearAll} className="border-2 border-black px-4 py-2 text-xs font-bold uppercase hover:bg-black hover:text-white transition">
                 Clear all
               </button>
             </div>
@@ -344,11 +344,11 @@ export function FiltersDrawer({
 
           {/* Quick toggles */}
           <div className="mt-6 space-y-2">
-            <h3 className="text-sm font-semibold text-zinc-900">Quick toggles</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest text-black">Quick toggles</h3>
             <div className="space-y-1">
               {cfg.filters.quickToggles.map((t) => (
                 <div key={t.id} className="flex items-center justify-between gap-3 py-2">
-                  <div className="text-sm text-zinc-900">{t.label}</div>
+                  <div className="text-xs uppercase tracking-wide font-bold text-black">{t.label}</div>
                   <Toggle checked={!!values[t.id]} onClick={() => toggleBool(t.id)} />
                 </div>
               ))}
@@ -361,19 +361,19 @@ export function FiltersDrawer({
               const isOpen = openGroupId === g.id;
 
               return (
-                <div key={g.id} className="rounded-2xl border">
+                <div key={g.id} className="border-2 border-black">
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between px-4 py-3"
+                    className="flex w-full items-center justify-between px-4 py-3 bg-white hover:bg-black/5 transition"
                     onClick={() => setOpenGroupId(isOpen ? null : g.id)}
                     aria-expanded={isOpen}
                   >
-                    <div className="text-sm font-semibold text-zinc-900">{g.label}</div>
-                    <div className="text-xs text-zinc-600">{isOpen ? "Hide" : "Show"}</div>
+                    <div className="text-xs font-black uppercase tracking-widest text-black">{g.label}</div>
+                    <div className="text-[10px] font-bold uppercase text-black/60">{isOpen ? "Hide" : "Show"}</div>
                   </button>
 
                   {isOpen && (
-                    <div className="border-t px-4 py-3">
+                    <div className="border-t-2 border-black px-4 py-3">
                       {g.fields.map((f) => {
                         // boolean
                         if (f.type === "boolean") {
@@ -519,22 +519,22 @@ export function FiltersDrawer({
           </div>
 
           {/* Footer links */}
-          <div className="mt-8 rounded-2xl border bg-black p-4">
-            <div className="text-sm font-bold text-white uppercase tracking-wider mb-3">
+          <div className="mt-8 border-2 border-black bg-black p-4">
+            <div className="text-sm font-black text-white uppercase tracking-wider mb-3">
               SHOP THE DROP
             </div>
             <div className="grid grid-cols-2 gap-2 mb-4">
               <button
                 type="button"
                 onClick={() => go("Marketplace")}
-                className="bg-white text-black px-3 py-2 text-xs font-black uppercase hover:bg-zinc-200 transition"
+                className="bg-white text-black px-3 py-2 text-xs font-black uppercase border-2 border-white hover:bg-black hover:text-white hover:border-white transition"
               >
                 SHOP RAW
               </button>
               <button
                 type="button"
                 onClick={() => go("Radio")}
-                className="bg-[#FF1493] text-white px-3 py-2 text-xs font-black uppercase hover:opacity-90 transition"
+                className="bg-[#FF1493] text-black px-3 py-2 text-xs font-black uppercase border-2 border-[#FF1493] hover:bg-black hover:text-[#FF1493] transition"
               >
                 RADIO
               </button>
@@ -545,27 +545,27 @@ export function FiltersDrawer({
                   key={l.path}
                   type="button"
                   onClick={() => go(l.path)}
-                  className="border border-white/40 text-white px-3 py-1 text-xs font-bold uppercase hover:bg-white/10 transition"
+                  className="border-2 border-white/60 text-white px-3 py-1 text-[10px] font-black uppercase hover:bg-white hover:text-black transition"
                 >
                   {l.label}
                 </button>
               ))}
             </div>
-            <div className="mt-3 text-xs text-white/60">
+            <div className="mt-3 text-[10px] uppercase tracking-wider text-white/60">
               Filters find bodies. Compatibility finds good nights.
             </div>
           </div>
         </div>
 
-        <div className="border-t px-5 py-4">
+        <div className="border-t-2 border-black px-5 py-4">
           <button
             type="button"
             onClick={apply}
-            className="w-full rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-semibold text-white hover:opacity-95"
+            className="w-full bg-[#FF1493] px-4 py-4 text-sm font-black uppercase tracking-widest text-black hover:bg-black hover:text-white transition-all"
           >
             Apply filters
           </button>
-          <div className="mt-2 text-center text-xs text-zinc-600">Right Now ends automatically. No ghost status.</div>
+          <div className="mt-2 text-center text-xs uppercase tracking-wider text-black/60">Right Now ends automatically. No ghost status.</div>
         </div>
       </div>
     </div>
