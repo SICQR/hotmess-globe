@@ -21,6 +21,12 @@ export default function NearbyGrid({ userLocation }) {
     refetchInterval: 5000
   });
 
+  const { data: rightNowStatuses = [] } = useQuery({
+    queryKey: ['right-now-status-nearby'],
+    queryFn: () => base44.entities.RightNowStatus.filter({ active: true }),
+    refetchInterval: 5000
+  });
+
   // Calculate distance between two points
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // Earth's radius in km
@@ -34,11 +40,17 @@ export default function NearbyGrid({ userLocation }) {
     return R * c;
   };
 
-  // Get users with recent activity
+  // Get users with recent activity OR Right Now status
   const activeUsers = allUsers
     .filter(user => {
       const activity = recentActivities.find(a => a.user_email === user.email);
-      if (!activity) return false;
+      const rightNowStatus = rightNowStatuses.find(s => 
+        s.user_email === user.email && 
+        s.active && 
+        new Date(s.expires_at) > new Date()
+      );
+      
+      if (!activity && !rightNowStatus) return false;
       
       // Check if within distance
       if (userLocation && activity.lat && activity.lng) {
@@ -55,6 +67,12 @@ export default function NearbyGrid({ userLocation }) {
     })
     .map(user => {
       const activity = recentActivities.find(a => a.user_email === user.email);
+      const rightNowStatus = rightNowStatuses.find(s => 
+        s.user_email === user.email && 
+        s.active && 
+        new Date(s.expires_at) > new Date()
+      );
+      
       const distance = userLocation && activity?.lat && activity?.lng
         ? calculateDistance(userLocation.lat, userLocation.lng, activity.lat, activity.lng)
         : null;
@@ -62,6 +80,7 @@ export default function NearbyGrid({ userLocation }) {
       return {
         ...user,
         lastActivity: activity,
+        rightNowStatus,
         distance,
         lastSeen: activity ? new Date(activity.created_date) : null
       };
@@ -138,8 +157,18 @@ export default function NearbyGrid({ userLocation }) {
                       
                       {/* Online Indicator */}
                       <div className="absolute top-2 right-2">
-                        <div className="w-3 h-3 bg-[#00D9FF] rounded-full border-2 border-white animate-pulse" />
+                        <div className={`w-3 h-3 rounded-full border-2 border-white animate-pulse ${
+                          user.rightNowStatus ? 'bg-[#FF1493]' : 'bg-[#00D9FF]'
+                        }`} />
                       </div>
+                      
+                      {/* Right Now Badge */}
+                      {user.rightNowStatus && (
+                        <div className="absolute top-2 left-2 px-2 py-1 bg-[#FF1493] text-black text-[9px] font-black uppercase flex items-center gap-1 border-2 border-white">
+                          <Zap className="w-2.5 h-2.5" />
+                          RIGHT NOW
+                        </div>
+                      )}
 
                       {/* Distance Badge */}
                       {user.distance !== null && (
@@ -182,8 +211,19 @@ export default function NearbyGrid({ userLocation }) {
                         )}
                       </div>
 
+                      {/* Right Now Logistics */}
+                      {user.rightNowStatus?.logistics && user.rightNowStatus.logistics.length > 0 && (
+                        <div className="flex gap-1 flex-wrap">
+                          {user.rightNowStatus.logistics.map(log => (
+                            <span key={log} className="text-[9px] px-1.5 py-0.5 bg-[#FF1493]/20 border border-[#FF1493]/40 text-[#FF1493] uppercase font-mono">
+                              {log.replace('_', ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      
                       {/* Activity Status */}
-                      {user.lastActivity?.activity_type && (
+                      {!user.rightNowStatus && user.lastActivity?.activity_type && (
                         <div className="text-[9px] text-white/40 font-mono uppercase">
                           {user.lastActivity.activity_type}
                         </div>
