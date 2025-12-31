@@ -8,6 +8,9 @@ import ContentModeration from '../components/admin/ContentModeration';
 import EventManagement from '../components/admin/EventManagement';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import CurationQueue from '../components/admin/CurationQueue';
+import UserVerification from '../components/admin/UserVerification';
+import AdvancedAnalytics from '../components/analytics/AdvancedAnalytics';
+import { ABTestResults } from '../components/analytics/ABTestingFramework';
 
 export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
