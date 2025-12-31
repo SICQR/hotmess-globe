@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { Calendar, MapPin, Users, Clock, ExternalLink, Sparkles } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatUTCDate } from '../utils/dateUtils';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
 
 export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, recommendationScore }) {
@@ -77,10 +77,10 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
 
             {/* Event Details */}
             <div className="space-y-2 text-sm">
-              {eventDate && (
+              {event.event_date && (
                 <div className="flex items-center gap-2 text-white/80">
                   <Calendar className="w-4 h-4 text-[#FF1493]" />
-                  <span>{format(eventDate, 'EEE, MMM d • h:mm a')}</span>
+                  <span>{formatUTCDate(event.event_date, 'EEE, MMM d • h:mm a')}</span>
                 </div>
               )}
 

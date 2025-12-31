@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Upload, Image, Video, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { processAndUploadMedia } from '../utils/mediaProcessing';
+import { validateAndOptimize } from '../utils/imageOptimization';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -25,7 +26,24 @@ export default function MediaUploader({
     setProgress({ stage: 'validating', message: 'Validating file...' });
 
     try {
-      const file = files[0];
+      let file = files[0];
+
+      // Optimize image before upload
+      if (type === 'image' && compress) {
+        setProgress({ stage: 'optimizing', message: 'Optimizing image...' });
+        try {
+          const result = await validateAndOptimize(file, {
+            maxWidth: 1920,
+            maxHeight: 1920,
+            quality: 0.85,
+            format: 'webp'
+          });
+          file = result.optimized;
+          console.log(`Image optimized: ${result.savedPercent}% smaller`);
+        } catch (err) {
+          console.warn('Image optimization failed, using original:', err);
+        }
+      }
 
       // Preview
       if (showPreview && type === 'image') {

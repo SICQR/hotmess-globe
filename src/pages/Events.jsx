@@ -8,7 +8,8 @@ import { Calendar, MapPin, Clock, Users, Filter, Search, Map, LayoutGrid } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, isAfter, isBefore, startOfDay, endOfDay, addDays } from 'date-fns';
+import { isAfter, isBefore, startOfDay, endOfDay, addDays } from 'date-fns';
+import { fromUTC } from '../components/utils/dateUtils';
 import EventCard from '../components/events/EventCard';
 import PersonalizedRecommendations from '../components/events/PersonalizedRecommendations';
 import EventsMapView from '../components/events/EventsMapView';
@@ -96,7 +97,7 @@ export default function Events() {
       const now = new Date();
       filtered = filtered.filter(e => {
         if (!e.event_date) return false;
-        const eventDate = new Date(e.event_date);
+        const eventDate = fromUTC(e.event_date);
         
         switch(dateFilter) {
           case 'today':
@@ -130,7 +131,9 @@ export default function Events() {
     filtered = [...filtered].sort((a, b) => {
       switch(sortBy) {
         case 'date':
-          return new Date(a.event_date || 0) - new Date(b.event_date || 0);
+          const aDate = a.event_date ? fromUTC(a.event_date) : new Date(0);
+          const bDate = b.event_date ? fromUTC(b.event_date) : new Date(0);
+          return aDate - bDate;
         case 'popularity':
           const aCount = allRsvps.filter(r => r.event_id === a.id).length;
           const bCount = allRsvps.filter(r => r.event_id === b.id).length;
