@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import DiscoveryCard from '../components/discovery/DiscoveryCard';
 import DiscoveryFilters from '../components/discovery/DiscoveryFilters';
 import RightNowModal from '../components/discovery/RightNowModal';
+import ConsentGate from '../components/auth/ConsentGate';
 
 export default function Connect() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -15,6 +16,8 @@ export default function Connect() {
   const [showFilters, setShowFilters] = useState(false);
   const [showRightNow, setShowRightNow] = useState(false);
   const [filters, setFilters] = useState({});
+  const [showConsent, setShowConsent] = useState(false);
+  const [consentAccepted, setConsentAccepted] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -51,18 +54,44 @@ export default function Connect() {
 
   if (!currentUser) return null;
 
+  // Check consent on mount
+  React.useEffect(() => {
+    if (currentUser && !currentUser.consent_agreed) {
+      setShowConsent(true);
+    } else {
+      setConsentAccepted(true);
+    }
+  }, [currentUser]);
+
   // Filter users
   let filteredUsers = allUsers.filter(u => u.email !== currentUser.email);
 
-  // Right Now lane - only show users with active status
+  // Right Now lane - only show users with active status and not expired
   if (lane === 'right_now') {
+    const now = new Date();
     const rightNowEmails = rightNowStatuses
-      .filter(s => new Date(s.expires_at) > new Date())
+      .filter(s => s.active && new Date(s.expires_at) > now)
       .map(s => s.user_email);
     filteredUsers = filteredUsers.filter(u => rightNowEmails.includes(u.email));
   }
 
-  // Apply additional filters (TODO: implement full filter logic)
+  // Apply filters
+  if (filters.onlineNow) {
+    filteredUsers = filteredUsers.filter(u => u.activity_status === 'online' || u.activity_status === 'at_event');
+  }
+  if (filters.chemFree) {
+    const chemFreeTagIds = ['sober', 'chem_free', 'cali_sober', 'recovery_friendly'];
+    const chemFreeUsers = userTags
+      .filter(t => chemFreeTagIds.includes(t.tag_id))
+      .map(t => t.user_email);
+    filteredUsers = filteredUsers.filter(u => chemFreeUsers.includes(u.email));
+  }
+  if (filters.hasFace) {
+    filteredUsers = filteredUsers.filter(u => u.avatar_url);
+  }
+  if (filters.nearMe && currentUser.city) {
+    filteredUsers = filteredUsers.filter(u => u.city === currentUser.city);
+  }
 
   const currentUserTags = userTags.filter(t => t.user_email === currentUser.email);
 
@@ -171,6 +200,16 @@ export default function Connect() {
           onClose={() => setShowFilters(false)}
           filters={filters}
           onFiltersChange={setFilters}
+        />
+      )}
+
+      {/* Consent Gate */}
+      {showConsent && (
+        <ConsentGate
+          onConsent={() => {
+            setShowConsent(false);
+            setConsentAccepted(true);
+          }}
         />
       )}
     </div>

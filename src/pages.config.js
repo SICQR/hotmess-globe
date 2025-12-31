@@ -9,14 +9,11 @@ import CreateBeacon from './pages/CreateBeacon';
 import EditBeacon from './pages/EditBeacon';
 import EditProfile from './pages/EditProfile';
 import Events from './pages/Events';
-import ExperienceMockups from './pages/ExperienceMockups';
 import Globe from './pages/Globe';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
-import MapView from './pages/MapView';
 import Marketplace from './pages/Marketplace';
 import Messages from './pages/Messages';
-import Network from './pages/Network';
 import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import ProductDetail from './pages/ProductDetail';
@@ -42,14 +39,11 @@ export const PAGES = {
     "EditBeacon": EditBeacon,
     "EditProfile": EditProfile,
     "Events": Events,
-    "ExperienceMockups": ExperienceMockups,
     "Globe": Globe,
     "Home": Home,
     "Leaderboard": Leaderboard,
-    "MapView": MapView,
     "Marketplace": Marketplace,
     "Messages": Messages,
-    "Network": Network,
     "OrderHistory": OrderHistory,
     "OrganizerDashboard": OrganizerDashboard,
     "ProductDetail": ProductDetail,
