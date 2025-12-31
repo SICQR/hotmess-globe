@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo } from "react";
-import taxonomyJson from "./taxonomy-config.js";
 import { buildTaxonomyIndex, loadDiscoveryTaxonomy } from "./schema";
+import taxonomyJson from "./taxonomy-config";
 
 const TaxonomyContext = createContext(null);
 
