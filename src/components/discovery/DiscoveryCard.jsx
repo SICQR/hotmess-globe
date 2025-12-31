@@ -18,12 +18,29 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
     >
       <Link to={createPageUrl(`Profile?email=${user.email}`)}>
         <div className="group relative overflow-hidden border-2 border-white/10 hover:border-[#FF1493] transition-all">
-          {/* Avatar */}
-          <div className="aspect-square bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-6xl font-black overflow-hidden">
-            {user.avatar_url ? (
-              <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
-            ) : (
-              user.full_name?.[0] || 'U'
+          {/* Avatar/Photo */}
+          <div className="aspect-square bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-6xl font-black overflow-hidden relative">
+            {(() => {
+              const primaryPhoto = user.photos?.find(p => p.is_primary)?.url;
+              const firstPhoto = user.photos?.[0]?.url;
+              const photoUrl = primaryPhoto || firstPhoto || user.avatar_url;
+              
+              return photoUrl ? (
+                <img src={photoUrl} alt={user.full_name} className="w-full h-full object-cover" />
+              ) : (
+                user.full_name?.[0] || 'U'
+              );
+            })()}
+            {user.video_intro_url && (
+              <div className="absolute top-2 left-2 px-2 py-1 bg-black/80 border border-[#FF1493] flex items-center gap-1">
+                <div className="w-2 h-2 bg-[#FF1493] rounded-full animate-pulse" />
+                <span className="text-[9px] font-bold text-white uppercase">Video</span>
+              </div>
+            )}
+            {user.photos && user.photos.length > 1 && (
+              <div className="absolute top-2 right-2 px-2 py-1 bg-black/80 text-[9px] font-bold text-white uppercase">
+                +{user.photos.length - 1}
+              </div>
             )}
           </div>
 
@@ -54,6 +71,20 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
                     className="px-2 py-0.5 bg-[#00D9FF] text-black text-[10px] font-bold uppercase"
                   >
                     {tribe.tribe_label}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Interests preview */}
+            {user.interests && user.interests.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-1">
+                {user.interests.slice(0, 2).map((interest, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2 py-0.5 bg-[#39FF14]/20 text-[#39FF14] text-[9px] font-bold uppercase border border-[#39FF14]/40"
+                  >
+                    {interest}
                   </span>
                 ))}
               </div>

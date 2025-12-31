@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { taxonomyConfig } from '../components/discovery/taxonomyConfig';
 import TagSelector from '../components/discovery/TagSelector';
+import { PhotoGallery, VideoUploader } from '../components/profile/MediaGallery';
 
 const VIBE_OPTIONS = ['techno', 'house', 'drag', 'indie', 'late_night', 'chill', 'wild', 'artsy'];
 const EVENT_VIBES = ['techno', 'house', 'drag', 'late_night', 'underground', 'warehouse', 'rooftop', 'intimate'];
@@ -50,6 +51,12 @@ export default function EditProfile() {
   const [lookingFor, setLookingFor] = useState([]);
   const [meetAt, setMeetAt] = useState([]);
   const [aftercareMenu, setAftercareMenu] = useState([]);
+  const [photos, setPhotos] = useState([]);
+  const [videoIntroUrl, setVideoIntroUrl] = useState('');
+  const [interests, setInterests] = useState([]);
+  const [dealbrekersText, setDealbrekersText] = useState([]);
+  const [newInterest, setNewInterest] = useState('');
+  const [newDealbreaker, setNewDealbreaker] = useState('');
   const [tagVisibility, setTagVisibility] = useState({
     substances_visibility: 'nobody',
     aftercare_visibility: 'matches',
@@ -97,6 +104,10 @@ export default function EditProfile() {
           aftercare_visibility: user.aftercare_visibility || 'matches',
           essentials_visibility: user.essentials_visibility || 'matches'
         });
+        setPhotos(user.photos || []);
+        setVideoIntroUrl(user.video_intro_url || '');
+        setInterests(user.interests || []);
+        setDealbrekersText(user.dealbreakers_text || []);
       } catch (error) {
         console.error('Failed to fetch user:', error);
       }
@@ -165,6 +176,10 @@ export default function EditProfile() {
       looking_for: lookingFor,
       meet_at: meetAt,
       aftercare_menu: aftercareMenu,
+      photos,
+      video_intro_url: videoIntroUrl,
+      interests,
+      dealbreakers_text: dealbrekersText,
       ...tagVisibility
     });
 
@@ -268,6 +283,25 @@ export default function EditProfile() {
           <p className="text-white/40 text-sm uppercase tracking-wider mb-8">Customize your hotmess presence</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Photos */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
+                <ImageIcon className="w-4 h-4" />
+                Photo Gallery
+              </Label>
+              <PhotoGallery photos={photos} onPhotosChange={setPhotos} maxPhotos={6} />
+            </div>
+
+            {/* Video Intro */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
+                <VideoIcon className="w-4 h-4" />
+                Video Introduction
+              </Label>
+              <p className="text-xs text-white/60 mb-4">Add a short video to introduce yourself (max 30s)</p>
+              <VideoUploader videoUrl={videoIntroUrl} onVideoChange={setVideoIntroUrl} />
+            </div>
+
             {/* Avatar & Bio */}
             <div className="bg-black border-2 border-white p-6">
               <div className="flex items-center gap-6 mb-6">
@@ -409,6 +443,111 @@ export default function EditProfile() {
                 className="bg-white/5 border-2 border-white/20 text-white"
               />
               <p className="text-xs text-white/40 mt-2 uppercase">Separate with commas</p>
+            </div>
+
+            {/* Interests */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Interests & Hobbies</Label>
+              <div className="flex gap-2 mb-3">
+                <Input
+                  value={newInterest}
+                  onChange={(e) => setNewInterest(e.target.value)}
+                  placeholder="Add interest..."
+                  className="bg-white/5 border-2 border-white/20 text-white flex-1"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (newInterest.trim() && interests.length < 10) {
+                        setInterests([...interests, newInterest.trim()]);
+                        setNewInterest('');
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={() => {
+                    if (newInterest.trim() && interests.length < 10) {
+                      setInterests([...interests, newInterest.trim()]);
+                      setNewInterest('');
+                    }
+                  }}
+                  className="bg-[#00D9FF] text-black hover:bg-[#00D9FF]/90"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {interests.map((interest, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1 bg-white/10 text-white text-xs font-bold uppercase flex items-center gap-2"
+                  >
+                    {interest}
+                    <button
+                      type="button"
+                      onClick={() => setInterests(interests.filter((_, i) => i !== idx))}
+                      className="text-white/60 hover:text-white"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <p className="text-xs text-white/40 mt-2">{interests.length}/10 interests</p>
+            </div>
+
+            {/* Dealbreakers */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Dealbreakers</Label>
+              <p className="text-xs text-white/60 mb-3">Things you're not looking for</p>
+              <div className="flex gap-2 mb-3">
+                <Input
+                  value={newDealbreaker}
+                  onChange={(e) => setNewDealbreaker(e.target.value)}
+                  placeholder="Add dealbreaker..."
+                  className="bg-white/5 border-2 border-white/20 text-white flex-1"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (newDealbreaker.trim() && dealbrekersText.length < 5) {
+                        setDealbrekersText([...dealbrekersText, newDealbreaker.trim()]);
+                        setNewDealbreaker('');
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={() => {
+                    if (newDealbreaker.trim() && dealbrekersText.length < 5) {
+                      setDealbrekersText([...dealbrekersText, newDealbreaker.trim()]);
+                      setNewDealbreaker('');
+                    }
+                  }}
+                  className="bg-[#FF1493] text-black hover:bg-[#FF1493]/90"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {dealbrekersText.map((dealbreaker, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1 bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-bold uppercase flex items-center gap-2"
+                  >
+                    {dealbreaker}
+                    <button
+                      type="button"
+                      onClick={() => setDealbrekersText(dealbrekersText.filter((_, i) => i !== idx))}
+                      className="text-red-300/60 hover:text-red-300"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <p className="text-xs text-white/40 mt-2">{dealbrekersText.length}/5 dealbreakers</p>
             </div>
 
             {/* Portfolio */}
