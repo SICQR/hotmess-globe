@@ -15,6 +15,8 @@ import { useQuery } from '@tanstack/react-query';
 import { taxonomyConfig } from '../components/discovery/taxonomyConfig';
 import TagSelector from '../components/discovery/TagSelector';
 import { PhotoGallery, VideoUploader, PremiumVideoManager } from '../components/profile/MediaGallery';
+import { validateBio, isValidLength } from '../components/utils/validation';
+import { sanitizeSocialLinks } from '../components/utils/sanitize';
 
 const VIBE_OPTIONS = ['techno', 'house', 'drag', 'indie', 'late_night', 'chill', 'wild', 'artsy'];
 const EVENT_VIBES = ['techno', 'house', 'drag', 'late_night', 'underground', 'warehouse', 'rooftop', 'intimate'];
@@ -164,19 +166,29 @@ export default function EditProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const musicArray = musicTaste.split(',').map(s => s.trim()).filter(Boolean);
+    // Validate bio
+    const bioValidation = validateBio(bio);
+    if (!bioValidation.valid) {
+      toast.error(bioValidation.error);
+      return;
+    }
+    
+    // Sanitize social links
+    const sanitizedSocialLinks = sanitizeSocialLinks(socialLinks);
+    
+    const musicArray = musicTaste.split(',').map(s => s.trim()).filter(Boolean).slice(0, 10);
     
     // Update user profile
     await updateProfileMutation.mutateAsync({
-      bio,
+      bio: bioValidation.sanitized,
       avatar_url: avatarUrl,
-      preferred_vibes: preferredVibes,
-      event_preferences: eventPreferences,
+      preferred_vibes: preferredVibes.slice(0, 5),
+      event_preferences: eventPreferences.slice(0, 5),
       activity_status: activityStatus,
-      skills,
-      portfolio,
+      skills: skills.slice(0, 8),
+      portfolio: portfolio.slice(0, 6),
       music_taste: musicArray,
-      social_links: socialLinks,
+      social_links: sanitizedSocialLinks,
       looking_for: lookingFor,
       meet_at: meetAt,
       aftercare_menu: aftercareMenu,
