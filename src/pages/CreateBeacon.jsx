@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import { snapToGrid } from '../components/utils/locationPrivacy';
+import { toUTC } from '../components/utils/dateUtils';
 import MediaUploader from '../components/media/MediaUploader';
 
 export default function CreateBeacon() {
@@ -43,6 +44,11 @@ export default function CreateBeacon() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
+      // Convert event_date to UTC for storage
+      if (data.event_date) {
+        data.event_date = toUTC(data.event_date);
+      }
+      
       // Apply location privacy for non-Care beacons
       if (data.mode !== 'care' && data.lat && data.lng) {
         const snapped = snapToGrid(data.lat, data.lng);
