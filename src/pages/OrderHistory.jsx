@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Package, Calendar, DollarSign, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Package, Calendar, DollarSign, CheckCircle, Clock, XCircle, Unlock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
@@ -24,6 +24,7 @@ const STATUS_CONFIG = {
 
 export default function OrderHistory() {
   const [currentUser, setCurrentUser] = useState(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -71,6 +72,15 @@ export default function OrderHistory() {
       </div>
     );
   }
+
+  const releaseEscrowMutation = useMutation({
+    mutationFn: (orderId) => base44.entities.Order.update(orderId, { status: 'processing' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['buyer-orders']);
+      queryClient.invalidateQueries(['seller-orders']);
+      toast.success('Payment released to seller!');
+    }
+  });
 
   const renderOrder = (order, idx, isSeller = false) => {
     const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
@@ -137,6 +147,33 @@ export default function OrderHistory() {
           <div className="mt-4 pt-4 border-t border-white/10">
             <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Notes</p>
             <p className="text-sm text-white/80">{order.notes}</p>
+          </div>
+        )}
+
+        {/* Escrow Release for Buyer */}
+        {!isSeller && order.status === 'escrow' && (
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <div className="bg-[#00D9FF]/20 border border-[#00D9FF]/40 rounded-lg p-4 mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="w-4 h-4 text-[#00D9FF]" />
+                <p className="text-sm font-bold uppercase text-[#00D9FF]">Payment in Escrow</p>
+              </div>
+              <p className="text-xs text-white/60 mb-3">
+                Your payment is held securely. Release it once you receive the item.
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                if (confirm('Release payment to seller? This action cannot be undone.')) {
+                  releaseEscrowMutation.mutate(order.id);
+                }
+              }}
+              disabled={releaseEscrowMutation.isPending}
+              className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black"
+            >
+              <Unlock className="w-4 h-4 mr-2" />
+              {releaseEscrowMutation.isPending ? 'Releasing...' : 'Release Payment'}
+            </Button>
           </div>
         )}
 
