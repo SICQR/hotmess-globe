@@ -26,6 +26,16 @@ export default function CurationQueue() {
         is_shadow: false,
         is_verified: true
       });
+      
+      // Notify beacon creator
+      await base44.entities.Notification.create({
+        user_email: beacon.created_by,
+        type: 'admin_alert',
+        title: 'Beacon Approved!',
+        message: `Your beacon "${beacon.title}" has been verified and is now live.`,
+        link: `BeaconDetail?id=${beacon.id}`
+      });
+      
       return beacon;
     },
     onSuccess: (beacon) => {
