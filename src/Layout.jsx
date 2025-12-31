@@ -14,7 +14,7 @@ const PRIMARY_NAV = [
   { name: 'Globe', icon: GlobeIcon, path: 'Globe' },
   { name: 'Events', icon: CalendarIcon, path: 'Events' },
   { name: 'Market', icon: ShoppingBag, path: 'Marketplace' },
-  { name: 'Connect', icon: Users, path: 'Network' },
+  { name: 'Connect', icon: Users, path: 'Connect' },
   { name: 'Messages', icon: MessageCircle, path: 'Messages', showBadge: true },
 ];
 

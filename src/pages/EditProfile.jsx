@@ -4,13 +4,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Save, User, Music, Sparkles, Link as LinkIcon, Upload, Briefcase, Zap, Plus, X } from 'lucide-react';
+import { ArrowLeft, Save, User, Music, Sparkles, Link as LinkIcon, Upload, Briefcase, Zap, Plus, X, Users as UsersIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { taxonomyConfig } from '../components/discovery/taxonomyConfig';
+import TagSelector from '../components/discovery/TagSelector';
 
 const VIBE_OPTIONS = ['techno', 'house', 'drag', 'indie', 'late_night', 'chill', 'wild', 'artsy'];
 const EVENT_VIBES = ['techno', 'house', 'drag', 'late_night', 'underground', 'warehouse', 'rooftop', 'intimate'];
@@ -40,8 +43,27 @@ export default function EditProfile() {
     soundcloud: ''
   });
   const [uploading, setUploading] = useState(false);
+  const [tribes, setTribes] = useState([]);
+  const [selectedTagIds, setSelectedTagIds] = useState([]);
+  const [essentialTagIds, setEssentialTagIds] = useState([]);
+  const [dealbreakerTagIds, setDealbreakerTagIds] = useState([]);
+  const [lookingFor, setLookingFor] = useState([]);
+  const [meetAt, setMeetAt] = useState([]);
+  const [aftercareMenu, setAftercareMenu] = useState([]);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const { data: userTags = [] } = useQuery({
+    queryKey: ['user-tags', currentUser?.email],
+    queryFn: () => base44.entities.UserTag.filter({ user_email: currentUser.email }),
+    enabled: !!currentUser
+  });
+
+  const { data: userTribes = [] } = useQuery({
+    queryKey: ['user-tribes', currentUser?.email],
+    queryFn: () => base44.entities.UserTribe.filter({ user_email: currentUser.email }),
+    enabled: !!currentUser
+  });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -62,12 +84,26 @@ export default function EditProfile() {
           spotify: '',
           soundcloud: ''
         });
+        setLookingFor(user.looking_for || []);
+        setMeetAt(user.meet_at || []);
+        setAftercareMenu(user.aftercare_menu || []);
       } catch (error) {
         console.error('Failed to fetch user:', error);
       }
     };
     fetchUser();
   }, []);
+
+  useEffect(() => {
+    if (userTribes.length > 0) {
+      setTribes(userTribes.map(t => t.tribe_id));
+    }
+    if (userTags.length > 0) {
+      setSelectedTagIds(userTags.map(t => t.tag_id));
+      setEssentialTagIds(userTags.filter(t => t.is_essential).map(t => t.tag_id));
+      setDealbreakerTagIds(userTags.filter(t => t.is_dealbreaker).map(t => t.tag_id));
+    }
+  }, [userTags, userTribes]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data) => {
@@ -100,12 +136,13 @@ export default function EditProfile() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     const musicArray = musicTaste.split(',').map(s => s.trim()).filter(Boolean);
     
-    updateProfileMutation.mutate({
+    // Update user profile
+    await updateProfileMutation.mutateAsync({
       bio,
       avatar_url: avatarUrl,
       preferred_vibes: preferredVibes,
@@ -114,8 +151,50 @@ export default function EditProfile() {
       skills,
       portfolio,
       music_taste: musicArray,
-      social_links: socialLinks
+      social_links: socialLinks,
+      looking_for: lookingFor,
+      meet_at: meetAt,
+      aftercare_menu: aftercareMenu
     });
+
+    // Delete old tribes/tags
+    for (const oldTribe of userTribes) {
+      await base44.entities.UserTribe.delete(oldTribe.id);
+    }
+    for (const oldTag of userTags) {
+      await base44.entities.UserTag.delete(oldTag.id);
+    }
+
+    // Create new tribes
+    for (const tribeId of tribes) {
+      const tribe = taxonomyConfig.tribes.find(t => t.id === tribeId);
+      if (tribe) {
+        await base44.entities.UserTribe.create({
+          user_email: currentUser.email,
+          tribe_id: tribeId,
+          tribe_label: tribe.label
+        });
+      }
+    }
+
+    // Create new tags
+    for (const tagId of selectedTagIds) {
+      const tag = taxonomyConfig.tags.find(t => t.id === tagId);
+      if (tag) {
+        await base44.entities.UserTag.create({
+          user_email: currentUser.email,
+          tag_id: tagId,
+          tag_label: tag.label,
+          category_id: tag.categoryId,
+          is_essential: essentialTagIds.includes(tagId),
+          is_dealbreaker: dealbreakerTagIds.includes(tagId),
+          visibility: tag.isSensitive ? 'nobody' : 'public'
+        });
+      }
+    }
+
+    queryClient.invalidateQueries(['user-tags']);
+    queryClient.invalidateQueries(['user-tribes']);
   };
 
   const toggleVibe = (vibe) => {
@@ -388,6 +467,113 @@ export default function EditProfile() {
                     />
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Tribes & Tags */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
+                <UsersIcon className="w-4 h-4" />
+                Tribes & Tags (Connect Discovery)
+              </Label>
+              
+              {/* Tribes */}
+              <div className="mb-6">
+                <p className="text-xs text-white/60 mb-3 uppercase">Select up to 3 tribes</p>
+                <div className="flex flex-wrap gap-2">
+                  {taxonomyConfig.tribes.map(tribe => (
+                    <button
+                      key={tribe.id}
+                      type="button"
+                      onClick={() => {
+                        if (tribes.includes(tribe.id)) {
+                          setTribes(tribes.filter(t => t !== tribe.id));
+                        } else if (tribes.length < 3) {
+                          setTribes([...tribes, tribe.id]);
+                        }
+                      }}
+                      disabled={!tribes.includes(tribe.id) && tribes.length >= 3}
+                      className={`px-3 py-2 text-xs font-bold uppercase border-2 transition-all ${
+                        tribes.includes(tribe.id)
+                          ? 'bg-[#00D9FF] border-[#00D9FF] text-black'
+                          : 'bg-white/5 border-white/20 text-white/60 hover:border-white/40 disabled:opacity-30'
+                      }`}
+                    >
+                      {tribe.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-white/40 mt-2">{tribes.length}/3 selected</p>
+              </div>
+
+              {/* Tags */}
+              <div className="mb-6">
+                <p className="text-xs text-white/60 mb-3 uppercase">Tags (searchable)</p>
+                <TagSelector
+                  selectedTagIds={selectedTagIds}
+                  onTagsChange={setSelectedTagIds}
+                  maxTags={10}
+                  showEssentials={true}
+                  essentialTagIds={essentialTagIds}
+                  onEssentialsChange={setEssentialTagIds}
+                  showDealbreakers={true}
+                  dealbreakerTagIds={dealbreakerTagIds}
+                  onDealbr eakersChange={setDealbreakerTagIds}
+                />
+              </div>
+
+              {/* Intent */}
+              <div className="mb-6">
+                <p className="text-xs text-white/60 mb-3 uppercase">Looking for</p>
+                <div className="flex flex-wrap gap-2">
+                  {['Chat', 'Dates', 'Mates', 'Play', 'Friends', 'Something ongoing'].map(option => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => {
+                        if (lookingFor.includes(option)) {
+                          setLookingFor(lookingFor.filter(o => o !== option));
+                        } else {
+                          setLookingFor([...lookingFor, option]);
+                        }
+                      }}
+                      className={`px-3 py-2 text-xs font-bold uppercase border-2 ${
+                        lookingFor.includes(option)
+                          ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                          : 'bg-white/5 border-white/20 text-white/60'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Aftercare */}
+              <div>
+                <p className="text-xs text-white/60 mb-3 uppercase">Aftercare menu</p>
+                <div className="flex flex-wrap gap-2">
+                  {['Water', 'Shower', 'Cuddle', 'Quiet time', 'Debrief', 'Snack', 'Breakfast', 'Check-in text'].map(option => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => {
+                        if (aftercareMenu.includes(option)) {
+                          setAftercareMenu(aftercareMenu.filter(o => o !== option));
+                        } else {
+                          setAftercareMenu([...aftercareMenu, option]);
+                        }
+                      }}
+                      className={`px-3 py-2 text-xs font-bold uppercase border-2 ${
+                        aftercareMenu.includes(option)
+                          ? 'bg-[#39FF14] border-[#39FF14] text-black'
+                          : 'bg-white/5 border-white/20 text-white/60'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
