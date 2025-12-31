@@ -1,10 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Heart, MessageCircle, Share2, AlertTriangle } from 'lucide-react';
+import { Heart, MessageCircle, Share2, AlertTriangle, Image as ImageIcon, Video } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import ExpiryBadge from './ExpiryBadge';
 import { base44 } from '@/api/base44Client';
+import CommentThread from './CommentThread';
 
 const CATEGORY_COLORS = {
   general: '#FF1493',
@@ -15,7 +16,7 @@ const CATEGORY_COLORS = {
   achievements: '#FF6B35',
 };
 
-export default function PostCard({ post, onLike, onComment, onShare, userHasLiked, index }) {
+export default function PostCard({ post, onLike, onComment, onShare, userHasLiked, index, currentUser, onCommentCountChange }) {
   const isFlagged = post.moderation_status === 'flagged';
   const isRemoved = post.moderation_status === 'removed';
   const isExpired = post.expires_at && new Date(post.expires_at) < new Date();
@@ -66,13 +67,26 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
               {format(new Date(post.created_date), 'MMM d, h:mm a')}
             </span>
           </div>
-          <p className="text-white/80 break-words">{post.content}</p>
+          <p className="text-white/80 break-words whitespace-pre-wrap">{post.content}</p>
+
+          {/* Media */}
+          {post.image_url && (
+            <div className="mt-3 border-2 border-white/10 rounded-lg overflow-hidden">
+              <img src={post.image_url} alt="Post" className="w-full max-h-96 object-cover" />
+            </div>
+          )}
+          {post.video_url && (
+            <div className="mt-3 border-2 border-white/10 rounded-lg overflow-hidden">
+              <video src={post.video_url} controls className="w-full max-h-96" />
+            </div>
+          )}
+
           {post.tags && post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
               {post.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-xs px-2 py-1 rounded-lg bg-white/5 text-white/60"
+                  className="text-xs px-2 py-1 rounded-full bg-[#FF1493]/20 border border-[#FF1493]/40 text-[#FF1493]"
                 >
                   #{tag}
                 </span>
@@ -81,44 +95,48 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
           )}
         </div>
       </div>
-      <div className="flex items-center gap-6 pt-4 border-t border-white/10">
-        <button
-          onClick={async () => {
-            await onLike(post.id);
-            // Notify post author of like
-            if (post.user_email !== userHasLiked) {
-              await base44.entities.Notification.create({
-                user_email: post.user_email,
-                type: 'post_like',
-                title: 'New Like',
-                message: `Someone liked your post`,
-                link: 'Community'
-              }).catch(() => {}); // Silent fail
-            }
-          }}
-          className={`flex items-center gap-2 text-sm transition-colors ${
-            userHasLiked
-              ? 'text-[#FF1493]'
-              : 'text-white/60 hover:text-[#FF1493]'
-          }`}
-        >
-          <Heart className={`w-4 h-4 ${userHasLiked ? 'fill-current' : ''}`} />
-          <span>{post.likes_count || 0}</span>
-        </button>
-        <button
-          onClick={() => onComment(post.id)}
-          className="flex items-center gap-2 text-sm text-white/60 hover:text-[#00D9FF] transition-colors"
-        >
-          <MessageCircle className="w-4 h-4" />
-          <span>{post.comments_count || 0}</span>
-        </button>
-        <button
-          onClick={() => onShare(post.id)}
-          className="flex items-center gap-2 text-sm text-white/60 hover:text-[#FFEB3B] transition-colors"
-        >
-          <Share2 className="w-4 h-4" />
-          {post.shares_count > 0 && <span>{post.shares_count}</span>}
-        </button>
+      <div className="pt-4 border-t border-white/10">
+        <div className="flex items-center gap-6 mb-4">
+          <button
+            onClick={async () => {
+              await onLike(post.id);
+              // Notify post author of like
+              if (post.user_email !== currentUser?.email) {
+                await base44.entities.Notification.create({
+                  user_email: post.user_email,
+                  type: 'post_like',
+                  title: 'New Like',
+                  message: `${currentUser?.full_name || 'Someone'} liked your post`,
+                  link: 'Community'
+                }).catch(() => {}); // Silent fail
+              }
+            }}
+            className={`flex items-center gap-2 text-sm transition-colors ${
+              userHasLiked
+                ? 'text-[#FF1493]'
+                : 'text-white/60 hover:text-[#FF1493]'
+            }`}
+          >
+            <Heart className={`w-4 h-4 ${userHasLiked ? 'fill-current' : ''}`} />
+            <span>{post.likes_count || 0}</span>
+          </button>
+
+          {currentUser && (
+            <CommentThread 
+              post={post} 
+              currentUser={currentUser}
+              onCommentCountChange={onCommentCountChange}
+            />
+          )}
+
+          <button
+            onClick={() => onShare(post.id)}
+            className="flex items-center gap-2 text-sm text-white/60 hover:text-[#FFEB3B] transition-colors"
+          >
+            <Share2 className="w-4 h-4" />
+            {post.shares_count > 0 && <span>{post.shares_count}</span>}
+          </button>
+        </div>
       </div>
     </motion.div>
   );

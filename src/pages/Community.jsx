@@ -11,11 +11,11 @@ import { toast } from 'sonner';
 import PostCard from '../components/community/PostCard';
 import TrendingSummary from '../components/community/TrendingSummary';
 import PersonalizedFeed from '../components/community/PersonalizedFeed';
+import PostCreator from '../components/community/PostCreator';
 
 export default function Community() {
   const [user, setUser] = useState(null);
   const [showCreatePost, setShowCreatePost] = useState(false);
-  const [newPost, setNewPost] = useState({ content: '', category: 'general', expires_in_24h: false });
   const [filteredPosts, setFilteredPosts] = useState([]);
   const queryClient = useQueryClient();
 
@@ -33,7 +33,8 @@ export default function Community() {
 
   const { data: posts = [] } = useQuery({
     queryKey: ['community-posts'],
-    queryFn: () => base44.entities.CommunityPost.filter({ moderation_status: 'approved' }, '-created_date', 50),
+    queryFn: () => base44.entities.CommunityPost.filter({ moderation_status: 'approved' }, '-created_date', 100),
+    refetchInterval: 5000 // Real-time feed updates every 5 seconds
   });
 
   const { data: userLikes = [] } = useQuery({
@@ -42,74 +43,7 @@ export default function Community() {
     enabled: !!user,
   });
 
-  // AI Content Moderation on Post Creation
-  const createPostMutation = useMutation({
-    mutationFn: async (postData) => {
-      // AI moderation check
-      const moderationPrompt = `Analyze this community post for inappropriate content:
 
-"${postData.content}"
-
-Check for:
-- Hate speech, harassment, threats
-- Spam or promotional content
-- NSFW/explicit content
-- Misinformation
-
-Return a JSON with: approved (boolean), reason (string if not approved), sentiment (positive/neutral/negative)`;
-
-      const moderation = await base44.integrations.Core.InvokeLLM({
-        prompt: moderationPrompt,
-        add_context_from_internet: false,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            approved: { type: "boolean" },
-            reason: { type: "string" },
-            sentiment: { type: "string" }
-          }
-        }
-      });
-
-      const expiresAt = postData.expires_in_24h 
-        ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        : null;
-
-      const post = await base44.entities.CommunityPost.create({
-        ...postData,
-        user_email: user.email,
-        user_name: user.full_name || user.email,
-        moderation_status: moderation.approved ? 'approved' : 'flagged',
-        moderation_reason: moderation.reason || null,
-        ai_sentiment: moderation.sentiment || 'neutral',
-        expires_at: expiresAt,
-      });
-      
-      // Notify admins if flagged
-      if (!moderation.approved) {
-        await base44.entities.Notification.create({
-          user_email: 'admin',
-          type: 'flagged_post',
-          title: 'Post Flagged by AI',
-          message: `Post by ${user.full_name || user.email} flagged: ${moderation.reason}`,
-          link: 'AdminDashboard',
-          metadata: { post_id: post.id }
-        });
-      }
-
-      return { post, moderation };
-    },
-    onSuccess: ({ moderation }) => {
-      queryClient.invalidateQueries(['community-posts']);
-      setNewPost({ content: '', category: 'general', expires_in_24h: false });
-      setShowCreatePost(false);
-      if (moderation.approved) {
-        toast.success('Post published!');
-      } else {
-        toast.warning('Post flagged for review: ' + moderation.reason);
-      }
-    },
-  });
 
   const likeMutation = useMutation({
     mutationFn: async (postId) => {
@@ -134,13 +68,7 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
     },
   });
 
-  const handleCreatePost = () => {
-    if (!newPost.content.trim()) {
-      toast.error('Please enter content');
-      return;
-    }
-    createPostMutation.mutate(newPost);
-  };
+
 
   useEffect(() => {
     setFilteredPosts(posts);
@@ -210,60 +138,14 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
         )}
 
         {showCreatePost && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6"
-          >
-            <Textarea
-              value={newPost.content}
-              onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-              placeholder="Share something with the community..."
-              rows={4}
-              className="mb-4"
-            />
-            <div className="flex items-center gap-3 mb-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={newPost.expires_in_24h}
-                  onChange={(e) => setNewPost({ ...newPost, expires_in_24h: e.target.checked })}
-                  className="w-4 h-4 accent-[#FF1493]"
-                />
-                <span className="text-xs text-white/60 uppercase">24hr post (auto-delete)</span>
-              </label>
-            </div>
-            <div className="flex items-center justify-between">
-              <Select
-                value={newPost.category}
-                onValueChange={(value) => setNewPost({ ...newPost, category: value })}
-              >
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="events">Events</SelectItem>
-                  <SelectItem value="marketplace">Marketplace</SelectItem>
-                  <SelectItem value="beacons">Beacons</SelectItem>
-                  <SelectItem value="squads">Squads</SelectItem>
-                  <SelectItem value="achievements">Achievements</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => setShowCreatePost(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleCreatePost}
-                  disabled={createPostMutation.isPending}
-                  className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
-                >
-                  Post
-                </Button>
-              </div>
-            </div>
-          </motion.div>
+          <PostCreator
+            user={user}
+            onPostCreated={() => {
+              setShowCreatePost(false);
+              queryClient.invalidateQueries(['community-posts']);
+            }}
+            onCancel={() => setShowCreatePost(false)}
+          />
         )}
 
         {/* Personalized Filtering */}
@@ -283,13 +165,14 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
                 key={post.id}
                 post={post}
                 index={idx}
+                currentUser={user}
                 userHasLiked={userLikes.some(l => l.post_id === post.id)}
                 onLike={(postId) => user && likeMutation.mutate(postId)}
-                onComment={(postId) => toast.info('Comments coming soon')}
                 onShare={(postId) => {
                   navigator.clipboard.writeText(window.location.href);
                   toast.success('Link copied!');
                 }}
+                onCommentCountChange={() => queryClient.invalidateQueries(['community-posts'])}
               />
             ))
           )}
