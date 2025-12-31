@@ -6,6 +6,7 @@ import { base44 } from '@/api/base44Client';
 import PanicButton from '@/components/safety/PanicButton';
 import Gatekeeper from '@/components/auth/Gatekeeper';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
+import GlobalAssistant from '@/components/ai/GlobalAssistant';
 
 const PRIMARY_NAV = [
   { name: 'Pulse', icon: Home, path: 'Home' },
@@ -228,6 +229,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Panic Button */}
       {user && <PanicButton />}
+
+      {/* Global AI Assistant */}
+      {user && <GlobalAssistant />}
       </div>
       </Gatekeeper>
       );
