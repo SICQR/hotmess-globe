@@ -38,9 +38,11 @@ export default function AdminDashboard() {
     );
   }
 
-  // Admin access check
-  // NOTE: This is client-side check only. Backend MUST validate admin role on all admin operations.
-  // TODO: Implement backend middleware to verify user.role === 'admin' for all admin API endpoints.
+  // ⚠️ CRITICAL SECURITY WARNING ⚠️
+  // This is a CLIENT-SIDE ONLY check. It provides NO security.
+  // Backend MUST enforce role='admin' validation on ALL admin API endpoints.
+  // Without backend validation, attackers can bypass this by manipulating browser state.
+  // Base44 platform enforces User entity security rules, but custom admin operations need explicit checks.
   if (!currentUser || currentUser.role !== 'admin') {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
