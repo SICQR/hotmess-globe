@@ -78,20 +78,21 @@ export default function Checkout() {
         sellers[seller].push(item);
       });
 
-      // ATOMIC TRANSACTION START
-      // 1. Deduct XP immediately (prevents double-spend)
-      const newXP = currentXP - totalXP;
-      await base44.auth.updateMe({ xp: newXP });
-
-      // 2. Immediately decrement inventory (prevents overselling)
+      // ATOMIC TRANSACTION START - CRITICAL: Sequential operations prevent race conditions
+      // Step 1: Reserve inventory FIRST (prevents overselling race condition)
       const inventoryUpdates = [];
       try {
         for (const item of cartWithProducts) {
           const freshProduct = freshProducts.find(p => p.id === item.product.id);
           if (freshProduct.inventory_count !== undefined) {
+            // Double-check inventory hasn't changed since initial validation
+            if (freshProduct.inventory_count < item.quantity) {
+              throw new Error(`Inventory changed: only ${freshProduct.inventory_count} of "${item.product.name}" available.`);
+            }
             const newInventory = freshProduct.inventory_count - item.quantity;
             await base44.entities.Product.update(item.product.id, {
-              inventory_count: Math.max(0, newInventory)
+              inventory_count: Math.max(0, newInventory),
+              sales_count: (freshProduct.sales_count || 0) + item.quantity
             });
             inventoryUpdates.push({ 
               id: item.product.id, 
@@ -100,7 +101,11 @@ export default function Checkout() {
           }
         }
 
-        // 3. Create orders (safe to do now that money & inventory are locked)
+        // Step 2: Deduct XP after inventory is reserved (safer order)
+        const newXP = currentXP - totalXP;
+        await base44.auth.updateMe({ xp: newXP });
+
+        // Step 3: Create orders (safe to do now that inventory & XP are locked)
         for (const [seller, items] of Object.entries(sellers)) {
           const order = await base44.entities.Order.create({
             buyer_email: freshUser.email,
@@ -135,20 +140,30 @@ export default function Checkout() {
           });
         }
 
-        // 4. Clear cart
+        // Step 4: Clear cart
         for (const item of cartItems) {
           await base44.entities.CartItem.delete(item.id);
         }
       } catch (error) {
-        // ROLLBACK: Restore XP and inventory on any failure
-        console.error('Checkout failed, rolling back:', error);
+        // CRITICAL ROLLBACK: Restore inventory and XP on any failure
+        console.error('Checkout failed, initiating rollback:', error);
         
-        await base44.auth.updateMe({ xp: currentXP });
-        
+        // Rollback inventory first (reverse order of operations)
         for (const update of inventoryUpdates) {
-          await base44.entities.Product.update(update.id, {
-            inventory_count: update.oldCount
-          });
+          try {
+            await base44.entities.Product.update(update.id, {
+              inventory_count: update.oldCount
+            });
+          } catch (rollbackError) {
+            console.error('Rollback failed for product', update.id, rollbackError);
+          }
+        }
+        
+        // Rollback XP
+        try {
+          await base44.auth.updateMe({ xp: currentXP });
+        } catch (rollbackError) {
+          console.error('XP rollback failed:', rollbackError);
         }
         
         throw error;

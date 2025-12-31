@@ -14,6 +14,7 @@ import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 import { valuesToSearchParams, searchParamsToValues, valuesToApiPayload, applyLocalFilters } from '../components/discovery/queryBuilder';
 import { useTaxonomy } from '../components/taxonomy/useTaxonomy';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
+import { debounce } from 'lodash';
 
 export default function Connect() {
   const { data: currentUser } = useCurrentUser();
@@ -106,10 +107,21 @@ export default function Connect() {
     laneFiltered = profiles.filter(p => p.rightNow);
   }
 
-  // Apply query builder filters with memoization
+  // Apply query builder filters with memoization and debouncing for performance
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+  
+  const debouncedSetFilters = useMemo(
+    () => debounce((newFilters) => setDebouncedFilters(newFilters), 150),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSetFilters(filters);
+  }, [filters, debouncedSetFilters]);
+
   const filteredUsers = useMemo(() => {
-    return applyLocalFilters(laneFiltered, filters, { taxonomyIndex: idx });
-  }, [laneFiltered, filters, idx]);
+    return applyLocalFilters(laneFiltered, debouncedFilters, { taxonomyIndex: idx });
+  }, [laneFiltered, debouncedFilters, idx]);
 
   // Memoize pagination calculations
   const totalPages = useMemo(() => Math.ceil(filteredUsers.length / ITEMS_PER_PAGE), [filteredUsers.length]);
