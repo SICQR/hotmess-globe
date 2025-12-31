@@ -11,6 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ProductCard from '../components/marketplace/ProductCard';
 import AIRecommendations from '../components/marketplace/AIRecommendations';
+import EmptyState from '../components/ui/EmptyState';
+import { GridSkeleton } from '../components/ui/LoadingSkeleton';
+import CartDrawer from '../components/marketplace/CartDrawer';
+import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 import { toast } from 'sonner';
 
 export default function Marketplace() {

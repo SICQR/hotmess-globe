@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button';
 import DiscoveryCard from '../components/discovery/DiscoveryCard';
 import DiscoveryFilters from '../components/discovery/DiscoveryFilters';
 import RightNowModal from '../components/discovery/RightNowModal';
+import EmptyState from '../components/ui/EmptyState';
+import { ListSkeleton } from '../components/ui/LoadingSkeleton';
+import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 
 export default function Connect() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -31,7 +34,8 @@ export default function Connect() {
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: () => base44.entities.User.list(),
+    staleTime: 60000 // Cache for 1 minute
   });
 
   const { data: userTags = [] } = useQuery({

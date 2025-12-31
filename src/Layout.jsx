@@ -9,6 +9,7 @@ import NotificationBadge from '@/components/messaging/NotificationBadge';
 import GlobalAssistant from '@/components/ai/GlobalAssistant';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import GlobalSearch from '@/components/search/GlobalSearch';
+import OfflineIndicator from '@/components/ui/OfflineIndicator';
 
 const PRIMARY_NAV = [
   { name: 'Pulse', icon: Home, path: 'Home' },
@@ -58,6 +59,7 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <Gatekeeper>
+      <OfflineIndicator />
       <div className="min-h-screen bg-black text-white">
       {!isGlobePage && (
         <>

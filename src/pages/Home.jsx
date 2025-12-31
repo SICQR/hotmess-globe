@@ -10,6 +10,7 @@ import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import OSHud from '../components/home/OSHud';
 import RadioTerminal from '../components/home/RadioTerminal';
 import RightNowOverlay from '../components/home/RightNowOverlay';
+import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -177,6 +178,8 @@ export default function Home() {
         onClose={() => setShowRightNow(false)}
         users={activeUsers}
       />
+
+      <TutorialTooltip page="home" />
     </div>
   );
 }
