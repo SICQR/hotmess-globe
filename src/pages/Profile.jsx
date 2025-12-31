@@ -377,6 +377,68 @@ export default function Profile() {
           </motion.div>
         )}
 
+        {/* Interests */}
+        {profileUser.interests && profileUser.interests.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.13 }}
+            className="mb-6"
+          >
+            <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Interests & Hobbies</h3>
+            <div className="flex flex-wrap gap-2">
+              {profileUser.interests.map((interest, idx) => (
+                <div key={idx} className="px-3 py-1.5 bg-white/10 border-2 border-white/20 text-white text-xs font-bold uppercase">
+                  {interest}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Availability & Communication */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.14 }}
+          className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4"
+        >
+          {profileUser.availability_status && profileUser.availability_status !== 'offline' && (
+            <div>
+              <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Availability</h3>
+              <div className={`inline-flex items-center gap-2 px-4 py-2 border-2 ${
+                profileUser.availability_status === 'available' ? 'bg-[#39FF14]/20 border-[#39FF14]' :
+                profileUser.availability_status === 'busy' ? 'bg-[#FF6B35]/20 border-[#FF6B35]' :
+                profileUser.availability_status === 'away' ? 'bg-[#FFEB3B]/20 border-[#FFEB3B]' :
+                'bg-[#FF1493]/20 border-[#FF1493]'
+              }`}>
+                <div className={`w-3 h-3 rounded-full animate-pulse ${
+                  profileUser.availability_status === 'available' ? 'bg-[#39FF14]' :
+                  profileUser.availability_status === 'busy' ? 'bg-[#FF6B35]' :
+                  profileUser.availability_status === 'away' ? 'bg-[#FFEB3B]' :
+                  'bg-[#FF1493]'
+                }`} />
+                <span className="text-xs font-black uppercase">
+                  {profileUser.availability_status.replace('_', ' ')}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {profileUser.preferred_communication && profileUser.preferred_communication.length > 0 && (
+            <div>
+              <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Preferred Communication</h3>
+              <div className="flex flex-wrap gap-2">
+                {profileUser.preferred_communication.map((method, idx) => (
+                  <div key={idx} className="px-3 py-1.5 bg-[#00D9FF]/20 border-2 border-[#00D9FF] text-[#00D9FF] text-xs font-black uppercase">
+                    {method.replace('_', ' ')}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+
         {/* Skills */}
         {profileUser.skills && profileUser.skills.length > 0 && (
           <motion.div

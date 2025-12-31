@@ -61,6 +61,8 @@ export default function EditProfile() {
   const [dealbrekersText, setDealbrekersText] = useState([]);
   const [newInterest, setNewInterest] = useState('');
   const [newDealbreaker, setNewDealbreaker] = useState('');
+  const [availabilityStatus, setAvailabilityStatus] = useState('offline');
+  const [preferredCommunication, setPreferredCommunication] = useState([]);
   const [tagVisibility, setTagVisibility] = useState({
     substances_visibility: 'nobody',
     aftercare_visibility: 'matches',
@@ -114,6 +116,8 @@ export default function EditProfile() {
         setPremiumUnlockXp(user.premium_unlock_xp || 1000);
         setInterests(user.interests || []);
         setDealbrekersText(user.dealbreakers_text || []);
+        setAvailabilityStatus(user.availability_status || 'offline');
+        setPreferredCommunication(user.preferred_communication || []);
       } catch (error) {
         console.error('Failed to fetch user:', error);
       }
@@ -199,6 +203,8 @@ export default function EditProfile() {
       has_premium_content: photos.some(p => p.is_premium) || premiumVideos.length > 0,
       interests,
       dealbreakers_text: dealbrekersText,
+      availability_status: availabilityStatus,
+      preferred_communication: preferredCommunication,
       ...tagVisibility
     });
 
@@ -536,6 +542,69 @@ export default function EditProfile() {
                 ))}
               </div>
               <p className="text-xs text-white/40 mt-2">{interests.length}/10 interests</p>
+            </div>
+
+            {/* Availability Status */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Availability Status</Label>
+              <p className="text-xs text-white/60 mb-3">Let others know when you're free to connect</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: 'available', label: 'Available', color: '#39FF14' },
+                  { value: 'busy', label: 'Busy', color: '#FF6B35' },
+                  { value: 'away', label: 'Away', color: '#FFEB3B' },
+                  { value: 'do_not_disturb', label: 'Do Not Disturb', color: '#FF1493' },
+                  { value: 'offline', label: 'Offline', color: '#666' }
+                ].map(({ value, label, color }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setAvailabilityStatus(value)}
+                    className={`px-4 py-3 text-xs font-black uppercase border-2 transition-all ${
+                      availabilityStatus === value
+                        ? 'border-white text-black'
+                        : 'bg-white/5 border-white/10 text-white/60 hover:border-white/30'
+                    }`}
+                    style={availabilityStatus === value ? { backgroundColor: color } : {}}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <div 
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: availabilityStatus === value ? '#fff' : color }}
+                      />
+                      {label}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Preferred Communication */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Preferred Communication</Label>
+              <p className="text-xs text-white/60 mb-3">How do you like to connect?</p>
+              <div className="flex flex-wrap gap-2">
+                {['telegram', 'voice_call', 'video_call', 'in_person'].map(method => (
+                  <button
+                    key={method}
+                    type="button"
+                    onClick={() => {
+                      if (preferredCommunication.includes(method)) {
+                        setPreferredCommunication(preferredCommunication.filter(m => m !== method));
+                      } else {
+                        setPreferredCommunication([...preferredCommunication, method]);
+                      }
+                    }}
+                    className={`px-4 py-2 text-xs font-black uppercase border-2 transition-all ${
+                      preferredCommunication.includes(method)
+                        ? 'bg-[#00D9FF] border-[#00D9FF] text-black'
+                        : 'bg-white/5 border-white/20 text-white/60 hover:border-white/40'
+                    }`}
+                  >
+                    {method.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Dealbreakers */}
