@@ -17,7 +17,7 @@ export function calculateCompatibility(currentUserTags = [], otherUserTags = [])
   }
 
   // Check for dealbreaker conflicts
-  const hasDealb reakerConflict = 
+  const hasDealBreakerConflict = 
     currentDealbreakers.some(db => !otherEssentials.find(e => e.tag_id === db.tag_id)) ||
     otherDealbreakers.some(db => !currentEssentials.find(e => e.tag_id === db.tag_id));
 
@@ -27,7 +27,7 @@ export function calculateCompatibility(currentUserTags = [], otherUserTags = [])
   ).length;
 
   // Green: no dealbreaker conflict + 2+ shared essentials
-  if (!hasDealb reakerConflict && sharedEssentials >= 2) {
+  if (!hasDealBreakerConflict && sharedEssentials >= 2) {
     return 'green';
   }
 

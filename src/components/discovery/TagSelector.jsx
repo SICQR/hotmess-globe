@@ -24,7 +24,7 @@ export default function TagSelector({
   onEssentialsChange,
   showDealbreakers = false,
   dealbreakerTagIds = [],
-  onDealbr eakersChange
+  onDealbbreakersChange
 }) {
   const [search, setSearch] = useState('');
 
@@ -68,9 +68,9 @@ export default function TagSelector({
 
   const handleToggleDealbreaker = (tagId) => {
     if (dealbreakerTagIds.includes(tagId)) {
-      onDealbr eakersChange(dealbreakerTagIds.filter(id => id !== tagId));
+      onDealbbreakersChange(dealbreakerTagIds.filter(id => id !== tagId));
     } else {
-      onDealbr eakersChange([...dealbreakerTagIds, tagId]);
+      onDealbbreakersChange([...dealbreakerTagIds, tagId]);
     }
   };
 

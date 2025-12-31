@@ -518,7 +518,7 @@ export default function EditProfile() {
                   onEssentialsChange={setEssentialTagIds}
                   showDealbreakers={true}
                   dealbreakerTagIds={dealbreakerTagIds}
-                  onDealbr eakersChange={setDealbreakerTagIds}
+                  onDealbbreakersChange={setDealbreakerTagIds}
                 />
               </div>
 
