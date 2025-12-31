@@ -21,11 +21,12 @@ import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
+import ProfileSetup from './pages/ProfileSetup';
 import Radio from './pages/Radio';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
-import ProfileSetup from './pages/ProfileSetup';
+import Connect from './pages/Connect';
 import __Layout from './Layout.jsx';
 
 
@@ -53,11 +54,12 @@ export const PAGES = {
     "OrganizerDashboard": OrganizerDashboard,
     "ProductDetail": ProductDetail,
     "Profile": Profile,
+    "ProfileSetup": ProfileSetup,
     "Radio": Radio,
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
-    "ProfileSetup": ProfileSetup,
+    "Connect": Connect,
 }
 
 export const pagesConfig = {

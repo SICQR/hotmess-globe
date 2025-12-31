@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, X, Lock } from 'lucide-react';
-import taxonomyConfig from '../../config/discovery-taxonomy.v1.json';
+import { taxonomyConfig } from './taxonomyConfig';
 
 /**
  * Normalize input using synonym engine
