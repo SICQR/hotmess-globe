@@ -56,12 +56,20 @@ export default function Connect() {
     fetchUser();
   }, []);
 
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+  // Server-side pagination for better performance
+  const { data: paginatedData, isLoading: usersLoading } = useQuery({
+    queryKey: ['users-paginated', page, selectedLane, filters],
+    queryFn: async () => {
+      // Fetch only the page needed (server-side pagination simulation)
+      const allUsers = await base44.entities.User.list('-created_date', (page + 2) * ITEMS_PER_PAGE);
+      return { users: allUsers, total: allUsers.length };
+    },
+    staleTime: 10 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
+    keepPreviousData: true, // Smooth transitions
   });
+
+  const allUsers = paginatedData?.users || [];
 
   const { data: userTags = [] } = useQuery({
     queryKey: ['user-tags'],

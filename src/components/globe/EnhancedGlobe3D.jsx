@@ -66,7 +66,11 @@ export default function EnhancedGlobe3D({
     const camera = new THREE.PerspectiveCamera(45, mount.clientWidth / mount.clientHeight, 0.1, 200);
     camera.position.z = 4.5;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: window.devicePixelRatio < 2, // Disable AA on high DPI
+      alpha: false,
+      powerPreference: 'high-performance',
+    });
     renderer.setSize(mount.clientWidth, mount.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     mount.appendChild(renderer.domElement);
@@ -82,8 +86,8 @@ export default function EnhancedGlobe3D({
     const globe = new THREE.Group();
     scene.add(globe);
 
-    // Sphere with Earth texture
-    const sphereGeo = new THREE.SphereGeometry(globeRadius, 128, 128);
+    // Sphere with Earth texture - LOD optimization
+    const sphereGeo = new THREE.SphereGeometry(globeRadius, 64, 64); // Reduced from 128 to 64
 
     // Load Earth textures
     const textureLoader = new THREE.TextureLoader();
@@ -100,8 +104,8 @@ export default function EnhancedGlobe3D({
     const sphere = new THREE.Mesh(sphereGeo, sphereMat);
     globe.add(sphere);
 
-    // Atmosphere glow
-    const atmosphereGeo = new THREE.SphereGeometry(globeRadius * 1.1, 64, 64);
+    // Atmosphere glow - LOD optimization
+    const atmosphereGeo = new THREE.SphereGeometry(globeRadius * 1.1, 32, 32); // Reduced segments
     const atmosphereMat = new THREE.ShaderMaterial({
       transparent: true,
       side: THREE.BackSide,
@@ -154,19 +158,51 @@ export default function EnhancedGlobe3D({
       globe.add(new THREE.Line(geo, gridMat));
     }
 
-    // Beacon pins layer
-    const beaconGeo = new THREE.SphereGeometry(0.015, 16, 16);
+    // Beacon pins layer - OPTIMIZED with instancing
+    const beaconGeo = new THREE.SphereGeometry(0.015, 8, 8); // Reduced segments for LOD
     const beaconMeshes = [];
 
     if (showPins) {
-      beacons.forEach(beacon => {
+      // Group beacons by type for instanced rendering
+      const normalBeacons = beacons.filter(b => !highlightedIds.includes(b.id) && b.mode !== 'care');
+      const careBeacons = beacons.filter(b => b.mode === 'care');
+      const highlightedBeacons = beacons.filter(b => highlightedIds.includes(b.id));
+
+      // Create instanced mesh for normal beacons (most common case)
+      if (normalBeacons.length > 0) {
+        const normalMat = new THREE.MeshStandardMaterial({
+          color: 0xff1493,
+          emissive: 0xff1493,
+          emissiveIntensity: 0.8,
+          roughness: 0.4,
+          metalness: 0.2
+        });
+
+        const instancedMesh = new THREE.InstancedMesh(beaconGeo, normalMat, normalBeacons.length);
+        const matrix = new THREE.Matrix4();
+        
+        normalBeacons.forEach((beacon, i) => {
+          const pos = latLngToVector3(beacon.lat, beacon.lng, globeRadius * 1.01);
+          matrix.setPosition(pos);
+          instancedMesh.setMatrixAt(i, matrix);
+          instancedMesh.setColorAt(i, new THREE.Color(0xff1493));
+        });
+        
+        instancedMesh.instanceMatrix.needsUpdate = true;
+        if (instancedMesh.instanceColor) instancedMesh.instanceColor.needsUpdate = true;
+        globe.add(instancedMesh);
+        beaconMeshes.push(instancedMesh);
+      }
+
+      // Individual meshes for highlighted/special beacons (fewer instances)
+      [...careBeacons, ...highlightedBeacons].forEach(beacon => {
         const isHighlighted = highlightedIds.includes(beacon.id);
         const isCareBeacon = beacon.mode === 'care';
 
         const beaconMat = new THREE.MeshStandardMaterial({
-          color: isCareBeacon ? 0x00d9ff : (isHighlighted ? 0xffeb3b : 0xff1493),
-          emissive: isCareBeacon ? 0x00d9ff : (isHighlighted ? 0xffeb3b : 0xff1493),
-          emissiveIntensity: isCareBeacon ? 1.5 : (isHighlighted ? 1.2 : 0.8),
+          color: isCareBeacon ? 0x00d9ff : 0xffeb3b,
+          emissive: isCareBeacon ? 0x00d9ff : 0xffeb3b,
+          emissiveIntensity: isCareBeacon ? 1.5 : 1.2,
           roughness: 0.4,
           metalness: 0.2
         });
@@ -176,7 +212,6 @@ export default function EnhancedGlobe3D({
         mesh.position.copy(pos);
         mesh.userData = { type: 'beacon', beacon };
 
-        // Scale up highlighted beacons
         if (isHighlighted) {
           mesh.scale.setScalar(1.5);
         }
@@ -184,16 +219,16 @@ export default function EnhancedGlobe3D({
         globe.add(mesh);
         beaconMeshes.push(mesh);
 
-        // Glow sprite
-        const spriteColor = isCareBeacon ? 0x00d9ff : (isHighlighted ? 0xffeb3b : 0xff1493);
+        // Glow sprite only for special beacons
+        const spriteColor = isCareBeacon ? 0x00d9ff : 0xffeb3b;
         const spriteMat = new THREE.SpriteMaterial({
           color: spriteColor,
           transparent: true,
-          opacity: isCareBeacon ? 1.0 : (isHighlighted ? 0.9 : 0.6),
+          opacity: isCareBeacon ? 1.0 : 0.9,
           blending: THREE.AdditiveBlending
         });
         const sprite = new THREE.Sprite(spriteMat);
-        sprite.scale.set(isCareBeacon ? 0.5 : (isHighlighted ? 0.4 : 0.25), isCareBeacon ? 0.5 : (isHighlighted ? 0.4 : 0.25), 1);
+        sprite.scale.set(isCareBeacon ? 0.5 : 0.4, isCareBeacon ? 0.5 : 0.4, 1);
         sprite.position.copy(pos);
         globe.add(sprite);
       });

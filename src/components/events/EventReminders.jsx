@@ -16,7 +16,7 @@ export default function EventReminders({ currentUser }) {
       return rsvps;
     },
     enabled: !!currentUser,
-    refetchInterval: 60000 // Check every minute
+    refetchInterval: 5 * 60000 // Check every 5 minutes (reduced from 1min)
   });
 
   const { data: allEvents = [] } = useQuery({
