@@ -125,6 +125,20 @@ export default function ChatThread({ thread, currentUser, onBack }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Client-side validation
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    
+    if (file.size > maxSize) {
+      toast.error('Image too large (max 10MB)');
+      return;
+    }
+    
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Use JPEG, PNG, WebP, or GIF.');
+      return;
+    }
+
     setUploading(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -147,9 +161,17 @@ export default function ChatThread({ thread, currentUser, onBack }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size (max 50MB)
-    if (file.size > 50 * 1024 * 1024) {
+    // Client-side validation
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    const allowedTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
+    
+    if (file.size > maxSize) {
       toast.error('Video too large (max 50MB)');
+      return;
+    }
+    
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Use MP4, MOV, or WebM.');
       return;
     }
 

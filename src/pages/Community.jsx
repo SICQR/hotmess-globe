@@ -12,6 +12,7 @@ import PostCard from '../components/community/PostCard';
 import TrendingSummary from '../components/community/TrendingSummary';
 import PersonalizedFeed from '../components/community/PersonalizedFeed';
 import PostCreator from '../components/community/PostCreator';
+import { checkRateLimit } from '../components/utils/sanitize';
 
 export default function Community() {
   const [user, setUser] = useState(null);
@@ -47,6 +48,12 @@ export default function Community() {
 
   const likeMutation = useMutation({
     mutationFn: async (postId) => {
+      // Rate limit: max 10 likes per minute
+      const rateCheck = checkRateLimit(`like-${user.email}`, 10, 60000);
+      if (!rateCheck.allowed) {
+        throw new Error('Too many likes. Please slow down.');
+      }
+
       const existingLike = userLikes.find(l => l.post_id === postId);
       if (existingLike) {
         await base44.entities.PostLike.delete(existingLike.id);
@@ -66,6 +73,9 @@ export default function Community() {
       queryClient.invalidateQueries(['community-posts']);
       queryClient.invalidateQueries(['user-likes']);
     },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to like post');
+    }
   });
 
 

@@ -55,7 +55,6 @@ export default function GlobePage() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'Beacon' },
         (payload) => {
-          console.log('New beacon inserted:', payload.new);
           queryClient.setQueryData(['beacons'], (old = []) => {
             if (payload.new.active) {
               return [payload.new, ...old];
@@ -68,7 +67,6 @@ export default function GlobePage() {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'Beacon' },
         (payload) => {
-          console.log('Beacon updated:', payload.new);
           queryClient.setQueryData(['beacons'], (old = []) => {
             return old.map(beacon => 
               beacon.id === payload.new.id ? payload.new : beacon
@@ -80,7 +78,6 @@ export default function GlobePage() {
         'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'Beacon' },
         (payload) => {
-          console.log('Beacon deleted:', payload.old);
           queryClient.setQueryData(['beacons'], (old = []) => {
             return old.filter(beacon => beacon.id !== payload.old.id);
           });
@@ -258,7 +255,7 @@ export default function GlobePage() {
   }, []);
 
   const handleCityClick = useCallback((city) => {
-    console.log('City clicked:', city);
+    // City click handler - can be extended for city-specific actions
   }, []);
 
   const handleClose = useCallback(() => {
@@ -289,7 +286,7 @@ export default function GlobePage() {
       setSelectedBeacon(results.beacons[0]);
       setShowPanel(true);
     } else if (results.cities.length === 1) {
-      console.log('Focus on city:', results.cities[0]);
+      // Focus on single city result
     }
   }, []);
 

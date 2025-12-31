@@ -22,7 +22,7 @@ export default function AdminDashboard() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        // Failed to fetch user - will show loading state
       } finally {
         setLoading(false);
       }
