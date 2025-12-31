@@ -47,7 +47,7 @@ export default function Checkout() {
 
   const checkoutMutation = useMutation({
     mutationFn: async () => {
-      // Fetch fresh user data to prevent race condition
+      // CRITICAL: Fetch fresh data and validate atomically
       const freshUser = await base44.auth.me();
       const currentXP = freshUser.xp || 0;
       
@@ -56,14 +56,17 @@ export default function Checkout() {
         throw new Error(`Insufficient XP. You have ${currentXP} XP but need ${totalXP} XP.`);
       }
 
-      // Validate products still exist and have inventory
+      // Fetch fresh product data to check inventory in real-time
+      const freshProducts = await base44.entities.Product.list();
+      
+      // Validate products and inventory atomically
       for (const item of cartWithProducts) {
-        const freshProduct = products.find(p => p.id === item.product.id);
+        const freshProduct = freshProducts.find(p => p.id === item.product.id);
         if (!freshProduct || freshProduct.status !== 'active') {
           throw new Error(`Product "${item.product.name}" is no longer available.`);
         }
         if (freshProduct.inventory_count !== undefined && freshProduct.inventory_count < item.quantity) {
-          throw new Error(`Insufficient inventory for "${item.product.name}".`);
+          throw new Error(`Only ${freshProduct.inventory_count} of "${item.product.name}" available.`);
         }
       }
 
@@ -75,11 +78,29 @@ export default function Checkout() {
         sellers[seller].push(item);
       });
 
-      // Deduct XP first (atomic operation to prevent double-spend)
-      await base44.auth.updateMe({ xp: currentXP - totalXP });
+      // ATOMIC TRANSACTION START
+      // 1. Deduct XP immediately (prevents double-spend)
+      const newXP = currentXP - totalXP;
+      await base44.auth.updateMe({ xp: newXP });
 
+      // 2. Immediately decrement inventory (prevents overselling)
+      const inventoryUpdates = [];
       try {
-        // Create order per seller
+        for (const item of cartWithProducts) {
+          const freshProduct = freshProducts.find(p => p.id === item.product.id);
+          if (freshProduct.inventory_count !== undefined) {
+            const newInventory = freshProduct.inventory_count - item.quantity;
+            await base44.entities.Product.update(item.product.id, {
+              inventory_count: Math.max(0, newInventory)
+            });
+            inventoryUpdates.push({ 
+              id: item.product.id, 
+              oldCount: freshProduct.inventory_count 
+            });
+          }
+        }
+
+        // 3. Create orders (safe to do now that money & inventory are locked)
         for (const [seller, items] of Object.entries(sellers)) {
           const order = await base44.entities.Order.create({
             buyer_email: freshUser.email,
@@ -92,7 +113,7 @@ export default function Checkout() {
             notes
           });
 
-          // Create order items and decrement inventory
+          // Create order items
           for (const item of items) {
             await base44.entities.OrderItem.create({
               order_id: order.id,
@@ -102,14 +123,6 @@ export default function Checkout() {
               price_xp: item.product.price_xp,
               price_gbp: 0
             });
-
-            // Decrement inventory
-            const product = products.find(p => p.id === item.product.id);
-            if (product.inventory_count !== undefined) {
-              await base44.entities.Product.update(item.product.id, {
-                inventory_count: product.inventory_count - item.quantity
-              });
-            }
           }
 
           // Notify seller
@@ -122,13 +135,22 @@ export default function Checkout() {
           });
         }
 
-        // Clear cart
+        // 4. Clear cart
         for (const item of cartItems) {
           await base44.entities.CartItem.delete(item.id);
         }
       } catch (error) {
-        // Rollback XP deduction if order creation fails
+        // ROLLBACK: Restore XP and inventory on any failure
+        console.error('Checkout failed, rolling back:', error);
+        
         await base44.auth.updateMe({ xp: currentXP });
+        
+        for (const update of inventoryUpdates) {
+          await base44.entities.Product.update(update.id, {
+            inventory_count: update.oldCount
+          });
+        }
+        
         throw error;
       }
     },

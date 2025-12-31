@@ -13,8 +13,9 @@ import OfflineIndicator from '@/components/ui/OfflineIndicator';
 import EventReminders from '@/components/events/EventReminders';
 import { TaxonomyProvider } from '@/components/taxonomy/provider';
 import ErrorBoundary from '@/components/error/ErrorBoundary';
+import PageErrorBoundary from '@/components/error/PageErrorBoundary';
 
-const PRIMARY_NAV = [
+      const PRIMARY_NAV = [
   { name: 'Pulse', icon: Home, path: 'Home' },
   { name: 'Globe', icon: GlobeIcon, path: 'Globe' },
   { name: 'Events', icon: CalendarIcon, path: 'Events' },
@@ -252,7 +253,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Main Content */}
       <div className={isGlobePage ? '' : 'md:ml-56 pt-14 md:pt-0'}>
-        {children}
+        <PageErrorBoundary>
+          {children}
+        </PageErrorBoundary>
       </div>
 
       {/* Panic Button */}

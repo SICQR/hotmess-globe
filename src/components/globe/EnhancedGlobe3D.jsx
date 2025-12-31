@@ -586,47 +586,108 @@ export default function EnhancedGlobe3D({
     };
     window.addEventListener('resize', handleResize);
 
-    // Cleanup
+    // Cleanup - CRITICAL: Prevent memory leaks
     return () => {
-      cancelAnimationFrame(animationId);
+      // Stop animation loop immediately
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+      
+      // Remove all event listeners
       window.removeEventListener('resize', handleResize);
-      renderer.domElement.removeEventListener('mousedown', onMouseDown);
-      renderer.domElement.removeEventListener('mousemove', onMouseMove);
-      renderer.domElement.removeEventListener('click', onClick);
       window.removeEventListener('mouseup', onMouseUp);
-      renderer.domElement.removeEventListener('wheel', onWheel);
       
-      // Dispose all geometries
-      beaconGeo.dispose();
-      sphereGeo.dispose();
-      atmosphereGeo.dispose();
+      if (renderer.domElement) {
+        renderer.domElement.removeEventListener('mousedown', onMouseDown);
+        renderer.domElement.removeEventListener('mousemove', onMouseMove);
+        renderer.domElement.removeEventListener('click', onClick);
+        renderer.domElement.removeEventListener('wheel', onWheel);
+      }
       
-      // Dispose all materials
-      sphereMat.dispose();
-      atmosphereMat.dispose();
-      gridMat.dispose();
+      // Dispose geometries
+      if (beaconGeo) beaconGeo.dispose();
+      if (sphereGeo) sphereGeo.dispose();
+      if (atmosphereGeo) atmosphereGeo.dispose();
+      
+      // Dispose materials
+      if (sphereMat) {
+        if (sphereMat.map) sphereMat.map.dispose();
+        if (sphereMat.bumpMap) sphereMat.bumpMap.dispose();
+        sphereMat.dispose();
+      }
+      if (atmosphereMat) atmosphereMat.dispose();
+      if (gridMat) gridMat.dispose();
       
       // Dispose textures
-      earthTexture.dispose();
-      bumpTexture.dispose();
+      if (earthTexture) earthTexture.dispose();
+      if (bumpTexture) bumpTexture.dispose();
       
-      // Dispose beacon meshes
+      // Dispose beacon meshes and sprites
       beaconMeshes.forEach(mesh => {
-        mesh.geometry.dispose();
-        mesh.material.dispose();
+        if (mesh.geometry) mesh.geometry.dispose();
+        if (mesh.material) mesh.material.dispose();
       });
       
-      // Dispose arcs
-      arcs.forEach(arc => {
-        arc.geometry.dispose();
-        if (arc.material.dispose) arc.material.dispose();
+      // Dispose heatmap group
+      if (heatmapGroup) {
+        heatmapGroup.traverse(child => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+        });
+      }
+      
+      // Dispose city group
+      if (cityGroup) {
+        cityGroup.traverse(child => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+        });
+      }
+      
+      // Dispose user trails
+      userTrails.forEach(trail => {
+        if (trail.geometry) trail.geometry.dispose();
+        if (trail.material) trail.material.dispose();
       });
+      
+      // Dispose arcs and shaders
+      arcs.forEach(arc => {
+        if (arc.geometry) arc.geometry.dispose();
+        if (arc.material) {
+          if (arc.material.uniforms) {
+            // Dispose shader uniforms
+            Object.values(arc.material.uniforms).forEach(uniform => {
+              if (uniform.value?.dispose) uniform.value.dispose();
+            });
+          }
+          arc.material.dispose();
+        }
+      });
+      
+      // Clear scene
+      while(scene.children.length > 0) {
+        const object = scene.children[0];
+        scene.remove(object);
+        if (object.geometry) object.geometry.dispose();
+        if (object.material) {
+          if (Array.isArray(object.material)) {
+            object.material.forEach(mat => mat.dispose());
+          } else {
+            object.material.dispose();
+          }
+        }
+      }
       
       // Dispose renderer and remove canvas
-      if (mount.contains(renderer.domElement)) {
+      if (mount && renderer.domElement && mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement);
       }
+      
       renderer.dispose();
+      renderer.forceContextLoss();
+      
+      // Clear references
+      scene.clear();
     };
   }, [beacons, cities, activeLayers, highlightedIds, userActivities]);
 
