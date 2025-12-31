@@ -17,6 +17,7 @@ import ProfileStats from '../components/profile/ProfileStats';
 import PremiumContentUnlock from '../components/profile/PremiumContentUnlock';
 import ReportButton from '../components/moderation/ReportButton';
 import BlockButton from '../components/moderation/BlockButton';
+import { sanitizeText, sanitizeURL, sanitizeSocialLinks } from '../components/utils/sanitize';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -204,7 +205,7 @@ export default function Profile() {
                   </Link>
                 )}
               </div>
-              <p className="text-white/60 mb-4">{profileUser.bio || 'No bio yet'}</p>
+              <p className="text-white/60 mb-4">{sanitizeText(profileUser.bio || 'No bio yet')}</p>
 
               {/* Vibes */}
               {profileUser.preferred_vibes && profileUser.preferred_vibes.length > 0 && (
@@ -290,50 +291,57 @@ export default function Profile() {
                     <p className="text-xs text-white/40 uppercase">Social Links (Connected)</p>
                   </div>
                   <div className="flex flex-wrap gap-3">
-                    {profileUser.social_links.instagram && (
-                      <a
-                        href={`https://instagram.com/${profileUser.social_links.instagram.replace('@', '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#833AB4] to-[#E1306C] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
-                      >
-                        <Instagram className="w-4 h-4" />
-                        Instagram
-                      </a>
-                    )}
-                    {profileUser.social_links.twitter && (
-                      <a
-                        href={`https://twitter.com/${profileUser.social_links.twitter.replace('@', '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 bg-black rounded-lg text-white text-sm border border-white/20 hover:bg-white/10 transition-colors"
-                      >
-                        <Twitter className="w-4 h-4" />
-                        Twitter
-                      </a>
-                    )}
-                    {profileUser.social_links.spotify && (
-                      <a
-                        href={profileUser.social_links.spotify.startsWith('http') ? profileUser.social_links.spotify : `https://open.spotify.com/user/${profileUser.social_links.spotify}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 bg-[#1DB954] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
-                      >
-                        <Music className="w-4 h-4" />
-                        Spotify
-                      </a>
-                    )}
-                    {profileUser.social_links.soundcloud && (
-                      <a
-                        href={profileUser.social_links.soundcloud.startsWith('http') ? profileUser.social_links.soundcloud : `https://soundcloud.com/${profileUser.social_links.soundcloud}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 bg-[#FF5500] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
-                      >
-                        <Music className="w-4 h-4" />
-                        SoundCloud
-                      </a>
-                    )}
+                    {(() => {
+                      const sanitizedLinks = sanitizeSocialLinks(profileUser.social_links || {});
+                      return (
+                        <>
+                          {sanitizedLinks.instagram && (
+                            <a
+                              href={sanitizeURL(sanitizedLinks.instagram)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#833AB4] to-[#E1306C] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
+                            >
+                              <Instagram className="w-4 h-4" />
+                              Instagram
+                            </a>
+                          )}
+                          {sanitizedLinks.twitter && (
+                            <a
+                              href={sanitizeURL(sanitizedLinks.twitter)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-3 py-2 bg-black rounded-lg text-white text-sm border border-white/20 hover:bg-white/10 transition-colors"
+                            >
+                              <Twitter className="w-4 h-4" />
+                              Twitter
+                            </a>
+                          )}
+                          {sanitizedLinks.spotify && (
+                            <a
+                              href={sanitizeURL(sanitizedLinks.spotify)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-3 py-2 bg-[#1DB954] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
+                            >
+                              <Music className="w-4 h-4" />
+                              Spotify
+                            </a>
+                          )}
+                          {sanitizedLinks.soundcloud && (
+                            <a
+                              href={sanitizeURL(sanitizedLinks.soundcloud)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-3 py-2 bg-[#FF5500] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
+                            >
+                              <Music className="w-4 h-4" />
+                              SoundCloud
+                            </a>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               ) : (
@@ -440,32 +448,34 @@ export default function Profile() {
             <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Portfolio & Creations</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {profileUser.portfolio.map((item, idx) => (
-                <a
-                  key={idx}
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group bg-black border-2 border-white hover:border-[#FF1493] transition-all overflow-hidden"
-                >
-                  {item.image_url && (
-                    <div className="h-40 overflow-hidden">
-                      <img 
-                        src={item.image_url} 
-                        alt={item.title}
-                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
-                      />
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-black text-sm">{item.title}</h4>
-                      <span className="text-[10px] uppercase text-white/40 font-bold">{item.type}</span>
-                    </div>
-                    {item.description && (
-                      <p className="text-xs text-white/60 line-clamp-2">{item.description}</p>
+                {sanitizeURL(item.url) && (
+                  <a
+                    key={idx}
+                    href={sanitizeURL(item.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group bg-black border-2 border-white hover:border-[#FF1493] transition-all overflow-hidden"
+                  >
+                    {item.image_url && sanitizeURL(item.image_url) && (
+                      <div className="h-40 overflow-hidden">
+                        <img 
+                          src={sanitizeURL(item.image_url)} 
+                          alt={sanitizeText(item.title)}
+                          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
+                        />
+                      </div>
                     )}
-                  </div>
-                </a>
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-black text-sm">{sanitizeText(item.title)}</h4>
+                        <span className="text-[10px] uppercase text-white/40 font-bold">{sanitizeText(item.type)}</span>
+                      </div>
+                      {item.description && (
+                        <p className="text-xs text-white/60 line-clamp-2">{sanitizeText(item.description)}</p>
+                      )}
+                    </div>
+                  </a>
+                )}
               ))}
             </div>
           </motion.div>
@@ -604,9 +614,9 @@ export default function Profile() {
                       <img src={checkIn.photo_url} alt="Check-in" className="w-full h-48 object-cover rounded-lg mb-3" />
                     )}
                     <Link to={createPageUrl(`BeaconDetail?id=${checkIn.beacon_id}`)}>
-                      <h3 className="font-bold mb-1 hover:text-[#FF1493] transition-colors">{checkIn.beacon_title}</h3>
+                      <h3 className="font-bold mb-1 hover:text-[#FF1493] transition-colors">{sanitizeText(checkIn.beacon_title)}</h3>
                     </Link>
-                    {checkIn.note && <p className="text-sm text-white/60 mb-2">{checkIn.note}</p>}
+                    {checkIn.note && <p className="text-sm text-white/60 mb-2">{sanitizeText(checkIn.note)}</p>}
                     <div className="flex items-center gap-2 text-xs text-white/40">
                       <Calendar className="w-3 h-3" />
                       <span>{format(new Date(checkIn.created_date), 'MMM d, yyyy')}</span>
