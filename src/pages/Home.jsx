@@ -47,8 +47,14 @@ export default function Home() {
     <div className="min-h-screen bg-black text-white">
       {/* HERO */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-[#FF1493]/10 to-black" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjAzIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-40" />
+        <div className="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80" 
+            alt="Hero"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black" />
+        </div>
         
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -56,24 +62,24 @@ export default function Home() {
           transition={{ duration: 1 }}
           className="relative z-10 text-center px-6 max-w-6xl"
         >
-          <h1 className="text-[20vw] md:text-[12vw] font-black italic leading-[0.8] tracking-tighter mb-8">
+          <h1 className="text-[20vw] md:text-[12vw] font-black italic leading-[0.8] tracking-tighter mb-8 drop-shadow-2xl">
             HOT<span className="text-[#FF1493]">MESS</span>
           </h1>
-          <p className="text-2xl md:text-4xl font-bold uppercase tracking-wider mb-4">
+          <p className="text-2xl md:text-4xl font-bold uppercase tracking-wider mb-4 drop-shadow-lg">
             LONDON OS
           </p>
-          <p className="text-base md:text-xl text-white/60 uppercase tracking-widest mb-12 max-w-3xl mx-auto">
+          <p className="text-base md:text-xl text-white/90 uppercase tracking-widest mb-12 max-w-3xl mx-auto drop-shadow-lg">
             RAW / HUNG / HIGH / SUPER + HNH MESS. No filler. No shame.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to={createPageUrl('Connect')}>
-              <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg">
+              <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg shadow-2xl">
                 <Users className="w-5 h-5 mr-2" />
                 CONNECT NOW
               </Button>
             </Link>
             <Link to={createPageUrl('Marketplace')}>
-              <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
+              <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg shadow-2xl backdrop-blur-sm">
                 <ShoppingBag className="w-5 h-5 mr-2" />
                 SHOP THE DROP
               </Button>
@@ -99,25 +105,92 @@ export default function Home() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            {COLLECTIONS.map((col, idx) => (
-              <motion.div
-                key={col.id}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-              >
-                <Link to={createPageUrl('Marketplace')}>
-                  <div className="group relative aspect-[4/3] overflow-hidden" style={{ backgroundColor: col.color }}>
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-500" />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
-                      <h3 className="text-6xl font-black italic mb-4 text-white">{col.name}</h3>
-                      <p className="text-sm uppercase tracking-widest text-white/80">{col.tagline}</p>
-                    </div>
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <Link to={createPageUrl('Marketplace')}>
+                <div className="group relative aspect-[4/3] overflow-hidden">
+                  <img 
+                    src="https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?w=800&q=90" 
+                    alt="RAW Collection"
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                  />
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-500" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
+                    <h3 className="text-6xl font-black italic mb-4 text-white drop-shadow-2xl">RAW</h3>
+                    <p className="text-sm uppercase tracking-widest text-white drop-shadow-lg">Hardwear. Clean lines. Loud intent.</p>
                   </div>
-                </Link>
-              </motion.div>
-            ))}
+                </div>
+              </Link>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+            >
+              <Link to={createPageUrl('Marketplace')}>
+                <div className="group relative aspect-[4/3] overflow-hidden">
+                  <img 
+                    src="https://images.unsplash.com/photo-1529068755536-a5ade0dcb4e8?w=800&q=90" 
+                    alt="HUNG Collection"
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#FF1493]/50 to-black/60 group-hover:from-[#FF1493]/30 transition-all duration-500" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
+                    <h3 className="text-6xl font-black italic mb-4 text-white drop-shadow-2xl">HUNG</h3>
+                    <p className="text-sm uppercase tracking-widest text-white drop-shadow-lg">Fit that doesn't ask permission.</p>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <Link to={createPageUrl('Marketplace')}>
+                <div className="group relative aspect-[4/3] overflow-hidden">
+                  <img 
+                    src="https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=800&q=90" 
+                    alt="HIGH Collection"
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#B026FF]/50 to-black/60 group-hover:from-[#B026FF]/30 transition-all duration-500" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
+                    <h3 className="text-6xl font-black italic mb-4 text-white drop-shadow-2xl">HIGH</h3>
+                    <p className="text-sm uppercase tracking-widest text-white drop-shadow-lg">Club armour. Daylight optional.</p>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+            >
+              <Link to={createPageUrl('Marketplace')}>
+                <div className="group relative aspect-[4/3] overflow-hidden">
+                  <img 
+                    src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=90" 
+                    alt="SUPER Collection"
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#00D9FF]/50 to-black/60 group-hover:from-[#00D9FF]/30 transition-all duration-500" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
+                    <h3 className="text-6xl font-black italic mb-4 text-white drop-shadow-2xl">SUPER</h3>
+                    <p className="text-sm uppercase tracking-widest text-white drop-shadow-lg">Limited. Unapologetic. Gone fast.</p>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
           </div>
 
           {products.length > 0 && (
@@ -152,21 +225,29 @@ export default function Home() {
       </section>
 
       {/* CONNECT */}
-      <section className="py-32 px-6 bg-[#FF1493] text-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative py-32 px-6 overflow-hidden">
+        <div className="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1920&q=80" 
+            alt="Connect"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FF1493]/90 to-[#FF1493]/70" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <p className="text-xs uppercase tracking-[0.4em] text-white/60 mb-4">DISCOVERY</p>
-              <h2 className="text-6xl md:text-8xl font-black italic mb-8">FIND YOUR TRIBE</h2>
-              <p className="text-xl mb-8 leading-relaxed">
+              <p className="text-xs uppercase tracking-[0.4em] text-white/80 mb-4">DISCOVERY</p>
+              <h2 className="text-6xl md:text-8xl font-black italic mb-8 drop-shadow-2xl">FIND YOUR TRIBE</h2>
+              <p className="text-xl mb-8 leading-relaxed drop-shadow-lg">
                 Compatibility-first discovery. No swiping. No ghosts. Just good chemistry backed by real data.
               </p>
               <Link to={createPageUrl('Connect')}>
-                <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 text-lg">
+                <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 text-lg shadow-2xl">
                   START CONNECTING
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
@@ -178,25 +259,25 @@ export default function Home() {
               viewport={{ once: true }}
               className="space-y-6"
             >
-              <div className="bg-black/20 backdrop-blur-sm p-6 border-2 border-white/20">
+              <div className="bg-black/40 backdrop-blur-md p-6 border-2 border-white/30 shadow-2xl">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-12 h-12 bg-white/20 flex items-center justify-center">
                     <Zap className="w-6 h-6" />
                   </div>
                   <h3 className="text-2xl font-black uppercase">RIGHT NOW</h3>
                 </div>
-                <p className="text-white/80 text-sm uppercase tracking-wide">
+                <p className="text-white/90 text-sm uppercase tracking-wide">
                   30min–Tonight. Can host / Travel / Hotel. Real time, real intent.
                 </p>
               </div>
-              <div className="bg-black/20 backdrop-blur-sm p-6 border-2 border-white/20">
+              <div className="bg-black/40 backdrop-blur-md p-6 border-2 border-white/30 shadow-2xl">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-12 h-12 bg-white/20 flex items-center justify-center">
                     <Users className="w-6 h-6" />
                   </div>
                   <h3 className="text-2xl font-black uppercase">BROWSE</h3>
                 </div>
-                <p className="text-white/80 text-sm uppercase tracking-wide">
+                <p className="text-white/90 text-sm uppercase tracking-wide">
                   Explore profiles. Filter by vibes, tribes, boundaries. Your pace.
                 </p>
               </div>
@@ -234,18 +315,36 @@ export default function Home() {
                   transition={{ delay: idx * 0.1 }}
                 >
                   <Link to={createPageUrl(`BeaconDetail?id=${beacon.id}`)}>
-                    <div className="group bg-white/5 border border-white/10 p-6 hover:border-[#00D9FF] transition-all">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="px-2 py-1 bg-[#00D9FF] text-black text-xs font-black uppercase">
-                          {beacon.kind}
-                        </div>
-                        <MapPin className="w-4 h-4 text-white/40" />
+                    <div className="group relative overflow-hidden">
+                      <div className="aspect-[4/3] bg-white/5">
+                        {beacon.image_url ? (
+                          <img 
+                            src={beacon.image_url} 
+                            alt={beacon.title}
+                            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                          />
+                        ) : (
+                          <img 
+                            src="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80" 
+                            alt={beacon.title}
+                            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
                       </div>
-                      <h3 className="font-black text-xl mb-2 text-white">{beacon.title}</h3>
-                      <p className="text-sm text-white/60 mb-3 line-clamp-2">{beacon.description}</p>
-                      <div className="flex items-center gap-2 text-xs text-white/40">
-                        <Calendar className="w-3 h-3" />
-                        <span className="uppercase">{beacon.city}</span>
+                      <div className="absolute bottom-0 left-0 right-0 p-6">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="px-2 py-1 bg-[#00D9FF] text-black text-xs font-black uppercase">
+                            {beacon.kind}
+                          </div>
+                          <MapPin className="w-4 h-4 text-white" />
+                        </div>
+                        <h3 className="font-black text-xl mb-2 text-white drop-shadow-lg">{beacon.title}</h3>
+                        <p className="text-sm text-white/80 mb-3 line-clamp-2 drop-shadow-md">{beacon.description}</p>
+                        <div className="flex items-center gap-2 text-xs text-white/70">
+                          <Calendar className="w-3 h-3" />
+                          <span className="uppercase">{beacon.city}</span>
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -256,7 +355,7 @@ export default function Home() {
 
           <div className="text-center">
             <Link to={createPageUrl('Events')}>
-              <Button className="bg-[#00D9FF] hover:bg-white text-black font-black uppercase px-8 py-4 text-lg">
+              <Button className="bg-[#00D9FF] hover:bg-white text-black font-black uppercase px-8 py-4 text-lg shadow-2xl">
                 VIEW ALL EVENTS
               </Button>
             </Link>
@@ -265,8 +364,16 @@ export default function Home() {
       </section>
 
       {/* RADIO + CARE */}
-      <section className="py-32 px-6 bg-[#B026FF] text-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative py-32 px-6 overflow-hidden">
+        <div className="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=1920&q=80" 
+            alt="Radio"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#B026FF]/85 to-black/70" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -274,14 +381,14 @@ export default function Home() {
               viewport={{ once: true }}
             >
               <div className="flex items-center gap-3 mb-6">
-                <Radio className="w-12 h-12" />
-                <h2 className="text-5xl font-black italic">RADIO</h2>
+                <Radio className="w-12 h-12 drop-shadow-lg" />
+                <h2 className="text-5xl font-black italic drop-shadow-lg">RADIO</h2>
               </div>
-              <p className="text-xl mb-8 leading-relaxed text-white/90">
+              <p className="text-xl mb-8 leading-relaxed text-white drop-shadow-md">
                 24/7 stream. London OS soundtrack. No ads. Just frequency.
               </p>
               <Link to={createPageUrl('Radio')}>
-                <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4">
+                <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl">
                   LISTEN NOW
                 </Button>
               </Link>
@@ -294,14 +401,14 @@ export default function Home() {
               transition={{ delay: 0.2 }}
             >
               <div className="flex items-center gap-3 mb-6">
-                <Heart className="w-12 h-12" />
-                <h2 className="text-5xl font-black italic">CARE</h2>
+                <Heart className="w-12 h-12 drop-shadow-lg" />
+                <h2 className="text-5xl font-black italic drop-shadow-lg">CARE</h2>
               </div>
-              <p className="text-xl mb-8 leading-relaxed text-white/90">
+              <p className="text-xl mb-8 leading-relaxed text-white drop-shadow-md">
                 Aftercare checklists. Emergency contacts. Community resources. Because preparation isn't paranoia.
               </p>
               <div className="flex gap-3">
-                <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-[#B026FF] font-black uppercase">
+                <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-[#B026FF] font-black uppercase shadow-2xl backdrop-blur-sm">
                   LEARN MORE
                 </Button>
               </div>
