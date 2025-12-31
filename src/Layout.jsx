@@ -10,6 +10,7 @@ import GlobalAssistant from '@/components/ai/GlobalAssistant';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import GlobalSearch from '@/components/search/GlobalSearch';
 import OfflineIndicator from '@/components/ui/OfflineIndicator';
+import EventReminders from '@/components/events/EventReminders';
 
 const PRIMARY_NAV = [
   { name: 'Pulse', icon: Home, path: 'Home' },
@@ -257,6 +258,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Global Search */}
       {user && <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />}
+
+      {/* Event Reminders Background Service */}
+      {user && <EventReminders currentUser={user} />}
       </div>
       </Gatekeeper>
       );

@@ -11,6 +11,9 @@ import CommentsSection from '../components/beacon/CommentsSection';
 import BeaconActions from '../components/beacon/BeaconActions';
 import EventRSVP from '../components/events/EventRSVP';
 import RelatedEvents from '../components/events/RelatedEvents';
+import EventTicket from '../components/events/EventTicket';
+import EventWaitlist from '../components/events/EventWaitlist';
+import TicketScanner from '../components/events/TicketScanner';
 
 
 export default function BeaconDetail() {
@@ -18,6 +21,7 @@ export default function BeaconDetail() {
   const navigate = useNavigate();
   const beaconId = searchParams.get('id');
   const [currentUser, setCurrentUser] = useState(null);
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -34,6 +38,18 @@ export default function BeaconDetail() {
   const { data: beacons = [] } = useQuery({
     queryKey: ['beacons'],
     queryFn: () => base44.entities.Beacon.list(),
+  });
+
+  const { data: myRsvp } = useQuery({
+    queryKey: ['my-rsvp', beaconId, currentUser?.email],
+    queryFn: async () => {
+      const rsvps = await base44.entities.EventRSVP.filter({
+        user_email: currentUser.email,
+        event_id: beaconId
+      });
+      return rsvps.find(r => r.status === 'going') || null;
+    },
+    enabled: !!currentUser && !!beaconId
   });
 
   const beacon = beacons.find(b => b.id === beaconId);
@@ -169,10 +185,30 @@ export default function BeaconDetail() {
           <div className="space-y-4">
             {/* Event RSVP */}
             {beacon.kind === 'event' && currentUser && (
-              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-                <h3 className="text-sm uppercase tracking-wider text-white/40 mb-4">Event RSVP</h3>
-                <EventRSVP event={beacon} currentUser={currentUser} />
-              </div>
+              <>
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <h3 className="text-sm uppercase tracking-wider text-white/40 mb-4">Event RSVP</h3>
+                  <EventRSVP event={beacon} currentUser={currentUser} />
+                </div>
+
+                {/* Waitlist */}
+                <EventWaitlist event={beacon} currentUser={currentUser} />
+
+                {/* Ticket */}
+                {myRsvp && (
+                  <EventTicket rsvp={myRsvp} event={beacon} />
+                )}
+
+                {/* Scanner for organizer */}
+                {beacon.created_by === currentUser.email && (
+                  <Button
+                    onClick={() => setShowScanner(true)}
+                    className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black"
+                  >
+                    SCAN TICKETS
+                  </Button>
+                )}
+              </>
             )}
 
             {beacon.xp_scan && (
@@ -230,6 +266,14 @@ export default function BeaconDetail() {
         {/* Comments Section */}
         <CommentsSection beaconId={beaconId} />
         </div>
+
+        {/* Ticket Scanner Modal */}
+        {showScanner && (
+          <TicketScanner 
+            event={beacon} 
+            onClose={() => setShowScanner(false)} 
+          />
+        )}
         </div>
         );
         }
