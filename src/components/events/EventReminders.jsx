@@ -26,9 +26,12 @@ export default function EventReminders({ currentUser }) {
 
   const sendReminderMutation = useMutation({
     mutationFn: async ({ rsvp, event, type }) => {
-      await base44.entities.EventRSVP.update(rsvp.id, {
-        reminder_sent: true
-      });
+      // Update specific reminder flag to prevent duplicates
+      const updateData = type === '24h' 
+        ? { reminder_24h_sent: true } 
+        : { reminder_1h_sent: true };
+      
+      await base44.entities.EventRSVP.update(rsvp.id, updateData);
 
       await base44.entities.Notification.create({
         user_email: currentUser.email,
@@ -68,13 +71,13 @@ export default function EventReminders({ currentUser }) {
         const hoursUntil = differenceInHours(eventDate, now);
         const minutesUntil = differenceInMinutes(eventDate, now);
 
-        // 24 hour reminder
-        if (hoursUntil === 24 && minutesUntil <= 1440) {
+        // 24 hour reminder (between 23-25 hours)
+        if (hoursUntil >= 23 && hoursUntil <= 25 && !rsvp.reminder_24h_sent) {
           sendReminderMutation.mutate({ rsvp, event, type: '24h' });
         }
 
-        // 1 hour reminder
-        if (hoursUntil === 1 && minutesUntil <= 60) {
+        // 1 hour reminder (between 0.5-1.5 hours)
+        if (minutesUntil >= 30 && minutesUntil <= 90 && !rsvp.reminder_1h_sent) {
           sendReminderMutation.mutate({ rsvp, event, type: '1h' });
         }
       });

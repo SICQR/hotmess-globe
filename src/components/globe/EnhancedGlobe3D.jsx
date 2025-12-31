@@ -595,7 +595,37 @@ export default function EnhancedGlobe3D({
       renderer.domElement.removeEventListener('click', onClick);
       window.removeEventListener('mouseup', onMouseUp);
       renderer.domElement.removeEventListener('wheel', onWheel);
-      mount.removeChild(renderer.domElement);
+      
+      // Dispose all geometries
+      beaconGeo.dispose();
+      sphereGeo.dispose();
+      atmosphereGeo.dispose();
+      
+      // Dispose all materials
+      sphereMat.dispose();
+      atmosphereMat.dispose();
+      gridMat.dispose();
+      
+      // Dispose textures
+      earthTexture.dispose();
+      bumpTexture.dispose();
+      
+      // Dispose beacon meshes
+      beaconMeshes.forEach(mesh => {
+        mesh.geometry.dispose();
+        mesh.material.dispose();
+      });
+      
+      // Dispose arcs
+      arcs.forEach(arc => {
+        arc.geometry.dispose();
+        if (arc.material.dispose) arc.material.dispose();
+      });
+      
+      // Dispose renderer and remove canvas
+      if (mount.contains(renderer.domElement)) {
+        mount.removeChild(renderer.domElement);
+      }
       renderer.dispose();
     };
   }, [beacons, cities, activeLayers, highlightedIds, userActivities]);

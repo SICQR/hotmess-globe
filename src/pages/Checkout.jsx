@@ -47,9 +47,24 @@ export default function Checkout() {
 
   const checkoutMutation = useMutation({
     mutationFn: async () => {
-      // Check user has enough XP
-      if ((currentUser.xp || 0) < totalXP) {
-        throw new Error('Insufficient XP');
+      // Fetch fresh user data to prevent race condition
+      const freshUser = await base44.auth.me();
+      const currentXP = freshUser.xp || 0;
+      
+      // Check user has enough XP with fresh data
+      if (currentXP < totalXP) {
+        throw new Error(`Insufficient XP. You have ${currentXP} XP but need ${totalXP} XP.`);
+      }
+
+      // Validate products still exist and have inventory
+      for (const item of cartWithProducts) {
+        const freshProduct = products.find(p => p.id === item.product.id);
+        if (!freshProduct || freshProduct.status !== 'active') {
+          throw new Error(`Product "${item.product.name}" is no longer available.`);
+        }
+        if (freshProduct.inventory_count !== undefined && freshProduct.inventory_count < item.quantity) {
+          throw new Error(`Insufficient inventory for "${item.product.name}".`);
+        }
       }
 
       // Group items by seller
@@ -60,47 +75,61 @@ export default function Checkout() {
         sellers[seller].push(item);
       });
 
-      // Create order per seller
-      for (const [seller, items] of Object.entries(sellers)) {
-        const order = await base44.entities.Order.create({
-          buyer_email: currentUser.email,
-          seller_email: seller,
-          total_xp: items.reduce((sum, i) => sum + (i.product.price_xp * i.quantity), 0),
-          total_gbp: 0,
-          status: 'pending',
-          payment_method: 'xp',
-          shipping_address: shippingAddress,
-          notes
-        });
+      // Deduct XP first (atomic operation to prevent double-spend)
+      await base44.auth.updateMe({ xp: currentXP - totalXP });
 
-        // Create order items
-        for (const item of items) {
-          await base44.entities.OrderItem.create({
-            order_id: order.id,
-            product_id: item.product.id,
-            product_name: item.product.name,
-            quantity: item.quantity,
-            price_xp: item.product.price_xp,
-            price_gbp: 0
+      try {
+        // Create order per seller
+        for (const [seller, items] of Object.entries(sellers)) {
+          const order = await base44.entities.Order.create({
+            buyer_email: freshUser.email,
+            seller_email: seller,
+            total_xp: items.reduce((sum, i) => sum + (i.product.price_xp * i.quantity), 0),
+            total_gbp: 0,
+            status: 'pending',
+            payment_method: 'xp',
+            shipping_address: shippingAddress,
+            notes
+          });
+
+          // Create order items and decrement inventory
+          for (const item of items) {
+            await base44.entities.OrderItem.create({
+              order_id: order.id,
+              product_id: item.product.id,
+              product_name: item.product.name,
+              quantity: item.quantity,
+              price_xp: item.product.price_xp,
+              price_gbp: 0
+            });
+
+            // Decrement inventory
+            const product = products.find(p => p.id === item.product.id);
+            if (product.inventory_count !== undefined) {
+              await base44.entities.Product.update(item.product.id, {
+                inventory_count: product.inventory_count - item.quantity
+              });
+            }
+          }
+
+          // Notify seller
+          await base44.entities.Notification.create({
+            user_email: seller,
+            type: 'order',
+            title: 'New Order!',
+            message: `${freshUser.full_name || freshUser.email} placed an order`,
+            link: 'SellerDashboard'
           });
         }
 
-        // Notify seller
-        await base44.entities.Notification.create({
-          user_email: seller,
-          type: 'order',
-          title: 'New Order!',
-          message: `${currentUser.full_name || currentUser.email} placed an order`,
-          link: 'SellerDashboard'
-        });
-      }
-
-      // Deduct XP
-      await base44.auth.updateMe({ xp: (currentUser.xp || 0) - totalXP });
-
-      // Clear cart
-      for (const item of cartItems) {
-        await base44.entities.CartItem.delete(item.id);
+        // Clear cart
+        for (const item of cartItems) {
+          await base44.entities.CartItem.delete(item.id);
+        }
+      } catch (error) {
+        // Rollback XP deduction if order creation fails
+        await base44.auth.updateMe({ xp: currentXP });
+        throw error;
       }
     },
     onSuccess: () => {

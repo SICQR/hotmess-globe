@@ -12,6 +12,7 @@ import GlobalSearch from '@/components/search/GlobalSearch';
 import OfflineIndicator from '@/components/ui/OfflineIndicator';
 import EventReminders from '@/components/events/EventReminders';
 import { TaxonomyProvider } from '@/components/taxonomy/provider';
+import ErrorBoundary from '@/components/error/ErrorBoundary';
 
 const PRIMARY_NAV = [
   { name: 'Pulse', icon: Home, path: 'Home' },
@@ -61,10 +62,11 @@ export default function Layout({ children, currentPageName }) {
   const isGlobePage = currentPageName === 'Globe';
 
   return (
-    <TaxonomyProvider>
-      <Gatekeeper>
-        <OfflineIndicator />
-      <div className="min-h-screen bg-black text-white">
+    <ErrorBoundary>
+      <TaxonomyProvider>
+        <Gatekeeper>
+          <OfflineIndicator />
+        <div className="min-h-screen bg-black text-white">
       {!isGlobePage && (
         <>
           {/* Mobile Header */}
@@ -265,7 +267,8 @@ export default function Layout({ children, currentPageName }) {
       {/* Event Reminders Background Service */}
       {user && <EventReminders currentUser={user} />}
       </div>
-      </Gatekeeper>
-    </TaxonomyProvider>
+        </Gatekeeper>
+      </TaxonomyProvider>
+    </ErrorBoundary>
   );
 }

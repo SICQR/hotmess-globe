@@ -39,6 +39,8 @@ export default function AdminDashboard() {
   }
 
   // Admin access check
+  // NOTE: This is client-side check only. Backend MUST validate admin role on all admin operations.
+  // TODO: Implement backend middleware to verify user.role === 'admin' for all admin API endpoints.
   if (!currentUser || currentUser.role !== 'admin') {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
@@ -48,6 +50,7 @@ export default function AdminDashboard() {
           </div>
           <h1 className="text-3xl font-black uppercase tracking-tighter mb-2">ACCESS DENIED</h1>
           <p className="text-white/40 uppercase text-sm font-mono">ADMIN PRIVILEGES REQUIRED</p>
+          <p className="text-xs text-red-500/60 mt-4 font-mono">⚠️ Unauthorized access attempts are logged</p>
         </div>
       </div>
     );

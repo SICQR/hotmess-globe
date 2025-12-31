@@ -69,7 +69,7 @@ export default function ChatThread({ thread, currentUser, onBack }) {
         unread_count: newUnreadCount,
       });
 
-      // Send push notification to other participants
+      // Send push notification to other participants only
       thread.participant_emails.forEach(async (email) => {
         if (email !== currentUser.email) {
           try {
@@ -86,14 +86,6 @@ export default function ChatThread({ thread, currentUser, onBack }) {
           }
         }
       });
-
-      // Browser push notification
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(`New message from ${currentUser.full_name}`, {
-          body: data.content.substring(0, 100),
-          icon: currentUser.avatar_url || '/icon.png'
-        });
-      }
 
       return message;
     },
