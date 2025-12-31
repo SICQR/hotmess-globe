@@ -519,21 +519,39 @@ export function FiltersDrawer({
           </div>
 
           {/* Footer links */}
-          <div className="mt-8 rounded-2xl border bg-zinc-50 p-4">
-            <div className="text-sm font-semibold text-zinc-900">Care-first shortcuts</div>
-            <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-8 rounded-2xl border bg-black p-4">
+            <div className="text-sm font-bold text-white uppercase tracking-wider mb-3">
+              SHOP THE DROP
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => go("Marketplace")}
+                className="bg-white text-black px-3 py-2 text-xs font-black uppercase hover:bg-zinc-200 transition"
+              >
+                SHOP RAW
+              </button>
+              <button
+                type="button"
+                onClick={() => go("Radio")}
+                className="bg-[#FF1493] text-white px-3 py-2 text-xs font-black uppercase hover:opacity-90 transition"
+              >
+                RADIO
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
               {footerLinks.map((l) => (
                 <button
                   key={l.path}
                   type="button"
                   onClick={() => go(l.path)}
-                  className="rounded-full border bg-white px-3 py-1 text-sm hover:bg-zinc-100"
+                  className="border border-white/40 text-white px-3 py-1 text-xs font-bold uppercase hover:bg-white/10 transition"
                 >
                   {l.label}
                 </button>
               ))}
             </div>
-            <div className="mt-2 text-xs text-zinc-600">
+            <div className="mt-3 text-xs text-white/60">
               Filters find bodies. Compatibility finds good nights.
             </div>
           </div>

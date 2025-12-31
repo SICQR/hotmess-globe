@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ProductCard from '../components/marketplace/ProductCard';
 import AIRecommendations from '../components/marketplace/AIRecommendations';
+import ShopCollections from '../components/marketplace/ShopCollections';
 import EmptyState from '../components/ui/EmptyState';
 import { GridSkeleton } from '../components/ui/LoadingSkeleton';
 import CartDrawer from '../components/marketplace/CartDrawer';
@@ -19,6 +20,7 @@ import { toast } from 'sonner';
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedCollection, setSelectedCollection] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [currentUser, setCurrentUser] = useState(null);
@@ -112,6 +114,12 @@ export default function Marketplace() {
     ? allProducts 
     : allProducts.filter(p => p.product_type === activeTab);
 
+  if (selectedCollection) {
+    filteredProducts = filteredProducts.filter(p => 
+      p.tags?.some(tag => tag.toLowerCase() === selectedCollection.toLowerCase())
+    );
+  }
+
   if (searchQuery) {
     filteredProducts = filteredProducts.filter(p => 
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -152,10 +160,12 @@ export default function Marketplace() {
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">
-                Marketplace
+              <h1 className="text-3xl md:text-4xl font-black italic uppercase tracking-tight mb-2">
+                SHOP THE DROP
               </h1>
-              <p className="text-white/60">Buy and sell exclusive items</p>
+              <p className="text-white/60 uppercase text-sm tracking-wider">
+                RAW / HUNG / HIGH / SUPER + HNH MESS. No filler. No shame.
+              </p>
             </div>
             <div className="flex gap-2">
               <Button 
@@ -175,6 +185,26 @@ export default function Marketplace() {
               </Button>
             </div>
           </div>
+
+          {/* Collections */}
+          <ShopCollections 
+            onSelectCollection={(id) => {
+              setSelectedCollection(id === selectedCollection ? null : id);
+              setPage(1);
+            }}
+          />
+
+          {selectedCollection && (
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-sm text-white/60">Filtered by:</span>
+              <button
+                onClick={() => setSelectedCollection(null)}
+                className="px-3 py-1 bg-[#FF1493] text-black text-xs font-black uppercase hover:opacity-90"
+              >
+                {selectedCollection} ✕
+              </button>
+            </div>
+          )}
 
           {/* Search and Filters */}
           <div className="flex flex-col md:flex-row gap-4 mb-6">
