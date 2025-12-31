@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Image, Video, X, Clock, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { checkRateLimit } from '../utils/sanitize';
 
 export default function PostCreator({ user, onPostCreated, onCancel }) {
   const [content, setContent] = useState('');
@@ -22,8 +23,17 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
+    // Strict validation
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Use JPEG, PNG, WebP, or GIF.');
+      return;
+    }
+    
+    if (file.size > maxSize) {
+      toast.error('Image too large (max 10MB)');
       return;
     }
 
@@ -44,12 +54,16 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('video/')) {
-      toast.error('Please upload a video file');
+    // Strict validation
+    const allowedTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
+    const maxSize = 100 * 1024 * 1024; // 100MB
+    
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Use MP4, MOV, or WebM.');
       return;
     }
-
-    if (file.size > 100 * 1024 * 1024) {
+    
+    if (file.size > maxSize) {
       toast.error('Video too large (max 100MB)');
       return;
     }
@@ -83,6 +97,13 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
   const handlePost = async () => {
     if (!content.trim() && !mediaUrl) {
       toast.error('Please add content or media');
+      return;
+    }
+
+    // Rate limit: max 5 posts per minute
+    const rateCheck = checkRateLimit(`post-${user.email}`, 5, 60000);
+    if (!rateCheck.allowed) {
+      toast.error('Too many posts. Please wait before posting again.');
       return;
     }
 
