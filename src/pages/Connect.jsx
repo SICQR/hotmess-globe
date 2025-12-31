@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import DiscoveryCard from '../components/discovery/DiscoveryCard';
 import DiscoveryFilters from '../components/discovery/DiscoveryFilters';
 import RightNowModal from '../components/discovery/RightNowModal';
-import ConsentGate from '../components/auth/ConsentGate';
 
 export default function Connect() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -16,8 +15,6 @@ export default function Connect() {
   const [showFilters, setShowFilters] = useState(false);
   const [showRightNow, setShowRightNow] = useState(false);
   const [filters, setFilters] = useState({});
-  const [showConsent, setShowConsent] = useState(false);
-  const [consentAccepted, setConsentAccepted] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -53,15 +50,6 @@ export default function Connect() {
   });
 
   if (!currentUser) return null;
-
-  // Check consent on mount
-  React.useEffect(() => {
-    if (currentUser && !currentUser.consent_agreed) {
-      setShowConsent(true);
-    } else {
-      setConsentAccepted(true);
-    }
-  }, [currentUser]);
 
   // Filter users
   let filteredUsers = allUsers.filter(u => u.email !== currentUser.email);
@@ -200,16 +188,6 @@ export default function Connect() {
           onClose={() => setShowFilters(false)}
           filters={filters}
           onFiltersChange={setFilters}
-        />
-      )}
-
-      {/* Consent Gate */}
-      {showConsent && (
-        <ConsentGate
-          onConsent={() => {
-            setShowConsent(false);
-            setConsentAccepted(true);
-          }}
         />
       )}
     </div>
