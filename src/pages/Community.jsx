@@ -15,7 +15,7 @@ import PersonalizedFeed from '../components/community/PersonalizedFeed';
 export default function Community() {
   const [user, setUser] = useState(null);
   const [showCreatePost, setShowCreatePost] = useState(false);
-  const [newPost, setNewPost] = useState({ content: '', category: 'general' });
+  const [newPost, setNewPost] = useState({ content: '', category: 'general', expires_in_24h: false });
   const [filteredPosts, setFilteredPosts] = useState([]);
   const queryClient = useQueryClient();
 
@@ -71,6 +71,10 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
         }
       });
 
+      const expiresAt = postData.expires_in_24h 
+        ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        : null;
+
       const post = await base44.entities.CommunityPost.create({
         ...postData,
         user_email: user.email,
@@ -78,13 +82,14 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
         moderation_status: moderation.approved ? 'approved' : 'flagged',
         moderation_reason: moderation.reason || null,
         ai_sentiment: moderation.sentiment || 'neutral',
+        expires_at: expiresAt,
       });
 
       return { post, moderation };
     },
     onSuccess: ({ moderation }) => {
       queryClient.invalidateQueries(['community-posts']);
-      setNewPost({ content: '', category: 'general' });
+      setNewPost({ content: '', category: 'general', expires_in_24h: false });
       setShowCreatePost(false);
       if (moderation.approved) {
         toast.success('Post published!');
@@ -205,6 +210,17 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
               rows={4}
               className="mb-4"
             />
+            <div className="flex items-center gap-3 mb-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={newPost.expires_in_24h}
+                  onChange={(e) => setNewPost({ ...newPost, expires_in_24h: e.target.checked })}
+                  className="w-4 h-4 accent-[#FF1493]"
+                />
+                <span className="text-xs text-white/60 uppercase">24hr post (auto-delete)</span>
+              </label>
+            </div>
             <div className="flex items-center justify-between">
               <Select
                 value={newPost.category}

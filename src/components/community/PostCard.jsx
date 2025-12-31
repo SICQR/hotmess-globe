@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Heart, MessageCircle, Share2, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import ExpiryBadge from './ExpiryBadge';
 
 const CATEGORY_COLORS = {
   general: '#FF1493',
@@ -16,8 +17,9 @@ const CATEGORY_COLORS = {
 export default function PostCard({ post, onLike, onComment, onShare, userHasLiked, index }) {
   const isFlagged = post.moderation_status === 'flagged';
   const isRemoved = post.moderation_status === 'removed';
+  const isExpired = post.expires_at && new Date(post.expires_at) < new Date();
 
-  if (isRemoved) return null;
+  if (isRemoved || isExpired) return null;
 
   return (
     <motion.div
@@ -43,7 +45,7 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-bold">{post.user_name}</span>
               {post.category && post.category !== 'general' && (
                 <Badge
@@ -57,6 +59,7 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
                   {post.category}
                 </Badge>
               )}
+              {post.expires_at && <ExpiryBadge expiresAt={post.expires_at} />}
             </div>
             <span className="text-xs text-white/40">
               {format(new Date(post.created_date), 'MMM d, h:mm a')}
