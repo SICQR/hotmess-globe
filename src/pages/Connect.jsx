@@ -77,6 +77,11 @@ export default function Connect() {
     queryFn: () => base44.entities.RightNowStatus.filter({ active: true })
   });
 
+  const currentUserTags = useMemo(() => {
+    if (!currentUser) return [];
+    return userTags.filter(t => t.user_email === currentUser.email);
+  }, [currentUser, userTags]);
+
   if (!currentUser || !cfg) return null;
 
   // Build profile objects for filtering
@@ -114,8 +119,6 @@ export default function Connect() {
   const filteredUsers = useMemo(() => {
     return applyLocalFilters(laneFiltered, filters, { taxonomyIndex: idx });
   }, [laneFiltered, filters, idx]);
-
-  const currentUserTags = userTags.filter(t => t.user_email === currentUser.email);
 
   // Handle filter apply
   const handleFiltersApply = (values) => {
