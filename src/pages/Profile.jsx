@@ -417,6 +417,18 @@ export default function Profile() {
           </motion.div>
         )}
 
+        {/* Premium Content */}
+        {!isOwnProfile && profileUser.has_premium_content && currentUser && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            className="mb-6"
+          >
+            <PremiumContentUnlock profileUser={profileUser} currentUser={currentUser} />
+          </motion.div>
+        )}
+
         {/* Portfolio / Creations */}
         {profileUser.portfolio && profileUser.portfolio.length > 0 && (
           <motion.div
