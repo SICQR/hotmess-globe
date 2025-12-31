@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { Shield, Users, Flag, Calendar, TrendingUp, Lock } from 'lucide-react';
+import { Shield, Users, Flag, Calendar, TrendingUp, Lock, CheckCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UserManagement from '../components/admin/UserManagement';
 import ContentModeration from '../components/admin/ContentModeration';
 import EventManagement from '../components/admin/EventManagement';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
+import CurationQueue from '../components/admin/CurationQueue';
 
 export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -73,13 +74,20 @@ export default function AdminDashboard() {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="analytics" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-black border-2 border-white mb-8 h-auto">
+          <TabsList className="grid w-full grid-cols-5 bg-black border-2 border-white mb-8 h-auto">
             <TabsTrigger 
               value="analytics" 
               className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black font-black uppercase text-xs py-3"
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               Analytics
+            </TabsTrigger>
+            <TabsTrigger 
+              value="curation" 
+              className="data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black font-black uppercase text-xs py-3"
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Curation
             </TabsTrigger>
             <TabsTrigger 
               value="users" 
@@ -106,6 +114,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="analytics">
             <AnalyticsDashboard />
+          </TabsContent>
+
+          <TabsContent value="curation">
+            <CurationQueue />
           </TabsContent>
 
           <TabsContent value="users">
