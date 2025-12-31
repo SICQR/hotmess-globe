@@ -14,6 +14,7 @@ import HandshakeButton from '../components/social/HandshakeButton';
 import QuickActions from '../components/profile/QuickActions';
 import MutualConnections from '../components/profile/MutualConnections';
 import ProfileStats from '../components/profile/ProfileStats';
+import PremiumContentUnlock from '../components/profile/PremiumContentUnlock';
 import ReportButton from '../components/moderation/ReportButton';
 import BlockButton from '../components/moderation/BlockButton';
 
