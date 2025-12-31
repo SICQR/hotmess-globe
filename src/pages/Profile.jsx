@@ -282,49 +282,49 @@ export default function Profile() {
                       return (
                         <>
                           {sanitizedLinks.instagram && (
-                            <a
-                              href={sanitizeURL(sanitizedLinks.instagram)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#833AB4] to-[#E1306C] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
-                            >
-                              <Instagram className="w-4 h-4" />
-                              Instagram
-                            </a>
-                          )}
-                          {sanitizedLinks.twitter && (
-                            <a
-                              href={sanitizeURL(sanitizedLinks.twitter)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 px-3 py-2 bg-black rounded-lg text-white text-sm border border-white/20 hover:bg-white/10 transition-colors"
-                            >
-                              <Twitter className="w-4 h-4" />
-                              Twitter
-                            </a>
-                          )}
-                          {sanitizedLinks.spotify && (
-                            <a
-                              href={sanitizeURL(sanitizedLinks.spotify)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 px-3 py-2 bg-[#1DB954] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
-                            >
-                              <Music className="w-4 h-4" />
-                              Spotify
-                            </a>
-                          )}
-                          {sanitizedLinks.soundcloud && (
-                            <a
-                              href={sanitizeURL(sanitizedLinks.soundcloud)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 px-3 py-2 bg-[#FF5500] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
-                            >
-                              <Music className="w-4 h-4" />
-                              SoundCloud
-                            </a>
-                          )}
+                                            <a
+                                              href={sanitizeURL(sanitizedLinks.instagram, { allowHttp: false })}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#833AB4] to-[#E1306C] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
+                                            >
+                                              <Instagram className="w-4 h-4" />
+                                              Instagram
+                                            </a>
+                                          )}
+                                          {sanitizedLinks.twitter && (
+                                            <a
+                                              href={sanitizeURL(sanitizedLinks.twitter, { allowHttp: false })}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="flex items-center gap-2 px-3 py-2 bg-black rounded-lg text-white text-sm border border-white/20 hover:bg-white/10 transition-colors"
+                                            >
+                                              <Twitter className="w-4 h-4" />
+                                              Twitter
+                                            </a>
+                                          )}
+                                          {sanitizedLinks.spotify && (
+                                            <a
+                                              href={sanitizeURL(sanitizedLinks.spotify, { allowHttp: false })}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="flex items-center gap-2 px-3 py-2 bg-[#1DB954] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
+                                            >
+                                              <Music className="w-4 h-4" />
+                                              Spotify
+                                            </a>
+                                          )}
+                                          {sanitizedLinks.soundcloud && (
+                                            <a
+                                              href={sanitizeURL(sanitizedLinks.soundcloud, { allowHttp: false })}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="flex items-center gap-2 px-3 py-2 bg-[#FF5500] rounded-lg text-white text-sm hover:opacity-80 transition-opacity"
+                                            >
+                                              <Music className="w-4 h-4" />
+                                              SoundCloud
+                                            </a>
+                                          )}
                         </>
                       );
                     })()}
@@ -433,18 +433,18 @@ export default function Profile() {
           >
             <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Portfolio & Creations</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {profileUser.portfolio.filter(item => sanitizeURL(item.url)).map((item, idx) => (
+              {profileUser.portfolio.filter(item => sanitizeURL(item.url, { allowHttp: false })).map((item, idx) => (
                 <a
                   key={idx}
-                  href={sanitizeURL(item.url)}
+                  href={sanitizeURL(item.url, { allowHttp: false })}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group bg-black border-2 border-white hover:border-[#FF1493] transition-all overflow-hidden"
-                >
-                  {item.image_url && sanitizeURL(item.image_url) && (
+                  >
+                  {item.image_url && sanitizeURL(item.image_url, { allowHttp: true }) && (
                     <div className="h-40 overflow-hidden">
                       <img 
-                        src={sanitizeURL(item.image_url)} 
+                        src={sanitizeURL(item.image_url, { allowHttp: true })} 
                         alt={sanitizeText(item.title)}
                         className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
                       />

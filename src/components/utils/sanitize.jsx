@@ -16,17 +16,49 @@ export function sanitizeHTML(dirty) {
     .replace(/<iframe/gi, '&lt;iframe');
 }
 
-// Sanitize URL - only allow http/https protocols
-export function sanitizeURL(url) {
+// Sanitize URL - only allow https:// for external links (security hardened)
+export function sanitizeURL(url, options = {}) {
+  const { allowHttp = false, allowRelative = false } = options;
+  
   if (!url || typeof url !== 'string') return '';
+  
+  // Remove any whitespace and potentially dangerous characters
+  url = url.trim();
+  
+  // Block javascript:, data:, vbscript:, file: protocols
+  const dangerousProtocols = /^(javascript|data|vbscript|file):/i;
+  if (dangerousProtocols.test(url)) {
+    return '';
+  }
+  
+  // Handle relative URLs if allowed
+  if (allowRelative && (url.startsWith('/') || url.startsWith('./'))) {
+    return url;
+  }
   
   try {
     const parsed = new URL(url);
-    if (!['http:', 'https:'].includes(parsed.protocol)) {
+    
+    // Only allow HTTPS by default (HTTP only if explicitly allowed)
+    const allowedProtocols = allowHttp ? ['http:', 'https:'] : ['https:'];
+    
+    if (!allowedProtocols.includes(parsed.protocol)) {
       return '';
     }
+    
+    // Block localhost and internal IPs for external portfolio links
+    const hostname = parsed.hostname.toLowerCase();
+    if (hostname === 'localhost' || 
+        hostname === '127.0.0.1' || 
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('172.16.')) {
+      return '';
+    }
+    
     return url;
   } catch {
+    // Invalid URL
     return '';
   }
 }
