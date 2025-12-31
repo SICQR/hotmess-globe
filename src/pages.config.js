@@ -1,3 +1,4 @@
+import AdminDashboard from './pages/AdminDashboard';
 import BeaconDetail from './pages/BeaconDetail';
 import Beacons from './pages/Beacons';
 import Bookmarks from './pages/Bookmarks';
@@ -24,11 +25,12 @@ import Radio from './pages/Radio';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
-import AdminDashboard from './pages/AdminDashboard';
+import ProfileSetup from './pages/ProfileSetup';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AdminDashboard": AdminDashboard,
     "BeaconDetail": BeaconDetail,
     "Beacons": Beacons,
     "Bookmarks": Bookmarks,
@@ -55,7 +57,7 @@ export const PAGES = {
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
-    "AdminDashboard": AdminDashboard,
+    "ProfileSetup": ProfileSetup,
 }
 
 export const pagesConfig = {

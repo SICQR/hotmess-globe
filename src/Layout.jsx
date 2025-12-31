@@ -36,6 +36,11 @@ export default function Layout({ children, currentPageName }) {
       try {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
+        
+        // Check if profile setup is incomplete
+        if (!currentUser.full_name || !currentUser.avatar_url) {
+          window.location.href = createPageUrl('ProfileSetup');
+        }
       } catch (error) {
         console.error('Failed to fetch user:', error);
       }
