@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Zap, ShoppingCart, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import ErrorBoundary from '../components/error/ErrorBoundary';
 
 export default function Checkout() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -181,7 +182,8 @@ export default function Checkout() {
 
   if (!currentUser || cartWithProducts.length === 0) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <ErrorBoundary>
+        <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <ShoppingCart className="w-16 h-16 text-white/20 mx-auto mb-4" />
           <p className="text-white/60 mb-4">Your cart is empty</p>
@@ -189,7 +191,8 @@ export default function Checkout() {
             Browse Products
           </Button>
         </div>
-      </div>
+        </div>
+      </ErrorBoundary>
     );
   }
 
@@ -197,7 +200,8 @@ export default function Checkout() {
   const hasEnoughXP = userXP >= totalXP;
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
+    <ErrorBoundary>
+      <div className="min-h-screen bg-black text-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <Button onClick={() => navigate(-1)} variant="ghost" className="mb-6">
@@ -289,6 +293,7 @@ export default function Checkout() {
           </div>
         </motion.div>
       </div>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

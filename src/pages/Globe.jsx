@@ -14,6 +14,7 @@ import { Settings, BarChart3, Menu, Home, Grid3x3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { debounce } from 'lodash';
+import ErrorBoundary from '../components/error/ErrorBoundary';
 
 export default function GlobePage() {
   const queryClient = useQueryClient();
@@ -328,10 +329,11 @@ export default function GlobePage() {
   }
 
   return (
-    <div className="relative w-full min-h-screen bg-black overflow-hidden">
-      {/* Globe - Full Screen */}
-      <div className="relative w-full h-screen">
-        <EnhancedGlobe3D
+    <ErrorBoundary>
+      <div className="relative w-full min-h-screen bg-black overflow-hidden">
+        {/* Globe - Full Screen */}
+        <div className="relative w-full h-screen">
+          <EnhancedGlobe3D
           beacons={filteredBeacons}
           cities={cities}
           activeLayers={debouncedLayers}
@@ -477,6 +479,7 @@ export default function GlobePage() {
           <NearbyGrid userLocation={userLocation} />
         </FloatingPanel>
       )}
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

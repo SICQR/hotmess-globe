@@ -19,6 +19,7 @@ import ReportButton from '../components/moderation/ReportButton';
 import BlockButton from '../components/moderation/BlockButton';
 import { sanitizeText, sanitizeURL, sanitizeSocialLinks } from '../components/utils/sanitize';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
+import ErrorBoundary from '../components/error/ErrorBoundary';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -154,16 +155,19 @@ export default function Profile() {
 
   if (!profileUser) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-white/60">User not found</p>
-      </div>
+      <ErrorBoundary>
+        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+          <p className="text-white/60">User not found</p>
+        </div>
+      </ErrorBoundary>
     );
   }
 
   const level = Math.floor((profileUser.xp || 0) / 1000) + 1;
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
+    <ErrorBoundary>
+      <div className="min-h-screen bg-black text-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Profile Header */}
         <motion.div
@@ -690,6 +694,7 @@ export default function Profile() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }
