@@ -4,19 +4,21 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '../utils';
-import { MapPin, Zap, Clock, ArrowLeft, Users, Calendar, ExternalLink } from 'lucide-react';
+import { MapPin, Zap, Clock, ArrowLeft, Users, Calendar, ExternalLink, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import CommentsSection from '../components/beacon/CommentsSection';
 import BeaconActions from '../components/beacon/BeaconActions';
 import EventRSVP from '../components/events/EventRSVP';
 import RelatedEvents from '../components/events/RelatedEvents';
+import EventChatbot from '../components/events/EventChatbot';
 
 export default function BeaconDetail() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const beaconId = searchParams.get('id');
   const [currentUser, setCurrentUser] = useState(null);
+  const [chatbotOpen, setChatbotOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -166,6 +168,26 @@ export default function BeaconDetail() {
 
           {/* Sidebar */}
           <div className="space-y-4">
+            {/* AI Event Assistant */}
+            {beacon.kind === 'event' && (
+              <div className="bg-gradient-to-br from-[#B026FF]/20 to-[#FF1493]/20 border-2 border-[#B026FF] rounded-xl p-6 mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Bot className="w-5 h-5 text-[#B026FF]" />
+                  <h3 className="text-sm uppercase tracking-wider text-white/60 font-black">AI Assistant</h3>
+                </div>
+                <p className="text-xs text-white/60 mb-4">
+                  Ask me anything about this event - schedule, location, tickets, and more!
+                </p>
+                <Button
+                  onClick={() => setChatbotOpen(true)}
+                  className="w-full bg-[#B026FF] hover:bg-[#B026FF]/90 text-white font-black border-2 border-white"
+                >
+                  <Bot className="w-4 h-4 mr-2" />
+                  Chat with Assistant
+                </Button>
+              </div>
+            )}
+
             {/* Event RSVP */}
             {beacon.kind === 'event' && currentUser && (
               <div className="bg-white/5 border border-white/10 rounded-xl p-6">
@@ -228,7 +250,16 @@ export default function BeaconDetail() {
 
         {/* Comments Section */}
         <CommentsSection beaconId={beaconId} />
-      </div>
-    </div>
-  );
-}
+        </div>
+
+        {/* Event Chatbot */}
+        {beacon.kind === 'event' && (
+        <EventChatbot
+          event={beacon}
+          isOpen={chatbotOpen}
+          onClose={() => setChatbotOpen(false)}
+        />
+        )}
+        </div>
+        );
+        }
