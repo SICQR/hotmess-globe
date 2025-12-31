@@ -17,6 +17,8 @@ export default function Connect() {
   const [lane, setLane] = useState('browse');
   const [showFilters, setShowFilters] = useState(false);
   const [showRightNow, setShowRightNow] = useState(false);
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
   const [filters, setFilters] = useState({});
 
   useEffect(() => {
@@ -87,6 +89,13 @@ export default function Connect() {
 
   const currentUserTags = userTags.filter(t => t.user_email === currentUser.email);
 
+  // Pagination
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const paginatedUsers = filteredUsers.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
@@ -151,7 +160,7 @@ export default function Connect() {
       {/* Grid */}
       <div className="max-w-7xl mx-auto p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredUsers.map((user, idx) => {
+          {paginatedUsers.map((user, idx) => {
             const userTagsData = userTags.filter(t => t.user_email === user.email);
             const userTribesData = userTribes.filter(t => t.user_email === user.email);
             return (
@@ -177,6 +186,31 @@ export default function Connect() {
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && filteredUsers.length > 0 && (
+          <div className="flex items-center justify-center gap-2 mt-8">
+            <Button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              variant="outline"
+              className="border-white/20"
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-white/60">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              variant="outline"
+              className="border-white/20"
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
@@ -194,6 +228,8 @@ export default function Connect() {
           onFiltersChange={setFilters}
         />
       )}
+
+      <TutorialTooltip page="connect" />
     </div>
   );
 }
