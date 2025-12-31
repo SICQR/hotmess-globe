@@ -447,35 +447,33 @@ export default function Profile() {
           >
             <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Portfolio & Creations</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {profileUser.portfolio.map((item, idx) => (
-                {sanitizeURL(item.url) && (
-                  <a
-                    key={idx}
-                    href={sanitizeURL(item.url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group bg-black border-2 border-white hover:border-[#FF1493] transition-all overflow-hidden"
-                  >
-                    {item.image_url && sanitizeURL(item.image_url) && (
-                      <div className="h-40 overflow-hidden">
-                        <img 
-                          src={sanitizeURL(item.image_url)} 
-                          alt={sanitizeText(item.title)}
-                          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
-                        />
-                      </div>
-                    )}
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-black text-sm">{sanitizeText(item.title)}</h4>
-                        <span className="text-[10px] uppercase text-white/40 font-bold">{sanitizeText(item.type)}</span>
-                      </div>
-                      {item.description && (
-                        <p className="text-xs text-white/60 line-clamp-2">{sanitizeText(item.description)}</p>
-                      )}
+              {profileUser.portfolio.filter(item => sanitizeURL(item.url)).map((item, idx) => (
+                <a
+                  key={idx}
+                  href={sanitizeURL(item.url)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group bg-black border-2 border-white hover:border-[#FF1493] transition-all overflow-hidden"
+                >
+                  {item.image_url && sanitizeURL(item.image_url) && (
+                    <div className="h-40 overflow-hidden">
+                      <img 
+                        src={sanitizeURL(item.image_url)} 
+                        alt={sanitizeText(item.title)}
+                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
+                      />
                     </div>
-                  </a>
-                )}
+                  )}
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-black text-sm">{sanitizeText(item.title)}</h4>
+                      <span className="text-[10px] uppercase text-white/40 font-bold">{sanitizeText(item.type)}</span>
+                    </div>
+                    {item.description && (
+                      <p className="text-xs text-white/60 line-clamp-2">{sanitizeText(item.description)}</p>
+                    )}
+                  </div>
+                </a>
               ))}
             </div>
           </motion.div>
