@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Upload, Image as ImageIcon, Video as VideoIcon, Trash2 } from 'lucide-react';
+import { X, Play, Upload, Image as ImageIcon, Video as VideoIcon, Trash2, Lock, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
-export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6 }) {
+export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6, allowPremium = false }) {
   const [uploading, setUploading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const [uploadType, setUploadType] = useState('regular'); // 'regular' or 'premium'
 
   const handleUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -26,6 +29,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6 }) {
       const newPhotos = results.map((result, idx) => ({
         url: result.file_url,
         is_primary: photos.length === 0 && idx === 0,
+        is_premium: uploadType === 'premium',
         order: photos.length + idx
       }));
 
@@ -52,8 +56,36 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6 }) {
     onPhotosChange(newPhotos);
   };
 
+  const togglePremium = (index) => {
+    const newPhotos = photos.map((photo, i) => 
+      i === index ? { ...photo, is_premium: !photo.is_premium } : photo
+    );
+    onPhotosChange(newPhotos);
+  };
+
   return (
     <div className="space-y-4">
+      {allowPremium && (
+        <div className="flex gap-2 mb-4">
+          <Button
+            type="button"
+            onClick={() => setUploadType('regular')}
+            variant={uploadType === 'regular' ? 'default' : 'outline'}
+            className={uploadType === 'regular' ? 'bg-[#00D9FF] text-black' : ''}
+          >
+            Regular Photos
+          </Button>
+          <Button
+            type="button"
+            onClick={() => setUploadType('premium')}
+            variant={uploadType === 'premium' ? 'default' : 'outline'}
+            className={uploadType === 'premium' ? 'bg-[#FF1493] text-black' : ''}
+          >
+            <Crown className="w-4 h-4 mr-2" />
+            Premium (XXX)
+          </Button>
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-3">
         {photos.map((photo, idx) => (
           <motion.div
@@ -68,32 +100,54 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6 }) {
               className="w-full h-full object-cover cursor-pointer"
               onClick={() => setSelectedIndex(idx)}
             />
-            {photo.is_primary && (
-              <div className="absolute top-2 left-2 px-2 py-1 bg-[#FF1493] text-black text-[10px] font-black uppercase">
-                PRIMARY
+            <div className="absolute top-2 left-2 flex flex-col gap-1">
+              {photo.is_primary && (
+                <div className="px-2 py-1 bg-[#FF1493] text-black text-[10px] font-black uppercase">
+                  PRIMARY
+                </div>
+              )}
+              {photo.is_premium && (
+                <div className="px-2 py-1 bg-[#FFD700] text-black text-[10px] font-black uppercase flex items-center gap-1">
+                  <Crown className="w-3 h-3" />
+                  XXX
+                </div>
+              )}
+            </div>
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSetPrimary(idx);
+                  }}
+                  className="bg-white text-black hover:bg-[#FF1493] text-xs"
+                >
+                  Primary
+                </Button>
+                {allowPremium && (
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      togglePremium(idx);
+                    }}
+                    className="bg-[#FFD700] text-black hover:bg-[#FFD700]/90 text-xs"
+                  >
+                    <Crown className="w-3 h-3" />
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(idx);
+                  }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
-            )}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <Button
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSetPrimary(idx);
-                }}
-                className="bg-white text-black hover:bg-[#FF1493]"
-              >
-                Set Primary
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(idx);
-                }}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
             </div>
           </motion.div>
         ))}
@@ -121,7 +175,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6 }) {
       </div>
 
       <p className="text-xs text-white/40 uppercase">
-        {photos.length}/{maxPhotos} photos • Click photo to view • First photo is shown in discovery
+        {photos.length}/{maxPhotos} photos • {allowPremium ? 'Premium (XXX) photos require unlock • ' : ''}First photo shown in discovery
       </p>
 
       {/* Lightbox */}
@@ -155,6 +209,116 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6 }) {
 
 export function VideoUploader({ videoUrl, onVideoChange }) {
   const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e, title, xp) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error('Video must be under 100MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      onVideosChange([...videos, { 
+        url: file_url, 
+        title: title || 'Untitled',
+        unlock_xp: xp 
+      }]);
+      toast.success('Premium video uploaded!');
+      setNewVideoTitle('');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast.error('Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = (index) => {
+    onVideosChange(videos.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="space-y-4">
+      {videos.map((video, idx) => (
+        <div key={idx} className="bg-white/5 border-2 border-[#FFD700]/40 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Crown className="w-4 h-4 text-[#FFD700]" />
+              <span className="text-sm font-bold text-white">{video.title}</span>
+              <span className="text-xs text-[#FFD700]">{video.unlock_xp} XP</span>
+            </div>
+            <Button
+              onClick={() => handleDelete(idx)}
+              variant="ghost"
+              size="sm"
+              className="text-red-400 hover:text-red-300"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+          <video src={video.url} controls className="w-full aspect-video bg-black" />
+        </div>
+      ))}
+
+      <div className="border-2 border-dashed border-[#FFD700]/40 p-4 space-y-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Crown className="w-5 h-5 text-[#FFD700]" />
+          <span className="text-sm font-bold text-white uppercase">Add Premium Video</span>
+        </div>
+        
+        <Input
+          placeholder="Video title"
+          value={newVideoTitle}
+          onChange={(e) => setNewVideoTitle(e.target.value)}
+          className="bg-white/5 border-white/20 text-white"
+        />
+        
+        <div>
+          <Label className="text-xs text-white/60 mb-2 block">Unlock cost (XP)</Label>
+          <Input
+            type="number"
+            value={newVideoXp}
+            onChange={(e) => setNewVideoXp(Number(e.target.value))}
+            min={100}
+            max={5000}
+            className="bg-white/5 border-white/20 text-white"
+          />
+        </div>
+
+        <label className="block">
+          <input
+            type="file"
+            accept="video/*"
+            onChange={(e) => handleUpload(e, newVideoTitle, newVideoXp)}
+            disabled={uploading || !newVideoTitle}
+            className="hidden"
+          />
+          <Button
+            type="button"
+            disabled={uploading || !newVideoTitle}
+            className="w-full bg-[#FFD700] text-black hover:bg-[#FFD700]/90 font-black"
+            onClick={() => document.querySelector('input[type="file"][accept="video/*"]').click()}
+          >
+            {uploading ? 'Uploading...' : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Premium Video
+              </>
+            )}
+          </Button>
+        </label>
+      </div>
+
+      <p className="text-xs text-white/40">
+        Premium videos are locked behind XP payment. Users must pay to unlock.
+      </p>
+    </div>
+  );
+}
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];

@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { MapPin, Zap } from 'lucide-react';
+import { MapPin, Zap, Crown } from 'lucide-react';
 import CompatibilityBadge, { calculateCompatibility } from './CompatibilityBadge';
 import ReportButton from '../moderation/ReportButton';
 
@@ -31,10 +31,20 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
                 user.full_name?.[0] || 'U'
               );
             })()}
-            {user.video_intro_url && (
-              <div className="absolute top-2 left-2 px-2 py-1 bg-black/80 border border-[#FF1493] flex items-center gap-1">
-                <div className="w-2 h-2 bg-[#FF1493] rounded-full animate-pulse" />
-                <span className="text-[9px] font-bold text-white uppercase">Video</span>
+            {(user.video_intro_url || user.has_premium_content) && (
+              <div className="absolute top-2 left-2 flex flex-col gap-1">
+                {user.video_intro_url && (
+                  <div className="px-2 py-1 bg-black/80 border border-[#FF1493] flex items-center gap-1">
+                    <div className="w-2 h-2 bg-[#FF1493] rounded-full animate-pulse" />
+                    <span className="text-[9px] font-bold text-white uppercase">Video</span>
+                  </div>
+                )}
+                {user.has_premium_content && (
+                  <div className="px-2 py-1 bg-[#FFD700]/90 text-black flex items-center gap-1">
+                    <Crown className="w-3 h-3" />
+                    <span className="text-[9px] font-bold uppercase">XXX</span>
+                  </div>
+                )}
               </div>
             )}
             {user.photos && user.photos.length > 1 && (

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Save, User, Music, Sparkles, Link as LinkIcon, Upload, Briefcase, Zap, Plus, X, Users as UsersIcon, Image as ImageIcon, Video as VideoIcon } from 'lucide-react';
+import { ArrowLeft, Save, User, Music, Sparkles, Link as LinkIcon, Upload, Briefcase, Zap, Plus, X, Users as UsersIcon, Image as ImageIcon, Video as VideoIcon, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { taxonomyConfig } from '../components/discovery/taxonomyConfig';
 import TagSelector from '../components/discovery/TagSelector';
-import { PhotoGallery, VideoUploader } from '../components/profile/MediaGallery';
+import { PhotoGallery, VideoUploader, PremiumVideoManager } from '../components/profile/MediaGallery';
 
 const VIBE_OPTIONS = ['techno', 'house', 'drag', 'indie', 'late_night', 'chill', 'wild', 'artsy'];
 const EVENT_VIBES = ['techno', 'house', 'drag', 'late_night', 'underground', 'warehouse', 'rooftop', 'intimate'];
@@ -53,6 +53,8 @@ export default function EditProfile() {
   const [aftercareMenu, setAftercareMenu] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [videoIntroUrl, setVideoIntroUrl] = useState('');
+  const [premiumVideos, setPremiumVideos] = useState([]);
+  const [premiumUnlockXp, setPremiumUnlockXp] = useState(1000);
   const [interests, setInterests] = useState([]);
   const [dealbrekersText, setDealbrekersText] = useState([]);
   const [newInterest, setNewInterest] = useState('');
@@ -106,6 +108,8 @@ export default function EditProfile() {
         });
         setPhotos(user.photos || []);
         setVideoIntroUrl(user.video_intro_url || '');
+        setPremiumVideos(user.premium_videos || []);
+        setPremiumUnlockXp(user.premium_unlock_xp || 1000);
         setInterests(user.interests || []);
         setDealbrekersText(user.dealbreakers_text || []);
       } catch (error) {
@@ -178,6 +182,9 @@ export default function EditProfile() {
       aftercare_menu: aftercareMenu,
       photos,
       video_intro_url: videoIntroUrl,
+      premium_videos: premiumVideos,
+      premium_unlock_xp: premiumUnlockXp,
+      has_premium_content: photos.some(p => p.is_premium) || premiumVideos.length > 0,
       interests,
       dealbreakers_text: dealbrekersText,
       ...tagVisibility
@@ -289,7 +296,19 @@ export default function EditProfile() {
                 <ImageIcon className="w-4 h-4" />
                 Photo Gallery
               </Label>
-              <PhotoGallery photos={photos} onPhotosChange={setPhotos} maxPhotos={6} />
+              <PhotoGallery photos={photos} onPhotosChange={setPhotos} maxPhotos={6} allowPremium={true} />
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <Label className="text-xs text-white/60 mb-2 block">Premium Content Unlock Price</Label>
+                <Input
+                  type="number"
+                  value={premiumUnlockXp}
+                  onChange={(e) => setPremiumUnlockXp(Number(e.target.value))}
+                  min={100}
+                  max={10000}
+                  className="bg-white/5 border-white/20 text-white w-32"
+                />
+                <p className="text-xs text-white/40 mt-2">XP cost for others to unlock your premium photos</p>
+              </div>
             </div>
 
             {/* Video Intro */}
@@ -298,8 +317,18 @@ export default function EditProfile() {
                 <VideoIcon className="w-4 h-4" />
                 Video Introduction
               </Label>
-              <p className="text-xs text-white/60 mb-4">Add a short video to introduce yourself (max 30s)</p>
+              <p className="text-xs text-white/60 mb-4">Add a short video to introduce yourself (max 30s, public)</p>
               <VideoUploader videoUrl={videoIntroUrl} onVideoChange={setVideoIntroUrl} />
+            </div>
+
+            {/* Premium Videos */}
+            <div className="bg-black border-2 border-[#FFD700] p-6">
+              <Label className="text-xs uppercase tracking-widest text-[#FFD700] mb-4 block flex items-center gap-2">
+                <Crown className="w-4 h-4" />
+                Premium Videos (XXX)
+              </Label>
+              <p className="text-xs text-white/60 mb-4">Upload locked videos that users pay XP to unlock</p>
+              <PremiumVideoManager videos={premiumVideos} onVideosChange={setPremiumVideos} />
             </div>
 
             {/* Avatar & Bio */}
