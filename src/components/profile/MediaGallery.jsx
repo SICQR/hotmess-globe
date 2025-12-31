@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6, allowPremium = false }) {
   const [uploading, setUploading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
-  const [uploadType, setUploadType] = useState('regular'); // 'regular' or 'premium'
+  const [uploadType, setUploadType] = useState('regular');
 
   const handleUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -178,7 +178,6 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6, allow
         {photos.length}/{maxPhotos} photos • {allowPremium ? 'Premium (XXX) photos require unlock • ' : ''}First photo shown in discovery
       </p>
 
-      {/* Lightbox */}
       <AnimatePresence>
         {selectedIndex !== null && (
           <motion.div
@@ -210,7 +209,77 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6, allow
 export function VideoUploader({ videoUrl, onVideoChange }) {
   const [uploading, setUploading] = useState(false);
 
-  const handleUpload = async (e, title, xp) => {
+  const handleUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('Video must be under 50MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      onVideoChange(file_url);
+      toast.success('Video uploaded!');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast.error('Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {videoUrl ? (
+        <div className="relative aspect-video bg-black">
+          <video
+            src={videoUrl}
+            controls
+            className="w-full h-full"
+          />
+          <Button
+            onClick={() => onVideoChange(null)}
+            variant="destructive"
+            size="sm"
+            className="absolute top-2 right-2"
+          >
+            <Trash2 className="w-4 h-4 mr-1" />
+            Remove
+          </Button>
+        </div>
+      ) : (
+        <label className="aspect-video border-2 border-dashed border-white/20 hover:border-[#FF1493] cursor-pointer flex flex-col items-center justify-center gap-3 transition-colors">
+          <input
+            type="file"
+            accept="video/*"
+            onChange={handleUpload}
+            disabled={uploading}
+            className="hidden"
+          />
+          {uploading ? (
+            <div className="text-white/40 text-sm uppercase">Uploading...</div>
+          ) : (
+            <>
+              <VideoIcon className="w-12 h-12 text-white/40" />
+              <span className="text-sm text-white/40 uppercase">Upload Video Introduction</span>
+              <span className="text-xs text-white/30">Max 30 seconds, 50MB</span>
+            </>
+          )}
+        </label>
+      )}
+    </div>
+  );
+}
+
+export function PremiumVideoManager({ videos = [], onVideosChange }) {
+  const [uploading, setUploading] = useState(false);
+  const [newVideoTitle, setNewVideoTitle] = useState('');
+  const [newVideoXp, setNewVideoXp] = useState(500);
+
+  const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -224,8 +293,8 @@ export function VideoUploader({ videoUrl, onVideoChange }) {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       onVideosChange([...videos, { 
         url: file_url, 
-        title: title || 'Untitled',
-        unlock_xp: xp 
+        title: newVideoTitle || 'Untitled',
+        unlock_xp: newVideoXp 
       }]);
       toast.success('Premium video uploaded!');
       setNewVideoTitle('');
@@ -293,7 +362,7 @@ export function VideoUploader({ videoUrl, onVideoChange }) {
           <input
             type="file"
             accept="video/*"
-            onChange={(e) => handleUpload(e, newVideoTitle, newVideoXp)}
+            onChange={handleUpload}
             disabled={uploading || !newVideoTitle}
             className="hidden"
           />
@@ -316,72 +385,6 @@ export function VideoUploader({ videoUrl, onVideoChange }) {
       <p className="text-xs text-white/40">
         Premium videos are locked behind XP payment. Users must pay to unlock.
       </p>
-    </div>
-  );
-}
-
-  const handleUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Check file size (max 50MB)
-    if (file.size > 50 * 1024 * 1024) {
-      toast.error('Video must be under 50MB');
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      onVideoChange(file_url);
-      toast.success('Video uploaded!');
-    } catch (error) {
-      console.error('Upload failed:', error);
-      toast.error('Upload failed');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      {videoUrl ? (
-        <div className="relative aspect-video bg-black">
-          <video
-            src={videoUrl}
-            controls
-            className="w-full h-full"
-          />
-          <Button
-            onClick={() => onVideoChange(null)}
-            variant="destructive"
-            size="sm"
-            className="absolute top-2 right-2"
-          >
-            <Trash2 className="w-4 h-4 mr-1" />
-            Remove
-          </Button>
-        </div>
-      ) : (
-        <label className="aspect-video border-2 border-dashed border-white/20 hover:border-[#FF1493] cursor-pointer flex flex-col items-center justify-center gap-3 transition-colors">
-          <input
-            type="file"
-            accept="video/*"
-            onChange={handleUpload}
-            disabled={uploading}
-            className="hidden"
-          />
-          {uploading ? (
-            <div className="text-white/40 text-sm uppercase">Uploading...</div>
-          ) : (
-            <>
-              <VideoIcon className="w-12 h-12 text-white/40" />
-              <span className="text-sm text-white/40 uppercase">Upload Video Introduction</span>
-              <span className="text-xs text-white/30">Max 30 seconds, 50MB</span>
-            </>
-          )}
-        </label>
-      )}
     </div>
   );
 }
