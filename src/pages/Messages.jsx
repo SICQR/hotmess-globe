@@ -7,23 +7,14 @@ import { Button } from '@/components/ui/button';
 import ChatThread from '../components/messaging/ChatThread';
 import ThreadList from '../components/messaging/ThreadList';
 import NewMessageModal from '../components/messaging/NewMessageModal';
+import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 
 export default function Messages() {
-  const [currentUser, setCurrentUser] = useState(null);
   const [selectedThread, setSelectedThread] = useState(null);
   const [showNewMessage, setShowNewMessage] = useState(false);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-      } catch (error) {
-        console.error('Failed to fetch user:', error);
-      }
-    };
-    fetchUser();
-  }, []);
+  
+  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
+  const { data: allUsers = [] } = useAllUsers();
 
   const { data: threads = [], isLoading } = useQuery({
     queryKey: ['chat-threads', currentUser?.email],
@@ -32,12 +23,7 @@ export default function Messages() {
       return allThreads.filter(t => t.participant_emails.includes(currentUser.email));
     },
     enabled: !!currentUser,
-    refetchInterval: 2000, // Real-time polling
-  });
-
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    refetchInterval: 5000, // Poll every 5s (optimized)
   });
 
   // Check handshake status for DMs
@@ -52,7 +38,7 @@ export default function Messages() {
     enabled: !!currentUser,
   });
 
-  if (!currentUser || isLoading) {
+  if (!currentUser || isLoading || userLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">

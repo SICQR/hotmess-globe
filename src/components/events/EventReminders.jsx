@@ -86,8 +86,10 @@ export default function EventReminders({ currentUser }) {
     checkReminders();
     const interval = setInterval(checkReminders, 60000); // Check every minute
 
-    return () => clearInterval(interval);
-  }, [upcomingRsvps, allEvents, currentUser]);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [upcomingRsvps, allEvents, currentUser, sendReminderMutation]);
 
   // Request notification permission
   useEffect(() => {

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { useAllUsers } from '../utils/queryConfig';
 
 export default function ChatThread({ thread, currentUser, onBack }) {
   const [messageText, setMessageText] = useState('');
@@ -20,7 +21,7 @@ export default function ChatThread({ thread, currentUser, onBack }) {
   const { data: messages = [] } = useQuery({
     queryKey: ['messages', thread.id],
     queryFn: () => base44.entities.Message.filter({ thread_id: thread.id }, 'created_date'),
-    refetchInterval: 1000, // Real-time polling
+    refetchInterval: 3000, // Poll every 3s (optimized)
   });
 
   const { data: typingIndicators = [] } = useQuery({
@@ -36,13 +37,10 @@ export default function ChatThread({ thread, currentUser, onBack }) {
         new Date(a.created_date).getTime() > Date.now() - 5000 // Last 5 seconds
       );
     },
-    refetchInterval: 1000,
+    refetchInterval: 2000, // Poll every 2s (optimized)
   });
 
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
-  });
+  const { data: allUsers = [] } = useAllUsers();
 
   const sendMutation = useMutation({
     mutationFn: async (data) => {
