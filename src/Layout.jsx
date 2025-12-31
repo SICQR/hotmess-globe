@@ -23,6 +23,7 @@ const PRIMARY_NAV = [
 
 const SECONDARY_NAV = [
   { name: 'Beacons', icon: MapPin, path: 'Beacons' },
+  { name: 'Grid', icon: Users, path: 'Connect' },
   { name: 'Radio', icon: Users, path: 'Radio' },
   { name: 'Calendar', icon: CalendarIcon, path: 'Calendar' },
   { name: 'Scan', icon: Scan, path: 'Scan' },
