@@ -77,7 +77,7 @@ export default function AdminDashboard() {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="analytics" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-black border-2 border-white mb-8 h-auto">
+          <TabsList className="grid w-full grid-cols-7 bg-black border-2 border-white mb-8 h-auto">
             <TabsTrigger 
               value="analytics" 
               className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black font-black uppercase text-xs py-3"
@@ -86,11 +86,25 @@ export default function AdminDashboard() {
               Analytics
             </TabsTrigger>
             <TabsTrigger 
+              value="advanced" 
+              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-black font-black uppercase text-xs py-3"
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Advanced
+            </TabsTrigger>
+            <TabsTrigger 
               value="curation" 
               className="data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black font-black uppercase text-xs py-3"
             >
               <CheckCircle className="w-4 h-4 mr-2" />
               Curation
+            </TabsTrigger>
+            <TabsTrigger 
+              value="verification" 
+              className="data-[state=active]:bg-[#39FF14] data-[state=active]:text-black font-black uppercase text-xs py-3"
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Verify
             </TabsTrigger>
             <TabsTrigger 
               value="users" 
@@ -133,6 +147,14 @@ export default function AdminDashboard() {
 
           <TabsContent value="events">
             <EventManagement />
+          </TabsContent>
+
+          <TabsContent value="advanced">
+            <AdvancedAnalytics />
+          </TabsContent>
+
+          <TabsContent value="verification">
+            <UserVerification />
           </TabsContent>
         </Tabs>
       </div>
