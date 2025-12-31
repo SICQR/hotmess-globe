@@ -15,6 +15,8 @@ import { TaxonomyProvider } from '@/components/taxonomy/provider';
 import ErrorBoundary from '@/components/error/ErrorBoundary';
 import PageErrorBoundary from '@/components/error/PageErrorBoundary';
 import SkipToContent from '@/components/accessibility/SkipToContent';
+import { useKeyboardNav } from '@/components/accessibility/KeyboardNav';
+import { A11yAnnouncer } from '@/components/accessibility/KeyboardNav';
 
       const PRIMARY_NAV = [
   { name: 'Pulse', icon: Home, path: 'Home' },
@@ -40,6 +42,18 @@ export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
+  
+  // Enable keyboard navigation
+  useKeyboardNav();
+
+  // Register service worker for offline support
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // Service worker registration failed, continue without offline support
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -68,6 +82,7 @@ export default function Layout({ children, currentPageName }) {
       <TaxonomyProvider>
         <Gatekeeper>
           <SkipToContent />
+          <A11yAnnouncer />
           <OfflineIndicator />
         <div className="min-h-screen bg-black text-white">
       {!isGlobePage && (
@@ -82,6 +97,8 @@ export default function Layout({ children, currentPageName }) {
                 <button
                   onClick={() => setShowSearch(true)}
                   className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                  aria-label="Open search"
+                  data-search-trigger
                 >
                   <Search className="w-5 h-5" />
                 </button>
@@ -89,6 +106,8 @@ export default function Layout({ children, currentPageName }) {
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                  aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+                  aria-expanded={mobileMenuOpen}
                 >
                   {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>
