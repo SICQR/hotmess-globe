@@ -13,9 +13,10 @@ import { ListSkeleton } from '../components/ui/LoadingSkeleton';
 import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 import { valuesToSearchParams, searchParamsToValues, valuesToApiPayload, applyLocalFilters } from '../components/discovery/queryBuilder';
 import { useTaxonomy } from '../components/taxonomy/useTaxonomy';
+import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 
 export default function Connect() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const { data: currentUser } = useCurrentUser();
   const [lane, setLane] = useState('browse');
   const [showFilters, setShowFilters] = useState(false);
   const [showRightNow, setShowRightNow] = useState(false);
@@ -44,32 +45,13 @@ export default function Connect() {
   });
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-        setLane(user.discovery_lane || 'browse');
-      } catch (error) {
-        console.error('Failed to fetch user:', error);
-      }
-    };
-    fetchUser();
-  }, []);
+    if (currentUser) {
+      setLane(currentUser.discovery_lane || 'browse');
+    }
+  }, [currentUser]);
 
-  // Server-side pagination for better performance
-  const { data: paginatedData, isLoading: usersLoading } = useQuery({
-    queryKey: ['users-paginated', page, selectedLane, filters],
-    queryFn: async () => {
-      // Fetch only the page needed (server-side pagination simulation)
-      const allUsers = await base44.entities.User.list('-created_date', (page + 2) * ITEMS_PER_PAGE);
-      return { users: allUsers, total: allUsers.length };
-    },
-    staleTime: 10 * 60 * 1000,
-    cacheTime: 30 * 60 * 1000,
-    keepPreviousData: true, // Smooth transitions
-  });
-
-  const allUsers = paginatedData?.users || [];
+  // Use global cached users
+  const { data: allUsers = [] } = useAllUsers();
 
   const { data: userTags = [] } = useQuery({
     queryKey: ['user-tags'],
