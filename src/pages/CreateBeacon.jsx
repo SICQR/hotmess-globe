@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import { snapToGrid } from '../components/utils/locationPrivacy';
+import MediaUploader from '../components/media/MediaUploader';
 
 export default function CreateBeacon() {
   const navigate = useNavigate();
@@ -88,37 +89,11 @@ export default function CreateBeacon() {
     }
   });
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    setUploading(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setFormData({ ...formData, image_url: file_url });
-      toast.success('Image uploaded!');
-    } catch (error) {
-      console.error('Upload failed:', error);
-      toast.error('Upload failed');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleVideoUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    setUploading(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setFormData({ ...formData, video_url: file_url });
-      toast.success('Video uploaded!');
-    } catch (error) {
-      console.error('Upload failed:', error);
-      toast.error('Upload failed');
-    } finally {
-      setUploading(false);
+  const handleMediaUpload = (result, type) => {
+    if (type === 'image') {
+      setFormData({ ...formData, image_url: result.url });
+    } else {
+      setFormData({ ...formData, video_url: result.url });
     }
   };
 
@@ -370,28 +345,16 @@ export default function CreateBeacon() {
                     <Image className="w-4 h-4" />
                     Event Image
                   </label>
-                  <div className="space-y-3">
-                    <Button
-                      type="button"
-                      onClick={() => document.getElementById('image-upload').click()}
-                      disabled={uploading}
-                      variant="outline"
-                      className="w-full border-white/20 text-white rounded-none"
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      {uploading ? 'Uploading...' : formData.image_url ? 'Change Image' : 'Upload Image'}
-                    </Button>
-                    <input
-                      id="image-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                    {formData.image_url && (
-                      <img src={formData.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg border-2 border-[#FF1493]" />
-                    )}
-                  </div>
+                  <MediaUploader
+                    type="image"
+                    onUploadComplete={(result) => handleMediaUpload(result, 'image')}
+                    showPreview={true}
+                    compress={true}
+                    moderate={true}
+                  />
+                  {formData.image_url && (
+                    <img src={formData.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg border-2 border-[#FF1493] mt-3" />
+                  )}
                 </div>
 
                 <div>
@@ -399,28 +362,16 @@ export default function CreateBeacon() {
                     <Video className="w-4 h-4" />
                     Event Video (Optional)
                   </label>
-                  <div className="space-y-3">
-                    <Button
-                      type="button"
-                      onClick={() => document.getElementById('video-upload').click()}
-                      disabled={uploading}
-                      variant="outline"
-                      className="w-full border-white/20 text-white rounded-none"
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      {uploading ? 'Uploading...' : formData.video_url ? 'Change Video' : 'Upload Video'}
-                    </Button>
-                    <input
-                      id="video-upload"
-                      type="file"
-                      accept="video/*"
-                      onChange={handleVideoUpload}
-                      className="hidden"
-                    />
-                    {formData.video_url && (
-                      <video src={formData.video_url} controls className="w-full h-48 rounded-lg border-2 border-[#FF1493]" />
-                    )}
-                  </div>
+                  <MediaUploader
+                    type="video"
+                    onUploadComplete={(result) => handleMediaUpload(result, 'video')}
+                    showPreview={false}
+                    compress={false}
+                    moderate={true}
+                  />
+                  {formData.video_url && (
+                    <video src={formData.video_url} controls className="w-full h-48 rounded-lg border-2 border-[#FF1493] mt-3" />
+                  )}
                 </div>
 
                 <div className="pt-4 flex justify-between">
