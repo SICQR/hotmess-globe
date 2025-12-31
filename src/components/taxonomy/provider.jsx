@@ -1,14 +1,29 @@
 import React, { createContext, useContext, useMemo } from "react";
-import taxonomyJson from "./taxonomy-config.json";
+import taxonomyJson from "./taxonomy-config.json?url";
 import { buildTaxonomyIndex, loadDiscoveryTaxonomy } from "./schema";
+
+// Load JSON dynamically
+const loadConfig = async () => {
+  const response = await fetch(taxonomyJson);
+  return response.json();
+};
 
 const TaxonomyContext = createContext(null);
 
 export function TaxonomyProvider({ children }) {
-  const cfg = useMemo(() => loadDiscoveryTaxonomy(taxonomyJson), []);
-  const idx = useMemo(() => buildTaxonomyIndex(cfg), [cfg]);
+  const [state, setState] = React.useState(null);
 
-  return <TaxonomyContext.Provider value={{ cfg, idx }}>{children}</TaxonomyContext.Provider>;
+  React.useEffect(() => {
+    loadConfig().then(json => {
+      const cfg = loadDiscoveryTaxonomy(json);
+      const idx = buildTaxonomyIndex(cfg);
+      setState({ cfg, idx });
+    });
+  }, []);
+
+  if (!state) return null;
+
+  return <TaxonomyContext.Provider value={state}>{children}</TaxonomyContext.Provider>;
 }
 
 export function useTaxonomy() {
