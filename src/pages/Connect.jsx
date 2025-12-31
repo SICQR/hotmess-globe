@@ -39,11 +39,15 @@ export default function Connect() {
   }, [cfg]);
 
   // Initialize filters from URL params
-  const [filters, setFilters] = useState(() => {
-    if (!cfg) return {};
-    const sp = new URLSearchParams(window.location.search);
-    return searchParamsToValues(sp, defaults);
-  });
+  const [filters, setFilters] = useState({});
+
+  // Initialize filters when cfg is ready
+  useEffect(() => {
+    if (cfg && Object.keys(filters).length === 0) {
+      const sp = new URLSearchParams(window.location.search);
+      setFilters(searchParamsToValues(sp, defaults));
+    }
+  }, [cfg, defaults]);
 
   useEffect(() => {
     if (currentUser) {
@@ -70,7 +74,13 @@ export default function Connect() {
   });
 
   // CRITICAL: Early return must happen after ALL hooks are called
-  if (!currentUser || !cfg) return null;
+  if (!currentUser || !cfg) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-white/40">Loading...</div>
+      </div>
+    );
+  }
 
   const currentUserTags = useMemo(() => {
     if (!currentUser) return [];
