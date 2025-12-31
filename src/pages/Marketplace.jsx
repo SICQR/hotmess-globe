@@ -22,6 +22,9 @@ export default function Marketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [currentUser, setCurrentUser] = useState(null);
+  const [showCart, setShowCart] = useState(false);
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -125,13 +128,16 @@ export default function Marketplace() {
     filteredProducts = [...filteredProducts].sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0));
   }
 
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <ShoppingBag className="w-12 h-12 text-white/40 mx-auto mb-4 animate-pulse" />
-          <p className="text-white/60">Loading marketplace...</p>
-        </div>
+      <div className="min-h-screen bg-black text-white p-4 md:p-8">
+        <GridSkeleton count={9} />
       </div>
     );
   }
@@ -151,13 +157,23 @@ export default function Marketplace() {
               </h1>
               <p className="text-white/60">Buy and sell exclusive items</p>
             </div>
-            <Button 
-              onClick={() => navigate(createPageUrl('SellerDashboard'))}
-              className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Sell Item
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => setShowCart(true)}
+                variant="outline"
+                className="border-[#39FF14] text-[#39FF14]"
+              >
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                Cart
+              </Button>
+              <Button 
+                onClick={() => navigate(createPageUrl('SellerDashboard'))}
+                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Sell Item
+              </Button>
+            </div>
           </div>
 
           {/* Search and Filters */}
@@ -212,26 +228,66 @@ export default function Marketplace() {
               />
             )}
             
-            {filteredProducts.length === 0 ? (
-              <div className="text-center py-20">
-                <ShoppingBag className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                <p className="text-white/40 text-lg">No products found</p>
-              </div>
+            {paginatedProducts.length === 0 ? (
+              <EmptyState
+                icon={ShoppingBag}
+                title="No products found"
+                description={searchQuery ? "Try a different search term" : "Be the first to list a product!"}
+                action={() => navigate(createPageUrl('SellerDashboard'))}
+                actionLabel="Start Selling"
+              />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product, idx) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    index={idx}
-                    onBuy={handleBuy}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedProducts.map((product, idx) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      index={idx}
+                      onBuy={handleBuy}
+                    />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-8">
+                    <Button
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      variant="outline"
+                      className="border-white/20"
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-white/60">
+                      Page {page} of {totalPages}
+                    </span>
+                    <Button
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages}
+                      variant="outline"
+                      className="border-white/20"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
         </Tabs>
       </div>
+
+      {currentUser && (
+        <CartDrawer 
+          isOpen={showCart} 
+          onClose={() => setShowCart(false)} 
+          currentUser={currentUser} 
+        />
+      )}
+
+      <TutorialTooltip page="marketplace" />
     </div>
   );
 }
