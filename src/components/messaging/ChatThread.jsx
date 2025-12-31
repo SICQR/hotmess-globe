@@ -18,11 +18,28 @@ export default function ChatThread({ thread, currentUser, onBack }) {
   const queryClient = useQueryClient();
   const isTelegramEncrypted = thread.telegram_chat_id || thread.thread_type === 'dm';
 
-  const { data: messages = [] } = useQuery({
-    queryKey: ['messages', thread.id],
-    queryFn: () => base44.entities.Message.filter({ thread_id: thread.id }, 'created_date'),
+  const [messagesPage, setMessagesPage] = useState(1);
+  const MESSAGES_PER_PAGE = 50;
+
+  const { data: messages = [], hasNextPage } = useQuery({
+    queryKey: ['messages', thread.id, messagesPage],
+    queryFn: async () => {
+      const allMessages = await base44.entities.Message.filter(
+        { thread_id: thread.id }, 
+        'created_date', 
+        MESSAGES_PER_PAGE * messagesPage
+      );
+      return allMessages;
+    },
     refetchInterval: 3000, // Poll every 3s (optimized)
+    keepPreviousData: true,
   });
+
+  const loadMoreMessages = () => {
+    if (messages.length >= MESSAGES_PER_PAGE * messagesPage) {
+      setMessagesPage(p => p + 1);
+    }
+  };
 
   const { data: typingIndicators = [] } = useQuery({
     queryKey: ['typing', thread.id],
@@ -276,6 +293,18 @@ export default function ChatThread({ thread, currentUser, onBack }) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#0a0a0a]">
+        {/* Load More Button */}
+        {messages.length >= MESSAGES_PER_PAGE && (
+          <div className="flex justify-center mb-4">
+            <button 
+              onClick={loadMoreMessages}
+              className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/20 text-white/60 text-xs uppercase font-bold transition-colors"
+            >
+              Load Earlier Messages
+            </button>
+          </div>
+        )}
+        
         <AnimatePresence>
           {messages.map((msg, idx) => {
             const isOwn = msg.sender_email === currentUser.email;

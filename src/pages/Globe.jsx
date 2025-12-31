@@ -13,6 +13,8 @@ import NearbyGrid from '../components/globe/NearbyGrid';
 import { Settings, BarChart3, Menu, Home, Grid3x3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { debounce } from 'lodash';
+
 export default function GlobePage() {
   const queryClient = useQueryClient();
 
@@ -144,8 +146,19 @@ export default function GlobePage() {
   }, []);
 
   const [activeLayers, setActiveLayers] = useState(['pins']);
+  const [debouncedLayers, setDebouncedLayers] = useState(['pins']);
   const [activeMode, setActiveMode] = useState(null);
   const [selectedBeacon, setSelectedBeacon] = useState(null);
+
+  // Debounce layer changes to prevent memory leak from rapid toggling
+  const debouncedSetLayers = React.useMemo(
+    () => debounce((layers) => setDebouncedLayers(layers), 300),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSetLayers(activeLayers);
+  }, [activeLayers, debouncedSetLayers]);
   const [beaconType, setBeaconType] = useState(null);
   const [minIntensity, setMinIntensity] = useState(0);
   const [recencyFilter, setRecencyFilter] = useState('all');
@@ -324,7 +337,7 @@ export default function GlobePage() {
         <EnhancedGlobe3D
           beacons={filteredBeacons}
           cities={cities}
-          activeLayers={activeLayers}
+          activeLayers={debouncedLayers}
           userActivities={userActivities}
           userIntents={userIntents}
           onBeaconClick={handleBeaconClick}
