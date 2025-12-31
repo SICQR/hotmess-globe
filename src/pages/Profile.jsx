@@ -18,17 +18,15 @@ import PremiumContentUnlock from '../components/profile/PremiumContentUnlock';
 import ReportButton from '../components/moderation/ReportButton';
 import BlockButton from '../components/moderation/BlockButton';
 import { sanitizeText, sanitizeURL, sanitizeSocialLinks } from '../components/utils/sanitize';
+import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
-  const [currentUser, setCurrentUser] = useState(null);
   const userEmail = searchParams.get('email');
   const queryClient = useQueryClient();
-
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
-  });
+  
+  const { data: currentUser } = useCurrentUser();
+  const { data: allUsers = [] } = useAllUsers();
 
   const profileUser = allUsers.find(u => u.email === userEmail);
 
@@ -82,18 +80,6 @@ export default function Profile() {
     queryKey: ['all-squads'],
     queryFn: () => base44.entities.Squad.list()
   });
-
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-      } catch (error) {
-        console.error('Failed to fetch current user:', error);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
 
   const isFollowing = following.some(f => f.following_email === userEmail);
   const isOwnProfile = currentUser?.email === userEmail;
