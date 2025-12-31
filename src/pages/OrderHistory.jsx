@@ -9,9 +9,12 @@ import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import MessageButton from '../components/social/MessageButton';
+import QRCodeGenerator from '../components/orders/QRCodeGenerator';
+import OrderQRScanner from '../components/orders/OrderQRScanner';
 
 const STATUS_CONFIG = {
   pending: { color: '#FFEB3B', icon: Clock },
+  escrow: { color: '#00D9FF', icon: Clock },
   processing: { color: '#00D9FF', icon: Package },
   shipped: { color: '#B026FF', icon: Package },
   delivered: { color: '#39FF14', icon: CheckCircle },
@@ -134,6 +137,34 @@ export default function OrderHistory() {
           <div className="mt-4 pt-4 border-t border-white/10">
             <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Notes</p>
             <p className="text-sm text-white/80">{order.notes}</p>
+          </div>
+        )}
+
+        {/* QR Code for Seller */}
+        {isSeller && order.status !== 'cancelled' && order.status !== 'refunded' && !order.is_qr_scanned && (
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <p className="text-xs text-white/40 uppercase mb-3">Attach this QR code to the item</p>
+            <QRCodeGenerator orderId={order.id} size={150} />
+          </div>
+        )}
+
+        {/* QR Scanner for Buyer */}
+        {!isSeller && order.status !== 'cancelled' && order.status !== 'refunded' && !order.is_qr_scanned && (
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <OrderQRScanner order={order} currentUser={currentUser} />
+          </div>
+        )}
+
+        {/* Delivery Confirmed Badge */}
+        {order.is_qr_scanned && (
+          <div className="mt-4 pt-4 border-t border-white/10 flex items-center gap-2 text-[#39FF14]">
+            <CheckCircle className="w-5 h-5" />
+            <div>
+              <p className="text-sm font-bold uppercase">Delivered & Confirmed</p>
+              <p className="text-xs text-white/60">
+                {format(new Date(order.qr_scanned_at), 'MMM d, yyyy • h:mm a')}
+              </p>
+            </div>
           </div>
         )}
 

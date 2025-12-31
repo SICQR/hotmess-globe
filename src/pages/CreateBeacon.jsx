@@ -41,18 +41,31 @@ export default function CreateBeacon() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => {
+    mutationFn: async (data) => {
       // Apply location privacy for non-Care beacons
       if (data.mode !== 'care' && data.lat && data.lng) {
         const snapped = snapToGrid(data.lat, data.lng);
         data.lat = snapped.lat;
         data.lng = snapped.lng;
       }
+      
+      // Mark as shadow beacon for non-admin users
+      const user = await base44.auth.me();
+      if (user.role !== 'admin') {
+        data.is_shadow = true;
+        data.is_verified = false;
+      }
+      
       return base44.entities.Beacon.create(data);
     },
     onSuccess: (newBeacon) => {
       queryClient.invalidateQueries(['beacons']);
-      toast.success('Event created and live on all views!');
+      queryClient.invalidateQueries(['shadow-beacons']);
+      if (newBeacon.is_shadow) {
+        toast.success('Event submitted for admin review!');
+      } else {
+        toast.success('Event created and live!');
+      }
       navigate(createPageUrl(`BeaconDetail?id=${newBeacon.id}`));
     },
     onError: (error) => {
