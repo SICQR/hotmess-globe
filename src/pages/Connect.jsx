@@ -69,6 +69,9 @@ export default function Connect() {
     queryFn: () => base44.entities.RightNowStatus.filter({ active: true })
   });
 
+  // CRITICAL: Early return must happen after ALL hooks are called
+  if (!currentUser || !cfg) return null;
+
   const currentUserTags = useMemo(() => {
     if (!currentUser) return [];
     return userTags.filter(t => t.user_email === currentUser.email);
@@ -85,15 +88,6 @@ export default function Connect() {
   useEffect(() => {
     debouncedSetFilters(filters);
   }, [filters, debouncedSetFilters]);
-
-  // CRITICAL: All hooks must be called before early return
-  const { data: allBeacons = [] } = useQuery({
-    queryKey: ['all-beacons'],
-    queryFn: () => base44.entities.Beacon.list(),
-    enabled: false // Not used in Connect, but hook must be called consistently
-  });
-
-  if (!currentUser || !cfg) return null;
 
   // Build profile objects for filtering
   const profiles = useMemo(() => {
