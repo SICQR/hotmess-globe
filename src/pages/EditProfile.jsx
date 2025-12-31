@@ -50,6 +50,11 @@ export default function EditProfile() {
   const [lookingFor, setLookingFor] = useState([]);
   const [meetAt, setMeetAt] = useState([]);
   const [aftercareMenu, setAftercareMenu] = useState([]);
+  const [tagVisibility, setTagVisibility] = useState({
+    substances_visibility: 'nobody',
+    aftercare_visibility: 'matches',
+    essentials_visibility: 'matches'
+  });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -87,6 +92,11 @@ export default function EditProfile() {
         setLookingFor(user.looking_for || []);
         setMeetAt(user.meet_at || []);
         setAftercareMenu(user.aftercare_menu || []);
+        setTagVisibility({
+          substances_visibility: user.substances_visibility || 'nobody',
+          aftercare_visibility: user.aftercare_visibility || 'matches',
+          essentials_visibility: user.essentials_visibility || 'matches'
+        });
       } catch (error) {
         console.error('Failed to fetch user:', error);
       }
@@ -154,7 +164,8 @@ export default function EditProfile() {
       social_links: socialLinks,
       looking_for: lookingFor,
       meet_at: meetAt,
-      aftercare_menu: aftercareMenu
+      aftercare_menu: aftercareMenu,
+      ...tagVisibility
     });
 
     // Delete old tribes/tags
@@ -573,6 +584,56 @@ export default function EditProfile() {
                       {option}
                     </button>
                   ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Privacy Controls */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Privacy Settings</Label>
+              <p className="text-xs text-white/60 mb-4">Control who can see sensitive information</p>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm mb-2 block">Substances Tags Visibility</Label>
+                  <Select value={tagVisibility.substances_visibility} onValueChange={(val) => setTagVisibility({...tagVisibility, substances_visibility: val})}>
+                    <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="public">Public</SelectItem>
+                      <SelectItem value="matches">Handshake connections only</SelectItem>
+                      <SelectItem value="nobody">Private</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm mb-2 block">Aftercare Menu Visibility</Label>
+                  <Select value={tagVisibility.aftercare_visibility} onValueChange={(val) => setTagVisibility({...tagVisibility, aftercare_visibility: val})}>
+                    <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="public">Public</SelectItem>
+                      <SelectItem value="matches">Handshake connections only</SelectItem>
+                      <SelectItem value="nobody">Private</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm mb-2 block">Essentials/Dealbreakers Visibility</Label>
+                  <Select value={tagVisibility.essentials_visibility} onValueChange={(val) => setTagVisibility({...tagVisibility, essentials_visibility: val})}>
+                    <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="public">Public</SelectItem>
+                      <SelectItem value="matches">Handshake connections only</SelectItem>
+                      <SelectItem value="nobody">Private</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
