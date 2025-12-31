@@ -86,6 +86,13 @@ export default function Connect() {
     debouncedSetFilters(filters);
   }, [filters, debouncedSetFilters]);
 
+  // CRITICAL: All hooks must be called before early return
+  const { data: allBeacons = [] } = useQuery({
+    queryKey: ['all-beacons'],
+    queryFn: () => base44.entities.Beacon.list(),
+    enabled: false // Not used in Connect, but hook must be called consistently
+  });
+
   if (!currentUser || !cfg) return null;
 
   // Build profile objects for filtering
