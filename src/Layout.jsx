@@ -14,6 +14,7 @@ import EventReminders from '@/components/events/EventReminders';
 import { TaxonomyProvider } from '@/components/taxonomy/provider';
 import ErrorBoundary from '@/components/error/ErrorBoundary';
 import PageErrorBoundary from '@/components/error/PageErrorBoundary';
+import SkipToContent from '@/components/accessibility/SkipToContent';
 
       const PRIMARY_NAV = [
   { name: 'Pulse', icon: Home, path: 'Home' },
@@ -66,6 +67,7 @@ export default function Layout({ children, currentPageName }) {
     <ErrorBoundary>
       <TaxonomyProvider>
         <Gatekeeper>
+          <SkipToContent />
           <OfflineIndicator />
         <div className="min-h-screen bg-black text-white">
       {!isGlobePage && (
@@ -252,11 +254,15 @@ export default function Layout({ children, currentPageName }) {
       )}
 
       {/* Main Content */}
-      <div className={isGlobePage ? '' : 'md:ml-56 pt-14 md:pt-0'}>
+      <main 
+        id="main-content" 
+        className={isGlobePage ? '' : 'md:ml-56 pt-14 md:pt-0'}
+        role="main"
+      >
         <PageErrorBoundary>
           {children}
         </PageErrorBoundary>
-      </div>
+      </main>
 
       {/* Panic Button */}
       {user && <PanicButton />}
