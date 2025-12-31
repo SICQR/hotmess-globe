@@ -26,6 +26,7 @@ import Radio from './pages/Radio';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
+import RightNowDashboard from './pages/RightNowDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -58,6 +59,7 @@ export const PAGES = {
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
+    "RightNowDashboard": RightNowDashboard,
 }
 
 export const pagesConfig = {

@@ -20,6 +20,7 @@ import BlockButton from '../components/moderation/BlockButton';
 import { sanitizeText, sanitizeURL, sanitizeSocialLinks } from '../components/utils/sanitize';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 import ErrorBoundary from '../components/error/ErrorBoundary';
+import RightNowIndicator from '../components/discovery/RightNowIndicator';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -98,6 +99,19 @@ export default function Profile() {
       );
     },
     enabled: !!currentUser && !!userEmail,
+  });
+
+  const { data: rightNowStatus } = useQuery({
+    queryKey: ['right-now-profile', userEmail],
+    queryFn: async () => {
+      const statuses = await base44.entities.RightNowStatus.filter({
+        user_email: userEmail,
+        active: true
+      });
+      return statuses.find(s => new Date(s.expires_at) > new Date()) || null;
+    },
+    enabled: !!userEmail,
+    refetchInterval: 15000
   });
 
   const followMutation = useMutation({
@@ -270,6 +284,13 @@ export default function Profile() {
               </div>
             )}
           </div>
+
+          {/* Right Now Status */}
+          {rightNowStatus && (
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <RightNowIndicator status={rightNowStatus} />
+            </div>
+          )}
 
           {/* Social Links - Behind Handshake */}
           {profileUser.social_links && Object.values(profileUser.social_links).some(v => v) && (

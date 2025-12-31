@@ -189,10 +189,17 @@ export default function Connect() {
               </Button>
               <Button
                 onClick={() => setShowRightNow(true)}
-                className="bg-[#FF1493] text-black font-black"
+                className={`font-black border-2 border-white ${
+                  rightNowStatuses.some(s => s.user_email === currentUser.email && s.active && new Date(s.expires_at) > new Date())
+                    ? 'bg-[#39FF14] text-black animate-pulse'
+                    : 'bg-[#FF1493] text-black'
+                }`}
               >
                 <Zap className="w-4 h-4 mr-2" />
-                Go Right Now
+                {rightNowStatuses.some(s => s.user_email === currentUser.email && s.active && new Date(s.expires_at) > new Date())
+                  ? 'You\'re Live'
+                  : 'Go Right Now'
+                }
               </Button>
             </div>
           </div>
