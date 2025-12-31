@@ -59,7 +59,8 @@ export default function Connect() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list(),
-    staleTime: 60000 // Cache for 1 minute
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    cacheTime: 30 * 60 * 1000, // 30 minutes
   });
 
   const { data: userTags = [] } = useQuery({
@@ -115,10 +116,23 @@ export default function Connect() {
     laneFiltered = profiles.filter(p => p.rightNow);
   }
 
-  // Apply query builder filters
+  // Apply query builder filters with memoization
   const filteredUsers = useMemo(() => {
     return applyLocalFilters(laneFiltered, filters, { taxonomyIndex: idx });
   }, [laneFiltered, filters, idx]);
+
+  // Memoize pagination calculations
+  const totalPages = useMemo(() => Math.ceil(filteredUsers.length / ITEMS_PER_PAGE), [filteredUsers.length]);
+  const paginatedUsers = useMemo(() => 
+    filteredUsers.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE),
+    [filteredUsers, page]
+  );
+
+  // Map to full user objects - memoized
+  const displayUsers = useMemo(() => 
+    paginatedUsers.map(p => allUsers.find(u => u.email === p.email)).filter(Boolean),
+    [paginatedUsers, allUsers]
+  );
 
   // Handle filter apply
   const handleFiltersApply = (values) => {
@@ -135,15 +149,7 @@ export default function Connect() {
     console.log("API payload:", payload);
   };
 
-  // Pagination
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const paginatedUsers = filteredUsers.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
-  );
 
-  // Map back to user objects for display
-  const displayUsers = paginatedUsers.map(p => allUsers.find(u => u.email === p.email)).filter(Boolean);
 
   return (
     <div className="min-h-screen bg-black text-white">
