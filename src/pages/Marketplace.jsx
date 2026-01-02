@@ -23,6 +23,8 @@ export default function Marketplace() {
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 50000 });
+  const [sellerFilter, setSellerFilter] = useState('all'); // 'all', 'verified', 'new'
   const [currentUser, setCurrentUser] = useState(null);
   const [showCart, setShowCart] = useState(false);
   const [page, setPage] = useState(1);
@@ -131,12 +133,32 @@ export default function Marketplace() {
     );
   }
 
+  // Price range filter
+  filteredProducts = filteredProducts.filter(p => 
+    p.price_xp >= priceRange.min && p.price_xp <= priceRange.max
+  );
+
+  // Seller filter
+  if (sellerFilter === 'verified') {
+    filteredProducts = filteredProducts.filter(p => 
+      p.seller_verified || (p.average_rating && p.average_rating >= 4.5)
+    );
+  } else if (sellerFilter === 'new') {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    filteredProducts = filteredProducts.filter(p => 
+      new Date(p.created_date) >= thirtyDaysAgo
+    );
+  }
+
   if (sortBy === 'price_low') {
     filteredProducts = [...filteredProducts].sort((a, b) => a.price_xp - b.price_xp);
   } else if (sortBy === 'price_high') {
     filteredProducts = [...filteredProducts].sort((a, b) => b.price_xp - a.price_xp);
   } else if (sortBy === 'popular') {
     filteredProducts = [...filteredProducts].sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0));
+  } else if (sortBy === 'rating') {
+    filteredProducts = [...filteredProducts].sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0));
   }
 
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
@@ -229,6 +251,17 @@ export default function Marketplace() {
                 <SelectItem value="popular">Most Popular</SelectItem>
                 <SelectItem value="price_low">Price: Low to High</SelectItem>
                 <SelectItem value="price_high">Price: High to Low</SelectItem>
+                <SelectItem value="rating">Highest Rated</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sellerFilter} onValueChange={setSellerFilter}>
+              <SelectTrigger className="w-full md:w-48">
+                <SelectValue placeholder="Seller Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sellers</SelectItem>
+                <SelectItem value="verified">Verified Only</SelectItem>
+                <SelectItem value="new">New Listings</SelectItem>
               </SelectContent>
             </Select>
           </div>

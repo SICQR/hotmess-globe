@@ -127,6 +127,14 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
           </div>
         </OSCard>
       </Link>
+      {currentUser && (
+        <MakeOfferModal
+          isOpen={showOfferModal}
+          onClose={() => setShowOfferModal(false)}
+          product={product}
+          currentUser={currentUser}
+        />
+      )}
     </motion.div>
   );
 }
