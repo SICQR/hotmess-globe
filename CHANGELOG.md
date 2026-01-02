@@ -59,6 +59,8 @@ The `package.json` includes an override for the `quill` package:
 ```
 This forces all dependencies to use quill 2.0.3+ which fixes a critical XSS vulnerability (GHSA-4943-9vgg-gr5r). The override is necessary because react-quill 2.0.0 explicitly depends on quill 1.3.7, which is vulnerable. This will remain in place until react-quill is updated to support quill 2.x.
 
+**TODO**: Monitor react-quill for updates that support quill 2.x. Once react-quill natively supports quill 2.0.3+, this override can be removed. Check: https://github.com/zenoamaro/react-quill/issues
+
 #### Test Configuration
 Vitest is configured with:
 - `globals: true` - Enable global test APIs

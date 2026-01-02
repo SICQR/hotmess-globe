@@ -49,7 +49,7 @@ export default function RecordManager() {
         lat: data.lat,
         lng: data.lng,
         audio_url: file_url,
-        track_id: `raw_${Date.now()}`, // In production, this comes from SoundCloud
+        track_id: `raw_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, // In production, this comes from SoundCloud
         xp_scan: 10,
         active: true
       });
@@ -186,8 +186,17 @@ export default function RecordManager() {
               </label>
               <input
                 type="file"
-                accept=".wav"
-                onChange={(e) => setWavFile(e.target.files?.[0] || null)}
+                accept=".wav,audio/wav,audio/x-wav"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  // Validate MIME type
+                  if (file && !file.type.includes('wav') && !file.type.includes('audio')) {
+                    toast.error('Please select a valid WAV audio file');
+                    e.target.value = '';
+                    return;
+                  }
+                  setWavFile(file || null);
+                }}
                 className="block w-full text-sm text-white/60
                   file:mr-4 file:py-2 file:px-4
                   file:border-0
