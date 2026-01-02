@@ -306,7 +306,9 @@ export default function EnhancedGlobe3D({
           }
         }
       });
-    }
+    };
+
+    updateBeaconClusters();
 
     // Heatmap layer - beacon density visualization
     const heatmapGroup = new THREE.Group();
