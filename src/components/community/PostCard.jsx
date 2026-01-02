@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, MessageCircle, Share2, AlertTriangle, Image as ImageIcon, Video, BarChart3 } from 'lucide-react';
+import { Heart, MessageCircle, Share2, AlertTriangle, Image as ImageIcon, Video, BarChart3, Calendar, MapPin, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import ExpiryBadge from './ExpiryBadge';
 import { base44 } from '@/api/base44Client';
 import CommentThread from './CommentThread';
 import { toast } from 'sonner';
+import ReportButton from '../moderation/ReportButton';
 
 function PollDisplay({ post, currentUser }) {
   const [voting, setVoting] = useState(false);
@@ -96,6 +97,48 @@ function PollDisplay({ post, currentUser }) {
           <> • Ends {format(new Date(poll.expires_at), 'MMM d')}</>
         )}
       </p>
+    </div>
+  );
+}
+
+function EventDisplay({ post }) {
+  const event = post.metadata?.event;
+  if (!event) return null;
+
+  return (
+    <div className="mt-4 bg-[#FFEB3B]/10 border-2 border-[#FFEB3B]/40 p-4 rounded-lg">
+      <div className="flex items-center gap-2 mb-3">
+        <Calendar className="w-5 h-5 text-[#FFEB3B]" />
+        <h3 className="font-black uppercase text-[#FFEB3B]">{event.title}</h3>
+      </div>
+      <div className="space-y-2 text-sm">
+        {event.date && (
+          <div className="flex items-center gap-2 text-white/80">
+            <Calendar className="w-4 h-4 text-white/60" />
+            <span>
+              {format(new Date(event.date), 'MMMM d, yyyy')}
+              {event.time && ` at ${event.time}`}
+            </span>
+          </div>
+        )}
+        {event.location && (
+          <div className="flex items-center gap-2 text-white/80">
+            <MapPin className="w-4 h-4 text-white/60" />
+            <span>{event.location}</span>
+          </div>
+        )}
+        {event.ticket_url && (
+          <a
+            href={event.ticket_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#FFEB3B] hover:bg-[#FFEB3B]/90 text-black font-bold rounded-lg mt-2 transition-colors"
+          >
+            Get Tickets
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        )}
+      </div>
     </div>
   );
 }
@@ -191,10 +234,15 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
           {post.metadata?.poll && (
             <PollDisplay post={post} currentUser={currentUser} />
           )}
+
+          {/* Event Display */}
+          {post.metadata?.event && (
+            <EventDisplay post={post} />
+          )}
         </div>
       </div>
       <div className="pt-4 border-t border-white/10">
-        <div className="flex items-center gap-6 mb-4">
+        <div className="flex items-center gap-6 mb-4 flex-wrap">
           <button
             onClick={async () => {
               await onLike(post.id);
@@ -209,13 +257,13 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
                 }).catch(() => {}); // Silent fail
               }
             }}
-            className={`flex items-center gap-2 text-sm transition-colors ${
+            className={`flex items-center gap-2 text-sm font-bold transition-colors ${
               userHasLiked
                 ? 'text-[#FF1493]'
                 : 'text-white/60 hover:text-[#FF1493]'
             }`}
           >
-            <Heart className={`w-4 h-4 ${userHasLiked ? 'fill-current' : ''}`} />
+            <Heart className={`w-5 h-5 ${userHasLiked ? 'fill-current' : ''}`} />
             <span>{post.likes_count || 0}</span>
           </button>
 
@@ -229,13 +277,15 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
 
           <button
             onClick={() => onShare(post.id)}
-            className="flex items-center gap-2 text-sm text-white/60 hover:text-[#FFEB3B] transition-colors"
+            className="flex items-center gap-2 text-sm font-bold text-white/60 hover:text-[#FFEB3B] transition-colors"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="w-5 h-5" />
             {post.shares_count > 0 && <span>{post.shares_count}</span>}
           </button>
 
-          <ReportButton itemType="post" itemId={post.id} variant="ghost" />
+          <div className="ml-auto">
+            <ReportButton itemType="post" itemId={post.id} variant="ghost" />
+          </div>
         </div>
       </div>
     </motion.div>

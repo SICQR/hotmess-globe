@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Image, Video, X, Clock, Loader2, BarChart3 } from 'lucide-react';
+import { Image, Video, X, Clock, Loader2, BarChart3, Calendar } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { checkRateLimit } from '../utils/sanitize';
@@ -18,9 +18,16 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
   const [mediaType, setMediaType] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [posting, setPosting] = useState(false);
-  const [postType, setPostType] = useState('text'); // 'text' or 'poll'
+  const [postType, setPostType] = useState('text'); // 'text', 'poll', or 'event'
   const [pollOptions, setPollOptions] = useState(['', '']);
   const [pollDuration, setPollDuration] = useState(7); // days
+  const [eventData, setEventData] = useState({
+    title: '',
+    date: '',
+    time: '',
+    location: '',
+    ticket_url: ''
+  });
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -133,6 +140,13 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
       }
     }
 
+    if (postType === 'event') {
+      if (!content.trim() || !eventData.title || !eventData.date) {
+        toast.error('Please fill in event title, description, and date');
+        return;
+      }
+    }
+
     // Rate limit: max 5 posts per minute
     const rateCheck = checkRateLimit(`post-${user.email}`, 5, 60000);
     if (!rateCheck.allowed) {
@@ -178,6 +192,16 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
         expires_at: new Date(Date.now() + pollDuration * 24 * 60 * 60 * 1000).toISOString()
       } : null;
 
+      const eventMetadata = postType === 'event' ? {
+        event: {
+          title: eventData.title,
+          date: eventData.date,
+          time: eventData.time,
+          location: eventData.location,
+          ticket_url: eventData.ticket_url
+        }
+      } : {};
+
       const post = await base44.entities.CommunityPost.create({
         user_email: user.email,
         user_name: user.full_name || user.email,
@@ -190,7 +214,7 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
         expires_at: expiresAt,
         image_url: mediaType === 'image' ? mediaUrl : null,
         video_url: mediaType === 'video' ? mediaUrl : null,
-        metadata: pollData ? { poll: pollData } : {}
+        metadata: pollData ? { poll: pollData } : eventMetadata
       });
       
       // Notify admins if flagged
@@ -248,12 +272,26 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           <BarChart3 className="w-4 h-4 mr-2" />
           Poll
         </Button>
+        <Button
+          type="button"
+          variant={postType === 'event' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setPostType('event')}
+          className={postType === 'event' ? 'bg-[#FFEB3B] text-black' : 'border-white/20'}
+        >
+          <Calendar className="w-4 h-4 mr-2" />
+          Event
+        </Button>
       </div>
 
       <Textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder={postType === 'poll' ? "What's your poll question?" : "Share something with the community..."}
+        placeholder={
+          postType === 'poll' ? "What's your poll question?" :
+          postType === 'event' ? "Describe your event..." :
+          "Share something with the community..."
+        }
         rows={4}
         className="mb-4 bg-black border-white/20 text-white placeholder:text-white/40"
         maxLength={1000}
@@ -317,6 +355,49 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
         </div>
       )}
 
+      {/* Event Form */}
+      {postType === 'event' && (
+        <div className="mb-4 space-y-3">
+          <p className="text-xs text-white/60 uppercase font-bold">Event Details</p>
+          <input
+            type="text"
+            value={eventData.title}
+            onChange={(e) => setEventData({...eventData, title: e.target.value})}
+            placeholder="Event Title"
+            className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-sm text-white placeholder:text-white/40"
+            maxLength={100}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              type="date"
+              value={eventData.date}
+              onChange={(e) => setEventData({...eventData, date: e.target.value})}
+              className="px-3 py-2 bg-black border border-white/20 rounded-lg text-sm text-white"
+            />
+            <input
+              type="time"
+              value={eventData.time}
+              onChange={(e) => setEventData({...eventData, time: e.target.value})}
+              className="px-3 py-2 bg-black border border-white/20 rounded-lg text-sm text-white"
+            />
+          </div>
+          <input
+            type="text"
+            value={eventData.location}
+            onChange={(e) => setEventData({...eventData, location: e.target.value})}
+            placeholder="Location"
+            className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-sm text-white placeholder:text-white/40"
+          />
+          <input
+            type="url"
+            value={eventData.ticket_url}
+            onChange={(e) => setEventData({...eventData, ticket_url: e.target.value})}
+            placeholder="Ticket URL (optional)"
+            className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-sm text-white placeholder:text-white/40"
+          />
+        </div>
+      )}
+
       {/* Media Preview */}
       {mediaUrl && (
         <div className="relative mb-4 border-2 border-white/20 rounded-lg overflow-hidden">
@@ -372,7 +453,7 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
 
       {/* Options */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        {postType === 'text' && (
+        {(postType === 'text' || postType === 'event') && (
           <>
             <input
               type="file"
@@ -464,7 +545,7 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           </Button>
           <Button
             onClick={handlePost}
-            disabled={posting || uploading || (postType === 'text' && !content.trim() && !mediaUrl) || (postType === 'poll' && (!content.trim() || pollOptions.filter(o => o.trim()).length < 2))}
+            disabled={posting || uploading || (postType === 'text' && !content.trim() && !mediaUrl) || (postType === 'poll' && (!content.trim() || pollOptions.filter(o => o.trim()).length < 2)) || (postType === 'event' && (!content.trim() || !eventData.title || !eventData.date))}
             className="bg-[#FF1493] hover:bg-white text-black font-black"
           >
             {posting ? (

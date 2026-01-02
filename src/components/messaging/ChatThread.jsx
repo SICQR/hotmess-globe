@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile } from 'lucide-react';
+import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useAllUsers } from '../utils/queryConfig';
+import MediaViewer from './MediaViewer';
 
 export default function ChatThread({ thread, currentUser, onBack }) {
   const [messageText, setMessageText] = useState('');
@@ -21,8 +22,9 @@ export default function ChatThread({ thread, currentUser, onBack }) {
   const [messagesPage, setMessagesPage] = useState(1);
   const MESSAGES_PER_PAGE = 50;
   const [showReactions, setShowReactions] = useState(null);
+  const [viewingMedia, setViewingMedia] = useState(null);
 
-  const REACTIONS = ['❤️', '😂', '😮', '😢', '👍', '🔥'];
+  const REACTIONS = ['❤️', '😂', '😮', '😢', '👍', '🔥', '💯', '🎉'];
 
   const { data: messages = [], hasNextPage } = useQuery({
     queryKey: ['messages', thread.id, messagesPage],
@@ -388,22 +390,32 @@ export default function ChatThread({ thread, currentUser, onBack }) {
                     )}
                     
                     {msg.message_type === 'image' && msg.metadata?.image_url && (
-                      <div className="border-2 border-white overflow-hidden mb-2">
+                      <div className="relative border-2 border-white overflow-hidden mb-2 group cursor-pointer"
+                        onClick={() => setViewingMedia({ url: msg.metadata.image_url, type: 'image' })}>
                         <img 
                           src={msg.metadata.image_url} 
                           alt="Sent image" 
-                          className="max-w-full grayscale hover:grayscale-0 transition-all"
+                          className="max-w-full max-h-96 object-cover grayscale hover:grayscale-0 transition-all"
                         />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
+                          <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
                       </div>
                     )}
 
                     {msg.message_type === 'video' && msg.metadata?.video_url && (
-                      <div className="border-2 border-white overflow-hidden mb-2">
+                      <div className="relative border-2 border-white overflow-hidden mb-2 group">
                         <video 
                           src={msg.metadata.video_url} 
                           controls
-                          className="max-w-full grayscale hover:grayscale-0 transition-all"
+                          className="max-w-full max-h-96 grayscale hover:grayscale-0 transition-all"
                         />
+                        <button
+                          onClick={() => setViewingMedia({ url: msg.metadata.video_url, type: 'video' })}
+                          className="absolute top-2 right-2 bg-black/80 hover:bg-black p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <ZoomIn className="w-4 h-4 text-white" />
+                        </button>
                       </div>
                     )}
                     
@@ -459,12 +471,15 @@ export default function ChatThread({ thread, currentUser, onBack }) {
                               return acc;
                             }, {})
                         ).map(([emoji, count]) => (
-                          <span
+                          <button
                             key={emoji}
-                            className="px-2 py-1 bg-white/10 border border-white/20 rounded-full text-xs flex items-center gap-1"
+                            onClick={() => handleReaction(msg.id, emoji)}
+                            className="px-2 py-1 bg-white/10 border border-white/20 hover:border-white/40 rounded-full text-sm flex items-center gap-1 transition-colors hover:bg-white/20"
+                            title="Click to toggle reaction"
                           >
-                            {emoji} {count > 1 && count}
-                          </span>
+                            <span className="text-base">{emoji}</span>
+                            {count > 1 && <span className="text-xs text-white/60">{count}</span>}
+                          </button>
                         ))}
                       </div>
                     )}
@@ -589,6 +604,15 @@ export default function ChatThread({ thread, currentUser, onBack }) {
           </Button>
         </div>
       </form>
+
+      {/* Media Viewer Modal */}
+      {viewingMedia && (
+        <MediaViewer
+          mediaUrl={viewingMedia.url}
+          mediaType={viewingMedia.type}
+          onClose={() => setViewingMedia(null)}
+        />
+      )}
     </div>
   );
 }
