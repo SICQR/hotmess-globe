@@ -253,7 +253,7 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
       <Textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder={postType === 'poll' ? 'What's your poll question?' : 'Share something with the community...'}
+        placeholder={postType === 'poll' ? "What's your poll question?" : "Share something with the community..."}
         rows={4}
         className="mb-4 bg-black border-white/20 text-white placeholder:text-white/40"
         maxLength={1000}
