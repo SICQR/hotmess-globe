@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Image, Video, X, Clock, Loader2 } from 'lucide-react';
+import { Image, Video, X, Clock, Loader2, BarChart3 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { checkRateLimit } from '../utils/sanitize';
@@ -18,6 +18,9 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
   const [mediaType, setMediaType] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [postType, setPostType] = useState('text'); // 'text' or 'poll'
+  const [pollOptions, setPollOptions] = useState(['', '']);
+  const [pollDuration, setPollDuration] = useState(7); // days
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -94,10 +97,40 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
     setTags(tags.filter(t => t !== tag));
   };
 
+  const addPollOption = () => {
+    if (pollOptions.length < 6) {
+      setPollOptions([...pollOptions, '']);
+    }
+  };
+
+  const removePollOption = (index) => {
+    if (pollOptions.length > 2) {
+      setPollOptions(pollOptions.filter((_, i) => i !== index));
+    }
+  };
+
+  const updatePollOption = (index, value) => {
+    const newOptions = [...pollOptions];
+    newOptions[index] = value;
+    setPollOptions(newOptions);
+  };
+
   const handlePost = async () => {
-    if (!content.trim() && !mediaUrl) {
+    if (postType === 'text' && !content.trim() && !mediaUrl) {
       toast.error('Please add content or media');
       return;
+    }
+
+    if (postType === 'poll') {
+      const validOptions = pollOptions.filter(o => o.trim());
+      if (!content.trim()) {
+        toast.error('Please add a poll question');
+        return;
+      }
+      if (validOptions.length < 2) {
+        toast.error('Polls need at least 2 options');
+        return;
+      }
     }
 
     // Rate limit: max 5 posts per minute
@@ -139,6 +172,12 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
         ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         : null;
 
+      const pollData = postType === 'poll' ? {
+        options: pollOptions.filter(o => o.trim()),
+        votes: {},
+        expires_at: new Date(Date.now() + pollDuration * 24 * 60 * 60 * 1000).toISOString()
+      } : null;
+
       const post = await base44.entities.CommunityPost.create({
         user_email: user.email,
         user_name: user.full_name || user.email,
@@ -150,7 +189,8 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
         ai_sentiment: moderation.sentiment || 'neutral',
         expires_at: expiresAt,
         image_url: mediaType === 'image' ? mediaUrl : null,
-        video_url: mediaType === 'video' ? mediaUrl : null
+        video_url: mediaType === 'video' ? mediaUrl : null,
+        metadata: pollData ? { poll: pollData } : {}
       });
       
       // Notify admins if flagged
@@ -187,10 +227,33 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
     >
       <h3 className="font-black uppercase text-sm mb-4">Create Post</h3>
 
+      {/* Post Type Toggle */}
+      <div className="flex gap-2 mb-4">
+        <Button
+          type="button"
+          variant={postType === 'text' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setPostType('text')}
+          className={postType === 'text' ? 'bg-[#FF1493] text-black' : 'border-white/20'}
+        >
+          Text Post
+        </Button>
+        <Button
+          type="button"
+          variant={postType === 'poll' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setPostType('poll')}
+          className={postType === 'poll' ? 'bg-[#00D9FF] text-black' : 'border-white/20'}
+        >
+          <BarChart3 className="w-4 h-4 mr-2" />
+          Poll
+        </Button>
+      </div>
+
       <Textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="Share something with the community..."
+        placeholder={postType === 'poll' ? 'What's your poll question?' : 'Share something with the community...'}
         rows={4}
         className="mb-4 bg-black border-white/20 text-white placeholder:text-white/40"
         maxLength={1000}
@@ -199,6 +262,60 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
       <div className="text-xs text-white/40 mb-4 text-right">
         {content.length}/1000
       </div>
+
+      {/* Poll Options */}
+      {postType === 'poll' && (
+        <div className="mb-4 space-y-3">
+          <p className="text-xs text-white/60 uppercase font-bold">Poll Options</p>
+          {pollOptions.map((option, index) => (
+            <div key={index} className="flex gap-2">
+              <input
+                type="text"
+                value={option}
+                onChange={(e) => updatePollOption(index, e.target.value)}
+                placeholder={`Option ${index + 1}`}
+                className="flex-1 px-3 py-2 bg-black border border-white/20 rounded-lg text-sm text-white placeholder:text-white/40"
+                maxLength={100}
+              />
+              {pollOptions.length > 2 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removePollOption(index)}
+                  className="text-white/40 hover:text-red-500"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          ))}
+          {pollOptions.length < 6 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addPollOption}
+              className="border-white/20 text-white/60"
+            >
+              + Add Option
+            </Button>
+          )}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-white/60">Poll Duration:</span>
+            <select
+              value={pollDuration}
+              onChange={(e) => setPollDuration(Number(e.target.value))}
+              className="px-2 py-1 bg-black border border-white/20 rounded text-xs text-white"
+            >
+              <option value={1}>1 day</option>
+              <option value={3}>3 days</option>
+              <option value={7}>7 days</option>
+              <option value={14}>14 days</option>
+            </select>
+          </div>
+        </div>
+      )}
 
       {/* Media Preview */}
       {mediaUrl && (
@@ -255,14 +372,16 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
 
       {/* Options */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="hidden"
-          id="post-image-upload"
-          disabled={uploading || mediaUrl}
-        />
+        {postType === 'text' && (
+          <>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+              id="post-image-upload"
+              disabled={uploading || mediaUrl}
+            />
         <label htmlFor="post-image-upload">
           <Button 
             type="button" 
@@ -302,6 +421,8 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
             </span>
           </Button>
         </label>
+          </>
+        )}
 
         <label className="flex items-center gap-2 cursor-pointer">
           <input
@@ -343,7 +464,7 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           </Button>
           <Button
             onClick={handlePost}
-            disabled={posting || uploading || (!content.trim() && !mediaUrl)}
+            disabled={posting || uploading || (postType === 'text' && !content.trim() && !mediaUrl) || (postType === 'poll' && (!content.trim() || pollOptions.filter(o => o.trim()).length < 2))}
             className="bg-[#FF1493] hover:bg-white text-black font-black"
           >
             {posting ? (

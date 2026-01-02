@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck } from 'lucide-react';
+import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
@@ -20,6 +20,9 @@ export default function ChatThread({ thread, currentUser, onBack }) {
 
   const [messagesPage, setMessagesPage] = useState(1);
   const MESSAGES_PER_PAGE = 50;
+  const [showReactions, setShowReactions] = useState(null);
+
+  const REACTIONS = ['❤️', '😂', '😮', '😢', '👍', '🔥'];
 
   const { data: messages = [], hasNextPage } = useQuery({
     queryKey: ['messages', thread.id, messagesPage],
@@ -200,6 +203,33 @@ export default function ChatThread({ thread, currentUser, onBack }) {
       activity_type: 'typing',
       metadata: { thread_id: thread.id }
     }).catch(() => {});
+  };
+
+  const handleReaction = async (messageId, emoji) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message) return;
+
+    const reactions = message.metadata?.reactions || {};
+    const userReactions = reactions[currentUser.email] || [];
+    
+    let newUserReactions;
+    if (userReactions.includes(emoji)) {
+      newUserReactions = userReactions.filter(r => r !== emoji);
+    } else {
+      newUserReactions = [...userReactions, emoji];
+    }
+
+    const newReactions = {
+      ...reactions,
+      [currentUser.email]: newUserReactions
+    };
+
+    await base44.entities.Message.update(messageId, {
+      metadata: { ...message.metadata, reactions: newReactions }
+    });
+
+    queryClient.invalidateQueries(['messages', thread.id]);
+    setShowReactions(null);
   };
 
   useEffect(() => {
@@ -395,7 +425,7 @@ export default function ChatThread({ thread, currentUser, onBack }) {
                       </div>
                     )}
                     
-                    <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`flex items-center gap-2 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
                       <p className="text-[10px] text-white/40 font-mono">
                         {format(new Date(msg.created_date), 'HH:mm')}
                       </p>
@@ -408,7 +438,51 @@ export default function ChatThread({ thread, currentUser, onBack }) {
                           )}
                         </>
                       )}
+                      
+                      {/* Reaction Button */}
+                      <button
+                        onClick={() => setShowReactions(showReactions === msg.id ? null : msg.id)}
+                        className="text-white/40 hover:text-white transition-colors"
+                      >
+                        <Smile className="w-3 h-3" />
+                      </button>
                     </div>
+
+                    {/* Reactions Display */}
+                    {msg.metadata?.reactions && Object.keys(msg.metadata.reactions).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {Object.entries(
+                          Object.values(msg.metadata.reactions)
+                            .flat()
+                            .reduce((acc, emoji) => {
+                              acc[emoji] = (acc[emoji] || 0) + 1;
+                              return acc;
+                            }, {})
+                        ).map(([emoji, count]) => (
+                          <span
+                            key={emoji}
+                            className="px-2 py-1 bg-white/10 border border-white/20 rounded-full text-xs flex items-center gap-1"
+                          >
+                            {emoji} {count > 1 && count}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Reaction Picker */}
+                    {showReactions === msg.id && (
+                      <div className="absolute z-10 mt-1 p-2 bg-black border-2 border-white rounded-lg flex gap-2">
+                        {REACTIONS.map(emoji => (
+                          <button
+                            key={emoji}
+                            onClick={() => handleReaction(msg.id, emoji)}
+                            className="text-xl hover:scale-125 transition-transform"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>
