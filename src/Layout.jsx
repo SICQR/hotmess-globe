@@ -4,7 +4,6 @@ import { createPageUrl } from './utils';
 import { Home, Globe as GlobeIcon, Map, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X, MessageCircle, Calendar as CalendarIcon, MapPin, TrendingUp, Bookmark, Search, Target, Shield } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import PanicButton from '@/components/safety/PanicButton';
-import Gatekeeper from '@/components/auth/Gatekeeper';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
 import GlobalAssistant from '@/components/ai/GlobalAssistant';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
@@ -109,7 +108,6 @@ function LayoutInner({ children, currentPageName }) {
   return (
     <ErrorBoundary>
         <TaxonomyProvider>
-          <Gatekeeper>
           <SkipToContent />
           <A11yAnnouncer />
           <OfflineIndicator />
@@ -358,7 +356,6 @@ function LayoutInner({ children, currentPageName }) {
       {/* Persistent Radio Player - Never Unmounts */}
       <PersistentRadioPlayer />
       </div>
-          </Gatekeeper>
         </TaxonomyProvider>
       </ErrorBoundary>
       );
