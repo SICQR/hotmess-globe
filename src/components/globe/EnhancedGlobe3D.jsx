@@ -722,7 +722,6 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
 
       if (beaconIntersects.length > 0 && onBeaconClick) {
         const beacon = beaconIntersects[0].object.userData?.beacon;
-        const beacon = intersects[0].object.userData?.beacon;
         
         if (!beacon) return;
         
@@ -742,6 +741,23 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           targetCameraZ = 3.5; // Zoom in slightly
           
           onBeaconClick(beacon);
+        }
+        return;
+      }
+
+      // Check city clicks
+      const cityIntersects = raycaster.intersectObjects(cityGroup.children, true);
+      if (cityIntersects.length > 0 && onCityClick) {
+        const cityObj = cityIntersects.find(i => i.object.userData?.type === 'city');
+        if (cityObj) {
+          const city = cityObj.object.userData.city;
+          const cityPos = latLngToVector3(city.lat, city.lng, globeRadius);
+          const direction = cityPos.clone().normalize();
+          targetRotationY = Math.atan2(direction.x, direction.z);
+          targetRotationX = Math.asin(direction.y);
+          targetCameraZ = 3.0; // Zoom in to city
+          
+          onCityClick(city);
         }
       }
     };
