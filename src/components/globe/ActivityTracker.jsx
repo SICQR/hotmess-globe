@@ -20,6 +20,9 @@ class ActivityTracker {
     if (!this.enabled) return;
 
     try {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) return;
+      
       const user = await base44.auth.me();
       await base44.entities.UserActivity.create({
         user_email: user.email,
