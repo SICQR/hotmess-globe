@@ -2,20 +2,30 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn } from 'lucide-react';
+import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn, Search, X, Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useAllUsers } from '../utils/queryConfig';
 import MediaViewer from './MediaViewer';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function ChatThread({ thread, currentUser, onBack }) {
   const [messageText, setMessageText] = useState('');
   const [uploading, setUploading] = useState(false);
   const [isTyping, setIsTyping] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+  const [isMuted, setIsMuted] = useState(thread.muted_by?.includes(currentUser.email) || false);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef({});
+  const lastTypingEmitRef = useRef(0);
   const queryClient = useQueryClient();
   const isTelegramEncrypted = thread.telegram_chat_id || thread.thread_type === 'dm';
 
@@ -91,9 +101,10 @@ export default function ChatThread({ thread, currentUser, onBack }) {
         unread_count: newUnreadCount,
       });
 
-      // Send push notification to other participants only
+      // Send push notification to other participants only (skip if muted)
+      const mutedBy = thread.muted_by || [];
       thread.participant_emails.forEach(async (email) => {
-        if (email !== currentUser.email) {
+        if (email !== currentUser.email && !mutedBy.includes(email)) {
           try {
             await base44.entities.Notification.create({
               user_email: email,
@@ -201,12 +212,32 @@ export default function ChatThread({ thread, currentUser, onBack }) {
   };
 
   const handleTyping = () => {
+    // Throttle typing indicator to every 2 seconds
+    const now = Date.now();
+    if (now - lastTypingEmitRef.current < 2000) return;
+    lastTypingEmitRef.current = now;
+
     // Broadcast typing indicator
     base44.entities.UserActivity.create({
       user_email: currentUser.email,
       activity_type: 'typing',
       metadata: { thread_id: thread.id }
     }).catch(() => {});
+  };
+
+  const toggleMute = async () => {
+    const mutedBy = thread.muted_by || [];
+    const newMutedBy = isMuted 
+      ? mutedBy.filter(email => email !== currentUser.email)
+      : [...mutedBy, currentUser.email];
+
+    await base44.entities.ChatThread.update(thread.id, {
+      muted_by: newMutedBy
+    });
+
+    setIsMuted(!isMuted);
+    queryClient.invalidateQueries(['chat-threads']);
+    toast.success(isMuted ? 'Conversation unmuted' : 'Conversation muted');
   };
 
   const handleReaction = async (messageId, emoji) => {
@@ -285,6 +316,14 @@ export default function ChatThread({ thread, currentUser, onBack }) {
   const otherUsers = allUsers.filter(u => otherParticipants.includes(u.email));
   const isGroupChat = otherUsers.length > 1;
 
+  // Filter messages based on search
+  const filteredMessages = searchQuery.trim()
+    ? messages.filter(m => 
+        m.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.sender_email?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : messages;
+
   return (
     <div className="flex flex-col h-full bg-black">
       {/* Header */}
@@ -342,10 +381,80 @@ export default function ChatThread({ thread, currentUser, onBack }) {
           )}
         </div>
 
-        <Button variant="ghost" size="icon" className="text-white/60 hover:text-white hover:bg-white/10">
-          <MoreVertical className="w-5 h-5" />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowSearch(!showSearch)}
+          className="text-white/60 hover:text-white hover:bg-white/10"
+        >
+          <Search className="w-5 h-5" />
         </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-white/60 hover:text-white hover:bg-white/10">
+              <MoreVertical className="w-5 h-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-black border-2 border-white text-white">
+            <DropdownMenuItem onClick={toggleMute} className="hover:bg-white/10 cursor-pointer">
+              {isMuted ? (
+                <>
+                  <Bell className="w-4 h-4 mr-2" />
+                  Unmute Conversation
+                </>
+              ) : (
+                <>
+                  <BellOff className="w-4 h-4 mr-2" />
+                  Mute Conversation
+                </>
+              )}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
+      {/* Search Bar */}
+      {showSearch && (
+        <div className="bg-black border-b-2 border-white/20 p-3">
+          <div className="flex items-center gap-2">
+            <Search className="w-4 h-4 text-white/40" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="SEARCH IN CONVERSATION..."
+              className="flex-1 bg-black border-2 border-white/20 text-white placeholder:text-white/40 placeholder:uppercase placeholder:font-mono placeholder:text-xs"
+              autoFocus
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSearchQuery('')}
+                className="text-white/60 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setShowSearch(false);
+                setSearchQuery('');
+              }}
+              className="text-white/60 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+          {searchQuery && (
+            <p className="text-xs text-white/40 mt-2 font-mono">
+              {filteredMessages.length} {filteredMessages.length === 1 ? 'result' : 'results'} found
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#0a0a0a]">
@@ -362,7 +471,7 @@ export default function ChatThread({ thread, currentUser, onBack }) {
         )}
         
         <AnimatePresence>
-          {messages.map((msg, idx) => {
+          {filteredMessages.map((msg, idx) => {
             const isOwn = msg.sender_email === currentUser.email;
             const sender = allUsers.find(u => u.email === msg.sender_email);
 
@@ -463,9 +572,11 @@ export default function ChatThread({ thread, currentUser, onBack }) {
                       {isOwn && (
                         <>
                           {msg.read_by.length === 1 ? (
-                            <Check className="w-3 h-3 text-white/40" />
+                            <Check className="w-3 h-3 text-white/40" title="Sent" />
+                          ) : msg.read_by.length === thread.participant_emails.length ? (
+                            <CheckCheck className="w-3 h-3 text-[#00D9FF]" title="Read by all" />
                           ) : (
-                            <CheckCheck className="w-3 h-3 text-[#00D9FF]" />
+                            <CheckCheck className="w-3 h-3 text-[#FFEB3B]" title={`Read by ${msg.read_by.length - 1}/${thread.participant_emails.length - 1}`} />
                           )}
                         </>
                       )}
@@ -525,7 +636,7 @@ export default function ChatThread({ thread, currentUser, onBack }) {
         </AnimatePresence>
 
         {/* Typing Indicator */}
-        {Object.keys(isTyping).length > 0 && (
+        {Object.keys(isTyping).length > 0 && !searchQuery && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -536,11 +647,17 @@ export default function ChatThread({ thread, currentUser, onBack }) {
               <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
                 <span className="text-xs font-bold">...</span>
               </div>
-              <div className="bg-black border-2 border-white px-4 py-2.5 rounded-lg">
-                <div className="flex gap-1">
+              <div className="bg-black border-2 border-white px-4 py-2.5">
+                <div className="flex gap-1 items-center">
                   <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                   <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="ml-2 text-xs text-white/60 font-mono uppercase">
+                    {Object.keys(isTyping).length === 1 
+                      ? allUsers.find(u => u.email === Object.keys(isTyping)[0])?.full_name?.split(' ')[0] || 'Someone'
+                      : `${Object.keys(isTyping).length} people`
+                    } typing
+                  </span>
                 </div>
               </div>
             </div>

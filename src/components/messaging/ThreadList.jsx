@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, ShoppingBag, Heart, Users, MapPin, Calendar } from 'lucide-react';
+import { MessageCircle, ShoppingBag, Heart, Users, MapPin, Calendar, BellOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
@@ -44,6 +44,7 @@ export default function ThreadList({ threads, currentUser, allUsers, onSelectThr
         const otherUsers = allUsers.filter(u => otherParticipants.includes(u.email));
         const unreadCount = thread.unread_count?.[currentUser.email] || 0;
         const isGroupChat = otherUsers.length > 1;
+        const isMuted = thread.muted_by?.includes(currentUser.email) || false;
 
         return (
           <motion.button
@@ -89,6 +90,9 @@ export default function ThreadList({ threads, currentUser, allUsers, onSelectThr
                 <div className="flex items-center gap-2 mb-1">
                   <Icon className="w-3 h-3" style={{ color }} />
                   <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">{thread.thread_type}</span>
+                  {isMuted && (
+                    <BellOff className="w-3 h-3 text-white/40" title="Muted" />
+                  )}
                 </div>
 
                 {thread.last_message && (
