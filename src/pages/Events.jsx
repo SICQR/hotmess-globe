@@ -27,6 +27,9 @@ export default function Events() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) return;
+        
         const user = await base44.auth.me();
         setCurrentUser(user);
         

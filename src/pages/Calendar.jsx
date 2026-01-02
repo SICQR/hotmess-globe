@@ -17,6 +17,11 @@ export default function Calendar() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          base44.auth.redirectToLogin();
+          return;
+        }
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {

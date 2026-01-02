@@ -16,6 +16,13 @@ export default function Gatekeeper({ children }) {
 
   const checkCompliance = async () => {
     try {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) {
+        setAgeVerified(false);
+        setLoading(false);
+        return;
+      }
+
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
@@ -27,7 +34,6 @@ export default function Gatekeeper({ children }) {
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      // If not logged in, show age gate
       setAgeVerified(false);
     } finally {
       setLoading(false);

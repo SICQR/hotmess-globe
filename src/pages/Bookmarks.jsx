@@ -16,6 +16,11 @@ export default function Bookmarks() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          base44.auth.redirectToLogin();
+          return;
+        }
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
