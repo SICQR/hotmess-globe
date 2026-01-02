@@ -686,7 +686,9 @@ export default function EnhancedGlobe3D({
       const intersects = raycaster.intersectObjects(beaconMeshes);
 
       if (intersects.length > 0 && onBeaconClick) {
-        const beacon = intersects[0].object.userData.beacon;
+        const beacon = intersects[0].object.userData?.beacon;
+        
+        if (!beacon) return;
         
         // If cluster, zoom in to expand it
         if (beacon.isCluster && beacon.count > 1) {
