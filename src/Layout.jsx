@@ -18,6 +18,7 @@ import SkipToContent from '@/components/accessibility/SkipToContent';
 import { useKeyboardNav } from '@/components/accessibility/KeyboardNav';
 import { A11yAnnouncer } from '@/components/accessibility/KeyboardNav';
 import WelcomeTour from '@/components/onboarding/WelcomeTour';
+import RightNowNotifications from '@/components/discovery/RightNowNotifications';
 
       const PRIMARY_NAV = [
   { name: 'Pulse', icon: Home, path: 'Home' },
@@ -313,9 +314,12 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Event Reminders Background Service */}
       {user && <EventReminders currentUser={user} />}
+
+      {/* Right Now Match Notifications */}
+      {user && <RightNowNotifications currentUser={user} />}
       </div>
         </Gatekeeper>
       </TaxonomyProvider>
-    </ErrorBoundary>
-  );
-}
+      </ErrorBoundary>
+      );
+      }

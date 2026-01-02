@@ -1,9 +1,11 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, ZoomIn } from 'lucide-react';
+import { X, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function MediaViewer({ mediaUrl, mediaType, onClose }) {
+export default function MediaViewer({ mediaUrl, mediaType, onClose, allMedia = [], currentIndex = 0, onNavigate }) {
+  const hasPrev = allMedia.length > 1 && currentIndex > 0;
+  const hasNext = allMedia.length > 1 && currentIndex < allMedia.length - 1;
   const handleDownload = () => {
     const a = document.createElement('a');
     a.href = mediaUrl;
@@ -31,14 +33,21 @@ export default function MediaViewer({ mediaUrl, mediaType, onClose }) {
         >
           {/* Controls */}
           <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
-            <Button
-              onClick={handleDownload}
-              variant="ghost"
-              size="icon"
-              className="text-white hover:bg-white/10"
-            >
-              <Download className="w-5 h-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleDownload}
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-white/10"
+              >
+                <Download className="w-5 h-5" />
+              </Button>
+              {allMedia.length > 1 && (
+                <span className="text-white/60 text-sm">
+                  {currentIndex + 1} / {allMedia.length}
+                </span>
+              )}
+            </div>
             <Button
               onClick={onClose}
               variant="ghost"
@@ -48,6 +57,24 @@ export default function MediaViewer({ mediaUrl, mediaType, onClose }) {
               <X className="w-6 h-6" />
             </Button>
           </div>
+
+          {/* Navigation Arrows */}
+          {hasPrev && (
+            <button
+              onClick={() => onNavigate(currentIndex - 1)}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-black/80 hover:bg-black rounded-full transition-colors"
+            >
+              <ChevronLeft className="w-8 h-8 text-white" />
+            </button>
+          )}
+          {hasNext && (
+            <button
+              onClick={() => onNavigate(currentIndex + 1)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-black/80 hover:bg-black rounded-full transition-colors"
+            >
+              <ChevronRight className="w-8 h-8 text-white" />
+            </button>
+          )}
 
           {/* Media Content */}
           <div className="flex items-center justify-center w-full h-full">

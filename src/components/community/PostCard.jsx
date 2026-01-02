@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Heart, MessageCircle, Share2, AlertTriangle, Image as ImageIcon, Video, BarChart3, Calendar, MapPin, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../../utils';
 import ExpiryBadge from './ExpiryBadge';
 import { base44 } from '@/api/base44Client';
 import CommentThread from './CommentThread';
@@ -101,9 +103,49 @@ function PollDisplay({ post, currentUser }) {
   );
 }
 
-function EventDisplay({ post }) {
+function EventDisplay({ post, currentUser }) {
   const event = post.metadata?.event;
+  const [creatingBeacon, setCreatingBeacon] = React.useState(false);
+  
   if (!event) return null;
+
+  const handleCreateBeacon = async () => {
+    if (!currentUser || !event.location) return;
+    
+    setCreatingBeacon(true);
+    try {
+      // Try to geocode location (simplified - in production use Google Maps API)
+      const beacon = await base44.entities.Beacon.create({
+        title: event.title,
+        description: post.content,
+        kind: 'event',
+        lat: 51.5074, // Default to London - should geocode event.location
+        lng: -0.1278,
+        city: event.location,
+        event_date: event.date + (event.time ? `T${event.time}` : 'T19:00:00'),
+        venue_name: event.location,
+        ticket_url: event.ticket_url,
+        active: true
+      });
+      
+      toast.success('Event beacon created!');
+      
+      // Link beacon to post
+      await base44.entities.CommunityPost.update(post.id, {
+        metadata: {
+          ...post.metadata,
+          event: {
+            ...event,
+            beacon_id: beacon.id
+          }
+        }
+      });
+    } catch (error) {
+      toast.error('Failed to create beacon');
+    } finally {
+      setCreatingBeacon(false);
+    }
+  };
 
   return (
     <div className="mt-4 bg-[#FFEB3B]/10 border-2 border-[#FFEB3B]/40 p-4 rounded-lg">
@@ -127,17 +169,38 @@ function EventDisplay({ post }) {
             <span>{event.location}</span>
           </div>
         )}
-        {event.ticket_url && (
-          <a
-            href={event.ticket_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#FFEB3B] hover:bg-[#FFEB3B]/90 text-black font-bold rounded-lg mt-2 transition-colors"
-          >
-            Get Tickets
-            <ExternalLink className="w-4 h-4" />
-          </a>
-        )}
+        <div className="flex gap-2 mt-3">
+          {event.ticket_url && (
+            <a
+              href={event.ticket_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#FFEB3B] hover:bg-[#FFEB3B]/90 text-black font-bold rounded-lg transition-colors"
+            >
+              Get Tickets
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          )}
+          {!event.beacon_id && currentUser && (
+            <button
+              onClick={handleCreateBeacon}
+              disabled={creatingBeacon}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
+            >
+              <MapPin className="w-4 h-4" />
+              {creatingBeacon ? 'Creating...' : 'Add to Globe'}
+            </button>
+          )}
+          {event.beacon_id && (
+            <Link
+              to={createPageUrl(`BeaconDetail?id=${event.beacon_id}`)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#00D9FF]/20 hover:bg-[#00D9FF]/30 border border-[#00D9FF] text-[#00D9FF] font-bold rounded-lg transition-colors"
+            >
+              <MapPin className="w-4 h-4" />
+              View on Globe
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -237,7 +300,7 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
 
           {/* Event Display */}
           {post.metadata?.event && (
-            <EventDisplay post={post} />
+            <EventDisplay post={post} currentUser={currentUser} />
           )}
         </div>
       </div>

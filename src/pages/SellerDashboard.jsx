@@ -10,6 +10,7 @@ import ProductForm from '../components/marketplace/ProductForm';
 import SalesAnalytics from '../components/seller/SalesAnalytics';
 import PromotionManager from '../components/seller/PromotionManager';
 import PayoutManager from '../components/seller/PayoutManager';
+import InventoryAlerts from '../components/seller/InventoryAlerts';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -183,6 +184,9 @@ export default function SellerDashboard() {
             </div>
           </div>
         </motion.div>
+
+        {/* Inventory Alerts */}
+        {currentUser && <InventoryAlerts sellerEmail={currentUser.email} />}
 
         {showForm && (
           <div className="mb-8">

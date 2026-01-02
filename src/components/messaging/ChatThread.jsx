@@ -23,6 +23,8 @@ export default function ChatThread({ thread, currentUser, onBack }) {
   const MESSAGES_PER_PAGE = 50;
   const [showReactions, setShowReactions] = useState(null);
   const [viewingMedia, setViewingMedia] = useState(null);
+  const [mediaGallery, setMediaGallery] = useState([]);
+  const [mediaIndex, setMediaIndex] = useState(0);
 
   const REACTIONS = ['❤️', '😂', '😮', '😢', '👍', '🔥', '💯', '🎉'];
 
@@ -391,7 +393,18 @@ export default function ChatThread({ thread, currentUser, onBack }) {
                     
                     {msg.message_type === 'image' && msg.metadata?.image_url && (
                       <div className="relative border-2 border-white overflow-hidden mb-2 group cursor-pointer"
-                        onClick={() => setViewingMedia({ url: msg.metadata.image_url, type: 'image' })}>
+                        onClick={() => {
+                          const allMedia = messages
+                            .filter(m => m.message_type === 'image' || m.message_type === 'video')
+                            .map(m => ({ 
+                              url: m.message_type === 'image' ? m.metadata?.image_url : m.metadata?.video_url,
+                              type: m.message_type
+                            }));
+                          const index = allMedia.findIndex(m => m.url === msg.metadata.image_url);
+                          setMediaGallery(allMedia);
+                          setMediaIndex(index);
+                          setViewingMedia(allMedia[index]);
+                        }}>
                         <img 
                           src={msg.metadata.image_url} 
                           alt="Sent image" 
@@ -404,18 +417,24 @@ export default function ChatThread({ thread, currentUser, onBack }) {
                     )}
 
                     {msg.message_type === 'video' && msg.metadata?.video_url && (
-                      <div className="relative border-2 border-white overflow-hidden mb-2 group">
+                      <div className="relative border-2 border-white overflow-hidden mb-2 group cursor-pointer"
+                        onClick={() => {
+                          const allMedia = messages
+                            .filter(m => m.message_type === 'image' || m.message_type === 'video')
+                            .map(m => ({ 
+                              url: m.message_type === 'image' ? m.metadata?.image_url : m.metadata?.video_url,
+                              type: m.message_type
+                            }));
+                          const index = allMedia.findIndex(m => m.url === msg.metadata.video_url);
+                          setMediaGallery(allMedia);
+                          setMediaIndex(index);
+                          setViewingMedia(allMedia[index]);
+                        }}>
                         <video 
                           src={msg.metadata.video_url} 
                           controls
                           className="max-w-full max-h-96 grayscale hover:grayscale-0 transition-all"
                         />
-                        <button
-                          onClick={() => setViewingMedia({ url: msg.metadata.video_url, type: 'video' })}
-                          className="absolute top-2 right-2 bg-black/80 hover:bg-black p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <ZoomIn className="w-4 h-4 text-white" />
-                        </button>
                       </div>
                     )}
                     
@@ -610,7 +629,17 @@ export default function ChatThread({ thread, currentUser, onBack }) {
         <MediaViewer
           mediaUrl={viewingMedia.url}
           mediaType={viewingMedia.type}
-          onClose={() => setViewingMedia(null)}
+          allMedia={mediaGallery}
+          currentIndex={mediaIndex}
+          onNavigate={(newIndex) => {
+            setMediaIndex(newIndex);
+            setViewingMedia(mediaGallery[newIndex]);
+          }}
+          onClose={() => {
+            setViewingMedia(null);
+            setMediaGallery([]);
+            setMediaIndex(0);
+          }}
         />
       )}
     </div>
