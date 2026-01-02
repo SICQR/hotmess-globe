@@ -5,8 +5,11 @@ import { createPageUrl } from '../utils';
 import { Radio as RadioIcon, Calendar, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { schedule } from '../components/radio/radioUtils';
+import { useRadio } from '../components/shell/RadioContext';
 
 export default function Radio() {
+  const { openRadio } = useRadio();
+
   const shows = [
     {
       ...schedule.shows[0],
@@ -43,7 +46,10 @@ export default function Radio() {
               24/7. Three tentpoles. One rule: care-first.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
-              <Button className="bg-[#FF1493] hover:bg-white text-white hover:text-black font-black text-lg px-8 py-6 border-2 border-white uppercase">
+              <Button 
+                onClick={openRadio}
+                className="bg-[#FF1493] hover:bg-white text-white hover:text-black font-black text-lg px-8 py-6 border-2 border-white uppercase"
+              >
                 <ExternalLink className="w-5 h-5 mr-2" />
                 Listen Live
               </Button>

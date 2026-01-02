@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Play, Pause, SkipForward, Volume2, VolumeX, Minimize2, Radio } from 'lucide-react';
+import { useRadio } from './RadioContext';
 
 export default function PersistentRadioPlayer() {
+  const { isRadioOpen, shouldAutoPlay, setIsRadioOpen } = useRadio();
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(true);
   const [currentTrack, setCurrentTrack] = useState(null);
   const audioRef = useRef(null);
 
@@ -26,6 +27,14 @@ export default function PersistentRadioPlayer() {
       setCurrentTrack(audioBeacons[0]);
     }
   }, [audioBeacons, currentTrack]);
+
+  useEffect(() => {
+    if (shouldAutoPlay && audioRef.current && currentTrack) {
+      audioRef.current.play();
+      setIsPlaying(true);
+      setIsRadioOpen(true);
+    }
+  }, [shouldAutoPlay, currentTrack]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -60,7 +69,7 @@ export default function PersistentRadioPlayer() {
     }
   }, [currentTrack, isPlaying]);
 
-  if (!isMinimized) {
+  if (isRadioOpen) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 50 }}
@@ -73,7 +82,7 @@ export default function PersistentRadioPlayer() {
             <Radio className="w-5 h-5 text-[#B026FF]" />
             <h3 className="font-black uppercase text-sm">RAW CONVICT RADIO</h3>
           </div>
-          <button onClick={() => setIsMinimized(true)} className="text-white/60 hover:text-white">
+          <button onClick={() => setIsRadioOpen(false)} className="text-white/60 hover:text-white">
             <Minimize2 className="w-4 h-4" />
           </button>
         </div>
@@ -125,7 +134,7 @@ export default function PersistentRadioPlayer() {
     <motion.button
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      onClick={() => setIsMinimized(false)}
+      onClick={() => setIsRadioOpen(true)}
       className="fixed bottom-4 right-4 z-[100] w-14 h-14 bg-[#B026FF] rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"
     >
       <Radio className="w-6 h-6 text-black" />

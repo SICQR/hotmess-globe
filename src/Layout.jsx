@@ -12,6 +12,7 @@ import GlobalSearch from '@/components/search/GlobalSearch';
 import OfflineIndicator from '@/components/ui/OfflineIndicator';
 import EventReminders from '@/components/events/EventReminders';
 import { TaxonomyProvider } from '@/components/taxonomy/provider';
+import { RadioProvider } from '@/components/shell/RadioContext';
 import ErrorBoundary from '@/components/error/ErrorBoundary';
 import PageErrorBoundary from '@/components/error/PageErrorBoundary';
 import SkipToContent from '@/components/accessibility/SkipToContent';
@@ -104,8 +105,9 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <ErrorBoundary>
-      <TaxonomyProvider>
-        <Gatekeeper>
+      <RadioProvider>
+        <TaxonomyProvider>
+          <Gatekeeper>
           <SkipToContent />
           <A11yAnnouncer />
           <OfflineIndicator />
@@ -338,8 +340,9 @@ export default function Layout({ children, currentPageName }) {
       {/* Persistent Radio Player - Never Unmounts */}
       <PersistentRadioPlayer />
       </div>
-        </Gatekeeper>
-      </TaxonomyProvider>
+          </Gatekeeper>
+        </TaxonomyProvider>
+      </RadioProvider>
       </ErrorBoundary>
       );
       }
