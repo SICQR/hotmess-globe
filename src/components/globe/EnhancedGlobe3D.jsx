@@ -246,6 +246,8 @@ export default function EnhancedGlobe3D({
     // Beacon pins layer with clustering
     const beaconGeo = new THREE.SphereGeometry(0.015, 8, 8);
     const beaconMeshes = [];
+    let currentClusters = [];
+    
     const updateBeaconClusters = () => {
       // Clear existing beacon meshes
       beaconMeshes.forEach(mesh => {
@@ -586,7 +588,6 @@ export default function EnhancedGlobe3D({
     let targetRotationX = 0;
     let velocity = { x: 0, y: 0 };
     let targetCameraZ = 4.5;
-    let currentClusters = [];
     
     // Touch support
     let touchStartDistance = 0;
