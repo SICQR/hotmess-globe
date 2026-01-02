@@ -27,6 +27,7 @@ import RightNowDashboard from './pages/RightNowDashboard';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
+import PromoteToAdmin from './pages/PromoteToAdmin';
 import __Layout from './Layout.jsx';
 
 
@@ -60,6 +61,7 @@ export const PAGES = {
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
+    "PromoteToAdmin": PromoteToAdmin,
 }
 
 export const pagesConfig = {
