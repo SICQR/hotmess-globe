@@ -21,10 +21,10 @@ export default function OnboardingGate() {
         const user = await base44.auth.me();
         setCurrentUser(user);
         
-        // If all consents already given, redirect to Connect
+        // If all consents already given, redirect to Home (Pulse)
         if (user.has_agreed_terms && user.has_consented_data && user.has_consented_gps) {
           if (user.full_name && user.avatar_url) {
-            window.location.href = createPageUrl('Connect');
+            window.location.href = createPageUrl('Home');
           } else {
             window.location.href = createPageUrl('ProfileSetup');
           }

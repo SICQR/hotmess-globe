@@ -87,10 +87,24 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
 
   return (
     <div className="absolute top-20 left-4 z-20 space-y-2 max-w-xs">
-      <div className="bg-black/90 backdrop-blur-xl border-2 border-white/20 rounded-lg p-3">
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="bg-black/90 backdrop-blur-xl border-2 border-white/20 rounded-lg p-3 shadow-2xl"
+      >
         <div className="flex items-center gap-2 mb-3">
-          <Zap className="w-4 h-4 text-[#FF1493]" />
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <Zap className="w-4 h-4 text-[#FF1493]" />
+          </motion.div>
           <h3 className="text-xs font-black uppercase tracking-wider">LIVE CITY DATA</h3>
+          <motion.div
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="ml-auto w-2 h-2 bg-red-500 rounded-full"
+          />
         </div>
 
         <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
@@ -104,11 +118,13 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
                 onClick={() => onCitySelect(city.name)}
+                whileHover={{ scale: 1.02, x: 5 }}
+                whileTap={{ scale: 0.98 }}
                 className={`
-                  w-full text-left p-3 rounded-lg border-2 transition-all
+                  w-full text-left p-3 rounded-lg border-2 transition-all cursor-pointer
                   ${selectedCity === city.name
-                    ? 'bg-[#FF1493]/20 border-[#FF1493]'
-                    : 'bg-white/5 border-white/10 hover:border-white/30'
+                    ? 'bg-[#FF1493]/20 border-[#FF1493] shadow-lg shadow-[#FF1493]/20'
+                    : 'bg-white/5 border-white/10 hover:border-white/30 hover:bg-white/10'
                   }
                 `}
               >
@@ -140,18 +156,31 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
                 </div>
 
                 {/* Heat Bar */}
-                <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden relative">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-[#FF1493] to-[#FFEB3B]"
+                    className="h-full bg-gradient-to-r from-[#FF1493] via-[#FF6B35] to-[#FFEB3B]"
                     initial={{ width: 0 }}
                     animate={{ width: `${city.heat * 10}%` }}
                     transition={{ duration: 0.5, delay: idx * 0.05 }}
                   />
-                </div>
+                  <motion.div
+                    className="absolute inset-0 bg-white/30"
+                    animate={{ 
+                      x: ['-100%', '200%'],
+                      opacity: [0, 0.5, 0]
+                    }}
+                    transition={{ 
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 1,
+                      delay: idx * 0.1
+                    }}
+                    style={{ width: '50%' }}
+                  />
               </motion.button>
             ))}
         </div>
-      </div>
+      </motion.div>
 
       {selectedCity && (
         <AnimatePresence>
