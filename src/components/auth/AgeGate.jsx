@@ -13,7 +13,7 @@ export default function AgeGate({ onVerified }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black overflow-hidden flex flex-col items-center justify-center">
+    <div className="fixed inset-0 z-[9999] bg-black overflow-y-auto flex flex-col items-center justify-center p-4 sm:p-6">
       {/* BACKGROUND IMAGE - HIGH CONTRAST EDITORIAL */}
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1920&q=95')] bg-cover bg-center opacity-50 grayscale contrast-125 scale-110" />
       
@@ -24,27 +24,27 @@ export default function AgeGate({ onVerified }) {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 text-center px-6"
+        className="relative z-10 text-center px-4 my-auto"
       >
-        <h1 className="text-8xl md:text-[12rem] font-black italic tracking-tighter text-white leading-none mb-4">
+        <h1 className="text-6xl sm:text-8xl md:text-[10rem] lg:text-[12rem] font-black italic tracking-tighter text-white leading-none mb-3 sm:mb-4">
           HOT<span className="text-[#FF1493]">MESS</span>
         </h1>
-        <p className="text-xl md:text-2xl font-bold italic uppercase tracking-[0.3em] text-white/80 mb-12">
+        <p className="text-base sm:text-xl md:text-2xl font-bold italic uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/80 mb-8 sm:mb-12">
           London Operating System
         </p>
 
-        <div className="flex flex-col gap-4 max-w-xs mx-auto">
+        <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-xs mx-auto">
           <motion.button 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleEnter}
-            className="bg-[#FF1493] text-black font-black py-6 text-2xl uppercase italic hover:bg-white transition-all shadow-[0_0_30px_#FF1493]"
+            className="bg-[#FF1493] text-black font-black py-5 sm:py-6 text-xl sm:text-2xl uppercase italic hover:bg-white transition-all shadow-[0_0_30px_#FF1493] w-full"
           >
             I AM 18+ // ENTER
           </motion.button>
           <button 
             onClick={handleExit}
-            className="border-2 border-white/20 text-white/40 py-4 uppercase font-bold text-xs tracking-widest hover:border-white/60 hover:text-white transition-all"
+            className="border-2 border-white/20 text-white/40 py-3 sm:py-4 uppercase font-bold text-xs tracking-widest hover:border-white/60 hover:text-white transition-all w-full"
           >
             Exit Terminal
           </button>
@@ -52,14 +52,14 @@ export default function AgeGate({ onVerified }) {
       </motion.div>
 
       {/* EDITORIAL COOKIE CONSENT - BOTTOM PINNED */}
-      <div className="absolute bottom-10 left-0 w-full px-8 flex flex-col md:flex-row justify-between items-end gap-4 border-t border-white/10 pt-6 bg-black/40 backdrop-blur-md">
-        <div className="max-w-md">
-          <p className="text-[10px] uppercase font-black tracking-widest text-[#FF1493] mb-2">Data Intelligence Policy</p>
-          <p className="text-[10px] leading-relaxed text-white/50 uppercase">
+      <div className="absolute bottom-0 left-0 w-full px-4 sm:px-8 py-4 sm:py-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 sm:gap-4 border-t border-white/10 bg-black/60 backdrop-blur-md">
+        <div className="w-full sm:max-w-md">
+          <p className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-[#FF1493] mb-1 sm:mb-2">Data Intelligence Policy</p>
+          <p className="text-[9px] sm:text-[10px] leading-relaxed text-white/50 uppercase">
             We use cookies to track XP heartbeats, geospatial pulse data, and marketplace security. By entering, you consent to the industrial surveillance of your nightlife participation.
           </p>
         </div>
-        <div className="text-[8px] text-white/20 font-mono">
+        <div className="text-[8px] text-white/20 font-mono whitespace-nowrap">
           HM-CC-V1.0.5
         </div>
       </div>
