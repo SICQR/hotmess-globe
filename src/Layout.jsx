@@ -78,19 +78,19 @@ function LayoutInner({ children, currentPageName }) {
         setUser(currentUser);
 
         // GATEKEEPER: Block all access until consent_accepted is true
-        if (currentPageName !== 'AccountConsents' && !currentUser.consent_accepted) {
+        if (currentPageName !== 'AccountConsents' && !currentUser?.consent_accepted) {
           window.location.href = createPageUrl('AccountConsents');
           return;
         }
 
         // Check if onboarding is incomplete (except on OnboardingGate page itself)
-        if (currentPageName !== 'OnboardingGate' && currentPageName !== 'AccountConsents' && (!currentUser.has_agreed_terms || !currentUser.has_consented_data || !currentUser.has_consented_gps)) {
+        if (currentPageName !== 'OnboardingGate' && currentPageName !== 'AccountConsents' && (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data || !currentUser?.has_consented_gps)) {
           window.location.href = createPageUrl('OnboardingGate');
           return;
         }
 
         // Check if profile setup is incomplete
-        if (currentPageName !== 'Profile' && currentPageName !== 'OnboardingGate' && currentPageName !== 'AccountConsents' && (!currentUser.full_name || !currentUser.avatar_url)) {
+        if (currentPageName !== 'Profile' && currentPageName !== 'OnboardingGate' && currentPageName !== 'AccountConsents' && (!currentUser?.full_name || !currentUser?.avatar_url)) {
           window.location.href = createPageUrl('Profile');
         }
       } catch (error) {
