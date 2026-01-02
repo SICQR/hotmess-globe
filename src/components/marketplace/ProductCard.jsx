@@ -1,12 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { ShoppingBag, Star, Package, Award, Ticket, Shirt } from 'lucide-react';
+import { ShoppingBag, Star, Package, Award, Ticket, Shirt, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
 import LazyImage from '../ui/LazyImage';
+import MakeOfferModal from './MakeOfferModal';
+import { base44 } from '@/api/base44Client';
 
 const TYPE_ICONS = {
   physical: Package,
@@ -27,6 +29,24 @@ const TYPE_COLORS = {
 };
 
 export default function ProductCard({ product, index = 0, onBuy, currentUserXP = 0 }) {
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (isAuth) {
+          const user = await base44.auth.me();
+          setCurrentUser(user);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+    fetchUser();
+  }, []);
+
   const Icon = TYPE_ICONS[product.product_type] || ShoppingBag;
   const color = TYPE_COLORS[product.product_type] || '#FF1493';
   const isOutOfStock = useMemo(() => 
@@ -104,25 +124,40 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
               </div>
             )}
 
-            <div className="flex items-center justify-between">
+            <div className="space-y-2">
               <div className="text-2xl font-black" style={{ color }}>
                 {product.price_xp.toLocaleString()} XP
                 {product.price_gbp && (
                   <span className="text-sm text-white/40 ml-2">+ £{product.price_gbp}</span>
                 )}
               </div>
-              <Button
-                size="sm"
-                className="text-black font-bold"
-                style={{ backgroundColor: color }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  onBuy?.(product);
-                }}
-                disabled={isOutOfStock || isLocked}
-              >
-                {isLocked ? 'LOCKED' : isOutOfStock ? 'Sold Out' : 'Buy'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1 text-black font-bold"
+                  style={{ backgroundColor: color }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onBuy?.(product);
+                  }}
+                  disabled={isOutOfStock || isLocked}
+                >
+                  {isLocked ? 'LOCKED' : isOutOfStock ? 'Sold Out' : 'Buy'}
+                </Button>
+                {!isOutOfStock && !isLocked && currentUser && currentUser.email !== product.seller_email && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-[#00D9FF] text-[#00D9FF] hover:bg-[#00D9FF] hover:text-black"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowOfferModal(true);
+                    }}
+                  >
+                    <Tag className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </OSCard>
