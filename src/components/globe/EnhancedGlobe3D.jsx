@@ -241,17 +241,31 @@ export default function EnhancedGlobe3D({
         beaconMeshes.push(mesh);
 
         // Glow sprite for special beacons
-        if (isCareBeacon || isHighlighted) {
+        if (isCareBeacon || isHighlighted || isRightNow) {
           const spriteMat = new THREE.SpriteMaterial({
             color,
             transparent: true,
-            opacity: isCareBeacon ? 1.0 : 0.9,
+            opacity: isRightNow ? 1.0 : isCareBeacon ? 1.0 : 0.9,
             blending: THREE.AdditiveBlending
           });
           const sprite = new THREE.Sprite(spriteMat);
-          sprite.scale.set(isCareBeacon ? 0.5 : 0.4, isCareBeacon ? 0.5 : 0.4, 1);
+          sprite.scale.set(isRightNow ? 0.06 : 0.04, isRightNow ? 0.06 : 0.04, 1);
           sprite.position.copy(pos);
           globe.add(sprite);
+          
+          // Pulsing effect for Right Now
+          if (isRightNow) {
+            const pulseSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+              color: 0x39ff14,
+              transparent: true,
+              opacity: 0.3,
+              blending: THREE.AdditiveBlending
+            }));
+            pulseSprite.scale.set(0.1, 0.1, 1);
+            pulseSprite.position.copy(pos);
+            pulseSprite.userData = { isPulse: true, baseScale: 0.1 };
+            globe.add(pulseSprite);
+          }
         }
       });
     }
