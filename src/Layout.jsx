@@ -199,6 +199,17 @@ export default function Layout({ children, currentPageName }) {
                 </Link>
               )}
 
+              {/* Promote to Admin Link */}
+              {user && user.role !== 'admin' && (
+                <Link
+                  to={createPageUrl('PromoteToAdmin')}
+                  className="flex items-center gap-2 px-3 py-2.5 mb-4 transition-all border-2 bg-yellow-600/20 border-yellow-600 text-yellow-400 hover:bg-yellow-600/30"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="font-black uppercase tracking-wider text-[10px]">BECOME ADMIN</span>
+                </Link>
+              )}
+
               {/* Primary Navigation */}
               <div className="mb-6">
                 {PRIMARY_NAV.map(({ name, icon: Icon, path, showBadge }) => (
