@@ -17,6 +17,7 @@ import { GridSkeleton } from '../components/ui/LoadingSkeleton';
 import CartDrawer from '../components/marketplace/CartDrawer';
 import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 import { toast } from 'sonner';
+import { Slider } from '@/components/ui/slider';
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
@@ -232,38 +233,55 @@ export default function Marketplace() {
           )}
 
           {/* Search and Filters */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search products..."
-                className="pl-10"
+          <div className="space-y-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search products..."
+                  className="pl-10"
+                />
+              </div>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full md:w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="popular">Most Popular</SelectItem>
+                  <SelectItem value="price_low">Price: Low to High</SelectItem>
+                  <SelectItem value="price_high">Price: High to Low</SelectItem>
+                  <SelectItem value="rating">Highest Rated</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sellerFilter} onValueChange={setSellerFilter}>
+                <SelectTrigger className="w-full md:w-48">
+                  <SelectValue placeholder="Seller Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sellers</SelectItem>
+                  <SelectItem value="verified">Verified Only</SelectItem>
+                  <SelectItem value="new">New Listings</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Price Range Filter */}
+            <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+              <label className="text-xs uppercase tracking-wider text-white/60 mb-3 block">
+                Price Range: {priceRange.min} - {priceRange.max >= 50000 ? '50000+' : priceRange.max} XP
+              </label>
+              <Slider
+                value={[priceRange.min, priceRange.max]}
+                onValueChange={([min, max]) => setPriceRange({ min, max })}
+                min={0}
+                max={50000}
+                step={500}
+                className="w-full"
               />
             </div>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="popular">Most Popular</SelectItem>
-                <SelectItem value="price_low">Price: Low to High</SelectItem>
-                <SelectItem value="price_high">Price: High to Low</SelectItem>
-                <SelectItem value="rating">Highest Rated</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sellerFilter} onValueChange={setSellerFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Seller Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sellers</SelectItem>
-                <SelectItem value="verified">Verified Only</SelectItem>
-                <SelectItem value="new">New Listings</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </motion.div>
 
