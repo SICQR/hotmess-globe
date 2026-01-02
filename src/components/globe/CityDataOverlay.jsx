@@ -177,6 +177,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
                     }}
                     style={{ width: '50%' }}
                   />
+                </div>
               </motion.button>
             ))}
         </div>
