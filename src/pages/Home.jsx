@@ -365,9 +365,13 @@ export default function Home() {
                     </div>
                   </Link>
                 </motion.div>
-              ))}
-            </div>
-          )}
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-12 text-white/40">
+                <p className="text-lg uppercase">No upcoming events</p>
+              </div>
+            )}
+          </div>
 
           <div className="text-center">
             <Link to={createPageUrl('Events')}>
