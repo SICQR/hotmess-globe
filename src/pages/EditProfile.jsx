@@ -78,6 +78,10 @@ export default function EditProfile() {
     aftercare_visibility: 'matches',
     essentials_visibility: 'matches'
   });
+  const [profileType, setProfileType] = useState('standard');
+  const [sellerBio, setSellerBio] = useState('');
+  const [sellerTagline, setSellerTagline] = useState('');
+  const [shopBannerUrl, setShopBannerUrl] = useState('');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -130,6 +134,10 @@ export default function EditProfile() {
         setPreferredCommunication(user.preferred_communication || []);
         setProfileTheme(user.profile_theme || 'default');
         setAccentColor(user.accent_color || '#FF1493');
+        setProfileType(user.profile_type || 'standard');
+        setSellerBio(user.seller_bio || '');
+        setSellerTagline(user.seller_tagline || '');
+        setShopBannerUrl(user.shop_banner_url || '');
       } catch (error) {
         console.error('Failed to fetch user:', error);
       }
@@ -215,6 +223,10 @@ export default function EditProfile() {
       preferred_communication: preferredCommunication,
       profile_theme: profileTheme,
       accent_color: accentColor,
+      profile_type: profileType,
+      seller_bio: sellerBio,
+      seller_tagline: sellerTagline,
+      shop_banner_url: shopBannerUrl,
       ...tagVisibility
     });
 
@@ -315,6 +327,76 @@ export default function EditProfile() {
           <p className="text-white/40 text-sm uppercase tracking-wider mb-8">Customize your hotmess presence</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Profile Type */}
+            <div className="bg-black border-2 border-[#FF1493] p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Profile Type</Label>
+              <p className="text-xs text-white/60 mb-4">Changes how your profile displays and what features are available</p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: 'standard', label: 'Standard', desc: 'Regular hookup/dating profile', icon: '👤' },
+                  { value: 'seller', label: 'Seller', desc: 'MessMarket seller with shop features', icon: '🛍️' },
+                  { value: 'premium', label: 'Premium', desc: 'Exclusive content creator', icon: '💎' },
+                  { value: 'creator', label: 'Creator', desc: 'Artist/DJ/performer profile', icon: '🎨' }
+                ].map(type => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => setProfileType(type.value)}
+                    className={`p-4 text-left border-2 transition-all ${
+                      profileType === type.value
+                        ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                        : 'bg-white/5 border-white/20 text-white hover:border-white/40'
+                    }`}
+                  >
+                    <div className="text-2xl mb-2">{type.icon}</div>
+                    <div className="font-black uppercase text-xs mb-1">{type.label}</div>
+                    <div className="text-[10px] opacity-70">{type.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Seller-specific fields */}
+            {profileType === 'seller' && (
+              <div className="bg-black border-2 border-[#00D9FF] p-6">
+                <Label className="text-xs uppercase tracking-widest text-[#00D9FF] mb-4 block">Seller Profile Details</Label>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-xs text-white/60 mb-2 block">Shop Tagline</Label>
+                    <Input
+                      value={sellerTagline}
+                      onChange={(e) => setSellerTagline(e.target.value)}
+                      placeholder="Premium streetwear & club gear"
+                      maxLength={60}
+                      className="bg-white/5 border-2 border-white/20 text-white"
+                    />
+                    <p className="text-xs text-white/40 mt-1">{sellerTagline.length}/60</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-white/60 mb-2 block">Seller Bio</Label>
+                    <Textarea
+                      value={sellerBio}
+                      onChange={(e) => setSellerBio(e.target.value)}
+                      placeholder="Tell buyers about your shop, what you sell, shipping policies..."
+                      rows={6}
+                      maxLength={500}
+                      className="bg-white/5 border-2 border-white/20 text-white"
+                    />
+                    <p className="text-xs text-white/40 mt-1">{sellerBio.length}/500</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-white/60 mb-2 block">Shop Banner URL</Label>
+                    <Input
+                      value={shopBannerUrl}
+                      onChange={(e) => setShopBannerUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="bg-white/5 border-2 border-white/20 text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Profile Theme Customization */}
             <div className="bg-black border-2 border-white p-6">
               <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
