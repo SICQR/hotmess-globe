@@ -1,9 +1,11 @@
+import AccountConsents from './pages/AccountConsents';
 import AdminDashboard from './pages/AdminDashboard';
 import BeaconDetail from './pages/BeaconDetail';
 import Beacons from './pages/Beacons';
 import Bookmarks from './pages/Bookmarks';
 import Calendar from './pages/Calendar';
 import Care from './pages/Care';
+import Challenges from './pages/Challenges';
 import Chat from './pages/Chat';
 import Checkout from './pages/Checkout';
 import Community from './pages/Community';
@@ -13,11 +15,13 @@ import DialADaddy from './pages/DialADaddy';
 import EditBeacon from './pages/EditBeacon';
 import EditProfile from './pages/EditProfile';
 import Events from './pages/Events';
+import Feed from './pages/Feed';
 import Globe from './pages/Globe';
 import HandNHand from './pages/HandNHand';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
 import Marketplace from './pages/Marketplace';
+import MembershipUpgrade from './pages/MembershipUpgrade';
 import Messages from './pages/Messages';
 import Onboarding from './pages/Onboarding';
 import OnboardingGate from './pages/OnboardingGate';
@@ -29,30 +33,28 @@ import ProfileSetup from './pages/ProfileSetup';
 import PromoteToAdmin from './pages/PromoteToAdmin';
 import Radio from './pages/Radio';
 import RadioSchedule from './pages/RadioSchedule';
+import RecordManager from './pages/RecordManager';
 import RightNowDashboard from './pages/RightNowDashboard';
+import Safety from './pages/Safety';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
 import SquadChat from './pages/SquadChat';
+import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
 import WakeTheMess from './pages/WakeTheMess';
-import AccountConsents from './pages/AccountConsents';
-import MembershipUpgrade from './pages/MembershipUpgrade';
-import RecordManager from './pages/RecordManager';
-import Feed from './pages/Feed';
-import Stats from './pages/Stats';
-import Safety from './pages/Safety';
-import Challenges from './pages/Challenges';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AccountConsents": AccountConsents,
     "AdminDashboard": AdminDashboard,
     "BeaconDetail": BeaconDetail,
     "Beacons": Beacons,
     "Bookmarks": Bookmarks,
     "Calendar": Calendar,
     "Care": Care,
+    "Challenges": Challenges,
     "Chat": Chat,
     "Checkout": Checkout,
     "Community": Community,
@@ -62,11 +64,13 @@ export const PAGES = {
     "EditBeacon": EditBeacon,
     "EditProfile": EditProfile,
     "Events": Events,
+    "Feed": Feed,
     "Globe": Globe,
     "HandNHand": HandNHand,
     "Home": Home,
     "Leaderboard": Leaderboard,
     "Marketplace": Marketplace,
+    "MembershipUpgrade": MembershipUpgrade,
     "Messages": Messages,
     "Onboarding": Onboarding,
     "OnboardingGate": OnboardingGate,
@@ -78,20 +82,16 @@ export const PAGES = {
     "PromoteToAdmin": PromoteToAdmin,
     "Radio": Radio,
     "RadioSchedule": RadioSchedule,
+    "RecordManager": RecordManager,
     "RightNowDashboard": RightNowDashboard,
+    "Safety": Safety,
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
     "SquadChat": SquadChat,
+    "Stats": Stats,
     "TicketMarketplace": TicketMarketplace,
     "WakeTheMess": WakeTheMess,
-    "AccountConsents": AccountConsents,
-    "MembershipUpgrade": MembershipUpgrade,
-    "RecordManager": RecordManager,
-    "Feed": Feed,
-    "Stats": Stats,
-    "Safety": Safety,
-    "Challenges": Challenges,
 }
 
 export const pagesConfig = {

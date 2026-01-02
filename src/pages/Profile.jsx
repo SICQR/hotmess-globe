@@ -155,7 +155,8 @@ export default function Profile() {
 
   const viewCount = profileViews.length;
   const tier = currentUser?.membership_tier || 'basic';
-  const canSeeViewers = level >= 5 && (tier === 'plus' || tier === 'pro');
+  // Chrome tier: Level 5+ can see WHO viewed their profile
+  const canSeeViewers = level >= 5;
 
   const followMutation = useMutation({
     mutationFn: () => base44.entities.UserFollow.create({
@@ -504,7 +505,7 @@ export default function Profile() {
               
               {canSeeViewers ? (
                 <div className="space-y-2">
-                  <p className="text-xs text-white/60 uppercase mb-3">Recent Viewers (PLUS/PRO Perk)</p>
+                  <p className="text-xs text-white/60 uppercase mb-3">Recent Viewers (Chrome Tier - Level 5+)</p>
                   {profileViews.slice(0, 10).map((view, idx) => {
                     const viewer = allUsers.find(u => u.email === view.viewer_email);
                     if (!viewer) return null;
@@ -531,16 +532,11 @@ export default function Profile() {
               ) : (
                 <div className="text-center py-4">
                   <p className="text-sm text-white/60 mb-2">
-                    {level < 5 ? `Reach Level 5 to see who viewed your profile (currently Level ${level})` : 'Upgrade to PLUS or PRO to see who viewed your profile'}
+                    Reach Level 5 to unlock Chrome tier and see who viewed your profile
                   </p>
-                  {level >= 5 && (
-                    <Link to={createPageUrl('MembershipUpgrade')}>
-                      <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black mt-2">
-                        <Zap className="w-4 h-4 mr-2" />
-                        UPGRADE NOW
-                      </Button>
-                    </Link>
-                  )}
+                  <p className="text-xs text-white/40">
+                    Currently Level {level} • Need {(5 - level) * 1000} more XP
+                  </p>
                 </div>
               )}
             </motion.div>
