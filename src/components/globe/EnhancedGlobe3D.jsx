@@ -206,19 +206,34 @@ export default function EnhancedGlobe3D({
       globe.add(new THREE.Line(geo, gridMat));
     }
 
-    // Beacon pins layer
+    // Beacon pins layer with clustering
     const beaconGeo = new THREE.SphereGeometry(0.015, 8, 8);
     const beaconMeshes = [];
+    const updateBeaconClusters = () => {
+      // Clear existing beacon meshes
+      beaconMeshes.forEach(mesh => {
+        globe.remove(mesh);
+        if (mesh.geometry) mesh.geometry.dispose();
+        if (mesh.material) mesh.material.dispose();
+      });
+      beaconMeshes.length = 0;
 
-    if (showPins) {
-      // Create individual meshes for ALL beacons (needed for click handling)
-      beacons.forEach(beacon => {
+      if (!showPins) return;
+
+      // Create clusters based on camera zoom
+      currentClusters = createClusters(beacons, camera.position.z);
+
+      currentClusters.forEach(beacon => {
         const isHighlighted = highlightedIds.includes(beacon.id);
         const isCareBeacon = beacon.mode === 'care';
         const isRightNow = beacon.isRightNow;
+        const isCluster = beacon.isCluster;
 
         const color = isCareBeacon ? 0x00d9ff : isHighlighted ? 0xffeb3b : isRightNow ? 0x39ff14 : 0xff1493;
         const emissiveIntensity = isCareBeacon ? 1.5 : isHighlighted ? 1.2 : 0.8;
+        
+        // Scale up clusters
+        const scale = isCluster ? Math.min(1 + (beacon.count * 0.1), 3) : isHighlighted ? 1.5 : 1;
 
         const beaconMat = new THREE.MeshStandardMaterial({
           color,
@@ -232,13 +247,36 @@ export default function EnhancedGlobe3D({
         const pos = latLngToVector3(beacon.lat, beacon.lng, globeRadius * 1.01);
         mesh.position.copy(pos);
         mesh.userData = { type: 'beacon', beacon };
-
-        if (isHighlighted) {
-          mesh.scale.setScalar(1.5);
-        }
+        mesh.scale.setScalar(scale);
 
         globe.add(mesh);
         beaconMeshes.push(mesh);
+
+        // Cluster label
+        if (isCluster && beacon.count > 1) {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = 64;
+          canvas.height = 64;
+          ctx.fillStyle = '#FF1493';
+          ctx.font = 'bold 32px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(beacon.count.toString(), 32, 32);
+
+          const texture = new THREE.CanvasTexture(canvas);
+          const spriteMat = new THREE.SpriteMaterial({ 
+            map: texture,
+            transparent: true,
+            opacity: 0.9
+          });
+          const sprite = new THREE.Sprite(spriteMat);
+          sprite.scale.set(0.08, 0.08, 1);
+          sprite.position.copy(pos);
+          sprite.position.y += 0.05;
+          globe.add(sprite);
+          beaconMeshes.push(sprite);
+        }
 
         // Glow sprite for special beacons
         if (isCareBeacon || isHighlighted || isRightNow) {
@@ -502,6 +540,43 @@ export default function EnhancedGlobe3D({
       }
     }
 
+    // Clustering logic for beacons when zoomed out
+    const createClusters = (beacons, zoomLevel) => {
+      // Don't cluster if zoomed in close (z < 3.5)
+      if (zoomLevel < 3.5) return beacons.map(b => ({ ...b, isCluster: false, count: 1 }));
+
+      const clusterRadius = 5; // degrees
+      const clusters = new Map();
+
+      beacons.forEach(beacon => {
+        const key = `${Math.floor(beacon.lat / clusterRadius)}_${Math.floor(beacon.lng / clusterRadius)}`;
+        if (!clusters.has(key)) {
+          clusters.set(key, []);
+        }
+        clusters.get(key).push(beacon);
+      });
+
+      const result = [];
+      clusters.forEach((clusterBeacons) => {
+        if (clusterBeacons.length === 1) {
+          result.push({ ...clusterBeacons[0], isCluster: false, count: 1 });
+        } else {
+          const avgLat = clusterBeacons.reduce((sum, b) => sum + b.lat, 0) / clusterBeacons.length;
+          const avgLng = clusterBeacons.reduce((sum, b) => sum + b.lng, 0) / clusterBeacons.length;
+          result.push({
+            ...clusterBeacons[0],
+            lat: avgLat,
+            lng: avgLng,
+            isCluster: true,
+            count: clusterBeacons.length,
+            clusterBeacons
+          });
+        }
+      });
+
+      return result;
+    };
+
     // Interaction
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
@@ -509,6 +584,7 @@ export default function EnhancedGlobe3D({
     let targetRotationX = 0;
     let velocity = { x: 0, y: 0 };
     let targetCameraZ = 4.5;
+    let currentClusters = [];
     
     // Touch support
     let touchStartDistance = 0;
@@ -609,20 +685,31 @@ export default function EnhancedGlobe3D({
       if (intersects.length > 0 && onBeaconClick) {
         const beacon = intersects[0].object.userData.beacon;
         
-        // Smooth camera transition to beacon
-        const beaconPos = latLngToVector3(beacon.lat, beacon.lng, globeRadius);
-        const direction = beaconPos.clone().normalize();
-        targetRotationY = Math.atan2(direction.x, direction.z);
-        targetRotationX = Math.asin(direction.y);
-        targetCameraZ = 3.5; // Zoom in slightly
-        
-        onBeaconClick(beacon);
+        // If cluster, zoom in to expand it
+        if (beacon.isCluster && beacon.count > 1) {
+          const beaconPos = latLngToVector3(beacon.lat, beacon.lng, globeRadius);
+          const direction = beaconPos.clone().normalize();
+          targetRotationY = Math.atan2(direction.x, direction.z);
+          targetRotationX = Math.asin(direction.y);
+          targetCameraZ = Math.max(2.5, targetCameraZ - 1.5); // Zoom in to expand cluster
+        } else {
+          // Smooth camera transition to beacon
+          const beaconPos = latLngToVector3(beacon.lat, beacon.lng, globeRadius);
+          const direction = beaconPos.clone().normalize();
+          targetRotationY = Math.atan2(direction.x, direction.z);
+          targetRotationX = Math.asin(direction.y);
+          targetCameraZ = 3.5; // Zoom in slightly
+          
+          onBeaconClick(beacon);
+        }
       }
     };
 
     const onWheel = (e) => {
       e.preventDefault();
-      targetCameraZ = THREE.MathUtils.clamp(targetCameraZ + e.deltaY * 0.002, 2.5, 6.0);
+      // Smoother zoom with reduced sensitivity
+      const zoomSpeed = 0.001;
+      targetCameraZ = THREE.MathUtils.clamp(targetCameraZ + e.deltaY * zoomSpeed, 2.5, 6.0);
     };
 
     // Touch handlers
@@ -686,11 +773,20 @@ export default function EnhancedGlobe3D({
         velocity.y *= 0.85;
       }
       
-      globe.rotation.y += (targetRotationY - globe.rotation.y) * 0.1;
-      globe.rotation.x += (targetRotationX - globe.rotation.x) * 0.1;
+      // Smooth rotation with easing
+      globe.rotation.y += (targetRotationY - globe.rotation.y) * 0.15;
+      globe.rotation.x += (targetRotationX - globe.rotation.x) * 0.15;
       
-      // Smooth camera zoom
-      camera.position.z += (targetCameraZ - camera.position.z) * 0.1;
+      // Smooth camera zoom with easing
+      const zoomDiff = targetCameraZ - camera.position.z;
+      camera.position.z += zoomDiff * 0.12;
+
+      // Re-cluster beacons when zoom level changes significantly
+      const zoomThresholds = [3, 4, 5];
+      const currentZoomLevel = Math.round(camera.position.z);
+      if (zoomThresholds.includes(currentZoomLevel) && Math.abs(zoomDiff) < 0.01) {
+        updateBeaconClusters();
+      }
 
       // Update arc shaders
       arcs.forEach(arc => {

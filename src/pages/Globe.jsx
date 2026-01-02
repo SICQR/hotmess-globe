@@ -11,6 +11,7 @@ import FloatingPanel from '../components/ui/FloatingPanel';
 import { activityTracker } from '../components/globe/ActivityTracker';
 import NearbyGrid from '../components/globe/NearbyGrid';
 import LocalBeaconsView from '../components/globe/LocalBeaconsView';
+import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import { Settings, BarChart3, Menu, Home, Grid3x3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -209,6 +210,7 @@ export default function GlobePage() {
   const [showLocalBeacons, setShowLocalBeacons] = useState(false);
   const [localBeaconCenter, setLocalBeaconCenter] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [previewBeacon, setPreviewBeacon] = useState(null);
 
   // Get user's location
   useEffect(() => {
@@ -284,12 +286,11 @@ export default function GlobePage() {
   }, [filteredBeacons]);
 
   const handleBeaconClick = useCallback((beacon) => {
-    setSelectedBeacon(beacon);
-    setLocalBeaconCenter(beacon);
-    setShowLocalBeacons(true);
-    setShowPanel(false);
-    setShowControls(false);
-    setShowNearbyGrid(false);
+    // Don't handle cluster clicks
+    if (beacon.isCluster) return;
+    
+    // Show preview panel instead of full detail
+    setPreviewBeacon(beacon);
     
     // Track activity
     activityTracker.trackActivity('beacon_click', { 
@@ -300,6 +301,18 @@ export default function GlobePage() {
       lng: beacon.lng
     });
   }, []);
+
+  const handleViewFullDetails = useCallback(() => {
+    if (previewBeacon) {
+      setSelectedBeacon(previewBeacon);
+      setLocalBeaconCenter(previewBeacon);
+      setShowLocalBeacons(true);
+      setShowPanel(false);
+      setShowControls(false);
+      setShowNearbyGrid(false);
+      setPreviewBeacon(null);
+    }
+  }, [previewBeacon]);
 
   const handleCityClick = useCallback((city) => {
     // City click handler - can be extended for city-specific actions
