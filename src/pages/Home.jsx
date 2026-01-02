@@ -273,7 +273,7 @@ export default function Home() {
               initial={{ opacity: 0, x: 40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="space-y-6"
+              className="grid grid-cols-1 gap-6"
             >
               <div className="bg-black/40 backdrop-blur-md p-6 border-2 border-white/30 shadow-2xl">
                 <div className="flex items-center gap-3 mb-3">
