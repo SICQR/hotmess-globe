@@ -144,7 +144,10 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="users">
-            <UserManagement />
+            <div className="space-y-6">
+              <BulkUserInvite />
+              <UserManagement />
+            </div>
           </TabsContent>
 
           <TabsContent value="moderation">
