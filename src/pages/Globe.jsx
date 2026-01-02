@@ -39,6 +39,44 @@ export default function GlobePage() {
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
+  const { data: rightNowUsers = [] } = useQuery({
+    queryKey: ['right-now-users-globe'],
+    queryFn: async () => {
+      const statuses = await base44.entities.RightNowStatus.filter({ active: true });
+      const validStatuses = statuses.filter(s => new Date(s.expires_at) > new Date());
+      
+      // Fetch users and cities
+      const users = await base44.entities.User.list();
+      const cities = await base44.entities.City.list();
+      
+      // Map to beacon format
+      return validStatuses.map(status => {
+        const user = users.find(u => u.email === status.user_email);
+        if (!user || !user.city) return null;
+        
+        const city = cities.find(c => c.name === user.city);
+        if (!city) return null;
+        
+        return {
+          id: `rightnow-${status.id}`,
+          title: `${user.full_name} is Right Now`,
+          description: status.logistics?.join(', ') || 'Available now',
+          lat: city.lat,
+          lng: city.lng,
+          city: city.name,
+          mode: 'hookup',
+          kind: 'hookup',
+          intensity: 1,
+          active: true,
+          isRightNow: true,
+          user_email: user.email,
+          avatar_url: user.avatar_url
+        };
+      }).filter(Boolean);
+    },
+    refetchInterval: 15000 // Refresh every 15 seconds
+  });
+
   // Real-time subscriptions for beacons
   useEffect(() => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -189,9 +227,10 @@ export default function GlobePage() {
 
   // Filter beacons by mode, type, intensity, recency, and search (must be before conditional return)
   const filteredBeacons = useMemo(() => {
-    let filtered = beacons.map(b => ({
+    // Combine regular beacons with Right Now users
+    let filtered = [...beacons, ...rightNowUsers].map(b => ({
       ...b,
-      ts: new Date(b.created_date).getTime() // Convert created_date to timestamp
+      ts: new Date(b.created_date || Date.now()).getTime() // Convert created_date to timestamp
     }));
 
     // Apply search filter first
@@ -237,7 +276,7 @@ export default function GlobePage() {
     }
 
     return filtered;
-  }, [beacons, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch]);
+  }, [beacons, rightNowUsers, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch]);
 
   // Sort by most recent
   const recentActivity = useMemo(() => {

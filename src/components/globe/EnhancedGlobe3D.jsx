@@ -215,8 +215,9 @@ export default function EnhancedGlobe3D({
       beacons.forEach(beacon => {
         const isHighlighted = highlightedIds.includes(beacon.id);
         const isCareBeacon = beacon.mode === 'care';
+        const isRightNow = beacon.isRightNow;
 
-        const color = isCareBeacon ? 0x00d9ff : isHighlighted ? 0xffeb3b : 0xff1493;
+        const color = isCareBeacon ? 0x00d9ff : isHighlighted ? 0xffeb3b : isRightNow ? 0x39ff14 : 0xff1493;
         const emissiveIntensity = isCareBeacon ? 1.5 : isHighlighted ? 1.2 : 0.8;
 
         const beaconMat = new THREE.MeshStandardMaterial({
@@ -681,6 +682,15 @@ export default function EnhancedGlobe3D({
       arcs.forEach(arc => {
         if (arc.userData.material?.uniforms?.uTime) {
           arc.userData.material.uniforms.uTime.value = time;
+        }
+      });
+
+      // Pulse Right Now beacons
+      scene.traverse(obj => {
+        if (obj.userData?.isPulse) {
+          const scale = obj.userData.baseScale * (1 + Math.sin(time * 2) * 0.3);
+          obj.scale.set(scale, scale, 1);
+          obj.material.opacity = 0.2 + Math.sin(time * 2) * 0.15;
         }
       });
 
