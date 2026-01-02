@@ -7,7 +7,7 @@ import { Calendar, MapPin, Users, Clock, ExternalLink, Sparkles } from 'lucide-r
 import { formatUTCDate } from '../utils/dateUtils';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
 
-export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, recommendationScore }) {
+export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, recommendationScore, scoreBreakdown }) {
   const eventDate = event.event_date ? new Date(event.event_date) : null;
   const isPast = eventDate && eventDate < new Date();
 
@@ -125,6 +125,13 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
                 <ExternalLink className="w-3 h-3" />
                 Get Tickets
               </a>
+            )}
+
+            {/* Recommendation Insights */}
+            {recommendationScore && scoreBreakdown && (
+              <div className="mt-4 pt-4 border-t border-white/10" onClick={(e) => e.preventDefault()}>
+                <EventInsights event={event} scoreBreakdown={scoreBreakdown} />
+              </div>
             )}
           </div>
         </OSCard>

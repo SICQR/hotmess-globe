@@ -61,6 +61,7 @@ export default function PersonalizedRecommendations({ currentUser, allEvents, al
             attendeeCount={allRsvps.filter(r => r.event_id === event.id).length}
             delay={idx * 0.05}
             recommendationScore={event.recommendationScore}
+            scoreBreakdown={engine.explainScore(event)}
           />
         ))}
       </div>
