@@ -40,6 +40,11 @@ export default function NearbyGrid({ userLocation }) {
     return R * c;
   };
 
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
+
   // Get users with recent activity OR Right Now status
   const activeUsers = allUsers
     .filter(user => {
@@ -50,7 +55,9 @@ export default function NearbyGrid({ userLocation }) {
         new Date(s.expires_at) > new Date()
       );
       
-      if (!activity && !rightNowStatus) return false;
+      // Show Right Now users even without recent activity
+      if (rightNowStatus) return true;
+      if (!activity) return false;
       
       // Check if within distance
       if (userLocation && activity.lat && activity.lng) {
