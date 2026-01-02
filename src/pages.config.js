@@ -38,6 +38,7 @@ import TicketMarketplace from './pages/TicketMarketplace';
 import WakeTheMess from './pages/WakeTheMess';
 import AccountConsents from './pages/AccountConsents';
 import MembershipUpgrade from './pages/MembershipUpgrade';
+import RecordManager from './pages/RecordManager';
 import __Layout from './Layout.jsx';
 
 
@@ -82,6 +83,7 @@ export const PAGES = {
     "WakeTheMess": WakeTheMess,
     "AccountConsents": AccountConsents,
     "MembershipUpgrade": MembershipUpgrade,
+    "RecordManager": RecordManager,
 }
 
 export const pagesConfig = {
