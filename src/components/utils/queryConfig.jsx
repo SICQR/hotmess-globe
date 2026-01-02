@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { QUERY_CONFIG } from './constants';
 
 /**
  * Global user cache - prevents redundant API calls
@@ -18,8 +19,8 @@ export function useAllUsers() {
         return [];
       }
     },
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    staleTime: QUERY_CONFIG.USER_STALE_TIME,
+    cacheTime: QUERY_CONFIG.USER_CACHE_TIME,
     refetchOnWindowFocus: false,
     retry: false,
   });
@@ -41,8 +42,8 @@ export function useCurrentUser() {
         return null;
       }
     },
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    staleTime: QUERY_CONFIG.USER_STALE_TIME,
+    cacheTime: QUERY_CONFIG.USER_CACHE_TIME,
     retry: false,
     enabled: true,
   });
@@ -55,7 +56,7 @@ export function useAllBeacons() {
   return useQuery({
     queryKey: ['all-beacons-global'],
     queryFn: () => base44.entities.Beacon.list(),
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 5 * 60 * 1000,
+    staleTime: QUERY_CONFIG.BEACON_STALE_TIME,
+    cacheTime: QUERY_CONFIG.BEACON_CACHE_TIME,
   });
 }

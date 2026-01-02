@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { PAGINATION, QUERY_CONFIG } from '../components/utils/constants';
 import { Users, Zap, Heart, Filter } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,6 @@ export default function Connect() {
   const [showFilters, setShowFilters] = useState(false);
   const [showRightNow, setShowRightNow] = useState(false);
   const [page, setPage] = useState(1);
-  const ITEMS_PER_PAGE = 12;
   const { cfg, idx } = useTaxonomy();
   const [aiMatchExplanations, setAiMatchExplanations] = useState({});
 
@@ -45,7 +45,8 @@ export default function Connect() {
   const { data: rightNowStatuses = [] } = useQuery({
     queryKey: ['right-now-status'],
     queryFn: () => base44.entities.RightNowStatus.filter({ active: true }),
-    enabled: !!currentUser
+    enabled: !!currentUser,
+    refetchInterval: QUERY_CONFIG.REFETCH_INTERVAL_MEDIUM
   });
 
   // Build defaults from taxonomy config
@@ -167,9 +168,9 @@ export default function Connect() {
   }, [filteredUsers, aiMatchExplanations]);
 
   // Memoize pagination calculations
-  const totalPages = useMemo(() => Math.ceil(reorderedUsers.length / ITEMS_PER_PAGE), [reorderedUsers.length]);
+  const totalPages = useMemo(() => Math.ceil(reorderedUsers.length / PAGINATION.ITEMS_PER_PAGE), [reorderedUsers.length]);
   const paginatedUsers = useMemo(() => 
-    reorderedUsers.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE),
+    reorderedUsers.slice((page - 1) * PAGINATION.ITEMS_PER_PAGE, page * PAGINATION.ITEMS_PER_PAGE),
     [reorderedUsers, page]
   );
 
@@ -197,10 +198,6 @@ export default function Connect() {
     const sp = valuesToSearchParams(values);
     const nextUrl = `${window.location.pathname}?${sp.toString()}`;
     window.history.replaceState({}, "", nextUrl);
-
-    // Log API payload for debugging
-    const payload = valuesToApiPayload(values);
-    console.log("API payload:", payload);
   };
 
 
