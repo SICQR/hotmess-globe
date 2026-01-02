@@ -4,8 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Radio as RadioIcon, Calendar, ExternalLink, Download, Clock, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import schedule from '../components/radio/radioSchedule.js';
-import { getNextEpisode, formatSchedule, generateICS, downloadICS } from '../components/radio/radioUtils';
+import { schedule, getNextEpisode, formatSchedule, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { format } from 'date-fns';
 
 export default function DialADaddy() {
