@@ -314,9 +314,29 @@ export default function GlobePage() {
     }
   }, [previewBeacon]);
 
+  const [selectedCity, setSelectedCity] = useState(null);
+  const globeRef = React.useRef(null);
+
   const handleCityClick = useCallback((city) => {
-    // City click handler - can be extended for city-specific actions
-  }, []);
+    setSelectedCity(city);
+    
+    // Filter beacons by city
+    const cityBeacons = beacons.filter(b => b.city === city.name);
+    setSearchResults({
+      query: city.name,
+      beacons: cityBeacons,
+      cities: [city]
+    });
+    
+    // Track city click
+    activityTracker.trackActivity('city_click', {
+      city_name: city.name,
+      beacon_count: cityBeacons.length
+    }, {
+      lat: city.lat,
+      lng: city.lng
+    });
+  }, [beacons]);
 
   const handleClose = useCallback(() => {
     setSelectedBeacon(null);
@@ -345,14 +365,15 @@ export default function GlobePage() {
     if (results.beacons.length === 1) {
       setSelectedBeacon(results.beacons[0]);
       setShowPanel(true);
-    } else if (results.cities.length === 1) {
-      // Focus on single city result
+    } else if (results.cities.length === 1 && results.cities[0]) {
+      setSelectedCity(results.cities[0]);
     }
   }, []);
 
   const handleClearSearch = useCallback(() => {
     setSearchResults(null);
     setRadiusSearch(null);
+    setSelectedCity(null);
   }, []);
 
   const handleRadiusSearch = useCallback((results) => {
@@ -393,12 +414,15 @@ export default function GlobePage() {
         {/* Globe - Full Screen */}
         <div className="relative w-full h-screen">
           <EnhancedGlobe3D
+          ref={globeRef}
           beacons={filteredBeacons}
           cities={cities}
           activeLayers={debouncedLayers}
           userActivities={userActivities}
           userIntents={userIntents}
           onBeaconClick={handleBeaconClick}
+          onCityClick={handleCityClick}
+          selectedCity={selectedCity}
           highlightedIds={searchResults?.beacons.map(b => b.id) || radiusSearch?.beacons.map(b => b.id) || []}
           className="w-full h-full"
         />

@@ -36,16 +36,18 @@ function createArc(from, to, radius) {
   return points;
 }
 
-export default function EnhancedGlobe3D({
+const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   beacons = [],
   cities = [],
   activeLayers = ['pins'],
   userActivities = [],
   userIntents = [],
   onBeaconClick,
+  onCityClick,
+  selectedCity = null,
   highlightedIds = [],
   className = ''
-}) {
+}, ref) {
   const mountRef = useRef(null);
   const hoveredArcRef = useRef(null);
   const [arcTooltip, setArcTooltip] = React.useState(null);
@@ -54,6 +56,13 @@ export default function EnhancedGlobe3D({
   const showHeat = activeLayers.includes('heat');
   const showActivity = activeLayers.includes('activity');
   const showCities = activeLayers.includes('cities');
+
+  // Expose rotation control to parent
+  React.useImperativeHandle(ref, () => ({
+    rotateTo: (lat, lng, zoom = 3.5) => {
+      // This will be set inside useEffect
+    }
+  }));
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -436,6 +445,7 @@ export default function EnhancedGlobe3D({
         });
         const marker = new THREE.Mesh(markerGeo, markerMat);
         marker.position.copy(pos);
+        marker.userData = { type: 'city', city };
         cityGroup.add(marker);
 
         // Glow for active cities
@@ -593,6 +603,19 @@ export default function EnhancedGlobe3D({
     let touchStartDistance = 0;
     let initialCameraZ = camera.position.z;
 
+    // Expose rotation control to parent via ref
+    if (ref && typeof ref === 'object') {
+      ref.current = {
+        rotateTo: (lat, lng, zoom = 3.5) => {
+          const pos = latLngToVector3(lat, lng, globeRadius);
+          const direction = pos.clone().normalize();
+          targetRotationY = Math.atan2(direction.x, direction.z);
+          targetRotationX = Math.asin(direction.y);
+          targetCameraZ = zoom;
+        }
+      };
+    }
+
     const onMouseDown = (e) => {
       isDragging = true;
       previousMousePosition = { x: e.clientX, y: e.clientY };
@@ -623,6 +646,16 @@ export default function EnhancedGlobe3D({
         if (beaconIntersects.length > 0) {
           renderer.domElement.style.cursor = 'pointer';
           return;
+        }
+
+        // Check cities
+        const cityIntersects = raycaster.intersectObjects(cityGroup.children, true);
+        if (cityIntersects.length > 0) {
+          const cityObj = cityIntersects.find(i => i.object.userData?.type === 'city');
+          if (cityObj) {
+            renderer.domElement.style.cursor = 'pointer';
+            return;
+          }
         }
 
         // Then check arcs
@@ -683,9 +716,12 @@ export default function EnhancedGlobe3D({
 
       const raycaster = new THREE.Raycaster();
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(beaconMeshes);
+      
+      // Check beacons first
+      const beaconIntersects = raycaster.intersectObjects(beaconMeshes);
 
-      if (intersects.length > 0 && onBeaconClick) {
+      if (beaconIntersects.length > 0 && onBeaconClick) {
+        const beacon = beaconIntersects[0].object.userData?.beacon;
         const beacon = intersects[0].object.userData?.beacon;
         
         if (!beacon) return;
@@ -931,7 +967,14 @@ export default function EnhancedGlobe3D({
       // Clear references
       scene.clear();
     };
-  }, [beacons, cities, activeLayers, highlightedIds, userActivities]);
+  }, [beacons, cities, activeLayers, highlightedIds, userActivities, onBeaconClick, onCityClick]);
+
+  // Rotate to selected city
+  useEffect(() => {
+    if (selectedCity && ref && typeof ref === 'object' && ref.current?.rotateTo) {
+      ref.current.rotateTo(selectedCity.lat, selectedCity.lng, 3.0);
+    }
+  }, [selectedCity, ref]);
 
   return (
     <>
@@ -970,4 +1013,6 @@ export default function EnhancedGlobe3D({
       )}
     </>
   );
-}
+});
+
+export default EnhancedGlobe3D;
