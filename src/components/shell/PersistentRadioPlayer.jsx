@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Play, Pause, SkipForward, Volume2, VolumeX, Minimize2, Radio } from 'lucide-react';
+import { Play, Pause, SkipForward, Volume2, VolumeX, X, Radio } from 'lucide-react';
 import { useRadio } from './RadioContext';
 
 export default function PersistentRadioPlayer() {
-  const { isRadioOpen, shouldAutoPlay, setIsRadioOpen } = useRadio();
+  const { isRadioOpen, shouldAutoPlay, closeRadio } = useRadio();
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
@@ -32,7 +32,6 @@ export default function PersistentRadioPlayer() {
     if (shouldAutoPlay && audioRef.current && currentTrack) {
       audioRef.current.play();
       setIsPlaying(true);
-      setIsRadioOpen(true);
     }
   }, [shouldAutoPlay, currentTrack]);
 
@@ -69,92 +68,116 @@ export default function PersistentRadioPlayer() {
     }
   }, [currentTrack, isPlaying]);
 
-  if (isRadioOpen) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 50 }}
-        className="fixed bottom-4 left-4 z-[100] bg-black/95 backdrop-blur-xl border-2 border-[#B026FF] rounded-xl p-6 w-80 shadow-2xl"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Radio className="w-5 h-5 text-[#B026FF]" />
-            <h3 className="font-black uppercase text-sm">RAW CONVICT RADIO</h3>
-          </div>
-          <button onClick={() => setIsRadioOpen(false)} className="text-white/60 hover:text-white">
-            <Minimize2 className="w-4 h-4" />
-          </button>
-        </div>
-
-        {currentTrack && (
-          <div className="mb-4">
-            <p className="font-bold text-sm truncate">{currentTrack.title}</p>
-            <p className="text-xs text-white/60">{currentTrack.description}</p>
-          </div>
-        )}
-
-        <div className="flex items-center gap-4 mb-4">
-          <button
-            onClick={handlePlayPause}
-            className="w-12 h-12 bg-[#B026FF] rounded-full flex items-center justify-center hover:bg-[#B026FF]/80 transition-colors"
-          >
-            {isPlaying ? <Pause className="w-5 h-5 text-black" /> : <Play className="w-5 h-5 text-black ml-0.5" />}
-          </button>
-          <button
-            onClick={handleNext}
-            className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
-          >
-            <SkipForward className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors ml-auto"
-          >
-            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          </button>
-        </div>
-
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={volume}
-          onChange={(e) => setVolume(parseFloat(e.target.value))}
-          className="w-full accent-[#B026FF]"
-        />
-
-        <audio ref={audioRef} />
-      </motion.div>
-    );
-  }
-
   return (
-    <motion.button
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={() => setIsRadioOpen(true)}
-      className="fixed bottom-6 left-6 z-[100] w-16 h-16 bg-[#B026FF] rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(176,38,255,0.6)] hover:shadow-[0_0_40px_rgba(176,38,255,0.8)] transition-all border-2 border-white"
-    >
-      <Radio className="w-7 h-7 text-white" />
-      {isPlaying && (
-        <>
-          <motion.div
-            animate={{ scale: [1, 1.5, 1] }}
-            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-            className="absolute inset-0 bg-[#B026FF] rounded-full opacity-40"
-          />
-          <motion.div
-            animate={{ scale: [1, 1.3, 1] }}
-            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut", delay: 0.5 }}
-            className="absolute inset-0 bg-[#B026FF] rounded-full opacity-30"
-          />
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#39FF14] rounded-full animate-pulse shadow-[0_0_10px_rgba(57,255,20,0.8)]" />
-        </>
-      )}
-    </motion.button>
+    <>
+      <AnimatePresence>
+        {isRadioOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeRadio}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90]"
+            />
+            
+            {/* Drawer */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 bottom-0 w-80 bg-black/95 backdrop-blur-xl border-l-2 border-[#B026FF] z-[100] shadow-2xl"
+            >
+              <div className="flex flex-col h-full p-6">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <Radio className="w-5 h-5 text-[#B026FF]" />
+                    <h3 className="font-black uppercase text-sm">RAW CONVICT RADIO</h3>
+                  </div>
+                  <button 
+                    onClick={closeRadio} 
+                    className="text-white/60 hover:text-white transition-colors"
+                    aria-label="Close radio"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Now Playing */}
+                {currentTrack && (
+                  <div className="mb-6">
+                    <p className="text-xs text-white/40 uppercase mb-2">Now Playing</p>
+                    <p className="font-bold text-lg truncate">{currentTrack.title}</p>
+                    <p className="text-sm text-white/60 line-clamp-2">{currentTrack.description}</p>
+                  </div>
+                )}
+
+                {/* Controls */}
+                <div className="flex items-center gap-4 mb-6">
+                  <button
+                    onClick={handlePlayPause}
+                    className="w-14 h-14 bg-[#B026FF] rounded-full flex items-center justify-center hover:bg-[#B026FF]/80 transition-colors shadow-lg"
+                  >
+                    {isPlaying ? <Pause className="w-6 h-6 text-white" /> : <Play className="w-6 h-6 text-white ml-0.5" />}
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+                  >
+                    <SkipForward className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setIsMuted(!isMuted)}
+                    className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors ml-auto"
+                  >
+                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                  </button>
+                </div>
+
+                {/* Volume Slider */}
+                <div className="mb-6">
+                  <p className="text-xs text-white/40 uppercase mb-2">Volume</p>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={volume}
+                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                    className="w-full accent-[#B026FF]"
+                  />
+                </div>
+
+                {/* Queue or Playlist could go here */}
+                <div className="flex-1 overflow-y-auto">
+                  <p className="text-xs text-white/40 uppercase mb-3">Available Tracks</p>
+                  <div className="space-y-2">
+                    {audioBeacons.map((beacon) => (
+                      <button
+                        key={beacon.id}
+                        onClick={() => setCurrentTrack(beacon)}
+                        className={`w-full text-left p-3 rounded-lg transition-colors ${
+                          currentTrack?.id === beacon.id
+                            ? 'bg-[#B026FF]/20 border border-[#B026FF]'
+                            : 'bg-white/5 hover:bg-white/10'
+                        }`}
+                      >
+                        <p className="font-bold text-sm truncate">{beacon.title}</p>
+                        <p className="text-xs text-white/60 truncate">{beacon.description}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <audio ref={audioRef} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

@@ -21,6 +21,8 @@ import { A11yAnnouncer } from '@/components/accessibility/KeyboardNav';
 import WelcomeTour from '@/components/onboarding/WelcomeTour';
 import RightNowNotifications from '@/components/discovery/RightNowNotifications';
 import PersistentRadioPlayer from '@/components/shell/PersistentRadioPlayer';
+import { Radio as RadioIcon } from 'lucide-react';
+import { useRadio } from '@/components/shell/RadioContext';
 
       const PRIMARY_NAV = [
         { name: 'Pulse', icon: Home, path: 'Home' },
@@ -49,6 +51,7 @@ export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
+  const { toggleRadio, isRadioOpen } = useRadio();
   
   // Enable keyboard navigation
   useKeyboardNav();
@@ -122,16 +125,23 @@ export default function Layout({ children, currentPageName }) {
                 HOTMESS
               </Link>
               <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowSearch(true)}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                    aria-label="Open search"
-                    data-search-trigger
-                  >
-                    <Search className="w-5 h-5" />
-                  </button>
-                  {user && <NotificationCenter currentUser={user} />}
-                  <button
+                <button
+                  onClick={() => setShowSearch(true)}
+                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                  aria-label="Open search"
+                  data-search-trigger
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={toggleRadio}
+                  className={`p-2 rounded-lg transition-colors ${isRadioOpen ? 'bg-[#B026FF] text-white' : 'bg-white/5 hover:bg-white/10'}`}
+                  aria-label="Toggle radio"
+                >
+                  <RadioIcon className="w-5 h-5" />
+                </button>
+                {user && <NotificationCenter currentUser={user} />}
+                <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                   aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
@@ -210,7 +220,16 @@ export default function Layout({ children, currentPageName }) {
                 <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
                   HOT<span className="text-[#FF1493]">MESS</span>
                 </Link>
-                {user && <NotificationCenter currentUser={user} />}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={toggleRadio}
+                    className={`p-1.5 rounded-lg transition-colors ${isRadioOpen ? 'bg-[#B026FF] text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                    aria-label="Toggle radio"
+                  >
+                    <RadioIcon className="w-4 h-4" />
+                  </button>
+                  {user && <NotificationCenter currentUser={user} />}
+                </div>
               </div>
               <p className="text-[8px] text-white/40 uppercase tracking-wider mt-1">LONDON OS</p>
             </div>
