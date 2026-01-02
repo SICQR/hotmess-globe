@@ -28,7 +28,15 @@ export default function Checkout() {
 
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', currentUser?.email],
-    queryFn: () => base44.entities.CartItem.filter({ user_email: currentUser.email }),
+    queryFn: async () => {
+      const items = await base44.entities.CartItem.filter({ user_email: currentUser.email });
+      // Filter out expired reservations (30min timeout)
+      const now = new Date();
+      return items.filter(item => {
+        if (!item.reserved_until) return true;
+        return new Date(item.reserved_until) > now;
+      });
+    },
     enabled: !!currentUser
   });
 

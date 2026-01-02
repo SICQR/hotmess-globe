@@ -8,10 +8,12 @@ import Checkout from './pages/Checkout';
 import Community from './pages/Community';
 import Connect from './pages/Connect';
 import CreateBeacon from './pages/CreateBeacon';
+import DialADaddy from './pages/DialADaddy';
 import EditBeacon from './pages/EditBeacon';
 import EditProfile from './pages/EditProfile';
 import Events from './pages/Events';
 import Globe from './pages/Globe';
+import HandNHand from './pages/HandNHand';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
 import Marketplace from './pages/Marketplace';
@@ -25,14 +27,12 @@ import Profile from './pages/Profile';
 import ProfileSetup from './pages/ProfileSetup';
 import PromoteToAdmin from './pages/PromoteToAdmin';
 import Radio from './pages/Radio';
+import RadioSchedule from './pages/RadioSchedule';
 import RightNowDashboard from './pages/RightNowDashboard';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
 import WakeTheMess from './pages/WakeTheMess';
-import DialADaddy from './pages/DialADaddy';
-import HandNHand from './pages/HandNHand';
-import RadioSchedule from './pages/RadioSchedule';
 import __Layout from './Layout.jsx';
 
 
@@ -47,10 +47,12 @@ export const PAGES = {
     "Community": Community,
     "Connect": Connect,
     "CreateBeacon": CreateBeacon,
+    "DialADaddy": DialADaddy,
     "EditBeacon": EditBeacon,
     "EditProfile": EditProfile,
     "Events": Events,
     "Globe": Globe,
+    "HandNHand": HandNHand,
     "Home": Home,
     "Leaderboard": Leaderboard,
     "Marketplace": Marketplace,
@@ -64,14 +66,12 @@ export const PAGES = {
     "ProfileSetup": ProfileSetup,
     "PromoteToAdmin": PromoteToAdmin,
     "Radio": Radio,
+    "RadioSchedule": RadioSchedule,
     "RightNowDashboard": RightNowDashboard,
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
     "WakeTheMess": WakeTheMess,
-    "DialADaddy": DialADaddy,
-    "HandNHand": HandNHand,
-    "RadioSchedule": RadioSchedule,
 }
 
 export const pagesConfig = {

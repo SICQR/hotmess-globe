@@ -113,7 +113,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     scene.add(globe);
 
     // Sphere with Earth texture - LOD optimization
-    const sphereGeo = new THREE.SphereGeometry(globeRadius, 64, 64); // Reduced from 128 to 64
+    const sphereGeo = new THREE.SphereGeometry(globeRadius, 48, 48); // Further reduced for mobile
 
     // Load Earth textures
     const textureLoader = new THREE.TextureLoader();
@@ -162,7 +162,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     globe.add(sphere);
 
     // Atmosphere glow - LOD optimization
-    const atmosphereGeo = new THREE.SphereGeometry(globeRadius * 1.1, 32, 32); // Reduced segments
+    const atmosphereGeo = new THREE.SphereGeometry(globeRadius * 1.1, 24, 24); // Further reduced segments
     const atmosphereMat = new THREE.ShaderMaterial({
       transparent: true,
       side: THREE.BackSide,
@@ -220,7 +220,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       // Don't cluster if zoomed in close (z < 3.5)
       if (zoomLevel < 3.5) return beacons.map(b => ({ ...b, isCluster: false, count: 1 }));
 
-      const clusterRadius = 5; // degrees
+      // Adaptive cluster radius based on zoom
+      const clusterRadius = zoomLevel > 5 ? 10 : zoomLevel > 4 ? 7 : 5;
       const clusters = new Map();
 
       beacons.forEach(beacon => {
@@ -253,9 +254,10 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     };
 
     // Beacon pins layer with clustering
-    const beaconGeo = new THREE.SphereGeometry(0.015, 8, 8);
+    const beaconGeo = new THREE.SphereGeometry(0.015, 6, 6); // Reduced for performance
     const beaconMeshes = [];
     let currentClusters = [];
+    let lastClusterUpdate = 0;
     
     const updateBeaconClusters = () => {
       // Clear existing beacon meshes
@@ -837,11 +839,15 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       const zoomDiff = targetCameraZ - camera.position.z;
       camera.position.z += zoomDiff * 0.12;
 
-      // Re-cluster beacons when zoom level changes significantly
-      const zoomThresholds = [3, 4, 5];
-      const currentZoomLevel = Math.round(camera.position.z);
-      if (zoomThresholds.includes(currentZoomLevel) && Math.abs(zoomDiff) < 0.01) {
-        updateBeaconClusters();
+      // Re-cluster beacons when zoom level changes significantly (throttled)
+      const now = Date.now();
+      if (now - lastClusterUpdate > 1000 && Math.abs(zoomDiff) < 0.01) {
+        const zoomThresholds = [3, 4, 5];
+        const currentZoomLevel = Math.round(camera.position.z);
+        if (zoomThresholds.includes(currentZoomLevel)) {
+          updateBeaconClusters();
+          lastClusterUpdate = now;
+        }
       }
 
       // Update arc shaders
