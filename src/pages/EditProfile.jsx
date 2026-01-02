@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Save, User, Music, Sparkles, Link as LinkIcon, Upload, Briefcase, Zap, Plus, X, Users as UsersIcon, Image as ImageIcon, Video as VideoIcon, Crown } from 'lucide-react';
+import { ArrowLeft, Save, User, Music, Sparkles, Link as LinkIcon, Upload, Briefcase, Zap, Plus, X, Users as UsersIcon, Image as ImageIcon, Video as VideoIcon, Crown, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,6 +28,14 @@ const ACTIVITY_STATUSES = [
   { value: 'offline', label: 'Offline', color: '#666' },
 ];
 const SKILLS = ['DJ', 'Producer', 'Designer', 'Photographer', 'Videographer', 'Promoter', 'Artist', 'Performer'];
+
+const PROFILE_THEMES = [
+  { id: 'default', label: 'Default', gradient: 'from-[#FF1493] to-[#B026FF]' },
+  { id: 'cyber', label: 'Cyber', gradient: 'from-[#00D9FF] to-[#39FF14]' },
+  { id: 'sunset', label: 'Sunset', gradient: 'from-[#FF6B35] to-[#FFEB3B]' },
+  { id: 'midnight', label: 'Midnight', gradient: 'from-[#1a1a2e] to-[#16213e]' },
+  { id: 'neon', label: 'Neon', gradient: 'from-[#FF1493] to-[#00D9FF]' }
+];
 
 export default function EditProfile() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -63,6 +71,8 @@ export default function EditProfile() {
   const [newDealbreaker, setNewDealbreaker] = useState('');
   const [availabilityStatus, setAvailabilityStatus] = useState('offline');
   const [preferredCommunication, setPreferredCommunication] = useState([]);
+  const [profileTheme, setProfileTheme] = useState('default');
+  const [accentColor, setAccentColor] = useState('#FF1493');
   const [tagVisibility, setTagVisibility] = useState({
     substances_visibility: 'nobody',
     aftercare_visibility: 'matches',
@@ -118,6 +128,8 @@ export default function EditProfile() {
         setDealbrekersText(user.dealbreakers_text || []);
         setAvailabilityStatus(user.availability_status || 'offline');
         setPreferredCommunication(user.preferred_communication || []);
+        setProfileTheme(user.profile_theme || 'default');
+        setAccentColor(user.accent_color || '#FF1493');
       } catch (error) {
         console.error('Failed to fetch user:', error);
       }
@@ -142,7 +154,7 @@ export default function EditProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['users']);
-      toast.success('Profile updated!');
+      toast.success('Profile updated! 🎉');
       navigate(createPageUrl(`Profile?email=${currentUser.email}`));
     },
     onError: () => {
@@ -170,19 +182,15 @@ export default function EditProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate bio
     const bioValidation = validateBio(bio);
     if (!bioValidation.valid) {
       toast.error(bioValidation.error);
       return;
     }
     
-    // Sanitize social links
     const sanitizedSocialLinks = sanitizeSocialLinks(socialLinks);
-    
     const musicArray = musicTaste.split(',').map(s => s.trim()).filter(Boolean).slice(0, 10);
     
-    // Update user profile
     await updateProfileMutation.mutateAsync({
       bio: bioValidation.sanitized,
       avatar_url: avatarUrl,
@@ -205,10 +213,11 @@ export default function EditProfile() {
       dealbreakers_text: dealbrekersText,
       availability_status: availabilityStatus,
       preferred_communication: preferredCommunication,
+      profile_theme: profileTheme,
+      accent_color: accentColor,
       ...tagVisibility
     });
 
-    // Delete old tribes/tags
     for (const oldTribe of userTribes) {
       await base44.entities.UserTribe.delete(oldTribe.id);
     }
@@ -216,7 +225,6 @@ export default function EditProfile() {
       await base44.entities.UserTag.delete(oldTag.id);
     }
 
-    // Create new tribes
     for (const tribeId of tribes) {
       const tribe = taxonomyConfig.tribes.find(t => t.id === tribeId);
       if (tribe) {
@@ -228,7 +236,6 @@ export default function EditProfile() {
       }
     }
 
-    // Create new tags
     for (const tagId of selectedTagIds) {
       const tag = taxonomyConfig.tags.find(t => t.id === tagId);
       if (tag) {
@@ -308,6 +315,59 @@ export default function EditProfile() {
           <p className="text-white/40 text-sm uppercase tracking-wider mb-8">Customize your hotmess presence</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Profile Theme Customization */}
+            <div className="bg-black border-2 border-white p-6">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
+                <Palette className="w-4 h-4" />
+                Profile Aesthetics
+              </Label>
+              
+              <div className="mb-6">
+                <p className="text-xs text-white/60 mb-3 uppercase">Theme</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {PROFILE_THEMES.map(theme => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => setProfileTheme(theme.id)}
+                      className={`relative overflow-hidden border-2 transition-all h-20 ${
+                        profileTheme === theme.id
+                          ? 'border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]'
+                          : 'border-white/20 hover:border-white/40'
+                      }`}
+                    >
+                      <div className={`absolute inset-0 bg-gradient-to-br ${theme.gradient}`} />
+                      <div className="relative z-10 h-full flex items-center justify-center">
+                        <span className="text-xs font-black uppercase text-white drop-shadow-lg">
+                          {theme.label}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs text-white/60 mb-2 block">Accent Color</Label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={accentColor}
+                    onChange={(e) => setAccentColor(e.target.value)}
+                    className="w-16 h-16 cursor-pointer bg-transparent border-2 border-white"
+                  />
+                  <Input
+                    type="text"
+                    value={accentColor}
+                    onChange={(e) => setAccentColor(e.target.value)}
+                    placeholder="#FF1493"
+                    className="bg-white/5 border-white/20 text-white flex-1"
+                  />
+                </div>
+                <p className="text-xs text-white/40 mt-2">Custom color for profile highlights</p>
+              </div>
+            </div>
+
             {/* Photos */}
             <div className="bg-black border-2 border-white p-6">
               <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
@@ -389,6 +449,7 @@ export default function EditProfile() {
               <p className="text-xs text-white/40 mt-2 font-mono">{bio.length}/300</p>
             </div>
 
+            {/* Rest of existing form sections... */}
             {/* Activity Status */}
             <div className="bg-black border-2 border-white p-6">
               <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Activity Status</Label>
@@ -737,7 +798,6 @@ export default function EditProfile() {
                 Tribes & Tags (Connect Discovery)
               </Label>
               
-              {/* Tribes */}
               <div className="mb-6">
                 <p className="text-xs text-white/60 mb-3 uppercase">Select up to 3 tribes</p>
                 <div className="flex flex-wrap gap-2">
@@ -766,7 +826,6 @@ export default function EditProfile() {
                 <p className="text-xs text-white/40 mt-2">{tribes.length}/3 selected</p>
               </div>
 
-              {/* Tags */}
               <div className="mb-6">
                 <p className="text-xs text-white/60 mb-3 uppercase">Tags (searchable)</p>
                 <TagSelector
@@ -782,7 +841,6 @@ export default function EditProfile() {
                 />
               </div>
 
-              {/* Intent */}
               <div className="mb-6">
                 <p className="text-xs text-white/60 mb-3 uppercase">Looking for</p>
                 <div className="flex flex-wrap gap-2">
@@ -809,7 +867,6 @@ export default function EditProfile() {
                 </div>
               </div>
 
-              {/* Aftercare */}
               <div>
                 <p className="text-xs text-white/60 mb-3 uppercase">Aftercare menu</p>
                 <div className="flex flex-wrap gap-2">

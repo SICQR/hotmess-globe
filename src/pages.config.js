@@ -17,6 +17,7 @@ import Leaderboard from './pages/Leaderboard';
 import Marketplace from './pages/Marketplace';
 import Messages from './pages/Messages';
 import Onboarding from './pages/Onboarding';
+import OnboardingGate from './pages/OnboardingGate';
 import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import ProductDetail from './pages/ProductDetail';
@@ -28,7 +29,6 @@ import RightNowDashboard from './pages/RightNowDashboard';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
-import OnboardingGate from './pages/OnboardingGate';
 import __Layout from './Layout.jsx';
 
 
@@ -52,6 +52,7 @@ export const PAGES = {
     "Marketplace": Marketplace,
     "Messages": Messages,
     "Onboarding": Onboarding,
+    "OnboardingGate": OnboardingGate,
     "OrderHistory": OrderHistory,
     "OrganizerDashboard": OrganizerDashboard,
     "ProductDetail": ProductDetail,
@@ -63,7 +64,6 @@ export const PAGES = {
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
-    "OnboardingGate": OnboardingGate,
 }
 
 export const pagesConfig = {
