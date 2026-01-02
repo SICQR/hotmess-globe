@@ -73,6 +73,18 @@ Focus on LGBT-specific venues and events. Use multiple sources to verify accurac
             kind: 'event'
           });
 
+          // Generate event image using AI
+          let imageUrl = null;
+          try {
+            const imagePrompt = `A vibrant, high-energy nightclub or LGBT event promotional image for "${event.name}" at ${event.venue_name}. ${event.description}. Colorful, dynamic, professional quality.`;
+            const imageResponse = await base44.asServiceRole.integrations.Core.GenerateImage({
+              prompt: imagePrompt
+            });
+            imageUrl = imageResponse.url;
+          } catch (err) {
+            console.log('Failed to generate image:', err.message);
+          }
+
           const eventData = {
             title: event.name,
             description: event.description,
@@ -86,9 +98,12 @@ Focus on LGBT-specific venues and events. Use multiple sources to verify accurac
             active: true,
             status: 'published',
             is_verified: true,
+            sponsored: false,
             ticket_url: event.ticket_url || null,
             capacity: event.capacity || null,
-            xp_scan: 50 // Default XP for checking in
+            xp_scan: 50,
+            intensity: 0.8, // High intensity for scraped events
+            image_url: imageUrl
           };
 
           if (existing.length > 0) {
