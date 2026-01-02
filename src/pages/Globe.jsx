@@ -201,8 +201,8 @@ export default function GlobePage() {
   const [beaconType, setBeaconType] = useState(null);
   const [minIntensity, setMinIntensity] = useState(0);
   const [recencyFilter, setRecencyFilter] = useState('all');
-  const [showControls, setShowControls] = useState(true);
-  const [showPanel, setShowPanel] = useState(true);
+  const [showControls, setShowControls] = useState(false);
+  const [showPanel, setShowPanel] = useState(false);
   const [searchResults, setSearchResults] = useState(null);
   const [radiusSearch, setRadiusSearch] = useState(null);
   const [userActivities, setUserActivities] = useState([]);
@@ -290,7 +290,13 @@ export default function GlobePage() {
     // Don't handle cluster clicks
     if (beacon.isCluster) return;
     
-    // Show preview panel instead of full detail
+    // Close all other panels first
+    setShowControls(false);
+    setShowPanel(false);
+    setShowNearbyGrid(false);
+    setShowLocalBeacons(false);
+    
+    // Show preview panel
     setPreviewBeacon(beacon);
     
     // Track activity
@@ -308,9 +314,6 @@ export default function GlobePage() {
       setSelectedBeacon(previewBeacon);
       setLocalBeaconCenter(previewBeacon);
       setShowLocalBeacons(true);
-      setShowPanel(false);
-      setShowControls(false);
-      setShowNearbyGrid(false);
       setPreviewBeacon(null);
     }
   }, [previewBeacon]);
@@ -456,10 +459,13 @@ export default function GlobePage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              setShowNearbyGrid(!showNearbyGrid);
-              if (!showNearbyGrid) {
+              const newState = !showNearbyGrid;
+              setShowNearbyGrid(newState);
+              if (newState) {
                 setShowControls(false);
                 setShowPanel(false);
+                setShowLocalBeacons(false);
+                setPreviewBeacon(null);
               }
             }}
             className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
@@ -470,8 +476,14 @@ export default function GlobePage() {
           </button>
           <button
             onClick={() => {
-              setShowControls(!showControls);
-              if (!showControls) setShowNearbyGrid(false);
+              const newState = !showControls;
+              setShowControls(newState);
+              if (newState) {
+                setShowPanel(false);
+                setShowNearbyGrid(false);
+                setShowLocalBeacons(false);
+                setPreviewBeacon(null);
+              }
             }}
             className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
               showControls ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
@@ -481,8 +493,14 @@ export default function GlobePage() {
           </button>
           <button
             onClick={() => {
-              setShowPanel(!showPanel);
-              if (!showPanel) setShowNearbyGrid(false);
+              const newState = !showPanel;
+              setShowPanel(newState);
+              if (newState) {
+                setShowControls(false);
+                setShowNearbyGrid(false);
+                setShowLocalBeacons(false);
+                setPreviewBeacon(null);
+              }
             }}
             className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
               showPanel ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
@@ -565,7 +583,7 @@ export default function GlobePage() {
       )}
 
       {/* Local Beacons View */}
-      {showLocalBeacons && localBeaconCenter && (
+      {showLocalBeacons && localBeaconCenter && !previewBeacon && (
         <FloatingPanel 
           title="Local Area" 
           position="right" 
@@ -573,6 +591,7 @@ export default function GlobePage() {
           onClose={() => {
             setShowLocalBeacons(false);
             setLocalBeaconCenter(null);
+            setSelectedBeacon(null);
           }}
         >
           <LocalBeaconsView 
@@ -581,6 +600,7 @@ export default function GlobePage() {
             onClose={() => {
               setShowLocalBeacons(false);
               setLocalBeaconCenter(null);
+              setSelectedBeacon(null);
             }}
             onBeaconSelect={handleBeaconClick}
           />
