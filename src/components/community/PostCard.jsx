@@ -234,6 +234,8 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
             <Share2 className="w-4 h-4" />
             {post.shares_count > 0 && <span>{post.shares_count}</span>}
           </button>
+
+          <ReportButton itemType="post" itemId={post.id} variant="ghost" />
         </div>
       </div>
     </motion.div>
