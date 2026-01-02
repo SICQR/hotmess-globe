@@ -1,61 +1,39 @@
 /**
- * Grid-snap coordinates to 500m radius for privacy
- * Uses 0.005 degree grid (~500m at London latitude)
+ * PostGIS ST_SnapToGrid implementation for geospatial privacy
+ * Snaps coordinates to a 500m grid to prevent exact location tracking
  */
-export function snapToGrid(lat, lng, gridSize = 0.005) {
-  const snappedLat = Math.round(lat / gridSize) * gridSize;
-  const snappedLng = Math.round(lng / gridSize) * gridSize;
-  return { lat: snappedLat, lng: snappedLng };
-}
 
-/**
- * Add random jitter within grid cell for additional obfuscation
- */
-export function addJitter(lat, lng, maxJitter = 0.002) {
-  const jitterLat = (Math.random() - 0.5) * maxJitter;
-  const jitterLng = (Math.random() - 0.5) * maxJitter;
+const GRID_SIZE = 0.0045; // ~500m at equator (0.0045 degrees ≈ 500m)
+
+export function snapToGrid(lat, lng) {
+  if (typeof lat !== 'number' || typeof lng !== 'number') {
+    return { lat: 0, lng: 0 };
+  }
+  
+  // Snap to grid by rounding to nearest grid point
+  const snappedLat = Math.floor(lat / GRID_SIZE) * GRID_SIZE;
+  const snappedLng = Math.floor(lng / GRID_SIZE) * GRID_SIZE;
+  
   return {
-    lat: lat + jitterLat,
-    lng: lng + jitterLng
+    lat: snappedLat,
+    lng: snappedLng
   };
 }
 
 /**
- * Calculate distance between two points in meters
+ * Calculate fuzzy distance between two grid-snapped locations
  */
-export function calculateDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371e3; // Earth radius in meters
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
-
-  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+export function calculateFuzzyDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c;
-}
-
-/**
- * Process location based on user's privacy setting
- */
-export function processLocationForPrivacy(lat, lng, privacyMode = 'fuzzy') {
-  switch (privacyMode) {
-    case 'precise':
-      return { lat, lng };
-    case 'fuzzy':
-      return snapToGrid(lat, lng);
-    case 'hidden':
-      return null;
-    default:
-      return snapToGrid(lat, lng);
-  }
-}
-
-/**
- * Format location for display (shows approximate area, not exact coords)
- */
-export function formatLocationDisplay(lat, lng) {
-  return `~${lat.toFixed(2)}°, ${lng.toFixed(2)}°`;
+  const distance = R * c;
+  
+  return Math.round(distance * 10) / 10; // Round to 1 decimal
 }

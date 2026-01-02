@@ -127,6 +127,36 @@ export default function Profile() {
     refetchInterval: 15000
   });
 
+  // Track profile view
+  useEffect(() => {
+    const trackView = async () => {
+      if (!currentUser || !userEmail || isOwnProfile) return;
+      
+      try {
+        await base44.entities.ProfileView.create({
+          viewer_email: currentUser.email,
+          viewed_email: userEmail,
+          viewed_at: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.log('Failed to track profile view');
+      }
+    };
+    
+    trackView();
+  }, [currentUser, userEmail, isOwnProfile]);
+
+  // Fetch profile views
+  const { data: profileViews = [] } = useQuery({
+    queryKey: ['profile-views', userEmail],
+    queryFn: () => base44.entities.ProfileView.filter({ viewed_email: userEmail }, '-viewed_at'),
+    enabled: !!userEmail && isOwnProfile,
+  });
+
+  const viewCount = profileViews.length;
+  const tier = currentUser?.membership_tier || 'basic';
+  const canSeeViewers = level >= 5 && (tier === 'plus' || tier === 'pro');
+
   const followMutation = useMutation({
     mutationFn: () => base44.entities.UserFollow.create({
       follower_email: currentUser.email,
@@ -455,6 +485,66 @@ export default function Profile() {
               city={profileUser.city}
             />
           </motion.div>
+
+          {/* Profile Views */}
+          {isOwnProfile && viewCount > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="mb-6 bg-white/5 border border-white/10 rounded-xl p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <User className="w-5 h-5 text-[#00D9FF]" />
+                  <h2 className="text-xl font-black uppercase">Profile Views</h2>
+                </div>
+                <span className="text-2xl font-black text-[#00D9FF]">{viewCount}</span>
+              </div>
+              
+              {canSeeViewers ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-white/60 uppercase mb-3">Recent Viewers (PLUS/PRO Perk)</p>
+                  {profileViews.slice(0, 10).map((view, idx) => {
+                    const viewer = allUsers.find(u => u.email === view.viewer_email);
+                    if (!viewer) return null;
+                    
+                    return (
+                      <Link key={idx} to={createPageUrl(`Profile?email=${viewer.email}`)}>
+                        <div className="flex items-center gap-3 p-2 hover:bg-white/5 transition-colors">
+                          <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center">
+                            {viewer.avatar_url ? (
+                              <img src={viewer.avatar_url} alt={viewer.full_name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-xs font-bold">{viewer.full_name?.[0]}</span>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-bold text-sm">{viewer.full_name}</p>
+                            <p className="text-xs text-white/40">{format(new Date(view.viewed_at), 'MMM d, h:mm a')}</p>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-white/60 mb-2">
+                    {level < 5 ? `Reach Level 5 to see who viewed your profile (currently Level ${level})` : 'Upgrade to PLUS or PRO to see who viewed your profile'}
+                  </p>
+                  {level >= 5 && (
+                    <Link to={createPageUrl('MembershipUpgrade')}>
+                      <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black mt-2">
+                        <Zap className="w-4 h-4 mr-2" />
+                        UPGRADE NOW
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          )}
 
 
 

@@ -277,9 +277,10 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         const isHighlighted = highlightedIds.includes(beacon.id);
         const isCareBeacon = beacon.mode === 'care';
         const isRightNow = beacon.isRightNow;
+        const isColdVibe = beacon.cold_vibe;
         const isCluster = beacon.isCluster;
 
-        const color = isCareBeacon ? 0x00d9ff : isHighlighted ? 0xffeb3b : isRightNow ? 0x39ff14 : 0xff1493;
+        const color = isCareBeacon ? 0x00d9ff : isHighlighted ? 0xffeb3b : isColdVibe ? 0x50C878 : isRightNow ? 0x39ff14 : 0xff1493;
         const emissiveIntensity = isCareBeacon ? 1.5 : isHighlighted ? 1.2 : 0.8;
         
         // Scale up clusters
@@ -467,7 +468,72 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       globe.add(cityGroup);
     }
 
-    // Mood blobs - fuzzy GPS user intents (removed)
+    // Mood blobs - fuzzy GPS user intents (ST_SnapToGrid privacy)
+    const moodBlobsGroup = new THREE.Group();
+    if (showActivity && userIntents.length > 0) {
+      // Import snapToGrid for privacy
+      const snapToGrid = (lat, lng) => {
+        const GRID_SIZE = 0.0045; // 500m grid
+        return {
+          lat: Math.floor(lat / GRID_SIZE) * GRID_SIZE,
+          lng: Math.floor(lng / GRID_SIZE) * GRID_SIZE
+        };
+      };
+
+      // Group users by snapped grid cell
+      const gridCells = new Map();
+      userIntents.forEach(intent => {
+        if (!intent.location?.lat || !intent.location?.lng) return;
+        const snapped = snapToGrid(intent.location.lat, intent.location.lng);
+        const key = `${snapped.lat.toFixed(4)}_${snapped.lng.toFixed(4)}`;
+        if (!gridCells.has(key)) {
+          gridCells.set(key, []);
+        }
+        gridCells.get(key).push(intent);
+      });
+
+      // Render mood blobs for each grid cell
+      gridCells.forEach((intents, key) => {
+        const [lat, lng] = key.split('_').map(Number);
+        const pos = latLngToVector3(lat, lng, globeRadius * 1.015);
+
+        // Calculate dominant mood color
+        const coldVibeCount = intents.filter(i => i.cold_vibe).length;
+        const isColdVibeDominant = coldVibeCount > intents.length / 2;
+        const color = isColdVibeDominant ? 0x50C878 : 0xFF1493;
+
+        // Blob size based on user count
+        const blobSize = Math.min(0.05 + (intents.length * 0.01), 0.15);
+
+        // Create pulsing blob
+        const blobGeo = new THREE.SphereGeometry(blobSize, 16, 16);
+        const blobMat = new THREE.MeshBasicMaterial({
+          color: color,
+          transparent: true,
+          opacity: 0.6,
+          blending: THREE.AdditiveBlending
+        });
+        const blob = new THREE.Mesh(blobGeo, blobMat);
+        blob.position.copy(pos);
+        blob.userData = { isPulsingBlob: true, baseSize: blobSize, intents };
+        moodBlobsGroup.add(blob);
+
+        // Outer glow
+        const glowGeo = new THREE.SphereGeometry(blobSize * 1.5, 16, 16);
+        const glowMat = new THREE.MeshBasicMaterial({
+          color: color,
+          transparent: true,
+          opacity: 0.3,
+          blending: THREE.AdditiveBlending,
+          side: THREE.BackSide
+        });
+        const glow = new THREE.Mesh(glowGeo, glowMat);
+        glow.position.copy(pos);
+        moodBlobsGroup.add(glow);
+      });
+
+      globe.add(moodBlobsGroup);
+    }
 
     // User activity trails - real-time user actions
     const userTrails = [];
@@ -857,12 +923,16 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         }
       });
 
-      // Pulse Right Now beacons
+      // Pulse Right Now beacons and mood blobs
       scene.traverse(obj => {
         if (obj.userData?.isPulse) {
           const scale = obj.userData.baseScale * (1 + Math.sin(time * 2) * 0.3);
           obj.scale.set(scale, scale, 1);
           obj.material.opacity = 0.2 + Math.sin(time * 2) * 0.15;
+        }
+        if (obj.userData?.isPulsingBlob) {
+          const scale = 1 + Math.sin(time * 1.5) * 0.2;
+          obj.scale.setScalar(scale);
         }
       });
 

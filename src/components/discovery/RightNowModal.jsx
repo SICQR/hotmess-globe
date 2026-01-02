@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Zap, Clock, Home, Car, Building, HelpCircle } from 'lucide-react';
+import { Zap, Clock, Home, Car, Building, HelpCircle, Sparkles } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -23,6 +24,7 @@ const LOGISTICS = [
 export default function RightNowModal({ isOpen, onClose, currentUser }) {
   const [duration, setDuration] = useState(60);
   const [logistics, setLogistics] = useState([]);
+  const [coldVibe, setColdVibe] = useState(false);
   const queryClient = useQueryClient();
 
   const goLiveMutation = useMutation({
@@ -61,6 +63,7 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
         duration_minutes: duration,
         expires_at: expiresAt,
         logistics,
+        cold_vibe: coldVibe,
         active: true
       });
       
@@ -145,6 +148,26 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Cold Vibe Mode */}
+          <div className="bg-[#50C878]/10 border-2 border-[#50C878] p-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <Checkbox
+                checked={coldVibe}
+                onCheckedChange={setColdVibe}
+                className="border-[#50C878] data-[state=checked]:bg-[#50C878] data-[state=checked]:border-[#50C878]"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles className="w-4 h-4 text-[#50C878]" />
+                  <span className="font-black uppercase text-sm text-[#50C878]">Cold Vibe Mode</span>
+                </div>
+                <p className="text-xs text-white/60">
+                  Cali Sober intent. +15 XP bonus on radio. Emerald glow on globe.
+                </p>
+              </div>
+            </label>
           </div>
 
           {/* Microcopy */}
