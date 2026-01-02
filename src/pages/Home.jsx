@@ -481,8 +481,6 @@ export default function Home() {
           )}
         </motion.div>
       </section>
-
-      <TutorialTooltip page="home" />
     </div>
   );
 }
