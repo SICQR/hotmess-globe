@@ -14,6 +14,7 @@ import EventCard from '../components/events/EventCard';
 import PersonalizedRecommendations from '../components/events/PersonalizedRecommendations';
 import EventsMapView from '../components/events/EventsMapView';
 import NightlifeResearcher from '../components/ai/NightlifeResearcher';
+import AIEventRecommendations from '../components/events/AIEventRecommendations';
 
 export default function Events() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -182,13 +183,23 @@ export default function Events() {
               Discover what's happening in London tonight
             </p>
           </div>
-          <Button
-            onClick={() => setViewMode('map')}
-            className="bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black border-2 border-white"
-          >
-            <Map className="w-4 h-4 mr-2" />
-            MAP VIEW
-          </Button>
+          <div className="flex gap-2">
+            <Link to={createPageUrl('MyEvents')}>
+              <Button
+                variant="outline"
+                className="border-[#FF1493] text-[#FF1493] hover:bg-[#FF1493]/10 font-black"
+              >
+                MY EVENTS
+              </Button>
+            </Link>
+            <Button
+              onClick={() => setViewMode('map')}
+              className="bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black border-2 border-white"
+            >
+              <Map className="w-4 h-4 mr-2" />
+              MAP VIEW
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -268,6 +279,9 @@ export default function Events() {
             )}
           </div>
         </div>
+
+        {/* AI Event Recommendations */}
+        {currentUser && <AIEventRecommendations currentUser={currentUser} />}
 
         {/* AI Nightlife Researcher */}
         {currentUser && (
