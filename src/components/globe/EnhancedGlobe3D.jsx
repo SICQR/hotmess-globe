@@ -46,6 +46,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   onCityClick,
   selectedCity = null,
   highlightedIds = [],
+  onSceneReady,
   className = ''
 }, ref) {
   const mountRef = useRef(null);
@@ -106,6 +107,11 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     const directional = new THREE.DirectionalLight(0xffffff, 1.2);
     directional.position.set(5, 3, 5);
     scene.add(directional);
+
+    // Notify parent that scene is ready
+    if (onSceneReady) {
+      onSceneReady(scene);
+    }
 
     // Globe
     const globeRadius = 1.4;
