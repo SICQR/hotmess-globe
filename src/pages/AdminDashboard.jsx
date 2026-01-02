@@ -13,6 +13,7 @@ import AdvancedAnalytics from '../components/analytics/AdvancedAnalytics';
 import { ABTestResults } from '../components/analytics/ABTestingFramework';
 import BulkUserInvite from '../components/admin/BulkUserInvite';
 import EventScraperControl from '../components/admin/EventScraperControl';
+import ModerationQueue from '../components/admin/ModerationQueue';
 
 export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
