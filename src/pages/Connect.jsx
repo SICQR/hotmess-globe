@@ -98,8 +98,20 @@ export default function Connect() {
   // Build profile objects for filtering
   const profiles = useMemo(() => {
     if (!currentUser) return [];
+    // Include current user in Right Now lane, exclude elsewhere
     return allUsers
-      .filter(u => u.email !== currentUser.email)
+      .filter(u => {
+        if (u.email === currentUser.email) {
+          // Show self only if Right Now active
+          const isLive = rightNowStatuses.some(s => 
+            s.user_email === u.email && 
+            s.active && 
+            new Date(s.expires_at) > new Date()
+          );
+          return isLive && lane === 'right_now';
+        }
+        return true;
+      })
       .map(u => {
         const uTags = userTags.filter(t => t.user_email === u.email);
         const uTribes = userTribes.filter(t => t.user_email === u.email);
