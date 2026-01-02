@@ -12,6 +12,7 @@ import UserVerification from '../components/admin/UserVerification';
 import AdvancedAnalytics from '../components/analytics/AdvancedAnalytics';
 import { ABTestResults } from '../components/analytics/ABTestingFramework';
 import BulkUserInvite from '../components/admin/BulkUserInvite';
+import EventScraperControl from '../components/admin/EventScraperControl';
 
 export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -155,7 +156,10 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="events">
-            <EventManagement />
+            <div className="space-y-6">
+              <EventScraperControl />
+              <EventManagement />
+            </div>
           </TabsContent>
 
           <TabsContent value="advanced">
