@@ -36,6 +36,8 @@ import Settings from './pages/Settings';
 import SquadChat from './pages/SquadChat';
 import TicketMarketplace from './pages/TicketMarketplace';
 import WakeTheMess from './pages/WakeTheMess';
+import AccountConsents from './pages/AccountConsents';
+import MembershipUpgrade from './pages/MembershipUpgrade';
 import __Layout from './Layout.jsx';
 
 
@@ -78,6 +80,8 @@ export const PAGES = {
     "SquadChat": SquadChat,
     "TicketMarketplace": TicketMarketplace,
     "WakeTheMess": WakeTheMess,
+    "AccountConsents": AccountConsents,
+    "MembershipUpgrade": MembershipUpgrade,
 }
 
 export const pagesConfig = {
