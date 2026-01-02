@@ -17,6 +17,7 @@ import PageErrorBoundary from '@/components/error/PageErrorBoundary';
 import SkipToContent from '@/components/accessibility/SkipToContent';
 import { useKeyboardNav } from '@/components/accessibility/KeyboardNav';
 import { A11yAnnouncer } from '@/components/accessibility/KeyboardNav';
+import WelcomeTour from '@/components/onboarding/WelcomeTour';
 
       const PRIMARY_NAV = [
   { name: 'Pulse', icon: Home, path: 'Home' },
@@ -90,6 +91,7 @@ export default function Layout({ children, currentPageName }) {
           <SkipToContent />
           <A11yAnnouncer />
           <OfflineIndicator />
+          {user && currentPageName === 'Home' && <WelcomeTour />}
         <div className="min-h-screen bg-black text-white">
       {!isGlobePage && (
         <>

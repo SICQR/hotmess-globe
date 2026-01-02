@@ -22,6 +22,8 @@ import { sanitizeText, sanitizeURL, sanitizeSocialLinks } from '../components/ut
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import RightNowIndicator from '../components/discovery/RightNowIndicator';
+import ProfileCompleteness from '../components/profile/ProfileCompleteness';
+import WelcomeTour from '../components/onboarding/WelcomeTour';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -314,8 +316,12 @@ export default function Profile() {
 
   return (
     <ErrorBoundary>
+      <WelcomeTour />
       <div className="min-h-screen bg-black text-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
+        {/* Profile Completeness */}
+        {isOwnProfile && <ProfileCompleteness user={profileUser} />}
+
         {/* Profile Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
