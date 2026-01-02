@@ -21,7 +21,6 @@ import { A11yAnnouncer } from '@/components/accessibility/KeyboardNav';
 import WelcomeTour from '@/components/onboarding/WelcomeTour';
 import RightNowNotifications from '@/components/discovery/RightNowNotifications';
 import PersistentRadioPlayer from '@/components/shell/PersistentRadioPlayer';
-import RadioToggleButton from '@/components/shell/RadioToggleButton';
 
       const PRIMARY_NAV = [
         { name: 'Pulse', icon: Home, path: 'Home' },
@@ -132,7 +131,6 @@ export default function Layout({ children, currentPageName }) {
                     <Search className="w-5 h-5" />
                   </button>
                   {user && <NotificationCenter currentUser={user} />}
-                  <RadioToggleButton />
                   <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
@@ -212,10 +210,7 @@ export default function Layout({ children, currentPageName }) {
                 <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
                   HOT<span className="text-[#FF1493]">MESS</span>
                 </Link>
-                <div className="flex items-center gap-2">
-                  {user && <NotificationCenter currentUser={user} />}
-                  <RadioToggleButton />
-                </div>
+                {user && <NotificationCenter currentUser={user} />}
               </div>
               <p className="text-[8px] text-white/40 uppercase tracking-wider mt-1">LONDON OS</p>
             </div>

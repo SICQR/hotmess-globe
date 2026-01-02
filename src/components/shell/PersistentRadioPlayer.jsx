@@ -134,18 +134,25 @@ export default function PersistentRadioPlayer() {
     <motion.button
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.95 }}
       onClick={() => setIsRadioOpen(true)}
-      className="fixed bottom-4 right-4 z-[100] w-14 h-14 bg-[#B026FF] rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform border-2 border-white"
+      className="fixed bottom-6 right-6 z-[100] w-16 h-16 bg-[#B026FF] rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(176,38,255,0.6)] hover:shadow-[0_0_40px_rgba(176,38,255,0.8)] transition-all border-2 border-white"
     >
-      <Radio className="w-6 h-6 text-white" />
+      <Radio className="w-7 h-7 text-white" />
       {isPlaying && (
         <>
           <motion.div
-            animate={{ scale: [1, 1.4, 1] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
-            className="absolute inset-0 bg-[#B026FF] rounded-full opacity-50"
+            animate={{ scale: [1, 1.5, 1] }}
+            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+            className="absolute inset-0 bg-[#B026FF] rounded-full opacity-40"
           />
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#39FF14] rounded-full animate-pulse" />
+          <motion.div
+            animate={{ scale: [1, 1.3, 1] }}
+            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut", delay: 0.5 }}
+            className="absolute inset-0 bg-[#B026FF] rounded-full opacity-30"
+          />
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#39FF14] rounded-full animate-pulse shadow-[0_0_10px_rgba(57,255,20,0.8)]" />
         </>
       )}
     </motion.button>
