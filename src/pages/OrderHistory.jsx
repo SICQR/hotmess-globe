@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import MessageButton from '../components/social/MessageButton';
 import QRCodeGenerator from '../components/orders/QRCodeGenerator';
 import OrderQRScanner from '../components/orders/OrderQRScanner';
+import MarketplaceReviewModal from '../components/marketplace/MarketplaceReviewModal';
 
 const STATUS_CONFIG = {
   pending: { color: '#FFEB3B', icon: Clock },
@@ -26,6 +27,7 @@ const STATUS_CONFIG = {
 
 export default function OrderHistory() {
   const [currentUser, setCurrentUser] = useState(null);
+  const [reviewingOrder, setReviewingOrder] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -60,6 +62,12 @@ export default function OrderHistory() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list(),
+  });
+
+  const { data: myReviews = [] } = useQuery({
+    queryKey: ['my-reviews', currentUser?.email],
+    queryFn: () => base44.entities.MarketplaceReview.filter({ reviewer_email: currentUser.email }),
+    enabled: !!currentUser
   });
 
   const isLoading = loadingBuyer || loadingSeller;
@@ -104,6 +112,8 @@ export default function OrderHistory() {
     const orderItems = allOrderItems.filter(item => item.order_id === order.id);
     const otherPartyEmail = isSeller ? order.buyer_email : order.seller_email;
     const otherParty = allUsers.find(u => u.email === otherPartyEmail);
+    const hasReviewed = myReviews.some(r => r.order_id === order.id);
+    const canReview = (order.status === 'delivered' || order.is_qr_scanned) && !hasReviewed;
 
     return (
       <motion.div
@@ -222,7 +232,7 @@ export default function OrderHistory() {
         )}
 
         {otherParty && currentUser && (
-          <div className="mt-4 pt-4 border-t border-white/10">
+          <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
             <MessageButton
               targetUser={otherParty}
               currentUser={currentUser}
@@ -230,6 +240,19 @@ export default function OrderHistory() {
               metadata={{ order_id: order.id }}
               className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white"
             />
+            {canReview && (
+              <Button
+                onClick={() => setReviewingOrder(order)}
+                className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black"
+              >
+                Leave Review
+              </Button>
+            )}
+            {hasReviewed && (
+              <div className="text-xs text-white/40 text-center py-2">
+                ✓ Review submitted
+              </div>
+            )}
           </div>
         )}
       </motion.div>
@@ -298,6 +321,15 @@ export default function OrderHistory() {
             )}
           </TabsContent>
         </Tabs>
+
+        {currentUser && (
+          <MarketplaceReviewModal
+            isOpen={!!reviewingOrder}
+            onClose={() => setReviewingOrder(null)}
+            order={reviewingOrder}
+            currentUser={currentUser}
+          />
+        )}
       </div>
     </div>
   );

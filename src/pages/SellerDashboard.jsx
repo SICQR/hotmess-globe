@@ -11,6 +11,7 @@ import SalesAnalytics from '../components/seller/SalesAnalytics';
 import PromotionManager from '../components/seller/PromotionManager';
 import PayoutManager from '../components/seller/PayoutManager';
 import InventoryAlerts from '../components/seller/InventoryAlerts';
+import OffersList from '../components/marketplace/OffersList';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -205,6 +206,7 @@ export default function SellerDashboard() {
           <TabsList className="bg-white/5 border border-white/10 mb-6">
             <TabsTrigger value="products">My Products</TabsTrigger>
             <TabsTrigger value="orders">Orders ({orders.length})</TabsTrigger>
+            <TabsTrigger value="offers">Offers</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="promotions">Promotions</TabsTrigger>
             <TabsTrigger value="payouts">Payouts</TabsTrigger>
@@ -332,6 +334,10 @@ export default function SellerDashboard() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="offers">
+            <OffersList userEmail={currentUser?.email} type="received" />
           </TabsContent>
 
           <TabsContent value="analytics">
