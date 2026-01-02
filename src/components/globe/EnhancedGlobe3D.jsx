@@ -719,28 +719,27 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       
       // Check beacons first
       const beaconIntersects = raycaster.intersectObjects(beaconMeshes);
-
       if (beaconIntersects.length > 0 && onBeaconClick) {
-        const beacon = beaconIntersects[0].object.userData?.beacon;
+        const clickedBeacon = beaconIntersects[0].object.userData?.beacon;
         
-        if (!beacon) return;
+        if (!clickedBeacon) return;
         
         // If cluster, zoom in to expand it
-        if (beacon.isCluster && beacon.count > 1) {
-          const beaconPos = latLngToVector3(beacon.lat, beacon.lng, globeRadius);
+        if (clickedBeacon.isCluster && clickedBeacon.count > 1) {
+          const beaconPos = latLngToVector3(clickedBeacon.lat, clickedBeacon.lng, globeRadius);
           const direction = beaconPos.clone().normalize();
           targetRotationY = Math.atan2(direction.x, direction.z);
           targetRotationX = Math.asin(direction.y);
           targetCameraZ = Math.max(2.5, targetCameraZ - 1.5); // Zoom in to expand cluster
         } else {
           // Smooth camera transition to beacon
-          const beaconPos = latLngToVector3(beacon.lat, beacon.lng, globeRadius);
+          const beaconPos = latLngToVector3(clickedBeacon.lat, clickedBeacon.lng, globeRadius);
           const direction = beaconPos.clone().normalize();
           targetRotationY = Math.atan2(direction.x, direction.z);
           targetRotationX = Math.asin(direction.y);
           targetCameraZ = 3.5; // Zoom in slightly
           
-          onBeaconClick(beacon);
+          onBeaconClick(clickedBeacon);
         }
         return;
       }
