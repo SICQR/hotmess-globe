@@ -10,6 +10,9 @@ jobs:
   lint-and-build:
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: read
+    
     strategy:
       matrix:
         node-version: [20.x]
@@ -41,6 +44,9 @@ jobs:
   
   security:
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
     
     steps:
     - uses: actions/checkout@v4
