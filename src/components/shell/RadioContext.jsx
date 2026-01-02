@@ -17,11 +17,7 @@ export function RadioProvider({ children }) {
   };
 
   const toggleRadio = () => {
-    if (isRadioOpen) {
-      closeRadio();
-    } else {
-      openRadio();
-    }
+    setIsRadioOpen(prev => !prev);
   };
 
   return (
