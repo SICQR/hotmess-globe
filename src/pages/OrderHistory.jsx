@@ -72,17 +72,6 @@ export default function OrderHistory() {
 
   const isLoading = loadingBuyer || loadingSeller;
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <Package className="w-12 h-12 text-white/40 mx-auto mb-4 animate-pulse" />
-          <p className="text-white/60">Loading orders...</p>
-        </div>
-      </div>
-    );
-  }
-
   const releaseEscrowMutation = useMutation({
     mutationFn: async (order) => {
       await base44.entities.Order.update(order.id, { status: 'processing' });
@@ -105,6 +94,17 @@ export default function OrderHistory() {
       toast.success('Payment released to seller!');
     }
   });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <Package className="w-12 h-12 text-white/40 mx-auto mb-4 animate-pulse" />
+          <p className="text-white/60">Loading orders...</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderOrder = (order, idx, isSeller = false) => {
     const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
