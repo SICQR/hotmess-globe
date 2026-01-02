@@ -196,11 +196,24 @@ Be concise and actionable.`,
                       </span>
                     </div>
                     <p className="text-white/80 mb-2">{post.content}</p>
+                    
+                    {/* AI Sentiment */}
+                    {post.ai_sentiment && (
+                      <div className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-bold uppercase border ${
+                        post.ai_sentiment === 'positive' ? 'bg-green-600/20 border-green-600 text-green-400' :
+                        post.ai_sentiment === 'negative' ? 'bg-red-600/20 border-red-600 text-red-400' :
+                        'bg-white/10 border-white/20 text-white/60'
+                      }`}>
+                        {post.ai_sentiment}
+                      </div>
+                    )}
+                    
                     {post.moderation_reason && (
-                      <div className="bg-red-600/20 border-2 border-red-600/40 p-2 mt-2">
-                        <p className="text-xs text-red-400 uppercase font-bold">
-                          Reason: {post.moderation_reason}
+                      <div className="bg-red-600/20 border-2 border-red-600/40 p-3 mt-2">
+                        <p className="text-xs text-red-400 uppercase font-bold mb-1">
+                          AI FLAG REASON:
                         </p>
+                        <p className="text-sm text-white/80">{post.moderation_reason}</p>
                       </div>
                     )}
                   </div>

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { MessageCircle, Send, Trash2 } from 'lucide-react';
+import { MessageCircle, Send, Trash2, Flag } from 'lucide-react';
+import ReportButton from '../moderation/ReportButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
@@ -144,15 +145,18 @@ export default function CommentThread({ post, currentUser, onCommentCountChange 
                           {format(new Date(comment.created_date), 'MMM d, h:mm a')}
                         </span>
                       </div>
-                      {(comment.user_email === currentUser.email || currentUser.role === 'admin') && (
-                        <button
-                          onClick={() => deleteCommentMutation.mutate(comment.id)}
-                          className="text-white/40 hover:text-red-500 transition-colors"
-                          disabled={deleteCommentMutation.isPending}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {(comment.user_email === currentUser.email || currentUser.role === 'admin') && (
+                          <button
+                            onClick={() => deleteCommentMutation.mutate(comment.id)}
+                            className="text-white/40 hover:text-red-500 transition-colors p-1"
+                            disabled={deleteCommentMutation.isPending}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                        <ReportButton itemType="post" itemId={comment.id} variant="ghost" />
+                      </div>
                     </div>
                     <p className="text-sm text-white/80 pl-8">{comment.content}</p>
                   </motion.div>
