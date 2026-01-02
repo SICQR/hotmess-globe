@@ -13,7 +13,15 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
 
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', currentUser?.email],
-    queryFn: () => base44.entities.CartItem.filter({ user_email: currentUser.email }),
+    queryFn: async () => {
+      const items = await base44.entities.CartItem.filter({ user_email: currentUser.email });
+      // Filter out expired reservations (30min timeout)
+      const now = new Date();
+      return items.filter(item => {
+        if (!item.reserved_until) return true;
+        return new Date(item.reserved_until) > now;
+      });
+    },
     enabled: !!currentUser
   });
 
@@ -31,7 +39,14 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
   });
 
   const updateQuantityMutation = useMutation({
-    mutationFn: ({ itemId, quantity }) => base44.entities.CartItem.update(itemId, { quantity }),
+    mutationFn: ({ itemId, quantity }) => {
+      const reservedUntil = new Date();
+      reservedUntil.setMinutes(reservedUntil.getMinutes() + 30);
+      return base44.entities.CartItem.update(itemId, { 
+        quantity,
+        reserved_until: reservedUntil.toISOString()
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
     }
