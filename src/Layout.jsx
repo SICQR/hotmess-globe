@@ -19,6 +19,7 @@ import { useKeyboardNav } from '@/components/accessibility/KeyboardNav';
 import { A11yAnnouncer } from '@/components/accessibility/KeyboardNav';
 import WelcomeTour from '@/components/onboarding/WelcomeTour';
 import RightNowNotifications from '@/components/discovery/RightNowNotifications';
+import PersistentRadioPlayer from '@/components/shell/PersistentRadioPlayer';
 
       const PRIMARY_NAV = [
         { name: 'Pulse', icon: Home, path: 'Home' },
@@ -333,6 +334,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Right Now Match Notifications */}
       {user && <RightNowNotifications currentUser={user} />}
+
+      {/* Persistent Radio Player - Never Unmounts */}
+      <PersistentRadioPlayer />
       </div>
         </Gatekeeper>
       </TaxonomyProvider>
