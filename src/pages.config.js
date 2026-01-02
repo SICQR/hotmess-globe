@@ -41,6 +41,8 @@ import MembershipUpgrade from './pages/MembershipUpgrade';
 import RecordManager from './pages/RecordManager';
 import Feed from './pages/Feed';
 import Stats from './pages/Stats';
+import Safety from './pages/Safety';
+import Challenges from './pages/Challenges';
 import __Layout from './Layout.jsx';
 
 
@@ -88,6 +90,8 @@ export const PAGES = {
     "RecordManager": RecordManager,
     "Feed": Feed,
     "Stats": Stats,
+    "Safety": Safety,
+    "Challenges": Challenges,
 }
 
 export const pagesConfig = {

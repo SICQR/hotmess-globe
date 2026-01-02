@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, Map, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X, MessageCircle, Calendar as CalendarIcon, MapPin, TrendingUp, Bookmark, Search } from 'lucide-react';
+import { Home, Globe as GlobeIcon, Map, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X, MessageCircle, Calendar as CalendarIcon, MapPin, TrendingUp, Bookmark, Search, Target, Shield } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import PanicButton from '@/components/safety/PanicButton';
 import Gatekeeper from '@/components/auth/Gatekeeper';
@@ -33,6 +33,8 @@ import RightNowNotifications from '@/components/discovery/RightNowNotifications'
 const SECONDARY_NAV = [
   { name: 'Beacons', icon: MapPin, path: 'Beacons' },
   { name: 'Stats', icon: TrendingUp, path: 'Stats' },
+  { name: 'Challenges', icon: Target, path: 'Challenges' },
+  { name: 'Safety', icon: Shield, path: 'Safety' },
   { name: 'Radio', icon: Users, path: 'Radio' },
   { name: 'Calendar', icon: CalendarIcon, path: 'Calendar' },
   { name: 'Scan', icon: Scan, path: 'Scan' },
