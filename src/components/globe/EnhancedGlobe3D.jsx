@@ -286,10 +286,13 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         // Scale up clusters
         const scale = isCluster ? Math.min(1 + (beacon.count * 0.1), 3) : isHighlighted ? 1.5 : 1;
 
+        // Special styling for audio drops
+        const isAudioDrop = beacon.mode === 'radio' && beacon.audio_url;
+
         const beaconMat = new THREE.MeshStandardMaterial({
-          color,
-          emissive: color,
-          emissiveIntensity,
+          color: isAudioDrop ? 0xB026FF : color,
+          emissive: isAudioDrop ? 0xB026FF : color,
+          emissiveIntensity: isAudioDrop ? 1.5 : emissiveIntensity,
           roughness: 0.4,
           metalness: 0.2
         });

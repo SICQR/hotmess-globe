@@ -55,11 +55,16 @@ export default function Marketplace() {
 
   const purchaseMutation = useMutation({
     mutationFn: async (product) => {
+      // Check if this is a P2P marketplace product
+      const isP2P = product.seller_email !== 'shopify@hotmess.london';
+      const platformFee = isP2P ? product.price_xp * 0.1 : 0;
+      const sellerAmount = isP2P ? product.price_xp - platformFee : product.price_xp;
+
       const order = await base44.entities.Order.create({
         buyer_email: currentUser.email,
         seller_email: product.seller_email,
         total_xp: product.price_xp,
-        status: 'pending',
+        status: isP2P ? 'escrow' : 'pending',
         payment_method: 'xp',
       });
 
@@ -79,6 +84,45 @@ export default function Marketplace() {
         inventory_count: Math.max(0, (product.inventory_count || 0) - 1),
       });
 
+      // For P2P purchases, create a temporary beacon at buyer's fuzzy location
+      if (isP2P && navigator.geolocation) {
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+          });
+          
+          // Import snap function
+          const snapToGrid = (lat, lng) => {
+            const GRID_SIZE = 0.0045;
+            return {
+              lat: Math.floor(lat / GRID_SIZE) * GRID_SIZE,
+              lng: Math.floor(lng / GRID_SIZE) * GRID_SIZE
+            };
+          };
+          
+          const snapped = snapToGrid(position.coords.latitude, position.coords.longitude);
+          const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+          
+          await base44.entities.Beacon.create({
+            title: `P2P Purchase: ${product.name}`,
+            description: `${currentUser.full_name || 'Someone'} just bought this!`,
+            kind: 'drop',
+            mode: 'drop',
+            lat: snapped.lat,
+            lng: snapped.lng,
+            city: currentUser.city || 'London',
+            xp_scan: 50,
+            product_id: product.id,
+            purchase_amount: product.price_xp,
+            active: true,
+            status: 'published',
+            expires_at: expiresAt,
+          });
+        } catch (error) {
+          console.log('Failed to create P2P beacon:', error);
+        }
+      }
+
       return order;
     },
     onSuccess: () => {
@@ -94,6 +138,15 @@ export default function Marketplace() {
   const handleBuy = (product) => {
     if (!currentUser) {
       toast.error('Please log in to purchase');
+      return;
+    }
+
+    // Check if this is an official Shopify product (Level 3+ required)
+    const isShopifyProduct = product.seller_email === 'shopify@hotmess.london';
+    const userLevel = Math.floor((currentUser.xp || 0) / 1000) + 1;
+    
+    if (isShopifyProduct && userLevel < 3) {
+      toast.error('Reach Level 3 to access the Official Shop');
       return;
     }
 
@@ -116,9 +169,15 @@ export default function Marketplace() {
     purchaseMutation.mutate(product);
   };
 
-  let filteredProducts = activeTab === 'all' 
-    ? allProducts 
-    : allProducts.filter(p => p.product_type === activeTab);
+  let filteredProducts = allProducts;
+  
+  if (activeTab === 'official') {
+    filteredProducts = allProducts.filter(p => p.seller_email === 'shopify@hotmess.london');
+  } else if (activeTab === 'p2p') {
+    filteredProducts = allProducts.filter(p => p.seller_email !== 'shopify@hotmess.london');
+  } else if (activeTab !== 'all') {
+    filteredProducts = allProducts.filter(p => p.product_type === activeTab);
+  }
 
   if (selectedCollection) {
     filteredProducts = filteredProducts.filter(p => 
@@ -187,10 +246,10 @@ export default function Marketplace() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-black italic uppercase tracking-tight mb-2">
-                SHOP THE DROP
+                THE <span className="text-[#00D9FF]">SHOP</span>
               </h1>
               <p className="text-white/60 uppercase text-sm tracking-wider">
-                RAW / HUNG / HIGH / SUPER + HNH MESS. No filler. No shame.
+                Official Gear (Level 3+) + P2P Mess Market (10% Platform Fee)
               </p>
             </div>
             <div className="flex gap-2">
@@ -290,17 +349,17 @@ export default function Marketplace() {
             <TabsTrigger value="all" className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black">
               All ({allProducts.length})
             </TabsTrigger>
-            <TabsTrigger value="physical" className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
+            <TabsTrigger value="official" className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
+              Official Shop
+            </TabsTrigger>
+            <TabsTrigger value="p2p" className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-black">
+              P2P Market
+            </TabsTrigger>
+            <TabsTrigger value="physical" className="data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black">
               Physical
             </TabsTrigger>
-            <TabsTrigger value="digital" className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-black">
+            <TabsTrigger value="digital" className="data-[state=active]:bg-[#39FF14] data-[state=active]:text-black">
               Digital
-            </TabsTrigger>
-            <TabsTrigger value="ticket" className="data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black">
-              Tickets
-            </TabsTrigger>
-            <TabsTrigger value="merch" className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black">
-              Merch
             </TabsTrigger>
           </TabsList>
 
