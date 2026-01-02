@@ -74,6 +74,15 @@ function BeaconDetail({ beacon, onClose }) {
 
       {/* Details */}
       <div className="p-5 space-y-4">
+        {beacon.venue_name && (
+          <div className="flex items-center gap-3 mb-2">
+            <MapPin className="w-4 h-4 text-[#FF1493]" />
+            <span className="text-white text-sm font-bold">
+              {beacon.venue_name}
+            </span>
+          </div>
+        )}
+        
         {beacon.city && (
           <div className="flex items-center gap-3">
             <MapPin className="w-4 h-4 text-white/40" />
@@ -83,11 +92,20 @@ function BeaconDetail({ beacon, onClose }) {
           </div>
         )}
 
-        {beacon.ts && (
+        {beacon.event_date && (
           <div className="flex items-center gap-3">
             <Clock className="w-4 h-4 text-white/40" />
             <span className="text-white/80 text-sm">
-              {format(new Date(beacon.ts), 'MMM d, yyyy • h:mm a')}
+              {format(new Date(beacon.event_date), 'MMM d, yyyy • h:mm a')}
+            </span>
+          </div>
+        )}
+
+        {beacon.capacity && (
+          <div className="flex items-center gap-3">
+            <Users className="w-4 h-4 text-white/40" />
+            <span className="text-white/80 text-sm">
+              Capacity: {beacon.capacity}
             </span>
           </div>
         )}

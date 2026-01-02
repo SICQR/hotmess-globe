@@ -45,6 +45,9 @@ export default function NearbyGrid({ userLocation }) {
     queryFn: () => base44.auth.me()
   });
 
+  // Limit results for performance
+  const MAX_DISPLAYED_USERS = 50;
+
   // Get users with recent activity OR Right Now status
   const activeUsers = allUsers
     .filter(user => {
@@ -92,7 +95,14 @@ export default function NearbyGrid({ userLocation }) {
         lastSeen: activity ? new Date(activity.created_date) : null
       };
     })
-    .sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+    .sort((a, b) => {
+      // Prioritize Right Now users
+      if (a.rightNowStatus && !b.rightNowStatus) return -1;
+      if (!a.rightNowStatus && b.rightNowStatus) return 1;
+      // Then sort by distance
+      return (a.distance || Infinity) - (b.distance || Infinity);
+    })
+    .slice(0, MAX_DISPLAYED_USERS);
 
   const getTimeAgo = (date) => {
     if (!date) return 'Just now';
@@ -122,10 +132,15 @@ export default function NearbyGrid({ userLocation }) {
 
         {/* Distance Filter */}
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs text-white/60">
-            <Filter className="w-3 h-3" />
-            <span className="font-mono uppercase">Within {distanceFilter}km</span>
-            <span className="text-[#FF1493]">• {activeUsers.length} online</span>
+          <div className="flex items-center justify-between text-xs text-white/60">
+            <div className="flex items-center gap-2">
+              <Filter className="w-3 h-3" />
+              <span className="font-mono uppercase">Within {distanceFilter}km</span>
+            </div>
+            <span className="text-[#FF1493] font-bold">
+              {activeUsers.length} online
+              {activeUsers.length >= MAX_DISPLAYED_USERS && '+'}
+            </span>
           </div>
           <input
             type="range"

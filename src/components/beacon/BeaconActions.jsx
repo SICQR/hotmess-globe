@@ -118,20 +118,23 @@ export default function BeaconActions({ beacon }) {
   if (!user) return null;
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       <Button
         onClick={() => isBookmarked ? unbookmarkMutation.mutate() : bookmarkMutation.mutate()}
         variant="outline"
-        size="icon"
-        className="border-white/20 hover:bg-white/10"
+        className="border-white/20 hover:bg-white/10 flex items-center gap-2"
       >
         <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#FFEB3B] text-[#FFEB3B]' : ''}`} />
+        <span className="text-xs font-bold uppercase hidden sm:inline">
+          {isBookmarked ? 'Saved' : 'Save'}
+        </span>
       </Button>
 
       <Dialog>
         <DialogTrigger asChild>
-          <Button variant="outline" size="icon" className="border-white/20 hover:bg-white/10">
+          <Button variant="outline" className="border-white/20 hover:bg-white/10 flex items-center gap-2">
             <Camera className="w-4 h-4" />
+            <span className="text-xs font-bold uppercase hidden sm:inline">Check In</span>
           </Button>
         </DialogTrigger>
         <DialogContent className="bg-black border-white/20">
@@ -177,10 +180,10 @@ export default function BeaconActions({ beacon }) {
       <Button
         onClick={handleShare}
         variant="outline"
-        size="icon"
-        className="border-white/20 hover:bg-white/10"
+        className="border-white/20 hover:bg-white/10 flex items-center gap-2"
       >
         <Share2 className="w-4 h-4" />
+        <span className="text-xs font-bold uppercase hidden sm:inline">Share</span>
       </Button>
     </div>
   );

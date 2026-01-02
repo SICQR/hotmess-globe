@@ -146,7 +146,7 @@ export default function CreateBeacon() {
           <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">
             Create Event
           </h1>
-          <p className="text-white/60">Multi-step event creation for organizers</p>
+          <p className="text-white/60 text-sm">4 quick steps • Pending admin review for non-admin users</p>
         </motion.div>
 
         {/* Progress */}
@@ -295,6 +295,9 @@ export default function CreateBeacon() {
                     placeholder="e.g. London"
                     className="bg-black border-white/20 text-white"
                   />
+                  <p className="text-xs text-white/40 mt-2">
+                    💡 Tip: Click map below to auto-fill coordinates
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
