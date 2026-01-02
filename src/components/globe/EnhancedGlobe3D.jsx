@@ -194,15 +194,18 @@ export default function EnhancedGlobe3D({
         beaconMeshes.push(instancedMesh);
       }
 
-      // Individual meshes for highlighted/special beacons (fewer instances)
-      [...careBeacons, ...highlightedBeacons].forEach(beacon => {
+      // Create individual meshes for ALL beacons (better for click handling)
+      beacons.forEach(beacon => {
         const isHighlighted = highlightedIds.includes(beacon.id);
         const isCareBeacon = beacon.mode === 'care';
 
+        const color = isCareBeacon ? 0x00d9ff : isHighlighted ? 0xffeb3b : 0xff1493;
+        const emissiveIntensity = isCareBeacon ? 1.5 : isHighlighted ? 1.2 : 0.8;
+
         const beaconMat = new THREE.MeshStandardMaterial({
-          color: isCareBeacon ? 0x00d9ff : 0xffeb3b,
-          emissive: isCareBeacon ? 0x00d9ff : 0xffeb3b,
-          emissiveIntensity: isCareBeacon ? 1.5 : 1.2,
+          color,
+          emissive: color,
+          emissiveIntensity,
           roughness: 0.4,
           metalness: 0.2
         });
@@ -219,18 +222,19 @@ export default function EnhancedGlobe3D({
         globe.add(mesh);
         beaconMeshes.push(mesh);
 
-        // Glow sprite only for special beacons
-        const spriteColor = isCareBeacon ? 0x00d9ff : 0xffeb3b;
-        const spriteMat = new THREE.SpriteMaterial({
-          color: spriteColor,
-          transparent: true,
-          opacity: isCareBeacon ? 1.0 : 0.9,
-          blending: THREE.AdditiveBlending
-        });
-        const sprite = new THREE.Sprite(spriteMat);
-        sprite.scale.set(isCareBeacon ? 0.5 : 0.4, isCareBeacon ? 0.5 : 0.4, 1);
-        sprite.position.copy(pos);
-        globe.add(sprite);
+        // Glow sprite for special beacons
+        if (isCareBeacon || isHighlighted) {
+          const spriteMat = new THREE.SpriteMaterial({
+            color,
+            transparent: true,
+            opacity: isCareBeacon ? 1.0 : 0.9,
+            blending: THREE.AdditiveBlending
+          });
+          const sprite = new THREE.Sprite(spriteMat);
+          sprite.scale.set(isCareBeacon ? 0.5 : 0.4, isCareBeacon ? 0.5 : 0.4, 1);
+          sprite.position.copy(pos);
+          globe.add(sprite);
+        }
       });
     }
 
