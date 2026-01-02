@@ -29,6 +29,10 @@ import RightNowDashboard from './pages/RightNowDashboard';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
+import WakeTheMess from './pages/WakeTheMess';
+import DialADaddy from './pages/DialADaddy';
+import HandNHand from './pages/HandNHand';
+import RadioSchedule from './pages/RadioSchedule';
 import __Layout from './Layout.jsx';
 
 
@@ -64,6 +68,10 @@ export const PAGES = {
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
+    "WakeTheMess": WakeTheMess,
+    "DialADaddy": DialADaddy,
+    "HandNHand": HandNHand,
+    "RadioSchedule": RadioSchedule,
 }
 
 export const pagesConfig = {
