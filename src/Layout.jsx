@@ -21,17 +21,18 @@ import WelcomeTour from '@/components/onboarding/WelcomeTour';
 import RightNowNotifications from '@/components/discovery/RightNowNotifications';
 
       const PRIMARY_NAV = [
-  { name: 'Pulse', icon: Home, path: 'Home' },
-  { name: 'Globe', icon: GlobeIcon, path: 'Globe' },
-  { name: 'Events', icon: CalendarIcon, path: 'Events' },
-  { name: 'Market', icon: ShoppingBag, path: 'Marketplace' },
-  { name: 'Connect', icon: Users, path: 'Connect' },
-  { name: 'Messages', icon: MessageCircle, path: 'Messages', showBadge: true },
-];
+        { name: 'Pulse', icon: Home, path: 'Home' },
+        { name: 'Globe', icon: GlobeIcon, path: 'Globe' },
+        { name: 'Events', icon: CalendarIcon, path: 'Events' },
+        { name: 'Market', icon: ShoppingBag, path: 'Marketplace' },
+        { name: 'Connect', icon: Users, path: 'Connect' },
+        { name: 'Messages', icon: MessageCircle, path: 'Messages', showBadge: true },
+        { name: 'Feed', icon: TrendingUp, path: 'Feed' },
+      ];
 
 const SECONDARY_NAV = [
   { name: 'Beacons', icon: MapPin, path: 'Beacons' },
-  { name: 'Grid', icon: Users, path: 'Connect' },
+  { name: 'Stats', icon: TrendingUp, path: 'Stats' },
   { name: 'Radio', icon: Users, path: 'Radio' },
   { name: 'Calendar', icon: CalendarIcon, path: 'Calendar' },
   { name: 'Scan', icon: Scan, path: 'Scan' },

@@ -39,6 +39,8 @@ import WakeTheMess from './pages/WakeTheMess';
 import AccountConsents from './pages/AccountConsents';
 import MembershipUpgrade from './pages/MembershipUpgrade';
 import RecordManager from './pages/RecordManager';
+import Feed from './pages/Feed';
+import Stats from './pages/Stats';
 import __Layout from './Layout.jsx';
 
 
@@ -84,6 +86,8 @@ export const PAGES = {
     "AccountConsents": AccountConsents,
     "MembershipUpgrade": MembershipUpgrade,
     "RecordManager": RecordManager,
+    "Feed": Feed,
+    "Stats": Stats,
 }
 
 export const pagesConfig = {
