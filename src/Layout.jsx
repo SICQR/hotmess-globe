@@ -61,8 +61,14 @@ export default function Layout({ children, currentPageName }) {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
         
+        // Check if onboarding is incomplete (except on OnboardingGate page itself)
+        if (currentPageName !== 'OnboardingGate' && (!currentUser.has_agreed_terms || !currentUser.has_consented_data || !currentUser.has_consented_gps)) {
+          window.location.href = createPageUrl('OnboardingGate');
+          return;
+        }
+        
         // Check if profile setup is incomplete
-        if (!currentUser.full_name || !currentUser.avatar_url) {
+        if (currentPageName !== 'ProfileSetup' && currentPageName !== 'OnboardingGate' && (!currentUser.full_name || !currentUser.avatar_url)) {
           window.location.href = createPageUrl('ProfileSetup');
         }
       } catch (error) {
@@ -70,7 +76,7 @@ export default function Layout({ children, currentPageName }) {
       }
     };
     fetchUser();
-  }, []);
+  }, [currentPageName]);
 
   const [showSecondary, setShowSecondary] = useState(false);
   const isActive = (pageName) => currentPageName === pageName;
