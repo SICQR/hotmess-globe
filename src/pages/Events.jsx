@@ -13,6 +13,7 @@ import { fromUTC } from '../components/utils/dateUtils';
 import EventCard from '../components/events/EventCard';
 import PersonalizedRecommendations from '../components/events/PersonalizedRecommendations';
 import EventsMapView from '../components/events/EventsMapView';
+import NightlifeResearcher from '../components/ai/NightlifeResearcher';
 
 export default function Events() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -267,6 +268,13 @@ export default function Events() {
             )}
           </div>
         </div>
+
+        {/* AI Nightlife Researcher */}
+        {currentUser && (
+          <div className="mb-8">
+            <NightlifeResearcher currentUser={currentUser} />
+          </div>
+        )}
 
         {/* Personalized Recommendations */}
         {currentUser && (

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
@@ -6,8 +6,10 @@ import { MapPin, Zap, Crown } from 'lucide-react';
 import CompatibilityBadge, { calculateCompatibility } from './CompatibilityBadge';
 import ReportButton from '../moderation/ReportButton';
 import LazyImage from '../ui/LazyImage';
+import AIMatchExplanation from './AIMatchExplanation';
 
-export default function DiscoveryCard({ user, userTags = [], userTribes = [], currentUserTags = [], index }) {
+export default function DiscoveryCard({ user, userTags = [], userTribes = [], currentUserTags = [], index, aiMatchExplanation }) {
+  const [isHovering, setIsHovering] = useState(false);
   const compatibility = useMemo(() => calculateCompatibility(currentUserTags, userTags), [currentUserTags, userTags]);
   const essentials = useMemo(() => userTags.filter(t => t.is_essential).slice(0, 3), [userTags]);
   const topTribes = useMemo(() => userTribes.slice(0, 2), [userTribes]);
@@ -19,7 +21,11 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
       transition={{ delay: index * 0.05 }}
     >
       <Link to={createPageUrl(`Profile?email=${user.email}`)}>
-        <div className="group relative overflow-hidden border-2 border-white/10 hover:border-[#FF1493] transition-all">
+        <div 
+          className="group relative overflow-hidden border-2 border-white/10 hover:border-[#FF1493] transition-all"
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
+        >
           {/* Avatar/Photo */}
           <div className="aspect-square bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-6xl font-black overflow-hidden relative">
             {(() => {
@@ -63,6 +69,11 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
 
           {/* Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+          {/* AI Match Explanation on Hover */}
+          {isHovering && aiMatchExplanation && (
+            <AIMatchExplanation explanation={aiMatchExplanation} />
+          )}
 
           {/* Info */}
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent">
