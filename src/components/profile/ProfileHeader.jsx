@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { User, ShoppingBag, Crown, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import QuickActions from './QuickActions';
+import BadgeDisplay from './BadgeDisplay';
 
 export default function ProfileHeader({ user, isOwnProfile, currentUser }) {
   const profileType = user?.profile_type || 'standard';
@@ -79,6 +80,11 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser }) {
                   {config.badge}
                 </span>
               )}
+            </div>
+
+            {/* Badges */}
+            <div className="mb-3">
+              <BadgeDisplay userEmail={user?.email} />
             </div>
 
             {/* Seller Tagline */}
