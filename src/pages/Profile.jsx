@@ -12,6 +12,9 @@ import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import HandshakeButton from '../components/social/HandshakeButton';
+import ProfileHeader from '../components/profile/ProfileHeader';
+import StandardProfileView from '../components/profile/StandardProfileView';
+import SellerProfileView from '../components/profile/SellerProfileView';
 import QuickActions from '../components/profile/QuickActions';
 import MutualConnections from '../components/profile/MutualConnections';
 import ProfileStats from '../components/profile/ProfileStats';
@@ -313,127 +316,48 @@ export default function Profile() {
   }
 
   const level = Math.floor((profileUser.xp || 0) / 1000) + 1;
+  const profileType = profileUser?.profile_type || 'standard';
 
   return (
     <ErrorBoundary>
       <WelcomeTour />
-      <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-black text-white">
         {/* Profile Completeness */}
-        {isOwnProfile && <ProfileCompleteness user={profileUser} />}
+        {isOwnProfile && (
+          <div className="p-4 md:p-8">
+            <div className="max-w-4xl mx-auto">
+              <ProfileCompleteness user={profileUser} />
+            </div>
+          </div>
+        )}
 
         {/* Profile Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/40 rounded-2xl p-8 mb-6"
-        >
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-4xl font-bold overflow-hidden">
-              {profileUser.avatar_url ? (
-                <img src={profileUser.avatar_url} alt={profileUser.full_name} className="w-full h-full object-cover" />
-              ) : (
-                profileUser.full_name?.[0] || 'U'
-              )}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-black">{profileUser.full_name}</h1>
-                {isOwnProfile && (
-                  <Link to={createPageUrl('EditProfile')}>
-                    <Button variant="ghost" size="sm" className="text-[#FF1493]">
-                      <Edit className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
-                  </Link>
-                )}
-              </div>
-              <p className="text-white/60 mb-4">{sanitizeText(profileUser.bio || 'No bio yet')}</p>
+        <ProfileHeader 
+          user={profileUser} 
+          isOwnProfile={isOwnProfile} 
+          currentUser={currentUser} 
+        />
 
-              {/* Vibes */}
-              {profileUser.preferred_vibes && profileUser.preferred_vibes.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {profileUser.preferred_vibes.map(vibe => (
-                    <span
-                      key={vibe}
-                      className="px-2 py-1 rounded-lg bg-[#FFEB3B]/20 border border-[#FFEB3B]/40 text-[#FFEB3B] text-xs font-bold uppercase"
-                    >
-                      {vibe}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Music Taste */}
-              {profileUser.music_taste && profileUser.music_taste.length > 0 && (
-                <div className="flex items-start gap-2 mb-3 text-sm">
-                  <Music className="w-4 h-4 text-[#B026FF] flex-shrink-0 mt-0.5" />
-                  <p className="text-white/80">{profileUser.music_taste.join(', ')}</p>
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-[#FFEB3B]" />
-                  <span className="font-bold">{profileUser.xp || 0} XP</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-[#FF1493]" />
-                  <span className="font-bold">Level {level}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-[#00D9FF]" />
-                  <span className="font-bold">{followers.length} Followers</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-[#00D9FF]" />
-                  <span className="font-bold">{following.length} Following</span>
-                </div>
-                {profileUser.activity_status && profileUser.activity_status !== 'offline' && (
-                  <div className={`flex items-center gap-2 px-3 py-1 border-2 ${
-                    profileUser.activity_status === 'online' ? 'bg-[#00D9FF]/20 border-[#00D9FF]' :
-                    profileUser.activity_status === 'busy' ? 'bg-[#FF6B35]/20 border-[#FF6B35]' :
-                    profileUser.activity_status === 'looking_for_collabs' ? 'bg-[#39FF14]/20 border-[#39FF14]' :
-                    'bg-[#FF1493]/20 border-[#FF1493]'
-                  }`}>
-                    <div className={`w-2 h-2 rounded-full animate-pulse ${
-                      profileUser.activity_status === 'online' ? 'bg-[#00D9FF]' :
-                      profileUser.activity_status === 'busy' ? 'bg-[#FF6B35]' :
-                      profileUser.activity_status === 'looking_for_collabs' ? 'bg-[#39FF14]' :
-                      'bg-[#FF1493]'
-                    }`} />
-                    <span className="text-xs font-black uppercase">
-                      {profileUser.activity_status.replace('_', ' ')}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-            {!isOwnProfile && currentUser && (
-              <div className="flex flex-col gap-2">
-                <QuickActions 
-                  profileUser={profileUser}
-                  currentUser={currentUser}
-                  isOwnProfile={isOwnProfile}
-                />
-                <div className="flex gap-2">
-                  <BlockButton userEmail={profileUser.email} />
-                  <ReportButton itemType="user" itemId={profileUser.email} variant="outline" />
-                </div>
-              </div>
-            )}
-          </div>
-
+        <div className="max-w-4xl mx-auto p-4 md:p-8">
           {/* Right Now Status */}
           {rightNowStatus && (
-            <div className="mt-4 pt-4 border-t border-white/10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6"
+            >
               <RightNowIndicator status={rightNowStatus} />
-            </div>
+            </motion.div>
           )}
 
           {/* Social Links - Behind Handshake */}
           {profileUser.social_links && Object.values(profileUser.social_links).some(v => v) && (
-            <div className="mt-4 pt-4 border-t border-white/10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6"
+            >
+
               {handshakeExists ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 mb-3">
@@ -500,196 +424,39 @@ export default function Profile() {
                   <p>Complete Telegram handshake to view social links</p>
                 </div>
               )}
-            </div>
+            </motion.div>
           )}
-        </motion.div>
 
-        {/* Stats Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6"
-        >
-          <ProfileStats
-            xp={profileUser.xp}
-            level={level}
-            followersCount={followers.length}
-            followingCount={following.length}
-            checkInsCount={checkIns.length}
-            achievementsCount={achievements.length}
-            city={profileUser.city}
-          />
-        </motion.div>
+          {/* Profile Type Specific View */}
+          {profileType === 'seller' ? (
+            <SellerProfileView user={profileUser} />
+          ) : (
+            <StandardProfileView 
+              user={profileUser} 
+              currentUser={currentUser} 
+              isHandshakeConnection={handshakeExists} 
+            />
+          )}
 
-        {/* Mutual Connections */}
-        {!isOwnProfile && currentUser && (
+          {/* Stats Grid */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.12 }}
+            transition={{ delay: 0.1 }}
             className="mb-6"
           >
-            <MutualConnections
-              profileUserEmail={profileUser.email}
-              currentUserEmail={currentUser.email}
+            <ProfileStats
+              xp={profileUser.xp}
+              level={level}
+              followersCount={followers.length}
+              followingCount={following.length}
+              checkInsCount={checkIns.length}
+              achievementsCount={achievements.length}
+              city={profileUser.city}
             />
           </motion.div>
-        )}
 
-        {/* Interests */}
-        {profileUser.interests && profileUser.interests.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.13 }}
-            className="mb-6"
-          >
-            <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Interests & Hobbies</h3>
-            <div className="flex flex-wrap gap-2">
-              {profileUser.interests.map((interest, idx) => (
-                <div key={idx} className="px-3 py-1.5 bg-white/10 border-2 border-white/20 text-white text-xs font-bold uppercase">
-                  {interest}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
 
-        {/* Availability & Communication */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.14 }}
-          className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4"
-        >
-          {profileUser.availability_status && profileUser.availability_status !== 'offline' && (
-            <div>
-              <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Availability</h3>
-              <div className={`inline-flex items-center gap-2 px-4 py-2 border-2 ${
-                profileUser.availability_status === 'available' ? 'bg-[#39FF14]/20 border-[#39FF14]' :
-                profileUser.availability_status === 'busy' ? 'bg-[#FF6B35]/20 border-[#FF6B35]' :
-                profileUser.availability_status === 'away' ? 'bg-[#FFEB3B]/20 border-[#FFEB3B]' :
-                'bg-[#FF1493]/20 border-[#FF1493]'
-              }`}>
-                <div className={`w-3 h-3 rounded-full animate-pulse ${
-                  profileUser.availability_status === 'available' ? 'bg-[#39FF14]' :
-                  profileUser.availability_status === 'busy' ? 'bg-[#FF6B35]' :
-                  profileUser.availability_status === 'away' ? 'bg-[#FFEB3B]' :
-                  'bg-[#FF1493]'
-                }`} />
-                <span className="text-xs font-black uppercase">
-                  {profileUser.availability_status.replace('_', ' ')}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {profileUser.preferred_communication && profileUser.preferred_communication.length > 0 && (
-            <div>
-              <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Preferred Communication</h3>
-              <div className="flex flex-wrap gap-2">
-                {profileUser.preferred_communication.map((method, idx) => (
-                  <div key={idx} className="px-3 py-1.5 bg-[#00D9FF]/20 border-2 border-[#00D9FF] text-[#00D9FF] text-xs font-black uppercase">
-                    {method.replace('_', ' ')}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </motion.div>
-
-        {/* Skills */}
-        {profileUser.skills && profileUser.skills.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="mb-6"
-          >
-            <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Skills & Talents</h3>
-            <div className="flex flex-wrap gap-2">
-              {profileUser.skills.map((skill, idx) => (
-                <div key={idx} className="px-3 py-1.5 bg-[#39FF14]/20 border-2 border-[#39FF14] text-[#39FF14] text-xs font-black uppercase">
-                  {skill}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Event Preferences */}
-        {profileUser.event_preferences && profileUser.event_preferences.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.17 }}
-            className="mb-6"
-          >
-            <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Event Preferences</h3>
-            <div className="flex flex-wrap gap-2">
-              {profileUser.event_preferences.map((vibe, idx) => (
-                <div key={idx} className="px-3 py-1.5 bg-[#00D9FF]/20 border-2 border-[#00D9FF] text-[#00D9FF] text-xs font-black uppercase">
-                  {vibe}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Premium Content */}
-        {!isOwnProfile && profileUser.has_premium_content && currentUser && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18 }}
-            className="mb-6"
-          >
-            <PremiumContentUnlock profileUser={profileUser} currentUser={currentUser} />
-          </motion.div>
-        )}
-
-        {/* Portfolio / Creations */}
-        {profileUser.portfolio && profileUser.portfolio.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.19 }}
-            className="mb-6"
-          >
-            <h3 className="text-xs uppercase tracking-widest text-white/40 mb-4">Portfolio & Creations</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {profileUser.portfolio.filter(item => sanitizeURL(item.url, { allowHttp: false })).map((item, idx) => (
-                <a
-                  key={idx}
-                  href={sanitizeURL(item.url, { allowHttp: false })}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group bg-black border-2 border-white hover:border-[#FF1493] transition-all overflow-hidden"
-                  >
-                  {item.image_url && sanitizeURL(item.image_url, { allowHttp: true }) && (
-                    <div className="h-40 overflow-hidden">
-                      <img 
-                        src={sanitizeURL(item.image_url, { allowHttp: true })} 
-                        alt={sanitizeText(item.title)}
-                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
-                      />
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-black text-sm">{sanitizeText(item.title)}</h4>
-                      <span className="text-[10px] uppercase text-white/40 font-bold">{sanitizeText(item.type)}</span>
-                    </div>
-                    {item.description && (
-                      <p className="text-xs text-white/60 line-clamp-2">{sanitizeText(item.description)}</p>
-                    )}
-                  </div>
-                </a>
-              ))}
-            </div>
-          </motion.div>
-        )}
 
         {/* Highlights Section */}
         {highlights.length > 0 && (
@@ -915,7 +682,7 @@ export default function Profile() {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
+        </div>
       </div>
     </ErrorBoundary>
   );
