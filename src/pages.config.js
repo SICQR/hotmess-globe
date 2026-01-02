@@ -35,6 +35,7 @@ import Settings from './pages/Settings';
 import WakeTheMess from './pages/WakeTheMess';
 import SquadChat from './pages/SquadChat';
 import Care from './pages/Care';
+import TicketMarketplace from './pages/TicketMarketplace';
 import __Layout from './Layout.jsx';
 
 
@@ -76,6 +77,7 @@ export const PAGES = {
     "WakeTheMess": WakeTheMess,
     "SquadChat": SquadChat,
     "Care": Care,
+    "TicketMarketplace": TicketMarketplace,
 }
 
 export const pagesConfig = {
