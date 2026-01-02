@@ -1,14 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Search, User, MapPin, ShoppingBag, X } from 'lucide-react';
+import { Search, User, MapPin, ShoppingBag, X, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 
+const RECENT_SEARCHES_KEY = 'hotmess_recent_searches';
+
 export default function GlobalSearch({ isOpen, onClose }) {
   const [query, setQuery] = useState('');
+  const [recentSearches, setRecentSearches] = useState([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
+    if (saved) {
+      setRecentSearches(JSON.parse(saved));
+    }
+  }, []);
+
+  const saveRecentSearch = (searchQuery) => {
+    if (!searchQuery.trim()) return;
+    const updated = [searchQuery, ...recentSearches.filter(q => q !== searchQuery)].slice(0, 5);
+    setRecentSearches(updated);
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+  };
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    localStorage.removeItem(RECENT_SEARCHES_KEY);
+  };
 
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
@@ -53,17 +75,56 @@ export default function GlobalSearch({ isOpen, onClose }) {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && query.trim()) {
+                saveRecentSearch(query.trim());
+              }
+            }}
             placeholder="Search people, events, products..."
             className="bg-white/5 border-white/20 text-white text-lg"
             autoFocus
+            list="search-suggestions"
           />
+          <datalist id="search-suggestions">
+            {recentSearches.map((q, idx) => (
+              <option key={idx} value={q} />
+            ))}
+          </datalist>
           <button onClick={onClose} className="text-white/60 hover:text-white">
             <X className="w-6 h-6" />
           </button>
         </div>
 
         <div className="space-y-6 max-h-96 overflow-y-auto">
-          {!query && (
+          {!query && recentSearches.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-white/40" />
+                  <h3 className="text-xs uppercase tracking-wider text-white/40">Recent</h3>
+                </div>
+                <button
+                  onClick={clearRecentSearches}
+                  className="text-xs text-white/40 hover:text-white/60 uppercase"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {recentSearches.map((q, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setQuery(q)}
+                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm transition-colors"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!query && recentSearches.length === 0 && (
             <p className="text-center text-white/40 py-8">Start typing to search...</p>
           )}
 
@@ -79,7 +140,10 @@ export default function GlobalSearch({ isOpen, onClose }) {
                   <Link
                     key={user.email}
                     to={createPageUrl(`Profile?email=${user.email}`)}
-                    onClick={onClose}
+                    onClick={() => {
+                      saveRecentSearch(query);
+                      onClose();
+                    }}
                     className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
                   >
                     <User className="w-5 h-5 text-[#FF1493]" />
@@ -102,7 +166,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
                     key={beacon.id}
                     to={createPageUrl(`BeaconDetail?id=${beacon.id}`)}
                     onClick={() => {
-                      saveRecentSearch(searchQuery);
+                      saveRecentSearch(query);
                       onClose();
                     }}
                     className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
@@ -127,7 +191,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
                     key={product.id}
                     to={createPageUrl(`ProductDetail?id=${product.id}`)}
                     onClick={() => {
-                      saveRecentSearch(searchQuery);
+                      saveRecentSearch(query);
                       onClose();
                     }}
                     className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
