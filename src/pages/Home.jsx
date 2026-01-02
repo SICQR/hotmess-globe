@@ -65,7 +65,7 @@ export default function Home() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80" 
+            src="https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=1920&q=80" 
             alt="Hero"
             className="w-full h-full object-cover"
           />
@@ -129,7 +129,7 @@ export default function Home() {
               <Link to={createPageUrl('Marketplace')}>
                 <div className="group relative aspect-[4/3] overflow-hidden">
                   <img 
-                    src="https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?w=800&q=90" 
+                    src="https://images.unsplash.com/photo-1483118714900-540cf339fd46?w=800&q=90" 
                     alt="RAW Collection"
                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
                   />
@@ -244,7 +244,7 @@ export default function Home() {
       <section className="relative py-32 px-6 overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1920&q=80" 
+            src="https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=1920&q=80" 
             alt="Connect"
             className="w-full h-full object-cover"
           />
@@ -341,7 +341,7 @@ export default function Home() {
                           />
                         ) : (
                           <img 
-                            src="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80" 
+                            src="https://images.unsplash.com/photo-1571266028243-d220ee4cb5cd?w=600&q=80" 
                             alt={beacon.title}
                             className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                           />
@@ -383,7 +383,7 @@ export default function Home() {
       <section className="relative py-32 px-6 overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=1920&q=80" 
+            src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=1920&q=80" 
             alt="Radio"
             className="w-full h-full object-cover"
           />
