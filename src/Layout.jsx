@@ -46,7 +46,7 @@ const SECONDARY_NAV = [
   { name: 'Leaderboard', icon: Trophy, path: 'Leaderboard' },
 ];
 
-export default function Layout({ children, currentPageName }) {
+function LayoutInner({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -108,7 +108,6 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <ErrorBoundary>
-      <RadioProvider>
         <TaxonomyProvider>
           <Gatekeeper>
           <SkipToContent />
@@ -361,7 +360,14 @@ export default function Layout({ children, currentPageName }) {
       </div>
           </Gatekeeper>
         </TaxonomyProvider>
-      </RadioProvider>
       </ErrorBoundary>
+      );
+      }
+
+      export default function Layout(props) {
+      return (
+      <RadioProvider>
+      <LayoutInner {...props} />
+      </RadioProvider>
       );
       }
