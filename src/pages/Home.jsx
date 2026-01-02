@@ -21,9 +21,25 @@ export default function Home() {
   const { data: recentBeacons = [] } = useQuery({
     queryKey: ['recent-beacons'],
     queryFn: async () => {
-      const beacons = await base44.entities.Beacon.filter({ active: true }, '-created_date', 6);
-      return beacons;
-    }
+      const allBeacons = await base44.entities.Beacon.filter({ active: true, status: 'published' });
+      const today = new Date();
+      // Filter to only upcoming/current events
+      const upcomingBeacons = allBeacons.filter(b => {
+        if (b.kind === 'event' && b.event_date) {
+          return new Date(b.event_date) >= today;
+        }
+        return true; // Non-events always show
+      });
+      // Sort by event date for events, created_date for others
+      return upcomingBeacons
+        .sort((a, b) => {
+          const aDate = a.event_date ? new Date(a.event_date) : new Date(a.created_date);
+          const bDate = b.event_date ? new Date(b.event_date) : new Date(b.created_date);
+          return aDate - bDate;
+        })
+        .slice(0, 6);
+    },
+    refetchInterval: 60000 // Refresh every minute
   });
 
   const { data: products = [] } = useQuery({
