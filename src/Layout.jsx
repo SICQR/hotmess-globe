@@ -68,8 +68,8 @@ export default function Layout({ children, currentPageName }) {
         }
         
         // Check if profile setup is incomplete
-        if (currentPageName !== 'ProfileSetup' && currentPageName !== 'OnboardingGate' && (!currentUser.full_name || !currentUser.avatar_url)) {
-          window.location.href = createPageUrl('ProfileSetup');
+        if (currentPageName !== 'Profile' && currentPageName !== 'OnboardingGate' && (!currentUser.full_name || !currentUser.avatar_url)) {
+          window.location.href = createPageUrl('Profile');
         }
       } catch (error) {
         console.error('Failed to fetch user:', error);

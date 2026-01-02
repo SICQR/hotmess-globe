@@ -64,7 +64,7 @@ export default function OnboardingGate() {
   };
 
   const handleCreateProfile = () => {
-    window.location.href = createPageUrl('ProfileSetup');
+    window.location.href = createPageUrl('Profile');
   };
 
   const renderStep = () => {
