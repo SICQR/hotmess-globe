@@ -206,6 +206,43 @@ export default function EnhancedGlobe3D({
       globe.add(new THREE.Line(geo, gridMat));
     }
 
+    // Clustering logic for beacons when zoomed out
+    const createClusters = (beacons, zoomLevel) => {
+      // Don't cluster if zoomed in close (z < 3.5)
+      if (zoomLevel < 3.5) return beacons.map(b => ({ ...b, isCluster: false, count: 1 }));
+
+      const clusterRadius = 5; // degrees
+      const clusters = new Map();
+
+      beacons.forEach(beacon => {
+        const key = `${Math.floor(beacon.lat / clusterRadius)}_${Math.floor(beacon.lng / clusterRadius)}`;
+        if (!clusters.has(key)) {
+          clusters.set(key, []);
+        }
+        clusters.get(key).push(beacon);
+      });
+
+      const result = [];
+      clusters.forEach((clusterBeacons) => {
+        if (clusterBeacons.length === 1) {
+          result.push({ ...clusterBeacons[0], isCluster: false, count: 1 });
+        } else {
+          const avgLat = clusterBeacons.reduce((sum, b) => sum + b.lat, 0) / clusterBeacons.length;
+          const avgLng = clusterBeacons.reduce((sum, b) => sum + b.lng, 0) / clusterBeacons.length;
+          result.push({
+            ...clusterBeacons[0],
+            lat: avgLat,
+            lng: avgLng,
+            isCluster: true,
+            count: clusterBeacons.length,
+            clusterBeacons
+          });
+        }
+      });
+
+      return result;
+    };
+
     // Beacon pins layer with clustering
     const beaconGeo = new THREE.SphereGeometry(0.015, 8, 8);
     const beaconMeshes = [];
@@ -541,43 +578,6 @@ export default function EnhancedGlobe3D({
         arcs.push(tube);
       }
     }
-
-    // Clustering logic for beacons when zoomed out
-    const createClusters = (beacons, zoomLevel) => {
-      // Don't cluster if zoomed in close (z < 3.5)
-      if (zoomLevel < 3.5) return beacons.map(b => ({ ...b, isCluster: false, count: 1 }));
-
-      const clusterRadius = 5; // degrees
-      const clusters = new Map();
-
-      beacons.forEach(beacon => {
-        const key = `${Math.floor(beacon.lat / clusterRadius)}_${Math.floor(beacon.lng / clusterRadius)}`;
-        if (!clusters.has(key)) {
-          clusters.set(key, []);
-        }
-        clusters.get(key).push(beacon);
-      });
-
-      const result = [];
-      clusters.forEach((clusterBeacons) => {
-        if (clusterBeacons.length === 1) {
-          result.push({ ...clusterBeacons[0], isCluster: false, count: 1 });
-        } else {
-          const avgLat = clusterBeacons.reduce((sum, b) => sum + b.lat, 0) / clusterBeacons.length;
-          const avgLng = clusterBeacons.reduce((sum, b) => sum + b.lng, 0) / clusterBeacons.length;
-          result.push({
-            ...clusterBeacons[0],
-            lat: avgLat,
-            lng: avgLng,
-            isCluster: true,
-            count: clusterBeacons.length,
-            clusterBeacons
-          });
-        }
-      });
-
-      return result;
-    };
 
     // Interaction
     let isDragging = false;
