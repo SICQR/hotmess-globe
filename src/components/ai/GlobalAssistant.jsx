@@ -242,7 +242,7 @@ export default function GlobalAssistant() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Ask about events..."
+                  placeholder="Ask me anything..."
                   disabled={sending || !conversationId}
                   className="flex-1 bg-white/5 border-2 border-white/20 text-white placeholder:text-white/40"
                 />
