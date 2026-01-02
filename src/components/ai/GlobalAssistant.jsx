@@ -156,10 +156,10 @@ export default function GlobalAssistant() {
                 <div className="text-center py-8">
                   <Sparkles className="w-12 h-12 mx-auto mb-4 text-[#FF1493]" />
                   <p className="text-sm text-white/80 mb-2 font-bold">
-                    Hey! I'm your AI nightlife guide
+                    Hey! I'm your HOTMESS AI assistant
                   </p>
                   <p className="text-xs text-white/60 mb-6">
-                    Ask me about events, get recommendations, or discover what's happening tonight
+                    Ask me about events, marketplace, connections, safety, XP, challenges, or any app feature
                   </p>
                   <div className="space-y-2">
                     <p className="text-xs text-white/40 uppercase tracking-wider mb-3">Try asking:</p>
