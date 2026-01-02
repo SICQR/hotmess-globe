@@ -13,7 +13,6 @@ import NearbyGrid from '../components/globe/NearbyGrid';
 import LocalBeaconsView from '../components/globe/LocalBeaconsView';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
-import { useBPMVisualization } from '../components/globe/BPMVisualizer';
 import { Settings, BarChart3, Menu, Home, Grid3x3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -213,8 +212,6 @@ export default function GlobePage() {
   const [localBeaconCenter, setLocalBeaconCenter] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [previewBeacon, setPreviewBeacon] = useState(null);
-  const [currentTrack, setCurrentTrack] = useState(null);
-  const [globeScene, setGlobeScene] = useState(null);
 
   // Get user's location
   useEffect(() => {
@@ -320,43 +317,6 @@ export default function GlobePage() {
 
   const [selectedCity, setSelectedCity] = useState(null);
   const globeRef = React.useRef(null);
-
-  // Get current radio track from localStorage (synced with Radio player)
-  useEffect(() => {
-    const getRadioState = () => {
-      try {
-        const radioState = localStorage.getItem('radio_current_track');
-        if (radioState) {
-          const track = JSON.parse(radioState);
-          setCurrentTrack(track);
-        }
-      } catch (error) {
-        console.error('Failed to get radio state:', error);
-      }
-    };
-
-    getRadioState();
-    
-    // Listen for radio state updates
-    const handleStorageChange = (e) => {
-      if (e.key === 'radio_current_track') {
-        getRadioState();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Poll every 5 seconds as fallback
-    const interval = setInterval(getRadioState, 5000);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
-
-  // BPM-driven visualization
-  const { pulseData } = useBPMVisualization(globeScene, currentTrack, cities, filteredBeacons);
 
   const handleCityClick = useCallback((city) => {
     setSelectedCity(city);
@@ -465,7 +425,6 @@ export default function GlobePage() {
           onCityClick={handleCityClick}
           selectedCity={selectedCity}
           highlightedIds={searchResults?.beacons.map(b => b.id) || radiusSearch?.beacons.map(b => b.id) || []}
-          onSceneReady={(scene) => setGlobeScene(scene)}
           className="w-full h-full"
         />
       </div>
