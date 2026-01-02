@@ -9,13 +9,18 @@ export function useAllUsers() {
   return useQuery({
     queryKey: ['all-users-global'],
     queryFn: async () => {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) return [];
-      return base44.entities.User.list();
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) return [];
+        return base44.entities.User.list();
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+        return [];
+      }
     },
-    staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes
-    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    refetchOnWindowFocus: false, // Don't refetch on window focus
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
     retry: false,
   });
 }
