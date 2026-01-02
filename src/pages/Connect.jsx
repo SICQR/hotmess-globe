@@ -130,7 +130,8 @@ export default function Connect() {
   }, [profiles, lane]);
 
   const filteredUsers = useMemo(() => {
-    return applyLocalFilters(laneFiltered, debouncedFilters, { taxonomyIndex: idx });
+    if (!laneFiltered || laneFiltered.length === 0) return [];
+    return applyLocalFilters(laneFiltered, debouncedFilters, { taxonomyIndex: idx || null });
   }, [laneFiltered, debouncedFilters, idx]);
 
   // Memoize pagination calculations
