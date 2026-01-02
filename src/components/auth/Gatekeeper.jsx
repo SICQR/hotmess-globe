@@ -20,14 +20,15 @@ export default function Gatekeeper({ children }) {
       setUser(currentUser);
 
       // Check if user has accepted consent
-      if (!currentUser.consent_accepted || !currentUser.is_18_plus) {
+      if (!currentUser.consent_accepted) {
         setNeedsConsent(true);
       } else {
         setAgeVerified(true);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      // If not logged in, allow age gate first
+      // If not logged in, show age gate
+      setAgeVerified(false);
     } finally {
       setLoading(false);
     }

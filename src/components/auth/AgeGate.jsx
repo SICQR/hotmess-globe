@@ -3,13 +3,9 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 
 export default function AgeGate({ onVerified }) {
-  const handleEnter = async () => {
-    try {
-      await base44.auth.updateMe({ age_verified: true });
-      onVerified();
-    } catch (err) {
-      console.error('Verification failed:', err);
-    }
+  const handleEnter = () => {
+    // Just mark as verified in session, don't update user record
+    onVerified();
   };
 
   const handleExit = () => {
