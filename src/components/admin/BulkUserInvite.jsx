@@ -10,6 +10,8 @@ export default function BulkUserInvite() {
   const [results, setResults] = useState([]);
 
   const testUsers = [
+    'phil.gizzie@icloud.com',
+    'glen@mccarty.me.uk',
     'alex@example.com',
     'jordan@example.com',
     'sam@example.com',
