@@ -29,6 +29,22 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
     mutationFn: async () => {
       const expiresAt = new Date(Date.now() + duration * 60 * 1000).toISOString();
       
+      // Get user's location
+      let userLocation = null;
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+          });
+          userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+        } catch (error) {
+          console.log('Location access denied');
+        }
+      }
+      
       // Deactivate any existing Right Now status
       const existing = await base44.entities.RightNowStatus.filter({ 
         user_email: currentUser.email,
@@ -40,16 +56,31 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
       }
       
       // Create new status
-      return base44.entities.RightNowStatus.create({
+      const status = await base44.entities.RightNowStatus.create({
         user_email: currentUser.email,
         duration_minutes: duration,
         expires_at: expiresAt,
         logistics,
         active: true
       });
+      
+      // Create UserActivity to track location for Globe/Grid visibility
+      if (userLocation) {
+        await base44.entities.UserActivity.create({
+          user_email: currentUser.email,
+          activity_type: 'right_now',
+          lat: userLocation.lat,
+          lng: userLocation.lng,
+          visible: true
+        });
+      }
+      
+      return status;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['right-now-status']);
+      queryClient.invalidateQueries(['recent-activities-nearby']);
+      queryClient.invalidateQueries(['user-activities-globe']);
       toast.success('You\'re live! Status auto-expires.');
       onClose();
     }
