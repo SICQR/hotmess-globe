@@ -561,6 +561,15 @@ export default function GlobePage() {
           />
         </FloatingPanel>
       )}
+
+      {/* Beacon Preview Panel */}
+      {previewBeacon && (
+        <BeaconPreviewPanel
+          beacon={previewBeacon}
+          onClose={() => setPreviewBeacon(null)}
+          onViewFull={handleViewFullDetails}
+        />
+      )}
       </div>
     </ErrorBoundary>
   );
