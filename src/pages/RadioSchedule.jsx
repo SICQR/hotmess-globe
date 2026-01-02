@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Radio as RadioIcon, Clock, Calendar } from 'lucide-react';
-import schedule from '../components/radio/radioSchedule.json';
+import schedule from '../components/radio/radioSchedule.js';
 import { formatSchedule } from '../components/radio/radioUtils';
 
 export default function RadioSchedule() {

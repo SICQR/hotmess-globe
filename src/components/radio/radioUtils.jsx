@@ -1,4 +1,4 @@
-import schedule from './radioSchedule.json';
+import schedule from './radioSchedule.js';
 
 /**
  * Get next episode for a show

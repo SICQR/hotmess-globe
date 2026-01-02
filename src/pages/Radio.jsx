@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Radio as RadioIcon, Calendar, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import schedule from '../components/radio/radioSchedule.json';
+import schedule from '../components/radio/radioSchedule.js';
 
 export default function Radio() {
   const shows = [
