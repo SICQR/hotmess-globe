@@ -156,6 +156,7 @@ export default function Profile() {
 
   const viewCount = profileViews.length;
   const tier = currentUser?.membership_tier || 'basic';
+  const level = Math.floor((profileUser.xp || 0) / 1000) + 1;
   // Chrome tier: Level 5+ can see WHO viewed their profile
   const canSeeViewers = level >= 5;
 

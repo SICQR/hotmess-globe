@@ -23,6 +23,7 @@ import Leaderboard from './pages/Leaderboard';
 import Marketplace from './pages/Marketplace';
 import MembershipUpgrade from './pages/MembershipUpgrade';
 import Messages from './pages/Messages';
+import MyEvents from './pages/MyEvents';
 import Onboarding from './pages/Onboarding';
 import OnboardingGate from './pages/OnboardingGate';
 import OrderHistory from './pages/OrderHistory';
@@ -43,7 +44,6 @@ import SquadChat from './pages/SquadChat';
 import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
 import WakeTheMess from './pages/WakeTheMess';
-import MyEvents from './pages/MyEvents';
 import __Layout from './Layout.jsx';
 
 
@@ -73,6 +73,7 @@ export const PAGES = {
     "Marketplace": Marketplace,
     "MembershipUpgrade": MembershipUpgrade,
     "Messages": Messages,
+    "MyEvents": MyEvents,
     "Onboarding": Onboarding,
     "OnboardingGate": OnboardingGate,
     "OrderHistory": OrderHistory,
@@ -93,7 +94,6 @@ export const PAGES = {
     "Stats": Stats,
     "TicketMarketplace": TicketMarketplace,
     "WakeTheMess": WakeTheMess,
-    "MyEvents": MyEvents,
 }
 
 export const pagesConfig = {
