@@ -91,17 +91,9 @@ export default function Connect() {
     return userTags.filter(t => t.user_email === currentUser.email);
   }, [currentUser, userTags]);
 
-  // Early return AFTER all hooks
-  if (!currentUser || !cfg) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-white/40">Loading...</div>
-      </div>
-    );
-  }
-
   // Build profile objects for filtering
   const profiles = useMemo(() => {
+    if (!currentUser) return [];
     return allUsers
       .filter(u => u.email !== currentUser.email)
       .map(u => {
@@ -125,11 +117,13 @@ export default function Connect() {
       });
   }, [allUsers, currentUser, userTags, userTribes, rightNowStatuses]);
 
-  // Apply lane filter
-  let laneFiltered = profiles;
-  if (lane === 'right_now') {
-    laneFiltered = profiles.filter(p => p.rightNow);
-  }
+  // Apply lane filter - with memoization
+  const laneFiltered = useMemo(() => {
+    if (lane === 'right_now') {
+      return profiles.filter(p => p.rightNow);
+    }
+    return profiles;
+  }, [profiles, lane]);
 
   const filteredUsers = useMemo(() => {
     return applyLocalFilters(laneFiltered, debouncedFilters, { taxonomyIndex: idx });
@@ -147,6 +141,15 @@ export default function Connect() {
     paginatedUsers.map(p => allUsers.find(u => u.email === p.email)).filter(Boolean),
     [paginatedUsers, allUsers]
   );
+
+  // Early return AFTER all hooks
+  if (!currentUser || !cfg) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-white/40">Loading...</div>
+      </div>
+    );
+  }
 
   // Handle filter apply
   const handleFiltersApply = (values) => {
