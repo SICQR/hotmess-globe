@@ -320,9 +320,9 @@ export default function Home() {
             </p>
           </motion.div>
 
-          {recentBeacons.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              {recentBeacons.map((beacon, idx) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {recentBeacons.length > 0 ? (
+              recentBeacons.map((beacon, idx) => (
                 <motion.div
                   key={beacon.id}
                   initial={{ opacity: 0, y: 20 }}
