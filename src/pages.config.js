@@ -22,12 +22,12 @@ import OrganizerDashboard from './pages/OrganizerDashboard';
 import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
 import ProfileSetup from './pages/ProfileSetup';
+import PromoteToAdmin from './pages/PromoteToAdmin';
 import Radio from './pages/Radio';
 import RightNowDashboard from './pages/RightNowDashboard';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
-import PromoteToAdmin from './pages/PromoteToAdmin';
 import __Layout from './Layout.jsx';
 
 
@@ -56,12 +56,12 @@ export const PAGES = {
     "ProductDetail": ProductDetail,
     "Profile": Profile,
     "ProfileSetup": ProfileSetup,
+    "PromoteToAdmin": PromoteToAdmin,
     "Radio": Radio,
     "RightNowDashboard": RightNowDashboard,
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
-    "PromoteToAdmin": PromoteToAdmin,
 }
 
 export const pagesConfig = {

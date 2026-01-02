@@ -45,12 +45,16 @@ export default function Connect() {
 
   // Build defaults from taxonomy config
   const defaults = useMemo(() => {
-    if (!cfg) return {};
+    if (!cfg || !cfg.filters) return {};
     const d = {};
-    for (const t of cfg.filters.quickToggles) d[t.id] = t.default;
-    for (const g of cfg.filters.groups) {
-      for (const f of g.fields) {
-        d[f.id] = typeof f.default !== "undefined" ? f.default : null;
+    if (cfg.filters.quickToggles) {
+      for (const t of cfg.filters.quickToggles) d[t.id] = t.default;
+    }
+    if (cfg.filters.groups) {
+      for (const g of cfg.filters.groups) {
+        for (const f of g.fields) {
+          d[f.id] = typeof f.default !== "undefined" ? f.default : null;
+        }
       }
     }
     return d;
@@ -143,10 +147,10 @@ export default function Connect() {
   );
 
   // Early return AFTER all hooks
-  if (!currentUser || !cfg) {
+  if (!currentUser) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-white/40">Loading...</div>
+        <div className="text-white/40">Loading user...</div>
       </div>
     );
   }
