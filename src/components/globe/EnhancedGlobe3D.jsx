@@ -63,6 +63,23 @@ export default function EnhancedGlobe3D({
     scene.background = new THREE.Color('#000000');
     scene.fog = new THREE.Fog('#000000', 8, 12);
 
+    // Starfield background
+    const starsGeo = new THREE.BufferGeometry();
+    const starCount = 2000;
+    const positions = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount * 3; i += 3) {
+      const radius = 50 + Math.random() * 50;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      positions[i] = radius * Math.sin(phi) * Math.cos(theta);
+      positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      positions[i + 2] = radius * Math.cos(phi);
+    }
+    starsGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.8 });
+    const stars = new THREE.Points(starsGeo, starsMat);
+    scene.add(stars);
+
     const camera = new THREE.PerspectiveCamera(45, mount.clientWidth / mount.clientHeight, 0.1, 200);
     camera.position.z = 4.5;
 
@@ -94,12 +111,43 @@ export default function EnhancedGlobe3D({
     const earthTexture = textureLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg');
     const bumpTexture = textureLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-topology.png');
 
-    const sphereMat = new THREE.MeshStandardMaterial({
-      map: earthTexture,
-      bumpMap: bumpTexture,
-      bumpScale: 0.05,
-      roughness: 0.7,
-      metalness: 0.1
+    // Day/night shader material
+    const sphereMat = new THREE.ShaderMaterial({
+      uniforms: {
+        dayTexture: { value: earthTexture },
+        bumpTexture: { value: bumpTexture },
+        sunDirection: { value: new THREE.Vector3(1, 0, 0.3).normalize() }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+        void main() {
+          vUv = uv;
+          vNormal = normalize(normalMatrix * normal);
+          vPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D dayTexture;
+        uniform sampler2D bumpTexture;
+        uniform vec3 sunDirection;
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+        
+        void main() {
+          vec4 dayColor = texture2D(dayTexture, vUv);
+          float intensity = max(dot(vNormal, sunDirection), 0.0);
+          float nightMix = smoothstep(0.0, 0.2, intensity);
+          
+          vec3 nightColor = dayColor.rgb * 0.15 + vec3(0.1, 0.15, 0.2) * 0.3;
+          vec3 finalColor = mix(nightColor, dayColor.rgb, nightMix);
+          
+          gl_FragColor = vec4(finalColor, 1.0);
+        }
+      `
     });
     const sphere = new THREE.Mesh(sphereGeo, sphereMat);
     globe.add(sphere);
@@ -445,6 +493,11 @@ export default function EnhancedGlobe3D({
     let targetRotationY = 0;
     let targetRotationX = 0;
     let velocity = { x: 0, y: 0 };
+    let targetCameraZ = 4.5;
+    
+    // Touch support
+    let touchStartDistance = 0;
+    let initialCameraZ = camera.position.z;
 
     const onMouseDown = (e) => {
       isDragging = true;
@@ -540,13 +593,56 @@ export default function EnhancedGlobe3D({
 
       if (intersects.length > 0 && onBeaconClick) {
         const beacon = intersects[0].object.userData.beacon;
+        
+        // Smooth camera transition to beacon
+        const beaconPos = latLngToVector3(beacon.lat, beacon.lng, globeRadius);
+        const direction = beaconPos.clone().normalize();
+        targetRotationY = Math.atan2(direction.x, direction.z);
+        targetRotationX = Math.asin(direction.y);
+        targetCameraZ = 3.5; // Zoom in slightly
+        
         onBeaconClick(beacon);
       }
     };
 
     const onWheel = (e) => {
       e.preventDefault();
-      camera.position.z = THREE.MathUtils.clamp(camera.position.z + e.deltaY * 0.002, 2.5, 6.0);
+      targetCameraZ = THREE.MathUtils.clamp(targetCameraZ + e.deltaY * 0.002, 2.5, 6.0);
+    };
+
+    // Touch handlers
+    const onTouchStart = (e) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        touchStartDistance = Math.sqrt(dx * dx + dy * dy);
+        initialCameraZ = camera.position.z;
+      } else if (e.touches.length === 1) {
+        isDragging = true;
+        previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+    };
+
+    const onTouchMove = (e) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const scale = touchStartDistance / distance;
+        targetCameraZ = THREE.MathUtils.clamp(initialCameraZ * scale, 2.5, 6.0);
+      } else if (e.touches.length === 1 && isDragging) {
+        const deltaX = e.touches[0].clientX - previousMousePosition.x;
+        const deltaY = e.touches[0].clientY - previousMousePosition.y;
+        targetRotationY += deltaX * 0.005;
+        targetRotationX += deltaY * 0.005;
+        targetRotationX = THREE.MathUtils.clamp(targetRotationX, -0.8, 0.8);
+        previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+    };
+
+    const onTouchEnd = () => {
+      isDragging = false;
+      touchStartDistance = 0;
     };
 
     renderer.domElement.addEventListener('mousedown', onMouseDown);
@@ -554,6 +650,11 @@ export default function EnhancedGlobe3D({
     renderer.domElement.addEventListener('click', onClick);
     window.addEventListener('mouseup', onMouseUp);
     renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
+    
+    // Touch events
+    renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: true });
+    renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: true });
+    renderer.domElement.addEventListener('touchend', onTouchEnd, { passive: true });
 
     // Animation
     let animationId;
@@ -572,6 +673,9 @@ export default function EnhancedGlobe3D({
       
       globe.rotation.y += (targetRotationY - globe.rotation.y) * 0.1;
       globe.rotation.x += (targetRotationX - globe.rotation.x) * 0.1;
+      
+      // Smooth camera zoom
+      camera.position.z += (targetCameraZ - camera.position.z) * 0.1;
 
       // Update arc shaders
       arcs.forEach(arc => {
@@ -610,12 +714,16 @@ export default function EnhancedGlobe3D({
         renderer.domElement.removeEventListener('mousemove', onMouseMove);
         renderer.domElement.removeEventListener('click', onClick);
         renderer.domElement.removeEventListener('wheel', onWheel);
+        renderer.domElement.removeEventListener('touchstart', onTouchStart);
+        renderer.domElement.removeEventListener('touchmove', onTouchMove);
+        renderer.domElement.removeEventListener('touchend', onTouchEnd);
       }
       
       // Dispose geometries
       if (beaconGeo) beaconGeo.dispose();
       if (sphereGeo) sphereGeo.dispose();
       if (atmosphereGeo) atmosphereGeo.dispose();
+      if (starsGeo) starsGeo.dispose();
       
       // Dispose materials
       if (sphereMat) {
@@ -625,6 +733,7 @@ export default function EnhancedGlobe3D({
       }
       if (atmosphereMat) atmosphereMat.dispose();
       if (gridMat) gridMat.dispose();
+      if (starsMat) starsMat.dispose();
       
       // Dispose textures
       if (earthTexture) earthTexture.dispose();
