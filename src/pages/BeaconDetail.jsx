@@ -14,6 +14,9 @@ import RelatedEvents from '../components/events/RelatedEvents';
 import EventTicket from '../components/events/EventTicket';
 import EventWaitlist from '../components/events/EventWaitlist';
 import TicketScanner from '../components/events/TicketScanner';
+import NightKingDisplay from '../components/gamification/NightKingDisplay';
+import ConvictPlayer from '../components/radio/ConvictPlayer';
+import { Music } from 'lucide-react';
 
 
 export default function BeaconDetail() {
@@ -22,6 +25,7 @@ export default function BeaconDetail() {
   const beaconId = searchParams.get('id');
   const [currentUser, setCurrentUser] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
+  const [showConvictPlayer, setShowConvictPlayer] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -183,6 +187,22 @@ export default function BeaconDetail() {
 
           {/* Sidebar */}
           <div className="space-y-4">
+            {/* Night King for Venues */}
+            {beacon.kind === 'venue' && (
+              <NightKingDisplay venueId={beaconId} />
+            )}
+
+            {/* Audio Drop Player */}
+            {beacon.mode === 'radio' && beacon.audio_url && (
+              <Button
+                onClick={() => setShowConvictPlayer(true)}
+                className="w-full bg-[#B026FF] hover:bg-[#B026FF]/90 text-white font-black py-6 border-2 border-white"
+              >
+                <Music className="w-5 h-5 mr-2" />
+                PLAY RAW TRACK
+              </Button>
+            )}
+
             {/* Event RSVP */}
             {beacon.kind === 'event' && currentUser && (
               <>
@@ -274,6 +294,16 @@ export default function BeaconDetail() {
             onClose={() => setShowScanner(false)} 
           />
         )}
-        </div>
-        );
-        }
+
+        {/* Convict Player Modal */}
+        {beacon.mode === 'radio' && beacon.audio_url && (
+          <ConvictPlayer
+            beacon={beacon}
+            isOpen={showConvictPlayer}
+            onClose={() => setShowConvictPlayer(false)}
+            currentUser={currentUser}
+          />
+        )}
+      </div>
+    );
+  }
