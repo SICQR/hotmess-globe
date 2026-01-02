@@ -33,6 +33,8 @@ import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
 import WakeTheMess from './pages/WakeTheMess';
+import SquadChat from './pages/SquadChat';
+import Care from './pages/Care';
 import __Layout from './Layout.jsx';
 
 
@@ -72,6 +74,8 @@ export const PAGES = {
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
     "WakeTheMess": WakeTheMess,
+    "SquadChat": SquadChat,
+    "Care": Care,
 }
 
 export const pagesConfig = {
