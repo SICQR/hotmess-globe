@@ -8,10 +8,15 @@ import { base44 } from '@/api/base44Client';
 export function useAllUsers() {
   return useQuery({
     queryKey: ['all-users-global'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: async () => {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) return [];
+      return base44.entities.User.list();
+    },
     staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes
     cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
     refetchOnWindowFocus: false, // Don't refetch on window focus
+    retry: false,
   });
 }
 
@@ -21,10 +26,15 @@ export function useAllUsers() {
 export function useCurrentUser() {
   return useQuery({
     queryKey: ['current-user'],
-    queryFn: () => base44.auth.me(),
+    queryFn: async () => {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) throw new Error('Not authenticated');
+      return base44.auth.me();
+    },
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
-    retry: 1,
+    retry: false,
+    enabled: true,
   });
 }
 

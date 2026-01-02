@@ -60,6 +60,12 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          setUser(null);
+          return;
+        }
+        
         const currentUser = await base44.auth.me();
         setUser(currentUser);
         
@@ -75,6 +81,7 @@ export default function Layout({ children, currentPageName }) {
         }
       } catch (error) {
         console.error('Failed to fetch user:', error);
+        setUser(null);
       }
     };
     fetchUser();

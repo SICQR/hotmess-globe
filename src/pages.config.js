@@ -3,6 +3,7 @@ import BeaconDetail from './pages/BeaconDetail';
 import Beacons from './pages/Beacons';
 import Bookmarks from './pages/Bookmarks';
 import Calendar from './pages/Calendar';
+import Care from './pages/Care';
 import Chat from './pages/Chat';
 import Checkout from './pages/Checkout';
 import Community from './pages/Community';
@@ -32,10 +33,9 @@ import RightNowDashboard from './pages/RightNowDashboard';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
-import WakeTheMess from './pages/WakeTheMess';
 import SquadChat from './pages/SquadChat';
-import Care from './pages/Care';
 import TicketMarketplace from './pages/TicketMarketplace';
+import WakeTheMess from './pages/WakeTheMess';
 import __Layout from './Layout.jsx';
 
 
@@ -45,6 +45,7 @@ export const PAGES = {
     "Beacons": Beacons,
     "Bookmarks": Bookmarks,
     "Calendar": Calendar,
+    "Care": Care,
     "Chat": Chat,
     "Checkout": Checkout,
     "Community": Community,
@@ -74,10 +75,9 @@ export const PAGES = {
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
-    "WakeTheMess": WakeTheMess,
     "SquadChat": SquadChat,
-    "Care": Care,
     "TicketMarketplace": TicketMarketplace,
+    "WakeTheMess": WakeTheMess,
 }
 
 export const pagesConfig = {
