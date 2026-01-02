@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Users, Send, ChevronLeft } from 'lucide-react';
+import { ArrowLeft, Users, Crown, Send, Loader2, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
+import SquadChallenges from '../components/squads/SquadChallenges';
 
 export default function SquadChat() {
+  const [searchParams] = useSearchParams();
+  const squadId = searchParams.get('id');
   const [currentUser, setCurrentUser] = useState(null);
-  const [selectedSquad, setSelectedSquad] = useState(null);
   const [message, setMessage] = useState('');
-
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -23,156 +26,236 @@ export default function SquadChat() {
     fetchUser();
   }, []);
 
-  const { data: mySquads = [] } = useQuery({
-    queryKey: ['my-squads', currentUser?.email],
+  const { data: squad } = useQuery({
+    queryKey: ['squad', squadId],
     queryFn: async () => {
-      const memberships = await base44.entities.SquadMember.filter({ user_email: currentUser.email });
-      const squadIds = memberships.map(m => m.squad_id);
       const squads = await base44.entities.Squad.list();
-      return squads.filter(s => squadIds.includes(s.id));
+      return squads.find(s => s.id === squadId);
     },
-    enabled: !!currentUser
+    enabled: !!squadId,
+  });
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['squad-members', squadId],
+    queryFn: () => base44.entities.SquadMember.filter({ squad_id: squadId }),
+    enabled: !!squadId,
+  });
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['all-users'],
+    queryFn: () => base44.entities.User.list(),
+  });
+
+  const { data: chatThread } = useQuery({
+    queryKey: ['squad-thread', squadId],
+    queryFn: async () => {
+      const threads = await base44.entities.ChatThread.filter({
+        thread_type: 'squad',
+        'metadata.squad_id': squadId
+      });
+      return threads[0] || null;
+    },
+    enabled: !!squadId,
   });
 
   const { data: messages = [] } = useQuery({
-    queryKey: ['squad-messages', selectedSquad?.id],
-    queryFn: () => base44.entities.Message.filter({ 
-      receiver_email: `squad_${selectedSquad.id}`
-    }, '-created_date', 100),
-    enabled: !!selectedSquad,
-    refetchInterval: 3000
+    queryKey: ['squad-messages', chatThread?.id],
+    queryFn: () => base44.entities.Message.filter({ thread_id: chatThread.id }, '-created_date'),
+    enabled: !!chatThread,
+    refetchInterval: 5000,
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: (messageData) => base44.entities.Message.create(messageData),
+    mutationFn: async (content) => {
+      if (!chatThread) {
+        throw new Error('No chat thread');
+      }
+
+      await base44.entities.Message.create({
+        thread_id: chatThread.id,
+        sender_email: currentUser.email,
+        sender_name: currentUser.full_name,
+        content,
+        message_type: 'text',
+      });
+
+      await base44.entities.ChatThread.update(chatThread.id, {
+        last_message: content,
+        last_message_at: new Date().toISOString(),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['squad-messages']);
       setMessage('');
-    }
+    },
+    onError: () => {
+      toast.error('Failed to send message');
+    },
   });
 
   const handleSend = () => {
-    if (!message.trim() || !selectedSquad || !currentUser) return;
-
-    sendMessageMutation.mutate({
-      sender_email: currentUser.email,
-      receiver_email: `squad_${selectedSquad.id}`,
-      content: message,
-      message_type: 'text'
-    });
+    if (!message.trim()) return;
+    sendMessageMutation.mutate(message);
   };
 
-  if (!currentUser) {
-    return <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="text-white">Loading...</div>
-    </div>;
+  const memberUsers = members.map(m => allUsers.find(u => u.email === m.user_email)).filter(Boolean);
+  const isCreator = squad?.creator_email === currentUser?.email;
+  const isMember = members.some(m => m.user_email === currentUser?.email);
+
+  if (!squad || !currentUser) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-white/40" />
+      </div>
+    );
+  }
+
+  if (!isMember) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <Users className="w-16 h-16 text-white/20 mx-auto mb-4" />
+          <h2 className="text-2xl font-black uppercase mb-2">Members Only</h2>
+          <p className="text-white/60 mb-6">Join this squad to access the chat</p>
+          <Link to={createPageUrl('Connect')}>
+            <Button className="bg-[#FF1493] hover:bg-white text-black font-black">
+              FIND SQUADS
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="flex items-center gap-4 mb-8">
-          <Link to={createPageUrl('Home')}>
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-              <ChevronLeft className="w-6 h-6" />
+      {/* Header */}
+      <div className="border-b border-white/10 p-4 md:p-6">
+        <div className="max-w-6xl mx-auto">
+          <Link to={createPageUrl('Connect')}>
+            <Button variant="ghost" className="mb-4">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Connect
             </Button>
           </Link>
-          <div>
-            <h1 className="text-4xl font-black italic">SQUAD CHAT</h1>
-            <p className="text-white/60 text-sm uppercase tracking-wider">Group messaging for your tribes</p>
+
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-black uppercase mb-2">{squad.name}</h1>
+              <p className="text-white/60 text-sm mb-2">{squad.description}</p>
+              <div className="flex items-center gap-4 text-sm">
+                <span className="text-[#B026FF] uppercase font-bold">{squad.interest}</span>
+                <span className="text-white/40">{members.length} members</span>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
-          {/* Squad List */}
-          <div className="bg-white/5 border-2 border-white/10 rounded-xl p-4 overflow-y-auto">
-            <h2 className="font-black uppercase text-sm text-white/60 mb-4">MY SQUADS</h2>
-            {mySquads.length === 0 ? (
-              <p className="text-white/40 text-sm">Join a squad to start chatting</p>
-            ) : (
-              <div className="space-y-2">
-                {mySquads.map(squad => (
-                  <button
-                    key={squad.id}
-                    onClick={() => setSelectedSquad(squad)}
-                    className={`w-full text-left p-4 rounded-lg transition-all border-2 ${
-                      selectedSquad?.id === squad.id
-                        ? 'bg-[#FF1493] border-[#FF1493] text-black'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <Users className="w-5 h-5" />
-                      <span className="font-black uppercase">{squad.name}</span>
-                    </div>
-                    <p className="text-xs opacity-60 line-clamp-2">{squad.description}</p>
-                    <div className="flex items-center gap-2 mt-2 text-xs">
-                      <span>{squad.member_count} members</span>
-                      <span>•</span>
-                      <span className="uppercase">{squad.interest}</span>
-                    </div>
-                  </button>
-                ))}
+      <div className="max-w-6xl mx-auto p-4 md:p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Chat Section */}
+          <div className="lg:col-span-2">
+            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden flex flex-col" style={{ height: '600px' }}>
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {!chatThread ? (
+                  <div className="text-center py-12 text-white/40">
+                    <p>No messages yet. Start the conversation!</p>
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="text-center py-12 text-white/40">
+                    <p>No messages yet</p>
+                  </div>
+                ) : (
+                  messages.map((msg) => {
+                    const isOwn = msg.sender_email === currentUser.email;
+                    return (
+                      <motion.div
+                        key={msg.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[70%] ${
+                          isOwn 
+                            ? 'bg-[#FF1493] text-black' 
+                            : 'bg-white/10 text-white'
+                        } rounded-xl p-3`}>
+                          {!isOwn && (
+                            <div className="text-xs font-bold mb-1">{msg.sender_name}</div>
+                          )}
+                          <div className="text-sm">{msg.content}</div>
+                        </div>
+                      </motion.div>
+                    );
+                  })
+                )}
               </div>
-            )}
+
+              {/* Input */}
+              <div className="border-t border-white/10 p-4">
+                <div className="flex gap-2">
+                  <Input
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                    placeholder="Type a message..."
+                    className="bg-white/5 border-white/20"
+                    disabled={!chatThread}
+                  />
+                  <Button
+                    onClick={handleSend}
+                    disabled={!message.trim() || sendMessageMutation.isPending || !chatThread}
+                    className="bg-[#FF1493] hover:bg-white text-black font-black"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Chat Area */}
-          <div className="md:col-span-2 bg-white/5 border-2 border-white/10 rounded-xl flex flex-col">
-            {selectedSquad ? (
-              <>
-                {/* Header */}
-                <div className="p-4 border-b-2 border-white/10">
-                  <h2 className="font-black uppercase text-xl">{selectedSquad.name}</h2>
-                  <p className="text-white/60 text-sm">{selectedSquad.member_count} members</p>
-                </div>
-
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {messages.map(msg => (
-                    <div key={msg.id} className={`flex ${msg.sender_email === currentUser.email ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[70%] ${
-                        msg.sender_email === currentUser.email
-                          ? 'bg-[#FF1493] text-black'
-                          : 'bg-white/10 text-white'
-                      } rounded-lg p-3`}>
-                        {msg.sender_email !== currentUser.email && (
-                          <p className="text-xs opacity-60 mb-1 uppercase font-bold">{msg.sender_email.split('@')[0]}</p>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Members */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+              <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Members ({members.length})
+              </h3>
+              <div className="space-y-2">
+                {memberUsers.slice(0, 10).map((user) => (
+                  <Link key={user.email} to={createPageUrl(`Profile?email=${user.email}`)}>
+                    <div className="flex items-center gap-3 p-2 hover:bg-white/5 transition-colors">
+                      <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center">
+                        {user.avatar_url ? (
+                          <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xs font-bold">{user.full_name?.[0]}</span>
                         )}
-                        <p>{msg.content}</p>
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold text-sm flex items-center gap-2">
+                          {user.full_name}
+                          {user.email === squad.creator_email && (
+                            <Crown className="w-4 h-4 text-[#FFEB3B]" />
+                          )}
+                        </div>
+                        <div className="text-xs text-white/40">
+                          LVL {Math.floor((user.xp || 0) / 1000) + 1}
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                {/* Input */}
-                <div className="p-4 border-t-2 border-white/10">
-                  <div className="flex gap-2">
-                    <Input
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                      placeholder="Type a message..."
-                      className="flex-1 bg-white/5 border-white/20 text-white"
-                    />
-                    <Button
-                      onClick={handleSend}
-                      disabled={!message.trim()}
-                      className="bg-[#FF1493] hover:bg-white text-black"
-                    >
-                      <Send className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center text-white/40">
-                  <Users className="w-16 h-16 mx-auto mb-4 opacity-40" />
-                  <p className="text-lg font-bold uppercase">Select a squad to chat</p>
-                </div>
+                  </Link>
+                ))}
               </div>
-            )}
+            </div>
+
+            {/* Squad Challenges */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+              <SquadChallenges squadId={squadId} currentUser={currentUser} />
+            </div>
           </div>
         </div>
       </div>
