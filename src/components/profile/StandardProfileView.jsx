@@ -1,6 +1,6 @@
 import React from 'react';
 import { MapPin, Heart, Calendar, Zap } from 'lucide-react';
-import MediaGallery from './MediaGallery';
+import { PhotoGallery } from './MediaGallery';
 import MutualConnections from './MutualConnections';
 
 export default function StandardProfileView({ user, currentUser, isHandshakeConnection }) {
@@ -10,14 +10,26 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
       {user?.photos && user.photos.length > 0 && (
         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
           <h3 className="text-sm uppercase tracking-wider text-white/40 mb-4">Photos</h3>
-          <MediaGallery 
-            photos={user.photos} 
-            videoIntroUrl={user.video_intro_url}
-            premiumVideos={user.premium_videos}
-            unlockXp={user.premium_unlock_xp}
-            ownerId={user.id}
-            viewerEmail={currentUser?.email}
-          />
+          <div className="grid grid-cols-3 gap-3">
+            {user.photos.map((photo, idx) => (
+              <div key={idx} className="relative aspect-square">
+                {photo.is_premium ? (
+                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/20 to-[#FF1493]/20 border-2 border-[#FFD700] flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-2xl mb-2">🔒</div>
+                      <div className="text-xs text-[#FFD700] font-black uppercase">Premium</div>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={photo.url}
+                    alt={`Photo ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
