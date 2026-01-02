@@ -576,8 +576,8 @@ export default function EnhancedGlobe3D({
     };
 
     const onClick = (e) => {
-      if (Math.abs(e.clientX - previousMousePosition.x) > 5 || 
-          Math.abs(e.clientY - previousMousePosition.y) > 5) {
+      if (Math.abs(e.clientX - previousMousePosition.x) > 10 || 
+          Math.abs(e.clientY - previousMousePosition.y) > 10) {
         return; // Was dragging, not clicking
       }
 
@@ -666,9 +666,9 @@ export default function EnhancedGlobe3D({
 
       // Smooth rotation
       if (!isDragging) {
-        targetRotationY += 0.002;
-        velocity.x *= 0.96;
-        velocity.y *= 0.96;
+        targetRotationY += 0.0005; // Much slower auto-rotation
+        velocity.x *= 0.85; // Faster decay
+        velocity.y *= 0.85;
       }
       
       globe.rotation.y += (targetRotationY - globe.rotation.y) * 0.1;
