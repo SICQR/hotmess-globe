@@ -324,46 +324,44 @@ export default function Home() {
             {recentBeacons.length > 0 ? (
               recentBeacons.map((beacon, idx) => (
                 <motion.div
-                  key={beacon.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
+                 key={beacon.id}
+                 initial={{ opacity: 0, y: 20 }}
+                 whileInView={{ opacity: 1, y: 0 }}
+                 viewport={{ once: true }}
+                 transition={{ delay: idx * 0.1 }}
                 >
-                  <Link to={createPageUrl(`BeaconDetail?id=${beacon.id}`)}>
-                    <div className="group relative overflow-hidden">
-                      <div className="aspect-[4/3] bg-white/5">
-                        {beacon.image_url ? (
-                          <img 
-                            src={beacon.image_url} 
-                            alt={beacon.title}
-                            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                          />
-                        ) : (
-                          <img 
-                            src="https://images.unsplash.com/photo-1571266028243-d220ee4cb5cd?w=600&q=80" 
-                            alt={beacon.title}
-                            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                          />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 p-6">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="px-2 py-1 bg-[#00D9FF] text-black text-xs font-black uppercase">
-                            {beacon.kind}
-                          </div>
-                          <MapPin className="w-4 h-4 text-white" />
-                        </div>
-                        <h3 className="font-black text-xl mb-2 text-white drop-shadow-lg">{beacon.title}</h3>
-                        <p className="text-sm text-white/80 mb-3 line-clamp-2 drop-shadow-md">{beacon.description}</p>
-                        <div className="flex items-center gap-2 text-xs text-white/70">
-                          <Calendar className="w-3 h-3" />
-                          <span className="uppercase">{beacon.city}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
+                 <Link to={createPageUrl(`BeaconDetail?id=${beacon.id}`)}>
+                   <div className="group relative aspect-[4/3] overflow-hidden bg-white/5">
+                     {beacon.image_url ? (
+                       <img 
+                         src={beacon.image_url} 
+                         alt={beacon.title}
+                         className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                       />
+                     ) : (
+                       <img 
+                         src="https://images.unsplash.com/photo-1571266028243-d220ee4cb5cd?w=600&q=80" 
+                         alt={beacon.title}
+                         className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                       />
+                     )}
+                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+                     <div className="absolute bottom-0 left-0 right-0 p-6">
+                       <div className="flex items-start justify-between mb-3">
+                         <div className="px-2 py-1 bg-[#00D9FF] text-black text-xs font-black uppercase">
+                           {beacon.kind}
+                         </div>
+                         <MapPin className="w-4 h-4 text-white" />
+                       </div>
+                       <h3 className="font-black text-xl mb-2 text-white drop-shadow-lg">{beacon.title}</h3>
+                       <p className="text-sm text-white/80 mb-3 line-clamp-2 drop-shadow-md">{beacon.description}</p>
+                       <div className="flex items-center gap-2 text-xs text-white/70">
+                         <Calendar className="w-3 h-3" />
+                         <span className="uppercase">{beacon.city}</span>
+                       </div>
+                     </div>
+                   </div>
+                 </Link>
                 </motion.div>
               ))
             ) : (
