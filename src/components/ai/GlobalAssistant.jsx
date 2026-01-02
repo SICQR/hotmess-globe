@@ -87,10 +87,13 @@ export default function GlobalAssistant() {
 
   const quickQuestions = [
     "What events are happening tonight?",
-    "Recommend techno events near me",
-    "Which event has the best vibe?",
-    "Compare upcoming warehouse parties",
-    "What's the most popular event this week?"
+    "Show me products under 1000 XP",
+    "Help me find people into techno",
+    "Explain the XP system",
+    "How do I use Right Now?",
+    "What's my next challenge?",
+    "Show me top-rated sellers",
+    "How do safety check-ins work?"
   ];
 
   return (
