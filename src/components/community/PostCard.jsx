@@ -1,11 +1,104 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, MessageCircle, Share2, AlertTriangle, Image as ImageIcon, Video } from 'lucide-react';
+import { Heart, MessageCircle, Share2, AlertTriangle, Image as ImageIcon, Video, BarChart3 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import ExpiryBadge from './ExpiryBadge';
 import { base44 } from '@/api/base44Client';
 import CommentThread from './CommentThread';
+import { toast } from 'sonner';
+
+function PollDisplay({ post, currentUser }) {
+  const [voting, setVoting] = useState(false);
+  const poll = post.metadata?.poll;
+  
+  if (!poll) return null;
+
+  const isPollExpired = poll.expires_at && new Date(poll.expires_at) < new Date();
+  const userVote = poll.votes?.[currentUser?.email];
+  const totalVotes = Object.keys(poll.votes || {}).length;
+
+  const handleVote = async (option) => {
+    if (!currentUser || voting || userVote || isPollExpired) return;
+    
+    setVoting(true);
+    try {
+      const updatedVotes = {
+        ...poll.votes,
+        [currentUser.email]: option
+      };
+
+      await base44.entities.CommunityPost.update(post.id, {
+        metadata: {
+          ...post.metadata,
+          poll: {
+            ...poll,
+            votes: updatedVotes
+          }
+        }
+      });
+
+      toast.success('Vote recorded!');
+    } catch (error) {
+      toast.error('Failed to vote');
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 space-y-2">
+      <div className="flex items-center gap-2 mb-3">
+        <BarChart3 className="w-4 h-4 text-[#00D9FF]" />
+        <span className="text-xs font-bold uppercase text-[#00D9FF]">Poll</span>
+        {isPollExpired && (
+          <span className="text-xs text-white/40 uppercase">• Ended</span>
+        )}
+      </div>
+
+      {poll.options.map((option, idx) => {
+        const votes = Object.values(poll.votes || {}).filter(v => v === option).length;
+        const percentage = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+        const isSelected = userVote === option;
+
+        return (
+          <button
+            key={idx}
+            onClick={() => handleVote(option)}
+            disabled={!!userVote || isPollExpired || !currentUser || voting}
+            className={`w-full p-3 border-2 transition-all relative overflow-hidden ${
+              isSelected
+                ? 'bg-[#00D9FF]/20 border-[#00D9FF]'
+                : userVote || isPollExpired
+                ? 'bg-white/5 border-white/20 cursor-default'
+                : 'bg-white/5 border-white/20 hover:border-white hover:bg-white/10 cursor-pointer'
+            }`}
+          >
+            <div
+              className="absolute inset-0 bg-[#00D9FF]/10 transition-all"
+              style={{ width: `${userVote || isPollExpired ? percentage : 0}%` }}
+            />
+            <div className="relative flex items-center justify-between">
+              <span className="text-sm font-medium">{option}</span>
+              {(userVote || isPollExpired) && (
+                <span className="text-xs font-bold text-white/60">
+                  {percentage}% ({votes})
+                </span>
+              )}
+            </div>
+          </button>
+        );
+      })}
+
+      <p className="text-xs text-white/40 mt-2">
+        {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}
+        {poll.expires_at && !isPollExpired && (
+          <> • Ends {format(new Date(poll.expires_at), 'MMM d')}</>
+        )}
+      </p>
+    </div>
+  );
+}
 
 const CATEGORY_COLORS = {
   general: '#FF1493',
@@ -92,6 +185,11 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
                 </span>
               ))}
             </div>
+          )}
+
+          {/* Poll Display */}
+          {post.metadata?.poll && (
+            <PollDisplay post={post} currentUser={currentUser} />
           )}
         </div>
       </div>

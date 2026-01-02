@@ -136,6 +136,44 @@ export default function Community() {
         {/* AI Trending Summary */}
         {posts.length >= 5 && <TrendingSummary posts={posts} />}
 
+        {/* Trending Posts Section */}
+        {posts.length >= 5 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 bg-gradient-to-br from-[#FF1493]/20 to-[#FFEB3B]/20 border-2 border-[#FF1493] p-6"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-[#FFEB3B]" />
+              <h2 className="text-xl font-black uppercase">Trending Now</h2>
+            </div>
+            <div className="space-y-3">
+              {posts
+                .filter(p => p.moderation_status === 'approved')
+                .sort((a, b) => {
+                  const scoreA = (a.likes_count || 0) * 2 + (a.comments_count || 0) * 3 + (a.shares_count || 0) * 4;
+                  const scoreB = (b.likes_count || 0) * 2 + (b.comments_count || 0) * 3 + (b.shares_count || 0) * 4;
+                  return scoreB - scoreA;
+                })
+                .slice(0, 3)
+                .map((post, idx) => (
+                  <div key={post.id} className="flex items-start gap-3 p-3 bg-black/40 border border-white/10">
+                    <span className="text-2xl font-black text-[#FFEB3B]">#{idx + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm mb-1">{post.user_name}</p>
+                      <p className="text-xs text-white/60 line-clamp-2">{post.content}</p>
+                      <div className="flex gap-3 mt-2 text-xs text-white/40">
+                        <span>❤️ {post.likes_count || 0}</span>
+                        <span>💬 {post.comments_count || 0}</span>
+                        <span>🔗 {post.shares_count || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Create Post */}
         {user && !showCreatePost && (
           <Button

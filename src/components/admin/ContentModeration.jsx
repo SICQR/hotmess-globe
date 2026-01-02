@@ -4,12 +4,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Flag, CheckCircle, XCircle, AlertTriangle, MessageCircle } from 'lucide-react';
+import { Flag, CheckCircle, XCircle, AlertTriangle, MessageCircle, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 export default function ContentModeration() {
   const queryClient = useQueryClient();
+  const [aiSummary, setAiSummary] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
 
   const { data: posts = [] } = useQuery({
     queryKey: ['admin-posts'],
@@ -42,8 +44,98 @@ export default function ContentModeration() {
   const flaggedPosts = posts.filter(p => p.moderation_status === 'flagged');
   const pendingPosts = posts.filter(p => p.moderation_status === 'pending');
 
+  const generateAISummary = async () => {
+    setLoadingSummary(true);
+    try {
+      const flaggedContent = flaggedPosts.slice(0, 10).map(p => ({
+        user: p.user_name,
+        content: p.content.substring(0, 200),
+        reason: p.moderation_reason,
+        sentiment: p.ai_sentiment
+      }));
+
+      const summary = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analyze these flagged community posts and provide a moderation summary:
+
+${JSON.stringify(flaggedContent, null, 2)}
+
+Provide:
+1. Common patterns or themes in flagged content
+2. Risk assessment (low/medium/high)
+3. Recommended actions
+4. Any false positives you detect
+
+Be concise and actionable.`,
+        add_context_from_internet: false,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            patterns: { type: "string" },
+            risk_level: { type: "string" },
+            recommendations: { type: "string" },
+            false_positives: { type: "string" }
+          }
+        }
+      });
+
+      setAiSummary(summary);
+    } catch (error) {
+      toast.error('Failed to generate AI summary');
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* AI Moderation Summary */}
+      {flaggedPosts.length > 0 && (
+        <div className="bg-black border-2 border-[#FF1493] p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-[#FF1493]" />
+              <h3 className="font-black uppercase">AI Moderation Insights</h3>
+            </div>
+            <Button
+              onClick={generateAISummary}
+              disabled={loadingSummary}
+              className="bg-[#FF1493] hover:bg-white text-black font-black"
+            >
+              {loadingSummary ? 'Analyzing...' : 'Generate Summary'}
+            </Button>
+          </div>
+
+          {aiSummary && (
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">PATTERNS</p>
+                <p className="text-white/80">{aiSummary.patterns}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">RISK LEVEL</p>
+                <span className={`px-2 py-1 font-black uppercase text-xs border-2 ${
+                  aiSummary.risk_level === 'high' ? 'bg-red-600/20 border-red-600 text-red-400' :
+                  aiSummary.risk_level === 'medium' ? 'bg-[#FFEB3B]/20 border-[#FFEB3B] text-[#FFEB3B]' :
+                  'bg-green-600/20 border-green-600 text-green-400'
+                }`}>
+                  {aiSummary.risk_level}
+                </span>
+              </div>
+              <div>
+                <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">RECOMMENDATIONS</p>
+                <p className="text-white/80">{aiSummary.recommendations}</p>
+              </div>
+              {aiSummary.false_positives && (
+                <div>
+                  <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">FALSE POSITIVES</p>
+                  <p className="text-white/80">{aiSummary.false_positives}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-black border-2 border-white p-6">
