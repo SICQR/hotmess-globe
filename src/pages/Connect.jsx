@@ -15,6 +15,7 @@ import { valuesToSearchParams, searchParamsToValues, valuesToApiPayload, applyLo
 import { useTaxonomy } from '../components/taxonomy/useTaxonomy';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 import { debounce } from 'lodash';
+import { generateMatchExplanations, promoteTopMatches } from '../components/discovery/AIMatchmaker';
 
 export default function Connect() {
   const { data: currentUser } = useCurrentUser();
@@ -24,6 +25,7 @@ export default function Connect() {
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 12;
   const { cfg, idx } = useTaxonomy();
+  const [aiMatchExplanations, setAiMatchExplanations] = useState({});
 
   // Use global cached users - MUST be before any conditional returns
   const { data: allUsers = [] } = useAllUsers();
@@ -146,11 +148,26 @@ export default function Connect() {
     return applyLocalFilters(laneFiltered, debouncedFilters, { taxonomyIndex: idx || null });
   }, [laneFiltered, debouncedFilters, idx]);
 
+  // Generate AI match explanations for top 6 users
+  useEffect(() => {
+    if (!currentUser || filteredUsers.length === 0) return;
+
+    const topUsers = filteredUsers.slice(0, 6).map(p => allUsers.find(u => u.email === p.email)).filter(Boolean);
+    generateMatchExplanations(currentUser, topUsers).then(explanations => {
+      setAiMatchExplanations(explanations);
+    });
+  }, [currentUser?.email, filteredUsers.slice(0, 6).map(u => u.email).join(',')]);
+
+  // Promote top AI matches
+  const reorderedUsers = useMemo(() => {
+    return promoteTopMatches(filteredUsers, aiMatchExplanations);
+  }, [filteredUsers, aiMatchExplanations]);
+
   // Memoize pagination calculations
-  const totalPages = useMemo(() => Math.ceil(filteredUsers.length / ITEMS_PER_PAGE), [filteredUsers.length]);
+  const totalPages = useMemo(() => Math.ceil(reorderedUsers.length / ITEMS_PER_PAGE), [reorderedUsers.length]);
   const paginatedUsers = useMemo(() => 
-    filteredUsers.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE),
-    [filteredUsers, page]
+    reorderedUsers.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE),
+    [reorderedUsers, page]
   );
 
   // Map to full user objects - memoized
@@ -256,7 +273,10 @@ export default function Connect() {
       {/* Grid */}
       <div className="max-w-7xl mx-auto p-6">
         <div className="mb-4 text-sm text-white/60">
-          {filteredUsers.length} {filteredUsers.length === 1 ? 'result' : 'results'}
+          {reorderedUsers.length} {reorderedUsers.length === 1 ? 'result' : 'results'}
+          {Object.keys(aiMatchExplanations).length > 0 && (
+            <span className="ml-2 text-[#00D9FF]">• Top {Object.keys(aiMatchExplanations).length} AI matches promoted</span>
+          )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {displayUsers.map((user, idx) => {
@@ -270,10 +290,11 @@ export default function Connect() {
                 userTribes={userTribesData}
                 currentUserTags={currentUserTags}
                 index={idx}
+                aiMatchExplanation={aiMatchExplanations[user.id]}
               />
             );
           })}
-          {filteredUsers.length === 0 && (
+          {reorderedUsers.length === 0 && (
             <div className="col-span-full text-center py-20">
               <Users className="w-16 h-16 text-white/20 mx-auto mb-4" />
               <p className="text-white/40 mb-2">
@@ -287,7 +308,7 @@ export default function Connect() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && filteredUsers.length > 0 && (
+        {totalPages > 1 && reorderedUsers.length > 0 && (
           <div className="flex items-center justify-center gap-2 mt-8">
             <Button
               onClick={() => setPage(p => Math.max(1, p - 1))}
