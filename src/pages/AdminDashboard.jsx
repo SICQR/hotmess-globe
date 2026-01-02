@@ -152,7 +152,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="moderation">
-            <ContentModeration />
+            <ModerationQueue />
           </TabsContent>
 
           <TabsContent value="events">

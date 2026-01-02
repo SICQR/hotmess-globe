@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Shield, UserPlus, Clock, MapPin, Phone, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Shield, UserPlus, Clock, MapPin, Phone, AlertTriangle, CheckCircle, MessageSquare, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
+import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
 
 export default function Safety() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -139,6 +141,7 @@ export default function Safety() {
           <TabsList className="bg-white/5 border border-white/10 mb-6">
             <TabsTrigger value="checkin">Safety Check-In</TabsTrigger>
             <TabsTrigger value="contacts">Trusted Contacts</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="checkin">
@@ -303,6 +306,50 @@ export default function Safety() {
                   </motion.div>
                 ))
               )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <div className="space-y-6">
+              <EmergencyMessageEditor />
+              <CheckInTimerCustomizer />
+              
+              <div className="bg-white/5 border border-white/10 p-6">
+                <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-[#FF1493]" />
+                  Safety Features
+                </h3>
+                <ul className="space-y-3 text-sm text-white/60">
+                  <li className="flex items-start gap-3">
+                    <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-white font-bold">Panic Button</p>
+                      <p className="text-xs">Always available in bottom-right corner. Sends SOS to all trusted contacts with your location.</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Clock className="w-4 h-4 text-[#00D9FF] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-white font-bold">Check-In Timer</p>
+                      <p className="text-xs">Set expected return time. Trusted contacts get notified if you're overdue.</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <MapPin className="w-4 h-4 text-[#FFEB3B] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-white font-bold">Location Sharing</p>
+                      <p className="text-xs">Real-time location shared during active check-ins and emergencies.</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <MessageSquare className="w-4 h-4 text-[#FF1493] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-white font-bold">Custom Messages</p>
+                      <p className="text-xs">Pre-define emergency messages for instant alerts.</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
