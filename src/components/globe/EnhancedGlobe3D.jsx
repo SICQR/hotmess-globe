@@ -306,7 +306,7 @@ export default function EnhancedGlobe3D({
           }
         }
       });
-    };
+    }
 
     updateBeaconClusters();
 
