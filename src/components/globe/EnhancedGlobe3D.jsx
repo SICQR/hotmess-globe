@@ -158,43 +158,12 @@ export default function EnhancedGlobe3D({
       globe.add(new THREE.Line(geo, gridMat));
     }
 
-    // Beacon pins layer - OPTIMIZED with instancing
-    const beaconGeo = new THREE.SphereGeometry(0.015, 8, 8); // Reduced segments for LOD
+    // Beacon pins layer
+    const beaconGeo = new THREE.SphereGeometry(0.015, 8, 8);
     const beaconMeshes = [];
 
     if (showPins) {
-      // Group beacons by type for instanced rendering
-      const normalBeacons = beacons.filter(b => !highlightedIds.includes(b.id) && b.mode !== 'care');
-      const careBeacons = beacons.filter(b => b.mode === 'care');
-      const highlightedBeacons = beacons.filter(b => highlightedIds.includes(b.id));
-
-      // Create instanced mesh for normal beacons (most common case)
-      if (normalBeacons.length > 0) {
-        const normalMat = new THREE.MeshStandardMaterial({
-          color: 0xff1493,
-          emissive: 0xff1493,
-          emissiveIntensity: 0.8,
-          roughness: 0.4,
-          metalness: 0.2
-        });
-
-        const instancedMesh = new THREE.InstancedMesh(beaconGeo, normalMat, normalBeacons.length);
-        const matrix = new THREE.Matrix4();
-        
-        normalBeacons.forEach((beacon, i) => {
-          const pos = latLngToVector3(beacon.lat, beacon.lng, globeRadius * 1.01);
-          matrix.setPosition(pos);
-          instancedMesh.setMatrixAt(i, matrix);
-          instancedMesh.setColorAt(i, new THREE.Color(0xff1493));
-        });
-        
-        instancedMesh.instanceMatrix.needsUpdate = true;
-        if (instancedMesh.instanceColor) instancedMesh.instanceColor.needsUpdate = true;
-        globe.add(instancedMesh);
-        beaconMeshes.push(instancedMesh);
-      }
-
-      // Create individual meshes for ALL beacons (better for click handling)
+      // Create individual meshes for ALL beacons (needed for click handling)
       beacons.forEach(beacon => {
         const isHighlighted = highlightedIds.includes(beacon.id);
         const isCareBeacon = beacon.mode === 'care';
