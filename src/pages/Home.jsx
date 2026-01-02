@@ -445,6 +445,13 @@ export default function Home() {
                     VIEW GLOBE
                   </Button>
                 </Link>
+                {currentUser.role !== 'admin' && (
+                  <Link to={createPageUrl('PromoteToAdmin')}>
+                    <Button variant="outline" className="border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-black uppercase px-8 py-6 text-lg">
+                      BECOME ADMIN
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           ) : (
