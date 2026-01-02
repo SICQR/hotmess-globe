@@ -348,7 +348,6 @@ export default function Profile() {
     );
   }
 
-  const level = Math.floor((profileUser.xp || 0) / 1000) + 1;
   const profileType = profileUser?.profile_type || 'standard';
 
   return (
