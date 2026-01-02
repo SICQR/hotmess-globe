@@ -10,6 +10,7 @@ import GlobeSearch from '../components/globe/GlobeSearch';
 import FloatingPanel from '../components/ui/FloatingPanel';
 import { activityTracker } from '../components/globe/ActivityTracker';
 import NearbyGrid from '../components/globe/NearbyGrid';
+import LocalBeaconsView from '../components/globe/LocalBeaconsView';
 import { Settings, BarChart3, Menu, Home, Grid3x3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -167,6 +168,8 @@ export default function GlobePage() {
   const [userActivities, setUserActivities] = useState([]);
   const [activityVisibility, setActivityVisibility] = useState(activityTracker.isEnabled());
   const [showNearbyGrid, setShowNearbyGrid] = useState(false);
+  const [showLocalBeacons, setShowLocalBeacons] = useState(false);
+  const [localBeaconCenter, setLocalBeaconCenter] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
 
   // Get user's location
@@ -243,7 +246,11 @@ export default function GlobePage() {
 
   const handleBeaconClick = useCallback((beacon) => {
     setSelectedBeacon(beacon);
-    setShowPanel(true);
+    setLocalBeaconCenter(beacon);
+    setShowLocalBeacons(true);
+    setShowPanel(false);
+    setShowControls(false);
+    setShowNearbyGrid(false);
     
     // Track activity
     activityTracker.trackActivity('beacon_click', { 
@@ -477,6 +484,29 @@ export default function GlobePage() {
           onClose={() => setShowNearbyGrid(false)}
         >
           <NearbyGrid userLocation={userLocation} />
+        </FloatingPanel>
+      )}
+
+      {/* Local Beacons View */}
+      {showLocalBeacons && localBeaconCenter && (
+        <FloatingPanel 
+          title="Local Area" 
+          position="right" 
+          width="w-[480px]"
+          onClose={() => {
+            setShowLocalBeacons(false);
+            setLocalBeaconCenter(null);
+          }}
+        >
+          <LocalBeaconsView 
+            centerBeacon={localBeaconCenter}
+            allBeacons={beacons}
+            onClose={() => {
+              setShowLocalBeacons(false);
+              setLocalBeaconCenter(null);
+            }}
+            onBeaconSelect={handleBeaconClick}
+          />
         </FloatingPanel>
       )}
       </div>
