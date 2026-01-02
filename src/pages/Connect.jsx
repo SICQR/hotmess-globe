@@ -32,17 +32,20 @@ export default function Connect() {
 
   const { data: userTags = [] } = useQuery({
     queryKey: ['user-tags'],
-    queryFn: () => base44.entities.UserTag.list()
+    queryFn: () => base44.entities.UserTag.list(),
+    enabled: !!currentUser
   });
 
   const { data: userTribes = [] } = useQuery({
     queryKey: ['user-tribes'],
-    queryFn: () => base44.entities.UserTribe.list()
+    queryFn: () => base44.entities.UserTribe.list(),
+    enabled: !!currentUser
   });
 
   const { data: rightNowStatuses = [] } = useQuery({
     queryKey: ['right-now-status'],
-    queryFn: () => base44.entities.RightNowStatus.filter({ active: true })
+    queryFn: () => base44.entities.RightNowStatus.filter({ active: true }),
+    enabled: !!currentUser
   });
 
   // Build defaults from taxonomy config
