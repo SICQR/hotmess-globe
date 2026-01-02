@@ -11,6 +11,11 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
   const queryClient = useQueryClient();
 
   const checkUnlock = async () => {
+    // CHROME members get free access to all premium content
+    if (currentUser.membership_tier === 'pro') {
+      return true;
+    }
+    
     const unlocks = await base44.entities.ContentUnlock.filter({
       unlocker_email: currentUser.email,
       owner_email: profileUser.email
@@ -20,7 +25,7 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
 
   React.useEffect(() => {
     checkUnlock().then(setUnlocked);
-  }, [currentUser.email, profileUser.email]);
+  }, [currentUser.email, profileUser.email, currentUser.membership_tier]);
 
   const unlockMutation = useMutation({
     mutationFn: async () => {
@@ -69,6 +74,7 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
   if (!profileUser.has_premium_content) return null;
 
   const cost = profileUser.premium_unlock_xp || 1000;
+  const isChromeMemeber = currentUser.membership_tier === 'pro';
 
   return (
     <motion.div
@@ -84,13 +90,20 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
             {premiumPhotos.length} photos • {premiumVideos.length} videos
           </p>
         </div>
+        {isChromeMemeber && (
+          <div className="ml-auto">
+            <Crown className="w-5 h-5 text-[#00D9FF]" title="CHROME members get free access" />
+          </div>
+        )}
       </div>
 
       {unlocked ? (
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-sm text-[#39FF14]">
             <Eye className="w-4 h-4" />
-            <span className="font-bold uppercase">Unlocked</span>
+            <span className="font-bold uppercase">
+              {isChromeMemeber ? 'CHROME Access' : 'Unlocked'}
+            </span>
           </div>
 
           {/* Premium Photos */}
@@ -157,6 +170,13 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
           <p className="text-xs text-white/40 text-center">
             One-time unlock • XP goes to profile owner
           </p>
+          
+          <div className="mt-4 p-3 bg-[#00D9FF]/10 border border-[#00D9FF]/30">
+            <p className="text-xs text-[#00D9FF] font-bold uppercase text-center flex items-center justify-center gap-2">
+              <Crown className="w-3 h-3" />
+              CHROME members get instant access to all premium content
+            </p>
+          </div>
         </div>
       )}
     </motion.div>
