@@ -75,7 +75,7 @@ export default function PersistentRadioPlayer() {
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 50 }}
-        className="fixed bottom-4 right-4 z-[100] bg-black/95 backdrop-blur-xl border-2 border-[#B026FF] rounded-xl p-6 w-80 shadow-2xl"
+        className="fixed bottom-4 left-4 z-[100] bg-black/95 backdrop-blur-xl border-2 border-[#B026FF] rounded-xl p-6 w-80 shadow-2xl"
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -137,7 +137,7 @@ export default function PersistentRadioPlayer() {
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
       onClick={() => setIsRadioOpen(true)}
-      className="fixed bottom-6 right-6 z-[100] w-16 h-16 bg-[#B026FF] rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(176,38,255,0.6)] hover:shadow-[0_0_40px_rgba(176,38,255,0.8)] transition-all border-2 border-white"
+      className="fixed bottom-6 left-6 z-[100] w-16 h-16 bg-[#B026FF] rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(176,38,255,0.6)] hover:shadow-[0_0_40px_rgba(176,38,255,0.8)] transition-all border-2 border-white"
     >
       <Radio className="w-7 h-7 text-white" />
       {isPlaying && (
