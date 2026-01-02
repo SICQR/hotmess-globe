@@ -32,9 +32,14 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: ['current-user'],
     queryFn: async () => {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) return null;
-      return base44.auth.me();
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) return null;
+        return base44.auth.me();
+      } catch (error) {
+        console.error('Failed to fetch current user:', error);
+        return null;
+      }
     },
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
