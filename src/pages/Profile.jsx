@@ -27,6 +27,7 @@ import ErrorBoundary from '../components/error/ErrorBoundary';
 import RightNowIndicator from '../components/discovery/RightNowIndicator';
 import ProfileCompleteness from '../components/profile/ProfileCompleteness';
 import WelcomeTour from '../components/onboarding/WelcomeTour';
+import VibeSynthesisCard from '../components/vibe/VibeSynthesisCard';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -370,6 +371,15 @@ export default function Profile() {
         />
 
         <div className="max-w-4xl mx-auto p-4 md:p-8">
+          {/* Vibe Synthesis - AI-Generated Character Profile */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <VibeSynthesisCard userEmail={userEmail || currentUser?.email} />
+          </motion.div>
+
           {/* Right Now Status */}
           {rightNowStatus && (
             <motion.div
