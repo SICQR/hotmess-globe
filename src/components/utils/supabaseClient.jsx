@@ -50,29 +50,8 @@ export const base44 = {
       }
     },
     
-    redirectToLogin: async (nextUrl) => {
-      // Redirect to Supabase hosted UI or handle auth
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin + (nextUrl || '/'),
-        }
-      });
-      if (error) {
-        // Fallback: create a simple inline login modal or use magic link
-        const email = prompt('Enter your email to receive a login link:');
-        if (email) {
-          const { error: magicError } = await supabase.auth.signInWithOtp({
-            email,
-            options: {
-              emailRedirectTo: window.location.origin + (nextUrl || '/'),
-            }
-          });
-          if (!magicError) {
-            alert('Check your email for the login link!');
-          }
-        }
-      }
+    redirectToLogin: (nextUrl) => {
+      window.location.href = createPageUrl('Auth') + (nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : '');
     }
   },
   
