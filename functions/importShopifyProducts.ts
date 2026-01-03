@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
         description: shopifyProduct.body_html?.replace(/<[^>]*>/g, '') || '',
         price_xp: Math.round(parseFloat(variant.price) * 100), // Convert to XP
         price_gbp: parseFloat(variant.price),
-        seller_email: user.email,
+        seller_email: 'shopify@hotmess.london', // Official shop identifier
         product_type: 'physical',
         category: shopifyProduct.product_type || 'general',
         tags: shopifyProduct.tags?.split(',').map(t => t.trim()) || [],
