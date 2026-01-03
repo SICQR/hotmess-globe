@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '../../utils';
-import { Sparkles, MapPin, Zap, Loader2 } from 'lucide-react';
+import { Sparkles, MapPin, Loader2 } from 'lucide-react';
 
 export default function AIRecommendations({ user, beacons, limit = 3 }) {
   const [recommendations, setRecommendations] = useState([]);

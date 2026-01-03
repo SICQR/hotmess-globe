@@ -13,7 +13,7 @@ import NearbyGrid from '../components/globe/NearbyGrid';
 import LocalBeaconsView from '../components/globe/LocalBeaconsView';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
-import { Settings, BarChart3, Menu, Home, Grid3x3 } from 'lucide-react';
+import { Settings, BarChart3, Home, Grid3x3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { debounce } from 'lodash';

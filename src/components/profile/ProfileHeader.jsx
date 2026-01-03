@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { User, ShoppingBag, Crown, Palette } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ShoppingBag, Crown, Palette } from 'lucide-react';
 import QuickActions from './QuickActions';
 import BadgeDisplay from './BadgeDisplay';
 

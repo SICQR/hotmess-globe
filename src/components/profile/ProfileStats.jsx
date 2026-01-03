@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Award, Users, MapPin, Calendar, Trophy } from 'lucide-react';
+import { Zap, Award, Users, MapPin, Trophy } from 'lucide-react';
 
 export default function ProfileStats({ 
   xp, 

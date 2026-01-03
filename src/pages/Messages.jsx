@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { MessageCircle, Users, Plus } from 'lucide-react';
+import { MessageCircle, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ChatThread from '../components/messaging/ChatThread';
 import ThreadList from '../components/messaging/ThreadList';

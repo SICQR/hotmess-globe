@@ -1,6 +1,4 @@
 import React from 'react';
-import { MapPin, Heart, Calendar, Zap } from 'lucide-react';
-import { PhotoGallery } from './MediaGallery';
 import MutualConnections from './MutualConnections';
 
 export default function StandardProfileView({ user, currentUser, isHandshakeConnection }) {
