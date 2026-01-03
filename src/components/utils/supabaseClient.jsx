@@ -1,13 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || 
+const supabaseKey = import.meta.env.VITE_supabase_anon_public || 
+                    import.meta.env.VITE_SUPABASE_KEY || 
                     import.meta.env.VITE_supabase_key || 
-                    import.meta.env.supabase_key;
+                    import.meta.env.supabase_key ||
+                    import.meta.env.supabase_anon_public;
 
 if (!supabaseKey) {
   console.error('Available env vars:', Object.keys(import.meta.env));
-  throw new Error('Missing Supabase key. Add supabase_key to your app secrets in the Base44 dashboard.');
+  console.error('Looking for supabase key in:', {
+    vite_anon: import.meta.env.VITE_supabase_anon_public,
+    vite_key: import.meta.env.VITE_supabase_key,
+    direct: import.meta.env.supabase_key
+  });
+  throw new Error('Missing Supabase key. Check console for available environment variables.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
