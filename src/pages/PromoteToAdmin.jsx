@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Shield, Check } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
