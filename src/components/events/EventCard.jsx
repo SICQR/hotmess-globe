@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import EventInsights from './EventInsights';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { Calendar, MapPin, Users, Clock, ExternalLink, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, Users, ExternalLink, Sparkles } from 'lucide-react';
 import { formatUTCDate } from '../utils/dateUtils';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
 

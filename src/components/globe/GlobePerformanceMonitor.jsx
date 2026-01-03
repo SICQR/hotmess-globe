@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Activity, Zap } from 'lucide-react';
+import { Activity } from 'lucide-react';
 
 export default function GlobePerformanceMonitor({ visible = false }) {
   const [fps, setFps] = useState(60);
