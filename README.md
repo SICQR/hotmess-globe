@@ -230,14 +230,23 @@ The build output will be in the `dist/` directory, ready for deployment.
 
 ## 🚀 Deployment
 
-This application can be deployed to various platforms:
+**Automated Deployment**: This application automatically deploys to Vercel production when code is pushed to the `main` branch, after all CI checks pass.
 
-- **Vercel** - Recommended for Vite applications
-- **Netlify** - Easy deployment with continuous integration
-- **AWS S3 + CloudFront** - Enterprise-grade hosting
-- **GitHub Pages** - Free hosting for open-source projects
+### Deployment Platforms Supported:
+- **Vercel** - Currently configured with automated GitHub Actions deployment
+- **Netlify** - Alternative platform (requires configuration)
+- **AWS S3 + CloudFront** - Enterprise-grade hosting (requires manual setup)
+- **GitHub Pages** - Free hosting for open-source projects (requires configuration)
 
-See [CI_CD_SETUP.md](./CI_CD_SETUP.md) for automated deployment configuration.
+### Setup and Configuration:
+- **Automated deployment setup**: See [CI_CD_SETUP.md](./CI_CD_SETUP.md)
+- **Deployment checklist**: See [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+To deploy, simply:
+1. Create a pull request with your changes
+2. Ensure all CI checks pass
+3. Merge to `main` branch
+4. Deployment happens automatically!
 
 ## 📱 Browser Support
 
