@@ -127,7 +127,11 @@ jobs:
       
       - name: Check licenses
         run: |
-          npx license-checker --production --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD' || echo "⚠️ Some licenses may require review"
+          npx license-checker --production --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD' || {
+            echo "⚠️ Some licenses may require review"
+            exit 0  # Don't fail workflow, just warn
+          }
+        continue-on-error: true
 
   security-summary:
     name: Security Summary

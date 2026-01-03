@@ -55,6 +55,14 @@ function sanitizeContext(context) {
   return sanitized;
 }
 
+// Console method mapping for cleaner code
+const consoleMethods = {
+  error: console.error,
+  warn: console.warn,
+  info: console.info,
+  debug: console.log,
+};
+
 /**
  * Log function
  */
@@ -73,24 +81,11 @@ function log(level, message, context = null) {
   const formattedMessage = formatMessage(level, message, sanitizedContext);
 
   // Use appropriate console method
-  switch (level) {
-    case 'error':
-      console.error(formattedMessage);
-      // In production, you might want to send this to an error tracking service
-      // like Sentry: Sentry.captureMessage(formattedMessage, 'error');
-      break;
-    case 'warn':
-      console.warn(formattedMessage);
-      break;
-    case 'info':
-      console.info(formattedMessage);
-      break;
-    case 'debug':
-      console.log(formattedMessage);
-      break;
-    default:
-      console.log(formattedMessage);
-  }
+  const consoleMethod = consoleMethods[level] || console.log;
+  consoleMethod(formattedMessage);
+  
+  // In production, you might want to send errors to an error tracking service
+  // like Sentry: if (level === 'error') Sentry.captureMessage(formattedMessage, 'error');
 }
 
 /**
