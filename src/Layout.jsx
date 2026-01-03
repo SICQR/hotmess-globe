@@ -154,6 +154,30 @@ function LayoutInner({ children, currentPageName }) {
           {mobileMenuOpen && (
             <div className="md:hidden fixed inset-0 z-40 bg-black/95 backdrop-blur-xl pt-16">
               <div className="flex flex-col p-4">
+                {/* Admin Link - Mobile */}
+                {user && user.role === 'admin' && (
+                  <Link
+                    to={createPageUrl('AdminDashboard')}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2.5 mb-4 transition-all border-2 bg-red-600/20 border-red-600 text-red-400 hover:bg-red-600/30"
+                  >
+                    <Shield className="w-4 h-4" />
+                    <span className="font-black uppercase tracking-wider text-xs">ADMIN</span>
+                  </Link>
+                )}
+
+                {/* Promote to Admin Link - Mobile */}
+                {user && user.role !== 'admin' && (
+                  <Link
+                    to={createPageUrl('PromoteToAdmin')}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2.5 mb-4 transition-all border-2 bg-yellow-600/20 border-yellow-600 text-yellow-400 hover:bg-yellow-600/30"
+                  >
+                    <Shield className="w-4 h-4" />
+                    <span className="font-black uppercase tracking-wider text-xs">BECOME ADMIN</span>
+                  </Link>
+                )}
+
                 <div className="mb-2">
                   <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-2 px-3">PRIMARY</p>
                   {PRIMARY_NAV.map(({ name, icon: Icon, path, showBadge }) => (
