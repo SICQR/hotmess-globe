@@ -1,24 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
-
-// Debug: Check all available env vars
-const allEnvKeys = Object.keys(import.meta.env);
-console.log('🔍 All available env var keys:', allEnvKeys);
-console.log('🔍 Full env object:', import.meta.env);
-
-// Try all possible variations
-const supabaseKey = import.meta.env.VITE_supabase_anon_public ||
-                    import.meta.env.VITE_SUPABASE_ANON_PUBLIC ||
-                    import.meta.env['VITE_supabase_anon_public'] ||
-                    import.meta.env['supabase_anon_public'];
-
-console.log('✅ Supabase key found:', !!supabaseKey);
-
-if (!supabaseKey) {
-  console.error('❌ Could not find Supabase key. Available keys:', allEnvKeys);
-  throw new Error(`Supabase key not found. Available env vars: ${allEnvKeys.join(', ')}`);
-}
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3l3cHZuY3FxZ2xobmhyamJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwOTEyMzIsImV4cCI6MjA4MjY2NzIzMn0.WhPthNardVU6yLmrBDy6poDmdt12MDV0h-QCuhSD5vQ';
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
