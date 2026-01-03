@@ -1,4 +1,3 @@
-import { base44 } from '@/api/base44Client';
 
 /**
  * Advanced Event Recommendation Engine

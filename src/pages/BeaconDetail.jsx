@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
-import { MapPin, Zap, Clock, ArrowLeft, Users, Calendar, ExternalLink, Bot } from 'lucide-react';
+import { MapPin, Zap, ArrowLeft, Users, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import CommentsSection from '../components/beacon/CommentsSection';

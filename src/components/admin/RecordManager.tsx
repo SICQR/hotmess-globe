@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Upload, Music, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 /**
  * RecordManager - RAW CONVICT RECORDS Admin Terminal
@@ -66,8 +67,8 @@ export default function RecordManager() {
       setWavFile(null);
       setUploading(false);
     },
-    onError: (error) => {
-      console.error('Upload failed:', error);
+    onError: (error: any) => {
+      logger.error('Upload failed', { error: error.message, fileName: wavFile?.name });
       toast.error('Upload failed. Try again.');
       setUploading(false);
     }

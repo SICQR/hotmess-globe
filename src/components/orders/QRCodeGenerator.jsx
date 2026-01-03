@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, QrCode } from 'lucide-react';
+import { Download } from 'lucide-react';
 
 export default function QRCodeGenerator({ orderId, size = 200 }) {
   const canvasRef = useRef(null);

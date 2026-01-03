@@ -4,9 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { MapPin, ShoppingBag, Users, Radio, Heart, Calendar, Zap, ArrowRight, Crown } from 'lucide-react';
+import { MapPin, ShoppingBag, Users, Radio, Heart, Calendar, Zap, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 
 const COLLECTIONS = [
   { id: 'raw', name: 'RAW', tagline: 'Hardwear. Clean lines. Loud intent.', color: '#000000' },
