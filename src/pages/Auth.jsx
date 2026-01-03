@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { auth } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,6 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const nextUrl = searchParams.get('next');
 
