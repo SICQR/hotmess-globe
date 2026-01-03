@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
 
 export default function AgeGate({ onVerified }) {
   const handleEnter = () => {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Upload, Image as ImageIcon, Video as VideoIcon, Trash2, Lock, Crown } from 'lucide-react';
+import { X, Upload, Image as ImageIcon, Video as VideoIcon, Trash2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { MessageCircle, Send, Trash2, Flag } from 'lucide-react';
+import { MessageCircle, Send, Trash2 } from 'lucide-react';
 import ReportButton from '../moderation/ReportButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
