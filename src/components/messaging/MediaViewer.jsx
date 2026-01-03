@@ -30,6 +30,9 @@ export default function MediaViewer({ mediaUrl, mediaType, onClose, allMedia = [
           exit={{ scale: 0.9, opacity: 0 }}
           className="relative max-w-7xl max-h-[90vh] w-full"
           onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Media viewer"
         >
           {/* Controls */}
           <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">

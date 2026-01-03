@@ -70,9 +70,12 @@ export default function MakeOfferModal({ isOpen, onClose, product, currentUser }
         animate={{ scale: 1, opacity: 1 }}
         className="bg-black border-2 border-[#FF1493] max-w-md w-full p-6"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="offer-modal-title"
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-black uppercase">Make Offer</h2>
+          <h2 id="offer-modal-title" className="text-2xl font-black uppercase">Make Offer</h2>
           <button onClick={onClose} className="text-white/60 hover:text-white">
             <X className="w-6 h-6" />
           </button>
