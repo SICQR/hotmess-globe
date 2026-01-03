@@ -9,6 +9,7 @@ import EventManagement from '../components/admin/EventManagement';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import CurationQueue from '../components/admin/CurationQueue';
 import UserVerification from '../components/admin/UserVerification';
+import ShopifyManager from '../components/admin/ShopifyManager';
 import AdvancedAnalytics from '../components/analytics/AdvancedAnalytics';
 import { ABTestResults } from '../components/analytics/ABTestingFramework';
 import BulkUserInvite from '../components/admin/BulkUserInvite';
@@ -165,6 +166,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="advanced">
             <AdvancedAnalytics />
+          </TabsContent>
+
+          <TabsContent value="shopify">
+            <ShopifyManager />
           </TabsContent>
 
           <TabsContent value="verification">
