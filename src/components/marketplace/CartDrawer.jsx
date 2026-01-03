@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -8,22 +8,56 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { toast } from 'sonner';
 
+// Cart persistence using localStorage
+const CART_STORAGE_KEY = 'hotmess_cart';
+
 export default function CartDrawer({ isOpen, onClose, currentUser }) {
   const queryClient = useQueryClient();
 
   const { data: cartItems = [] } = useQuery({
     queryKey: ['cart', currentUser?.email],
     queryFn: async () => {
+      if (!currentUser) return [];
+      
       const items = await base44.entities.CartItem.filter({ user_email: currentUser.email });
-      // Filter out expired reservations (30min timeout)
       const now = new Date();
-      return items.filter(item => {
+      const validItems = items.filter(item => {
         if (!item.reserved_until) return true;
         return new Date(item.reserved_until) > now;
       });
+      
+      // Sync to localStorage
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(validItems));
+      return validItems;
     },
     enabled: !!currentUser
   });
+
+  // Restore cart from localStorage on mount
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const storedCart = localStorage.getItem(CART_STORAGE_KEY);
+    if (storedCart) {
+      try {
+        const items = JSON.parse(storedCart);
+        // Sync localStorage items to database
+        items.forEach(async (item) => {
+          const existing = cartItems.find(ci => ci.product_id === item.product_id);
+          if (!existing) {
+            await base44.entities.CartItem.create({
+              user_email: currentUser.email,
+              product_id: item.product_id,
+              quantity: item.quantity,
+              reserved_until: item.reserved_until
+            });
+          }
+        });
+      } catch (e) {
+        console.error('Failed to restore cart:', e);
+      }
+    }
+  }, [currentUser]);
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
@@ -34,6 +68,11 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
     mutationFn: (itemId) => base44.entities.CartItem.delete(itemId),
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
+      
+      // Update localStorage
+      const updatedCart = cartItems.filter(item => item.id !== itemId);
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
+      
       toast.success('Removed from cart');
     }
   });
@@ -49,6 +88,17 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
+    }
+  });
+
+  const clearCartMutation = useMutation({
+    mutationFn: async () => {
+      await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['cart']);
+      localStorage.removeItem(CART_STORAGE_KEY);
+      toast.success('Cart cleared');
     }
   });
 
@@ -138,13 +188,24 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
               </div>
 
               <div className="border-t-2 border-white/10 pt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-white/60 uppercase">Items: {cartWithProducts.reduce((sum, item) => sum + item.quantity, 0)}</span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => clearCartMutation.mutate()}
+                    className="text-xs text-red-400 hover:text-red-300"
+                  >
+                    Clear Cart
+                  </Button>
+                </div>
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-lg font-black uppercase">Total</span>
+                  <span className="text-lg font-black uppercase">Subtotal</span>
                   <span className="text-2xl font-black text-[#FFEB3B]">{totalXP} XP</span>
                 </div>
                 <Link to={createPageUrl('Checkout')} onClick={onClose}>
                   <Button className="w-full bg-[#39FF14] text-black font-black text-lg py-6">
-                    Checkout
+                    Proceed to Checkout
                   </Button>
                 </Link>
               </div>
