@@ -46,6 +46,7 @@ export default function ConfirmDialog({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className={`relative bg-black border-2 ${colors.border} max-w-md w-full p-6`}
             role="dialog"
+            aria-modal="true"
             aria-labelledby="dialog-title"
             aria-describedby="dialog-description"
           >

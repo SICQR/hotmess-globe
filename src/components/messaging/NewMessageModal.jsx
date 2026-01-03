@@ -146,11 +146,14 @@ export default function NewMessageModal({ currentUser, allUsers, handshakes, onC
           exit={{ scale: 0.9, y: 20 }}
           className="bg-black border-2 border-white w-full max-w-2xl max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="new-message-title"
         >
           {/* Header */}
           <div className="border-b-2 border-white/20 p-6 flex items-center justify-between bg-black">
             <div>
-              <h2 className="text-2xl font-black uppercase tracking-tighter">NEW MESSAGE</h2>
+              <h2 id="new-message-title" className="text-2xl font-black uppercase tracking-tighter">NEW MESSAGE</h2>
               <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">START A CONVERSATION</p>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="text-white/60 hover:text-white">
