@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Helper to create page URLs - matches Base44 pattern
+const createPageUrl = (pageName) => `/${pageName}`;
+
 const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3l3cHZuY3FxZ2xobmhyamJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwOTEyMzIsImV4cCI6MjA4MjY2NzIzMn0.WhPthNardVU6yLmrBDy6poDmdt12MDV0h-QCuhSD5vQ';
 
