@@ -15,6 +15,7 @@ import PersonalizedRecommendations from '../components/events/PersonalizedRecomm
 import EventsMapView from '../components/events/EventsMapView';
 import NightlifeResearcher from '../components/ai/NightlifeResearcher';
 import AIEventRecommendations from '../components/events/AIEventRecommendations';
+import logger from '@/utils/logger';
 
 export default function Events() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -40,7 +41,7 @@ export default function Events() {
           setUserLocation({ lat: user.lat, lng: user.lng });
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error.message });
       }
     };
     fetchUser();
@@ -56,7 +57,7 @@ export default function Events() {
             });
           }
         },
-        (error) => console.log('Location access denied:', error)
+        (error) => logger.debug('Location access denied', { error: error.message })
       );
     }
   }, []);
