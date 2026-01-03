@@ -2,13 +2,15 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { ShoppingBag, Star, Package, Award, Ticket, Shirt, Tag } from 'lucide-react';
+import { ShoppingBag, Star, Package, Award, Ticket, Shirt, Tag, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
 import LazyImage from '../ui/LazyImage';
 import MakeOfferModal from './MakeOfferModal';
 import { base44 } from '@/api/base44Client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 const TYPE_ICONS = {
   physical: Package,
@@ -31,6 +33,7 @@ const TYPE_COLORS = {
 export default function ProductCard({ product, index = 0, onBuy, currentUserXP = 0 }) {
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -46,6 +49,41 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
     };
     fetchUser();
   }, []);
+
+  const addToCartMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUser) throw new Error('Please log in to add to cart');
+
+      const reservedUntil = new Date();
+      reservedUntil.setMinutes(reservedUntil.getMinutes() + 30);
+
+      const existingItems = await base44.entities.CartItem.filter({
+        user_email: currentUser.email,
+        product_id: product.id
+      });
+
+      if (existingItems.length > 0) {
+        return await base44.entities.CartItem.update(existingItems[0].id, {
+          quantity: existingItems[0].quantity + 1,
+          reserved_until: reservedUntil.toISOString()
+        });
+      } else {
+        return await base44.entities.CartItem.create({
+          user_email: currentUser.email,
+          product_id: product.id,
+          quantity: 1,
+          reserved_until: reservedUntil.toISOString()
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['cart']);
+      toast.success('Added to cart!');
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    }
+  });
 
   const Icon = TYPE_ICONS[product.product_type] || ShoppingBag;
   const color = TYPE_COLORS[product.product_type] || '#FF1493';
@@ -132,6 +170,20 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
                 )}
               </div>
               <div className="flex gap-2">
+                {!isOutOfStock && !isLocked && currentUser && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-[#39FF14] text-[#39FF14] hover:bg-[#39FF14]/10"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      addToCartMutation.mutate();
+                    }}
+                    disabled={addToCartMutation.isPending}
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   className="flex-1 text-black font-bold"
