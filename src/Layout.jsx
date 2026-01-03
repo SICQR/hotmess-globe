@@ -253,6 +253,10 @@ function LayoutInner({ children, currentPageName }) {
                 </div>
               </div>
               <p className="text-[8px] text-white/40 uppercase tracking-wider mt-1">LONDON OS</p>
+              {/* DEBUG: User Status */}
+              <div className="mt-2 px-2 py-1 bg-yellow-500/20 border border-yellow-500 text-yellow-500 text-[8px] font-mono">
+                {user ? `LOGGED IN: ${user.email} (${user.role})` : 'NOT LOGGED IN'}
+              </div>
             </div>
 
             <nav className="flex-1 px-2 py-4 overflow-y-auto">
