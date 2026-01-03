@@ -21,6 +21,12 @@ Run the following command to install all required testing dependencies:
 npm install --save-dev vitest @vitest/ui jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event
 ```
 
+For API mocking (recommended for integration tests):
+
+```bash
+npm install --save-dev msw
+```
+
 ### Update package.json Scripts
 
 Add the following test scripts to your `package.json`:
@@ -584,9 +590,9 @@ Most Jest APIs work in Vitest without changes!
 import { describe, it } from 'vitest'
 
 describe('slow tests', () => {
-  it('takes a while', { timeout: 10000 }, async () => {
+  it('takes a while', async () => {
     // test code
-  })
+  }, { timeout: 10000 })
 })
 ```
 

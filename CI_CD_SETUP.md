@@ -146,7 +146,7 @@ jobs:
 
       - name: Run tests
         run: npm test
-        continue-on-error: true  # Remove this when tests are fully implemented
+        continue-on-error: true  # TODO: Remove this once test suite is implemented (target: Q1 2026)
 
       - name: Upload coverage reports
         if: always()
@@ -206,12 +206,10 @@ jobs:
           cache: 'npm'
 
       - name: Run npm audit
-        run: npm audit --audit-level=moderate
-        continue-on-error: true
+        run: npm audit --audit-level=high
 
       - name: Run Snyk security scan
-        uses: snyk/actions/node@master
-        continue-on-error: true
+        uses: snyk/actions/node@0.4.0
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
