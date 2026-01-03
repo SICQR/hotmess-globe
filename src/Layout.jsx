@@ -230,6 +230,27 @@ function LayoutInner({ children, currentPageName }) {
                   <Settings className="w-4 h-4" />
                   <span className="text-xs uppercase tracking-wider font-bold">Settings</span>
                 </Link>
+                {user ? (
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      base44.auth.logout();
+                    }}
+                    className="w-full text-left px-3 py-2 text-white/60 hover:text-white border border-white/10 text-xs uppercase tracking-wider font-bold mt-2"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      base44.auth.redirectToLogin();
+                    }}
+                    className="w-full text-left px-3 py-2 bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black text-xs uppercase tracking-wider font-bold mt-2"
+                  >
+                    Login
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -253,10 +274,6 @@ function LayoutInner({ children, currentPageName }) {
                 </div>
               </div>
               <p className="text-[8px] text-white/40 uppercase tracking-wider mt-1">LONDON OS</p>
-              {/* DEBUG: User Status */}
-              <div className="mt-2 px-2 py-1 bg-yellow-500/20 border border-yellow-500 text-yellow-500 text-[8px] font-mono">
-                {user ? `LOGGED IN: ${user.email} (${user.role})` : 'NOT LOGGED IN'}
-              </div>
             </div>
 
             <nav className="flex-1 px-2 py-4 overflow-y-auto">
@@ -337,20 +354,35 @@ function LayoutInner({ children, currentPageName }) {
               )}
             </nav>
 
-            {user && (
-              <div className="p-3 border-t-2 border-white/20">
-                <Link to={createPageUrl('Settings')} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
-                    <span className="text-xs font-bold">{user.full_name?.[0] || 'U'}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-black truncate">{user.full_name}</p>
-                    <p className="text-[9px] text-[#FFEB3B] font-mono">LVL {Math.floor((user.xp || 0) / 1000) + 1} • {user.xp || 0} XP</p>
-                  </div>
-                  <Settings className="w-3 h-3 text-white/40" />
-                </Link>
-              </div>
-            )}
+            <div className="p-3 border-t-2 border-white/20">
+              {user ? (
+                <>
+                  <Link to={createPageUrl('Settings')} className="flex items-center gap-2 hover:opacity-80 transition-opacity mb-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
+                      <span className="text-xs font-bold">{user.full_name?.[0] || 'U'}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-black truncate">{user.full_name}</p>
+                      <p className="text-[9px] text-[#FFEB3B] font-mono">LVL {Math.floor((user.xp || 0) / 1000) + 1} • {user.xp || 0} XP</p>
+                    </div>
+                    <Settings className="w-3 h-3 text-white/40" />
+                  </Link>
+                  <button
+                    onClick={() => base44.auth.logout()}
+                    className="w-full px-3 py-2 text-white/60 hover:text-white hover:bg-white/5 border border-white/10 text-xs uppercase tracking-wider font-bold transition-all"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => base44.auth.redirectToLogin()}
+                  className="w-full px-3 py-2 bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black text-xs uppercase tracking-wider font-bold transition-all"
+                >
+                  Login
+                </button>
+              )}
+            </div>
           </div>
         </>
       )}
