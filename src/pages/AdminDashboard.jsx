@@ -86,7 +86,7 @@ export default function AdminDashboard() {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="analytics" className="w-full">
-          <TabsList className="grid w-full grid-cols-7 bg-black border-2 border-white mb-8 h-auto">
+          <TabsList className="grid w-full grid-cols-8 bg-black border-2 border-white mb-8 h-auto">
             <TabsTrigger 
               value="analytics" 
               className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black font-black uppercase text-xs py-3"
@@ -135,6 +135,13 @@ export default function AdminDashboard() {
             >
               <Calendar className="w-4 h-4 mr-2" />
               Events
+            </TabsTrigger>
+            <TabsTrigger 
+              value="shopify" 
+              className="data-[state=active]:bg-[#39FF14] data-[state=active]:text-black font-black uppercase text-xs py-3"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Shopify
             </TabsTrigger>
           </TabsList>
 
