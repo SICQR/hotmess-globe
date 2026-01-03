@@ -162,6 +162,8 @@ jobs:
   deploy-production:
     name: Deploy to Vercel Production
     runs-on: ubuntu-latest
+    # Note: test job is not included in needs because it's currently non-blocking (continue-on-error: true)
+    # Once tests are fully implemented, add 'test' to the needs array
     needs: [lint, typecheck, build, security]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
@@ -169,6 +171,9 @@ jobs:
     environment:
       name: production
       url: https://hotmess.app
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     
     steps:
       - name: Checkout code
@@ -188,18 +193,9 @@ jobs:
       
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       
       - name: Build Project Artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       
       - name: Deploy to Vercel Production
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
