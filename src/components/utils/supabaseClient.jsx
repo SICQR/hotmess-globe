@@ -2,18 +2,21 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
 
-// Log all available env vars to debug
-console.log('All env vars:', import.meta.env);
+// Find the correct env var by checking all keys
+const envVars = import.meta.env;
+console.log('Searching for Supabase key in environment variables...');
+Object.keys(envVars).forEach(key => {
+  console.log(`${key}:`, envVars[key]);
+});
 
-const supabaseKey = import.meta.env.VITE_supabase_anon_public || 
-                    import.meta.env.VITE_SUPABASE_KEY || 
-                    import.meta.env.VITE_supabase_key || 
-                    import.meta.env.supabase_key ||
-                    import.meta.env.supabase_anon_public;
+const supabaseKey = envVars.VITE_supabase_anon_public || 
+                    envVars.VITE_supabase_key ||
+                    // Try without VITE prefix (shouldn't work in browser but let's check)
+                    envVars.supabase_anon_public ||
+                    envVars.supabase_key;
 
 if (!supabaseKey) {
-  console.error('Available env var keys:', Object.keys(import.meta.env));
-  throw new Error('Missing Supabase key. Check console for available environment variables.');
+  throw new Error('Supabase key not found in environment. Make sure "supabase_anon_public" is set in Base44 dashboard secrets.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
