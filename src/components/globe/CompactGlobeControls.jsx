@@ -1,6 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { MapPin, Flame, Activity, Building2, Clock, Eye, EyeOff, Zap } from 'lucide-react';
+import { MapPin, Flame, Activity, Building2, Eye, EyeOff, Zap } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 

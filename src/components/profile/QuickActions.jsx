@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageCircle, UserPlus, UserMinus, Zap, Share2 } from 'lucide-react';
+import { MessageCircle, UserPlus, UserMinus, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';

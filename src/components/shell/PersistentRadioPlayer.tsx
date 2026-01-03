@@ -24,15 +24,22 @@ export default function PersistentRadioPlayer() {
     }
   }, [volume, isMuted]);
 
-  const handlePlayPause = () => {
+  const handlePlayPause = async () => {
     if (!audioRef.current) return;
     
     if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      audioRef.current.play();
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (error) {
+        // Browser blocked autoplay or other playback error
+        console.error('Playback failed:', error);
+        setIsPlaying(false);
+      }
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleNext = () => {
@@ -46,7 +53,11 @@ export default function PersistentRadioPlayer() {
     if (currentTrack && audioRef.current) {
       audioRef.current.src = currentTrack.audio_url;
       if (isPlaying) {
-        audioRef.current.play();
+        audioRef.current.play().catch((error) => {
+          // Browser blocked autoplay
+          console.error('Auto-play failed:', error);
+          setIsPlaying(false);
+        });
       }
     }
   }, [currentTrack]);

@@ -1,10 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { Calendar, MapPin, Clock, Users, Filter, Search, Map, LayoutGrid } from 'lucide-react';
+import { Calendar, Filter, Search, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,6 +14,7 @@ import PersonalizedRecommendations from '../components/events/PersonalizedRecomm
 import EventsMapView from '../components/events/EventsMapView';
 import NightlifeResearcher from '../components/ai/NightlifeResearcher';
 import AIEventRecommendations from '../components/events/AIEventRecommendations';
+import logger from '@/utils/logger';
 
 export default function Events() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -40,7 +40,7 @@ export default function Events() {
           setUserLocation({ lat: user.lat, lng: user.lng });
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error.message });
       }
     };
     fetchUser();
@@ -56,7 +56,7 @@ export default function Events() {
             });
           }
         },
-        (error) => console.log('Location access denied:', error)
+        (error) => logger.debug('Location access denied', { error: error.message })
       );
     }
   }, []);

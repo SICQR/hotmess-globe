@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Ban, CheckCircle, Edit, Trash2 } from 'lucide-react';
+import { Search, Ban, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
