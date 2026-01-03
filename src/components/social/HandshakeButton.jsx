@@ -4,7 +4,6 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Zap, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
-import { createPageUrl } from '../../utils';
 
 // Generate 16-character token
 function generateToken() {
