@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_supabase_key;
 
 if (!supabaseKey) {
-  console.error('Missing VITE_SUPABASE_KEY environment variable');
+  throw new Error('Missing Supabase key. Add supabase_key to your app secrets in the Base44 dashboard.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
