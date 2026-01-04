@@ -14,24 +14,24 @@ const MEMBERSHIP_TIERS = [
     name: 'FREE',
     price: '£0',
     color: '#FFFFFF',
-    features: ['Basic profile', 'Browse events', 'Marketplace access', 'Limited XP earning'],
+    features: ['Basic profile', 'Browse events & market', 'Social: limited threads/day', 'Beacons: 1/day', 'Calendar: basic'],
     icon: Star
   },
   {
-    id: 'mess',
-    name: 'MESS',
+    id: 'plus',
+    name: 'PLUS',
     price: '£9.99/mo',
     color: '#FF1493',
-    features: ['Everything in FREE', 'Unlimited XP', 'Priority support', 'Badge & highlights', 'Ad-free experience'],
+    features: ['Everything in FREE', 'Social: more threads + sorting', 'Saved filter presets', 'More beacons + privacy controls', 'Extended calendar'],
     icon: Zap,
     popular: true
   },
   {
-    id: 'king',
-    name: 'KING',
-    price: '£29.99/mo',
-    color: '#FFEB3B',
-    features: ['Everything in MESS', 'Crown badge', 'Featured profile', 'Early event access', 'Exclusive content', 'King status'],
+    id: 'pro',
+    name: 'PRO',
+    price: '£19.99/mo',
+    color: '#00D9FF',
+    features: ['Everything in PLUS', 'Visibility boost (non-spam)', 'Advanced Pulse layers', 'Music: early access', 'Full stats dashboard'],
     icon: Crown
   }
 ];

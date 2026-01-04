@@ -49,6 +49,7 @@ import Pulse from './pages/Pulse';
 import Social from './pages/Social';
 import Music from './pages/Music';
 import More from './pages/More';
+import AgeGate from './pages/AgeGate';
 import __Layout from './Layout.jsx';
 
 
@@ -104,6 +105,7 @@ export const PAGES = {
     "Social": Social,
     "Music": Music,
     "More": More,
+    "AgeGate": AgeGate,
 }
 
 export const pagesConfig = {
