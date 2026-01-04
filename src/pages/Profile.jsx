@@ -150,7 +150,7 @@ export default function Profile() {
 
   const viewCount = profileViews.length;
   const tier = currentUser?.membership_tier || 'basic';
-  const level = Math.floor((profileUser.xp || 0) / 1000) + 1;
+  const level = Math.floor(((profileUser?.xp ?? 0) || 0) / 1000) + 1;
   // Chrome tier: Level 5+ can see WHO viewed their profile
   const canSeeViewers = level >= 5;
 
@@ -238,7 +238,7 @@ export default function Profile() {
         avatar_url: file_url
       });
       toast.success('Profile complete!');
-      window.location.href = createPageUrl('Connect');
+	  window.location.href = createPageUrl('Home');
     } catch (error) {
       console.error('Profile setup failed:', error);
       toast.error('Setup failed. Please try again.');

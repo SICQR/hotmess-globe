@@ -240,8 +240,14 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
           <Label>Price (XP)</Label>
           <Input
             type="number"
-            value={formData.price_xp}
-            onChange={(e) => setFormData({ ...formData, price_xp: parseInt(e.target.value) })}
+            value={Number.isFinite(formData.price_xp) ? formData.price_xp : ''}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setFormData({
+                ...formData,
+                price_xp: raw === '' ? '' : parseInt(raw, 10),
+              });
+            }}
             min="0"
             required
           />
@@ -265,8 +271,14 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
           <Label>Stock</Label>
           <Input
             type="number"
-            value={formData.inventory_count}
-            onChange={(e) => setFormData({ ...formData, inventory_count: parseInt(e.target.value) })}
+            value={Number.isFinite(formData.inventory_count) ? formData.inventory_count : ''}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setFormData({
+                ...formData,
+                inventory_count: raw === '' ? '' : parseInt(raw, 10),
+              });
+            }}
             min="0"
           />
         </div>

@@ -20,6 +20,10 @@ export default function EventScraperControl() {
     
     try {
       // Note: This requires backend functions to be enabled
+      if (!base44?.functions?.scrapeEvents || typeof base44.functions.scrapeEvents !== 'function') {
+        throw new Error('Backend functions not enabled (scrapeEvents unavailable)');
+      }
+
       const cityList = cities.split(',').map(c => c.trim());
       
       const response = await base44.functions.scrapeEvents({

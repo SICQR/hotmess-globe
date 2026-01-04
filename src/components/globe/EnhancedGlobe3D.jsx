@@ -67,6 +67,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   useEffect(() => {
     if (!mountRef.current) return;
 
+    const asArray = (value) => (Array.isArray(value) ? value : []);
+
     const mount = mountRef.current;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#000000');
@@ -217,14 +219,15 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
 
     // Clustering logic for beacons when zoomed out
     const createClusters = (beacons, zoomLevel) => {
+      const beaconList = asArray(beacons);
       // Don't cluster if zoomed in close (z < 3.5)
-      if (zoomLevel < 3.5) return beacons.map(b => ({ ...b, isCluster: false, count: 1 }));
+      if (zoomLevel < 3.5) return beaconList.map(b => ({ ...b, isCluster: false, count: 1 }));
 
       // Adaptive cluster radius based on zoom
       const clusterRadius = zoomLevel > 5 ? 10 : zoomLevel > 4 ? 7 : 5;
       const clusters = new Map();
 
-      beacons.forEach(beacon => {
+      beaconList.forEach(beacon => {
         const key = `${Math.floor(beacon.lat / clusterRadius)}_${Math.floor(beacon.lng / clusterRadius)}`;
         if (!clusters.has(key)) {
           clusters.set(key, []);
@@ -271,10 +274,10 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       if (!showPins) return;
 
       // Create clusters based on camera zoom
-      currentClusters = createClusters(beacons, camera.position.z);
+      currentClusters = createClusters(asArray(beacons), camera.position.z);
 
       currentClusters.forEach(beacon => {
-        const isHighlighted = highlightedIds.includes(beacon.id);
+        const isHighlighted = asArray(highlightedIds).includes(beacon.id);
         const isCareBeacon = beacon.mode === 'care';
         const isRightNow = beacon.isRightNow;
         const isColdVibe = beacon.cold_vibe;
@@ -366,12 +369,12 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
 
     // Heatmap layer - beacon density visualization
     const heatmapGroup = new THREE.Group();
-    if (showHeat && beacons.length > 0) {
+    if (showHeat && asArray(beacons).length > 0) {
       // Create density clusters
       const clusters = new Map();
       const clusterRadius = 5; // degrees
       
-      beacons.forEach(beacon => {
+      asArray(beacons).forEach(beacon => {
         const key = `${Math.floor(beacon.lat / clusterRadius)}_${Math.floor(beacon.lng / clusterRadius)}`;
         if (!clusters.has(key)) {
           clusters.set(key, []);
@@ -420,8 +423,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
 
     // City tier overlay layer
     const cityGroup = new THREE.Group();
-    if (showCities && cities.length > 0) {
-      cities.forEach(city => {
+    if (showCities && asArray(cities).length > 0) {
+      asArray(cities).forEach(city => {
         const pos = latLngToVector3(city.lat, city.lng, globeRadius * 1.02);
         
         // Tier ring size based on tier (1=large, 3=small)
@@ -473,7 +476,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
 
     // Mood blobs - fuzzy GPS user intents (ST_SnapToGrid privacy)
     const moodBlobsGroup = new THREE.Group();
-    if (showActivity && userIntents.length > 0) {
+    if (showActivity && asArray(userIntents).length > 0) {
       // Import snapToGrid for privacy
       const snapToGrid = (lat, lng) => {
         const GRID_SIZE = 0.0045; // 500m grid
@@ -485,7 +488,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
 
       // Group users by snapped grid cell
       const gridCells = new Map();
-      userIntents.forEach(intent => {
+      asArray(userIntents).forEach(intent => {
         if (!intent.location?.lat || !intent.location?.lng) return;
         const snapped = snapToGrid(intent.location.lat, intent.location.lng);
         const key = `${snapped.lat.toFixed(4)}_${snapped.lng.toFixed(4)}`;
@@ -540,8 +543,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
 
     // User activity trails - real-time user actions
     const userTrails = [];
-    if (userActivities.length > 0) {
-      userActivities.forEach((activity, idx) => {
+    if (asArray(userActivities).length > 0) {
+      asArray(userActivities).forEach((activity, idx) => {
         if (!activity.location || !activity.location.lat || !activity.location.lng) return;
 
         const pos = latLngToVector3(activity.location.lat, activity.location.lng, globeRadius * 1.015);
@@ -610,7 +613,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
 
     // Activity streams layer - animated arcs
     const arcs = [];
-    if (showActivity && beacons.length >= 2) {
+    if (showActivity && asArray(beacons).length >= 2) {
       const arcMaterial = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },

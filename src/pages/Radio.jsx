@@ -74,7 +74,7 @@ export default function Radio() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
             >
-              <Link to={createPageUrl(show.slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(''))}>
+              <Link to={`/music/shows/${show.slug}`}>
                 <div className="group bg-black border-2 border-white hover:border-[#FF1493] transition-all overflow-hidden h-full">
                   <div className={`h-48 bg-gradient-to-br ${show.color} relative overflow-hidden`}>
                     <div className="absolute inset-0 flex items-center justify-center">

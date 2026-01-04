@@ -5,13 +5,20 @@ import { Radio as RadioIcon, Music2, Disc, Play, Pause, Calendar, MapPin, Extern
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRadio } from '@/components/shell/RadioContext';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
+import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
+import { schedule } from '../components/radio/radioUtils';
 
 export default function Music() {
+  const location = useLocation();
   const { isRadioOpen, openRadio } = useRadio();
-  const [activeTab, setActiveTab] = useState('live');
+  const [activeTab, setActiveTab] = useState(() => {
+    const path = location?.pathname ?? '';
+    if (path.startsWith('/music/releases')) return 'releases';
+    return 'live';
+  });
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
@@ -45,6 +52,9 @@ export default function Music() {
     },
     refetchInterval: 60000
   });
+
+  const radioShows = schedule?.shows ?? [];
+  const showUrlFromSlug = (slug) => `/music/shows/${slug}`;
 
   // Fetch audio releases
   const { data: releases = [] } = useQuery({
@@ -99,12 +109,14 @@ export default function Music() {
               <Play className="w-5 h-5 mr-2" />
               LISTEN LIVE
             </Button>
-            <Button 
-              variant="outline"
-              className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg shadow-2xl backdrop-blur-sm"
-            >
-              BROWSE SHOWS
-            </Button>
+            <Link to="/music/shows">
+              <Button 
+                variant="outline"
+                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg shadow-2xl backdrop-blur-sm"
+              >
+                BROWSE SHOWS
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -188,13 +200,67 @@ export default function Music() {
             <div className="mb-8">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-3xl font-black uppercase">UPCOMING SHOWS</h3>
+                  <h3 className="text-3xl font-black uppercase">RADIO SHOWS</h3>
                   <p className="text-white/60 uppercase text-sm tracking-wider">
-                    Live sets, radio shows, and music events
+                    Three tentpoles. One rule: care-first.
+                  </p>
+                </div>
+                <Link to={createPageUrl('RadioSchedule')}>
+                  <Button 
+                    variant="outline"
+                    className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase"
+                  >
+                    VIEW SCHEDULE
+                  </Button>
+                </Link>
+              </div>
+
+              {radioShows.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                  {radioShows.slice(0, 3).map((show) => (
+                    <Link
+                      key={show.id}
+                      to={showUrlFromSlug(show.slug)}
+                      className="group"
+                    >
+                      <div className="relative bg-white/5 border-2 border-white/10 hover:border-[#B026FF] transition-all p-6 h-full">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="px-2 py-1 bg-[#B026FF] text-black text-xs font-black uppercase">
+                            SHOW
+                          </div>
+                          <ExternalLink className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
+                        </div>
+                        <h4 className="text-2xl font-black uppercase mb-2 group-hover:text-[#B026FF] transition-colors">
+                          {show.title}
+                        </h4>
+                        <p className="text-white/60 mb-4 text-sm">
+                          {show.tagline}
+                        </p>
+                        <div className="flex items-start gap-2 text-sm">
+                          <Calendar className="w-4 h-4 text-[#B026FF] flex-shrink-0 mt-0.5" />
+                          <span className="text-white/80">{show.schedule?.length ? `${show.schedule.length} weekly slot${show.schedule.length === 1 ? '' : 's'}` : 'Schedule coming soon'}</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10 bg-white/5 border-2 border-white/10 mb-12">
+                  <RadioIcon className="w-12 h-12 mx-auto mb-3 text-white/40" />
+                  <h3 className="text-xl font-black mb-2">SHOWS COMING SOON</h3>
+                  <p className="text-white/60">Check back for the weekly grid.</p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-2xl font-black uppercase">MUSIC EVENTS</h3>
+                  <p className="text-white/60 uppercase text-sm tracking-wider">
+                    Live sets and upcoming beacons
                   </p>
                 </div>
                 <Link to={createPageUrl('Events')}>
-                  <Button 
+                  <Button
                     variant="outline"
                     className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase"
                   >
@@ -251,8 +317,8 @@ export default function Music() {
               ) : (
                 <div className="text-center py-12 bg-white/5 border-2 border-white/10">
                   <Music2 className="w-16 h-16 mx-auto mb-4 text-white/40" />
-                  <h3 className="text-2xl font-black mb-2">NO SHOWS SCHEDULED</h3>
-                  <p className="text-white/60 mb-6">Check back soon for upcoming music events</p>
+                  <h3 className="text-2xl font-black mb-2">NO MUSIC EVENTS YET</h3>
+                  <p className="text-white/60 mb-6">Radio shows are live above — events land here when beacons are scheduled.</p>
                   <Link to={createPageUrl('Events')}>
                     <Button 
                       variant="outline"
@@ -297,6 +363,17 @@ export default function Music() {
                       <div className="aspect-square bg-gradient-to-br from-[#B026FF]/20 to-black/40 mb-4 flex items-center justify-center">
                         <Disc className="w-16 h-16 text-[#B026FF] group-hover:animate-spin" style={{ animationDuration: '3s' }} />
                       </div>
+
+                      {(release.soundcloud_urn || release.soundcloud_url) && (
+                        <div className="mb-4">
+                          <SoundCloudEmbed
+                            urlOrUrn={release.soundcloud_urn || release.soundcloud_url}
+                            title={release.beacon?.title ? `${release.beacon.title} (SoundCloud)` : 'SoundCloud player'}
+                            visual={false}
+                            className="w-full"
+                          />
+                        </div>
+                      )}
                       
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 flex-wrap">
