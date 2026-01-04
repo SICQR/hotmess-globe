@@ -98,7 +98,22 @@ HOTMESS is more than just a social network—it's a vibrant community hub that c
 - `npm run preview` - Preview production build locally
 - `npm run lint` - Run ESLint code quality checks
 - `npm run lint:fix` - Automatically fix ESLint issues
-- `npm run typecheck` - Run TypeScript type checking
+- `npm run typecheck` - Run TypeScript type checking (`tsc --noEmit`)
+
+## ▲ Deploying to Vercel
+
+This app is a Vite SPA using React Router. Deep links like `/${PageKey}` require an SPA rewrite.
+
+- Vercel settings:
+   - Framework Preset: Vite
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+- Environment Variables (Vercel Project → Settings → Environment Variables):
+   - Required: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+   - Optional: `VITE_SUPABASE_STORAGE_BUCKET`
+   - Optional: `VITE_BASE44_APP_BASE_URL` (set to your production URL)
+- Routing:
+   - `vercel.json` includes an SPA rewrite to `index.html` for all routes.
 
 ## 🏗️ Technology Stack
 
