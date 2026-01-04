@@ -20,6 +20,8 @@ export default function SquadChat() {
 
   useEffect(() => {
     const fetchUser = async () => {
+      const ok = await base44.auth.requireProfile(window.location.href);
+      if (!ok) return;
       const user = await base44.auth.me();
       setCurrentUser(user);
     };

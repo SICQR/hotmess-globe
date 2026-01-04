@@ -16,6 +16,15 @@ export default function Messages() {
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const { data: allUsers = [] } = useAllUsers();
 
+  useEffect(() => {
+    // Messages can be read-only for incomplete profiles, but still require login.
+    base44.auth.isAuthenticated().then((isAuth) => {
+      if (!isAuth) base44.auth.redirectToLogin(window.location.href);
+    });
+  }, []);
+
+  const isProfileComplete = !!(currentUser?.full_name && currentUser?.avatar_url);
+
   const { data: threads = [], isLoading } = useQuery({
     queryKey: ['chat-threads', currentUser?.email],
     queryFn: async () => {
@@ -63,7 +72,13 @@ export default function Messages() {
               <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">E2E ENCRYPTED VIA TELEGRAM</p>
             </motion.div>
             <Button
-              onClick={() => setShowNewMessage(true)}
+              onClick={() => {
+                if (!isProfileComplete) {
+                  base44.auth.redirectToProfile(window.location.href);
+                  return;
+                }
+                setShowNewMessage(true);
+              }}
               className="w-full mt-4 bg-[#FF1493] hover:bg-white text-black font-black border-2 border-white hover:border-[#FF1493] transition-all"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -77,6 +92,14 @@ export default function Messages() {
               currentUser={currentUser}
               allUsers={allUsers}
               onSelectThread={setSelectedThread}
+              canStartNew={isProfileComplete}
+              onNewMessage={() => {
+                if (!isProfileComplete) {
+                  base44.auth.redirectToProfile(window.location.href);
+                  return;
+                }
+                setShowNewMessage(true);
+              }}
             />
           </div>
         </div>
@@ -87,6 +110,7 @@ export default function Messages() {
             <ChatThread
               thread={selectedThread}
               currentUser={currentUser}
+              readOnly={!isProfileComplete}
               onBack={() => setSelectedThread(null)}
             />
           ) : (

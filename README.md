@@ -1,6 +1,6 @@
 # Hotmess Globe
 
-A feature-rich LGBT+ social networking and nightlife discovery platform built with React, Vite, and Base44 SDK.
+A feature-rich LGBT+ social networking and nightlife discovery platform built with React + Vite, with Supabase as the backend for auth and data.
 
 ## 📋 Project Status
 
@@ -34,23 +34,31 @@ A feature-rich LGBT+ social networking and nightlife discovery platform built wi
    ```
 
 3. **Set up environment variables**
-   
-   Create an `.env.local` file with the following variables:
+
+   Copy `.env.example` to `.env.local` and fill in at least the required Supabase values:
    ```
-   VITE_BASE44_APP_ID=your_app_id
-   VITE_BASE44_APP_BASE_URL=your_backend_url
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
    ```
 
-   Example:
+   Optional (used by uploads):
    ```
-   VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-   VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
+   VITE_SUPABASE_STORAGE_BUCKET=public
    ```
+
+   Note: Legacy Base44 env vars may still appear in `.env.example` during migration, but Supabase is the intended source of truth.
 
 4. **Start the development server**
    ```bash
    npm run dev
    ```
+
+### Supabase RLS (important)
+
+If Row Level Security (RLS) is enabled without policies, the app may sign in but fail to read/write tables.
+
+- See `supabase/README.md`
+- Apply the starter policies in `supabase/policies.sql`
 
 ### Available Scripts
 
@@ -59,12 +67,28 @@ A feature-rich LGBT+ social networking and nightlife discovery platform built wi
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint issues
-- `npm run typecheck` - Run TypeScript type checking
+- `npm run typecheck` - Run TypeScript type checking (`tsc --noEmit`)
+
+## ▲ Deploying to Vercel
+
+This repo is a Vite SPA using React Router. Deep links like `/${PageKey}` require an SPA rewrite.
+
+- Vercel settings:
+   - Framework Preset: Vite
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+- Environment Variables (Vercel Project → Settings → Environment Variables):
+   - Required: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+   - Optional: `VITE_SUPABASE_STORAGE_BUCKET`
+   - Optional (removes Base44 proxy warning): `VITE_BASE44_APP_BASE_URL` (set to your production URL)
+- Routing:
+   - `vercel.json` includes an SPA rewrite to `index.html` for all routes.
 
 ## 📖 Documentation
 
 - [Hyper Analysis Report](./HYPER-ANALYSIS-REPORT.md) - Comprehensive codebase analysis
 - [Issues Tracker](./ISSUES-TRACKER.md) - Prioritized issues and sprint planning
+- [London OS Bible v1.5](./docs/London-OS-Bible-v1.5.md) - Product + routing + gating spec grounded in repo code
 
 ## 🔒 Security
 

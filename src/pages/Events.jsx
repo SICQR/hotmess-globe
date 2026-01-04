@@ -1,10 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { Calendar, MapPin, Clock, Users, Filter, Search, Map, LayoutGrid } from 'lucide-react';
+import { Calendar, Filter, Search, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,9 +13,10 @@ import EventCard from '../components/events/EventCard';
 import PersonalizedRecommendations from '../components/events/PersonalizedRecommendations';
 import EventsMapView from '../components/events/EventsMapView';
 import NightlifeResearcher from '../components/ai/NightlifeResearcher';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Events() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user: currentUser } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -26,23 +26,9 @@ export default function Events() {
   const [userLocation, setUserLocation] = useState(null);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const isAuth = await base44.auth.isAuthenticated();
-        if (!isAuth) return;
-        
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-        
-        // Set user location if available
-        if (user.lat && user.lng) {
-          setUserLocation({ lat: user.lat, lng: user.lng });
-        }
-      } catch (error) {
-        console.error('Failed to fetch user:', error);
-      }
-    };
-    fetchUser();
+    if (currentUser?.lat && currentUser?.lng) {
+      setUserLocation({ lat: currentUser.lat, lng: currentUser.lng });
+    }
 
     // Get browser location as fallback
     if (navigator.geolocation) {
@@ -58,28 +44,45 @@ export default function Events() {
         (error) => console.log('Location access denied:', error)
       );
     }
-  }, []);
+  }, [currentUser]);
 
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      const beacons = await base44.entities.Beacon.filter(
-        { kind: 'event', status: 'published', active: true },
-        '-event_date'
-      );
-      return beacons;
+      const { data, error } = await supabase
+        .from('Beacon')
+        .select('*')
+        .eq('kind', 'event')
+        .eq('status', 'published')
+        .eq('active', true)
+        .order('event_date', { ascending: false });
+      if (error) throw error;
+      return data ?? [];
     }
   });
 
   const { data: rsvps = [] } = useQuery({
     queryKey: ['my-rsvps', currentUser?.email],
-    queryFn: () => base44.entities.EventRSVP.filter({ user_email: currentUser?.email }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('EventRSVP')
+        .select('*')
+        .eq('user_email', currentUser?.email);
+      if (error) throw error;
+      return data ?? [];
+    },
     enabled: !!currentUser
   });
 
   const { data: allRsvps = [] } = useQuery({
     queryKey: ['all-rsvps'],
-    queryFn: () => base44.entities.EventRSVP.list()
+    queryFn: async () => {
+      const { data, error } = await supabase.from('EventRSVP').select('*');
+      if (error) throw error;
+      return data ?? [];
+    },
+    // Guests can browse Events, but RSVP data is currently auth-only.
+    enabled: !!currentUser
   });
 
   const filteredEvents = useMemo(() => {
@@ -303,7 +306,13 @@ export default function Events() {
             <Calendar className="w-16 h-16 mx-auto mb-4 text-white/20" />
             <h3 className="text-xl font-bold mb-2">No events found</h3>
             <p className="text-white/60 mb-6">Try adjusting your filters</p>
-            <Link to={createPageUrl('CreateBeacon')}>
+            <Link
+              to={createPageUrl('CreateBeacon')}
+              onClick={async (e) => {
+                const ok = await base44.auth.requireProfile(createPageUrl('CreateBeacon'));
+                if (!ok) e.preventDefault();
+              }}
+            >
               <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black">
                 Create Event
               </Button>

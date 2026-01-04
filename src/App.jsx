@@ -3,10 +3,10 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import Gatekeeper from '@/components/auth/Gatekeeper';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -17,10 +17,24 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   : <>{children}</>;
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, authError, navigateToLogin } = useAuth();
+  const location = useLocation();
+  const isLoginRoute = location.pathname === '/Login';
+  const publicRoutes = new Set([
+    '/',
+    '/Login',
+    // Allow the configured landing page to render without auth.
+    mainPageKey ? `/${mainPageKey}` : null,
+    // Guest-browsable pages
+    '/Home',
+    '/Globe',
+    '/Events',
+    '/Marketplace',
+    '/ProductDetail',
+  ].filter(Boolean));
 
   // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  if (isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
@@ -30,12 +44,13 @@ const AuthenticatedApp = () => {
 
   // Handle authentication errors
   if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
+    if (authError.type === 'auth_required') {
+      // Do not force /Login as the first screen; only redirect when the user
+      // navigates to a protected route.
+      if (!isLoginRoute && !publicRoutes.has(location.pathname)) {
+        navigateToLogin();
+        return null;
+      }
     }
   }
 
@@ -52,9 +67,13 @@ const AuthenticatedApp = () => {
           key={path}
           path={`/${path}`}
           element={
-            <LayoutWrapper currentPageName={path}>
+            path === 'Login' ? (
               <Page />
-            </LayoutWrapper>
+            ) : (
+              <LayoutWrapper currentPageName={path}>
+                <Page />
+              </LayoutWrapper>
+            )
           }
         />
       ))}
@@ -69,10 +88,12 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <NavigationTracker />
-          <AuthenticatedApp />
-        </Router>
+        <Gatekeeper>
+          <Router>
+            <NavigationTracker />
+            <AuthenticatedApp />
+          </Router>
+        </Gatekeeper>
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>

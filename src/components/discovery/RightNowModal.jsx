@@ -29,6 +29,9 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
 
   const goLiveMutation = useMutation({
     mutationFn: async () => {
+      const ok = await base44.auth.requireProfile(window.location.href);
+      if (!ok) return null;
+
       const expiresAt = new Date(Date.now() + duration * 60 * 1000).toISOString();
       
       // Get user's location
@@ -80,7 +83,8 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
       
       return status;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (!data) return;
       queryClient.invalidateQueries(['right-now-status']);
       queryClient.invalidateQueries(['recent-activities-nearby']);
       queryClient.invalidateQueries(['user-activities-globe']);

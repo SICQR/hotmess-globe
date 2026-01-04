@@ -18,6 +18,9 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
 
   const createGroupMutation = useMutation({
     mutationFn: async () => {
+      const ok = await base44.auth.requireProfile(window.location.href);
+      if (!ok) return null;
+
       const participantEmails = [currentUser.email, ...selectedUsers];
       
       const thread = await base44.entities.ChatThread.create({
@@ -43,6 +46,7 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
       return thread;
     },
     onSuccess: (thread) => {
+      if (!thread) return;
       queryClient.invalidateQueries(['chat-threads']);
       toast.success('Group created!');
       navigate(createPageUrl('Messages'));

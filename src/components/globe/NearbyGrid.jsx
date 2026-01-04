@@ -12,19 +12,36 @@ export default function NearbyGrid({ userLocation }) {
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: async () => {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) return [];
+      return base44.entities.User.list();
+    },
+    retry: false
   });
 
   const { data: recentActivities = [] } = useQuery({
     queryKey: ['recent-activities-nearby'],
-    queryFn: () => base44.entities.UserActivity.filter({ visible: true }, '-created_date', 50),
+    queryFn: async () => {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) return [];
+      return base44.entities.UserActivity.filter({ visible: true }, '-created_date', 50);
+    },
     refetchInterval: 5000
+    ,
+    retry: false
   });
 
   const { data: rightNowStatuses = [] } = useQuery({
     queryKey: ['right-now-status-nearby'],
-    queryFn: () => base44.entities.RightNowStatus.filter({ active: true }),
+    queryFn: async () => {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) return [];
+      return base44.entities.RightNowStatus.filter({ active: true });
+    },
     refetchInterval: 5000
+    ,
+    retry: false
   });
 
   // Calculate distance between two points
@@ -39,11 +56,6 @@ export default function NearbyGrid({ userLocation }) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
   };
-
-  const { data: currentUser } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
-  });
 
   // Limit results for performance
   const MAX_DISPLAYED_USERS = 50;

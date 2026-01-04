@@ -27,10 +27,17 @@ export default function ProductDetail() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          setCurrentUser(null);
+          return;
+        }
+
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
         console.error('Failed to fetch user:', error);
+        setCurrentUser(null);
       }
     };
     fetchUser();
@@ -135,7 +142,7 @@ export default function ProductDetail() {
 
   const handlePurchase = () => {
     if (!currentUser) {
-      toast.error('Please log in to purchase');
+      base44.auth.redirectToLogin(window.location.href);
       return;
     }
 
@@ -178,6 +185,7 @@ export default function ProductDetail() {
   const isOutOfStock = product.status === 'sold_out' || (product.inventory_count !== undefined && product.inventory_count <= 0);
   const canAfford = currentUser && (currentUser.xp || 0) >= product.price_xp;
   const meetsLevel = !product.min_xp_level || (currentUser && (currentUser.xp || 0) >= product.min_xp_level);
+  const isLockedForCurrentUser = !!currentUser && (!canAfford || !meetsLevel);
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
@@ -268,10 +276,18 @@ export default function ProductDetail() {
             <div className="space-y-3">
               <Button
                 onClick={handlePurchase}
-                disabled={isOutOfStock || !canAfford || !meetsLevel || purchaseMutation.isPending}
+                disabled={isOutOfStock || isLockedForCurrentUser || purchaseMutation.isPending}
                 className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold text-lg py-6"
               >
-                {isOutOfStock ? 'Sold Out' : !canAfford ? 'Insufficient XP' : !meetsLevel ? 'Level Locked' : 'Buy Now'}
+                {isOutOfStock
+                  ? 'Sold Out'
+                  : !currentUser
+                    ? 'Log in to buy'
+                    : !canAfford
+                      ? 'Insufficient XP'
+                      : !meetsLevel
+                        ? 'Level Locked'
+                        : 'Buy Now'}
               </Button>
 
               {seller && (

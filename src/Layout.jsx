@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, Map, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X, MessageCircle, Calendar as CalendarIcon, MapPin, TrendingUp, Bookmark, Search, Target, Shield } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { Home, Globe as GlobeIcon, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X, MessageCircle, Calendar as CalendarIcon, MapPin, TrendingUp, Search, Target, Shield } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
 import PanicButton from '@/components/safety/PanicButton';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
 import GlobalAssistant from '@/components/ai/GlobalAssistant';
@@ -24,8 +24,8 @@ import { Radio as RadioIcon } from 'lucide-react';
 import { useRadio } from '@/components/shell/RadioContext';
 
       const PRIMARY_NAV = [
-        { name: 'Pulse', icon: Home, path: 'Home' },
-        { name: 'Globe', icon: GlobeIcon, path: 'Globe' },
+        { name: 'Home', icon: Home, path: 'Home' },
+        { name: 'Pulse', icon: GlobeIcon, path: 'Globe' },
         { name: 'Events', icon: CalendarIcon, path: 'Events' },
         { name: 'Market', icon: ShoppingBag, path: 'Marketplace' },
         { name: 'Connect', icon: Users, path: 'Connect' },
@@ -47,7 +47,7 @@ const SECONDARY_NAV = [
 
 function LayoutInner({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const { user, isLoadingAuth } = useAuth();
   const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
   const { toggleRadio, isRadioOpen } = useRadio();
@@ -65,40 +65,50 @@ function LayoutInner({ children, currentPageName }) {
   }, []);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const isAuth = await base44.auth.isAuthenticated();
-        if (!isAuth) {
-          setUser(null);
-          return;
-        }
-        
-        const currentUser = await base44.auth.me();
-        setUser(currentUser);
+    if (isLoadingAuth) return;
+    if (!user) return;
 
-        // GATEKEEPER: Block all access until consent_accepted is true
-        if (currentPageName !== 'AccountConsents' && !currentUser?.consent_accepted) {
-          window.location.href = createPageUrl('AccountConsents');
-          return;
-        }
+    // Profile is required before *interactions* (Right Now, Beacons, messaging, etc.),
+    // but browsing core surfaces should still work even if the profile isn't complete.
+    const profileOptionalPages = new Set([
+      'Home',
+      'Globe',
+      'Events',
+      'Marketplace',
+      'ProductDetail',
+      'MembershipUpgrade',
+      'Login',
+      'Profile',
+      'ProfileSetup',
+      'EditProfile',
+      'OnboardingGate',
+      'AccountConsents',
+    ]);
 
-        // Check if onboarding is incomplete (except on OnboardingGate page itself)
-        if (currentPageName !== 'OnboardingGate' && currentPageName !== 'AccountConsents' && (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data || !currentUser?.has_consented_gps)) {
-          window.location.href = createPageUrl('OnboardingGate');
-          return;
-        }
+    // GATEKEEPER: Block all access until consent_accepted is true
+    if (currentPageName !== 'AccountConsents' && !user?.consent_accepted) {
+      window.location.href = createPageUrl('AccountConsents');
+      return;
+    }
 
-        // Check if profile setup is incomplete
-        if (currentPageName !== 'Profile' && currentPageName !== 'OnboardingGate' && currentPageName !== 'AccountConsents' && (!currentUser?.full_name || !currentUser?.avatar_url)) {
-          window.location.href = createPageUrl('Profile');
-        }
-      } catch (error) {
-        console.error('Failed to fetch user:', error);
-        setUser(null);
-      }
-    };
-    fetchUser();
-  }, [currentPageName]);
+    // Check if onboarding is incomplete (except on OnboardingGate page itself)
+    if (
+      currentPageName !== 'OnboardingGate' &&
+      currentPageName !== 'AccountConsents' &&
+      (!user?.has_agreed_terms || !user?.has_consented_data || !user?.has_consented_gps)
+    ) {
+      window.location.href = createPageUrl('OnboardingGate');
+      return;
+    }
+
+    // Check if profile setup is incomplete
+    if (
+      !profileOptionalPages.has(currentPageName) &&
+      (!user?.full_name || !user?.avatar_url)
+    ) {
+      window.location.href = createPageUrl(`Profile?returnUrl=${encodeURIComponent(window.location.href)}`);
+    }
+  }, [currentPageName, isLoadingAuth, user]);
 
   const [showSecondary, setShowSecondary] = useState(false);
   const isActive = (pageName) => currentPageName === pageName;
