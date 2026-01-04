@@ -33,6 +33,8 @@ import { useRadio } from '@/components/shell/RadioContext';
         { name: 'More', icon: Menu, path: 'More' },
       ];
 
+      const SECONDARY_NAV = [];
+
 function LayoutInner({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
