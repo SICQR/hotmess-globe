@@ -3,10 +3,23 @@ import { createClient } from '@supabase/supabase-js';
 // Helper to create page URLs - matches Base44 pattern
 const createPageUrl = (pageName) => `/${pageName}`;
 
-const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3l3cHZuY3FxZ2xobmhyamJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwOTEyMzIsImV4cCI6MjA4MjY2NzIzMn0.WhPthNardVU6yLmrBDy6poDmdt12MDV0h-QCuhSD5vQ';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+if (!supabaseUrl || !supabaseKey) {
+  // Avoid hard-crashing on import (which can look like a white screen);
+  // log a clear error instead so it shows up in Vercel/DevTools.
+  console.error(
+    '[supabase] Missing required env vars. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+  );
+}
+
+// If env vars are missing, createClient still needs a URL/key.
+// Use a clearly-invalid URL so failures are obvious and debuggable.
+export const supabase = createClient(
+  supabaseUrl || 'http://invalid.localhost',
+  supabaseKey || 'invalid-anon-key'
+);
 
 // Base44-compatible API wrapper
 export const base44 = {
