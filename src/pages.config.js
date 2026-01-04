@@ -1,5 +1,6 @@
 import AccountConsents from './pages/AccountConsents';
 import AdminDashboard from './pages/AdminDashboard';
+import Auth from './pages/Auth';
 import BeaconDetail from './pages/BeaconDetail';
 import Beacons from './pages/Beacons';
 import Bookmarks from './pages/Bookmarks';
@@ -44,13 +45,17 @@ import SquadChat from './pages/SquadChat';
 import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
 import WakeTheMess from './pages/WakeTheMess';
-import Auth from './pages/Auth';
+import Pulse from './pages/Pulse';
+import Social from './pages/Social';
+import Music from './pages/Music';
+import More from './pages/More';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AccountConsents": AccountConsents,
     "AdminDashboard": AdminDashboard,
+    "Auth": Auth,
     "BeaconDetail": BeaconDetail,
     "Beacons": Beacons,
     "Bookmarks": Bookmarks,
@@ -95,7 +100,10 @@ export const PAGES = {
     "Stats": Stats,
     "TicketMarketplace": TicketMarketplace,
     "WakeTheMess": WakeTheMess,
-    "Auth": Auth,
+    "Pulse": Pulse,
+    "Social": Social,
+    "Music": Music,
+    "More": More,
 }
 
 export const pagesConfig = {
