@@ -10,6 +10,7 @@ import FiltersDrawer from '@/components/discovery/FiltersDrawer';
 export default function DiscoveryGrid({ currentUser }) {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({});
+  const laneId = 'connect'; // Default lane for discovery
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['discover-users', filters],
@@ -101,10 +102,11 @@ export default function DiscoveryGrid({ currentUser }) {
 
       {showFilters && (
         <FiltersDrawer
-          isOpen={showFilters}
+          open={showFilters}
           onClose={() => setShowFilters(false)}
-          filters={filters}
+          laneId={laneId}
           onApply={setFilters}
+          initialValues={filters}
         />
       )}
     </>
