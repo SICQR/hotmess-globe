@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { base44 } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -216,46 +216,62 @@ export default function Checkout() {
             <ArrowLeft className="w-4 h-4 mr-2" /> Back
           </Button>
 
-          <h1 className="text-4xl font-black uppercase mb-8">Checkout</h1>
+          <h1 className="text-4xl font-black uppercase mb-2">
+            CHECKOUT<span className="text-[#39FF14]">.</span>
+          </h1>
+          <p className="text-white/60 text-sm uppercase tracking-wider mb-8">
+            Complete your order • XP payment
+          </p>
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Order Summary */}
-            <div>
-              <h2 className="text-2xl font-black uppercase mb-4">Order Summary</h2>
+            <div className="bg-white/5 border-2 border-white/10 p-6">
+              <h2 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-[#FF1493]" />
+                Order Summary
+              </h2>
               <div className="space-y-3 mb-6">
                 {cartWithProducts.map(item => (
-                  <div key={item.id} className="flex justify-between p-3 bg-white/5 border border-white/10">
-                    <div>
-                      <div className="font-bold">{item.product.name}</div>
-                      <div className="text-sm text-white/60">Qty: {item.quantity}</div>
+                  <div key={item.id} className="flex justify-between items-start p-4 bg-black/40 border border-white/10">
+                    <div className="flex-1">
+                      <div className="font-black uppercase text-sm mb-1">{item.product.name}</div>
+                      <div className="text-xs text-white/40 uppercase">
+                        Qty: {item.quantity} × {item.product.price_xp} XP
+                      </div>
                     </div>
-                    <div className="text-[#FFEB3B] font-bold">
-                      {item.product.price_xp * item.quantity} XP
+                    <div className="text-[#FFEB3B] font-black text-lg">
+                      {item.product.price_xp * item.quantity}
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="border-t-2 border-white/10 pt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-white/60">Your XP Balance</span>
-                  <span className="font-bold">{userXP} XP</span>
+              <div className="border-t-2 border-white/20 pt-4">
+                <div className="flex justify-between items-center mb-3 text-sm">
+                  <span className="text-white/60 uppercase tracking-wider">Your Balance</span>
+                  <span className="font-black text-[#39FF14]">{userXP.toLocaleString()} XP</span>
                 </div>
-                <div className="flex justify-between items-center text-xl font-black mb-4">
-                  <span>Total</span>
-                  <span className="text-[#FFEB3B]">{totalXP} XP</span>
+                <div className="flex justify-between items-center mb-3 text-sm">
+                  <span className="text-white/60 uppercase tracking-wider">Order Total</span>
+                  <span className="font-black text-[#FFEB3B]">-{totalXP.toLocaleString()} XP</span>
+                </div>
+                <div className="border-t border-white/20 pt-3 flex justify-between items-center text-xl font-black">
+                  <span className="uppercase">After Order</span>
+                  <span className={hasEnoughXP ? 'text-[#39FF14]' : 'text-red-500'}>
+                    {(userXP - totalXP).toLocaleString()} XP
+                  </span>
                 </div>
                 {!hasEnoughXP && (
-                  <div className="bg-red-600/20 border border-red-600 p-3 text-sm">
-                    ⚠️ Insufficient XP. You need {totalXP - userXP} more XP.
+                  <div className="mt-4 bg-red-600/20 border-2 border-red-600 p-4 text-sm font-bold uppercase tracking-wider">
+                    ⚠️ Need {(totalXP - userXP).toLocaleString()} more XP
                   </div>
                 )}
               </div>
             </div>
 
             {/* Shipping Info */}
-            <div>
-              <h2 className="text-2xl font-black uppercase mb-4">Shipping Info</h2>
+            <div className="bg-white/5 border-2 border-white/10 p-6">
+              <h2 className="text-xl font-black uppercase mb-4">DELIVERY DETAILS</h2>
               <div className="space-y-4">
                 <Input
                   placeholder="Street Address"
@@ -285,17 +301,28 @@ export default function Checkout() {
                 <Button
                   onClick={() => checkoutMutation.mutate()}
                   disabled={!hasEnoughXP || checkoutMutation.isPending}
-                  className="w-full bg-[#39FF14] text-black font-black text-lg py-6"
+                  className="w-full bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black text-lg py-7 uppercase tracking-wider shadow-[0_0_20px_rgba(57,255,20,0.3)] border-2 border-[#39FF14]"
                 >
                   {checkoutMutation.isPending ? (
-                    'Processing...'
+                    'PROCESSING ORDER...'
                   ) : (
                     <>
                       <Check className="w-5 h-5 mr-2" />
-                      Complete Order ({totalXP} XP)
+                      COMPLETE ORDER • {totalXP.toLocaleString()} XP
                     </>
                   )}
                 </Button>
+                
+                <div className="mt-4 p-4 bg-black/40 border border-white/10 text-xs text-white/60 uppercase tracking-wider">
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 mt-0.5 text-[#39FF14]" />
+                    <div className="space-y-1">
+                      <div>Instant XP deduction</div>
+                      <div>Order tracking available</div>
+                      <div>Seller notified immediately</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
