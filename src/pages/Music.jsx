@@ -30,13 +30,18 @@ export default function Music() {
   const { data: musicEvents = [] } = useQuery({
     queryKey: ['music-events'],
     queryFn: async () => {
-      const allBeacons = await base44.entities.Beacon.filter({ active: true, status: 'published' });
-      const today = new Date();
-      // Filter to music events with audio_url
-      return allBeacons
-        .filter(b => b.audio_url && b.event_date && new Date(b.event_date) >= today)
-        .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
-        .slice(0, 12);
+      try {
+        const allBeacons = await base44.entities.Beacon.filter({ active: true, status: 'published' });
+        const today = new Date();
+        // Filter to music events with audio_url
+        return allBeacons
+          .filter(b => b.audio_url && b.event_date && new Date(b.event_date) >= today)
+          .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
+          .slice(0, 12);
+      } catch (error) {
+        console.error('Failed to fetch music events:', error);
+        return [];
+      }
     },
     refetchInterval: 60000
   });
@@ -45,15 +50,24 @@ export default function Music() {
   const { data: releases = [] } = useQuery({
     queryKey: ['audio-releases'],
     queryFn: async () => {
-      const metadata = await base44.entities.AudioMetadata.list('-created_date', 20);
-      const beaconIds = metadata.map(m => m.beacon_id).filter(Boolean);
-      const beacons = await Promise.all(
-        beaconIds.map(id => base44.entities.Beacon.filter({ id }).then(b => b[0]))
-      );
-      return metadata.map(m => ({
-        ...m,
-        beacon: beacons.find(b => b?.id === m.beacon_id)
-      }));
+      try {
+        const metadata = await base44.entities.AudioMetadata.list('-created_date', 20);
+        if (!metadata || metadata.length === 0) return [];
+        
+        const beaconIds = metadata.map(m => m.beacon_id).filter(Boolean);
+        if (beaconIds.length === 0) return metadata.map(m => ({ ...m, beacon: null }));
+        
+        const beacons = await Promise.all(
+          beaconIds.map(id => base44.entities.Beacon.filter({ id }).then(b => b[0]).catch(() => null))
+        );
+        return metadata.map(m => ({
+          ...m,
+          beacon: beacons.find(b => b?.id === m.beacon_id) || null
+        }));
+      } catch (error) {
+        console.error('Failed to fetch releases:', error);
+        return [];
+      }
     }
   });
 
@@ -216,14 +230,18 @@ export default function Music() {
                           </div>
                           <h4 className="font-black text-xl mb-2 line-clamp-2">{event.title}</h4>
                           <div className="flex items-center gap-3 text-xs text-white/80">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {format(new Date(event.event_date), 'MMM d, HH:mm')}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {event.city}
-                            </div>
+                            {event.event_date && (
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {format(new Date(event.event_date), 'MMM d, HH:mm')}
+                              </div>
+                            )}
+                            {event.city && (
+                              <div className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {event.city}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
