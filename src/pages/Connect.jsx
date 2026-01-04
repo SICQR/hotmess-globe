@@ -16,7 +16,7 @@ import { debounce } from 'lodash';
 import { generateMatchExplanations, promoteTopMatches } from '../components/discovery/AIMatchmaker';
 
 export default function Connect() {
-  const { data: currentUser } = useCurrentUser();
+  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const [lane, setLane] = useState('browse');
   const [showFilters, setShowFilters] = useState(false);
   const [showRightNow, setShowRightNow] = useState(false);
@@ -25,7 +25,7 @@ export default function Connect() {
   const [aiMatchExplanations, setAiMatchExplanations] = useState({});
 
   // Use global cached users - MUST be before any conditional returns
-  const { data: allUsers = [] } = useAllUsers();
+  const { data: allUsers = [], isLoading: usersLoading } = useAllUsers();
 
   const { data: userTags = [] } = useQuery({
     queryKey: ['user-tags'],
@@ -178,10 +178,21 @@ export default function Connect() {
   );
 
   // Early return AFTER all hooks
+  if (userLoading || usersLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#FF1493] border-t-transparent rounded-full animate-spin" />
+          <div className="text-white/60 text-sm uppercase">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-white/40">Loading user...</div>
+        <div className="text-white/40">Not authenticated</div>
       </div>
     );
   }
