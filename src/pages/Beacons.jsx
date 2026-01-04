@@ -57,7 +57,13 @@ export default function Beacons() {
             </h1>
             <p className="text-white/60">{filteredBeacons.length} active beacons</p>
           </div>
-          <Link to={createPageUrl('CreateBeacon')}>
+          <Link
+            to={createPageUrl('CreateBeacon')}
+            onClick={async (e) => {
+              const ok = await base44.auth.requireProfile(createPageUrl('CreateBeacon'));
+              if (!ok) e.preventDefault();
+            }}
+          >
             <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
               <Plus className="w-4 h-4 mr-2" />
               Create

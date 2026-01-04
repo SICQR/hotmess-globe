@@ -27,8 +27,10 @@ export default function AIRecommendations({ currentUser, onBuy, excludeProductId
   });
 
   const { data: orderItems = [] } = useQuery({
-    queryKey: ['order-items'],
+    queryKey: ['order-items', currentUser?.email],
     queryFn: () => base44.entities.OrderItem.list(),
+    enabled: !!currentUser,
+    retry: false,
   });
 
   const { data: userFavorites = [] } = useQuery({

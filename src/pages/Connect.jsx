@@ -225,7 +225,11 @@ export default function Connect() {
                 Filters
               </Button>
               <Button
-                onClick={() => setShowRightNow(true)}
+                onClick={async () => {
+                  const ok = await base44.auth.requireProfile(window.location.href);
+                  if (!ok) return;
+                  setShowRightNow(true);
+                }}
                 className={`font-black border-2 border-white ${
                   rightNowStatuses.some(s => s.user_email === currentUser.email && s.active && new Date(s.expires_at) > new Date())
                     ? 'bg-[#39FF14] text-black animate-pulse'

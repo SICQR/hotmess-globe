@@ -20,6 +20,7 @@ import Globe from './pages/Globe';
 import HandNHand from './pages/HandNHand';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
+import Login from './pages/Login';
 import Marketplace from './pages/Marketplace';
 import MembershipUpgrade from './pages/MembershipUpgrade';
 import Messages from './pages/Messages';
@@ -69,6 +70,7 @@ export const PAGES = {
     "HandNHand": HandNHand,
     "Home": Home,
     "Leaderboard": Leaderboard,
+    "Login": Login,
     "Marketplace": Marketplace,
     "MembershipUpgrade": MembershipUpgrade,
     "Messages": Messages,
@@ -95,7 +97,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "Globe",
+    mainPage: "Home",
     Pages: PAGES,
     Layout: __Layout,
 };

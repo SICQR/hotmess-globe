@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/api/supabaseClient';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import CompactGlobeControls from '../components/globe/CompactGlobeControls';
 import GlobeDataPanel from '../components/globe/GlobeDataPanel';
@@ -26,12 +26,14 @@ export default function GlobePage() {
   const { data: beacons = [], isLoading: beaconsLoading } = useQuery({
     queryKey: ['beacons'],
     queryFn: () => base44.entities.Beacon.filter({ active: true, status: 'published' }, '-created_date'),
+    retry: false,
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
   const { data: cities = [], isLoading: citiesLoading } = useQuery({
     queryKey: ['cities'],
     queryFn: () => base44.entities.City.list(),
+    retry: false,
     refetchInterval: 60000 // Refresh every minute
   });
 
@@ -81,16 +83,6 @@ export default function GlobePage() {
 
   // Real-time subscriptions for beacons
   useEffect(() => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.warn('Supabase credentials not found - real-time updates disabled');
-      return;
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     const channel = supabase
       .channel('beacons-realtime')
       .on(
@@ -134,13 +126,6 @@ export default function GlobePage() {
 
   // Real-time subscriptions for user activities
   useEffect(() => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) return;
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Fetch recent activities
     const fetchActivities = async () => {
       try {
@@ -401,20 +386,19 @@ export default function GlobePage() {
     activityTracker.setEnabled(newVisibility);
   }, [activityVisibility]);
 
-  if (beaconsLoading || citiesLoading) {
-    return (
-      <div className="relative w-full min-h-screen bg-black flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#FF1493]/30 border-t-[#FF1493] rounded-full animate-spin" />
-          <p className="text-white/60 text-sm tracking-wider uppercase">Loading Globe...</p>
-        </div>
-      </div>
-    );
-  }
+  const isInitialLoading = beaconsLoading || citiesLoading;
 
   return (
     <ErrorBoundary>
       <div className="relative w-full min-h-screen bg-black overflow-hidden">
+        {isInitialLoading && (
+          <div className="absolute bottom-4 right-4 z-50 pointer-events-none">
+            <div className="flex items-center gap-2 px-3 py-2 bg-black/80 border border-white/10 rounded-lg backdrop-blur-xl">
+              <div className="w-4 h-4 border-2 border-[#FF1493]/30 border-t-[#FF1493] rounded-full animate-spin" />
+              <p className="text-white/60 text-xs tracking-wider uppercase">Loading Globe...</p>
+            </div>
+          </div>
+        )}
         {/* Globe - Full Screen */}
         <div className="relative w-full h-screen">
           <EnhancedGlobe3D

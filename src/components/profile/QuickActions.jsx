@@ -85,7 +85,11 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
   return (
     <div className="flex gap-2 flex-wrap">
       <Button
-        onClick={() => isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}
+        onClick={async () => {
+          const ok = await base44.auth.requireProfile(window.location.href);
+          if (!ok) return;
+          isFollowing ? unfollowMutation.mutate() : followMutation.mutate();
+        }}
         variant="outline"
         size="sm"
         className="border-2 border-white text-white hover:bg-white hover:text-black font-black"
@@ -104,7 +108,11 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
       </Button>
 
       <Button
-        onClick={handleMessage}
+        onClick={async () => {
+          const ok = await base44.auth.requireProfile(window.location.href);
+          if (!ok) return;
+          handleMessage();
+        }}
         size="sm"
         className="bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black border-2 border-white"
       >

@@ -20,8 +20,18 @@ export default function Checkout() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const user = await base44.auth.me();
-      setCurrentUser(user);
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          base44.auth.redirectToLogin(window.location.href);
+          return;
+        }
+
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+      } catch (error) {
+        base44.auth.redirectToLogin(window.location.href);
+      }
     };
     fetchUser();
   }, []);

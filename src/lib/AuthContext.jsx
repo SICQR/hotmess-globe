@@ -1,131 +1,175 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { appParams } from '@/lib/app-params';
-import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
+import { supabase } from '@/api/supabaseClient';
 
 const AuthContext = createContext();
+
+async function loadUserProfile(supabaseUser) {
+  if (!supabaseUser?.email) return null;
+
+  // Ensure there is a profile row (many pages expect User-table fields like xp, consent flags, etc.)
+  // Policies applied: self by auth_user_id (auth.uid()), with an email fallback for legacy rows.
+  try {
+    await supabase
+      .from('User')
+      .upsert(
+        { email: supabaseUser.email, auth_user_id: supabaseUser.id },
+        { onConflict: 'email' }
+      );
+  } catch {
+    // Non-fatal during migration or when RLS blocks access.
+  }
+
+  // Prefer selecting by auth_user_id; fallback to email for legacy rows.
+  try {
+    const { data: byAuthId, error: byAuthIdError } = await supabase
+      .from('User')
+      .select('*')
+      .eq('auth_user_id', supabaseUser.id)
+      .maybeSingle();
+    if (!byAuthIdError && byAuthId) return byAuthId;
+  } catch {
+    // Non-fatal.
+  }
+
+  let byEmail = null;
+  try {
+    const { data, error } = await supabase
+      .from('User')
+      .select('*')
+      .eq('email', supabaseUser.email)
+      .maybeSingle();
+    if (!error) byEmail = data ?? null;
+  } catch {
+    // Non-fatal.
+  }
+
+  // If we found a legacy row without auth_user_id, try to attach it.
+  if (byEmail && !byEmail.auth_user_id) {
+    try {
+      await supabase
+        .from('User')
+        .update({ auth_user_id: supabaseUser.id })
+        .eq('id', byEmail.id);
+
+      const { data: byAuthIdAfter, error: byAuthIdAfterError } = await supabase
+        .from('User')
+        .select('*')
+        .eq('auth_user_id', supabaseUser.id)
+        .maybeSingle();
+      if (!byAuthIdAfterError && byAuthIdAfter) return byAuthIdAfter;
+    } catch {
+      // Non-fatal.
+    }
+  }
+
+  return byEmail ?? null;
+}
+
+function mergeAuthAndProfile(supabaseUser, profileRow) {
+  if (!supabaseUser) return null;
+  return {
+    id: supabaseUser.id,
+    email: supabaseUser.email,
+    ...(supabaseUser.user_metadata || {}),
+    ...(profileRow || {}),
+    __supabase_user: supabaseUser,
+  };
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
   const [authError, setAuthError] = useState(null);
-  const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
 
   useEffect(() => {
-    checkAppState();
-  }, []);
+    let isMounted = true;
 
-  const checkAppState = async () => {
-    try {
-      setIsLoadingPublicSettings(true);
-      setAuthError(null);
-      
-      // First, check app public settings (with token if available)
-      // This will tell us if auth is required, user not registered, etc.
-      const appClient = createAxiosClient({
-        baseURL: `/api/apps/public`,
-        headers: {
-          'X-App-Id': appParams.appId
-        },
-        token: appParams.token, // Include token if available
-        interceptResponses: true
-      });
-      
+    const bootstrap = async () => {
       try {
-        const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
-        setAppPublicSettings(publicSettings);
-        
-        // If we got the app public settings successfully, check if user is authenticated
-        if (appParams.token) {
-          await checkUserAuth();
-        } else {
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-        }
-        setIsLoadingPublicSettings(false);
-      } catch (appError) {
-        console.error('App state check failed:', appError);
-        
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
-          } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
-          }
-        } else {
-          setAuthError({
-            type: 'unknown',
-            message: appError.message || 'Failed to load app'
-          });
-        }
-        setIsLoadingPublicSettings(false);
-        setIsLoadingAuth(false);
-      }
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      setAuthError({
-        type: 'unknown',
-        message: error.message || 'An unexpected error occurred'
-      });
-      setIsLoadingPublicSettings(false);
-      setIsLoadingAuth(false);
-    }
-  };
+        setIsLoadingAuth(true);
+        setAuthError(null);
 
-  const checkUserAuth = async () => {
-    try {
-      // Now check if the user is authenticated
-      setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-      setIsAuthenticated(true);
-      setIsLoadingAuth(false);
-    } catch (error) {
-      console.error('User auth check failed:', error);
-      setIsLoadingAuth(false);
-      setIsAuthenticated(false);
-      
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+
+        const sessionUser = data?.session?.user ?? null;
+        if (!sessionUser) {
+          if (!isMounted) return;
+          setUser(null);
+          setIsAuthenticated(false);
+          setAuthError({ type: 'auth_required', message: 'Authentication required' });
+          setIsLoadingAuth(false);
+          return;
+        }
+
+        const profile = await loadUserProfile(sessionUser);
+        if (!isMounted) return;
+        setUser(mergeAuthAndProfile(sessionUser, profile));
+        setIsAuthenticated(true);
+        setIsLoadingAuth(false);
+      } catch (error) {
+        console.error('Auth bootstrap failed:', error);
+        if (!isMounted) return;
+        setUser(null);
+        setIsAuthenticated(false);
+        setIsLoadingAuth(false);
+        setAuthError({ type: 'unknown', message: error?.message || 'Auth error' });
       }
-    }
-  };
+    };
+
+    bootstrap();
+
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      try {
+        const sessionUser = session?.user ?? null;
+        if (!sessionUser) {
+          if (!isMounted) return;
+          setUser(null);
+          setIsAuthenticated(false);
+          setAuthError({ type: 'auth_required', message: 'Authentication required' });
+          setIsLoadingAuth(false);
+          return;
+        }
+
+        setIsLoadingAuth(true);
+        const profile = await loadUserProfile(sessionUser);
+        if (!isMounted) return;
+        setUser(mergeAuthAndProfile(sessionUser, profile));
+        setIsAuthenticated(true);
+        setAuthError(null);
+        setIsLoadingAuth(false);
+      } catch (error) {
+        console.error('Auth state change handling failed:', error);
+        if (!isMounted) return;
+        setUser(null);
+        setIsAuthenticated(false);
+        setIsLoadingAuth(false);
+        setAuthError({ type: 'unknown', message: error?.message || 'Auth error' });
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      sub?.subscription?.unsubscribe?.();
+    };
+  }, []);
 
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
     
     if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      base44.auth.logout(window.location.href);
+      supabase.auth.signOut().finally(() => {
+        window.location.href = `/Login?returnUrl=${encodeURIComponent(window.location.href)}`;
+      });
     } else {
-      // Just remove the token without redirect
-      base44.auth.logout();
+      supabase.auth.signOut();
     }
   };
 
   const navigateToLogin = () => {
-    // Use the SDK's redirectToLogin method
-    base44.auth.redirectToLogin(window.location.href);
+    window.location.href = `/Login?returnUrl=${encodeURIComponent(window.location.href)}`;
   };
 
   return (
@@ -133,12 +177,9 @@ export const AuthProvider = ({ children }) => {
       user, 
       isAuthenticated, 
       isLoadingAuth,
-      isLoadingPublicSettings,
       authError,
-      appPublicSettings,
       logout,
       navigateToLogin,
-      checkAppState
     }}>
       {children}
     </AuthContext.Provider>

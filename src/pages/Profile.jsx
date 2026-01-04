@@ -243,7 +243,20 @@ export default function Profile() {
         avatar_url: file_url
       });
       toast.success('Profile complete!');
-      window.location.href = createPageUrl('Connect');
+      const returnUrlRaw = searchParams.get('returnUrl');
+      let returnUrl = null;
+      if (returnUrlRaw) {
+        try {
+          const url = new URL(returnUrlRaw, window.location.origin);
+          if (url.origin === window.location.origin) {
+            returnUrl = url.href;
+          }
+        } catch {
+          // ignore invalid returnUrl
+        }
+      }
+
+      window.location.href = returnUrl || createPageUrl('Connect');
     } catch (error) {
       console.error('Profile setup failed:', error);
       toast.error('Setup failed. Please try again.');

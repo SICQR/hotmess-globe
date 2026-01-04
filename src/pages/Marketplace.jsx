@@ -33,6 +33,10 @@ export default function Marketplace() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const redirectToLogin = () => {
+    base44.auth.redirectToLogin(window.location.href);
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -137,7 +141,7 @@ export default function Marketplace() {
 
   const handleBuy = (product) => {
     if (!currentUser) {
-      toast.error('Please log in to purchase');
+      redirectToLogin();
       return;
     }
 
@@ -254,7 +258,13 @@ export default function Marketplace() {
             </div>
             <div className="flex gap-2">
               <Button 
-                onClick={() => setShowCart(true)}
+                onClick={() => {
+                  if (!currentUser) {
+                    redirectToLogin();
+                    return;
+                  }
+                  setShowCart(true);
+                }}
                 variant="outline"
                 className="border-[#39FF14] text-[#39FF14]"
               >
@@ -262,7 +272,13 @@ export default function Marketplace() {
                 Cart
               </Button>
               <Button 
-                onClick={() => navigate(createPageUrl('SellerDashboard'))}
+                onClick={() => {
+                  if (!currentUser) {
+                    redirectToLogin();
+                    return;
+                  }
+                  navigate(createPageUrl('SellerDashboard'));
+                }}
                 className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -376,7 +392,13 @@ export default function Marketplace() {
                 icon={ShoppingBag}
                 title="No products found"
                 description={searchQuery ? "Try a different search term" : "Be the first to list a product!"}
-                action={() => navigate(createPageUrl('SellerDashboard'))}
+                action={() => {
+                  if (!currentUser) {
+                    redirectToLogin();
+                    return;
+                  }
+                  navigate(createPageUrl('SellerDashboard'));
+                }}
                 actionLabel="Start Selling"
               />
             ) : (

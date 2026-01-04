@@ -133,9 +133,15 @@ export default function MembershipUpgrade() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className={`bg-black border-2 p-8 ${
-                  isCurrentTier ? `border-[${tier.color}] shadow-[0_0_20px_${tier.color}]` : 'border-white/20'
-                }`}
+                className={`bg-black border-2 p-8 ${isCurrentTier ? '' : 'border-white/20'}`}
+                style={
+                  isCurrentTier
+                    ? {
+                        borderColor: tier.color,
+                        boxShadow: `0 0 20px ${tier.color}`,
+                      }
+                    : undefined
+                }
               >
                 <div className="text-center mb-6">
                   <div
