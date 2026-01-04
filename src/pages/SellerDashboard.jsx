@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { base44 } from '@/components/utils/supabaseClient';
 import { Plus, Package, DollarSign, Star, TrendingUp, Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -52,6 +52,7 @@ export default function SellerDashboard() {
   const { data: orderItems = [] } = useQuery({
     queryKey: ['order-items'],
     queryFn: () => base44.entities.OrderItem.list(),
+    enabled: !!currentUser,
   });
 
   const { data: promotions = [] } = useQuery({
@@ -69,6 +70,7 @@ export default function SellerDashboard() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list(),
+    enabled: !!currentUser,
   });
 
   // Enrich orders with their items
@@ -84,6 +86,9 @@ export default function SellerDashboard() {
       setShowForm(false);
       toast.success('Product created!');
     },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to create product');
+    },
   });
 
   const updateMutation = useMutation({
@@ -94,6 +99,9 @@ export default function SellerDashboard() {
       setEditingProduct(null);
       toast.success('Product updated!');
     },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to update product');
+    },
   });
 
   const deleteMutation = useMutation({
@@ -102,13 +110,36 @@ export default function SellerDashboard() {
       queryClient.invalidateQueries(['seller-products']);
       toast.success('Product deleted');
     },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to delete product');
+    },
   });
 
+  const normalizeProductPayload = (data) => {
+    const toIntOrNull = (value) => {
+      if (value === '' || value === null || value === undefined) return null;
+      const num = typeof value === 'number' ? value : parseInt(String(value), 10);
+      return Number.isFinite(num) ? num : null;
+    };
+
+    return {
+      ...data,
+      price_xp: toIntOrNull(data?.price_xp) ?? 0,
+      inventory_count: toIntOrNull(data?.inventory_count) ?? 0,
+    };
+  };
+
   const handleSubmit = (data) => {
+    if (!currentUser?.email) {
+      toast.error('Please sign in to create products');
+      return;
+    }
+
+    const normalized = normalizeProductPayload(data);
     if (editingProduct) {
-      updateMutation.mutate({ id: editingProduct.id, data });
+      updateMutation.mutate({ id: editingProduct.id, data: normalized });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(normalized);
     }
   };
 

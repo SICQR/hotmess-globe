@@ -20,6 +20,26 @@ class PageErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('Page Error Boundary caught:', error, errorInfo);
+
+    try {
+      const payload = {
+        message: error?.message || String(error),
+        name: error?.name,
+        stack: error?.stack,
+        componentStack: errorInfo?.componentStack,
+        href: typeof window !== 'undefined' ? window.location.href : undefined,
+        ts: new Date().toISOString(),
+      };
+
+      if (typeof window !== 'undefined') {
+        window.__lastPageError = payload;
+      }
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('last_page_error', JSON.stringify(payload));
+      }
+    } catch {
+      // ignore
+    }
     
     this.setState(prevState => ({
       error,
@@ -47,6 +67,17 @@ class PageErrorBoundary extends React.Component {
     if (this.state.hasError) {
       const { error, errorInfo, errorCount } = this.state;
       const isDev = import.meta.env.DEV;
+
+      let persisted = null;
+      if (isDev) {
+        try {
+          persisted = typeof sessionStorage !== 'undefined'
+            ? JSON.parse(sessionStorage.getItem('last_page_error') || 'null')
+            : null;
+        } catch {
+          persisted = null;
+        }
+      }
 
       // If error keeps happening, show simpler recovery
       if (errorCount > 2) {
@@ -114,11 +145,27 @@ class PageErrorBoundary extends React.Component {
                       {error.toString()}
                     </pre>
                   </div>
+                  {error?.stack && (
+                    <div>
+                      <div className="text-orange-300 font-bold mb-1">JS Stack:</div>
+                      <pre className="bg-black/50 p-2 overflow-x-auto text-orange-200">
+                        {error.stack}
+                      </pre>
+                    </div>
+                  )}
                   {errorInfo && (
                     <div>
                       <div className="text-yellow-400 font-bold mb-1">Stack:</div>
                       <pre className="bg-black/50 p-2 overflow-x-auto text-yellow-300">
                         {errorInfo.componentStack}
+                      </pre>
+                    </div>
+                  )}
+                  {persisted?.href && (
+                    <div>
+                      <div className="text-white/50 font-bold mb-1">URL:</div>
+                      <pre className="bg-black/50 p-2 overflow-x-auto text-white/60">
+                        {persisted.href}
                       </pre>
                     </div>
                   )}

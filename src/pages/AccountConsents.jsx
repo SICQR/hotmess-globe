@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Shield, MapPin, Calendar } from 'lucide-react';
@@ -20,16 +20,28 @@ export default function AccountConsents() {
 
     setLoading(true);
     try {
+      // Keep age verification consistent across gates.
+      try {
+        sessionStorage.setItem('age_verified', 'true');
+      } catch {
+        // ignore
+      }
+
       await base44.auth.updateMe({
         consent_accepted: true,
         consent_age: true,
         consent_location: true,
         consent_date: new Date().toISOString(),
+
+        // These are the required flags checked by Layout/OnboardingGate.
+        has_agreed_terms: true,
+        has_consented_data: true,
+        has_consented_gps: true,
       });
 
       window.location.href = createPageUrl('Profile');
     } catch (error) {
-      toast.error('Failed to save consents');
+      toast.error(error?.message || 'Failed to save consents');
       setLoading(false);
     }
   };

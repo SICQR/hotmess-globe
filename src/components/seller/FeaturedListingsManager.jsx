@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { base44 } from '@/components/utils/supabaseClient';
 import { Star, TrendingUp, Eye, MousePointer, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,7 +15,8 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user-featured'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => base44.auth.me(),
+    enabled: !!sellerEmail,
   });
 
   const { data: featuredListings = [] } = useQuery({

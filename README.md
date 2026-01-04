@@ -29,6 +29,7 @@ HOTMESS is more than just a social network—it's a vibrant community hub that c
 
 ### 📚 Important Documentation:
 - 🔒 [**SECURITY.md**](./SECURITY.md) - Security best practices and policies
+- 📘 [**HOTMESS LONDON OS — V1.5 Bible**](./docs/HOTMESS-LONDON-OS-BIBLE-v1.5.md) - Canonical product navigation, routes, and build sequence
 - 🚀 [**DEPLOYMENT.md**](./DEPLOYMENT.md) - Deployment checklist and guide
 - 📊 [**CODE_QUALITY_RECOMMENDATIONS.md**](./CODE_QUALITY_RECOMMENDATIONS.md) - Code improvement roadmap
 - 🚧 [**INCOMPLETE_FEATURES.md**](./INCOMPLETE_FEATURES.md) - Known limitations and TODOs

@@ -8,56 +8,48 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { toast } from 'sonner';
 
-// Cart persistence using localStorage
-const CART_STORAGE_KEY = 'hotmess_cart';
+import {
+  getGuestCartItems,
+  mergeGuestCartToUser,
+  removeFromCart,
+  updateCartItemQuantity,
+  clearGuestCart,
+} from './cartStorage';
 
 export default function CartDrawer({ isOpen, onClose, currentUser }) {
   const queryClient = useQueryClient();
 
   const { data: cartItems = [] } = useQuery({
-    queryKey: ['cart', currentUser?.email],
+    queryKey: ['cart', currentUser?.email || 'guest'],
     queryFn: async () => {
-      if (!currentUser) return [];
-      
-      const items = await base44.entities.CartItem.filter({ user_email: currentUser.email });
       const now = new Date();
-      const validItems = items.filter(item => {
+
+      if (!currentUser) {
+        const items = getGuestCartItems();
+        return items.filter(item => {
+          if (!item.reserved_until) return true;
+          return new Date(item.reserved_until) > now;
+        });
+      }
+
+      const items = await base44.entities.CartItem.filter({ user_email: currentUser.email });
+      return items.filter(item => {
         if (!item.reserved_until) return true;
         return new Date(item.reserved_until) > now;
       });
-      
-      // Sync to localStorage
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(validItems));
-      return validItems;
     },
-    enabled: !!currentUser
+    enabled: isOpen
   });
 
-  // Restore cart from localStorage on mount
+  // Merge any guest cart into DB on login
   useEffect(() => {
-    if (!currentUser) return;
-    
-    const storedCart = localStorage.getItem(CART_STORAGE_KEY);
-    if (storedCart) {
-      try {
-        const items = JSON.parse(storedCart);
-        // Sync localStorage items to database
-        items.forEach(async (item) => {
-          const existing = cartItems.find(ci => ci.product_id === item.product_id);
-          if (!existing) {
-            await base44.entities.CartItem.create({
-              user_email: currentUser.email,
-              product_id: item.product_id,
-              quantity: item.quantity,
-              reserved_until: item.reserved_until
-            });
-          }
-        });
-      } catch (e) {
-        console.error('Failed to restore cart:', e);
-      }
-    }
-  }, [currentUser]);
+    if (!currentUser?.email) return;
+    mergeGuestCartToUser({ currentUser })
+      .then(() => queryClient.invalidateQueries({ queryKey: ['cart'] }))
+      .catch(() => {
+        // Non-fatal: keep guest cart local if merge fails.
+      });
+  }, [currentUser?.email, queryClient]);
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
@@ -65,27 +57,16 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
   });
 
   const removeMutation = useMutation({
-    mutationFn: (itemId) => base44.entities.CartItem.delete(itemId),
+    mutationFn: ({ itemId, productId }) => removeFromCart({ itemId, productId, currentUser }),
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
-      
-      // Update localStorage
-      const updatedCart = cartItems.filter(item => item.id !== itemId);
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
-      
       toast.success('Removed from cart');
     }
   });
 
   const updateQuantityMutation = useMutation({
-    mutationFn: ({ itemId, quantity }) => {
-      const reservedUntil = new Date();
-      reservedUntil.setMinutes(reservedUntil.getMinutes() + 30);
-      return base44.entities.CartItem.update(itemId, { 
-        quantity,
-        reserved_until: reservedUntil.toISOString()
-      });
-    },
+    mutationFn: ({ itemId, productId, quantity }) =>
+      updateCartItemQuantity({ itemId, productId, quantity, currentUser }),
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
     }
@@ -93,11 +74,15 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
 
   const clearCartMutation = useMutation({
     mutationFn: async () => {
+      if (!currentUser) {
+        clearGuestCart();
+        return;
+      }
+
       await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
-      localStorage.removeItem(CART_STORAGE_KEY);
       toast.success('Cart cleared');
     }
   });
@@ -131,7 +116,7 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
             <>
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {cartWithProducts.map(item => (
-                  <div key={item.id} className="flex gap-3 p-4 bg-white/5 border border-white/10">
+                  <div key={item.id ?? item.product_id} className="flex gap-3 p-4 bg-white/5 border border-white/10">
                     {item.product.image_urls?.[0] && (
                       <img 
                         src={item.product.image_urls[0]} 
@@ -154,7 +139,8 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
                           size="sm"
                           variant="outline"
                           onClick={() => updateQuantityMutation.mutate({ 
-                            itemId: item.id, 
+                            itemId: item.id,
+                            productId: item.product_id,
                             quantity: Math.max(1, item.quantity - 1) 
                           })}
                           className="h-6 w-6 p-0"
@@ -166,7 +152,8 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
                           size="sm"
                           variant="outline"
                           onClick={() => updateQuantityMutation.mutate({ 
-                            itemId: item.id, 
+                            itemId: item.id,
+                            productId: item.product_id,
                             quantity: item.quantity + 1 
                           })}
                           className="h-6 w-6 p-0"
@@ -178,7 +165,7 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => removeMutation.mutate(item.id)}
+                      onClick={() => removeMutation.mutate({ itemId: item.id, productId: item.product_id })}
                       className="text-red-400 hover:text-red-300"
                     >
                       <Trash2 className="w-4 h-4" />

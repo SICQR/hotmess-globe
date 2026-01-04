@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, Radio, Flame, ShoppingBag, User, Zap } from 'lucide-react';
+import { Home, Globe, Radio, Users, ShoppingBag, Menu, Zap } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 
@@ -12,11 +12,12 @@ export default function OSHud({ user, onModuleChange }) {
   const xpProgress = (xpInLevel / 1000) * 100;
 
   const modules = [
-    { id: 'pulse', icon: Globe, label: 'PULSE', path: '/' },
-    { id: 'radio', icon: Radio, label: 'RADIO', path: '/radio' },
-    { id: 'connect', icon: Flame, label: 'CONNECT', path: '/connect' },
-    { id: 'market', icon: ShoppingBag, label: 'MARKET', path: '/marketplace' },
-    { id: 'profile', icon: User, label: 'PROFILE', path: user ? `/profile?email=${user.email}` : '/settings' },
+    { id: 'home', icon: Home, label: 'HOME', path: '/' },
+    { id: 'pulse', icon: Globe, label: 'PULSE', path: '/pulse' },
+    { id: 'social', icon: Users, label: 'SOCIAL', path: '/social' },
+    { id: 'market', icon: ShoppingBag, label: 'MARKET', path: '/market' },
+    { id: 'music', icon: Radio, label: 'MUSIC', path: '/music' },
+    { id: 'more', icon: Menu, label: 'MORE', path: '/more' },
   ];
 
   return (
@@ -55,14 +56,15 @@ export default function OSHud({ user, onModuleChange }) {
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-black/90 backdrop-blur-xl border-t-2 border-[#FF1493]">
         <div className="max-w-4xl mx-auto px-2 py-3 flex items-center justify-around">
           {modules.map(({ id, icon: Icon, label, path }) => {
-            const isActive = id === 'pulse' 
-              ? currentPath === '/' 
-              : currentPath.includes(id) || currentPath.includes(path.split('?')[0]);
+            const isActive =
+              path === '/'
+                ? currentPath === '/'
+                : currentPath === path || currentPath.startsWith(`${path}/`);
             
             return (
               <Link
                 key={id}
-                to={createPageUrl(path.startsWith('/') ? path.slice(1) : path)}
+                to={createPageUrl(path)}
                 onClick={() => onModuleChange?.(id)}
                 className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all ${
                   isActive 
