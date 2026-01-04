@@ -6,7 +6,7 @@ import { Users, Zap, Heart, Filter } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import DiscoveryCard from '../components/discovery/DiscoveryCard';
-import { FiltersDrawer } from '../components/discovery/FiltersDrawer';
+import FiltersDrawer from '../components/discovery/FiltersDrawer';
 import RightNowModal from '../components/discovery/RightNowModal';
 import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 import { valuesToSearchParams, searchParamsToValues, applyLocalFilters } from '../components/discovery/queryBuilder';
