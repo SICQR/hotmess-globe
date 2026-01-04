@@ -27,6 +27,7 @@ import MembershipUpgrade from './pages/MembershipUpgrade';
 import Messages from './pages/Messages';
 import More from './pages/More';
 import Music from './pages/Music';
+import MusicRelease from './pages/MusicRelease';
 import MyEvents from './pages/MyEvents';
 import Onboarding from './pages/Onboarding';
 import OnboardingGate from './pages/OnboardingGate';
@@ -83,6 +84,7 @@ export const PAGES = {
     "Messages": Messages,
     "More": More,
     "Music": Music,
+    "MusicRelease": MusicRelease,
     "MyEvents": MyEvents,
     "Onboarding": Onboarding,
     "OnboardingGate": OnboardingGate,
@@ -109,7 +111,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "Globe",
+    mainPage: "Home",
     Pages: PAGES,
     Layout: __Layout,
 };

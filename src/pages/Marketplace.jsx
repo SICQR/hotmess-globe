@@ -18,6 +18,7 @@ import CartDrawer from '../components/marketplace/CartDrawer';
 import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
+import { addToCart } from '@/components/marketplace/cartStorage';
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
@@ -137,7 +138,12 @@ export default function Marketplace() {
 
   const handleBuy = (product) => {
     if (!currentUser) {
-      toast.error('Please log in to purchase');
+      addToCart({ productId: product.id, quantity: 1, currentUser: null })
+        .then(() => {
+          toast.success('Added to cart! Sign in at checkout to complete.');
+          setShowCart(true);
+        })
+        .catch(() => toast.error('Failed to add to cart'));
       return;
     }
 
@@ -422,13 +428,11 @@ export default function Marketplace() {
         </Tabs>
       </div>
 
-      {currentUser && (
-        <CartDrawer 
-          isOpen={showCart} 
-          onClose={() => setShowCart(false)} 
-          currentUser={currentUser} 
-        />
-      )}
+      <CartDrawer 
+        isOpen={showCart} 
+        onClose={() => setShowCart(false)} 
+        currentUser={currentUser} 
+      />
 
       <TutorialTooltip page="marketplace" />
     </div>

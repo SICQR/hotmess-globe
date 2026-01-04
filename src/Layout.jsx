@@ -22,15 +22,16 @@ import RightNowNotifications from '@/components/discovery/RightNowNotifications'
 import PersistentRadioPlayer from '@/components/shell/PersistentRadioPlayer';
 import { Radio as RadioIcon } from 'lucide-react';
 import { useRadio } from '@/components/shell/RadioContext';
+import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 
       const PRIMARY_NAV = [
-        { name: 'Home', icon: Home, path: 'Home' },
-        { name: 'Pulse', icon: GlobeIcon, path: 'Pulse' },
-        { name: 'Events', icon: CalendarIcon, path: 'Events' },
-        { name: 'Market', icon: ShoppingBag, path: 'Marketplace' },
-        { name: 'Social', icon: Users, path: 'Social', showBadge: true },
-        { name: 'Music', icon: RadioIcon, path: 'Music' },
-        { name: 'More', icon: Menu, path: 'More' },
+        { name: 'HOME', icon: Home, path: 'Home' },
+        { name: 'PULSE', icon: GlobeIcon, path: 'Pulse' },
+        { name: 'EVENTS', icon: CalendarIcon, path: 'Events' },
+        { name: 'MARKET', icon: ShoppingBag, path: 'Marketplace' },
+        { name: 'SOCIAL', icon: Users, path: 'Social', showBadge: true },
+        { name: 'MUSIC', icon: RadioIcon, path: 'Music' },
+        { name: 'MORE', icon: Menu, path: 'More' },
       ];
 
       const SECONDARY_NAV = [];
@@ -58,7 +59,12 @@ function LayoutInner({ children, currentPageName }) {
     const fetchUser = async () => {
       try {
         // Check age verification first (session-based)
-        const ageVerified = sessionStorage.getItem('age_verified');
+        let ageVerified = null;
+        try {
+          ageVerified = sessionStorage.getItem('age_verified');
+        } catch {
+          ageVerified = null;
+        }
         if (!ageVerified && currentPageName !== 'AgeGate') {
           window.location.href = createPageUrl('AgeGate') + `?next=${encodeURIComponent(window.location.pathname)}`;
           return;
@@ -72,6 +78,31 @@ function LayoutInner({ children, currentPageName }) {
 
         const currentUser = await base44.auth.me();
         setUser(currentUser);
+
+        // Merge any guest cart into the authenticated cart (once per user per session)
+        if (currentUser?.email) {
+          const mergedKey = `guest_cart_merged_for:${currentUser.email}`;
+          let alreadyMerged = false;
+          try {
+            alreadyMerged = !!sessionStorage.getItem(mergedKey);
+          } catch {
+            alreadyMerged = false;
+          }
+
+          if (!alreadyMerged) {
+            mergeGuestCartToUser({ currentUser })
+              .then(() => {
+                try {
+                  sessionStorage.setItem(mergedKey, '1');
+                } catch {
+                  // ignore
+                }
+              })
+              .catch(() => {
+                // Non-fatal; keep guest cart local if merge fails.
+              });
+          }
+        }
 
         // GATEKEEPER: Block all access until consent_accepted is true
         if (currentPageName !== 'AccountConsents' && currentPageName !== 'AgeGate' && !currentUser?.consent_accepted) {

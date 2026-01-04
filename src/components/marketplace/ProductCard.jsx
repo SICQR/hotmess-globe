@@ -10,6 +10,7 @@ import MakeOfferModal from './MakeOfferModal';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { addToCart } from './cartStorage';
 
 const TYPE_ICONS = {
   physical: Package,
@@ -51,29 +52,7 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
 
   const addToCartMutation = useMutation({
     mutationFn: async () => {
-      if (!currentUser) throw new Error('Please log in to add to cart');
-
-      const reservedUntil = new Date();
-      reservedUntil.setMinutes(reservedUntil.getMinutes() + 30);
-
-      const existingItems = await base44.entities.CartItem.filter({
-        user_email: currentUser.email,
-        product_id: product.id
-      });
-
-      if (existingItems.length > 0) {
-        return await base44.entities.CartItem.update(existingItems[0].id, {
-          quantity: existingItems[0].quantity + 1,
-          reserved_until: reservedUntil.toISOString()
-        });
-      } else {
-        return await base44.entities.CartItem.create({
-          user_email: currentUser.email,
-          product_id: product.id,
-          quantity: 1,
-          reserved_until: reservedUntil.toISOString()
-        });
-      }
+      return addToCart({ productId: product.id, quantity: 1, currentUser });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
@@ -95,8 +74,8 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
     [product.min_xp_level, currentUserXP]
   );
   const isOfficial = useMemo(() => 
-    product.category === 'official' || product.tags?.includes('official'),
-    [product.category, product.tags]
+    product.seller_email === 'shopify@hotmess.london' || product.category === 'official' || product.tags?.includes('official'),
+    [product.seller_email, product.category, product.tags]
   );
 
   return (
@@ -169,7 +148,7 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
                 )}
               </div>
               <div className="flex gap-2">
-                {!isOutOfStock && !isLocked && currentUser && (
+                {!isOutOfStock && !isLocked && (
                   <Button
                     size="sm"
                     variant="outline"

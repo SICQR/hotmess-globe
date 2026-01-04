@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { MapPin, ShoppingBag, Users, Radio, Heart, Calendar, Zap, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useServerNow } from '@/hooks/use-server-now';
 
 const COLLECTIONS = [
   { id: 'raw', name: 'RAW', tagline: 'Hardwear. Clean lines. Loud intent.', color: '#000000' },
@@ -16,6 +17,81 @@ const COLLECTIONS = [
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
+  const queryClient = useQueryClient();
+  const { serverNow } = useServerNow();
+
+  const formatLondonDateTime = (value) => {
+    try {
+      return new Date(value).toLocaleString('en-GB', { timeZone: 'Europe/London' });
+    } catch {
+      return '';
+    }
+  };
+
+  const formatCountdown = (target) => {
+    const now = serverNow ?? new Date();
+    const diffMs = Math.max(0, target.getTime() - now.getTime());
+    const totalSeconds = Math.floor(diffMs / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const pad2 = (n) => String(n).padStart(2, '0');
+    if (days > 0) return `${days}d ${pad2(hours)}h ${pad2(minutes)}m`;
+    return `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
+  };
+
+  const { data: releaseBeacons = [] } = useQuery({
+    queryKey: ['release-beacons'],
+    queryFn: async () => {
+      const rows = await base44.entities.Beacon.filter(
+        { active: true, status: 'published', kind: 'release' },
+        'release_at',
+        10
+      );
+      return Array.isArray(rows) ? rows : [];
+    },
+    refetchInterval: 60000,
+  });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('home-release-beacons')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'Beacon' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['release-beacons'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  const featuredRelease = (() => {
+    const now = serverNow ?? new Date();
+    const sorted = [...releaseBeacons]
+      .filter((b) => b?.release_at)
+      .sort((a, b) => new Date(a.release_at) - new Date(b.release_at));
+
+    const upcoming = sorted.find((b) => new Date(b.release_at) > now);
+    if (upcoming) return { beacon: upcoming, state: 'upcoming' };
+
+    const live = [...sorted]
+      .reverse()
+      .find((b) => {
+        const start = new Date(b.release_at);
+        const end = b.end_at ? new Date(b.end_at) : null;
+        return start <= now && (!end || now < end);
+      });
+    if (live) return { beacon: live, state: 'live' };
+
+    return null;
+  })();
 
   const { data: recentBeacons = [] } = useQuery({
     queryKey: ['recent-beacons'],
@@ -102,6 +178,47 @@ export default function Home() {
           </div>
         </motion.div>
       </section>
+
+      {/* RELEASE COUNTDOWN */}
+      {featuredRelease?.beacon?.release_slug && featuredRelease?.beacon?.release_at && (
+        <section className="py-16 px-6 bg-black">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-white/5 border-2 border-white/10 p-8">
+              <p className="text-xs uppercase tracking-[0.4em] text-white/50 mb-4">DROP</p>
+              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+                <div>
+                  <h2 className="text-3xl md:text-5xl font-black italic mb-2">
+                    {featuredRelease.beacon.release_title || featuredRelease.beacon.title || 'RELEASE'}
+                  </h2>
+                  <p className="text-white/70 uppercase tracking-wider">
+                    {featuredRelease.state === 'upcoming' ? 'Launches in' : 'Live now'}
+                  </p>
+                  <p className="text-white/50 uppercase tracking-wider text-sm">
+                    {formatLondonDateTime(featuredRelease.beacon.release_at)} (London)
+                  </p>
+                </div>
+                <div className="text-right">
+                  {featuredRelease.state === 'upcoming' ? (
+                    <div className="text-3xl md:text-5xl font-mono font-black text-[#B026FF]">
+                      {formatCountdown(new Date(featuredRelease.beacon.release_at))}
+                    </div>
+                  ) : (
+                    <div className="text-3xl md:text-5xl font-black text-[#B026FF]">LIVE</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <Link to={`/music/releases/${encodeURIComponent(featuredRelease.beacon.release_slug)}`}>
+                  <Button className="bg-[#B026FF] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg">
+                    OPEN RELEASE
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* SHOP COLLECTIONS */}
       <section className="py-32 px-6 bg-white text-black">

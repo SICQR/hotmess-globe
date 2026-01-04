@@ -81,8 +81,8 @@ export default function GlobePage() {
 
   // Real-time subscriptions for beacons
   useEffect(() => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.vite_publicSUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.vite_publicSUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       console.warn('Supabase credentials not found - real-time updates disabled');
@@ -134,8 +134,8 @@ export default function GlobePage() {
 
   // Real-time subscriptions for user activities
   useEffect(() => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.vite_publicSUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.vite_publicSUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) return;
 
@@ -231,21 +231,26 @@ export default function GlobePage() {
   // Filter beacons by mode, type, intensity, recency, and search (must be before conditional return)
   const filteredBeacons = useMemo(() => {
     // Combine regular beacons with Right Now users
-    let filtered = [...beacons, ...rightNowUsers].map(b => ({
+    const beaconsList = Array.isArray(beacons) ? beacons : [];
+    const rightNowList = Array.isArray(rightNowUsers) ? rightNowUsers : [];
+
+    let filtered = [...beaconsList, ...rightNowList].map(b => ({
       ...b,
       ts: new Date(b.created_date || Date.now()).getTime() // Convert created_date to timestamp
     }));
 
     // Apply search filter first
     if (searchResults) {
-      const searchIds = new Set(searchResults.beacons.map(b => b.id));
-      filtered = filtered.filter(b => searchIds.has(b.id));
+      const searchBeacons = Array.isArray(searchResults?.beacons) ? searchResults.beacons : [];
+      const searchIds = new Set(searchBeacons.map((b) => b.id));
+      filtered = filtered.filter((b) => searchIds.has(b.id));
     }
 
     // Apply radius search
     if (radiusSearch) {
-      const radiusIds = new Set(radiusSearch.beacons.map(b => b.id));
-      filtered = filtered.filter(b => radiusIds.has(b.id));
+      const radiusBeacons = Array.isArray(radiusSearch?.beacons) ? radiusSearch.beacons : [];
+      const radiusIds = new Set(radiusBeacons.map((b) => b.id));
+      filtered = filtered.filter((b) => radiusIds.has(b.id));
     }
 
     // Filter by mode
@@ -427,7 +432,11 @@ export default function GlobePage() {
           onBeaconClick={handleBeaconClick}
           onCityClick={handleCityClick}
           selectedCity={selectedCity}
-          highlightedIds={searchResults?.beacons.map(b => b.id) || radiusSearch?.beacons.map(b => b.id) || []}
+          highlightedIds={
+            (Array.isArray(searchResults?.beacons) ? searchResults.beacons.map((b) => b.id) : null) ||
+            (Array.isArray(radiusSearch?.beacons) ? radiusSearch.beacons.map((b) => b.id) : null) ||
+            []
+          }
           className="w-full h-full"
         />
       </div>
