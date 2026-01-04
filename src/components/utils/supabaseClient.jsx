@@ -303,9 +303,14 @@ entityTables.forEach(table => {
       
       if (limit) query = query.limit(limit);
       
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await query;
+        if (error) throw error;
+        return safeArray(data);
+      } catch (error) {
+        console.error(`[base44.entities.${entityName}.list] Failed, returning []`, error);
+        return [];
+      }
     },
     
     filter: async (filters, orderBy, limit) => {
@@ -323,9 +328,14 @@ entityTables.forEach(table => {
       
       if (limit) query = query.limit(limit);
       
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await query;
+        if (error) throw error;
+        return safeArray(data);
+      } catch (error) {
+        console.error(`[base44.entities.${entityName}.filter] Failed, returning []`, error);
+        return [];
+      }
     },
     
     create: async (data) => {
