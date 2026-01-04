@@ -65,17 +65,7 @@ export default function Social() {
           </TabsList>
 
           <TabsContent value="discover">
-            {/* Reuse existing Connect discovery flow */}
-            <div className="text-center py-12">
-              <Users className="w-16 h-16 mx-auto mb-4 text-white/40" />
-              <h3 className="text-2xl font-black mb-2">DISCOVER PEOPLE</h3>
-              <p className="text-white/60 mb-6">Find compatible connections near you</p>
-              <Link to={createPageUrl('Connect')}>
-                <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase">
-                  START DISCOVERING
-                </Button>
-              </Link>
-            </div>
+            <DiscoveryGrid currentUser={currentUser} />
           </TabsContent>
 
           <TabsContent value="inbox">
