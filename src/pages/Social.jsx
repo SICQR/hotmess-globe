@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Users, MessageCircle, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import DiscoveryCard from '@/components/discovery/DiscoveryCard';
+import DiscoveryGrid from '@/components/social/DiscoveryGrid';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
