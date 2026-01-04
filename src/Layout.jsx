@@ -55,29 +55,36 @@ function LayoutInner({ children, currentPageName }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        // Check age verification first (session-based)
+        const ageVerified = sessionStorage.getItem('age_verified');
+        if (!ageVerified && currentPageName !== 'AgeGate') {
+          window.location.href = createPageUrl('AgeGate') + `?next=${encodeURIComponent(window.location.pathname)}`;
+          return;
+        }
+
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
           setUser(null);
           return;
         }
-        
+
         const currentUser = await base44.auth.me();
         setUser(currentUser);
 
         // GATEKEEPER: Block all access until consent_accepted is true
-        if (currentPageName !== 'AccountConsents' && !currentUser?.consent_accepted) {
+        if (currentPageName !== 'AccountConsents' && currentPageName !== 'AgeGate' && !currentUser?.consent_accepted) {
           window.location.href = createPageUrl('AccountConsents');
           return;
         }
 
         // Check if onboarding is incomplete (except on OnboardingGate page itself)
-        if (currentPageName !== 'OnboardingGate' && currentPageName !== 'AccountConsents' && (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data || !currentUser?.has_consented_gps)) {
+        if (currentPageName !== 'OnboardingGate' && currentPageName !== 'AccountConsents' && currentPageName !== 'AgeGate' && (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data || !currentUser?.has_consented_gps)) {
           window.location.href = createPageUrl('OnboardingGate');
           return;
         }
 
         // Check if profile setup is incomplete
-        if (currentPageName !== 'Profile' && currentPageName !== 'OnboardingGate' && currentPageName !== 'AccountConsents' && (!currentUser?.full_name || !currentUser?.avatar_url)) {
+        if (currentPageName !== 'Profile' && currentPageName !== 'OnboardingGate' && currentPageName !== 'AccountConsents' && currentPageName !== 'AgeGate' && (!currentUser?.full_name || !currentUser?.avatar_url)) {
           window.location.href = createPageUrl('Profile');
         }
       } catch (error) {
