@@ -238,14 +238,16 @@ export default function GlobePage() {
 
     // Apply search filter first
     if (searchResults) {
-      const searchIds = new Set(searchResults.beacons.map(b => b.id));
-      filtered = filtered.filter(b => searchIds.has(b.id));
+      const searchBeacons = Array.isArray(searchResults?.beacons) ? searchResults.beacons : [];
+      const searchIds = new Set(searchBeacons.map((b) => b.id));
+      filtered = filtered.filter((b) => searchIds.has(b.id));
     }
 
     // Apply radius search
     if (radiusSearch) {
-      const radiusIds = new Set(radiusSearch.beacons.map(b => b.id));
-      filtered = filtered.filter(b => radiusIds.has(b.id));
+      const radiusBeacons = Array.isArray(radiusSearch?.beacons) ? radiusSearch.beacons : [];
+      const radiusIds = new Set(radiusBeacons.map((b) => b.id));
+      filtered = filtered.filter((b) => radiusIds.has(b.id));
     }
 
     // Filter by mode
@@ -427,7 +429,11 @@ export default function GlobePage() {
           onBeaconClick={handleBeaconClick}
           onCityClick={handleCityClick}
           selectedCity={selectedCity}
-          highlightedIds={searchResults?.beacons.map(b => b.id) || radiusSearch?.beacons.map(b => b.id) || []}
+          highlightedIds={
+            (Array.isArray(searchResults?.beacons) ? searchResults.beacons.map((b) => b.id) : null) ||
+            (Array.isArray(radiusSearch?.beacons) ? radiusSearch.beacons.map((b) => b.id) : null) ||
+            []
+          }
           className="w-full h-full"
         />
       </div>
