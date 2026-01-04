@@ -1,5 +1,6 @@
 import AccountConsents from './pages/AccountConsents';
 import AdminDashboard from './pages/AdminDashboard';
+import AgeGate from './pages/AgeGate';
 import Auth from './pages/Auth';
 import BeaconDetail from './pages/BeaconDetail';
 import Beacons from './pages/Beacons';
@@ -24,6 +25,8 @@ import Leaderboard from './pages/Leaderboard';
 import Marketplace from './pages/Marketplace';
 import MembershipUpgrade from './pages/MembershipUpgrade';
 import Messages from './pages/Messages';
+import More from './pages/More';
+import Music from './pages/Music';
 import MyEvents from './pages/MyEvents';
 import Onboarding from './pages/Onboarding';
 import OnboardingGate from './pages/OnboardingGate';
@@ -33,6 +36,7 @@ import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
 import ProfileSetup from './pages/ProfileSetup';
 import PromoteToAdmin from './pages/PromoteToAdmin';
+import Pulse from './pages/Pulse';
 import Radio from './pages/Radio';
 import RadioSchedule from './pages/RadioSchedule';
 import RecordManager from './pages/RecordManager';
@@ -41,21 +45,18 @@ import Safety from './pages/Safety';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
+import Social from './pages/Social';
 import SquadChat from './pages/SquadChat';
 import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
 import WakeTheMess from './pages/WakeTheMess';
-import Pulse from './pages/Pulse';
-import Social from './pages/Social';
-import Music from './pages/Music';
-import More from './pages/More';
-import AgeGate from './pages/AgeGate';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AccountConsents": AccountConsents,
     "AdminDashboard": AdminDashboard,
+    "AgeGate": AgeGate,
     "Auth": Auth,
     "BeaconDetail": BeaconDetail,
     "Beacons": Beacons,
@@ -80,6 +81,8 @@ export const PAGES = {
     "Marketplace": Marketplace,
     "MembershipUpgrade": MembershipUpgrade,
     "Messages": Messages,
+    "More": More,
+    "Music": Music,
     "MyEvents": MyEvents,
     "Onboarding": Onboarding,
     "OnboardingGate": OnboardingGate,
@@ -89,6 +92,7 @@ export const PAGES = {
     "Profile": Profile,
     "ProfileSetup": ProfileSetup,
     "PromoteToAdmin": PromoteToAdmin,
+    "Pulse": Pulse,
     "Radio": Radio,
     "RadioSchedule": RadioSchedule,
     "RecordManager": RecordManager,
@@ -97,15 +101,11 @@ export const PAGES = {
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
+    "Social": Social,
     "SquadChat": SquadChat,
     "Stats": Stats,
     "TicketMarketplace": TicketMarketplace,
     "WakeTheMess": WakeTheMess,
-    "Pulse": Pulse,
-    "Social": Social,
-    "Music": Music,
-    "More": More,
-    "AgeGate": AgeGate,
 }
 
 export const pagesConfig = {
