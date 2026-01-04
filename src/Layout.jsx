@@ -24,26 +24,14 @@ import { Radio as RadioIcon } from 'lucide-react';
 import { useRadio } from '@/components/shell/RadioContext';
 
       const PRIMARY_NAV = [
-        { name: 'Pulse', icon: Home, path: 'Home' },
-        { name: 'Globe', icon: GlobeIcon, path: 'Globe' },
+        { name: 'Home', icon: Home, path: 'Home' },
+        { name: 'Pulse', icon: GlobeIcon, path: 'Pulse' },
         { name: 'Events', icon: CalendarIcon, path: 'Events' },
         { name: 'Market', icon: ShoppingBag, path: 'Marketplace' },
-        { name: 'Connect', icon: Users, path: 'Connect' },
-        { name: 'Messages', icon: MessageCircle, path: 'Messages', showBadge: true },
-        { name: 'Feed', icon: TrendingUp, path: 'Feed' },
+        { name: 'Social', icon: Users, path: 'Social', showBadge: true },
+        { name: 'Music', icon: RadioIcon, path: 'Music' },
+        { name: 'More', icon: Menu, path: 'More' },
       ];
-
-const SECONDARY_NAV = [
-  { name: 'Beacons', icon: MapPin, path: 'Beacons' },
-  { name: 'Stats', icon: TrendingUp, path: 'Stats' },
-  { name: 'Challenges', icon: Target, path: 'Challenges' },
-  { name: 'Safety', icon: Shield, path: 'Safety' },
-  { name: 'Radio', icon: Users, path: 'Radio' },
-  { name: 'Calendar', icon: CalendarIcon, path: 'Calendar' },
-  { name: 'Scan', icon: Scan, path: 'Scan' },
-  { name: 'Community', icon: Users, path: 'Community' },
-  { name: 'Leaderboard', icon: Trophy, path: 'Leaderboard' },
-];
 
 function LayoutInner({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -100,10 +88,9 @@ function LayoutInner({ children, currentPageName }) {
     fetchUser();
   }, [currentPageName]);
 
-  const [showSecondary, setShowSecondary] = useState(false);
   const isActive = (pageName) => currentPageName === pageName;
 
-  const isGlobePage = currentPageName === 'Globe';
+  const isPulsePage = currentPageName === 'Pulse';
 
   return (
     <ErrorBoundary>
@@ -113,7 +100,7 @@ function LayoutInner({ children, currentPageName }) {
           <OfflineIndicator />
           {user && currentPageName === 'Home' && <WelcomeTour />}
         <div className="min-h-screen bg-black text-white">
-      {!isGlobePage && (
+      {!isPulsePage && (
         <>
           {/* Mobile Header */}
           <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10">
@@ -321,38 +308,8 @@ function LayoutInner({ children, currentPageName }) {
                     <span className="font-black uppercase tracking-wider text-[10px]">{name}</span>
                   </Link>
                 ))}
-              </div>
-
-              {/* Secondary Toggle */}
-              <button
-                onClick={() => setShowSecondary(!showSecondary)}
-                className="w-full text-left px-3 py-2 text-white/40 hover:text-white/60 text-[8px] uppercase tracking-widest font-black mb-2 transition-all"
-              >
-                {showSecondary ? '▼' : '▶'} MORE
-              </button>
-
-              {/* Secondary Navigation */}
-              {showSecondary && (
-                <div className="space-y-1">
-                  {SECONDARY_NAV.map(({ name, icon: Icon, path }) => (
-                    <Link
-                      key={path}
-                      to={createPageUrl(path)}
-                      className={`
-                        flex items-center gap-2 px-3 py-1.5 transition-all
-                        ${isActive(path)
-                          ? 'text-[#FF1493] border-l-2 border-[#FF1493]'
-                          : 'text-white/40 hover:text-white/60 border-l-2 border-white/5'
-                        }
-                      `}
-                    >
-                      <Icon className="w-3 h-3" />
-                      <span className="font-bold uppercase tracking-wider text-[9px]">{name}</span>
-                    </Link>
-                  ))}
                 </div>
-              )}
-            </nav>
+                </nav>
 
             <div className="p-3 border-t-2 border-white/20">
               {user ? (
@@ -390,7 +347,7 @@ function LayoutInner({ children, currentPageName }) {
       {/* Main Content */}
       <main 
         id="main-content" 
-        className={isGlobePage ? '' : 'md:ml-56 pt-14 md:pt-0'}
+        className={isPulsePage ? '' : 'md:ml-56 pt-14 md:pt-0'}
         role="main"
       >
         <PageErrorBoundary>
