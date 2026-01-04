@@ -5,6 +5,10 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   logLevel: 'error', // Suppress warnings, only show errors
+  // Vite only exposes env vars to import.meta.env when they match envPrefix.
+  // We keep the default VITE_ prefix, and also support existing Vercel env vars
+  // that were created with a "vite_public" prefix.
+  envPrefix: ['VITE_', 'vite_public'],
   plugins: [
     base44({
       // Support for legacy code that imports the base44 SDK with @/integrations, @/entities, etc.

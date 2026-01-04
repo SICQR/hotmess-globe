@@ -3,8 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 // Helper to create page URLs - matches Base44 pattern
 const createPageUrl = (pageName) => `/${pageName}`;
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl =
+  import.meta.env.VITE_SUPABASE_URL ||
+  import.meta.env.vite_publicSUPABASE_URL ||
+  '';
+const supabaseKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.vite_publicSUPABASE_ANON_KEY ||
+  '';
 
 if (!supabaseUrl || !supabaseKey) {
   // Avoid hard-crashing on import (which can look like a white screen);
@@ -20,6 +26,8 @@ export const supabase = createClient(
   supabaseUrl || 'http://invalid.localhost',
   supabaseKey || 'invalid-anon-key'
 );
+
+const safeArray = (value) => (Array.isArray(value) ? value : []);
 
 // Base44-compatible API wrapper
 export const base44 = {
@@ -84,9 +92,14 @@ export const base44 = {
         
         if (limit) query = query.limit(limit);
         
-        const { data, error } = await query;
-        if (error) throw error;
-        return data || [];
+        try {
+          const { data, error } = await query;
+          if (error) throw error;
+          return safeArray(data);
+        } catch (error) {
+          console.error('[base44.entities.Beacon.list] Failed, returning []', error);
+          return [];
+        }
       },
       
       filter: async (filters, orderBy, limit) => {
@@ -104,9 +117,14 @@ export const base44 = {
         
         if (limit) query = query.limit(limit);
         
-        const { data, error } = await query;
-        if (error) throw error;
-        return data || [];
+        try {
+          const { data, error } = await query;
+          if (error) throw error;
+          return safeArray(data);
+        } catch (error) {
+          console.error('[base44.entities.Beacon.filter] Failed, returning []', error);
+          return [];
+        }
       },
       
       create: async (data) => {
@@ -151,9 +169,14 @@ export const base44 = {
         
         if (limit) query = query.limit(limit);
         
-        const { data, error } = await query;
-        if (error) throw error;
-        return data || [];
+        try {
+          const { data, error } = await query;
+          if (error) throw error;
+          return safeArray(data);
+        } catch (error) {
+          console.error('[base44.entities.Product.list] Failed, returning []', error);
+          return [];
+        }
       },
       
       filter: async (filters, orderBy, limit) => {
@@ -171,9 +194,14 @@ export const base44 = {
         
         if (limit) query = query.limit(limit);
         
-        const { data, error } = await query;
-        if (error) throw error;
-        return data || [];
+        try {
+          const { data, error } = await query;
+          if (error) throw error;
+          return safeArray(data);
+        } catch (error) {
+          console.error('[base44.entities.Product.filter] Failed, returning []', error);
+          return [];
+        }
       },
       
       create: async (data) => {
