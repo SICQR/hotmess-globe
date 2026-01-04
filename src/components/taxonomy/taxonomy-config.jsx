@@ -420,8 +420,8 @@ export default {
   "navigation": {
     "routes": [
       { "id": "care", "label": "Care", "path": "/care" },
-      { "id": "shop", "label": "Shop", "path": "/marketplace" },
-      { "id": "radio", "label": "Radio", "path": "/radio" },
+      { "id": "shop", "label": "Shop", "path": "/market" },
+      { "id": "radio", "label": "Radio", "path": "/music/live" },
       { "id": "affiliate", "label": "Affiliate", "path": "/settings" }
     ],
     "contextLinks": [

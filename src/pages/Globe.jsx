@@ -231,7 +231,10 @@ export default function GlobePage() {
   // Filter beacons by mode, type, intensity, recency, and search (must be before conditional return)
   const filteredBeacons = useMemo(() => {
     // Combine regular beacons with Right Now users
-    let filtered = [...beacons, ...rightNowUsers].map(b => ({
+    const beaconsList = Array.isArray(beacons) ? beacons : [];
+    const rightNowList = Array.isArray(rightNowUsers) ? rightNowUsers : [];
+
+    let filtered = [...beaconsList, ...rightNowList].map(b => ({
       ...b,
       ts: new Date(b.created_date || Date.now()).getTime() // Convert created_date to timestamp
     }));

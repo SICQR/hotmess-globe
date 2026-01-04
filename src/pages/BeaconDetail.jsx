@@ -16,6 +16,7 @@ import TicketScanner from '../components/events/TicketScanner';
 import NightKingDisplay from '../components/gamification/NightKingDisplay';
 import ConvictPlayer from '../components/radio/ConvictPlayer';
 import { Music } from 'lucide-react';
+import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
 
 
 export default function BeaconDetail() {
@@ -56,6 +57,13 @@ export default function BeaconDetail() {
   });
 
   const beacon = beacons.find(b => b.id === beaconId);
+
+  const soundCloudRef =
+    beacon?.soundcloud_urn ||
+    beacon?.soundcloud_url ||
+    beacon?.metadata?.soundcloud_urn ||
+    beacon?.metadata?.soundcloud_url ||
+    null;
 
   if (!beacon) {
     return (
@@ -200,6 +208,28 @@ export default function BeaconDetail() {
                 <Music className="w-5 h-5 mr-2" />
                 PLAY RAW TRACK
               </Button>
+            )}
+
+            {/* SoundCloud (Embed-first + fallback link) */}
+            {soundCloudRef && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div className="text-xs uppercase tracking-wider text-white/40 mb-3">SoundCloud</div>
+                <SoundCloudEmbed
+                  urlOrUrn={soundCloudRef}
+                  title={beacon.title ? `${beacon.title} (SoundCloud)` : 'SoundCloud player'}
+                  visual={false}
+                />
+                {typeof soundCloudRef === 'string' && soundCloudRef.startsWith('http') && (
+                  <a
+                    href={soundCloudRef}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-block text-xs text-white/60 hover:text-white transition-colors"
+                  >
+                    Play on SoundCloud →
+                  </a>
+                )}
+              </div>
             )}
 
             {/* Event RSVP */}

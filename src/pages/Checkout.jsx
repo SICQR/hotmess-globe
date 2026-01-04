@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
+import { auth, base44 } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -10,11 +10,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, ShoppingCart, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import ErrorBoundary from '../components/error/ErrorBoundary';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { getGuestCartItems, mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 
 export default function Checkout() {
   const [currentUser, setCurrentUser] = useState(null);
   const [shippingAddress, setShippingAddress] = useState({});
   const [notes, setNotes] = useState('');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [magicEmail, setMagicEmail] = useState('');
+  const [sendingLink, setSendingLink] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -26,18 +38,51 @@ export default function Checkout() {
     fetchUser();
   }, []);
 
+  useEffect(() => {
+    if (!currentUser?.email) return;
+
+    const mergedKey = `guest_cart_merged_for:${currentUser.email}`;
+    try {
+      if (sessionStorage.getItem(mergedKey)) return;
+    } catch {
+      // If sessionStorage is unavailable, attempt merge anyway.
+    }
+
+    mergeGuestCartToUser({ currentUser })
+      .then(() => {
+        try {
+          sessionStorage.setItem(mergedKey, '1');
+        } catch {
+          // ignore
+        }
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+      })
+      .catch(() => {
+        // Non-fatal: keep guest cart local if merge fails.
+      });
+  }, [currentUser?.email, queryClient]);
+
   const { data: cartItems = [] } = useQuery({
-    queryKey: ['cart', currentUser?.email],
+    queryKey: ['cart', currentUser?.email || 'guest'],
     queryFn: async () => {
-      const items = await base44.entities.CartItem.filter({ user_email: currentUser.email });
       // Filter out expired reservations (30min timeout)
       const now = new Date();
+
+      if (!currentUser) {
+        const items = getGuestCartItems();
+        return items.filter(item => {
+          if (!item.reserved_until) return true;
+          return new Date(item.reserved_until) > now;
+        });
+      }
+
+      const items = await base44.entities.CartItem.filter({ user_email: currentUser.email });
       return items.filter(item => {
         if (!item.reserved_until) return true;
         return new Date(item.reserved_until) > now;
       });
     },
-    enabled: !!currentUser
+    enabled: true
   });
 
   const { data: products = [] } = useQuery({
@@ -54,8 +99,22 @@ export default function Checkout() {
     sum + (item.product.price_xp * item.quantity), 0
   );
 
+  const requiresShipping = cartWithProducts.some(item =>
+    ['physical', 'merch'].includes(String(item.product.product_type || '').toLowerCase())
+  );
+
+  const isShippingComplete = !requiresShipping || (
+    (shippingAddress.street || '').trim() &&
+    (shippingAddress.city || '').trim() &&
+    (shippingAddress.postcode || '').trim()
+  );
+
   const checkoutMutation = useMutation({
     mutationFn: async () => {
+      if (!currentUser) {
+        throw new Error('Please sign in to complete checkout');
+      }
+
       // CRITICAL: Fetch fresh data and validate atomically
       const freshUser = await base44.auth.me();
       const currentXP = freshUser.xp || 0;
@@ -188,7 +247,10 @@ export default function Checkout() {
     }
   });
 
-  if (!currentUser || cartWithProducts.length === 0) {
+  const userXP = currentUser?.xp || 0;
+  const hasEnoughXP = currentUser ? userXP >= totalXP : true;
+
+  if (cartWithProducts.length === 0) {
     return (
       <ErrorBoundary>
         <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -204,8 +266,25 @@ export default function Checkout() {
     );
   }
 
-  const userXP = currentUser.xp || 0;
-  const hasEnoughXP = userXP >= totalXP;
+  const handleSendMagicLink = async () => {
+    const email = (magicEmail || '').trim();
+    if (!email) {
+      toast.error('Enter your email');
+      return;
+    }
+
+    setSendingLink(true);
+    try {
+      const redirectTo = `${window.location.origin}${createPageUrl('Checkout')}`;
+      const { error } = await auth.sendMagicLink(email, redirectTo);
+      if (error) throw error;
+      toast.success('Magic link sent. Check your email.');
+    } catch (error) {
+      toast.error(error?.message || 'Failed to send magic link');
+    } finally {
+      setSendingLink(false);
+    }
+  };
 
   return (
     <ErrorBoundary>
@@ -232,7 +311,7 @@ export default function Checkout() {
               </h2>
               <div className="space-y-3 mb-6">
                 {cartWithProducts.map(item => (
-                  <div key={item.id} className="flex justify-between items-start p-4 bg-black/40 border border-white/10">
+                  <div key={item.id ?? item.product_id} className="flex justify-between items-start p-4 bg-black/40 border border-white/10">
                     <div className="flex-1">
                       <div className="font-black uppercase text-sm mb-1">{item.product.name}</div>
                       <div className="text-xs text-white/40 uppercase">
@@ -247,23 +326,31 @@ export default function Checkout() {
               </div>
 
               <div className="border-t-2 border-white/20 pt-4">
-                <div className="flex justify-between items-center mb-3 text-sm">
-                  <span className="text-white/60 uppercase tracking-wider">Your Balance</span>
-                  <span className="font-black text-[#39FF14]">{userXP.toLocaleString()} XP</span>
-                </div>
-                <div className="flex justify-between items-center mb-3 text-sm">
-                  <span className="text-white/60 uppercase tracking-wider">Order Total</span>
-                  <span className="font-black text-[#FFEB3B]">-{totalXP.toLocaleString()} XP</span>
-                </div>
-                <div className="border-t border-white/20 pt-3 flex justify-between items-center text-xl font-black">
-                  <span className="uppercase">After Order</span>
-                  <span className={hasEnoughXP ? 'text-[#39FF14]' : 'text-red-500'}>
-                    {(userXP - totalXP).toLocaleString()} XP
-                  </span>
-                </div>
-                {!hasEnoughXP && (
-                  <div className="mt-4 bg-red-600/20 border-2 border-red-600 p-4 text-sm font-bold uppercase tracking-wider">
-                    ⚠️ Need {(totalXP - userXP).toLocaleString()} more XP
+                {currentUser ? (
+                  <>
+                    <div className="flex justify-between items-center mb-3 text-sm">
+                      <span className="text-white/60 uppercase tracking-wider">Your Balance</span>
+                      <span className="font-black text-[#39FF14]">{userXP.toLocaleString()} XP</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-3 text-sm">
+                      <span className="text-white/60 uppercase tracking-wider">Order Total</span>
+                      <span className="font-black text-[#FFEB3B]">-{totalXP.toLocaleString()} XP</span>
+                    </div>
+                    <div className="border-t border-white/20 pt-3 flex justify-between items-center text-xl font-black">
+                      <span className="uppercase">After Order</span>
+                      <span className={hasEnoughXP ? 'text-[#39FF14]' : 'text-red-500'}>
+                        {(userXP - totalXP).toLocaleString()} XP
+                      </span>
+                    </div>
+                    {!hasEnoughXP && (
+                      <div className="mt-4 bg-red-600/20 border-2 border-red-600 p-4 text-sm font-bold uppercase tracking-wider">
+                        ⚠️ Need {(totalXP - userXP).toLocaleString()} more XP
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-sm text-white/60 uppercase tracking-wider">
+                    Sign in at checkout to confirm XP balance.
                   </div>
                 )}
               </div>
@@ -299,8 +386,14 @@ export default function Checkout() {
                 />
 
                 <Button
-                  onClick={() => checkoutMutation.mutate()}
-                  disabled={!hasEnoughXP || checkoutMutation.isPending}
+                  onClick={() => {
+                    if (!currentUser) {
+                      setShowAuthModal(true);
+                      return;
+                    }
+                    checkoutMutation.mutate();
+                  }}
+                  disabled={(!currentUser ? false : (!hasEnoughXP || checkoutMutation.isPending)) || !isShippingComplete}
                   className="w-full bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black text-lg py-7 uppercase tracking-wider shadow-[0_0_20px_rgba(57,255,20,0.3)] border-2 border-[#39FF14]"
                 >
                   {checkoutMutation.isPending ? (
@@ -308,10 +401,16 @@ export default function Checkout() {
                   ) : (
                     <>
                       <Check className="w-5 h-5 mr-2" />
-                      COMPLETE ORDER • {totalXP.toLocaleString()} XP
+                      {currentUser ? 'COMPLETE ORDER' : 'SIGN IN TO COMPLETE'} • {totalXP.toLocaleString()} XP
                     </>
                   )}
                 </Button>
+
+                {!isShippingComplete && (
+                  <div className="mt-2 text-xs text-red-400 uppercase tracking-wider">
+                    {requiresShipping ? 'Add a shipping address to continue.' : 'Complete required fields to continue.'}
+                  </div>
+                )}
                 
                 <div className="mt-4 p-4 bg-black/40 border border-white/10 text-xs text-white/60 uppercase tracking-wider">
                   <div className="flex items-start gap-2">
@@ -329,6 +428,36 @@ export default function Checkout() {
         </motion.div>
       </div>
       </div>
+
+      <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
+        <DialogContent className="bg-black text-white border-2 border-white/10">
+          <DialogHeader>
+            <DialogTitle className="font-black uppercase">Sign in to checkout</DialogTitle>
+            <DialogDescription className="text-white/60">
+              Magic link only. We’ll email you a secure sign-in link.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <Input
+              value={magicEmail}
+              onChange={(e) => setMagicEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="bg-white/5 border-white/20 text-white"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={handleSendMagicLink}
+              disabled={sendingLink}
+              className="bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black uppercase"
+            >
+              {sendingLink ? 'Sending…' : 'Send magic link'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ErrorBoundary>
   );
 }

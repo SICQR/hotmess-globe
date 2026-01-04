@@ -33,8 +33,8 @@ export default function RadioSchedule() {
           >
             <div className="flex items-center gap-3 mb-4">
               <Calendar className="w-8 h-8 text-[#FF1493]" />
-              <Link to={createPageUrl('Radio')} className="text-xs uppercase tracking-widest text-white/60 font-bold hover:text-white">
-                ← Back to Radio
+              <Link to={createPageUrl('Music')} className="text-xs uppercase tracking-widest text-white/60 font-bold hover:text-white">
+                ← Back to Music
               </Link>
             </div>
             <h1 className="text-5xl md:text-7xl font-black uppercase mb-4">
@@ -90,7 +90,7 @@ export default function RadioSchedule() {
                       slots.map((slot, idx) => (
                         <Link
                           key={idx}
-                          to={createPageUrl(slot.slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(''))}
+                          to={`/music/shows/${slot.slug}`}
                           className="block group"
                         >
                           <div className="flex items-center gap-3 text-sm">

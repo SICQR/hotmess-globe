@@ -1,10 +1,32 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { auth } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Download, RefreshCw, CheckCircle, AlertCircle, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
+
+async function postWithAuth(url) {
+  const { data } = await auth.getSession();
+  const token = data?.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload?.error || payload?.details || 'Request failed');
+  }
+
+  return payload;
+}
 
 export default function ShopifyManager() {
   const [lastImport, setLastImport] = useState(null);
@@ -13,15 +35,17 @@ export default function ShopifyManager() {
   const { data: shopifyProducts = [] } = useQuery({
     queryKey: ['shopify-products'],
     queryFn: async () => {
-      const products = await base44.entities.Product.list();
-      return products.filter(p => p.details?.shopify_id);
+      // Only show currently-active official Shopify items (avoid historic draft/archived imports)
+      return base44.entities.Product.filter(
+        { seller_email: 'shopify@hotmess.london', status: 'active' },
+        '-created_date'
+      );
     }
   });
 
   const importMutation = useMutation({
     mutationFn: async () => {
-      const response = await base44.functions.invoke('importShopifyProducts', {});
-      return response.data;
+      return postWithAuth('/api/shopify/import');
     },
     onSuccess: (data) => {
       setLastImport(data);
@@ -34,8 +58,7 @@ export default function ShopifyManager() {
 
   const syncMutation = useMutation({
     mutationFn: async () => {
-      const response = await base44.functions.invoke('syncShopifyInventory', {});
-      return response.data;
+      return postWithAuth('/api/shopify/sync');
     },
     onSuccess: (data) => {
       setLastSync(data);
