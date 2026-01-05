@@ -81,7 +81,7 @@ export default function RadioPlayer() {
   };
 
   return (
-    <div className="fixed bottom-20 right-4 z-30 bg-black/95 backdrop-blur-xl border-2 border-[#FF1493] rounded-none p-4 w-80">
+    <div className="fixed bottom-20 right-4 z-30 bg-black/95 backdrop-blur-xl border-2 border-[#FF1493] rounded-none p-4 w-[calc(100vw-2rem)] max-w-80">
       {/* Header */}
       <div className="flex items-center gap-3 mb-3">
         <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center">

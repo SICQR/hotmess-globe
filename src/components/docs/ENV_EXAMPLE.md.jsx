@@ -38,7 +38,7 @@ TELEGRAM_WEBHOOK_SECRET=your_webhook_secret
 # Get from: https://soundcloud.com/you/apps
 SOUNDCLOUD_CLIENT_ID=your_client_id
 SOUNDCLOUD_CLIENT_SECRET=your_client_secret
-SOUNDCLOUD_REDIRECT_URI=https://your-domain.com/callback
+SOUNDCLOUD_REDIRECT_URI=https://your-domain.com/api/soundcloud/callback
 
 # OpenAI (for AI features)
 # Get from: https://platform.openai.com/api-keys

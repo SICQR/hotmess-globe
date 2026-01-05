@@ -68,7 +68,7 @@ export default function PersistentRadioPlayer() {
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 50 }}
-        className="fixed bottom-4 right-4 z-[100] bg-black/95 backdrop-blur-xl border-2 border-[#B026FF] rounded-xl p-6 w-80 shadow-2xl"
+        className="fixed bottom-4 right-4 z-[100] bg-black/95 backdrop-blur-xl border-2 border-[#B026FF] rounded-xl p-6 w-[calc(100vw-2rem)] max-w-80 shadow-2xl"
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">

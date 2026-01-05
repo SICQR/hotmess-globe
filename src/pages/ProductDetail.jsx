@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { addToCart } from '@/components/marketplace/cartStorage';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -19,7 +21,11 @@ export default function ProductDetail() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const productId = searchParams.get('id');
+  const productHandle = searchParams.get('handle');
+  const productLookup = productId || productHandle;
   const [currentUser, setCurrentUser] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const queryClient = useQueryClient();
@@ -37,18 +43,81 @@ export default function ProductDetail() {
   }, []);
 
   const { data: product, isLoading } = useQuery({
-    queryKey: ['product', productId],
+    queryKey: ['product', productLookup],
     queryFn: async () => {
+      const key = String(productLookup ?? '').trim();
+      if (!key) return null;
+
       const products = await base44.entities.Product.list();
-      return products.find(p => p.id === productId);
+      if (!Array.isArray(products)) return null;
+
+      // 1) Canonical: UUID
+      const byId = products.find((p) => p?.id === key);
+      if (byId) return byId;
+
+      const normalized = key.toLowerCase();
+
+      // 2) Shopify handle stored in details
+      const byHandle = products.find((p) => String(p?.details?.shopify_handle ?? '').toLowerCase() === normalized);
+      if (byHandle) return byHandle;
+
+      // 3) Tag fallback
+      const byTag = products.find((p) => Array.isArray(p?.tags) && p.tags.map((t) => String(t).toLowerCase()).includes(normalized));
+      if (byTag) return byTag;
+
+      // 4) Name fallback (last resort)
+      const byName = products.find((p) => String(p?.name ?? '').toLowerCase().includes(normalized));
+      if (byName) return byName;
+
+      return null;
     },
-    enabled: !!productId,
+    enabled: !!productLookup,
   });
 
+  const resolvedProductId = product?.id || null;
+
+  const normalizedDetails = React.useMemo(() => {
+    const raw = product?.details;
+    if (!raw) return {};
+    if (typeof raw === 'object') return raw;
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  }, [product?.details]);
+
+  const shopifyVariants = React.useMemo(() => {
+    const variants = normalizedDetails?.shopify_variants;
+    return Array.isArray(variants)
+      ? variants
+          .map((v) => ({
+            id: String(v?.id || '').trim(),
+            title: String(v?.title || '').trim() || 'Default',
+          }))
+          .filter((v) => v.id)
+      : [];
+  }, [normalizedDetails]);
+
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [resolvedProductId]);
+
+  useEffect(() => {
+    if (!product) return;
+    const defaultVariantId = normalizedDetails?.shopify_variant_id ? String(normalizedDetails.shopify_variant_id).trim() : null;
+    const firstVariantId = shopifyVariants?.[0]?.id || null;
+    setSelectedVariantId(defaultVariantId || firstVariantId);
+  }, [product?.id, normalizedDetails, shopifyVariants]);
+
   const { data: reviews = [] } = useQuery({
-    queryKey: ['product-reviews', productId],
-    queryFn: () => base44.entities.Review.filter({ product_id: productId }, '-created_date'),
-    enabled: !!productId,
+    queryKey: ['product-reviews', resolvedProductId],
+    queryFn: () => base44.entities.Review.filter({ product_id: resolvedProductId }, '-created_date'),
+    enabled: !!resolvedProductId,
   });
 
   const { data: seller } = useQuery({
@@ -134,6 +203,34 @@ export default function ProductDetail() {
   }, [product?.id, currentUser?.email]);
 
   const handlePurchase = () => {
+    const isShopifyProduct =
+      String(product?.seller_email || '').toLowerCase() === 'shopify@hotmess.london' &&
+      !!(normalizedDetails?.shopify_variant_id || shopifyVariants?.[0]?.id);
+
+    if (isShopifyProduct) {
+      const variantIdToUse = selectedVariantId || normalizedDetails?.shopify_variant_id;
+      if (!variantIdToUse) {
+        toast.error('Select a size');
+        return;
+      }
+
+      const variantTitleToUse = shopifyVariants.find((v) => v.id === String(variantIdToUse))?.title || null;
+
+      addToCart({
+        productId: product.id,
+        quantity: 1,
+        currentUser,
+        variantId: variantIdToUse,
+        variantTitle: variantTitleToUse,
+      })
+        .then(() => {
+          toast.success('Added to cart!');
+          navigate(createPageUrl('Checkout'));
+        })
+        .catch((error) => toast.error(error?.message || 'Failed to add to cart'));
+      return;
+    }
+
     if (!currentUser) {
       toast.error('Please log in to purchase');
       return;
@@ -176,8 +273,12 @@ export default function ProductDetail() {
   }
 
   const isOutOfStock = product.status === 'sold_out' || (product.inventory_count !== undefined && product.inventory_count <= 0);
-  const canAfford = currentUser && (currentUser.xp || 0) >= product.price_xp;
-  const meetsLevel = !product.min_xp_level || (currentUser && (currentUser.xp || 0) >= product.min_xp_level);
+  const isShopifyProduct =
+    String(product?.seller_email || '').toLowerCase() === 'shopify@hotmess.london' &&
+    !!(normalizedDetails?.shopify_variant_id || shopifyVariants?.[0]?.id);
+  const canAfford = isShopifyProduct ? true : currentUser && (currentUser.xp || 0) >= product.price_xp;
+  const meetsLevel =
+    isShopifyProduct ? true : !product.min_xp_level || (currentUser && (currentUser.xp || 0) >= product.min_xp_level);
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
@@ -196,11 +297,33 @@ export default function ProductDetail() {
                 animate={{ opacity: 1 }}
                 className="aspect-square rounded-xl overflow-hidden"
               >
-                <img src={product.image_urls[0]} alt={product.name} className="w-full h-full object-cover" />
+                <img
+                  src={product.image_urls[Math.min(selectedImageIndex, product.image_urls.length - 1)]}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
               </motion.div>
             ) : (
               <div className="aspect-square bg-white/5 rounded-xl flex items-center justify-center">
                 <Package className="w-24 h-24 text-white/20" />
+              </div>
+            )}
+
+            {product.image_urls && product.image_urls.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-1">
+                {product.image_urls.map((url, idx) => (
+                  <button
+                    key={`${url}-${idx}`}
+                    type="button"
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                      idx === selectedImageIndex ? 'border-white' : 'border-white/20 hover:border-white/50'
+                    }`}
+                    aria-label={`View image ${idx + 1}`}
+                  >
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -208,19 +331,19 @@ export default function ProductDetail() {
           {/* Details */}
           <div className="space-y-6">
             <div>
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
                 <div>
                   <Badge className="mb-2 uppercase">{product.product_type}</Badge>
-                  <h1 className="text-4xl font-black mb-2">{product.name}</h1>
+                  <h1 className="text-4xl font-black mb-2 break-words">{product.name}</h1>
                   {product.category && (
                     <p className="text-white/40 uppercase text-sm tracking-wider">{product.category}</p>
                   )}
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                   <div className="text-4xl font-black text-[#FFEB3B]">
                     {product.price_xp.toLocaleString()} XP
                   </div>
-                  {product.min_xp_level && (
+                  {!isShopifyProduct && product.min_xp_level && (
                     <p className="text-xs text-white/40 mt-1">
                       Requires Level {Math.floor(product.min_xp_level / 1000) + 1}+
                     </p>
@@ -266,12 +389,38 @@ export default function ProductDetail() {
             </div>
 
             <div className="space-y-3">
+              {isShopifyProduct && shopifyVariants.length > 1 && (
+                <div className="space-y-2">
+                  <p className="text-sm text-white/60 uppercase tracking-wider">Size</p>
+                  <Select value={selectedVariantId || ''} onValueChange={(v) => setSelectedVariantId(v)}>
+                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                      <SelectValue placeholder="Select a size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {shopifyVariants.map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          {v.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <Button
                 onClick={handlePurchase}
-                disabled={isOutOfStock || !canAfford || !meetsLevel || purchaseMutation.isPending}
+                disabled={isOutOfStock || !canAfford || !meetsLevel || (!isShopifyProduct && purchaseMutation.isPending)}
                 className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold text-lg py-6"
               >
-                {isOutOfStock ? 'Sold Out' : !canAfford ? 'Insufficient XP' : !meetsLevel ? 'Level Locked' : 'Buy Now'}
+                {isOutOfStock
+                  ? 'Sold Out'
+                  : isShopifyProduct
+                    ? 'Buy on Shopify'
+                    : !canAfford
+                      ? 'Insufficient XP'
+                      : !meetsLevel
+                        ? 'Level Locked'
+                        : 'Buy Now'}
               </Button>
 
               {seller && (
@@ -352,7 +501,7 @@ export default function ProductDetail() {
                   transition={{ delay: idx * 0.05 }}
                   className="bg-white/5 border border-white/10 rounded-xl p-6"
                 >
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
                     <div>
                       <p className="font-bold">{review.reviewer_email}</p>
                       <div className="flex gap-1 mt-1">
@@ -366,7 +515,7 @@ export default function ProductDetail() {
                         ))}
                       </div>
                     </div>
-                    <p className="text-xs text-white/40">
+                    <p className="text-xs text-white/40 sm:text-right">
                       {format(new Date(review.created_date), 'MMM d, yyyy')}
                     </p>
                   </div>

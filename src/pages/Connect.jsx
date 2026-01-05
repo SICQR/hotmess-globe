@@ -266,7 +266,7 @@ export default function Connect() {
                   <span className="text-[10px] opacity-60">Scroll, vibe, chat.</span>
                 </div>
               </TabsTrigger>
-              <TabsTrigger value="dates" className="flex-1 data-[state=active]:bg-[#B026FF] data-[state=active]:text-black">
+              <TabsTrigger value="dates" className="flex-1 data-[state=active]:bg-[#B026FF] data-[state=active]:text-white">
                 <div className="flex flex-col items-center py-2">
                   <Heart className="w-5 h-5 mb-1" />
                   <span className="font-black uppercase text-xs">Dates</span>

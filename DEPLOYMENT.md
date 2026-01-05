@@ -58,6 +58,25 @@ For CI/CD setup details, see [CI_CD_SETUP.md](./CI_CD_SETUP.md).
 - [ ] CDN/Storage for media files configured
 - [ ] Email service configured (if applicable)
 
+### 3a. Event Scraper (Vercel + Supabase)
+
+The event scraper runs via **Vercel Serverless Functions**:
+
+- Manual run: Admin → Event Scraper (calls `POST /api/events/scrape` using the current Supabase session token).
+- Scheduled run: Vercel Cron hits `GET /api/events/cron` daily (configured in `vercel.json`).
+
+Required server env vars in Vercel:
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Scrape input configuration:
+- Set `EVENT_SCRAPER_SOURCES_JSON` as JSON mapping city → list of JSON feed URLs, or POST `events[]` directly to `/api/events/scrape`.
+
+Security note:
+- `/api/events/scrape` requires an authenticated admin bearer token.
+- `/api/events/cron` should be protected via `EVENT_SCRAPER_CRON_SECRET` when used outside Vercel Cron.
+
 ### 4. Performance
 - [ ] Bundle size analyzed (`npm run build`)
 - [ ] Images optimized

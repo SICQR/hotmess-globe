@@ -15,9 +15,11 @@ export default function UserVerification() {
   });
 
   const verifyMutation = useMutation({
-    mutationFn: async ({ email, verified }) => {
-      await base44.auth.updateMe({ is_verified: verified });
-      // Note: This updates current user. In production, you'd need admin endpoints
+    mutationFn: async ({ userId, email, verified }) => {
+      await base44.entities.User.update(userId, {
+        is_verified: verified,
+        verification_requested: false,
+      });
       return { email, verified };
     },
     onSuccess: (data) => {
@@ -98,14 +100,14 @@ export default function UserVerification() {
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => verifyMutation.mutate({ email: user.email, verified: true })}
+                      onClick={() => verifyMutation.mutate({ userId: user.id, email: user.email, verified: true })}
                       className="bg-[#39FF14] text-black font-bold"
                     >
                       <CheckCircle className="w-4 h-4 mr-1" />
                       Verify
                     </Button>
                     <Button
-                      onClick={() => verifyMutation.mutate({ email: user.email, verified: false })}
+                      onClick={() => verifyMutation.mutate({ userId: user.id, email: user.email, verified: false })}
                       variant="outline"
                       className="border-red-600 text-red-600"
                     >

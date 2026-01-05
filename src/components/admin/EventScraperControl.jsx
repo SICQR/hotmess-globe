@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { RefreshCw, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -19,17 +19,35 @@ export default function EventScraperControl() {
     setResult(null);
     
     try {
-      // Note: This requires backend functions to be enabled
-      if (!base44?.functions?.scrapeEvents || typeof base44.functions.scrapeEvents !== 'function') {
-        throw new Error('Backend functions not enabled (scrapeEvents unavailable)');
-      }
-
       const cityList = cities.split(',').map(c => c.trim());
+
+      const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+      if (sessionErr) throw sessionErr;
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        throw new Error('Not authenticated');
+      }
       
-      const response = await base44.functions.scrapeEvents({
-        cities: cityList,
-        daysAhead: 14
+      const resp = await fetch('/api/events/scrape', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          cities: cityList,
+          daysAhead: 14,
+        }),
       });
+
+      const response = await resp.json().catch(() => null);
+      if (!resp.ok) {
+        // Preserve structured error details from the server for display.
+        setResult(response || { success: false, error: 'Scrape request failed' });
+        const msg = response?.error || response?.message || 'Scrape request failed';
+        toast.error(msg);
+        return;
+      }
       
       setResult(response);
       
@@ -40,11 +58,11 @@ export default function EventScraperControl() {
       }
     } catch (error) {
       console.error('Scraping error:', error);
-      toast.error('Backend functions not enabled. Enable in Settings > Backend Functions');
+      toast.error(error?.message || 'Event scraper request failed');
       setResult({ 
         success: false, 
-        error: 'Backend functions required. Enable in app settings.',
-        needsBackendFunctions: true 
+        error: error?.message || 'Request failed',
+        needsBackendFunctions: false 
       });
     } finally {
       setLoading(false);
@@ -129,7 +147,7 @@ export default function EventScraperControl() {
                   <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs">
                     <p className="font-bold text-yellow-500 mb-1">⚡ Backend Functions Required</p>
                     <p className="text-white/70">
-                      Enable backend functions in Settings → Backend Functions to use the event scraper.
+                      This requires the Vercel API endpoint and Supabase server env vars to be configured.
                     </p>
                   </div>
                 )}
@@ -141,13 +159,12 @@ export default function EventScraperControl() {
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 text-xs">
           <p className="font-bold text-blue-400 mb-2">📅 Scheduled Scraping</p>
           <p className="text-white/70 mb-2">
-            For automatic daily updates, schedule the <code className="bg-white/10 px-1 rounded">scheduleEventScraper</code> function:
+            For automatic daily updates, schedule a Vercel Cron job to hit the scrape endpoint:
           </p>
           <ol className="list-decimal list-inside text-white/60 space-y-1">
-            <li>Go to Dashboard → Functions</li>
-            <li>Find <code className="bg-white/10 px-1 rounded">scheduleEventScraper</code></li>
-            <li>Click "Schedule"</li>
-            <li>Set to run daily at 3 AM UTC</li>
+            <li>Configure Vercel Cron to hit <code className="bg-white/10 px-1 rounded">/api/events/cron</code></li>
+            <li>Set it to run daily at 3 AM UTC</li>
+            <li>Set <code className="bg-white/10 px-1 rounded">EVENT_SCRAPER_SOURCES_JSON</code> (JSON feeds) OR <code className="bg-white/10 px-1 rounded">OPENAI_API_KEY</code> (LLM) in Vercel env</li>
           </ol>
         </div>
       </div>

@@ -36,7 +36,7 @@ const EventDetailRedirect = () => {
 
 const ProductDetailRedirect = () => {
   const { handle } = useParams();
-  const target = `${createPageUrl('ProductDetail')}?id=${encodeURIComponent(handle ?? '')}`;
+  const target = `${createPageUrl('ProductDetail')}?handle=${encodeURIComponent(handle ?? '')}`;
   return <Navigate to={target} replace />;
 };
 
@@ -103,6 +103,7 @@ const AuthenticatedApp = () => {
       <Route path="/music/schedule" element={<PageRoute pageKey="RadioSchedule" />} />
       <Route path="/music/releases" element={<PageRoute pageKey="Music" />} />
       <Route path="/music/releases/:slug" element={<PageRoute pageKey="MusicRelease" />} />
+      <Route path="/hnhmess" element={<PageRoute pageKey="Hnhmess" />} />
       <Route path="/more" element={<PageRoute pageKey="More" />} />
 
       {/* Legacy lowercase routes -> canonical V1.5 routes */}

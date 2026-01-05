@@ -46,7 +46,12 @@ export default function ModerationQueue() {
 
   const banUserMutation = useMutation({
     mutationFn: async (userEmail) => {
-      await base44.entities.User.update(userEmail, { is_banned: true });
+      const user = allUsers.find(u => u.email === userEmail);
+      if (!user?.id) {
+        throw new Error('User not found');
+      }
+
+      await base44.entities.User.update(user.id, { role: 'banned' });
       await base44.entities.NotificationOutbox.create({
         user_email: userEmail,
         notification_type: 'system',
