@@ -387,7 +387,7 @@ function LayoutInner({ children, currentPageName }) {
       {/* Main Content */}
       <main 
         id="main-content" 
-        className={isPulsePage ? '' : 'md:ml-56 pt-14 md:pt-0'}
+        className={isPulsePage ? 'min-w-0' : 'md:ml-56 pt-14 md:pt-0 min-w-0'}
         role="main"
       >
         <PageErrorBoundary>

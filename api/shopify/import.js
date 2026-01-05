@@ -1,43 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-
-const json = (res, status, body) => {
-  res.statusCode = status;
-  res.setHeader('Content-Type', 'application/json');
-  res.end(JSON.stringify(body));
-};
-
-const getEnv = (name, fallbacks = []) => {
-  const candidates = [name, ...fallbacks];
-  for (const key of candidates) {
-    const value = process.env[key];
-    if (value && String(value).trim()) return String(value).trim();
-  }
-  return null;
-};
-
-const normalizeShopDomain = (value) => {
-  if (!value) return null;
-  const raw = String(value).trim();
-  if (!raw) return null;
-
-  // Accept either "your-store.myshopify.com" or "https://your-store.myshopify.com"
-  try {
-    if (raw.startsWith('http://') || raw.startsWith('https://')) {
-      return new URL(raw).host;
-    }
-    return new URL(`https://${raw}`).host;
-  } catch {
-    return raw;
-  }
-};
-
-const getBearerToken = (req) => {
-  const header = req.headers?.authorization || req.headers?.Authorization;
-  if (!header) return null;
-  const value = Array.isArray(header) ? header[0] : header;
-  const match = String(value).match(/^Bearer\s+(.+)$/i);
-  return match?.[1] || null;
-};
+import { getBearerToken, getEnv, json, normalizeDetails, normalizeShopDomain } from './_utils.js';
 
 const isAdminUser = async ({ anonClient, serviceClient, accessToken, email }) => {
   // 1) Prefer role in auth metadata
@@ -155,15 +117,8 @@ export default async function handler(req, res) {
     return json(res, 403, { error: 'Forbidden: Admin access required' });
   }
 
-  const shopDomain = normalizeShopDomain(
-    getEnv('SHOPIFY_SHOP_DOMAIN', ['SHOPIFY_STORE_URL', 'SHOPIFY_DOMAIN'])
-  );
-  const shopifyAccessToken = getEnv('SHOPIFY_ACCESS_TOKEN', [
-    'SHOPIFY_ADMIN_ACCESS_TOKEN',
-    // Common misnaming: in some setups people paste an Admin API token (shpat_*)
-    // into a "storefront" variable. Accept as fallback so local/dev works.
-    'SHOPIFY_STOREFRONT_ACCESS_TOKEN',
-  ]);
+  const shopDomain = normalizeShopDomain(getEnv('SHOPIFY_SHOP_DOMAIN', ['SHOPIFY_STORE_URL', 'SHOPIFY_DOMAIN']));
+  const shopifyAccessToken = getEnv('SHOPIFY_ADMIN_ACCESS_TOKEN', ['SHOPIFY_ACCESS_TOKEN']);
 
   if (!shopDomain || !shopifyAccessToken) {
     const present = {
@@ -178,7 +133,7 @@ export default async function handler(req, res) {
     return json(res, 400, {
       error: 'Shopify credentials not configured',
       details:
-        'Set SHOPIFY_SHOP_DOMAIN (or SHOPIFY_STORE_URL) and SHOPIFY_ACCESS_TOKEN (or SHOPIFY_ADMIN_ACCESS_TOKEN).',
+        'Set SHOPIFY_SHOP_DOMAIN (or SHOPIFY_STORE_URL) and SHOPIFY_ADMIN_ACCESS_TOKEN (or SHOPIFY_ACCESS_TOKEN).',
       debug_present: present,
     });
   }
@@ -194,15 +149,26 @@ export default async function handler(req, res) {
     // Build a lookup of existing Shopify products (by details.shopify_id)
     const { data: existingOfficial, error: existingErr } = await serviceClient
       .from('products')
-      .select('id,details')
+      .select('id,details,status,updated_at,created_at')
       .eq('seller_email', 'shopify@hotmess.london');
 
     if (existingErr) throw existingErr;
 
     const byShopifyId = new Map();
+    const duplicatesByShopifyId = new Map();
     for (const row of existingOfficial || []) {
-      const shopifyId = row?.details?.shopify_id;
-      if (shopifyId) byShopifyId.set(String(shopifyId), row.id);
+      const details = normalizeDetails(row?.details) || {};
+      const shopifyId = details?.shopify_id;
+      if (!shopifyId) continue;
+      const sid = String(shopifyId);
+
+      if (!byShopifyId.has(sid)) {
+        byShopifyId.set(sid, row.id);
+        duplicatesByShopifyId.set(sid, [row]);
+        continue;
+      }
+
+      duplicatesByShopifyId.get(sid)?.push(row);
     }
 
     const importedIds = [];
@@ -212,14 +178,33 @@ export default async function handler(req, res) {
     // Hide any previously-imported Shopify products that are no longer active in Shopify.
     // (Prevents old drafts/archived products from showing up as "duplicates" in the app.)
     const toDraftIds = [];
+
+    // If duplicates already exist for a Shopify product, keep the newest row and draft the rest.
+    for (const [sid, rows] of duplicatesByShopifyId.entries()) {
+      if (!rows || rows.length <= 1) continue;
+      const sorted = [...rows].sort((a, b) => {
+        const ad = Date.parse(a?.updated_at || a?.created_at || 0) || 0;
+        const bd = Date.parse(b?.updated_at || b?.created_at || 0) || 0;
+        return bd - ad;
+      });
+      const keep = sorted[0];
+      byShopifyId.set(String(sid), keep.id);
+      for (const dup of sorted.slice(1)) {
+        if (dup?.id) toDraftIds.push(dup.id);
+      }
+    }
+
     for (const row of existingOfficial || []) {
-      const sid = row?.details?.shopify_id ? String(row.details.shopify_id) : null;
+      const details = normalizeDetails(row?.details) || {};
+      const sid = details?.shopify_id ? String(details.shopify_id) : null;
       if (!sid) continue;
       if (activeShopifyIds.has(sid)) continue;
       toDraftIds.push(row.id);
     }
 
-    if (toDraftIds.length) {
+    const uniqueToDraftIds = Array.from(new Set(toDraftIds.map((id) => String(id))));
+
+    if (uniqueToDraftIds.length) {
       const draftUpdate = {
         status: 'draft',
         updated_at: new Date().toISOString(),
@@ -228,8 +213,8 @@ export default async function handler(req, res) {
 
       // Batch the updates to keep the request fast.
       const BATCH_SIZE = 200;
-      for (let i = 0; i < toDraftIds.length; i += BATCH_SIZE) {
-        const batch = toDraftIds.slice(i, i + BATCH_SIZE);
+      for (let i = 0; i < uniqueToDraftIds.length; i += BATCH_SIZE) {
+        const batch = uniqueToDraftIds.slice(i, i + BATCH_SIZE);
         const { error } = await serviceClient
           .from('products')
           .update(draftUpdate)
@@ -240,7 +225,8 @@ export default async function handler(req, res) {
     }
 
     for (const p of shopifyProducts) {
-      const variant = Array.isArray(p?.variants) ? p.variants[0] : null;
+      const variants = Array.isArray(p?.variants) ? p.variants.filter(Boolean) : [];
+      const variant = variants[0] || null;
       if (!variant) continue;
 
       const shopifyId = String(p.id);
@@ -253,11 +239,17 @@ export default async function handler(req, res) {
         .map((v) => String(v || '').trim())
         .filter(Boolean);
 
+      const variantPriceNumbers = variants
+        .map((v) => Number.parseFloat(v?.price))
+        .filter((n) => Number.isFinite(n));
+      const minPrice = variantPriceNumbers.length ? Math.min(...variantPriceNumbers) : Number.parseFloat(variant.price);
+      const minPriceSafe = Number.isFinite(minPrice) ? minPrice : Number.parseFloat(variant.price);
+
       const productData = {
         name: p.title,
         description: p.body_html?.replace(/<[^>]*>/g, '') || '',
-        price_xp: Math.round(parseFloat(variant.price) * 100),
-        price_gbp: parseFloat(variant.price),
+        price_xp: Math.round(minPriceSafe * 100),
+        price_gbp: minPriceSafe,
         seller_email: 'shopify@hotmess.london',
         // Treat Shopify items as official merch in the app UI.
         product_type: 'merch',
@@ -275,6 +267,13 @@ export default async function handler(req, res) {
           shopify_handle: p.handle,
           shopify_vendor: p.vendor || null,
           shopify_product_type: p.product_type || null,
+          shopify_variants: variants.map((v) => ({
+            id: String(v.id),
+            title: String(v.title || '').trim() || 'Default',
+            price: v.price,
+            sku: v.sku,
+            inventory_quantity: v.inventory_quantity,
+          })),
         },
         updated_at: new Date().toISOString(),
         updated_date: new Date().toISOString(),

@@ -95,7 +95,8 @@ export default function MembershipUpgrade() {
     }
   };
 
-  const currentTier = currentUser?.membership_tier || 'basic';
+  const currentTierRaw = currentUser?.membership_tier;
+  const currentTier = currentTierRaw === 'free' ? 'basic' : currentTierRaw || 'basic';
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
@@ -133,9 +134,15 @@ export default function MembershipUpgrade() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className={`bg-black border-2 p-8 ${
-                  isCurrentTier ? `border-[${tier.color}] shadow-[0_0_20px_${tier.color}]` : 'border-white/20'
-                }`}
+                className="bg-black border-2 p-6 md:p-8 h-full flex flex-col"
+                style={
+                  isCurrentTier
+                    ? {
+                        borderColor: tier.color,
+                        boxShadow: `0 0 20px ${tier.color}`,
+                      }
+                    : { borderColor: 'rgba(255,255,255,0.2)' }
+                }
               >
                 <div className="text-center mb-6">
                   <div
@@ -144,17 +151,20 @@ export default function MembershipUpgrade() {
                   >
                     <Icon className="w-8 h-8" style={{ color: tier.color }} />
                   </div>
-                  <h2 className="text-2xl font-black uppercase mb-2" style={{ color: tier.color }}>
+                  <h2
+                    className="text-2xl font-black uppercase mb-2 break-words leading-none"
+                    style={{ color: tier.color }}
+                  >
                     {tier.name}
                   </h2>
-                  <p className="text-3xl font-black">{tier.price}</p>
+                  <p className="text-3xl font-black break-words leading-none">{tier.price}</p>
                 </div>
 
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-3 mb-8 min-w-0">
                   {tier.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
+                    <li key={i} className="flex items-start gap-2 text-sm min-w-0">
                       <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: tier.color }} />
-                      <span className="text-white/80">{feature}</span>
+                      <span className="text-white/80 min-w-0 break-words">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -162,7 +172,8 @@ export default function MembershipUpgrade() {
                 <Button
                   onClick={() => handleUpgrade(tier.id)}
                   disabled={isCurrentTier || loading}
-                  className={`w-full font-black border-2 ${
+                  size="xl"
+                  className={`w-full mt-auto font-black uppercase tracking-wide border-2 ${
                     isCurrentTier
                       ? 'bg-white/10 text-white/40 border-white/20 cursor-not-allowed'
                       : 'text-black border-white hover:bg-white/90'
@@ -178,7 +189,7 @@ export default function MembershipUpgrade() {
 
         <div className="mt-12 bg-white/5 border-2 border-white/10 p-6 text-center">
           <p className="text-white/60 text-sm uppercase tracking-wider">
-            All subscriptions are monthly and can be cancelled anytime. Stripe-powered secure payments.
+            Subscriptions are monthly and can be cancelled anytime.
           </p>
         </div>
       </div>

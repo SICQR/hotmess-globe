@@ -14,6 +14,7 @@ export function createPageUrl(pageName: string) {
         Music: '/music',
         Radio: '/music/live',
         RadioSchedule: '/music/schedule',
+        Hnhmess: '/hnhmess',
         More: '/more',
 
         AgeGate: '/age',

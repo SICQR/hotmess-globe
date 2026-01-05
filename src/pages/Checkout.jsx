@@ -76,7 +76,11 @@ export default function Checkout() {
         });
       }
 
-      const items = await base44.entities.CartItem.filter({ user_email: currentUser.email });
+      const authUserId = currentUser?.auth_user_id || null;
+
+      const items = authUserId
+        ? await base44.entities.CartItem.filter({ auth_user_id: authUserId })
+        : await base44.entities.CartItem.filter({ user_email: currentUser.email });
       return items.filter(item => {
         if (!item.reserved_until) return true;
         return new Date(item.reserved_until) > now;
@@ -87,19 +91,28 @@ export default function Checkout() {
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list()
+    // Cart needs to resolve product details even if sold_out/draft.
+    queryFn: () => base44.entities.Product.filter({}, '-created_at')
   });
 
-  const cartWithProducts = cartItems.map(item => {
-    const product = products.find(p => p.id === item.product_id);
-    return { ...item, product };
-  }).filter(item => item.product);
+  const cartWithProducts = cartItems
+    .map((item) => {
+      const product = products.find((p) => String(p.id) === String(item.product_id));
+      return { ...item, product };
+    })
+    .filter((item) => item.product);
 
-  const totalXP = cartWithProducts.reduce((sum, item) => 
-    sum + (item.product.price_xp * item.quantity), 0
-  );
+  const shopifyCartItems = cartWithProducts.filter((item) => {
+    const seller = String(item?.product?.seller_email || '').toLowerCase();
+    const variantId = item?.shopify_variant_id || item?.product?.details?.shopify_variant_id;
+    return seller === 'shopify@hotmess.london' && !!variantId;
+  });
 
-  const requiresShipping = cartWithProducts.some(item =>
+  const xpCartItems = cartWithProducts.filter((item) => !shopifyCartItems.includes(item));
+
+  const totalXP = xpCartItems.reduce((sum, item) => sum + (item.product.price_xp * item.quantity), 0);
+
+  const requiresShipping = xpCartItems.some((item) =>
     ['physical', 'merch'].includes(String(item.product.product_type || '').toLowerCase())
   );
 
@@ -115,6 +128,10 @@ export default function Checkout() {
         throw new Error('Please sign in to complete checkout');
       }
 
+      if (!xpCartItems.length) {
+        throw new Error('No XP items to checkout');
+      }
+
       // CRITICAL: Fetch fresh data and validate atomically
       const freshUser = await base44.auth.me();
       const currentXP = freshUser.xp || 0;
@@ -128,7 +145,7 @@ export default function Checkout() {
       const freshProducts = await base44.entities.Product.list();
       
       // Validate products and inventory atomically
-      for (const item of cartWithProducts) {
+      for (const item of xpCartItems) {
         const freshProduct = freshProducts.find(p => p.id === item.product.id);
         if (!freshProduct || freshProduct.status !== 'active') {
           throw new Error(`Product "${item.product.name}" is no longer available.`);
@@ -140,7 +157,7 @@ export default function Checkout() {
 
       // Group items by seller
       const sellers = {};
-      cartWithProducts.forEach(item => {
+      xpCartItems.forEach(item => {
         const seller = item.product.seller_email;
         if (!sellers[seller]) sellers[seller] = [];
         sellers[seller].push(item);
@@ -150,7 +167,7 @@ export default function Checkout() {
       // Step 1: Reserve inventory FIRST (prevents overselling race condition)
       const inventoryUpdates = [];
       try {
-        for (const item of cartWithProducts) {
+        for (const item of xpCartItems) {
           const freshProduct = freshProducts.find(p => p.id === item.product.id);
           if (freshProduct.inventory_count !== undefined) {
             // Double-check inventory hasn't changed since initial validation
@@ -209,8 +226,11 @@ export default function Checkout() {
         }
 
         // Step 4: Clear cart
-        for (const item of cartItems) {
-          await base44.entities.CartItem.delete(item.id);
+        // Remove only the XP items from the DB cart.
+        for (const item of xpCartItems) {
+          if (item?.id) {
+            await base44.entities.CartItem.delete(item.id);
+          }
         }
       } catch (error) {
         // CRITICAL ROLLBACK: Restore inventory and XP on any failure
@@ -245,6 +265,43 @@ export default function Checkout() {
     onError: (error) => {
       toast.error(error.message || 'Checkout failed');
     }
+  });
+
+  const shopifyCheckoutMutation = useMutation({
+    mutationFn: async () => {
+      if (!shopifyCartItems.length) {
+        throw new Error('No Shopify items to checkout');
+      }
+
+      const lines = shopifyCartItems.map((item) => ({
+        variantId: item?.shopify_variant_id || item?.product?.details?.shopify_variant_id,
+        quantity: item?.quantity || 1,
+      }));
+
+      const resp = await fetch('/api/shopify/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lines }),
+      });
+
+      const payload = await resp.json().catch(() => null);
+      if (!resp.ok) {
+        throw new Error(payload?.error || 'Failed to start Shopify checkout');
+      }
+
+      const checkoutUrl = payload?.cart?.checkoutUrl;
+      if (!checkoutUrl) {
+        throw new Error('Shopify did not return a checkout URL');
+      }
+
+      return checkoutUrl;
+    },
+    onSuccess: (checkoutUrl) => {
+      window.location.assign(checkoutUrl);
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Shopify checkout failed');
+    },
   });
 
   const userXP = currentUser?.xp || 0;
@@ -299,8 +356,27 @@ export default function Checkout() {
             CHECKOUT<span className="text-[#39FF14]">.</span>
           </h1>
           <p className="text-white/60 text-sm uppercase tracking-wider mb-8">
-            Complete your order • XP payment
+            Complete your order
           </p>
+
+          {shopifyCartItems.length > 0 && (
+            <div className="mb-8 bg-white/5 border-2 border-white/10 p-6">
+              <h2 className="text-xl font-black uppercase mb-2">SHOPIFY CHECKOUT</h2>
+              <p className="text-white/60 text-sm uppercase tracking-wider mb-4">
+                {xpCartItems.length > 0
+                  ? 'You have Shopify items + XP items. These checkout separately.'
+                  : 'These items checkout on Shopify (card, Apple Pay, etc.).'}
+              </p>
+
+              <Button
+                onClick={() => shopifyCheckoutMutation.mutate()}
+                disabled={shopifyCheckoutMutation.isPending}
+                className="bg-white hover:bg-white/90 text-black font-black uppercase"
+              >
+                {shopifyCheckoutMutation.isPending ? 'Starting Shopify checkout…' : 'Checkout on Shopify'}
+              </Button>
+            </div>
+          )}
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Order Summary */}
@@ -317,6 +393,9 @@ export default function Checkout() {
                       <div className="text-xs text-white/40 uppercase">
                         Qty: {item.quantity} × {item.product.price_xp} XP
                       </div>
+                      {String(item?.product?.seller_email || '').toLowerCase() === 'shopify@hotmess.london' && (
+                        <div className="text-xs text-white/50 uppercase mt-1">Checkout on Shopify</div>
+                      )}
                     </div>
                     <div className="text-[#FFEB3B] font-black text-lg">
                       {item.product.price_xp * item.quantity}
@@ -393,7 +472,11 @@ export default function Checkout() {
                     }
                     checkoutMutation.mutate();
                   }}
-                  disabled={(!currentUser ? false : (!hasEnoughXP || checkoutMutation.isPending)) || !isShippingComplete}
+                  disabled={
+                    xpCartItems.length === 0 ||
+                    (!currentUser ? false : (!hasEnoughXP || checkoutMutation.isPending)) ||
+                    !isShippingComplete
+                  }
                   className="w-full bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black text-lg py-7 uppercase tracking-wider shadow-[0_0_20px_rgba(57,255,20,0.3)] border-2 border-[#39FF14]"
                 >
                   {checkoutMutation.isPending ? (
@@ -401,7 +484,7 @@ export default function Checkout() {
                   ) : (
                     <>
                       <Check className="w-5 h-5 mr-2" />
-                      {currentUser ? 'COMPLETE ORDER' : 'SIGN IN TO COMPLETE'} • {totalXP.toLocaleString()} XP
+                      {currentUser ? 'COMPLETE XP ORDER' : 'SIGN IN TO COMPLETE'} • {totalXP.toLocaleString()} XP
                     </>
                   )}
                 </Button>

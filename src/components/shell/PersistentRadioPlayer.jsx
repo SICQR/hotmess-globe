@@ -88,7 +88,7 @@ export default function PersistentRadioPlayer() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-80 bg-black/95 backdrop-blur-xl border-l-2 border-[#B026FF] z-[100] shadow-2xl"
+              className="fixed top-0 right-0 bottom-0 w-screen sm:w-80 bg-black/95 backdrop-blur-xl border-l-2 border-[#B026FF] z-[100] shadow-2xl"
             >
               <div className="flex flex-col h-full p-6">
                 {/* Header */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -49,10 +49,101 @@ export default function Marketplace() {
     fetchUser();
   }, []);
 
-  const { data: allProducts = [], isLoading } = useQuery({
+  const { data: rawProducts = [], isLoading } = useQuery({
     queryKey: ['marketplace-products'],
-    queryFn: () => base44.entities.Product.filter({ status: 'active' }, '-created_date'),
+    // Some legacy rows may not use status='active'. Fetch all and filter client-side.
+    queryFn: () => base44.entities.Product.filter({}, '-created_date'),
   });
+
+  const allProducts = useMemo(() => {
+    const products = Array.isArray(rawProducts) ? rawProducts : [];
+    return products.filter((p) => String(p?.status || '').toLowerCase() !== 'draft');
+  }, [rawProducts]);
+
+  // Defensive UI-side dedupe (some environments may still have duplicate Shopify imports).
+  const uniqueProducts = useMemo(() => {
+    const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+    const normalizeDetails = (details) => {
+      if (!details) return {};
+      if (typeof details === 'object') return details;
+      if (typeof details === 'string') {
+        try {
+          const parsed = JSON.parse(details);
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch {
+          return {};
+        }
+      }
+      return {};
+    };
+
+    const pickPreferred = (current, candidate) => {
+      if (!current) return candidate;
+      if (!candidate) return current;
+
+      const currentImages = Array.isArray(current.image_urls) ? current.image_urls.length : 0;
+      const candidateImages = Array.isArray(candidate.image_urls) ? candidate.image_urls.length : 0;
+      if (candidateImages > currentImages) return candidate;
+      if (currentImages > candidateImages) return current;
+
+      const currentUpdated = Date.parse(current.updated_at || current.updated_date || current.created_at || current.created_date || 0) || 0;
+      const candidateUpdated = Date.parse(candidate.updated_at || candidate.updated_date || candidate.created_at || candidate.created_date || 0) || 0;
+      return candidateUpdated > currentUpdated ? candidate : current;
+    };
+
+    const getKey = (product) => {
+      const sellerEmail = normalizeEmail(product?.seller_email);
+      const details = normalizeDetails(product?.details);
+
+      const isShopifyImport =
+        sellerEmail === 'shopify@hotmess.london' ||
+        !!details?.shopify_id ||
+        !!details?.shopify_handle ||
+        !!details?.shopify_variant_id;
+
+      if (!isShopifyImport) return null;
+
+      const sid = details?.shopify_id ? String(details.shopify_id) : null;
+      const handle = details?.shopify_handle ? String(details.shopify_handle) : null;
+      const variant = details?.shopify_variant_id ? String(details.shopify_variant_id) : null;
+      const name = String(product?.name || '').trim().toLowerCase();
+
+      if (sid) return `shopify:id:${sid}`;
+      if (handle) return `shopify:handle:${handle}`;
+      if (variant) return `shopify:variant:${variant}`;
+      return name ? `shopify:name:${name}` : null;
+    };
+
+    const products = Array.isArray(allProducts) ? allProducts : [];
+    const byKey = new Map();
+    const out = [];
+
+    for (const p of products) {
+      const key = getKey(p);
+      if (!key) {
+        out.push(p);
+        continue;
+      }
+
+      const existing = byKey.get(key);
+      const preferred = pickPreferred(existing, p);
+      byKey.set(key, preferred);
+    }
+
+    // Keep original ordering as much as possible.
+    const seen = new Set();
+    for (const p of products) {
+      const key = getKey(p);
+      if (!key) continue;
+      const winner = byKey.get(key);
+      const winnerId = winner?.id ? String(winner.id) : key;
+      if (seen.has(winnerId)) continue;
+      seen.add(winnerId);
+      out.push(winner);
+    }
+
+    return out;
+  }, [allProducts]);
 
   const purchaseMutation = useMutation({
     mutationFn: async (product) => {
@@ -137,22 +228,49 @@ export default function Marketplace() {
   });
 
   const handleBuy = (product) => {
+    const isShopifyProduct = String(product?.seller_email || '').toLowerCase() === 'shopify@hotmess.london';
+    const details = (() => {
+      const raw = product?.details;
+      if (!raw) return {};
+      if (typeof raw === 'object') return raw;
+      if (typeof raw === 'string') {
+        try {
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch {
+          return {};
+        }
+      }
+      return {};
+    })();
+
+    const hasMultipleVariants = Array.isArray(details?.shopify_variants) && details.shopify_variants.length > 1;
+
+    // Official Shopify items should always be purchasable (guest or member).
+    // Route them through cart/checkout instead of XP-gated instant purchase.
+    if (isShopifyProduct) {
+      if (hasMultipleVariants) {
+        toast.success('Choose a size');
+        navigate(createPageUrl(`ProductDetail?id=${product.id}`));
+        return;
+      }
+
+      addToCart({ productId: product.id, quantity: 1, currentUser })
+        .then(() => {
+          toast.success('Added to cart!');
+          setShowCart(true);
+        })
+        .catch((error) => toast.error(error?.message || 'Failed to add to cart'));
+      return;
+    }
+
     if (!currentUser) {
       addToCart({ productId: product.id, quantity: 1, currentUser: null })
         .then(() => {
           toast.success('Added to cart! Sign in at checkout to complete.');
           setShowCart(true);
         })
-        .catch(() => toast.error('Failed to add to cart'));
-      return;
-    }
-
-    // Check if this is an official Shopify product (Level 3+ required)
-    const isShopifyProduct = product.seller_email === 'shopify@hotmess.london';
-    const userLevel = Math.floor((currentUser.xp || 0) / 1000) + 1;
-    
-    if (isShopifyProduct && userLevel < 3) {
-      toast.error('Reach Level 3 to access the Official Shop');
+        .catch((error) => toast.error(error?.message || 'Failed to add to cart'));
       return;
     }
 
@@ -175,14 +293,14 @@ export default function Marketplace() {
     purchaseMutation.mutate(product);
   };
 
-  let filteredProducts = allProducts;
+  let filteredProducts = uniqueProducts;
   
   if (activeTab === 'official') {
-    filteredProducts = allProducts.filter(p => p.seller_email === 'shopify@hotmess.london');
+    filteredProducts = uniqueProducts.filter(p => p.seller_email === 'shopify@hotmess.london');
   } else if (activeTab === 'p2p') {
-    filteredProducts = allProducts.filter(p => p.seller_email !== 'shopify@hotmess.london');
+    filteredProducts = uniqueProducts.filter(p => p.seller_email !== 'shopify@hotmess.london');
   } else if (activeTab !== 'all') {
-    filteredProducts = allProducts.filter(p => p.product_type === activeTab);
+    filteredProducts = uniqueProducts.filter(p => p.product_type === activeTab);
   }
 
   if (selectedCollection) {
@@ -249,27 +367,27 @@ export default function Marketplace() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-black italic uppercase tracking-tight mb-2">
                 THE <span className="text-[#00D9FF]">SHOP</span>
               </h1>
               <p className="text-white/60 uppercase text-sm tracking-wider">
-                Official Gear (Level 3+) + P2P Mess Market (10% Platform Fee)
+                Official Gear + P2P Mess Market (10% Platform Fee)
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button 
                 onClick={() => setShowCart(true)}
                 variant="outline"
-                className="border-[#39FF14] text-[#39FF14]"
+                className="border-[#39FF14] text-[#39FF14] w-full sm:w-auto"
               >
                 <ShoppingBag className="w-4 h-4 mr-2" />
                 Cart
               </Button>
               <Button 
                 onClick={() => navigate(createPageUrl('SellerDashboard'))}
-                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black w-full sm:w-auto"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Sell Item
@@ -351,20 +469,20 @@ export default function Marketplace() {
         </motion.div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="bg-white/5 border border-white/10">
-            <TabsTrigger value="all" className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black">
-              All ({allProducts.length})
+          <TabsList className="bg-white/5 border border-white/10 w-full justify-start overflow-x-auto">
+            <TabsTrigger value="all" className="shrink-0 data-[state=active]:bg-[#FF1493] data-[state=active]:text-black">
+              All ({uniqueProducts.length})
             </TabsTrigger>
-            <TabsTrigger value="official" className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
+            <TabsTrigger value="official" className="shrink-0 data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
               Official Shop
             </TabsTrigger>
-            <TabsTrigger value="p2p" className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-black">
+            <TabsTrigger value="p2p" className="shrink-0 data-[state=active]:bg-[#B026FF] data-[state=active]:text-white">
               P2P Market
             </TabsTrigger>
-            <TabsTrigger value="physical" className="data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black">
+            <TabsTrigger value="physical" className="shrink-0 data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black">
               Physical
             </TabsTrigger>
-            <TabsTrigger value="digital" className="data-[state=active]:bg-[#39FF14] data-[state=active]:text-black">
+            <TabsTrigger value="digital" className="shrink-0 data-[state=active]:bg-[#39FF14] data-[state=active]:text-black">
               Digital
             </TabsTrigger>
           </TabsList>
@@ -394,6 +512,7 @@ export default function Marketplace() {
                       product={product}
                       index={idx}
                       onBuy={handleBuy}
+                      currentUserXP={currentUser?.xp || 0}
                     />
                   ))}
                 </div>
