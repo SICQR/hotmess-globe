@@ -212,7 +212,8 @@
   - [ ] Document setup in README
 - **Files**:
   - `functions/pushToSoundCloud.ts`
-  - `src/components/admin/RecordManager.tsx.jsx`
+  - `src/components/admin/RecordManager.tsx`
+  - `docs/SOUNDCLOUD_API_FIELD_REQUIREMENTS.md`
 - **Notes**: Requires SoundCloud Pro API access
 
 ---

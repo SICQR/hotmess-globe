@@ -49,8 +49,12 @@ export const UPLOAD_LIMITS = {
 // Membership Tiers
 export const MEMBERSHIP_TIERS = {
   BASIC: 'basic',
-  CHROME: 'chrome',
-  PLATINUM: 'platinum',
+  PLUS: 'plus',
+  PRO: 'pro',
+
+  // Aliases / legacy
+  FREE: 'basic',
+  CHROME: 'pro',
 };
 
 // Chrome Tier Requirements

@@ -1,41 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-
-const json = (res, status, body) => {
-  res.statusCode = status;
-  res.setHeader('Content-Type', 'application/json');
-  res.end(JSON.stringify(body));
-};
-
-const getEnv = (name, fallbacks = []) => {
-  const candidates = [name, ...fallbacks];
-  for (const key of candidates) {
-    const value = process.env[key];
-    if (value && String(value).trim()) return String(value).trim();
-  }
-  return null;
-};
-
-const normalizeShopDomain = (value) => {
-  if (!value) return null;
-  const raw = String(value).trim();
-  if (!raw) return null;
-  try {
-    if (raw.startsWith('http://') || raw.startsWith('https://')) {
-      return new URL(raw).host;
-    }
-    return new URL(`https://${raw}`).host;
-  } catch {
-    return raw;
-  }
-};
-
-const getBearerToken = (req) => {
-  const header = req.headers?.authorization || req.headers?.Authorization;
-  if (!header) return null;
-  const value = Array.isArray(header) ? header[0] : header;
-  const match = String(value).match(/^Bearer\s+(.+)$/i);
-  return match?.[1] || null;
-};
+import { getBearerToken, getEnv, json, normalizeDetails, normalizeShopDomain } from './_utils.js';
 
 const isAdminUser = async ({ anonClient, serviceClient, accessToken, email }) => {
   const { data: userData, error: userErr } = await anonClient.auth.getUser(accessToken);
@@ -104,13 +68,8 @@ export default async function handler(req, res) {
     return json(res, 403, { error: 'Forbidden: Admin access required' });
   }
 
-  const shopDomain = normalizeShopDomain(
-    getEnv('SHOPIFY_SHOP_DOMAIN', ['SHOPIFY_STORE_URL', 'SHOPIFY_DOMAIN'])
-  );
-  const shopifyAccessToken = getEnv('SHOPIFY_ACCESS_TOKEN', [
-    'SHOPIFY_ADMIN_ACCESS_TOKEN',
-    'SHOPIFY_STOREFRONT_ACCESS_TOKEN',
-  ]);
+  const shopDomain = normalizeShopDomain(getEnv('SHOPIFY_SHOP_DOMAIN', ['SHOPIFY_STORE_URL', 'SHOPIFY_DOMAIN']));
+  const shopifyAccessToken = getEnv('SHOPIFY_ADMIN_ACCESS_TOKEN', ['SHOPIFY_ACCESS_TOKEN']);
 
   if (!shopDomain || !shopifyAccessToken) {
     const present = {
@@ -125,7 +84,7 @@ export default async function handler(req, res) {
     return json(res, 400, {
       error: 'Shopify credentials not configured',
       details:
-        'Set SHOPIFY_SHOP_DOMAIN (or SHOPIFY_STORE_URL) and SHOPIFY_ACCESS_TOKEN (or SHOPIFY_ADMIN_ACCESS_TOKEN).',
+        'Set SHOPIFY_SHOP_DOMAIN (or SHOPIFY_STORE_URL) and SHOPIFY_ADMIN_ACCESS_TOKEN (or SHOPIFY_ACCESS_TOKEN).',
       debug_present: present,
     });
   }
@@ -139,7 +98,12 @@ export default async function handler(req, res) {
 
     if (existingErr) throw existingErr;
 
-    const shopifyRows = (existing || []).filter((p) => p?.details?.shopify_id);
+    const shopifyRows = (existing || [])
+      .map((row) => {
+        const details = normalizeDetails(row?.details) || null;
+        return details ? { ...row, details } : row;
+      })
+      .filter((p) => p?.details?.shopify_id);
 
     const syncedProducts = [];
     const errors = [];

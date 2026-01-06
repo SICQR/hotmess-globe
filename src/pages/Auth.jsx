@@ -10,7 +10,7 @@ import { createPageUrl } from '../utils';
 
 const MEMBERSHIP_TIERS = [
   {
-    id: 'free',
+    id: 'basic',
     name: 'FREE',
     price: '£0',
     color: '#FFFFFF',
@@ -28,7 +28,7 @@ const MEMBERSHIP_TIERS = [
   },
   {
     id: 'pro',
-    name: 'PRO',
+    name: 'CHROME',
     price: '£19.99/mo',
     color: '#00D9FF',
     features: ['Everything in PLUS', 'Visibility boost (non-spam)', 'Advanced Pulse layers', 'Music: early access', 'Full stats dashboard'],
@@ -45,7 +45,7 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedTier, setSelectedTier] = useState('free');
+  const [selectedTier, setSelectedTier] = useState('basic');
   const [profileData, setProfileData] = useState({
     bio: '',
     city: 'London',
@@ -163,7 +163,7 @@ export default function Auth() {
     try {
       await base44.auth.updateMe({
         membership_tier: selectedTier,
-        subscription_status: selectedTier === 'free' ? 'active' : 'trial'
+        subscription_status: selectedTier === 'basic' ? 'active' : 'trial'
       });
       toast.success('Membership selected!');
       setStep('profile');
@@ -521,7 +521,8 @@ export default function Auth() {
               <Button
                 onClick={handleMembership}
                 disabled={loading}
-                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase px-12 py-6 text-lg"
+                size="xl"
+                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase px-12"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                   <>

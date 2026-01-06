@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/components/utils/supabaseClient';
-import { Shield, Users, Flag, Calendar, TrendingUp, Lock, CheckCircle } from 'lucide-react';
+import { Shield, Users, Flag, Calendar, TrendingUp, Lock, CheckCircle, Settings as SettingsIcon, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import UserManagement from '../components/admin/UserManagement';
 import EventManagement from '../components/admin/EventManagement';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
@@ -13,6 +15,7 @@ import AdvancedAnalytics from '../components/analytics/AdvancedAnalytics';
 import BulkUserInvite from '../components/admin/BulkUserInvite';
 import EventScraperControl from '../components/admin/EventScraperControl';
 import ModerationQueue from '../components/admin/ModerationQueue';
+import { createPageUrl } from '../utils';
 
 export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -69,15 +72,32 @@ export default function AdminDashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-16 h-16 bg-red-600 border-2 border-white flex items-center justify-center">
-              <Shield className="w-8 h-8 text-white" />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-red-600 border-2 border-white flex items-center justify-center">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-5xl font-black uppercase tracking-tighter">ADMIN</h1>
+                <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">
+                  SYSTEM CONTROL PANEL
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-5xl font-black uppercase tracking-tighter">ADMIN</h1>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">
-                SYSTEM CONTROL PANEL
-              </p>
+
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
+              <Link to={createPageUrl('Settings')} className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto border-white/20 text-white">
+                  <SettingsIcon className="w-4 h-4" />
+                  Settings
+                </Button>
+              </Link>
+              <Link to={createPageUrl('EditProfile')} className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto border-white/20 text-white">
+                  <User className="w-4 h-4" />
+                  Edit Profile
+                </Button>
+              </Link>
             </div>
           </div>
         </motion.div>
@@ -94,7 +114,7 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="advanced" 
-              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-black font-black uppercase text-xs py-3"
+              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-white font-black uppercase text-xs py-3"
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               Advanced
@@ -129,7 +149,7 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="events" 
-              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-black font-black uppercase text-xs py-3"
+              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-white font-black uppercase text-xs py-3"
             >
               <Calendar className="w-4 h-4 mr-2" />
               Events

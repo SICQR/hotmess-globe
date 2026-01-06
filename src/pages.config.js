@@ -21,6 +21,7 @@ import Feed from './pages/Feed';
 import Globe from './pages/Globe';
 import HandNHand from './pages/HandNHand';
 import Home from './pages/Home';
+import Hnhmess from './pages/Hnhmess';
 import Leaderboard from './pages/Leaderboard';
 import Marketplace from './pages/Marketplace';
 import MembershipUpgrade from './pages/MembershipUpgrade';
@@ -78,6 +79,7 @@ export const PAGES = {
     "Globe": Globe,
     "HandNHand": HandNHand,
     "Home": Home,
+    "Hnhmess": Hnhmess,
     "Leaderboard": Leaderboard,
     "Marketplace": Marketplace,
     "MembershipUpgrade": MembershipUpgrade,

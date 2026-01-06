@@ -60,7 +60,7 @@ export default function Messages() {
               animate={{ opacity: 1, y: 0 }}
             >
               <h1 className="text-3xl font-black uppercase tracking-tighter mb-1">MESSAGES</h1>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">E2E ENCRYPTED VIA TELEGRAM</p>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">HANDSHAKE VIA TELEGRAM</p>
             </motion.div>
             <Button
               onClick={() => setShowNewMessage(true)}
