@@ -1,6 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
+  // Deprecated: production Shopify sync runs via Vercel serverless routes.
+  // Keeping this function present avoids breaking old callers, but it no longer mutates data.
+  return Response.json(
+    {
+      error: 'Deprecated',
+      details:
+        'Shopify inventory sync has moved to the Vercel serverless route POST /api/shopify/sync. Use the Admin UI (Shopify Manager) or call that endpoint directly.',
+    },
+    { status: 410 }
+  );
+
   try {
     const base44 = createClientFromRequest(req);
     

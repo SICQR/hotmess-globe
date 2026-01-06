@@ -86,7 +86,7 @@ export default function PersonalizedFeed({ user, posts, onFilterChange }) {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 bg-black border-white/20">
+        <PopoverContent className="w-[calc(100vw-2rem)] max-w-80 bg-black border-white/20">
           <div className="space-y-4">
             <div>
               <h3 className="font-bold mb-3">Categories</h3>

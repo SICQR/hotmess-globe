@@ -29,6 +29,105 @@ export const supabase = createClient(
 
 const safeArray = (value) => (Array.isArray(value) ? value : []);
 
+const SHOPIFY_SELLER_EMAIL = 'shopify@hotmess.london';
+
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+const normalizeProductDetails = (details) => {
+  if (!details) return {};
+  if (typeof details === 'object') return details;
+  if (typeof details === 'string') {
+    try {
+      const parsed = JSON.parse(details);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+  return {};
+};
+
+const getShopifyDedupeKey = (product) => {
+  const sellerEmail = normalizeEmail(product?.seller_email);
+  const details = normalizeProductDetails(product?.details);
+
+  // Dedupe should ONLY apply to Shopify-imported products.
+  // Do not use tags/category heuristics here, otherwise unrelated products can be collapsed.
+  const isShopifyLike =
+    sellerEmail === SHOPIFY_SELLER_EMAIL ||
+    !!details?.shopify_id ||
+    !!details?.shopify_handle ||
+    !!details?.shopify_variant_id;
+
+  if (!isShopifyLike) return null;
+
+  const shopifyId = details?.shopify_id ? String(details.shopify_id) : null;
+  const handle = details?.shopify_handle ? String(details.shopify_handle) : null;
+
+  if (shopifyId) return `shopify:id:${shopifyId}`;
+  if (handle) return `shopify:handle:${handle}`;
+
+  // Last resort: fall back to a name-based key so we don't spam duplicates
+  // if older rows were imported without details.
+  const name = String(product?.name || '').trim().toLowerCase();
+  return name ? `shopify:name:${name}` : null;
+};
+
+const pickPreferredProduct = (current, candidate) => {
+  if (!current) return candidate;
+  if (!candidate) return current;
+
+  const currentImages = Array.isArray(current.image_urls) ? current.image_urls.length : 0;
+  const candidateImages = Array.isArray(candidate.image_urls) ? candidate.image_urls.length : 0;
+  if (candidateImages > currentImages) return candidate;
+  if (currentImages > candidateImages) return current;
+
+  const currentUpdated = Date.parse(current.updated_at || current.updated_date || current.created_at || current.created_date || 0) || 0;
+  const candidateUpdated = Date.parse(candidate.updated_at || candidate.updated_date || candidate.created_at || candidate.created_date || 0) || 0;
+  return candidateUpdated > currentUpdated ? candidate : current;
+};
+
+const dedupeProducts = (rows) => {
+  const products = safeArray(rows);
+  if (!products.length) return products;
+
+  const byKey = new Map();
+  const order = [];
+
+  for (const product of products) {
+    const key = getShopifyDedupeKey(product);
+    if (!key) {
+      order.push({ key: null, product });
+      continue;
+    }
+
+    if (!byKey.has(key)) {
+      byKey.set(key, product);
+      order.push({ key, product: null });
+      continue;
+    }
+
+    const preferred = pickPreferredProduct(byKey.get(key), product);
+    byKey.set(key, preferred);
+  }
+
+  const out = [];
+  for (const item of order) {
+    if (!item.key) out.push(item.product);
+    else out.push(byKey.get(item.key));
+  }
+
+  // Ensure we don't emit the same object twice if multiple duplicates existed.
+  const seenIds = new Set();
+  return out.filter((p) => {
+    const id = p?.id ? String(p.id) : null;
+    if (!id) return true;
+    if (seenIds.has(id)) return false;
+    seenIds.add(id);
+    return true;
+  });
+};
+
 const isMissingTableError = (error) => {
   const message = (error?.message || '').toLowerCase();
   return (
@@ -88,6 +187,8 @@ export const base44 = {
         ...user,
         ...(profile || {}),
         ...(user.user_metadata || {}),
+        // Always preserve the Supabase auth UID even if profile tables also have an `id`.
+        auth_user_id: user.id,
         email: user.email || profile?.email,
       };
     },
@@ -425,7 +526,7 @@ export const base44 = {
         try {
           const { data, error } = await query;
           if (error) throw error;
-          return safeArray(data);
+          return dedupeProducts(data);
         } catch (error) {
           console.error('[base44.entities.Product.list] Failed, returning []', error);
           return [];
@@ -450,7 +551,7 @@ export const base44 = {
         try {
           const { data, error } = await query;
           if (error) throw error;
-          return safeArray(data);
+          return dedupeProducts(data);
         } catch (error) {
           console.error('[base44.entities.Product.filter] Failed, returning []', error);
           return [];

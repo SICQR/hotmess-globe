@@ -32,7 +32,11 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
         });
       }
 
-      const items = await base44.entities.CartItem.filter({ user_email: currentUser.email });
+      const authUserId = currentUser?.auth_user_id || null;
+
+      const items = authUserId
+        ? await base44.entities.CartItem.filter({ auth_user_id: authUserId })
+        : await base44.entities.CartItem.filter({ user_email: currentUser.email });
       return items.filter(item => {
         if (!item.reserved_until) return true;
         return new Date(item.reserved_until) > now;
@@ -53,11 +57,13 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list()
+    // Cart needs to resolve product details even if a product is sold_out/draft.
+    // Product.list() is "active" only in this codebase.
+    queryFn: () => base44.entities.Product.filter({}, '-created_at')
   });
 
   const removeMutation = useMutation({
-    mutationFn: ({ itemId, productId }) => removeFromCart({ itemId, productId, currentUser }),
+    mutationFn: ({ itemId, productId, variantId }) => removeFromCart({ itemId, productId, variantId, currentUser }),
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
       toast.success('Removed from cart');
@@ -65,8 +71,8 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
   });
 
   const updateQuantityMutation = useMutation({
-    mutationFn: ({ itemId, productId, quantity }) =>
-      updateCartItemQuantity({ itemId, productId, quantity, currentUser }),
+    mutationFn: ({ itemId, productId, quantity, variantId }) =>
+      updateCartItemQuantity({ itemId, productId, quantity, variantId, currentUser }),
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
     }
@@ -87,10 +93,12 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
     }
   });
 
-  const cartWithProducts = cartItems.map(item => {
-    const product = products.find(p => p.id === item.product_id);
-    return { ...item, product };
-  }).filter(item => item.product);
+  const cartWithProducts = cartItems
+    .map((item) => {
+      const product = products.find((p) => String(p.id) === String(item.product_id));
+      return { ...item, product };
+    })
+    .filter((item) => item.product);
 
   const totalXP = cartWithProducts.reduce((sum, item) => 
     sum + (item.product.price_xp * item.quantity), 0
@@ -116,7 +124,8 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
             <>
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {cartWithProducts.map(item => (
-                  <div key={item.id ?? item.product_id} className="flex gap-3 p-4 bg-white/5 border border-white/10">
+                  <div key={item.id ?? `${item.product_id}::${item.shopify_variant_id || ''}`}
+                    className="flex gap-3 p-4 bg-white/5 border border-white/10">
                     {item.product.image_urls?.[0] && (
                       <img 
                         src={item.product.image_urls[0]} 
@@ -132,6 +141,9 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
                       >
                         {item.product.name}
                       </Link>
+                      {item.variant_title && (
+                        <p className="text-xs text-white/50 uppercase tracking-wider mt-1">{item.variant_title}</p>
+                      )}
                       <p className="text-sm text-[#FFEB3B] font-mono">{item.product.price_xp} XP each</p>
                       
                       <div className="flex items-center gap-2 mt-2">
@@ -141,20 +153,21 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
                           onClick={() => updateQuantityMutation.mutate({ 
                             itemId: item.id,
                             productId: item.product_id,
-                            quantity: Math.max(1, item.quantity - 1) 
+                            quantity: Math.max(1, item.quantity - 1),
+                            variantId: item.shopify_variant_id,
                           })}
                           className="h-6 w-6 p-0"
                         >
                           <Minus className="w-3 h-3" />
                         </Button>
-                        <span className="text-sm font-bold">{item.quantity}</span>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => updateQuantityMutation.mutate({ 
                             itemId: item.id,
                             productId: item.product_id,
-                            quantity: item.quantity + 1 
+                            quantity: item.quantity + 1,
+                            variantId: item.shopify_variant_id,
                           })}
                           className="h-6 w-6 p-0"
                         >
@@ -165,7 +178,7 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => removeMutation.mutate({ itemId: item.id, productId: item.product_id })}
+                      onClick={() => removeMutation.mutate({ itemId: item.id, productId: item.product_id, variantId: item.shopify_variant_id })}
                       className="text-red-400 hover:text-red-300"
                     >
                       <Trash2 className="w-4 h-4" />

@@ -55,7 +55,7 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
       return addToCart({ productId: product.id, quantity: 1, currentUser });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['cart']);
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast.success('Added to cart!');
     },
     onError: (error) => {
@@ -65,13 +65,40 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
 
   const Icon = TYPE_ICONS[product.product_type] || ShoppingBag;
   const color = TYPE_COLORS[product.product_type] || '#FF1493';
+  const isShopifyProduct = useMemo(() => {
+    const sellerEmail = String(product?.seller_email || '').trim().toLowerCase();
+    const tags = Array.isArray(product?.tags) ? product.tags : [];
+    const details = (() => {
+      const raw = product?.details;
+      if (!raw) return {};
+      if (typeof raw === 'object') return raw;
+      if (typeof raw === 'string') {
+        try {
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch {
+          return {};
+        }
+      }
+      return {};
+    })();
+
+    return (
+      sellerEmail === 'shopify@hotmess.london' ||
+      !!details?.shopify_variant_id ||
+      !!details?.shopify_id ||
+      !!details?.shopify_handle ||
+      String(product?.category || '').trim().toLowerCase() === 'official' ||
+      tags.some((t) => String(t || '').trim().toLowerCase() === 'official')
+    );
+  }, [product?.seller_email, product?.details, product?.tags, product?.category]);
   const isOutOfStock = useMemo(() => 
     product.status === 'sold_out' || (product.inventory_count !== undefined && product.inventory_count <= 0),
     [product.status, product.inventory_count]
   );
   const isLocked = useMemo(() => 
-    product.min_xp_level && currentUserXP < product.min_xp_level,
-    [product.min_xp_level, currentUserXP]
+    !isShopifyProduct && product.min_xp_level && currentUserXP < product.min_xp_level,
+    [isShopifyProduct, product.min_xp_level, currentUserXP]
   );
   const isOfficial = useMemo(() => 
     product.seller_email === 'shopify@hotmess.london' || product.category === 'official' || product.tags?.includes('official'),
@@ -88,7 +115,7 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
       <Link to={createPageUrl(`ProductDetail?id=${product.id}`)}>
         <OSCard 
           locked={isLocked}
-          xpRequired={product.min_xp_level}
+          xpRequired={isLocked ? product.min_xp_level : null}
         >
           {/* Editorial Product Photography */}
           <div 

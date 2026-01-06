@@ -177,7 +177,7 @@ export default function NewMessageModal({ currentUser, allUsers, handshakes, onC
                   <Calendar className="w-3 h-3 mr-1" />
                   Event
                 </TabsTrigger>
-                <TabsTrigger value="squad" className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-black font-black uppercase text-xs">
+                <TabsTrigger value="squad" className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-white font-black uppercase text-xs">
                   <MapPin className="w-3 h-3 mr-1" />
                   Squad
                 </TabsTrigger>

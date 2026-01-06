@@ -25,18 +25,48 @@ function buildSoundCloudPlayerSrc({ urlOrUrn, autoPlay, visual }) {
   const normalized = normalizeSoundCloudRef(urlOrUrn);
   if (!normalized) return null;
 
-  const url = encodeURIComponent(normalized);
-  const params = new URLSearchParams({
-    url,
-    auto_play: autoPlay ? 'true' : 'false',
-    hide_related: 'true',
-    show_comments: 'false',
-    show_user: 'true',
-    show_reposts: 'false',
-    visual: visual ? 'true' : 'false',
-  });
+  const params = new URLSearchParams();
+  // Let URLSearchParams do the encoding. SoundCloud expects a single-encoded URL.
+  params.set('url', normalized);
+  params.set('auto_play', autoPlay ? 'true' : 'false');
+  params.set('visual', visual ? 'true' : 'false');
+
+  // Defaults (kept from previous behavior)
+  params.set('hide_related', 'true');
+  params.set('show_comments', 'false');
+  params.set('show_reposts', 'false');
+  params.set('show_user', 'true');
 
   return `https://w.soundcloud.com/player/?${params.toString()}`;
+}
+
+function applyWidgetParams(searchParams, widgetParams) {
+  if (!widgetParams || typeof widgetParams !== 'object') return;
+
+  const boolParams = [
+    'auto_play',
+    'buying',
+    'sharing',
+    'download',
+    'show_artwork',
+    'show_playcount',
+    'show_user',
+    'single_active',
+  ];
+
+  for (const key of boolParams) {
+    if (widgetParams[key] === undefined || widgetParams[key] === null) continue;
+    searchParams.set(key, widgetParams[key] ? 'true' : 'false');
+  }
+
+  if (widgetParams.color) {
+    searchParams.set('color', String(widgetParams.color));
+  }
+
+  if (widgetParams.start_track !== undefined && widgetParams.start_track !== null) {
+    const n = Number(widgetParams.start_track);
+    if (Number.isFinite(n)) searchParams.set('start_track', String(Math.trunc(n)));
+  }
 }
 
 export default function SoundCloudEmbed({
@@ -46,8 +76,14 @@ export default function SoundCloudEmbed({
   visual = false,
   height,
   className,
+  widgetParams,
 }) {
-  const src = buildSoundCloudPlayerSrc({ urlOrUrn, autoPlay, visual });
+  const baseSrc = buildSoundCloudPlayerSrc({ urlOrUrn, autoPlay, visual });
+  if (!baseSrc) return null;
+
+  const srcUrl = new URL(baseSrc);
+  applyWidgetParams(srcUrl.searchParams, widgetParams);
+  const src = srcUrl.toString();
   if (!src) return null;
 
   const resolvedHeight = height ?? (visual ? 450 : 166);

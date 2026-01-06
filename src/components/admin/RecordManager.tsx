@@ -11,9 +11,9 @@ import logger from '@/utils/logger';
 
 /**
  * RecordManager - RAW CONVICT RECORDS Admin Terminal
- * 
- * Upload WAV files to SoundCloud Pro via Edge Function
- * Automatically creates audio_drop beacons on the globe
+ *
+ * Upload WAV files to storage and publish audio_drop beacons on the globe.
+ * SoundCloud publishing is not wired in this UI yet.
  */
 export default function RecordManager() {
   const [title, setTitle] = useState('');
@@ -193,7 +193,7 @@ export default function RecordManager() {
                   file:mr-4 file:py-2 file:px-4
                   file:border-0
                   file:text-sm file:font-bold
-                  file:bg-[#B026FF] file:text-black
+                  file:bg-[#B026FF] file:text-white
                   hover:file:bg-[#B026FF]/80
                   file:cursor-pointer"
                 required
@@ -208,12 +208,12 @@ export default function RecordManager() {
             <Button
               type="submit"
               disabled={uploading}
-              className="w-full bg-[#B026FF] hover:bg-[#B026FF]/90 text-black font-black text-lg py-6"
+              className="w-full bg-[#B026FF] hover:bg-[#B026FF]/90 text-white font-black text-lg py-6"
             >
               {uploading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  UPLOADING TO SOUNDCLOUD...
+                  UPLOADING...
                 </>
               ) : (
                 <>

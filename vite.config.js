@@ -14,9 +14,9 @@ const importFresh = async (relativePath) => {
   return mod?.default;
 };
 
-function localShopifyApi() {
+function localApiRoutes() {
   return {
-    name: 'local-shopify-api',
+    name: 'local-api-routes',
     configureServer(server) {
       let loggedEnvReloadError = false;
       server.middlewares.use((req, res, next) => {
@@ -34,7 +34,7 @@ function localShopifyApi() {
           if (!loggedEnvReloadError) {
             loggedEnvReloadError = true;
             // Keep this short: it's only for local debugging.
-            console.error('[local-shopify-api] Failed to reload env from .env.local/.env files');
+            console.error('[local-api-routes] Failed to reload env from .env.local/.env files');
           }
         }
 
@@ -55,6 +55,128 @@ function localShopifyApi() {
               res.statusCode = 500;
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify({ error: error?.message || 'Failed to load sync handler' }));
+            });
+        }
+
+        if (path === '/api/shopify/product' && method === 'GET') {
+          return importFresh('./api/shopify/product.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load product handler' }));
+            });
+        }
+
+        if (path === '/api/shopify/cart' && method === 'POST') {
+          return importFresh('./api/shopify/cart.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load cart handler' }));
+            });
+        }
+
+        // Event scraper endpoints (handled locally in dev)
+        if (path === '/api/events/scrape' && method === 'POST') {
+          return importFresh('./api/events/scrape.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load scrape handler' }));
+            });
+        }
+
+        if (path === '/api/events/cron' && (method === 'POST' || method === 'GET')) {
+          return importFresh('./api/events/cron.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load cron handler' }));
+            });
+        }
+
+        if (path === '/api/events/diag' && method === 'GET') {
+          return importFresh('./api/events/diag.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load diag handler' }));
+            });
+        }
+
+        // SoundCloud OAuth + upload + public widgets (handled locally in dev)
+        if (path === '/api/soundcloud/authorize' && method === 'GET') {
+          return importFresh('./api/soundcloud/authorize.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load authorize handler' }));
+            });
+        }
+
+        if (path === '/api/soundcloud/callback' && method === 'GET') {
+          return importFresh('./api/soundcloud/callback.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load callback handler' }));
+            });
+        }
+
+        if (path === '/api/soundcloud/status' && method === 'GET') {
+          return importFresh('./api/soundcloud/status.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load status handler' }));
+            });
+        }
+
+        if (path === '/api/soundcloud/upload' && method === 'POST') {
+          return importFresh('./api/soundcloud/upload.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load upload handler' }));
+            });
+        }
+
+        if (path === '/api/soundcloud/disconnect' && method === 'POST') {
+          return importFresh('./api/soundcloud/disconnect.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load disconnect handler' }));
+            });
+        }
+
+        if (path === '/api/soundcloud/public-profile' && method === 'GET') {
+          return importFresh('./api/soundcloud/public-profile.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load public profile handler' }));
+            });
+        }
+
+        if (path === '/api/soundcloud/public-tracks' && method === 'GET') {
+          return importFresh('./api/soundcloud/public-tracks.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load public tracks handler' }));
             });
         }
 
@@ -79,7 +201,7 @@ export default defineConfig(({ mode }) => {
     envPrefix: ['VITE_', 'vite_public'],
     plugins: [
       // Must come before base44() so these endpoints aren't proxied away in dev.
-      localShopifyApi(),
+      localApiRoutes(),
       base44({
         // Support for legacy code that imports the base44 SDK with @/integrations, @/entities, etc.
         // can be removed if the code has been updated to use the new SDK imports from @base44/sdk
@@ -89,6 +211,17 @@ export default defineConfig(({ mode }) => {
         visualEditAgent: true
       }),
       react(),
-    ]
+    ],
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './src/test/setup.js',
+      css: true,
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'json', 'html'],
+        exclude: ['node_modules/', 'src/test/', '**/dist/**'],
+      },
+    },
   };
 });

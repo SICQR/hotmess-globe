@@ -115,10 +115,11 @@ export default function OrderHistory() {
           continue;
         }
 
-        const existingCartItems = await base44.entities.CartItem.filter({
-          user_email: currentUser.email,
-          product_id: item.product_id
-        });
+        const cartOwnerFilter = currentUser?.auth_user_id
+          ? { auth_user_id: currentUser.auth_user_id, product_id: item.product_id }
+          : { user_email: currentUser.email, product_id: item.product_id };
+
+        const existingCartItems = await base44.entities.CartItem.filter(cartOwnerFilter);
 
         if (existingCartItems.length > 0) {
           await base44.entities.CartItem.update(existingCartItems[0].id, {
@@ -127,6 +128,7 @@ export default function OrderHistory() {
           });
         } else {
           await base44.entities.CartItem.create({
+            ...(currentUser?.auth_user_id ? { auth_user_id: currentUser.auth_user_id } : {}),
             user_email: currentUser.email,
             product_id: item.product_id,
             quantity: item.quantity,
