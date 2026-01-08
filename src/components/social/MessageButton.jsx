@@ -1,30 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { MessageCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { createPageUrl } from '../../utils';
 import { toast } from 'sonner';
-import HandshakeButton from './HandshakeButton';
 
 export default function MessageButton({ targetUser, currentUser, threadType = 'dm', metadata = {}, className = '' }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  // Check if handshake exists
-  const { data: handshake } = useQuery({
-    queryKey: ['handshake', currentUser?.email, targetUser?.email],
-    queryFn: async () => {
-      const sessions = await base44.entities.BotSession.list();
-      return sessions.find(s => 
-        ((s.initiator_email === currentUser.email && s.target_email === targetUser.email) ||
-         (s.initiator_email === targetUser.email && s.target_email === currentUser.email)) &&
-        s.status === 'accepted'
-      );
-    },
-    enabled: !!currentUser && !!targetUser && threadType === 'dm',
-  });
 
   const createThreadMutation = useMutation({
     mutationFn: async () => {
@@ -54,7 +38,7 @@ export default function MessageButton({ targetUser, currentUser, threadType = 'd
     },
     onSuccess: (thread) => {
       queryClient.invalidateQueries(['chat-threads']);
-      navigate(createPageUrl('Messages'));
+      navigate(`/social/t/${encodeURIComponent(String(thread?.id || ''))}`);
     },
     onError: () => {
       toast.error('Failed to start conversation');
@@ -72,26 +56,8 @@ export default function MessageButton({ targetUser, currentUser, threadType = 'd
       return;
     }
 
-    // Check handshake for DM threads
-    if (threadType === 'dm' && !handshake) {
-      toast.error('Complete Telegram handshake first');
-      return;
-    }
-
     createThreadMutation.mutate();
   };
-
-  // For DM threads, require handshake first
-  if (threadType === 'dm' && !handshake) {
-    return (
-      <HandshakeButton
-        targetUser={targetUser}
-        currentUser={currentUser}
-        variant="default"
-        className={className}
-      />
-    );
-  }
 
   return (
     <Button

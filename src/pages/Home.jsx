@@ -8,6 +8,8 @@ import { MapPin, ShoppingBag, Users, Radio, Heart, Calendar, Zap, ArrowRight } f
 import { Button } from '@/components/ui/button';
 import { useServerNow } from '@/hooks/use-server-now';
 import { toast } from 'sonner';
+import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
+import { format } from 'date-fns';
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
 const HNHMESS_RELEASE_AT_FALLBACK = new Date('2026-01-10T00:00:00Z');
@@ -23,6 +25,31 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
   const queryClient = useQueryClient();
   const { serverNow } = useServerNow();
+
+  const nextRadioUp = useMemo(() => {
+    const candidates = (schedule?.shows || [])
+      .map((show) => {
+        const nextEpisode = getNextEpisode(show?.id);
+        if (!show || !nextEpisode?.date) return null;
+        return { show, nextEpisode };
+      })
+      .filter(Boolean);
+
+    if (!candidates.length) return null;
+    return candidates.sort((a, b) => a.nextEpisode.date - b.nextEpisode.date)[0];
+  }, [serverNow]);
+
+  const handleAddNextShowToCalendar = () => {
+    if (!nextRadioUp?.show || !nextRadioUp?.nextEpisode) {
+      toast.error('No scheduled shows found.');
+      return;
+    }
+
+    const ics = generateICS(nextRadioUp.show, nextRadioUp.nextEpisode);
+    const filename = `${nextRadioUp.show.slug || nextRadioUp.show.id}-${format(nextRadioUp.nextEpisode.date, 'yyyy-MM-dd')}.ics`;
+    downloadICS(ics, filename);
+    toast.success('Calendar file downloaded.');
+  };
 
   const formatLondonDateTime = (value) => {
     try {
@@ -223,6 +250,13 @@ export default function Home() {
     fetchUser();
   }, []);
 
+  const tonightEvent = useMemo(() => {
+    const events = Array.isArray(recentBeacons)
+      ? recentBeacons.filter((b) => String(b?.kind || '').toLowerCase() === 'event')
+      : [];
+    return events[0] || null;
+  }, [recentBeacons]);
+
   return (
     <div className="min-h-screen bg-black text-white pb-20">
       {/* HERO */}
@@ -255,13 +289,13 @@ export default function Home() {
             RAW / HUNG / HIGH / SUPER + HNH MESS. No filler. No shame.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Link to={createPageUrl('Connect')}>
+            <Link to="/social">
               <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg shadow-2xl">
                 <Users className="w-5 h-5 mr-2" />
-                CONNECT NOW
+                SOCIAL
               </Button>
             </Link>
-            <Link to={createPageUrl('Marketplace')}>
+            <Link to="/market">
               <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg shadow-2xl backdrop-blur-sm">
                 <ShoppingBag className="w-5 h-5 mr-2" />
                 SHOP THE DROP
@@ -426,7 +460,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <Link to={createPageUrl('Marketplace')}>
+              <Link to="/market">
                 <div className="group relative aspect-[4/3] overflow-hidden">
                   <img 
                     src="https://images.unsplash.com/photo-1483118714900-540cf339fd46?w=800&q=90" 
@@ -448,7 +482,7 @@ export default function Home() {
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
             >
-              <Link to={createPageUrl('Marketplace')}>
+              <Link to="/market">
                 <div className="group relative aspect-[4/3] overflow-hidden">
                   <img 
                     src="/images/hung-hero.png"
@@ -474,7 +508,7 @@ export default function Home() {
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
             >
-              <Link to={createPageUrl('Marketplace')}>
+              <Link to="/market">
                 <div className="group relative aspect-[4/3] overflow-hidden">
                   <img 
                     src="https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=800&q=90" 
@@ -496,7 +530,7 @@ export default function Home() {
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
             >
-              <Link to={createPageUrl('Marketplace')}>
+              <Link to="/market">
                 <div className="group relative aspect-[4/3] overflow-hidden">
                   <img 
                     src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=90" 
@@ -583,14 +617,14 @@ export default function Home() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <p className="text-xs uppercase tracking-[0.4em] text-white/80 mb-4">DISCOVERY</p>
-              <h2 className="text-6xl md:text-8xl font-black italic mb-8 drop-shadow-2xl">FIND YOUR TRIBE</h2>
+              <p className="text-xs uppercase tracking-[0.4em] text-white/80 mb-4">SOCIAL</p>
+              <h2 className="text-6xl md:text-8xl font-black italic mb-8 drop-shadow-2xl">RIGHT NOW</h2>
               <p className="text-xl mb-8 leading-relaxed drop-shadow-lg">
                 Compatibility-first discovery. No swiping. No ghosts. Just good chemistry backed by real data.
               </p>
-              <Link to={createPageUrl('Connect')}>
+              <Link to="/social">
                 <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 text-lg shadow-2xl">
-                  START CONNECTING
+                  DISCOVER
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
@@ -642,63 +676,101 @@ export default function Home() {
               TONIGHT<span className="text-[#00D9FF]">.</span>
             </h2>
             <p className="text-xl uppercase tracking-wider text-white/60 max-w-2xl">
-              Live beacon network. Real-time intensity. Verified check-ins.
+              Three moves you can actually make.
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {recentBeacons.length > 0 ? (
-              recentBeacons.map((beacon, idx) => (
-                <motion.div
-                 key={beacon.id}
-                 initial={{ opacity: 0, y: 20 }}
-                 whileInView={{ opacity: 1, y: 0 }}
-                 viewport={{ once: true }}
-                 transition={{ delay: idx * 0.1 }}
-                >
-                 <Link to={createPageUrl(`BeaconDetail?id=${beacon.id}`)}>
-                   <div className="group relative aspect-[4/3] overflow-hidden bg-white/5">
-                     {beacon.image_url ? (
-                       <img 
-                         src={beacon.image_url} 
-                         alt={beacon.title}
-                         className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                       />
-                     ) : (
-                       <img 
-                         src="https://images.unsplash.com/photo-1571266028243-d220ee4cb5cd?w=600&q=80" 
-                         alt={beacon.title}
-                         className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                       />
-                     )}
-                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-                     <div className="absolute bottom-0 left-0 right-0 p-6">
-                       <div className="flex items-start justify-between mb-3">
-                         <div className="px-2 py-1 bg-[#00D9FF] text-black text-xs font-black uppercase">
-                           {beacon.kind}
-                         </div>
-                         <MapPin className="w-4 h-4 text-white" />
-                       </div>
-                       <h3 className="font-black text-xl mb-2 text-white drop-shadow-lg">{beacon.title}</h3>
-                       <p className="text-sm text-white/80 mb-3 line-clamp-2 drop-shadow-md">{beacon.description}</p>
-                       <div className="flex items-center gap-2 text-xs text-white/70">
-                         <Calendar className="w-3 h-3" />
-                         <span className="uppercase">{beacon.city}</span>
-                       </div>
-                     </div>
-                   </div>
-                 </Link>
-                </motion.div>
-              ))
-            ) : (
-              <div className="col-span-3 text-center py-12 text-white/40">
-                <p className="text-lg uppercase">No upcoming events</p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="bg-white/5 border-2 border-white/10 p-6 h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-[#00D9FF] text-black flex items-center justify-center">
+                    <Calendar className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-black uppercase">RSVP</h3>
+                </div>
+
+                {tonightEvent ? (
+                  <>
+                    <p className="text-white/60 uppercase tracking-wider text-xs mb-2">Tonight</p>
+                    <p className="text-2xl font-black mb-2">{tonightEvent.title}</p>
+                    <p className="text-white/70 text-sm mb-6 line-clamp-2">{tonightEvent.description}</p>
+                    <Link to={`/events/${encodeURIComponent(tonightEvent.id)}`}>
+                      <Button className="bg-[#00D9FF] hover:bg-white text-black font-black uppercase w-full">
+                        RSVP
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-white/70 text-sm mb-6">
+                      Find what’s on and lock it in.
+                    </p>
+                    <Link to="/events">
+                      <Button className="bg-[#00D9FF] hover:bg-white text-black font-black uppercase w-full">
+                        VIEW EVENTS
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
-            )}
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="bg-white/5 border-2 border-white/10 p-6 h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-white/10 flex items-center justify-center">
+                    <MapPin className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-black uppercase">OPEN IN PULSE</h3>
+                </div>
+                <p className="text-white/70 text-sm mb-6">
+                  Map + layers. Find the energy.
+                </p>
+                <Link to="/pulse">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase w-full">
+                    OPEN PULSE
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="bg-white/5 border-2 border-white/10 p-6 h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-white/10 flex items-center justify-center">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-black uppercase">DISCOVER</h3>
+                </div>
+                <p className="text-white/70 text-sm mb-6">
+                  Right now guys near you.
+                </p>
+                <Link to="/social">
+                  <Button className="bg-white text-black hover:bg-black hover:text-white font-black uppercase w-full">
+                    GO RIGHT NOW
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
           </div>
 
           <div className="text-center">
-            <Link to={createPageUrl('Events')}>
+            <Link to="/events">
               <Button className="bg-[#00D9FF] hover:bg-white text-black font-black uppercase px-8 py-4 text-lg shadow-2xl">
                 VIEW ALL EVENTS
               </Button>
@@ -726,16 +798,37 @@ export default function Home() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Radio className="w-12 h-12 drop-shadow-lg" />
-                <h2 className="text-5xl font-black italic drop-shadow-lg">RADIO</h2>
+                <h2 className="text-5xl font-black italic drop-shadow-lg">ON AIR</h2>
               </div>
               <p className="text-xl mb-8 leading-relaxed text-white drop-shadow-md">
-                24/7 stream. London OS soundtrack. No ads. Just frequency.
+                Live now on HOTMESS RADIO.
               </p>
-              <Link to={createPageUrl('Radio')}>
-                <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl">
-                  LISTEN NOW
+
+              {nextRadioUp?.show && nextRadioUp?.nextEpisode && (
+                <p className="text-sm uppercase tracking-wider text-white/70 mb-6 drop-shadow-md">
+                  Next up: {nextRadioUp.show.title} • {format(nextRadioUp.nextEpisode.date, 'EEE d MMM')} • {nextRadioUp.nextEpisode.startTime} (London)
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-3">
+                <Link to="/music/live">
+                  <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl">
+                    LISTEN LIVE
+                  </Button>
+                </Link>
+                <Button
+                  onClick={handleAddNextShowToCalendar}
+                  variant="outline"
+                  className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl backdrop-blur-sm"
+                >
+                  ADD NEXT SHOW TO CALENDAR
                 </Button>
-              </Link>
+                <Link to="/music/schedule">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl backdrop-blur-sm">
+                    BROWSE SHOWS
+                  </Button>
+                </Link>
+              </div>
             </motion.div>
 
             <motion.div
@@ -746,17 +839,62 @@ export default function Home() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <Heart className="w-12 h-12 drop-shadow-lg" />
-                <h2 className="text-5xl font-black italic drop-shadow-lg">CARE</h2>
+                <h2 className="text-5xl font-black italic drop-shadow-lg">SAFETY CHECK</h2>
               </div>
               <p className="text-xl mb-8 leading-relaxed text-white drop-shadow-md">
-                Aftercare checklists. Emergency contacts. Community resources. Because preparation isn't paranoia.
+                You good?
               </p>
-              <div className="flex gap-3">
-                <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-[#B026FF] font-black uppercase shadow-2xl backdrop-blur-sm">
-                  LEARN MORE
+              <div className="flex flex-wrap gap-3">
+                <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl">
+                  ALL GOOD
                 </Button>
+                <Link to="/safety/resources">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm">
+                    NEED A MINUTE
+                  </Button>
+                </Link>
+                <Link to="/safety">
+                  <Button className="bg-white text-black hover:bg-black hover:text-white font-black uppercase shadow-2xl">
+                    SAFETY
+                  </Button>
+                </Link>
               </div>
             </motion.div>
+          </div>
+
+          <div className="mt-10 flex flex-wrap gap-3 justify-center">
+            <Link to="/pulse">
+              <Button
+                variant="outline"
+                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm"
+              >
+                OPEN PULSE
+              </Button>
+            </Link>
+            <Link to="/calendar">
+              <Button
+                variant="outline"
+                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm"
+              >
+                CALENDAR
+              </Button>
+            </Link>
+            <Link to="/events">
+              <Button
+                variant="outline"
+                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm"
+              >
+                EVENTS
+              </Button>
+            </Link>
+            <Link to="/market">
+              <Button
+                variant="outline"
+                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm"
+              >
+                MARKET
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -779,14 +917,14 @@ export default function Home() {
             <div className="space-y-4">
               <p className="text-xl text-[#39FF14]">Welcome back, {currentUser.full_name}</p>
               <div className="flex flex-wrap gap-4 justify-center">
-                <Link to={createPageUrl('Connect')}>
+                <Link to="/social">
                   <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg">
                     GO RIGHT NOW
                   </Button>
                 </Link>
-                <Link to={createPageUrl('Globe')}>
+                <Link to="/pulse">
                   <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
-                    VIEW GLOBE
+                    OPEN PULSE
                   </Button>
                 </Link>
                 {currentUser.role !== 'admin' && (
@@ -799,7 +937,7 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <Link to={createPageUrl('Onboarding')}>
+            <Link to="/auth">
               <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-12 py-8 text-2xl">
                 GET STARTED
               </Button>

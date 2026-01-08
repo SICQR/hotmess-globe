@@ -4,9 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { createPageUrl } from '../../utils';
 import { useNavigate } from 'react-router-dom';
-import HandshakeButton from '../social/HandshakeButton';
 
 export default function QuickActions({ profileUser, currentUser, isOwnProfile }) {
   const queryClient = useQueryClient();
@@ -57,12 +55,9 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
 
   const handleMessage = () => {
     if (existingThread) {
-      navigate(createPageUrl(`Messages?thread=${existingThread.id}`));
+      navigate(`/social/t/${encodeURIComponent(String(existingThread.id))}`);
     } else {
-      navigate(createPageUrl('Messages'));
-      toast('Start a new conversation', { 
-        description: 'Select the user to message them' 
-      });
+      navigate(`/social/inbox?to=${encodeURIComponent(String(profileUser?.email || ''))}`);
     }
   };
 
@@ -111,12 +106,6 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
         <MessageCircle className="w-4 h-4 mr-2" />
         MESSAGE
       </Button>
-
-      <HandshakeButton
-        targetUser={profileUser}
-        currentUser={currentUser}
-        className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black border-2 border-white"
-      />
 
       <Button
         onClick={handleShare}

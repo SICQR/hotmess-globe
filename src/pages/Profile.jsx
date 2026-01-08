@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -22,23 +22,92 @@ import RightNowIndicator from '../components/discovery/RightNowIndicator';
 import ProfileCompleteness from '../components/profile/ProfileCompleteness';
 import WelcomeTour from '../components/onboarding/WelcomeTour';
 import VibeSynthesisCard from '../components/vibe/VibeSynthesisCard';
+import { fetchRoutingEtas } from '@/api/connectProximity';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
-  const userEmail = searchParams.get('email');
+  const emailParam = searchParams.get('email');
+  const uidParam = searchParams.get('uid') || searchParams.get('auth_user_id');
   const queryClient = useQueryClient();
   
   const { data: currentUser } = useCurrentUser();
-  const { data: allUsers = [] } = useAllUsers();
+  const { data: allUsers = [], isLoading: isLoadingAllUsers } = useAllUsers();
 
-  const profileUser = userEmail ? allUsers.find(u => u.email === userEmail) : currentUser;
-  const isSetupMode = !profileUser?.full_name || !profileUser?.avatar_url;
+  const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+  const normalizeId = (value) => String(value || '').trim().toLowerCase();
+
+  const isViewingOtherUser = !!emailParam || !!uidParam;
+
+  const cachedProfileUser = emailParam
+    ? allUsers.find((u) => normalizeEmail(u?.email) === normalizeEmail(emailParam))
+    : uidParam
+      ? allUsers.find((u) => normalizeId(u?.auth_user_id || u?.authUserId || u?.id) === normalizeId(uidParam))
+      : null;
+
+  const { data: fetchedProfileUser, isLoading: isLoadingFetchedProfileUser } = useQuery({
+    queryKey: ['profile-user-by-param', normalizeEmail(emailParam), normalizeId(uidParam)],
+    queryFn: async () => {
+      if (!isViewingOtherUser) return null;
+
+      const email = emailParam ? normalizeEmail(emailParam) : '';
+      const uid = uidParam ? normalizeId(uidParam) : '';
+
+      const qs = new URLSearchParams();
+      if (email) qs.set('email', email);
+      else if (uid) qs.set('uid', uid);
+      else return null;
+
+      const res = await fetch(`/api/profile?${qs.toString()}`, { method: 'GET' });
+      if (res.status === 404) return null;
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Profile lookup failed (${res.status}): ${text}`);
+      }
+
+      const payload = await res.json();
+      return payload?.user || null;
+
+      return null;
+    },
+    enabled: isViewingOtherUser && !cachedProfileUser,
+    retry: false,
+    staleTime: 60000,
+  });
+
+  const profileUser = cachedProfileUser || fetchedProfileUser || (!isViewingOtherUser ? currentUser : null);
+
+  const userEmail = emailParam || profileUser?.email || null;
+  const isSetupMode =
+    !profileUser?.full_name ||
+    !profileUser?.avatar_url ||
+    !profileUser?.city ||
+    !profileUser?.profile_type;
 
   // State for profile setup
   const [fullName, setFullName] = useState('');
   const [avatarFile, setAvatarFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [profileType, setProfileType] = useState('standard');
+  const [city, setCity] = useState('');
+  const [bio, setBio] = useState('');
+  const [sellerTagline, setSellerTagline] = useState('');
+  const [sellerBio, setSellerBio] = useState('');
+  const [shopBannerUrl, setShopBannerUrl] = useState('');
+
+  useEffect(() => {
+    // Prefill setup form for current user (setup mode only runs when !userEmail).
+    if (!profileUser) return;
+    if (isViewingOtherUser) return;
+
+    setFullName(String(profileUser?.full_name || ''));
+    setProfileType(String(profileUser?.profile_type || 'standard'));
+    setCity(String(profileUser?.city || ''));
+    setBio(String(profileUser?.bio || ''));
+    setSellerTagline(String(profileUser?.seller_tagline || ''));
+    setSellerBio(String(profileUser?.seller_bio || ''));
+    setShopBannerUrl(String(profileUser?.shop_banner_url || ''));
+  }, [profileUser, isViewingOtherUser]);
 
   const { data: checkIns = [] } = useQuery({
     queryKey: ['check-ins', userEmail],
@@ -75,7 +144,7 @@ export default function Profile() {
     queryFn: () => base44.entities.Achievement.list()
   });
 
-  const { data: allBeacons = [] } = useQuery({
+  const { data: _allBeacons = [] } = useQuery({
     queryKey: ['all-beacons'],
     queryFn: () => base44.entities.Beacon.list()
   });
@@ -91,22 +160,77 @@ export default function Profile() {
     queryFn: () => base44.entities.Squad.list()
   });
 
-  const isFollowing = following.some(f => f.following_email === userEmail);
+  const _isFollowing = following.some(f => f.following_email === userEmail);
   const isOwnProfile = currentUser?.email === userEmail;
 
-  // Check if current user has handshake with profile user
-  const { data: handshakeExists } = useQuery({
-    queryKey: ['handshake-check', currentUser?.email, userEmail],
-    queryFn: async () => {
-      if (!currentUser || isOwnProfile) return true;
-      const sessions = await base44.entities.BotSession.list();
-      return sessions.some(s => 
-        ((s.initiator_email === currentUser.email && s.target_email === userEmail) ||
-         (s.initiator_email === userEmail && s.target_email === currentUser.email)) &&
-        s.status === 'accepted'
-      );
-    },
-    enabled: !!currentUser && !!userEmail,
+  const [viewerOrigin, setViewerOrigin] = useState(null);
+
+  const haversineMeters = useCallback((a, b) => {
+    if (!a || !b) return Infinity;
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(b.lat - a.lat);
+    const dLng = toRad(b.lng - a.lng);
+    const lat1 = toRad(a.lat);
+    const lat2 = toRad(b.lat);
+
+    const sinDLat = Math.sin(dLat / 2);
+    const sinDLng = Math.sin(dLng / 2);
+    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+    return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  }, []);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    let last = null;
+    const id = navigator.geolocation.watchPosition(
+      (pos) => {
+        const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        if (!last || haversineMeters(last, next) >= 500) {
+          last = next;
+          setViewerOrigin(next);
+        }
+      },
+      () => {},
+      { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(id);
+  }, [haversineMeters]);
+
+  const destination =
+    Number.isFinite(profileUser?.last_lat) && Number.isFinite(profileUser?.last_lng)
+      ? { lat: profileUser.last_lat, lng: profileUser.last_lng }
+      : Number.isFinite(profileUser?.lat) && Number.isFinite(profileUser?.lng)
+        ? { lat: profileUser.lat, lng: profileUser.lng }
+        : null;
+
+  // In-app "connection" is a mutual follow (no Telegram handshake).
+  const { data: viewerFollowing = [] } = useQuery({
+    queryKey: ['viewer-following', currentUser?.email],
+    queryFn: () => base44.entities.UserFollow.filter({ follower_email: currentUser.email }),
+    enabled: !!currentUser?.email,
+  });
+
+  const viewerFollowsProfile =
+    !!currentUser?.email &&
+    !!userEmail &&
+    viewerFollowing.some((f) => normalizeEmail(f?.following_email) === normalizeEmail(userEmail));
+
+  const profileFollowsViewer =
+    !!currentUser?.email &&
+    followers.some((f) => normalizeEmail(f?.follower_email) === normalizeEmail(currentUser?.email));
+
+  const isConnection = isOwnProfile || (viewerFollowsProfile && profileFollowsViewer);
+
+  const { data: travelEtas } = useQuery({
+    queryKey: ['routing-etas', currentUser?.email, userEmail, viewerOrigin?.lat, viewerOrigin?.lng, destination?.lat, destination?.lng],
+    queryFn: () => fetchRoutingEtas({ origin: viewerOrigin, destination, ttlSeconds: 120, modes: ['WALK', 'DRIVE', 'BICYCLE'] }),
+    enabled: !!currentUser?.email && !!userEmail && !isOwnProfile && !!viewerOrigin && !!destination,
+    retry: false,
+    staleTime: 60000,
+    refetchInterval: 60000,
   });
 
   const { data: rightNowStatus } = useQuery({
@@ -133,7 +257,7 @@ export default function Profile() {
           viewed_email: userEmail,
           viewed_at: new Date().toISOString(),
         });
-      } catch (error) {
+      } catch {
         console.log('Failed to track profile view');
       }
     };
@@ -150,12 +274,12 @@ export default function Profile() {
 
   const viewCount = profileViews.length;
   const tierRaw = currentUser?.membership_tier;
-  const tier = tierRaw === 'free' ? 'basic' : tierRaw || 'basic';
+  const _tier = tierRaw === 'free' ? 'basic' : tierRaw || 'basic';
   const level = Math.floor(((profileUser?.xp ?? 0) || 0) / 1000) + 1;
   // Chrome tier: Level 5+ can see WHO viewed their profile
   const canSeeViewers = level >= 5;
 
-  const followMutation = useMutation({
+  const _followMutation = useMutation({
     mutationFn: () => base44.entities.UserFollow.create({
       follower_email: currentUser.email,
       following_email: userEmail
@@ -163,7 +287,7 @@ export default function Profile() {
     onSuccess: () => queryClient.invalidateQueries(['following', currentUser.email])
   });
 
-  const unfollowMutation = useMutation({
+  const _unfollowMutation = useMutation({
     mutationFn: () => {
       const followRecord = following.find(f => f.following_email === userEmail);
       return base44.entities.UserFollow.delete(followRecord.id);
@@ -228,6 +352,16 @@ export default function Profile() {
       return;
     }
 
+    if (!String(profileType || '').trim()) {
+      toast.error('Please choose a profile type');
+      return;
+    }
+
+    if (!String(city || '').trim()) {
+      toast.error('Please enter your city');
+      return;
+    }
+
     setSaving(true);
     setUploading(true);
 
@@ -236,7 +370,13 @@ export default function Profile() {
       setUploading(false);
       await base44.auth.updateMe({
         full_name: fullName.trim(),
-        avatar_url: file_url
+        avatar_url: file_url,
+        profile_type: profileType,
+        city: city.trim(),
+        bio: bio.trim(),
+        seller_tagline: profileType === 'seller' ? sellerTagline.trim() : null,
+        seller_bio: profileType === 'seller' ? sellerBio.trim() : null,
+        shop_banner_url: profileType === 'seller' ? shopBannerUrl.trim() : null,
       });
       toast.success('Profile complete!');
 	  window.location.href = createPageUrl('Home');
@@ -250,6 +390,33 @@ export default function Profile() {
   };
 
   if (!profileUser) {
+    const isLoading = isViewingOtherUser
+      ? isLoadingAllUsers || isLoadingFetchedProfileUser
+      : false;
+
+    if (!isLoading && isViewingOtherUser) {
+      return (
+        <ErrorBoundary>
+          <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
+            <div className="max-w-md w-full text-center">
+              <h1 className="text-2xl font-black uppercase tracking-tight">Profile not found</h1>
+              <p className="mt-2 text-white/60 text-sm">
+                This profile may be private, deleted, or not accessible in your environment.
+              </p>
+              <div className="mt-6 flex items-center justify-center gap-3">
+                <Button onClick={() => (window.location.href = createPageUrl('Home'))}>
+                  Go Home
+                </Button>
+                <Button variant="outline" onClick={() => window.history.back()}>
+                  Back
+                </Button>
+              </div>
+            </div>
+          </div>
+        </ErrorBoundary>
+      );
+    }
+
     return (
       <ErrorBoundary>
         <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -323,9 +490,120 @@ export default function Profile() {
               />
             </div>
 
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-white/40 mb-2">
+                Profile Type
+              </label>
+              <p className="text-xs text-white/50 mb-3">
+                This powers your card and unlocks different experiences.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: 'standard', label: 'STANDARD', desc: 'Connect + social' },
+                  { value: 'seller', label: 'SELLER', desc: 'MessMarket shop' },
+                  { value: 'creator', label: 'CREATOR', desc: 'Music + events' },
+                  { value: 'premium', label: 'PREMIUM', desc: 'Exclusive content' },
+                ].map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setProfileType(t.value)}
+                    className={`p-4 text-left border-2 transition-all ${
+                      profileType === t.value
+                        ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                        : 'bg-white/5 border-white/20 text-white hover:border-white/40'
+                    }`}
+                  >
+                    <div className="font-black uppercase text-xs mb-1">{t.label}</div>
+                    <div className="text-[10px] opacity-70">{t.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-white/40 mb-2">
+                City
+              </label>
+              <Input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="London"
+                className="bg-white/5 border-2 border-white/20 text-white"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-white/40 mb-2">
+                Bio (Optional)
+              </label>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="What are you about? What are you here for?"
+                rows={4}
+                className="w-full bg-white/5 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#FF1493] focus:outline-none"
+              />
+            </div>
+
+            {profileType === 'seller' && (
+              <div className="border-2 border-[#00D9FF] p-4 bg-black">
+                <div className="mb-3">
+                  <p className="text-xs uppercase tracking-widest text-[#00D9FF] font-black">Seller Details</p>
+                  <p className="text-xs text-white/50">These show up on your card and help cross-sell.</p>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-white/40 mb-2">
+                      Shop Tagline
+                    </label>
+                    <Input
+                      type="text"
+                      value={sellerTagline}
+                      onChange={(e) => setSellerTagline(e.target.value)}
+                      placeholder="Club gear, prints, styling, tickets…"
+                      className="bg-white/5 border-2 border-white/20 text-white"
+                      maxLength={60}
+                    />
+                    <p className="text-xs text-white/40 mt-1">{sellerTagline.length}/60</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-white/40 mb-2">
+                      Seller Bio (Optional)
+                    </label>
+                    <textarea
+                      value={sellerBio}
+                      onChange={(e) => setSellerBio(e.target.value)}
+                      placeholder="What you sell, shipping/pickup, collaborations…"
+                      rows={4}
+                      maxLength={500}
+                      className="w-full bg-white/5 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#00D9FF] focus:outline-none"
+                    />
+                    <p className="text-xs text-white/40 mt-1">{sellerBio.length}/500</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-white/40 mb-2">
+                      Shop Banner URL (Optional)
+                    </label>
+                    <Input
+                      type="url"
+                      value={shopBannerUrl}
+                      onChange={(e) => setShopBannerUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="bg-white/5 border-2 border-white/20 text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <Button
               type="submit"
-              disabled={saving || !fullName.trim() || !avatarFile}
+              disabled={saving || !fullName.trim() || !avatarFile || !String(profileType || '').trim() || !String(city || '').trim()}
               className="w-full bg-[#FF1493] hover:bg-white text-white hover:text-black font-black text-lg py-6 border-2 border-white"
             >
               {saving ? (
@@ -343,7 +621,7 @@ export default function Profile() {
     );
   }
 
-  const profileType = profileUser?.profile_type || 'standard';
+  const profileTypeKey = profileUser?.profile_type || 'standard';
 
   return (
     <ErrorBoundary>
@@ -363,6 +641,7 @@ export default function Profile() {
           user={profileUser} 
           isOwnProfile={isOwnProfile} 
           currentUser={currentUser} 
+          travelEtas={travelEtas}
         />
 
         <div className="max-w-4xl mx-auto p-4 md:p-8">
@@ -386,7 +665,7 @@ export default function Profile() {
             </motion.div>
           )}
 
-          {/* Social Links - Behind Handshake */}
+          {/* Social Links - visible to mutual follows */}
           {profileUser.social_links && Object.values(profileUser.social_links).some(v => v) && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -394,7 +673,7 @@ export default function Profile() {
               className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6"
             >
 
-              {handshakeExists ? (
+              {isConnection ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 mb-3">
                     <Lock className="w-4 h-4 text-[#00D9FF]" />
@@ -457,20 +736,20 @@ export default function Profile() {
               ) : (
                 <div className="flex items-center gap-2 text-xs text-white/40">
                   <Lock className="w-4 h-4" />
-                  <p>Complete Telegram handshake to view social links</p>
+                  <p>Mutual follow required to view social links</p>
                 </div>
               )}
             </motion.div>
           )}
 
           {/* Profile Type Specific View */}
-          {profileType === 'seller' ? (
+          {profileTypeKey === 'seller' ? (
             <SellerProfileView user={profileUser} />
           ) : (
             <StandardProfileView 
               user={profileUser} 
               currentUser={currentUser} 
-              isHandshakeConnection={handshakeExists} 
+              isHandshakeConnection={isConnection} 
             />
           )}
 

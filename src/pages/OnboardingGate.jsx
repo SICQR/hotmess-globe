@@ -18,7 +18,13 @@ export default function OnboardingGate() {
   });
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [dataConsent, setDataConsent] = useState(false);
-  const [gpsConsent, setGpsConsent] = useState(false);
+  const [gpsConsent, setGpsConsent] = useState(() => {
+    try {
+      return sessionStorage.getItem('location_consent') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
@@ -54,7 +60,7 @@ export default function OnboardingGate() {
     if (step === 2 && !termsAgreed) {
       return;
     }
-    if (step === 3 && (!dataConsent || !gpsConsent)) {
+    if (step === 3 && !dataConsent) {
       return;
     }
     
@@ -63,7 +69,7 @@ export default function OnboardingGate() {
       await base44.auth.updateMe({
         has_agreed_terms: termsAgreed,
         has_consented_data: dataConsent,
-        has_consented_gps: gpsConsent
+        has_consented_gps: gpsConsent,
       });
       setStep(4);
     } else {
@@ -210,7 +216,7 @@ export default function OnboardingGate() {
             </div>
             <Button 
               onClick={handleNext}
-              disabled={!dataConsent || !gpsConsent}
+              disabled={!dataConsent}
               className="bg-[#B026FF] text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg disabled:opacity-50"
             >
               Continue

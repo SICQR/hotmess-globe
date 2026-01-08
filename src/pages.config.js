@@ -36,6 +36,7 @@ import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
+import ProfilesGrid from './pages/ProfilesGrid';
 import ProfileSetup from './pages/ProfileSetup';
 import PromoteToAdmin from './pages/PromoteToAdmin';
 import Pulse from './pages/Pulse';
@@ -94,6 +95,7 @@ export const PAGES = {
     "OrganizerDashboard": OrganizerDashboard,
     "ProductDetail": ProductDetail,
     "Profile": Profile,
+    "ProfilesGrid": ProfilesGrid,
     "ProfileSetup": ProfileSetup,
     "PromoteToAdmin": PromoteToAdmin,
     "Pulse": Pulse,

@@ -1,4 +1,3 @@
-import base44 from "@base44/vite-plugin"
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 import path from 'node:path'
@@ -23,6 +22,15 @@ function localApiRoutes() {
         const method = (req.method || 'GET').toUpperCase();
         const url = req.url || '';
         const path = url.split('?')[0];
+
+        // Vercel-style handlers often expect `req.query`.
+        // Vite's dev server (connect) does not populate it by default.
+        try {
+          const parsed = new URL(url, 'http://localhost');
+          req.query = Object.fromEntries(parsed.searchParams.entries());
+        } catch {
+          // ignore
+        }
 
         // Reload env on each request so `.env.local` edits apply without a restart.
         try {
@@ -106,6 +114,83 @@ function localApiRoutes() {
               res.statusCode = 500;
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify({ error: error?.message || 'Failed to load diag handler' }));
+            });
+        }
+
+        // Connect proximity endpoints (handled locally in dev)
+        if (path === '/api/nearby' && method === 'GET') {
+          return importFresh('./api/nearby.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load nearby handler' }));
+            });
+        }
+
+        if (path === '/api/routing/etas' && method === 'POST') {
+          return importFresh('./api/routing/etas.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              try {
+                if (res.headersSent || res.writableEnded) return;
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ error: error?.message || 'Failed to load etas handler' }));
+              } catch {
+                // If the client disconnected mid-request, do not crash dev server.
+              }
+            });
+        }
+
+        if (path === '/api/presence/update' && method === 'POST') {
+          return importFresh('./api/presence/update.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load presence update handler' }));
+            });
+        }
+
+        // Profiles Grid demo endpoints (handled locally in dev)
+        if (path === '/api/profiles' && method === 'GET') {
+          return importFresh('./api/profiles.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load profiles handler' }));
+            });
+        }
+
+        if (path === '/api/profile' && method === 'GET') {
+          return importFresh('./api/profile.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load profile handler' }));
+            });
+        }
+
+        if (path === '/api/viewer-location' && method === 'GET') {
+          return importFresh('./api/viewer-location.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load viewer location handler' }));
+            });
+        }
+
+        if (path === '/api/travel-time' && method === 'POST') {
+          return importFresh('./api/travel-time.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load travel time handler' }));
             });
         }
 
@@ -194,22 +279,30 @@ export default defineConfig(({ mode }) => {
   Object.assign(process.env, env);
 
   return {
-    logLevel: 'error', // Suppress warnings, only show errors
+    logLevel: mode === 'development' ? 'info' : 'error',
     // Vite only exposes env vars to import.meta.env when they match envPrefix.
     // We keep the default VITE_ prefix, and also support existing Vercel env vars
     // that were created with a "vite_public" prefix.
     envPrefix: ['VITE_', 'vite_public'],
+    // Local dev convenience: if you only have SUPABASE_URL/SUPABASE_ANON_KEY in .env.local
+    // (and not the VITE_ prefixed versions), define the VITE_ vars explicitly.
+    // This keeps the client working without exposing the service role key.
+    define: {
+      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || ''
+      ),
+      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(
+        process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+      ),
+    },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src'),
+      },
+    },
     plugins: [
-      // Must come before base44() so these endpoints aren't proxied away in dev.
+      // Local dev handlers for /api/* endpoints.
       localApiRoutes(),
-      base44({
-        // Support for legacy code that imports the base44 SDK with @/integrations, @/entities, etc.
-        // can be removed if the code has been updated to use the new SDK imports from @base44/sdk
-        legacySDKImports: process.env.BASE44_LEGACY_SDK_IMPORTS === 'true',
-        hmrNotifier: true,
-        navigationNotifier: true,
-        visualEditAgent: true
-      }),
       react(),
     ],
     test: {
@@ -217,6 +310,11 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: './src/test/setup.js',
       css: true,
+      exclude: [
+        'node_modules/**',
+        'dist/**',
+        'hotmess-globe/**',
+      ],
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html'],

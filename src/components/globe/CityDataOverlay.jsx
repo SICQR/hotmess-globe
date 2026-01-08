@@ -55,7 +55,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
 
   const { data: cities = [] } = useQuery({
     queryKey: ['cities'],
-    queryFn: () => base44.entities.City.filter({ active: true }),
+    queryFn: () => base44.entities.City.list(),
   });
 
   const { data: beacons = [] } = useQuery({

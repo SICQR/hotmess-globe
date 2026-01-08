@@ -14,6 +14,9 @@ function slugify(value) {
     .replace(/^-+|-+$/g, '');
 }
 
+const HNHMESS_SOUNDCLOUD_URL = 'https://soundcloud.com/rawconvictrecords/hnh-mess/s-jK7AWO2CQ6t';
+const HNHMESS_SOUNDCLOUD_PUBLIC_URL = 'https://soundcloud.com/rawconvictrecords/hnh-mess';
+
 export default function MusicRelease() {
   const { slug } = useParams();
   const { serverNow } = useServerNow();
@@ -70,6 +73,11 @@ export default function MusicRelease() {
 
   const soundcloudUrn = effective?.soundcloud_urn || effective?.metadata?.soundcloud_urn;
   const soundcloudUrl = effective?.soundcloud_url || effective?.metadata?.soundcloud_url;
+  const normalizedSlug = String(slug ?? '').trim().toLowerCase();
+  const soundcloudRef = soundcloudUrn || soundcloudUrl || (normalizedSlug === 'hnhmess' ? HNHMESS_SOUNDCLOUD_URL : null);
+  const playOnSoundCloudUrl = normalizedSlug === 'hnhmess'
+    ? HNHMESS_SOUNDCLOUD_PUBLIC_URL
+    : ((typeof soundcloudUrl === 'string' && soundcloudUrl.trim()) ? soundcloudUrl : null);
 
   return (
     <div className="min-h-screen bg-black text-white pb-20">
@@ -123,9 +131,9 @@ export default function MusicRelease() {
               </div>
             )}
 
-            {!isPreLaunch && !isEnded && (soundcloudUrn || soundcloudUrl) ? (
+            {!isPreLaunch && !isEnded && soundcloudRef ? (
               <div className="mb-4">
-                <SoundCloudEmbed url={soundcloudUrl} urn={soundcloudUrn} />
+                <SoundCloudEmbed urlOrUrn={soundcloudRef} />
               </div>
             ) : (
               <div className="mb-4 text-white/70">
@@ -137,9 +145,9 @@ export default function MusicRelease() {
               </div>
             )}
 
-            {typeof soundcloudUrl === 'string' && soundcloudUrl.startsWith('http') && (
+            {typeof playOnSoundCloudUrl === 'string' && playOnSoundCloudUrl.startsWith('http') && (
               <a
-                href={soundcloudUrl}
+                href={playOnSoundCloudUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-block"

@@ -5,7 +5,6 @@ import { base44 } from '@/api/base44Client';
 import { Sparkles, Flame, Calendar, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
 import { format } from 'date-fns';
 import { fromUTC } from '../utils/dateUtils';
 
@@ -154,7 +153,7 @@ export default function AIEventRecommendations({ currentUser }) {
                 </div>
               )}
 
-              <Link to={createPageUrl(`BeaconDetail?id=${event.id}`)}>
+              <Link to={`/events/${encodeURIComponent(event.id)}`}>
                 <Button 
                   className={`w-full ${
                     isHighMatch 

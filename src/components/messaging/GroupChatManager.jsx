@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Users, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
 
 export default function GroupChatManager({ currentUser, allUsers, eventId = null, squadId = null }) {
   const [showCreate, setShowCreate] = useState(false);
@@ -45,7 +44,7 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
     onSuccess: (thread) => {
       queryClient.invalidateQueries(['chat-threads']);
       toast.success('Group created!');
-      navigate(createPageUrl('Messages'));
+      navigate(`/social/t/${encodeURIComponent(String(thread?.id || ''))}`);
       setShowCreate(false);
       setSelectedUsers([]);
     },
