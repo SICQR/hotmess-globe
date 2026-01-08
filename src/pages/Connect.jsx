@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { PAGINATION, QUERY_CONFIG } from '../components/utils/constants';
-import { Users, Zap, Heart, Filter } from 'lucide-react';
+import { Users, Zap, Heart, Filter, Grid3x3 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import DiscoveryCard from '../components/discovery/DiscoveryCard';
@@ -14,8 +14,14 @@ import { useTaxonomy } from '../components/taxonomy/useTaxonomy';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 import { debounce } from 'lodash';
 import { generateMatchExplanations, promoteTopMatches } from '../components/discovery/AIMatchmaker';
+import { fetchNearbyCandidates } from '@/api/connectProximity';
+import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
+import { useNavigate } from 'react-router-dom';
+import useLiveViewerLocation, { bucketLatLng } from '@/hooks/useLiveViewerLocation';
+import useRealtimeNearbyInvalidation from '@/hooks/useRealtimeNearbyInvalidation';
 
 export default function Connect() {
+  const navigate = useNavigate();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const [lane, setLane] = useState('browse');
   const [showFilters, setShowFilters] = useState(false);
@@ -23,6 +29,23 @@ export default function Connect() {
   const [page, setPage] = useState(1);
   const { cfg, idx } = useTaxonomy();
   const [aiMatchExplanations, setAiMatchExplanations] = useState({});
+
+  const hasGpsConsent = !!currentUser?.has_consented_gps;
+  const { location: liveLocation } = useLiveViewerLocation({
+    enabled: !!currentUser?.email && hasGpsConsent,
+    enableHighAccuracy: false,
+    timeoutMs: 10_000,
+    maximumAgeMs: 15_000,
+    minUpdateMs: 10_000,
+    minDistanceM: 25,
+  });
+  const locationBucket = useMemo(() => bucketLatLng(liveLocation, 3), [liveLocation]);
+
+  useRealtimeNearbyInvalidation({
+    enabled: !!currentUser?.email && hasGpsConsent && !!locationBucket,
+    queryKeys: [['connect-nearby', currentUser?.email, locationBucket?.lat, locationBucket?.lng]],
+    minInvalidateMs: 5000,
+  });
 
   // Use global cached users - MUST be before any conditional returns
   const { data: allUsers = [], isLoading: usersLoading } = useAllUsers();
@@ -45,6 +68,58 @@ export default function Connect() {
     enabled: !!currentUser,
     refetchInterval: QUERY_CONFIG.REFETCH_INTERVAL_MEDIUM
   });
+
+  const { data: nearbyPayload } = useQuery({
+    queryKey: ['connect-nearby', currentUser?.email, locationBucket?.lat, locationBucket?.lng],
+    queryFn: async () => {
+      if (!currentUser?.has_consented_gps) return { candidates: [], _meta: { status: 'gps_consent_off' } };
+      if (!locationBucket) return { candidates: [], _meta: { status: 'geolocation_pending' } };
+
+      try {
+
+        const payload = await fetchNearbyCandidates({
+          lat: locationBucket.lat,
+          lng: locationBucket.lng,
+          radiusMeters: 10_000,
+          limit: 80,
+          approximate: true,
+        });
+
+        if (!payload || typeof payload !== 'object') return { candidates: [], _meta: { status: 'nearby_unavailable' } };
+        return { ...payload, _meta: { status: 'ok' } };
+      } catch {
+        return { candidates: [], _meta: { status: 'nearby_unavailable' } };
+      }
+    },
+    enabled: !!currentUser?.email && !!currentUser?.has_consented_gps,
+    staleTime: 10_000,
+    cacheTime: 60_000,
+    refetchInterval: hasGpsConsent && locationBucket ? 30_000 : false,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
+  const nearbyByEmail = useMemo(() => {
+    const map = new Map();
+    const candidates = Array.isArray(nearbyPayload?.candidates) ? nearbyPayload.candidates : [];
+
+    for (const candidate of candidates) {
+      const email = candidate?.profile?.email;
+      if (!email) continue;
+      const distanceMeters = candidate?.distance_meters;
+      const distanceKm = Number.isFinite(distanceMeters) ? distanceMeters / 1000 : null;
+      map.set(String(email).toLowerCase(), {
+        distanceMeters: Number.isFinite(distanceMeters) ? distanceMeters : null,
+        distanceKm: Number.isFinite(distanceKm) ? distanceKm : null,
+        etaSeconds: Number.isFinite(candidate?.eta_seconds) ? candidate.eta_seconds : null,
+        etaMode: candidate?.eta_mode ?? null,
+      });
+    }
+
+    return map;
+  }, [nearbyPayload]);
+
+  const proximityStatus = nearbyPayload?._meta?.status || (currentUser?.has_consented_gps ? 'idle' : 'gps_consent_off');
 
   // Build defaults from taxonomy config
   const defaults = useMemo(() => {
@@ -118,6 +193,11 @@ export default function Connect() {
       .map(u => {
         const uTags = userTags.filter(t => t.user_email === u.email);
         const uTribes = userTribes.filter(t => t.user_email === u.email);
+        const proximity = nearbyByEmail.get(String(u.email || '').toLowerCase()) || null;
+
+        const photos = Array.isArray(u.photos) ? u.photos : [];
+        const hasPhotos = photos.length > 0;
+        const hasFacePhoto = !!u.avatar_url;
         
         return {
           ...u,
@@ -128,13 +208,21 @@ export default function Connect() {
             new Date(s.expires_at) > new Date()
           ),
           hasFace: !!u.avatar_url,
+          hasPhotos,
+          hasFacePhoto,
           age: u.age || 25,
           tribes: uTribes.map(t => t.tribe_id),
           tags: uTags.map(t => t.tag_id),
-          distanceKm: u.city === currentUser.city ? 5 : 50, // Mock distance
+          lookingFor: u.lookingFor ?? u.looking_for ?? [],
+          meetAt: u.meetAt ?? u.meet_at ?? [],
+          communicationStyle: u.communicationStyle ?? u.preferred_communication ?? [],
+          distanceKm: proximity?.distanceKm ?? null,
+          distanceMeters: proximity?.distanceMeters ?? null,
+          etaSeconds: proximity?.etaSeconds ?? null,
+          etaMode: proximity?.etaMode ?? null,
         };
       });
-  }, [allUsers, currentUser, userTags, userTribes, rightNowStatuses]);
+  }, [allUsers, currentUser, userTags, userTribes, rightNowStatuses, nearbyByEmail]);
 
   // Apply lane filter - with memoization
   const laneFiltered = useMemo(() => {
@@ -153,7 +241,7 @@ export default function Connect() {
   useEffect(() => {
     if (!currentUser || filteredUsers.length === 0) return;
 
-    const topUsers = filteredUsers.slice(0, 6).map(p => allUsers.find(u => u.email === p.email)).filter(Boolean);
+    const topUsers = filteredUsers.slice(0, 6);
     generateMatchExplanations(currentUser, topUsers).then(explanations => {
       setAiMatchExplanations(explanations);
     });
@@ -172,10 +260,7 @@ export default function Connect() {
   );
 
   // Map to full user objects - memoized
-  const displayUsers = useMemo(() => 
-    paginatedUsers.map(p => allUsers.find(u => u.email === p.email)).filter(Boolean),
-    [paginatedUsers, allUsers]
-  );
+  const displayUsers = paginatedUsers;
 
   // Early return AFTER all hooks
   if (userLoading || usersLoading) {
@@ -273,6 +358,13 @@ export default function Connect() {
                   <span className="text-[10px] opacity-60">Slower burn. Better outcomes.</span>
                 </div>
               </TabsTrigger>
+              <TabsTrigger value="profiles" className="flex-1 data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black">
+                <div className="flex flex-col items-center py-2">
+                  <Grid3x3 className="w-5 h-5 mb-1" />
+                  <span className="font-black uppercase text-xs">Profiles</span>
+                  <span className="text-[10px] opacity-60">The card grid.</span>
+                </div>
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -280,6 +372,44 @@ export default function Connect() {
 
       {/* Grid */}
       <div className="max-w-7xl mx-auto p-6">
+        {lane === 'profiles' ? (
+          <ProfilesGrid
+            showHeader={false}
+            showTelegramFeedButton
+            containerClassName="mx-0 max-w-none p-0"
+            onNavigateUrl={(url) => navigate(url)}
+            onOpenProfile={(profile) => {
+              const email = profile?.email;
+              const uid = profile?.authUserId;
+              if (email) {
+                navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
+                return;
+              }
+              if (uid) {
+                navigate(createPageUrl(`Profile?uid=${encodeURIComponent(uid)}`));
+              }
+            }}
+          />
+        ) : (
+          <>
+        {proximityStatus !== 'ok' && (
+          <div className="mb-4 border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70 flex items-center justify-between gap-3">
+            <span>
+              {proximityStatus === 'gps_consent_off'
+                ? 'Location is off. Enable it to unlock nearby distances (and distance filters).'
+                : 'Could not access your location. Check browser location permission to unlock nearby distances (and distance filters).'}
+            </span>
+            {proximityStatus === 'gps_consent_off' && (
+              <Button
+                onClick={() => navigate(createPageUrl('AccountConsents'))}
+                variant="outline"
+                className="border-2 border-white/20 text-white hover:bg-white hover:text-black font-black uppercase"
+              >
+                ENABLE LOCATION
+              </Button>
+            )}
+          </div>
+        )}
         <div className="mb-4 text-sm text-white/60">
           {reorderedUsers.length} {reorderedUsers.length === 1 ? 'result' : 'results'}
           {Object.keys(aiMatchExplanations).length > 0 && (
@@ -338,6 +468,8 @@ export default function Connect() {
               Next
             </Button>
           </div>
+        )}
+          </>
         )}
       </div>
 

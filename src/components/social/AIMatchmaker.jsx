@@ -6,7 +6,6 @@ import { Sparkles, MapPin, Zap, Heart, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import HandshakeButton from './HandshakeButton';
 
 export default function AIMatchmaker({ currentUser }) {
   const [matches, setMatches] = useState([]);
@@ -291,14 +290,11 @@ export default function AIMatchmaker({ currentUser }) {
                   PROFILE
                 </Button>
               </Link>
-              <div className="flex-1">
-                <HandshakeButton
-                  targetUser={match.user}
-                  currentUser={currentUser}
-                  variant="default"
-                  className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-lg"
-                />
-              </div>
+              <Link to={`/social/inbox?to=${encodeURIComponent(String(match?.user?.email || ''))}`} className="flex-1">
+                <Button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-lg">
+                  MESSAGE
+                </Button>
+              </Link>
             </div>
           </motion.div>
         ))}

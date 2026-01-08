@@ -8,11 +8,48 @@ import ReportButton from '../moderation/ReportButton';
 import LazyImage from '../ui/LazyImage';
 import AIMatchExplanation from './AIMatchExplanation';
 
+const formatDistance = (distanceKm) => {
+  if (!Number.isFinite(distanceKm)) return null;
+  if (distanceKm < 1) return `${Math.round(distanceKm * 1000)}m`;
+  if (distanceKm < 10) return `${distanceKm.toFixed(1)}km`;
+  return `${Math.round(distanceKm)}km`;
+};
+
+const formatEta = (etaSeconds) => {
+  if (!Number.isFinite(etaSeconds) || etaSeconds <= 0) return null;
+  const minutes = Math.round(etaSeconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const rem = minutes % 60;
+  return rem ? `${hours}h ${rem}m` : `${hours}h`;
+};
+
 export default function DiscoveryCard({ user, userTags = [], userTribes = [], currentUserTags = [], index, aiMatchExplanation }) {
   const [isHovering, setIsHovering] = useState(false);
   const compatibility = useMemo(() => calculateCompatibility(currentUserTags, userTags), [currentUserTags, userTags]);
-  const essentials = useMemo(() => userTags.filter(t => t.is_essential).slice(0, 3), [userTags]);
+  const essentials = useMemo(() => userTags.filter(t => t.is_essential), [userTags]);
+  const nonEssentialTags = useMemo(() => userTags.filter(t => !t.is_essential && !t.is_dealbreaker), [userTags]);
+  const dealbreakerTags = useMemo(() => userTags.filter(t => t.is_dealbreaker), [userTags]);
   const topTribes = useMemo(() => userTribes.slice(0, 2), [userTribes]);
+
+  const lookingFor = useMemo(() => {
+    const raw = user?.lookingFor ?? user?.looking_for;
+    return Array.isArray(raw) ? raw : [];
+  }, [user?.lookingFor, user?.looking_for]);
+
+  const meetAt = useMemo(() => {
+    const raw = user?.meetAt ?? user?.meet_at;
+    return Array.isArray(raw) ? raw : [];
+  }, [user?.meetAt, user?.meet_at]);
+
+  const communicationStyle = useMemo(() => {
+    const raw = user?.communicationStyle ?? user?.preferred_communication;
+    return Array.isArray(raw) ? raw : [];
+  }, [user?.communicationStyle, user?.preferred_communication]);
+
+  const distanceLabel = useMemo(() => formatDistance(user?.distanceKm), [user?.distanceKm]);
+  const etaLabel = useMemo(() => formatEta(user?.etaSeconds), [user?.etaSeconds]);
+  const etaMode = user?.etaMode ? String(user.etaMode).toLowerCase() : null;
 
   return (
     <motion.div
@@ -86,7 +123,15 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
             {user.city && (
               <div className="flex items-center gap-1 text-xs text-white/60 mb-2">
                 <MapPin className="w-3 h-3" />
-                <span>{user.city}</span>
+                <span>
+                  {user.city}
+                  {(distanceLabel || etaLabel) && (
+                    <span className="text-white/50">
+                      {' '}• {etaLabel ? `~${etaLabel}` : distanceLabel}
+                      {etaLabel && etaMode ? ` ${etaMode}` : ''}
+                    </span>
+                  )}
+                </span>
               </div>
             )}
 
@@ -118,13 +163,71 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
               </div>
             )}
 
+            {/* Looking For */}
+            {lookingFor.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-1">
+                {lookingFor.slice(0, 3).map((item, idx) => (
+                  <span
+                    key={`${item}-${idx}`}
+                    className="px-2 py-0.5 bg-[#FF1493]/20 text-[#FF1493] text-[9px] font-bold uppercase border border-[#FF1493]/40"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Meet At */}
+            {meetAt.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-1">
+                {meetAt.slice(0, 2).map((item, idx) => (
+                  <span
+                    key={`${item}-${idx}`}
+                    className="px-2 py-0.5 bg-[#B026FF]/20 text-white text-[9px] font-bold uppercase border border-white/20"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Communication Style */}
+            {communicationStyle.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-1">
+                {communicationStyle.slice(0, 2).map((item, idx) => (
+                  <span
+                    key={`${item}-${idx}`}
+                    className="px-2 py-0.5 bg-[#00D9FF]/20 text-[#00D9FF] text-[9px] font-bold uppercase border border-[#00D9FF]/40"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            )}
+
             {/* Essentials preview */}
-            {essentials.length > 0 && (
+            {(essentials.length > 0 || dealbreakerTags.length > 0 || nonEssentialTags.length > 0) && (
               <div className="flex flex-wrap gap-1">
-                {essentials.map(tag => (
+                {dealbreakerTags.slice(0, 2).map(tag => (
+                  <span
+                    key={tag.tag_id}
+                    className="px-2 py-0.5 bg-red-500/20 text-red-300 text-[9px] font-bold uppercase border border-red-500/40"
+                  >
+                    {tag.tag_label}
+                  </span>
+                ))}
+                {essentials.slice(0, 4).map(tag => (
                   <span
                     key={tag.tag_id}
                     className="px-2 py-0.5 bg-white/10 text-white text-[9px] font-bold uppercase"
+                  >
+                    {tag.tag_label}
+                  </span>
+                ))}
+                {nonEssentialTags.slice(0, 4).map(tag => (
+                  <span
+                    key={tag.tag_id}
+                    className="px-2 py-0.5 bg-white/5 text-white/80 text-[9px] font-bold uppercase border border-white/10"
                   >
                     {tag.tag_label}
                   </span>

@@ -337,7 +337,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
                       </div>
                     )}
                   </div>
-                  <Link to={createPageUrl(`BeaconDetail?id=${event.id}`)}>
+                  <Link to={`/events/${encodeURIComponent(event.id)}`}>
                     <button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-white font-black text-xs py-2 px-3 uppercase">
                       View Event
                     </button>
@@ -510,7 +510,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
             )}
           </div>
 
-          <Link to={createPageUrl(`BeaconDetail?id=${selectedEvent.id}`)}>
+          <Link to={`/events/${encodeURIComponent(selectedEvent.id)}`}>
             <Button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black">
               View Full Details
             </Button>

@@ -129,13 +129,50 @@ const dedupeProducts = (rows) => {
 };
 
 const isMissingTableError = (error) => {
-  const message = (error?.message || '').toLowerCase();
+  const code = String(error?.code || '').toUpperCase();
+  const message = String(error?.message || '').toLowerCase();
+
+  // PostgREST missing table/view: "Could not find the table ... in the schema cache".
+  // This commonly surfaces as `PGRST205`.
+  if (code === 'PGRST205') return true;
+
+  // Postgres missing relation.
+  if (code === '42P01') return true;
+
   return (
     error?.status === 404 ||
     message.includes('schema cache') ||
     message.includes('could not find the table') ||
     message.includes('does not exist')
   );
+};
+
+const isMissingColumnError = (error) => {
+  const code = String(error?.code || '').toUpperCase();
+  const message = String(error?.message || '').toLowerCase();
+
+  // PostgREST missing column: "Could not find the 'col' column of 'table' in the schema cache".
+  // This commonly surfaces as `PGRST204`.
+  if (code === 'PGRST204') return true;
+
+  // Postgres missing column.
+  if (code === '42703') return true;
+
+  return (
+    message.includes('could not find') &&
+    message.includes('column')
+  ) || (
+    message.includes('column') &&
+    message.includes('does not exist')
+  );
+};
+
+const loggedOnce = new Set();
+const warnOnce = (key, ...args) => {
+  if (loggedOnce.has(key)) return;
+  loggedOnce.add(key);
+  // Keep this quiet: we only want one breadcrumb per missing table.
+  console.warn(...args);
 };
 
 const runWithTableFallback = async (tables, buildQuery) => {
@@ -587,36 +624,6 @@ export const base44 = {
         if (error) throw error;
       }
     },
-    
-    User: {
-      list: async () => {
-        try {
-          const { data } = await runWithTableFallback(USER_TABLES, (table) =>
-            supabase.from(table).select('*')
-          );
-          return safeArray(data);
-        } catch (error) {
-          console.error('[base44.entities.User.list] Failed, returning []', error);
-          return [];
-        }
-      },
-      
-      filter: async (filters) => {
-        try {
-          const { data } = await runWithTableFallback(USER_TABLES, (table) => {
-            let query = supabase.from(table).select('*');
-            Object.entries(filters || {}).forEach(([key, value]) => {
-              query = query.eq(key, value);
-            });
-            return query;
-          });
-          return safeArray(data);
-        } catch (error) {
-          console.error('[base44.entities.User.filter] Failed, returning []', error);
-          return [];
-        }
-      }
-    },
 
     City: {
       list: async (orderBy = '-created_date', limit) => {
@@ -638,22 +645,39 @@ export const base44 = {
         }
       },
       filter: async (filters, orderBy, limit) => {
-        try {
-          const { data } = await runWithTableFallback(CITY_TABLES, (table) => {
-            let query = supabase.from(table).select('*');
-            Object.entries(filters || {}).forEach(([key, value]) => {
-              query = query.eq(key, value);
-            });
-            if (orderBy) {
-              const desc = orderBy.startsWith('-');
-              const column = desc ? orderBy.slice(1) : orderBy;
-              query = query.order(column, { ascending: !desc });
-            }
-            if (limit) query = query.limit(limit);
-            return query;
+        const safeFilters = filters && typeof filters === 'object' ? filters : {};
+
+        const run = async (table, filterOverrides) => {
+          let query = supabase.from(table).select('*');
+          Object.entries(filterOverrides || {}).forEach(([key, value]) => {
+            query = query.eq(key, value);
           });
+          if (orderBy) {
+            const desc = orderBy.startsWith('-');
+            const column = desc ? orderBy.slice(1) : orderBy;
+            query = query.order(column, { ascending: !desc });
+          }
+          if (limit) query = query.limit(limit);
+          return query;
+        };
+
+        try {
+          const { data } = await runWithTableFallback(CITY_TABLES, (table) => run(table, safeFilters));
           return safeArray(data);
         } catch (error) {
+          // Back-compat: some UI code still filters on `active`, but the `cities` table may not have it.
+          if (safeFilters && Object.prototype.hasOwnProperty.call(safeFilters, 'active') && isMissingColumnError(error)) {
+            try {
+              const retryFilters = { ...safeFilters };
+              delete retryFilters.active;
+              const { data } = await runWithTableFallback(CITY_TABLES, (table) => run(table, retryFilters));
+              return safeArray(data);
+            } catch (retryError) {
+              console.error('[base44.entities.City.filter] Failed after retry, returning []', retryError);
+              return [];
+            }
+          }
+
           console.error('[base44.entities.City.filter] Failed, returning []', error);
           return [];
         }
@@ -789,6 +813,35 @@ const entityTables = [
   'reports', 'user_blocks', 'beacon_comments', 'daily_challenges',
   'challenge_completions',
 
+  // Discovery / taxonomy
+  'cities',
+  'user_intents',
+
+  // Community
+  'community_posts',
+  'post_likes',
+  'post_comments',
+
+  // Safety
+  'trusted_contacts',
+  'safety_checkins',
+  'notification_outbox',
+
+  // Bookmarks / favorites
+  'beacon_bookmarks',
+  'product_favorites',
+
+  // Reviews + analytics
+  'reviews',
+  'marketplace_reviews',
+  'product_views',
+  'event_views',
+
+  // Gamification
+  'user_streaks',
+  'venue_kings',
+  'seller_ratings',
+
   // Marketplace cart
   'cart_items',
 
@@ -806,6 +859,39 @@ entityTables.forEach(table => {
   const entityName = table.split('_').map((word, i) => 
     i === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word.charAt(0).toUpperCase() + word.slice(1)
   ).join('');
+
+  const normalizeFilterKey = (rawKey) => {
+    if (!rawKey || typeof rawKey !== 'string') return rawKey;
+    if (!rawKey.includes('.')) return rawKey;
+    const parts = rawKey.split('.');
+    if (parts.length === 2) return `${parts[0]}->>${parts[1]}`;
+    return rawKey;
+  };
+
+  const buildOrExpression = (orArray) => {
+    if (!Array.isArray(orArray) || !orArray.length) return null;
+
+    const parts = orArray
+      .map((clause) => {
+        if (!clause || typeof clause !== 'object') return null;
+        const entries = Object.entries(clause).filter(([, v]) => v !== undefined && v !== null);
+        if (!entries.length) return null;
+
+        const conds = entries.map(([k, v]) => {
+          const key = normalizeFilterKey(k);
+          if (Array.isArray(v)) {
+            const values = v.map((item) => String(item));
+            return `${key}.in.(${values.join(',')})`;
+          }
+          return `${key}.eq.${String(v)}`;
+        });
+
+        return conds.length === 1 ? conds[0] : `and(${conds.join(',')})`;
+      })
+      .filter(Boolean);
+
+    return parts.length ? parts.join(',') : null;
+  };
   
   base44.entities[entityName] = {
     list: async (orderBy = '-created_at', limit) => {
@@ -824,6 +910,14 @@ entityTables.forEach(table => {
         if (error) throw error;
         return safeArray(data);
       } catch (error) {
+        if (isMissingTableError(error)) {
+          warnOnce(
+            `missing-table:${table}:list`,
+            `[base44.entities.${entityName}.list] Missing table/view "${table}"; returning []`
+          );
+          return [];
+        }
+
         console.error(`[base44.entities.${entityName}.list] Failed, returning []`, error);
         return [];
       }
@@ -831,14 +925,21 @@ entityTables.forEach(table => {
     
     filter: async (filters, orderBy, limit) => {
       let query = supabase.from(table).select('*');
-      
-      Object.entries(filters).forEach(([rawKey, rawValue]) => {
-        // Support simple JSON path keys used in the UI (e.g. "metadata.squad_id")
-        const key = rawKey.includes('.')
-          ? rawKey.split('.').length === 2
-            ? `${rawKey.split('.')[0]}->>${rawKey.split('.')[1]}`
-            : rawKey
-          : rawKey;
+
+      const safeFilters = filters && typeof filters === 'object' ? filters : {};
+
+      // Base44-style OR support:
+      // { $or: [ { col: value }, { other_col: value } ] }
+      if (Array.isArray(safeFilters.$or)) {
+        const expr = buildOrExpression(safeFilters.$or);
+        if (expr) query = query.or(expr);
+      }
+
+      const remaining = { ...safeFilters };
+      delete remaining.$or;
+
+      Object.entries(remaining).forEach(([rawKey, rawValue]) => {
+        const key = normalizeFilterKey(rawKey);
 
         // Support "IN" filters (e.g. { user_email: ['admin', email] })
         if (Array.isArray(rawValue)) {
@@ -862,6 +963,14 @@ entityTables.forEach(table => {
         if (error) throw error;
         return safeArray(data);
       } catch (error) {
+        if (isMissingTableError(error)) {
+          warnOnce(
+            `missing-table:${table}:filter`,
+            `[base44.entities.${entityName}.filter] Missing table/view "${table}"; returning []`
+          );
+          return [];
+        }
+
         console.error(`[base44.entities.${entityName}.filter] Failed, returning []`, error);
         return [];
       }
@@ -906,6 +1015,67 @@ entityTables.forEach(table => {
     }
   }
 });
+
+// Back-compat aliases for acronym/casing differences in older UI code.
+base44.entities.EventRSVP =
+  base44.entities.EventRSVP ??
+  base44.entities.EventRsvp ??
+  base44.entities.EventRsvps;
+
+// Compatibility: `event_rsvps` is often a read-only view.
+// Keep reads on the view (list/filter), but write to the canonical table when present.
+if (base44.entities.EventRSVP) {
+  const readEntity = base44.entities.EventRSVP;
+
+  base44.entities.EventRSVP = {
+    ...readEntity,
+    filter: async (filters, orderBy, limit) => {
+      // Back-compat: `event_rsvps` is often a view that does not expose `status`.
+      // Drop it client-side so we don't spam the network with 400s.
+      const safeFilters = filters && typeof filters === 'object' ? { ...filters } : {};
+      if (Object.prototype.hasOwnProperty.call(safeFilters, 'status')) {
+        delete safeFilters.status;
+      }
+      return readEntity.filter(safeFilters, orderBy, limit);
+    },
+    create: async (data) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const payload = { ...(data || {}), created_by: user?.email };
+
+      const candidates = ['EventRSVP', 'EventRsvp'];
+      for (let i = 0; i < candidates.length; i += 1) {
+        const table = candidates[i];
+        const { data: created, error } = await supabase
+          .from(table)
+          .insert(payload)
+          .select()
+          .single();
+
+        if (!error) return created;
+        if (!isMissingTableError(error) || i === candidates.length - 1) {
+          throw error;
+        }
+
+        warnOnce(
+          `missing-table:${table}:EventRSVP.create`,
+          `[base44.entities.EventRSVP.create] Missing table "${table}"; trying fallback`
+        );
+      }
+
+      return null;
+    },
+  };
+}
+
+base44.entities.SafetyCheckIn =
+  base44.entities.SafetyCheckIn ??
+  base44.entities.SafetyCheckin ??
+  base44.entities.SafetyCheckins;
+
+base44.entities.BeaconCheckIn =
+  base44.entities.BeaconCheckIn ??
+  base44.entities.BeaconCheckin ??
+  base44.entities.BeaconCheckins;
 
 // Back-compat aliases (Base44-style singular + legacy casing)
 base44.entities.Order = base44.entities.Order ?? base44.entities.Orders;

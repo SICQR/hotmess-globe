@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner"
+import { useEffect, useState } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
@@ -34,6 +35,12 @@ const EventDetailRedirect = () => {
   return <Navigate to={target} replace />;
 };
 
+const EditBeaconRedirect = () => {
+  const { id } = useParams();
+  const target = `${createPageUrl('EditBeacon')}?id=${encodeURIComponent(id ?? '')}`;
+  return <Navigate to={target} replace />;
+};
+
 const ProductDetailRedirect = () => {
   const { handle } = useParams();
   const target = `${createPageUrl('ProductDetail')}?handle=${encodeURIComponent(handle ?? '')}`;
@@ -52,12 +59,65 @@ const ShowHeroRedirect = () => {
   return <Navigate to={target} replace />;
 };
 
+const OrdersRedirect = () => {
+  return <Navigate to={createPageUrl('OrderHistory')} replace />;
+};
+
+const OrderByIdRedirect = () => {
+  // We don't currently have a dedicated order detail route; land on the orders list.
+  return <Navigate to={createPageUrl('OrderHistory')} replace />;
+};
+
+const OrderTrackingRedirect = () => {
+  // We don't currently have a dedicated tracking page; land on the orders list.
+  return <Navigate to={createPageUrl('OrderHistory')} replace />;
+};
+
+const ReturnsRedirect = () => {
+  // Returns are handled from orders for now.
+  return <Navigate to={createPageUrl('OrderHistory')} replace />;
+};
+
+const SocialDiscoverRedirect = () => {
+  return <Navigate to={createPageUrl('Social')} replace />;
+};
+
+const SocialUserRedirect = () => {
+  const { id } = useParams();
+  const target = `${createPageUrl('Profile')}?uid=${encodeURIComponent(id ?? '')}`;
+  return <Navigate to={target} replace />;
+};
+
+const SocialThreadRedirect = () => {
+  const { threadId } = useParams();
+  const target = `${createPageUrl('Messages')}?thread=${encodeURIComponent(threadId ?? '')}`;
+  return <Navigate to={target} replace />;
+};
+
+const MarketCollectionRedirect = () => {
+  const { collection } = useParams();
+  const target = `${createPageUrl('Marketplace')}?collection=${encodeURIComponent(collection ?? '')}`;
+  return <Navigate to={target} replace />;
+};
+
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, authError, navigateToLogin } = useAuth();
   const location = useLocation();
+  const [isRedirectingToAuth, setIsRedirectingToAuth] = useState(false);
+
+  useEffect(() => {
+    if (!authError) return;
+    if (authError.type !== 'auth_required') return;
+
+    const isOnAuthRoute = (location?.pathname || '').toLowerCase().startsWith('/auth');
+    if (isOnAuthRoute) return;
+
+    setIsRedirectingToAuth(true);
+    navigateToLogin();
+  }, [authError, location?.pathname, navigateToLogin]);
 
   // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  if (isLoadingAuth || isRedirectingToAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
@@ -73,9 +133,12 @@ const AuthenticatedApp = () => {
       // Allow the Auth page (and recovery links) to render without forcing a redirect loop.
       const isOnAuthRoute = (location?.pathname || '').toLowerCase().startsWith('/auth');
       if (!isOnAuthRoute) {
-        // Redirect to login automatically
-        navigateToLogin();
-        return null;
+        // Redirect is handled in the effect above; render a spinner.
+        return (
+          <div className="fixed inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+          </div>
+        );
       }
     }
   }
@@ -89,22 +152,72 @@ const AuthenticatedApp = () => {
           <MainPage />
         </LayoutWrapper>
       } />
+      <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
+      <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
+      <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
+      <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
       <Route path="/pulse" element={<PageRoute pageKey="Pulse" />} />
       <Route path="/events" element={<PageRoute pageKey="Events" />} />
       <Route path="/events/:id" element={<EventDetailRedirect />} />
       <Route path="/market" element={<PageRoute pageKey="Marketplace" />} />
+      <Route path="/market/:collection" element={<MarketCollectionRedirect />} />
       <Route path="/market/p/:handle" element={<ProductDetailRedirect />} />
       <Route path="/social" element={<PageRoute pageKey="Social" />} />
+      <Route path="/social/discover" element={<SocialDiscoverRedirect />} />
       <Route path="/social/inbox" element={<PageRoute pageKey="Messages" />} />
+      <Route path="/social/u/:id" element={<SocialUserRedirect />} />
+      <Route path="/social/t/:threadId" element={<SocialThreadRedirect />} />
       <Route path="/music" element={<PageRoute pageKey="Music" />} />
       <Route path="/music/live" element={<PageRoute pageKey="Radio" />} />
       <Route path="/music/shows" element={<PageRoute pageKey="RadioSchedule" />} />
+      <Route path="/music/shows/:show/episodes" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
+      <Route path="/music/shows/:show/episodes/:id" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
       <Route path="/music/shows/:slug" element={<ShowHeroRedirect />} />
       <Route path="/music/schedule" element={<PageRoute pageKey="RadioSchedule" />} />
       <Route path="/music/releases" element={<PageRoute pageKey="Music" />} />
       <Route path="/music/releases/:slug" element={<PageRoute pageKey="MusicRelease" />} />
+      <Route path="/music/tracks" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/music/tracks/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/music/playlists" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/music/playlists/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/music/artists" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/music/artists/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/music/clips/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
       <Route path="/hnhmess" element={<PageRoute pageKey="Hnhmess" />} />
       <Route path="/more" element={<PageRoute pageKey="More" />} />
+
+      {/* Bible-friendly market/order aliases */}
+      <Route path="/orders" element={<OrdersRedirect />} />
+      <Route path="/orders/:id" element={<OrderByIdRedirect />} />
+      <Route path="/orders/:id/tracking" element={<OrderTrackingRedirect />} />
+      <Route path="/returns" element={<ReturnsRedirect />} />
+
+      {/* Bible-friendly /more/* tool routes (aliases) */}
+      <Route path="/more/beacons" element={<PageRoute pageKey="Beacons" />} />
+      <Route path="/more/beacons/new" element={<PageRoute pageKey="CreateBeacon" />} />
+      <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
+      <Route path="/more/beacons/:id/edit" element={<EditBeaconRedirect />} />
+      <Route path="/more/stats" element={<PageRoute pageKey="Stats" />} />
+      <Route path="/more/challenges" element={<PageRoute pageKey="Challenges" />} />
+
+      {/* Bible-friendly safety/calendar/scan subroutes */}
+      <Route path="/safety/*" element={<PageRoute pageKey="Safety" />} />
+      <Route path="/calendar/*" element={<PageRoute pageKey="Calendar" />} />
+      <Route path="/scan/*" element={<PageRoute pageKey="Scan" />} />
+      <Route path="/community/*" element={<PageRoute pageKey="Community" />} />
+      <Route path="/leaderboard/*" element={<PageRoute pageKey="Leaderboard" />} />
+
+      {/* Bible-friendly notifications/account aliases */}
+      <Route path="/notifications" element={<Navigate to={createPageUrl('Settings')} replace />} />
+      <Route path="/notifications/*" element={<Navigate to={createPageUrl('Settings')} replace />} />
+      <Route path="/account" element={<Navigate to={createPageUrl('Settings')} replace />} />
+      <Route path="/account/profile" element={<Navigate to={createPageUrl('EditProfile')} replace />} />
+      <Route path="/account/membership" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+      <Route path="/account/upgrade" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+      <Route path="/account/billing" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+      <Route path="/account/receipts" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+      <Route path="/account/data" element={<Navigate to={createPageUrl('AccountConsents')} replace />} />
+      <Route path="/account/data/*" element={<Navigate to={createPageUrl('AccountConsents')} replace />} />
 
       {/* Legacy lowercase routes -> canonical V1.5 routes */}
       <Route path="/radio" element={<Navigate to={createPageUrl('Radio')} replace />} />
@@ -123,6 +236,7 @@ const AuthenticatedApp = () => {
       <Route path="/saved" element={<PageRoute pageKey="Bookmarks" />} />
       <Route path="/leaderboard" element={<PageRoute pageKey="Leaderboard" />} />
       <Route path="/community" element={<PageRoute pageKey="Community" />} />
+      <Route path="/profiles" element={<PageRoute pageKey="ProfilesGrid" />} />
 
       {/* Backward-compatible auto-generated /PageName routes */}
       {Object.entries(Pages).map(([path, Page]) => (

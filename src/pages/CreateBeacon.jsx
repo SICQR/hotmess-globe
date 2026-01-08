@@ -261,7 +261,7 @@ export default function CreateBeacon() {
                 <h2 className="text-2xl font-black uppercase mb-4">Step 2: Location & Time</h2>
 
                 <div>
-                  <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block flex items-center gap-2">
+                  <label className="text-sm text-white/60 uppercase tracking-wider mb-2 flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     Event Date & Time *
                   </label>
@@ -350,7 +350,7 @@ export default function CreateBeacon() {
                 <h2 className="text-2xl font-black uppercase mb-4">Step 3: Media & Promo</h2>
 
                 <div>
-                  <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block flex items-center gap-2">
+                  <label className="text-sm text-white/60 uppercase tracking-wider mb-2 flex items-center gap-2">
                     <Image className="w-4 h-4" />
                     Event Image
                   </label>
@@ -367,7 +367,7 @@ export default function CreateBeacon() {
                 </div>
 
                 <div>
-                  <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block flex items-center gap-2">
+                  <label className="text-sm text-white/60 uppercase tracking-wider mb-2 flex items-center gap-2">
                     <Video className="w-4 h-4" />
                     Event Video (Optional)
                   </label>
@@ -405,7 +405,7 @@ export default function CreateBeacon() {
                 <h2 className="text-2xl font-black uppercase mb-4">Step 4: Engagement</h2>
 
                 <div>
-                  <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block flex items-center justify-between">
+                  <label className="text-sm text-white/60 uppercase tracking-wider mb-2 flex items-center justify-between">
                     <span>Intensity</span>
                     <span className="text-white font-bold">{Math.round(formData.intensity * 100)}%</span>
                   </label>

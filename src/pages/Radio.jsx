@@ -10,6 +10,8 @@ import { useRadio } from '../components/shell/RadioContext';
 export default function Radio() {
   const { openRadio } = useRadio();
 
+  const LIVE_STREAM_URL = 'https://listen.radioking.com/radio/736103/stream/802454';
+
   const shows = [
     {
       ...schedule.shows[0],
@@ -59,6 +61,22 @@ export default function Radio() {
                   See Schedule
                 </Button>
               </Link>
+            </div>
+
+            <div className="mt-10 max-w-xl mx-auto">
+              <div className="bg-black/40 border border-white/20 p-4">
+                <p className="text-xs text-white/60 uppercase tracking-wider mb-3">
+                  Live stream player
+                </p>
+                <audio
+                  controls
+                  preload="none"
+                  crossOrigin="anonymous"
+                  className="w-full"
+                >
+                  <source src={LIVE_STREAM_URL} />
+                </audio>
+              </div>
             </div>
           </motion.div>
         </div>

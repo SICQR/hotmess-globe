@@ -399,7 +399,7 @@ export default function EditProfile() {
 
             {/* Profile Theme Customization */}
             <div className="bg-black border-2 border-white p-6">
-              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
                 <Palette className="w-4 h-4" />
                 Profile Aesthetics
               </Label>
@@ -452,7 +452,7 @@ export default function EditProfile() {
 
             {/* Photos */}
             <div className="bg-black border-2 border-white p-6">
-              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
                 <ImageIcon className="w-4 h-4" />
                 Photo Gallery
               </Label>
@@ -473,7 +473,7 @@ export default function EditProfile() {
 
             {/* Video Intro */}
             <div className="bg-black border-2 border-white p-6">
-              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
                 <VideoIcon className="w-4 h-4" />
                 Video Introduction
               </Label>
@@ -483,7 +483,7 @@ export default function EditProfile() {
 
             {/* Premium Videos */}
             <div className="bg-black border-2 border-[#FFD700] p-6">
-              <Label className="text-xs uppercase tracking-widest text-[#FFD700] mb-4 block flex items-center gap-2">
+              <Label className="text-xs uppercase tracking-widest text-[#FFD700] mb-4 flex items-center gap-2">
                 <Crown className="w-4 h-4" />
                 Premium Videos (XXX)
               </Label>
@@ -875,7 +875,7 @@ export default function EditProfile() {
 
             {/* Tribes & Tags */}
             <div className="bg-black border-2 border-white p-6">
-              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
                 <UsersIcon className="w-4 h-4" />
                 Tribes & Tags (Connect Discovery)
               </Label>
@@ -990,7 +990,7 @@ export default function EditProfile() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="public">Public</SelectItem>
-                      <SelectItem value="matches">Handshake connections only</SelectItem>
+                      <SelectItem value="matches">Mutual follows only</SelectItem>
                       <SelectItem value="nobody">Private</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1004,7 +1004,7 @@ export default function EditProfile() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="public">Public</SelectItem>
-                      <SelectItem value="matches">Handshake connections only</SelectItem>
+                      <SelectItem value="matches">Mutual follows only</SelectItem>
                       <SelectItem value="nobody">Private</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1018,7 +1018,7 @@ export default function EditProfile() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="public">Public</SelectItem>
-                      <SelectItem value="matches">Handshake connections only</SelectItem>
+                      <SelectItem value="matches">Mutual follows only</SelectItem>
                       <SelectItem value="nobody">Private</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1029,7 +1029,7 @@ export default function EditProfile() {
             {/* Social Links */}
             <div className="bg-black border-2 border-white p-6">
               <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Social Links</Label>
-              <p className="text-xs text-white/40 mb-4 uppercase">🔒 Only visible after handshake</p>
+              <p className="text-xs text-white/40 mb-4 uppercase">🔒 Only visible to mutual follows</p>
               <div className="space-y-4">
                 {['instagram', 'twitter', 'spotify', 'soundcloud'].map(platform => (
                   <Input

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, ShoppingBag, Users, Scan, Trophy, Settings, Menu, X, MessageCircle, Calendar as CalendarIcon, MapPin, TrendingUp, Search, Target, Shield } from 'lucide-react';
+import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield } from 'lucide-react';
 import { base44 } from '@/components/utils/supabaseClient';
+import { updatePresence } from '@/api/presence';
 import PanicButton from '@/components/safety/PanicButton';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
 import GlobalAssistant from '@/components/ai/GlobalAssistant';
@@ -42,6 +43,12 @@ function LayoutInner({ children, currentPageName }) {
   const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
   const { toggleRadio, isRadioOpen } = useRadio();
+
+  const presenceLastSentRef = useRef({
+    ts: 0,
+    lat: null,
+    lng: null,
+  });
   
   // Enable keyboard navigation
   useKeyboardNav();
@@ -76,7 +83,46 @@ function LayoutInner({ children, currentPageName }) {
           return;
         }
 
-        const currentUser = await base44.auth.me();
+        let currentUser = await base44.auth.me();
+
+        // If the user already completed the AgeGate (session-based) AND granted browser
+        // location permission, auto-apply the equivalent profile consent flags once.
+        // This prevents loops where the app keeps redirecting to AccountConsents/OnboardingGate.
+        try {
+          const ageVerified = sessionStorage.getItem('age_verified') === 'true';
+          const locationConsent = sessionStorage.getItem('location_consent') === 'true';
+          const locationPermission = sessionStorage.getItem('location_permission');
+          const hasGrantedLocation = locationPermission === 'granted';
+
+          const markerKey = currentUser?.email ? `auto_consents_applied_for:${currentUser.email}` : null;
+          const alreadyApplied = markerKey ? sessionStorage.getItem(markerKey) === '1' : false;
+
+          const needsConsents =
+            !currentUser?.consent_accepted ||
+            !currentUser?.has_agreed_terms ||
+            !currentUser?.has_consented_data ||
+            !currentUser?.has_consented_gps;
+
+          if (!alreadyApplied && needsConsents && ageVerified && locationConsent && hasGrantedLocation) {
+            await base44.auth.updateMe({
+              consent_accepted: true,
+              consent_age: true,
+              consent_location: true,
+              consent_date: new Date().toISOString(),
+
+              // These are the required flags checked by Layout/OnboardingGate.
+              has_agreed_terms: true,
+              has_consented_data: true,
+              has_consented_gps: true,
+            });
+
+            if (markerKey) sessionStorage.setItem(markerKey, '1');
+            currentUser = await base44.auth.me();
+          }
+        } catch {
+          // ignore
+        }
+
         setUser(currentUser);
 
         // Merge any guest cart into the authenticated cart (once per user per session)
@@ -110,8 +156,14 @@ function LayoutInner({ children, currentPageName }) {
           return;
         }
 
-        // Check if onboarding is incomplete (except on OnboardingGate page itself)
-        if (currentPageName !== 'OnboardingGate' && currentPageName !== 'AccountConsents' && currentPageName !== 'AgeGate' && (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data || !currentUser?.has_consented_gps)) {
+        // Onboarding gate: require terms + data consent.
+        // GPS consent is optional and should only gate location-based features.
+        if (
+          currentPageName !== 'OnboardingGate' &&
+          currentPageName !== 'AccountConsents' &&
+          currentPageName !== 'AgeGate' &&
+          (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data)
+        ) {
           window.location.href = createPageUrl('OnboardingGate');
           return;
         }
@@ -127,6 +179,88 @@ function LayoutInner({ children, currentPageName }) {
     };
     fetchUser();
   }, [currentPageName]);
+
+  // Foreground presence/location updates (production behavior):
+  // - Only when authenticated AND GPS consented.
+  // - Send if moved >200m OR at least 60s since last send.
+  useEffect(() => {
+    if (!user?.has_consented_gps) return;
+    if (!('geolocation' in navigator)) return;
+
+    let watchId = null;
+    let cancelled = false;
+    let inFlight = false;
+
+    const shouldSend = ({ lat, lng }) => {
+      const now = Date.now();
+      const last = presenceLastSentRef.current;
+      const elapsedMs = now - (last.ts || 0);
+      if (!Number.isFinite(last.lat) || !Number.isFinite(last.lng)) return true;
+
+      const toRad = (deg) => (deg * Math.PI) / 180;
+      const R = 6371000;
+      const dLat = toRad(lat - last.lat);
+      const dLng = toRad(lng - last.lng);
+      const lat1 = toRad(last.lat);
+      const lat2 = toRad(lat);
+      const sinDLat = Math.sin(dLat / 2);
+      const sinDLng = Math.sin(dLng / 2);
+      const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+      const movedM = 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+
+      return movedM >= 200 || elapsedMs >= 60_000;
+    };
+
+    const onPosition = async (pos) => {
+      if (cancelled) return;
+      if (document.visibilityState !== 'visible') return;
+      if (inFlight) return;
+
+      const lat = pos?.coords?.latitude;
+      const lng = pos?.coords?.longitude;
+      const accuracy = pos?.coords?.accuracy;
+      const heading = pos?.coords?.heading;
+      const speed = pos?.coords?.speed;
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+      if (!shouldSend({ lat, lng })) return;
+
+      inFlight = true;
+      try {
+        await updatePresence({ lat, lng, accuracy, heading, speed });
+        presenceLastSentRef.current = { ts: Date.now(), lat, lng };
+      } catch {
+        // Non-fatal: presence should not break navigation.
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    const onError = () => {
+      // Ignore: user can revoke permission at any time.
+    };
+
+    try {
+      watchId = navigator.geolocation.watchPosition(onPosition, onError, {
+        enableHighAccuracy: false,
+        maximumAge: 30_000,
+        timeout: 10_000,
+      });
+    } catch {
+      watchId = null;
+    }
+
+    return () => {
+      cancelled = true;
+      if (watchId != null) {
+        try {
+          navigator.geolocation.clearWatch(watchId);
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, [user?.has_consented_gps]);
 
   const isActive = (pageName) => currentPageName === pageName;
 

@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
@@ -19,6 +19,7 @@ import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
 import { addToCart } from '@/components/marketplace/cartStorage';
+import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
@@ -27,12 +28,53 @@ export default function Marketplace() {
   const [sortBy, setSortBy] = useState('newest');
   const [priceRange, setPriceRange] = useState({ min: 0, max: 50000 });
   const [sellerFilter, setSellerFilter] = useState('all'); // 'all', 'verified', 'new'
+  const [sellerEmailFilter, setSellerEmailFilter] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [showCart, setShowCart] = useState(false);
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 12;
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+
+  const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+  // Support deep-links from profile cards:
+  // - Preferred: /market?created_by=email (matches product.created_by)
+  // - Back-compat: /market?seller=email
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search || '');
+      const createdBy = params.get('created_by');
+      const seller = params.get('seller');
+      const raw = createdBy || seller;
+      if (raw) {
+        setActiveTab('p2p');
+        setSellerEmailFilter(normalizeEmail(raw));
+        setPage(1);
+      } else {
+        setSellerEmailFilter(null);
+      }
+    } catch {
+      setSellerEmailFilter(null);
+    }
+  }, [location.search]);
+
+  // Support Bible-friendly collection deep-links:
+  // - /market/:collection (redirects to /market?collection=...)
+  // - /market?collection=...
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search || '');
+      const raw = params.get('collection');
+      if (raw) {
+        setSelectedCollection(String(raw));
+        setPage(1);
+      }
+    } catch {
+      // ignore
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -335,6 +377,15 @@ export default function Marketplace() {
     );
   }
 
+  // Seller deep-link filter (explicit seller email)
+  if (sellerEmailFilter) {
+    filteredProducts = filteredProducts.filter((p) => {
+      const createdBy = normalizeEmail(p?.created_by);
+      const sellerEmail = normalizeEmail(p?.seller_email);
+      return createdBy === sellerEmailFilter || sellerEmail === sellerEmailFilter;
+    });
+  }
+
   if (sortBy === 'price_low') {
     filteredProducts = [...filteredProducts].sort((a, b) => a.price_xp - b.price_xp);
   } else if (sortBy === 'price_high') {
@@ -375,6 +426,20 @@ export default function Marketplace() {
               <p className="text-white/60 uppercase text-sm tracking-wider">
                 Official Gear + P2P Mess Market (10% Platform Fee)
               </p>
+              {sellerEmailFilter && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/70">
+                  <span className="rounded-sm border border-white/20 bg-white/5 px-2 py-1">
+                    Showing creator: <span className="font-mono text-white/90">{sellerEmailFilter}</span>
+                  </span>
+                  <button
+                    type="button"
+                    className="underline text-white/70 hover:text-white"
+                    onClick={() => navigate(createPageUrl('Marketplace'))}
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button 
@@ -467,6 +532,19 @@ export default function Marketplace() {
             </div>
           </div>
         </motion.div>
+
+        <div className="mb-8">
+          <ProfilesGrid
+            showHeader
+            headerTitle="Top Sellers"
+            showTelegramFeedButton={false}
+            hideWhenEmpty
+            maxItems={8}
+            filterProfiles={(p) => String(p?.profileType || '').toLowerCase() === 'seller'}
+            containerClassName="mx-0 max-w-none p-0"
+            onNavigateUrl={(url) => navigate(url)}
+          />
+        </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList className="bg-white/5 border border-white/10 w-full justify-start overflow-x-auto">

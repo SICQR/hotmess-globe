@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { auth } from '@/components/utils/supabaseClient';
@@ -12,7 +12,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
-import { schedule } from '../components/radio/radioUtils';
+import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { toast } from 'sonner';
 import { snapToGrid } from '../components/utils/locationPrivacy';
 
@@ -136,6 +136,27 @@ export default function Music() {
 
   const radioShows = schedule?.shows ?? [];
   const showUrlFromSlug = (slug) => `/music/shows/${slug}`;
+
+  const nextUp = useMemo(() => {
+    const items = radioShows
+      .map((show) => {
+        const nextEpisode = getNextEpisode(show?.id);
+        if (!show || !nextEpisode?.date) return null;
+        return { show, nextEpisode };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.nextEpisode.date - b.nextEpisode.date);
+
+    return items.slice(0, 3);
+  }, [radioShows]);
+
+  const addEpisodeToCalendar = ({ show, nextEpisode }) => {
+    if (!show || !nextEpisode) return;
+    const ics = generateICS(show, nextEpisode);
+    const filename = `${show.slug || show.id}-${format(nextEpisode.date, 'yyyy-MM-dd')}.ics`;
+    downloadICS(ics, filename);
+    toast.success('Calendar file downloaded.');
+  };
 
   // Fetch audio releases
   const { data: releases = [] } = useQuery({
@@ -483,21 +504,47 @@ export default function Music() {
             <div className="mt-12">
               <h4 className="text-2xl font-black uppercase mb-6">NEXT UP</h4>
               <div className="grid gap-4">
-                {[
-                  { time: '22:00', show: 'HEAVY PULSE', host: 'DJ ARCHITECT' },
-                  { time: '00:00', show: 'NIGHT HUNTER', host: 'SELECTOR X' },
-                  { time: '02:00', show: 'DAWN PATROL', host: 'MORNING MESS' },
-                ].map((slot, idx) => (
-                  <div key={idx} className="bg-white/5 border-l-4 border-[#B026FF] p-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div>
-                        <p className="font-black uppercase text-lg">{slot.show}</p>
-                        <p className="text-sm text-white/60">{slot.host}</p>
+                {nextUp.length > 0 ? (
+                  nextUp.map(({ show, nextEpisode }) => (
+                    <div key={`${show.id}:${nextEpisode.date.toISOString()}`} className="bg-white/5 border-l-4 border-[#B026FF] p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-black uppercase text-lg truncate">{show.title}</p>
+                          <p className="text-sm text-white/60 truncate">{show.tagline}</p>
+                        </div>
+
+                        <div className="flex items-center gap-3 sm:justify-end">
+                          <div className="text-right">
+                            <p className="text-2xl font-mono font-bold text-[#B026FF] leading-none">
+                              {nextEpisode.startTime}
+                            </p>
+                            <p className="text-xs text-white/60 uppercase tracking-wider">
+                              {format(nextEpisode.date, 'EEE d MMM')} • London
+                            </p>
+                          </div>
+
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => addEpisodeToCalendar({ show, nextEpisode })}
+                            className="border-2 border-white/40 text-white hover:bg-white hover:text-black font-black uppercase"
+                          >
+                            ADD
+                          </Button>
+                        </div>
                       </div>
-                      <p className="text-2xl font-mono font-bold text-[#B026FF] sm:text-right">{slot.time}</p>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 bg-white/5 border-2 border-white/10">
+                    <p className="text-white/60 uppercase text-sm tracking-wider">Schedule coming soon</p>
+                    <Link to="/music/schedule" className="inline-block mt-4">
+                      <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase">
+                        VIEW SCHEDULE
+                      </Button>
+                    </Link>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </TabsContent>
@@ -511,7 +558,7 @@ export default function Music() {
                     Three tentpoles. One rule: care-first.
                   </p>
                 </div>
-                <Link to={createPageUrl('RadioSchedule')} className="block w-full sm:w-auto">
+                <Link to="/music/schedule" className="block w-full sm:w-auto">
                   <Button 
                     variant="outline"
                     className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase w-full sm:w-auto"
@@ -565,7 +612,7 @@ export default function Music() {
                     Live sets and upcoming beacons
                   </p>
                 </div>
-                <Link to={createPageUrl('Events')}>
+                <Link to="/events">
                   <Button
                     variant="outline"
                     className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase"
@@ -578,7 +625,7 @@ export default function Music() {
               {musicEvents.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {musicEvents.map((event) => (
-                    <Link key={event.id} to={createPageUrl(`BeaconDetail?id=${event.id}`)}>
+                    <Link key={event.id} to={`/events/${encodeURIComponent(event.id)}`}>
                       <div className="group relative aspect-[4/3] overflow-hidden bg-white/5 border-2 border-white/10 hover:border-[#B026FF] transition-all">
                         {event.image_url && (
                           <img 
@@ -625,7 +672,7 @@ export default function Music() {
                   <Music2 className="w-16 h-16 mx-auto mb-4 text-white/40" />
                   <h3 className="text-2xl font-black mb-2">NO MUSIC EVENTS YET</h3>
                   <p className="text-white/60 mb-6">Radio shows are live above — events land here when beacons are scheduled.</p>
-                  <Link to={createPageUrl('Events')}>
+                  <Link to="/events">
                     <Button 
                       variant="outline"
                       className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase"

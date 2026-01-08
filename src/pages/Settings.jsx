@@ -251,7 +251,7 @@ export default function Settings() {
 
             <div className="bg-[#00D9FF]/10 border border-[#00D9FF]/40 rounded-lg p-4">
               <p className="text-xs text-white/80 leading-relaxed">
-                🔒 <span className="font-bold">Social Links Privacy:</span> Your social media links are only visible to users you've completed a Telegram handshake with. Edit them in your full profile.
+                🔒 <span className="font-bold">Social Links Privacy:</span> Your social media links are only visible to mutual follows. Edit them in your full profile.
               </p>
             </div>
           </div>
