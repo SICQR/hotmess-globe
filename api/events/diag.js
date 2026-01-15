@@ -52,6 +52,16 @@ export default async function handler(req, res) {
     vite_publicSUPABASE_ANON_KEY: isPresent('vite_publicSUPABASE_ANON_KEY'),
   };
 
+  const canScrape = checks.EVENT_SCRAPER_SOURCES_JSON || checks.OPENAI_API_KEY;
+  const eventScraper = {
+    canScrape,
+    mode: checks.EVENT_SCRAPER_SOURCES_JSON
+      ? 'json_sources'
+      : checks.OPENAI_API_KEY
+        ? 'openai_fallback'
+        : 'disabled',
+  };
+
   const hints = [];
   if (!checks.SUPABASE_URL && (fallbacks.VITE_SUPABASE_URL || fallbacks.vite_publicSUPABASE_URL)) {
     hints.push('SUPABASE_URL is missing but a Vite-prefixed URL is present; ensure server env uses SUPABASE_URL.');
@@ -62,6 +72,15 @@ export default async function handler(req, res) {
   if (!checks.OPENAI_API_KEY) {
     hints.push('OPENAI_API_KEY not visible to this function. Confirm env is set for the correct Vercel environment (Preview/Production) and redeploy.');
   }
+  if (!checks.EVENT_SCRAPER_SOURCES_JSON && checks.OPENAI_API_KEY) {
+    hints.push('EVENT_SCRAPER_SOURCES_JSON is optional because OpenAI fallback is enabled (OPENAI_API_KEY present).');
+  }
+  if (!canScrape) {
+    hints.push('Event scraper cannot run: set EVENT_SCRAPER_SOURCES_JSON or OPENAI_API_KEY.');
+  }
+  if (checks.OPENAI_API_KEY && !checks.OPENAI_MODEL) {
+    hints.push('OPENAI_MODEL is not set; defaulting to gpt-4o-mini. Set OPENAI_MODEL explicitly to control costs/quality.');
+  }
 
   return json(res, 200, {
     ok: true,
@@ -70,7 +89,17 @@ export default async function handler(req, res) {
       region: process.env.VERCEL_REGION || null,
     },
     has: checks,
+    eventScraper,
     fallbacks,
+    examples: {
+      EVENT_SCRAPER_SOURCES_JSON: {
+        '*': ['https://example.com/events/all.json'],
+        London: ['https://example.com/events/london.json'],
+        Manchester: ['https://example.com/events/manchester.json'],
+        Brighton: ['https://example.com/events/brighton.json'],
+      },
+      OPENAI_MODEL: 'gpt-4o-mini',
+    },
     hints,
   });
 }
