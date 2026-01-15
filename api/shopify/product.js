@@ -1,4 +1,21 @@
-import { getEnv, getQueryParam, json, normalizeShopDomain } from './_utils.js';
+import { getQueryParam, json } from './_utils.js';
+import { ensureStorefrontConfigured, getStorefrontConfig, storefrontFetch } from './_storefront.js';
+
+const DEFAULT_ALLOWED_HANDLES = ['hnh-mess-lube-50ml', 'hnh-mess-lube-250ml'];
+
+const normalizeHandle = (value) => String(value || '').trim().toLowerCase();
+
+const getAllowedHandles = () => {
+  const rawCsv = process.env.SHOPIFY_ALLOWED_PRODUCT_HANDLES;
+  const fromCsv = String(rawCsv || '')
+    .split(',')
+    .map((s) => normalizeHandle(s))
+    .filter(Boolean);
+
+  const defaults = DEFAULT_ALLOWED_HANDLES.map(normalizeHandle).filter(Boolean);
+  const allowed = new Set([...defaults, ...fromCsv].filter(Boolean));
+  return { allowed };
+};
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -11,31 +28,18 @@ export default async function handler(req, res) {
     return json(res, 400, { error: 'Missing required query param: handle' });
   }
 
-  const shopDomain = normalizeShopDomain(getEnv('SHOPIFY_SHOP_DOMAIN'));
-  const storefrontTokenPrimary = getEnv('SHOPIFY_API_STOREFRONT_ACCESS_TOKEN');
-  const storefrontTokenFallback = getEnv('SHOPIFY_STOREFRONT_ACCESS_TOKEN');
-  const storefrontToken =
-    storefrontTokenPrimary ||
-    (storefrontTokenFallback && !String(storefrontTokenFallback).startsWith('shpat_')
-      ? storefrontTokenFallback
-      : null);
+  const configured = ensureStorefrontConfigured(res);
+  if (!configured) return;
 
-  if (!shopDomain || !storefrontToken) {
-    return json(res, 500, {
-      error: 'Missing SHOPIFY_SHOP_DOMAIN or Shopify Storefront token',
-      details: 'Set SHOPIFY_API_STOREFRONT_ACCESS_TOKEN (preferred) or SHOPIFY_STOREFRONT_ACCESS_TOKEN.',
-    });
+  const { shopDomain, token } = configured;
+  const { apiVersion } = getStorefrontConfig();
+
+  const requested = normalizeHandle(handle);
+  const { allowed } = getAllowedHandles();
+
+  if (!allowed.has(requested)) {
+    return json(res, 404, { error: 'Product not allowed', handle });
   }
-
-  if (String(storefrontToken).startsWith('shpat_')) {
-    return json(res, 500, {
-      error: 'Invalid Shopify Storefront token (looks like an Admin API token)',
-      details:
-        'Set SHOPIFY_STOREFRONT_ACCESS_TOKEN to your Storefront API token (NOT the Admin API shpat_* token).',
-    });
-  }
-
-  const endpoint = `https://${shopDomain}/api/2024-01/graphql.json`;
   const query = `#graphql
     query ProductByHandle($handle: String!) {
       productByHandle(handle: $handle) {
@@ -43,7 +47,6 @@ export default async function handler(req, res) {
         title
         handle
         descriptionHtml
-        onlineStoreUrl
         featuredImage {
           url
           altText
@@ -74,28 +77,13 @@ export default async function handler(req, res) {
   `;
 
   try {
-    const resp = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': storefrontToken,
-      },
-      body: JSON.stringify({
-        query,
-        variables: { handle },
-      }),
+    const payload = await storefrontFetch({
+      shopDomain,
+      token,
+      apiVersion,
+      query,
+      variables: { handle },
     });
-
-    const payload = await resp.json().catch(() => null);
-
-    if (!resp.ok) {
-      const msg = payload?.errors?.[0]?.message || resp.statusText;
-      return json(res, resp.status, { error: `Shopify Storefront API error: ${msg}` });
-    }
-
-    if (payload?.errors?.length) {
-      return json(res, 502, { error: payload.errors[0]?.message || 'Shopify Storefront API error' });
-    }
 
     const product = payload?.data?.productByHandle || null;
     if (!product) {
@@ -107,6 +95,6 @@ export default async function handler(req, res) {
 
     return json(res, 200, { ok: true, product });
   } catch (error) {
-    return json(res, 500, { error: error?.message || 'Unknown error' });
+    return json(res, error?.status || 500, { error: error?.message || 'Unknown error' });
   }
 }

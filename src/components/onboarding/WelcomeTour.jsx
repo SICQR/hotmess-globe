@@ -38,11 +38,11 @@ const TOUR_STEPS = [
   },
   {
     id: 'marketplace',
-    title: 'Shop & Trade',
-    description: 'Buy and sell with XP or real money. Tickets, merch, services—all in one place.',
+    title: 'Shop the Market',
+    description: 'Browse merch, drops, and essentials—fast checkout, no clutter.',
     icon: ShoppingBag,
     color: '#39FF14',
-    link: 'Marketplace'
+    link: '/market'
   },
   {
     id: 'messages',
@@ -92,6 +92,11 @@ export default function WelcomeTour({ onComplete }) {
 
   const currentStepData = TOUR_STEPS[currentStep];
   const Icon = currentStepData.icon;
+
+  const resolveLink = (value) => {
+    const raw = String(value || '');
+    return raw.startsWith('/') ? raw : createPageUrl(raw);
+  };
 
   return (
     <AnimatePresence>
@@ -157,7 +162,7 @@ export default function WelcomeTour({ onComplete }) {
 
                 {currentStepData.link && (
                   <a
-                    href={createPageUrl(currentStepData.link)}
+                    href={resolveLink(currentStepData.link)}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border-2 border-white/20 hover:border-[#FF1493] text-sm font-bold uppercase tracking-wider transition-colors mb-6"
                   >
                     Go to {currentStepData.title}

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
+import OnSiteAudioPlayer from '@/components/media/OnSiteAudioPlayer';
 import { useServerNow } from '@/hooks/use-server-now';
 
 function slugify(value) {
@@ -15,7 +16,7 @@ function slugify(value) {
 }
 
 const HNHMESS_SOUNDCLOUD_URL = 'https://soundcloud.com/rawconvictrecords/hnh-mess/s-jK7AWO2CQ6t';
-const HNHMESS_SOUNDCLOUD_PUBLIC_URL = 'https://soundcloud.com/rawconvictrecords/hnh-mess';
+const HNHMESS_SOUNDCLOUD_EMBED_HTML = `<iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%3Atracks%3A2243204375%3Fsecret_token%3Ds-jK7AWO2CQ6t&color=%23a35624&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true"></iframe><div style="font-size: 10px; color: #cccccc;line-break: anywhere;word-break: normal;overflow: hidden;white-space: nowrap;text-overflow: ellipsis; font-family: Interstate,Lucida Grande,Lucida Sans Unicode,Lucida Sans,Garuda,Verdana,Tahoma,sans-serif;font-weight: 100;"><a href="https://soundcloud.com/rawconvictrecords" title="Raw Convict Records" target="_blank" style="color: #cccccc; text-decoration: none;">Raw Convict Records</a> · <a href="https://soundcloud.com/rawconvictrecords/hnh-mess/s-jK7AWO2CQ6t" title="HNH MESS" target="_blank" style="color: #cccccc; text-decoration: none;">HNH MESS</a></div>`;
 
 export default function MusicRelease() {
   const { slug } = useParams();
@@ -73,11 +74,9 @@ export default function MusicRelease() {
 
   const soundcloudUrn = effective?.soundcloud_urn || effective?.metadata?.soundcloud_urn;
   const soundcloudUrl = effective?.soundcloud_url || effective?.metadata?.soundcloud_url;
+  const audioUrl = effective?.audio_url || effective?.metadata?.audio_url || null;
   const normalizedSlug = String(slug ?? '').trim().toLowerCase();
   const soundcloudRef = soundcloudUrn || soundcloudUrl || (normalizedSlug === 'hnhmess' ? HNHMESS_SOUNDCLOUD_URL : null);
-  const playOnSoundCloudUrl = normalizedSlug === 'hnhmess'
-    ? HNHMESS_SOUNDCLOUD_PUBLIC_URL
-    : ((typeof soundcloudUrl === 'string' && soundcloudUrl.trim()) ? soundcloudUrl : null);
 
   return (
     <div className="min-h-screen bg-black text-white pb-20">
@@ -131,31 +130,32 @@ export default function MusicRelease() {
               </div>
             )}
 
-            {!isPreLaunch && !isEnded && soundcloudRef ? (
+            {!isPreLaunch && !isEnded ? (
               <div className="mb-4">
-                <SoundCloudEmbed urlOrUrn={soundcloudRef} />
+                {audioUrl ? (
+                  <OnSiteAudioPlayer
+                    src={audioUrl}
+                    title="Listen"
+                    downloadFileName={effective?.release_slug || effective?.slug || 'track'}
+                  />
+                ) : normalizedSlug === 'hnhmess' ? (
+                  <>
+                    <div dangerouslySetInnerHTML={{ __html: HNHMESS_SOUNDCLOUD_EMBED_HTML }} />
+                  </>
+                ) : soundcloudRef ? (
+                  <SoundCloudEmbed urlOrUrn={soundcloudRef} />
+                ) : (
+                  <div className="text-white/70">
+                    No audio file or SoundCloud link/URN available for this release.
+                  </div>
+                )}
               </div>
             ) : (
               <div className="mb-4 text-white/70">
                 {isPreLaunch
                   ? 'Countdown active — player unlocks at launch.'
-                  : isEnded
-                    ? 'Player is no longer available.'
-                    : 'No SoundCloud link/URN available for this release.'}
+                  : 'Player is no longer available.'}
               </div>
-            )}
-
-            {typeof playOnSoundCloudUrl === 'string' && playOnSoundCloudUrl.startsWith('http') && (
-              <a
-                href={playOnSoundCloudUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block"
-              >
-                <Button className="bg-[#B026FF] hover:bg-white text-black font-black uppercase">
-                  {isPreLaunch ? 'View on SoundCloud' : 'Play on SoundCloud'}
-                </Button>
-              </a>
             )}
           </div>
         )}

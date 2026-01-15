@@ -3,13 +3,16 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { ShoppingBag, Star, Package, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
 import ProductCard from '../marketplace/ProductCard';
+import { isXpPurchasingEnabled } from '@/lib/featureFlags';
 
 export default function SellerProfileView({ user }) {
+  const xpPurchasingEnabled = isXpPurchasingEnabled();
+
   const { data: products = [] } = useQuery({
     queryKey: ['seller-products', user.email],
-    queryFn: () => base44.entities.Product.filter({ seller_email: user.email, status: 'active' })
+    queryFn: () => base44.entities.Product.filter({ seller_email: user.email, status: 'active' }),
+    enabled: xpPurchasingEnabled && !!user?.email,
   });
 
   const { data: reviews = [] } = useQuery({
@@ -17,10 +20,11 @@ export default function SellerProfileView({ user }) {
     queryFn: async () => {
       // Get all reviews for this seller's products
       const sellerProducts = await base44.entities.Product.filter({ seller_email: user.email });
-      const productIds = sellerProducts.map(p => p.id);
+      const productIds = sellerProducts.map((p) => p.id);
       const allReviews = await base44.entities.Review.list();
-      return allReviews.filter(r => productIds.includes(r.product_id));
-    }
+      return allReviews.filter((r) => productIds.includes(r.product_id));
+    },
+    enabled: xpPurchasingEnabled && !!user?.email,
   });
 
   return (
@@ -55,13 +59,25 @@ export default function SellerProfileView({ user }) {
         </div>
       </div>
 
+      {!xpPurchasingEnabled && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <h3 className="text-sm uppercase tracking-wider text-white/60 mb-2">Shopfront</h3>
+          <p className="text-sm text-white/70">Seller listings are coming soon.</p>
+          <div className="mt-4">
+            <Link to="/market" className="text-xs text-[#00D9FF] hover:text-white uppercase font-bold">
+              Browse Market →
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Products */}
-      {products.length > 0 && (
+      {xpPurchasingEnabled && products.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-black uppercase">Products</h3>
             <Link 
-              to={createPageUrl(`Marketplace?seller=${user.email}`)}
+              to="/market"
               className="text-xs text-[#00D9FF] hover:text-white uppercase font-bold"
             >
               View All →
@@ -76,7 +92,7 @@ export default function SellerProfileView({ user }) {
       )}
 
       {/* Recent Reviews */}
-      {reviews.length > 0 && (
+      {xpPurchasingEnabled && reviews.length > 0 && (
         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
           <h3 className="text-sm uppercase tracking-wider text-white/40 mb-4">Recent Reviews</h3>
           <div className="space-y-4">

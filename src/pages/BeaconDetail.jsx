@@ -218,17 +218,8 @@ export default function BeaconDetail() {
                   urlOrUrn={soundCloudRef}
                   title={beacon.title ? `${beacon.title} (SoundCloud)` : 'SoundCloud player'}
                   visual={false}
+                  widgetParams={{ buying: false, sharing: false, download: false, show_user: false }}
                 />
-                {typeof soundCloudRef === 'string' && soundCloudRef.startsWith('http') && (
-                  <a
-                    href={soundCloudRef}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 inline-block text-xs text-white/60 hover:text-white transition-colors"
-                  >
-                    Play on SoundCloud →
-                  </a>
-                )}
               </div>
             )}
 

@@ -35,3 +35,9 @@ supabase/.temp/
 .env
 .vercel
 .env*.local
+
+# Local media/assets (avoid accidentally committing large binaries)
+HNH Mess 2 (Remastered).mp3
+
+# Duplicate nested repo artifacts (local-only)
+hotmess-globe/
