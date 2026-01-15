@@ -9,6 +9,14 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { createPageUrl } from './utils';
+import { ShopCartProvider } from '@/features/shop/cart/ShopCartContext';
+import Shop from '@/pages/Shop';
+import ShopCollection from '@/pages/ShopCollection';
+import ShopProduct from '@/pages/ShopProduct';
+import ShopCart from '@/pages/ShopCart';
+import Privacy from '@/pages/legal/Privacy';
+import Terms from '@/pages/legal/Terms';
+import PrivacyHub from '@/pages/legal/PrivacyHub';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -41,10 +49,39 @@ const EditBeaconRedirect = () => {
   return <Navigate to={target} replace />;
 };
 
-const ProductDetailRedirect = () => {
-  const { handle } = useParams();
-  const target = `${createPageUrl('ProductDetail')}?handle=${encodeURIComponent(handle ?? '')}`;
+const LegacyShopCollectionRedirect = () => {
+  return <Navigate to="/market" replace />;
+};
+
+const LegacyProductDetailRedirect = () => {
+  const location = useLocation();
+  const search = location?.search || '';
+  const params = new URLSearchParams(search);
+  const handle = params.get('handle');
+  const target = handle ? `/market/p/${encodeURIComponent(handle)}` : '/market';
   return <Navigate to={target} replace />;
+};
+
+const ProductDetailGate = () => {
+  const location = useLocation();
+  const search = location?.search || '';
+  const params = new URLSearchParams(search);
+  const handle = params.get('handle');
+
+  // If a Shopify handle is provided, always land on the canonical Shopify product page.
+  if (handle) {
+    return <LegacyProductDetailRedirect />;
+  }
+
+  // Otherwise, allow legacy ProductDetail (used by XP/P2P marketplace) to render.
+  const Page = Pages?.ProductDetail;
+  if (!Page) return <PageNotFound />;
+
+  return (
+    <LayoutWrapper currentPageName="ProductDetail">
+      <Page />
+    </LayoutWrapper>
+  );
 };
 
 const ShowHeroRedirect = () => {
@@ -78,6 +115,56 @@ const ReturnsRedirect = () => {
   return <Navigate to={createPageUrl('OrderHistory')} replace />;
 };
 
+const ShopCollectionRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <ShopCollection />
+    </LayoutWrapper>
+  );
+};
+
+const ShopProductRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <ShopProduct />
+    </LayoutWrapper>
+  );
+};
+
+const ShopHomeRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <Shop />
+    </LayoutWrapper>
+  );
+};
+
+const ShopCartRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <ShopCart />
+    </LayoutWrapper>
+  );
+};
+
+const LegalPrivacyRoute = () => (
+  <LayoutWrapper currentPageName="More">
+    <Privacy />
+  </LayoutWrapper>
+);
+
+const LegalTermsRoute = () => (
+  <LayoutWrapper currentPageName="More">
+    <Terms />
+  </LayoutWrapper>
+);
+
+const LegalPrivacyHubRoute = () => (
+  <LayoutWrapper currentPageName="More">
+    <PrivacyHub />
+  </LayoutWrapper>
+);
+
 const SocialDiscoverRedirect = () => {
   return <Navigate to={createPageUrl('Social')} replace />;
 };
@@ -96,7 +183,7 @@ const SocialThreadRedirect = () => {
 
 const MarketCollectionRedirect = () => {
   const { collection } = useParams();
-  const target = `${createPageUrl('Marketplace')}?collection=${encodeURIComponent(collection ?? '')}`;
+  const target = `/market?collection=${encodeURIComponent(collection ?? '')}`;
   return <Navigate to={target} replace />;
 };
 
@@ -159,9 +246,10 @@ const AuthenticatedApp = () => {
       <Route path="/pulse" element={<PageRoute pageKey="Pulse" />} />
       <Route path="/events" element={<PageRoute pageKey="Events" />} />
       <Route path="/events/:id" element={<EventDetailRedirect />} />
-      <Route path="/market" element={<PageRoute pageKey="Marketplace" />} />
-      <Route path="/market/:collection" element={<MarketCollectionRedirect />} />
-      <Route path="/market/p/:handle" element={<ProductDetailRedirect />} />
+      {/* Market (canonical) -> headless Shopify shop */}
+      <Route path="/market" element={<ShopHomeRoute />} />
+      <Route path="/market/:collection" element={<Navigate to="/market" replace />} />
+      <Route path="/market/p/:handle" element={<ShopProductRoute />} />
       <Route path="/social" element={<PageRoute pageKey="Social" />} />
       <Route path="/social/discover" element={<SocialDiscoverRedirect />} />
       <Route path="/social/inbox" element={<PageRoute pageKey="Messages" />} />
@@ -185,6 +273,19 @@ const AuthenticatedApp = () => {
       <Route path="/music/clips/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
       <Route path="/hnhmess" element={<PageRoute pageKey="Hnhmess" />} />
       <Route path="/more" element={<PageRoute pageKey="More" />} />
+
+      {/* Headless Shopify shop routes */}
+      {/* Legacy/alias shop routes (keep URLs working) */}
+      <Route path="/shop" element={<Navigate to="/market" replace />} />
+      <Route path="/shop/:handle" element={<LegacyShopCollectionRedirect />} />
+      <Route path="/p/:handle" element={<ShopProductRoute />} />
+      <Route path="/cart" element={<ShopCartRoute />} />
+
+      {/* Legal */}
+      <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
+      <Route path="/legal/terms" element={<LegalTermsRoute />} />
+      <Route path="/legal/privacy-hub" element={<LegalPrivacyHubRoute />} />
+      <Route path="/legal" element={<Navigate to="/legal/privacy" replace />} />
 
       {/* Bible-friendly market/order aliases */}
       <Route path="/orders" element={<OrdersRedirect />} />
@@ -224,8 +325,8 @@ const AuthenticatedApp = () => {
       <Route path="/radio/schedule" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
       <Route path="/connect" element={<Navigate to={createPageUrl('Social')} replace />} />
       <Route path="/connect/*" element={<Navigate to={createPageUrl('Social')} replace />} />
-      <Route path="/marketplace" element={<Navigate to={createPageUrl('Marketplace')} replace />} />
-      <Route path="/marketplace/p/:handle" element={<ProductDetailRedirect />} />
+      <Route path="/marketplace" element={<Navigate to="/market" replace />} />
+      <Route path="/marketplace/p/:handle" element={<ShopProductRoute />} />
       <Route path="/more/beacons" element={<PageRoute pageKey="Beacons" />} />
       <Route path="/more/beacons/new" element={<PageRoute pageKey="CreateBeacon" />} />
       <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
@@ -239,17 +340,27 @@ const AuthenticatedApp = () => {
       <Route path="/profiles" element={<PageRoute pageKey="ProfilesGrid" />} />
 
       {/* Backward-compatible auto-generated /PageName routes */}
-      {Object.entries(Pages).map(([path, Page]) => (
-        <Route
-          key={path}
-          path={`/${path}`}
-          element={
-            <LayoutWrapper currentPageName={path}>
-              <Page />
-            </LayoutWrapper>
-          }
-        />
-      ))}
+      {Object.entries(Pages).map(([path, Page]) => {
+        if (path === 'Marketplace') {
+          return <Route key={path} path={`/${path}`} element={<Navigate to="/market" replace />} />;
+        }
+
+        if (path === 'ProductDetail') {
+          return <Route key={path} path={`/${path}`} element={<ProductDetailGate />} />;
+        }
+
+        return (
+          <Route
+            key={path}
+            path={`/${path}`}
+            element={
+              <LayoutWrapper currentPageName={path}>
+                <Page />
+              </LayoutWrapper>
+            }
+          />
+        );
+      })}
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
@@ -261,10 +372,12 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <NavigationTracker />
-          <AuthenticatedApp />
-        </Router>
+        <ShopCartProvider>
+          <Router>
+            <NavigationTracker />
+            <AuthenticatedApp />
+          </Router>
+        </ShopCartProvider>
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>

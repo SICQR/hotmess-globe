@@ -24,12 +24,13 @@ import PersistentRadioPlayer from '@/components/shell/PersistentRadioPlayer';
 import { Radio as RadioIcon } from 'lucide-react';
 import { useRadio } from '@/components/shell/RadioContext';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
+import ShopCartDrawer from '@/features/shop/cart/ShopCartDrawer';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
         { name: 'PULSE', icon: GlobeIcon, path: 'Pulse' },
         { name: 'EVENTS', icon: CalendarIcon, path: 'Events' },
-        { name: 'MARKET', icon: ShoppingBag, path: 'Marketplace' },
+        { name: 'MARKET', icon: ShoppingBag, path: 'Marketplace', href: '/market' },
         { name: 'SOCIAL', icon: Users, path: 'Social', showBadge: true },
         { name: 'MUSIC', icon: RadioIcon, path: 'Music' },
         { name: 'MORE', icon: Menu, path: 'More' },
@@ -44,6 +45,13 @@ function LayoutInner({ children, currentPageName }) {
   const location = useLocation();
   const { toggleRadio, isRadioOpen } = useRadio();
 
+  const pathname = (location?.pathname || '').toLowerCase();
+  const isMarketRoute =
+    pathname === '/market' ||
+    pathname.startsWith('/market/') ||
+    pathname === '/cart' ||
+    pathname.startsWith('/p/');
+
   const presenceLastSentRef = useRef({
     ts: 0,
     lat: null,
@@ -53,13 +61,26 @@ function LayoutInner({ children, currentPageName }) {
   // Enable keyboard navigation
   useKeyboardNav();
 
-  // Register service worker for offline support
+  // Service worker:
+  // - Enable in production for offline support.
+  // - In dev, explicitly unregister any existing SW so stale cached bundles
+  //   can't keep showing old runtime errors after code fixes.
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {
-        // Service worker registration failed, continue without offline support
-      });
+    if (!('serviceWorker' in navigator)) return;
+
+    if (import.meta.env.DEV) {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((regs) => Promise.all(regs.map((r) => r.unregister())))
+        .catch(() => {
+          // ignore
+        });
+      return;
     }
+
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Service worker registration failed, continue without offline support
+    });
   }, []);
 
   useEffect(() => {
@@ -283,6 +304,20 @@ function LayoutInner({ children, currentPageName }) {
                 HOTMESS
               </Link>
               <div className="flex items-center gap-2">
+                <Link
+                  to={createPageUrl('Care')}
+                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                  aria-label="Open care"
+                >
+                  <Shield className="w-5 h-5" />
+                </Link>
+                <Link
+                  to={createPageUrl('Settings')}
+                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                  aria-label="Open settings"
+                >
+                  <Settings className="w-5 h-5" />
+                </Link>
                 <button
                   onClick={() => setShowSearch(true)}
                   className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
@@ -291,6 +326,7 @@ function LayoutInner({ children, currentPageName }) {
                 >
                   <Search className="w-5 h-5" />
                 </button>
+                {isMarketRoute ? <ShopCartDrawer /> : null}
                 <button
                   onClick={toggleRadio}
                   className={`p-2 rounded-lg transition-colors ${isRadioOpen ? 'bg-[#B026FF] text-white' : 'bg-white/5 hover:bg-white/10'}`}
@@ -341,10 +377,10 @@ function LayoutInner({ children, currentPageName }) {
 
                 <div className="mb-2">
                   <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-2 px-3">PRIMARY</p>
-                  {PRIMARY_NAV.map(({ name, icon: Icon, path, showBadge }) => (
+                  {PRIMARY_NAV.map(({ name, icon: Icon, path, href, showBadge }) => (
                     <Link
                       key={path}
-                      to={createPageUrl(path)}
+                      to={href || createPageUrl(path)}
                       onClick={() => setMobileMenuOpen(false)}
                       className={`
                         flex items-center gap-3 px-3 py-2.5 mb-1 transition-all
@@ -424,6 +460,21 @@ function LayoutInner({ children, currentPageName }) {
                   HOT<span className="text-[#FF1493]">MESS</span>
                 </Link>
                 <div className="flex items-center gap-2">
+                  <Link
+                    to={createPageUrl('Care')}
+                    className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                    aria-label="Open care"
+                  >
+                    <Shield className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    to={createPageUrl('Settings')}
+                    className="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                    aria-label="Open settings"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Link>
+                  {isMarketRoute ? <ShopCartDrawer /> : null}
                   <button
                     onClick={toggleRadio}
                     className={`p-1.5 rounded-lg transition-colors ${isRadioOpen ? 'bg-[#B026FF] text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
@@ -462,10 +513,10 @@ function LayoutInner({ children, currentPageName }) {
 
               {/* Primary Navigation */}
               <div className="mb-6">
-                {PRIMARY_NAV.map(({ name, icon: Icon, path, showBadge }) => (
+                {PRIMARY_NAV.map(({ name, icon: Icon, path, href, showBadge }) => (
                   <Link
                     key={path}
-                    to={createPageUrl(path)}
+                    to={href || createPageUrl(path)}
                     className={`
                       flex items-center gap-2 px-3 py-2.5 mb-1 transition-all border-2
                       ${isActive(path)
@@ -486,6 +537,23 @@ function LayoutInner({ children, currentPageName }) {
                 </nav>
 
             <div className="p-3 border-t-2 border-white/20">
+              <div className="mb-3 border border-white/10 bg-white/5 p-2">
+                <p className="text-[9px] text-white/40 font-black uppercase tracking-widest mb-2">Quick Links</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link to={createPageUrl('Radio')} className="flex items-center gap-2 px-2 py-2 border border-white/10 hover:border-white/30 hover:bg-white/5 transition-all">
+                    <RadioIcon className="w-3 h-3" />
+                    <span className="text-[10px] font-black uppercase tracking-wider">Radio</span>
+                  </Link>
+                  <Link to={createPageUrl('Care')} className="flex items-center gap-2 px-2 py-2 border border-white/10 hover:border-white/30 hover:bg-white/5 transition-all">
+                    <Shield className="w-3 h-3" />
+                    <span className="text-[10px] font-black uppercase tracking-wider">Care</span>
+                  </Link>
+                  <Link to={createPageUrl('Settings')} className="flex items-center gap-2 px-2 py-2 border border-white/10 hover:border-white/30 hover:bg-white/5 transition-all">
+                    <Settings className="w-3 h-3" />
+                    <span className="text-[10px] font-black uppercase tracking-wider">Settings</span>
+                  </Link>
+                </div>
+              </div>
               {user ? (
                 <>
                   <Link to={createPageUrl('Settings')} className="flex items-center gap-2 hover:opacity-80 transition-opacity mb-2">

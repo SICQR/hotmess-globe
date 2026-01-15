@@ -12,14 +12,10 @@ import { schedule, getNextEpisode, generateICS, downloadICS } from '../component
 import { format } from 'date-fns';
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
+// Shopify product handles are not the same as release slugs.
+// This is the canonical Shopify handle for the HNHMESS lube product used by the home CTA.
+const HNHMESS_LUBE_SHOPIFY_HANDLE = 'hnh-mess-lube-250ml';
 const HNHMESS_RELEASE_AT_FALLBACK = new Date('2026-01-10T00:00:00Z');
-
-const COLLECTIONS = [
-  { id: 'raw', name: 'RAW', tagline: 'Hardwear. Clean lines. Loud intent.', color: '#000000' },
-  { id: 'hung', name: 'HUNG', tagline: "Fit that doesn't ask permission.", color: '#FF1493' },
-  { id: 'high', name: 'HIGH', tagline: 'Club armour. Daylight optional.', color: '#B026FF' },
-  { id: 'super', name: 'SUPER', tagline: 'Limited. Unapologetic. Gone fast.', color: '#00D9FF' },
-];
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -180,10 +176,20 @@ export default function Home() {
     refetchInterval: 60000 // Refresh every minute
   });
 
-  const { data: products = [] } = useQuery({
-    queryKey: ['featured-products'],
-    queryFn: () => base44.entities.Product.filter({ status: 'active' }, '-created_date', 3)
+  const { data: featuredShopify = null } = useQuery({
+    queryKey: ['shopify', 'featured', 'home'],
+    queryFn: async () => {
+      const resp = await fetch('/api/shopify/featured');
+      const payload = await resp.json().catch(() => null);
+      if (!resp.ok) return null;
+      return payload;
+    },
+    refetchInterval: 10 * 60 * 1000,
   });
+
+  const featuredShopifyProducts = Array.isArray(featuredShopify?.products)
+    ? featuredShopify.products
+    : [];
 
   const { data: shopifyProductsForLube = [] } = useQuery({
     queryKey: ['shopify-products', 'for-home-lube'],
@@ -199,15 +205,19 @@ export default function Home() {
   });
 
   const lubeProduct = useMemo(() => {
-    const handle = HNHMESS_RELEASE_SLUG;
-    const byHandle = shopifyProductsForLube.find(
-      (p) => String(p?.details?.shopify_handle ?? '').toLowerCase() === handle
-    );
+    const candidates = [HNHMESS_LUBE_SHOPIFY_HANDLE, HNHMESS_RELEASE_SLUG].filter(Boolean);
+
+    const byHandle = shopifyProductsForLube.find((p) => {
+      const raw = p?.details?.shopify_handle;
+      const h = raw ? String(raw).toLowerCase().trim() : '';
+      return h && candidates.includes(h);
+    });
     if (byHandle) return byHandle;
 
-    const byTag = shopifyProductsForLube.find(
-      (p) => Array.isArray(p?.tags) && p.tags.map((t) => String(t).toLowerCase()).includes(handle)
-    );
+    const byTag = shopifyProductsForLube.find((p) => {
+      const tags = Array.isArray(p?.tags) ? p.tags.map((t) => String(t).toLowerCase()) : [];
+      return candidates.some((c) => tags.includes(c));
+    });
     if (byTag) return byTag;
 
     const byName = shopifyProductsForLube.find((p) => String(p?.name ?? '').toLowerCase().includes('hnh'));
@@ -216,14 +226,19 @@ export default function Home() {
     return null;
   }, [shopifyProductsForLube]);
 
+  const lubeStorefrontHandle =
+    (lubeProduct?.details?.shopify_handle ? String(lubeProduct.details.shopify_handle).trim() : '') ||
+    HNHMESS_LUBE_SHOPIFY_HANDLE;
+
   const { data: lubeStorefrontProduct = null } = useQuery({
-    queryKey: ['shopify-storefront-product', 'home', HNHMESS_RELEASE_SLUG],
+    queryKey: ['shopify-storefront-product', 'home', lubeStorefrontHandle],
     queryFn: async () => {
-      const resp = await fetch(`/api/shopify/product?handle=${encodeURIComponent(HNHMESS_RELEASE_SLUG)}`);
+      const resp = await fetch(`/api/shopify/product?handle=${encodeURIComponent(lubeStorefrontHandle)}`);
       const payload = await resp.json().catch(() => null);
       if (!resp.ok) return null;
       return payload?.product || null;
     },
+    enabled: !!lubeStorefrontHandle,
     refetchInterval: 10 * 60 * 1000,
   });
 
@@ -336,7 +351,7 @@ export default function Home() {
               <div className="flex flex-wrap gap-3">
                 <Link to="/hnhmess">
                   <Button className="bg-[#B026FF] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg">
-                    Shop lube
+                    Buy now
                   </Button>
                 </Link>
                 {isHnhmessPreLaunch ? (
@@ -388,7 +403,7 @@ export default function Home() {
                 </Link>
                 <Link to="/hnhmess">
                   <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase">
-                    Buy HNH MESS lube
+                    Buy now
                   </Button>
                 </Link>
               </div>
@@ -447,134 +462,59 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-16"
           >
-            <p className="text-xs uppercase tracking-[0.4em] text-black/40 mb-4">COLLECTIONS</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-black/40 mb-4">SHOP</p>
             <h2 className="text-6xl md:text-8xl font-black italic mb-6">SHOP THE DROP</h2>
             <p className="text-xl uppercase tracking-wider text-black/60 max-w-2xl">
               Hardwear. Fit. Club armour. Limited runs.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <Link to="/market">
-                <div className="group relative aspect-[4/3] overflow-hidden">
-                  <img 
-                    src="https://images.unsplash.com/photo-1483118714900-540cf339fd46?w=800&q=90" 
-                    alt="RAW Collection"
-                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-                  />
-                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-500" />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
-                    <h3 className="text-6xl font-black italic mb-4 text-white drop-shadow-2xl">RAW</h3>
-                    <p className="text-sm uppercase tracking-widest text-white drop-shadow-lg">Hardwear. Clean lines. Loud intent.</p>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {featuredShopifyProducts.length ? (
+              featuredShopifyProducts.slice(0, 2).map((p, idx) => {
+                const handle = p?.handle ? String(p.handle) : '';
+                const imageUrl = p?.featuredImage?.url || p?.images?.nodes?.[0]?.url || '';
+                const imageAlt =
+                  p?.featuredImage?.altText || p?.images?.nodes?.[0]?.altText || p?.title || 'Shop item';
 
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-            >
-              <Link to="/market">
-                <div className="group relative aspect-[4/3] overflow-hidden">
-                  <img 
-                    src="/images/hung-hero.png"
-                    alt="HUNG Collection"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1529068755536-a5ade0dcb4e8?w=800&q=90';
-                    }}
-                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#FF1493]/50 to-black/60 group-hover:from-[#FF1493]/30 transition-all duration-500" />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
-                    <h3 className="text-6xl font-black italic mb-4 text-white drop-shadow-2xl">HUNG</h3>
-                    <p className="text-sm uppercase tracking-widest text-white drop-shadow-lg">Fit that doesn't ask permission.</p>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-            >
-              <Link to="/market">
-                <div className="group relative aspect-[4/3] overflow-hidden">
-                  <img 
-                    src="https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=800&q=90" 
-                    alt="HIGH Collection"
-                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#B026FF]/50 to-black/60 group-hover:from-[#B026FF]/30 transition-all duration-500" />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
-                    <h3 className="text-6xl font-black italic mb-4 text-white drop-shadow-2xl">HIGH</h3>
-                    <p className="text-sm uppercase tracking-widest text-white drop-shadow-lg">Club armour. Daylight optional.</p>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
-            >
-              <Link to="/market">
-                <div className="group relative aspect-[4/3] overflow-hidden">
-                  <img 
-                    src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=90" 
-                    alt="SUPER Collection"
-                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#00D9FF]/50 to-black/60 group-hover:from-[#00D9FF]/30 transition-all duration-500" />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
-                    <h3 className="text-6xl font-black italic mb-4 text-white drop-shadow-2xl">SUPER</h3>
-                    <p className="text-sm uppercase tracking-widest text-white drop-shadow-lg">Limited. Unapologetic. Gone fast.</p>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
+                return (
+                  <motion.div
+                    key={p?.id || handle || idx}
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 }}
+                  >
+                    <Link to={handle ? `/market/p/${encodeURIComponent(handle)}` : '/market'}>
+                      <div className="group relative aspect-[4/3] overflow-hidden bg-black">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={imageAlt}
+                            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                          />
+                        ) : null}
+                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-500" />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
+                          <h3 className="text-3xl md:text-5xl font-black italic mb-4 text-white drop-shadow-2xl">
+                            {p?.title || 'Shop'}
+                          </h3>
+                          <p className="text-sm uppercase tracking-widest text-white drop-shadow-lg">Tap to view</p>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })
+            ) : (
+              <div className="border border-black/10 bg-black/5 p-6">
+                <p className="text-black/70">Shop is loading or unavailable.</p>
+                <Link to="/market">
+                  <Button className="mt-4 bg-black text-white font-black uppercase">Open Market</Button>
+                </Link>
+              </div>
+            )}
           </div>
-
-          {products.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {products.map((product, idx) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="group"
-                >
-                  <Link to={createPageUrl(`ProductDetail?id=${product.id}`)}>
-                    <div className="aspect-square bg-black mb-4 overflow-hidden">
-                      {product.image_urls?.[0] && (
-                        <img src={product.image_urls[0]} alt={product.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
-                      )}
-                    </div>
-                    <h3 className="font-black uppercase text-lg mb-2">{product.name}</h3>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[#FF1493] font-bold">{product.price_xp} XP</span>
-                      <span className="text-black/40">•</span>
-                      <span className="text-black/60">£{product.price_gbp}</span>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          )}
         </div>
       </section>
 

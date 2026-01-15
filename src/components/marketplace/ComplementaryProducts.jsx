@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Sparkles } from 'lucide-react';
 import ProductCard from './ProductCard';
+import logger from '@/utils/logger';
 
 export default function ComplementaryProducts({ product, onBuy }) {
   const [complementary, setComplementary] = useState([]);
@@ -37,6 +38,15 @@ export default function ComplementaryProducts({ product, onBuy }) {
         return;
       }
 
+      const invokeLLM = base44?.integrations?.Core?.InvokeLLM;
+      if (typeof invokeLLM !== 'function') {
+        const fallback = availableProducts
+          .filter((p) => (product?.category ? p.category === product.category : true))
+          .slice(0, 4);
+        setComplementary(fallback);
+        return;
+      }
+
       const prompt = `You are recommending complementary products for HOTMESS LONDON marketplace.
 
 Current Product:
@@ -58,7 +68,7 @@ Recommend 4 complementary product IDs that would pair well with the current prod
 
 Return ONLY a JSON array of product IDs, like: ["id1", "id2", "id3", "id4"]`;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await invokeLLM({
         prompt,
         add_context_from_internet: false,
         response_json_schema: {
@@ -77,9 +87,12 @@ Return ONLY a JSON array of product IDs, like: ["id1", "id2", "id3", "id4"]`;
 
       setComplementary(complementaryProducts);
     } catch (error) {
-      console.error('Failed to generate complementary products:', error);
+      logger.warn('Failed to generate complementary products; using fallback', {
+        error: error?.message,
+      });
       const fallback = allProducts
-        .filter(p => p.id !== product.id && p.category === product.category)
+        .filter((p) => p.id !== product.id)
+        .filter((p) => (product?.category ? p.category === product.category : true))
         .slice(0, 4);
       setComplementary(fallback);
     } finally {

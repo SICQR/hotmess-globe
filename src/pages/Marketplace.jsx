@@ -297,7 +297,17 @@ export default function Marketplace() {
         return;
       }
 
-      addToCart({ productId: product.id, quantity: 1, currentUser })
+      const variants = Array.isArray(details?.shopify_variants) ? details.shopify_variants : [];
+      const idFromDetails = details?.shopify_variant_id ? String(details.shopify_variant_id).trim() : null;
+      const idFromFirstVariant = variants?.[0]?.id ? String(variants[0].id).trim() : null;
+      const variantId = idFromDetails || idFromFirstVariant || null;
+      const variantTitle =
+        (variantId && variants.length
+          ? (variants.find((v) => String(v?.id || '').trim() === String(variantId))?.title ?? null)
+          : (variants?.[0]?.title ?? null)) ||
+        null;
+
+      addToCart({ productId: product.id, quantity: 1, currentUser, variantId, variantTitle })
         .then(() => {
           toast.success('Added to cart!');
           setShowCart(true);

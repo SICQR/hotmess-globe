@@ -76,7 +76,37 @@ function localApiRoutes() {
             });
         }
 
-        if (path === '/api/shopify/cart' && method === 'POST') {
+        if (path === '/api/shopify/collections' && method === 'GET') {
+          return importFresh('./api/shopify/collections.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load collections handler' }));
+            });
+        }
+
+        if (path === '/api/shopify/collection' && method === 'GET') {
+          return importFresh('./api/shopify/collection.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load collection handler' }));
+            });
+        }
+
+        if (path === '/api/shopify/featured' && method === 'GET') {
+          return importFresh('./api/shopify/featured.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load featured handler' }));
+            });
+        }
+
+        if (path === '/api/shopify/cart' && (method === 'POST' || method === 'GET')) {
           return importFresh('./api/shopify/cart.js')
             .then((handler) => handler(req, res))
             .catch((error) => {

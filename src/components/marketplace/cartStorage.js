@@ -73,6 +73,93 @@ const resolveCurrentUser = async (currentUser) => {
   }
 };
 
+const isMissingTableError = (error) => {
+  const code = String(error?.code || '').toUpperCase();
+  const message = String(error?.message || '').toLowerCase();
+
+  if (code === 'PGRST205') return true;
+  if (code === '42P01') return true;
+
+  return (
+    error?.status === 404 ||
+    message.includes('schema cache') ||
+    message.includes('could not find the table') ||
+    message.includes('does not exist')
+  );
+};
+
+const isMissingColumnError = (error) => {
+  const code = String(error?.code || '').toUpperCase();
+  const message = String(error?.message || '').toLowerCase();
+
+  if (code === 'PGRST204') return true;
+  if (code === '42703') return true;
+
+  return (
+    (message.includes('could not find') && message.includes('column')) ||
+    (message.includes('column') && message.includes('does not exist'))
+  );
+};
+
+const isCartSchemaCompatError = (error) => {
+  if (isMissingTableError(error) || isMissingColumnError(error)) return true;
+
+  // Some Supabase schema-cache/column issues surface as a generic 400.
+  const status = Number(error?.status);
+  if (status === 400) {
+    const message = String(error?.message || '').toLowerCase();
+    return message.includes('schema') || message.includes('column') || message.includes('could not find');
+  }
+
+  return false;
+};
+
+const warnCartFallbackOnce = (() => {
+  let didWarn = false;
+  return (error) => {
+    if (didWarn) return;
+    didWarn = true;
+    // Keep this as a quiet breadcrumb; many environments won’t have cart tables yet.
+    console.warn('[cart] Falling back to guest cart (cart_items table unavailable)', error);
+  };
+})();
+
+const addToGuestCart = ({ productId, qty, variantId, variantTitle }) => {
+  const existingItems = getGuestCartItems();
+  const reserved_until = getReservedUntilIso();
+  const idx = existingItems.findIndex((item) => {
+    if (item?.product_id !== productId) return false;
+    const itemVariant = item?.shopify_variant_id ? String(item.shopify_variant_id).trim() : null;
+    return itemVariant === variantId;
+  });
+
+  if (idx >= 0) {
+    const next = [...existingItems];
+    const current = next[idx] || {};
+    next[idx] = {
+      ...current,
+      product_id: productId,
+      quantity: (current.quantity || 0) + qty,
+      reserved_until,
+      ...(variantId ? { shopify_variant_id: variantId } : {}),
+      ...(variantTitle ? { variant_title: variantTitle } : {}),
+    };
+    setGuestCartItems(next);
+    return;
+  }
+
+  setGuestCartItems([
+    ...existingItems,
+    {
+      product_id: productId,
+      quantity: qty,
+      reserved_until,
+      ...(variantId ? { shopify_variant_id: variantId } : {}),
+      ...(variantTitle ? { variant_title: variantTitle } : {}),
+    },
+  ]);
+};
+
 export const addToCart = async ({ productId, quantity = 1, currentUser, variantId = null, variantTitle = null }) => {
   if (!productId) throw new Error('Missing product id');
   const qty = Number.isFinite(quantity) ? quantity : 1;
@@ -85,70 +172,57 @@ export const addToCart = async ({ productId, quantity = 1, currentUser, variantI
 
   // Authenticated cart -> DB
   if (resolvedUser?.email) {
-    const authUserId = resolvedUser?.auth_user_id || null;
-    const reserved_until = getReservedUntilIso();
+    try {
+      const authUserId = resolvedUser?.auth_user_id || null;
+      const reserved_until = getReservedUntilIso();
 
-    const baseFilter = authUserId
-      ? { auth_user_id: authUserId, product_id: productId }
-      : { user_email: resolvedUser.email, product_id: productId };
+      const baseFilter = authUserId
+        ? { auth_user_id: authUserId, product_id: productId }
+        : { user_email: resolvedUser.email, product_id: productId };
 
-    const existing = normalizedVariantId
-      ? await base44.entities.CartItem.filter({ ...baseFilter, shopify_variant_id: normalizedVariantId })
-      : await base44.entities.CartItem.filter(baseFilter);
+      const existing = normalizedVariantId
+        ? await base44.entities.CartItem.filter({ ...baseFilter, shopify_variant_id: normalizedVariantId })
+        : await base44.entities.CartItem.filter(baseFilter);
 
-    if (existing.length > 0) {
-      const item = existing[0];
-      return base44.entities.CartItem.update(item.id, {
-        quantity: (item.quantity || 0) + qty,
+      if (existing.length > 0) {
+        const item = existing[0];
+        return base44.entities.CartItem.update(item.id, {
+          quantity: (item.quantity || 0) + qty,
+          reserved_until,
+        });
+      }
+
+      return base44.entities.CartItem.create({
+        user_email: resolvedUser.email,
+        ...(authUserId ? { auth_user_id: authUserId } : {}),
+        product_id: productId,
+        quantity: qty,
         reserved_until,
+        ...(normalizedVariantId ? { shopify_variant_id: normalizedVariantId } : {}),
+        ...(normalizedVariantTitle ? { variant_title: normalizedVariantTitle } : {}),
       });
+    } catch (error) {
+      if (isCartSchemaCompatError(error)) {
+        warnCartFallbackOnce(error);
+        addToGuestCart({
+          productId,
+          qty,
+          variantId: normalizedVariantId,
+          variantTitle: normalizedVariantTitle,
+        });
+        return;
+      }
+      throw error;
     }
-
-    return base44.entities.CartItem.create({
-      user_email: resolvedUser.email,
-      ...(authUserId ? { auth_user_id: authUserId } : {}),
-      product_id: productId,
-      quantity: qty,
-      reserved_until,
-      ...(normalizedVariantId ? { shopify_variant_id: normalizedVariantId } : {}),
-      ...(normalizedVariantTitle ? { variant_title: normalizedVariantTitle } : {}),
-    });
   }
 
   // Guest cart -> localStorage
-  const existingItems = getGuestCartItems();
-  const reserved_until = getReservedUntilIso();
-  const idx = existingItems.findIndex((item) => {
-    if (item?.product_id !== productId) return false;
-    const itemVariant = item?.shopify_variant_id ? String(item.shopify_variant_id).trim() : null;
-    return itemVariant === normalizedVariantId;
+  addToGuestCart({
+    productId,
+    qty,
+    variantId: normalizedVariantId,
+    variantTitle: normalizedVariantTitle,
   });
-
-  if (idx >= 0) {
-    const next = [...existingItems];
-    const current = next[idx] || {};
-    next[idx] = {
-      ...current,
-      product_id: productId,
-      quantity: (current.quantity || 0) + qty,
-      reserved_until,
-      ...(normalizedVariantId ? { shopify_variant_id: normalizedVariantId } : {}),
-      ...(normalizedVariantTitle ? { variant_title: normalizedVariantTitle } : {}),
-    };
-    setGuestCartItems(next);
-    return;
-  }
-
-  setGuestCartItems([
-    ...existingItems,
-    {
-      product_id: productId,
-      quantity: qty,
-      reserved_until,
-      ...(normalizedVariantId ? { shopify_variant_id: normalizedVariantId } : {}),
-      ...(normalizedVariantTitle ? { variant_title: normalizedVariantTitle } : {}),
-    },
-  ]);
 };
 
 export const updateCartItemQuantity = async ({ itemId, productId, quantity, currentUser, variantId = null }) => {
@@ -159,10 +233,26 @@ export const updateCartItemQuantity = async ({ itemId, productId, quantity, curr
 
   if (currentUser?.email) {
     if (!itemId) throw new Error('Missing cart item id');
-    return base44.entities.CartItem.update(itemId, {
-      quantity: qty,
-      reserved_until: getReservedUntilIso(),
-    });
+    try {
+      return base44.entities.CartItem.update(itemId, {
+        quantity: qty,
+        reserved_until: getReservedUntilIso(),
+      });
+    } catch (error) {
+      if (isCartSchemaCompatError(error)) {
+        warnCartFallbackOnce(error);
+        const normalizedVariantId = variantId ? String(variantId).trim() : null;
+        const items = getGuestCartItems();
+        const next = items.map((item) =>
+          item?.product_id === productId && (String(item?.shopify_variant_id || '').trim() || null) === normalizedVariantId
+            ? { ...item, quantity: qty, reserved_until: getReservedUntilIso() }
+            : item
+        );
+        setGuestCartItems(next);
+        return;
+      }
+      throw error;
+    }
   }
 
   const items = getGuestCartItems();
@@ -178,7 +268,24 @@ export const updateCartItemQuantity = async ({ itemId, productId, quantity, curr
 export const removeFromCart = async ({ itemId, productId, currentUser, variantId = null }) => {
   if (currentUser?.email) {
     if (!itemId) throw new Error('Missing cart item id');
-    return base44.entities.CartItem.delete(itemId);
+    try {
+      return base44.entities.CartItem.delete(itemId);
+    } catch (error) {
+      if (isCartSchemaCompatError(error)) {
+        warnCartFallbackOnce(error);
+        const items = getGuestCartItems();
+        const normalizedVariantId = variantId ? String(variantId).trim() : null;
+        setGuestCartItems(
+          items.filter((item) => {
+            if (item?.product_id !== productId) return true;
+            const itemVariant = (String(item?.shopify_variant_id || '').trim() || null);
+            return itemVariant !== normalizedVariantId;
+          })
+        );
+        return;
+      }
+      throw error;
+    }
   }
 
   const items = getGuestCartItems();
@@ -213,9 +320,19 @@ export const mergeGuestCartToUser = async ({ currentUser }) => {
     return;
   }
 
-  const existingDbItems = authUserId
-    ? await base44.entities.CartItem.filter({ auth_user_id: authUserId })
-    : await base44.entities.CartItem.filter({ user_email: resolvedUser.email });
+  let existingDbItems = [];
+  try {
+    existingDbItems = authUserId
+      ? await base44.entities.CartItem.filter({ auth_user_id: authUserId })
+      : await base44.entities.CartItem.filter({ user_email: resolvedUser.email });
+  } catch (error) {
+    if (isMissingTableError(error)) {
+      warnCartFallbackOnce(error);
+      // Leave items in guest cart; DB cart is unavailable.
+      return;
+    }
+    throw error;
+  }
   const makeKey = (item) => {
     const pid = item?.product_id ? String(item.product_id) : '';
     const vid = item?.shopify_variant_id ? String(item.shopify_variant_id).trim() : '';
@@ -232,23 +349,32 @@ export const mergeGuestCartToUser = async ({ currentUser }) => {
     const reserved_until = guestItem.reserved_until || getReservedUntilIso();
 
     const existing = byKey.get(`${String(productId)}::${guestVariantId || ''}`);
-    if (existing) {
-      await base44.entities.CartItem.update(existing.id, {
-        quantity: (existing.quantity || 0) + qty,
-        reserved_until,
-      });
-      continue;
-    }
+    try {
+      if (existing) {
+        await base44.entities.CartItem.update(existing.id, {
+          quantity: (existing.quantity || 0) + qty,
+          reserved_until,
+        });
+        continue;
+      }
 
-    await base44.entities.CartItem.create({
-      user_email: resolvedUser.email,
-      ...(authUserId ? { auth_user_id: authUserId } : {}),
-      product_id: productId,
-      quantity: qty,
-      reserved_until,
-      ...(guestVariantId ? { shopify_variant_id: guestVariantId } : {}),
-      ...(guestVariantTitle ? { variant_title: guestVariantTitle } : {}),
-    });
+      await base44.entities.CartItem.create({
+        user_email: resolvedUser.email,
+        ...(authUserId ? { auth_user_id: authUserId } : {}),
+        product_id: productId,
+        quantity: qty,
+        reserved_until,
+        ...(guestVariantId ? { shopify_variant_id: guestVariantId } : {}),
+        ...(guestVariantTitle ? { variant_title: guestVariantTitle } : {}),
+      });
+    } catch (error) {
+      if (isMissingTableError(error)) {
+        warnCartFallbackOnce(error);
+        // Leave items in guest cart; DB cart is unavailable.
+        return;
+      }
+      throw error;
+    }
   }
 
   clearGuestCart();

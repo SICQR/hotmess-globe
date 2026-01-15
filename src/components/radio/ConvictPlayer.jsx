@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Music } from 'lucide-react';
+import { Play, Pause, Music, Download } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
@@ -115,6 +115,20 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
 
           {/* Audio Element */}
           <audio ref={audioRef} />
+
+          {/* Download (local file only) */}
+          {typeof beacon?.audio_url === 'string' && beacon.audio_url.startsWith('http') && (
+            <Button
+              asChild
+              variant="outline"
+              className="w-full border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase"
+            >
+              <a href={beacon.audio_url} download={beacon?.title ? `${beacon.title}` : true}>
+                <Download className="w-4 h-4" />
+                Download
+              </a>
+            </Button>
+          )}
 
           {/* Progress Bar */}
           <div className="space-y-2">
