@@ -8,6 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:loopback": "vite --host 127.0.0.1 --port 5173 --clearScreen false --logLevel info",
+    "dev:lan": "vite --host 0.0.0.0 --port 5173 --clearScreen false --logLevel info",
     "build": "vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
@@ -15,6 +17,7 @@
     "seed:mock-profiles": "node ./scripts/seed-mock-profiles.mjs",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:run:verbose": "vitest run --reporter verbose",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "preview": "vite preview"

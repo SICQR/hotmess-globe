@@ -71,7 +71,23 @@ Required server env vars in Vercel:
 - `SUPABASE_SERVICE_ROLE_KEY`
 
 Scrape input configuration:
-- Set `EVENT_SCRAPER_SOURCES_JSON` as JSON mapping city → list of JSON feed URLs, or POST `events[]` directly to `/api/events/scrape`.
+- Option A (sources): set `EVENT_SCRAPER_SOURCES_JSON` as JSON mapping city → list of JSON feed URLs.
+- Option B (push): POST `events[]` directly to `/api/events/scrape`.
+- Option C (LLM fallback): set `OPENAI_API_KEY` (and optionally `OPENAI_MODEL`) and omit `EVENT_SCRAPER_SOURCES_JSON`.
+
+`EVENT_SCRAPER_SOURCES_JSON` schema:
+- Must be a JSON object.
+- Keys are city names (case-insensitive).
+- Values are arrays of URLs.
+- Each URL must return JSON that is either an array of events or `{ "events": [...] }`.
+- Optional wildcard keys:
+   - `"*"`: URLs fetched for every city.
+   - `"all"`: alias for `"*"`.
+
+Example value (paste as a single line into Vercel env):
+```json
+{"*":[],"London":["https://example.com/events/london.json"],"Manchester":["https://example.com/events/manchester.json"],"Brighton":["https://example.com/events/brighton.json"]}
+```
 
 Security note:
 - `/api/events/scrape` requires an authenticated admin bearer token.
