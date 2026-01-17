@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
 import { MapPin, Zap, ArrowLeft, Users, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,11 +17,13 @@ import NightKingDisplay from '../components/gamification/NightKingDisplay';
 import ConvictPlayer from '../components/radio/ConvictPlayer';
 import { Music } from 'lucide-react';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
+import { toast } from 'sonner';
 
 
 export default function BeaconDetail() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const beaconId = searchParams.get('id');
   const [currentUser, setCurrentUser] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
@@ -89,22 +91,39 @@ export default function BeaconDetail() {
 
   const handleScan = async () => {
     try {
-      const user = await base44.auth.me();
-      const newXp = (user.xp || 0) + (beacon.xp_scan || 0);
-      await base44.auth.updateMe({ xp: newXp });
-      
-      // Track interaction
-      await base44.entities.UserInteraction.create({
-        user_email: user.email,
-        interaction_type: 'scan',
-        beacon_id: beacon.id,
-        beacon_kind: beacon.kind,
-        beacon_mode: beacon.mode
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token || null;
+      if (!token) {
+        toast.error('Please log in to scan beacons');
+        return;
+      }
+
+      const res = await fetch('/api/scan/check-in', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code: beacon?.id, source: 'beacon_detail' }),
       });
-      
-      alert(`Scanned! +${beacon.xp_scan} XP earned`);
+
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 409) {
+          toast.message('Already scanned recently');
+          return;
+        }
+        throw new Error(payload?.error || 'Scan failed');
+      }
+
+      toast.success(`Scanned (+${payload?.earned_xp ?? 0} XP)`);
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ['beacon_checkins'] });
     } catch (error) {
       console.error('Failed to scan:', error);
+      toast.error(error?.message || 'Failed to scan');
     }
   };
 

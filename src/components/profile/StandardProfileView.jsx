@@ -1,15 +1,57 @@
 import React from 'react';
 import MutualConnections from './MutualConnections';
+import { taxonomyConfig } from '../discovery/taxonomyConfig';
 
-export default function StandardProfileView({ user, currentUser, isHandshakeConnection }) {
+const buildTagLabelMap = () => {
+  const map = new Map();
+  (taxonomyConfig?.tags || []).forEach((t) => {
+    if (t?.id) map.set(String(t.id), t);
+  });
+  return map;
+};
+
+const TAG_BY_ID = buildTagLabelMap();
+
+export default function StandardProfileView({ user, currentUser, isHandshakeConnection, isOwnProfile }) {
+  const tagIds = Array.isArray(user?.tag_ids)
+    ? user.tag_ids
+    : Array.isArray(user?.tags)
+      ? user.tags
+      : [];
+
+  const normalizedTagIds = tagIds
+    .map((t) => String(t || '').trim())
+    .filter(Boolean);
+
+  const tagged = normalizedTagIds
+    .map((id) => {
+      const tag = TAG_BY_ID.get(id);
+      return {
+        id,
+        label: tag?.label || id,
+        isSensitive: !!tag?.isSensitive,
+      };
+    });
+
+  const canSeeSensitiveTags = !!isOwnProfile || !!isHandshakeConnection;
+  const safeTags = tagged.filter((t) => !t.isSensitive);
+  const sensitiveTags = tagged.filter((t) => t.isSensitive);
+  const visibleSensitive = canSeeSensitiveTags ? sensitiveTags : [];
+  const hiddenSensitiveCount = canSeeSensitiveTags ? 0 : sensitiveTags.length;
+
+  const photos = Array.isArray(user?.photos) ? user.photos.slice(0, 5) : [];
+  const preferredVibes = Array.isArray(user?.preferred_vibes) ? user.preferred_vibes : [];
+  const skills = Array.isArray(user?.skills) ? user.skills : [];
+  const musicTaste = Array.isArray(user?.music_taste) ? user.music_taste : [];
+
   return (
     <div className="space-y-6">
       {/* Photo Gallery */}
-      {user?.photos && user.photos.length > 0 && (
+      {photos.length > 0 && (
         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
           <h3 className="text-sm uppercase tracking-wider text-white/40 mb-4">Photos</h3>
           <div className="grid grid-cols-3 gap-3">
-            {user.photos.map((photo, idx) => (
+            {photos.map((photo, idx) => (
               <div key={idx} className="relative aspect-square">
                 {photo.is_premium ? (
                   <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/20 to-[#FF1493]/20 border-2 border-[#FFD700] flex items-center justify-center">
@@ -31,11 +73,76 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
         </div>
       )}
 
+      {/* Tags */}
+      {(safeTags.length > 0 || visibleSensitive.length > 0) && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h3 className="text-sm uppercase tracking-wider text-white/40">Tags</h3>
+            {hiddenSensitiveCount > 0 && (
+              <span className="text-[10px] text-white/40 uppercase">Sensitive tags hidden</span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {safeTags.concat(visibleSensitive).slice(0, 14).map((tag) => (
+              <span
+                key={tag.id}
+                className={
+                  tag.isSensitive
+                    ? 'px-3 py-1 bg-[#FF1493]/15 border border-[#FF1493]/40 text-[#FF1493] text-xs font-bold uppercase'
+                    : 'px-3 py-1 bg-[#00D9FF]/15 border border-[#00D9FF]/35 text-[#00D9FF] text-xs font-bold uppercase'
+                }
+              >
+                {tag.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Bio */}
       {user?.bio && (
         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
           <h3 className="text-sm uppercase tracking-wider text-white/40 mb-3">About</h3>
           <p className="text-white/80 leading-relaxed">{user.bio}</p>
+        </div>
+      )}
+
+      {/* Vibes */}
+      {preferredVibes.length > 0 && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <h3 className="text-sm uppercase tracking-wider text-white/40 mb-3">Vibes</h3>
+          <div className="flex flex-wrap gap-2">
+            {preferredVibes.slice(0, 8).map((vibe, idx) => (
+              <span key={idx} className="px-3 py-1 bg-white/10 border border-white/15 text-white/80 text-xs font-bold uppercase">
+                {String(vibe).replaceAll('_', ' ')}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Skills */}
+      {skills.length > 0 && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <h3 className="text-sm uppercase tracking-wider text-white/40 mb-3">Skills</h3>
+          <div className="flex flex-wrap gap-2">
+            {skills.slice(0, 10).map((skill, idx) => (
+              <span key={idx} className="px-3 py-1 bg-[#B026FF]/15 border border-[#B026FF]/35 text-[#D7B8FF] text-xs font-bold uppercase">
+                {String(skill)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Music Taste */}
+      {musicTaste.length > 0 && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <h3 className="text-sm uppercase tracking-wider text-white/40 mb-3">Music Taste</h3>
+          <p className="text-white/70 text-sm leading-relaxed">
+            {musicTaste.slice(0, 10).join(' • ')}
+          </p>
         </div>
       )}
 

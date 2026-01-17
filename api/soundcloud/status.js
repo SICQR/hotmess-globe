@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { getBearerToken, getEnv, json } from '../shopify/_utils.js';
+import { isMusicUploadAllowlisted } from './_auth.js';
 
 const isAdminUser = async ({ anonClient, serviceClient, accessToken, email }) => {
   const { data: userData, error: userErr } = await anonClient.auth.getUser(accessToken);
@@ -52,9 +53,17 @@ export default async function handler(req, res) {
   }
 
   const email = userData.user.email;
-  const adminOk = await isAdminUser({ anonClient, serviceClient, accessToken, email });
-  if (!adminOk) {
-    return json(res, 403, { error: 'Admin required' });
+  const allowlisted = isMusicUploadAllowlisted(email);
+  if (allowlisted === false) {
+    return json(res, 403, { error: 'Not authorized' });
+  }
+
+  // Back-compat: if allowlist isn't configured, keep the previous admin-only behavior.
+  if (allowlisted === null) {
+    const adminOk = await isAdminUser({ anonClient, serviceClient, accessToken, email });
+    if (!adminOk) {
+      return json(res, 403, { error: 'Admin required' });
+    }
   }
 
   const { data, error } = await serviceClient

@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { GridSkeleton } from '@/components/ui/LoadingSkeleton';
 import { Button } from '@/components/ui/button';
+import PageShell from '@/components/shell/PageShell';
+import { openCartDrawer } from '@/utils/cartEvents';
 
 export default function Shop() {
   const { data, isLoading, error } = useQuery({
@@ -22,22 +24,28 @@ export default function Shop() {
   const products = data?.products || [];
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 md:p-10">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight">Shop</h1>
-            <p className="text-white/60 uppercase tracking-wider text-sm mt-2">Featured</p>
+    <div className="min-h-screen bg-black text-white">
+      <PageShell
+        eyebrow="MARKET"
+        title="Market"
+        subtitle="Featured drops. Limited. Unapologetic. Gone fast."
+        maxWidth="6xl"
+        right={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="glass"
+              className="border-white/20"
+              onClick={() => openCartDrawer('shopify')}
+            >
+              Cart
+            </Button>
+            <Button asChild variant="glass" className="border-white/20">
+              <Link to="/market/creators">Creators</Link>
+            </Button>
           </div>
-          <Link
-            to="/cart"
-            className="text-sm font-black uppercase tracking-wider text-[#00D9FF] hover:underline"
-          >
-            Cart
-          </Link>
-        </div>
-
-        <div className="mt-8">
+        }
+      >
+        <div>
           {isLoading ? (
             <GridSkeleton count={2} />
           ) : error ? (
@@ -82,7 +90,8 @@ export default function Shop() {
                     <div className="mt-4">
                       <Button
                         asChild
-                        className="w-full bg-[#00D9FF] text-black hover:bg-white font-black uppercase"
+                        variant="cyan"
+                        className="w-full font-black uppercase"
                       >
                         <Link to={href}>View product</Link>
                       </Button>
@@ -93,7 +102,7 @@ export default function Shop() {
             </div>
           )}
         </div>
-      </div>
+      </PageShell>
     </div>
   );
 }

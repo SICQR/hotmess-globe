@@ -125,17 +125,17 @@ export default function Messages() {
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="glass"
                 onClick={() => goToSocial('discover')}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/15"
+                className="border-white/20"
               >
                 BACK TO GRID
               </Button>
               <Button
                 type="button"
-                variant="outline"
+                variant="glass"
                 onClick={() => goToSocial('inbox')}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/15"
+                className="border-white/20"
               >
                 INBOX
               </Button>
@@ -143,7 +143,8 @@ export default function Messages() {
 
             <Button
               onClick={() => setShowNewMessage(true)}
-              className="w-full mt-4 bg-[#FF1493] hover:bg-white text-black font-black border-2 border-white hover:border-[#FF1493] transition-all"
+              variant="hot"
+              className="w-full mt-4 font-black uppercase"
             >
               <Plus className="w-4 h-4 mr-2" />
               NEW MESSAGE
@@ -156,6 +157,7 @@ export default function Messages() {
               currentUser={currentUser}
               allUsers={allUsers}
               onSelectThread={setSelectedThread}
+              onNewMessage={() => setShowNewMessage(true)}
             />
           </div>
         </div>
@@ -167,17 +169,17 @@ export default function Messages() {
               <div className="p-4 border-b-2 border-white/20 bg-black flex items-center gap-2">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="glass"
                   onClick={backToInbox}
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/15"
+                  className="border-white/20"
                 >
                   BACK TO INBOX
                 </Button>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="glass"
                   onClick={() => goToSocial('discover')}
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/15"
+                  className="border-white/20"
                 >
                   BACK TO GRID
                 </Button>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { toast } from 'sonner';
+import PageShell from '@/components/shell/PageShell';
 
 const money = (amount, currency) => {
   const n = Number(amount);
@@ -16,7 +17,7 @@ const money = (amount, currency) => {
 };
 
 export default function ShopCart() {
-  const { cart, isLoading, lastError, updateLineQuantity, removeLine, applyDiscountCode, beginCheckout } = useShopCart();
+  const { cart, isLoading, lastError, updateLineQuantity, removeLine, applyDiscountCode } = useShopCart();
   const [code, setCode] = useState('');
 
   const lines = cart?.lines?.nodes || [];
@@ -36,37 +37,37 @@ export default function ShopCart() {
     }
   };
 
-  const onCheckout = () => {
-    try {
-      beginCheckout();
-    } catch (err) {
-      toast.error(err?.message || 'Checkout blocked');
-    }
-  };
+  // Checkout happens via the branded handoff page.
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 md:p-10">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between">
-          <h1 className="text-4xl font-black uppercase tracking-tight">Cart</h1>
-          <Link to="/market" className="text-sm text-[#00D9FF] font-black uppercase tracking-wider hover:underline">
-            Continue shopping
-          </Link>
-        </div>
+    <div className="min-h-screen bg-black text-white">
+      <PageShell
+        eyebrow="MARKET"
+        title="Cart"
+        subtitle="Shipping and taxes are calculated at checkout."
+        maxWidth="4xl"
+        back="/market"
+        backLabel="Back to market"
+        right={
+          <Button asChild variant="glass" className="border-white/20">
+            <Link to="/market">Shop</Link>
+          </Button>
+        }
+      >
 
         {lastError ? (
-          <div className="mt-4 border border-white/10 bg-white/5 p-4">
+          <div className="border border-white/10 bg-white/5 p-4">
             <p className="text-red-400 font-bold">Cart error</p>
             <p className="text-white/60 text-sm mt-1">{lastError?.message || 'Unknown error'}</p>
           </div>
         ) : null}
 
         {lines.length === 0 ? (
-          <div className="mt-8 border border-white/10 bg-white/5 p-6">
+          <div className="border border-white/10 bg-white/5 p-6">
             <p className="text-white/70">Your cart is empty.</p>
           </div>
         ) : (
-          <div className="mt-8 grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {lines.map((line) => {
               const variant = line?.merchandise;
               const product = variant?.product;
@@ -142,7 +143,8 @@ export default function ShopCart() {
                 <Button
                   onClick={onApply}
                   disabled={isLoading || !String(code || '').trim()}
-                  className="bg-[#FF1493] text-black hover:bg-white font-black uppercase"
+                  variant="hot"
+                  className="font-black uppercase"
                 >
                   Apply
                 </Button>
@@ -150,11 +152,13 @@ export default function ShopCart() {
             </div>
 
             <Button
-              onClick={onCheckout}
               disabled={isLoading || lines.length === 0}
-              className="w-full bg-[#00D9FF] text-black hover:bg-white font-black uppercase py-6"
+              asChild
+              variant="cyan"
+              size="xl"
+              className="w-full font-black uppercase"
             >
-              Checkout
+              <Link to="/checkout/start">Checkout</Link>
             </Button>
           </div>
         )}
@@ -164,7 +168,7 @@ export default function ShopCart() {
           <span className="mx-2 text-white/20">•</span>
           <Link to="/legal/terms" className="hover:text-white">Terms</Link>
         </div>
-      </div>
+      </PageShell>
     </div>
   );
 }

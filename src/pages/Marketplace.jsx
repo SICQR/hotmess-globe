@@ -14,12 +14,13 @@ import AIRecommendations from '../components/marketplace/AIRecommendations';
 import ShopCollections from '../components/marketplace/ShopCollections';
 import EmptyState from '../components/ui/EmptyState';
 import { GridSkeleton } from '../components/ui/LoadingSkeleton';
-import CartDrawer from '../components/marketplace/CartDrawer';
 import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
 import { addToCart } from '@/components/marketplace/cartStorage';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
+import { openCartDrawer } from '@/utils/cartEvents';
+import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
@@ -30,12 +31,12 @@ export default function Marketplace() {
   const [sellerFilter, setSellerFilter] = useState('all'); // 'all', 'verified', 'new'
   const [sellerEmailFilter, setSellerEmailFilter] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [showCart, setShowCart] = useState(false);
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 12;
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { addItem: addShopifyItem } = useShopCart();
 
   const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
@@ -293,7 +294,8 @@ export default function Marketplace() {
     if (isShopifyProduct) {
       if (hasMultipleVariants) {
         toast.success('Choose a size');
-        navigate(createPageUrl(`ProductDetail?id=${product.id}`));
+        const handle = details?.shopify_handle ? String(details.shopify_handle).trim() : null;
+        navigate(handle ? `/market/p/${encodeURIComponent(handle)}` : createPageUrl(`ProductDetail?id=${product.id}`));
         return;
       }
 
@@ -301,16 +303,16 @@ export default function Marketplace() {
       const idFromDetails = details?.shopify_variant_id ? String(details.shopify_variant_id).trim() : null;
       const idFromFirstVariant = variants?.[0]?.id ? String(variants[0].id).trim() : null;
       const variantId = idFromDetails || idFromFirstVariant || null;
-      const variantTitle =
-        (variantId && variants.length
-          ? (variants.find((v) => String(v?.id || '').trim() === String(variantId))?.title ?? null)
-          : (variants?.[0]?.title ?? null)) ||
-        null;
 
-      addToCart({ productId: product.id, quantity: 1, currentUser, variantId, variantTitle })
+      if (!variantId) {
+        toast.error('Missing variant');
+        return;
+      }
+
+      addShopifyItem({ variantId, quantity: 1 })
         .then(() => {
           toast.success('Added to cart!');
-          setShowCart(true);
+          openCartDrawer('shopify');
         })
         .catch((error) => toast.error(error?.message || 'Failed to add to cart'));
       return;
@@ -320,7 +322,7 @@ export default function Marketplace() {
       addToCart({ productId: product.id, quantity: 1, currentUser: null })
         .then(() => {
           toast.success('Added to cart! Sign in at checkout to complete.');
-          setShowCart(true);
+          openCartDrawer('creators');
         })
         .catch((error) => toast.error(error?.message || 'Failed to add to cart'));
       return;
@@ -453,7 +455,7 @@ export default function Marketplace() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button 
-                onClick={() => setShowCart(true)}
+                onClick={() => openCartDrawer('creators')}
                 variant="outline"
                 className="border-[#39FF14] text-[#39FF14] w-full sm:w-auto"
               >
@@ -634,12 +636,6 @@ export default function Marketplace() {
           </TabsContent>
         </Tabs>
       </div>
-
-      <CartDrawer 
-        isOpen={showCart} 
-        onClose={() => setShowCart(false)} 
-        currentUser={currentUser} 
-      />
 
       <TutorialTooltip page="marketplace" />
     </div>

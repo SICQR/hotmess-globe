@@ -5,16 +5,47 @@ import { Button } from '@/components/ui/button';
 import { Download, Share2, Calendar, MapPin, Clock, Ticket } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { supabase } from '@/components/utils/supabaseClient';
 
 export default function EventTicket({ rsvp, event }) {
   const [showQR, setShowQR] = useState(false);
+  const [ticketValue, setTicketValue] = useState(null);
+  const [ticketError, setTicketError] = useState(null);
+  const [isLoadingTicket, setIsLoadingTicket] = useState(false);
 
-  const ticketData = {
-    rsvp_id: rsvp.id,
-    event_id: event.id,
-    user_email: rsvp.user_email,
-    event_title: event.title,
-    timestamp: rsvp.created_date
+  const fetchSignedTicket = async () => {
+    setTicketError(null);
+    setIsLoadingTicket(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const token = session?.access_token || null;
+      if (!token) throw new Error('Not authenticated');
+
+      const res = await fetch(`/api/tickets/qr?rsvp_id=${encodeURIComponent(rsvp.id)}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(payload?.error || payload?.details || 'Failed to load ticket');
+      }
+
+      const ticket = typeof payload?.ticket === 'string' ? payload.ticket : null;
+      if (!ticket) throw new Error('Ticket missing');
+      setTicketValue(ticket);
+    } catch (err) {
+      setTicketValue(null);
+      setTicketError(err?.message || 'Failed to load ticket');
+    } finally {
+      setIsLoadingTicket(false);
+    }
   };
 
   const handleDownload = () => {
@@ -77,7 +108,9 @@ export default function EventTicket({ rsvp, event }) {
       try {
         await navigator.share(shareData);
       } catch (err) {
-        console.log('Share cancelled');
+        // User cancelled the share sheet (common on iOS/macOS).
+        if (err?.name === 'AbortError') return;
+        toast.error('Share failed');
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
@@ -141,7 +174,11 @@ export default function EventTicket({ rsvp, event }) {
 
       <div className="border-t-2 border-white/20 pt-4">
         <Button
-          onClick={() => setShowQR(!showQR)}
+          onClick={async () => {
+            const next = !showQR;
+            setShowQR(next);
+            if (next) await fetchSignedTicket();
+          }}
           className="w-full bg-[#FF1493] hover:bg-white text-black font-black mb-2"
         >
           {showQR ? 'HIDE QR CODE' : 'SHOW QR CODE'}
@@ -154,12 +191,15 @@ export default function EventTicket({ rsvp, event }) {
             className="bg-white p-4 flex flex-col items-center"
             id="ticket-qr"
           >
-            <QRCodeSVG
-              value={JSON.stringify(ticketData)}
-              size={200}
-              level="H"
-              includeMargin
-            />
+            {isLoadingTicket ? (
+              <p className="text-black text-xs font-mono">Loading ticket…</p>
+            ) : ticketError ? (
+              <p className="text-black text-xs font-mono text-center">{ticketError}</p>
+            ) : ticketValue ? (
+              <QRCodeSVG value={ticketValue} size={200} level="H" includeMargin />
+            ) : (
+              <p className="text-black text-xs font-mono">Ticket unavailable</p>
+            )}
             <p className="text-black text-xs font-mono mt-2">
               #{rsvp.id.slice(-8).toUpperCase()}
             </p>

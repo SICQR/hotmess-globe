@@ -24,7 +24,7 @@ import PersistentRadioPlayer from '@/components/shell/PersistentRadioPlayer';
 import { Radio as RadioIcon } from 'lucide-react';
 import { useRadio } from '@/components/shell/RadioContext';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
-import ShopCartDrawer from '@/features/shop/cart/ShopCartDrawer';
+import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
@@ -105,6 +105,13 @@ function LayoutInner({ children, currentPageName }) {
         }
 
         let currentUser = await base44.auth.me();
+
+        // If we have a session but cannot load the user record, treat this as unauthenticated
+        // for gating purposes (prevents redirect loops into consent/profile flows).
+        if (!currentUser) {
+          setUser(null);
+          return;
+        }
 
         // If the user already completed the AgeGate (session-based) AND granted browser
         // location permission, auto-apply the equivalent profile consent flags once.
@@ -190,8 +197,15 @@ function LayoutInner({ children, currentPageName }) {
         }
 
         // Check if profile setup is incomplete
-        if (currentPageName !== 'Profile' && currentPageName !== 'OnboardingGate' && currentPageName !== 'AccountConsents' && currentPageName !== 'AgeGate' && (!currentUser?.full_name || !currentUser?.avatar_url)) {
-          window.location.href = createPageUrl('Profile');
+        if (
+          currentPageName !== 'Profile' &&
+          currentPageName !== 'OnboardingGate' &&
+          currentPageName !== 'AccountConsents' &&
+          currentPageName !== 'AgeGate' &&
+          (!currentUser?.full_name || !currentUser?.avatar_url)
+        ) {
+          const next = encodeURIComponent(`${window.location.pathname}${window.location.search || ''}`);
+          window.location.href = `${createPageUrl('Profile')}?next=${next}`;
         }
       } catch (error) {
         console.error('Failed to fetch user:', error);
@@ -208,7 +222,7 @@ function LayoutInner({ children, currentPageName }) {
     if (!user?.has_consented_gps) return;
     if (!('geolocation' in navigator)) return;
 
-    let watchId = null;
+    let intervalId = null;
     let cancelled = false;
     let inFlight = false;
 
@@ -261,21 +275,42 @@ function LayoutInner({ children, currentPageName }) {
       // Ignore: user can revoke permission at any time.
     };
 
-    try {
-      watchId = navigator.geolocation.watchPosition(onPosition, onError, {
-        enableHighAccuracy: false,
-        maximumAge: 30_000,
-        timeout: 10_000,
-      });
-    } catch {
-      watchId = null;
-    }
+    const poll = () => {
+      if (cancelled) return;
+      if (document.visibilityState !== 'visible') return;
+
+      try {
+        navigator.geolocation.getCurrentPosition(
+          onPosition,
+          (err) => {
+            // 1 = PERMISSION_DENIED
+            // Stop polling if permission is explicitly denied to avoid repeated CoreLocation noise.
+            if (err?.code === 1) {
+              if (intervalId != null) clearInterval(intervalId);
+              intervalId = null;
+            }
+            onError(err);
+          },
+          {
+            enableHighAccuracy: false,
+            maximumAge: 30_000,
+            timeout: 10_000,
+          }
+        );
+      } catch {
+        // ignore
+      }
+    };
+
+    // Run immediately, then poll (low frequency) to keep presence roughly fresh.
+    poll();
+    intervalId = setInterval(poll, 60_000);
 
     return () => {
       cancelled = true;
-      if (watchId != null) {
+      if (intervalId != null) {
         try {
-          navigator.geolocation.clearWatch(watchId);
+          clearInterval(intervalId);
         } catch {
           // ignore
         }
@@ -294,11 +329,11 @@ function LayoutInner({ children, currentPageName }) {
           <A11yAnnouncer />
           <OfflineIndicator />
           {user && currentPageName === 'Home' && <WelcomeTour />}
-        <div className="min-h-screen bg-black text-white">
+        <div className="min-h-[100svh] bg-black text-white">
       {!isPulsePage && (
         <>
           {/* Mobile Header */}
-          <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10">
+          <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10 pt-[env(safe-area-inset-top)]">
             <div className="flex items-center justify-between px-4 py-3">
               <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
                 HOTMESS
@@ -326,7 +361,7 @@ function LayoutInner({ children, currentPageName }) {
                 >
                   <Search className="w-5 h-5" />
                 </button>
-                {isMarketRoute ? <ShopCartDrawer /> : null}
+                {isMarketRoute ? <UnifiedCartDrawer currentUser={user} /> : null}
                 <button
                   onClick={toggleRadio}
                   className={`p-2 rounded-lg transition-colors ${isRadioOpen ? 'bg-[#B026FF] text-white' : 'bg-white/5 hover:bg-white/10'}`}
@@ -349,7 +384,7 @@ function LayoutInner({ children, currentPageName }) {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden fixed inset-0 z-40 bg-black/95 backdrop-blur-xl pt-16">
+            <div className="md:hidden fixed inset-0 z-40 bg-black/95 backdrop-blur-xl pt-[calc(4rem+env(safe-area-inset-top))]">
               <div className="flex flex-col p-4">
                 {/* Admin Link - Mobile */}
                 {user && user.role === 'admin' && (
@@ -474,7 +509,7 @@ function LayoutInner({ children, currentPageName }) {
                   >
                     <Settings className="w-4 h-4" />
                   </Link>
-                  {isMarketRoute ? <ShopCartDrawer /> : null}
+                  {isMarketRoute ? <UnifiedCartDrawer currentUser={user} /> : null}
                   <button
                     onClick={toggleRadio}
                     className={`p-1.5 rounded-lg transition-colors ${isRadioOpen ? 'bg-[#B026FF] text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
@@ -589,7 +624,7 @@ function LayoutInner({ children, currentPageName }) {
       {/* Main Content */}
       <main 
         id="main-content" 
-        className={isPulsePage ? 'min-w-0' : 'md:ml-56 pt-14 md:pt-0 min-w-0'}
+        className={isPulsePage ? 'min-w-0' : 'md:ml-56 pt-[calc(3.5rem+env(safe-area-inset-top))] md:pt-0 min-w-0'}
         role="main"
       >
         <PageErrorBoundary>

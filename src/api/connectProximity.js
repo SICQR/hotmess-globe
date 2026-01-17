@@ -66,3 +66,18 @@ export const fetchRoutingEtas = async ({ origin, destination, ttlSeconds = 120, 
     }),
   });
 };
+
+export const fetchRoutingDirections = async ({ origin, destination, mode, ttlSeconds = 90 }) => {
+  return authedFetch('/api/routing/directions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      origin,
+      destination,
+      mode,
+      ttl_seconds: ttlSeconds,
+    }),
+  });
+};

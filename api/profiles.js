@@ -110,7 +110,8 @@ const normalizePhotos = (rawPhotos, avatarUrl) => {
 
   // Ensure exactly one primary photo.
   const primaryIndex = out.findIndex((p) => p.isPrimary);
-  return out.map((p, idx) => ({ ...p, isPrimary: primaryIndex === -1 ? idx === 0 : idx === primaryIndex }));
+  const normalized = out.map((p, idx) => ({ ...p, isPrimary: primaryIndex === -1 ? idx === 0 : idx === primaryIndex }));
+  return normalized.slice(0, 5);
 };
 
 const getAuthMetaMapById = async ({ serviceClient, authUserIds }) => {
@@ -243,7 +244,7 @@ export default async function handler(req, res) {
         const title = toShortHeadline(bio, tierLabel);
 
         const tags = email ? tagMap.get(String(email).toLowerCase()) : null;
-        const safeTags = Array.isArray(tags) ? tags.slice(0, 3) : [];
+        const safeTags = Array.isArray(tags) ? tags.slice(0, 5) : [];
 
         return {
           id: `profile_${dedupeKey}`,
@@ -255,6 +256,7 @@ export default async function handler(req, res) {
           city: city || undefined,
           profileType: profileType || undefined,
           bio: bio || undefined,
+          tag_ids: safeTags,
           sellerTagline,
           sellerBio,
           shopBannerUrl,

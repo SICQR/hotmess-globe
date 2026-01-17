@@ -1,6 +1,6 @@
 # HOTMESS - LGBT+ Social Network & Nightlife Platform
 
-A comprehensive social networking and nightlife discovery platform designed specifically for the LGBT+ community. Built with modern web technologies including React, Vite, and Base44 SDK.
+A comprehensive social networking and nightlife discovery platform designed specifically for the LGBT+ community. Built with React + Vite and backed by Supabase (via a Base44-compatible wrapper).
 
 ## 🌈 About HOTMESS
 
@@ -47,7 +47,7 @@ HOTMESS is more than just a social network—it's a vibrant community hub that c
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 20+
 - npm 9+
 - Modern web browser (Chrome, Firefox, Safari, or Edge)
 
@@ -75,12 +75,12 @@ HOTMESS is more than just a social network—it's a vibrant community hub that c
    
    Required variables (see [.env.example](./.env.example) for full list):
    ```env
-   VITE_BASE44_APP_ID=your_app_id
-   VITE_BASE44_APP_BASE_URL=https://your-app.base44.app
-   VITE_MAPBOX_ACCESS_TOKEN=your_mapbox_token
    VITE_SUPABASE_URL=https://your-project.supabase.co
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_key
+   # Server-side (Vercel Functions)
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
    ```
    
    📚 **Important**: Read [SECURITY.md](./SECURITY.md) for environment variable best practices!
@@ -110,11 +110,21 @@ This app is a Vite SPA using React Router. Deep links like `/${PageKey}` require
    - Build Command: `npm run build`
    - Output Directory: `dist`
 - Environment Variables (Vercel Project → Settings → Environment Variables):
-   - Required: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-   - Optional: `VITE_SUPABASE_STORAGE_BUCKET`
-   - Optional: `VITE_BASE44_APP_BASE_URL` (set to your production URL)
+   - Required (Supabase): set **either** `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` **or** `SUPABASE_URL` + `SUPABASE_ANON_KEY` (the build maps server vars into the client bundle when VITE vars are missing)
+   - Strongly recommended: `SUPABASE_SERVICE_ROLE_KEY` (enables admin/server features like scraper, SoundCloud uploads, rate-limit cleanup)
+   - Optional: `GOOGLE_MAPS_API_KEY` (routing/ETAs)
+   - Optional: `TICKET_QR_SIGNING_SECRET` (production-safe ticket QR signing)
+   - Optional: see [.env.example](./.env.example) for Shopify/SoundCloud/crons.
 - Routing:
    - `vercel.json` includes an SPA rewrite to `index.html` for all routes.
+
+## 🧪 Auth + Social e2e smoke
+
+There is a focused Playwright smoke test for the core member loop: Auth → Social → New Message → Send.
+
+- Run: `npm run test:e2e:auth`
+- Required env: `E2E_EMAIL`, `E2E_PASSWORD`
+- Optional (auto-seed profiles for the Social grid): `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (the runner calls `npm run seed:mock-profiles` when present)
 
 ## 🏗️ Technology Stack
 

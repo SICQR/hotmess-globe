@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { User, Users, Calendar, Award, Camera, Star, Pin, Trophy, Shield, Music, Lock, Instagram, Twitter, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,11 +24,13 @@ import ProfileCompleteness from '../components/profile/ProfileCompleteness';
 import WelcomeTour from '../components/onboarding/WelcomeTour';
 import VibeSynthesisCard from '../components/vibe/VibeSynthesisCard';
 import { fetchRoutingEtas } from '@/api/connectProximity';
+import { safeGetViewerLatLng } from '@/utils/geolocation';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
   const emailParam = searchParams.get('email');
   const uidParam = searchParams.get('uid') || searchParams.get('auth_user_id');
+  const nextParam = searchParams.get('next');
   const queryClient = useQueryClient();
   
   const { data: currentUser } = useCurrentUser();
@@ -57,7 +60,15 @@ export default function Profile() {
       else if (uid) qs.set('uid', uid);
       else return null;
 
-      const res = await fetch(`/api/profile?${qs.toString()}`, { method: 'GET' });
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token || null;
+
+      const res = await fetch(`/api/profile?${qs.toString()}`, {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       if (res.status === 404) return null;
       if (!res.ok) {
         const text = await res.text();
@@ -66,15 +77,15 @@ export default function Profile() {
 
       const payload = await res.json();
       return payload?.user || null;
-
-      return null;
     },
-    enabled: isViewingOtherUser && !cachedProfileUser,
+    enabled: isViewingOtherUser,
     retry: false,
     staleTime: 60000,
   });
 
-  const profileUser = cachedProfileUser || fetchedProfileUser || (!isViewingOtherUser ? currentUser : null);
+  const profileUser = isViewingOtherUser
+    ? (fetchedProfileUser || cachedProfileUser)
+    : currentUser;
 
   const userEmail = emailParam || profileUser?.email || null;
   const isSetupMode =
@@ -163,6 +174,40 @@ export default function Profile() {
   const _isFollowing = following.some(f => f.following_email === userEmail);
   const isOwnProfile = currentUser?.email === userEmail;
 
+  const { data: profileUserTags = [] } = useQuery({
+    queryKey: ['profile-user-tags', userEmail],
+    queryFn: async () => {
+      if (!userEmail) return [];
+      try {
+        // Best-effort; RLS might restrict in some environments.
+        return await base44.entities.UserTag.filter({ user_email: userEmail });
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!userEmail,
+    staleTime: 60000,
+    retry: false,
+  });
+
+  const tagIdsFromRows = Array.isArray(profileUserTags)
+    ? profileUserTags
+        .map((t) => t?.tag_id)
+        .filter(Boolean)
+    : [];
+
+  const enrichedProfileUser = profileUser
+    ? {
+        ...profileUser,
+        tag_ids:
+          Array.isArray(profileUser?.tag_ids) && profileUser.tag_ids.length
+            ? profileUser.tag_ids
+            : Array.isArray(profileUser?.tags) && profileUser.tags.length
+              ? profileUser.tags
+              : tagIdsFromRows,
+      }
+    : profileUser;
+
   const [viewerOrigin, setViewerOrigin] = useState(null);
 
   const haversineMeters = useCallback((a, b) => {
@@ -180,31 +225,46 @@ export default function Profile() {
     return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
   }, []);
 
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-
-    let last = null;
-    const id = navigator.geolocation.watchPosition(
-      (pos) => {
-        const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        if (!last || haversineMeters(last, next) >= 500) {
-          last = next;
-          setViewerOrigin(next);
-        }
-      },
-      () => {},
-      { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 }
-    );
-
-    return () => navigator.geolocation.clearWatch(id);
-  }, [haversineMeters]);
-
   const destination =
     Number.isFinite(profileUser?.last_lat) && Number.isFinite(profileUser?.last_lng)
       ? { lat: profileUser.last_lat, lng: profileUser.last_lng }
       : Number.isFinite(profileUser?.lat) && Number.isFinite(profileUser?.lng)
         ? { lat: profileUser.lat, lng: profileUser.lng }
         : null;
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    // Only watch location when it can actually be used (for ETAs to another user's location).
+    if (!currentUser?.email) return;
+    if (!userEmail) return;
+    if (isOwnProfile) return;
+    if (!destination) return;
+
+    // NOTE: We intentionally avoid `watchPosition` here.
+    // On macOS (CoreLocation), `watchPosition` can spam the console with
+    // `kCLErrorLocationUnknown` when the OS can't resolve location (indoors/VPN/etc).
+    // For profile ETAs we only need a coarse origin; a single `getCurrentPosition`
+    // keeps UX good and the console quiet.
+    let cancelled = false;
+
+    safeGetViewerLatLng(
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 },
+      { retries: 2, logKey: 'profile-eta' }
+    ).then((loc) => {
+      if (cancelled) return;
+      if (!loc) return;
+      const next = { lat: loc.lat, lng: loc.lng };
+      setViewerOrigin((prev) => {
+        if (!prev) return next;
+        return haversineMeters(prev, next) >= 500 ? next : prev;
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser?.email, userEmail, isOwnProfile, destination, haversineMeters]);
 
   // In-app "connection" is a mutual follow (no Telegram handshake).
   const { data: viewerFollowing = [] } = useQuery({
@@ -347,7 +407,8 @@ export default function Profile() {
       return;
     }
 
-    if (!avatarFile) {
+    // Only require a new upload if the user doesn't already have an avatar.
+    if (!avatarFile && !profileUser?.avatar_url) {
       toast.error('Please upload an avatar');
       return;
     }
@@ -366,11 +427,16 @@ export default function Profile() {
     setUploading(true);
 
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: avatarFile });
+      let avatarUrl = profileUser?.avatar_url || null;
+      if (avatarFile) {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: avatarFile });
+        avatarUrl = file_url;
+      }
+
       setUploading(false);
       await base44.auth.updateMe({
         full_name: fullName.trim(),
-        avatar_url: file_url,
+        avatar_url: avatarUrl,
         profile_type: profileType,
         city: city.trim(),
         bio: bio.trim(),
@@ -379,7 +445,10 @@ export default function Profile() {
         shop_banner_url: profileType === 'seller' ? shopBannerUrl.trim() : null,
       });
       toast.success('Profile complete!');
-	  window.location.href = createPageUrl('Home');
+
+      const next = typeof nextParam === 'string' ? nextParam.trim() : '';
+      const safeNext = next.startsWith('/') ? next : '';
+      window.location.href = safeNext || createPageUrl('Home');
     } catch (error) {
       console.error('Profile setup failed:', error);
       toast.error('Setup failed. Please try again.');
@@ -426,8 +495,9 @@ export default function Profile() {
     );
   }
 
-  // Render setup mode if profile is incomplete
-  if (isSetupMode && !userEmail) {
+  // Render setup mode if *your* profile is incomplete.
+  // NOTE: previously this was gated by `!userEmail`, but `userEmail` is always present for authenticated users.
+  if (isSetupMode && !isViewingOtherUser) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
         <motion.div
@@ -603,7 +673,7 @@ export default function Profile() {
 
             <Button
               type="submit"
-              disabled={saving || !fullName.trim() || !avatarFile || !String(profileType || '').trim() || !String(city || '').trim()}
+              disabled={saving || !fullName.trim() || (!avatarFile && !profileUser?.avatar_url) || !String(profileType || '').trim() || !String(city || '').trim()}
               className="w-full bg-[#FF1493] hover:bg-white text-white hover:text-black font-black text-lg py-6 border-2 border-white"
             >
               {saving ? (
@@ -744,12 +814,13 @@ export default function Profile() {
 
           {/* Profile Type Specific View */}
           {profileTypeKey === 'seller' ? (
-            <SellerProfileView user={profileUser} />
+            <SellerProfileView user={enrichedProfileUser} />
           ) : (
             <StandardProfileView 
-              user={profileUser} 
+              user={enrichedProfileUser} 
               currentUser={currentUser} 
               isHandshakeConnection={isConnection} 
+              isOwnProfile={isOwnProfile}
             />
           )}
 

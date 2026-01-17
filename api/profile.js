@@ -1,4 +1,5 @@
-import { getQueryParam, json } from './shopify/_utils.js';
+import { createClient } from '@supabase/supabase-js';
+import { getBearerToken, getEnv, getQueryParam, json } from './shopify/_utils.js';
 import { getSupabaseServerClients } from './routing/_utils.js';
 
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
@@ -15,11 +16,9 @@ const buildFallbackProfiles = () => {
       city: 'London',
       profile_type: 'creator',
       bio: 'Late-night walks, loud music, no drama',
-      seller_tagline: 'Clubwear drops + limited runs',
       last_lng: -0.1278,
       lat: 51.5074,
       lng: -0.1278,
-      seller_tagline: null,
       seller_bio: null,
       shop_banner_url: null,
     },
@@ -54,14 +53,82 @@ const isMissingTableError = (error) => {
   );
 };
 
-const fetchMaybeSingle = async (client, table, where) => {
-  const query = client
-    .from(table)
-    .select('id,auth_user_id,email,full_name,avatar_url,subscription_tier,last_lat,last_lng,lat,lng,city,bio,profile_type,seller_tagline,seller_bio,shop_banner_url,instagram,twitter')
-    .match(where)
-    .maybeSingle();
+const isMissingColumnError = (error) => {
+  const message = String(error?.message || '').toLowerCase();
+  const code = String(error?.code || '').toUpperCase();
 
-  const { data, error } = await query;
+  // PostgREST missing column often shows as PGRST204.
+  if (code === 'PGRST204') return true;
+  // Postgres missing column.
+  if (code === '42703') return true;
+
+  return (
+    message.includes('could not find') && message.includes('column')
+  ) || (
+    message.includes('column') && message.includes('does not exist')
+  );
+};
+
+const safeArray = (value) => (Array.isArray(value) ? value : []);
+
+const pickDefined = (primary, fallback) => (primary === undefined ? fallback : primary);
+
+const mergeAuthMeta = ({ row, meta }) => {
+  const out = { ...(row || {}) };
+  const userMeta = meta && typeof meta === 'object' ? meta : {};
+
+  // Only merge fields that are safe to render publicly in the Profile UI.
+  // Keep the rest gated on the client (and/or stored only locally).
+  const allowedKeys = [
+    'photos',
+    'bio',
+    'interests',
+    'looking_for',
+    'preferred_vibes',
+    'skills',
+    'music_taste',
+    'profile_theme',
+    'accent_color',
+    'availability_status',
+  ];
+
+  for (const key of allowedKeys) {
+    if (out[key] === undefined) {
+      out[key] = userMeta[key];
+    }
+  }
+
+  // Normalize photos shape lightly (keep the stored object structure).
+  if (out.photos !== undefined) {
+    out.photos = safeArray(out.photos).slice(0, 5);
+  }
+
+  out.interests = safeArray(out.interests);
+  out.looking_for = safeArray(out.looking_for);
+  out.preferred_vibes = safeArray(out.preferred_vibes);
+  out.skills = safeArray(out.skills);
+  out.music_taste = safeArray(out.music_taste);
+
+  return out;
+};
+
+const fetchMaybeSingle = async (client, table, where) => {
+  const baseSelect = 'id,auth_user_id,email,full_name,avatar_url,subscription_tier,last_lat,last_lng,lat,lng,city,bio,profile_type,seller_tagline,seller_bio,shop_banner_url,instagram,twitter';
+  const extendedSelect = `${baseSelect},photos,preferred_vibes,skills,interests,looking_for,music_taste,availability_status,profile_theme,accent_color`;
+
+  const run = async (select) => {
+    return client
+      .from(table)
+      .select(select)
+      .match(where)
+      .maybeSingle();
+  };
+
+  let { data, error } = await run(extendedSelect);
+  if (error && isMissingColumnError(error)) {
+    ({ data, error } = await run(baseSelect));
+  }
+
   if (error) return { data: null, error };
   return { data: data || null, error: null };
 };
@@ -72,11 +139,6 @@ export default async function handler(req, res) {
     return json(res, 405, { error: 'Method not allowed' });
   }
 
-const isFemaleIdentity = (value) => {
-  const v = String(value || '').trim().toLowerCase();
-  if (!v) return false;
-  return v.includes('female') || v.includes('woman') || v === 'f';
-};
   const emailRaw = getQueryParam(req, 'email');
   const uidRaw = getQueryParam(req, 'uid') || getQueryParam(req, 'auth_user_id');
 
@@ -88,7 +150,41 @@ const isFemaleIdentity = (value) => {
   }
 
   const { error: supaErr, serviceClient } = getSupabaseServerClients();
+
+  // If service role isn't configured (common in local dev), try an authenticated anon-client query
+  // using the viewer's bearer token. This relies on RLS allowing authenticated reads.
   if (supaErr || !serviceClient) {
+    const accessToken = getBearerToken(req);
+    const supabaseUrl = getEnv('SUPABASE_URL', ['VITE_SUPABASE_URL']);
+    const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY', ['VITE_SUPABASE_ANON_KEY']);
+
+    if (accessToken && supabaseUrl && supabaseAnonKey) {
+      const authedClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      });
+
+      const tables = ['User', 'users'];
+      for (const table of tables) {
+        if (email) {
+          const { data } = await fetchMaybeSingle(authedClient, table, { email });
+          if (data) return json(res, 200, { user: data });
+        }
+
+        if (uid) {
+          const { data: byAuth } = await fetchMaybeSingle(authedClient, table, { auth_user_id: uid });
+          if (byAuth) return json(res, 200, { user: byAuth });
+
+          const { data: byId } = await fetchMaybeSingle(authedClient, table, { id: uid });
+          if (byId) return json(res, 200, { user: byId });
+        }
+      }
+    }
+
     const fallbacks = buildFallbackProfiles();
     const match = email
       ? fallbacks.find((p) => normalizeEmail(p?.email) === email)
@@ -103,22 +199,75 @@ const isFemaleIdentity = (value) => {
 
   let sawMissingTable = false;
 
+  const respondWithUser = async (row) => {
+    const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : null;
+    if (!authUserId || !serviceClient?.auth?.admin?.getUserById) {
+      return json(res, 200, { user: row });
+    }
+
+    try {
+      const { data, error } = await serviceClient.auth.admin.getUserById(authUserId);
+      const meta = error ? null : (data?.user?.user_metadata || null);
+      const merged = mergeAuthMeta({ row, meta });
+      return json(res, 200, { user: merged });
+    } catch {
+      return json(res, 200, { user: row });
+    }
+  };
+
   for (const table of tables) {
     if (whereEmail) {
       const { data, error } = await fetchMaybeSingle(serviceClient, table, whereEmail);
       if (error && isMissingTableError(error)) sawMissingTable = true;
-      if (data) return json(res, 200, { user: data });
+      if (data) return respondWithUser(data);
     }
 
     if (uid) {
       // Try auth_user_id first, then id.
       const { data: byAuth, error: byAuthError } = await fetchMaybeSingle(serviceClient, table, { auth_user_id: uid });
       if (byAuthError && isMissingTableError(byAuthError)) sawMissingTable = true;
-      if (byAuth) return json(res, 200, { user: byAuth });
+      if (byAuth) return respondWithUser(byAuth);
 
       const { data: byId, error: byIdError } = await fetchMaybeSingle(serviceClient, table, { id: uid });
       if (byIdError && isMissingTableError(byIdError)) sawMissingTable = true;
-      if (byId) return json(res, 200, { user: byId });
+      if (byId) return respondWithUser(byId);
+    }
+  }
+
+  // If we were asked for a UID, it may exist in Supabase Auth even if the
+  // public profile row hasn't been created yet. Best-effort: resolve auth user
+  // -> email, then retry by email.
+  if (uid && serviceClient?.auth?.admin?.getUserById) {
+    try {
+      const { data: authData, error: authError } = await serviceClient.auth.admin.getUserById(uid);
+      const resolvedEmail = authError ? null : normalizeEmail(authData?.user?.email);
+      if (resolvedEmail) {
+        for (const table of tables) {
+          const { data, error } = await fetchMaybeSingle(serviceClient, table, { email: resolvedEmail });
+          if (error && isMissingTableError(error)) sawMissingTable = true;
+          if (data) return respondWithUser(data);
+        }
+      }
+    } catch {
+      // Non-fatal: fall through to existing fallback/404 behavior.
+    }
+  }
+
+  // Back-compat: sometimes the request uses a Supabase auth UID, but the profile row
+  // has not yet been linked via `auth_user_id`. Try to resolve the auth user email
+  // and then look up by email.
+  if (uid && serviceClient?.auth?.admin?.getUserById) {
+    try {
+      const { data } = await serviceClient.auth.admin.getUserById(uid);
+      const resolvedEmail = data?.user?.email ? normalizeEmail(data.user.email) : null;
+      if (resolvedEmail) {
+        for (const table of tables) {
+          const { data: byEmail } = await fetchMaybeSingle(serviceClient, table, { email: resolvedEmail });
+          if (byEmail) return respondWithUser(byEmail);
+        }
+      }
+    } catch {
+      // ignore
     }
   }
 

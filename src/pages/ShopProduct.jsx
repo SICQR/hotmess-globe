@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { fetchProductByHandle } from '@/features/shop/api/shopifyStorefront';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import PageShell from '@/components/shell/PageShell';
 
 const money = (price) => {
   const amount = Number(price?.amount);
@@ -20,7 +21,6 @@ const money = (price) => {
 
 export default function ShopProduct() {
   const { handle } = useParams();
-  const navigate = useNavigate();
   const { addItem } = useShopCart();
 
   const { data, isLoading, error } = useQuery({
@@ -69,28 +69,31 @@ export default function ShopProduct() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 md:p-10">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between gap-4">
-          <button onClick={() => navigate(-1)} className="text-sm text-white/60 hover:text-white">
-            ← Back
-          </button>
-          <Link to="/cart" className="text-sm font-black uppercase tracking-wider text-[#00D9FF] hover:underline">
-            Cart
-          </Link>
-        </div>
-
+    <div className="min-h-screen bg-black text-white">
+      <PageShell
+        eyebrow="MARKET"
+        title={product?.title || (isLoading ? 'Loading…' : 'Product')}
+        subtitle={selectedVariant?.price ? `From ${money(selectedVariant.price)}` : 'Drop details + variants.'}
+        maxWidth="5xl"
+        back
+        backLabel="Back"
+        right={
+          <Button asChild variant="glass" className="border-white/20">
+            <Link to="/cart">Cart</Link>
+          </Button>
+        }
+      >
         {isLoading ? (
-          <div className="mt-8 border border-white/10 bg-white/5 p-6">Loading…</div>
+          <div className="border border-white/10 bg-white/5 p-6">Loading…</div>
         ) : error ? (
-          <div className="mt-8 border border-white/10 bg-white/5 p-6">
+          <div className="border border-white/10 bg-white/5 p-6">
             <p className="text-red-400 font-bold">Failed to load product</p>
             <p className="text-white/60 text-sm mt-1">{error?.message || 'Unknown error'}</p>
           </div>
         ) : !product ? (
-          <div className="mt-8 border border-white/10 bg-white/5 p-6">Product not found.</div>
+          <div className="border border-white/10 bg-white/5 p-6">Product not found.</div>
         ) : (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="border border-white/10 bg-white/5">
               <div className="aspect-square bg-black border-b border-white/10 overflow-hidden">
                 {product?.featuredImage?.url ? (
@@ -107,9 +110,8 @@ export default function ShopProduct() {
             </div>
 
             <div>
-              <h1 className="text-4xl font-black uppercase tracking-tight">{product.title}</h1>
               {selectedVariant?.price ? (
-                <p className="mt-2 text-xl font-black text-[#FFEB3B]">{money(selectedVariant.price)}</p>
+                <p className="text-xl font-black text-[#FFEB3B]">{money(selectedVariant.price)}</p>
               ) : null}
 
               <div className="mt-6 space-y-4">
@@ -146,7 +148,9 @@ export default function ShopProduct() {
                 <Button
                   onClick={onAddToCart}
                   disabled={!canBuy}
-                  className="w-full bg-[#00D9FF] text-black hover:bg-white font-black uppercase py-6"
+                  variant="cyan"
+                  size="xl"
+                  className="w-full font-black uppercase"
                 >
                   {canBuy ? 'Add to cart' : 'Sold out'}
                 </Button>
@@ -174,7 +178,7 @@ export default function ShopProduct() {
             </div>
           </div>
         )}
-      </div>
+      </PageShell>
     </div>
   );
 }

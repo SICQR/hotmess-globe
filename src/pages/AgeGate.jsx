@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
+import { safeGetViewerLatLng } from '@/utils/geolocation';
 
 export default function AgeGate() {
   const [confirmed, setConfirmed] = useState(false);
@@ -67,13 +68,13 @@ export default function AgeGate() {
 
     setRequestingLocation(true);
     try {
-      await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          () => resolve(true),
-          (err) => reject(err),
-          { enableHighAccuracy: false, timeout: 8000, maximumAge: 60_000 }
-        );
-      });
+      // Best-effort: sometimes CoreLocation returns transient "unknown" errors.
+      // A short retry keeps this from looking like an immediate "deny".
+      const loc = await safeGetViewerLatLng(
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 60_000 },
+        { retries: 1, logKey: 'age-gate' }
+      );
+      if (!loc) throw new Error('Unable to get location');
       try {
         sessionStorage.setItem('location_permission', 'granted');
       } catch {

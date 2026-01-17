@@ -55,17 +55,26 @@ export const getSupabaseServerClients = () => {
   const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY', ['VITE_SUPABASE_ANON_KEY']);
   const supabaseServiceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
 
-  if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
+  if (!supabaseUrl || !supabaseAnonKey) {
     return { error: 'Supabase server env not configured', supabaseUrl: null, anonClient: null, serviceClient: null };
   }
 
+  // Service role is optional in local dev. When absent:
+  // - auth validation can still run via anonClient
+  // - endpoints should skip DB-backed rate limiting/caching
+  // - endpoints can still return approximate fallbacks
   const { anonClient, serviceClient } = createSupabaseClients({
     supabaseUrl,
     supabaseAnonKey,
-    supabaseServiceRoleKey,
+    supabaseServiceRoleKey: supabaseServiceRoleKey || supabaseAnonKey,
   });
 
-  return { error: null, supabaseUrl, anonClient, serviceClient };
+  return {
+    error: null,
+    supabaseUrl,
+    anonClient,
+    serviceClient: supabaseServiceRoleKey ? serviceClient : null,
+  };
 };
 
 export const getAuthedUser = async ({ anonClient, accessToken }) => {

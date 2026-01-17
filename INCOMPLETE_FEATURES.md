@@ -7,16 +7,18 @@ This document tracks incomplete features, placeholder implementations, and mock 
 ## 🚧 Incomplete Features
 
 ### 1. SoundCloud OAuth Integration
-**Status**: ⚠️ Placeholder Implementation
+**Status**: 🟡 Implemented in `api/soundcloud/*` (legacy placeholders still exist under `functions/`)
 **Priority**: High
 **Effort**: 24 hours
 
 #### Location:
-- `functions/pushToSoundCloud.ts`
-- `src/components/admin/RecordManager.tsx`
+- `api/soundcloud/authorize.js`, `api/soundcloud/callback.js`, `api/soundcloud/status.js`, `api/soundcloud/upload.js`, `api/soundcloud/disconnect.js`
+- UI: `src/components/admin/RecordManager.tsx`
+- Legacy/deprecated stubs: `functions/pushToSoundCloud.ts` (do not extend)
 
 #### Current State:
-The SoundCloud upload functionality contains placeholder code and mock responses:
+Server-side SoundCloud OAuth + upload endpoints exist under `api/soundcloud/*`.
+Some older code under `functions/` still contains placeholder logic and should be treated as deprecated.
 
 ```typescript
 // functions/pushToSoundCloud.ts:18-22
@@ -26,23 +28,15 @@ The SoundCloud upload functionality contains placeholder code and mock responses
 // In production, this would use SoundCloud's upload API
 ```
 
-#### What's Missing:
-1. **OAuth Flow Implementation**
-   - SoundCloud OAuth 2.0 authentication
-   - Token generation and refresh
-   - Secure token storage
-
-2. **API Integration**
-   - SoundCloud Pro API client setup
-   - File upload to SoundCloud
-   - Metadata synchronization
-   - Error handling and retries
-
-3. **Backend Proxy**
-   - Edge function to proxy requests
-   - Secure API key storage
-   - Rate limiting
-   - Upload progress tracking
+#### What's Still Missing / Needs Hardening:
+1. **Production credential setup**
+   - Confirm OAuth app + redirect URIs for the production domain
+   - Ensure token storage tables/policies exist in Supabase
+2. **Operational UI polish**
+   - Clear “connected / expires / refresh” status in UI
+   - Better error surfacing + retry messaging
+3. **Observability**
+   - Optional: persist upload attempts + outcomes for admin audit
 
 #### Requirements:
 - SoundCloud Pro account (API access)
@@ -81,38 +75,32 @@ The SoundCloud upload functionality contains placeholder code and mock responses
 ---
 
 ### 2. QR Scanner / Ticket Validation
-**Status**: ⚠️ Not Implemented
+**Status**: ✅ Implemented (Beacon scan/check-in + signed ticket QR + admin redemption)
 **Priority**: High
 **Effort**: 12 hours
 
 #### Location:
-- `src/pages/Scan.jsx` (line 127)
-- `src/components/events/TicketScanner.jsx` (line 53)
+- Beacon scanning UI: `src/pages/Scan.jsx`
+- Beacon check-in API: `api/scan/check-in.js`
+- Ticket QR issuance: `api/tickets/qr.js`
+- Ticket redemption (admin-only): `api/scan/redeem.js`
+- Ticket verification helpers: `api/tickets/_utils.js`
 
 #### Current State:
-QR scanning functionality shows "Coming Soon" placeholder:
-
-```javascript
-// src/pages/Scan.jsx:127
-<div className="text-center text-white/40">
-  Scan QR Code (Coming Soon)
-</div>
-
-// src/components/events/TicketScanner.jsx:53
-// For now, this is a placeholder for the scanning logic
-```
+Beacon QR scanning is implemented (camera + manual entry) and calls a server-side check-in endpoint.
+Event ticket flows support:
+- signed ticket generation for a user RSVP (`GET /api/tickets/qr?rsvp_id=...`)
+- admin-only redemption / check-in with idempotency (`POST /api/scan/redeem`)
 
 #### What's Missing:
 1. **QR Code Scanner**
-   - Camera access and permissions
-   - QR code detection and parsing
-   - Multi-format support (QR, Data Matrix, etc.)
+   - ✅ Beacon scan UI supports camera scanning + manual entry
+   - ⏳ Additional formats beyond the current implementation (if required)
 
 2. **Ticket Validation**
-   - Backend validation endpoint
-   - Ticket authenticity verification
-   - Duplicate scan prevention
-   - Check-in recording
+   - ✅ Backend validation + signature verification
+   - ✅ Duplicate redemption prevention (`event_rsvps.checked_in`)
+   - ⏳ UI wiring polish (scanner UX, scan history, reporting)
 
 3. **Beacon Check-in**
    - Location-based check-in
@@ -125,76 +113,37 @@ QR scanning functionality shows "Coming Soon" placeholder:
    - Offline support
    - Scan history
 
-#### Recommended Library:
-```bash
-npm install html5-qrcode
-# or
-npm install @zxing/library
-```
+#### Implemented (Beacon scan/check-in)
+- Camera scan + manual entry flow
+- Server-side check-in endpoint (`POST /api/scan/check-in`) with idempotency protection
+- Success/error feedback
 
 #### Implementation Checklist:
-- [ ] Add QR scanner library dependency
-- [ ] Implement camera permissions handling
-- [ ] Create QR scanner component
-- [ ] Build ticket validation backend endpoint
-- [ ] Implement duplicate scan prevention
-- [ ] Add check-in recording to database
+- [x] Add QR scanner library dependency
+- [x] Implement camera permissions handling
+- [x] Create beacon QR scanner UI
+- [x] Implement duplicate scan prevention (idempotency)
+- [x] Add check-in recording endpoint
+- [ ] Build ticket validation backend endpoint (separate from beacon check-in)
 - [ ] Create scan history UI
 - [ ] Add offline support (queue scans)
-- [ ] Implement error handling (invalid tickets, expired, etc.)
+- [ ] Implement ticket error handling (invalid/expired/duplicate)
 - [ ] Test on various devices (iOS, Android)
-- [ ] Add accessibility features (manual entry)
-- [ ] Document scanning flow
+- [ ] Ensure accessibility features (manual entry, fallbacks)
+- [ ] Document ticket scanning + validation flow
 
-#### Example Implementation:
-```javascript
-import { Html5Qrcode } from 'html5-qrcode';
-
-function TicketScanner() {
-  const scannerRef = useRef(null);
-
-  useEffect(() => {
-    const scanner = new Html5Qrcode("scanner");
-    
-    scanner.start(
-      { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 250 }
-      },
-      (decodedText) => {
-        handleScan(decodedText);
-      },
-      (error) => {
-        // Handle scan error
-      }
-    );
-
-    return () => scanner.stop();
-  }, []);
-
-  async function handleScan(ticketData) {
-    // Validate ticket with backend
-    const result = await base44.functions.validateTicket({ ticketData });
-    if (result.valid) {
-      // Record check-in
-      // Show success
-    } else {
-      // Show error
-    }
-  }
-}
-```
+#### Notes
+- Beacon check-in and event ticket validation are related but not identical flows; keep them separate so ticket rules (signature verification, event ownership, redemption limits) don’t complicate beacon XP check-ins.
 
 ---
 
 ### 3. Mock Data in Production Code
-**Status**: ⚠️ Needs Replacement
+**Status**: 🟡 Partially Replaced (randomized values removed where possible)
 **Priority**: Medium
 **Effort**: 8 hours
 
 #### Location 1: City Data Overlay
-**File**: `src/components/globe/CityDataOverlay.jsx` (line 7)
+**File**: `src/components/globe/CityDataOverlay.jsx`
 
 ```javascript
 // Mock real-time data generator
@@ -205,13 +154,11 @@ const generateMockData = () => ({
 });
 ```
 
-**Issue**: Using randomly generated fake data instead of real API calls.
+**Issue**: Historically used simulated weather/transit/temp; now derives heat + counts from beacons/check-ins, but still lacks real weather/transit APIs.
 
 **Solution**:
-- Create backend endpoint for city statistics
-- Fetch real-time data from database
-- Implement caching to reduce API calls
-- Add fallback for when data unavailable
+- Optional: create backend endpoint for city statistics (aggregate in SQL)
+- Optional: integrate real weather/transit APIs (server-side) and cache results
 
 ```javascript
 // Recommended implementation

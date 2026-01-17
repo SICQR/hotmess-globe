@@ -26,11 +26,8 @@ const enforceBrandedCheckoutUrl = ({ checkoutUrl, checkoutHost }) => {
     url.host = desiredHost;
   }
 
-  // Reduce the chance Shopify auto-routes users into Shop/accelerated flows.
-  // This does not disable checkout; it simply opts out of automatic redirects.
-  if (!url.searchParams.has('auto_redirect')) url.searchParams.set('auto_redirect', 'false');
-  if (!url.searchParams.has('skip_shop_pay')) url.searchParams.set('skip_shop_pay', 'true');
-  if (!url.searchParams.has('edge_redirect')) url.searchParams.set('edge_redirect', 'false');
+  // Do not mutate query params: Shopify checkout URLs may rely on
+  // exact params/cookies, and adding unknown params can cause errors.
 
   const final = url.toString();
   if (isDisallowedCheckoutHost(url.host)) {

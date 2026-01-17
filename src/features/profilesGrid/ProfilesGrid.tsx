@@ -13,7 +13,7 @@ import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
 
 const SkeletonCard = () => {
   return (
-    <div className="w-full aspect-[4/5] rounded-lg bg-black/10 animate-pulse" />
+    <div className="w-full aspect-[4/5] rounded-2xl border border-white/10 bg-white/5 animate-pulse" />
   );
 };
 

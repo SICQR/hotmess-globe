@@ -64,10 +64,16 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
   const handleShare = () => {
     const url = window.location.href;
     if (navigator.share) {
-      navigator.share({
-        title: `${profileUser.full_name} on HOTMESS`,
-        text: `Check out ${profileUser.full_name}'s profile`,
-        url
+      Promise.resolve(
+        navigator.share({
+          title: `${profileUser.full_name} on HOTMESS`,
+          text: `Check out ${profileUser.full_name}'s profile`,
+          url,
+        })
+      ).catch((err) => {
+        // User cancelled the share sheet (common on iOS/macOS).
+        if (err?.name === 'AbortError') return;
+        toast.error('Share failed');
       });
     } else {
       navigator.clipboard.writeText(url);

@@ -124,7 +124,7 @@ export default function EditProfile() {
           aftercare_visibility: user.aftercare_visibility || 'matches',
           essentials_visibility: user.essentials_visibility || 'matches'
         });
-        setPhotos(user.photos || []);
+        setPhotos(Array.isArray(user.photos) ? user.photos.slice(0, 5) : []);
         setVideoIntroUrl(user.video_intro_url || '');
         setPremiumVideos(user.premium_videos || []);
         setPremiumUnlockXp(user.premium_unlock_xp || 1000);
@@ -144,6 +144,16 @@ export default function EditProfile() {
     };
     fetchUser();
   }, []);
+
+  const normalizePhotosForSave = (raw) => {
+    const list = Array.isArray(raw) ? raw.filter(Boolean).slice(0, 5) : [];
+    const primaryIndex = list.findIndex((p) => !!p?.is_primary);
+    return list.map((p, idx) => ({
+      ...p,
+      is_primary: primaryIndex === -1 ? idx === 0 : idx === primaryIndex,
+      order: typeof p?.order === 'number' ? p.order : idx,
+    }));
+  };
 
   useEffect(() => {
     if (userTribes.length > 0) {
@@ -198,6 +208,7 @@ export default function EditProfile() {
     
     const sanitizedSocialLinks = sanitizeSocialLinks(socialLinks);
     const musicArray = musicTaste.split(',').map(s => s.trim()).filter(Boolean).slice(0, 10);
+    const safePhotos = normalizePhotosForSave(photos);
     
     await updateProfileMutation.mutateAsync({
       bio: bioValidation.sanitized,
@@ -212,11 +223,11 @@ export default function EditProfile() {
       looking_for: lookingFor,
       meet_at: meetAt,
       aftercare_menu: aftercareMenu,
-      photos,
+      photos: safePhotos,
       video_intro_url: videoIntroUrl,
       premium_videos: premiumVideos,
       premium_unlock_xp: premiumUnlockXp,
-      has_premium_content: photos.some(p => p.is_premium) || premiumVideos.length > 0,
+      has_premium_content: safePhotos.some(p => p.is_premium) || premiumVideos.length > 0,
       interests,
       dealbreakers_text: dealbrekersText,
       availability_status: availabilityStatus,
@@ -456,7 +467,7 @@ export default function EditProfile() {
                 <ImageIcon className="w-4 h-4" />
                 Photo Gallery
               </Label>
-              <PhotoGallery photos={photos} onPhotosChange={setPhotos} maxPhotos={6} allowPremium={true} />
+              <PhotoGallery photos={photos} onPhotosChange={setPhotos} maxPhotos={5} allowPremium={true} />
               <div className="mt-4 pt-4 border-t border-white/10">
                 <Label className="text-xs text-white/60 mb-2 block">Premium Content Unlock Price</Label>
                 <Input

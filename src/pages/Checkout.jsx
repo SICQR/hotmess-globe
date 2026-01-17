@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { auth, base44, supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
@@ -22,7 +22,6 @@ import { getGuestCartItems, mergeGuestCartToUser } from '@/components/marketplac
 import { isXpPurchasingEnabled } from '@/lib/featureFlags';
 
 export default function Checkout() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [currentUser, setCurrentUser] = useState(null);
   const [shippingAddress, setShippingAddress] = useState({});
   const [notes, setNotes] = useState('');
@@ -51,30 +50,6 @@ export default function Checkout() {
     };
     fetchUser();
   }, []);
-
-  useEffect(() => {
-    const raw = searchParams?.get('shopify');
-    const url = raw ? String(raw).trim() : '';
-    if (!url) return;
-
-    // Best-effort validation: only allow https URLs.
-    if (!url.startsWith('https://')) return;
-
-    // Never allow Shopify-hosted checkout URLs to be embedded or redirected to.
-    if (isDisallowedCheckoutUrl(url)) return;
-
-    setEmbeddedShopifyCheckoutUrl(url);
-    setIsShopifyCheckoutOpen(true);
-
-    // Clean the param so refresh/back doesn't re-open endlessly.
-    try {
-      const next = new URLSearchParams(searchParams);
-      next.delete('shopify');
-      setSearchParams(next, { replace: true });
-    } catch {
-      // ignore
-    }
-  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!currentUser?.email) return;
@@ -386,8 +361,9 @@ export default function Checkout() {
       return checkoutUrl;
     },
     onSuccess: (checkoutUrl) => {
-      // Keep user in-app: attempt to render Shopify checkout inside a dialog.
-      // Note: Shopify may block iframes; we show a fallback button in that case.
+      // Do NOT embed Shopify checkout in an iframe.
+      // Embedding can trigger Shopify protected endpoints (e.g. /private_access_tokens)
+      // and is often blocked by Shopify/X-Frame-Options.
       setEmbeddedShopifyCheckoutUrl(checkoutUrl);
       setIsShopifyCheckoutOpen(true);
     },
@@ -502,24 +478,15 @@ export default function Checkout() {
               <DialogHeader>
                 <DialogTitle className="font-black uppercase">Secure checkout</DialogTitle>
                 <DialogDescription className="text-white/60">
-                  We’ll try to keep checkout inside the app. If Shopify blocks embedding, use “Open secure checkout”.
+                    Checkout opens in a separate secure page.
                 </DialogDescription>
               </DialogHeader>
 
-              {embeddedShopifyCheckoutUrl ? (
-                <div className="w-full">
-                  <div className="w-full aspect-[3/4] md:aspect-[16/10] border border-white/10 bg-white/5">
-                    <iframe
-                      title="Shopify Checkout"
-                      src={embeddedShopifyCheckoutUrl}
-                      className="w-full h-full"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
+                <div className="text-sm text-white/60">
+                  {embeddedShopifyCheckoutUrl
+                    ? 'When you’re ready, open the secure checkout to pay (card, Apple Pay, etc.).'
+                    : 'No checkout URL available.'}
                 </div>
-              ) : (
-                <div className="text-sm text-white/60">No checkout URL available.</div>
-              )}
 
               <DialogFooter>
                 <Button

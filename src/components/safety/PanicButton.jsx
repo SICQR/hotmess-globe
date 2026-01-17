@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { safeGetViewerLatLng } from '@/utils/geolocation';
 
 export default function PanicButton() {
   const [showConfirm, setShowConfirm] = useState(false);
@@ -22,22 +23,23 @@ export default function PanicButton() {
     setSendingAlerts(true);
     try {
       const user = await base44.auth.me();
+      if (!user?.email) {
+        toast.error('You must be logged in to send alerts');
+        return;
+      }
       
       // Get current location
       let locationData = { lat: null, lng: null, address: 'Location unavailable' };
-      if (navigator.geolocation) {
-        try {
-          const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-          });
-          locationData = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            address: `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`
-          };
-        } catch (error) {
-          console.log('Location access denied');
-        }
+      const loc = await safeGetViewerLatLng(
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 15_000 },
+        { retries: 2, logKey: 'panic' }
+      );
+      if (loc) {
+        locationData = {
+          lat: loc.lat,
+          lng: loc.lng,
+          address: `${loc.lat.toFixed(6)}, ${loc.lng.toFixed(6)}`,
+        };
       }
 
       // Get trusted contacts
