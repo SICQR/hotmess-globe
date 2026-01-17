@@ -1,6 +1,10 @@
 import { getEnv, getQueryParam, json } from '../shopify/_utils.js';
 
 const isAuthorized = (req) => {
+  // Local dev convenience: this endpoint only returns booleans + hints (no secrets),
+  // so allow it to run when not on Vercel.
+  if (!process.env.VERCEL && !process.env.VERCEL_ENV) return true;
+
   const cronHeader = req.headers?.['x-vercel-cron'];
   if (cronHeader === '1' || cronHeader === 1 || cronHeader === true) return true;
 
@@ -17,6 +21,47 @@ const isAuthorized = (req) => {
 const isPresent = (key) => {
   const value = process.env[key];
   return !!(value && String(value).trim());
+};
+
+const parseUrl = (value) => {
+  if (!value) return null;
+  try {
+    return new URL(String(value));
+  } catch {
+    return null;
+  }
+};
+
+const readQueryFlag = (req, key) => {
+  const raw = getQueryParam(req, key);
+  if (!raw) return false;
+  const value = String(raw).trim().toLowerCase();
+  return value === '1' || value === 'true' || value === 'yes';
+};
+
+const probeSupabaseAuthHealth = async ({ url, anonKey }) => {
+  if (!url || !anonKey) return { ok: false, status: null, error: 'missing_url_or_key' };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6000);
+  try {
+    const res = await fetch(`${String(url).replace(/\/+$/, '')}/auth/v1/health`, {
+      method: 'GET',
+      headers: {
+        apikey: String(anonKey),
+      },
+      signal: controller.signal,
+    });
+
+    // Health endpoints usually respond with JSON, but we don't depend on it.
+    return { ok: res.ok, status: res.status, error: null };
+  } catch (error) {
+    const message = error?.name === 'AbortError'
+      ? 'timeout'
+      : error?.cause?.code || error?.code || error?.message || 'fetch_failed';
+    return { ok: false, status: null, error: String(message) };
+  } finally {
+    clearTimeout(timeout);
+  }
 };
 
 export default async function handler(req, res) {
@@ -51,6 +96,14 @@ export default async function handler(req, res) {
     vite_publicSUPABASE_URL: isPresent('vite_publicSUPABASE_URL'),
     vite_publicSUPABASE_ANON_KEY: isPresent('vite_publicSUPABASE_ANON_KEY'),
   };
+
+  const supabaseUrl = getEnv('SUPABASE_URL', ['VITE_SUPABASE_URL', 'vite_publicSUPABASE_URL']);
+  const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY', ['VITE_SUPABASE_ANON_KEY', 'vite_publicSUPABASE_ANON_KEY']);
+  const parsedSupabaseUrl = parseUrl(supabaseUrl);
+  const shouldProbe = readQueryFlag(req, 'probe');
+  const supabaseProbe = shouldProbe
+    ? await probeSupabaseAuthHealth({ url: supabaseUrl, anonKey: supabaseAnonKey })
+    : null;
 
   const canScrape = checks.EVENT_SCRAPER_SOURCES_JSON || checks.OPENAI_API_KEY;
   const eventScraper = {
@@ -87,6 +140,11 @@ export default async function handler(req, res) {
     vercel: {
       env: process.env.VERCEL_ENV || null,
       region: process.env.VERCEL_REGION || null,
+    },
+    supabase: {
+      urlHost: parsedSupabaseUrl?.host || null,
+      urlProtocol: parsedSupabaseUrl?.protocol || null,
+      authHealth: supabaseProbe,
     },
     has: checks,
     eventScraper,

@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 import path from 'node:path'
+import fs from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const __filename = fileURLToPath(import.meta.url);
@@ -11,6 +12,56 @@ const importFresh = async (relativePath) => {
   // Cache-bust so edits to handler files are picked up without restarting.
   const mod = await import(`${href}?t=${Date.now()}`);
   return mod?.default;
+};
+
+const VITE_ENV_FILES_ORDER = (mode) => [
+  '.env',
+  '.env.local',
+  `.env.${mode}`,
+  `.env.${mode}.local`,
+];
+
+const readEnvKeyFromFiles = ({ envDir, mode, key }) => {
+  if (!envDir || !mode || !key) return null;
+
+  let value = null;
+  for (const filename of VITE_ENV_FILES_ORDER(mode)) {
+    const fullPath = path.resolve(envDir, filename);
+    if (!fs.existsSync(fullPath)) continue;
+
+    let text = '';
+    try {
+      text = fs.readFileSync(fullPath, 'utf8');
+    } catch {
+      continue;
+    }
+
+    for (const rawLine of text.split(/\n/)) {
+      const line = rawLine.replace(/\r$/, '');
+      if (!line || /^\s*#/.test(line)) continue;
+
+      const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+      if (!match) continue;
+      if (match[1] !== key) continue;
+
+      let next = match[2] ?? '';
+      const quoted =
+        (next.startsWith('"') && next.endsWith('"')) ||
+        (next.startsWith("'") && next.endsWith("'"));
+      if (!quoted) next = next.split('#')[0];
+      next = next.trim();
+      if (
+        (next.startsWith('"') && next.endsWith('"')) ||
+        (next.startsWith("'") && next.endsWith("'"))
+      ) {
+        next = next.slice(1, -1);
+      }
+
+      value = next;
+    }
+  }
+
+  return value && String(value).trim() ? String(value) : null;
 };
 
 function localApiRoutes() {
@@ -38,6 +89,19 @@ function localApiRoutes() {
           const envDir = server?.config?.envDir || server?.config?.root || process.cwd();
           const env = loadEnv(mode, envDir, '');
           Object.assign(process.env, env);
+
+          // If a shell exported an empty value, Vite's env loading can preserve
+          // the empty string instead of the file value. For security-sensitive
+          // keys, explicitly prefer the .env* file value when the runtime value
+          // is empty.
+          for (const key of ['TICKET_QR_SIGNING_SECRET', 'QR_SIGNING_SECRET']) {
+            const current = process.env[key];
+            const isEmpty = typeof current === 'string' && current.trim().length === 0;
+            if (!isEmpty) continue;
+
+            const fromFiles = readEnvKeyFromFiles({ envDir, mode, key });
+            if (fromFiles) process.env[key] = fromFiles;
+          }
         } catch {
           if (!loggedEnvReloadError) {
             loggedEnvReloadError = true;
@@ -116,6 +180,16 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/health' && method === 'GET') {
+          return importFresh('./api/health.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load health handler' }));
+            });
+        }
+
         // Event scraper endpoints (handled locally in dev)
         if (path === '/api/events/scrape' && method === 'POST') {
           return importFresh('./api/events/scrape.js')
@@ -173,6 +247,21 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/routing/directions' && method === 'POST') {
+          return importFresh('./api/routing/directions.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              try {
+                if (res.headersSent || res.writableEnded) return;
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ error: error?.message || 'Failed to load directions handler' }));
+              } catch {
+                // If the client disconnected mid-request, do not crash dev server.
+              }
+            });
+        }
+
         if (path === '/api/presence/update' && method === 'POST') {
           return importFresh('./api/presence/update.js')
             .then((handler) => handler(req, res))
@@ -180,6 +269,76 @@ function localApiRoutes() {
               res.statusCode = 500;
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify({ error: error?.message || 'Failed to load presence update handler' }));
+            });
+        }
+
+        if (path === '/api/notifications/settings' && (method === 'GET' || method === 'PATCH' || method === 'OPTIONS')) {
+          return importFresh('./api/notifications/settings.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load notifications settings handler' }));
+            });
+        }
+
+        if (path === '/api/notifications/preferences' && (method === 'GET' || method === 'POST')) {
+          return importFresh('./api/notifications/preferences.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load notifications preferences handler' }));
+            });
+        }
+
+        if (path === '/api/notifications/dispatch' && (method === 'POST' || method === 'GET')) {
+          return importFresh('./api/notifications/dispatch.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load notifications dispatch handler' }));
+            });
+        }
+
+        if (path === '/api/admin/notifications/dispatch' && method === 'POST') {
+          return importFresh('./api/admin/notifications/dispatch.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load admin notifications dispatch handler' }));
+            });
+        }
+
+        if (path === '/api/admin/cleanup/rate-limits' && (method === 'POST' || method === 'GET')) {
+          return importFresh('./api/admin/cleanup/rate-limits.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load rate-limits cleanup handler' }));
+            });
+        }
+
+        if (path === '/api/subscriptions/me' && method === 'GET') {
+          return importFresh('./api/subscriptions/me.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load subscriptions handler' }));
+            });
+        }
+
+        if (path === '/api/gdpr/request' && method === 'POST') {
+          return importFresh('./api/gdpr/request.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load gdpr request handler' }));
             });
         }
 
@@ -295,6 +454,38 @@ function localApiRoutes() {
             });
         }
 
+        // Scan endpoints (handled locally in dev)
+        if (path === '/api/scan/check-in' && (method === 'POST' || method === 'OPTIONS')) {
+          return importFresh('./api/scan/check-in.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load scan check-in handler' }));
+            });
+        }
+
+        if (path === '/api/scan/redeem' && (method === 'POST' || method === 'OPTIONS')) {
+          return importFresh('./api/scan/redeem.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load scan redeem handler' }));
+            });
+        }
+
+        // Tickets endpoints (handled locally in dev)
+        if (path === '/api/tickets/qr' && method === 'GET') {
+          return importFresh('./api/tickets/qr.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load ticket QR handler' }));
+            });
+        }
+
         return next();
       });
     },
@@ -341,6 +532,7 @@ export default defineConfig(({ mode }) => {
       setupFiles: './src/test/setup.js',
       css: true,
       exclude: [
+        'e2e/**',
         'node_modules/**',
         'dist/**',
         'hotmess-globe/**',

@@ -2,6 +2,9 @@ import * as React from "react";
 
 type ButtonVariant =
   | "default"
+  | "hot"
+  | "cyan"
+  | "glass"
   | "destructive"
   | "outline"
   | "secondary"

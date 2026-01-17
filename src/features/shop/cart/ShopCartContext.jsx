@@ -197,19 +197,25 @@ export function ShopCartProvider({ children }) {
     setCart(null);
   }, [persistCartId]);
 
+  const getCheckoutUrlOrThrow = useCallback(
+    ({ allowUnbranded = false } = {}) => {
+      const blockedReason = cart?.checkoutBlockedReason;
+      const url = cart?.checkoutUrl;
+      if (!url) {
+        throw new Error(blockedReason || 'Checkout currently unavailable. Please try again later.');
+      }
+      if (!allowUnbranded && isDisallowedCheckoutHost(url)) {
+        throw new Error('Checkout URL is not branded. Refusing to redirect to Shopify domains.');
+      }
+      return url;
+    },
+    [cart?.checkoutBlockedReason, cart?.checkoutUrl]
+  );
+
   const beginCheckout = useCallback(() => {
-    const blockedReason = cart?.checkoutBlockedReason;
-    const url = cart?.checkoutUrl;
-    if (!url) {
-      throw new Error(
-        blockedReason || 'Checkout currently unavailable. Please try again later.'
-      );
-    }
-    if (isDisallowedCheckoutHost(url)) {
-      throw new Error('Checkout URL is not branded. Refusing to redirect to Shopify domains.');
-    }
+    const url = getCheckoutUrlOrThrow({ allowUnbranded: false });
     window.location.assign(url);
-  }, [cart?.checkoutBlockedReason, cart?.checkoutUrl]);
+  }, [getCheckoutUrlOrThrow]);
 
   const value = useMemo(
     () => ({
@@ -224,6 +230,7 @@ export function ShopCartProvider({ children }) {
       removeLine,
       applyDiscountCode,
       clearCart,
+      getCheckoutUrlOrThrow,
       beginCheckout,
     }),
     [
@@ -238,6 +245,7 @@ export function ShopCartProvider({ children }) {
       removeLine,
       applyDiscountCode,
       clearCart,
+      getCheckoutUrlOrThrow,
       beginCheckout,
     ]
   );

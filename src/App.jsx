@@ -14,6 +14,10 @@ import Shop from '@/pages/Shop';
 import ShopCollection from '@/pages/ShopCollection';
 import ShopProduct from '@/pages/ShopProduct';
 import ShopCart from '@/pages/ShopCart';
+import CheckoutStart from '@/pages/CheckoutStart';
+import CreatorsCart from '@/pages/CreatorsCart';
+import CreatorsCheckout from '@/pages/CreatorsCheckout';
+import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
 import Privacy from '@/pages/legal/Privacy';
 import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
@@ -123,6 +127,40 @@ const ShopCollectionRoute = () => {
   );
 };
 
+const CreatorsMarketRoute = () => {
+  return <PageRoute pageKey="Marketplace" />;
+};
+
+const CreatorsProductRoute = () => {
+  const { id } = useParams();
+  const target = `${createPageUrl('ProductDetail')}?id=${encodeURIComponent(id ?? '')}`;
+  return <Navigate to={target} replace />;
+};
+
+const CreatorsCartRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <CreatorsCart />
+    </LayoutWrapper>
+  );
+};
+
+const CreatorsCheckoutRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <CreatorsCheckout />
+    </LayoutWrapper>
+  );
+};
+
+const CreatorsCheckoutSuccessRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <CreatorsCheckoutSuccess />
+    </LayoutWrapper>
+  );
+};
+
 const ShopProductRoute = () => {
   return (
     <LayoutWrapper currentPageName="Marketplace">
@@ -143,6 +181,14 @@ const ShopCartRoute = () => {
   return (
     <LayoutWrapper currentPageName="Marketplace">
       <ShopCart />
+    </LayoutWrapper>
+  );
+};
+
+const ShopCheckoutStartRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <CheckoutStart />
     </LayoutWrapper>
   );
 };
@@ -248,7 +294,12 @@ const AuthenticatedApp = () => {
       <Route path="/events/:id" element={<EventDetailRedirect />} />
       {/* Market (canonical) -> headless Shopify shop */}
       <Route path="/market" element={<ShopHomeRoute />} />
-      <Route path="/market/:collection" element={<Navigate to="/market" replace />} />
+      <Route path="/market/creators" element={<CreatorsMarketRoute />} />
+      <Route path="/market/creators/p/:id" element={<CreatorsProductRoute />} />
+      <Route path="/market/creators/cart" element={<CreatorsCartRoute />} />
+      <Route path="/market/creators/checkout" element={<CreatorsCheckoutRoute />} />
+      <Route path="/market/creators/checkout-success" element={<CreatorsCheckoutSuccessRoute />} />
+      <Route path="/market/:collection" element={<ShopCollectionRoute />} />
       <Route path="/market/p/:handle" element={<ShopProductRoute />} />
       <Route path="/social" element={<PageRoute pageKey="Social" />} />
       <Route path="/social/discover" element={<SocialDiscoverRedirect />} />
@@ -273,6 +324,7 @@ const AuthenticatedApp = () => {
       <Route path="/music/clips/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
       <Route path="/hnhmess" element={<PageRoute pageKey="Hnhmess" />} />
       <Route path="/more" element={<PageRoute pageKey="More" />} />
+      <Route path="/directions" element={<PageRoute pageKey="Directions" />} />
 
       {/* Headless Shopify shop routes */}
       {/* Legacy/alias shop routes (keep URLs working) */}
@@ -280,6 +332,7 @@ const AuthenticatedApp = () => {
       <Route path="/shop/:handle" element={<LegacyShopCollectionRedirect />} />
       <Route path="/p/:handle" element={<ShopProductRoute />} />
       <Route path="/cart" element={<ShopCartRoute />} />
+      <Route path="/checkout/start" element={<ShopCheckoutStartRoute />} />
 
       {/* Legal */}
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />

@@ -51,13 +51,15 @@ export default function Radio() {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Button 
                 onClick={openRadio}
-                className="bg-[#FF1493] hover:bg-white text-white hover:text-black font-black text-lg px-8 py-6 border-2 border-white uppercase"
+                variant="cyan"
+                size="xl"
+                className="font-black uppercase"
               >
                 <ExternalLink className="w-5 h-5 mr-2" />
                 Listen Live
               </Button>
               <Link to={createPageUrl('RadioSchedule')}>
-                <Button variant="outline" className="border-2 border-white bg-transparent hover:bg-white text-white hover:text-black font-black text-lg px-8 py-6 uppercase">
+                <Button variant="glass" size="xl" className="border-white/20 font-black uppercase">
                   <Calendar className="w-5 h-5 mr-2" />
                   See Schedule
                 </Button>

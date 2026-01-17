@@ -66,8 +66,11 @@ export default async function handler(req, res) {
   const supabaseServiceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
 
   if (!supabaseUrl || !supabaseServiceRoleKey) {
-    return json(res, 500, {
-      error: 'Supabase server env not configured',
+    // Public endpoint: degrade gracefully in dev if server env isn't set.
+    return json(res, 200, {
+      connected: false,
+      tracks: [],
+      error: 'SoundCloud not configured',
       details: 'Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in server env.',
     });
   }
@@ -80,7 +83,16 @@ export default async function handler(req, res) {
   try {
     accessToken = await getValidAccessToken({ serviceClient });
   } catch (e) {
-    return json(res, e?.status || 500, { error: e?.message || 'SoundCloud token error', details: e?.details });
+    if ((e?.status || 0) === 409) {
+      return json(res, 200, { connected: false, tracks: [] });
+    }
+
+    return json(res, 200, {
+      connected: false,
+      tracks: [],
+      error: e?.message || 'SoundCloud token error',
+      details: e?.details,
+    });
   }
 
   const url = new URL(`${SOUNDCLOUD_API_BASE}/me/tracks`);
@@ -100,7 +112,12 @@ export default async function handler(req, res) {
   }
 
   if (!resp.ok) {
-    return json(res, 502, { error: `SoundCloud tracks fetch failed (${resp.status})`, details: payload || text });
+    return json(res, 200, {
+      connected: false,
+      tracks: [],
+      error: `SoundCloud tracks fetch failed (${resp.status})`,
+      details: payload || text,
+    });
   }
 
   const collection = Array.isArray(payload?.collection) ? payload.collection : Array.isArray(payload) ? payload : [];
@@ -126,5 +143,5 @@ export default async function handler(req, res) {
     .filter((t) => t.id && t.permalink_url);
 
   res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=600');
-  return json(res, 200, { tracks });
+  return json(res, 200, { connected: true, tracks });
 }

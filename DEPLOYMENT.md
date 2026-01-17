@@ -43,16 +43,23 @@ For CI/CD setup details, see [CI_CD_SETUP.md](./CI_CD_SETUP.md).
   - [ ] `VERCEL_TOKEN` (deployment authentication)
   - [ ] `VERCEL_ORG_ID` (Vercel organization ID)
   - [ ] `VERCEL_PROJECT_ID` (Vercel project ID)
-  - [ ] `VITE_BASE44_APP_ID` (if needed during build)
-  - [ ] `VITE_BASE44_APP_BASE_URL` (if needed during build)
 - [ ] Vercel environment variables set (in Vercel dashboard):
-  - [ ] `VITE_BASE44_APP_ID`
-  - [ ] `VITE_BASE44_APP_BASE_URL`
-  - [ ] `VITE_MAPBOX_ACCESS_TOKEN`
-  - [ ] `VITE_SUPABASE_URL`
-  - [ ] `VITE_SUPABASE_ANON_KEY`
-  - [ ] `VITE_STRIPE_PUBLISHABLE_KEY`
-  - [ ] Any additional backend-only secrets (without VITE_ prefix)
+   - [ ] Supabase (required):
+      - [ ] `VITE_SUPABASE_URL`
+      - [ ] `VITE_SUPABASE_ANON_KEY`
+      - [ ] `SUPABASE_URL`
+      - [ ] `SUPABASE_ANON_KEY`
+      - [ ] `SUPABASE_SERVICE_ROLE_KEY` (recommended; required for admin/server features)
+   - [ ] Routing/ETAs (optional):
+      - [ ] `GOOGLE_MAPS_API_KEY`
+      - [ ] `GOOGLE_ROUTES_DRIVE_TRAFFIC_AWARE` (optional)
+   - [ ] Ticket QR signing (recommended for prod):
+      - [ ] `TICKET_QR_SIGNING_SECRET`
+   - [ ] Cron protection secrets (recommended):
+      - [ ] `OUTBOX_CRON_SECRET`
+      - [ ] `RATE_LIMIT_CLEANUP_SECRET`
+      - [ ] `EVENT_SCRAPER_CRON_SECRET`
+   - [ ] Integrations (optional): Shopify, SoundCloud (see `.env.example`)
 - [ ] `NODE_ENV=production` is set (automatically set by Vercel)
 - [ ] Production database configured
 - [ ] CDN/Storage for media files configured

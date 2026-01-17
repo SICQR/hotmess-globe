@@ -1,140 +1,146 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Camera, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { BrowserMultiFormatReader } from '@zxing/browser';
+import { supabase } from '@/components/utils/supabaseClient';
 
 export default function TicketScanner({ event, onClose }) {
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState(null);
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const streamRef = useRef(null);
+  const [qrError, setQrError] = useState(null);
+  const qrReader = useMemo(() => new BrowserMultiFormatReader(), []);
+  const controlsRef = useRef(null);
 
-  const startScanning = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-      setScanning(true);
-      scanQRCode();
-    } catch (error) {
-      toast.error('Camera access denied');
-    }
+  const getAccessToken = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    return session?.access_token || null;
   };
 
   const stopScanning = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+    try {
+      controlsRef.current?.stop?.();
+    } catch {
+      // ignore
+    }
+    controlsRef.current = null;
+    try {
+      qrReader.reset?.();
+    } catch {
+      // ignore
     }
     setScanning(false);
   };
 
-  const scanQRCode = () => {
-    if (!scanning || !videoRef.current || !canvasRef.current) return;
+  const redeemTicket = async (ticket) => {
+    const token = await getAccessToken();
+    if (!token) throw new Error('Not authenticated');
 
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const res = await fetch('/api/scan/redeem', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ ticket, event_id: event?.id }),
+    });
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const message = payload?.error || payload?.details || 'Redeem failed';
+      const err = new Error(message);
+      err.status = res.status;
+      err.payload = payload;
+      throw err;
+    }
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    
-    // In production, use a QR code detection library like jsQR
-    // For now, this is a placeholder for the scanning logic
-    
-    requestAnimationFrame(scanQRCode);
+    return payload;
   };
 
-  const verifyTicket = async (ticketData) => {
+  const startScanning = async () => {
+    setQrError(null);
+    setResult(null);
+
+    const video = videoRef.current;
+    if (!video) {
+      setQrError('Camera not ready');
+      return;
+    }
+
     try {
-      const data = JSON.parse(ticketData);
-      
-      // Verify this ticket is for this event
-      if (data.event_id !== event.id) {
-        setResult({ status: 'error', message: 'Wrong event' });
-        return;
-      }
+      setScanning(true);
+      controlsRef.current = await qrReader.decodeFromVideoDevice(undefined, video, async (scanResult, error) => {
+        if (scanResult) {
+          const text = scanResult.getText?.() || String(scanResult);
+          stopScanning();
 
-      // Check if RSVP exists
-      const rsvps = await base44.entities.EventRSVP.filter({
-        id: data.rsvp_id,
-        event_id: event.id,
-        user_email: data.user_email
+          try {
+            const redeemed = await redeemTicket(text);
+
+            if (redeemed?.already_checked_in) {
+              setResult({
+                status: 'warning',
+                message: 'Already checked in',
+                user: redeemed?.rsvp?.user_email,
+                time: redeemed?.rsvp?.checked_in_at,
+              });
+              toast.message('Already checked in');
+              return;
+            }
+
+            setResult({
+              status: 'success',
+              message: 'Check-in successful',
+              user: redeemed?.rsvp?.user_email,
+            });
+            toast.success('Ticket verified');
+          } catch (err) {
+            setResult({ status: 'error', message: err?.message || 'Invalid ticket' });
+            toast.error(err?.message || 'Verification failed');
+          }
+        }
+
+        // NotFoundException is expected when nothing is in view.
+        if (error && error.name !== 'NotFoundException') {
+          // Keep quiet.
+        }
       });
-
-      if (rsvps.length === 0) {
-        setResult({ status: 'error', message: 'Invalid ticket' });
-        return;
-      }
-
-      const rsvp = rsvps[0];
-
-      // Check if already scanned
-      if (rsvp.checked_in) {
-        setResult({ 
-          status: 'warning', 
-          message: 'Already checked in',
-          time: rsvp.check_in_time
-        });
-        return;
-      }
-
-      // Mark as checked in
-      await base44.entities.EventRSVP.update(rsvp.id, {
-        checked_in: true,
-        check_in_time: new Date().toISOString()
-      });
-
-      // Award XP
-      const user = await base44.entities.User.filter({ email: data.user_email });
-      if (user[0]) {
-        await base44.entities.User.update(user[0].id, {
-          xp: (user[0].xp || 0) + 50
-        });
-      }
-
-      setResult({ 
-        status: 'success', 
-        message: 'Check-in successful',
-        user: data.user_email
-      });
-
-      toast.success('Ticket verified');
-    } catch (error) {
-      setResult({ status: 'error', message: 'Invalid QR code' });
+    } catch (e) {
+      setQrError(e?.message || 'Failed to start camera');
+      setScanning(false);
     }
   };
 
   const manualEntry = async () => {
-    const ticketId = prompt('Enter ticket ID:');
-    if (!ticketId) return;
+    const ticket = prompt('Paste ticket QR payload:');
+    if (!ticket) return;
 
     try {
-      const rsvps = await base44.entities.EventRSVP.filter({ event_id: event.id });
-      const rsvp = rsvps.find(r => r.id.includes(ticketId.toLowerCase()));
-
-      if (!rsvp) {
-        toast.error('Ticket not found');
+      const redeemed = await redeemTicket(ticket);
+      if (redeemed?.already_checked_in) {
+        setResult({
+          status: 'warning',
+          message: 'Already checked in',
+          user: redeemed?.rsvp?.user_email,
+          time: redeemed?.rsvp?.checked_in_at,
+        });
+        toast.message('Already checked in');
         return;
       }
 
-      await verifyTicket(JSON.stringify({
-        rsvp_id: rsvp.id,
-        event_id: event.id,
-        user_email: rsvp.user_email
-      }));
-    } catch (error) {
-      toast.error('Verification failed');
+      setResult({
+        status: 'success',
+        message: 'Check-in successful',
+        user: redeemed?.rsvp?.user_email,
+      });
+      toast.success('Ticket verified');
+    } catch (err) {
+      setResult({ status: 'error', message: err?.message || 'Invalid ticket' });
+      toast.error(err?.message || 'Verification failed');
     }
   };
 
@@ -182,12 +188,14 @@ export default function TicketScanner({ event, onClose }) {
                   className="w-full h-full object-cover"
                   playsInline
                 />
-                <canvas ref={canvasRef} className="hidden" />
                 <div className="absolute inset-0 border-4 border-[#00D9FF] m-12 pointer-events-none" />
               </div>
               <p className="text-center text-sm text-white/60 uppercase">
                 Position QR code within frame
               </p>
+              {qrError ? (
+                <p className="text-center text-xs text-red-200">{qrError}</p>
+              ) : null}
               <Button
                 onClick={stopScanning}
                 variant="outline"

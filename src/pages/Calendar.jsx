@@ -6,6 +6,7 @@ import { createPageUrl } from '../utils';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, Clock, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
+import PageShell from '@/components/shell/PageShell';
 
 export default function Calendar() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -69,27 +70,18 @@ export default function Calendar() {
   }, [selectedDate, eventsByDate]);
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl md:text-6xl font-black italic mb-2">
-              CALENDAR<span className="text-[#FF1493]">.</span>
-            </h1>
-            <p className="text-white/60 text-sm uppercase tracking-wider">
-              Your events schedule
-            </p>
-          </div>
-          <Link to={createPageUrl('Events')}>
-            <Button
-              variant="outline"
-              className="border-[#00D9FF] text-[#00D9FF] hover:bg-[#00D9FF]/10 font-black"
-            >
-              BROWSE EVENTS
-            </Button>
-          </Link>
-        </div>
+    <div className="min-h-screen bg-black text-white pb-20">
+      <PageShell
+        eyebrow="MORE"
+        title="Calendar"
+        subtitle="Your events schedule"
+        maxWidth="7xl"
+        right={
+          <Button asChild variant="glass" className="border-white/20 font-black uppercase">
+            <Link to={createPageUrl('Events')}>Browse events</Link>
+          </Button>
+        }
+      >
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Calendar */}
@@ -279,7 +271,7 @@ export default function Calendar() {
             </div>
           </div>
         )}
-      </div>
+      </PageShell>
     </div>
   );
 }

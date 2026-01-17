@@ -8,6 +8,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 import { useCurrentUser } from '@/components/utils/queryConfig';
+import PageShell from '@/components/shell/PageShell';
 
 export default function Social() {
   const navigate = useNavigate();
@@ -76,27 +77,28 @@ export default function Social() {
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-black text-white pb-20">
-        <div className="max-w-2xl mx-auto px-4 py-10">
-          <div className="mb-8">
-            <h1 className="text-5xl font-black uppercase mb-2">SOCIAL</h1>
-            <p className="text-white/60 uppercase tracking-wider text-sm">
-              Discover • Connect • Message
-            </p>
-          </div>
-
+        <PageShell
+          eyebrow="SOCIAL"
+          title="Social"
+          subtitle="Discover • Connect • Message"
+          maxWidth="4xl"
+        >
           <div className="bg-white/5 border-2 border-white/10 p-6">
             <h2 className="text-2xl font-black uppercase mb-2">SIGN IN TO CONTINUE</h2>
             <p className="text-white/60 mb-6">
               Social features require an account.
             </p>
             <Button
+              type="button"
+              variant="hot"
+              size="xl"
               onClick={() => navigate(`/auth?next=${encodeURIComponent('/social')}`)}
-              className="bg-[#FF1493] hover:bg-white text-black font-black uppercase"
+              className="w-full sm:w-auto font-black uppercase"
             >
               SIGN IN
             </Button>
           </div>
-        </div>
+        </PageShell>
       </div>
     );
   }
@@ -104,26 +106,24 @@ export default function Social() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-20">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="mb-8">
-          <h1 className="text-5xl font-black uppercase mb-2">SOCIAL</h1>
-          <p className="text-white/60 uppercase tracking-wider text-sm">
-            Discover • Connect • Message
-          </p>
-        </div>
-
+      <PageShell
+        eyebrow="SOCIAL"
+        title="Social"
+        subtitle="Discover • Connect • Message"
+        maxWidth="7xl"
+      >
         <Tabs value={activeTab} onValueChange={(v) => setTabAndUrl(v)} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-white/5 mb-8">
-            <TabsTrigger 
+            <TabsTrigger
               value="discover"
-              className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black"
+              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black"
             >
               <Users className="w-4 h-4 mr-2" />
               DISCOVER
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="inbox"
-              className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black relative"
+              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black relative"
             >
               <MessageCircle className="w-4 h-4 mr-2" />
               INBOX
@@ -161,9 +161,11 @@ export default function Social() {
                 <MessageCircle className="w-16 h-16 mx-auto mb-4 text-white/40" />
                 <h3 className="text-2xl font-black mb-2">NO MESSAGES YET</h3>
                 <p className="text-white/60 mb-6">Start a conversation from Discover</p>
-                <Button 
+                <Button
+                  type="button"
+                  variant="cyan"
                   onClick={() => setTabAndUrl('discover')}
-                  className="bg-[#FF1493] hover:bg-white text-black font-black uppercase"
+                  className="font-black uppercase"
                 >
                   GO TO DISCOVER
                 </Button>
@@ -177,9 +179,9 @@ export default function Social() {
                     typeof thread.unread_count === 'number'
                       ? thread.unread_count
                       : Number(thread.unread_count?.[currentUser?.email] || 0);
-                  
+
                   return (
-                    <Link 
+                    <Link
                       key={thread.id}
                       to={`/social/t/${encodeURIComponent(String(thread.id))}`}
                       className="block"
@@ -211,7 +213,7 @@ export default function Social() {
             )}
           </TabsContent>
         </Tabs>
-      </div>
+      </PageShell>
     </div>
   );
 }

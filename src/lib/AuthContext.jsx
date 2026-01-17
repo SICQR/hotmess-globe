@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/components/utils/supabaseClient';
 import logger from '@/utils/logger';
+import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 
 const AuthContext = createContext();
 
@@ -11,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [authError, setAuthError] = useState(null);
+  const mergedGuestCartRef = React.useRef(false);
 
   useEffect(() => {
     checkAppState();
@@ -42,12 +44,23 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setIsAuthenticated(false);
         setIsLoadingAuth(false);
+        mergedGuestCartRef.current = false;
         return;
       }
 
       const currentUser = await base44.auth.me();
       setUser(currentUser || null);
       setIsAuthenticated(!!currentUser);
+
+      // Best-effort: if the user logs in while holding a creators guest cart,
+      // merge it into the DB cart once per session.
+      if (currentUser?.email && !mergedGuestCartRef.current) {
+        mergedGuestCartRef.current = true;
+        mergeGuestCartToUser({ currentUser }).catch((error) => {
+          logger.warn('Guest cart merge failed (non-fatal)', { error: error?.message });
+        });
+      }
+
       setIsLoadingAuth(false);
     } catch (error) {
       logger.error('User auth check failed', { error: error.message, status: error.status });

@@ -275,7 +275,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white pb-20">
       {/* HERO */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img 
             src="/images/hung-hero.png"
@@ -519,7 +519,7 @@ export default function Home() {
       </section>
 
       {/* HUNGMESS EDITORIAL */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-black">
+      <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden bg-black">
         <div className="absolute inset-0">
           <img
             src="/images/hungmess-editorial.png"

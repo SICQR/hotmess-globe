@@ -12,7 +12,21 @@ import {
   readJsonBody,
   requireGoogleApiKey,
 } from './_utils.js';
-import { fetchRoutesV2 } from './_google.js';
+import { bestEffortRateLimit, minuteBucket } from '../_rateLimit.js';
+
+const importGoogle = async () => {
+  const isDev =
+    String(process.env.NODE_ENV || '').toLowerCase() === 'development' ||
+    String(process.env.VITE_USER_NODE_ENV || '').toLowerCase() === 'development';
+
+  if (isDev) {
+    const url = new URL('./_google.js', import.meta.url);
+    const mod = await import(`${url.href}?t=${Date.now()}`);
+    return mod;
+  }
+
+  return import('./_google.js');
+};
 
 const computeTimeSlice = ({ nowMs, ttlSeconds }) => {
   const ttlMs = ttlSeconds * 1000;
@@ -26,6 +40,49 @@ const validatePoint = (point, name) => {
   return { ok: true, lat, lng };
 };
 
+const haversineMeters = (a, b) => {
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const R = 6371000;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+
+  const sinLat = Math.sin(dLat / 2);
+  const sinLng = Math.sin(dLng / 2);
+  const h = sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLng * sinLng;
+  const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  return Math.round(R * c);
+};
+
+const approximateDurationSeconds = ({ origin, destination, mode }) => {
+  const distanceMeters = haversineMeters(origin, destination);
+  const km = distanceMeters / 1000;
+
+  if (mode === 'DRIVE') {
+    const speedKmh = 22;
+    return { distanceMeters, seconds: Math.max(60, Math.round((km / speedKmh) * 3600)) };
+  }
+
+  if (mode === 'BICYCLE') {
+    const speedKmh = 16;
+    return { distanceMeters, seconds: Math.max(60, Math.round((km / speedKmh) * 3600)) };
+  }
+
+  if (mode === 'WALK') {
+    const speedKmh = 4.8;
+    return { distanceMeters, seconds: Math.max(60, Math.round((km / speedKmh) * 3600)) };
+  }
+
+  // Transit fallback is a rough drive proxy.
+  if (mode === 'TRANSIT') {
+    const speedKmh = 18;
+    return { distanceMeters, seconds: Math.max(60, Math.round((km / speedKmh) * 3600)) };
+  }
+
+  return { distanceMeters, seconds: null };
+};
+
 export default async function handler(req, res) {
   try {
     if (req.method !== 'POST') {
@@ -34,16 +91,13 @@ export default async function handler(req, res) {
     }
 
     const { error: supaErr, anonClient, serviceClient } = getSupabaseServerClients();
-    if (supaErr) return json(res, 500, { error: supaErr });
+    if (supaErr || !anonClient) return json(res, 500, { error: supaErr || 'Supabase anon client unavailable' });
 
     const accessToken = getBearerToken(req);
     if (!accessToken) return json(res, 401, { error: 'Missing Authorization bearer token' });
 
     const { user: authUser, error: authErr } = await getAuthedUser({ anonClient, accessToken });
     if (authErr || !authUser?.id) return json(res, 401, { error: 'Invalid auth token' });
-
-    const { key: googleKey, error: googleErr } = requireGoogleApiKey();
-    if (googleErr) return json(res, 500, { error: googleErr });
 
     const body = (await readJsonBody(req)) || {};
 
@@ -62,21 +116,81 @@ export default async function handler(req, res) {
   const originBucket = bucketLatLng(origin.lat, origin.lng, 2);
   const destBucket = bucketLatLng(destination.lat, destination.lng, 2);
 
-  // Rate limits: per-user + per-IP
-  const ip = getRequestIp(req);
-  const bucketKey = `etas:${authUser.id}:${ip || 'noip'}:${Math.floor(nowMs / 60000)}`;
-  const { data: rl } = await serviceClient.rpc('check_routing_rate_limit', {
-    p_bucket_key: bucketKey,
-    p_user_id: authUser.id,
-    p_ip: ip,
-    p_window_seconds: 60,
-    p_max_requests: 20,
-  });
+  // Rate limits + caching require service role. If not configured, skip.
+  if (!serviceClient) {
+    const requestedModes = Array.isArray(body.modes) ? body.modes : null;
+    const normalized = (requestedModes || ['WALK', 'TRANSIT', 'DRIVE'])
+      .map((m) => normalizeMode(m))
+      .filter(Boolean);
+    const modes = Array.from(new Set(normalized)).slice(0, 5);
 
-  const allowed = Array.isArray(rl) ? rl[0]?.allowed : rl?.allowed;
-  if (allowed === false) {
-    return json(res, 429, { error: 'Rate limit exceeded' });
+    const results = {};
+    for (const mode of modes) {
+      const approx = approximateDurationSeconds({ origin, destination, mode });
+      results[mode] = {
+        duration_seconds: approx.seconds,
+        distance_meters: approx.distanceMeters,
+        provider: 'approx',
+      };
+    }
+
+    const response = {
+      walk: results.WALK ? { ...results.WALK } : null,
+      transit: results.TRANSIT ? { ...results.TRANSIT } : null,
+      drive: results.DRIVE ? { ...results.DRIVE } : null,
+      ...(results.BICYCLE ? { bicycle: { ...results.BICYCLE } } : {}),
+      ...(results.TWO_WHEELER ? { two_wheeler: { ...results.TWO_WHEELER } } : {}),
+    };
+
+    return json(res, 200, response);
   }
+
+  // Rate limits: per-user + per-IP
+  {
+    const ip = getRequestIp(req);
+    const bucketKey = `etas:${authUser.id}:${ip || 'noip'}:${minuteBucket()}`;
+    const rl = await bestEffortRateLimit({
+      serviceClient,
+      bucketKey,
+      userId: authUser.id,
+      ip,
+      windowSeconds: 60,
+      maxRequests: 20,
+    });
+
+    if (rl.allowed === false) {
+      return json(res, 429, { error: 'Rate limit exceeded', remaining: rl.remaining ?? 0 });
+    }
+  }
+
+    const { key: googleKey, error: googleErr } = requireGoogleApiKey();
+    if (googleErr || !googleKey) {
+      const requestedModes = Array.isArray(body.modes) ? body.modes : null;
+      const normalized = (requestedModes || ['WALK', 'TRANSIT', 'DRIVE'])
+        .map((m) => normalizeMode(m))
+        .filter(Boolean);
+      const modes = Array.from(new Set(normalized)).slice(0, 5);
+
+      const results = {};
+      for (const mode of modes) {
+        const approx = approximateDurationSeconds({ origin, destination, mode });
+        results[mode] = {
+          duration_seconds: approx.seconds,
+          distance_meters: approx.distanceMeters,
+          provider: 'approx',
+        };
+      }
+
+      const response = {
+        walk: results.WALK ? { ...results.WALK } : null,
+        transit: results.TRANSIT ? { ...results.TRANSIT } : null,
+        drive: results.DRIVE ? { ...results.DRIVE } : null,
+        ...(results.BICYCLE ? { bicycle: { ...results.BICYCLE } } : {}),
+        ...(results.TWO_WHEELER ? { two_wheeler: { ...results.TWO_WHEELER } } : {}),
+      };
+
+      return json(res, 200, response);
+    }
 
     const trafficAware = String(process.env.GOOGLE_ROUTES_DRIVE_TRAFFIC_AWARE || '').toLowerCase() === 'true';
 
@@ -107,6 +221,8 @@ export default async function handler(req, res) {
 
   const results = {};
   const upserts = [];
+
+    const { fetchRoutesV2 } = await importGoogle();
 
     for (const mode of modes) {
     const keyRow = cacheKeys.find((k) => k.mode === mode);

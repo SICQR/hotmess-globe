@@ -14,6 +14,7 @@ import Community from './pages/Community';
 import Connect from './pages/Connect';
 import CreateBeacon from './pages/CreateBeacon';
 import DialADaddy from './pages/DialADaddy';
+import Directions from './pages/Directions';
 import EditBeacon from './pages/EditBeacon';
 import EditProfile from './pages/EditProfile';
 import Events from './pages/Events';
@@ -73,6 +74,7 @@ export const PAGES = {
     "Connect": Connect,
     "CreateBeacon": CreateBeacon,
     "DialADaddy": DialADaddy,
+    "Directions": Directions,
     "EditBeacon": EditBeacon,
     "EditProfile": EditProfile,
     "Events": Events,

@@ -10,6 +10,7 @@
     "lib": ["esnext", "dom"],
     "target": "esnext",
     "checkJs": false,
+    "ignoreDeprecations": "5.0",
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -17,6 +18,13 @@
     "maxNodeModuleJsDepth": 0,
     "types": ["vite/client"]
   },
-  "include": ["src/components/**/*.js", "src/pages/**/*.jsx", "src/Layout.jsx"],
-  "exclude": ["node_modules", "dist", "src/vite-plugins", "src/components/ui", "src/api", "src/lib"]
+  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/vite-plugins",
+    "src/components/ui",
+    "src/**/*.md.jsx",
+    "src/**/*.sql.jsx"
+  ]
 } 

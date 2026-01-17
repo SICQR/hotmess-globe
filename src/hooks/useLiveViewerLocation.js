@@ -99,9 +99,17 @@ export default function useLiveViewerLocation({
       (err) => {
         if (cancelled) return;
         const code = normalizeErrorCode(err);
+
+        // Treat transient CoreLocation failures as degraded, but keep the last known fix.
+        if (code === 'unavailable' || code === 'timeout') {
+          setStatus('degraded');
+          setError({ code, message: err?.message || 'Geolocation temporarily unavailable' });
+          return;
+        }
+
         setStatus(code === 'denied' ? 'denied' : 'error');
         setError({ code, message: err?.message || 'Geolocation error' });
-        setLocation(null);
+        if (code === 'denied') setLocation(null);
       },
       {
         enableHighAccuracy,

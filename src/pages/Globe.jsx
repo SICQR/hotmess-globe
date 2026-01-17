@@ -20,6 +20,7 @@ import { createPageUrl } from '../utils';
 import { debounce } from 'lodash';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
+import { safeGetViewerLatLng } from '@/utils/geolocation';
 
 export default function GlobePage() {
   const queryClient = useQueryClient();
@@ -287,17 +288,20 @@ export default function GlobePage() {
 
   // Get user's location
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => console.log('Location access denied')
-      );
-    }
+    let cancelled = false;
+
+    safeGetViewerLatLng(
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 },
+      { retries: 2, logKey: 'globe' }
+    ).then((loc) => {
+      if (cancelled) return;
+      if (!loc) return;
+      setUserLocation({ lat: loc.lat, lng: loc.lng });
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Filter beacons by mode, type, intensity, recency, and search (must be before conditional return)
@@ -532,7 +536,7 @@ export default function GlobePage() {
       <div className="relative w-full min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[#FF1493]/30 border-t-[#FF1493] rounded-full animate-spin" />
-          <p className="text-white/60 text-sm tracking-wider uppercase">Loading Globe...</p>
+          <p className="text-white/60 text-sm tracking-wider uppercase">Loading Pulse...</p>
         </div>
       </div>
     );
@@ -570,6 +574,9 @@ export default function GlobePage() {
               <Home className="w-4 h-4" />
             </button>
           </Link>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-black/90 border border-white/10 rounded-lg backdrop-blur-xl">
+            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-white/60">PULSE</span>
+          </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-black/90 border border-white/10 rounded-lg backdrop-blur-xl">
             <div className="w-2 h-2 rounded-full bg-[#FF1493] animate-pulse" />
             <span className="text-xs font-bold">{filteredBeacons.length}</span>

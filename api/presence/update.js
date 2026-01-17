@@ -1,4 +1,6 @@
 import { bucketLatLng, getAuthedUser, getBearerToken, getSupabaseServerClients, json, readJsonBody } from '../routing/_utils.js';
+import { bestEffortRateLimit, minuteBucket } from '../_rateLimit.js';
+import { getRequestIp } from '../routing/_utils.js';
 
 const USER_TABLES = ['User', 'users'];
 
@@ -77,6 +79,21 @@ export default async function handler(req, res) {
 
   const { user: authUser, error: authErr } = await getAuthedUser({ anonClient, accessToken });
   if (authErr || !authUser?.id || !authUser?.email) return json(res, 401, { error: 'Invalid auth token' });
+
+  // Best-effort DB-backed rate limiting to prevent hot loops.
+  const ip = getRequestIp(req);
+  const rl = await bestEffortRateLimit({
+    serviceClient,
+    bucketKey: `presence:${authUser.id}:${ip || 'noip'}:${minuteBucket()}`,
+    userId: authUser.id,
+    ip,
+    windowSeconds: 60,
+    maxRequests: 120,
+  });
+
+  if (rl.allowed === false) {
+    return json(res, 429, { error: 'Rate limit exceeded', remaining: rl.remaining ?? 0 });
+  }
 
   const body = (await readJsonBody(req)) || {};
   if (!body || typeof body !== 'object') {

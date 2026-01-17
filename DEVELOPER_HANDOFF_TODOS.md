@@ -1,12 +1,20 @@
 # HOTMESS Globe — Developer Handoff TODOs (Hyper-Detailed)
 
 **Date**: 2026-01-06  
+**Updated**: 2026-01-17  
 **Goal**: Provide an execution-ready backlog for finishing features, wiring, and polish.  
 **Sources**: INCOMPLETE_FEATURES.md, ISSUES-TRACKER.md, DEPLOYMENT.md, SECURITY.md, CI_CD_SETUP.md, CODE_QUALITY_RECOMMENDATIONS.md, TEST_SETUP.md.
 
 ---
 
 ## 0) Read This First (Key Facts + Decisions)
+
+### 0.0 Recent updates (since 2026-01-06)
+- Market restoration: creators lane is reachable at `/market/creators` and Shopify remains canonical at `/market`.
+- Cart UX: added a unified cart drawer (Shopify + creators tabs) and wired it into the Market layout.
+- Marketplace behavior: Shopify-backed items now add to the Shopify cart (and route to Shopify PDP when needed).
+- API hardening: added best-effort DB-backed rate limiting + idempotency for Scan check-in, plus extended rate limiting to high-risk endpoints.
+- CSP: enforced via `Content-Security-Policy` headers in `vercel.json`.
 
 ### 0.1 What’s already working (baseline)
 - Vercel serverless API routes exist under `api/`.
@@ -99,6 +107,8 @@ Then open Globe → Nearby People. Paid users will show ETAs; free users show di
 ### P0.3 Add CSP + security headers
 **Goal**: reduce XSS risk; support external embeds (Mapbox, SoundCloud, etc.)
 
+**Status**: ✅ Enforced via `vercel.json` response headers
+
 **Steps**:
 - Define CSP policy.
 - Implement headers at Vercel (headers config) or via middleware.
@@ -110,6 +120,8 @@ Then open Globe → Nearby People. Paid users will show ETAs; free users show di
 **Targets**:
 - `api/events/cron.js`, `api/events/scrape.js`, `api/events/diag.js`
 - `api/soundcloud/*`, `api/shopify/*`
+
+**Status**: PARTIAL (best-effort DB-backed limiter added and used on multiple endpoints; coverage can expand)
 
 **Acceptance**: basic per-IP limits; friendly 429; no sensitive endpoints without any throttling.
 
@@ -270,6 +282,14 @@ Then open Globe → Nearby People. Paid users will show ETAs; free users show di
 ---
 
 ## 7) P5 — Marketplace / Payments / Orders: Finish Wiring + Polish
+
+### P5.0 Cart UX unification + creators discoverability
+**Status**: DONE (unified cart drawer; creators entry point from shop)
+
+**Notes**:
+- Single cart drawer with tabs for Shopify and creators carts.
+- Market layout uses unified cart trigger across Market routes.
+- Marketplace routes Shopify-backed items into Shopify cart/checkout flow.
 
 ### P5.1 Define cart ownership model
 **Problem**: mixing email-based and auth_user_id carts creates confusion.

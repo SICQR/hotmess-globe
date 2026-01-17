@@ -173,3 +173,99 @@ export const fetchRoutesV2 = async ({ apiKey, origin, destination, mode, traffic
 
   return { ok: true, duration_seconds: durationTraffic, distance_meters, provider: 'ROUTES_V2' };
 };
+
+export const fetchRoutesV2Directions = async ({ apiKey, origin, destination, mode, trafficAware }) => {
+  const travelMode = routesApiMode(mode);
+  if (!travelMode) return { ok: false, error: `Unsupported mode: ${mode}` };
+
+  const body = {
+    origin: { location: { latLng: { latitude: origin.lat, longitude: origin.lng } } },
+    destination: { location: { latLng: { latitude: destination.lat, longitude: destination.lng } } },
+    travelMode,
+  };
+
+  const fieldMask = [
+    'routes.duration',
+    'routes.distanceMeters',
+    'routes.polyline.encodedPolyline',
+    'routes.legs.steps.distanceMeters',
+    'routes.legs.steps.duration',
+    'routes.legs.steps.navigationInstruction.instructions',
+  ].join(',');
+
+  if (trafficAware && mode === 'DRIVE') {
+    body.routingPreference = 'TRAFFIC_AWARE';
+    body.departureTime = new Date().toISOString();
+  }
+
+  const result = await fetchJsonSafe(
+    'https://routes.googleapis.com/directions/v2:computeRoutes',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': fieldMask,
+      },
+      body: JSON.stringify(body),
+    },
+    { timeoutMs: DEFAULT_TIMEOUT_MS }
+  );
+
+  if (!result.ok) {
+    return {
+      ok: false,
+      error: result.aborted ? 'Routes API timed out' : 'Routes API request failed',
+      details: result.details,
+    };
+  }
+
+  const resp = result.resp;
+  const json = result.json;
+  if (!resp.ok) {
+    return { ok: false, error: `Routes API HTTP ${resp.status}`, details: json };
+  }
+
+  const route = Array.isArray(json?.routes) ? json.routes[0] : null;
+  if (!route) return { ok: false, error: 'Routes API returned no routes', details: json };
+
+  const duration_seconds = toSecondsFromGoogleDuration(route.duration);
+  const distance_meters = typeof route.distanceMeters === 'number' && Number.isFinite(route.distanceMeters)
+    ? Math.round(route.distanceMeters)
+    : null;
+
+  if (!duration_seconds || !distance_meters) {
+    return { ok: false, error: 'Routes API returned invalid duration/distance', details: json };
+  }
+
+  const encoded_polyline = route?.polyline?.encodedPolyline || null;
+
+  const stepsRaw = route?.legs?.[0]?.steps;
+  const steps = Array.isArray(stepsRaw)
+    ? stepsRaw
+        .map((step) => {
+          const instruction = step?.navigationInstruction?.instructions || null;
+          const distanceMeters = typeof step?.distanceMeters === 'number' && Number.isFinite(step.distanceMeters)
+            ? Math.round(step.distanceMeters)
+            : null;
+          const durationSeconds = toSecondsFromGoogleDuration(step?.duration);
+
+          if (!instruction && !distanceMeters && !durationSeconds) return null;
+          return {
+            instruction,
+            distance_meters: distanceMeters,
+            duration_seconds: durationSeconds,
+          };
+        })
+        .filter(Boolean)
+    : [];
+
+  return {
+    ok: true,
+    duration_seconds,
+    distance_meters,
+    encoded_polyline,
+    steps,
+    provider: 'ROUTES_V2',
+  };
+};

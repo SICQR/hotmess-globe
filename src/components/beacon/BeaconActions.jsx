@@ -104,10 +104,16 @@ export default function BeaconActions({ beacon }) {
   const handleShare = () => {
     const url = window.location.href;
     if (navigator.share) {
-      navigator.share({
-        title: beacon.title,
-        text: beacon.description,
-        url
+      Promise.resolve(
+        navigator.share({
+          title: beacon.title,
+          text: beacon.description,
+          url,
+        })
+      ).catch((err) => {
+        // User cancelled the share sheet.
+        if (err?.name === 'AbortError') return;
+        toast.error('Share failed');
       });
     } else {
       navigator.clipboard.writeText(url);

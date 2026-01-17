@@ -4,11 +4,12 @@ import { ShoppingBag, Crown, Palette } from 'lucide-react';
 import QuickActions from './QuickActions';
 import BadgeDisplay from './BadgeDisplay';
 import { buildUberDeepLink } from '@/utils/uberDeepLink';
-import { buildGoogleMapsDirectionsLink } from '@/utils/mapsDeepLink';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes } from '@/utils/travelRecommendations';
+import { useNavigate } from 'react-router-dom';
 
 export default function ProfileHeader({ user, isOwnProfile, currentUser, travelEtas }) {
+  const navigate = useNavigate();
   const profileType = user?.profile_type || 'standard';
   const themeGradient = {
     'default': 'from-[#FF1493] to-[#B026FF]',
@@ -97,9 +98,16 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
     dropoffNickname: user?.full_name,
   });
 
-  const mapsWalkUrl = buildGoogleMapsDirectionsLink({ destinationLat: dropoffLat, destinationLng: dropoffLng, mode: 'walk' });
-  const mapsDriveUrl = buildGoogleMapsDirectionsLink({ destinationLat: dropoffLat, destinationLng: dropoffLng, mode: 'cab' });
-  const mapsBikeUrl = buildGoogleMapsDirectionsLink({ destinationLat: dropoffLat, destinationLng: dropoffLng, mode: 'bike' });
+  const canDirections = Number.isFinite(dropoffLat) && Number.isFinite(dropoffLng);
+  const openInAppDirections = (mode) => {
+    if (!canDirections) return;
+    const qs = new URLSearchParams();
+    qs.set('lat', String(dropoffLat));
+    qs.set('lng', String(dropoffLng));
+    if (user?.full_name) qs.set('label', String(user.full_name));
+    qs.set('mode', mode);
+    navigate(`/directions?${qs.toString()}`);
+  };
 
   return (
     <div className={`relative h-80 border-b border-white/10 bg-gradient-to-br ${themeGradient}/20`}>
@@ -169,16 +177,23 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {orderedModes
                       .filter((mode) => {
-                        if (mode === 'foot') return !!mapsWalkUrl;
-                        if (mode === 'cab') return !!mapsDriveUrl;
-                        if (mode === 'bike') return !!mapsBikeUrl;
+                        if (mode === 'foot') return canDirections;
+                        if (mode === 'cab') return canDirections;
+                        if (mode === 'bike') return canDirections;
                         return !!uberUrl;
                       })
                       .map((mode) => {
                         const isPrimary = mode === primaryMode;
                         const label = mode === 'foot' ? 'Foot' : mode === 'cab' ? 'Cab' : mode === 'bike' ? 'Bike' : 'Uber';
                         const eta = mode === 'foot' ? (walkEta || '—') : mode === 'cab' ? (driveEta || '—') : mode === 'bike' ? (bikeEta || '—') : (driveEta || '—');
-                        const url = mode === 'foot' ? mapsWalkUrl : mode === 'cab' ? mapsDriveUrl : mode === 'bike' ? mapsBikeUrl : uberUrl;
+                        const onClick = () => {
+                          if (mode === 'uber') {
+                            if (!uberUrl) return;
+                            window.open(uberUrl, '_blank', 'noopener,noreferrer');
+                            return;
+                          }
+                          openInAppDirections(mode);
+                        };
 
                         return (
                           <Button
@@ -186,7 +201,7 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
                             type="button"
                             variant={isPrimary ? 'default' : 'outline'}
                             size="sm"
-                            onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
+                            onClick={onClick}
                             className={
                               isPrimary
                                 ? 'bg-white/90 text-black hover:bg-white'

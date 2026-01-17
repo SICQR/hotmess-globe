@@ -16,10 +16,14 @@ import BulkUserInvite from '../components/admin/BulkUserInvite';
 import EventScraperControl from '../components/admin/EventScraperControl';
 import ModerationQueue from '../components/admin/ModerationQueue';
 import { createPageUrl } from '../utils';
+import { supabase } from '@/components/utils/supabaseClient';
 
 export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [dispatchingOutbox, setDispatchingOutbox] = useState(false);
+  const [dispatchResult, setDispatchResult] = useState(null);
+  const [dispatchError, setDispatchError] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -86,6 +90,62 @@ export default function AdminDashboard() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
+              <div className="w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto border-white/20 text-white"
+                  disabled={dispatchingOutbox}
+                  onClick={async () => {
+                    setDispatchError(null);
+                    setDispatchResult(null);
+                    setDispatchingOutbox(true);
+
+                    try {
+                      const {
+                        data: { session },
+                      } = await supabase.auth.getSession();
+
+                      const token = session?.access_token;
+                      if (!token) throw new Error('Not authenticated');
+
+                      const res = await fetch('/api/admin/notifications/dispatch', {
+                        method: 'POST',
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                          'Content-Type': 'application/json',
+                        },
+                      });
+
+                      const payload = await res.json().catch(() => ({}));
+                      if (!res.ok) {
+                        throw new Error(payload?.error || `Dispatch failed (${res.status})`);
+                      }
+
+                      setDispatchResult(payload);
+                    } catch (err) {
+                      setDispatchError(err?.message || 'Failed to dispatch outbox');
+                    } finally {
+                      setDispatchingOutbox(false);
+                    }
+                  }}
+                >
+                  <Shield className="w-4 h-4" />
+                  {dispatchingOutbox ? 'Dispatching…' : 'Run Outbox Dispatch'}
+                </Button>
+
+                {(dispatchResult || dispatchError) && (
+                  <div className="mt-2 text-[10px] font-mono uppercase tracking-widest">
+                    {dispatchError ? (
+                      <span className="text-red-400">{dispatchError}</span>
+                    ) : (
+                      <span className="text-white/60">
+                        queued {dispatchResult?.queued ?? 0} • sent {dispatchResult?.sent ?? 0} • failed {dispatchResult?.failed ?? 0}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <Link to={createPageUrl('Settings')} className="w-full sm:w-auto">
                 <Button variant="outline" className="w-full sm:w-auto border-white/20 text-white">
                   <SettingsIcon className="w-4 h-4" />

@@ -1,7 +1,14 @@
 # GitHub Issues Pack — HOTMESS Globe (Handoff)
 
 **Date**: 2026-01-06  
+**Updated**: 2026-01-17  
 **How to use**: For each issue below: copy **Title**, create issue, paste **Body**, apply **Labels**.
+
+## Status notes (as of 2026-01-17)
+- CSP is present as `Content-Security-Policy-Report-Only` via `vercel.json` (enforcement + removing `unsafe-eval` still pending).
+- Best-effort DB-backed rate limiting exists and is used by multiple endpoints; coverage can expand.
+- Beacon scan UI (camera + manual) and `POST /api/scan/check-in` (idempotent) are implemented.
+- Market: creators lane is reachable at `/market/creators`; unified cart drawer exists (Shopify + creators tabs) and Shopify-backed items add to Shopify cart.
 
 ---
 
@@ -132,19 +139,23 @@ No production-grade error tracking; failures are hard to debug.
 ## Problem
 No Content Security Policy and weak/default headers increase XSS risk.
 
+## Status (2026-01-17)
+DONE: CSP is enforced via `Content-Security-Policy` in `vercel.json` and `'unsafe-eval'` has been removed.
+
 ## Scope
 - Add CSP and baseline headers.
 - Ensure external services still work (Mapbox, SoundCloud, Supabase, etc.).
 
 ## Checklist
-- [ ] Draft CSP policy
-- [ ] Implement headers via Vercel config (or middleware)
+- [x] Draft CSP policy
+- [x] Implement headers via Vercel config (enforced)
 - [ ] Validate:
   - auth flows
   - API calls
   - embeds (SoundCloud)
   - maps (Mapbox)
-- [ ] Add report-only mode first (optional) then enforce.
+- [x] Migrate to enforced CSP (drop `Report-Only`)
+- [x] Remove `'unsafe-eval'`
 
 ## Acceptance Criteria
 - CSP header present in production responses.
@@ -163,6 +174,9 @@ No Content Security Policy and weak/default headers increase XSS risk.
 ## Problem
 Sensitive serverless endpoints can be abused without throttling.
 
+## Status (2026-01-17)
+PARTIAL: best-effort DB-backed rate limiting exists and is already used by multiple high-risk endpoints.
+
 ## Targets
 - `api/events/cron.js`
 - `api/events/scrape.js`
@@ -171,10 +185,11 @@ Sensitive serverless endpoints can be abused without throttling.
 - `api/shopify/*`
 
 ## Checklist
-- [ ] Choose approach (in-handler token bucket vs Vercel edge middleware)
-- [ ] Implement per-IP limits
-- [ ] Return HTTP 429 with consistent body
-- [ ] Ensure admin-only endpoints still function
+- [x] Choose approach (DB-backed best-effort limiter in handler)
+- [x] Implement per-IP limits (best-effort when service role env is present)
+- [x] Return HTTP 429 with consistent body
+- [ ] Ensure coverage includes all targets listed above (verify + extend)
+- [ ] Ensure admin-only endpoints still function under normal load
 
 ## Acceptance Criteria
 - Requests over threshold return 429.
@@ -427,6 +442,9 @@ Uploads must work reliably with validation, errors, and progress.
 ## Problem
 Scan screen shows placeholder "Coming Soon".
 
+## Status (2026-01-17)
+DONE for beacon scanning: Scan page supports camera scanning + manual entry.
+
 ## Scope
 - Implement QR scanning with camera permissions.
 
@@ -434,9 +452,9 @@ Scan screen shows placeholder "Coming Soon".
 - `src/pages/Scan.jsx`
 
 ## Checklist
-- [ ] Choose library: `html5-qrcode` or `@zxing/library`
-- [ ] Handle iOS Safari permissions and fallback flows
-- [ ] Provide manual entry fallback
+- [x] Choose library: ZXing (`@zxing/browser`)
+- [x] Handle iOS Safari permissions and fallback flows
+- [x] Provide manual entry fallback
 
 ## Acceptance Criteria
 - Works on iOS Safari + Android Chrome.
@@ -474,13 +492,17 @@ Tickets/beacons must not be forgeable.
 ## Problem
 Need server-verified check-ins and duplicate scan prevention.
 
+## Status (2026-01-17)
+PARTIAL: beacon check-in exists as `POST /api/scan/check-in` with idempotency/duplicate prevention.
+
 ## Scope
 - Add server endpoint(s) for validation/check-in.
 - Add DB records for check-ins.
 
 ## Acceptance Criteria
-- First scan records check-in.
-- Second scan returns "already checked in".
+- Beacon: first scan records check-in.
+- Beacon: second scan returns "already checked in" (idempotent semantics).
+- [ ] Ticket validation: define model + add event ticket validation endpoint.
 - Audit trail exists.
 ```
 
@@ -531,6 +553,24 @@ Connect uses mock distance values.
 ---
 
 ## P6 — Marketplace / Payments / Orders
+
+### ISSUE-P6-000: Market cart UX unification (single drawer across Shopify + creators)
+
+**Labels**: `feature`, `ux`, `marketplace`, `high-priority`
+
+**Body**:
+```markdown
+## Problem
+Users could end up in different cart UIs (Shopify vs creators), causing confusion.
+
+## Status (2026-01-17)
+DONE: single cart drawer exists with two tabs (Shopify + creators) and is wired into Market layout.
+
+## Acceptance Criteria
+- One cart icon/trigger on Market routes.
+- Drawer contains both carts with clear separation.
+- Shopify-backed items add to Shopify cart and checkout.
+```
 
 ### ISSUE-P6-001: Define and enforce cart ownership model (auth_user_id vs email vs anonymous)
 

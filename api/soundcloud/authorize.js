@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getBearerToken, getEnv, getQueryParam, json } from '../shopify/_utils.js';
 import { createCodeChallenge, createCodeVerifier, createState } from './_pkce.js';
 import { buildAuthorizeUrl, getSoundCloudConfig } from './_soundcloud.js';
+import { isMusicUploadAllowlisted } from './_auth.js';
 
 const isAdminUser = async ({ anonClient, serviceClient, accessToken, email }) => {
   const { data: userData, error: userErr } = await anonClient.auth.getUser(accessToken);
@@ -30,8 +31,8 @@ export default async function handler(req, res) {
   const supabaseServiceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
 
   if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
-    return json(res, 500, {
-      error: 'Supabase server env not configured',
+    return json(res, 409, {
+      error: 'SoundCloud connect not configured',
       details: 'Set SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY in server env.',
     });
   }
@@ -54,15 +55,23 @@ export default async function handler(req, res) {
   }
 
   const email = userData.user.email;
-  const adminOk = await isAdminUser({ anonClient, serviceClient, accessToken, email });
-  if (!adminOk) {
-    return json(res, 403, { error: 'Admin required' });
+  const allowlisted = isMusicUploadAllowlisted(email);
+  if (allowlisted === false) {
+    return json(res, 403, { error: 'Not authorized' });
+  }
+
+  // Back-compat: if allowlist isn't configured, keep the previous admin-only behavior.
+  if (allowlisted === null) {
+    const adminOk = await isAdminUser({ anonClient, serviceClient, accessToken, email });
+    if (!adminOk) {
+      return json(res, 403, { error: 'Admin required' });
+    }
   }
 
   const { clientId, redirectUri, scope } = getSoundCloudConfig();
   if (!clientId || !redirectUri) {
-    return json(res, 500, {
-      error: 'SoundCloud env not configured',
+    return json(res, 409, {
+      error: 'SoundCloud connect not configured',
       details: 'Set SOUNDCLOUD_CLIENT_ID and SOUNDCLOUD_REDIRECT_URI (and SOUNDCLOUD_CLIENT_SECRET for callback).',
     });
   }

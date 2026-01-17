@@ -425,8 +425,16 @@ export default function CreateBeacon() {
                   </label>
                   <Input
                     type="number"
-                    value={formData.xp_scan}
-                    onChange={(e) => setFormData({ ...formData, xp_scan: parseInt(e.target.value) })}
+                    value={Number.isFinite(formData.xp_scan) ? formData.xp_scan : ''}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === '') {
+                        setFormData({ ...formData, xp_scan: 0 });
+                        return;
+                      }
+                      const parsed = Number.parseInt(raw, 10);
+                      setFormData({ ...formData, xp_scan: Number.isFinite(parsed) ? parsed : 0 });
+                    }}
                     className="bg-black border-white/20 text-white"
                   />
                   <p className="text-xs text-white/40 mt-2">XP users earn for scanning this beacon</p>

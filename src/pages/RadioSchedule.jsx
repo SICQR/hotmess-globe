@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Clock, Calendar } from 'lucide-react';
 import { schedule, formatSchedule } from '../components/radio/radioUtils';
+import PageShell from '@/components/shell/PageShell';
 
 export default function RadioSchedule() {
   const dayMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -24,30 +25,19 @@ export default function RadioSchedule() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <div className="border-b-2 border-white">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <Calendar className="w-8 h-8 text-[#FF1493]" />
-              <Link to={createPageUrl('Music')} className="text-xs uppercase tracking-widest text-white/60 font-bold hover:text-white">
-                ← Back to Music
-              </Link>
-            </div>
-            <h1 className="text-5xl md:text-7xl font-black uppercase mb-4">
-              Schedule
-            </h1>
-            <p className="text-xl text-white/80">
-              All times Europe/London
-            </p>
-          </motion.div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <PageShell
+        eyebrow="MUSIC"
+        title="Schedule"
+        subtitle="All times Europe/London"
+        maxWidth="7xl"
+        back={createPageUrl('Music')}
+        backLabel="Back to music"
+        right={<Calendar className="w-5 h-5 text-white/60" />}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
         {/* Show Quick Reference */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {schedule.shows.map((show, idx) => (
@@ -121,7 +111,8 @@ export default function RadioSchedule() {
             <strong className="text-white">Want to add an episode?</strong> Visit the individual show page and use "Add to Calendar" to download the .ics file.
           </p>
         </motion.div>
-      </div>
+        </motion.div>
+      </PageShell>
     </div>
   );
 }

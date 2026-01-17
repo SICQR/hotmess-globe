@@ -4,7 +4,6 @@ import { fetchTravelTime, type LatLng } from './travelTime';
 import { useLongPress } from './useLongPress';
 import { useVisibility } from './useVisibility';
 import { buildUberDeepLink } from '@/utils/uberDeepLink';
-import { buildGoogleMapsDirectionsLink } from '@/utils/mapsDeepLink';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@/utils/travelRecommendations';
 
@@ -28,6 +27,23 @@ const supportsHover = () => {
 };
 
 const normalizeProfileType = (value: unknown) => String(value || '').trim().toLowerCase();
+
+const initialsFromName = (name: unknown) => {
+  const raw = String(name || '').trim();
+  if (!raw) return 'HM';
+  const parts = raw.split(/\s+/).filter(Boolean);
+  const first = parts[0]?.[0] || '';
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] || '') : '';
+  const out = `${first}${last}`.toUpperCase();
+  return out || 'HM';
+};
+
+const badgeForProfileType = (profileType: string) => {
+  if (profileType === 'seller') return { label: 'Seller', tone: 'hot' as const };
+  if (profileType === 'creator') return { label: 'Creator', tone: 'cyan' as const };
+  if (profileType === 'organizer') return { label: 'Organizer', tone: 'cyan' as const };
+  return null;
+};
 
 export function ProfileCard({
   profile,
@@ -73,11 +89,22 @@ export function ProfileCard({
     const refreshMs = 2 * 60 * 1000;
 
     const run = () => {
+      if (cancelled) return;
+      if (controller.signal.aborted) return;
       setIsTravelTimeLoading(true);
-      fetchTravelTime({ viewer: viewerLocation, destination, signal: controller.signal })
+
+      // `fetchTravelTime` may throw synchronously if passed an already-aborted signal.
+      Promise.resolve()
+        .then(() => fetchTravelTime({ viewer: viewerLocation, destination, signal: controller.signal }))
         .then((value) => {
           if (cancelled) return;
           setTravelTime(value);
+        })
+        .catch((err) => {
+          // Expected when the card unmounts or a refresh aborts the request.
+          if (cancelled) return;
+          if (controller.signal.aborted) return;
+          if (err?.name === 'AbortError') return;
         })
         .finally(() => {
           if (cancelled) return;
@@ -89,9 +116,13 @@ export function ProfileCard({
     run();
     const id = window.setInterval(run, refreshMs);
     return () => {
-      cancelled = true;
-      controller.abort();
       window.clearInterval(id);
+      cancelled = true;
+      try {
+        controller.abort();
+      } catch {
+        // ignore
+      }
     };
   }, [destination, isVisible, viewerLocation]);
 
@@ -153,19 +184,6 @@ export function ProfileCard({
     return uberMins;
   };
 
-  const onOpenMaps = useCallback(
-    (mode: 'walk' | 'cab' | 'bike') => {
-      const url = buildGoogleMapsDirectionsLink({
-        destinationLat: profile.geoLat,
-        destinationLng: profile.geoLng,
-        mode,
-      });
-      if (!url) return;
-      window.open(url, '_blank', 'noopener,noreferrer');
-    },
-    [profile.geoLat, profile.geoLng]
-  );
-
   const openMode = useCallback(
     (mode: TravelModeKey) => {
       if (mode === 'uber') {
@@ -179,9 +197,14 @@ export function ProfileCard({
         return;
       }
 
-      onOpenMaps(mode === 'foot' ? 'walk' : mode === 'cab' ? 'cab' : 'bike');
+      const qs = new URLSearchParams();
+      qs.set('lat', String(profile.geoLat));
+      qs.set('lng', String(profile.geoLng));
+      if (profile.profileName) qs.set('label', String(profile.profileName));
+      qs.set('mode', mode);
+      onNavigateUrl(`/directions?${qs.toString()}`);
     },
-    [onOpenMaps, profile.geoLat, profile.geoLng, profile.profileName]
+    [onNavigateUrl, profile.geoLat, profile.geoLng, profile.profileName]
   );
 
   const headline = profile.title;
@@ -341,6 +364,15 @@ export function ProfileCard({
   const primaryUrl = pickPrimaryPhotoUrl(profile);
   const currentUrl = isActive ? (photoUrls[photoIndex] || primaryUrl) : primaryUrl;
 
+  const typeBadge = useMemo(() => badgeForProfileType(profileType), [profileType]);
+  const hasTravelTimes = !!travelTime;
+  const primaryModeShort = useMemo(() => {
+    if (!primaryMode) return null;
+    const mins = modeMins(primaryMode);
+    if (!mins || mins === '—') return null;
+    return `${modeLabel(primaryMode)} ${mins}`;
+  }, [primaryMode, modeLabel, modeMins]);
+
   return (
     <div
       ref={attachRef as unknown as React.Ref<HTMLDivElement>}
@@ -354,46 +386,49 @@ export function ProfileCard({
       onClick={onClick}
       {...longPressHandlers}
     >
-      <div className="relative w-full aspect-[4/5] overflow-hidden rounded-lg bg-black/10">
+      <div className="relative w-full aspect-[4/5] overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-sm transition-all duration-200 hover:border-white/20 hover:shadow-lg">
         {currentUrl ? (
           <img
             src={currentUrl}
             alt={profile.profileName}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-500 will-change-transform"
+            style={supportsHover() ? { transform: isActive ? 'scale(1.04)' : 'scale(1)' } : undefined}
             draggable={false}
           />
         ) : (
-          <div className="h-full w-full bg-black/10" />
+          <div className="h-full w-full bg-gradient-to-br from-white/10 to-black/40 flex items-center justify-center">
+            <div className="h-14 w-14 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-white/80 font-black">
+              {initialsFromName(profile.profileName)}
+            </div>
+          </div>
         )}
 
-        {/* Always-visible footer scrim + View button */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-2 pointer-events-auto">
-          {viewerLocation && (
-            <div className="mb-1 text-[11px] text-white/80 truncate">
-              {isTravelTimeLoading ? (
-                <span className="text-white/70">Loading travel time…</span>
-              ) : primaryLabel ? (
-                <span className="text-white/90">{primaryLabel}</span>
-              ) : (
-                <span className="text-white/70">Travel time unavailable</span>
-              )}
+        {/* Global readability scrim */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
+
+        {/* Top badges */}
+        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2 pointer-events-none">
+          {typeBadge ? (
+            <div
+              className={
+                typeBadge.tone === 'hot'
+                  ? 'rounded-full bg-[#FF1493] text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
+                  : 'rounded-full bg-[#00D9FF] text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
+              }
+            >
+              {typeBadge.label}
             </div>
-          )}
-          <button
-            type="button"
-            onClick={onViewClick}
-            className="w-full rounded-md bg-white/10 border border-white/20 text-white text-xs font-semibold py-2"
-          >
-            View profile
-          </button>
+          ) : null}
+
+          {viewerLocation ? (
+            <div className="rounded-full bg-black/40 border border-white/15 text-white/85 text-[10px] font-black uppercase tracking-wider px-2 py-1">
+              {isTravelTimeLoading ? 'Loading…' : primaryModeShort ? `Rec ${primaryModeShort}` : 'No ETA'}
+            </div>
+          ) : null}
         </div>
 
         {isActive && (
           <>
-            {/* Gradient scrim for readability */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
             {/* Swipe capture layer */}
             <div
               className="absolute inset-0"
@@ -402,90 +437,121 @@ export function ProfileCard({
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}
             />
+          </>
+        )}
 
-            {/* Overlay panel */}
-            <div className="absolute inset-x-0 bottom-0 p-3">
-              <div className="rounded-md bg-black/50 backdrop-blur-sm p-2">
-                <div className="text-sm font-semibold text-white leading-tight">
+        {/* Bottom identity + CTAs (always visible) */}
+        <div className="absolute inset-x-0 bottom-0 p-3 pointer-events-auto">
+          <div className="rounded-xl bg-black/40 backdrop-blur-md border border-white/10 p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-sm font-black text-white leading-tight truncate">
                   {profile.profileName}
                 </div>
                 <div className="text-xs text-white/80 truncate">{headline}</div>
-                <div className="mt-1 text-[11px] text-white/70">{locationLine}</div>
+                <div className="mt-1 text-[11px] text-white/65 truncate">{locationLine}</div>
+              </div>
+              <Button
+                type="button"
+                variant="glass"
+                size="sm"
+                onClick={onViewClick}
+                className="h-8 px-3 text-[10px] font-black uppercase tracking-wider"
+              >
+                View
+              </Button>
+            </div>
 
-                {tags.length > 0 && (
-                  <div className="mt-1 text-[11px] text-white/70 truncate">
-                    {tags.join(' • ')}
-                  </div>
-                )}
+            {tags.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {tags.map((t) => (
+                  <span
+                    key={t}
+                    className="inline-flex items-center rounded-full bg-white/5 border border-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-white/75"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            ) : null}
 
-                <div className="mt-2">
-                  {isTravelTimeLoading ? (
-                    <div className="text-[11px] text-white/70">Loading travel time…</div>
-                  ) : travelTime ? (
-                    <>
-                      <div className="grid grid-cols-2 gap-2">
-                        {orderedModes.map((mode) => {
-                          const isPrimary = mode === primaryMode;
-                          const isDisabled = mode === 'uber' ? !travelTime?.uber : false;
-
-                          return (
-                            <Button
-                              key={mode}
-                              type="button"
-                              variant={isPrimary ? 'default' : 'outline'}
-                              size="sm"
-                              disabled={isDisabled}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                openMode(mode);
-                              }}
-                              className={
-                                isPrimary
-                                  ? 'bg-white/90 text-black hover:bg-white'
-                                  : 'bg-white/10 border-white/20 text-white hover:bg-white/15'
-                              }
-                            >
-                              <span className="flex w-full items-center justify-between gap-2">
-                                <span>{modeLabel(mode)}</span>
-                                <span className="font-mono">{modeMins(mode)}</span>
-                              </span>
-                            </Button>
-                          );
-                        })}
-                      </div>
-
-                      <div className="mt-2 text-[11px] text-white/60">
-                        Estimates • Choose what feels safest
-                      </div>
-                    </>
+            {/* Expanded panel on hover/long-press */}
+            {isActive ? (
+              <div className="mt-3">
+                <div className="text-[11px] text-white/70">
+                  {viewerLocation ? (
+                    isTravelTimeLoading ? (
+                      'Loading travel time…'
+                    ) : primaryLabel ? (
+                      primaryLabel
+                    ) : (
+                      'Travel time unavailable'
+                    )
                   ) : (
-                    <div className="text-[11px] text-white/70">Travel time unavailable</div>
+                    'Enable location for ETAs'
                   )}
                 </div>
 
-                  <div className="mt-2 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={onPrimaryClick}
-                      disabled={
-                        (primaryAction.key === 'shop' || primaryAction.key === 'message') &&
-                        !String(profile?.email || '').trim()
-                      }
-                      className="flex-1 rounded-md bg-white/90 text-black text-xs font-semibold py-2 disabled:opacity-50"
-                    >
-                      {primaryAction.label}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={onViewClick}
-                      className="rounded-md bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-2"
-                    >
-                      View
-                    </button>
-                  </div>
+                {hasTravelTimes ? (
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {orderedModes.map((mode) => {
+                      const isPrimary = mode === primaryMode;
+                      const isDisabled = mode === 'uber' ? !travelTime?.uber : false;
 
-                {photoUrls.length > 1 && (
+                      return (
+                        <Button
+                          key={mode}
+                          type="button"
+                          variant={isPrimary ? 'cyan' : 'glass'}
+                          size="sm"
+                          disabled={isDisabled}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            openMode(mode);
+                          }}
+                          className={
+                            isPrimary
+                              ? 'justify-between'
+                              : 'justify-between border-white/15'
+                          }
+                        >
+                          <span>{modeLabel(mode)}</span>
+                          <span className="font-mono">{modeMins(mode)}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
+                <div className="mt-3 flex items-center gap-2">
+                  <Button
+                    type="button"
+                    onClick={onPrimaryClick}
+                    disabled={
+                      (primaryAction.key === 'shop' || primaryAction.key === 'message') &&
+                      !String(profile?.email || '').trim()
+                    }
+                    variant={primaryAction.key === 'message' ? 'hot' : 'cyan'}
+                    className="flex-1"
+                  >
+                    {primaryAction.label}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={onViewClick}
+                    variant="glass"
+                    className="border-white/15"
+                  >
+                    Open
+                  </Button>
+                </div>
+
+                <div className="mt-2 text-[11px] text-white/55">
+                  Estimates • Ask first. Confirm yes.
+                </div>
+
+                {photoUrls.length > 1 ? (
                   <div className="mt-2 flex items-center gap-1">
                     {photoUrls.map((_, idx) => (
                       <div
@@ -498,11 +564,26 @@ export function ProfileCard({
                       />
                     ))}
                   </div>
-                )}
+                ) : null}
               </div>
-            </div>
-          </>
-        )}
+            ) : (
+              <div className="mt-3">
+                <Button
+                  type="button"
+                  onClick={onPrimaryClick}
+                  disabled={
+                    (primaryAction.key === 'shop' || primaryAction.key === 'message') &&
+                    !String(profile?.email || '').trim()
+                  }
+                  variant={primaryAction.key === 'message' ? 'hot' : 'cyan'}
+                  className="w-full"
+                >
+                  {primaryAction.label}
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
