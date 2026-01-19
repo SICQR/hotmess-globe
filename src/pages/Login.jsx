@@ -6,7 +6,14 @@ function useReturnUrl() {
   const location = useLocation();
   return useMemo(() => {
     const params = new URLSearchParams(location.search);
-    const rawReturnUrl = params.get('returnUrl');
+    const returnUrl = params.get('returnUrl') || '/';
+
+    // Only allow same-origin relative paths; fall back to '/' otherwise.
+    if (typeof returnUrl === 'string' && returnUrl.startsWith('/') && !returnUrl.startsWith('//')) {
+      return returnUrl;
+    }
+
+    return '/';
 
     // Default to home if no returnUrl specified
     if (!rawReturnUrl) {
