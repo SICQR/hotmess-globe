@@ -15,7 +15,7 @@ import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
 import { Settings, BarChart3, Home, Grid3x3 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createPageUrl } from '../utils';
+import { createPageUrl, createUserProfileUrl } from '../utils';
 import { debounce } from 'lodash';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
@@ -392,8 +392,11 @@ export default function GlobePage() {
     if (beacon.isCluster) return;
 
     // People pins: go straight to profile.
-    if (beacon?.kind === 'person' && beacon?.email) {
-      navigate(createPageUrl(`Profile?email=${encodeURIComponent(beacon.email)}`));
+    if (beacon?.kind === 'person') {
+      const uid = beacon?.auth_user_id || beacon?.authUserId || beacon?.uid || null;
+      if (uid) {
+        navigate(`/social/u/${encodeURIComponent(String(uid))}`);
+      }
       return;
     }
     
@@ -419,8 +422,11 @@ export default function GlobePage() {
   const handleViewFullDetails = useCallback(() => {
     if (!previewBeacon) return;
 
-    if (previewBeacon?.kind === 'person' && previewBeacon?.email) {
-      navigate(createPageUrl(`Profile?email=${encodeURIComponent(previewBeacon.email)}`));
+    if (previewBeacon?.kind === 'person') {
+      const uid = previewBeacon?.auth_user_id || previewBeacon?.authUserId || previewBeacon?.uid || null;
+      if (uid) {
+        navigate(`/social/u/${encodeURIComponent(String(uid))}`);
+      }
       setPreviewBeacon(null);
       return;
     }
@@ -727,15 +733,7 @@ export default function GlobePage() {
             containerClassName="mx-0 max-w-none p-0"
             onNavigateUrl={(url) => navigate(url)}
             onOpenProfile={(profile) => {
-              const email = profile?.email;
-              const uid = profile?.authUserId;
-              if (email) {
-                navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
-                return;
-              }
-              if (uid) {
-                navigate(createPageUrl(`Profile?uid=${encodeURIComponent(uid)}`));
-              }
+              navigate(createUserProfileUrl(profile));
             }}
           />
         </FloatingPanel>

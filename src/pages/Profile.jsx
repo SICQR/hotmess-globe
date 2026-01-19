@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../utils';
+import { createPageUrl, createUserProfileUrl } from '../utils';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import ProfileHeader from '../components/profile/ProfileHeader';
@@ -954,9 +954,11 @@ export default function Profile() {
                   {profileViews.slice(0, 10).map((view, idx) => {
                     const viewer = allUsers.find(u => u.email === view.viewer_email);
                     if (!viewer) return null;
+
+                    const viewerLink = createUserProfileUrl(viewer);
                     
                     return (
-                      <Link key={idx} to={createPageUrl(`Profile?email=${viewer.email}`)}>
+                      <Link key={idx} to={viewerLink}>
                         <div className="flex items-center gap-3 p-2 hover:bg-white/5 transition-colors">
                           <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center">
                             {viewer.avatar_url ? (

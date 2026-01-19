@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+import { createUserProfileUrl } from '@/utils';
 import { Clock, MapPin, Zap, Heart } from 'lucide-react';
 import { useAllUsers } from '../utils/queryConfig';
 
@@ -56,7 +56,7 @@ export default function RightNowGrid() {
             transition={{ delay: idx * 0.05 }}
             className="relative"
           >
-            <Link to={createPageUrl(`Profile?email=${user.email}`)}>
+            <Link to={createUserProfileUrl(user)}>
               <div className="bg-white/5 border-2 border-white/10 hover:border-[#39FF14] transition-all p-4 cursor-pointer group">
                 {/* Pulse Indicator */}
                 <motion.div

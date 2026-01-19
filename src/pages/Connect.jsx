@@ -17,6 +17,7 @@ import { fetchNearbyCandidates } from '@/api/connectProximity';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 import { ProfileCard } from '@/features/profilesGrid/ProfileCard';
 import { useNavigate } from 'react-router-dom';
+import { createUserProfileUrl } from '@/utils';
 import useLiveViewerLocation, { bucketLatLng } from '@/hooks/useLiveViewerLocation';
 import useRealtimeNearbyInvalidation from '@/hooks/useRealtimeNearbyInvalidation';
 
@@ -385,7 +386,7 @@ export default function Connect() {
       const lat = Number(u?.last_lat ?? u?.lat);
       const lng = Number(u?.last_lng ?? u?.lng);
 
-      const name = String(u?.full_name || u?.profileName || u?.email || 'Unknown').trim();
+      const name = String(u?.full_name || u?.profileName || u?.handle || u?.username || 'Unknown').trim();
       const city = u?.city ? String(u.city).trim() : null;
       const bio = u?.bio ? String(u.bio).trim() : '';
       const sellerTagline = String(u?.seller_tagline || u?.sellerTagline || '').trim() || undefined;
@@ -572,15 +573,7 @@ export default function Connect() {
             containerClassName="mx-0 max-w-none p-0"
             onNavigateUrl={(url) => navigate(url)}
             onOpenProfile={(profile) => {
-              const email = profile?.email;
-              const uid = profile?.authUserId;
-              if (email) {
-                navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
-                return;
-              }
-              if (uid) {
-                navigate(createPageUrl(`Profile?uid=${encodeURIComponent(uid)}`));
-              }
+              navigate(createUserProfileUrl(profile));
             }}
           />
         ) : (
@@ -622,15 +615,7 @@ export default function Connect() {
                   viewerProfile={currentUser}
                   onNavigateUrl={(url) => navigate(url)}
                   onOpenProfile={(p) => {
-                    const email = p?.email;
-                    const uid = p?.authUserId;
-                    if (email) {
-                      navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
-                      return;
-                    }
-                    if (uid) {
-                      navigate(createPageUrl(`Profile?uid=${encodeURIComponent(uid)}`));
-                    }
+                    navigate(createUserProfileUrl(p));
                   }}
                 />
               );

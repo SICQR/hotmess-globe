@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+import { createUserProfileUrl } from '@/utils';
 
 export default function MutualConnections({ profileUserEmail, currentUserEmail }) {
   const { data: currentUserFollowing = [] } = useQuery({
@@ -45,7 +45,7 @@ export default function MutualConnections({ profileUserEmail, currentUserEmail }
         {mutualUsers.slice(0, 5).map((user) => (
           <Link 
             key={user.email} 
-            to={createPageUrl(`Profile?email=${user.email}`)}
+            to={createUserProfileUrl(user)}
             className="inline-block"
           >
             <div 

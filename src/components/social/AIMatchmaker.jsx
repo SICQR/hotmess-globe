@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Sparkles, MapPin, Zap, Heart, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+import { createMessageComposeUrl, createUserProfileUrl } from '@/utils';
 
 export default function AIMatchmaker({ currentUser }) {
   const [matches, setMatches] = useState([]);
@@ -285,12 +285,12 @@ export default function AIMatchmaker({ currentUser }) {
             )}
 
             <div className="flex gap-2">
-              <Link to={createPageUrl(`Profile?email=${match.user.email}`)} className="flex-1">
+              <Link to={createUserProfileUrl(match.user)} className="flex-1">
                 <Button variant="outline" className="w-full border-[#FF1493] text-[#FF1493] hover:bg-[#FF1493]/10 font-black rounded-lg">
                   PROFILE
                 </Button>
               </Link>
-              <Link to={`/social/inbox?to=${encodeURIComponent(String(match?.user?.email || ''))}`} className="flex-1">
+              <Link to={createMessageComposeUrl(match.user, '/social/inbox')} className="flex-1">
                 <Button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-lg">
                   MESSAGE
                 </Button>

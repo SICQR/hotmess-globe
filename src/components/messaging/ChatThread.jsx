@@ -16,6 +16,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+const EMPTY_ARRAY = [];
+
 export default function ChatThread({ thread, currentUser, onBack, readOnly = false }) {
   const [messageText, setMessageText] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -38,7 +40,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
   const REACTIONS = ['❤️', '😂', '😮', '😢', '👍', '🔥', '💯', '🎉'];
 
-  const { data: messages = [], hasNextPage } = useQuery({
+  const { data: messagesData, hasNextPage } = useQuery({
     queryKey: ['messages', thread.id, messagesPage],
     queryFn: async () => {
       const allMessages = await base44.entities.Message.filter(
@@ -52,13 +54,15 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     keepPreviousData: true,
   });
 
+  const messages = messagesData ?? EMPTY_ARRAY;
+
   const loadMoreMessages = () => {
     if (messages.length >= MESSAGES_PER_PAGE * messagesPage) {
       setMessagesPage(p => p + 1);
     }
   };
 
-  const { data: typingIndicators = [] } = useQuery({
+  const { data: typingIndicatorsData } = useQuery({
     queryKey: ['typing', thread.id],
     queryFn: async () => {
       const activities = await base44.entities.UserActivity.filter(
@@ -73,6 +77,8 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     },
     refetchInterval: 2000, // Poll every 2s (optimized)
   });
+
+  const typingIndicators = typingIndicatorsData ?? EMPTY_ARRAY;
 
   const { data: allUsers = [] } = useAllUsers();
 
@@ -473,7 +479,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#0a0a0a]">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-32 space-y-4 bg-[#0a0a0a]">
         {/* Load More Button */}
         {messages.length >= MESSAGES_PER_PAGE && (
           <div className="flex justify-center mb-4">
@@ -684,8 +690,12 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSend} className="bg-black border-t-2 border-white/20 p-4">
-        <div className="flex items-center gap-2">
+      <form
+        onSubmit={handleSend}
+        className="bg-black border-t-2 border-white/20 p-3 sm:p-4 sticky bottom-0 z-20 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
+      >
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+          <div className="flex items-center gap-2">
           <input
             type="file"
             accept="image/*"
@@ -731,30 +741,33 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
               </span>
             </Button>
           </label>
+          </div>
 
-          <Input
-            value={messageText}
-            onChange={(e) => {
-              setMessageText(e.target.value);
-              if (!readOnly) handleTyping();
-            }}
-            placeholder="TYPE MESSAGE..."
-            disabled={readOnly}
-            className="flex-1 bg-black border-2 border-white/20 text-white placeholder:text-white/40 placeholder:uppercase placeholder:font-mono placeholder:text-xs focus:border-white"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              value={messageText}
+              onChange={(e) => {
+                setMessageText(e.target.value);
+                if (!readOnly) handleTyping();
+              }}
+              placeholder="TYPE MESSAGE..."
+              disabled={readOnly}
+              className="flex-1 min-w-0 bg-black border-2 border-white/20 text-white placeholder:text-white/40 placeholder:uppercase placeholder:font-mono placeholder:text-xs focus:border-white"
+            />
 
-          <Button 
-            type="submit" 
-            size="icon"
-            disabled={readOnly || !messageText.trim() || sendMutation.isPending}
-            className="bg-[#FF1493] hover:bg-white text-black border-2 border-white"
-          >
-            {sendMutation.isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Send className="w-5 h-5" />
-            )}
-          </Button>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={readOnly || !messageText.trim() || sendMutation.isPending}
+              className="bg-[#FF1493] hover:bg-white text-black border-2 border-white shrink-0"
+            >
+              {sendMutation.isPending ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Send className="w-5 h-5" />
+              )}
+            </Button>
+          </div>
         </div>
       </form>
 

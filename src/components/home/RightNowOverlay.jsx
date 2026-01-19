@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import TacticalProfileCard from '../social/TacticalProfileCard';
 import { format } from 'date-fns';
+import { createUserProfileUrlByEmail } from '@/utils';
 
 export default function RightNowOverlay({ isOpen, onClose, users, onUserClick }) {
   const [activeTab, setActiveTab] = useState('people');
@@ -305,7 +306,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                              <Link to={createPageUrl(`Profile?email=${checkIn.user_email}`)}>
+                              <Link to={createUserProfileUrlByEmail(checkIn.user_email, users)}>
                                 <p className="font-bold text-sm hover:text-[#00D9FF] transition-colors">
                                   {checkIn.user_name}
                                 </p>
@@ -342,7 +343,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
                           transition={{ delay: idx * 0.03 }}
                           className="bg-black border-l-4 border-[#B026FF] p-3"
                         >
-                          <Link to={createPageUrl(`Profile?email=${post.user_email}`)}>
+                          <Link to={createUserProfileUrlByEmail(post.user_email, users)}>
                             <p className="font-bold text-sm mb-1 hover:text-[#B026FF] transition-colors">
                               {post.user_name}
                             </p>

@@ -505,7 +505,43 @@ export const base44 = {
     
     redirectToLogin: (nextUrl) => {
       window.location.href = createPageUrl('Auth') + (nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : '');
-    }
+    },
+
+    requireProfile: async (nextUrl) => {
+      const returnTo = nextUrl || (typeof window !== 'undefined' ? window.location.href : null) || createPageUrl('Home');
+
+      const isAuthed = await base44.auth.isAuthenticated();
+      if (!isAuthed) {
+        base44.auth.redirectToLogin(returnTo);
+        return false;
+      }
+
+      const me = await base44.auth.me();
+      if (!me) {
+        base44.auth.redirectToLogin(returnTo);
+        return false;
+      }
+
+      // If terms/data consent isn't captured yet, route through onboarding.
+      // (GPS consent is feature-specific and should not block messaging/following.)
+      if (!me.has_agreed_terms || !me.has_consented_data) {
+        window.location.href = createPageUrl('OnboardingGate') + `?next=${encodeURIComponent(returnTo)}`;
+        return false;
+      }
+
+      const missingProfile =
+        !String(me.full_name || '').trim() ||
+        !String(me.avatar_url || '').trim() ||
+        !String(me.city || '').trim() ||
+        !String(me.profile_type || '').trim();
+
+      if (missingProfile) {
+        window.location.href = createPageUrl('Profile') + `?next=${encodeURIComponent(returnTo)}`;
+        return false;
+      }
+
+      return true;
+    },
   },
   
   entities: {
@@ -592,19 +628,6 @@ export const base44 = {
 
     Beacon: {
       list: async (orderBy = '-created_date', limit) => {
-        const run = async (table) => {
-          let query = supabase.from(table).select('*');
-        
-          if (orderBy) {
-            const desc = orderBy.startsWith('-');
-            const column = desc ? orderBy.slice(1) : orderBy;
-            query = query.order(column, { ascending: !desc });
-          }
-
-          if (limit) query = query.limit(limit);
-          return query;
-        };
-
         try {
           const tryList = async (table, orderByOverride) => {
             const finalOrderBy = orderByOverride ?? orderBy;
@@ -1078,7 +1101,7 @@ export const base44 = {
     Core: {
       UploadFile: async ({ file }) => {
         const fileName = `${Date.now()}_${file.name}`;
-        const { data, error } = await supabase.storage
+        const { data: _data, error } = await supabase.storage
           .from('uploads')
           .upload(fileName, file);
         
@@ -1542,7 +1565,7 @@ export const db = {
 // Storage helpers
 export const storage = {
   upload: async (bucket, path, file) => {
-    const { data, error } = await supabase.storage
+    const { data: _data, error } = await supabase.storage
       .from(bucket)
       .upload(path, file, { upsert: true });
     

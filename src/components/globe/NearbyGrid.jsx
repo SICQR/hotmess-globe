@@ -5,7 +5,7 @@ import { base44 } from '@/components/utils/supabaseClient';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { Users, Zap, Filter, Grid3x3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+import { createUserProfileUrl } from '@/utils';
 
 export default function NearbyGrid({ userLocation }) {
   const [distanceFilter, setDistanceFilter] = useState(10); // km
@@ -191,7 +191,7 @@ export default function NearbyGrid({ userLocation }) {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: idx * 0.02 }}
               >
-                <Link to={createPageUrl(`Profile?email=${user.email}`)}>
+                <Link to={createUserProfileUrl(user)}>
                   <div className="bg-black border-2 border-white hover:border-[#FF1493] transition-all group overflow-hidden">
                     {/* Profile Image */}
                     <div className="aspect-square relative overflow-hidden">

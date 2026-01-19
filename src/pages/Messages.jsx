@@ -9,6 +9,7 @@ import ThreadList from '../components/messaging/ThreadList';
 import NewMessageModal from '../components/messaging/NewMessageModal';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { getAuthUserId } from '@/utils';
 
 export default function Messages() {
   const [selectedThread, setSelectedThread] = useState(null);
@@ -19,6 +20,16 @@ export default function Messages() {
   
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const { data: allUsers = [] } = useAllUsers();
+
+  const requestedToUid = useMemo(() => {
+    try {
+      const params = new URLSearchParams(location.search || '');
+      const raw = params.get('to_uid');
+      return raw ? String(raw).trim() : null;
+    } catch {
+      return null;
+    }
+  }, [location.search]);
 
   const requestedTo = useMemo(() => {
     try {
@@ -50,15 +61,29 @@ export default function Messages() {
     refetchInterval: 5000, // Poll every 5s (optimized)
   });
 
-  // Deep-link: /social/inbox?to=email → open compose with recipient prefilled.
+  // Deep-link: /social/inbox?to_uid=<uid> (preferred) or ?to=email (legacy) → open compose.
   useEffect(() => {
     if (!currentUser) return;
+    const currentEmail = String(currentUser.email || '').trim().toLowerCase();
+
+    if (requestedToUid) {
+      const match = (Array.isArray(allUsers) ? allUsers : []).find(
+        (u) => getAuthUserId(u) && String(getAuthUserId(u)) === String(requestedToUid)
+      );
+      const email = String(match?.email || '').trim().toLowerCase();
+      if (!email || email === currentEmail) return;
+
+      setPrefillToEmail(email);
+      setShowNewMessage(true);
+      return;
+    }
+
     if (!requestedTo) return;
-    if (requestedTo === String(currentUser.email || '').trim().toLowerCase()) return;
+    if (requestedTo === currentEmail) return;
 
     setPrefillToEmail(requestedTo);
     setShowNewMessage(true);
-  }, [currentUser, requestedTo]);
+  }, [allUsers, currentUser, requestedTo, requestedToUid]);
 
   // Deep-link: /social/inbox?thread=<id> → open an existing thread.
   useEffect(() => {

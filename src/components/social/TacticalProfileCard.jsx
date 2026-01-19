@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+import { createUserProfileUrl } from '@/utils';
 import { Zap, Flame, Users, Music } from 'lucide-react';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
 
@@ -50,7 +50,7 @@ export default function TacticalProfileCard({ user, delay = 0, hotScore = 0 }) {
       transition={{ delay }}
       className="group"
     >
-      <Link to={createPageUrl(`Profile?email=${user.email}`)}>
+      <Link to={createUserProfileUrl(user)}>
         <OSCard 
           className={isHot ? 'animate-pulse border-[#FF1493]' : ''}
           hoverGlow={true}

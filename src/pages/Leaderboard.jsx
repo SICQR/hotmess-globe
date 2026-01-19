@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Trophy, Crown, Medal } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../utils';
+import { createPageUrl, createUserProfileUrlByEmail, createUserProfileUrl } from '../utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -123,7 +123,7 @@ export default function Leaderboard() {
             className="grid grid-cols-3 gap-4 mb-8"
           >
             <div className="pt-12">
-              <Link to={createPageUrl(`Profile?email=${rankedUsers[1].email}`)}>
+              <Link to={createUserProfileUrl(rankedUsers[1])}>
                 <div className="bg-gradient-to-br from-gray-300/20 to-gray-500/20 border-2 border-gray-300 p-6 text-center hover:border-white transition-colors cursor-pointer">
                   <Medal className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <div className="text-6xl font-black mb-2">2</div>
@@ -134,7 +134,7 @@ export default function Leaderboard() {
             </div>
 
             <div>
-              <Link to={createPageUrl(`Profile?email=${rankedUsers[0].email}`)}>
+              <Link to={createUserProfileUrl(rankedUsers[0])}>
                 <div className="bg-gradient-to-br from-[#FFEB3B]/30 to-[#FF6B35]/30 border-4 border-[#FFEB3B] p-8 text-center hover:border-white transition-colors cursor-pointer">
                   <Crown className="w-20 h-20 text-[#FFEB3B] mx-auto mb-3" />
                   <div className="text-7xl font-black mb-2">1</div>
@@ -145,7 +145,7 @@ export default function Leaderboard() {
             </div>
 
             <div className="pt-12">
-              <Link to={createPageUrl(`Profile?email=${rankedUsers[2].email}`)}>
+              <Link to={createUserProfileUrl(rankedUsers[2])}>
                 <div className="bg-gradient-to-br from-[#CD7F32]/20 to-[#8B4513]/20 border-2 border-[#CD7F32] p-6 text-center hover:border-white transition-colors cursor-pointer">
                   <Trophy className="w-12 h-12 text-[#CD7F32] mx-auto mb-3" />
                   <div className="text-6xl font-black mb-2">3</div>
@@ -208,7 +208,7 @@ export default function Leaderboard() {
                 }`}>
                   {idx + 1}
                 </div>
-                <Link to={createPageUrl(`Profile?email=${user.email}`)} className="flex-1 flex items-center gap-3">
+                <Link to={createUserProfileUrl(user)} className="flex-1 flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center">
                     {user.avatar_url ? (
                       <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
@@ -303,7 +303,7 @@ export default function Leaderboard() {
                         </div>
                         <div>
                           <h3 className="font-black uppercase text-lg">{king.venue_name}</h3>
-                          <Link to={createPageUrl(`Profile?email=${king.king_email}`)}>
+                          <Link to={createUserProfileUrlByEmail(king.king_email, allUsers)}>
                             <p className="text-sm text-[#00D9FF] hover:underline">{king.king_name}</p>
                           </Link>
                         </div>

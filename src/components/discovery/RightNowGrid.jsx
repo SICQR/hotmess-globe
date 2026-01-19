@@ -6,8 +6,9 @@ import { MapPin, Clock, Sparkles, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+ 
 import MembershipBadge from '../membership/MembershipBadge';
+import { createUserProfileUrl } from '@/utils';
 
 export default function RightNowGrid({ currentUser }) {
   const { data: rightNowStatuses = [] } = useQuery({
@@ -70,7 +71,7 @@ export default function RightNowGrid({ currentUser }) {
                     : 'border-white/20 hover:border-[#FF1493]'
                 }`}
               >
-                <Link to={createPageUrl(`Profile?email=${user.email}`)}>
+                <Link to={createUserProfileUrl(user)}>
                   <div className="flex items-start gap-3 mb-4">
                     <div className="relative">
                       <div

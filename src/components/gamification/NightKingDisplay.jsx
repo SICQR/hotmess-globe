@@ -5,8 +5,8 @@ import { base44 } from '@/api/base44Client';
 import { Crown, Swords, Zap, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
 import { formatDistanceToNow } from 'date-fns';
+import { createUserProfileUrl } from '@/utils';
 
 export default function NightKingDisplay({ venueId }) {
   const { data: kingData } = useQuery({
@@ -18,6 +18,18 @@ export default function NightKingDisplay({ venueId }) {
     },
     enabled: !!venueId,
     refetchInterval: 30000,
+  });
+
+  const kingEmail = kingData?.king_email || null;
+
+  const { data: kingUser } = useQuery({
+    queryKey: ['venue-king-user', kingEmail],
+    queryFn: async () => {
+      if (!kingEmail) return null;
+      const matches = await base44.entities.User.filter({ email: kingEmail }, null, 1);
+      return Array.isArray(matches) && matches.length ? matches[0] : null;
+    },
+    enabled: !!kingEmail,
   });
 
   if (!kingData) return null;
@@ -63,7 +75,7 @@ export default function NightKingDisplay({ venueId }) {
         )}
       </div>
 
-      <Link to={createPageUrl(`Profile?email=${kingData.king_email}`)}>
+      <Link to={createUserProfileUrl(kingUser, '/social')}>
         <div className="bg-black/40 border border-white/20 p-4 hover:border-white/40 transition-colors mb-3">
           <div className="flex items-center justify-between">
             <div>

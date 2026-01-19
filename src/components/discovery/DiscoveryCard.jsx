@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+import { createUserProfileUrl } from '@/utils';
 import { MapPin, Zap, Crown } from 'lucide-react';
 import CompatibilityBadge, { calculateCompatibility } from './CompatibilityBadge';
 import ReportButton from '../moderation/ReportButton';
@@ -84,7 +84,7 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
     >
-      <Link to={createPageUrl(`Profile?email=${user.email}`)}>
+      <Link to={createUserProfileUrl(user)}>
         <div 
           className="group relative overflow-hidden border-2 border-white/10 hover:border-[#FF1493] transition-all"
           onMouseEnter={() => setIsHovering(true)}

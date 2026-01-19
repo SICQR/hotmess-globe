@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { createPageUrl } from '../utils';
+import { createUserProfileUrl } from '../utils';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 import { useCurrentUser } from '@/components/utils/queryConfig';
 import PageShell from '@/components/shell/PageShell';
@@ -142,15 +142,7 @@ export default function Social() {
               containerClassName="mx-0 max-w-none p-0"
               onNavigateUrl={(url) => navigate(url)}
               onOpenProfile={(profile) => {
-                const email = profile?.email;
-                const uid = profile?.authUserId;
-                if (uid) {
-                  navigate(`/social/u/${encodeURIComponent(uid)}`);
-                  return;
-                }
-                if (email) {
-                  navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
-                }
+                navigate(createUserProfileUrl(profile));
               }}
             />
           </TabsContent>

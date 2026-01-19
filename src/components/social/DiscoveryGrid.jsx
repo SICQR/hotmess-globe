@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+import { createPageUrl, createUserProfileUrl } from '../../utils';
 import { Users, Filter, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import FiltersDrawer from '@/components/discovery/FiltersDrawer';
@@ -228,11 +228,7 @@ export default function DiscoveryGrid({ currentUser }) {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {enrichedUsers.map((user) => (
             (() => {
-              const uid = user?.auth_user_id || user?.authUserId;
-              const email = user?.email;
-              const to = uid
-                ? `/social/u/${encodeURIComponent(uid)}`
-                : createPageUrl(`Profile?email=${encodeURIComponent(email || '')}`);
+              const to = createUserProfileUrl(user);
 
               const distanceLabel = formatDistanceMeters(user?.distanceMeters);
               const etaLabel = formatEta(user?.etaSeconds);

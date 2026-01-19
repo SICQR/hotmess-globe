@@ -5,6 +5,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { createMessageComposeUrl } from '@/utils';
 
 export default function QuickActions({ profileUser, currentUser, isOwnProfile }) {
   const queryClient = useQueryClient();
@@ -57,7 +58,7 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
     if (existingThread) {
       navigate(`/social/t/${encodeURIComponent(String(existingThread.id))}`);
     } else {
-      navigate(`/social/inbox?to=${encodeURIComponent(String(profileUser?.email || ''))}`);
+      navigate(createMessageComposeUrl(profileUser, '/social/inbox'));
     }
   };
 

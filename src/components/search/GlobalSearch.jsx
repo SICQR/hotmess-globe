@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
+import { createUserProfileUrl } from '@/utils';
 
 const RECENT_SEARCHES_KEY = 'hotmess_recent_searches';
 
@@ -139,7 +140,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
                 {filteredUsers.map(user => (
                   <Link
                     key={user.email}
-                    to={createPageUrl(`Profile?email=${user.email}`)}
+                    to={createUserProfileUrl(user)}
                     onClick={() => {
                       saveRecentSearch(query);
                       onClose();
@@ -149,7 +150,11 @@ export default function GlobalSearch({ isOpen, onClose }) {
                     <User className="w-5 h-5 text-[#FF1493]" />
                     <div>
                       <div className="font-bold">{user.full_name}</div>
-                      <div className="text-xs text-white/60">{user.email}</div>
+                      {(user.profile_type || user.city) && (
+                        <div className="text-xs text-white/60">
+                          {[user.profile_type, user.city].filter(Boolean).join(' • ')}
+                        </div>
+                      )}
                     </div>
                   </Link>
                 ))}

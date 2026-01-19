@@ -4,6 +4,7 @@ import { fetchTravelTime, type LatLng } from './travelTime';
 import { useLongPress } from './useLongPress';
 import { useVisibility } from './useVisibility';
 import { buildUberDeepLink } from '@/utils/uberDeepLink';
+import { createMessageComposeUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@/utils/travelRecommendations';
 import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
@@ -382,9 +383,7 @@ export function ProfileCard({
       }
 
       if (primaryAction.key === 'message') {
-        const email = String(profile?.email || '').trim();
-        if (!email) return;
-        onNavigateUrl(`/social/inbox?to=${encodeURIComponent(email)}`);
+        onNavigateUrl(createMessageComposeUrl(profile, '/social/inbox'));
         return;
       }
 
@@ -436,7 +435,6 @@ export function ProfileCard({
     const handle =
       (profile as any)?.handle ||
       (profile as any)?.username ||
-      emailHandle((profile as any)?.email) ||
       initialsFromName((profile as any)?.profileName || (profile as any)?.full_name || 'HM');
 
     const status = primaryModeShort || statusLine || '';
@@ -496,9 +494,7 @@ export function ProfileCard({
               }
 
               if (primaryAction.key === 'message') {
-                const email = String(profile?.email || '').trim();
-                if (!email) return;
-                onNavigateUrl(`/social/inbox?to=${encodeURIComponent(email)}`);
+                onNavigateUrl(createMessageComposeUrl(profile, '/social/inbox'));
                 return;
               }
 

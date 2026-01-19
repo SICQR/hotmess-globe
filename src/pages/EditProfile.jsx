@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '../utils';
+import { createPageUrl, createUserProfileUrl } from '../utils';
 import { ArrowLeft, Save, User, Upload, Plus, X, Users as UsersIcon, Image as ImageIcon, Video as VideoIcon, Crown, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -317,7 +317,7 @@ export default function EditProfile() {
 
       queryClient.invalidateQueries(['user-tags']);
       queryClient.invalidateQueries(['user-tribes']);
-      navigate(createPageUrl(`Profile?email=${currentUser.email}`));
+      navigate(createUserProfileUrl(currentUser, createPageUrl('Profile')));
     } finally {
       setIsSavingProfile(false);
     }

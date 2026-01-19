@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { createUserProfileUrl } from '@/utils';
 
 const REVIEW_TAGS = [
   { id: 'fast_shipping', label: 'Fast Shipping', type: 'buyer_to_seller' },
@@ -54,7 +55,7 @@ export default function MarketplaceReviewModal({ isOpen, onClose, order, current
         type: 'post_like',
         title: 'New Marketplace Review',
         message: `${currentUser.full_name} left you a ${rating}-star review`,
-        link: `/profile?email=${currentUser.email}`
+        link: createUserProfileUrl(currentUser, '/social')
       });
 
       toast.success('Review submitted!');
