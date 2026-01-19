@@ -21,9 +21,10 @@ test('B: directions page renders and shows location guidance when geo denied', a
   await expect(page.locator('.leaflet-container')).toBeVisible();
 
   // One of these should appear depending on browser behavior.
-  await expect(
-    page.getByText(/Enable location to see turn-by-turn steps\.|Unable to get your location\.|permission/i)
-  ).toBeVisible();
+  const guidance = page
+    .getByText(/Enable location to see turn-by-turn steps\.|Unable to get your location\.|permission/i)
+    .first();
+  await expect(guidance).toBeVisible();
 
   expect(pageErrors, `Unexpected page errors:\n${pageErrors.join('\n\n')}`).toEqual([]);
 });

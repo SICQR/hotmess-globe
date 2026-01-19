@@ -51,7 +51,6 @@ const main = async () => {
       String(spread),
     ], { allowFailure: true });
   } else if (shouldSeed) {
-    // eslint-disable-next-line no-console
     console.log('[e2e] Skipping profile seeding (missing SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY).');
   }
 
@@ -60,7 +59,6 @@ const main = async () => {
 };
 
 main().catch((err) => {
-  // eslint-disable-next-line no-console
   console.error('[e2e] Failed:', err?.message || String(err));
   process.exit(1);
 });
