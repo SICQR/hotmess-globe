@@ -275,6 +275,7 @@ export default function Directions() {
             distance_meters: directions?.distance_meters ?? null,
             steps_count: Array.isArray(directions?.steps) ? directions.steps.length : 0,
             has_encoded_polyline: !!directions?.polyline?.encoded,
+            warning: directions?.warning ?? null,
           }
         : null,
     };
@@ -298,6 +299,8 @@ export default function Directions() {
   }, [destination, error, mode, origin]);
 
   const steps = Array.isArray(directions?.steps) ? directions.steps : [];
+  const directionsWarning = directions?.warning;
+  const isApprox = directions?.provider === 'approx';
 
   const polylinePoints = useMemo(() => {
     const encoded = directions?.polyline?.encoded;
@@ -532,6 +535,11 @@ export default function Directions() {
 
                 {mode !== 'uber' && (
                   <div className="px-4 pb-4">
+                    {(isApprox || directionsWarning) && !directionsErrorMessage && origin && (
+                      <div className="mb-3 border border-amber-400/30 bg-amber-500/10 p-2 text-xs text-amber-200">
+                        Approximate route shown — turn-by-turn steps unavailable right now.
+                      </div>
+                    )}
                     {directionsErrorMessage ? (
                       <div className="text-sm text-red-300">{directionsErrorMessage}</div>
                     ) : steps.length ? (

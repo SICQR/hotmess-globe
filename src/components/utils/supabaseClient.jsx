@@ -1394,6 +1394,62 @@ base44.entities.BeaconCheckIn =
   base44.entities.BeaconCheckin ??
   base44.entities.BeaconCheckins;
 
+// Compatibility: `user_tribes` table may be missing in some environments.
+// Reads already degrade to [] via the generic entity wrapper; harden writes to avoid crashing.
+base44.entities.UserTribe =
+  base44.entities.UserTribe ??
+  base44.entities.UserTribes;
+
+if (base44.entities.UserTribe) {
+  const writeEntity = base44.entities.UserTribe;
+
+  base44.entities.UserTribe = {
+    ...writeEntity,
+    create: async (data) => {
+      try {
+        return await writeEntity.create(data);
+      } catch (error) {
+        if (isMissingTableError(error)) {
+          warnOnce(
+            'missing-table:user_tribes:UserTribe.create',
+            '[base44.entities.UserTribe.create] Missing table/view "user_tribes"; skipping create'
+          );
+          return null;
+        }
+        throw error;
+      }
+    },
+    update: async (id, data) => {
+      try {
+        return await writeEntity.update(id, data);
+      } catch (error) {
+        if (isMissingTableError(error)) {
+          warnOnce(
+            'missing-table:user_tribes:UserTribe.update',
+            '[base44.entities.UserTribe.update] Missing table/view "user_tribes"; skipping update'
+          );
+          return null;
+        }
+        throw error;
+      }
+    },
+    delete: async (id) => {
+      try {
+        return await writeEntity.delete(id);
+      } catch (error) {
+        if (isMissingTableError(error)) {
+          warnOnce(
+            'missing-table:user_tribes:UserTribe.delete',
+            '[base44.entities.UserTribe.delete] Missing table/view "user_tribes"; skipping delete'
+          );
+          return;
+        }
+        throw error;
+      }
+    },
+  };
+}
+
 // Back-compat aliases (Base44-style singular + legacy casing)
 base44.entities.Order = base44.entities.Order ?? base44.entities.Orders;
 base44.entities.OrderItem = base44.entities.OrderItem ?? base44.entities.OrderItems;
