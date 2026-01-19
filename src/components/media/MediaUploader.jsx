@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Image, Video, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { processAndUploadMedia } from '../utils/mediaProcessing';
 import { validateAndOptimize } from '../utils/imageOptimization';

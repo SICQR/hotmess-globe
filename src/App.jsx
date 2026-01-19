@@ -1,12 +1,62 @@
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/sonner"
+import { useEffect, useState } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useParams, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import Gatekeeper from '@/components/auth/Gatekeeper';
+import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import { createPageUrl } from './utils';
+import { ShopCartProvider } from '@/features/shop/cart/ShopCartContext';
+import Shop from '@/pages/Shop';
+import ShopCollection from '@/pages/ShopCollection';
+import ShopProduct from '@/pages/ShopProduct';
+import ShopCart from '@/pages/ShopCart';
+import CheckoutStart from '@/pages/CheckoutStart';
+import CreatorsCart from '@/pages/CreatorsCart';
+import CreatorsCheckout from '@/pages/CreatorsCheckout';
+import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
+import Privacy from '@/pages/legal/Privacy';
+import Terms from '@/pages/legal/Terms';
+import PrivacyHub from '@/pages/legal/PrivacyHub';
+
+const isProdBuild = import.meta.env.MODE === 'production';
+
+// In production, do not expose every Base44 page as a public /PageName route.
+// Keep a small compatibility allowlist for historically-used deep links.
+const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
+  'Auth',
+  'AgeGate',
+  'OnboardingGate',
+  'Home',
+  'Pulse',
+  'Events',
+  'Social',
+  'Messages',
+  'Music',
+  'Radio',
+  'RadioSchedule',
+  'More',
+  'Profile',
+  'ProfilesGrid',
+  'Beacons',
+  'CreateBeacon',
+  'EditBeacon',
+  'Bookmarks',
+  'Settings',
+  'EditProfile',
+  'MembershipUpgrade',
+  'Safety',
+  'Calendar',
+  'Scan',
+  'Community',
+  'Leaderboard',
+  // Shop/market compat is handled separately.
+  'Marketplace',
+  'ProductDetail',
+]);
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -16,25 +66,227 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
+const PageRoute = ({ pageKey }) => {
+  const Page = Pages[pageKey];
+  if (!Page) return <PageNotFound />;
+
+  return (
+    <LayoutWrapper currentPageName={pageKey}>
+      <Page />
+    </LayoutWrapper>
+  );
+};
+
+const EventDetailRedirect = () => {
+  const { id } = useParams();
+  const target = `${createPageUrl('BeaconDetail')}?id=${encodeURIComponent(id ?? '')}`;
+  return <Navigate to={target} replace />;
+};
+
+const EditBeaconRedirect = () => {
+  const { id } = useParams();
+  const target = `${createPageUrl('EditBeacon')}?id=${encodeURIComponent(id ?? '')}`;
+  return <Navigate to={target} replace />;
+};
+
+const LegacyShopCollectionRedirect = () => {
+  return <Navigate to="/market" replace />;
+};
+
+const LegacyProductDetailRedirect = () => {
+  const location = useLocation();
+  const search = location?.search || '';
+  const params = new URLSearchParams(search);
+  const handle = params.get('handle');
+  const target = handle ? `/market/p/${encodeURIComponent(handle)}` : '/market';
+  return <Navigate to={target} replace />;
+};
+
+const ProductDetailGate = () => {
+  const location = useLocation();
+  const search = location?.search || '';
+  const params = new URLSearchParams(search);
+  const handle = params.get('handle');
+
+  // If a Shopify handle is provided, always land on the canonical Shopify product page.
+  if (handle) {
+    return <LegacyProductDetailRedirect />;
+  }
+
+  // Otherwise, allow legacy ProductDetail (used by XP/P2P marketplace) to render.
+  const Page = Pages?.ProductDetail;
+  if (!Page) return <PageNotFound />;
+
+  return (
+    <LayoutWrapper currentPageName="ProductDetail">
+      <Page />
+    </LayoutWrapper>
+  );
+};
+
+const ShowHeroRedirect = () => {
+  const { slug } = useParams();
+  const map = {
+    'wake-the-mess': 'WakeTheMess',
+    'dial-a-daddy': 'DialADaddy',
+    'hand-n-hand': 'HandNHand',
+  };
+  const pageKey = slug ? map[String(slug).toLowerCase()] : null;
+  const target = pageKey ? createPageUrl(pageKey) : createPageUrl('RadioSchedule');
+  return <Navigate to={target} replace />;
+};
+
+const OrdersRedirect = () => {
+  return <Navigate to={createPageUrl('OrderHistory')} replace />;
+};
+
+const OrderByIdRedirect = () => {
+  // We don't currently have a dedicated order detail route; land on the orders list.
+  return <Navigate to={createPageUrl('OrderHistory')} replace />;
+};
+
+const OrderTrackingRedirect = () => {
+  // We don't currently have a dedicated tracking page; land on the orders list.
+  return <Navigate to={createPageUrl('OrderHistory')} replace />;
+};
+
+const ReturnsRedirect = () => {
+  // Returns are handled from orders for now.
+  return <Navigate to={createPageUrl('OrderHistory')} replace />;
+};
+
+const ShopCollectionRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <ShopCollection />
+    </LayoutWrapper>
+  );
+};
+
+const CreatorsMarketRoute = () => {
+  return <PageRoute pageKey="Marketplace" />;
+};
+
+const CreatorsProductRoute = () => {
+  const { id } = useParams();
+  const target = `${createPageUrl('ProductDetail')}?id=${encodeURIComponent(id ?? '')}`;
+  return <Navigate to={target} replace />;
+};
+
+const CreatorsCartRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <CreatorsCart />
+    </LayoutWrapper>
+  );
+};
+
+const CreatorsCheckoutRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <CreatorsCheckout />
+    </LayoutWrapper>
+  );
+};
+
+const CreatorsCheckoutSuccessRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <CreatorsCheckoutSuccess />
+    </LayoutWrapper>
+  );
+};
+
+const ShopProductRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <ShopProduct />
+    </LayoutWrapper>
+  );
+};
+
+const ShopHomeRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <Shop />
+    </LayoutWrapper>
+  );
+};
+
+const ShopCartRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <ShopCart />
+    </LayoutWrapper>
+  );
+};
+
+const ShopCheckoutStartRoute = () => {
+  return (
+    <LayoutWrapper currentPageName="Marketplace">
+      <CheckoutStart />
+    </LayoutWrapper>
+  );
+};
+
+const LegalPrivacyRoute = () => (
+  <LayoutWrapper currentPageName="More">
+    <Privacy />
+  </LayoutWrapper>
+);
+
+const LegalTermsRoute = () => (
+  <LayoutWrapper currentPageName="More">
+    <Terms />
+  </LayoutWrapper>
+);
+
+const LegalPrivacyHubRoute = () => (
+  <LayoutWrapper currentPageName="More">
+    <PrivacyHub />
+  </LayoutWrapper>
+);
+
+const SocialDiscoverRedirect = () => {
+  return <Navigate to={createPageUrl('Social')} replace />;
+};
+
+const SocialUserRedirect = () => {
+  const { id } = useParams();
+  const target = `${createPageUrl('Profile')}?uid=${encodeURIComponent(id ?? '')}`;
+  return <Navigate to={target} replace />;
+};
+
+const SocialThreadRedirect = () => {
+  const { threadId } = useParams();
+  const target = `${createPageUrl('Messages')}?thread=${encodeURIComponent(threadId ?? '')}`;
+  return <Navigate to={target} replace />;
+};
+
+const MarketCollectionRedirect = () => {
+  const { collection } = useParams();
+  const target = `/market?collection=${encodeURIComponent(collection ?? '')}`;
+  return <Navigate to={target} replace />;
+};
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, authError, navigateToLogin } = useAuth();
   const location = useLocation();
-  const isLoginRoute = location.pathname === '/Login';
-  const publicRoutes = new Set([
-    '/',
-    '/Login',
-    // Allow the configured landing page to render without auth.
-    mainPageKey ? `/${mainPageKey}` : null,
-    // Guest-browsable pages
-    '/Home',
-    '/Globe',
-    '/Events',
-    '/Marketplace',
-    '/ProductDetail',
-  ].filter(Boolean));
+  const [isRedirectingToAuth, setIsRedirectingToAuth] = useState(false);
+
+  useEffect(() => {
+    if (!authError) return;
+    if (authError.type !== 'auth_required') return;
+
+    const isOnAuthRoute = (location?.pathname || '').toLowerCase().startsWith('/auth');
+    if (isOnAuthRoute) return;
+
+    setIsRedirectingToAuth(true);
+    navigateToLogin();
+  }, [authError, location?.pathname, navigateToLogin]);
 
   // Show loading spinner while checking app public settings or auth
-  if (isLoadingAuth) {
+  if (isLoadingAuth || isRedirectingToAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
@@ -44,12 +296,18 @@ const AuthenticatedApp = () => {
 
   // Handle authentication errors
   if (authError) {
-    if (authError.type === 'auth_required') {
-      // Do not force /Login as the first screen; only redirect when the user
-      // navigates to a protected route.
-      if (!isLoginRoute && !publicRoutes.has(location.pathname)) {
-        navigateToLogin();
-        return null;
+    if (authError.type === 'user_not_registered') {
+      return <UserNotRegisteredError />;
+    } else if (authError.type === 'auth_required') {
+      // Allow the Auth page (and recovery links) to render without forcing a redirect loop.
+      const isOnAuthRoute = (location?.pathname || '').toLowerCase().startsWith('/auth');
+      if (!isOnAuthRoute) {
+        // Redirect is handled in the effect above; render a spinner.
+        return (
+          <div className="fixed inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+          </div>
+        );
       }
     }
   }
@@ -57,26 +315,145 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
+      {/* V1.5 canonical routes (Bible) */}
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
           <MainPage />
         </LayoutWrapper>
       } />
-      {Object.entries(Pages).map(([path, Page]) => (
-        <Route
-          key={path}
-          path={`/${path}`}
-          element={
-            path === 'Login' ? (
-              <Page />
-            ) : (
+      <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
+      <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
+      <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
+      <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
+      <Route path="/pulse" element={<PageRoute pageKey="Pulse" />} />
+      <Route path="/events" element={<PageRoute pageKey="Events" />} />
+      <Route path="/events/:id" element={<EventDetailRedirect />} />
+      {/* Market (canonical) -> headless Shopify shop */}
+      <Route path="/market" element={<ShopHomeRoute />} />
+      <Route path="/market/creators" element={<CreatorsMarketRoute />} />
+      <Route path="/market/creators/p/:id" element={<CreatorsProductRoute />} />
+      <Route path="/market/creators/cart" element={<CreatorsCartRoute />} />
+      <Route path="/market/creators/checkout" element={<CreatorsCheckoutRoute />} />
+      <Route path="/market/creators/checkout-success" element={<CreatorsCheckoutSuccessRoute />} />
+      <Route path="/market/:collection" element={<ShopCollectionRoute />} />
+      <Route path="/market/p/:handle" element={<ShopProductRoute />} />
+      <Route path="/social" element={<PageRoute pageKey="Social" />} />
+      <Route path="/social/discover" element={<SocialDiscoverRedirect />} />
+      <Route path="/social/inbox" element={<PageRoute pageKey="Messages" />} />
+      <Route path="/social/u/:id" element={<SocialUserRedirect />} />
+      <Route path="/social/t/:threadId" element={<SocialThreadRedirect />} />
+      <Route path="/music" element={<PageRoute pageKey="Music" />} />
+      <Route path="/music/live" element={<PageRoute pageKey="Radio" />} />
+      <Route path="/music/shows" element={<PageRoute pageKey="RadioSchedule" />} />
+      <Route path="/music/shows/:show/episodes" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
+      <Route path="/music/shows/:show/episodes/:id" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
+      <Route path="/music/shows/:slug" element={<ShowHeroRedirect />} />
+      <Route path="/music/schedule" element={<PageRoute pageKey="RadioSchedule" />} />
+      <Route path="/music/releases" element={<PageRoute pageKey="Music" />} />
+      <Route path="/music/releases/:slug" element={<PageRoute pageKey="MusicRelease" />} />
+      <Route path="/music/tracks" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/music/tracks/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/music/playlists" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/music/playlists/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/music/artists" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/music/artists/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/music/clips/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
+      <Route path="/hnhmess" element={<PageRoute pageKey="Hnhmess" />} />
+      <Route path="/more" element={<PageRoute pageKey="More" />} />
+      <Route path="/directions" element={<PageRoute pageKey="Directions" />} />
+
+      {/* Headless Shopify shop routes */}
+      {/* Legacy/alias shop routes (keep URLs working) */}
+      <Route path="/shop" element={<Navigate to="/market" replace />} />
+      <Route path="/shop/:handle" element={<LegacyShopCollectionRedirect />} />
+      <Route path="/p/:handle" element={<ShopProductRoute />} />
+      <Route path="/cart" element={<ShopCartRoute />} />
+      <Route path="/checkout/start" element={<ShopCheckoutStartRoute />} />
+
+      {/* Legal */}
+      <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
+      <Route path="/legal/terms" element={<LegalTermsRoute />} />
+      <Route path="/legal/privacy-hub" element={<LegalPrivacyHubRoute />} />
+      <Route path="/legal" element={<Navigate to="/legal/privacy" replace />} />
+
+      {/* Bible-friendly market/order aliases */}
+      <Route path="/orders" element={<OrdersRedirect />} />
+      <Route path="/orders/:id" element={<OrderByIdRedirect />} />
+      <Route path="/orders/:id/tracking" element={<OrderTrackingRedirect />} />
+      <Route path="/returns" element={<ReturnsRedirect />} />
+
+      {/* Bible-friendly /more/* tool routes (aliases) */}
+      <Route path="/more/beacons" element={<PageRoute pageKey="Beacons" />} />
+      <Route path="/more/beacons/new" element={<PageRoute pageKey="CreateBeacon" />} />
+      <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
+      <Route path="/more/beacons/:id/edit" element={<EditBeaconRedirect />} />
+      <Route path="/more/stats" element={<PageRoute pageKey="Stats" />} />
+      <Route path="/more/challenges" element={<PageRoute pageKey="Challenges" />} />
+
+      {/* Bible-friendly safety/calendar/scan subroutes */}
+      <Route path="/safety/*" element={<PageRoute pageKey="Safety" />} />
+      <Route path="/calendar/*" element={<PageRoute pageKey="Calendar" />} />
+      <Route path="/scan/*" element={<PageRoute pageKey="Scan" />} />
+      <Route path="/community/*" element={<PageRoute pageKey="Community" />} />
+      <Route path="/leaderboard/*" element={<PageRoute pageKey="Leaderboard" />} />
+
+      {/* Bible-friendly notifications/account aliases */}
+      <Route path="/notifications" element={<Navigate to={createPageUrl('Settings')} replace />} />
+      <Route path="/notifications/*" element={<Navigate to={createPageUrl('Settings')} replace />} />
+      <Route path="/account" element={<Navigate to={createPageUrl('Settings')} replace />} />
+      <Route path="/account/profile" element={<Navigate to={createPageUrl('EditProfile')} replace />} />
+      <Route path="/account/membership" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+      <Route path="/account/upgrade" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+      <Route path="/account/billing" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+      <Route path="/account/receipts" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+      <Route path="/account/data" element={<Navigate to={createPageUrl('AccountConsents')} replace />} />
+      <Route path="/account/data/*" element={<Navigate to={createPageUrl('AccountConsents')} replace />} />
+
+      {/* Legacy lowercase routes -> canonical V1.5 routes */}
+      <Route path="/radio" element={<Navigate to={createPageUrl('Radio')} replace />} />
+      <Route path="/radio/schedule" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
+      <Route path="/connect" element={<Navigate to={createPageUrl('Social')} replace />} />
+      <Route path="/connect/*" element={<Navigate to={createPageUrl('Social')} replace />} />
+      <Route path="/marketplace" element={<Navigate to="/market" replace />} />
+      <Route path="/marketplace/p/:handle" element={<ShopProductRoute />} />
+      <Route path="/more/beacons" element={<PageRoute pageKey="Beacons" />} />
+      <Route path="/more/beacons/new" element={<PageRoute pageKey="CreateBeacon" />} />
+      <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
+      <Route path="/age" element={<PageRoute pageKey="AgeGate" />} />
+      <Route path="/safety" element={<PageRoute pageKey="Safety" />} />
+      <Route path="/calendar" element={<PageRoute pageKey="Calendar" />} />
+      <Route path="/scan" element={<PageRoute pageKey="Scan" />} />
+      <Route path="/saved" element={<PageRoute pageKey="Bookmarks" />} />
+      <Route path="/leaderboard" element={<PageRoute pageKey="Leaderboard" />} />
+      <Route path="/community" element={<PageRoute pageKey="Community" />} />
+      <Route path="/profiles" element={<PageRoute pageKey="ProfilesGrid" />} />
+
+      {/* Backward-compatible auto-generated /PageName routes */}
+      {Object.entries(Pages).map(([path, Page]) => {
+        if (isProdBuild && !LEGACY_PAGE_ROUTE_ALLOWLIST.has(path)) {
+          return null;
+        }
+
+        if (path === 'Marketplace') {
+          return <Route key={path} path={`/${path}`} element={<Navigate to="/market" replace />} />;
+        }
+
+        if (path === 'ProductDetail') {
+          return <Route key={path} path={`/${path}`} element={<ProductDetailGate />} />;
+        }
+
+        return (
+          <Route
+            key={path}
+            path={`/${path}`}
+            element={
               <LayoutWrapper currentPageName={path}>
                 <Page />
               </LayoutWrapper>
-            )
-          }
-        />
-      ))}
+            }
+          />
+        );
+      })}
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
@@ -88,12 +465,12 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Gatekeeper>
+        <ShopCartProvider>
           <Router>
             <NavigationTracker />
             <AuthenticatedApp />
           </Router>
-        </Gatekeeper>
+        </ShopCartProvider>
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>

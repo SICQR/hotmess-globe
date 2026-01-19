@@ -4,14 +4,12 @@
 
 -- 1) User table: allow a logged-in user to select/update/upsert their own row by email
 alter table if exists public."User" enable row level security;
-
 drop policy if exists "user_select_self" on public."User";
 create policy "user_select_self"
 on public."User"
 for select
 to authenticated
 using ((auth.jwt() ->> 'email') = email);
-
 drop policy if exists "user_update_self" on public."User";
 create policy "user_update_self"
 on public."User"
@@ -19,14 +17,12 @@ for update
 to authenticated
 using ((auth.jwt() ->> 'email') = email)
 with check ((auth.jwt() ->> 'email') = email);
-
 drop policy if exists "user_insert_self" on public."User";
 create policy "user_insert_self"
 on public."User"
 for insert
 to authenticated
 with check ((auth.jwt() ->> 'email') = email);
-
 -- 2) Beacon table: common pattern for publicly visible content
 do $$
 begin
@@ -52,7 +48,6 @@ begin
 		$beacon_policy2$;
 	end if;
 end $$;
-
 -- 3) EventRSVP table: allow authenticated users to RSVP and read RSVP counts
 -- Assumptions:
 -- - The table has a user_email column containing the RSVP owner's email.

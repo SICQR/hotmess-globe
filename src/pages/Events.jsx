@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/api/supabaseClient';
+import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Calendar, Filter, Search, Map } from 'lucide-react';
@@ -13,10 +13,13 @@ import EventCard from '../components/events/EventCard';
 import PersonalizedRecommendations from '../components/events/PersonalizedRecommendations';
 import EventsMapView from '../components/events/EventsMapView';
 import NightlifeResearcher from '../components/ai/NightlifeResearcher';
-import { useAuth } from '@/lib/AuthContext';
+import AIEventRecommendations from '../components/events/AIEventRecommendations';
+import logger from '@/utils/logger';
+import PageShell from '@/components/shell/PageShell';
+import { safeGetViewerLatLng } from '@/utils/geolocation';
 
 export default function Events() {
-  const { user: currentUser } = useAuth();
+  const [currentUser, setCurrentUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -26,63 +29,60 @@ export default function Events() {
   const [userLocation, setUserLocation] = useState(null);
 
   useEffect(() => {
-    if (currentUser?.lat && currentUser?.lng) {
-      setUserLocation({ lat: currentUser.lat, lng: currentUser.lng });
-    }
+    const fetchUser = async () => {
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) return;
+        
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+        
+        // Set user location if available
+        if (user.lat && user.lng) {
+          setUserLocation({ lat: user.lat, lng: user.lng });
+        }
+      } catch (error) {
+        logger.error('Failed to fetch user', { error: error.message });
+      }
+    };
+    fetchUser();
 
-    // Get browser location as fallback
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (!userLocation) {
-            setUserLocation({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            });
-          }
-        },
-        (error) => console.log('Location access denied:', error)
-      );
-    }
-  }, [currentUser]);
+    // Get browser location as fallback (best-effort, with retry/backoff)
+    let cancelled = false;
+    safeGetViewerLatLng(
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 },
+      { retries: 2, logKey: 'events' }
+    ).then((loc) => {
+      if (cancelled) return;
+      if (!loc) return;
+      if (!userLocation) setUserLocation({ lat: loc.lat, lng: loc.lng });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('Beacon')
-        .select('*')
-        .eq('kind', 'event')
-        .eq('status', 'published')
-        .eq('active', true)
-        .order('event_date', { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      const beacons = await base44.entities.Beacon.filter(
+        { kind: 'event', status: 'published', active: true },
+        '-event_date'
+      );
+      return beacons;
     }
   });
 
   const { data: rsvps = [] } = useQuery({
     queryKey: ['my-rsvps', currentUser?.email],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('EventRSVP')
-        .select('*')
-        .eq('user_email', currentUser?.email);
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => base44.entities.EventRSVP.filter({ user_email: currentUser?.email }),
     enabled: !!currentUser
   });
 
   const { data: allRsvps = [] } = useQuery({
     queryKey: ['all-rsvps'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('EventRSVP').select('*');
-      if (error) throw error;
-      return data ?? [];
-    },
-    // Guests can browse Events, but RSVP data is currently auth-only.
-    enabled: !!currentUser
+    queryFn: () => base44.entities.EventRSVP.list()
   });
 
   const filteredEvents = useMemo(() => {
@@ -173,26 +173,28 @@ export default function Events() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-4xl md:text-6xl font-black italic mb-2">
-              EVENTS<span className="text-[#FF1493]">.</span>
-            </h1>
-            <p className="text-white/60 text-sm uppercase tracking-wider">
-              Discover what's happening in London tonight
-            </p>
+    <div className="min-h-screen bg-black text-white">
+      <PageShell
+        eyebrow="EVENTS"
+        title="Events"
+        subtitle="Discover what’s happening in London tonight."
+        maxWidth="7xl"
+        right={
+          <div className="flex items-center gap-2">
+            <Button asChild variant="glass" className="border-white/20 font-black uppercase">
+              <Link to={createPageUrl('MyEvents')}>My events</Link>
+            </Button>
+            <Button
+              onClick={() => setViewMode('map')}
+              variant="cyan"
+              className="font-black uppercase"
+            >
+              <Map className="w-4 h-4" />
+              Map view
+            </Button>
           </div>
-          <Button
-            onClick={() => setViewMode('map')}
-            className="bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black border-2 border-white"
-          >
-            <Map className="w-4 h-4 mr-2" />
-            MAP VIEW
-          </Button>
-        </div>
+        }
+      >
 
         {/* Filters */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8">
@@ -216,7 +218,7 @@ export default function Events() {
               <SelectTrigger className="bg-white/5 border-white/20 text-white">
                 <SelectValue placeholder="Date" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black text-white border-white/20">
                 <SelectItem value="all">All Dates</SelectItem>
                 <SelectItem value="today">Today</SelectItem>
                 <SelectItem value="tomorrow">Tomorrow</SelectItem>
@@ -230,7 +232,7 @@ export default function Events() {
               <SelectTrigger className="bg-white/5 border-white/20 text-white">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black text-white border-white/20">
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="crowd">Club Night</SelectItem>
                 <SelectItem value="hookup">Meetup</SelectItem>
@@ -244,7 +246,7 @@ export default function Events() {
               <SelectTrigger className="bg-white/5 border-white/20 text-white">
                 <SelectValue placeholder="Location" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black text-white border-white/20">
                 <SelectItem value="all">All Locations</SelectItem>
                 {cities.map(city => (
                   <SelectItem key={city} value={city}>{city}</SelectItem>
@@ -256,7 +258,7 @@ export default function Events() {
               <SelectTrigger className="bg-white/5 border-white/20 text-white">
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black text-white border-white/20">
                 <SelectItem value="date">By Date</SelectItem>
                 <SelectItem value="popularity">Most Popular</SelectItem>
                 <SelectItem value="newest">Newest</SelectItem>
@@ -271,6 +273,9 @@ export default function Events() {
             )}
           </div>
         </div>
+
+        {/* AI Event Recommendations */}
+        {currentUser && <AIEventRecommendations currentUser={currentUser} />}
 
         {/* AI Nightlife Researcher */}
         {currentUser && (
@@ -306,20 +311,14 @@ export default function Events() {
             <Calendar className="w-16 h-16 mx-auto mb-4 text-white/20" />
             <h3 className="text-xl font-bold mb-2">No events found</h3>
             <p className="text-white/60 mb-6">Try adjusting your filters</p>
-            <Link
-              to={createPageUrl('CreateBeacon')}
-              onClick={async (e) => {
-                const ok = await base44.auth.requireProfile(createPageUrl('CreateBeacon'));
-                if (!ok) e.preventDefault();
-              }}
-            >
-              <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black">
+            <Link to={createPageUrl('CreateBeacon')}>
+              <Button variant="hot" className="font-black">
                 Create Event
               </Button>
             </Link>
           </div>
         )}
-      </div>
+      </PageShell>
     </div>
   );
 }

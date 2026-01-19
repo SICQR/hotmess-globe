@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Check, Star, X, Users } from 'lucide-react';
+import { Check, Star, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function EventRSVP({ event, currentUser }) {

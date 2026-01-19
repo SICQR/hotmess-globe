@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { Calendar, MapPin, Users, X, Zap } from 'lucide-react';
+import { Calendar, MapPin, X, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
@@ -337,7 +337,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
                       </div>
                     )}
                   </div>
-                  <Link to={createPageUrl(`BeaconDetail?id=${event.id}`)}>
+                  <Link to={`/events/${encodeURIComponent(event.id)}`}>
                     <button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-white font-black text-xs py-2 px-3 uppercase">
                       View Event
                     </button>
@@ -510,7 +510,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
             )}
           </div>
 
-          <Link to={createPageUrl(`BeaconDetail?id=${selectedEvent.id}`)}>
+          <Link to={`/events/${encodeURIComponent(selectedEvent.id)}`}>
             <Button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black">
               View Full Details
             </Button>

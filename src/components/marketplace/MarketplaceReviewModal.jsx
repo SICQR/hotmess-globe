@@ -86,9 +86,12 @@ export default function MarketplaceReviewModal({ isOpen, onClose, order, current
         animate={{ scale: 1, opacity: 1 }}
         className="bg-black border-2 border-[#00D9FF] max-w-md w-full p-6"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="review-modal-title"
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-black uppercase">
+          <h2 id="review-modal-title" className="text-2xl font-black uppercase">
             Rate {isBuyer ? 'Seller' : 'Buyer'}
           </h2>
           <button onClick={onClose} className="text-white/60 hover:text-white">

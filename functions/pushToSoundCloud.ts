@@ -1,6 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
+  // Production readiness: this function previously returned a mock success.
+  // SoundCloud uploads require OAuth + SoundCloud API access; until implemented, fail fast.
+  return Response.json(
+    {
+      error: 'Not implemented',
+      details:
+        'SoundCloud upload/push is not wired yet. Implement OAuth + upload, or disable the UI entry points that claim SoundCloud publishing.',
+    },
+    { status: 501 }
+  );
+
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();

@@ -1,26 +1,5 @@
 {
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "jsx": "react-jsx",
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "lib": ["esnext", "dom"],
-    "target": "esnext",
-    "allowJs": true,
-    "checkJs": false,
-    "maxNodeModuleJsDepth": 0,
-    "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "types": ["vite/client", "react", "react-dom"]
-  },
-  "include": [
-    "src/**/*.js",
-    "src/**/*.jsx"
-  ],
+  "extends": "./tsconfig.json",
+  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist"]
-}
+} 

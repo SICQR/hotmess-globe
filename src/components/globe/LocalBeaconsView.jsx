@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Navigation, Clock, Users, X } from 'lucide-react';
+import { MapPin, Navigation, Clock, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';

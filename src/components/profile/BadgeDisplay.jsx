@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Shield, Crown, Star, Music, Calendar, Users, Award, Zap } from 'lucide-react';
+import { Shield, Crown, Music, Calendar, Users, Award, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function BadgeDisplay({ userEmail }) {

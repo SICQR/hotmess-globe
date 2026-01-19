@@ -1,22 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
-import { Shield, Users, Flag, Calendar, TrendingUp, Lock, CheckCircle } from 'lucide-react';
+import { base44 } from '@/components/utils/supabaseClient';
+import { Shield, Users, Flag, Calendar, TrendingUp, Lock, CheckCircle, Settings as SettingsIcon, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import UserManagement from '../components/admin/UserManagement';
-import ContentModeration from '../components/admin/ContentModeration';
 import EventManagement from '../components/admin/EventManagement';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import CurationQueue from '../components/admin/CurationQueue';
 import UserVerification from '../components/admin/UserVerification';
+import ShopifyManager from '../components/admin/ShopifyManager';
 import AdvancedAnalytics from '../components/analytics/AdvancedAnalytics';
-import { ABTestResults } from '../components/analytics/ABTestingFramework';
 import BulkUserInvite from '../components/admin/BulkUserInvite';
 import EventScraperControl from '../components/admin/EventScraperControl';
+import ModerationQueue from '../components/admin/ModerationQueue';
+import { createPageUrl } from '../utils';
+import { supabase } from '@/components/utils/supabaseClient';
 
 export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [dispatchingOutbox, setDispatchingOutbox] = useState(false);
+  const [dispatchResult, setDispatchResult] = useState(null);
+  const [dispatchError, setDispatchError] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -69,22 +76,95 @@ export default function AdminDashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-16 h-16 bg-red-600 border-2 border-white flex items-center justify-center">
-              <Shield className="w-8 h-8 text-white" />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-red-600 border-2 border-white flex items-center justify-center">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-5xl font-black uppercase tracking-tighter">ADMIN</h1>
+                <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">
+                  SYSTEM CONTROL PANEL
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-5xl font-black uppercase tracking-tighter">ADMIN</h1>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">
-                SYSTEM CONTROL PANEL
-              </p>
+
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
+              <div className="w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto border-white/20 text-white"
+                  disabled={dispatchingOutbox}
+                  onClick={async () => {
+                    setDispatchError(null);
+                    setDispatchResult(null);
+                    setDispatchingOutbox(true);
+
+                    try {
+                      const {
+                        data: { session },
+                      } = await supabase.auth.getSession();
+
+                      const token = session?.access_token;
+                      if (!token) throw new Error('Not authenticated');
+
+                      const res = await fetch('/api/admin/notifications/dispatch', {
+                        method: 'POST',
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                          'Content-Type': 'application/json',
+                        },
+                      });
+
+                      const payload = await res.json().catch(() => ({}));
+                      if (!res.ok) {
+                        throw new Error(payload?.error || `Dispatch failed (${res.status})`);
+                      }
+
+                      setDispatchResult(payload);
+                    } catch (err) {
+                      setDispatchError(err?.message || 'Failed to dispatch outbox');
+                    } finally {
+                      setDispatchingOutbox(false);
+                    }
+                  }}
+                >
+                  <Shield className="w-4 h-4" />
+                  {dispatchingOutbox ? 'Dispatching…' : 'Run Outbox Dispatch'}
+                </Button>
+
+                {(dispatchResult || dispatchError) && (
+                  <div className="mt-2 text-[10px] font-mono uppercase tracking-widest">
+                    {dispatchError ? (
+                      <span className="text-red-400">{dispatchError}</span>
+                    ) : (
+                      <span className="text-white/60">
+                        queued {dispatchResult?.queued ?? 0} • sent {dispatchResult?.sent ?? 0} • failed {dispatchResult?.failed ?? 0}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <Link to={createPageUrl('Settings')} className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto border-white/20 text-white">
+                  <SettingsIcon className="w-4 h-4" />
+                  Settings
+                </Button>
+              </Link>
+              <Link to={createPageUrl('EditProfile')} className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto border-white/20 text-white">
+                  <User className="w-4 h-4" />
+                  Edit Profile
+                </Button>
+              </Link>
             </div>
           </div>
         </motion.div>
 
         {/* Admin Tabs */}
         <Tabs defaultValue="analytics" className="w-full">
-          <TabsList className="grid w-full grid-cols-7 bg-black border-2 border-white mb-8 h-auto">
+          <TabsList className="grid w-full grid-cols-8 bg-black border-2 border-white mb-8 h-auto">
             <TabsTrigger 
               value="analytics" 
               className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black font-black uppercase text-xs py-3"
@@ -94,7 +174,7 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="advanced" 
-              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-black font-black uppercase text-xs py-3"
+              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-white font-black uppercase text-xs py-3"
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               Advanced
@@ -129,10 +209,17 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="events" 
-              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-black font-black uppercase text-xs py-3"
+              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-white font-black uppercase text-xs py-3"
             >
               <Calendar className="w-4 h-4 mr-2" />
               Events
+            </TabsTrigger>
+            <TabsTrigger 
+              value="shopify" 
+              className="data-[state=active]:bg-[#39FF14] data-[state=active]:text-black font-black uppercase text-xs py-3"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Shopify
             </TabsTrigger>
           </TabsList>
 
@@ -152,7 +239,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="moderation">
-            <ContentModeration />
+            <ModerationQueue />
           </TabsContent>
 
           <TabsContent value="events">
@@ -164,6 +251,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="advanced">
             <AdvancedAnalytics />
+          </TabsContent>
+
+          <TabsContent value="shopify">
+            <ShopifyManager />
           </TabsContent>
 
           <TabsContent value="verification">

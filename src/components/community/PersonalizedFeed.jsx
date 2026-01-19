@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Sliders, Loader2 } from 'lucide-react';
+import { Sliders } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -86,7 +86,7 @@ export default function PersonalizedFeed({ user, posts, onFilterChange }) {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 bg-black border-white/20">
+        <PopoverContent className="w-[calc(100vw-2rem)] max-w-80 bg-black border-white/20">
           <div className="space-y-4">
             <div>
               <h3 className="font-bold mb-3">Categories</h3>

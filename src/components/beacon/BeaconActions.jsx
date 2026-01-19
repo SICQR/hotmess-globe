@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Bookmark, Camera, Share2, Heart } from 'lucide-react';
+import { Bookmark, Camera, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -111,10 +111,16 @@ export default function BeaconActions({ beacon }) {
   const handleShare = () => {
     const url = window.location.href;
     if (navigator.share) {
-      navigator.share({
-        title: beacon.title,
-        text: beacon.description,
-        url
+      Promise.resolve(
+        navigator.share({
+          title: beacon.title,
+          text: beacon.description,
+          url,
+        })
+      ).catch((err) => {
+        // User cancelled the share sheet.
+        if (err?.name === 'AbortError') return;
+        toast.error('Share failed');
       });
     } else {
       navigator.clipboard.writeText(url);

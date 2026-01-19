@@ -1,6 +1,6 @@
 # 📋 Trackable Issues - Hotmess Globe
 
-**Last Updated**: 2026-01-02  
+**Last Updated**: 2026-01-17  
 **Total Issues**: 25  
 **Status Legend**: 🔴 Not Started | 🟡 In Progress | 🟢 Completed
 
@@ -9,18 +9,17 @@
 ## 🚨 Critical Priority (Do First)
 
 ### ISSUE-001: Critical NPM Security Vulnerabilities
-- **Status**: 🔴 Not Started
+- **Status**: 🟢 Completed
 - **Priority**: Critical
 - **Type**: Security
 - **Estimate**: 2 hours
 - **Dependencies**: None
-- **Description**: 6 npm vulnerabilities (2 high, 4 moderate) affecting dompurify, glob, mdast-util-to-hast, and quill packages
+- **Description**: Resolved `npm audit --audit-level=moderate` findings (Vitest/Vite-node esbuild dev-server advisory + Quill HTML export XSS advisory).
 - **Acceptance Criteria**:
-  - [ ] Run `npm audit` to confirm vulnerabilities
-  - [ ] Execute `npm audit fix` for non-breaking changes
-  - [ ] Execute `npm audit fix --force` for breaking changes
-  - [ ] Test application after fixes
-  - [ ] Verify `npm audit` shows 0 vulnerabilities
+  - [x] Run `npm audit` to confirm vulnerabilities
+  - [x] Apply dependency updates to resolve advisories (Vitest v4 upgrade; Quill downgrade)
+  - [x] Re-run lint/typecheck/tests/build after changes
+  - [x] Verify `npm audit --audit-level=moderate` shows 0 vulnerabilities
 - **Files**: 
   - `package.json`
   - `package-lock.json`
@@ -212,7 +211,8 @@
   - [ ] Document setup in README
 - **Files**:
   - `functions/pushToSoundCloud.ts`
-  - `src/components/admin/RecordManager.tsx.jsx`
+  - `src/components/admin/RecordManager.tsx`
+  - `docs/SOUNDCLOUD_API_FIELD_REQUIREMENTS.md`
 - **Notes**: Requires SoundCloud Pro API access
 
 ---

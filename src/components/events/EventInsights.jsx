@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Users, Eye, Award, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
@@ -40,7 +40,7 @@ export default function EventInsights({ event, scoreBreakdown }) {
           Why recommended
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 bg-black border border-white/20 text-white">
+        <PopoverContent className="w-[calc(100vw-2rem)] max-w-80 bg-black border border-white/20 text-white">
         <div className="space-y-3">
           <div>
             <div className="flex items-center justify-between mb-2">

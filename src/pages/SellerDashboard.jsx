@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { base44 } from '@/components/utils/supabaseClient';
 import { Plus, Package, DollarSign, Star, TrendingUp, Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,6 +12,9 @@ import PromotionManager from '../components/seller/PromotionManager';
 import PayoutManager from '../components/seller/PayoutManager';
 import InventoryAlerts from '../components/seller/InventoryAlerts';
 import OffersList from '../components/marketplace/OffersList';
+import DisputeResolution from '../components/seller/DisputeResolution';
+import FeaturedListingsManager from '../components/seller/FeaturedListingsManager';
+import SellerRatingDisplay from '../components/seller/SellerRatingDisplay';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -49,6 +52,7 @@ export default function SellerDashboard() {
   const { data: orderItems = [] } = useQuery({
     queryKey: ['order-items'],
     queryFn: () => base44.entities.OrderItem.list(),
+    enabled: !!currentUser,
   });
 
   const { data: promotions = [] } = useQuery({
@@ -66,6 +70,7 @@ export default function SellerDashboard() {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list(),
+    enabled: !!currentUser,
   });
 
   // Enrich orders with their items
@@ -81,6 +86,9 @@ export default function SellerDashboard() {
       setShowForm(false);
       toast.success('Product created!');
     },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to create product');
+    },
   });
 
   const updateMutation = useMutation({
@@ -91,6 +99,9 @@ export default function SellerDashboard() {
       setEditingProduct(null);
       toast.success('Product updated!');
     },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to update product');
+    },
   });
 
   const deleteMutation = useMutation({
@@ -99,13 +110,36 @@ export default function SellerDashboard() {
       queryClient.invalidateQueries(['seller-products']);
       toast.success('Product deleted');
     },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to delete product');
+    },
   });
 
+  const normalizeProductPayload = (data) => {
+    const toIntOrNull = (value) => {
+      if (value === '' || value === null || value === undefined) return null;
+      const num = typeof value === 'number' ? value : parseInt(String(value), 10);
+      return Number.isFinite(num) ? num : null;
+    };
+
+    return {
+      ...data,
+      price_xp: toIntOrNull(data?.price_xp) ?? 0,
+      inventory_count: toIntOrNull(data?.inventory_count) ?? 0,
+    };
+  };
+
   const handleSubmit = (data) => {
+    if (!currentUser?.email) {
+      toast.error('Please sign in to create products');
+      return;
+    }
+
+    const normalized = normalizeProductPayload(data);
     if (editingProduct) {
-      updateMutation.mutate({ id: editingProduct.id, data });
+      updateMutation.mutate({ id: editingProduct.id, data: normalized });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(normalized);
     }
   };
 
@@ -189,6 +223,9 @@ export default function SellerDashboard() {
         {/* Inventory Alerts */}
         {currentUser && <InventoryAlerts sellerEmail={currentUser.email} />}
 
+        {/* Seller Rating Display */}
+        {currentUser && <SellerRatingDisplay sellerEmail={currentUser.email} />}
+
         {showForm && (
           <div className="mb-8">
             <ProductForm
@@ -203,11 +240,13 @@ export default function SellerDashboard() {
         )}
 
         <Tabs defaultValue="products">
-          <TabsList className="bg-white/5 border border-white/10 mb-6">
+          <TabsList className="bg-white/5 border border-white/10 mb-6 flex-wrap">
             <TabsTrigger value="products">My Products</TabsTrigger>
             <TabsTrigger value="orders">Orders ({orders.length})</TabsTrigger>
             <TabsTrigger value="offers">Offers</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="featured">Featured</TabsTrigger>
+            <TabsTrigger value="disputes">Disputes</TabsTrigger>
             <TabsTrigger value="promotions">Promotions</TabsTrigger>
             <TabsTrigger value="payouts">Payouts</TabsTrigger>
           </TabsList>
@@ -346,6 +385,17 @@ export default function SellerDashboard() {
               products={products}
               allUsers={allUsers}
             />
+          </TabsContent>
+
+          <TabsContent value="featured">
+            <FeaturedListingsManager
+              products={products}
+              sellerEmail={currentUser?.email}
+            />
+          </TabsContent>
+
+          <TabsContent value="disputes">
+            <DisputeResolution sellerEmail={currentUser?.email} />
           </TabsContent>
 
           <TabsContent value="promotions">

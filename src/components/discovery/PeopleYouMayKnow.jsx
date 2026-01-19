@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Users, Zap, MapPin, Heart, Sparkles } from 'lucide-react';
+import { Users, Zap, MapPin, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { motion } from 'framer-motion';
@@ -156,7 +156,7 @@ export default function PeopleYouMayKnow({ currentUser, limit = 6 }) {
                   
                   {/* Mutual Badge */}
                   {suggestion.mutualCount > 0 && (
-                    <div className="absolute top-2 left-2 px-2 py-1 bg-[#B026FF] text-black text-[9px] font-black uppercase border-2 border-white">
+                      <div className="absolute top-2 left-2 px-2 py-1 bg-[#B026FF] text-white text-[9px] font-black uppercase border-2 border-white">
                       <Users className="w-2.5 h-2.5 inline mr-1" />
                       {suggestion.mutualCount} Mutual
                     </div>

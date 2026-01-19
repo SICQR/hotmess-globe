@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { base44 } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowLeft, Users, Tag, Zap, Check } from 'lucide-react';

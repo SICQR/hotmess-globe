@@ -2,7 +2,6 @@
 -- Creates public."User" before any RLS/policy migrations run.
 
 create extension if not exists pgcrypto;
-
 create table if not exists public."User" (
   id uuid primary key default gen_random_uuid(),
   email text not null,
@@ -28,10 +27,8 @@ create table if not exists public."User" (
   created_date timestamptz not null default now(),
   updated_date timestamptz not null default now()
 );
-
 -- Ensure email uniqueness for upsert(onConflict: 'email')
 create unique index if not exists uniq_user_email on public."User" (email);
-
 -- Keep updated_date fresh.
 create or replace function public.set_updated_date()
 returns trigger
@@ -42,7 +39,6 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists trg_user_set_updated_date on public."User";
 create trigger trg_user_set_updated_date
 before update on public."User"

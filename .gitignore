@@ -3,6 +3,8 @@
 #env
 .env
 .env.*
+.env.local
+.env.*.local
 
 # Logs
 logs
@@ -18,6 +20,16 @@ dist
 dist-ssr
 *.local
 
+# Playwright
+playwright-report/
+test-results/
+
+# Vitest coverage
+coverage/
+
+# Supabase CLI local state
+supabase/.temp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -30,3 +42,11 @@ dist-ssr
 *.sw?
 
 .env
+.vercel
+.env*.local
+
+# Local media/assets (avoid accidentally committing large binaries)
+HNH Mess 2 (Remastered).mp3
+
+# Duplicate nested repo artifacts (local-only)
+hotmess-globe/
