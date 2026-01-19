@@ -40,8 +40,16 @@ export default function DropBeacons() {
     const timer = setInterval(() => {
       drops.forEach(drop => {
         if (drop.expires_at && new Date(drop.expires_at) < new Date()) {
-          // Mark as inactive
-          base44.entities.Beacon.update(drop.id, { active: false });
+          // Mark as inactive (authenticated-only)
+          base44.auth
+            .isAuthenticated()
+            .then((isAuth) => {
+              if (!isAuth) return;
+              base44.entities.Beacon.update(drop.id, { active: false });
+            })
+            .catch(() => {
+              // ignore
+            });
         }
       });
     }, 60000); // Check every minute

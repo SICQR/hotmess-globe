@@ -50,7 +50,11 @@ export default function RightNowManager({ currentUser }) {
         
         {activeStatus ? (
           <Button
-            onClick={() => endNowMutation.mutate()}
+            onClick={async () => {
+              const ok = await base44.auth.requireProfile(window.location.href);
+              if (!ok) return;
+              endNowMutation.mutate();
+            }}
             disabled={endNowMutation.isPending}
             variant="outline"
             size="sm"
@@ -61,7 +65,11 @@ export default function RightNowManager({ currentUser }) {
           </Button>
         ) : (
           <Button
-            onClick={() => setShowModal(true)}
+            onClick={async () => {
+              const ok = await base44.auth.requireProfile(window.location.href);
+              if (!ok) return;
+              setShowModal(true);
+            }}
             className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black"
           >
             <Zap className="w-4 h-4 mr-2" />
@@ -84,7 +92,11 @@ export default function RightNowManager({ currentUser }) {
             <li>• Appears in Connect discovery</li>
           </ul>
           <Button
-            onClick={() => setShowModal(true)}
+            onClick={async () => {
+              const ok = await base44.auth.requireProfile(window.location.href);
+              if (!ok) return;
+              setShowModal(true);
+            }}
             className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black w-full"
           >
             <Zap className="w-4 h-4 mr-2" />

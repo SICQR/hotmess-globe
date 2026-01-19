@@ -51,6 +51,9 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
 
   const createThreadMutation = useMutation({
     mutationFn: async () => {
+      const ok = await base44.auth.requireProfile(window.location.href);
+      if (!ok) return null;
+
       let participantEmails = [currentUser.email];
       let threadType = messageType;
       let metadata = {};
@@ -113,6 +116,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
       return thread;
     },
     onSuccess: (thread) => {
+      if (!thread) return;
       queryClient.invalidateQueries(['chat-threads']);
       toast.success('Thread created!');
       onThreadCreated(thread);
