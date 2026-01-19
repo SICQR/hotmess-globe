@@ -13,7 +13,7 @@
     "build": "vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
-    "typecheck": "node ./node_modules/typescript/bin/tsc -p ./jsconfig.json --noEmit",
+    "typecheck": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json --noEmit",
     "seed:mock-profiles": "node ./scripts/seed-mock-profiles.mjs",
     "test": "vitest",
     "test:run": "vitest run",
