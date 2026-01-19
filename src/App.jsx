@@ -22,6 +22,42 @@ import Privacy from '@/pages/legal/Privacy';
 import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
 
+const isProdBuild = import.meta.env.MODE === 'production';
+
+// In production, do not expose every Base44 page as a public /PageName route.
+// Keep a small compatibility allowlist for historically-used deep links.
+const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
+  'Auth',
+  'AgeGate',
+  'OnboardingGate',
+  'Home',
+  'Pulse',
+  'Events',
+  'Social',
+  'Messages',
+  'Music',
+  'Radio',
+  'RadioSchedule',
+  'More',
+  'Profile',
+  'ProfilesGrid',
+  'Beacons',
+  'CreateBeacon',
+  'EditBeacon',
+  'Bookmarks',
+  'Settings',
+  'EditProfile',
+  'MembershipUpgrade',
+  'Safety',
+  'Calendar',
+  'Scan',
+  'Community',
+  'Leaderboard',
+  // Shop/market compat is handled separately.
+  'Marketplace',
+  'ProductDetail',
+]);
+
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
@@ -394,6 +430,10 @@ const AuthenticatedApp = () => {
 
       {/* Backward-compatible auto-generated /PageName routes */}
       {Object.entries(Pages).map(([path, Page]) => {
+        if (isProdBuild && !LEGACY_PAGE_ROUTE_ALLOWLIST.has(path)) {
+          return null;
+        }
+
         if (path === 'Marketplace') {
           return <Route key={path} path={`/${path}`} element={<Navigate to="/market" replace />} />;
         }
