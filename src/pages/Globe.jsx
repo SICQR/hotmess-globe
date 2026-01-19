@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
-import { createClient } from '@supabase/supabase-js';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import CompactGlobeControls from '../components/globe/CompactGlobeControls';
 import GlobeDataPanel from '../components/globe/GlobeDataPanel';
@@ -97,16 +96,6 @@ export default function GlobePage() {
 
   // Real-time subscriptions for beacons
   useEffect(() => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.vite_publicSUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.vite_publicSUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.warn('Supabase credentials not found - real-time updates disabled');
-      return;
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     const channel = supabase
       .channel('beacons-realtime')
       .on(
@@ -150,13 +139,6 @@ export default function GlobePage() {
 
   // Real-time subscriptions for user activities
   useEffect(() => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.vite_publicSUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.vite_publicSUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) return;
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Fetch recent activities
     const fetchActivities = async () => {
       try {

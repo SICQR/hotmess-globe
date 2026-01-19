@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import { PAGINATION, QUERY_CONFIG } from '../components/utils/constants';
 import { Users, Zap, Heart, Filter, Grid3x3 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import DiscoveryCard from '../components/discovery/DiscoveryCard';
 import FiltersDrawer from '../components/discovery/FiltersDrawer';
 import RightNowModal from '../components/discovery/RightNowModal';
 import TutorialTooltip from '../components/tutorial/TutorialTooltip';
@@ -16,9 +15,23 @@ import { debounce } from 'lodash';
 import { generateMatchExplanations, promoteTopMatches } from '../components/discovery/AIMatchmaker';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
+import { ProfileCard } from '@/features/profilesGrid/ProfileCard';
 import { useNavigate } from 'react-router-dom';
 import useLiveViewerLocation, { bucketLatLng } from '@/hooks/useLiveViewerLocation';
 import useRealtimeNearbyInvalidation from '@/hooks/useRealtimeNearbyInvalidation';
+
+const isMaleAllowedProfile = (u) => {
+  const gender = String(u?.gender_identity || u?.gender || u?.sex || '').trim().toLowerCase();
+  const isFemale = gender === 'f' || gender.includes('female') || gender.includes('woman');
+  if (isFemale) return false;
+
+  const rawAck = u?.photo_policy_ack ?? u?.photoPolicyAck;
+  if (rawAck === false) return false;
+
+  return true;
+};
+
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
 export default function Connect() {
   const navigate = useNavigate();
@@ -176,24 +189,19 @@ export default function Connect() {
   // Build profile objects for filtering
   const profiles = useMemo(() => {
     if (!currentUser) return [];
-    // Include current user in Right Now lane, exclude elsewhere
     return allUsers
       .filter(u => {
-        if (u.email === currentUser.email) {
-          // Show self only if Right Now active
-          const isLive = rightNowStatuses.some(s => 
-            s.user_email === u.email && 
-            s.active && 
-            new Date(s.expires_at) > new Date()
-          );
-          return isLive && lane === 'right_now';
-        }
+        if (!isMaleAllowedProfile(u)) return false;
         return true;
       })
       .map(u => {
         const uTags = userTags.filter(t => t.user_email === u.email);
         const uTribes = userTribes.filter(t => t.user_email === u.email);
         const proximity = nearbyByEmail.get(String(u.email || '').toLowerCase()) || null;
+
+        const isSelf = normalizeEmail(u?.email) && normalizeEmail(u?.email) === normalizeEmail(currentUser?.email);
+        const distanceKm = isSelf ? 0 : (proximity?.distanceKm ?? null);
+        const distanceMeters = isSelf ? 0 : (proximity?.distanceMeters ?? null);
 
         const photos = Array.isArray(u.photos) ? u.photos : [];
         const hasPhotos = photos.length > 0;
@@ -216,13 +224,13 @@ export default function Connect() {
           lookingFor: u.lookingFor ?? u.looking_for ?? [],
           meetAt: u.meetAt ?? u.meet_at ?? [],
           communicationStyle: u.communicationStyle ?? u.preferred_communication ?? [],
-          distanceKm: proximity?.distanceKm ?? null,
-          distanceMeters: proximity?.distanceMeters ?? null,
-          etaSeconds: proximity?.etaSeconds ?? null,
-          etaMode: proximity?.etaMode ?? null,
+          distanceKm,
+          distanceMeters,
+          etaSeconds: isSelf ? 0 : (proximity?.etaSeconds ?? null),
+          etaMode: isSelf ? null : (proximity?.etaMode ?? null),
         };
       });
-  }, [allUsers, currentUser, userTags, userTribes, rightNowStatuses, nearbyByEmail]);
+  }, [allUsers, currentUser, userTags, userTribes, rightNowStatuses, nearbyByEmail, lane]);
 
   // Apply lane filter - with memoization
   const laneFiltered = useMemo(() => {
@@ -249,8 +257,31 @@ export default function Connect() {
 
   // Promote top AI matches
   const reorderedUsers = useMemo(() => {
-    return promoteTopMatches(filteredUsers, aiMatchExplanations);
-  }, [filteredUsers, aiMatchExplanations]);
+    const promoted = promoteTopMatches(filteredUsers, aiMatchExplanations);
+    const viewer = normalizeEmail(currentUser?.email);
+    if (!viewer) return promoted;
+
+    let me = null;
+    const out = [];
+    const seen = new Set();
+
+    for (const u of promoted) {
+      const email = normalizeEmail(u?.email);
+      if (email) {
+        if (seen.has(email)) continue;
+        seen.add(email);
+      }
+
+      if (email && email === viewer) {
+        me = u;
+        continue;
+      }
+
+      out.push(u);
+    }
+
+    return me ? [me, ...out] : out;
+  }, [filteredUsers, aiMatchExplanations, currentUser?.email]);
 
   // Memoize pagination calculations
   const totalPages = useMemo(() => Math.ceil(reorderedUsers.length / PAGINATION.ITEMS_PER_PAGE), [reorderedUsers.length]);
@@ -261,6 +292,151 @@ export default function Connect() {
 
   // Map to full user objects - memoized
   const displayUsers = paginatedUsers;
+
+  const isSellerProfile = (u) => String(u?.profile_type || u?.profileType || '').trim().toLowerCase() === 'seller';
+
+  const sellerEmails = useMemo(() => {
+    return displayUsers
+      .filter((u) => isSellerProfile(u))
+      .map((u) => normalizeEmail(u?.email))
+      .filter(Boolean);
+  }, [displayUsers]);
+
+  const { data: sellerProductsMeta = { hasProductsByEmail: {}, previewsByEmail: {} } } = useQuery({
+    queryKey: ['connect-seller-products-meta', sellerEmails.join(',')],
+    queryFn: async () => {
+      const uniq = Array.from(new Set(sellerEmails));
+      const hasProductsByEmail = {};
+      const previewsByEmail = {};
+      if (!uniq.length) return { hasProductsByEmail, previewsByEmail };
+
+      uniq.forEach((e) => {
+        hasProductsByEmail[e] = false;
+        previewsByEmail[e] = [];
+      });
+
+      const firstImageUrl = (product) => {
+        const urls = Array.isArray(product?.image_urls) ? product.image_urls : [];
+        for (const raw of urls) {
+          const url = typeof raw === 'string' ? raw.trim() : '';
+          if (url) return url;
+        }
+        return null;
+      };
+
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('id,seller_email,image_urls,status,updated_at,created_at')
+          .eq('status', 'active')
+          .in('seller_email', uniq)
+          .order('updated_at', { ascending: false })
+          .limit(500);
+
+        if (error) throw error;
+
+        const rows = Array.isArray(data) ? data : [];
+        for (const row of rows) {
+          const email = normalizeEmail(row?.seller_email);
+          if (!email) continue;
+          if (!Object.prototype.hasOwnProperty.call(hasProductsByEmail, email)) continue;
+          hasProductsByEmail[email] = true;
+
+          const url = firstImageUrl(row);
+          if (!url) continue;
+          const current = Array.isArray(previewsByEmail[email]) ? previewsByEmail[email] : [];
+          if (current.length >= 3) continue;
+          if (current.some((p) => p?.imageUrl === url)) continue;
+          current.push({ id: row?.id ? String(row.id) : undefined, imageUrl: url });
+          previewsByEmail[email] = current;
+        }
+      } catch {
+        // Fall back to hasProducts only (best-effort) via Base44 entity filter.
+        try {
+          const rows = await base44.entities.Product.filter({ seller_email: uniq, status: 'active' }, null, 250);
+          (Array.isArray(rows) ? rows : []).forEach((row) => {
+            const email = normalizeEmail(row?.seller_email);
+            if (!email) return;
+            if (!Object.prototype.hasOwnProperty.call(hasProductsByEmail, email)) return;
+            hasProductsByEmail[email] = true;
+            const url = firstImageUrl(row);
+            if (!url) return;
+            const current = Array.isArray(previewsByEmail[email]) ? previewsByEmail[email] : [];
+            if (current.length >= 3) return;
+            if (current.some((p) => p?.imageUrl === url)) return;
+            current.push({ id: row?.id ? String(row.id) : undefined, imageUrl: url });
+            previewsByEmail[email] = current;
+          });
+        } catch {
+          // ignore
+        }
+      }
+
+      return { hasProductsByEmail, previewsByEmail };
+    },
+    enabled: sellerEmails.length > 0,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const toCardProfile = useCallback(
+    (u) => {
+      const email = normalizeEmail(u?.email) || '';
+      const lat = Number(u?.last_lat ?? u?.lat);
+      const lng = Number(u?.last_lng ?? u?.lng);
+
+      const name = String(u?.full_name || u?.profileName || u?.email || 'Unknown').trim();
+      const city = u?.city ? String(u.city).trim() : null;
+      const bio = u?.bio ? String(u.bio).trim() : '';
+      const profileType = String(u?.profile_type || u?.profileType || '').trim() || undefined;
+
+      const rawTags = u?.tags;
+      const tags = Array.isArray(rawTags) ? rawTags.map((t) => String(t)).filter(Boolean).slice(0, 5) : [];
+
+      const photos = Array.isArray(u?.photos) ? u.photos : [];
+      const avatar = String(u?.avatar_url || u?.avatarUrl || '').trim();
+      const normalizedPhotos = [];
+      if (avatar) normalizedPhotos.push({ url: avatar, isPrimary: true });
+      for (const p of photos) {
+        if (!p) continue;
+        if (typeof p === 'string') {
+          const url = p.trim();
+          if (!url || normalizedPhotos.some((x) => x.url === url)) continue;
+          normalizedPhotos.push({ url, isPrimary: normalizedPhotos.length === 0 });
+          continue;
+        }
+        if (typeof p === 'object') {
+          const url = String(p.url || p.file_url || p.href || '').trim();
+          if (!url || normalizedPhotos.some((x) => x.url === url)) continue;
+          const isPrimary = !!(p.isPrimary ?? p.is_primary ?? p.primary);
+          normalizedPhotos.push({ url, isPrimary: isPrimary || normalizedPhotos.length === 0 });
+        }
+      }
+      const safePhotos = normalizedPhotos.slice(0, 5);
+
+      const hasProducts = !!sellerProductsMeta?.hasProductsByEmail?.[email];
+      const productPreviews = sellerProductsMeta?.previewsByEmail?.[email];
+
+      return {
+        id: String(u?.id || email || name),
+        email: email || undefined,
+        authUserId: u?.auth_user_id ? String(u.auth_user_id) : undefined,
+        profileType,
+        city: city || undefined,
+        bio: bio || undefined,
+        tags,
+        hasProducts,
+        productPreviews: Array.isArray(productPreviews) ? productPreviews : undefined,
+        profileName: name,
+        title: bio || 'Member',
+        locationLabel: city || 'Nearby',
+        geoLat: Number.isFinite(lat) ? lat : 0,
+        geoLng: Number.isFinite(lng) ? lng : 0,
+        photos: safePhotos.length ? safePhotos : avatar ? [{ url: avatar, isPrimary: true }] : [],
+      };
+    },
+    [sellerProductsMeta]
+  );
 
   // Early return AFTER all hooks
   if (userLoading || usersLoading) {
@@ -417,21 +593,31 @@ export default function Connect() {
           )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {displayUsers.map((user, idx) => {
-            const userTagsData = userTags.filter(t => t.user_email === user.email);
-            const userTribesData = userTribes.filter(t => t.user_email === user.email);
-            return (
-              <DiscoveryCard
-                key={user.email}
-                user={user}
-                userTags={userTagsData}
-                userTribes={userTribesData}
-                currentUserTags={currentUserTags}
-                index={idx}
-                aiMatchExplanation={aiMatchExplanations[user.id]}
-              />
-            );
-          })}
+          {displayUsers
+            .filter((u) => Number.isFinite(Number(u?.last_lat ?? u?.lat)) && Number.isFinite(Number(u?.last_lng ?? u?.lng)))
+            .map((user) => {
+              const cardProfile = toCardProfile(user);
+              return (
+                <ProfileCard
+                  key={String(user?.email || user?.id)}
+                  profile={cardProfile}
+                  viewerLocation={liveLocation || null}
+                  viewerProfile={currentUser}
+                  onNavigateUrl={(url) => navigate(url)}
+                  onOpenProfile={(p) => {
+                    const email = p?.email;
+                    const uid = p?.authUserId;
+                    if (email) {
+                      navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
+                      return;
+                    }
+                    if (uid) {
+                      navigate(createPageUrl(`Profile?uid=${encodeURIComponent(uid)}`));
+                    }
+                  }}
+                />
+              );
+            })}
           {reorderedUsers.length === 0 && (
             <div className="col-span-full text-center py-20">
               <Users className="w-16 h-16 text-white/20 mx-auto mb-4" />

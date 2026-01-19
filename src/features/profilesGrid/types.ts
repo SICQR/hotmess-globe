@@ -3,6 +3,12 @@ export type Photo = {
   isPrimary: boolean;
 };
 
+export type ProductPreview = {
+  id?: string;
+  handle?: string;
+  imageUrl: string;
+};
+
 export type Profile = {
   id: string;
   // Optional rich fields used by host pages + smart CTAs.
@@ -12,6 +18,8 @@ export type Profile = {
   city?: string;
   bio?: string;
   sellerTagline?: string;
+  hasProducts?: boolean;
+  productPreviews?: ProductPreview[];
   tags?: string[];
 
   profileName: string;

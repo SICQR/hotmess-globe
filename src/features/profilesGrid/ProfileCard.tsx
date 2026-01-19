@@ -6,6 +6,7 @@ import { useVisibility } from './useVisibility';
 import { buildUberDeepLink } from '@/utils/uberDeepLink';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@/utils/travelRecommendations';
+import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
 
 type Props = {
   profile: Profile;
@@ -15,10 +16,41 @@ type Props = {
   onNavigateUrl: (url: string) => void;
 };
 
-const pickPrimaryPhotoUrl = (profile: Profile): string | null => {
-  const photos = Array.isArray(profile.photos) ? profile.photos : [];
-  const primary = photos.find((p) => p.isPrimary);
-  return (primary || photos[0])?.url || null;
+const getPhotoUrls = (profile: Profile): string[] => {
+  const urls: string[] = [];
+
+  const push = (value: unknown) => {
+    const url = typeof value === 'string' ? value.trim() : '';
+    if (!url) return;
+    if (urls.includes(url)) return;
+    urls.push(url);
+  };
+
+  // Canonical API response: profile.photos: { url, isPrimary }
+  const photos = Array.isArray((profile as any)?.photos) ? (profile as any).photos : [];
+  for (const item of photos) {
+    if (typeof item === 'string') push(item);
+    else if (item && typeof item === 'object') push((item as any).url || (item as any).file_url);
+  }
+
+  // Back-compat / older shapes.
+  push((profile as any)?.avatar_url);
+  push((profile as any)?.avatarUrl);
+
+  const photoUrls = (profile as any)?.photo_urls;
+  if (Array.isArray(photoUrls)) {
+    for (const u of photoUrls) push(u);
+  }
+
+  const images = (profile as any)?.images;
+  if (Array.isArray(images)) {
+    for (const img of images) {
+      if (typeof img === 'string') push(img);
+      else if (img && typeof img === 'object') push((img as any).url || (img as any).src || (img as any).file_url);
+    }
+  }
+
+  return urls.filter(Boolean).slice(0, 5);
 };
 
 const supportsHover = () => {
@@ -27,6 +59,54 @@ const supportsHover = () => {
 };
 
 const normalizeProfileType = (value: unknown) => String(value || '').trim().toLowerCase();
+
+const getProfileCardStyle = () => {
+  // Priority:
+  // 1) URL param (?card=react-bits)
+  // 2) localStorage (hm.profileCardStyle)
+  // 3) Vite env (VITE_PROFILE_CARD_STYLE)
+  //
+  // Reason: Vite only reads .env* at server start, so env tweaks won't show
+  // until restart; query/localStorage gives an instant toggle for dev.
+  let style = '';
+
+  try {
+    style = String((import.meta as any)?.env?.VITE_PROFILE_CARD_STYLE || '').trim();
+  } catch {
+    // ignore
+  }
+
+  try {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search || '');
+      const fromQuery = params.get('card');
+      if (fromQuery && String(fromQuery).trim()) {
+        style = String(fromQuery).trim();
+      } else {
+        const fromStorage = window.localStorage?.getItem('hm.profileCardStyle');
+        if (fromStorage && String(fromStorage).trim()) {
+          style = String(fromStorage).trim();
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  const normalized = String(style || '').trim().toLowerCase();
+
+  // Production default: use react-bits unless explicitly forced to legacy.
+  if (import.meta.env.MODE === 'production' && !normalized) return 'react-bits';
+
+  return normalized;
+};
+
+const emailHandle = (value: unknown) => {
+  const email = String(value || '').trim().toLowerCase();
+  if (!email || !email.includes('@')) return null;
+  const handle = email.split('@')[0] || '';
+  return handle.replace(/[^a-z0-9_\-.]/g, '').slice(0, 24) || null;
+};
 
 const initialsFromName = (name: unknown) => {
   const raw = String(name || '').trim();
@@ -45,6 +125,22 @@ const badgeForProfileType = (profileType: string) => {
   return null;
 };
 
+const getProductPreviewUrls = (profile: Profile): string[] => {
+  const raw = (profile as any)?.productPreviews;
+  const previews = Array.isArray(raw) ? raw : [];
+  const urls: string[] = [];
+
+  for (const item of previews) {
+    if (!item || typeof item !== 'object') continue;
+    const url = typeof (item as any).imageUrl === 'string' ? String((item as any).imageUrl).trim() : '';
+    if (!url) continue;
+    if (urls.includes(url)) continue;
+    urls.push(url);
+  }
+
+  return urls.slice(0, 3);
+};
+
 export function ProfileCard({
   profile,
   viewerLocation,
@@ -52,11 +148,12 @@ export function ProfileCard({
   onOpenProfile,
   onNavigateUrl,
 }: Props) {
-  const photos = Array.isArray(profile.photos) ? profile.photos : [];
-  const photoUrls = photos.map((p) => p.url).filter((u) => !!u);
+  const useReactBits = getProfileCardStyle() === 'react-bits';
+
+  const photoUrls = useMemo(() => getPhotoUrls(profile), [profile]);
+  const productPreviewUrls = useMemo(() => getProductPreviewUrls(profile), [profile]);
 
   const [isActive, setIsActive] = useState(false);
-  const [photoIndex, setPhotoIndex] = useState(0);
 
   const { ref: visibilityRef, isVisible } = useVisibility({ rootMargin: '200px', threshold: 0.2, once: true });
 
@@ -72,6 +169,15 @@ export function ProfileCard({
 
   const destination = useMemo<LatLng>(() => ({ lat: profile.geoLat, lng: profile.geoLng }), [profile.geoLat, profile.geoLng]);
 
+  const viewerLocationBucket = useMemo<LatLng | null>(() => {
+    if (!viewerLocation) return null;
+    if (!Number.isFinite(viewerLocation.lat) || !Number.isFinite(viewerLocation.lng)) return null;
+    return {
+      lat: Math.round(viewerLocation.lat * 1e3) / 1e3,
+      lng: Math.round(viewerLocation.lng * 1e3) / 1e3,
+    };
+  }, [viewerLocation]);
+
   const tags = useMemo(() => {
     const raw = (profile as any)?.tags;
     return Array.isArray(raw) ? raw.map((t) => String(t)).filter(Boolean).slice(0, 3) : [];
@@ -82,11 +188,12 @@ export function ProfileCard({
 
   useEffect(() => {
     if (!isVisible) return;
-    if (!viewerLocation) return;
+    if (!viewerLocationBucket) return;
 
     let cancelled = false;
     const controller = new AbortController();
     const refreshMs = 2 * 60 * 1000;
+    const jitterMs = Math.floor(Math.random() * 15000);
 
     const run = () => {
       if (cancelled) return;
@@ -95,7 +202,7 @@ export function ProfileCard({
 
       // `fetchTravelTime` may throw synchronously if passed an already-aborted signal.
       Promise.resolve()
-        .then(() => fetchTravelTime({ viewer: viewerLocation, destination, signal: controller.signal }))
+        .then(() => fetchTravelTime({ viewer: viewerLocationBucket, destination, signal: controller.signal }))
         .then((value) => {
           if (cancelled) return;
           setTravelTime(value);
@@ -114,7 +221,20 @@ export function ProfileCard({
 
     // Prime immediately, then keep results reasonably fresh (cab traffic in particular).
     run();
-    const id = window.setInterval(run, refreshMs);
+
+    // Refresh only when the card is active (hovered/opened). Otherwise, keep the first result.
+    if (!isActive) {
+      return () => {
+        cancelled = true;
+        try {
+          controller.abort();
+        } catch {
+          // ignore
+        }
+      };
+    }
+
+    const id = window.setInterval(run, refreshMs + jitterMs);
     return () => {
       window.clearInterval(id);
       cancelled = true;
@@ -124,7 +244,7 @@ export function ProfileCard({
         // ignore
       }
     };
-  }, [destination, isVisible, viewerLocation]);
+  }, [destination, isActive, isVisible, viewerLocationBucket]);
 
   const toMinsLabel = (seconds: number | null | undefined) => {
     if (!Number.isFinite(seconds)) return '—';
@@ -224,14 +344,26 @@ export function ProfileCard({
   const profileType = normalizeProfileType(profile?.profileType);
   const isSeller = profileType === 'seller';
   const isCreator = profileType === 'creator' || profileType === 'organizer';
+  const hasProducts = (profile as any)?.hasProducts === true;
+
+  const onShopClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const email = String(profile?.email || '').trim();
+      if (!email) return;
+      onNavigateUrl(`/market?created_by=${encodeURIComponent(email)}`);
+    },
+    [onNavigateUrl, profile?.email]
+  );
 
   const primaryAction = useMemo(() => {
-    if (isSeller) return { key: 'shop', label: 'Shop' } as const;
+    if (isSeller && hasProducts) return { key: 'shop', label: 'Shop' } as const;
     if (isCreator) return { key: 'listen', label: 'Listen' } as const;
     const email = String(profile?.email || '').trim();
     if (email) return { key: 'message', label: 'Message' } as const;
     return { key: 'view', label: 'View' } as const;
-  }, [isCreator, isSeller, profile?.email]);
+  }, [hasProducts, isCreator, isSeller, profile?.email]);
 
   const onPrimaryClick = useCallback(
     (e: React.MouseEvent) => {
@@ -272,87 +404,8 @@ export function ProfileCard({
     [openProfile]
   );
 
-  const canSwipe = isActive && photoUrls.length > 1;
-
-  const pointerStateRef = useRef<{
-    startX: number;
-    startY: number;
-    lastX: number;
-    isDown: boolean;
-    hasMoved: boolean;
-    wasSwipe: boolean;
-    suppressClick: boolean;
-  }>({
-    startX: 0,
-    startY: 0,
-    lastX: 0,
-    isDown: false,
-    hasMoved: false,
-    wasSwipe: false,
-    suppressClick: false,
-  });
-
-  const clampIndex = (idx: number) => {
-    if (!photoUrls.length) return 0;
-    const m = ((idx % photoUrls.length) + photoUrls.length) % photoUrls.length;
-    return m;
-  };
-
-  const advance = (delta: number) => {
-    setPhotoIndex((prev) => clampIndex(prev + delta));
-  };
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (!canSwipe) return;
-    pointerStateRef.current.isDown = true;
-    pointerStateRef.current.hasMoved = false;
-    pointerStateRef.current.wasSwipe = false;
-    pointerStateRef.current.startX = e.clientX;
-    pointerStateRef.current.startY = e.clientY;
-    pointerStateRef.current.lastX = e.clientX;
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!canSwipe) return;
-    if (!pointerStateRef.current.isDown) return;
-
-    const dx = e.clientX - pointerStateRef.current.startX;
-    const dy = e.clientY - pointerStateRef.current.startY;
-
-    if (Math.hypot(dx, dy) > 8) {
-      pointerStateRef.current.hasMoved = true;
-    }
-
-    // Horizontal intent to swipe.
-    if (Math.abs(dx) > 24 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-      pointerStateRef.current.wasSwipe = true;
-    }
-
-    pointerStateRef.current.lastX = e.clientX;
-  };
-
-  const onPointerUp = () => {
-    if (!canSwipe) return;
-
-    const st = pointerStateRef.current;
-    if (!st.isDown) return;
-    st.isDown = false;
-
-    const dx = st.lastX - st.startX;
-
-    if (st.wasSwipe && Math.abs(dx) > 40) {
-      // Prevent click navigation after swipe.
-      st.suppressClick = true;
-      advance(dx < 0 ? 1 : -1);
-      window.setTimeout(() => {
-        st.suppressClick = false;
-      }, 250);
-    }
-  };
-
   const onClick = (e: React.MouseEvent) => {
-    const st = pointerStateRef.current;
-    if (st.suppressClick || st.wasSwipe || st.hasMoved || isLongPressActive || didLongPress) {
+    if (isLongPressActive || didLongPress) {
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -361,8 +414,8 @@ export function ProfileCard({
     openProfile();
   };
 
-  const primaryUrl = pickPrimaryPhotoUrl(profile);
-  const currentUrl = isActive ? (photoUrls[photoIndex] || primaryUrl) : primaryUrl;
+  const primaryUrl = photoUrls[0] || null;
+  const currentUrl = primaryUrl;
 
   const typeBadge = useMemo(() => badgeForProfileType(profileType), [profileType]);
   const hasTravelTimes = !!travelTime;
@@ -372,6 +425,82 @@ export function ProfileCard({
     if (!mins || mins === '—') return null;
     return `${modeLabel(primaryMode)} ${mins}`;
   }, [primaryMode, modeLabel, modeMins]);
+
+  if (useReactBits) {
+    const handle =
+      (profile as any)?.handle ||
+      (profile as any)?.username ||
+      emailHandle((profile as any)?.email) ||
+      initialsFromName((profile as any)?.profileName || (profile as any)?.full_name || 'HM');
+
+    const status =
+      primaryModeShort || ((profile as any)?.onlineNow ? 'Online' : ((profile as any)?.rightNow ? 'Right now' : '')); 
+
+    return (
+      <div
+        ref={attachRef as unknown as React.Ref<HTMLDivElement>}
+        className="select-none"
+        onMouseEnter={() => {
+          if (supportsHover()) setIsActive(true);
+        }}
+        onMouseLeave={() => {
+          if (supportsHover()) setIsActive(false);
+        }}
+        onClick={(e) => {
+          const target = e.target as HTMLElement | null;
+          // If the user clicked the react-bits action button, don't also open the profile.
+          if (target?.closest?.('.pc-contact-btn')) return;
+          onClick(e);
+        }}
+        {...longPressHandlers}
+      >
+        <div className="relative w-full aspect-[4/5] overflow-hidden rounded-2xl">
+          <ReactBitsProfileCard
+            className="pc-grid"
+            avatarUrl={currentUrl || ''}
+            miniAvatarUrl={currentUrl || ''}
+            iconUrl={undefined}
+            grainUrl={undefined}
+            innerGradient={undefined}
+            enableTilt={true}
+            enableMobileTilt={false}
+            behindGlowEnabled={true}
+            behindGlowColor={isSeller ? 'rgba(244, 63, 94, 0.55)' : 'rgba(56, 189, 248, 0.55)'}
+            behindGlowSize="60%"
+            name={String(profile.profileName || 'HOTMESS')}
+            title={String(headline || '')}
+            handle={String(handle || 'hotmess')}
+            status={String(status || '')}
+            contactText={primaryAction.label}
+            onContactClick={() => {
+              // Mirror existing primary CTA behavior.
+              // We can't stopPropagation from inside react-bits button, so the wrapper click guard handles it.
+              if (primaryAction.key === 'listen') {
+                onNavigateUrl('/music/live');
+                return;
+              }
+
+              if (primaryAction.key === 'shop') {
+                const email = String(profile?.email || '').trim();
+                if (!email) return;
+                onNavigateUrl(`/market?created_by=${encodeURIComponent(email)}`);
+                return;
+              }
+
+              if (primaryAction.key === 'message') {
+                const email = String(profile?.email || '').trim();
+                if (!email) return;
+                onNavigateUrl(`/social/inbox?to=${encodeURIComponent(email)}`);
+                return;
+              }
+
+              openProfile();
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -427,19 +556,6 @@ export function ProfileCard({
           ) : null}
         </div>
 
-        {isActive && (
-          <>
-            {/* Swipe capture layer */}
-            <div
-              className="absolute inset-0"
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerUp}
-            />
-          </>
-        )}
-
         {/* Bottom identity + CTAs (always visible) */}
         <div className="absolute inset-x-0 bottom-0 p-3 pointer-events-auto">
           <div className="rounded-xl bg-black/40 backdrop-blur-md border border-white/10 p-3">
@@ -461,6 +577,31 @@ export function ProfileCard({
                 View
               </Button>
             </div>
+
+            {isSeller && hasProducts && productPreviewUrls.length > 0 ? (
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={onShopClick}
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1 hover:bg-white/10"
+                >
+                  <div className="flex items-center -space-x-2">
+                    {productPreviewUrls.map((url) => (
+                      <img
+                        key={url}
+                        src={url}
+                        alt="Product preview"
+                        className="h-8 w-8 rounded-md border border-black/60 object-cover"
+                        draggable={false}
+                        loading="lazy"
+                      />
+                    ))}
+                  </div>
+                  <div className="text-[10px] font-black uppercase tracking-wider text-white/80">Drops</div>
+                </button>
+                <div className="text-[10px] font-black uppercase tracking-wider text-white/50">Tap to shop</div>
+              </div>
+            ) : null}
 
             {tags.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -551,20 +692,6 @@ export function ProfileCard({
                   Estimates • Ask first. Confirm yes.
                 </div>
 
-                {photoUrls.length > 1 ? (
-                  <div className="mt-2 flex items-center gap-1">
-                    {photoUrls.map((_, idx) => (
-                      <div
-                        key={idx}
-                        className={
-                          idx === photoIndex
-                            ? 'h-1.5 w-1.5 rounded-full bg-white'
-                            : 'h-1.5 w-1.5 rounded-full bg-white/40'
-                        }
-                      />
-                    ))}
-                  </div>
-                ) : null}
               </div>
             ) : (
               <div className="mt-3">

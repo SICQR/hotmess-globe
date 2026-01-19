@@ -31,6 +31,32 @@ export type ProfilesGridProps = {
 
 const normalizeEmail = (value: unknown) => String(value || '').trim().toLowerCase();
 
+const prioritizeViewerFirst = (profiles: Profile[], viewerEmail: string | null): Profile[] => {
+  const target = normalizeEmail(viewerEmail);
+  if (!target) return profiles;
+
+  let viewer: Profile | null = null;
+  const out: Profile[] = [];
+  const seenEmails = new Set<string>();
+
+  for (const profile of profiles) {
+    const email = normalizeEmail(profile?.email);
+    if (email) {
+      if (seenEmails.has(email)) continue;
+      seenEmails.add(email);
+    }
+
+    if (email && email === target) {
+      viewer = profile;
+      continue;
+    }
+
+    out.push(profile);
+  }
+
+  return viewer ? [viewer, ...out] : out;
+};
+
 
 export default function ProfilesGrid({
   showHeader = true,
@@ -140,9 +166,10 @@ export default function ProfilesGrid({
   const displayItems = useMemo(() => {
     const base = Array.isArray(items) ? items : [];
     const filtered = typeof filterProfiles === 'function' ? base.filter(filterProfiles) : base;
-    if (typeof maxItems === 'number') return filtered.slice(0, Math.max(0, maxItems));
-    return filtered;
-  }, [filterProfiles, items, maxItems]);
+    const prioritized = prioritizeViewerFirst(filtered, viewerEmail);
+    if (typeof maxItems === 'number') return prioritized.slice(0, Math.max(0, maxItems));
+    return prioritized;
+  }, [filterProfiles, items, maxItems, viewerEmail]);
 
   const totalFilteredCount = useMemo(() => {
     if (typeof maxItems !== 'number') return null;
