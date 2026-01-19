@@ -1,6 +1,7 @@
 import {
   bucketLatLng,
   cacheKeyFor,
+  getBearerToken,
   getRequestIp,
   getSupabaseServerClients,
   json,
@@ -9,6 +10,11 @@ import {
   requireGoogleApiKey,
 } from './routing/_utils.js';
 import { fetchRoutesV2 } from './routing/_google.js';
+
+const isRunningOnVercel = () => {
+  const flag = process.env.VERCEL || process.env.VERCEL_ENV;
+  return !!flag;
+};
 
 const computeTimeSlice = ({ nowMs, ttlSeconds }) => {
   const ttlMs = ttlSeconds * 1000;
@@ -77,6 +83,12 @@ export default async function handler(req, res) {
     return json(res, 405, { error: 'Method not allowed' });
   }
 
+  const requireAuth = isRunningOnVercel() || process.env.NODE_ENV === 'production';
+  const accessToken = getBearerToken(req);
+  if (requireAuth && !accessToken) {
+    return json(res, 401, { error: 'Unauthorized' });
+  }
+
   const body = (await readJsonBody(req)) || {};
   const originV = validatePoint(body.origin, 'origin');
   const destV = validatePoint(body.destination, 'destination');
@@ -107,6 +119,19 @@ export default async function handler(req, res) {
 
   const supa = getSupabaseServerClients();
   const serviceClient = supa?.serviceClient || null;
+  const anonClient = supa?.anonClient || null;
+
+  let authedUserId = null;
+  if (accessToken && anonClient) {
+    const { data, error } = await anonClient.auth.getUser(accessToken);
+    if (error || !data?.user) {
+      if (requireAuth) return json(res, 401, { error: 'Unauthorized' });
+    } else {
+      authedUserId = data.user.id;
+    }
+  } else if (requireAuth && !anonClient) {
+    return json(res, 500, { error: 'Supabase server env not configured' });
+  }
 
   // Optional: DB-backed IP rate limiting + caching.
   let cacheMap = new Map();
@@ -116,7 +141,7 @@ export default async function handler(req, res) {
       const bucketKey = `travel_time:${ip || 'noip'}:${Math.floor(nowMs / 60000)}`;
       const { data: rl } = await serviceClient.rpc('check_routing_rate_limit', {
         p_bucket_key: bucketKey,
-        p_user_id: null,
+        p_user_id: authedUserId,
         p_ip: ip,
         p_window_seconds: 60,
         p_max_requests: 60,

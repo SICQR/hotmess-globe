@@ -58,6 +58,12 @@ export default async function handler(req, res) {
               url
               altText
             }
+            images(first: 10) {
+              nodes {
+                url
+                altText
+              }
+            }
             priceRange {
               minVariantPrice { amount currencyCode }
               maxVariantPrice { amount currencyCode }

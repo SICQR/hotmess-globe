@@ -90,6 +90,12 @@ export default async function handler(req, res) {
 
     const body = (await readJsonBody(req)) || {};
 
+    // By default, keep users in-app by returning an approximate route when Google fails.
+    // Opt into strict failures for debugging.
+    const strict =
+      body?.strict === true ||
+      String(process.env.ROUTING_DIRECTIONS_STRICT || '').toLowerCase() === 'true';
+
     const originV = validatePoint(body.origin, 'origin');
     const destV = validatePoint(body.destination, 'destination');
     if (!originV.ok) return json(res, 400, { error: originV.error });
@@ -160,7 +166,30 @@ export default async function handler(req, res) {
     });
 
     if (!route.ok) {
-      return json(res, 502, { error: route.error || 'Directions request failed', details: route.details || null });
+      if (strict) {
+        return json(res, 502, { error: route.error || 'Directions request failed', details: route.details || null });
+      }
+
+      const approx = approximateDurationSeconds({ origin, destination, mode });
+      return json(res, 200, {
+        mode,
+        origin,
+        destination,
+        duration_seconds: approx.seconds,
+        distance_meters: approx.distanceMeters,
+        provider: 'approx',
+        polyline: {
+          encoded: null,
+          points: [origin, destination],
+        },
+        steps: [],
+        ttl_seconds: ttlSeconds,
+        warning: {
+          code: 'google_directions_unavailable',
+          message: route.error || 'Directions request failed',
+          details: route.details || null,
+        },
+      });
     }
 
     return json(res, 200, {
