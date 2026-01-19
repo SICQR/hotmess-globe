@@ -21,7 +21,7 @@ export default function RecordManager() {
   const [city, setCity] = useState('London');
   const [lat, setLat] = useState(51.5074);
   const [lng, setLng] = useState(-0.1278);
-  const [wavFile, setWavFile] = useState<File | null>(null);
+  const [wavFile, setWavFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   const queryClient = useQueryClient();
@@ -32,7 +32,7 @@ export default function RecordManager() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data) => {
       setUploading(true);
       
       // Step 1: Upload WAV file to storage
@@ -74,7 +74,7 @@ export default function RecordManager() {
     }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     
     if (!wavFile || !title || !city) {

@@ -22,13 +22,16 @@ const THREAD_TYPE_COLORS = {
   beacon: '#39FF14',
 };
 
-export default function ThreadList({ threads, currentUser, allUsers, onSelectThread, onNewMessage }) {
+export default function ThreadList({ threads, currentUser, allUsers, onSelectThread, onNewMessage, canStartNew = true }) {
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b-2 border-white/20">
         <button
           onClick={onNewMessage}
-          className="w-full bg-[#FF1493] hover:bg-white text-black hover:text-black font-black uppercase text-sm py-3 border-2 border-white transition-all"
+          disabled={!canStartNew}
+          className={`w-full bg-[#FF1493] hover:bg-white text-black hover:text-black font-black uppercase text-sm py-3 border-2 border-white transition-all ${
+            !canStartNew ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+          }`}
         >
           <MessageCircle className="w-4 h-4 inline mr-2" />
           New Message

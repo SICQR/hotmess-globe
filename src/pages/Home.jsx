@@ -256,10 +256,17 @@ export default function Home() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          setCurrentUser(null);
+          return;
+        }
+
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
         console.error('Failed to fetch user:', error);
+        setCurrentUser(null);
       }
     };
     fetchUser();

@@ -37,6 +37,9 @@ export default function Chat() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const ok = await base44.auth.requireProfile(window.location.href);
+        if (!ok) return;
+
         const currentUser = await base44.auth.me();
         setUser(currentUser);
         

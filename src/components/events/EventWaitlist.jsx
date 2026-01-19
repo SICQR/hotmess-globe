@@ -90,7 +90,11 @@ export default function EventWaitlist({ event, currentUser }) {
       </p>
 
       <Button
-        onClick={() => joinWaitlistMutation.mutate()}
+        onClick={async () => {
+          const ok = await base44.auth.requireProfile(window.location.href);
+          if (!ok) return;
+          joinWaitlistMutation.mutate();
+        }}
         disabled={joinWaitlistMutation.isPending}
         className={`w-full font-black uppercase ${
           waitlistEntry
