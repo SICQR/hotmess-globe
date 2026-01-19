@@ -15,6 +15,12 @@ export default function ReportButton({ itemType, itemId, variant = 'ghost' }) {
 
   const reportMutation = useMutation({
     mutationFn: async (data) => {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) {
+        base44.auth.redirectToLogin(window.location.href);
+        return;
+      }
+
       const user = await base44.auth.me();
       await base44.entities.Report.create({
         reporter_email: user.email,

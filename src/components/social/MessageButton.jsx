@@ -45,11 +45,14 @@ export default function MessageButton({ targetUser, currentUser, threadType = 'd
     },
   });
 
-  const handleMessage = () => {
+  const handleMessage = async () => {
     if (!currentUser) {
       toast.error('Please log in');
       return;
     }
+
+    const ok = await base44.auth.requireProfile(window.location.href);
+    if (!ok) return;
 
     if (currentUser.email === targetUser.email) {
       toast.error('Cannot message yourself');

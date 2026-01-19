@@ -10,7 +10,7 @@
 ## Dev workflows
 - Dev server: `npm run dev` (Vite on :5173). Preview: `npm run preview`. Seed data: `npm run seed:mock-profiles`.
 - Tests: `npm test` / `npm run test:run` / `npm run test:ui` / `npm run test:coverage` (Vitest).
-- Lint: `npm run lint` (quiet). Typecheck: `npm run typecheck` (TypeScript checks JS via `jsconfig.json`).
+- Lint: `npm run lint` (quiet). Typecheck: `npm run typecheck` (TypeScript checks JS via `tsconfig.json`).
 - Local `/api/*` in dev is implemented by the custom Vite middleware in [vite.config.js](../vite.config.js) (`localApiRoutes()`).
   - If you add a new `api/...` endpoint and need it to work in `npm run dev`, also add a route case there (or you’ll get a 404 locally while it still works on Vercel).
   - The middleware hydrates `req.query` (Connect doesn’t by default) and reloads env per request so `.env.local` edits apply without restart.

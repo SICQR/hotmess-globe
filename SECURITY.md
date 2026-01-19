@@ -40,11 +40,11 @@ VITE_BASE44_APP_BASE_URL=https://your-app.base44.app
 
 # Third-party Services (Client-side - use with caution)
 VITE_MAPBOX_ACCESS_TOKEN=your_mapbox_token
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_key
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 
 # Sensitive Operations (Server-side only)
 SUPABASE_SERVICE_KEY=your_service_key  # NEVER prefix with VITE_
-STRIPE_SECRET_KEY=sk_test_your_key     # NEVER prefix with VITE_
+STRIPE_SECRET_KEY=your_stripe_secret_key     # NEVER prefix with VITE_
 ```
 
 ### 2. Dependency Management

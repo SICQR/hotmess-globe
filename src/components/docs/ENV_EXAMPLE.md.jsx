@@ -10,8 +10,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here
 
 # Stripe Payment Processing
 # Get from: https://dashboard.stripe.com/apikeys
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
-stripe_key=sk_test_your_secret_key_here
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key_here
+STRIPE_SECRET_KEY=your_stripe_secret_key_here
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 
 # Supabase (Server)
@@ -23,7 +23,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 # Shopify Integration (Optional)
 # Get from: https://admin.shopify.com/store/your-store/settings/apps/development
 SHOPIFY_STORE_URL=your-store.myshopify.com
-SHOPIFY_ACCESS_TOKEN=shpat_your_access_token
+SHOPIFY_ACCESS_TOKEN=your_shopify_access_token_here
 
 # Mapbox (for enhanced maps)
 # Get from: https://account.mapbox.com/access-tokens
@@ -48,11 +48,11 @@ SOUNDCLOUD_REDIRECT_URI=https://your-domain.com/api/soundcloud/callback
 
 # OpenAI (for AI features)
 # Get from: https://platform.openai.com/api-keys
-OPENAI_API_KEY=sk-your_openai_key
+OPENAI_API_KEY=your_openai_api_key_here
 
 # Email Service (Optional)
 # Get from your email provider
-SENDGRID_API_KEY=SG.your_sendgrid_key
+SENDGRID_API_KEY=your_sendgrid_api_key_here
 SMTP_HOST=smtp.your-provider.com
 SMTP_PORT=587
 SMTP_USER=your_email@domain.com

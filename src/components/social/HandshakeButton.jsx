@@ -57,6 +57,9 @@ export default function HandshakeButton({ targetUser, currentUser, variant = 'de
 
   const handleConnect = async () => {
     if (!currentUser || !targetUser) return;
+
+    const ok = await base44.auth.requireProfile(window.location.href);
+    if (!ok) return;
     
     if (currentUser.email === targetUser.email) {
       toast.error('Cannot connect with yourself');
