@@ -92,7 +92,7 @@ export default function NotificationCenter({ currentUser }) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-96 bg-black border-2 border-white/20 p-0" align="end">
+      <PopoverContent className="w-[calc(100vw-2rem)] max-w-96 bg-black border-2 border-white/20 p-0" align="end">
         <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <h3 className="font-black uppercase text-sm">Notifications</h3>
           {unreadCount > 0 && (

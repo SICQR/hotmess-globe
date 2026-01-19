@@ -1,41 +1,45 @@
 # Copilot instructions (hotmess-globe)
 
 ## Big picture
-- Frontend: React 18 + Vite 6 in `src/`, Tailwind + shadcn/ui components.
-- Backend: Supabase is the source of truth for auth + CRUD.
-- Migration state: legacy code still calls `base44.*`, but `src/api/base44Client.js` is now a Supabase-backed compatibility layer.
+- Vite + React SPA. Canonical navigation lives in [docs/HOTMESS-LONDON-OS-BIBLE-v1.5.md](../docs/HOTMESS-LONDON-OS-BIBLE-v1.5.md).
+- Routing is React Router in [src/App.jsx](../src/App.jsx): “Bible” routes (e.g. `/events`, `/market`) plus backward-compatible `/${PageName}` routes generated from `Pages`.
+- Pages are registered in [src/pages.config.js](../src/pages.config.js). Add a page by importing the component and adding it to `PAGES`.
+- Backend is Vercel Serverless Functions in `api/` (ESM `export default async function handler(req, res)`), with SPA rewrites in [vercel.json](../vercel.json).
+- `functions/` contains deprecated Base44 edge-function stubs; don’t add new logic there—use `api/*` instead.
 
-## Dev workflow
-- Install: `npm install`
-- Run: `npm run dev`
-- Build/preview: `npm run build` / `npm run preview`
-- Lint: `npm run lint` / `npm run lint:fix`
-- Typecheck: `npm run typecheck` (uses `jsconfig.json`; it is intentionally scoped)
+## Dev workflows
+- Dev server: `npm run dev` (Vite on :5173). Preview: `npm run preview`. Seed data: `npm run seed:mock-profiles`.
+- Tests: `npm test` / `npm run test:run` / `npm run test:ui` / `npm run test:coverage` (Vitest).
+- Lint: `npm run lint` (quiet). Typecheck: `npm run typecheck` (TypeScript checks JS via `tsconfig.json`).
+- Local `/api/*` in dev is implemented by the custom Vite middleware in [vite.config.js](../vite.config.js) (`localApiRoutes()`).
+  - If you add a new `api/...` endpoint and need it to work in `npm run dev`, also add a route case there (or you’ll get a 404 locally while it still works on Vercel).
+  - The middleware hydrates `req.query` (Connect doesn’t by default) and reloads env per request so `.env.local` edits apply without restart.
 
-## Environment (Supabase)
-- Required (see `.env.example`):
-  - `VITE_SUPABASE_URL`
-  - `VITE_SUPABASE_ANON_KEY`
-- Optional:
-  - `VITE_SUPABASE_STORAGE_BUCKET` (used by `base44.integrations.Core.UploadFile` shim)
+## Env + secrets
+- Never commit secrets (`.env.local` is gitignored). Client-exposed env vars must be prefixed `VITE_`; server-only env vars (used by `api/*`) must NOT be `VITE_`.
+- Server routes commonly require `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and (for routing/ETAs) `GOOGLE_MAPS_API_KEY`.
 
-## Routing & navigation
-- Routes are generated from `src/pages.config.js` (NOT file-based).
-- The URL path is the page key: `/${PageKey}`.
-- Use `createPageUrl()` from `src/utils/index.ts` for internal links.
-- Auth entry point: `Login` page in `src/pages/Login.jsx`.
+## Supabase + auth conventions
+- Client Supabase + the “Base44 compatibility wrapper” live in [src/components/utils/supabaseClient.jsx](../src/components/utils/supabaseClient.jsx).
+  - Many components still import `base44` from there; prefer extending that wrapper rather than introducing a new SDK.
+  - Many newer modules import `base44` from [src/api/base44Client.js](../src/api/base44Client.js) (it re-exports the same wrapper).
+  - Table names are legacy/dual-cased in places (e.g. `User` vs `users`, `Beacon` vs `beacons`). Follow the existing `*_TABLES` + `runWithTableFallback()` pattern.
+- Prefer `base44.entities.*` helpers over raw `supabase.from(...)` when the table is already represented there (it also carries Base44-style conventions like `created_by`).
+- Frontend auth flow is centralized in [src/lib/AuthContext.jsx](../src/lib/AuthContext.jsx) using `base44.auth.isAuthenticated()` and `base44.auth.me()`.
+- When calling authenticated `/api/*` routes from the client, send the Supabase access token as a bearer token (example: [src/api/presence.js](../src/api/presence.js)).
+  - Many APIs use a small helper that reads the Supabase session and attaches `Authorization: Bearer ...` (see [src/api/connectProximity.js](../src/api/connectProximity.js)).
 
-## Data access patterns (during migration)
-- Preferred for new code: import `supabase` from `src/api/supabaseClient.js`.
-- Legacy-compatible (keep working while refactoring):
-  - `base44.auth.*` maps to Supabase Auth (`me()` returns `{ email, ...user_metadata }`).
-  - `base44.entities.<Table>.*` maps to `supabase.from('<Table>')`:
-    - `.filter(where, sort?, limit?)` supports simple equality filters + sort like `'-created_date'`.
-  - `base44.functions.<name>(body)` maps to `supabase.functions.invoke('<name>')`.
-  - `base44.integrations.Core.UploadFile({ file })` uploads to Supabase Storage and returns `{ file_url }`.
+## Serverless handler patterns (`api/*`)
+- Prefer shared helpers:
+  - `json(res, status, body)`, `getEnv()`, `getBearerToken()`, `readJsonBody()` from [api/shopify/_utils.js](../api/shopify/_utils.js)
+  - Supabase server clients + auth helpers from [api/routing/_utils.js](../api/routing/_utils.js) (`getSupabaseServerClients()`, `getAuthedUser()`)
+- Server-side Supabase requires `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (never expose the service role key to the client).
+- Cron: Vercel hits `/api/events/cron` per [vercel.json](../vercel.json).
 
-## Project conventions / sharp edges
-- Path alias: `@/` maps to `src/` (see `jsconfig.json`).
-- Auth + onboarding redirects are enforced in `src/Layout.jsx` (consent/onboarding/profile completeness).
-- Lint/typecheck are scoped (ESLint ignores `src/lib/**` + `src/components/ui/**`; `jsconfig.json` excludes `src/api/**`).
-- Legacy Base44 Deno handlers still exist in `functions/` but are considered migration targets (Supabase Edge Functions/RPC should replace them).
+## Logging
+- In frontend code, prefer the structured logger in [src/utils/logger.js](../src/utils/logger.js) (it redacts sensitive keys and is quiet in prod).
+- Avoid adding noisy `console.*` in client code; if you must log, use `logger.{debug|info|warn|error}`.
+
+## Imports + UI
+- Path alias `@` maps to `src/` (configured in [vite.config.js](../vite.config.js)).
+- UI is Tailwind + shadcn/Radix; reuse existing components in `src/components/ui/*` rather than introducing new styling systems.

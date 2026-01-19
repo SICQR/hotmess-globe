@@ -1,45 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 
-function readCookie(name) {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
-function writeCookie(name, value) {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; SameSite=Lax`;
-}
-
 export default function AgeGate({ onVerified }) {
-  const [cookieAccepted, setCookieAccepted] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      if (window.sessionStorage.getItem('hm_cookie_accepted') === '1') return true;
-    } catch {
-      // ignore
-    }
-    return readCookie('hm_cookie_accepted') === '1';
-  });
-
-  const acceptCookies = () => {
-    setCookieAccepted(true);
-    try {
-      window.sessionStorage.setItem('hm_cookie_accepted', '1');
-    } catch {
-      // ignore
-    }
-    try {
-      writeCookie('hm_cookie_accepted', '1');
-    } catch {
-      // ignore
-    }
-  };
-
   const handleEnter = () => {
-    // Keep cookie/session acknowledgment tied to the same gate moment.
-    if (!cookieAccepted) acceptCookies();
     // Just mark as verified in session, don't update user record
     onVerified();
   };
@@ -60,32 +23,30 @@ export default function AgeGate({ onVerified }) {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 w-full max-w-xl my-auto"
+        className="relative z-10 text-center px-4 my-auto"
       >
-        <div className="text-center px-4 sm:px-8 py-8 sm:py-10 bg-white/5 border border-white/20 rounded-2xl backdrop-blur-xl">
-          <h1 className="text-6xl sm:text-8xl md:text-[10rem] font-black italic tracking-tighter text-white leading-none mb-3 sm:mb-4">
-            HOT<span className="text-[#FF1493]">MESS</span>
-          </h1>
-          <p className="text-base sm:text-xl md:text-2xl font-bold italic uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/80 mb-8 sm:mb-10">
-            London Operating System
-          </p>
+        <h1 className="text-6xl sm:text-8xl md:text-[10rem] lg:text-[12rem] font-black italic tracking-tighter text-white leading-none mb-3 sm:mb-4">
+          HOT<span className="text-[#FF1493]">MESS</span>
+        </h1>
+        <p className="text-base sm:text-xl md:text-2xl font-bold italic uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/80 mb-8 sm:mb-12">
+          London Operating System
+        </p>
 
-          <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-xs mx-auto">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleEnter}
-              className="bg-[#FF1493] text-black font-black py-5 sm:py-6 text-xl sm:text-2xl uppercase italic hover:bg-white transition-all shadow-2xl w-full"
-            >
-              I AM 18+ // ENTER
-            </motion.button>
-            <button
-              onClick={handleExit}
-              className="border-2 border-white/20 text-white/40 py-3 sm:py-4 uppercase font-bold text-xs tracking-widest hover:border-white/60 hover:text-white transition-all w-full"
-            >
-              Exit Terminal
-            </button>
-          </div>
+        <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-xs mx-auto">
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleEnter}
+            className="bg-[#FF1493] text-black font-black py-5 sm:py-6 text-xl sm:text-2xl uppercase italic hover:bg-white transition-all shadow-[0_0_30px_#FF1493] w-full"
+          >
+            I AM 18+ // ENTER
+          </motion.button>
+          <button 
+            onClick={handleExit}
+            className="border-2 border-white/20 text-white/40 py-3 sm:py-4 uppercase font-bold text-xs tracking-widest hover:border-white/60 hover:text-white transition-all w-full"
+          >
+            Exit Terminal
+          </button>
         </div>
       </motion.div>
 
@@ -97,23 +58,8 @@ export default function AgeGate({ onVerified }) {
             We use cookies to track XP heartbeats, geospatial pulse data, and marketplace security. By entering, you consent to the industrial surveillance of your nightlife participation.
           </p>
         </div>
-
-        <div className="flex items-center gap-3 sm:gap-4">
-          {!cookieAccepted ? (
-            <button
-              onClick={acceptCookies}
-              className="text-[10px] font-black uppercase border-2 border-white/20 text-white/70 px-4 py-2 hover:border-white/60 hover:text-white transition-all"
-            >
-              [ ACK ]
-            </button>
-          ) : (
-            <div className="text-[10px] font-mono uppercase text-white/50 border border-white/10 px-3 py-2">
-              Cookies: OK
-            </div>
-          )}
-          <div className="text-[8px] text-white/20 font-mono whitespace-nowrap">
-            HM-CC-V1.0.5
-          </div>
+        <div className="text-[8px] text-white/20 font-mono whitespace-nowrap">
+          HM-CC-V1.0.5
         </div>
       </div>
     </div>

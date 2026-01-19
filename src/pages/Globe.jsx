@@ -1,39 +1,52 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { supabase } from '@/api/supabaseClient';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import CompactGlobeControls from '../components/globe/CompactGlobeControls';
 import GlobeDataPanel from '../components/globe/GlobeDataPanel';
 import GlobeSearch from '../components/globe/GlobeSearch';
 import FloatingPanel from '../components/ui/FloatingPanel';
 import { activityTracker } from '../components/globe/ActivityTracker';
-import NearbyGrid from '../components/globe/NearbyGrid';
+import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
+import TelegramPanel from '@/features/profilesGrid/TelegramPanel';
 import LocalBeaconsView from '../components/globe/LocalBeaconsView';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
-import { Settings, BarChart3, Menu, Home, Grid3x3 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Settings, BarChart3, Home, Grid3x3 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { debounce } from 'lodash';
 import ErrorBoundary from '../components/error/ErrorBoundary';
+import { fetchNearbyCandidates } from '@/api/connectProximity';
+import { safeGetViewerLatLng } from '@/utils/geolocation';
 
 export default function GlobePage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me(),
+  });
 
   // Fetch beacons and cities from Supabase
   const { data: beacons = [], isLoading: beaconsLoading } = useQuery({
     queryKey: ['beacons'],
-    queryFn: () => base44.entities.Beacon.filter({ active: true, status: 'published' }, '-created_date'),
-    retry: false,
+    queryFn: async () => {
+      // Be tolerant of schema drift:
+      // - some DBs have created_at (not created_date)
+      // - some DBs may not have status/active columns
+      // Avoid orderBy/filter assumptions here; we filter/sort client-side.
+      const rows = await base44.entities.Beacon.filter({}, null, 500);
+      return Array.isArray(rows) ? rows : [];
+    },
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
   const { data: cities = [], isLoading: citiesLoading } = useQuery({
     queryKey: ['cities'],
     queryFn: () => base44.entities.City.list(),
-    retry: false,
     refetchInterval: 60000 // Refresh every minute
   });
 
@@ -193,44 +206,147 @@ export default function GlobePage() {
   const [userActivities, setUserActivities] = useState([]);
   const [activityVisibility, setActivityVisibility] = useState(activityTracker.isEnabled());
   const [showNearbyGrid, setShowNearbyGrid] = useState(false);
+  const [showHotmessFeed, setShowHotmessFeed] = useState(false);
   const [showLocalBeacons, setShowLocalBeacons] = useState(false);
   const [localBeaconCenter, setLocalBeaconCenter] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [previewBeacon, setPreviewBeacon] = useState(null);
 
+  const showPeoplePins = activeLayers.includes('people');
+
+  const { data: nearbyResponse } = useQuery({
+    queryKey: ['globe-nearby', userLocation?.lat, userLocation?.lng],
+    queryFn: () =>
+      fetchNearbyCandidates({
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        radiusMeters: 50000,
+        limit: 40,
+        approximate: true,
+      }),
+    enabled: !!currentUser && !!userLocation?.lat && !!userLocation?.lng && showPeoplePins,
+    refetchInterval: 15000,
+    retry: false,
+  });
+
+  const nearbyPeoplePins = useMemo(() => {
+    const candidates = Array.isArray(nearbyResponse?.candidates) ? nearbyResponse.candidates : [];
+
+    return candidates
+      .map((candidate) => {
+        const lat = Number(candidate?.last_lat);
+        const lng = Number(candidate?.last_lng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+        const profile = candidate?.profile && typeof candidate.profile === 'object' ? candidate.profile : {};
+        const email = profile?.email ? String(profile.email) : null;
+        if (!email) return null;
+
+        const updated = profile?.updated_date || profile?.updated_at || null;
+        const title = profile?.full_name || email;
+
+        return {
+          id: `person-${String(candidate.user_id || email)}`,
+          kind: 'person',
+          mode: 'hookup',
+          title,
+          description: profile?.bio || null,
+          lat,
+          lng,
+          city: profile?.city || null,
+          image_url: profile?.avatar_url || null,
+          avatar_url: profile?.avatar_url || null,
+          email,
+          created_date: updated || new Date().toISOString(),
+          updated_date: updated || null,
+          source: 'nearby',
+          distance_meters: candidate?.distance_meters ?? null,
+          eta_seconds: candidate?.eta_seconds ?? null,
+          eta_mode: candidate?.eta_mode ?? null,
+        };
+      })
+      .filter(Boolean);
+  }, [nearbyResponse]);
+
   // Get user's location
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => console.log('Location access denied')
-      );
-    }
+    let cancelled = false;
+
+    safeGetViewerLatLng(
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 },
+      { retries: 2, logKey: 'globe' }
+    ).then((loc) => {
+      if (cancelled) return;
+      if (!loc) return;
+      setUserLocation({ lat: loc.lat, lng: loc.lng });
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Filter beacons by mode, type, intensity, recency, and search (must be before conditional return)
   const filteredBeacons = useMemo(() => {
+    const toNumberOrNull = (value) => {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    };
+
+    const normalizeBeacon = (b) => {
+      if (!b || typeof b !== 'object') return null;
+
+      const lat = toNumberOrNull(b.lat ?? b.latitude ?? b?.location?.lat);
+      const lng = toNumberOrNull(b.lng ?? b.lon ?? b.longitude ?? b?.location?.lng);
+
+      return {
+        ...b,
+        lat,
+        lng,
+        created_date: b.created_date || b.created_at || b.updated_date || b.updated_at || null,
+      };
+    };
+
     // Combine regular beacons with Right Now users
-    let filtered = [...beacons, ...rightNowUsers].map(b => ({
+    const beaconsList = (Array.isArray(beacons) ? beacons : [])
+      .map(normalizeBeacon)
+      .filter(Boolean)
+      .filter((b) => {
+        // Keep semantics close to the old query (`active:true` + `status:'published'`)
+        // without requiring those columns to exist.
+        const isActive = b.active !== false;
+        const status = b.status ? String(b.status).toLowerCase() : null;
+        const isPublished = status ? status === 'published' : true;
+
+        const isShadow = !!b.is_shadow;
+        const canSeeShadow = String(currentUser?.role || '').toLowerCase() === 'admin';
+        if (isShadow && !canSeeShadow) return false;
+
+        return isActive && isPublished;
+      })
+      .filter((b) => Number.isFinite(b.lat) && Number.isFinite(b.lng));
+
+    const rightNowList = Array.isArray(rightNowUsers) ? rightNowUsers : [];
+
+    const peopleList = showPeoplePins ? nearbyPeoplePins : [];
+
+    let filtered = [...beaconsList, ...rightNowList, ...peopleList].map(b => ({
       ...b,
       ts: new Date(b.created_date || Date.now()).getTime() // Convert created_date to timestamp
     }));
 
     // Apply search filter first
     if (searchResults) {
-      const searchIds = new Set(searchResults.beacons.map(b => b.id));
-      filtered = filtered.filter(b => searchIds.has(b.id));
+      const searchBeacons = Array.isArray(searchResults?.beacons) ? searchResults.beacons : [];
+      const searchIds = new Set(searchBeacons.map((b) => b.id));
+      filtered = filtered.filter((b) => searchIds.has(b.id));
     }
 
     // Apply radius search
     if (radiusSearch) {
-      const radiusIds = new Set(radiusSearch.beacons.map(b => b.id));
-      filtered = filtered.filter(b => radiusIds.has(b.id));
+      const radiusBeacons = Array.isArray(radiusSearch?.beacons) ? radiusSearch.beacons : [];
+      const radiusIds = new Set(radiusBeacons.map((b) => b.id));
+      filtered = filtered.filter((b) => radiusIds.has(b.id));
     }
 
     // Filter by mode
@@ -264,7 +380,7 @@ export default function GlobePage() {
     }
 
     return filtered;
-  }, [beacons, rightNowUsers, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch]);
+  }, [beacons, rightNowUsers, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, currentUser?.role]);
 
   // Sort by most recent
   const recentActivity = useMemo(() => {
@@ -274,6 +390,12 @@ export default function GlobePage() {
   const handleBeaconClick = useCallback((beacon) => {
     // Don't handle cluster clicks
     if (beacon.isCluster) return;
+
+    // People pins: go straight to profile.
+    if (beacon?.kind === 'person' && beacon?.email) {
+      navigate(createPageUrl(`Profile?email=${encodeURIComponent(beacon.email)}`));
+      return;
+    }
     
     // Close all other panels first
     setShowControls(false);
@@ -292,16 +414,21 @@ export default function GlobePage() {
       lat: beacon.lat,
       lng: beacon.lng
     });
-  }, []);
+  }, [navigate]);
 
   const handleViewFullDetails = useCallback(() => {
-    if (previewBeacon) {
-      setSelectedBeacon(previewBeacon);
-      setLocalBeaconCenter(previewBeacon);
-      setShowLocalBeacons(true);
+    if (!previewBeacon) return;
+
+    if (previewBeacon?.kind === 'person' && previewBeacon?.email) {
+      navigate(createPageUrl(`Profile?email=${encodeURIComponent(previewBeacon.email)}`));
       setPreviewBeacon(null);
+      return;
     }
-  }, [previewBeacon]);
+
+    // Default: treat as a Beacon row.
+    navigate(`${createPageUrl('BeaconDetail')}?id=${encodeURIComponent(previewBeacon.id ?? '')}`);
+    setPreviewBeacon(null);
+  }, [navigate, previewBeacon]);
 
   const [selectedCity, setSelectedCity] = useState(null);
   const globeRef = React.useRef(null);
@@ -386,19 +513,20 @@ export default function GlobePage() {
     activityTracker.setEnabled(newVisibility);
   }, [activityVisibility]);
 
-  const isInitialLoading = beaconsLoading || citiesLoading;
+  if (beaconsLoading || citiesLoading) {
+    return (
+      <div className="relative w-full min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[#FF1493]/30 border-t-[#FF1493] rounded-full animate-spin" />
+          <p className="text-white/60 text-sm tracking-wider uppercase">Loading Pulse...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary>
       <div className="relative w-full min-h-screen bg-black overflow-hidden">
-        {isInitialLoading && (
-          <div className="absolute bottom-4 right-4 z-50 pointer-events-none">
-            <div className="flex items-center gap-2 px-3 py-2 bg-black/80 border border-white/10 rounded-lg backdrop-blur-xl">
-              <div className="w-4 h-4 border-2 border-[#FF1493]/30 border-t-[#FF1493] rounded-full animate-spin" />
-              <p className="text-white/60 text-xs tracking-wider uppercase">Loading Globe...</p>
-            </div>
-          </div>
-        )}
         {/* Globe - Full Screen */}
         <div className="relative w-full h-screen">
           <EnhancedGlobe3D
@@ -411,7 +539,11 @@ export default function GlobePage() {
           onBeaconClick={handleBeaconClick}
           onCityClick={handleCityClick}
           selectedCity={selectedCity}
-          highlightedIds={searchResults?.beacons.map(b => b.id) || radiusSearch?.beacons.map(b => b.id) || []}
+          highlightedIds={
+            (Array.isArray(searchResults?.beacons) ? searchResults.beacons.map((b) => b.id) : null) ||
+            (Array.isArray(radiusSearch?.beacons) ? radiusSearch.beacons.map((b) => b.id) : null) ||
+            []
+          }
           className="w-full h-full"
         />
       </div>
@@ -424,6 +556,9 @@ export default function GlobePage() {
               <Home className="w-4 h-4" />
             </button>
           </Link>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-black/90 border border-white/10 rounded-lg backdrop-blur-xl">
+            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-white/60">PULSE</span>
+          </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-black/90 border border-white/10 rounded-lg backdrop-blur-xl">
             <div className="w-2 h-2 rounded-full bg-[#FF1493] animate-pulse" />
             <span className="text-xs font-bold">{filteredBeacons.length}</span>
@@ -446,6 +581,7 @@ export default function GlobePage() {
               const newState = !showNearbyGrid;
               setShowNearbyGrid(newState);
               if (newState) {
+                setShowHotmessFeed(false);
                 setShowControls(false);
                 setShowPanel(false);
                 setShowLocalBeacons(false);
@@ -458,11 +594,33 @@ export default function GlobePage() {
           >
             <Grid3x3 className="w-4 h-4" />
           </button>
+
+          <button
+            onClick={() => {
+              const newState = !showHotmessFeed;
+              setShowHotmessFeed(newState);
+              if (newState) {
+                setShowNearbyGrid(false);
+                setShowControls(false);
+                setShowPanel(false);
+                setShowLocalBeacons(false);
+                setPreviewBeacon(null);
+              }
+            }}
+            className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
+              showHotmessFeed ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+            }`}
+            aria-label="Hotmess Feed"
+          >
+            <span className="text-[10px] font-black">FEED</span>
+          </button>
+
           <button
             onClick={() => {
               const newState = !showControls;
               setShowControls(newState);
               if (newState) {
+                setShowHotmessFeed(false);
                 setShowPanel(false);
                 setShowNearbyGrid(false);
                 setShowLocalBeacons(false);
@@ -480,6 +638,7 @@ export default function GlobePage() {
               const newState = !showPanel;
               setShowPanel(newState);
               if (newState) {
+                setShowHotmessFeed(false);
                 setShowControls(false);
                 setShowNearbyGrid(false);
                 setShowLocalBeacons(false);
@@ -557,12 +716,28 @@ export default function GlobePage() {
       {/* Nearby Grid Panel */}
       {showNearbyGrid && (
         <FloatingPanel 
-          title="Nearby People" 
+          title="Profile Cards" 
           position="right" 
           width="w-96"
           onClose={() => setShowNearbyGrid(false)}
         >
-          <NearbyGrid userLocation={userLocation} />
+          <ProfilesGrid
+            showHeader={false}
+            showTelegramFeedButton
+            containerClassName="mx-0 max-w-none p-0"
+            onNavigateUrl={(url) => navigate(url)}
+            onOpenProfile={(profile) => {
+              const email = profile?.email;
+              const uid = profile?.authUserId;
+              if (email) {
+                navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
+                return;
+              }
+              if (uid) {
+                navigate(createPageUrl(`Profile?uid=${encodeURIComponent(uid)}`));
+              }
+            }}
+          />
         </FloatingPanel>
       )}
 
@@ -608,6 +783,8 @@ export default function GlobePage() {
           if (city) handleCityClick(city);
         }}
       />
+
+      <TelegramPanel open={showHotmessFeed} onClose={() => setShowHotmessFeed(false)} />
       </div>
     </ErrorBoundary>
   );

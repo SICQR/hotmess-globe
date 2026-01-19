@@ -3,6 +3,13 @@ import { Crown, Zap, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const TIER_CONFIG = {
+  free: {
+    name: 'BASIC',
+    icon: Star,
+    color: 'text-white/60',
+    bgColor: 'bg-white/10',
+    borderColor: 'border-white/20',
+  },
   basic: {
     name: 'BASIC',
     icon: Star,
@@ -18,6 +25,13 @@ const TIER_CONFIG = {
     borderColor: 'border-[#FF1493]',
   },
   pro: {
+    name: 'CHROME',
+    icon: Crown,
+    color: 'text-[#00D9FF]',
+    bgColor: 'bg-[#00D9FF]/20',
+    borderColor: 'border-[#00D9FF]',
+  },
+  chrome: {
     name: 'CHROME',
     icon: Crown,
     color: 'text-[#00D9FF]',

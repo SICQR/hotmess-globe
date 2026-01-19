@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Sparkles, MapPin, Zap, Heart } from 'lucide-react';
+import { Sparkles, MapPin, Zap, Heart, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import HandshakeButton from './HandshakeButton';
 
 export default function AIMatchmaker({ currentUser }) {
   const [matches, setMatches] = useState([]);
@@ -35,79 +34,143 @@ export default function AIMatchmaker({ currentUser }) {
     queryFn: () => base44.entities.UserInteraction.list('-created_date', 500)
   });
 
+  const { data: allVibes = [] } = useQuery({
+    queryKey: ['all-vibes'],
+    queryFn: () => base44.entities.UserVibe.list()
+  });
+
   useEffect(() => {
     if (!currentUser || !allUsers.length) return;
     generateMatches();
-  }, [currentUser, allUsers, userIntents, userInteractions, allInteractions]);
+  }, [currentUser, allUsers, userIntents, userInteractions, allInteractions, allVibes]);
 
   const generateMatches = async () => {
     setLoading(true);
     try {
-      // Get current user's intent
+      // Get current user's data
       const myIntent = userIntents.find(i => i.user_email === currentUser.email);
-      
-      // Get current user's interaction history
+      const myVibe = allVibes.find(v => v.user_email === currentUser.email);
       const myBeacons = userInteractions
         .filter(i => i.interaction_type === 'scan')
         .map(i => i.beacon_id);
 
-      // Build match candidates based on shared intents and beacon history
-      const candidates = allUsers
+      // Calculate vibe compatibility for each user
+      const matchPromises = allUsers
         .filter(u => u.email !== currentUser.email)
-        .map(user => {
+        .filter(u => {
+          // Filter by user preferences
+          if (currentUser.match_preferences?.min_vibe_score) {
+            return (u.vibe_score || 0) >= currentUser.match_preferences.min_vibe_score;
+          }
+          return true;
+        })
+        .map(async (user) => {
           const theirIntent = userIntents.find(i => i.user_email === user.email);
+          const theirVibe = allVibes.find(v => v.user_email === user.email);
           const theirInteractions = allInteractions.filter(i => i.user_email === user.email);
           const theirBeacons = theirInteractions
             .filter(i => i.interaction_type === 'scan')
             .map(i => i.beacon_id);
 
-          // Calculate match score
           let score = 0;
           let reasons = [];
 
-          // Same intent bonus
+          // 1. Vibe Score Compatibility (30 points)
+          if (myVibe && theirVibe) {
+            const archetypeCompatibility = {
+              'architect': ['explorer', 'alchemist', 'guardian'],
+              'hunter': ['collector', 'merchant', 'socialite'],
+              'collector': ['hunter', 'merchant', 'architect'],
+              'explorer': ['architect', 'socialite', 'hunter'],
+              'socialite': ['hunter', 'explorer', 'merchant'],
+              'merchant': ['collector', 'hunter', 'socialite'],
+              'guardian': ['architect', 'alchemist', 'explorer'],
+              'alchemist': ['architect', 'guardian', 'explorer']
+            };
+
+            const compatible = archetypeCompatibility[myVibe.archetype] || [];
+            if (compatible.includes(theirVibe.archetype)) {
+              score += 30;
+              reasons.push(`${myVibe.archetype} × ${theirVibe.archetype} synergy`);
+            }
+
+            // Shared traits
+            const sharedTraits = (myVibe.traits || []).filter(t => 
+              (theirVibe.traits || []).includes(t)
+            );
+            if (sharedTraits.length > 0) {
+              score += sharedTraits.length * 5;
+              reasons.push(`${sharedTraits.length} shared traits`);
+            }
+          }
+
+          // 2. Personality Trait Match (20 points)
+          if (currentUser.personality_traits && user.personality_traits) {
+            const traits = ['openness', 'energy', 'social', 'adventure', 'intensity'];
+            let traitScore = 0;
+            
+            traits.forEach(trait => {
+              const myVal = currentUser.personality_traits[trait] || 50;
+              const theirVal = user.personality_traits[trait] || 50;
+              const similarity = 100 - Math.abs(myVal - theirVal);
+              traitScore += similarity / traits.length;
+            });
+
+            const traitPoints = (traitScore / 100) * 20;
+            score += traitPoints;
+            if (traitPoints > 10) {
+              reasons.push(`${Math.round(traitScore)}% personality match`);
+            }
+          }
+
+          // 3. Same intent bonus (20 points)
           if (myIntent && theirIntent && myIntent.intent === theirIntent.intent) {
-            score += 50;
+            score += 20;
             reasons.push(`Both ${myIntent.intent} right now`);
           }
 
-          // Shared beacon history
+          // 4. Shared beacon history (15 points)
           const sharedBeacons = myBeacons.filter(b => theirBeacons.includes(b));
           if (sharedBeacons.length > 0) {
-            score += sharedBeacons.length * 20;
-            reasons.push(`Scanned ${sharedBeacons.length} same spots`);
+            const beaconScore = Math.min(15, sharedBeacons.length * 3);
+            score += beaconScore;
+            reasons.push(`${sharedBeacons.length} shared venues`);
           }
 
-          // Proximity bonus (if both have intents with locations)
+          // 5. Interest overlap (10 points)
+          const myInterests = new Set(currentUser.interests || []);
+          const theirInterests = new Set(user.interests || []);
+          const sharedInterests = [...myInterests].filter(i => theirInterests.has(i));
+          if (sharedInterests.length > 0) {
+            score += Math.min(10, sharedInterests.length * 2);
+            reasons.push(`${sharedInterests.length} shared interests`);
+          }
+
+          // 6. Proximity bonus (5 points)
           if (myIntent?.lat && theirIntent?.lat) {
             const distance = calculateDistance(
               myIntent.lat, myIntent.lng,
               theirIntent.lat, theirIntent.lng
             );
             if (distance < 5) {
-              score += 30;
-              reasons.push(`Within ${distance.toFixed(1)}km`);
+              score += 5;
+              reasons.push(`${distance.toFixed(1)}km away`);
             }
-          }
-
-          // Similar XP level
-          const myLevel = Math.floor((currentUser.xp || 0) / 1000) + 1;
-          const theirLevel = Math.floor((user.xp || 0) / 1000) + 1;
-          if (Math.abs(myLevel - theirLevel) <= 1) {
-            score += 10;
-            reasons.push(`Similar level`);
           }
 
           return {
             user,
-            score,
+            score: Math.round(score),
             reasons,
-            intent: theirIntent
+            intent: theirIntent,
+            vibe: theirVibe
           };
-        })
-        .filter(m => m.score > 0)
+        });
+
+      const candidates = (await Promise.all(matchPromises))
+        .filter(m => m.score > 40) // Only show 40%+ matches
         .sort((a, b) => b.score - a.score)
-        .slice(0, 6);
+        .slice(0, 8);
 
       setMatches(candidates);
     } catch (error) {
@@ -161,18 +224,46 @@ export default function AIMatchmaker({ currentUser }) {
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-xl font-black rounded-full">
+                <div 
+                  className="w-12 h-12 flex items-center justify-center text-xl font-black rounded-full border-2"
+                  style={{
+                    background: match.vibe?.vibe_color 
+                      ? `linear-gradient(135deg, ${match.vibe.vibe_color}, #000)`
+                      : 'linear-gradient(135deg, #FF1493, #B026FF)',
+                    borderColor: match.vibe?.vibe_color || '#FF1493'
+                  }}
+                >
                   {match.user.full_name?.[0] || 'U'}
                 </div>
                 <div>
                   <h4 className="font-bold">{match.user.full_name}</h4>
                   <div className="flex items-center gap-2 text-xs text-white/60">
-                    <Zap className="w-3 h-3" />
-                    <span>LVL {Math.floor((match.user.xp || 0) / 1000) + 1}</span>
+                    {match.vibe ? (
+                      <>
+                        <Sparkles className="w-3 h-3" />
+                        <span className="uppercase">{match.vibe.archetype}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3 h-3" />
+                        <span>LVL {Math.floor((match.user.xp || 0) / 1000) + 1}</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
-              <div className="px-2 py-1 bg-[#FF1493]/20 border border-[#FF1493] rounded text-xs font-bold">
+              <div 
+                className="px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-1"
+                style={{
+                  background: match.score >= 80 
+                    ? 'linear-gradient(135deg, #FF1493, #B026FF)'
+                    : match.score >= 60
+                    ? 'rgba(255, 20, 147, 0.3)'
+                    : 'rgba(255, 20, 147, 0.2)',
+                  border: `2px solid ${match.score >= 80 ? '#FF1493' : 'rgba(255, 20, 147, 0.3)'}`
+                }}
+              >
+                {match.score >= 80 && <Flame className="w-3 h-3" />}
                 {match.score}%
               </div>
             </div>
@@ -199,14 +290,11 @@ export default function AIMatchmaker({ currentUser }) {
                   PROFILE
                 </Button>
               </Link>
-              <div className="flex-1">
-                <HandshakeButton
-                  targetUser={match.user}
-                  currentUser={currentUser}
-                  variant="default"
-                  className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-lg"
-                />
-              </div>
+              <Link to={`/social/inbox?to=${encodeURIComponent(String(match?.user?.email || ''))}`} className="flex-1">
+                <Button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-lg">
+                  MESSAGE
+                </Button>
+              </Link>
             </div>
           </motion.div>
         ))}

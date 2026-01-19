@@ -114,7 +114,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
               type: 'message',
               title: `New message from ${currentUser.full_name}`,
               message: data.content.substring(0, 100),
-              link: `/Messages?thread=${thread.id}`,
+              link: `/social/t/${encodeURIComponent(String(thread.id))}`,
               metadata: { thread_id: thread.id, sender: currentUser.email }
             });
           } catch (err) {

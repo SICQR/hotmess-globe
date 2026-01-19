@@ -59,7 +59,7 @@ export default function EventWaitlist({ event, currentUser }) {
           type: 'event_reminder',
           title: 'Joined Waitlist',
           message: `You're on the waitlist for ${event.title}. We'll notify you if a spot opens up.`,
-          link: `/BeaconDetail?id=${event.id}`,
+          link: `/events/${event.id}`,
           metadata: { event_id: event.id }
         });
       }

@@ -1,16 +1,34 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Upload, Image as ImageIcon, Video as VideoIcon, Trash2, Lock, Crown } from 'lucide-react';
+import { X, Upload, Image as ImageIcon, Video as VideoIcon, Trash2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6, allowPremium = false }) {
+export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allowPremium = false }) {
   const [uploading, setUploading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [uploadType, setUploadType] = useState('regular');
+
+  const normalizePhotos = (next) => {
+    const list = Array.isArray(next) ? next.filter(Boolean) : [];
+    const clamped = list.slice(0, Math.max(0, maxPhotos));
+
+    // Ensure exactly one primary photo (first by default).
+    const primaryIndex = clamped.findIndex((p) => !!p?.is_primary);
+    return clamped.map((photo, idx) => ({
+      ...photo,
+      is_primary: primaryIndex === -1 ? idx === 0 : idx === primaryIndex,
+      order: typeof photo?.order === 'number' ? photo.order : idx,
+    }));
+  };
+
+  const commitPhotos = (next) => {
+    if (typeof onPhotosChange !== 'function') return;
+    onPhotosChange(normalizePhotos(next));
+  };
 
   const handleUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -33,7 +51,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6, allow
         order: photos.length + idx
       }));
 
-      onPhotosChange([...photos, ...newPhotos]);
+      commitPhotos([...photos, ...newPhotos]);
       toast.success('Photos uploaded!');
     } catch (error) {
       console.error('Upload failed:', error);
@@ -45,7 +63,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6, allow
 
   const handleDelete = (index) => {
     const newPhotos = photos.filter((_, i) => i !== index);
-    onPhotosChange(newPhotos);
+    commitPhotos(newPhotos);
   };
 
   const handleSetPrimary = (index) => {
@@ -53,14 +71,14 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6, allow
       ...photo,
       is_primary: i === index
     }));
-    onPhotosChange(newPhotos);
+    commitPhotos(newPhotos);
   };
 
   const togglePremium = (index) => {
     const newPhotos = photos.map((photo, i) => 
       i === index ? { ...photo, is_premium: !photo.is_premium } : photo
     );
-    onPhotosChange(newPhotos);
+    commitPhotos(newPhotos);
   };
 
   return (

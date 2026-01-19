@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Bot, Loader2, Sparkles, Zap, Calendar, MapPin } from 'lucide-react';
+import { X, Send, Bot, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { base44 } from '@/api/base44Client';
+import { base44 } from '@/components/utils/supabaseClient';
 import ReactMarkdown from 'react-markdown';
 
 export default function GlobalAssistant() {
@@ -87,10 +87,13 @@ export default function GlobalAssistant() {
 
   const quickQuestions = [
     "What events are happening tonight?",
-    "Recommend techno events near me",
-    "Which event has the best vibe?",
-    "Compare upcoming warehouse parties",
-    "What's the most popular event this week?"
+    "Show me products under 1000 XP",
+    "Help me find people into techno",
+    "Explain the XP system",
+    "How do I use Right Now?",
+    "What's my next challenge?",
+    "Show me top-rated sellers",
+    "How do safety check-ins work?"
   ];
 
   return (
@@ -153,10 +156,10 @@ export default function GlobalAssistant() {
                 <div className="text-center py-8">
                   <Sparkles className="w-12 h-12 mx-auto mb-4 text-[#FF1493]" />
                   <p className="text-sm text-white/80 mb-2 font-bold">
-                    Hey! I'm your AI nightlife guide
+                    Hey! I'm your HOTMESS AI assistant
                   </p>
                   <p className="text-xs text-white/60 mb-6">
-                    Ask me about events, get recommendations, or discover what's happening tonight
+                    Ask me about events, marketplace, connections, safety, XP, challenges, or any app feature
                   </p>
                   <div className="space-y-2">
                     <p className="text-xs text-white/40 uppercase tracking-wider mb-3">Try asking:</p>
@@ -239,7 +242,7 @@ export default function GlobalAssistant() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Ask about events..."
+                  placeholder="Ask me anything..."
                   disabled={sending || !conversationId}
                   className="flex-1 bg-white/5 border-2 border-white/20 text-white placeholder:text-white/40"
                 />

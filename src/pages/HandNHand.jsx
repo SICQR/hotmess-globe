@@ -2,12 +2,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { Radio as RadioIcon, Calendar, ExternalLink, Download, Clock, Heart } from 'lucide-react';
+import { Radio as RadioIcon, ExternalLink, Download, Clock, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { schedule, getNextEpisode, formatSchedule, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { format } from 'date-fns';
+import { useRadio } from '../components/shell/RadioContext';
 
 export default function HandNHand() {
+  const { openRadio } = useRadio();
   const show = schedule.shows[2];
   const nextEpisode = getNextEpisode(show.id);
 
@@ -29,7 +31,12 @@ export default function HandNHand() {
           >
             <div className="flex items-center gap-3 mb-4">
               <RadioIcon className="w-8 h-8 text-[#FFEB3B]" />
-              <span className="text-xs uppercase tracking-widest text-white/60 font-bold">HOTMESS Radio</span>
+              <Link
+                to={createPageUrl('RadioSchedule')}
+                className="text-xs uppercase tracking-widest text-white/60 font-bold hover:text-white"
+              >
+                ← Back to Shows
+              </Link>
             </div>
             <h1 className="text-5xl md:text-7xl font-black uppercase mb-4">
               {show.title}
@@ -38,7 +45,10 @@ export default function HandNHand() {
               {show.tagline}
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button className="bg-[#FFEB3B] hover:bg-white text-black hover:text-black font-black px-8 py-6 border-2 border-white uppercase">
+              <Button
+                onClick={openRadio}
+                className="bg-[#FFEB3B] hover:bg-white text-black hover:text-black font-black px-8 py-6 border-2 border-white uppercase"
+              >
                 <ExternalLink className="w-5 h-5 mr-2" />
                 Listen Live
               </Button>

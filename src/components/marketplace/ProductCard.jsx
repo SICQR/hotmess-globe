@@ -1,14 +1,13 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { ShoppingBag, Star, Package, Award, Ticket, Shirt, Tag } from 'lucide-react';
+import { ShoppingBag, Star, Package, Award, Ticket, Shirt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
+import OSCard, { OSCardBadge } from '../ui/OSCard';
 import LazyImage from '../ui/LazyImage';
-import MakeOfferModal from './MakeOfferModal';
 import { base44 } from '@/api/base44Client';
+import { isXpPurchasingEnabled } from '@/lib/featureFlags';
 
 const TYPE_ICONS = {
   physical: Package,
@@ -28,9 +27,23 @@ const TYPE_COLORS = {
   merch: '#FF1493',
 };
 
-export default function ProductCard({ product, index = 0, onBuy, currentUserXP = 0 }) {
-  const [showOfferModal, setShowOfferModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
+  const xpPurchasingEnabled = isXpPurchasingEnabled();
+
+  const normalizedDetails = useMemo(() => {
+    const raw = product?.details;
+    if (!raw) return {};
+    if (typeof raw === 'object') return raw;
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  }, [product?.details]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -38,7 +51,8 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
         const isAuth = await base44.auth.isAuthenticated();
         if (isAuth) {
           const user = await base44.auth.me();
-          setCurrentUser(user);
+          // Keeping this for potential future badges; purchases are disabled for now.
+          void user;
         }
       } catch (error) {
         console.error('Failed to fetch user:', error);
@@ -49,17 +63,30 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
 
   const Icon = TYPE_ICONS[product.product_type] || ShoppingBag;
   const color = TYPE_COLORS[product.product_type] || '#FF1493';
+  const isShopifyProduct = useMemo(() => {
+    const sellerEmail = String(product?.seller_email || '').trim().toLowerCase();
+    const tags = Array.isArray(product?.tags) ? product.tags : [];
+
+    return (
+      sellerEmail === 'shopify@hotmess.london' ||
+      !!normalizedDetails?.shopify_variant_id ||
+      !!normalizedDetails?.shopify_id ||
+      !!normalizedDetails?.shopify_handle ||
+      String(product?.category || '').trim().toLowerCase() === 'official' ||
+      tags.some((t) => String(t || '').trim().toLowerCase() === 'official')
+    );
+  }, [normalizedDetails, product?.seller_email, product?.tags, product?.category]);
   const isOutOfStock = useMemo(() => 
     product.status === 'sold_out' || (product.inventory_count !== undefined && product.inventory_count <= 0),
     [product.status, product.inventory_count]
   );
   const isLocked = useMemo(() => 
-    product.min_xp_level && currentUserXP < product.min_xp_level,
-    [product.min_xp_level, currentUserXP]
+    !isShopifyProduct && product.min_xp_level && currentUserXP < product.min_xp_level,
+    [isShopifyProduct, product.min_xp_level, currentUserXP]
   );
   const isOfficial = useMemo(() => 
-    product.category === 'official' || product.tags?.includes('official'),
-    [product.category, product.tags]
+    product.seller_email === 'shopify@hotmess.london' || product.category === 'official' || product.tags?.includes('official'),
+    [product.seller_email, product.category, product.tags]
   );
 
   return (
@@ -72,7 +99,7 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
       <Link to={createPageUrl(`ProductDetail?id=${product.id}`)}>
         <OSCard 
           locked={isLocked}
-          xpRequired={product.min_xp_level}
+          xpRequired={isLocked ? product.min_xp_level : null}
         >
           {/* Editorial Product Photography */}
           <div 
@@ -136,40 +163,20 @@ export default function ProductCard({ product, index = 0, onBuy, currentUserXP =
                   size="sm"
                   className="flex-1 text-black font-bold"
                   style={{ backgroundColor: color }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onBuy?.(product);
-                  }}
-                  disabled={isOutOfStock || isLocked}
+                  disabled={false}
                 >
-                  {isLocked ? 'LOCKED' : isOutOfStock ? 'Sold Out' : 'Buy'}
+                  View product
                 </Button>
-                {!isOutOfStock && !isLocked && currentUser && currentUser.email !== product.seller_email && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-[#00D9FF] text-[#00D9FF] hover:bg-[#00D9FF] hover:text-black"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setShowOfferModal(true);
-                    }}
-                  >
-                    <Tag className="w-4 h-4" />
-                  </Button>
-                )}
               </div>
+              {!xpPurchasingEnabled ? (
+                <p className="text-xs text-white/50 uppercase tracking-wider">
+                  XP purchasing coming soon
+                </p>
+              ) : null}
             </div>
           </div>
         </OSCard>
       </Link>
-      {currentUser && (
-        <MakeOfferModal
-          isOpen={showOfferModal}
-          onClose={() => setShowOfferModal(false)}
-          product={product}
-          currentUser={currentUser}
-        />
-      )}
     </motion.div>
   );
 }

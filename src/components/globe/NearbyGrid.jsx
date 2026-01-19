@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Users, MapPin, Zap, Filter, Grid3x3 } from 'lucide-react';
+import { base44 } from '@/components/utils/supabaseClient';
+import { fetchNearbyCandidates } from '@/api/connectProximity';
+import { Users, Zap, Filter, Grid3x3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 
@@ -10,115 +11,110 @@ export default function NearbyGrid({ userLocation }) {
   const [distanceFilter, setDistanceFilter] = useState(10); // km
   const [showGrid, setShowGrid] = useState(true);
 
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) return [];
-      return base44.entities.User.list();
-    },
-    retry: false
-  });
+  const haversineMeters = (a, b) => {
+    if (!a || !b) return Infinity;
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(b.lat - a.lat);
+    const dLng = toRad(b.lng - a.lng);
+    const lat1 = toRad(a.lat);
+    const lat2 = toRad(b.lat);
 
-  const { data: recentActivities = [] } = useQuery({
-    queryKey: ['recent-activities-nearby'],
-    queryFn: async () => {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) return [];
-      return base44.entities.UserActivity.filter({ visible: true }, '-created_date', 50);
-    },
-    refetchInterval: 5000
-    ,
-    retry: false
-  });
+    const sinDLat = Math.sin(dLat / 2);
+    const sinDLng = Math.sin(dLng / 2);
+    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+    return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  };
 
   const { data: rightNowStatuses = [] } = useQuery({
     queryKey: ['right-now-status-nearby'],
-    queryFn: async () => {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) return [];
-      return base44.entities.RightNowStatus.filter({ active: true });
-    },
+    queryFn: () => base44.entities.RightNowStatus.filter({ active: true }),
     refetchInterval: 5000
-    ,
-    retry: false
   });
 
-  // Calculate distance between two points
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
+
+  const tier = String(currentUser?.subscription_tier || currentUser?.membership_tier || 'FREE').toUpperCase();
+  const isPaid = tier === 'PAID';
+
+  const { data: nearbyResponse } = useQuery({
+    queryKey: ['connect-nearby', userLocation?.lat, userLocation?.lng, distanceFilter],
+    queryFn: () =>
+      fetchNearbyCandidates({
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        radiusMeters: distanceFilter * 1000,
+        limit: 50,
+      }),
+    enabled: !!currentUser && !!userLocation?.lat && !!userLocation?.lng,
+    refetchInterval: 15000,
+    retry: false,
+  });
 
   // Limit results for performance
   const MAX_DISPLAYED_USERS = 50;
 
-  // Get users with recent activity OR Right Now status
-  const activeUsers = allUsers
-    .filter(user => {
-      const activity = recentActivities.find(a => a.user_email === user.email);
-      const rightNowStatus = rightNowStatuses.find(s => 
-        s.user_email === user.email && 
-        s.active && 
-        new Date(s.expires_at) > new Date()
+  const nearbyCandidates = Array.isArray(nearbyResponse?.candidates) ? nearbyResponse.candidates : [];
+
+  const activeUsers = nearbyCandidates
+    .map((candidate) => {
+      const profile = candidate?.profile && typeof candidate.profile === 'object' ? candidate.profile : {};
+      const user = {
+        ...profile,
+        // keep a stable ID for links/keys
+        id: profile?.id || candidate.user_id,
+        auth_user_id: profile?.auth_user_id || candidate.user_id,
+        email: profile?.email,
+      };
+
+      if (!user?.email) return null;
+
+      const rightNowStatus = rightNowStatuses.find(
+        (s) => s.user_email === user.email && s.active && new Date(s.expires_at) > new Date()
       );
-      
-      // Show Right Now users even without recent activity
-      if (rightNowStatus) return true;
-      if (!activity) return false;
-      
-      // Check if within distance
-      if (userLocation && activity.lat && activity.lng) {
-        const distance = calculateDistance(
-          userLocation.lat,
-          userLocation.lng,
-          activity.lat,
-          activity.lng
-        );
-        return distance <= distanceFilter;
-      }
-      
-      return true;
-    })
-    .map(user => {
-      const activity = recentActivities.find(a => a.user_email === user.email);
-      const rightNowStatus = rightNowStatuses.find(s => 
-        s.user_email === user.email && 
-        s.active && 
-        new Date(s.expires_at) > new Date()
-      );
-      
-      const distance = userLocation && activity?.lat && activity?.lng
-        ? calculateDistance(userLocation.lat, userLocation.lng, activity.lat, activity.lng)
+
+      const origin = userLocation?.lat && userLocation?.lng ? { lat: userLocation.lat, lng: userLocation.lng } : null;
+      const candLat = Number(candidate?.last_lat);
+      const candLng = Number(candidate?.last_lng);
+      const dest = Number.isFinite(candLat) && Number.isFinite(candLng)
+        ? { lat: candLat, lng: candLng }
         : null;
-      
+      const localDistanceMeters = origin && dest ? haversineMeters(origin, dest) : null;
+
       return {
         ...user,
-        lastActivity: activity,
         rightNowStatus,
-        distance,
-        lastSeen: activity ? new Date(activity.created_date) : null
+        // Per spec: straight-line distance is computed locally for FREE tier.
+        distanceMeters: Number.isFinite(localDistanceMeters) ? localDistanceMeters : candidate.distance_meters,
+        etaSeconds: candidate.eta_seconds,
+        etaMode: candidate.eta_mode,
       };
     })
+    .filter(Boolean)
     .sort((a, b) => {
-      // Prioritize Right Now users
       if (a.rightNowStatus && !b.rightNowStatus) return -1;
       if (!a.rightNowStatus && b.rightNowStatus) return 1;
-      // Then sort by distance
-      return (a.distance || Infinity) - (b.distance || Infinity);
+
+      if (isPaid) {
+        const aEta = Number.isFinite(a.etaSeconds) ? a.etaSeconds : Number.POSITIVE_INFINITY;
+        const bEta = Number.isFinite(b.etaSeconds) ? b.etaSeconds : Number.POSITIVE_INFINITY;
+        if (aEta !== bEta) return aEta - bEta;
+      }
+
+      const aDist = Number.isFinite(a.distanceMeters) ? a.distanceMeters : Number.POSITIVE_INFINITY;
+      const bDist = Number.isFinite(b.distanceMeters) ? b.distanceMeters : Number.POSITIVE_INFINITY;
+      return aDist - bDist;
     })
     .slice(0, MAX_DISPLAYED_USERS);
 
   const getTimeAgo = (date) => {
     if (!date) return 'Just now';
-    const seconds = Math.floor((new Date() - date) / 1000);
+    const parsed = date instanceof Date ? date : new Date(date);
+    if (Number.isNaN(parsed.getTime())) return 'Just now';
+    const seconds = Math.floor((new Date() - parsed) / 1000);
     if (seconds < 60) return 'Just now';
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
@@ -167,14 +163,30 @@ export default function NearbyGrid({ userLocation }) {
 
       {/* Grid/List */}
       <div className="flex-1 overflow-y-auto p-4">
-        {activeUsers.length > 0 ? (
+        {!currentUser ? (
+          <div className="flex items-center justify-center h-full text-center">
+            <div>
+              <Users className="w-12 h-12 mx-auto mb-3 text-white/20" />
+              <p className="text-white/40 text-sm uppercase tracking-wider">Login required</p>
+              <p className="text-white/20 text-xs mt-2">Sign in to see nearby people</p>
+            </div>
+          </div>
+        ) : !userLocation?.lat || !userLocation?.lng ? (
+          <div className="flex items-center justify-center h-full text-center">
+            <div>
+              <Users className="w-12 h-12 mx-auto mb-3 text-white/20" />
+              <p className="text-white/40 text-sm uppercase tracking-wider">Location needed</p>
+              <p className="text-white/20 text-xs mt-2">Allow location access to find people nearby</p>
+            </div>
+          </div>
+        ) : activeUsers.length > 0 ? (
           <div className={showGrid 
             ? "grid grid-cols-2 gap-3" 
             : "space-y-3"
           }>
             {activeUsers.map((user, idx) => (
               <motion.div
-                key={user.email}
+                key={user.email || user.auth_user_id || idx}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: idx * 0.02 }}
@@ -185,7 +197,7 @@ export default function NearbyGrid({ userLocation }) {
                     <div className="aspect-square relative overflow-hidden">
                       <img
                         src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&size=400&background=FF1493&color=000`}
-                        alt={user.full_name}
+                        alt={user.full_name || user.email}
                         className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
                       />
                       
@@ -205,12 +217,13 @@ export default function NearbyGrid({ userLocation }) {
                       )}
 
                       {/* Distance Badge */}
-                      {user.distance !== null && (
+                      {(Number.isFinite(user.etaSeconds) || Number.isFinite(user.distanceMeters)) && (
                         <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/80 backdrop-blur-sm text-white text-[10px] font-black uppercase">
-                          {user.distance < 1 
-                            ? `${Math.round(user.distance * 1000)}m`
-                            : `${user.distance.toFixed(1)}km`
-                          }
+                          {isPaid && Number.isFinite(user.etaSeconds)
+                            ? `${Math.max(1, Math.round(user.etaSeconds / 60))}m ${String(user.etaMode || '').toLowerCase()}`
+                            : user.distanceMeters < 1000
+                              ? `${Math.round(user.distanceMeters)}m`
+                              : `${(user.distanceMeters / 1000).toFixed(1)}km`}
                         </div>
                       )}
                     </div>
@@ -219,10 +232,10 @@ export default function NearbyGrid({ userLocation }) {
                     <div className="p-3 space-y-1">
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="font-black text-sm truncate group-hover:text-[#FF1493] transition-colors">
-                          {user.full_name}
+                          {user.full_name || user.email}
                         </h3>
                         <span className="text-[10px] text-white/40 font-mono whitespace-nowrap">
-                          {getTimeAgo(user.lastSeen)}
+                          {getTimeAgo(user.updated_date || user.updated_at)}
                         </span>
                       </div>
 
@@ -257,9 +270,9 @@ export default function NearbyGrid({ userLocation }) {
                       )}
                       
                       {/* Activity Status */}
-                      {!user.rightNowStatus && user.lastActivity?.activity_type && (
+                      {!user.rightNowStatus && (
                         <div className="text-[9px] text-white/40 font-mono uppercase">
-                          {user.lastActivity.activity_type}
+                          {user.availability_status || 'nearby'}
                         </div>
                       )}
                     </div>

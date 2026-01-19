@@ -15,10 +15,15 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
     hookup: '#FF1493',
     drop: '#FFEB3B',
     popup: '#39FF14',
-    private: '#FF6B35'
+    private: '#FF6B35',
+    person: '#00D9FF',
   };
 
   const color = kindColors[beacon.kind] || '#FF1493';
+  const isPerson = beacon.kind === 'person';
+  const detailsUrl = isPerson && beacon.email
+    ? createPageUrl(`Profile?email=${encodeURIComponent(beacon.email)}`)
+    : createPageUrl('BeaconDetail') + '?id=' + encodeURIComponent(beacon.id);
 
   return (
     <motion.div
@@ -53,7 +58,7 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
                 className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80"
                 style={{ color }}
               >
-                {beacon.kind}
+                {isPerson ? 'person' : beacon.kind}
               </div>
               <h3 className="font-black text-lg leading-tight mb-1 line-clamp-2">
                 {beacon.title}
@@ -123,9 +128,9 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
               className="flex-1 bg-[#FF1493] hover:bg-white text-black font-black border-2 border-white"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              VIEW DETAILS
+              {isPerson ? 'VIEW PROFILE' : 'VIEW DETAILS'}
             </Button>
-            <Link to={createPageUrl('BeaconDetail') + '?id=' + beacon.id}>
+            <Link to={detailsUrl}>
               <Button
                 variant="outline"
                 className="border-white/20 hover:bg-white/10"

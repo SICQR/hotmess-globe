@@ -136,7 +136,7 @@ function RefMultiSelectField({
   );
 }
 
-export function FiltersDrawer({
+export default function FiltersDrawer({
   open,
   onClose,
   laneId,

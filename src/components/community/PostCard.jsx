@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, MessageCircle, Share2, AlertTriangle, Image as ImageIcon, Video, BarChart3, Calendar, MapPin, ExternalLink } from 'lucide-react';
+import { Heart, Share2, AlertTriangle, BarChart3, Calendar, MapPin, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';

@@ -1,29 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { MessageCircle, Users, Plus } from 'lucide-react';
+import { MessageCircle, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ChatThread from '../components/messaging/ChatThread';
 import ThreadList from '../components/messaging/ThreadList';
 import NewMessageModal from '../components/messaging/NewMessageModal';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function Messages() {
   const [selectedThread, setSelectedThread] = useState(null);
   const [showNewMessage, setShowNewMessage] = useState(false);
+  const [prefillToEmail, setPrefillToEmail] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
   
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const { data: allUsers = [] } = useAllUsers();
 
-  useEffect(() => {
-    // Messages can be read-only for incomplete profiles, but still require login.
-    base44.auth.isAuthenticated().then((isAuth) => {
-      if (!isAuth) base44.auth.redirectToLogin(window.location.href);
-    });
-  }, []);
+  const requestedTo = useMemo(() => {
+    try {
+      const params = new URLSearchParams(location.search || '');
+      const raw = params.get('to');
+      return raw ? String(raw).trim().toLowerCase() : null;
+    } catch {
+      return null;
+    }
+  }, [location.search]);
 
-  const isProfileComplete = !!(currentUser?.full_name && currentUser?.avatar_url);
+  const requestedThreadId = useMemo(() => {
+    try {
+      const params = new URLSearchParams(location.search || '');
+      const raw = params.get('thread');
+      return raw ? String(raw).trim() : null;
+    } catch {
+      return null;
+    }
+  }, [location.search]);
 
   const { data: threads = [], isLoading } = useQuery({
     queryKey: ['chat-threads', currentUser?.email],
@@ -35,17 +50,52 @@ export default function Messages() {
     refetchInterval: 5000, // Poll every 5s (optimized)
   });
 
-  // Check handshake status for DMs
-  const { data: handshakes = [] } = useQuery({
-    queryKey: ['handshakes', currentUser?.email],
-    queryFn: async () => {
-      const sessions = await base44.entities.BotSession.filter({ status: 'accepted' });
-      return sessions.filter(s => 
-        s.initiator_email === currentUser.email || s.target_email === currentUser.email
+  // Deep-link: /social/inbox?to=email → open compose with recipient prefilled.
+  useEffect(() => {
+    if (!currentUser) return;
+    if (!requestedTo) return;
+    if (requestedTo === String(currentUser.email || '').trim().toLowerCase()) return;
+
+    setPrefillToEmail(requestedTo);
+    setShowNewMessage(true);
+  }, [currentUser, requestedTo]);
+
+  // Deep-link: /social/inbox?thread=<id> → open an existing thread.
+  useEffect(() => {
+    if (!requestedThreadId) return;
+    if (!Array.isArray(threads) || !threads.length) return;
+    if (selectedThread?.id === requestedThreadId) return;
+
+    const match = threads.find((t) => String(t?.id) === requestedThreadId);
+    if (match) setSelectedThread(match);
+  }, [requestedThreadId, threads, selectedThread?.id]);
+
+  const goToSocial = (tab) => {
+    const safeTab = tab === 'inbox' ? 'inbox' : 'discover';
+    navigate(`/social?tab=${encodeURIComponent(safeTab)}`);
+  };
+
+  const clearThreadParam = () => {
+    try {
+      const params = new URLSearchParams(location.search || '');
+      params.delete('thread');
+      navigate(
+        {
+          pathname: location.pathname,
+          search: params.toString() ? `?${params.toString()}` : '',
+        },
+        { replace: true }
       );
-    },
-    enabled: !!currentUser,
-  });
+    } catch {
+      // ignore
+    }
+  };
+
+  const backToInbox = () => {
+    setSelectedThread(null);
+    // If we arrived via /social/inbox?thread=..., remove the param so the thread doesn't reopen.
+    if (requestedThreadId) clearThreadParam();
+  };
 
   if (!currentUser || isLoading || userLoading) {
     return (
@@ -69,17 +119,32 @@ export default function Messages() {
               animate={{ opacity: 1, y: 0 }}
             >
               <h1 className="text-3xl font-black uppercase tracking-tighter mb-1">MESSAGES</h1>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">E2E ENCRYPTED VIA TELEGRAM</p>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">IN-APP DMS</p>
             </motion.div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant="glass"
+                onClick={() => goToSocial('discover')}
+                className="border-white/20"
+              >
+                BACK TO GRID
+              </Button>
+              <Button
+                type="button"
+                variant="glass"
+                onClick={() => goToSocial('inbox')}
+                className="border-white/20"
+              >
+                INBOX
+              </Button>
+            </div>
+
             <Button
-              onClick={() => {
-                if (!isProfileComplete) {
-                  base44.auth.redirectToProfile(window.location.href);
-                  return;
-                }
-                setShowNewMessage(true);
-              }}
-              className="w-full mt-4 bg-[#FF1493] hover:bg-white text-black font-black border-2 border-white hover:border-[#FF1493] transition-all"
+              onClick={() => setShowNewMessage(true)}
+              variant="hot"
+              className="w-full mt-4 font-black uppercase"
             >
               <Plus className="w-4 h-4 mr-2" />
               NEW MESSAGE
@@ -92,14 +157,7 @@ export default function Messages() {
               currentUser={currentUser}
               allUsers={allUsers}
               onSelectThread={setSelectedThread}
-              canStartNew={isProfileComplete}
-              onNewMessage={() => {
-                if (!isProfileComplete) {
-                  base44.auth.redirectToProfile(window.location.href);
-                  return;
-                }
-                setShowNewMessage(true);
-              }}
+              onNewMessage={() => setShowNewMessage(true)}
             />
           </div>
         </div>
@@ -107,12 +165,31 @@ export default function Messages() {
         {/* Chat Thread - Main Area */}
         <div className={`${selectedThread ? 'block' : 'hidden md:block'} flex-1 bg-black`}>
           {selectedThread ? (
-            <ChatThread
-              thread={selectedThread}
-              currentUser={currentUser}
-              readOnly={!isProfileComplete}
-              onBack={() => setSelectedThread(null)}
-            />
+            <>
+              <div className="p-4 border-b-2 border-white/20 bg-black flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="glass"
+                  onClick={backToInbox}
+                  className="border-white/20"
+                >
+                  BACK TO INBOX
+                </Button>
+                <Button
+                  type="button"
+                  variant="glass"
+                  onClick={() => goToSocial('discover')}
+                  className="border-white/20"
+                >
+                  BACK TO GRID
+                </Button>
+              </div>
+              <ChatThread
+                thread={selectedThread}
+                currentUser={currentUser}
+                onBack={backToInbox}
+              />
+            </>
           ) : (
             <div className="h-full flex items-center justify-center bg-black">
               <div className="text-center">
@@ -120,7 +197,7 @@ export default function Messages() {
                   <MessageCircle className="w-16 h-16 text-white/20" />
                 </div>
                 <p className="text-white/60 text-xl font-black uppercase tracking-wider mb-2">SELECT A CONVERSATION</p>
-                <p className="text-white/20 text-xs uppercase font-mono">ALL MESSAGES ARE END-TO-END ENCRYPTED</p>
+                <p className="text-white/20 text-xs uppercase font-mono">MESSAGES STAY IN-APP</p>
               </div>
             </div>
           )}
@@ -132,7 +209,7 @@ export default function Messages() {
         <NewMessageModal
           currentUser={currentUser}
           allUsers={allUsers}
-          handshakes={handshakes}
+          prefillToEmail={prefillToEmail}
           onClose={() => setShowNewMessage(false)}
           onThreadCreated={(thread) => {
             setSelectedThread(thread);

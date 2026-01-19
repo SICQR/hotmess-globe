@@ -1,33 +1,181 @@
 import React from 'react';
-import { MapPin, Heart, Calendar, Zap } from 'lucide-react';
-import { PhotoGallery } from './MediaGallery';
 import MutualConnections from './MutualConnections';
+import { taxonomyConfig } from '../discovery/taxonomyConfig';
 
-export default function StandardProfileView({ user, currentUser, isHandshakeConnection }) {
+const buildTagLabelMap = () => {
+  const map = new Map();
+  (taxonomyConfig?.tags || []).forEach((t) => {
+    if (t?.id) map.set(String(t.id), t);
+  });
+  return map;
+};
+
+const TAG_BY_ID = buildTagLabelMap();
+
+export default function StandardProfileView({ user, currentUser, isHandshakeConnection, isOwnProfile }) {
+  const tagIds = Array.isArray(user?.tag_ids)
+    ? user.tag_ids
+    : Array.isArray(user?.tags)
+      ? user.tags
+      : [];
+
+  const normalizedTagIds = tagIds
+    .map((t) => String(t || '').trim())
+    .filter(Boolean);
+
+  const tagged = normalizedTagIds
+    .map((id) => {
+      const tag = TAG_BY_ID.get(id);
+      return {
+        id,
+        label: tag?.label || id,
+        isSensitive: !!tag?.isSensitive,
+      };
+    });
+
+  const canSeeSensitiveTags = !!isOwnProfile || !!isHandshakeConnection;
+  const safeTags = tagged.filter((t) => !t.isSensitive);
+  const sensitiveTags = tagged.filter((t) => t.isSensitive);
+  const visibleSensitive = canSeeSensitiveTags ? sensitiveTags : [];
+  const hiddenSensitiveCount = canSeeSensitiveTags ? 0 : sensitiveTags.length;
+
+  const photos = Array.isArray(user?.photos) ? user.photos.slice(0, 10) : [];
+
+  const photoUrls = (() => {
+    const urls = [];
+    const push = (value) => {
+      const url = typeof value === 'string' ? value.trim() : '';
+      if (!url) return;
+      if (urls.includes(url)) return;
+      urls.push(url);
+    };
+
+    // Always prefer explicit avatar first if present.
+    push(user?.avatar_url);
+    push(user?.avatarUrl);
+
+    // Canonical: photos array (strings or objects)
+    for (const item of photos) {
+      if (!item) continue;
+      if (typeof item === 'string') push(item);
+      else if (typeof item === 'object') push(item.url || item.file_url || item.href);
+    }
+
+    // Back-compat: photo_urls array
+    const more = Array.isArray(user?.photo_urls) ? user.photo_urls : [];
+    for (const u of more) push(u);
+
+    // Back-compat: images array
+    const images = Array.isArray(user?.images) ? user.images : [];
+    for (const img of images) {
+      if (!img) continue;
+      if (typeof img === 'string') push(img);
+      else if (typeof img === 'object') push(img.url || img.src || img.file_url || img.href);
+    }
+
+    return urls.slice(0, 5);
+  })();
+
+  const isPremiumPhoto = (idx) => {
+    const p = photos[idx];
+    if (!p || typeof p !== 'object') return false;
+    return !!(p.is_premium || p.isPremium || p.premium);
+  };
+
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = React.useState(0);
+  const [previewPhotoIndex, setPreviewPhotoIndex] = React.useState(null);
+
+  const activePhotoIndex = previewPhotoIndex === null ? selectedPhotoIndex : previewPhotoIndex;
+  const activeUrl = photoUrls[activePhotoIndex] || null;
+  const activeIsPremium = isPremiumPhoto(activePhotoIndex);
+
+  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(String(user?.full_name || 'User'))}&size=512&background=111111&color=ffffff`;
+  const mainUrl = activeUrl || fallbackAvatar;
+  const preferredVibes = Array.isArray(user?.preferred_vibes) ? user.preferred_vibes : [];
+  const skills = Array.isArray(user?.skills) ? user.skills : [];
+  const musicTaste = Array.isArray(user?.music_taste) ? user.music_taste : [];
+
   return (
     <div className="space-y-6">
       {/* Photo Gallery */}
-      {user?.photos && user.photos.length > 0 && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-          <h3 className="text-sm uppercase tracking-wider text-white/40 mb-4">Photos</h3>
-          <div className="grid grid-cols-3 gap-3">
-            {user.photos.map((photo, idx) => (
-              <div key={idx} className="relative aspect-square">
-                {photo.is_premium ? (
-                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/20 to-[#FF1493]/20 border-2 border-[#FFD700] flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-2xl mb-2">🔒</div>
-                      <div className="text-xs text-[#FFD700] font-black uppercase">Premium</div>
-                    </div>
-                  </div>
-                ) : (
-                  <img
-                    src={photo.url}
-                    alt={`Photo ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                )}
+      <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+        <h3 className="text-sm uppercase tracking-wider text-white/40 mb-4">Photos</h3>
+
+        {/* Main photo */}
+        <div className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black/30">
+          {activeIsPremium ? (
+            <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#FF1493]/15 border border-[#FFD700]/40 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-3xl mb-2">🔒</div>
+                <div className="text-xs text-[#FFD700] font-black uppercase">Premium</div>
               </div>
+            </div>
+          ) : (
+            <img src={mainUrl} alt="Profile photo" className="w-full h-full object-cover" />
+          )}
+        </div>
+
+        {/* 4 other photos: hover to preview, click to select */}
+        <div className="mt-3 grid grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, slotIdx) => {
+            const photoIdx = slotIdx + 1;
+            const url = photoUrls[photoIdx] || null;
+            const premium = isPremiumPhoto(photoIdx);
+
+            return (
+              <button
+                key={photoIdx}
+                type="button"
+                className="relative aspect-square overflow-hidden rounded-md border border-white/10 bg-black/30 hover:border-white/25 transition-colors disabled:opacity-60"
+                onMouseEnter={() => setPreviewPhotoIndex(photoIdx)}
+                onMouseLeave={() => setPreviewPhotoIndex(null)}
+                onFocus={() => setPreviewPhotoIndex(photoIdx)}
+                onBlur={() => setPreviewPhotoIndex(null)}
+                onClick={() => {
+                  if (!url) return;
+                  setSelectedPhotoIndex(photoIdx);
+                  setPreviewPhotoIndex(null);
+                }}
+                disabled={!url}
+                aria-label={url ? `View photo ${photoIdx + 1}` : `Empty photo slot ${photoIdx + 1}`}
+              >
+                {premium ? (
+                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#FF1493]/15 border border-[#FFD700]/40 flex items-center justify-center">
+                    <div className="text-xs text-[#FFD700] font-black uppercase">🔒</div>
+                  </div>
+                ) : url ? (
+                  <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-white/10 to-black/30" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Tags */}
+      {(safeTags.length > 0 || visibleSensitive.length > 0) && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h3 className="text-sm uppercase tracking-wider text-white/40">Tags</h3>
+            {hiddenSensitiveCount > 0 && (
+              <span className="text-[10px] text-white/40 uppercase">Sensitive tags hidden</span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {safeTags.concat(visibleSensitive).slice(0, 14).map((tag) => (
+              <span
+                key={tag.id}
+                className={
+                  tag.isSensitive
+                    ? 'px-3 py-1 bg-[#FF1493]/15 border border-[#FF1493]/40 text-[#FF1493] text-xs font-bold uppercase'
+                    : 'px-3 py-1 bg-[#00D9FF]/15 border border-[#00D9FF]/35 text-[#00D9FF] text-xs font-bold uppercase'
+                }
+              >
+                {tag.label}
+              </span>
             ))}
           </div>
         </div>
@@ -38,6 +186,44 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
           <h3 className="text-sm uppercase tracking-wider text-white/40 mb-3">About</h3>
           <p className="text-white/80 leading-relaxed">{user.bio}</p>
+        </div>
+      )}
+
+      {/* Vibes */}
+      {preferredVibes.length > 0 && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <h3 className="text-sm uppercase tracking-wider text-white/40 mb-3">Vibes</h3>
+          <div className="flex flex-wrap gap-2">
+            {preferredVibes.slice(0, 8).map((vibe, idx) => (
+              <span key={idx} className="px-3 py-1 bg-white/10 border border-white/15 text-white/80 text-xs font-bold uppercase">
+                {String(vibe).replaceAll('_', ' ')}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Skills */}
+      {skills.length > 0 && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <h3 className="text-sm uppercase tracking-wider text-white/40 mb-3">Skills</h3>
+          <div className="flex flex-wrap gap-2">
+            {skills.slice(0, 10).map((skill, idx) => (
+              <span key={idx} className="px-3 py-1 bg-[#B026FF]/15 border border-[#B026FF]/35 text-[#D7B8FF] text-xs font-bold uppercase">
+                {String(skill)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Music Taste */}
+      {musicTaste.length > 0 && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <h3 className="text-sm uppercase tracking-wider text-white/40 mb-3">Music Taste</h3>
+          <p className="text-white/70 text-sm leading-relaxed">
+            {musicTaste.slice(0, 10).join(' • ')}
+          </p>
         </div>
       )}
 

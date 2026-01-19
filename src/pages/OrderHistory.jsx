@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Package, Calendar, DollarSign, CheckCircle, Clock, XCircle, Unlock } from 'lucide-react';
+import { Package, CheckCircle, Clock, XCircle, Unlock, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -59,6 +59,11 @@ export default function OrderHistory() {
     queryFn: () => base44.entities.OrderItem.list(),
   });
 
+  const { data: allProducts = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => base44.entities.Product.list(),
+  });
+
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
     queryFn: () => base44.entities.User.list(),
@@ -71,17 +76,6 @@ export default function OrderHistory() {
   });
 
   const isLoading = loadingBuyer || loadingSeller;
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <Package className="w-12 h-12 text-white/40 mx-auto mb-4 animate-pulse" />
-          <p className="text-white/60">Loading orders...</p>
-        </div>
-      </div>
-    );
-  }
 
   const releaseEscrowMutation = useMutation({
     mutationFn: async (order) => {
@@ -105,6 +99,63 @@ export default function OrderHistory() {
       toast.success('Payment released to seller!');
     }
   });
+
+  const reorderMutation = useMutation({
+    mutationFn: async (order) => {
+      const orderItems = allOrderItems.filter(item => item.order_id === order.id);
+      const reservedUntil = new Date();
+      reservedUntil.setMinutes(reservedUntil.getMinutes() + 30);
+
+      // Add all items to cart
+      for (const item of orderItems) {
+        const product = allProducts.find(p => p.id === item.product_id);
+        
+        if (!product || product.status === 'sold_out' || product.inventory_count <= 0) {
+          toast.warning(`${item.product_name} is no longer available`);
+          continue;
+        }
+
+        const cartOwnerFilter = currentUser?.auth_user_id
+          ? { auth_user_id: currentUser.auth_user_id, product_id: item.product_id }
+          : { user_email: currentUser.email, product_id: item.product_id };
+
+        const existingCartItems = await base44.entities.CartItem.filter(cartOwnerFilter);
+
+        if (existingCartItems.length > 0) {
+          await base44.entities.CartItem.update(existingCartItems[0].id, {
+            quantity: existingCartItems[0].quantity + item.quantity,
+            reserved_until: reservedUntil.toISOString()
+          });
+        } else {
+          await base44.entities.CartItem.create({
+            ...(currentUser?.auth_user_id ? { auth_user_id: currentUser.auth_user_id } : {}),
+            user_email: currentUser.email,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            reserved_until: reservedUntil.toISOString()
+          });
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['cart']);
+      toast.success('Items added to cart!');
+    },
+    onError: (error) => {
+      toast.error('Failed to reorder: ' + error.message);
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <Package className="w-12 h-12 text-white/40 mx-auto mb-4 animate-pulse" />
+          <p className="text-white/60">Loading orders...</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderOrder = (order, idx, isSeller = false) => {
     const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
@@ -148,17 +199,49 @@ export default function OrderHistory() {
 
         {orderItems.length > 0 && (
           <div className="space-y-2 mt-4 pt-4 border-t border-white/10">
-            {orderItems.map(item => (
-              <div key={item.id} className="flex items-center justify-between text-sm">
-                <Link 
-                  to={createPageUrl(`ProductDetail?id=${item.product_id}`)}
-                  className="text-white/80 hover:text-white transition-colors"
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-white/40 uppercase tracking-wider">Order Items</p>
+              {!isSeller && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => reorderMutation.mutate(order)}
+                  disabled={reorderMutation.isPending}
+                  className="border-[#39FF14] text-[#39FF14] hover:bg-[#39FF14]/10 text-xs"
                 >
-                  {item.product_name} x{item.quantity}
-                </Link>
-                <span className="text-white/40">{item.price_xp.toLocaleString()} XP</span>
-              </div>
-            ))}
+                  <RotateCcw className="w-3 h-3 mr-1" />
+                  Reorder
+                </Button>
+              )}
+            </div>
+            {orderItems.map(item => {
+              const product = allProducts.find(p => p.id === item.product_id);
+              return (
+                <div key={item.id} className="flex items-center gap-3">
+                  {product?.image_urls?.[0] && (
+                    <img 
+                      src={product.image_urls[0]} 
+                      alt={item.product_name}
+                      className="w-12 h-12 object-cover rounded"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <Link 
+                      to={createPageUrl(`ProductDetail?id=${item.product_id}`)}
+                      className="text-white hover:text-[#FF1493] transition-colors font-semibold block"
+                    >
+                      {item.product_name}
+                    </Link>
+                    <p className="text-xs text-white/40">
+                      Qty: {item.quantity} × {item.price_xp.toLocaleString()} XP
+                    </p>
+                  </div>
+                  <span className="text-sm font-bold text-[#FFEB3B]">
+                    {(item.price_xp * item.quantity).toLocaleString()} XP
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -289,10 +372,10 @@ export default function OrderHistory() {
                 <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
                 <p className="text-white/40 text-lg mb-4">No purchases yet</p>
                 <Link 
-                  to={createPageUrl('Marketplace')}
+                  to="/market"
                   className="text-[#FF1493] hover:underline"
                 >
-                  Browse Marketplace
+                  Browse Market
                 </Link>
               </div>
             ) : (

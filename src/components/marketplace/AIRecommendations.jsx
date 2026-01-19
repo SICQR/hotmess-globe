@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Sparkles, TrendingUp } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import ProductCard from './ProductCard';
 
 export default function AIRecommendations({ currentUser, onBuy, excludeProductId = null }) {

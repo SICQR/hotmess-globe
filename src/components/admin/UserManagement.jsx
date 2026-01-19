@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Ban, CheckCircle, Edit, Trash2 } from 'lucide-react';
+import { Search, Ban, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -77,7 +77,9 @@ export default function UserManagement() {
         <div className="bg-black border-2 border-white p-6">
           <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">AVG XP</p>
           <p className="text-4xl font-black text-[#FFEB3B]">
-            {Math.round(users.reduce((sum, u) => sum + (u.xp || 0), 0) / users.length)}
+            {users.length
+              ? Math.round(users.reduce((sum, u) => sum + (u.xp || 0), 0) / users.length)
+              : 0}
           </p>
         </div>
       </div>

@@ -1,22 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { auth, base44, supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Zap, ShoppingCart, Check } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import ErrorBoundary from '../components/error/ErrorBoundary';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { getGuestCartItems, mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
+import { isXpPurchasingEnabled } from '@/lib/featureFlags';
 
 export default function Checkout() {
   const [currentUser, setCurrentUser] = useState(null);
   const [shippingAddress, setShippingAddress] = useState({});
   const [notes, setNotes] = useState('');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [magicEmail, setMagicEmail] = useState('');
+  const [sendingLink, setSendingLink] = useState(false);
+  const [embeddedShopifyCheckoutUrl, setEmbeddedShopifyCheckoutUrl] = useState('');
+  const [isShopifyCheckoutOpen, setIsShopifyCheckoutOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const xpPurchasingEnabled = isXpPurchasingEnabled();
+
+  const isDisallowedCheckoutUrl = (value) => {
+    try {
+      const host = new URL(String(value)).host.toLowerCase();
+      return host.includes('myshopify.com') || host.includes('shopify.com') || host.includes('shop.app');
+    } catch {
+      return true;
+    }
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -36,36 +61,138 @@ export default function Checkout() {
     fetchUser();
   }, []);
 
+  useEffect(() => {
+    if (!currentUser?.email) return;
+
+    const mergedKey = `guest_cart_merged_for:${currentUser.email}`;
+    try {
+      if (sessionStorage.getItem(mergedKey)) return;
+    } catch {
+      // If sessionStorage is unavailable, attempt merge anyway.
+    }
+
+    mergeGuestCartToUser({ currentUser })
+      .then(() => {
+        try {
+          sessionStorage.setItem(mergedKey, '1');
+        } catch {
+          // ignore
+        }
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+      })
+      .catch(() => {
+        // Non-fatal: keep guest cart local if merge fails.
+      });
+  }, [currentUser?.email, queryClient]);
+
   const { data: cartItems = [] } = useQuery({
-    queryKey: ['cart', currentUser?.email],
+    queryKey: ['cart', currentUser?.email || 'guest'],
     queryFn: async () => {
-      const items = await base44.entities.CartItem.filter({ user_email: currentUser.email });
       // Filter out expired reservations (30min timeout)
       const now = new Date();
+
+      if (!currentUser) {
+        const items = getGuestCartItems();
+        return items.filter(item => {
+          if (!item.reserved_until) return true;
+          return new Date(item.reserved_until) > now;
+        });
+      }
+
+      const authUserId = currentUser?.auth_user_id || null;
+
+      const items = authUserId
+        ? await base44.entities.CartItem.filter({ auth_user_id: authUserId })
+        : await base44.entities.CartItem.filter({ user_email: currentUser.email });
       return items.filter(item => {
         if (!item.reserved_until) return true;
         return new Date(item.reserved_until) > now;
       });
     },
-    enabled: !!currentUser
+    enabled: true
   });
+
+  const cartProductIds = Array.from(
+    new Set(
+      (Array.isArray(cartItems) ? cartItems : [])
+        .map((item) => item?.product_id)
+        .filter((id) => id !== null && id !== undefined)
+        .map((id) => String(id))
+    )
+  );
 
   const { data: products = [] } = useQuery({
-    queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list()
+    queryKey: ['products', 'by-cart-ids', cartProductIds.join('|')],
+    queryFn: async () => {
+      if (!cartProductIds.length) return [];
+
+      // IMPORTANT: do not use base44.entities.Product.list/filter here.
+      // Those methods dedupe Shopify-imported rows, which can hide the exact
+      // product id referenced by a cart item and make the cart look empty.
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .in('id', cartProductIds);
+
+      if (error) {
+        // Fall back to the Base44 wrapper (best-effort) if the raw query fails.
+        // This may still dedupe, but it's better than hard-failing checkout.
+        const fallback = await base44.entities.Product.filter({}, '-created_at');
+        return Array.isArray(fallback) ? fallback : [];
+      }
+
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: cartProductIds.length > 0,
   });
 
-  const cartWithProducts = cartItems.map(item => {
-    const product = products.find(p => p.id === item.product_id);
-    return { ...item, product };
-  }).filter(item => item.product);
+  const cartWithProducts = (Array.isArray(cartItems) ? cartItems : [])
+    .map((item) => {
+      const product = products.find((p) => String(p.id) === String(item.product_id)) || null;
+      return { ...item, product };
+    });
 
-  const totalXP = cartWithProducts.reduce((sum, item) => 
-    sum + (item.product.price_xp * item.quantity), 0
+  const unresolvedCartItems = cartWithProducts.filter((item) => !item.product);
+
+  const shopifyCartItems = cartWithProducts.filter((item) => {
+    const seller = String(item?.product?.seller_email || '').toLowerCase();
+    const variantId = item?.shopify_variant_id || item?.product?.details?.shopify_variant_id;
+    // If product lookup failed but the cart item has a Shopify variant id, treat it as Shopify.
+    return !!variantId && (seller === 'shopify@hotmess.london' || !seller);
+  });
+
+  const xpCartItems = cartWithProducts.filter((item) => !shopifyCartItems.includes(item));
+
+  const totalXP = xpCartItems.reduce((sum, item) => {
+    const priceXp = item?.product?.price_xp || 0;
+    const qty = item?.quantity || 1;
+    return sum + (priceXp * qty);
+  }, 0);
+
+  const requiresShipping = xpCartItems.some((item) =>
+    ['physical', 'merch'].includes(String(item?.product?.product_type || '').toLowerCase())
+  );
+
+  const isShippingComplete = !requiresShipping || (
+    (shippingAddress.street || '').trim() &&
+    (shippingAddress.city || '').trim() &&
+    (shippingAddress.postcode || '').trim()
   );
 
   const checkoutMutation = useMutation({
     mutationFn: async () => {
+      if (!xpPurchasingEnabled) {
+        throw new Error('XP purchasing is coming soon.');
+      }
+
+      if (!currentUser) {
+        throw new Error('Please sign in to complete checkout');
+      }
+
+      if (!xpCartItems.length) {
+        throw new Error('No XP items to checkout');
+      }
+
       // CRITICAL: Fetch fresh data and validate atomically
       const freshUser = await base44.auth.me();
       const currentXP = freshUser.xp || 0;
@@ -79,7 +206,7 @@ export default function Checkout() {
       const freshProducts = await base44.entities.Product.list();
       
       // Validate products and inventory atomically
-      for (const item of cartWithProducts) {
+      for (const item of xpCartItems) {
         const freshProduct = freshProducts.find(p => p.id === item.product.id);
         if (!freshProduct || freshProduct.status !== 'active') {
           throw new Error(`Product "${item.product.name}" is no longer available.`);
@@ -91,7 +218,7 @@ export default function Checkout() {
 
       // Group items by seller
       const sellers = {};
-      cartWithProducts.forEach(item => {
+      xpCartItems.forEach(item => {
         const seller = item.product.seller_email;
         if (!sellers[seller]) sellers[seller] = [];
         sellers[seller].push(item);
@@ -101,12 +228,12 @@ export default function Checkout() {
       // Step 1: Reserve inventory FIRST (prevents overselling race condition)
       const inventoryUpdates = [];
       try {
-        for (const item of cartWithProducts) {
+        for (const item of xpCartItems) {
           const freshProduct = freshProducts.find(p => p.id === item.product.id);
           if (freshProduct.inventory_count !== undefined) {
             // Double-check inventory hasn't changed since initial validation
             if (freshProduct.inventory_count < item.quantity) {
-              throw new Error(`Inventory changed: only ${freshProduct.inventory_count} of "${item.product.name}" available.`);
+              throw new Error(`Only ${freshProduct.inventory_count} of "${item.product.name}" available.`);
             }
             const newInventory = freshProduct.inventory_count - item.quantity;
             await base44.entities.Product.update(item.product.id, {
@@ -160,8 +287,11 @@ export default function Checkout() {
         }
 
         // Step 4: Clear cart
-        for (const item of cartItems) {
-          await base44.entities.CartItem.delete(item.id);
+        // Remove only the XP items from the DB cart.
+        for (const item of xpCartItems) {
+          if (item?.id) {
+            await base44.entities.CartItem.delete(item.id);
+          }
         }
       } catch (error) {
         // CRITICAL ROLLBACK: Restore inventory and XP on any failure
@@ -198,15 +328,78 @@ export default function Checkout() {
     }
   });
 
-  if (!currentUser || cartWithProducts.length === 0) {
+  const shopifyCheckoutMutation = useMutation({
+    mutationFn: async () => {
+      if (!shopifyCartItems.length) {
+        throw new Error('No Shopify items to checkout');
+      }
+
+      const lines = shopifyCartItems.map((item) => ({
+        variantId: item?.shopify_variant_id || item?.product?.details?.shopify_variant_id,
+        quantity: item?.quantity || 1,
+      }));
+
+      const resp = await fetch('/api/shopify/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lines }),
+      });
+
+      const contentType = resp.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+      const payload = isJson ? await resp.json().catch(() => null) : await resp.text().catch(() => '');
+      if (!resp.ok) {
+        const message = isJson
+          ? (payload?.error || payload?.message || 'Failed to start Shopify checkout')
+          : 'Failed to start Shopify checkout';
+        const details = isJson && payload?.details ? ` (${payload.details})` : '';
+        const err = new Error(`${message}${details}`);
+        err.status = resp.status;
+        err.payload = payload;
+        throw err;
+      }
+
+      const checkoutUrl = payload?.cart?.checkoutUrl;
+      if (!checkoutUrl) {
+        throw new Error('Shopify did not return a checkout URL');
+      }
+
+      if (isDisallowedCheckoutUrl(checkoutUrl)) {
+        throw new Error('Checkout URL is not branded. Refusing to redirect to Shopify domains.');
+      }
+
+      return checkoutUrl;
+    },
+    onSuccess: (checkoutUrl) => {
+      // Do NOT embed Shopify checkout in an iframe.
+      // Embedding can trigger Shopify protected endpoints (e.g. /private_access_tokens)
+      // and is often blocked by Shopify/X-Frame-Options.
+      setEmbeddedShopifyCheckoutUrl(checkoutUrl);
+      setIsShopifyCheckoutOpen(true);
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Shopify checkout failed');
+      // Keep a breadcrumb in DevTools for debugging 500s in prod.
+      console.error('[Checkout] Shopify checkout failed', {
+        status: error?.status,
+        message: error?.message,
+        payload: error?.payload,
+      });
+    },
+  });
+
+  const userXP = currentUser?.xp || 0;
+  const hasEnoughXP = currentUser ? userXP >= totalXP : true;
+
+  if ((cartItems?.length || 0) === 0) {
     return (
       <ErrorBoundary>
         <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <ShoppingCart className="w-16 h-16 text-white/20 mx-auto mb-4" />
           <p className="text-white/60 mb-4">Your cart is empty</p>
-          <Button onClick={() => navigate(createPageUrl('Marketplace'))}>
-            Browse Products
+          <Button onClick={() => navigate('/market')}>
+            Browse Market
           </Button>
         </div>
         </div>
@@ -214,8 +407,25 @@ export default function Checkout() {
     );
   }
 
-  const userXP = currentUser.xp || 0;
-  const hasEnoughXP = userXP >= totalXP;
+  const handleSendMagicLink = async () => {
+    const email = (magicEmail || '').trim();
+    if (!email) {
+      toast.error('Enter your email');
+      return;
+    }
+
+    setSendingLink(true);
+    try {
+      const redirectTo = `${window.location.origin}${createPageUrl('Checkout')}`;
+      const { error } = await auth.sendMagicLink(email, redirectTo);
+      if (error) throw error;
+      toast.success('Magic link sent. Check your email.');
+    } catch (error) {
+      toast.error(error?.message || 'Failed to send magic link');
+    } finally {
+      setSendingLink(false);
+    }
+  };
 
   return (
     <ErrorBoundary>
@@ -226,46 +436,168 @@ export default function Checkout() {
             <ArrowLeft className="w-4 h-4 mr-2" /> Back
           </Button>
 
-          <h1 className="text-4xl font-black uppercase mb-8">Checkout</h1>
+          <h1 className="text-4xl font-black uppercase mb-2">
+            CHECKOUT<span className="text-[#39FF14]">.</span>
+          </h1>
+          <p className="text-white/60 text-sm uppercase tracking-wider mb-8">
+            Complete your order
+          </p>
+
+          {!xpPurchasingEnabled ? (
+            <div className="mb-8 bg-white/5 border-2 border-white/10 p-6">
+              <h2 className="text-xl font-black uppercase mb-2">XP PURCHASING</h2>
+              <p className="text-white/60 text-sm uppercase tracking-wider">
+                Coming soon.
+              </p>
+            </div>
+          ) : null}
+
+          {shopifyCartItems.length > 0 && (
+            <div className="mb-8 bg-white/5 border-2 border-white/10 p-6">
+              <h2 className="text-xl font-black uppercase mb-2">SHOPIFY CHECKOUT</h2>
+              <p className="text-white/60 text-sm uppercase tracking-wider mb-4">
+                {xpCartItems.length > 0
+                  ? 'You have Shopify items + XP items. These checkout separately.'
+                  : 'These items checkout on Shopify (card, Apple Pay, etc.).'}
+              </p>
+
+              {unresolvedCartItems.length > 0 && (
+                <div className="mb-4 bg-red-600/20 border-2 border-red-600 p-4 text-xs font-bold uppercase tracking-wider">
+                  Some cart items couldn’t load. Try refreshing, or remove/re-add the item.
+                </div>
+              )}
+
+              <Button
+                onClick={() => shopifyCheckoutMutation.mutate()}
+                disabled={shopifyCheckoutMutation.isPending}
+                className="bg-white hover:bg-white/90 text-black font-black uppercase"
+              >
+                {shopifyCheckoutMutation.isPending ? 'Starting Shopify checkout…' : 'Checkout on Shopify'}
+              </Button>
+            </div>
+          )}
+
+          <Dialog
+            open={isShopifyCheckoutOpen}
+            onOpenChange={(open) => {
+              setIsShopifyCheckoutOpen(open);
+              if (!open) setEmbeddedShopifyCheckoutUrl('');
+            }}
+          >
+            <DialogContent className="max-w-5xl bg-black border border-white/10 text-white">
+              <DialogHeader>
+                <DialogTitle className="font-black uppercase">Secure checkout</DialogTitle>
+                <DialogDescription className="text-white/60">
+                    Checkout opens in a separate secure page.
+                </DialogDescription>
+              </DialogHeader>
+
+                <div className="text-sm text-white/60">
+                  {embeddedShopifyCheckoutUrl
+                    ? 'When you’re ready, open the secure checkout to pay (card, Apple Pay, etc.).'
+                    : 'No checkout URL available.'}
+                </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-white/20 text-white hover:bg-white hover:text-black font-black uppercase"
+                  onClick={() => setIsShopifyCheckoutOpen(false)}
+                >
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  className="bg-white hover:bg-white/90 text-black font-black uppercase"
+                  onClick={() => {
+                    if (!embeddedShopifyCheckoutUrl) return;
+                    if (isDisallowedCheckoutUrl(embeddedShopifyCheckoutUrl)) {
+                      toast.error('Checkout URL is not branded. Refusing to redirect to Shopify domains.');
+                      return;
+                    }
+                    window.location.assign(embeddedShopifyCheckoutUrl);
+                  }}
+                  disabled={!embeddedShopifyCheckoutUrl}
+                >
+                  Open secure checkout
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Order Summary */}
-            <div>
-              <h2 className="text-2xl font-black uppercase mb-4">Order Summary</h2>
+            <div className="bg-white/5 border-2 border-white/10 p-6">
+              <h2 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-[#FF1493]" />
+                Order Summary
+              </h2>
               <div className="space-y-3 mb-6">
                 {cartWithProducts.map(item => (
-                  <div key={item.id} className="flex justify-between p-3 bg-white/5 border border-white/10">
-                    <div>
-                      <div className="font-bold">{item.product.name}</div>
-                      <div className="text-sm text-white/60">Qty: {item.quantity}</div>
+                  <div key={item.id ?? item.product_id} className="flex justify-between items-start p-4 bg-black/40 border border-white/10">
+                    <div className="flex-1">
+                      <div className="font-black uppercase text-sm mb-1">
+                        {item?.product?.name || 'Product unavailable'}
+                      </div>
+                      {item?.product ? (
+                        <>
+                          <div className="text-xs text-white/40 uppercase">
+                            Qty: {item.quantity} × {item.product.price_xp} XP
+                          </div>
+                          {String(item?.product?.seller_email || '').toLowerCase() === 'shopify@hotmess.london' && (
+                            <div className="text-xs text-white/50 uppercase mt-1">
+                              {item?.variant_title ? `Size: ${item.variant_title} • ` : ''}Checkout on Shopify
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-xs text-red-400 uppercase mt-1">
+                          Couldn’t load product details. Remove and re-add.
+                        </div>
+                      )}
                     </div>
-                    <div className="text-[#FFEB3B] font-bold">
-                      {item.product.price_xp * item.quantity} XP
+                    <div className="text-[#FFEB3B] font-black text-lg">
+                      {item?.product ? (item.product.price_xp * item.quantity) : '—'}
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="border-t-2 border-white/10 pt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-white/60">Your XP Balance</span>
-                  <span className="font-bold">{userXP} XP</span>
-                </div>
-                <div className="flex justify-between items-center text-xl font-black mb-4">
-                  <span>Total</span>
-                  <span className="text-[#FFEB3B]">{totalXP} XP</span>
-                </div>
-                {!hasEnoughXP && (
-                  <div className="bg-red-600/20 border border-red-600 p-3 text-sm">
-                    ⚠️ Insufficient XP. You need {totalXP - userXP} more XP.
+              <div className="border-t-2 border-white/20 pt-4">
+                {currentUser ? (
+                  <>
+                    <div className="flex justify-between items-center mb-3 text-sm">
+                      <span className="text-white/60 uppercase tracking-wider">Your Balance</span>
+                      <span className="font-black text-[#39FF14]">{userXP.toLocaleString()} XP</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-3 text-sm">
+                      <span className="text-white/60 uppercase tracking-wider">Order Total</span>
+                      <span className="font-black text-[#FFEB3B]">-{totalXP.toLocaleString()} XP</span>
+                    </div>
+                    <div className="border-t border-white/20 pt-3 flex justify-between items-center text-xl font-black">
+                      <span className="uppercase">After Order</span>
+                      <span className={hasEnoughXP ? 'text-[#39FF14]' : 'text-red-500'}>
+                        {(userXP - totalXP).toLocaleString()} XP
+                      </span>
+                    </div>
+                    {!hasEnoughXP && (
+                      <div className="mt-4 bg-red-600/20 border-2 border-red-600 p-4 text-sm font-bold uppercase tracking-wider">
+                        ⚠️ Need {(totalXP - userXP).toLocaleString()} more XP
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-sm text-white/60 uppercase tracking-wider">
+                    Sign in at checkout to confirm XP balance.
                   </div>
                 )}
               </div>
             </div>
 
             {/* Shipping Info */}
-            <div>
-              <h2 className="text-2xl font-black uppercase mb-4">Shipping Info</h2>
+            <div className="bg-white/5 border-2 border-white/10 p-6">
+              <h2 className="text-xl font-black uppercase mb-4">DELIVERY DETAILS</h2>
               <div className="space-y-4">
                 <Input
                   placeholder="Street Address"
@@ -293,25 +625,85 @@ export default function Checkout() {
                 />
 
                 <Button
-                  onClick={() => checkoutMutation.mutate()}
-                  disabled={!hasEnoughXP || checkoutMutation.isPending}
-                  className="w-full bg-[#39FF14] text-black font-black text-lg py-6"
+                  onClick={() => {
+                    if (!currentUser) {
+                      setShowAuthModal(true);
+                      return;
+                    }
+                    checkoutMutation.mutate();
+                  }}
+                  disabled={
+                    xpCartItems.length === 0 ||
+                    !xpPurchasingEnabled ||
+                    (!currentUser ? false : (!hasEnoughXP || checkoutMutation.isPending)) ||
+                    !isShippingComplete
+                  }
+                  className="w-full bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black text-lg py-7 uppercase tracking-wider shadow-[0_0_20px_rgba(57,255,20,0.3)] border-2 border-[#39FF14]"
                 >
-                  {checkoutMutation.isPending ? (
-                    'Processing...'
+                  {!xpPurchasingEnabled ? (
+                    'XP PURCHASING COMING SOON'
+                  ) : checkoutMutation.isPending ? (
+                    'PROCESSING ORDER...'
                   ) : (
                     <>
                       <Check className="w-5 h-5 mr-2" />
-                      Complete Order ({totalXP} XP)
+                      {currentUser ? 'COMPLETE XP ORDER' : 'SIGN IN TO COMPLETE'} • {totalXP.toLocaleString()} XP
                     </>
                   )}
                 </Button>
+
+                {!isShippingComplete && (
+                  <div className="mt-2 text-xs text-red-400 uppercase tracking-wider">
+                    {requiresShipping ? 'Add a shipping address to continue.' : 'Complete required fields to continue.'}
+                  </div>
+                )}
+                
+                <div className="mt-4 p-4 bg-black/40 border border-white/10 text-xs text-white/60 uppercase tracking-wider">
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 mt-0.5 text-[#39FF14]" />
+                    <div className="space-y-1">
+                      <div>Instant XP deduction</div>
+                      <div>Order tracking available</div>
+                      <div>Seller notified immediately</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </motion.div>
       </div>
       </div>
+
+      <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
+        <DialogContent className="bg-black text-white border-2 border-white/10">
+          <DialogHeader>
+            <DialogTitle className="font-black uppercase">Sign in to checkout</DialogTitle>
+            <DialogDescription className="text-white/60">
+              Magic link only. We’ll email you a secure sign-in link.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <Input
+              value={magicEmail}
+              onChange={(e) => setMagicEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="bg-white/5 border-white/20 text-white"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={handleSendMagicLink}
+              disabled={sendingLink}
+              className="bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black uppercase"
+            >
+              {sendingLink ? 'Sending…' : 'Send magic link'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ErrorBoundary>
   );
 }

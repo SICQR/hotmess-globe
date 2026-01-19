@@ -1,12 +1,13 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { base44 } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
 export default function RightNowNotifications({ currentUser }) {
   const { data: rightNowUsers = [] } = useQuery({
     queryKey: ['right-now-active'],
     queryFn: () => base44.entities.RightNowStatus.filter({ active: true }),
+    enabled: !!currentUser,
     refetchInterval: 30000 // Check every 30 seconds
   });
 
@@ -18,12 +19,14 @@ export default function RightNowNotifications({ currentUser }) {
 
   const { data: allUserTags = [] } = useQuery({
     queryKey: ['all-user-tags'],
-    queryFn: () => base44.entities.UserTag.list()
+    queryFn: () => base44.entities.UserTag.list(),
+    enabled: !!currentUser,
   });
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: () => base44.entities.User.list(),
+    enabled: !!currentUser,
   });
 
   useEffect(() => {

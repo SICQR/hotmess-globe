@@ -1,35 +1,73 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Shield, MapPin, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
+import { useCurrentUser } from '@/components/utils/queryConfig';
 
 export default function AccountConsents() {
-  const [ageConsent, setAgeConsent] = useState(false);
-  const [locationConsent, setLocationConsent] = useState(false);
+  const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
+
+  const sessionAgeVerified = useMemo(() => {
+    try {
+      return sessionStorage.getItem('age_verified') === 'true';
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const initialAge = !!currentUser?.consent_age || sessionAgeVerified;
+  const initialLocation = !!currentUser?.has_consented_gps;
+
+  const [ageConsent, setAgeConsent] = useState(initialAge);
+  const [locationConsent, setLocationConsent] = useState(initialLocation);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    // Once we know who the user is, prefill checkboxes so returning users
+    // don't have to re-accept age/consent just to toggle location.
+    if (!currentUser) return;
+    setAgeConsent((prev) => prev || !!currentUser?.consent_age || sessionAgeVerified);
+    setLocationConsent(!!currentUser?.has_consented_gps);
+  }, [currentUser, sessionAgeVerified]);
+
   const handleSubmit = async () => {
-    if (!ageConsent || !locationConsent) {
-      toast.error('You must accept all consents to continue');
+    const alreadyAccepted = !!currentUser?.consent_accepted;
+    const hasAgeAlready = !!currentUser?.consent_age || sessionAgeVerified;
+
+    // Only require the explicit age checkbox for first-time consent.
+    if (!alreadyAccepted && !ageConsent && !hasAgeAlready) {
+      toast.error('You must confirm you are 18+ to continue');
       return;
     }
 
     setLoading(true);
     try {
+      // Keep age verification consistent across gates.
+      try {
+        if (ageConsent || hasAgeAlready) sessionStorage.setItem('age_verified', 'true');
+      } catch {
+        // ignore
+      }
+
       await base44.auth.updateMe({
         consent_accepted: true,
-        consent_age: true,
-        consent_location: true,
+        consent_age: ageConsent || hasAgeAlready,
+        consent_location: !!locationConsent,
         consent_date: new Date().toISOString(),
+
+        // These are the required flags checked by Layout/OnboardingGate.
+        has_agreed_terms: true,
+        has_consented_data: true,
+        has_consented_gps: !!locationConsent,
       });
 
       window.location.href = createPageUrl('Profile');
     } catch (error) {
-      toast.error('Failed to save consents');
+      toast.error(error?.message || 'Failed to save consents');
       setLoading(false);
     }
   };
@@ -105,10 +143,10 @@ export default function AccountConsents() {
 
           <Button
             onClick={handleSubmit}
-            disabled={!ageConsent || !locationConsent || loading}
+            disabled={loading || (!currentUser?.consent_accepted && !ageConsent)}
             className="w-full bg-[#FF1493] hover:bg-white text-black font-black text-lg py-6 border-2 border-white"
           >
-            {loading ? 'PROCESSING...' : 'ENTER THE NIGHT'}
+            {loading ? 'PROCESSING...' : (currentUser?.consent_accepted ? 'SAVE' : 'ENTER THE NIGHT')}
           </Button>
 
           <p className="text-center text-xs text-white/40 mt-6 uppercase font-mono">
