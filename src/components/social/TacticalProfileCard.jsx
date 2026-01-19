@@ -5,9 +5,32 @@ import { createPageUrl } from '../../utils';
 import { Zap, Flame, Users, Music } from 'lucide-react';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
 
+const getUserPhotoUrls = (user) => {
+  const urls = [];
+  const push = (value) => {
+    const url = typeof value === 'string' ? value.trim() : '';
+    if (!url) return;
+    if (urls.includes(url)) return;
+    urls.push(url);
+  };
+
+  const photos = Array.isArray(user?.photos) ? user.photos : [];
+  for (const item of photos) {
+    if (typeof item === 'string') push(item);
+    else if (item && typeof item === 'object') push(item.url || item.file_url || item.href);
+  }
+
+  push(user?.avatar_url);
+  push(user?.avatarUrl);
+  return urls.filter(Boolean).slice(0, 5);
+};
+
 export default function TacticalProfileCard({ user, delay = 0, hotScore = 0 }) {
   const level = Math.floor((user.xp || 0) / 1000) + 1;
   const isHot = hotScore > 50;
+
+  const photoUrls = getUserPhotoUrls(user);
+  const primaryPhotoUrl = photoUrls[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || 'User')}&size=400&background=FF1493&color=000`;
   
   const getIntentIcon = () => {
     if (!user.current_intent) return null;
@@ -35,7 +58,7 @@ export default function TacticalProfileCard({ user, delay = 0, hotScore = 0 }) {
           {/* Grayscale Profile Photo */}
           <div className="relative aspect-square">
             <OSCardImage
-              src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || 'User')}&size=400&background=FF1493&color=000`}
+              src={primaryPhotoUrl}
               alt={user.full_name}
               grayscale={true}
             />

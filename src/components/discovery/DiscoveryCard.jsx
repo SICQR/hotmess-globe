@@ -8,6 +8,30 @@ import ReportButton from '../moderation/ReportButton';
 import LazyImage from '../ui/LazyImage';
 import AIMatchExplanation from './AIMatchExplanation';
 
+const getUserPhotoUrls = (user) => {
+  const urls = [];
+  const push = (value) => {
+    const url = typeof value === 'string' ? value.trim() : '';
+    if (!url) return;
+    if (urls.includes(url)) return;
+    urls.push(url);
+  };
+
+  const photos = Array.isArray(user?.photos) ? user.photos : [];
+  for (const item of photos) {
+    if (typeof item === 'string') push(item);
+    else if (item && typeof item === 'object') push(item.url || item.file_url || item.href);
+  }
+
+  push(user?.avatar_url);
+  push(user?.avatarUrl);
+
+  const more = Array.isArray(user?.photo_urls) ? user.photo_urls : [];
+  for (const u of more) push(u);
+
+  return urls.filter(Boolean).slice(0, 5);
+};
+
 const formatDistance = (distanceKm) => {
   if (!Number.isFinite(distanceKm)) return null;
   if (distanceKm < 1) return `${Math.round(distanceKm * 1000)}m`;
@@ -51,6 +75,9 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
   const etaLabel = useMemo(() => formatEta(user?.etaSeconds), [user?.etaSeconds]);
   const etaMode = user?.etaMode ? String(user.etaMode).toLowerCase() : null;
 
+  const photoUrls = useMemo(() => getUserPhotoUrls(user), [user]);
+  const primaryPhotoUrl = photoUrls[0] || null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -65,22 +92,16 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
         >
           {/* Avatar/Photo */}
           <div className="aspect-square bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-6xl font-black overflow-hidden relative">
-            {(() => {
-              const primaryPhoto = user.photos?.find(p => p.is_primary)?.url;
-              const firstPhoto = user.photos?.[0]?.url;
-              const photoUrl = primaryPhoto || firstPhoto || user.avatar_url;
-              
-              return photoUrl ? (
-                <LazyImage
-                  src={photoUrl}
-                  alt={user.full_name}
-                  className="w-full h-full object-cover"
-                  containerClassName="w-full h-full absolute inset-0"
-                />
-              ) : (
-                user.full_name?.[0] || 'U'
-              );
-            })()}
+            {primaryPhotoUrl ? (
+              <LazyImage
+                src={primaryPhotoUrl}
+                alt={user.full_name}
+                className="w-full h-full object-cover"
+                containerClassName="w-full h-full absolute inset-0"
+              />
+            ) : (
+              user.full_name?.[0] || 'U'
+            )}
             {(user.video_intro_url || user.has_premium_content) && (
               <div className="absolute top-2 left-2 flex flex-col gap-1">
                 {user.video_intro_url && (
@@ -97,9 +118,9 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
                 )}
               </div>
             )}
-            {user.photos && user.photos.length > 1 && (
+            {photoUrls.length > 1 && (
               <div className="absolute top-2 right-2 px-2 py-1 bg-black/80 text-[9px] font-bold text-white uppercase">
-                +{user.photos.length - 1}
+                {photoUrls.length}/5
               </div>
             )}
           </div>

@@ -105,6 +105,49 @@ export default function Profile() {
   const [sellerTagline, setSellerTagline] = useState('');
   const [sellerBio, setSellerBio] = useState('');
   const [shopBannerUrl, setShopBannerUrl] = useState('');
+  const [gender, setGender] = useState('male');
+  const [photoPolicyAck, setPhotoPolicyAck] = useState(false);
+
+  const buildInitialsAvatarDataUrl = (name) => {
+    const raw = String(name || '').trim();
+    const parts = raw.split(/\s+/).filter(Boolean);
+    const first = parts[0]?.[0] || 'H';
+    const last = parts.length > 1 ? parts[parts.length - 1]?.[0] : 'M';
+    const initials = `${first}${last}`.toUpperCase();
+
+    // Simple deterministic colors so avatars feel consistent.
+    const palette = [
+      ['#FF1493', '#B026FF'],
+      ['#00D9FF', '#1E3A8A'],
+      ['#22C55E', '#0F766E'],
+      ['#F97316', '#7C2D12'],
+    ];
+    const idx = (initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % palette.length;
+    const [c1, c2] = palette[idx];
+
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${c1}"/>
+      <stop offset="1" stop-color="${c2}"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="64" fill="url(#g)"/>
+  <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle"
+        font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+        font-size="190" font-weight="900" fill="rgba(0,0,0,0.9)">
+    ${initials}
+  </text>
+  <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle"
+        font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+        font-size="190" font-weight="900" fill="rgba(255,255,255,0.92)" dx="-6" dy="-6">
+    ${initials}
+  </text>
+</svg>`;
+
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  };
 
   useEffect(() => {
     // Prefill setup form for current user (setup mode only runs when !userEmail).
@@ -118,6 +161,8 @@ export default function Profile() {
     setSellerTagline(String(profileUser?.seller_tagline || ''));
     setSellerBio(String(profileUser?.seller_bio || ''));
     setShopBannerUrl(String(profileUser?.shop_banner_url || ''));
+    setGender(String(profileUser?.gender || 'male'));
+    setPhotoPolicyAck(!!(profileUser?.photo_policy_ack || profileUser?.photoPolicyAck));
   }, [profileUser, isViewingOtherUser]);
 
   const { data: checkIns = [] } = useQuery({
@@ -407,12 +452,6 @@ export default function Profile() {
       return;
     }
 
-    // Only require a new upload if the user doesn't already have an avatar.
-    if (!avatarFile && !profileUser?.avatar_url) {
-      toast.error('Please upload an avatar');
-      return;
-    }
-
     if (!String(profileType || '').trim()) {
       toast.error('Please choose a profile type');
       return;
@@ -423,23 +462,52 @@ export default function Profile() {
       return;
     }
 
+    const normalizedGender = String(gender || '').trim().toLowerCase();
+    if (normalizedGender !== 'male' && normalizedGender !== 'man' && normalizedGender !== 'm') {
+      toast.error('This experience is currently male-only.');
+      return;
+    }
+
+    if (!photoPolicyAck) {
+      toast.error('Please confirm your photos are of men.');
+      return;
+    }
+
     setSaving(true);
-    setUploading(true);
+    setUploading(!!avatarFile);
 
     try {
       let avatarUrl = profileUser?.avatar_url || null;
-      if (avatarFile) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: avatarFile });
-        avatarUrl = file_url;
+
+      // If the user didn't upload an avatar (or storage is misconfigured), fall back to a
+      // generated SVG so setup can complete and the grid has something to show.
+      if (!avatarUrl && !avatarFile) {
+        avatarUrl = buildInitialsAvatarDataUrl(fullName);
+        toast.message('Using a placeholder avatar (you can change it later).');
       }
 
-      setUploading(false);
+      if (avatarFile) {
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file: avatarFile });
+          avatarUrl = file_url;
+        } catch (uploadError) {
+          // Non-fatal: still allow setup completion.
+          console.warn('Avatar upload failed; falling back to placeholder', uploadError);
+          avatarUrl = avatarUrl || buildInitialsAvatarDataUrl(fullName);
+          toast.message('Avatar upload failed; using a placeholder for now.');
+        } finally {
+          setUploading(false);
+        }
+      }
+
       await base44.auth.updateMe({
         full_name: fullName.trim(),
         avatar_url: avatarUrl,
         profile_type: profileType,
         city: city.trim(),
         bio: bio.trim(),
+        gender: 'male',
+        photo_policy_ack: true,
         seller_tagline: profileType === 'seller' ? sellerTagline.trim() : null,
         seller_bio: profileType === 'seller' ? sellerBio.trim() : null,
         shop_banner_url: profileType === 'seller' ? shopBannerUrl.trim() : null,
@@ -451,7 +519,11 @@ export default function Profile() {
       window.location.href = safeNext || createPageUrl('Home');
     } catch (error) {
       console.error('Profile setup failed:', error);
-      toast.error('Setup failed. Please try again.');
+      const msg =
+        (error && typeof error === 'object' && 'message' in error && error.message)
+          ? String(error.message)
+          : 'Setup failed. Please try again.';
+      toast.error(msg);
     } finally {
       setSaving(false);
       setUploading(false);
@@ -671,9 +743,27 @@ export default function Profile() {
               </div>
             )}
 
+            <div className="border border-white/10 bg-black/40 p-4">
+              <p className="text-xs uppercase tracking-widest text-white/50 font-black">Photo Policy</p>
+              <p className="mt-1 text-xs text-white/60">
+                All profile photos must be of men.
+              </p>
+              <label className="mt-3 flex items-start gap-3 text-sm text-white/80">
+                <input
+                  type="checkbox"
+                  checked={photoPolicyAck}
+                  onChange={(e) => setPhotoPolicyAck(e.target.checked)}
+                  className="mt-1 h-4 w-4"
+                />
+                <span>
+                  I confirm my profile photos depict men.
+                </span>
+              </label>
+            </div>
+
             <Button
               type="submit"
-              disabled={saving || !fullName.trim() || (!avatarFile && !profileUser?.avatar_url) || !String(profileType || '').trim() || !String(city || '').trim()}
+              disabled={saving || !fullName.trim() || !String(profileType || '').trim() || !String(city || '').trim() || !photoPolicyAck}
               className="w-full bg-[#FF1493] hover:bg-white text-white hover:text-black font-black text-lg py-6 border-2 border-white"
             >
               {saving ? (
