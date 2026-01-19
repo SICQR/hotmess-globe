@@ -4,6 +4,30 @@ const asJsonOrText = async (res) => {
   return isJson ? res.json() : res.text();
 };
 
+const isShopifyStorefrontConfigError = (payload) => {
+  if (!payload || typeof payload !== 'object') return false;
+  const error = String(payload?.error || '').toLowerCase();
+  if (!error) return false;
+  return (
+    error.includes('shopify storefront api not configured') ||
+    error.includes('invalid shopify storefront token')
+  );
+};
+
+const asNotConfiguredPayload = (payload) => {
+  const error = typeof payload?.error === 'string' ? payload.error : 'Shopify is not configured';
+  const details = typeof payload?.details === 'string' ? payload.details : null;
+  const debug = payload?.debug && typeof payload.debug === 'object' ? payload.debug : null;
+
+  return {
+    ok: false,
+    notConfigured: true,
+    error,
+    ...(details ? { details } : {}),
+    ...(debug ? { debug } : {}),
+  };
+};
+
 const throwIfNotOk = async (res) => {
   if (res.ok) return;
   const payload = await asJsonOrText(res);
@@ -30,22 +54,52 @@ const withCartDebugParam = (url) => {
 export async function fetchCollections({ first = 24 } = {}) {
   const params = new URLSearchParams({ first: String(first) });
   const res = await fetch(`/api/shopify/collections?${params.toString()}`, { method: 'GET' });
-  await throwIfNotOk(res);
-  return res.json();
+  const payload = await asJsonOrText(res);
+  if (!res.ok) {
+    if (isShopifyStorefrontConfigError(payload)) {
+      return { ...asNotConfiguredPayload(payload), collections: [] };
+    }
+    const message = typeof payload === 'string' ? payload : payload?.error || 'Request failed';
+    const err = new Error(message);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
 }
 
 export async function fetchCollectionByHandle({ handle, firstProducts = 24 } = {}) {
   const params = new URLSearchParams({ handle: String(handle || ''), firstProducts: String(firstProducts) });
   const res = await fetch(`/api/shopify/collection?${params.toString()}`, { method: 'GET' });
-  await throwIfNotOk(res);
-  return res.json();
+  const payload = await asJsonOrText(res);
+  if (!res.ok) {
+    if (isShopifyStorefrontConfigError(payload)) {
+      return { ...asNotConfiguredPayload(payload), collection: null };
+    }
+    const message = typeof payload === 'string' ? payload : payload?.error || 'Request failed';
+    const err = new Error(message);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
 }
 
 export async function fetchProductByHandle({ handle } = {}) {
   const params = new URLSearchParams({ handle: String(handle || '') });
   const res = await fetch(`/api/shopify/product?${params.toString()}`, { method: 'GET' });
-  await throwIfNotOk(res);
-  return res.json();
+  const payload = await asJsonOrText(res);
+  if (!res.ok) {
+    if (isShopifyStorefrontConfigError(payload)) {
+      return { ...asNotConfiguredPayload(payload), product: null };
+    }
+    const message = typeof payload === 'string' ? payload : payload?.error || 'Request failed';
+    const err = new Error(message);
+    err.status = res.status;
+    err.payload = payload;
+    throw err;
+  }
+  return payload;
 }
 
 export async function cartGet({ cartId }) {

@@ -13,6 +13,14 @@ export default function Shop() {
       const resp = await fetch('/api/shopify/featured');
       const payload = await resp.json().catch(() => null);
       if (!resp.ok) {
+        const maybeError = String(payload?.error || '').toLowerCase();
+        if (
+          maybeError.includes('shopify storefront api not configured') ||
+          maybeError.includes('invalid shopify storefront token')
+        ) {
+          return { ok: false, notConfigured: true, products: [], ...payload };
+        }
+
         const message = payload?.error || 'Failed to load shop';
         throw new Error(message);
       }
@@ -22,6 +30,7 @@ export default function Shop() {
   });
 
   const products = data?.products || [];
+  const notConfigured = !!data?.notConfigured;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -48,6 +57,16 @@ export default function Shop() {
         <div>
           {isLoading ? (
             <GridSkeleton count={2} />
+          ) : notConfigured ? (
+            <div className="border border-white/10 bg-white/5 p-4">
+              <p className="text-white font-bold">Shop temporarily unavailable</p>
+              <p className="text-white/60 text-sm mt-1">
+                Shopify Storefront isn’t configured for this deployment yet.
+              </p>
+              {data?.details ? (
+                <p className="text-white/50 text-xs mt-2">{data.details}</p>
+              ) : null}
+            </div>
           ) : error ? (
             <div className="border border-white/10 bg-white/5 p-4">
               <p className="text-red-400 font-bold">Failed to load shop</p>
@@ -61,6 +80,10 @@ export default function Shop() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {products.map((p) => {
                 const href = `/market/p/${encodeURIComponent(p.handle)}`;
+                const primaryUrl = p?.featuredImage?.url || p?.images?.nodes?.[0]?.url || '';
+                const primaryAlt = p?.featuredImage?.altText || p?.images?.nodes?.[0]?.altText || p?.title;
+                const secondaryUrl = p?.images?.nodes?.[1]?.url || '';
+                const secondaryAlt = p?.images?.nodes?.[1]?.altText || primaryAlt;
                 return (
                   <div
                     key={p.id}
@@ -70,12 +93,27 @@ export default function Shop() {
                       to={href}
                       className="block hover:opacity-95 transition-opacity"
                     >
-                      <div className="aspect-[16/9] bg-black border border-white/10 overflow-hidden">
-                        {p?.featuredImage?.url ? (
+                      <div className="group aspect-square bg-black border border-white/10 overflow-hidden relative">
+                        {primaryUrl ? (
                           <img
-                            src={p.featuredImage.url}
-                            alt={p.featuredImage.altText || p.title}
-                            className="w-full h-full object-cover"
+                            src={primaryUrl}
+                            alt={primaryAlt || p.title}
+                            loading="lazy"
+                            decoding="async"
+                            className={
+                              "absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-300 " +
+                              (secondaryUrl ? "opacity-100 group-hover:opacity-0" : "opacity-100")
+                            }
+                          />
+                        ) : null}
+
+                        {secondaryUrl ? (
+                          <img
+                            src={secondaryUrl}
+                            alt={secondaryAlt || p.title}
+                            loading="lazy"
+                            decoding="async"
+                            className="absolute inset-0 w-full h-full object-cover object-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                           />
                         ) : null}
                       </div>
