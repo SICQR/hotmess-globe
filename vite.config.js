@@ -190,6 +190,16 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/time/now' && method === 'GET') {
+          return importFresh('./api/time/now.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load time now handler' }));
+            });
+        }
+
         // Event scraper endpoints (handled locally in dev)
         if (path === '/api/events/scrape' && method === 'POST') {
           return importFresh('./api/events/scrape.js')

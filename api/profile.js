@@ -2,6 +2,11 @@ import { createClient } from '@supabase/supabase-js';
 import { getBearerToken, getEnv, getQueryParam, json } from './shopify/_utils.js';
 import { getSupabaseServerClients } from './routing/_utils.js';
 
+const isRunningOnVercel = () => {
+  const flag = process.env.VERCEL || process.env.VERCEL_ENV;
+  return !!flag;
+};
+
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 const normalizeId = (value) => String(value || '').trim();
 
@@ -115,6 +120,9 @@ const mergeAuthMeta = ({ row, meta }) => {
 const fetchMaybeSingle = async (client, table, where) => {
   const baseSelect = 'id,auth_user_id,email,full_name,avatar_url,subscription_tier,last_lat,last_lng,lat,lng,city,bio,profile_type,seller_tagline,seller_bio,shop_banner_url,instagram,twitter';
   const extendedSelect = `${baseSelect},photos,preferred_vibes,skills,interests,looking_for,music_taste,availability_status,profile_theme,accent_color`;
+  // Some Supabase projects backing this repo have a slimmer public.User schema.
+  // If both extended + base selects fail, fall back to a minimal, widely-compatible select.
+  const minimalSelect = 'id,auth_user_id,email,full_name,avatar_url,last_lat,last_lng,lat,lng,city,bio,profile_type';
 
   const run = async (select) => {
     return client
@@ -124,19 +132,28 @@ const fetchMaybeSingle = async (client, table, where) => {
       .maybeSingle();
   };
 
-  let { data, error } = await run(extendedSelect);
-  if (error && isMissingColumnError(error)) {
-    ({ data, error } = await run(baseSelect));
+  const candidates = [extendedSelect, baseSelect, minimalSelect];
+  for (let i = 0; i < candidates.length; i += 1) {
+    const select = candidates[i];
+    const { data, error } = await run(select);
+    if (!error) return { data: data || null, error: null };
+    if (isMissingColumnError(error) && i < candidates.length - 1) continue;
+    return { data: null, error };
   }
 
-  if (error) return { data: null, error };
-  return { data: data || null, error: null };
+  return { data: null, error: null };
 };
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
     return json(res, 405, { error: 'Method not allowed' });
+  }
+
+  const requireAuth = isRunningOnVercel() || process.env.NODE_ENV === 'production';
+  const accessToken = getBearerToken(req);
+  if (requireAuth && !accessToken) {
+    return json(res, 401, { error: 'Unauthorized' });
   }
 
   const emailRaw = getQueryParam(req, 'email');
@@ -149,12 +166,20 @@ export default async function handler(req, res) {
     return json(res, 400, { error: 'Missing required query param: email or uid' });
   }
 
-  const { error: supaErr, serviceClient } = getSupabaseServerClients();
+  const { error: supaErr, serviceClient, anonClient } = getSupabaseServerClients();
+
+  if (accessToken && anonClient) {
+    const { data, error } = await anonClient.auth.getUser(accessToken);
+    if (error || !data?.user) {
+      if (requireAuth) return json(res, 401, { error: 'Unauthorized' });
+    }
+  } else if (requireAuth && !anonClient) {
+    return json(res, 500, { error: 'Supabase server env not configured' });
+  }
 
   // If service role isn't configured (common in local dev), try an authenticated anon-client query
   // using the viewer's bearer token. This relies on RLS allowing authenticated reads.
   if (supaErr || !serviceClient) {
-    const accessToken = getBearerToken(req);
     const supabaseUrl = getEnv('SUPABASE_URL', ['VITE_SUPABASE_URL']);
     const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY', ['VITE_SUPABASE_ANON_KEY']);
 
@@ -190,7 +215,14 @@ export default async function handler(req, res) {
       ? fallbacks.find((p) => normalizeEmail(p?.email) === email)
       : fallbacks.find((p) => normalizeId(p?.auth_user_id) === uid || normalizeId(p?.id) === uid);
 
-    if (!match) return json(res, 404, { error: 'Profile not found' });
+    if (!match) {
+      return json(res, 200, {
+        ok: false,
+        notFound: true,
+        user: null,
+        error: 'Profile not found',
+      });
+    }
     return json(res, 200, { user: match });
   }
 
@@ -280,5 +312,10 @@ export default async function handler(req, res) {
     if (match) return json(res, 200, { user: match });
   }
 
-  return json(res, 404, { error: 'Profile not found' });
+  return json(res, 200, {
+    ok: false,
+    notFound: true,
+    user: null,
+    error: 'Profile not found',
+  });
 }
