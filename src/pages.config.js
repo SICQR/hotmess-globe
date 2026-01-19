@@ -24,6 +24,7 @@ import HandNHand from './pages/HandNHand';
 import Home from './pages/Home';
 import Hnhmess from './pages/Hnhmess';
 import Leaderboard from './pages/Leaderboard';
+import Login from './pages/Login';
 import Marketplace from './pages/Marketplace';
 import MembershipUpgrade from './pages/MembershipUpgrade';
 import Messages from './pages/Messages';
@@ -85,6 +86,7 @@ export const PAGES = {
     "Home": Home,
     "Hnhmess": Hnhmess,
     "Leaderboard": Leaderboard,
+    "Login": Login,
     "Marketplace": Marketplace,
     "MembershipUpgrade": MembershipUpgrade,
     "Messages": Messages,

@@ -69,7 +69,11 @@ export default function EventRSVP({ event, currentUser }) {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <Button
-          onClick={() => rsvpMutation.mutate('going')}
+          onClick={async () => {
+            const ok = await base44.auth.requireProfile(window.location.href);
+            if (!ok) return;
+            rsvpMutation.mutate('going');
+          }}
           disabled={rsvpMutation.isPending || (isAtCapacity && myRsvp?.status !== 'going')}
           className={`flex-1 font-black uppercase ${
             myRsvp?.status === 'going'
@@ -91,7 +95,11 @@ export default function EventRSVP({ event, currentUser }) {
         </Button>
 
         <Button
-          onClick={() => rsvpMutation.mutate('interested')}
+          onClick={async () => {
+            const ok = await base44.auth.requireProfile(window.location.href);
+            if (!ok) return;
+            rsvpMutation.mutate('interested');
+          }}
           disabled={rsvpMutation.isPending}
           variant="outline"
           className={`flex-1 font-black uppercase ${
