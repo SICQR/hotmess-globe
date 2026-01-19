@@ -44,6 +44,7 @@ import Pulse from './pages/Pulse';
 import Radio from './pages/Radio';
 import RadioSchedule from './pages/RadioSchedule';
 import RecordManager from './pages/RecordManager';
+import ReactBitsProfileCardDemo from './pages/ReactBitsProfileCardDemo';
 import RightNowDashboard from './pages/RightNowDashboard';
 import Safety from './pages/Safety';
 import Scan from './pages/Scan';
@@ -104,6 +105,7 @@ export const PAGES = {
     "Radio": Radio,
     "RadioSchedule": RadioSchedule,
     "RecordManager": RecordManager,
+    "ReactBitsProfileCardDemo": ReactBitsProfileCardDemo,
     "RightNowDashboard": RightNowDashboard,
     "Safety": Safety,
     "Scan": Scan,

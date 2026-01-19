@@ -23,6 +23,13 @@ const normalizeErrorCode = (err) => {
   return 'error';
 };
 
+const isAppleDesktop = () => {
+  if (typeof navigator === 'undefined') return false;
+  const platform = String(navigator.platform || '');
+  const ua = String(navigator.userAgent || '');
+  return platform.includes('Mac') || ua.includes('Macintosh');
+};
+
 export function bucketLatLng(loc, decimals = 3) {
   if (!loc) return null;
   const factor = Math.pow(10, decimals);
@@ -40,6 +47,7 @@ export default function useLiveViewerLocation({
   maximumAgeMs = 15_000,
   minUpdateMs = 10_000,
   minDistanceM = 25,
+  disableWatchPositionOnAppleDesktop = true,
 } = {}) {
   const [location, setLocation] = useState(null);
   const [status, setStatus] = useState(enabled ? 'starting' : 'disabled');
@@ -66,7 +74,8 @@ export default function useLiveViewerLocation({
     }
 
     let cancelled = false;
-    setStatus('watching');
+    const shouldUseWatchPosition = !(disableWatchPositionOnAppleDesktop && isAppleDesktop());
+    setStatus(shouldUseWatchPosition ? 'watching' : 'polling');
     setError(null);
 
     const acceptIfAllowed = (next) => {
@@ -88,42 +97,84 @@ export default function useLiveViewerLocation({
       setLocation(next);
     };
 
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        if (cancelled) return;
-        const lat = pos?.coords?.latitude;
-        const lng = pos?.coords?.longitude;
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-        acceptIfAllowed({ lat, lng });
-      },
-      (err) => {
-        if (cancelled) return;
-        const code = normalizeErrorCode(err);
+    let watchId = null;
+    let intervalId = null;
 
-        // Treat transient CoreLocation failures as degraded, but keep the last known fix.
-        if (code === 'unavailable' || code === 'timeout') {
-          setStatus('degraded');
-          setError({ code, message: err?.message || 'Geolocation temporarily unavailable' });
-          return;
-        }
+    const onPosition = (pos) => {
+      if (cancelled) return;
+      const lat = pos?.coords?.latitude;
+      const lng = pos?.coords?.longitude;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+      acceptIfAllowed({ lat, lng });
+    };
 
-        setStatus(code === 'denied' ? 'denied' : 'error');
-        setError({ code, message: err?.message || 'Geolocation error' });
-        if (code === 'denied') setLocation(null);
-      },
-      {
+    const onError = (err) => {
+      if (cancelled) return;
+      const code = normalizeErrorCode(err);
+
+      // Treat transient CoreLocation failures as degraded, but keep the last known fix.
+      if (code === 'unavailable' || code === 'timeout') {
+        setStatus('degraded');
+        setError({ code, message: err?.message || 'Geolocation temporarily unavailable' });
+        return;
+      }
+
+      setStatus(code === 'denied' ? 'denied' : 'error');
+      setError({ code, message: err?.message || 'Geolocation error' });
+      if (code === 'denied') setLocation(null);
+    };
+
+    if (shouldUseWatchPosition) {
+      watchId = navigator.geolocation.watchPosition(onPosition, onError, {
         enableHighAccuracy,
         timeout: timeoutMs,
         maximumAge: maximumAgeMs,
-      }
-    );
+      });
+    } else {
+      // Apple desktop (CoreLocation) can spam the console with kCLErrorLocationUnknown
+      // when using watchPosition. Use low-frequency polling instead.
+      const poll = () => {
+        try {
+          navigator.geolocation.getCurrentPosition(onPosition, (err) => {
+            // Stop polling if permission is explicitly denied.
+            if (err?.code === 1 && intervalId != null) {
+              try {
+                clearInterval(intervalId);
+              } catch {
+                // ignore
+              }
+              intervalId = null;
+            }
+            onError(err);
+          }, {
+            enableHighAccuracy,
+            timeout: timeoutMs,
+            maximumAge: maximumAgeMs,
+          });
+        } catch {
+          // ignore
+        }
+      };
+
+      poll();
+      intervalId = setInterval(poll, Math.max(2_500, minUpdateMs));
+    }
 
     return () => {
       cancelled = true;
-      try {
-        navigator.geolocation.clearWatch(watchId);
-      } catch {
-        // ignore
+      if (intervalId != null) {
+        try {
+          clearInterval(intervalId);
+        } catch {
+          // ignore
+        }
+      }
+      if (watchId != null) {
+        try {
+          navigator.geolocation.clearWatch(watchId);
+        } catch {
+          // ignore
+        }
       }
     };
   }, [
@@ -133,6 +184,7 @@ export default function useLiveViewerLocation({
     minDistanceM,
     minUpdateMs,
     timeoutMs,
+    disableWatchPositionOnAppleDesktop,
   ]);
 
   return { location, status, error };
