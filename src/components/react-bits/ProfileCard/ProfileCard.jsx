@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import './ProfileCard.css';
+import CardSwap from '../CardSwap/CardSwap';
 
 const DEFAULT_INNER_GRADIENT = 'linear-gradient(145deg,#60496e8c 0%,#71C4FF44 100%)';
 
@@ -41,6 +42,9 @@ const adjust = (v, fMin, fMax, tMin, tMax) => round(tMin + ((tMax - tMin) * (v -
 
 const ProfileCardComponent = ({
   avatarUrl = '',
+  mediaUrls = [],
+  enableMediaSwap = true,
+  isActive = false,
   iconUrl = DEFAULT_ICON_URL,
   grainUrl = DEFAULT_GRAIN_URL,
   innerGradient,
@@ -62,6 +66,9 @@ const ProfileCardComponent = ({
 }) => {
   const wrapRef = useRef(null);
   const shellRef = useRef(null);
+
+  const [isHoverActive, setIsHoverActive] = useState(false);
+  const effectiveActive = Boolean(isActive || isHoverActive);
 
   const enterTimerRef = useRef(null);
   const leaveRafRef = useRef(null);
@@ -198,6 +205,8 @@ const ProfileCardComponent = ({
       const shell = shellRef.current;
       if (!shell || !tiltEngine) return;
 
+      setIsHoverActive(true);
+
       shell.classList.add('active');
       shell.classList.add('entering');
       if (enterTimerRef.current) window.clearTimeout(enterTimerRef.current);
@@ -214,6 +223,8 @@ const ProfileCardComponent = ({
   const handlePointerLeave = useCallback(() => {
     const shell = shellRef.current;
     if (!shell || !tiltEngine) return;
+
+    setIsHoverActive(false);
 
     tiltEngine.toCenter();
 
@@ -332,24 +343,37 @@ const ProfileCardComponent = ({
   }, [onContactClick]);
 
   return (
-    <div ref={wrapRef} className={`pc-card-wrapper ${className}`.trim()} style={cardStyle}>
+    <div
+      ref={wrapRef}
+      className={`pc-card-wrapper ${effectiveActive ? 'active' : ''} ${className}`.trim()}
+      style={cardStyle}
+    >
       {behindGlowEnabled && <div className="pc-behind" />}
       <div ref={shellRef} className="pc-card-shell">
-        <section className="pc-card">
+        <section className={`pc-card ${effectiveActive ? 'active' : ''}`.trim()}>
           <div className="pc-inside">
             <div className="pc-shine" />
             <div className="pc-glare" />
             <div className="pc-content pc-avatar-content">
-              <img
-                className="avatar"
-                src={avatarUrl}
-                alt={`${name || 'User'} avatar`}
-                loading="lazy"
-                onError={(e) => {
-                  const t = e.target;
-                  if (t) t.style.display = 'none';
-                }}
-              />
+              {enableMediaSwap && effectiveActive && Array.isArray(mediaUrls) && mediaUrls.length >= 2 ? (
+                <CardSwap
+                  urls={mediaUrls}
+                  active={true}
+                  alt={`${name || 'User'} media`}
+                  className="avatar"
+                />
+              ) : (
+                <img
+                  className="avatar"
+                  src={avatarUrl}
+                  alt={`${name || 'User'} avatar`}
+                  loading="lazy"
+                  onError={(e) => {
+                    const t = e.target;
+                    if (t) t.style.display = 'none';
+                  }}
+                />
+              )}
               {showUserInfo && (
                 <div className="pc-user-info">
                   <div className="pc-user-details">

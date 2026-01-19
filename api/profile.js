@@ -21,6 +21,16 @@ const buildFallbackProfiles = () => {
       city: 'London',
       profile_type: 'creator',
       bio: 'Late-night walks, loud music, no drama',
+      preferred_vibes: [],
+      skills: [],
+      music_taste: [],
+      interests: [],
+      looking_for: [],
+      event_preferences: [],
+      meet_at: [],
+      dealbreakers_text: [],
+      aftercare_menu: [],
+      social_links: null,
       last_lng: -0.1278,
       lat: 51.5074,
       lng: -0.1278,
@@ -37,6 +47,16 @@ const buildFallbackProfiles = () => {
       profile_type: 'seller',
       bio: 'Sunsets, scooters, and smoothies',
       seller_tagline: 'Handmade beachwear + scooter charms',
+      preferred_vibes: [],
+      skills: [],
+      music_taste: [],
+      interests: [],
+      looking_for: [],
+      event_preferences: [],
+      meet_at: [],
+      dealbreakers_text: [],
+      aftercare_menu: [],
+      social_links: null,
       last_lat: 51.5099,
       last_lng: -0.1181,
       lat: 51.5099,
@@ -76,7 +96,32 @@ const isMissingColumnError = (error) => {
 
 const safeArray = (value) => (Array.isArray(value) ? value : []);
 
+const isNil = (value) => value === undefined || value === null;
+
 const pickDefined = (primary, fallback) => (primary === undefined ? fallback : primary);
+
+const isTruthyString = (value) => {
+  const text = typeof value === 'string' ? value.trim() : '';
+  return !!text;
+};
+
+const safeEmailMatch = (a, b) => {
+  const left = normalizeEmail(a);
+  const right = normalizeEmail(b);
+  if (!left || !right) return false;
+  return left === right;
+};
+
+const hasAnyTruthyObjectValue = (value) => {
+  if (!value || typeof value !== 'object') return false;
+  const vals = Object.values(value);
+  return vals.some((v) => {
+    if (v === true) return true;
+    if (typeof v === 'string') return !!v.trim();
+    if (typeof v === 'number') return Number.isFinite(v) && v !== 0;
+    return false;
+  });
+};
 
 const mergeAuthMeta = ({ row, meta }) => {
   const out = { ...(row || {}) };
@@ -90,15 +135,30 @@ const mergeAuthMeta = ({ row, meta }) => {
     'interests',
     'looking_for',
     'preferred_vibes',
+    'event_preferences',
+    'meet_at',
     'skills',
+    'portfolio',
     'music_taste',
     'profile_theme',
     'accent_color',
     'availability_status',
+    'activity_status',
+    'preferred_communication',
+    'dealbreakers_text',
+    'aftercare_menu',
+    'social_links',
+    'video_intro_url',
+    'premium_videos',
+    'premium_unlock_xp',
+    'has_premium_content',
+    'seller_bio',
+    'seller_tagline',
+    'shop_banner_url',
   ];
 
   for (const key of allowedKeys) {
-    if (out[key] === undefined) {
+    if (isNil(out[key])) {
       out[key] = userMeta[key];
     }
   }
@@ -111,15 +171,112 @@ const mergeAuthMeta = ({ row, meta }) => {
   out.interests = safeArray(out.interests);
   out.looking_for = safeArray(out.looking_for);
   out.preferred_vibes = safeArray(out.preferred_vibes);
+  out.event_preferences = safeArray(out.event_preferences);
+  out.meet_at = safeArray(out.meet_at);
+  out.skills = safeArray(out.skills);
+  out.portfolio = safeArray(out.portfolio);
+  out.music_taste = safeArray(out.music_taste);
+  out.aftercare_menu = safeArray(out.aftercare_menu);
+  out.dealbreakers_text = safeArray(out.dealbreakers_text);
+  out.premium_videos = safeArray(out.premium_videos);
+
+  return out;
+};
+
+const isMissingFollowTableError = (error) => isMissingTableError(error);
+
+const checkMutualFollow = async ({ serviceClient, viewerEmail, targetEmail }) => {
+  if (!serviceClient || !viewerEmail || !targetEmail) return false;
+  if (safeEmailMatch(viewerEmail, targetEmail)) return true;
+
+  const tables = ['user_follows', 'UserFollow', 'UserFollows'];
+
+  const hasFollow = async (follower, following) => {
+    for (let i = 0; i < tables.length; i += 1) {
+      const table = tables[i];
+      try {
+        const { data, error } = await serviceClient
+          .from(table)
+          .select('id')
+          .match({ follower_email: follower, following_email: following })
+          .limit(1);
+
+        if (!error) {
+          return Array.isArray(data) && data.length > 0;
+        }
+
+        if (isMissingFollowTableError(error) && i < tables.length - 1) {
+          continue;
+        }
+
+        return false;
+      } catch (error) {
+        if (isMissingFollowTableError(error) && i < tables.length - 1) {
+          continue;
+        }
+        return false;
+      }
+    }
+
+    return false;
+  };
+
+  const viewer = normalizeEmail(viewerEmail);
+  const target = normalizeEmail(targetEmail);
+  if (!viewer || !target) return false;
+
+  const a = await hasFollow(viewer, target);
+  if (!a) return false;
+  const b = await hasFollow(target, viewer);
+  return !!b;
+};
+
+const applyProfilePrivacyGates = ({ user, isConnection }) => {
+  const out = { ...(user || {}) };
+
+  // Social links are connection-only.
+  if (!isConnection) {
+    const hasLinks = hasAnyTruthyObjectValue(out.social_links);
+    out.social_links = hasLinks ? { _locked: true } : null;
+  }
+
+  // Aftercare is connection-only.
+  if (!isConnection) {
+    delete out.aftercare_menu;
+  }
+
+  // Always normalize arrays (avoid UI blowing up on strings/nulls).
+  out.interests = safeArray(out.interests);
+  out.looking_for = safeArray(out.looking_for);
+  out.preferred_vibes = safeArray(out.preferred_vibes);
+  out.event_preferences = safeArray(out.event_preferences);
+  out.meet_at = safeArray(out.meet_at);
   out.skills = safeArray(out.skills);
   out.music_taste = safeArray(out.music_taste);
+  out.portfolio = safeArray(out.portfolio);
+  out.aftercare_menu = safeArray(out.aftercare_menu);
+  out.dealbreakers_text = safeArray(out.dealbreakers_text);
+  out.premium_videos = safeArray(out.premium_videos);
+
+  // Keep premium fields bounded.
+  if (out.photos !== undefined) {
+    out.photos = safeArray(out.photos).slice(0, 10);
+  }
+
+  // Back-compat: some tables store instagram/twitter handles as plain columns.
+  if (!isTruthyString(out.instagram_handle) && isTruthyString(out.instagram)) {
+    out.instagram_handle = String(out.instagram).trim();
+  }
+  if (!isTruthyString(out.twitter_handle) && isTruthyString(out.twitter)) {
+    out.twitter_handle = String(out.twitter).trim();
+  }
 
   return out;
 };
 
 const fetchMaybeSingle = async (client, table, where) => {
   const baseSelect = 'id,auth_user_id,email,full_name,avatar_url,subscription_tier,last_lat,last_lng,lat,lng,city,bio,profile_type,seller_tagline,seller_bio,shop_banner_url,instagram,twitter';
-  const extendedSelect = `${baseSelect},photos,preferred_vibes,skills,interests,looking_for,music_taste,availability_status,profile_theme,accent_color`;
+  const extendedSelect = `${baseSelect},photos,preferred_vibes,event_preferences,meet_at,skills,portfolio,interests,looking_for,music_taste,availability_status,activity_status,preferred_communication,profile_theme,accent_color,dealbreakers_text,aftercare_menu,social_links,video_intro_url,premium_videos,premium_unlock_xp,has_premium_content,instagram_handle,twitter_handle,spotify_url,soundcloud_url,total_sales,seller_rating`;
   // Some Supabase projects backing this repo have a slimmer public.User schema.
   // If both extended + base selects fail, fall back to a minimal, widely-compatible select.
   const minimalSelect = 'id,auth_user_id,email,full_name,avatar_url,last_lat,last_lng,lat,lng,city,bio,profile_type';
@@ -168,10 +325,14 @@ export default async function handler(req, res) {
 
   const { error: supaErr, serviceClient, anonClient } = getSupabaseServerClients();
 
+  let viewerEmail = null;
+
   if (accessToken && anonClient) {
     const { data, error } = await anonClient.auth.getUser(accessToken);
     if (error || !data?.user) {
       if (requireAuth) return json(res, 401, { error: 'Unauthorized' });
+    } else {
+      viewerEmail = data?.user?.email ? normalizeEmail(data.user.email) : null;
     }
   } else if (requireAuth && !anonClient) {
     return json(res, 500, { error: 'Supabase server env not configured' });
@@ -193,19 +354,53 @@ export default async function handler(req, res) {
         },
       });
 
+      let localViewerEmail = viewerEmail;
+      if (!localViewerEmail) {
+        try {
+          const { data } = await authedClient.auth.getUser(accessToken);
+          localViewerEmail = data?.user?.email ? normalizeEmail(data.user.email) : null;
+        } catch {
+          // ignore
+        }
+      }
+
       const tables = ['User', 'users'];
       for (const table of tables) {
         if (email) {
           const { data } = await fetchMaybeSingle(authedClient, table, { email });
-          if (data) return json(res, 200, { user: data });
+          if (data) {
+            const targetEmail = data?.email ? normalizeEmail(data.email) : email;
+            const isConnection = localViewerEmail && targetEmail
+              ? safeEmailMatch(localViewerEmail, targetEmail)
+              : false;
+            const merged = mergeAuthMeta({ row: data, meta: null });
+            const gated = applyProfilePrivacyGates({ user: merged, isConnection });
+            return json(res, 200, { user: gated });
+          }
         }
 
         if (uid) {
           const { data: byAuth } = await fetchMaybeSingle(authedClient, table, { auth_user_id: uid });
-          if (byAuth) return json(res, 200, { user: byAuth });
+          if (byAuth) {
+            const targetEmail = byAuth?.email ? normalizeEmail(byAuth.email) : null;
+            const isConnection = localViewerEmail && targetEmail
+              ? safeEmailMatch(localViewerEmail, targetEmail)
+              : false;
+            const merged = mergeAuthMeta({ row: byAuth, meta: null });
+            const gated = applyProfilePrivacyGates({ user: merged, isConnection });
+            return json(res, 200, { user: gated });
+          }
 
           const { data: byId } = await fetchMaybeSingle(authedClient, table, { id: uid });
-          if (byId) return json(res, 200, { user: byId });
+          if (byId) {
+            const targetEmail = byId?.email ? normalizeEmail(byId.email) : null;
+            const isConnection = localViewerEmail && targetEmail
+              ? safeEmailMatch(localViewerEmail, targetEmail)
+              : false;
+            const merged = mergeAuthMeta({ row: byId, meta: null });
+            const gated = applyProfilePrivacyGates({ user: merged, isConnection });
+            return json(res, 200, { user: gated });
+          }
         }
       }
     }
@@ -233,17 +428,27 @@ export default async function handler(req, res) {
 
   const respondWithUser = async (row) => {
     const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : null;
+    const targetEmail = row?.email ? normalizeEmail(row.email) : null;
+    const isConnection = await checkMutualFollow({
+      serviceClient,
+      viewerEmail,
+      targetEmail,
+    });
+
     if (!authUserId || !serviceClient?.auth?.admin?.getUserById) {
-      return json(res, 200, { user: row });
+      const gated = applyProfilePrivacyGates({ user: row, isConnection });
+      return json(res, 200, { user: gated });
     }
 
     try {
       const { data, error } = await serviceClient.auth.admin.getUserById(authUserId);
       const meta = error ? null : (data?.user?.user_metadata || null);
       const merged = mergeAuthMeta({ row, meta });
-      return json(res, 200, { user: merged });
+      const gated = applyProfilePrivacyGates({ user: merged, isConnection });
+      return json(res, 200, { user: gated });
     } catch {
-      return json(res, 200, { user: row });
+      const gated = applyProfilePrivacyGates({ user: row, isConnection });
+      return json(res, 200, { user: gated });
     }
   };
 

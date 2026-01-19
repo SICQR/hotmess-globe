@@ -7,6 +7,7 @@ import { buildUberDeepLink } from '@/utils/uberDeepLink';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@/utils/travelRecommendations';
 import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
+import { getProfileChips, getProfileHeadline, getProfileStatusLine } from './profilePresentation';
 
 type Props = {
   profile: Profile;
@@ -178,10 +179,7 @@ export function ProfileCard({
     };
   }, [viewerLocation]);
 
-  const tags = useMemo(() => {
-    const raw = (profile as any)?.tags;
-    return Array.isArray(raw) ? raw.map((t) => String(t)).filter(Boolean).slice(0, 3) : [];
-  }, [profile]);
+  const tags = useMemo(() => getProfileChips(profile, 3), [profile]);
 
   const [travelTime, setTravelTime] = useState<TravelTimeResponse | null>(null);
   const [isTravelTimeLoading, setIsTravelTimeLoading] = useState(false);
@@ -327,7 +325,8 @@ export function ProfileCard({
     [onNavigateUrl, profile.geoLat, profile.geoLng, profile.profileName]
   );
 
-  const headline = profile.title;
+  const headline = useMemo(() => getProfileHeadline(profile), [profile]);
+  const statusLine = useMemo(() => getProfileStatusLine(profile), [profile]);
   const locationLine = profile.locationLabel;
 
   const { isLongPressActive, didLongPress, handlers: longPressHandlers } = useLongPress({ delayMs: 300 });
@@ -417,6 +416,13 @@ export function ProfileCard({
   const primaryUrl = photoUrls[0] || null;
   const currentUrl = primaryUrl;
 
+  const mediaUrls = useMemo(() => {
+    // Sellers: prefer product previews for the swap.
+    if (isSeller && productPreviewUrls.length) return productPreviewUrls;
+    // Everyone else: swap through profile photos.
+    return photoUrls;
+  }, [isSeller, photoUrls, productPreviewUrls]);
+
   const typeBadge = useMemo(() => badgeForProfileType(profileType), [profileType]);
   const hasTravelTimes = !!travelTime;
   const primaryModeShort = useMemo(() => {
@@ -433,8 +439,7 @@ export function ProfileCard({
       emailHandle((profile as any)?.email) ||
       initialsFromName((profile as any)?.profileName || (profile as any)?.full_name || 'HM');
 
-    const status =
-      primaryModeShort || ((profile as any)?.onlineNow ? 'Online' : ((profile as any)?.rightNow ? 'Right now' : '')); 
+    const status = primaryModeShort || statusLine || '';
 
     return (
       <div
@@ -459,6 +464,9 @@ export function ProfileCard({
             className="pc-grid"
             avatarUrl={currentUrl || ''}
             miniAvatarUrl={currentUrl || ''}
+            mediaUrls={mediaUrls}
+            enableMediaSwap={true}
+            isActive={isActive}
             iconUrl={undefined}
             grainUrl={undefined}
             innerGradient={undefined}
@@ -565,6 +573,9 @@ export function ProfileCard({
                   {profile.profileName}
                 </div>
                 <div className="text-xs text-white/80 truncate">{headline}</div>
+                {statusLine ? (
+                  <div className="mt-1 text-[11px] text-white/70 truncate">{statusLine}</div>
+                ) : null}
                 <div className="mt-1 text-[11px] text-white/65 truncate">{locationLine}</div>
               </div>
               <Button
@@ -619,6 +630,9 @@ export function ProfileCard({
             {/* Expanded panel on hover/long-press */}
             {isActive ? (
               <div className="mt-3">
+                {statusLine ? (
+                  <div className="mb-2 text-[11px] text-white/75 truncate">{statusLine}</div>
+                ) : null}
                 <div className="text-[11px] text-white/70">
                   {viewerLocation ? (
                     isTravelTimeLoading ? (

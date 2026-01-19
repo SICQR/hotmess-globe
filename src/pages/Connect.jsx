@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
 import { PAGINATION, QUERY_CONFIG } from '../components/utils/constants';
@@ -388,7 +388,16 @@ export default function Connect() {
       const name = String(u?.full_name || u?.profileName || u?.email || 'Unknown').trim();
       const city = u?.city ? String(u.city).trim() : null;
       const bio = u?.bio ? String(u.bio).trim() : '';
+      const sellerTagline = String(u?.seller_tagline || u?.sellerTagline || '').trim() || undefined;
       const profileType = String(u?.profile_type || u?.profileType || '').trim() || undefined;
+
+      const preferredVibesRaw = u?.preferred_vibes ?? u?.preferredVibes ?? null;
+      const preferredVibes = Array.isArray(preferredVibesRaw)
+        ? preferredVibesRaw.map((v) => String(v)).filter(Boolean).slice(0, 5)
+        : [];
+
+      const availabilityStatus = String(u?.availability_status || u?.availabilityStatus || '').trim() || undefined;
+      const activityStatus = String(u?.activity_status || u?.activityStatus || '').trim() || undefined;
 
       const rawTags = u?.tags;
       const tags = Array.isArray(rawTags) ? rawTags.map((t) => String(t)).filter(Boolean).slice(0, 5) : [];
@@ -424,11 +433,15 @@ export default function Connect() {
         profileType,
         city: city || undefined,
         bio: bio || undefined,
+        sellerTagline,
+        preferredVibes: preferredVibes.length ? preferredVibes : undefined,
+        availabilityStatus,
+        activityStatus,
         tags,
         hasProducts,
         productPreviews: Array.isArray(productPreviews) ? productPreviews : undefined,
         profileName: name,
-        title: bio || 'Member',
+        title: sellerTagline || bio || 'Member',
         locationLabel: city || 'Nearby',
         geoLat: Number.isFinite(lat) ? lat : 0,
         geoLng: Number.isFinite(lng) ? lng : 0,

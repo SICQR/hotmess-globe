@@ -18,6 +18,9 @@ export type Profile = {
   city?: string;
   bio?: string;
   sellerTagline?: string;
+  preferredVibes?: string[];
+  availabilityStatus?: string;
+  activityStatus?: string;
   hasProducts?: boolean;
   productPreviews?: ProductPreview[];
   tags?: string[];

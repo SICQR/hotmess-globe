@@ -201,6 +201,29 @@ const normalizePhotos = (rawPhotos, avatarUrl) => {
 
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
+const normalizeStringArray = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.map((v) => String(v || '').trim()).filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    // Accept a JSON array or a comma-separated list.
+    const text = value.trim();
+    if (!text) return [];
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) return parsed.map((v) => String(v || '').trim()).filter(Boolean);
+    } catch {
+      // ignore
+    }
+    return text
+      .split(',')
+      .map((v) => String(v || '').trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
 const normalizeDetails = (details) => {
   if (!details) return null;
   if (typeof details === 'object') return details;
@@ -592,7 +615,12 @@ export default async function handler(req, res) {
       const productPreviews = isSellerProfile && email ? productPreviewsByEmail.get(String(email).toLowerCase()) : undefined;
 
       const bio = row?.bio ? String(row.bio).trim() : null;
-      const title = toShortHeadline(bio, tierLabel);
+      const titleSource = isSellerProfile ? sellerTagline || bio : bio;
+      const title = toShortHeadline(titleSource, tierLabel);
+
+      const preferredVibes = normalizeStringArray(row?.preferred_vibes ?? row?.preferredVibes);
+      const availabilityStatus = row?.availability_status ? String(row.availability_status).trim() : undefined;
+      const activityStatus = row?.activity_status ? String(row.activity_status).trim() : undefined;
 
       const tags = email ? tagMap.get(String(email).toLowerCase()) : null;
       const safeTags = Array.isArray(tags) ? tags.slice(0, 3) : [];
@@ -609,6 +637,9 @@ export default async function handler(req, res) {
         hasProducts,
         productPreviews: Array.isArray(productPreviews) && productPreviews.length ? productPreviews : undefined,
         bio: bio || undefined,
+        preferredVibes: preferredVibes.length ? preferredVibes.slice(0, 5) : undefined,
+        availabilityStatus,
+        activityStatus,
         gender: normalizeGender(gender) || undefined,
         photo_policy_ack: photoPolicyAck === true ? true : undefined,
         sellerTagline,
