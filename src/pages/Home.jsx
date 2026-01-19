@@ -486,20 +486,24 @@ export default function Home() {
                     transition={{ delay: idx * 0.1 }}
                   >
                     <Link to={handle ? `/market/p/${encodeURIComponent(handle)}` : '/market'}>
-                      <div className="group relative aspect-[4/3] overflow-hidden bg-black">
+                      <div className="group relative aspect-square overflow-hidden bg-black">
                         {imageUrl ? (
                           <img
                             src={imageUrl}
                             alt={imageAlt}
-                            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover object-center grayscale group-hover:grayscale-0 transition-all duration-700"
                           />
                         ) : null}
-                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-500" />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
-                          <h3 className="text-3xl md:text-5xl font-black italic mb-4 text-white drop-shadow-2xl">
-                            {p?.title || 'Shop'}
-                          </h3>
-                          <p className="text-sm uppercase tracking-widest text-white drop-shadow-lg">Tap to view</p>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/0 group-hover:from-black/70 transition-all duration-500" />
+                        <div className="absolute inset-0 flex items-end p-4 sm:p-6">
+                          <div className="w-full max-w-[34rem] bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-4 sm:p-5">
+                            <h3 className="text-xl sm:text-2xl md:text-3xl font-black italic leading-tight line-clamp-2 text-white drop-shadow-2xl break-words">
+                              {p?.title || 'Shop'}
+                            </h3>
+                            <p className="mt-2 text-xs uppercase tracking-[0.3em] text-white/90">Tap to view</p>
+                          </div>
                         </div>
                       </div>
                     </Link>

@@ -30,7 +30,48 @@ export default function ShopProduct() {
   });
 
   const product = data?.product || null;
+  const notConfigured = !!data?.notConfigured;
   const variants = product?.variants?.nodes || [];
+
+  const imageCandidates = useMemo(() => {
+    const out = [];
+
+    const push = (url, altText) => {
+      const cleanUrl = String(url || '').trim();
+      if (!cleanUrl) return;
+      if (out.some((img) => img.url === cleanUrl)) return;
+      out.push({ url: cleanUrl, altText: String(altText || '').trim() || null });
+    };
+
+    push(product?.featuredImage?.url, product?.featuredImage?.altText || product?.title);
+
+    const nodes = product?.images?.nodes;
+    if (Array.isArray(nodes)) {
+      for (const node of nodes) {
+        push(node?.url, node?.altText || product?.title);
+      }
+    }
+
+    return out;
+  }, [product?.featuredImage?.url, product?.featuredImage?.altText, product?.images?.nodes, product?.title]);
+
+  const [selectedImageUrl, setSelectedImageUrl] = useState(null);
+
+  useEffect(() => {
+    if (!imageCandidates.length) {
+      setSelectedImageUrl(null);
+      return;
+    }
+    setSelectedImageUrl((current) => {
+      if (current && imageCandidates.some((img) => img.url === current)) return current;
+      return imageCandidates[0].url;
+    });
+  }, [imageCandidates]);
+
+  const selectedImage = useMemo(() => {
+    if (!selectedImageUrl) return null;
+    return imageCandidates.find((img) => img.url === selectedImageUrl) || null;
+  }, [imageCandidates, selectedImageUrl]);
 
   const [selectedVariantId, setSelectedVariantId] = useState(null);
   const selectedVariant = useMemo(
@@ -85,6 +126,16 @@ export default function ShopProduct() {
       >
         {isLoading ? (
           <div className="border border-white/10 bg-white/5 p-6">Loading…</div>
+        ) : notConfigured ? (
+          <div className="border border-white/10 bg-white/5 p-6">
+            <p className="text-white font-bold">Shop temporarily unavailable</p>
+            <p className="text-white/60 text-sm mt-1">
+              Shopify Storefront isn’t configured for this deployment yet.
+            </p>
+            {data?.details ? (
+              <p className="text-white/50 text-xs mt-2">{data.details}</p>
+            ) : null}
+          </div>
         ) : error ? (
           <div className="border border-white/10 bg-white/5 p-6">
             <p className="text-red-400 font-bold">Failed to load product</p>
@@ -96,14 +147,47 @@ export default function ShopProduct() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="border border-white/10 bg-white/5">
               <div className="aspect-square bg-black border-b border-white/10 overflow-hidden">
-                {product?.featuredImage?.url ? (
+                {selectedImage?.url ? (
                   <img
-                    src={product.featuredImage.url}
-                    alt={product.featuredImage.altText || product.title}
-                    className="w-full h-full object-cover"
+                    src={selectedImage.url}
+                    alt={selectedImage.altText || product.title}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover object-center"
                   />
                 ) : null}
               </div>
+
+              {imageCandidates.length > 1 ? (
+                <div className="p-4 border-b border-white/10">
+                  <div className="grid grid-cols-6 gap-2">
+                    {imageCandidates.slice(0, 12).map((img) => {
+                      const isActive = img.url === selectedImageUrl;
+                      return (
+                        <button
+                          key={img.url}
+                          type="button"
+                          onClick={() => setSelectedImageUrl(img.url)}
+                          className={
+                            "aspect-square overflow-hidden border bg-black focus:outline-none focus:ring-2 focus:ring-[#00D9FF] " +
+                            (isActive ? "border-[#00D9FF]" : "border-white/10 hover:border-white/30")
+                          }
+                          aria-label="View product image"
+                        >
+                          <img
+                            src={img.url}
+                            alt={img.altText || product.title}
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover object-center"
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+
               <div className="p-4 text-xs text-white/60">
                 <p>18+ • Consent-first • Care always.</p>
               </div>
