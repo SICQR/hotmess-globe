@@ -61,6 +61,7 @@ const ProfileCardComponent = ({
   handle = 'javicodes',
   status = 'Online',
   contactText = 'Contact',
+  contactActionKey,
   showUserInfo = true,
   onContactClick,
 }) => {
@@ -400,7 +401,9 @@ const ProfileCardComponent = ({
                     onClick={handleContactClick}
                     style={{ pointerEvents: 'auto' }}
                     type="button"
-                    aria-label={`Contact ${name || 'user'}`}
+                    data-testid="profile-primary-action"
+                    data-action-key={contactActionKey || undefined}
+                    aria-label={`${contactText || 'Message'} ${name || 'user'}`}
                   >
                     {contactText}
                   </button>

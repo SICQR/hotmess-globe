@@ -281,6 +281,103 @@ const stripUndefinedKeys = (obj) => {
   return out;
 };
 
+const USER_EMAIL_COLUMNS = ['email', 'Email'];
+
+// For the canonical profile table public."User", the auth column is `auth_user_id`.
+// Keeping this list tight avoids extra failing PostgREST requests in environments
+// where legacy columns are not present.
+const USER_AUTH_ID_COLUMNS = ['auth_user_id'];
+
+const selectUserRowByAuthUserId = async ({ table, authUserId, columns = '*' }) => {
+  const normalized = authUserId ? String(authUserId).trim() : '';
+  if (!normalized) return { data: null, error: null, authColumn: null };
+
+  let lastMissingColumnError = null;
+
+  for (const authColumn of USER_AUTH_ID_COLUMNS) {
+    const { data, error } = await supabase
+      .from(table)
+      .select(columns)
+      .eq(authColumn, normalized)
+      .maybeSingle();
+
+    if (!error) return { data, error: null, authColumn };
+    if (!isMissingColumnError(error)) return { data: null, error, authColumn };
+
+    lastMissingColumnError = error;
+  }
+
+  // Preserve the last missing-column error so callers can decide how to fall back.
+  return { data: null, error: lastMissingColumnError, authColumn: null };
+};
+
+const updateUserRowByAuthUserId = async ({ table, authUserId, payload }) => {
+  const normalized = authUserId ? String(authUserId).trim() : '';
+  if (!normalized) return { data: null, error: null, authColumn: null };
+
+  let lastMissingColumnError = null;
+
+  for (const authColumn of USER_AUTH_ID_COLUMNS) {
+    const { data, error } = await supabase
+      .from(table)
+      .update(payload)
+      .eq(authColumn, normalized)
+      .select()
+      .maybeSingle();
+
+    if (!error) return { data, error: null, authColumn };
+    if (!isMissingColumnError(error)) return { data: null, error, authColumn };
+
+    lastMissingColumnError = error;
+  }
+
+  return { data: null, error: lastMissingColumnError, authColumn: null };
+};
+
+const selectUserRowByEmail = async ({ table, email, columns = '*' }) => {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return { data: null, error: null, emailColumn: null };
+
+  const run = async (emailColumn) => {
+    const { data, error } = await supabase
+      .from(table)
+      .select(columns)
+      .eq(emailColumn, normalized)
+      .maybeSingle();
+    return { data, error, emailColumn };
+  };
+
+  // Try lowercase `email` first, then legacy `Email` if the column doesn't exist.
+  const first = await run(USER_EMAIL_COLUMNS[0]);
+  if (!first.error) return first;
+  if (!isMissingColumnError(first.error)) return first;
+
+  const second = await run(USER_EMAIL_COLUMNS[1]);
+  return second.error ? first : second;
+};
+
+const updateUserRowByEmail = async ({ table, email, payload }) => {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return { data: null, error: null, emailColumn: null };
+
+  const run = async (emailColumn) => {
+    const { data, error } = await supabase
+      .from(table)
+      .update(payload)
+      .eq(emailColumn, normalized)
+      .select()
+      .maybeSingle();
+    return { data, error, emailColumn };
+  };
+
+  const first = await run(USER_EMAIL_COLUMNS[0]);
+  if (!first.error) return first;
+  if (!isMissingColumnError(first.error)) return first;
+
+  const second = await run(USER_EMAIL_COLUMNS[1]);
+  return second.error ? first : second;
+};
+
 const ensureUserProfileRow = async ({ user, seed = {} }) => {
   const email = normalizeEmail(user?.email);
   const authUserId = user?.id ? String(user.id) : null;
@@ -293,11 +390,19 @@ const ensureUserProfileRow = async ({ user, seed = {} }) => {
     const table = USER_TABLES[i];
 
     try {
-      const { data: existing, error: existingError } = await supabase
-        .from(table)
-        .select('*')
-        .eq('email', email)
-        .maybeSingle();
+      // Prefer auth UID matching when available (more stable than email casing and better for RLS).
+      const { data: byAuth, error: byAuthError } = await selectUserRowByAuthUserId({
+        table,
+        authUserId,
+      });
+
+      if (byAuthError && !isMissingColumnError(byAuthError)) throw byAuthError;
+      if (byAuth) return byAuth;
+
+      const { data: existing, error: existingError, emailColumn } = await selectUserRowByEmail({
+        table,
+        email,
+      });
 
       if (existingError) throw existingError;
 
@@ -312,13 +417,25 @@ const ensureUserProfileRow = async ({ user, seed = {} }) => {
           });
 
           const attempt = async (payload) => {
+            const chosen = emailColumn || USER_EMAIL_COLUMNS[0];
             const { data, error } = await supabase
               .from(table)
               .update(payload)
-              .eq('email', email)
+              .eq(chosen, email)
               .select()
               .maybeSingle();
-            return { data, error };
+
+            if (!error) return { data, error };
+            if (!isMissingColumnError(error)) return { data, error };
+            if (chosen !== USER_EMAIL_COLUMNS[0]) return { data, error };
+
+            const retry = await supabase
+              .from(table)
+              .update(payload)
+              .eq(USER_EMAIL_COLUMNS[1], email)
+              .select()
+              .maybeSingle();
+            return retry;
           };
 
           try {
@@ -366,11 +483,7 @@ const ensureUserProfileRow = async ({ user, seed = {} }) => {
       } catch (insertError) {
         // If another client created the row concurrently, re-select and continue.
         if (isUniqueViolationError(insertError)) {
-          const { data: row } = await supabase
-            .from(table)
-            .select('*')
-            .eq('email', email)
-            .maybeSingle();
+          const { data: row } = await selectUserRowByEmail({ table, email });
           if (row) return row;
         }
         throw insertError;
@@ -404,11 +517,7 @@ export const base44 = {
       let profile = null;
       try {
         const result = await runWithTableFallback(USER_TABLES, (table) =>
-          supabase
-            .from(table)
-            .select('*')
-            .eq('email', user.email)
-            .maybeSingle()
+          selectUserRowByEmail({ table, email: user.email })
         );
         profile = result?.data ?? null;
       } catch (profileError) {
@@ -469,14 +578,27 @@ export const base44 = {
           },
         });
 
-        const { data: updatedProfile } = await runWithTableFallback(USER_TABLES, (table) =>
-          supabase
-            .from(table)
-            .update({ ...data, updated_at: nowIso, updated_date: nowIso })
-            .eq('email', user.email)
-            .select()
-            .single()
-        );
+        const updatePayload = { ...data, updated_at: nowIso, updated_date: nowIso };
+
+        const { data: updatedProfile } = await runWithTableFallback(USER_TABLES, async (table) => {
+          // Try auth_user_id first, then fall back to email/Email.
+          const attempt = async (payload) => {
+            const byAuth = await updateUserRowByAuthUserId({ table, authUserId: user.id, payload });
+            if (!byAuth.error) return { data: byAuth.data, error: null };
+            if (byAuth.error && !isMissingColumnError(byAuth.error)) return { data: null, error: byAuth.error };
+
+            const byEmail = await updateUserRowByEmail({ table, email: user.email, payload });
+            return { data: byEmail.data, error: byEmail.error };
+          };
+
+          const result = await stripUnknownColumnsAndRetry({
+            payload: updatePayload,
+            requiredKeys: [],
+            attempt,
+          });
+
+          return { data: result.data, error: null };
+        });
 
         return {
           ...(updatedAuth?.user || user),
@@ -1318,26 +1440,66 @@ entityTables.forEach(table => {
     
     create: async (data) => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: created, error } = await supabase
-        .from(table)
-        .insert({ ...data, created_by: user?.email })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return created;
+      const basePayload = { ...(data || {}), created_by: user?.email };
+
+      const attempt = async (payload) => {
+        const { data: created, error } = await supabase
+          .from(table)
+          .insert(payload)
+          .select()
+          .single();
+        return { data: created, error };
+      };
+
+      try {
+        const { data: created } = await stripUnknownColumnsAndRetry({
+          payload: basePayload,
+          requiredKeys: [],
+          attempt,
+        });
+        return created;
+      } catch (error) {
+        if (isMissingTableError(error)) {
+          warnOnce(
+            `missing-table:${table}:create`,
+            `[base44.entities.${entityName}.create] Missing table/view "${table}"; skipping create`
+          );
+          return null;
+        }
+        throw error;
+      }
     },
     
     update: async (id, data) => {
-      const { data: updated, error } = await supabase
-        .from(table)
-        .update({ ...data, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return updated;
+      const basePayload = { ...(data || {}), updated_at: new Date().toISOString() };
+
+      const attempt = async (payload) => {
+        const { data: updated, error } = await supabase
+          .from(table)
+          .update(payload)
+          .eq('id', id)
+          .select()
+          .single();
+        return { data: updated, error };
+      };
+
+      try {
+        const { data: updated } = await stripUnknownColumnsAndRetry({
+          payload: basePayload,
+          requiredKeys: [],
+          attempt,
+        });
+        return updated;
+      } catch (error) {
+        if (isMissingTableError(error)) {
+          warnOnce(
+            `missing-table:${table}:update`,
+            `[base44.entities.${entityName}.update] Missing table/view "${table}"; skipping update`
+          );
+          return null;
+        }
+        throw error;
+      }
     },
     
     delete: async (id) => {
@@ -1504,6 +1666,9 @@ export const auth = {
   
   getSession: () => 
     supabase.auth.getSession(),
+
+  getSessionFromUrl: (options) =>
+    supabase.auth.getSessionFromUrl(options),
 
   resetPasswordForEmail: (email, redirectTo) =>
     supabase.auth.resetPasswordForEmail(email, redirectTo ? { redirectTo } : undefined),

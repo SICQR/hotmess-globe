@@ -1,14 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn, Search, X, Bell, BellOff } from 'lucide-react';
+import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn, Search, X, Bell, BellOff, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useAllUsers } from '../utils/queryConfig';
 import MediaViewer from './MediaViewer';
+import ConsentGate from '@/components/social/ConsentGate';
+import ReportButton from '@/components/moderation/ReportButton';
+import BlockButton from '@/components/moderation/BlockButton';
+import { Link } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +22,18 @@ import {
 
 const EMPTY_ARRAY = [];
 
+const deriveMessagingConsentAck = (user) => {
+  if (!user || typeof user !== 'object') return false;
+
+  return !!(
+    user.messaging_consent_acknowledged ||
+    user.has_consented_messaging ||
+    user.has_acknowledged_messaging_consent ||
+    user.messagingConsentAcked ||
+    user.messagingConsentAcknowledged
+  );
+};
+
 export default function ChatThread({ thread, currentUser, onBack, readOnly = false }) {
   const [messageText, setMessageText] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -25,6 +41,9 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [isMuted, setIsMuted] = useState(thread.muted_by?.includes(currentUser.email) || false);
+  const [showConsentGate, setShowConsentGate] = useState(false);
+  const [hasMessagingConsent, setHasMessagingConsent] = useState(() => deriveMessagingConsentAck(currentUser));
+  const pendingSendRef = useRef(null);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef({});
   const lastTypingEmitRef = useRef(0);
@@ -81,6 +100,77 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
   const typingIndicators = typingIndicatorsData ?? EMPTY_ARRAY;
 
   const { data: allUsers = [] } = useAllUsers();
+
+  useEffect(() => {
+    setHasMessagingConsent(deriveMessagingConsentAck(currentUser));
+  }, [currentUser]);
+
+  const sendTextMessage = useCallback(
+    (content) => {
+      const text = String(content || '');
+      if (!text.trim()) return;
+      sendMutation.mutate({ content: text, message_type: 'text' });
+    },
+    // sendMutation is stable enough for our use; keep deps minimal to avoid needless re-renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const uploadAndSendMedia = useCallback(
+    async ({ file, mediaType }) => {
+      if (!file) return;
+      if (readOnly) return;
+
+      // Mirror sendMutation's gating before we upload anything.
+      const ok = await base44.auth.requireProfile(window.location.href);
+      if (!ok) return;
+
+      // Client-side validation
+      const maxSize = mediaType === 'video' ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+      const allowedTypes =
+        mediaType === 'video'
+          ? ['video/mp4', 'video/quicktime', 'video/webm']
+          : ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+      if (file.size > maxSize) {
+        toast.error(mediaType === 'video' ? 'Video too large (max 50MB)' : 'Image too large (max 10MB)');
+        return;
+      }
+
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(
+          mediaType === 'video'
+            ? 'Invalid file type. Use MP4, MOV, or WebM.'
+            : 'Invalid file type. Use JPEG, PNG, WebP, or GIF.'
+        );
+        return;
+      }
+
+      setUploading(true);
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+        const metadata =
+          mediaType === 'video'
+            ? { video_url: file_url }
+            : { image_url: file_url };
+
+        sendMutation.mutate({
+          content: mediaType === 'video' ? 'Video' : 'Image',
+          message_type: mediaType,
+          metadata,
+        });
+
+        toast.success(mediaType === 'video' ? 'Video sent' : 'Image sent');
+      } catch {
+        toast.error('Upload failed');
+      } finally {
+        setUploading(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [readOnly]
+  );
 
   const sendMutation = useMutation({
     mutationFn: async (data) => {
@@ -147,10 +237,14 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     }
     if (!messageText.trim()) return;
 
-    sendMutation.mutate({
-      content: messageText,
-      message_type: 'text',
-    });
+    // V1.5: First message send triggers Consent Gate.
+    if (!hasMessagingConsent) {
+      pendingSendRef.current = { kind: 'text', content: messageText };
+      setShowConsentGate(true);
+      return;
+    }
+
+    sendTextMessage(messageText);
   };
 
   const handleImageUpload = async (e) => {
@@ -161,36 +255,13 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Client-side validation
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    
-    if (file.size > maxSize) {
-      toast.error('Image too large (max 10MB)');
-      return;
-    }
-    
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Invalid file type. Use JPEG, PNG, WebP, or GIF.');
+    if (!hasMessagingConsent) {
+      pendingSendRef.current = { kind: 'image', file };
+      setShowConsentGate(true);
       return;
     }
 
-    setUploading(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      
-      sendMutation.mutate({
-        content: 'Image',
-        message_type: 'image',
-        metadata: { image_url: file_url },
-      });
-      
-      toast.success('Image sent');
-    } catch (error) {
-      toast.error('Upload failed');
-    } finally {
-      setUploading(false);
-    }
+    await uploadAndSendMedia({ file, mediaType: 'image' });
   };
 
   const handleVideoUpload = async (e) => {
@@ -201,36 +272,13 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Client-side validation
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    const allowedTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
-    
-    if (file.size > maxSize) {
-      toast.error('Video too large (max 50MB)');
-      return;
-    }
-    
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Invalid file type. Use MP4, MOV, or WebM.');
+    if (!hasMessagingConsent) {
+      pendingSendRef.current = { kind: 'video', file };
+      setShowConsentGate(true);
       return;
     }
 
-    setUploading(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      
-      sendMutation.mutate({
-        content: 'Video',
-        message_type: 'video',
-        metadata: { video_url: file_url },
-      });
-      
-      toast.success('Video sent');
-    } catch (error) {
-      toast.error('Upload failed');
-    } finally {
-      setUploading(false);
-    }
+    await uploadAndSendMedia({ file, mediaType: 'video' });
   };
 
   const handleTyping = () => {
@@ -338,6 +386,11 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
   const otherUsers = allUsers.filter(u => otherParticipants.includes(u.email));
   const isGroupChat = otherUsers.length > 1;
 
+  const safetyBlockTargetEmail = !isGroupChat && otherParticipants.length === 1 ? otherParticipants[0] : null;
+  const recipientName =
+    (!isGroupChat && (otherUsers[0]?.full_name || otherUsers[0]?.email)) ||
+    (safetyBlockTargetEmail ? String(safetyBlockTargetEmail) : 'this chat');
+
   // Filter messages based on search
   const filteredMessages = searchQuery.trim()
     ? messages.filter(m => 
@@ -412,6 +465,18 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
           <Search className="w-5 h-5" />
         </Button>
 
+        <Link to="/safety">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white/60 hover:text-white hover:bg-white/10"
+            aria-label="Safety"
+            title="Safety"
+          >
+            <Shield className="w-5 h-5" />
+          </Button>
+        </Link>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="text-white/60 hover:text-white hover:bg-white/10">
@@ -434,6 +499,44 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+      </div>
+
+      {/* Safety actions (1-tap) */}
+      <div className="bg-black border-b-2 border-white/20 px-4 py-2 flex flex-wrap items-center gap-2">
+        {safetyBlockTargetEmail ? (
+          <>
+            <ReportButton itemType="user" itemId={String(safetyBlockTargetEmail)} variant="ghost" />
+            <BlockButton userEmail={String(safetyBlockTargetEmail)} />
+          </>
+        ) : (
+          <ReportButton itemType="thread" itemId={String(thread?.id || '')} variant="ghost" />
+        )}
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={toggleMute}
+          className={isMuted ? 'border-[#39FF14] text-[#39FF14]' : 'border-white/20 text-white/80'}
+        >
+          {isMuted ? (
+            <>
+              <Bell className="w-4 h-4 mr-2" />
+              Unmute
+            </>
+          ) : (
+            <>
+              <BellOff className="w-4 h-4 mr-2" />
+              Mute
+            </>
+          )}
+        </Button>
+
+        <Link to="/safety" className="ml-auto">
+          <Button type="button" variant="outline" size="sm" className="border-white/20 text-white/80">
+            Safety
+          </Button>
+        </Link>
       </div>
 
       {/* Search Bar */}
@@ -786,6 +889,49 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
             setViewingMedia(null);
             setMediaGallery([]);
             setMediaIndex(0);
+          }}
+        />
+      )}
+
+      {showConsentGate && (
+        <ConsentGate
+          recipientName={recipientName}
+          onCancel={() => {
+            pendingSendRef.current = null;
+            setShowConsentGate(false);
+          }}
+          onAccept={async () => {
+            try {
+              const nowIso = new Date().toISOString();
+              await base44.auth.updateMe({
+                messaging_consent_acknowledged: true,
+                has_consented_messaging: true,
+                messaging_consent_ack_at: nowIso,
+              });
+            } catch {
+              // Best-effort: the gate still prevents sending until the user agrees.
+            }
+
+            setHasMessagingConsent(true);
+            setShowConsentGate(false);
+
+            const pending = pendingSendRef.current;
+            pendingSendRef.current = null;
+            if (!pending) return;
+
+            if (pending.kind === 'text') {
+              sendTextMessage(pending.content);
+              return;
+            }
+
+            if (pending.kind === 'image') {
+              await uploadAndSendMedia({ file: pending.file, mediaType: 'image' });
+              return;
+            }
+
+            if (pending.kind === 'video') {
+              await uploadAndSendMedia({ file: pending.file, mediaType: 'video' });
+            }
           }}
         />
       )}

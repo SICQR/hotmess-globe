@@ -121,126 +121,209 @@ alter table public.messages enable row level security;
 alter table public.bot_sessions enable row level security;
 alter table public.notifications enable row level security;
 
--- Policies (intentionally permissive to match existing UI expectations)
+-- Policies
+-- SECURITY NOTE:
+-- These policies are participant/self-scoped (not "any authenticated can read everything").
+-- The app frequently filters client-side, but RLS must enforce privacy server-side.
 
-drop policy if exists chat_threads_select_authenticated on public.chat_threads;
-create policy chat_threads_select_authenticated
+-- Chat threads: only participants may read/write.
+drop policy if exists chat_threads_select_participants on public.chat_threads;
+create policy chat_threads_select_participants
   on public.chat_threads
   for select
   to authenticated
-  using (true);
+  using ((auth.jwt() ->> 'email') = any (participant_emails));
 
-drop policy if exists chat_threads_write_authenticated on public.chat_threads;
-create policy chat_threads_write_authenticated
+drop policy if exists chat_threads_insert_participants on public.chat_threads;
+create policy chat_threads_insert_participants
   on public.chat_threads
   for insert
   to authenticated
-  with check (true);
+  with check ((auth.jwt() ->> 'email') = any (participant_emails));
 
-drop policy if exists chat_threads_update_authenticated on public.chat_threads;
-create policy chat_threads_update_authenticated
+drop policy if exists chat_threads_update_participants on public.chat_threads;
+create policy chat_threads_update_participants
   on public.chat_threads
   for update
   to authenticated
-  using (true)
-  with check (true);
+  using ((auth.jwt() ->> 'email') = any (participant_emails))
+  with check ((auth.jwt() ->> 'email') = any (participant_emails));
 
-drop policy if exists chat_threads_delete_authenticated on public.chat_threads;
-create policy chat_threads_delete_authenticated
+drop policy if exists chat_threads_delete_participants on public.chat_threads;
+create policy chat_threads_delete_participants
   on public.chat_threads
   for delete
   to authenticated
-  using (true);
+  using ((auth.jwt() ->> 'email') = any (participant_emails));
 
 
-drop policy if exists messages_select_authenticated on public.messages;
-create policy messages_select_authenticated
+-- Messages: only thread participants may read; only sender may insert.
+drop policy if exists messages_select_participants on public.messages;
+create policy messages_select_participants
   on public.messages
   for select
   to authenticated
-  using (true);
+  using (
+    exists (
+      select 1
+      from public.chat_threads t
+      where t.id = public.messages.thread_id
+        and (auth.jwt() ->> 'email') = any (t.participant_emails)
+    )
+  );
 
-drop policy if exists messages_write_authenticated on public.messages;
-create policy messages_write_authenticated
+drop policy if exists messages_insert_sender on public.messages;
+create policy messages_insert_sender
   on public.messages
   for insert
   to authenticated
-  with check (true);
+  with check (
+    sender_email = (auth.jwt() ->> 'email')
+    and exists (
+      select 1
+      from public.chat_threads t
+      where t.id = public.messages.thread_id
+        and (auth.jwt() ->> 'email') = any (t.participant_emails)
+    )
+  );
 
-drop policy if exists messages_update_authenticated on public.messages;
-create policy messages_update_authenticated
+-- Allow participants to update messages so read receipts/reactions can be written.
+-- A trigger below prevents non-senders from editing message content.
+drop policy if exists messages_update_participants on public.messages;
+create policy messages_update_participants
   on public.messages
   for update
   to authenticated
-  using (true)
-  with check (true);
+  using (
+    exists (
+      select 1
+      from public.chat_threads t
+      where t.id = public.messages.thread_id
+        and (auth.jwt() ->> 'email') = any (t.participant_emails)
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.chat_threads t
+      where t.id = public.messages.thread_id
+        and (auth.jwt() ->> 'email') = any (t.participant_emails)
+    )
+  );
 
-drop policy if exists messages_delete_authenticated on public.messages;
-create policy messages_delete_authenticated
+drop policy if exists messages_delete_sender on public.messages;
+create policy messages_delete_sender
   on public.messages
   for delete
   to authenticated
-  using (true);
+  using (sender_email = (auth.jwt() ->> 'email'));
 
 
-drop policy if exists bot_sessions_select_authenticated on public.bot_sessions;
-create policy bot_sessions_select_authenticated
+-- Bot sessions: only participants may read; only initiator may create.
+drop policy if exists bot_sessions_select_participants on public.bot_sessions;
+create policy bot_sessions_select_participants
   on public.bot_sessions
   for select
   to authenticated
-  using (true);
+  using (
+    (auth.jwt() ->> 'email') = initiator_email
+    or (auth.jwt() ->> 'email') = target_email
+  );
 
-drop policy if exists bot_sessions_write_authenticated on public.bot_sessions;
-create policy bot_sessions_write_authenticated
+drop policy if exists bot_sessions_insert_initiator on public.bot_sessions;
+create policy bot_sessions_insert_initiator
   on public.bot_sessions
   for insert
   to authenticated
-  with check (true);
+  with check ((auth.jwt() ->> 'email') = initiator_email);
 
-drop policy if exists bot_sessions_update_authenticated on public.bot_sessions;
-create policy bot_sessions_update_authenticated
+drop policy if exists bot_sessions_update_participants on public.bot_sessions;
+create policy bot_sessions_update_participants
   on public.bot_sessions
   for update
   to authenticated
-  using (true)
-  with check (true);
+  using (
+    (auth.jwt() ->> 'email') = initiator_email
+    or (auth.jwt() ->> 'email') = target_email
+  )
+  with check (
+    (auth.jwt() ->> 'email') = initiator_email
+    or (auth.jwt() ->> 'email') = target_email
+  );
 
-drop policy if exists bot_sessions_delete_authenticated on public.bot_sessions;
-create policy bot_sessions_delete_authenticated
+drop policy if exists bot_sessions_delete_initiator on public.bot_sessions;
+create policy bot_sessions_delete_initiator
   on public.bot_sessions
   for delete
   to authenticated
-  using (true);
+  using ((auth.jwt() ->> 'email') = initiator_email);
 
 
-drop policy if exists notifications_select_authenticated on public.notifications;
-create policy notifications_select_authenticated
+-- Notifications: a user may only read/update/delete their own notifications.
+-- (Client currently creates notifications directly; this is not ideal but prevents data leakage.)
+drop policy if exists notifications_select_self on public.notifications;
+create policy notifications_select_self
   on public.notifications
   for select
   to authenticated
-  using (true);
+  using (user_email = (auth.jwt() ->> 'email'));
 
-drop policy if exists notifications_write_authenticated on public.notifications;
-create policy notifications_write_authenticated
+drop policy if exists notifications_insert_authenticated on public.notifications;
+create policy notifications_insert_authenticated
   on public.notifications
   for insert
   to authenticated
-  with check (true);
+  with check ((auth.jwt() ->> 'email') = coalesce(created_by, (auth.jwt() ->> 'email')));
 
-drop policy if exists notifications_update_authenticated on public.notifications;
-create policy notifications_update_authenticated
+drop policy if exists notifications_update_self on public.notifications;
+create policy notifications_update_self
   on public.notifications
   for update
   to authenticated
-  using (true)
-  with check (true);
+  using (user_email = (auth.jwt() ->> 'email'))
+  with check (user_email = (auth.jwt() ->> 'email'));
 
-drop policy if exists notifications_delete_authenticated on public.notifications;
-create policy notifications_delete_authenticated
+drop policy if exists notifications_delete_self on public.notifications;
+create policy notifications_delete_self
   on public.notifications
   for delete
   to authenticated
-  using (true);
+  using (user_email = (auth.jwt() ->> 'email'));
+
+-- Guardrail: participants can update read receipts, but only the sender can edit message content/type.
+create or replace function public.enforce_message_sender_updates()
+returns trigger
+language plpgsql
+as $$
+declare
+  actor_email text;
+begin
+  actor_email := auth.jwt() ->> 'email';
+
+  if new.thread_id is distinct from old.thread_id then
+    raise exception 'messages.thread_id is immutable';
+  end if;
+
+  if new.sender_email is distinct from old.sender_email then
+    raise exception 'messages.sender_email is immutable';
+  end if;
+
+  if (new.content is distinct from old.content)
+     or (new.message_type is distinct from old.message_type)
+     or (new.media_urls is distinct from old.media_urls) then
+    if actor_email is null or actor_email <> old.sender_email then
+      raise exception 'only the sender may edit message content';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_messages_enforce_sender_updates on public.messages;
+create trigger trg_messages_enforce_sender_updates
+before update on public.messages
+for each row execute function public.enforce_message_sender_updates();
 
 -- Storage bucket for uploads (Profile avatar + chat media)
 -- Note: requires Supabase Storage to be enabled in the project.

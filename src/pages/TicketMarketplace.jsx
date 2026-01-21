@@ -38,7 +38,7 @@ export default function TicketMarketplace() {
     queryFn: () => base44.entities.Product.filter({ product_type: 'ticket', status: 'active' }, '-created_date')
   });
 
-  const { data: myOrders = [] } = useQuery({
+  const { data: _myOrders = [] } = useQuery({
     queryKey: ['my-orders', currentUser?.email],
     queryFn: () => base44.entities.Order.filter({ buyer_email: currentUser.email }),
     enabled: !!currentUser

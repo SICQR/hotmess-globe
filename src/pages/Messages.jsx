@@ -71,11 +71,19 @@ export default function Messages() {
         (u) => getAuthUserId(u) && String(getAuthUserId(u)) === String(requestedToUid)
       );
       const email = String(match?.email || '').trim().toLowerCase();
-      if (!email || email === currentEmail) return;
+      if (email && email !== currentEmail) {
+        setPrefillToEmail(email);
+        setShowNewMessage(true);
+        return;
+      }
 
-      setPrefillToEmail(email);
-      setShowNewMessage(true);
-      return;
+      // If we can't resolve the UID to an email (e.g. limited user list), fall back
+      // to the legacy email param when present.
+      if (requestedTo && requestedTo !== currentEmail) {
+        setPrefillToEmail(requestedTo);
+        setShowNewMessage(true);
+        return;
+      }
     }
 
     if (!requestedTo) return;

@@ -4,7 +4,7 @@ import { fetchTravelTime, type LatLng } from './travelTime';
 import { useLongPress } from './useLongPress';
 import { useVisibility } from './useVisibility';
 import { buildUberDeepLink } from '@/utils/uberDeepLink';
-import { createMessageComposeUrl } from '@/utils';
+import { createMessageComposeUrl, getAuthUserId } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@/utils/travelRecommendations';
 import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
@@ -346,6 +346,13 @@ export function ProfileCard({
   const isCreator = profileType === 'creator' || profileType === 'organizer';
   const hasProducts = (profile as any)?.hasProducts === true;
 
+  const profileUid = useMemo(() => getAuthUserId(profile), [profile]);
+  const profileEmail = useMemo(
+    () => String((profile as any)?.email || (profile as any)?.Email || '').trim().toLowerCase(),
+    [profile]
+  );
+  const hasMessageTarget = !!profileUid || (profileEmail.length > 3 && profileEmail.includes('@'));
+
   const onShopClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -358,12 +365,25 @@ export function ProfileCard({
   );
 
   const primaryAction = useMemo(() => {
+    const viewerUid = getAuthUserId(viewerProfile);
+    const viewerEmail = String((viewerProfile as any)?.email || '').trim().toLowerCase();
+
+    const uid = profileUid;
+    const email = profileEmail;
+    const hasEmail = !!email && email.includes('@');
+
+    const isSelf =
+      (!!uid && !!viewerUid && String(uid) === String(viewerUid)) ||
+      (!!email && !!viewerEmail && email === viewerEmail);
+
+    // Social-first: if we can message (non-self + UID/email), make it the primary action.
+    // This keeps /social Discover deterministic (e.g. Playwright smoke expects a Message CTA).
+    if (!isSelf && (uid || hasEmail)) return { key: 'message', label: 'Message' } as const;
+
     if (isSeller && hasProducts) return { key: 'shop', label: 'Shop' } as const;
     if (isCreator) return { key: 'listen', label: 'Listen' } as const;
-    const email = String(profile?.email || '').trim();
-    if (email) return { key: 'message', label: 'Message' } as const;
     return { key: 'view', label: 'View' } as const;
-  }, [hasProducts, isCreator, isSeller, profile?.email]);
+  }, [hasProducts, isCreator, isSeller, profileEmail, profileUid, viewerProfile]);
 
   const onPrimaryClick = useCallback(
     (e: React.MouseEvent) => {
@@ -478,6 +498,7 @@ export function ProfileCard({
             handle={String(handle || 'hotmess')}
             status={String(status || '')}
             contactText={primaryAction.label}
+            contactActionKey={primaryAction.key}
             onContactClick={() => {
               // Mirror existing primary CTA behavior.
               // We can't stopPropagation from inside react-bits button, so the wrapper click guard handles it.
@@ -680,9 +701,11 @@ export function ProfileCard({
                     type="button"
                     onClick={onPrimaryClick}
                     disabled={
-                      (primaryAction.key === 'shop' || primaryAction.key === 'message') &&
-                      !String(profile?.email || '').trim()
+                      (primaryAction.key === 'shop' && !String(profile?.email || '').trim()) ||
+                      (primaryAction.key === 'message' && !hasMessageTarget)
                     }
+                    data-testid="profile-primary-action"
+                    data-action-key={primaryAction.key}
                     variant={primaryAction.key === 'message' ? 'hot' : 'cyan'}
                     className="flex-1"
                   >
@@ -709,9 +732,11 @@ export function ProfileCard({
                   type="button"
                   onClick={onPrimaryClick}
                   disabled={
-                    (primaryAction.key === 'shop' || primaryAction.key === 'message') &&
-                    !String(profile?.email || '').trim()
+                    (primaryAction.key === 'shop' && !String(profile?.email || '').trim()) ||
+                    (primaryAction.key === 'message' && !hasMessageTarget)
                   }
+                  data-testid="profile-primary-action"
+                  data-action-key={primaryAction.key}
                   variant={primaryAction.key === 'message' ? 'hot' : 'cyan'}
                   className="w-full"
                 >

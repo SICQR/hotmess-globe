@@ -113,8 +113,14 @@ function LayoutInner({ children, currentPageName }) {
           return;
         }
 
-        // If the user already completed the AgeGate (session-based) AND granted browser
-        // location permission, auto-apply the equivalent profile consent flags once.
+        // If the user already completed the AgeGate (session-based), auto-apply the equivalent
+        // profile consent flags once.
+        //
+        // IMPORTANT:
+        // - Age + terms/data consents should not depend on location consent.
+        // - GPS consent is optional; if location was declined (or permission denied), keep
+        //   `has_consented_gps` false so location-based features remain gated.
+        //
         // This prevents loops where the app keeps redirecting to AccountConsents/OnboardingGate.
         try {
           const ageVerified = sessionStorage.getItem('age_verified') === 'true';
@@ -131,17 +137,17 @@ function LayoutInner({ children, currentPageName }) {
             !currentUser?.has_consented_data ||
             !currentUser?.has_consented_gps;
 
-          if (!alreadyApplied && needsConsents && ageVerified && locationConsent && hasGrantedLocation) {
+          if (!alreadyApplied && needsConsents && ageVerified) {
             await base44.auth.updateMe({
               consent_accepted: true,
               consent_age: true,
-              consent_location: true,
+              consent_location: locationConsent,
               consent_date: new Date().toISOString(),
 
               // These are the required flags checked by Layout/OnboardingGate.
               has_agreed_terms: true,
               has_consented_data: true,
-              has_consented_gps: true,
+              has_consented_gps: locationConsent && hasGrantedLocation,
             });
 
             if (markerKey) sessionStorage.setItem(markerKey, '1');

@@ -3,6 +3,7 @@ export function createPageUrl(pageName: string) {
     if (pageName.startsWith('/')) return pageName;
 
     const routeMap: Record<string, string> = {
+        Auth: '/auth',
         Home: '/',
         Pulse: '/pulse',
         Globe: '/pulse',
@@ -75,7 +76,19 @@ export function createUserProfileUrlByEmail(
 
 export function createMessageComposeUrl(user: any, fallbackPath: string = '/social/inbox') {
     const uid = getAuthUserId(user);
-    if (uid) return `/social/inbox?to_uid=${encodeURIComponent(uid)}`;
+    const email = String(user?.email || user?.Email || '').trim().toLowerCase();
+
+    // Prefer auth UID for stable deep-links, but include email as a fallback so
+    // the inbox can still open a compose modal if UID resolution fails.
+    if (uid) {
+        const params = new URLSearchParams();
+        params.set('to_uid', uid);
+        if (email && email.includes('@')) params.set('to', email);
+        return `/social/inbox?${params.toString()}`;
+    }
+
+    if (email && email.includes('@')) return `/social/inbox?to=${encodeURIComponent(email)}`;
+
     return fallbackPath;
 }
 

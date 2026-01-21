@@ -239,7 +239,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
         </AnimatePresence>
       )}
 
-      <style jsx>{`
+      <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 4px;
         }

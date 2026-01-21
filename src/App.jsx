@@ -4,7 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, Navigate, useParams, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useParams, useLocation, useNavigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -263,6 +263,49 @@ const SocialThreadRedirect = () => {
   return <Navigate to={target} replace />;
 };
 
+const GoRedirect = () => {
+  const { type, id } = useParams();
+  const rawType = String(type || '').trim().toLowerCase();
+  const rawId = String(id || '').trim();
+  const safeId = rawId ? encodeURIComponent(rawId) : '';
+
+  const target = (() => {
+    if (!safeId) return '/';
+
+    if (rawType === 'user' || rawType === 'u' || rawType === 'profile') {
+      return `/social/u/${safeId}`;
+    }
+
+    if (rawType === 'thread' || rawType === 't' || rawType === 'dm') {
+      return `/social/t/${safeId}`;
+    }
+
+    if (rawType === 'event' || rawType === 'events') {
+      return `/events/${safeId}`;
+    }
+
+    if (rawType === 'beacon' || rawType === 'b') {
+      return `${createPageUrl('BeaconDetail')}?id=${safeId}`;
+    }
+
+    if (rawType === 'product' || rawType === 'p' || rawType === 'market') {
+      return `/market/p/${safeId}`;
+    }
+
+    if (rawType === 'collection' || rawType === 'c') {
+      return `/market/${safeId}`;
+    }
+
+    if (rawType === 'pulse' || rawType === 'map') {
+      return '/pulse';
+    }
+
+    return '/';
+  })();
+
+  return <Navigate to={target} replace />;
+};
+
 const MarketCollectionRedirect = () => {
   const { collection } = useParams();
   const target = `/market?collection=${encodeURIComponent(collection ?? '')}`;
@@ -272,7 +315,22 @@ const MarketCollectionRedirect = () => {
 const AuthenticatedApp = () => {
   const { isLoadingAuth, authError, navigateToLogin } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isRedirectingToAuth, setIsRedirectingToAuth] = useState(false);
+
+  // Supabase recovery links can arrive at the site root with tokens in the hash.
+  // Example: http://localhost:5173/#access_token=...&type=recovery
+  // Redirect to the Auth reset UI while preserving the hash so Supabase can hydrate the session.
+  useEffect(() => {
+    const hash = String(location?.hash || '');
+    const looksLikeRecovery = hash.toLowerCase().includes('type=recovery');
+    if (!looksLikeRecovery) return;
+
+    const path = String(location?.pathname || '').toLowerCase();
+    if (path.startsWith('/auth')) return;
+
+    navigate({ pathname: '/auth', search: '?mode=reset', hash }, { replace: true });
+  }, [location?.hash, location?.pathname, navigate]);
 
   useEffect(() => {
     if (!authError) return;
@@ -321,6 +379,7 @@ const AuthenticatedApp = () => {
           <MainPage />
         </LayoutWrapper>
       } />
+      <Route path="/_/go/:type/:id" element={<GoRedirect />} />
       <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
       <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />

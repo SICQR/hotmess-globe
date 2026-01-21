@@ -3,6 +3,7 @@ import { defineConfig, loadEnv } from 'vite'
 import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -509,6 +510,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   Object.assign(process.env, env);
 
+  const enableSentryUpload =
+    mode === 'production' &&
+    !!process.env.SENTRY_AUTH_TOKEN &&
+    !!process.env.SENTRY_ORG &&
+    !!process.env.SENTRY_PROJECT;
+
   return {
     logLevel: mode === 'development' ? 'info' : 'error',
     // Vite only exposes env vars to import.meta.env when they match envPrefix.
@@ -535,7 +542,20 @@ export default defineConfig(({ mode }) => {
       // Local dev handlers for /api/* endpoints.
       localApiRoutes(),
       react(),
+      ...(enableSentryUpload
+        ? [
+            sentryVitePlugin({
+              org: process.env.SENTRY_ORG,
+              project: process.env.SENTRY_PROJECT,
+              authToken: process.env.SENTRY_AUTH_TOKEN,
+            }),
+          ]
+        : []),
     ],
+    build: {
+      // Keep prod stack traces readable in Sentry by generating hidden sourcemaps.
+      sourcemap: mode === 'production' ? 'hidden' : false,
+    },
     test: {
       globals: true,
       environment: 'jsdom',

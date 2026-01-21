@@ -115,6 +115,37 @@ const buildFallbackProfiles = () => {
         },
       ],
     },
+    {
+      id: 'profile_125',
+      // Include both variants for client compatibility.
+      auth_user_id: 'fallback_auth_125',
+      authUserId: 'fallback_auth_125',
+      email: 'sam@example.com',
+      profileName: 'Sam',
+      title: 'Down for a pint, a dance, or both',
+      locationLabel: 'London',
+      city: 'London',
+      profileType: 'standard',
+      bio: 'Down for a pint, a dance, or both',
+      gender: 'male',
+      photo_policy_ack: true,
+      geoLat: 51.5154,
+      geoLng: -0.1410,
+      photos: [
+        {
+          url: 'https://images.unsplash.com/photo-1520974735194-6a9a3a559b97?auto=format&fit=crop&w=1200&q=80',
+          isPrimary: true,
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80',
+          isPrimary: false,
+        },
+        {
+          url: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+          isPrimary: false,
+        },
+      ],
+    },
   ];
 };
 

@@ -1,4 +1,22 @@
 import { defineConfig, devices } from '@playwright/test';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
+
+// Load .env files for local Playwright runs.
+// - CI typically injects env vars already; we do not override those.
+// - Locally, .env.local should take precedence over .env.
+try {
+  dotenv.config({ override: false });
+
+  const envLocalUrl = new URL('./.env.local', import.meta.url);
+  const envLocalPath = fileURLToPath(envLocalUrl);
+  if (fs.existsSync(envLocalPath)) {
+    dotenv.config({ path: envLocalPath, override: true });
+  }
+} catch {
+  // Best-effort: tests can still run with env vars injected by the shell/CI.
+}
 
 export default defineConfig({
   testDir: './e2e',

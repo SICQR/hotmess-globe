@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { auth, base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star } from 'lucide-react';
 import { toast } from 'sonner';
-import { createPageUrl } from '../utils';
+import logger from '@/utils/logger';
 
 const MEMBERSHIP_TIERS = [
   {
@@ -37,6 +37,7 @@ const MEMBERSHIP_TIERS = [
 ];
 
 export default function Auth() {
+  const navigate = useNavigate();
   const [step, setStep] = useState('auth'); // auth, forgot, reset, membership, profile, welcome
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -45,6 +46,7 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [authErrorMessage, setAuthErrorMessage] = useState(null);
   const [selectedTier, setSelectedTier] = useState('basic');
   const [profileData, setProfileData] = useState({
     bio: '',
@@ -54,6 +56,28 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const nextUrl = searchParams.get('next');
   const mode = searchParams.get('mode');
+
+  const getSafeNextPath = (raw) => {
+    const value = typeof raw === 'string' ? raw.trim() : '';
+    if (!value) return null;
+    // Only allow internal app paths.
+    if (!value.startsWith('/')) return null;
+    if (value.startsWith('//')) return null;
+    if (value.includes('://')) return null;
+    return value;
+  };
+
+  const waitForSession = async ({ timeoutMs = 2000, intervalMs = 100 } = {}) => {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const {
+        data: { session },
+      } = await auth.getSession();
+      if (session?.access_token) return session;
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+    return null;
+  };
 
   useEffect(() => {
     // Supabase recovery links typically land with tokens in the URL hash.
@@ -65,34 +89,59 @@ export default function Auth() {
     }
   }, [mode]);
 
+  useEffect(() => {
+    const hash = (typeof window !== 'undefined' ? window.location.hash : '') || '';
+    const looksLikeRecovery = hash.toLowerCase().includes('type=recovery');
+    if (!(mode === 'reset' || looksLikeRecovery)) return;
+
+    // Persist the recovery session contained in the URL hash (access_token/refresh_token).
+    // Without this, `auth.getSession()` will be empty and password updates will fail.
+    auth
+      .getSessionFromUrl({ storeSession: true })
+      .catch(() => {
+        // Non-fatal: we'll show the friendly error message when attempting reset.
+      });
+  }, [mode]);
+
   const handleAuth = async (e) => {
     e.preventDefault();
+    setAuthErrorMessage(null);
     setLoading(true);
 
     try {
+      const normalizedEmail = String(email || '').trim().toLowerCase();
+      const normalizedPassword = String(password || '');
+
       if (isSignUp) {
-        const { error } = await auth.signUp(email, password, {
+        const { error } = await auth.signUp(normalizedEmail, normalizedPassword, {
           full_name: fullName,
         });
 
         if (error) throw error;
 
-        const { error: signInError } = await auth.signIn(email, password);
+        const { error: signInError } = await auth.signIn(normalizedEmail, normalizedPassword);
         if (signInError) throw signInError;
 
         toast.success('Account created! Let\'s set you up...');
         setStep('membership');
       } else {
-        const { error } = await auth.signIn(email, password);
+        const { error } = await auth.signIn(normalizedEmail, normalizedPassword);
         if (error) throw error;
 
         toast.success('Welcome back!');
-        setTimeout(() => {
-          window.location.href = nextUrl || createPageUrl('Home');
-        }, 500);
+
+        // Supabase session storage can be async; wait briefly so route guards
+        // and e2e tests see a stable post-login state.
+        await waitForSession({ timeoutMs: 2500, intervalMs: 100 });
+
+        const target = getSafeNextPath(nextUrl) || '/';
+        navigate(target, { replace: true });
       }
     } catch (error) {
-      toast.error(error.message || 'Authentication failed');
+      const message = error?.message || 'Authentication failed';
+      setAuthErrorMessage(message);
+      logger.warn('[Auth] Authentication failed', { message, code: error?.code, status: error?.status });
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -112,7 +161,7 @@ export default function Auth() {
       const safeOrigin = isDevLoopback
         ? `${protocol}//localhost${port ? `:${port}` : ''}`
         : origin;
-      const redirectTo = `${safeOrigin}${createPageUrl('Auth')}?mode=reset`;
+      const redirectTo = `${safeOrigin}/auth?mode=reset`;
       const { error } = await auth.resetPasswordForEmail(email, redirectTo);
       if (error) throw error;
 
@@ -182,9 +231,10 @@ export default function Auth() {
         onboarding_completed: true
       });
       setStep('welcome');
+      const target = getSafeNextPath(nextUrl) || '/';
       setTimeout(() => {
-        window.location.href = nextUrl || createPageUrl('Home');
-      }, 3000);
+        navigate(target, { replace: true });
+      }, 800);
     } catch (error) {
       toast.error('Failed to update profile');
       setLoading(false);
@@ -300,6 +350,14 @@ export default function Auth() {
                   )}
                 </Button>
               </form>
+
+              {authErrorMessage && (
+                <div className="mt-4 border border-red-500/40 bg-red-500/10 p-3">
+                  <p className="text-xs uppercase tracking-wider text-red-200 font-mono">
+                    {authErrorMessage}
+                  </p>
+                </div>
+              )}
 
               {!isSignUp && (
                 <div className="text-center mt-4">

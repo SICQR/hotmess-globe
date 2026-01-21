@@ -68,6 +68,7 @@ const fetchProfilesForCandidateIds = async ({ serviceClient, candidateUserIds })
 const toPublicProfile = (row) => {
   if (!row || typeof row !== 'object') return null;
   return {
+    auth_user_id: row.auth_user_id ?? null,
     email: row.email ?? null,
     full_name: row.full_name ?? null,
     avatar_url: row.avatar_url ?? null,
@@ -261,6 +262,7 @@ export default async function handler(req, res) {
     return json(res, 200, {
       candidates: candidates.map((c) => ({
         user_id: c.user_id,
+        auth_user_id: profileMap.get(String(c.user_id))?.auth_user_id ?? String(c.user_id),
         profile: toPublicProfile(profileMap.get(String(c.user_id))),
         last_lat: c.last_lat,
         last_lng: c.last_lng,
@@ -277,6 +279,7 @@ export default async function handler(req, res) {
     return json(res, 200, {
       candidates: candidates.map((c) => ({
         user_id: c.user_id,
+        auth_user_id: profileMap.get(String(c.user_id))?.auth_user_id ?? String(c.user_id),
         profile: toPublicProfile(profileMap.get(String(c.user_id))),
         last_lat: c.last_lat,
         last_lng: c.last_lng,
@@ -336,6 +339,7 @@ export default async function handler(req, res) {
       return json(res, 200, {
         candidates: candidates.map((c) => ({
           user_id: c.user_id,
+          auth_user_id: profileMap.get(String(c.user_id))?.auth_user_id ?? String(c.user_id),
           profile: toPublicProfile(profileMap.get(String(c.user_id))),
           last_lat: c.last_lat,
           last_lng: c.last_lng,
@@ -390,6 +394,7 @@ export default async function handler(req, res) {
 
     return {
       user_id: c.user_id,
+      auth_user_id: profileMap.get(String(c.user_id))?.auth_user_id ?? String(c.user_id),
       profile: toPublicProfile(profileMap.get(String(c.user_id))),
       last_lat: c.last_lat,
       last_lng: c.last_lng,

@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
+import * as Sentry from '@sentry/react';
 
 class PageErrorBoundary extends React.Component {
   constructor(props) {
@@ -47,8 +48,19 @@ class PageErrorBoundary extends React.Component {
       errorCount: prevState.errorCount + 1
     }));
 
-    // Log to error tracking service (add your service here)
-    // logErrorToService(error, errorInfo);
+    try {
+      Sentry.withScope((scope) => {
+        scope.setTag('boundary', 'page');
+        scope.setLevel('error');
+        scope.setExtra('componentStack', errorInfo?.componentStack);
+        if (typeof window !== 'undefined') {
+          scope.setExtra('href', window.location.href);
+        }
+        Sentry.captureException(error);
+      });
+    } catch {
+      // ignore
+    }
   }
 
   handleReset = () => {

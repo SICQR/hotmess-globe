@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logger from '@/utils/logger';
+import * as Sentry from '@sentry/react';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -20,9 +21,20 @@ export default class ErrorBoundary extends React.Component {
       stack: error.stack,
       componentStack: errorInfo.componentStack 
     });
-    
-    // TODO: Send to error tracking service (Sentry)
-    // Sentry.captureException(error, { extra: errorInfo });
+
+    try {
+      Sentry.withScope((scope) => {
+        scope.setTag('boundary', 'app');
+        scope.setLevel('fatal');
+        scope.setExtra('componentStack', errorInfo?.componentStack);
+        if (typeof window !== 'undefined') {
+          scope.setExtra('href', window.location.href);
+        }
+        Sentry.captureException(error);
+      });
+    } catch {
+      // ignore
+    }
   }
 
   handleReset = () => {

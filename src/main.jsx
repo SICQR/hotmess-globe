@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
 import ErrorBoundary from '@/components/error/ErrorBoundary'
+import * as Sentry from '@sentry/react'
 
 const showFatalOverlay = (err) => {
   if (!import.meta.env.DEV) return;
@@ -21,6 +22,21 @@ const showFatalOverlay = (err) => {
 
 // In dev, rely on ErrorBoundary + console output.
 
+// Error tracking (production-safe; no-op unless VITE_SENTRY_DSN is set).
+try {
+  const dsn = import.meta.env.VITE_SENTRY_DSN;
+  if (dsn) {
+    Sentry.init({
+      dsn,
+      environment: import.meta.env.MODE,
+      // Keep tracing off by default to avoid unexpected quota/overhead.
+      tracesSampleRate: 0,
+    });
+  }
+} catch {
+  // ignore
+}
+
 try {
   ReactDOM.createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
@@ -30,3 +46,4 @@ try {
 } catch (err) {
   showFatalOverlay(err);
 }
+

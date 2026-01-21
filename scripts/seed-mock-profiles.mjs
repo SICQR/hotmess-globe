@@ -174,7 +174,9 @@ const main = async () => {
     const fullName = names[i % names.length];
     const email = `mock.${slugify(fullName)}.${i + 1}@hotmess.local`;
 
-    const profileType = i % 4 === 0 ? 'seller' : 'creator';
+    // E2E stability: ensure at least one profile renders a "Message" primary CTA.
+    // The Social grid uses profile_type to decide the CTA (seller -> Shop, creator -> Listen, else -> Message).
+    const profileType = i === 0 ? 'member' : i % 4 === 0 ? 'seller' : 'creator';
     const photos = pickPhotos(i);
     const avatarUrl = photos[0]?.url;
 
@@ -192,7 +194,12 @@ const main = async () => {
       avatar_url: avatarUrl,
       photos,
       profile_type: profileType,
-      bio: profileType === 'seller' ? 'Late-night walks, loud music, no drama' : 'Gym rat, beach lover',
+      bio:
+        profileType === 'seller'
+          ? 'Late-night walks, loud music, no drama'
+          : profileType === 'creator'
+            ? 'Gym rat, beach lover'
+            : 'Looking for good vibes and real chats',
       photo_policy_ack: true,
       gender: 'male',
       xp: Math.floor(rand(250, 12000)),

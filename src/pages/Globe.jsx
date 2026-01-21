@@ -242,11 +242,18 @@ export default function GlobePage() {
         const email = profile?.email ? String(profile.email) : null;
         if (!email) return null;
 
+        const authUserId =
+          candidate?.auth_user_id ||
+          profile?.auth_user_id ||
+          profile?.authUserId ||
+          candidate?.user_id ||
+          null;
+
         const updated = profile?.updated_date || profile?.updated_at || null;
         const title = profile?.full_name || email;
 
         return {
-          id: `person-${String(candidate.user_id || email)}`,
+          id: `person-${String(authUserId || candidate.user_id || email)}`,
           kind: 'person',
           mode: 'hookup',
           title,
@@ -256,6 +263,7 @@ export default function GlobePage() {
           city: profile?.city || null,
           image_url: profile?.avatar_url || null,
           avatar_url: profile?.avatar_url || null,
+          auth_user_id: authUserId ? String(authUserId) : null,
           email,
           created_date: updated || new Date().toISOString(),
           updated_date: updated || null,

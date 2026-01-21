@@ -21,6 +21,10 @@ export default function Safety() {
   const [checkOutHours, setCheckOutHours] = useState(4);
   const queryClient = useQueryClient();
 
+  const userEmail = String(currentUser?.email || '')
+    .trim()
+    .toLowerCase();
+
   useEffect(() => {
     const fetchUser = async () => {
       const user = await base44.auth.me();
@@ -30,34 +34,36 @@ export default function Safety() {
   }, []);
 
   const { data: trustedContacts = [] } = useQuery({
-    queryKey: ['trusted-contacts', currentUser?.email],
-    queryFn: () => base44.entities.TrustedContact.filter({ user_email: currentUser.email }),
-    enabled: !!currentUser,
+    queryKey: ['trusted-contacts', userEmail],
+    queryFn: () => base44.entities.TrustedContact.filter({ user_email: userEmail }),
+    enabled: !!userEmail,
   });
 
   const { data: activeCheckIn } = useQuery({
-    queryKey: ['active-safety-checkin', currentUser?.email],
+    queryKey: ['active-safety-checkin', userEmail],
     queryFn: async () => {
       const checkIns = await base44.entities.SafetyCheckIn.filter({ 
-        user_email: currentUser.email,
+        user_email: userEmail,
         status: 'active'
       });
       return checkIns[0] || null;
     },
-    enabled: !!currentUser,
+    enabled: !!userEmail,
     refetchInterval: 30000,
   });
 
   const addContactMutation = useMutation({
     mutationFn: async () => {
-      await base44.entities.TrustedContact.create({
-        user_email: currentUser.email,
-        contact_name: contactName,
-        contact_phone: contactPhone,
-        contact_email: contactEmail,
-        relationship,
-        notify_on_sos: true,
-      });
+          await base44.entities.TrustedContact.create({
+            user_email: userEmail,
+            contact_name: contactName,
+            // Best-effort: in some environments these columns exist; in others they don't.
+            // Our Base44/Supabase wrapper will strip unknown columns and retry.
+            contact_phone: contactPhone || undefined,
+            contact_email: contactEmail,
+            relationship: relationship || undefined,
+            notify_on_sos: true,
+          });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['trusted-contacts']);
@@ -66,10 +72,15 @@ export default function Safety() {
       setContactPhone('');
       setContactEmail('');
     },
+    onError: (error) => {
+      const message = error?.message || 'Failed to add trusted contact';
+      toast.error(message);
+    },
   });
 
   const checkInMutation = useMutation({
     mutationFn: async () => {
+      if (!userEmail) throw new Error('Missing user email');
       const checkOutTime = new Date(Date.now() + checkOutHours * 60 * 60 * 1000).toISOString();
       
       let location = { venue_name: 'Unknown' };
@@ -88,22 +99,34 @@ export default function Safety() {
         }
       }
 
-      await base44.entities.SafetyCheckIn.create({
-        user_email: currentUser.email,
+      const created = await base44.entities.SafetyCheckIn.create({
+        user_email: userEmail,
         check_in_time: new Date().toISOString(),
         expected_check_out: checkOutTime,
         location,
         status: 'active',
       });
+
+      return created;
     },
-    onSuccess: () => {
+    onSuccess: (created) => {
+      if (created && userEmail) {
+        queryClient.setQueryData(['active-safety-checkin', userEmail], created);
+      }
       queryClient.invalidateQueries(['active-safety-checkin']);
       toast.success('Safety check-in active');
+    },
+    onError: (error) => {
+      const message = error?.message || 'Failed to start safety check-in';
+      toast.error(message);
     },
   });
 
   const checkOutMutation = useMutation({
     mutationFn: async () => {
+      const checkInId = activeCheckIn?.id;
+      if (!checkInId) throw new Error('No active check-in found');
+
       await base44.entities.SafetyCheckIn.update(activeCheckIn.id, {
         status: 'checked_out',
       });
@@ -111,6 +134,10 @@ export default function Safety() {
     onSuccess: () => {
       queryClient.invalidateQueries(['active-safety-checkin']);
       toast.success('Checked out safely');
+    },
+    onError: (error) => {
+      const message = error?.message || 'Failed to check out';
+      toast.error(message);
     },
   });
 
@@ -231,7 +258,7 @@ export default function Safety() {
                   className="bg-white/5 border-white/20"
                 />
                 <Input
-                  placeholder="Phone number"
+                  placeholder="Phone (optional)"
                   value={contactPhone}
                   onChange={(e) => setContactPhone(e.target.value)}
                   className="bg-white/5 border-white/20"
@@ -242,6 +269,9 @@ export default function Safety() {
                   onChange={(e) => setContactEmail(e.target.value)}
                   className="bg-white/5 border-white/20"
                 />
+                <p className="text-xs text-white/40">
+                  Provide at least one contact method (phone or email). Phone/relationship are best-effort stored and may not appear in all environments.
+                </p>
                 <Select value={relationship} onValueChange={setRelationship}>
                   <SelectTrigger className="bg-white/5 border-white/20">
                     <SelectValue />
@@ -256,7 +286,11 @@ export default function Safety() {
 
                 <Button
                   onClick={() => addContactMutation.mutate()}
-                  disabled={!contactName.trim() || !contactPhone.trim() || addContactMutation.isPending}
+                  disabled={
+                    !contactName.trim() ||
+                    (!contactPhone.trim() && !contactEmail.trim()) ||
+                    addContactMutation.isPending
+                  }
                   variant="cyan"
                   className="w-full"
                 >
@@ -282,16 +316,20 @@ export default function Safety() {
                     <div className="flex items-start justify-between">
                       <div>
                         <h4 className="font-bold uppercase">{contact.contact_name}</h4>
-                        <p className="text-sm text-white/60 flex items-center gap-2 mt-1">
-                          <Phone className="w-3 h-3" />
-                          {contact.contact_phone}
-                        </p>
+                        {contact.contact_phone && (
+                          <p className="text-sm text-white/60 flex items-center gap-2 mt-1">
+                            <Phone className="w-3 h-3" />
+                            {contact.contact_phone}
+                          </p>
+                        )}
                         {contact.contact_email && (
                           <p className="text-xs text-white/40">{contact.contact_email}</p>
                         )}
-                        <span className="inline-block mt-2 px-2 py-1 bg-[#00D9FF]/20 text-[#00D9FF] text-xs font-bold uppercase">
-                          {contact.relationship}
-                        </span>
+                        {contact.relationship && (
+                          <span className="inline-block mt-2 px-2 py-1 bg-[#00D9FF]/20 text-[#00D9FF] text-xs font-bold uppercase">
+                            {contact.relationship}
+                          </span>
+                        )}
                       </div>
                       <Button
                         onClick={() => deleteContactMutation.mutate(contact.id)}
