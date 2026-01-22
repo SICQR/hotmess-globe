@@ -6,7 +6,38 @@ function useReturnUrl() {
   const location = useLocation();
   return useMemo(() => {
     const params = new URLSearchParams(location.search);
-    return params.get('returnUrl') || '/';
+    const returnUrl = params.get('returnUrl') || '/';
+
+    // Only allow same-origin relative paths; fall back to '/' otherwise.
+    if (typeof returnUrl === 'string' && returnUrl.startsWith('/') && !returnUrl.startsWith('//')) {
+      return returnUrl;
+    }
+
+    return '/';
+
+    // Default to home if no returnUrl specified
+    if (!rawReturnUrl) {
+      return '/';
+    }
+
+    try {
+      // If rawReturnUrl is a relative path, ensure it starts with '/'
+      // This prevents values like '//' (protocol-relative) or 'http://...'
+      if (rawReturnUrl.startsWith('/')) {
+        return rawReturnUrl;
+      }
+
+      // For absolute URLs, only allow same-origin redirects
+      const candidate = new URL(rawReturnUrl, window.location.origin);
+      if (candidate.origin === window.location.origin) {
+        return candidate.pathname + candidate.search + candidate.hash;
+      }
+    } catch (e) {
+      // Fall through to safe default on parsing errors
+    }
+
+    // Unsafe or invalid returnUrl: fall back to safe default
+    return '/';
   }, [location.search]);
 }
 
