@@ -32,6 +32,7 @@
 - [ ] Tested in development environment
 - [ ] Tested in staging environment
 - [ ] Verified all acceptance criteria
+- [ ] Ran `npm run test:ci` (or CI passed)
 
 ## 🔒 Security Checklist
 <!-- All items must be checked before merging -->
@@ -51,6 +52,9 @@
 - [ ] No new dependencies with known security issues
 - [ ] New dependencies justified and documented
 - [ ] Updated `.env.example` if new env vars added
+
+### Local guardrails
+- [ ] Installed local git hooks (`npm run hooks:install`) or equivalent
 
 ### Environment & Configuration
 - [ ] Environment variables properly prefixed (`VITE_` for client, none for server)
@@ -79,6 +83,8 @@
 - [ ] Integration tests added/updated (when applicable)
 - [ ] All tests pass
 - [ ] Edge cases considered and tested
+
+> Note: Playwright E2E runs in CI when required GitHub Secrets are configured.
 
 ### Performance
 - [ ] No unnecessary re-renders introduced
