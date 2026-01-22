@@ -1,5 +1,9 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 
+// This spec uses a single shared credential set; run serially to avoid
+// cross-test interference when Playwright uses multiple workers.
+test.describe.configure({ mode: 'serial' });
+
 // C = authenticated happy path (optional).
 // Skips unless E2E_EMAIL + E2E_PASSWORD are provided.
 
@@ -225,7 +229,7 @@ const clickStartConversationRedirectSafe = async ({
   startButton: Locator;
 }): Promise<ClickOutcome> => {
   const profileGate = page.getByText('Complete Your Profile');
-  const messageInput = page.getByPlaceholder('TYPE MESSAGE...');
+  const messageInput = page.getByTestId('chat-composer-input');
 
   // Clicking can trigger a redirect to /Profile?next=... which detaches the button.
   // Treat that as a valid outcome and recover rather than failing the click.
@@ -258,19 +262,14 @@ test.use({
   permissions: ['geolocation'],
 });
 
-test('C: auth → social → new message → send', async ({ page }) => {
-  test.skip(!email || !password, 'Set E2E_EMAIL and E2E_PASSWORD to run this smoke test');
-
-  const pageErrors: string[] = [];
-  page.on('pageerror', (err) => pageErrors.push(String(err)));
-
+const loginAndClearGates = async ({ page, nextPath }: { page: Page; nextPath: string }) => {
   // Bypass session-based AgeGate.
   await page.addInitScript(() => {
     sessionStorage.setItem('age_verified', 'true');
     sessionStorage.setItem('location_consent', 'false');
   });
 
-  await page.goto('/auth?next=%2Fsocial');
+  await page.goto(`/auth?next=${encodeURIComponent(nextPath)}`);
 
   await page.getByPlaceholder('your@email.com').fill(String(email));
   await page.getByPlaceholder('Enter password').fill(String(password));
@@ -280,6 +279,56 @@ test('C: auth → social → new message → send', async ({ page }) => {
   await expect(page).not.toHaveURL(/\/auth(\?|$)/, { timeout: 30_000 });
 
   await clearAnyGates(page);
+};
+
+test.describe('D: mobile safety widgets', () => {
+  test.use({ viewport: { width: 390, height: 844 } }); // iPhone 13/14-ish
+
+  test('D: panic remains clickable on mobile (assistant present/open)', async ({ page }) => {
+    test.skip(!email || !password, 'Set E2E_EMAIL and E2E_PASSWORD to run this smoke test');
+
+    const pageErrors: string[] = [];
+    page.on('pageerror', (err) => pageErrors.push(String(err)));
+
+    await loginAndClearGates({ page, nextPath: '/' });
+
+    const panicButton = page.getByTestId('panic-button');
+    await expect(panicButton).toBeVisible({ timeout: 20_000 });
+
+    // Baseline: can click panic and see the confirm dialog.
+    await panicButton.click({ timeout: 10_000 });
+    await expect(page.getByText('Emergency Panic')).toBeVisible({ timeout: 10_000 });
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page.getByText('Emergency Panic')).toBeHidden({ timeout: 10_000 });
+
+    // Assistant should not overlap the panic button (closed state).
+    const assistantLauncher = page.getByTestId('global-assistant-launcher');
+    await expect(assistantLauncher).toBeVisible({ timeout: 20_000 });
+
+    // Open assistant panel and verify panic is still clickable (z-index regression).
+    await assistantLauncher.click({ timeout: 10_000 });
+    await expect(page.getByTestId('global-assistant-panel')).toBeVisible({ timeout: 20_000 });
+    await expect(panicButton).toBeVisible({ timeout: 5_000 });
+
+    await panicButton.click({ timeout: 10_000 });
+    await expect(page.getByText('Emergency Panic')).toBeVisible({ timeout: 10_000 });
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page.getByText('Emergency Panic')).toBeHidden({ timeout: 10_000 });
+
+    await page.getByTestId('global-assistant-close').click({ timeout: 10_000 });
+    await expect(page.getByTestId('global-assistant-panel')).toBeHidden({ timeout: 20_000 });
+
+    expect(pageErrors, `Unexpected page errors:\n${pageErrors.join('\n\n')}`).toEqual([]);
+  });
+});
+
+test('C: auth → social → new message → send', async ({ page }) => {
+  test.skip(!email || !password, 'Set E2E_EMAIL and E2E_PASSWORD to run this smoke test');
+
+  const pageErrors: string[] = [];
+  page.on('pageerror', (err) => pageErrors.push(String(err)));
+
+  await loginAndClearGates({ page, nextPath: '/social' });
 
   // Proactively ensure profile is complete before hitting social messaging flows
   // (some actions call requireProfile and will redirect mid-flow otherwise).
@@ -389,7 +438,7 @@ test('C: auth → social → new message → send', async ({ page }) => {
 
   // Thread view should mount and allow sending.
   // Some environments can redirect to Profile setup here (requireProfile is called on thread create).
-  const messageInput = page.getByPlaceholder('TYPE MESSAGE...');
+  const messageInput = page.getByTestId('chat-composer-input');
   const consentGate = page.getByText('CONSENT CHECK');
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -440,9 +489,14 @@ test('C: auth → social → new message → send', async ({ page }) => {
 
   await expect(messageInput).toBeVisible({ timeout: 20_000 });
 
+  const sendButton = page.getByTestId('chat-composer-send');
+  await expect(sendButton).toBeVisible({ timeout: 20_000 });
+
   const text = `smoke ${Date.now()}`;
   await messageInput.fill(text);
-  await messageInput.press('Enter');
+  await expect(messageInput).toHaveValue(text, { timeout: 20_000 });
+  await expect(sendButton).toBeEnabled({ timeout: 20_000 });
+  await sendButton.click({ timeout: 15_000 });
 
   await maybeAcceptMessagingConsentGate(page);
 

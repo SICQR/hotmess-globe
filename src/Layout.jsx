@@ -52,6 +52,29 @@ function LayoutInner({ children, currentPageName }) {
     pathname === '/cart' ||
     pathname.startsWith('/p/');
 
+  const isMessagingSurface =
+    currentPageName === 'Messages' ||
+    pathname.startsWith('/social/inbox') ||
+    pathname.startsWith('/social/t/') ||
+    pathname === '/messages' ||
+    pathname.startsWith('/messages/');
+
+  // Safe-area-aware anchors so mobile UI chrome (home indicator) doesn't collide.
+  // - Assistant button: bottom-right
+  // - Assistant panel: full-width on mobile, bottom-right on md+
+  // - Panic: bottom-left on mobile, separated from assistant on md+
+  const assistantButtonAnchorClassName = isMessagingSurface
+    ? 'bottom-[calc(env(safe-area-inset-bottom)+6rem)] right-[calc(env(safe-area-inset-right)+1.5rem)]'
+    : 'bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] right-[calc(env(safe-area-inset-right)+1.5rem)]';
+
+  const assistantPanelAnchorClassName = isMessagingSurface
+    ? 'bottom-[calc(env(safe-area-inset-bottom)+6rem)] inset-x-0 md:bottom-[calc(env(safe-area-inset-bottom)+6rem)] md:right-[calc(env(safe-area-inset-right)+1.5rem)]'
+    : 'bottom-[env(safe-area-inset-bottom)] inset-x-0 md:bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] md:right-[calc(env(safe-area-inset-right)+1.5rem)]';
+
+  const panicAnchorClassName = isMessagingSurface
+    ? 'bottom-[calc(env(safe-area-inset-bottom)+6rem)] left-[calc(env(safe-area-inset-left)+1.25rem)] md:left-auto md:right-24'
+    : 'bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] left-[calc(env(safe-area-inset-left)+1.25rem)] md:left-auto md:right-24';
+
   const presenceLastSentRef = useRef({
     ts: 0,
     lat: null,
@@ -639,10 +662,15 @@ function LayoutInner({ children, currentPageName }) {
       </main>
 
       {/* Panic Button */}
-      {user && <PanicButton />}
+      {user && <PanicButton anchorClassName={panicAnchorClassName} />}
 
       {/* Global AI Assistant */}
-      {user && <GlobalAssistant />}
+      {user && (
+        <GlobalAssistant
+          buttonAnchorClassName={assistantButtonAnchorClassName}
+          panelAnchorClassName={assistantPanelAnchorClassName}
+        />
+      )}
 
       {/* Global Search */}
       {user && <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />}

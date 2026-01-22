@@ -323,13 +323,31 @@ const AuthenticatedApp = () => {
   // Redirect to the Auth reset UI while preserving the hash so Supabase can hydrate the session.
   useEffect(() => {
     const hash = String(location?.hash || '');
-    const looksLikeRecovery = hash.toLowerCase().includes('type=recovery');
-    if (!looksLikeRecovery) return;
+    const looksLikeRecoveryHash = hash.toLowerCase().includes('type=recovery');
+
+    const search = String(location?.search || '');
+    let looksLikeRecoveryQuery = false;
+    if (search) {
+      try {
+        const params = new URLSearchParams(search);
+        const type = String(params.get('type') || '').toLowerCase();
+        const code = params.get('code');
+        looksLikeRecoveryQuery = type === 'recovery' || (!!code && type === 'recovery');
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!looksLikeRecoveryHash && !looksLikeRecoveryQuery) return;
 
     const path = String(location?.pathname || '').toLowerCase();
     if (path.startsWith('/auth')) return;
 
-    navigate({ pathname: '/auth', search: '?mode=reset', hash }, { replace: true });
+    // Preserve recovery context so Supabase can hydrate the session.
+    const nextParams = new URLSearchParams(search);
+    nextParams.set('mode', 'reset');
+    const nextSearch = `?${nextParams.toString()}`;
+    navigate({ pathname: '/auth', search: nextSearch, hash }, { replace: true });
   }, [location?.hash, location?.pathname, navigate]);
 
   useEffect(() => {

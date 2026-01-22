@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth, base44 } from '@/components/utils/supabaseClient';
+import { auth, base44, supabase } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star } from 'lucide-react';
@@ -56,6 +56,32 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const nextUrl = searchParams.get('next');
   const mode = searchParams.get('mode');
+  const didHydrateRecoveryRef = useRef(false);
+
+  const getRecoveryContext = () => {
+    const hash = (typeof window !== 'undefined' ? window.location.hash : '') || '';
+    const looksLikeRecoveryHash = hash.toLowerCase().includes('type=recovery');
+
+    const search = (typeof window !== 'undefined' ? window.location.search : '') || '';
+    let code = null;
+    let looksLikeRecoveryQuery = false;
+    if (search) {
+      try {
+        const params = new URLSearchParams(search);
+        code = params.get('code');
+        const type = String(params.get('type') || '').toLowerCase();
+        looksLikeRecoveryQuery = type === 'recovery' || (!!code && type === 'recovery');
+      } catch {
+        // ignore
+      }
+    }
+
+    return {
+      hash,
+      code,
+      isRecovery: mode === 'reset' || looksLikeRecoveryHash || looksLikeRecoveryQuery,
+    };
+  };
 
   const getSafeNextPath = (raw) => {
     const value = typeof raw === 'string' ? raw.trim() : '';
@@ -82,25 +108,36 @@ export default function Auth() {
   useEffect(() => {
     // Supabase recovery links typically land with tokens in the URL hash.
     // Example: /Auth?mode=reset#access_token=...&type=recovery
-    const hash = (typeof window !== 'undefined' ? window.location.hash : '') || '';
-    const looksLikeRecovery = hash.toLowerCase().includes('type=recovery');
-    if (mode === 'reset' || looksLikeRecovery) {
+    const { isRecovery } = getRecoveryContext();
+    if (isRecovery) {
       setStep('reset');
     }
   }, [mode]);
 
   useEffect(() => {
-    const hash = (typeof window !== 'undefined' ? window.location.hash : '') || '';
-    const looksLikeRecovery = hash.toLowerCase().includes('type=recovery');
-    if (!(mode === 'reset' || looksLikeRecovery)) return;
+    if (didHydrateRecoveryRef.current) return;
+    const { isRecovery, code } = getRecoveryContext();
+    if (!isRecovery) return;
+    didHydrateRecoveryRef.current = true;
 
     // Persist the recovery session contained in the URL hash (access_token/refresh_token).
     // Without this, `auth.getSession()` will be empty and password updates will fail.
-    auth
-      .getSessionFromUrl({ storeSession: true })
-      .catch(() => {
+    const hydrate = async () => {
+      try {
+        // Some Supabase projects use PKCE and deliver a `?code=...&type=recovery` link.
+        // Prefer exchanging code when present; otherwise fall back to parsing hash tokens.
+        if (code && typeof supabase?.auth?.exchangeCodeForSession === 'function') {
+          await supabase.auth.exchangeCodeForSession(code);
+          return;
+        }
+
+        await auth.getSessionFromUrl({ storeSession: true });
+      } catch {
         // Non-fatal: we'll show the friendly error message when attempting reset.
-      });
+      }
+    };
+
+    hydrate();
   }, [mode]);
 
   const handleAuth = async (e) => {

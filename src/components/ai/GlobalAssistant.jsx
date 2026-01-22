@@ -6,7 +6,19 @@ import { Input } from '@/components/ui/input';
 import { base44 } from '@/components/utils/supabaseClient';
 import ReactMarkdown from 'react-markdown';
 
-export default function GlobalAssistant() {
+export default function GlobalAssistant({
+  anchorClassName,
+  buttonAnchorClassName,
+  panelAnchorClassName,
+} = {}) {
+  const defaultButtonAnchor =
+    'bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] right-[calc(env(safe-area-inset-right)+1.5rem)]';
+  const defaultPanelAnchor =
+    'bottom-[env(safe-area-inset-bottom)] inset-x-0 md:bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] md:right-[calc(env(safe-area-inset-right)+1.5rem)]';
+
+  const resolvedButtonAnchor = buttonAnchorClassName || anchorClassName || defaultButtonAnchor;
+  const resolvedPanelAnchor = panelAnchorClassName || anchorClassName || defaultPanelAnchor;
+
   const [isOpen, setIsOpen] = useState(false);
   const [conversationId, setConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -106,7 +118,9 @@ export default function GlobalAssistant() {
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_20px_rgba(255,20,147,0.5)] hover:shadow-[0_0_30px_rgba(255,20,147,0.8)] transition-all"
+            aria-label="Open assistant"
+            data-testid="global-assistant-launcher"
+            className={`fixed ${resolvedButtonAnchor} z-50 w-14 h-14 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_20px_rgba(255,20,147,0.5)] hover:shadow-[0_0_30px_rgba(255,20,147,0.8)] transition-all`}
           >
             <Bot className="w-6 h-6 text-white" />
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#39FF14] rounded-full border-2 border-black animate-pulse" />
@@ -122,7 +136,8 @@ export default function GlobalAssistant() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed bottom-6 right-6 w-full md:w-[420px] h-[600px] bg-black border-2 border-[#FF1493] z-50 flex flex-col shadow-[0_0_40px_rgba(255,20,147,0.3)]"
+            data-testid="global-assistant-panel"
+            className={`fixed ${resolvedPanelAnchor} w-full md:w-[420px] h-[600px] bg-black border-2 border-[#FF1493] z-50 flex flex-col shadow-[0_0_40px_rgba(255,20,147,0.3)]`}
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-[#FF1493] to-[#B026FF] border-b-2 border-white p-4">
@@ -143,6 +158,8 @@ export default function GlobalAssistant() {
                   onClick={() => setIsOpen(false)}
                   variant="ghost"
                   size="icon"
+                  aria-label="Close assistant"
+                  data-testid="global-assistant-close"
                   className="text-white hover:bg-white/20"
                 >
                   <X className="w-5 h-5" />

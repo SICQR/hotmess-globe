@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+set -eu
+
+# Secret scanning for staged changes.
+# Blocks committing env files or common secret patterns.
+
+if command -v node >/dev/null 2>&1; then
+  node scripts/secret-scan.mjs
+else
+  echo "pre-commit: node is required to run secret scan" >&2
+  exit 1
+fi

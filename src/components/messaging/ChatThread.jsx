@@ -854,6 +854,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
                 if (!readOnly) handleTyping();
               }}
               placeholder="TYPE MESSAGE..."
+              data-testid="chat-composer-input"
               disabled={readOnly}
               className="flex-1 min-w-0 bg-black border-2 border-white/20 text-white placeholder:text-white/40 placeholder:uppercase placeholder:font-mono placeholder:text-xs focus:border-white"
             />
@@ -861,6 +862,8 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
             <Button
               type="submit"
               size="icon"
+              aria-label="Send message"
+              data-testid="chat-composer-send"
               disabled={readOnly || !messageText.trim() || sendMutation.isPending}
               className="bg-[#FF1493] hover:bg-white text-black border-2 border-white shrink-0"
             >

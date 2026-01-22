@@ -32,6 +32,13 @@ We will respond within 48 hours and work with you to address the issue promptly.
 - ❌ NEVER hardcode API keys, passwords, or tokens in source code
 - ❌ NEVER log sensitive data (passwords, tokens, API keys, PII)
 
+#### Local pre-commit guard (recommended)
+
+This repo includes an optional pre-commit hook that blocks committing `.env*` files and flags common secret patterns in staged changes.
+
+- Install locally: `npm run hooks:install`
+- If a commit is blocked: remove the secret from the staged diff (and rotate any leaked credentials).
+
 #### Example `.env.local`:
 ```env
 # Backend Configuration

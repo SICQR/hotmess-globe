@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
 export default function RightNowNotifications({ currentUser }) {
+  const shownRef = useRef(new Set());
+
   const { data: rightNowUsers = [] } = useQuery({
     queryKey: ['right-now-active'],
     queryFn: () => base44.entities.RightNowStatus.filter({ active: true }),
@@ -39,6 +41,9 @@ export default function RightNowNotifications({ currentUser }) {
     rightNowUsers.forEach(status => {
       if (status.user_email === currentUser.email) return;
 
+      const dedupeKey = String(status?.id || `${status?.user_email || 'unknown'}:${status?.created_date || ''}`);
+      if (shownRef.current.has(dedupeKey)) return;
+
       // Check if this is a new Right Now status (created in last minute)
       const createdAt = new Date(status.created_date);
       const now = new Date();
@@ -62,6 +67,7 @@ export default function RightNowNotifications({ currentUser }) {
         const totalTags = Math.max(userTags.length, theirTags.length);
         const matchPercent = totalTags > 0 ? Math.round((commonTags / totalTags) * 100) : 0;
 
+        shownRef.current.add(dedupeKey);
         toast.success(`${userName} is Right Now! ${matchPercent}% match`, {
           description: 'Check Connect to view their profile',
           duration: 8000

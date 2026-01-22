@@ -15,7 +15,7 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 
-export default function PanicButton() {
+export default function PanicButton({ anchorClassName = 'bottom-4 right-4' }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [sendingAlerts, setSendingAlerts] = useState(false);
 
@@ -110,7 +110,9 @@ export default function PanicButton() {
         onClick={() => setShowConfirm(true)}
         variant="ghost"
         size="sm"
-        className="fixed bottom-4 right-4 z-50 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-500"
+        aria-label="Panic"
+        data-testid="panic-button"
+        className={`fixed ${anchorClassName} z-[60] bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-500`}
       >
         <AlertTriangle className="w-4 h-4 mr-2" />
         PANIC
