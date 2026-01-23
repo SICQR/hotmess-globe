@@ -321,6 +321,14 @@ function LayoutInner({ children, currentPageName }) {
   const isActive = (pageName) => currentPageName === pageName;
 
   const isPulsePage = currentPageName === 'Pulse';
+  const isChromelessPage =
+    currentPageName === 'Auth' ||
+    currentPageName === 'Login' ||
+    currentPageName === 'AgeGate' ||
+    currentPageName === 'OnboardingGate' ||
+    currentPageName === 'AccountConsents';
+
+  const shouldShowChrome = !isPulsePage && !isChromelessPage;
 
   return (
     <ErrorBoundary>
@@ -330,7 +338,7 @@ function LayoutInner({ children, currentPageName }) {
           <OfflineIndicator />
           {user && currentPageName === 'Home' && <WelcomeTour />}
         <div className="min-h-[100svh] bg-black text-white">
-      {!isPulsePage && (
+      {shouldShowChrome && (
         <>
           {/* Mobile Header */}
           <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10 pt-[env(safe-area-inset-top)]">
@@ -624,7 +632,13 @@ function LayoutInner({ children, currentPageName }) {
       {/* Main Content */}
       <main 
         id="main-content" 
-        className={isPulsePage ? 'min-w-0' : 'md:ml-56 pt-[calc(3.5rem+env(safe-area-inset-top))] md:pt-0 min-w-0'}
+        className={
+          isPulsePage
+            ? 'min-w-0'
+            : shouldShowChrome
+              ? 'md:ml-56 pt-[calc(3.5rem+env(safe-area-inset-top))] md:pt-0 min-w-0'
+              : 'min-w-0'
+        }
         role="main"
       >
         <PageErrorBoundary>
