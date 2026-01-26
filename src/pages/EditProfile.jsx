@@ -17,6 +17,7 @@ import TagSelector from '../components/discovery/TagSelector';
 import { PhotoGallery, VideoUploader, PremiumVideoManager } from '../components/profile/MediaGallery';
 import { validateBio } from '../components/utils/validation';
 import { sanitizeSocialLinks } from '../components/utils/sanitize';
+import logger from '@/utils/logger';
 
 const VIBE_OPTIONS = ['techno', 'house', 'drag', 'indie', 'late_night', 'chill', 'wild', 'artsy'];
 const EVENT_VIBES = ['techno', 'house', 'drag', 'late_night', 'underground', 'warehouse', 'rooftop', 'intimate'];
@@ -144,7 +145,7 @@ export default function EditProfile() {
         setSellerTagline(user.seller_tagline || '');
         setShopBannerUrl(user.shop_banner_url || '');
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user in EditProfile', { error: error.message });
       }
     };
     fetchUser();
@@ -194,7 +195,7 @@ export default function EditProfile() {
       setAvatarUrl(file_url);
       toast.success('Avatar uploaded!');
     } catch (error) {
-      console.error('Upload failed:', error);
+      logger.error('Avatar upload failed in EditProfile', { error: error.message });
       toast.error('Upload failed');
     } finally {
       setUploading(false);
@@ -554,7 +555,7 @@ export default function EditProfile() {
             <div className="bg-black border-2 border-[#FFD700] p-6">
               <Label className="text-xs uppercase tracking-widest text-[#FFD700] mb-4 flex items-center gap-2">
                 <Crown className="w-4 h-4" />
-                Premium Videos (XXX)
+                Premium Videos (Coming Soon)
               </Label>
               <p className="text-xs text-white/60 mb-4">Upload locked videos that users pay XP to unlock</p>
               <PremiumVideoManager videos={premiumVideos} onVideosChange={setPremiumVideos} />
