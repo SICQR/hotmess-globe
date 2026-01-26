@@ -1293,11 +1293,26 @@ entityTables.forEach(table => {
       delete remaining.$or;
 
       Object.entries(remaining).forEach(([rawKey, rawValue]) => {
+        // Skip undefined/null values
+        if (rawValue === undefined || rawValue === null) return;
+        
         const key = normalizeFilterKey(rawKey);
 
         // Support "IN" filters (e.g. { user_email: ['admin', email] })
         if (Array.isArray(rawValue)) {
+          // Only use .in() for arrays of primitives, not arrays of objects
+          const hasObjects = rawValue.some(v => v !== null && typeof v === 'object');
+          if (hasObjects) {
+            console.warn(`[base44.entities.${entityName}.filter] Skipping complex array filter for key "${rawKey}"`);
+            return;
+          }
           query = query.in(key, rawValue);
+          return;
+        }
+
+        // Skip object values (can't use .eq() with objects)
+        if (typeof rawValue === 'object') {
+          console.warn(`[base44.entities.${entityName}.filter] Skipping object filter for key "${rawKey}"`);
           return;
         }
 
