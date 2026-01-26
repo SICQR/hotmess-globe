@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { User, Users, Calendar, Award, Camera, Star, Pin, Trophy, Shield, Music, Lock, Instagram, Twitter, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,23 +23,147 @@ import RightNowIndicator from '../components/discovery/RightNowIndicator';
 import ProfileCompleteness from '../components/profile/ProfileCompleteness';
 import WelcomeTour from '../components/onboarding/WelcomeTour';
 import VibeSynthesisCard from '../components/vibe/VibeSynthesisCard';
+import { fetchRoutingEtas } from '@/api/connectProximity';
+import { safeGetViewerLatLng } from '@/utils/geolocation';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
-  const userEmail = searchParams.get('email');
+  const emailParam = searchParams.get('email');
+  const uidParam = searchParams.get('uid') || searchParams.get('auth_user_id');
+  const nextParam = searchParams.get('next');
   const queryClient = useQueryClient();
   
   const { data: currentUser } = useCurrentUser();
-  const { data: allUsers = [] } = useAllUsers();
+  const { data: allUsers = [], isLoading: isLoadingAllUsers } = useAllUsers();
 
-  const profileUser = userEmail ? allUsers.find(u => u.email === userEmail) : currentUser;
-  const isSetupMode = !profileUser?.full_name || !profileUser?.avatar_url;
+  const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+  const normalizeId = (value) => String(value || '').trim().toLowerCase();
+
+  const isViewingOtherUser = !!emailParam || !!uidParam;
+
+  const cachedProfileUser = emailParam
+    ? allUsers.find((u) => normalizeEmail(u?.email) === normalizeEmail(emailParam))
+    : uidParam
+      ? allUsers.find((u) => normalizeId(u?.auth_user_id || u?.authUserId || u?.id) === normalizeId(uidParam))
+      : null;
+
+  const { data: fetchedProfileUser, isLoading: isLoadingFetchedProfileUser } = useQuery({
+    queryKey: ['profile-user-by-param', normalizeEmail(emailParam), normalizeId(uidParam)],
+    queryFn: async () => {
+      if (!isViewingOtherUser) return null;
+
+      const email = emailParam ? normalizeEmail(emailParam) : '';
+      const uid = uidParam ? normalizeId(uidParam) : '';
+
+      const qs = new URLSearchParams();
+      if (email) qs.set('email', email);
+      else if (uid) qs.set('uid', uid);
+      else return null;
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token || null;
+
+      const res = await fetch(`/api/profile?${qs.toString()}`, {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Profile lookup failed (${res.status}): ${text}`);
+      }
+
+      const payload = await res.json();
+      return payload?.user || null;
+    },
+    enabled: isViewingOtherUser,
+    retry: false,
+    staleTime: 60000,
+  });
+
+  const profileUser = isViewingOtherUser
+    ? (fetchedProfileUser || cachedProfileUser)
+    : currentUser;
+
+  const userEmail = emailParam || profileUser?.email || null;
+  const isSetupMode =
+    !profileUser?.full_name ||
+    !profileUser?.avatar_url ||
+    !profileUser?.city ||
+    !profileUser?.profile_type;
 
   // State for profile setup
   const [fullName, setFullName] = useState('');
   const [avatarFile, setAvatarFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [profileType, setProfileType] = useState('standard');
+  const [city, setCity] = useState('');
+  const [bio, setBio] = useState('');
+  const [sellerTagline, setSellerTagline] = useState('');
+  const [sellerBio, setSellerBio] = useState('');
+  const [shopBannerUrl, setShopBannerUrl] = useState('');
+  const [gender, setGender] = useState('male');
+  const [photoPolicyAck, setPhotoPolicyAck] = useState(false);
+
+  const buildInitialsAvatarDataUrl = (name) => {
+    const raw = String(name || '').trim();
+    const parts = raw.split(/\s+/).filter(Boolean);
+    const first = parts[0]?.[0] || 'H';
+    const last = parts.length > 1 ? parts[parts.length - 1]?.[0] : 'M';
+    const initials = `${first}${last}`.toUpperCase();
+
+    // Simple deterministic colors so avatars feel consistent.
+    const palette = [
+      ['#FF1493', '#B026FF'],
+      ['#00D9FF', '#1E3A8A'],
+      ['#22C55E', '#0F766E'],
+      ['#F97316', '#7C2D12'],
+    ];
+    const idx = (initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % palette.length;
+    const [c1, c2] = palette[idx];
+
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${c1}"/>
+      <stop offset="1" stop-color="${c2}"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="64" fill="url(#g)"/>
+  <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle"
+        font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+        font-size="190" font-weight="900" fill="rgba(0,0,0,0.9)">
+    ${initials}
+  </text>
+  <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle"
+        font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+        font-size="190" font-weight="900" fill="rgba(255,255,255,0.92)" dx="-6" dy="-6">
+    ${initials}
+  </text>
+</svg>`;
+
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  };
+
+  useEffect(() => {
+    // Prefill setup form for current user (setup mode only runs when !userEmail).
+    if (!profileUser) return;
+    if (isViewingOtherUser) return;
+
+    setFullName(String(profileUser?.full_name || ''));
+    setProfileType(String(profileUser?.profile_type || 'standard'));
+    setCity(String(profileUser?.city || ''));
+    setBio(String(profileUser?.bio || ''));
+    setSellerTagline(String(profileUser?.seller_tagline || ''));
+    setSellerBio(String(profileUser?.seller_bio || ''));
+    setShopBannerUrl(String(profileUser?.shop_banner_url || ''));
+    setGender(String(profileUser?.gender || 'male'));
+    setPhotoPolicyAck(!!(profileUser?.photo_policy_ack || profileUser?.photoPolicyAck));
+  }, [profileUser, isViewingOtherUser]);
 
   const { data: checkIns = [] } = useQuery({
     queryKey: ['check-ins', userEmail],
@@ -75,7 +200,7 @@ export default function Profile() {
     queryFn: () => base44.entities.Achievement.list()
   });
 
-  const { data: allBeacons = [] } = useQuery({
+  const { data: _allBeacons = [] } = useQuery({
     queryKey: ['all-beacons'],
     queryFn: () => base44.entities.Beacon.list()
   });
@@ -91,22 +216,126 @@ export default function Profile() {
     queryFn: () => base44.entities.Squad.list()
   });
 
-  const isFollowing = following.some(f => f.following_email === userEmail);
+  const _isFollowing = following.some(f => f.following_email === userEmail);
   const isOwnProfile = currentUser?.email === userEmail;
 
-  // Check if current user has handshake with profile user
-  const { data: handshakeExists } = useQuery({
-    queryKey: ['handshake-check', currentUser?.email, userEmail],
+  const { data: profileUserTags = [] } = useQuery({
+    queryKey: ['profile-user-tags', userEmail],
     queryFn: async () => {
-      if (!currentUser || isOwnProfile) return true;
-      const sessions = await base44.entities.BotSession.list();
-      return sessions.some(s => 
-        ((s.initiator_email === currentUser.email && s.target_email === userEmail) ||
-         (s.initiator_email === userEmail && s.target_email === currentUser.email)) &&
-        s.status === 'accepted'
-      );
+      if (!userEmail) return [];
+      try {
+        // Best-effort; RLS might restrict in some environments.
+        return await base44.entities.UserTag.filter({ user_email: userEmail });
+      } catch {
+        return [];
+      }
     },
-    enabled: !!currentUser && !!userEmail,
+    enabled: !!userEmail,
+    staleTime: 60000,
+    retry: false,
+  });
+
+  const tagIdsFromRows = Array.isArray(profileUserTags)
+    ? profileUserTags
+        .map((t) => t?.tag_id)
+        .filter(Boolean)
+    : [];
+
+  const enrichedProfileUser = profileUser
+    ? {
+        ...profileUser,
+        tag_ids:
+          Array.isArray(profileUser?.tag_ids) && profileUser.tag_ids.length
+            ? profileUser.tag_ids
+            : Array.isArray(profileUser?.tags) && profileUser.tags.length
+              ? profileUser.tags
+              : tagIdsFromRows,
+      }
+    : profileUser;
+
+  const [viewerOrigin, setViewerOrigin] = useState(null);
+
+  const haversineMeters = useCallback((a, b) => {
+    if (!a || !b) return Infinity;
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(b.lat - a.lat);
+    const dLng = toRad(b.lng - a.lng);
+    const lat1 = toRad(a.lat);
+    const lat2 = toRad(b.lat);
+
+    const sinDLat = Math.sin(dLat / 2);
+    const sinDLng = Math.sin(dLng / 2);
+    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+    return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  }, []);
+
+  const destination =
+    Number.isFinite(profileUser?.last_lat) && Number.isFinite(profileUser?.last_lng)
+      ? { lat: profileUser.last_lat, lng: profileUser.last_lng }
+      : Number.isFinite(profileUser?.lat) && Number.isFinite(profileUser?.lng)
+        ? { lat: profileUser.lat, lng: profileUser.lng }
+        : null;
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    // Only watch location when it can actually be used (for ETAs to another user's location).
+    if (!currentUser?.email) return;
+    if (!userEmail) return;
+    if (isOwnProfile) return;
+    if (!destination) return;
+
+    // NOTE: We intentionally avoid `watchPosition` here.
+    // On macOS (CoreLocation), `watchPosition` can spam the console with
+    // `kCLErrorLocationUnknown` when the OS can't resolve location (indoors/VPN/etc).
+    // For profile ETAs we only need a coarse origin; a single `getCurrentPosition`
+    // keeps UX good and the console quiet.
+    let cancelled = false;
+
+    safeGetViewerLatLng(
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 },
+      { retries: 2, logKey: 'profile-eta' }
+    ).then((loc) => {
+      if (cancelled) return;
+      if (!loc) return;
+      const next = { lat: loc.lat, lng: loc.lng };
+      setViewerOrigin((prev) => {
+        if (!prev) return next;
+        return haversineMeters(prev, next) >= 500 ? next : prev;
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser?.email, userEmail, isOwnProfile, destination, haversineMeters]);
+
+  // In-app "connection" is a mutual follow (no Telegram handshake).
+  const { data: viewerFollowing = [] } = useQuery({
+    queryKey: ['viewer-following', currentUser?.email],
+    queryFn: () => base44.entities.UserFollow.filter({ follower_email: currentUser.email }),
+    enabled: !!currentUser?.email,
+  });
+
+  const viewerFollowsProfile =
+    !!currentUser?.email &&
+    !!userEmail &&
+    viewerFollowing.some((f) => normalizeEmail(f?.following_email) === normalizeEmail(userEmail));
+
+  const profileFollowsViewer =
+    !!currentUser?.email &&
+    followers.some((f) => normalizeEmail(f?.follower_email) === normalizeEmail(currentUser?.email));
+
+  const isConnection = isOwnProfile || (viewerFollowsProfile && profileFollowsViewer);
+
+  const { data: travelEtas } = useQuery({
+    queryKey: ['routing-etas', currentUser?.email, userEmail, viewerOrigin?.lat, viewerOrigin?.lng, destination?.lat, destination?.lng],
+    queryFn: () => fetchRoutingEtas({ origin: viewerOrigin, destination, ttlSeconds: 120, modes: ['WALK', 'DRIVE', 'BICYCLE'] }),
+    enabled: !!currentUser?.email && !!userEmail && !isOwnProfile && !!viewerOrigin && !!destination,
+    retry: false,
+    staleTime: 60000,
+    refetchInterval: 60000,
   });
 
   const { data: rightNowStatus } = useQuery({
@@ -133,7 +362,7 @@ export default function Profile() {
           viewed_email: userEmail,
           viewed_at: new Date().toISOString(),
         });
-      } catch (error) {
+      } catch {
         console.log('Failed to track profile view');
       }
     };
@@ -150,12 +379,12 @@ export default function Profile() {
 
   const viewCount = profileViews.length;
   const tierRaw = currentUser?.membership_tier;
-  const tier = tierRaw === 'free' ? 'basic' : tierRaw || 'basic';
+  const _tier = tierRaw === 'free' ? 'basic' : tierRaw || 'basic';
   const level = Math.floor(((profileUser?.xp ?? 0) || 0) / 1000) + 1;
   // Chrome tier: Level 5+ can see WHO viewed their profile
   const canSeeViewers = level >= 5;
 
-  const followMutation = useMutation({
+  const _followMutation = useMutation({
     mutationFn: () => base44.entities.UserFollow.create({
       follower_email: currentUser.email,
       following_email: userEmail
@@ -163,7 +392,7 @@ export default function Profile() {
     onSuccess: () => queryClient.invalidateQueries(['following', currentUser.email])
   });
 
-  const unfollowMutation = useMutation({
+  const _unfollowMutation = useMutation({
     mutationFn: () => {
       const followRecord = following.find(f => f.following_email === userEmail);
       return base44.entities.UserFollow.delete(followRecord.id);
@@ -223,26 +452,78 @@ export default function Profile() {
       return;
     }
 
-    if (!avatarFile) {
-      toast.error('Please upload an avatar');
+    if (!String(profileType || '').trim()) {
+      toast.error('Please choose a profile type');
+      return;
+    }
+
+    if (!String(city || '').trim()) {
+      toast.error('Please enter your city');
+      return;
+    }
+
+    const normalizedGender = String(gender || '').trim().toLowerCase();
+    if (normalizedGender !== 'male' && normalizedGender !== 'man' && normalizedGender !== 'm') {
+      toast.error('This experience is currently male-only.');
+      return;
+    }
+
+    if (!photoPolicyAck) {
+      toast.error('Please confirm your photos are of men.');
       return;
     }
 
     setSaving(true);
-    setUploading(true);
+    setUploading(!!avatarFile);
 
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: avatarFile });
-      setUploading(false);
+      let avatarUrl = profileUser?.avatar_url || null;
+
+      // If the user didn't upload an avatar (or storage is misconfigured), fall back to a
+      // generated SVG so setup can complete and the grid has something to show.
+      if (!avatarUrl && !avatarFile) {
+        avatarUrl = buildInitialsAvatarDataUrl(fullName);
+        toast.message('Using a placeholder avatar (you can change it later).');
+      }
+
+      if (avatarFile) {
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file: avatarFile });
+          avatarUrl = file_url;
+        } catch (uploadError) {
+          // Non-fatal: still allow setup completion.
+          console.warn('Avatar upload failed; falling back to placeholder', uploadError);
+          avatarUrl = avatarUrl || buildInitialsAvatarDataUrl(fullName);
+          toast.message('Avatar upload failed; using a placeholder for now.');
+        } finally {
+          setUploading(false);
+        }
+      }
+
       await base44.auth.updateMe({
         full_name: fullName.trim(),
-        avatar_url: file_url
+        avatar_url: avatarUrl,
+        profile_type: profileType,
+        city: city.trim(),
+        bio: bio.trim(),
+        gender: 'male',
+        photo_policy_ack: true,
+        seller_tagline: profileType === 'seller' ? sellerTagline.trim() : null,
+        seller_bio: profileType === 'seller' ? sellerBio.trim() : null,
+        shop_banner_url: profileType === 'seller' ? shopBannerUrl.trim() : null,
       });
       toast.success('Profile complete!');
-	  window.location.href = createPageUrl('Home');
+
+      const next = typeof nextParam === 'string' ? nextParam.trim() : '';
+      const safeNext = next.startsWith('/') ? next : '';
+      window.location.href = safeNext || createPageUrl('Home');
     } catch (error) {
       console.error('Profile setup failed:', error);
-      toast.error('Setup failed. Please try again.');
+      const msg =
+        (error && typeof error === 'object' && 'message' in error && error.message)
+          ? String(error.message)
+          : 'Setup failed. Please try again.';
+      toast.error(msg);
     } finally {
       setSaving(false);
       setUploading(false);
@@ -250,6 +531,33 @@ export default function Profile() {
   };
 
   if (!profileUser) {
+    const isLoading = isViewingOtherUser
+      ? isLoadingAllUsers || isLoadingFetchedProfileUser
+      : false;
+
+    if (!isLoading && isViewingOtherUser) {
+      return (
+        <ErrorBoundary>
+          <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
+            <div className="max-w-md w-full text-center">
+              <h1 className="text-2xl font-black uppercase tracking-tight">Profile not found</h1>
+              <p className="mt-2 text-white/60 text-sm">
+                This profile may be private, deleted, or not accessible in your environment.
+              </p>
+              <div className="mt-6 flex items-center justify-center gap-3">
+                <Button onClick={() => (window.location.href = createPageUrl('Home'))}>
+                  Go Home
+                </Button>
+                <Button variant="outline" onClick={() => window.history.back()}>
+                  Back
+                </Button>
+              </div>
+            </div>
+          </div>
+        </ErrorBoundary>
+      );
+    }
+
     return (
       <ErrorBoundary>
         <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -259,8 +567,9 @@ export default function Profile() {
     );
   }
 
-  // Render setup mode if profile is incomplete
-  if (isSetupMode && !userEmail) {
+  // Render setup mode if *your* profile is incomplete.
+  // NOTE: previously this was gated by `!userEmail`, but `userEmail` is always present for authenticated users.
+  if (isSetupMode && !isViewingOtherUser) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
         <motion.div
@@ -323,9 +632,138 @@ export default function Profile() {
               />
             </div>
 
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-white/40 mb-2">
+                Profile Type
+              </label>
+              <p className="text-xs text-white/50 mb-3">
+                This powers your card and unlocks different experiences.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: 'standard', label: 'STANDARD', desc: 'Connect + social' },
+                  { value: 'seller', label: 'SELLER', desc: 'MessMarket shop' },
+                  { value: 'creator', label: 'CREATOR', desc: 'Music + events' },
+                  { value: 'premium', label: 'PREMIUM', desc: 'Exclusive content' },
+                ].map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setProfileType(t.value)}
+                    className={`p-4 text-left border-2 transition-all ${
+                      profileType === t.value
+                        ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                        : 'bg-white/5 border-white/20 text-white hover:border-white/40'
+                    }`}
+                  >
+                    <div className="font-black uppercase text-xs mb-1">{t.label}</div>
+                    <div className="text-[10px] opacity-70">{t.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-white/40 mb-2">
+                City
+              </label>
+              <Input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="London"
+                className="bg-white/5 border-2 border-white/20 text-white"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-white/40 mb-2">
+                Bio (Optional)
+              </label>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="What are you about? What are you here for?"
+                rows={4}
+                className="w-full bg-white/5 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#FF1493] focus:outline-none"
+              />
+            </div>
+
+            {profileType === 'seller' && (
+              <div className="border-2 border-[#00D9FF] p-4 bg-black">
+                <div className="mb-3">
+                  <p className="text-xs uppercase tracking-widest text-[#00D9FF] font-black">Seller Details</p>
+                  <p className="text-xs text-white/50">These show up on your card and help cross-sell.</p>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-white/40 mb-2">
+                      Shop Tagline
+                    </label>
+                    <Input
+                      type="text"
+                      value={sellerTagline}
+                      onChange={(e) => setSellerTagline(e.target.value)}
+                      placeholder="Club gear, prints, styling, tickets…"
+                      className="bg-white/5 border-2 border-white/20 text-white"
+                      maxLength={60}
+                    />
+                    <p className="text-xs text-white/40 mt-1">{sellerTagline.length}/60</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-white/40 mb-2">
+                      Seller Bio (Optional)
+                    </label>
+                    <textarea
+                      value={sellerBio}
+                      onChange={(e) => setSellerBio(e.target.value)}
+                      placeholder="What you sell, shipping/pickup, collaborations…"
+                      rows={4}
+                      maxLength={500}
+                      className="w-full bg-white/5 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#00D9FF] focus:outline-none"
+                    />
+                    <p className="text-xs text-white/40 mt-1">{sellerBio.length}/500</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest text-white/40 mb-2">
+                      Shop Banner URL (Optional)
+                    </label>
+                    <Input
+                      type="url"
+                      value={shopBannerUrl}
+                      onChange={(e) => setShopBannerUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="bg-white/5 border-2 border-white/20 text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="border border-white/10 bg-black/40 p-4">
+              <p className="text-xs uppercase tracking-widest text-white/50 font-black">Photo Policy</p>
+              <p className="mt-1 text-xs text-white/60">
+                All profile photos must be of men.
+              </p>
+              <label className="mt-3 flex items-start gap-3 text-sm text-white/80">
+                <input
+                  type="checkbox"
+                  checked={photoPolicyAck}
+                  onChange={(e) => setPhotoPolicyAck(e.target.checked)}
+                  className="mt-1 h-4 w-4"
+                />
+                <span>
+                  I confirm my profile photos depict men.
+                </span>
+              </label>
+            </div>
+
             <Button
               type="submit"
-              disabled={saving || !fullName.trim() || !avatarFile}
+              disabled={saving || !fullName.trim() || !String(profileType || '').trim() || !String(city || '').trim() || !photoPolicyAck}
               className="w-full bg-[#FF1493] hover:bg-white text-white hover:text-black font-black text-lg py-6 border-2 border-white"
             >
               {saving ? (
@@ -343,7 +781,7 @@ export default function Profile() {
     );
   }
 
-  const profileType = profileUser?.profile_type || 'standard';
+  const profileTypeKey = profileUser?.profile_type || 'standard';
 
   return (
     <ErrorBoundary>
@@ -363,6 +801,7 @@ export default function Profile() {
           user={profileUser} 
           isOwnProfile={isOwnProfile} 
           currentUser={currentUser} 
+          travelEtas={travelEtas}
         />
 
         <div className="max-w-4xl mx-auto p-4 md:p-8">
@@ -386,7 +825,7 @@ export default function Profile() {
             </motion.div>
           )}
 
-          {/* Social Links - Behind Handshake */}
+          {/* Social Links - visible to mutual follows */}
           {profileUser.social_links && Object.values(profileUser.social_links).some(v => v) && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -394,7 +833,7 @@ export default function Profile() {
               className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6"
             >
 
-              {handshakeExists ? (
+              {isConnection ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 mb-3">
                     <Lock className="w-4 h-4 text-[#00D9FF]" />
@@ -457,20 +896,21 @@ export default function Profile() {
               ) : (
                 <div className="flex items-center gap-2 text-xs text-white/40">
                   <Lock className="w-4 h-4" />
-                  <p>Complete Telegram handshake to view social links</p>
+                  <p>Mutual follow required to view social links</p>
                 </div>
               )}
             </motion.div>
           )}
 
           {/* Profile Type Specific View */}
-          {profileType === 'seller' ? (
-            <SellerProfileView user={profileUser} />
+          {profileTypeKey === 'seller' ? (
+            <SellerProfileView user={enrichedProfileUser} />
           ) : (
             <StandardProfileView 
-              user={profileUser} 
+              user={enrichedProfileUser} 
               currentUser={currentUser} 
-              isHandshakeConnection={handshakeExists} 
+              isHandshakeConnection={isConnection} 
+              isOwnProfile={isOwnProfile}
             />
           )}
 

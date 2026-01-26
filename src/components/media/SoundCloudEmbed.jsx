@@ -5,6 +5,11 @@ function normalizeSoundCloudRef(urlOrUrn) {
   const value = urlOrUrn.trim();
   if (!value) return null;
 
+  // Allow passing an already-built SoundCloud widget URL (iframe src).
+  if (/^https?:\/\/w\.soundcloud\.com\/player\//i.test(value)) {
+    return { directSrc: value, normalizedUrl: null };
+  }
+
   // URN formats we support (Bible: URN-first):
   // - soundcloud:tracks:123
   // - soundcloud:playlists:123
@@ -12,11 +17,11 @@ function normalizeSoundCloudRef(urlOrUrn) {
   if (urnMatch) {
     const kind = urnMatch[1].toLowerCase();
     const id = urnMatch[2];
-    return `https://api.soundcloud.com/${kind}/${id}`;
+    return { directSrc: null, normalizedUrl: `https://api.soundcloud.com/${kind}/${id}` };
   }
 
   // Already a URL (track, playlist, or api url)
-  if (/^https?:\/\//i.test(value)) return value;
+  if (/^https?:\/\//i.test(value)) return { directSrc: null, normalizedUrl: value };
 
   return null;
 }
@@ -24,10 +29,12 @@ function normalizeSoundCloudRef(urlOrUrn) {
 function buildSoundCloudPlayerSrc({ urlOrUrn, autoPlay, visual }) {
   const normalized = normalizeSoundCloudRef(urlOrUrn);
   if (!normalized) return null;
+  if (normalized.directSrc) return normalized.directSrc;
+  if (!normalized.normalizedUrl) return null;
 
   const params = new URLSearchParams();
   // Let URLSearchParams do the encoding. SoundCloud expects a single-encoded URL.
-  params.set('url', normalized);
+  params.set('url', normalized.normalizedUrl);
   params.set('auto_play', autoPlay ? 'true' : 'false');
   params.set('visual', visual ? 'true' : 'false');
 
@@ -35,7 +42,11 @@ function buildSoundCloudPlayerSrc({ urlOrUrn, autoPlay, visual }) {
   params.set('hide_related', 'true');
   params.set('show_comments', 'false');
   params.set('show_reposts', 'false');
-  params.set('show_user', 'true');
+  // Keep the widget focused on playback (avoid outbound affordances where possible).
+  params.set('show_user', 'false');
+  params.set('buying', 'false');
+  params.set('sharing', 'false');
+  params.set('download', 'false');
 
   return `https://w.soundcloud.com/player/?${params.toString()}`;
 }
@@ -45,6 +56,12 @@ function applyWidgetParams(searchParams, widgetParams) {
 
   const boolParams = [
     'auto_play',
+    'hide_related',
+    'show_comments',
+    'show_reposts',
+    'show_teaser',
+    'visual',
+    'inverse',
     'buying',
     'sharing',
     'download',
@@ -66,6 +83,18 @@ function applyWidgetParams(searchParams, widgetParams) {
   if (widgetParams.start_track !== undefined && widgetParams.start_track !== null) {
     const n = Number(widgetParams.start_track);
     if (Number.isFinite(n)) searchParams.set('start_track', String(Math.trunc(n)));
+  }
+
+  // Best-effort support for additional widget params.
+  // Only string/number values are forwarded.
+  for (const [key, value] of Object.entries(widgetParams)) {
+    if (!key) continue;
+    if (boolParams.includes(key)) continue;
+    if (key === 'color' || key === 'start_track') continue;
+    if (value === undefined || value === null) continue;
+    if (typeof value === 'string' || typeof value === 'number') {
+      searchParams.set(key, String(value));
+    }
   }
 }
 

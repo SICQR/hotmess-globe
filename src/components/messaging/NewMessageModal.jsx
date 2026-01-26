@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { X, Users, Lock, MessageCircle, Calendar, MapPin } from 'lucide-react';
+import { X, Users, MessageCircle, Calendar, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export default function NewMessageModal({ currentUser, allUsers, handshakes, onClose, onThreadCreated }) {
+export default function NewMessageModal({ currentUser, allUsers, onClose, onThreadCreated, prefillToEmail }) {
   const [messageType, setMessageType] = useState('dm'); // dm, group, event, squad
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -16,13 +16,21 @@ export default function NewMessageModal({ currentUser, allUsers, handshakes, onC
   const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
 
-  // Check if user has handshake with another user
-  const hasHandshake = (email) => {
-    return handshakes.some(h => 
-      (h.initiator_email === currentUser.email && h.target_email === email) ||
-      (h.initiator_email === email && h.target_email === currentUser.email)
-    );
-  };
+  const didPrefillRef = useRef(false);
+
+  useEffect(() => {
+    const email = prefillToEmail ? String(prefillToEmail).trim().toLowerCase() : '';
+    if (!email) return;
+    if (didPrefillRef.current) return;
+    if (!currentUser?.email) return;
+    if (email === String(currentUser.email).trim().toLowerCase()) return;
+
+    didPrefillRef.current = true;
+    setMessageType('dm');
+    setSearchQuery(email);
+
+    setSelectedUsers([email]);
+  }, [currentUser?.email, prefillToEmail]);
 
   // Fetch events for event chats
   const { data: events = [] } = useQuery({
@@ -43,6 +51,9 @@ export default function NewMessageModal({ currentUser, allUsers, handshakes, onC
 
   const createThreadMutation = useMutation({
     mutationFn: async () => {
+      const ok = await base44.auth.requireProfile(window.location.href);
+      if (!ok) return null;
+
       let participantEmails = [currentUser.email];
       let threadType = messageType;
       let metadata = {};
@@ -61,12 +72,7 @@ export default function NewMessageModal({ currentUser, allUsers, handshakes, onC
         );
         
         if (existingThread) return existingThread;
-        
-        // Check handshake for DM
-        if (!hasHandshake(targetEmail)) {
-          throw new Error('Complete Telegram handshake first to message this user');
-        }
-        
+
         participantEmails.push(targetEmail);
       } else if (messageType === 'group') {
         if (selectedUsers.length === 0) throw new Error('Select at least one user');
@@ -110,6 +116,7 @@ export default function NewMessageModal({ currentUser, allUsers, handshakes, onC
       return thread;
     },
     onSuccess: (thread) => {
+      if (!thread) return;
       queryClient.invalidateQueries(['chat-threads']);
       toast.success('Thread created!');
       onThreadCreated(thread);
@@ -185,12 +192,6 @@ export default function NewMessageModal({ currentUser, allUsers, handshakes, onC
 
               {/* DM Tab */}
               <TabsContent value="dm" className="space-y-4">
-                <div className="bg-[#FF1493]/10 border-2 border-[#FF1493]/40 p-3">
-                  <p className="text-xs text-white/60 flex items-center gap-2">
-                    <Lock className="w-3 h-3 text-[#FF1493]" />
-                    DMs require a completed Telegram handshake for E2E encryption
-                  </p>
-                </div>
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -199,18 +200,14 @@ export default function NewMessageModal({ currentUser, allUsers, handshakes, onC
                 />
                 <div className="max-h-96 overflow-y-auto space-y-2">
                   {filteredUsers.map(user => {
-                    const canMessage = hasHandshake(user.email);
                     return (
                       <button
                         key={user.email}
-                        onClick={() => canMessage && toggleUser(user.email)}
-                        disabled={!canMessage}
+                        onClick={() => toggleUser(user.email)}
                         className={`w-full flex items-center gap-3 p-3 border-2 transition-all ${
                           selectedUsers.includes(user.email)
                             ? 'bg-[#FF1493]/20 border-[#FF1493]'
-                            : canMessage
-                            ? 'bg-black border-white/20 hover:border-white/40'
-                            : 'bg-white/5 border-white/10 opacity-50 cursor-not-allowed'
+                            : 'bg-black border-white/20 hover:border-white/40'
                         }`}
                       >
                         <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center border-2 border-white">
@@ -224,9 +221,6 @@ export default function NewMessageModal({ currentUser, allUsers, handshakes, onC
                           <p className="font-black text-sm uppercase">{user.full_name}</p>
                           <p className="text-xs text-white/40 font-mono">{user.email}</p>
                         </div>
-                        {!canMessage && (
-                          <Lock className="w-4 h-4 text-white/40" />
-                        )}
                       </button>
                     );
                   })}

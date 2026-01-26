@@ -7,7 +7,7 @@
 
 ## 🌈 Overview
 
-HOTMESS is a cutting-edge LGBT+ social networking and nightlife discovery platform built on Base44. It combines real-time location-based discovery, gamification, and community features to create an immersive urban nightlife experience.
+HOTMESS is a cutting-edge LGBT+ social networking and nightlife discovery platform built on Supabase + Vercel serverless APIs. It combines real-time location-based discovery, gamification, and community features to create an immersive urban nightlife experience.
 
 ## ✨ Key Features
 
@@ -52,7 +52,7 @@ HOTMESS is a cutting-edge LGBT+ social networking and nightlife discovery platfo
 ### Prerequisites
 
 - Node.js 20+
-- Base44 account
+- Supabase account
 - Stripe account (for payments)
 - Supabase account (for storage)
 
@@ -70,7 +70,7 @@ npm install
 cp .env.example .env
 
 # Configure your environment variables
-# Add your Base44, Stripe, and Supabase keys
+# Add your Supabase + Stripe keys
 
 # Start development server
 npm run dev
@@ -85,8 +85,8 @@ See `.env.example` for required environment variables.
 ### Tech Stack
 
 - **Frontend**: React 18, Tailwind CSS, Framer Motion
-- **Backend**: Base44 BaaS, Deno Deploy Functions
-- **Database**: Base44 Entities (PostgreSQL)
+- **Backend**: Vercel Serverless Functions (`/api/*`)
+- **Database**: Supabase Postgres
 - **3D Visualization**: Three.js, React Three Fiber
 - **State Management**: TanStack Query (React Query)
 - **UI Components**: Radix UI, shadcn/ui
@@ -110,7 +110,7 @@ See `.env.example` for required environment variables.
 │   ├── social/         # Social networking
 │   └── utils/          # Shared utilities
 ├── entities/           # Data models (JSON schemas)
-├── functions/          # Backend Deno functions
+├── api/                # Vercel Serverless Functions
 ├── pages/              # Top-level page components
 └── agents/             # AI agent configurations
 ```

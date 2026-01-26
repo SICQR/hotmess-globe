@@ -16,24 +16,14 @@ const generateCityData = (city, beacons, checkIns) => {
     return beacon && beacon.city === city.name;
   });
 
-  // Weather placeholder (beta) - will integrate real weather API in future
-  const weatherTypes = ['sunny', 'cloudy', 'rainy', 'windy'];
-  const weather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
-  const temp = Math.floor(Math.random() * 20) + 10; // 10-30°C
-
-  // Transit placeholder (beta) - will integrate real transit API in future
-  const transitStatus = Math.random() > 0.3 ? 'normal' : 'delayed';
-
-  // Heat calculation based on check-ins and weather
-  const baseHeat = cityCheckIns.length / 10;
-  const weatherMultiplier = weather === 'rainy' ? 0.7 : weather === 'sunny' ? 1.3 : 1.0;
-  const heat = Math.min(baseHeat * weatherMultiplier, 10);
+  // Real, deterministic signals we can safely show without external APIs.
+  const heat = Math.min(cityCheckIns.length / 2, 10);
 
   return {
     name: city.name,
-    weather,
-    temp,
-    transitStatus,
+    weather: 'unknown',
+    temp: null,
+    transitStatus: 'unknown',
     heat,
     activeVenues: cityBeacons.length,
     recentCheckIns: cityCheckIns.length,
@@ -55,7 +45,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
 
   const { data: cities = [] } = useQuery({
     queryKey: ['cities'],
-    queryFn: () => base44.entities.City.filter({ active: true }),
+    queryFn: () => base44.entities.City.list(),
   });
 
   const { data: beacons = [] } = useQuery({
@@ -147,11 +137,9 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
                 <div className="flex items-center gap-4 text-[10px] text-white/60">
                   <div className="flex items-center gap-1">
                     <Bus className="w-3 h-3" />
-                    <span className={city.transitStatus === 'delayed' ? 'text-red-400' : ''}>
-                      {city.transitStatus === 'delayed' ? 'DELAYS' : 'ON TIME'}
-                    </span>
+                    <span className="text-white/40">UNKNOWN</span>
                   </div>
-                  <div>{city.temp}°C</div>
+                  <div>{city.temp != null ? `${city.temp}°C` : '—'}</div>
                   <div>{city.recentCheckIns} check-ins</div>
                 </div>
 
@@ -206,7 +194,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
                     <span className="text-white/60">Weather</span>
                     <div className="flex items-center gap-2">
                       <WeatherIcon type={selected.weather} />
-                      <span className="font-bold">{selected.temp}°C</span>
+                      <span className="font-bold">{selected.temp != null ? `${selected.temp}°C` : '—'}</span>
                     </div>
                   </div>
 
@@ -214,11 +202,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
                     <span className="text-white/60">Public Transit</span>
                     <div className="flex items-center gap-2">
                       <Bus className="w-4 h-4" />
-                      <span className={`font-bold uppercase text-xs ${
-                        selected.transitStatus === 'delayed' ? 'text-red-400' : 'text-[#39FF14]'
-                      }`}>
-                        {selected.transitStatus}
-                      </span>
+                      <span className="font-bold uppercase text-xs text-white/40">UNKNOWN</span>
                     </div>
                   </div>
 

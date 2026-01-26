@@ -5,6 +5,7 @@ import {
   MapPin, TrendingUp, Target, Shield, Calendar, 
   Scan, Users, Trophy, Settings, FileText, HelpCircle 
 } from 'lucide-react';
+import PageShell from '@/components/shell/PageShell';
 
 const TOOLS = [
   { name: 'Beacons', icon: MapPin, path: 'Beacons', desc: 'Create location drops' },
@@ -26,13 +27,12 @@ const ACCOUNT = [
 export default function More() {
   return (
     <div className="min-h-screen bg-black text-white pb-20">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="mb-8">
-          <h1 className="text-5xl font-black uppercase mb-2">MORE</h1>
-          <p className="text-white/60 uppercase tracking-wider text-sm">
-            Tools • Settings • Legal
-          </p>
-        </div>
+      <PageShell
+        eyebrow="MORE"
+        title="More"
+        subtitle="Tools • Settings • Legal"
+        maxWidth="7xl"
+      >
 
         {/* Tools Grid */}
         <div className="mb-12">
@@ -46,8 +46,8 @@ export default function More() {
                   to={createPageUrl(tool.path)}
                   className="group"
                 >
-                  <div className="bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-[#FF1493] p-6 transition-all h-full">
-                    <Icon className="w-8 h-8 mb-3 text-white/60 group-hover:text-[#FF1493] transition-colors" />
+                  <div className="bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-[#00D9FF] p-6 transition-all h-full">
+                    <Icon className="w-8 h-8 mb-3 text-white/60 group-hover:text-[#00D9FF] transition-colors" />
                     <h3 className="font-black uppercase text-sm mb-1">{tool.name}</h3>
                     <p className="text-xs text-white/50">{tool.desc}</p>
                   </div>
@@ -69,7 +69,7 @@ export default function More() {
                   to={createPageUrl(item.path)}
                   className="block"
                 >
-                  <div className="bg-white/5 hover:bg-white/10 border-l-4 border-[#FF1493] p-4 transition-all flex items-center gap-3">
+                  <div className="bg-white/5 hover:bg-white/10 border-l-4 border-[#00D9FF] p-4 transition-all flex items-center gap-3">
                     <Icon className="w-5 h-5" />
                     <span className="font-black uppercase text-sm">{item.name}</span>
                   </div>
@@ -86,8 +86,8 @@ export default function More() {
               18+ • Consent-first • Care always
             </p>
             <div className="flex flex-wrap justify-center gap-4 text-xs text-white/60">
-              <Link to={createPageUrl('TermsOfService')} className="hover:text-white">Terms of Service</Link>
-              <Link to={createPageUrl('PrivacyPolicy')} className="hover:text-white">Privacy Policy</Link>
+              <Link to="/legal/terms" className="hover:text-white">Terms of Service</Link>
+              <Link to="/legal/privacy" className="hover:text-white">Privacy Policy</Link>
               <Link to={createPageUrl('CommunityGuidelines')} className="hover:text-white">Community Guidelines</Link>
               <Link to={createPageUrl('Contact')} className="hover:text-white">Contact</Link>
             </div>
@@ -96,7 +96,7 @@ export default function More() {
             </p>
           </div>
         </div>
-      </div>
+      </PageShell>
     </div>
   );
 }

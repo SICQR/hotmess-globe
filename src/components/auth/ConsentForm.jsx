@@ -42,11 +42,19 @@ export default function ConsentForm({ user, onAccepted }) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl w-full bg-gradient-to-br from-white/5 to-white/10 border border-white/20 rounded-2xl p-8"
+        className="max-w-2xl w-full bg-white/5 border border-white/20 rounded-2xl p-8 backdrop-blur-xl"
       >
-        <div className="flex items-center gap-3 mb-6">
+        <div className="mb-6">
+          <p className="text-[10px] uppercase tracking-[0.35em] font-mono text-white/50 mb-3">
+            SYSTEM INITIALIZATION
+          </p>
+          <div className="flex items-center gap-3">
           <Shield className="w-8 h-8 text-[#FF1493]" />
-          <h1 className="text-3xl font-black text-white">MEMBERSHIP AGREEMENT</h1>
+            <h1 className="text-3xl font-black text-white uppercase">DECRYPTION CONSENT</h1>
+          </div>
+          <p className="text-white/60 text-sm mt-3 font-mono uppercase">
+            Scanning permissions… <span className="animate-pulse">READY</span>
+          </p>
         </div>
 
         <ScrollArea className="h-96 mb-6 pr-4">
@@ -138,10 +146,10 @@ export default function ConsentForm({ user, onAccepted }) {
           disabled={!accepted || loading}
           className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black text-lg py-6"
         >
-          {loading ? 'PROCESSING...' : 'ACCEPT & ENTER HOTMESS OS'}
+          {loading ? 'DECRYPTING...' : '[ DECRYPT CITY INTEL ]'}
         </Button>
 
-        <p className="text-center text-xs text-white/40 mt-4">
+        <p className="text-center text-xs text-white/40 mt-4 font-mono uppercase">
           Version {CONSENT_VERSION} • Last Updated: December 2025
         </p>
       </motion.div>

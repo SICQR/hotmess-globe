@@ -17,10 +17,17 @@ export default function BeaconActions({ beacon }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          setUser(null);
+          return;
+        }
+
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
         console.error('Failed to fetch user:', error);
+        setUser(null);
       }
     };
     fetchUser();
@@ -104,10 +111,16 @@ export default function BeaconActions({ beacon }) {
   const handleShare = () => {
     const url = window.location.href;
     if (navigator.share) {
-      navigator.share({
-        title: beacon.title,
-        text: beacon.description,
-        url
+      Promise.resolve(
+        navigator.share({
+          title: beacon.title,
+          text: beacon.description,
+          url,
+        })
+      ).catch((err) => {
+        // User cancelled the share sheet.
+        if (err?.name === 'AbortError') return;
+        toast.error('Share failed');
       });
     } else {
       navigator.clipboard.writeText(url);

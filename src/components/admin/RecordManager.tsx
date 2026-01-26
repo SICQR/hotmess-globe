@@ -24,6 +24,15 @@ export default function RecordManager() {
   const [wavFile, setWavFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  type UploadAudioVars = {
+    title: string;
+    description: string;
+    city: string;
+    lat: number;
+    lng: number;
+    wavFile: File;
+  };
+
   const queryClient = useQueryClient();
 
   const { data: audioBeacons = [] } = useQuery({
@@ -32,7 +41,7 @@ export default function RecordManager() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: UploadAudioVars) => {
       setUploading(true);
       
       // Step 1: Upload WAV file to storage
@@ -74,7 +83,7 @@ export default function RecordManager() {
     }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!wavFile || !title || !city) {
@@ -88,7 +97,7 @@ export default function RecordManager() {
       city,
       lat,
       lng,
-      wavFile
+      wavFile,
     });
   };
 

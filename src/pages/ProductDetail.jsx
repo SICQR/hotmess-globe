@@ -8,14 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { addToCart } from '@/components/marketplace/cartStorage';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import MessageButton from '../components/social/MessageButton';
 import ComplementaryProducts from '../components/marketplace/ComplementaryProducts';
+import { isXpPurchasingEnabled } from '@/lib/featureFlags';
 
 export default function ProductDetail() {
   const [searchParams] = useSearchParams();
@@ -29,6 +28,7 @@ export default function ProductDetail() {
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const queryClient = useQueryClient();
+  const xpPurchasingEnabled = isXpPurchasingEnabled();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -123,53 +123,17 @@ export default function ProductDetail() {
   const { data: seller } = useQuery({
     queryKey: ['seller', product?.seller_email],
     queryFn: async () => {
+      const email = String(product?.seller_email || '').trim().toLowerCase();
+      if (!email) return null;
+
       const users = await base44.entities.User.list();
-      return users.find(u => u.email === product.seller_email);
+      if (!Array.isArray(users)) return null;
+
+      return users.find((u) => String(u?.email || '').trim().toLowerCase() === email) || null;
     },
     enabled: !!product?.seller_email,
   });
 
-  const purchaseMutation = useMutation({
-    mutationFn: async () => {
-      // Create order
-      const order = await base44.entities.Order.create({
-        buyer_email: currentUser.email,
-        seller_email: product.seller_email,
-        total_xp: product.price_xp,
-        status: 'pending',
-        payment_method: 'xp',
-      });
-
-      // Create order item
-      await base44.entities.OrderItem.create({
-        order_id: order.id,
-        product_id: product.id,
-        product_name: product.name,
-        quantity: 1,
-        price_xp: product.price_xp,
-      });
-
-      // Deduct XP from buyer
-      const newXp = (currentUser.xp || 0) - product.price_xp;
-      await base44.auth.updateMe({ xp: newXp });
-
-      // Update product sales count and inventory
-      await base44.entities.Product.update(product.id, {
-        sales_count: (product.sales_count || 0) + 1,
-        inventory_count: Math.max(0, (product.inventory_count || 0) - 1),
-      });
-
-      return order;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['product']);
-      toast.success('Purchase successful!');
-      navigate(createPageUrl('OrderHistory'));
-    },
-    onError: () => {
-      toast.error('Purchase failed');
-    },
-  });
 
   const reviewMutation = useMutation({
     mutationFn: (data) => base44.entities.Review.create(data),
@@ -208,45 +172,21 @@ export default function ProductDetail() {
       !!(normalizedDetails?.shopify_variant_id || shopifyVariants?.[0]?.id);
 
     if (isShopifyProduct) {
-      const variantIdToUse = selectedVariantId || normalizedDetails?.shopify_variant_id;
-      if (!variantIdToUse) {
-        toast.error('Select a size');
+      const handle = String(normalizedDetails?.shopify_handle || '').trim();
+      if (!handle) {
+        toast.error('This product is not available in the shop yet.');
         return;
       }
-
-      const variantTitleToUse = shopifyVariants.find((v) => v.id === String(variantIdToUse))?.title || null;
-
-      addToCart({
-        productId: product.id,
-        quantity: 1,
-        currentUser,
-        variantId: variantIdToUse,
-        variantTitle: variantTitleToUse,
-      })
-        .then(() => {
-          toast.success('Added to cart!');
-          navigate(createPageUrl('Checkout'));
-        })
-        .catch((error) => toast.error(error?.message || 'Failed to add to cart'));
+      navigate(`/market/p/${encodeURIComponent(handle)}`);
       return;
     }
 
-    if (!currentUser) {
-      toast.error('Please log in to purchase');
+    if (!xpPurchasingEnabled) {
+      toast.message('XP purchasing is coming soon.');
       return;
     }
 
-    if ((currentUser.xp || 0) < product.price_xp) {
-      toast.error('Insufficient XP');
-      return;
-    }
-
-    if (product.min_xp_level && (currentUser.xp || 0) < product.min_xp_level) {
-      toast.error(`Requires Level ${Math.floor(product.min_xp_level / 1000) + 1}+`);
-      return;
-    }
-
-    purchaseMutation.mutate();
+    toast.message('XP purchasing is not available yet.');
   };
 
   const handleReview = () => {
@@ -276,9 +216,8 @@ export default function ProductDetail() {
   const isShopifyProduct =
     String(product?.seller_email || '').toLowerCase() === 'shopify@hotmess.london' &&
     !!(normalizedDetails?.shopify_variant_id || shopifyVariants?.[0]?.id);
-  const canAfford = isShopifyProduct ? true : currentUser && (currentUser.xp || 0) >= product.price_xp;
-  const meetsLevel =
-    isShopifyProduct ? true : !product.min_xp_level || (currentUser && (currentUser.xp || 0) >= product.min_xp_level);
+  const canAfford = isShopifyProduct ? true : true;
+  const meetsLevel = isShopifyProduct ? true : true;
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
@@ -389,39 +328,19 @@ export default function ProductDetail() {
             </div>
 
             <div className="space-y-3">
-              {isShopifyProduct && shopifyVariants.length > 1 && (
-                <div className="space-y-2">
-                  <p className="text-sm text-white/60 uppercase tracking-wider">Size</p>
-                  <Select value={selectedVariantId || ''} onValueChange={(v) => setSelectedVariantId(v)}>
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                      <SelectValue placeholder="Select a size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {shopifyVariants.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>
-                          {v.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
               <Button
                 onClick={handlePurchase}
-                disabled={isOutOfStock || !canAfford || !meetsLevel || (!isShopifyProduct && purchaseMutation.isPending)}
+                disabled={isShopifyProduct ? false : !xpPurchasingEnabled}
                 className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold text-lg py-6"
               >
-                {isOutOfStock
-                  ? 'Sold Out'
-                  : isShopifyProduct
-                    ? 'Buy on Shopify'
-                    : !canAfford
-                      ? 'Insufficient XP'
-                      : !meetsLevel
-                        ? 'Level Locked'
-                        : 'Buy Now'}
+                {isShopifyProduct ? 'View product' : 'XP purchasing coming soon'}
               </Button>
+
+              {!isShopifyProduct ? (
+                <p className="text-xs text-white/50 uppercase tracking-wider">
+                  You can browse drops now. Buying with XP is next.
+                </p>
+              ) : null}
 
               {seller && (
                 <div className="space-y-2">

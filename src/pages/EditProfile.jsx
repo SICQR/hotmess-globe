@@ -42,6 +42,8 @@ export default function EditProfile() {
   const [currentUser, setCurrentUser] = useState(null);
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [gender, setGender] = useState('male');
+  const [photoPolicyAck, setPhotoPolicyAck] = useState(false);
   const [preferredVibes, setPreferredVibes] = useState([]);
   const [eventPreferences, setEventPreferences] = useState([]);
   const [activityStatus, setActivityStatus] = useState('offline');
@@ -83,6 +85,7 @@ export default function EditProfile() {
   const [sellerBio, setSellerBio] = useState('');
   const [sellerTagline, setSellerTagline] = useState('');
   const [shopBannerUrl, setShopBannerUrl] = useState('');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -125,7 +128,9 @@ export default function EditProfile() {
           aftercare_visibility: user.aftercare_visibility || 'matches',
           essentials_visibility: user.essentials_visibility || 'matches'
         });
-        setPhotos(user.photos || []);
+        setPhotos(Array.isArray(user.photos) ? user.photos.slice(0, 5) : []);
+        setGender(String(user.gender || 'male'));
+        setPhotoPolicyAck(!!(user.photo_policy_ack || user.photoPolicyAck));
         setVideoIntroUrl(user.video_intro_url || '');
         setPremiumVideos(user.premium_videos || []);
         setPremiumUnlockXp(user.premium_unlock_xp || 1000);
@@ -146,6 +151,16 @@ export default function EditProfile() {
     fetchUser();
   }, []);
 
+  const normalizePhotosForSave = (raw) => {
+    const list = Array.isArray(raw) ? raw.filter(Boolean).slice(0, 5) : [];
+    const primaryIndex = list.findIndex((p) => !!p?.is_primary);
+    return list.map((p, idx) => ({
+      ...p,
+      is_primary: primaryIndex === -1 ? idx === 0 : idx === primaryIndex,
+      order: typeof p?.order === 'number' ? p.order : idx,
+    }));
+  };
+
   useEffect(() => {
     if (userTribes.length > 0) {
       setTribes(userTribes.map(t => t.tribe_id));
@@ -164,7 +179,6 @@ export default function EditProfile() {
     onSuccess: () => {
       queryClient.invalidateQueries(['users']);
       toast.success('Profile updated! 🎉');
-      navigate(createPageUrl(`Profile?email=${currentUser.email}`));
     },
     onError: () => {
       toast.error('Failed to update profile');
@@ -190,82 +204,124 @@ export default function EditProfile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const bioValidation = validateBio(bio);
-    if (!bioValidation.valid) {
-      toast.error(bioValidation.error);
-      return;
-    }
-    
-    const sanitizedSocialLinks = sanitizeSocialLinks(socialLinks);
-    const musicArray = musicTaste.split(',').map(s => s.trim()).filter(Boolean).slice(0, 10);
-    
-    await updateProfileMutation.mutateAsync({
-      bio: bioValidation.sanitized,
-      avatar_url: avatarUrl,
-      preferred_vibes: preferredVibes.slice(0, 5),
-      event_preferences: eventPreferences.slice(0, 5),
-      activity_status: activityStatus,
-      skills: skills.slice(0, 8),
-      portfolio: portfolio.slice(0, 6),
-      music_taste: musicArray,
-      social_links: sanitizedSocialLinks,
-      looking_for: lookingFor,
-      meet_at: meetAt,
-      aftercare_menu: aftercareMenu,
-      photos,
-      video_intro_url: videoIntroUrl,
-      premium_videos: premiumVideos,
-      premium_unlock_xp: premiumUnlockXp,
-      has_premium_content: photos.some(p => p.is_premium) || premiumVideos.length > 0,
-      interests,
-      dealbreakers_text: dealbrekersText,
-      availability_status: availabilityStatus,
-      preferred_communication: preferredCommunication,
-      profile_theme: profileTheme,
-      accent_color: accentColor,
-      profile_type: profileType,
-      seller_bio: sellerBio,
-      seller_tagline: sellerTagline,
-      shop_banner_url: shopBannerUrl,
-      ...tagVisibility
-    });
 
-    for (const oldTribe of userTribes) {
-      await base44.entities.UserTribe.delete(oldTribe.id);
-    }
-    for (const oldTag of userTags) {
-      await base44.entities.UserTag.delete(oldTag.id);
-    }
+    if (isSavingProfile || updateProfileMutation.isPending) return;
+    setIsSavingProfile(true);
 
-    for (const tribeId of tribes) {
-      const tribe = taxonomyConfig.tribes.find(t => t.id === tribeId);
-      if (tribe) {
-        await base44.entities.UserTribe.create({
-          user_email: currentUser.email,
-          tribe_id: tribeId,
-          tribe_label: tribe.label
-        });
+    try {
+      const normalizedGender = String(gender || '').trim().toLowerCase();
+      if (normalizedGender !== 'male' && normalizedGender !== 'man' && normalizedGender !== 'm') {
+        toast.error('This experience is currently male-only.');
+        return;
       }
-    }
 
-    for (const tagId of selectedTagIds) {
-      const tag = taxonomyConfig.tags.find(t => t.id === tagId);
-      if (tag) {
-        await base44.entities.UserTag.create({
-          user_email: currentUser.email,
-          tag_id: tagId,
-          tag_label: tag.label,
-          category_id: tag.categoryId,
-          is_essential: essentialTagIds.includes(tagId),
-          is_dealbreaker: dealbreakerTagIds.includes(tagId),
-          visibility: tag.isSensitive ? 'nobody' : 'public'
-        });
+      if (!photoPolicyAck) {
+        toast.error('Please confirm your photos are of men.');
+        return;
       }
-    }
+      
+      const bioValidation = validateBio(bio);
+      if (!bioValidation.valid) {
+        toast.error(bioValidation.error);
+        return;
+      }
+      
+      const sanitizedSocialLinks = sanitizeSocialLinks(socialLinks);
+      const musicArray = musicTaste.split(',').map(s => s.trim()).filter(Boolean).slice(0, 10);
+      const safePhotos = normalizePhotosForSave(photos);
 
-    queryClient.invalidateQueries(['user-tags']);
-    queryClient.invalidateQueries(['user-tribes']);
+      await updateProfileMutation.mutateAsync({
+        bio: bioValidation.sanitized,
+        avatar_url: avatarUrl,
+        gender: 'male',
+        photo_policy_ack: true,
+        preferred_vibes: preferredVibes.slice(0, 5),
+        event_preferences: eventPreferences.slice(0, 5),
+        activity_status: activityStatus,
+        skills: skills.slice(0, 8),
+        portfolio: portfolio.slice(0, 6),
+        music_taste: musicArray,
+        social_links: sanitizedSocialLinks,
+        looking_for: lookingFor,
+        meet_at: meetAt,
+        aftercare_menu: aftercareMenu,
+        photos: safePhotos,
+        video_intro_url: videoIntroUrl,
+        premium_videos: premiumVideos,
+        premium_unlock_xp: premiumUnlockXp,
+        has_premium_content: safePhotos.some(p => p.is_premium) || premiumVideos.length > 0,
+        interests,
+        dealbreakers_text: dealbrekersText,
+        availability_status: availabilityStatus,
+        preferred_communication: preferredCommunication,
+        profile_theme: profileTheme,
+        accent_color: accentColor,
+        profile_type: profileType,
+        seller_bio: sellerBio,
+        seller_tagline: sellerTagline,
+        shop_banner_url: shopBannerUrl,
+        ...tagVisibility
+      });
+
+      // Sync tribes/tags best-effort. De-dupe inputs so we never create duplicates.
+      const email = currentUser?.email;
+      if (email) {
+        const uniqueOldTribes = Array.from(
+          new Map((Array.isArray(userTribes) ? userTribes : []).map((t) => [t?.id, t])).values()
+        ).filter((t) => t?.id);
+        const uniqueOldTags = Array.from(
+          new Map((Array.isArray(userTags) ? userTags : []).map((t) => [t?.id, t])).values()
+        ).filter((t) => t?.id);
+
+        try {
+          for (const oldTribe of uniqueOldTribes) {
+            await base44.entities.UserTribe.delete(oldTribe.id);
+          }
+          for (const oldTag of uniqueOldTags) {
+            await base44.entities.UserTag.delete(oldTag.id);
+          }
+
+          const uniqueTribes = Array.from(new Set((Array.isArray(tribes) ? tribes : []).filter(Boolean)));
+          const uniqueSelectedTagIds = Array.from(new Set((Array.isArray(selectedTagIds) ? selectedTagIds : []).filter(Boolean)));
+          const essentialSet = new Set((Array.isArray(essentialTagIds) ? essentialTagIds : []).filter(Boolean));
+          const dealbreakerSet = new Set((Array.isArray(dealbreakerTagIds) ? dealbreakerTagIds : []).filter(Boolean));
+
+          for (const tribeId of uniqueTribes) {
+            const tribe = taxonomyConfig.tribes.find(t => t.id === tribeId);
+            if (tribe) {
+              await base44.entities.UserTribe.create({
+                user_email: email,
+                tribe_id: tribeId,
+                tribe_label: tribe.label
+              });
+            }
+          }
+
+          for (const tagId of uniqueSelectedTagIds) {
+            const tag = taxonomyConfig.tags.find(t => t.id === tagId);
+            if (tag) {
+              await base44.entities.UserTag.create({
+                user_email: email,
+                tag_id: tagId,
+                tag_label: tag.label,
+                category_id: tag.categoryId,
+                is_essential: essentialSet.has(tagId),
+                is_dealbreaker: dealbreakerSet.has(tagId),
+                visibility: tag.isSensitive ? 'nobody' : 'public'
+              });
+            }
+          }
+        } catch (tagSyncError) {
+          console.warn('Profile updated, but tags/tribes sync failed (non-fatal)', tagSyncError);
+        }
+      }
+
+      queryClient.invalidateQueries(['user-tags']);
+      queryClient.invalidateQueries(['user-tribes']);
+      navigate(createPageUrl(`Profile?email=${currentUser.email}`));
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   const toggleVibe = (vibe) => {
@@ -400,7 +456,7 @@ export default function EditProfile() {
 
             {/* Profile Theme Customization */}
             <div className="bg-black border-2 border-white p-6">
-              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
                 <Palette className="w-4 h-4" />
                 Profile Aesthetics
               </Label>
@@ -453,11 +509,24 @@ export default function EditProfile() {
 
             {/* Photos */}
             <div className="bg-black border-2 border-white p-6">
-              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
                 <ImageIcon className="w-4 h-4" />
                 Photo Gallery
               </Label>
-              <PhotoGallery photos={photos} onPhotosChange={setPhotos} maxPhotos={6} allowPremium={true} />
+              <PhotoGallery photos={photos} onPhotosChange={setPhotos} maxPhotos={5} allowPremium={true} />
+              <div className="mt-4 border-t border-white/10 pt-4">
+                <Label className="text-xs uppercase tracking-widest text-white/40 mb-2 block">Photo Policy</Label>
+                <p className="text-xs text-white/60">All profile photos must be of men.</p>
+                <label className="mt-3 flex items-start gap-3 text-sm text-white/80">
+                  <input
+                    type="checkbox"
+                    checked={photoPolicyAck}
+                    onChange={(e) => setPhotoPolicyAck(e.target.checked)}
+                    className="mt-1 h-4 w-4"
+                  />
+                  <span>I confirm my profile photos depict men.</span>
+                </label>
+              </div>
               <div className="mt-4 pt-4 border-t border-white/10">
                 <Label className="text-xs text-white/60 mb-2 block">Premium Content Unlock Price</Label>
                 <Input
@@ -474,7 +543,7 @@ export default function EditProfile() {
 
             {/* Video Intro */}
             <div className="bg-black border-2 border-white p-6">
-              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
                 <VideoIcon className="w-4 h-4" />
                 Video Introduction
               </Label>
@@ -484,7 +553,7 @@ export default function EditProfile() {
 
             {/* Premium Videos */}
             <div className="bg-black border-2 border-[#FFD700] p-6">
-              <Label className="text-xs uppercase tracking-widest text-[#FFD700] mb-4 block flex items-center gap-2">
+              <Label className="text-xs uppercase tracking-widest text-[#FFD700] mb-4 flex items-center gap-2">
                 <Crown className="w-4 h-4" />
                 Premium Videos (Coming Soon)
               </Label>
@@ -876,7 +945,7 @@ export default function EditProfile() {
 
             {/* Tribes & Tags */}
             <div className="bg-black border-2 border-white p-6">
-              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block flex items-center gap-2">
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
                 <UsersIcon className="w-4 h-4" />
                 Tribes & Tags (Connect Discovery)
               </Label>
@@ -991,7 +1060,7 @@ export default function EditProfile() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="public">Public</SelectItem>
-                      <SelectItem value="matches">Handshake connections only</SelectItem>
+                      <SelectItem value="matches">Mutual follows only</SelectItem>
                       <SelectItem value="nobody">Private</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1005,7 +1074,7 @@ export default function EditProfile() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="public">Public</SelectItem>
-                      <SelectItem value="matches">Handshake connections only</SelectItem>
+                      <SelectItem value="matches">Mutual follows only</SelectItem>
                       <SelectItem value="nobody">Private</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1019,7 +1088,7 @@ export default function EditProfile() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="public">Public</SelectItem>
-                      <SelectItem value="matches">Handshake connections only</SelectItem>
+                      <SelectItem value="matches">Mutual follows only</SelectItem>
                       <SelectItem value="nobody">Private</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1030,7 +1099,7 @@ export default function EditProfile() {
             {/* Social Links */}
             <div className="bg-black border-2 border-white p-6">
               <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Social Links</Label>
-              <p className="text-xs text-white/40 mb-4 uppercase">🔒 Only visible after handshake</p>
+              <p className="text-xs text-white/40 mb-4 uppercase">🔒 Only visible to mutual follows</p>
               <div className="space-y-4">
                 {['instagram', 'twitter', 'spotify', 'soundcloud'].map(platform => (
                   <Input
@@ -1047,10 +1116,10 @@ export default function EditProfile() {
             {/* Submit */}
             <Button
               type="submit"
-              disabled={updateProfileMutation.isPending}
+              disabled={updateProfileMutation.isPending || isSavingProfile}
               className="w-full bg-[#FF1493] hover:bg-white text-black font-black text-lg py-6 border-2 border-white shadow-[0_0_10px_#FF1493]"
             >
-              {updateProfileMutation.isPending ? 'SAVING...' : (
+              {updateProfileMutation.isPending || isSavingProfile ? 'SAVING...' : (
                 <>
                   <Save className="w-5 h-5 mr-2" />
                   SAVE PROFILE

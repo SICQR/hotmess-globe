@@ -11,20 +11,38 @@ const normalizeCities = (value) => {
   return Array.from(new Set(cities));
 };
 
-const isAuthorizedCron = (req) => {
-  // Always allow calls coming from Vercel Cron.
-  // (Vercel sets x-vercel-cron: 1 but cannot send custom secrets.)
+const isRunningOnVercel = () => {
+  const flag = process.env.VERCEL || process.env.VERCEL_ENV;
+  return !!flag;
+};
+
+const isVercelCronRequest = (req) => {
   const cronHeader = req.headers?.['x-vercel-cron'];
-  if (cronHeader === '1' || cronHeader === 1 || cronHeader === true) return true;
+  return cronHeader === '1' || cronHeader === 1 || cronHeader === true;
+};
 
+const isAuthorizedCron = (req) => {
   const secret = getEnv('EVENT_SCRAPER_CRON_SECRET');
-  if (!secret) return false;
+  const onVercel = isRunningOnVercel();
+  const allowVercelCron = onVercel && isVercelCronRequest(req);
 
-  const header = req.headers?.authorization || req.headers?.Authorization;
-  const match = header && String(header).match(/^Bearer\s+(.+)$/i);
-  const headerToken = match?.[1] || null;
-  const queryToken = getQueryParam(req, 'secret');
-  return headerToken === secret || queryToken === secret;
+  // Best practice:
+  // - scheduled runs: allow Vercel Cron header
+  // - manual/admin runs: allow secret (header or query)
+  // If a secret is configured, require either (cron header) OR (valid secret).
+  if (secret && !allowVercelCron) {
+    const header = req.headers?.authorization || req.headers?.Authorization;
+    const match = header && String(header).match(/^Bearer\s+(.+)$/i);
+    const headerToken = match?.[1] || null;
+    const queryToken = getQueryParam(req, 'secret');
+    return headerToken === secret || queryToken === secret;
+  }
+
+  // If no secret is configured:
+  // - on Vercel: allow only Vercel Cron
+  // - local/dev: allow for convenience
+  if (onVercel) return allowVercelCron;
+  return true;
 };
 
 const findExistingBeaconId = async ({ serviceClient, city, title, eventDateIso }) => {

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import PageShell from '@/components/shell/PageShell';
 import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
 import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
 
@@ -122,21 +123,16 @@ export default function Safety() {
   });
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2">
-            <span className="text-[#00D9FF]">SAFETY</span> HUB
-          </h1>
-          <p className="text-white/60 uppercase text-sm tracking-wider">
-            Care-first. Your safety matters.
-          </p>
-        </motion.div>
-
+    <div className="min-h-screen bg-black text-white">
+      <PageShell
+        title={
+          <>
+            <span className="text-[#00D9FF]">Safety</span> Hub
+          </>
+        }
+        subtitle="Care-first. Your safety matters."
+        maxWidth="4xl"
+      >
         <Tabs defaultValue="checkin">
           <TabsList className="bg-white/5 border border-white/10 mb-6">
             <TabsTrigger value="checkin">Safety Check-In</TabsTrigger>
@@ -158,7 +154,8 @@ export default function Safety() {
                 </div>
                 <Button
                   onClick={() => checkOutMutation.mutate()}
-                  className="w-full bg-green-500 hover:bg-green-600 text-black font-black"
+                  variant="cyan"
+                  className="w-full"
                 >
                   CHECK OUT SAFELY
                 </Button>
@@ -194,7 +191,8 @@ export default function Safety() {
                 <Button
                   onClick={() => checkInMutation.mutate()}
                   disabled={trustedContacts.length === 0 || checkInMutation.isPending}
-                  className="w-full bg-[#00D9FF] hover:bg-white text-black font-black"
+                  variant="cyan"
+                  className="w-full"
                 >
                   START CHECK-IN
                 </Button>
@@ -259,7 +257,8 @@ export default function Safety() {
                 <Button
                   onClick={() => addContactMutation.mutate()}
                   disabled={!contactName.trim() || !contactPhone.trim() || addContactMutation.isPending}
-                  className="w-full bg-[#00D9FF] hover:bg-white text-black font-black"
+                  variant="cyan"
+                  className="w-full"
                 >
                   ADD CONTACT
                 </Button>
@@ -296,9 +295,9 @@ export default function Safety() {
                       </div>
                       <Button
                         onClick={() => deleteContactMutation.mutate(contact.id)}
-                        variant="ghost"
+                        variant="glass"
                         size="sm"
-                        className="text-white/40 hover:text-red-500"
+                        className="text-white/70 hover:text-red-300 border-white/15"
                       >
                         Remove
                       </Button>
@@ -353,7 +352,7 @@ export default function Safety() {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
+      </PageShell>
     </div>
   );
 }

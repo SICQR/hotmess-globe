@@ -16,10 +16,17 @@ export default function CommentsSection({ beaconId }) {
   React.useEffect(() => {
     const fetchUser = async () => {
       try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          setUser(null);
+          return;
+        }
+
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
         console.error('Failed to fetch user:', error);
+        setUser(null);
       }
     };
     fetchUser();

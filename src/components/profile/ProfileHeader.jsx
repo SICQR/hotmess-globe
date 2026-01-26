@@ -3,8 +3,13 @@ import { motion } from 'framer-motion';
 import { ShoppingBag, Crown, Palette } from 'lucide-react';
 import QuickActions from './QuickActions';
 import BadgeDisplay from './BadgeDisplay';
+import { buildUberDeepLink } from '@/utils/uberDeepLink';
+import { Button } from '@/components/ui/button';
+import { buildProfileRecText, recommendTravelModes } from '@/utils/travelRecommendations';
+import { useNavigate } from 'react-router-dom';
 
-export default function ProfileHeader({ user, isOwnProfile, currentUser }) {
+export default function ProfileHeader({ user, isOwnProfile, currentUser, travelEtas }) {
+  const navigate = useNavigate();
   const profileType = user?.profile_type || 'standard';
   const themeGradient = {
     'default': 'from-[#FF1493] to-[#B026FF]',
@@ -34,6 +39,75 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser }) {
   };
 
   const config = profileTypeConfig[profileType];
+
+  const formatEta = (eta) => {
+    const seconds = eta?.duration_seconds;
+    if (!Number.isFinite(seconds)) return null;
+    return `${Math.max(1, Math.round(seconds / 60))}m`;
+  };
+
+  const walkEta = formatEta(travelEtas?.walk);
+  const driveEta = formatEta(travelEtas?.drive);
+  const bikeEta = formatEta(travelEtas?.bicycle);
+  const hasAnyEta = !!walkEta || !!driveEta || !!bikeEta;
+
+  const etaToSeconds = (eta) => {
+    const seconds = eta?.duration_seconds;
+    return Number.isFinite(seconds) ? Number(seconds) : null;
+  };
+
+  const recommendations = (() => {
+    const viewerText = buildProfileRecText(currentUser);
+    const targetText = buildProfileRecText(user);
+    return recommendTravelModes({
+      viewerText,
+      targetText,
+      seconds: {
+        foot: etaToSeconds(travelEtas?.walk),
+        cab: etaToSeconds(travelEtas?.drive),
+        bike: etaToSeconds(travelEtas?.bicycle),
+        uber: etaToSeconds(travelEtas?.drive),
+      },
+    });
+  })();
+
+  const orderedModes = (() => {
+    const base = ['foot', 'cab', 'bike', 'uber'];
+    const rec = Array.isArray(recommendations?.order) ? recommendations.order : base;
+    const filtered = rec.filter((k) => base.includes(k));
+    base.forEach((k) => {
+      if (!filtered.includes(k)) filtered.push(k);
+    });
+    return filtered.slice(0, 4);
+  })();
+
+  const primaryMode = orderedModes[0] || null;
+
+  const recommendedLabel = (() => {
+    if (!primaryMode) return null;
+    const label = primaryMode === 'foot' ? 'Foot' : primaryMode === 'cab' ? 'Cab' : primaryMode === 'bike' ? 'Bike' : 'Uber';
+    const eta = primaryMode === 'foot' ? walkEta : primaryMode === 'cab' ? driveEta : primaryMode === 'bike' ? bikeEta : driveEta;
+    return `Recommended: ${label}${eta ? ` ${eta}` : ''}`;
+  })();
+
+  const dropoffLat = Number.isFinite(user?.last_lat) ? user.last_lat : user?.lat;
+  const dropoffLng = Number.isFinite(user?.last_lng) ? user.last_lng : user?.lng;
+  const uberUrl = buildUberDeepLink({
+    dropoffLat,
+    dropoffLng,
+    dropoffNickname: user?.full_name,
+  });
+
+  const canDirections = Number.isFinite(dropoffLat) && Number.isFinite(dropoffLng);
+  const openInAppDirections = (mode) => {
+    if (!canDirections) return;
+    const qs = new URLSearchParams();
+    qs.set('lat', String(dropoffLat));
+    qs.set('lng', String(dropoffLng));
+    if (user?.full_name) qs.set('label', String(user.full_name));
+    qs.set('mode', mode);
+    navigate(`/directions?${qs.toString()}`);
+  };
 
   return (
     <div className={`relative h-80 border-b border-white/10 bg-gradient-to-br ${themeGradient}/20`}>
@@ -94,6 +168,56 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser }) {
             {/* Stats */}
             <div className="flex flex-wrap items-center gap-3 text-sm mb-4">
               <span className="text-white/60">{user?.city}</span>
+
+              {!isOwnProfile && (hasAnyEta || !!uberUrl) && (
+                <span className="inline-block">
+                  {recommendedLabel && (
+                    <div className="mb-1 text-[11px] text-white/70">{recommendedLabel}</div>
+                  )}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {orderedModes
+                      .filter((mode) => {
+                        if (mode === 'foot') return canDirections;
+                        if (mode === 'cab') return canDirections;
+                        if (mode === 'bike') return canDirections;
+                        return !!uberUrl;
+                      })
+                      .map((mode) => {
+                        const isPrimary = mode === primaryMode;
+                        const label = mode === 'foot' ? 'Foot' : mode === 'cab' ? 'Cab' : mode === 'bike' ? 'Bike' : 'Uber';
+                        const eta = mode === 'foot' ? (walkEta || '—') : mode === 'cab' ? (driveEta || '—') : mode === 'bike' ? (bikeEta || '—') : (driveEta || '—');
+                        const onClick = () => {
+                          if (mode === 'uber') {
+                            if (!uberUrl) return;
+                            window.open(uberUrl, '_blank', 'noopener,noreferrer');
+                            return;
+                          }
+                          openInAppDirections(mode);
+                        };
+
+                        return (
+                          <Button
+                            key={mode}
+                            type="button"
+                            variant={isPrimary ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={onClick}
+                            className={
+                              isPrimary
+                                ? 'bg-white/90 text-black hover:bg-white'
+                                : 'bg-white/10 border-white/20 text-white hover:bg-white/15'
+                            }
+                          >
+                            <span className="flex w-full items-center justify-between gap-2">
+                              <span>{label}</span>
+                              <span className="font-mono">{eta}</span>
+                            </span>
+                          </Button>
+                        );
+                      })}
+                  </div>
+                </span>
+              )}
               
               {profileType === 'seller' ? (
                 <>
@@ -124,7 +248,7 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser }) {
             </div>
 
             {/* Actions */}
-            <QuickActions user={user} isOwnProfile={isOwnProfile} currentUser={currentUser} />
+            <QuickActions profileUser={user} isOwnProfile={isOwnProfile} currentUser={currentUser} />
           </div>
         </div>
       </div>

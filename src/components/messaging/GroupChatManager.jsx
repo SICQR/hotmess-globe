@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Users, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
 
 export default function GroupChatManager({ currentUser, allUsers, eventId = null, squadId = null }) {
   const [showCreate, setShowCreate] = useState(false);
@@ -18,6 +17,9 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
 
   const createGroupMutation = useMutation({
     mutationFn: async () => {
+      const ok = await base44.auth.requireProfile(window.location.href);
+      if (!ok) return null;
+
       const participantEmails = [currentUser.email, ...selectedUsers];
       
       const thread = await base44.entities.ChatThread.create({
@@ -43,9 +45,10 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
       return thread;
     },
     onSuccess: (thread) => {
+      if (!thread) return;
       queryClient.invalidateQueries(['chat-threads']);
       toast.success('Group created!');
-      navigate(createPageUrl('Messages'));
+      navigate(`/social/t/${encodeURIComponent(String(thread?.id || ''))}`);
       setShowCreate(false);
       setSelectedUsers([]);
     },

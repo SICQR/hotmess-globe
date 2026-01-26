@@ -8,6 +8,7 @@ export function createPageUrl(pageName: string) {
         Globe: '/pulse',
         Events: '/events',
         Marketplace: '/market',
+        OrderHistory: '/orders',
         Connect: '/social',
         Messages: '/social/inbox',
         Social: '/social',

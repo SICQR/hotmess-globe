@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Play, Pause, SkipForward, Volume2, VolumeX, X, Radio } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useRadio } from './RadioContext';
 
 export default function PersistentRadioPlayer() {
@@ -12,6 +13,14 @@ export default function PersistentRadioPlayer() {
   const [isMuted, setIsMuted] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(null);
   const audioRef = useRef(null);
+
+  const LIVE_STREAM_URL = 'https://listen.radioking.com/radio/736103/stream/802454';
+  const liveTrack = {
+    id: '__live__',
+    title: 'HOTMESS RADIO (LIVE)',
+    description: 'Live stream',
+    audio_url: LIVE_STREAM_URL,
+  };
 
   const { data: audioBeacons = [] } = useQuery({
     queryKey: ['audio-drops'],
@@ -23,15 +32,29 @@ export default function PersistentRadioPlayer() {
   });
 
   useEffect(() => {
-    if (audioBeacons.length > 0 && !currentTrack) {
-      setCurrentTrack(audioBeacons[0]);
+    // Default to live stream (live is king). If the user explicitly picked a track,
+    // keep their selection.
+    if (!currentTrack) {
+      setCurrentTrack(liveTrack);
+      return;
+    }
+
+    // If the current track is not live and it no longer exists, fall back.
+    const currentId = String(currentTrack?.id || '');
+    if (currentId && currentId !== String(liveTrack.id)) {
+      const stillExists = audioBeacons.some((b) => String(b?.id) === currentId);
+      if (!stillExists) setCurrentTrack(liveTrack);
     }
   }, [audioBeacons, currentTrack]);
 
   useEffect(() => {
     if (shouldAutoPlay && audioRef.current && currentTrack) {
-      audioRef.current.play();
-      setIsPlaying(true);
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(() => {
+        // Autoplay can be blocked; keep UI in a paused state.
+        setIsPlaying(false);
+      });
     }
   }, [shouldAutoPlay, currentTrack]);
 
@@ -47,23 +70,29 @@ export default function PersistentRadioPlayer() {
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play();
+      audioRef.current.play().catch(() => {
+        // Ignore; browser may block play without a user gesture.
+      });
     }
     setIsPlaying(!isPlaying);
   };
 
   const handleNext = () => {
-    if (audioBeacons.length === 0) return;
-    const currentIndex = audioBeacons.findIndex(b => b.id === currentTrack?.id);
-    const nextIndex = (currentIndex + 1) % audioBeacons.length;
-    setCurrentTrack(audioBeacons[nextIndex]);
+    const playlist = [liveTrack, ...audioBeacons];
+    if (playlist.length === 0) return;
+    const currentIndex = playlist.findIndex((b) => String(b?.id) === String(currentTrack?.id));
+    const nextIndex = (currentIndex + 1) % playlist.length;
+    setCurrentTrack(playlist[nextIndex]);
   };
 
   useEffect(() => {
     if (currentTrack && audioRef.current) {
       audioRef.current.src = currentTrack.audio_url;
       if (isPlaying) {
-        audioRef.current.play();
+        audioRef.current.play().catch(() => {
+          // If stream can't play (CORS/codec), keep UI from thrashing.
+          setIsPlaying(false);
+        });
       }
     }
   }, [currentTrack, isPlaying]);
@@ -88,7 +117,7 @@ export default function PersistentRadioPlayer() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-screen sm:w-80 bg-black/95 backdrop-blur-xl border-l-2 border-[#B026FF] z-[100] shadow-2xl"
+              className="fixed top-0 right-0 bottom-0 w-screen sm:w-96 bg-black/95 backdrop-blur-xl border-l-2 border-[#B026FF] z-[100] shadow-2xl"
             >
               <div className="flex flex-col h-full p-6">
                 {/* Header */}
@@ -151,11 +180,48 @@ export default function PersistentRadioPlayer() {
                   />
                 </div>
 
+                {/* Quick Links */}
+                <div className="mb-6">
+                  <p className="text-xs text-white/40 uppercase mb-3">Quick Links</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link to="/social/inbox" onClick={closeRadio} className="block">
+                      <div className="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 text-xs font-black uppercase text-white">
+                        Inbox
+                      </div>
+                    </Link>
+                    <Link to="/events" onClick={closeRadio} className="block">
+                      <div className="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 text-xs font-black uppercase text-white">
+                        Events
+                      </div>
+                    </Link>
+                    <Link to="/music/schedule" onClick={closeRadio} className="block">
+                      <div className="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 text-xs font-black uppercase text-white">
+                        Schedule
+                      </div>
+                    </Link>
+                    <Link to="/music/shows" onClick={closeRadio} className="block">
+                      <div className="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 text-xs font-black uppercase text-white">
+                        Shows
+                      </div>
+                    </Link>
+                    <Link to="/pulse" onClick={closeRadio} className="block">
+                      <div className="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 text-xs font-black uppercase text-white">
+                        Pulse
+                      </div>
+                    </Link>
+                    <Link to="/safety" onClick={closeRadio} className="block">
+                      <div className="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 text-xs font-black uppercase text-white">
+                        Safety
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+
                 {/* Queue or Playlist could go here */}
                 <div className="flex-1 overflow-y-auto">
                   <p className="text-xs text-white/40 uppercase mb-3">Available Tracks</p>
                   <div className="space-y-2">
-                    {audioBeacons.map((beacon) => (
+                    {[liveTrack, ...audioBeacons].map((beacon) => (
                       <button
                         key={beacon.id}
                         onClick={() => setCurrentTrack(beacon)}
@@ -173,7 +239,7 @@ export default function PersistentRadioPlayer() {
                 </div>
               </div>
 
-              <audio ref={audioRef} />
+              <audio ref={audioRef} preload="none" crossOrigin="anonymous" />
             </motion.div>
           </>
         )}

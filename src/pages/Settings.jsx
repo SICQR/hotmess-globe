@@ -24,10 +24,16 @@ export default function Settings() {
     const fetchUser = async () => {
       try {
         const currentUser = await base44.auth.me();
+        if (!currentUser) {
+          // If the session is missing/expired, bounce to Auth instead of crashing.
+          base44.auth.redirectToLogin(window.location.href);
+          return;
+        }
+
         setUser(currentUser);
-        setFullName(currentUser.full_name || '');
-        setAvatarUrl(currentUser.avatar_url || '');
-        setLocationPrivacy(currentUser.location_privacy_mode || 'fuzzy');
+        setFullName(currentUser?.full_name || '');
+        setAvatarUrl(currentUser?.avatar_url || '');
+        setLocationPrivacy(currentUser?.location_privacy_mode || 'fuzzy');
       } catch (error) {
         console.error('Failed to fetch user:', error);
       }
@@ -251,7 +257,7 @@ export default function Settings() {
 
             <div className="bg-[#00D9FF]/10 border border-[#00D9FF]/40 rounded-lg p-4">
               <p className="text-xs text-white/80 leading-relaxed">
-                🔒 <span className="font-bold">Social Links Privacy:</span> Your social media links are only visible to users you've completed a Telegram handshake with. Edit them in your full profile.
+                🔒 <span className="font-bold">Social Links Privacy:</span> Your social media links are only visible to mutual follows. Edit them in your full profile.
               </p>
             </div>
           </div>

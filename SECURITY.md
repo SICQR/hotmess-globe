@@ -40,11 +40,11 @@ VITE_BASE44_APP_BASE_URL=https://your-app.base44.app
 
 # Third-party Services (Client-side - use with caution)
 VITE_MAPBOX_ACCESS_TOKEN=your_mapbox_token
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_key
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 
 # Sensitive Operations (Server-side only)
 SUPABASE_SERVICE_KEY=your_service_key  # NEVER prefix with VITE_
-STRIPE_SECRET_KEY=sk_test_your_key     # NEVER prefix with VITE_
+STRIPE_SECRET_KEY=your_stripe_secret_key     # NEVER prefix with VITE_
 ```
 
 ### 2. Dependency Management
@@ -63,7 +63,7 @@ STRIPE_SECRET_KEY=sk_test_your_key     # NEVER prefix with VITE_
 ### 3. Authentication & Authorization
 
 #### Best Practices:
-- ✅ Use Base44 SDK for authentication flows
+- ✅ Use Supabase auth for authentication flows (via the Base44-compat wrapper)
 - ✅ Check `base44.auth.isAuthenticated()` before accessing protected resources
 - ✅ Validate user permissions on both client and server
 - ✅ Implement proper session management
@@ -142,24 +142,17 @@ console.log('User data:', user);  // Avoid console.log in production
 
 ### 7. Content Security Policy (CSP)
 
-**Status**: ⚠️ TODO - Not yet implemented
+**Status**: ✅ Implemented (Vercel headers)
 
-Recommended CSP headers:
-```
-Content-Security-Policy: 
-  default-src 'self';
-  script-src 'self' 'unsafe-inline' 'unsafe-eval';
-  style-src 'self' 'unsafe-inline';
-  img-src 'self' data: https:;
-  font-src 'self' data:;
-  connect-src 'self' https://your-api.base44.app;
-```
+Notes:
+- CSP is configured in `vercel.json` and enforced via the `Content-Security-Policy` response header.
+- Keep the policy compatible with required third-party embeds (Stripe + SoundCloud) and Supabase network calls.
 
 ### 8. API Security
 
-#### Backend Functions (Edge Functions):
+#### Backend Functions (Vercel Serverless Functions):
 - ✅ Validate authentication tokens server-side
-- ✅ Implement rate limiting
+- ✅ Implement rate limiting on high-risk endpoints
 - ✅ Use CORS appropriately
 - ✅ Validate request payloads
 - ✅ Return appropriate HTTP status codes
@@ -200,18 +193,18 @@ Before submitting a PR, ensure:
 3. Environment variable management with `.env.example`
 
 #### ⚠️ In Progress / Recommended:
-1. **Content Security Policy**: Not yet implemented - should be added to Vite config
-2. **Error Tracking**: Sentry integration partially commented out in ErrorBoundary
-3. **Rate Limiting**: Not implemented on API endpoints
-4. **Input Validation**: Inconsistent across the application
-5. **Console Statements**: ~95 remaining console.log statements should be replaced with logger
+1. **Error Tracking**: Sentry integration is not wired by default (recommended)
+2. **Rate Limiting Coverage**: Best-effort DB-backed rate limiting exists and is used on multiple endpoints; expand coverage as needed
+3. **Input Validation**: Still inconsistent across the application; consider adding Zod schemas on `/api/*` inputs
+4. **Console Statements**: Remaining `console.*` usage should be replaced with `src/utils/logger.js` in client code
+5. **Secret Hygiene in Logs**: Avoid `vite build --debug` in shared logs; it can print resolved env values
 
 #### 🔴 Known Issues:
 1. **Client-Side API Keys**: Some API operations performed client-side (VITE_ env vars)
    - Mapbox, Supabase public keys are acceptable
    - Consider proxying sensitive operations through backend functions
-2. **SoundCloud Integration**: Incomplete OAuth implementation (placeholder code)
-3. **QR Scanner**: Ticket scanning not fully implemented
+2. **SoundCloud Integration**: OAuth + upload endpoints exist under `api/soundcloud/*`; ensure tokens and admin allowlists are configured in production
+3. **QR Scanner / Tickets**: Signed ticket QR issuance + admin-only redemption exist; ensure `TICKET_QR_SIGNING_SECRET` is configured in production
 
 ## 📚 Additional Resources
 
@@ -244,6 +237,6 @@ Before submitting a PR, ensure:
 
 ---
 
-**Last Updated**: 2026-01-03
+**Last Updated**: 2026-01-17
 **Maintained By**: Development Team
 **Contact**: security@sicqr.com (update with actual contact)

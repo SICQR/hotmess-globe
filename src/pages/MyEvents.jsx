@@ -30,9 +30,9 @@ export default function MyEvents() {
 
   const { data: myEvents = [] } = useQuery({
     queryKey: ['my-events', currentUser?.email],
-    queryFn: () => base44.entities.Beacon.filter({ 
-      organizer_email: currentUser.email,
-      kind: 'event'
+    queryFn: () => base44.entities.Beacon.filter({
+      created_by: currentUser.email,
+      kind: 'event',
     }, '-created_date'),
     enabled: !!currentUser
   });

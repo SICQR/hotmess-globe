@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { getBearerToken, getEnv, json, normalizeDetails, normalizeShopDomain } from './_utils.js';
+import { bestEffortRateLimit, minuteBucket } from '../_rateLimit.js';
+import { getRequestIp } from '../routing/_utils.js';
 
 const isAdminUser = async ({ anonClient, serviceClient, accessToken, email }) => {
   const { data: userData, error: userErr } = await anonClient.auth.getUser(accessToken);
@@ -66,6 +68,26 @@ export default async function handler(req, res) {
   const isAdmin = await isAdminUser({ anonClient, serviceClient, accessToken, email });
   if (!isAdmin) {
     return json(res, 403, { error: 'Forbidden: Admin access required' });
+  }
+
+  // Rate limits: per-user + per-IP (best-effort).
+  // Sync is lighter than import but still potentially abusive.
+  {
+    const ip = getRequestIp(req);
+    const userId = userData.user.id;
+    const bucketKey = `shopify:sync:${userId}:${ip || 'noip'}:${minuteBucket()}`;
+    const rl = await bestEffortRateLimit({
+      serviceClient,
+      bucketKey,
+      userId,
+      ip,
+      windowSeconds: 60,
+      maxRequests: 2,
+    });
+
+    if (rl.allowed === false) {
+      return json(res, 429, { error: 'Rate limit exceeded', remaining: rl.remaining ?? 0 });
+    }
   }
 
   const shopDomain = normalizeShopDomain(getEnv('SHOPIFY_SHOP_DOMAIN', ['SHOPIFY_STORE_URL', 'SHOPIFY_DOMAIN']));

@@ -66,8 +66,11 @@ export default async function handler(req, res) {
   const supabaseServiceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
 
   if (!supabaseUrl || !supabaseServiceRoleKey) {
-    return json(res, 500, {
-      error: 'Supabase server env not configured',
+    // Public endpoint: degrade gracefully in dev if server env isn't set.
+    return json(res, 200, {
+      connected: false,
+      profile: null,
+      error: 'SoundCloud not configured',
       details: 'Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in server env.',
     });
   }
@@ -80,7 +83,17 @@ export default async function handler(req, res) {
   try {
     accessToken = await getValidAccessToken({ serviceClient });
   } catch (e) {
-    return json(res, e?.status || 500, { error: e?.message || 'SoundCloud token error', details: e?.details });
+    // SoundCloud not connected is a normal state for most envs.
+    if ((e?.status || 0) === 409) {
+      return json(res, 200, { connected: false, profile: null });
+    }
+
+    return json(res, 200, {
+      connected: false,
+      profile: null,
+      error: e?.message || 'SoundCloud token error',
+      details: e?.details,
+    });
   }
 
   const resp = await fetch(`${SOUNDCLOUD_API_BASE}/me`, {
@@ -96,7 +109,13 @@ export default async function handler(req, res) {
   }
 
   if (!resp.ok) {
-    return json(res, 502, { error: `SoundCloud profile fetch failed (${resp.status})`, details: payload || text });
+    // Public endpoint: don't hard-fail; treat as disconnected/temporarily unavailable.
+    return json(res, 200, {
+      connected: false,
+      profile: null,
+      error: `SoundCloud profile fetch failed (${resp.status})`,
+      details: payload || text,
+    });
   }
 
   const safe = {
@@ -111,5 +130,5 @@ export default async function handler(req, res) {
   };
 
   res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=600');
-  return json(res, 200, safe);
+  return json(res, 200, { connected: true, profile: safe });
 }

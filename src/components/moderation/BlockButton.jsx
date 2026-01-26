@@ -11,8 +11,17 @@ export default function BlockButton({ userEmail }) {
 
   React.useEffect(() => {
     const fetchUser = async () => {
-      const user = await base44.auth.me();
-      setCurrentUser(user);
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          setCurrentUser(null);
+          return;
+        }
+        const user = await base44.auth.me();
+        setCurrentUser(user);
+      } catch {
+        setCurrentUser(null);
+      }
     };
     fetchUser();
   }, []);

@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-export default function ChatThread({ thread, currentUser, onBack }) {
+export default function ChatThread({ thread, currentUser, onBack, readOnly = false }) {
   const [messageText, setMessageText] = useState('');
   const [uploading, setUploading] = useState(false);
   const [isTyping, setIsTyping] = useState({});
@@ -78,6 +78,9 @@ export default function ChatThread({ thread, currentUser, onBack }) {
 
   const sendMutation = useMutation({
     mutationFn: async (data) => {
+      const ok = await base44.auth.requireProfile(window.location.href);
+      if (!ok) return null;
+
       const message = await base44.entities.Message.create({
         thread_id: thread.id,
         sender_email: currentUser.email,
@@ -111,7 +114,7 @@ export default function ChatThread({ thread, currentUser, onBack }) {
               type: 'message',
               title: `New message from ${currentUser.full_name}`,
               message: data.content.substring(0, 100),
-              link: `/Messages?thread=${thread.id}`,
+              link: `/social/t/${encodeURIComponent(String(thread.id))}`,
               metadata: { thread_id: thread.id, sender: currentUser.email }
             });
           } catch (err) {
@@ -122,7 +125,8 @@ export default function ChatThread({ thread, currentUser, onBack }) {
 
       return message;
     },
-    onSuccess: () => {
+    onSuccess: (message) => {
+      if (!message) return;
       queryClient.invalidateQueries(['messages', thread.id]);
       queryClient.invalidateQueries(['chat-threads']);
       setMessageText('');
@@ -131,6 +135,10 @@ export default function ChatThread({ thread, currentUser, onBack }) {
 
   const handleSend = (e) => {
     e.preventDefault();
+    if (readOnly) {
+      base44.auth.redirectToProfile(window.location.href);
+      return;
+    }
     if (!messageText.trim()) return;
 
     sendMutation.mutate({
@@ -140,6 +148,10 @@ export default function ChatThread({ thread, currentUser, onBack }) {
   };
 
   const handleImageUpload = async (e) => {
+    if (readOnly) {
+      base44.auth.redirectToProfile(window.location.href);
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -176,6 +188,10 @@ export default function ChatThread({ thread, currentUser, onBack }) {
   };
 
   const handleVideoUpload = async (e) => {
+    if (readOnly) {
+      base44.auth.redirectToProfile(window.location.href);
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -676,14 +692,14 @@ export default function ChatThread({ thread, currentUser, onBack }) {
             onChange={handleImageUpload}
             className="hidden"
             id="image-upload"
-            disabled={uploading}
+            disabled={uploading || readOnly}
           />
           <label htmlFor="image-upload">
             <Button 
               type="button" 
               variant="ghost" 
               size="icon" 
-              disabled={uploading} 
+              disabled={uploading || readOnly} 
               asChild
               className="text-white/60 hover:text-white hover:bg-white/10 border-2 border-white/20 hover:border-white"
             >
@@ -699,14 +715,14 @@ export default function ChatThread({ thread, currentUser, onBack }) {
             onChange={handleVideoUpload}
             className="hidden"
             id="video-upload"
-            disabled={uploading}
+            disabled={uploading || readOnly}
           />
           <label htmlFor="video-upload">
             <Button 
               type="button" 
               variant="ghost" 
               size="icon" 
-              disabled={uploading} 
+              disabled={uploading || readOnly} 
               asChild
               className="text-white/60 hover:text-white hover:bg-white/10 border-2 border-white/20 hover:border-white"
             >
@@ -720,16 +736,17 @@ export default function ChatThread({ thread, currentUser, onBack }) {
             value={messageText}
             onChange={(e) => {
               setMessageText(e.target.value);
-              handleTyping();
+              if (!readOnly) handleTyping();
             }}
             placeholder="TYPE MESSAGE..."
+            disabled={readOnly}
             className="flex-1 bg-black border-2 border-white/20 text-white placeholder:text-white/40 placeholder:uppercase placeholder:font-mono placeholder:text-xs focus:border-white"
           />
 
           <Button 
             type="submit" 
             size="icon"
-            disabled={!messageText.trim() || sendMutation.isPending}
+            disabled={readOnly || !messageText.trim() || sendMutation.isPending}
             className="bg-[#FF1493] hover:bg-white text-black border-2 border-white"
           >
             {sendMutation.isPending ? (

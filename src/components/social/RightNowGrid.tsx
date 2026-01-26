@@ -8,11 +8,11 @@ import { Clock, MapPin, Zap, Heart } from 'lucide-react';
 import { useAllUsers } from '../utils/queryConfig';
 
 export default function RightNowGrid() {
-  const [gridUsers, setGridUsers] = useState([]);
+  const [gridUsers, setGridUsers] = useState<any[]>([]);
 
-  const { data: allUsers = [] } = useAllUsers();
+  const { data: allUsers = [] } = (useAllUsers() as any) as { data: any[] };
 
-  const { data: rightNowStatuses = [] } = useQuery({
+  const { data: rightNowStatuses = [] } = useQuery<any[]>({
     queryKey: ['right-now-active'],
     queryFn: async () => {
       const statuses = await base44.entities.RightNowStatus.filter({ active: true });
@@ -23,7 +23,7 @@ export default function RightNowGrid() {
 
   useEffect(() => {
     const activeUsers = rightNowStatuses.map(status => {
-      const user = allUsers.find(u => u.email === status.user_email);
+      const user = (Array.isArray(allUsers) ? allUsers : []).find(u => u?.email === status.user_email);
       return { ...user, rightNowStatus: status };
     }).filter(u => u);
 
