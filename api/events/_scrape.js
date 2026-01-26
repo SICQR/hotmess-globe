@@ -61,8 +61,28 @@ export const fetchEventsFromConfiguredSources = async ({ cities }) => {
   const out = [];
   const errors = [];
 
+  const normalizeKey = (value) => String(value || '').trim().toLowerCase();
+  const sourcesByCity = new Map();
+
+  for (const [rawKey, rawValue] of Object.entries(parsed)) {
+    const key = normalizeKey(rawKey);
+    if (!key) continue;
+    const urls = coerceArray(rawValue)
+      .map((u) => String(u || '').trim())
+      .filter(Boolean);
+    if (!urls.length) continue;
+
+    const existing = sourcesByCity.get(key) || [];
+    sourcesByCity.set(key, existing.concat(urls));
+  }
+
+  const globalUrls = Array.from(
+    new Set([...(sourcesByCity.get('*') || []), ...(sourcesByCity.get('all') || [])])
+  );
+
   for (const city of cities) {
-    const urls = coerceArray(parsed[city]);
+    const key = normalizeKey(city);
+    const urls = Array.from(new Set([...(sourcesByCity.get(key) || []), ...globalUrls]));
     if (!urls.length) continue;
 
     for (const url of urls) {

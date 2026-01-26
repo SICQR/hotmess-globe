@@ -15,6 +15,8 @@ import EventsMapView from '../components/events/EventsMapView';
 import NightlifeResearcher from '../components/ai/NightlifeResearcher';
 import AIEventRecommendations from '../components/events/AIEventRecommendations';
 import logger from '@/utils/logger';
+import PageShell from '@/components/shell/PageShell';
+import { safeGetViewerLatLng } from '@/utils/geolocation';
 
 export default function Events() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -45,20 +47,20 @@ export default function Events() {
     };
     fetchUser();
 
-    // Get browser location as fallback
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (!userLocation) {
-            setUserLocation({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            });
-          }
-        },
-        (error) => logger.debug('Location access denied', { error: error.message })
-      );
-    }
+    // Get browser location as fallback (best-effort, with retry/backoff)
+    let cancelled = false;
+    safeGetViewerLatLng(
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 },
+      { retries: 2, logKey: 'events' }
+    ).then((loc) => {
+      if (cancelled) return;
+      if (!loc) return;
+      if (!userLocation) setUserLocation({ lat: loc.lat, lng: loc.lng });
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const { data: events = [] } = useQuery({
@@ -171,36 +173,28 @@ export default function Events() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-4xl md:text-6xl font-black italic mb-2">
-              EVENTS<span className="text-[#FF1493]">.</span>
-            </h1>
-            <p className="text-white/60 text-sm uppercase tracking-wider">
-              Discover what's happening in London tonight
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Link to={createPageUrl('MyEvents')}>
-              <Button
-                variant="outline"
-                className="border-[#FF1493] text-[#FF1493] hover:bg-[#FF1493]/10 font-black"
-              >
-                MY EVENTS
-              </Button>
-            </Link>
+    <div className="min-h-screen bg-black text-white">
+      <PageShell
+        eyebrow="EVENTS"
+        title="Events"
+        subtitle="Discover what’s happening in London tonight."
+        maxWidth="7xl"
+        right={
+          <div className="flex items-center gap-2">
+            <Button asChild variant="glass" className="border-white/20 font-black uppercase">
+              <Link to={createPageUrl('MyEvents')}>My events</Link>
+            </Button>
             <Button
               onClick={() => setViewMode('map')}
-              className="bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black border-2 border-white"
+              variant="cyan"
+              className="font-black uppercase"
             >
-              <Map className="w-4 h-4 mr-2" />
-              MAP VIEW
+              <Map className="w-4 h-4" />
+              Map view
             </Button>
           </div>
-        </div>
+        }
+      >
 
         {/* Filters */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8">
@@ -224,7 +218,7 @@ export default function Events() {
               <SelectTrigger className="bg-white/5 border-white/20 text-white">
                 <SelectValue placeholder="Date" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black text-white border-white/20">
                 <SelectItem value="all">All Dates</SelectItem>
                 <SelectItem value="today">Today</SelectItem>
                 <SelectItem value="tomorrow">Tomorrow</SelectItem>
@@ -238,7 +232,7 @@ export default function Events() {
               <SelectTrigger className="bg-white/5 border-white/20 text-white">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black text-white border-white/20">
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="crowd">Club Night</SelectItem>
                 <SelectItem value="hookup">Meetup</SelectItem>
@@ -252,7 +246,7 @@ export default function Events() {
               <SelectTrigger className="bg-white/5 border-white/20 text-white">
                 <SelectValue placeholder="Location" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black text-white border-white/20">
                 <SelectItem value="all">All Locations</SelectItem>
                 {cities.map(city => (
                   <SelectItem key={city} value={city}>{city}</SelectItem>
@@ -264,7 +258,7 @@ export default function Events() {
               <SelectTrigger className="bg-white/5 border-white/20 text-white">
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black text-white border-white/20">
                 <SelectItem value="date">By Date</SelectItem>
                 <SelectItem value="popularity">Most Popular</SelectItem>
                 <SelectItem value="newest">Newest</SelectItem>
@@ -318,13 +312,13 @@ export default function Events() {
             <h3 className="text-xl font-bold mb-2">No events found</h3>
             <p className="text-white/60 mb-6">Try adjusting your filters</p>
             <Link to={createPageUrl('CreateBeacon')}>
-              <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black">
+              <Button variant="hot" className="font-black">
                 Create Event
               </Button>
             </Link>
           </div>
         )}
-      </div>
+      </PageShell>
     </div>
   );
 }

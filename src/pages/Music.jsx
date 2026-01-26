@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { auth } from '@/components/utils/supabaseClient';
@@ -12,7 +12,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
-import { schedule } from '../components/radio/radioUtils';
+import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { toast } from 'sonner';
 import { snapToGrid } from '../components/utils/locationPrivacy';
 
@@ -94,6 +94,19 @@ export default function Music() {
   const [uploading, setUploading] = useState(false);
   const [pendingDeleteDropId, setPendingDeleteDropId] = useState(null);
 
+  const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+  const musicUploadEmailAllowlist = useMemo(() => {
+    const raw =
+      import.meta.env.VITE_MUSIC_UPLOAD_EMAILS ||
+      import.meta.env.VITE_OWNER_EMAIL ||
+      '';
+    return String(raw)
+      .split(',')
+      .map((e) => normalizeEmail(e))
+      .filter(Boolean);
+  }, []);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -105,6 +118,30 @@ export default function Music() {
     };
     fetchUser();
   }, []);
+
+  const canUpload = useMemo(() => {
+    const email = normalizeEmail(currentUser?.email);
+    if (!email) return false;
+
+    // If you set VITE_MUSIC_UPLOAD_EMAILS (recommended), only those addresses can upload.
+    if (musicUploadEmailAllowlist.length) {
+      return musicUploadEmailAllowlist.includes(email);
+    }
+
+    // Back-compat fallback: keep admin-only behavior when the allowlist isn't configured.
+    return currentUser?.role === 'admin';
+  }, [currentUser?.email, currentUser?.role, musicUploadEmailAllowlist]);
+
+  const HNHMESS_FEATURED = useMemo(
+    () => ({
+      id: 2243204375,
+      title: 'HNHMESS',
+      slug: 'hnhmess',
+      // Use the SoundCloud API URL with secret_token so the embed works even if unlisted.
+      urlOrUrn: 'https://api.soundcloud.com/tracks/2243204375?secret_token=s-jK7AWO2CQ6t',
+    }),
+    []
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(location?.search || '');
@@ -136,6 +173,27 @@ export default function Music() {
 
   const radioShows = schedule?.shows ?? [];
   const showUrlFromSlug = (slug) => `/music/shows/${slug}`;
+
+  const nextUp = useMemo(() => {
+    const items = radioShows
+      .map((show) => {
+        const nextEpisode = getNextEpisode(show?.id);
+        if (!show || !nextEpisode?.date) return null;
+        return { show, nextEpisode };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.nextEpisode.date - b.nextEpisode.date);
+
+    return items.slice(0, 3);
+  }, [radioShows]);
+
+  const addEpisodeToCalendar = ({ show, nextEpisode }) => {
+    if (!show || !nextEpisode) return;
+    const ics = generateICS(show, nextEpisode);
+    const filename = `${show.slug || show.id}-${format(nextEpisode.date, 'yyyy-MM-dd')}.ics`;
+    downloadICS(ics, filename);
+    toast.success('Calendar file downloaded.');
+  };
 
   // Fetch audio releases
   const { data: releases = [] } = useQuery({
@@ -209,7 +267,7 @@ export default function Music() {
   const { data: soundcloudStatus } = useQuery({
     queryKey: ['soundcloud-status'],
     queryFn: () => getWithAuth('/api/soundcloud/status'),
-    enabled: !!currentUser && currentUser.role === 'admin',
+    enabled: !!currentUser && canUpload,
     retry: false,
   });
 
@@ -217,8 +275,9 @@ export default function Music() {
     queryKey: ['soundcloud-public-profile'],
     queryFn: async () => {
       const resp = await fetch('/api/soundcloud/public-profile');
-      if (!resp.ok) return null;
-      return resp.json();
+      const payload = await resp.json().catch(() => null);
+      if (!payload || payload.connected === false) return null;
+      return payload.profile || null;
     },
     retry: false,
   });
@@ -227,11 +286,21 @@ export default function Music() {
     queryKey: ['soundcloud-public-tracks'],
     queryFn: async () => {
       const resp = await fetch('/api/soundcloud/public-tracks');
-      if (!resp.ok) return { tracks: [] };
-      return resp.json();
+      const payload = await resp.json().catch(() => null);
+      if (!payload || payload.connected === false) return { tracks: [] };
+      return { tracks: Array.isArray(payload.tracks) ? payload.tracks : [] };
     },
     retry: false,
   });
+
+  const soundcloudTracksForReleases = useMemo(() => {
+    const tracks = Array.isArray(soundcloudPublicTracks?.tracks) ? soundcloudPublicTracks.tracks : [];
+    const hasHnh = tracks.some((t) => String(t?.id) === String(HNHMESS_FEATURED.id));
+    if (hasHnh) return tracks;
+
+    // If the track is unlisted/secret, it may not appear in the public track list.
+    return [HNHMESS_FEATURED, ...tracks];
+  }, [soundcloudPublicTracks?.tracks, HNHMESS_FEATURED]);
 
   const connectSoundcloudMutation = useMutation({
     mutationFn: async () => {
@@ -264,6 +333,7 @@ export default function Music() {
 
   const uploadDropMutation = useMutation({
     mutationFn: async () => {
+      if (!canUpload) throw new Error('Not authorized to upload');
       if (!wavFile || !trackTitle.trim()) {
         throw new Error('Title and WAV file required');
       }
@@ -410,15 +480,18 @@ export default function Music() {
           <div className="flex flex-wrap gap-4 justify-center">
             <Button 
               onClick={openRadio}
-              className="bg-[#B026FF] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg shadow-2xl w-full sm:w-auto"
+              variant="cyan"
+              size="xl"
+              className="shadow-2xl w-full sm:w-auto font-black uppercase"
             >
               <Play className="w-5 h-5 mr-2" />
               LISTEN LIVE
             </Button>
             <Link to="/music/shows" className="block w-full sm:w-auto">
               <Button 
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg shadow-2xl backdrop-blur-sm w-full sm:w-auto"
+                variant="glass"
+                size="xl"
+                className="border-white/20 shadow-2xl backdrop-blur-sm w-full sm:w-auto font-black uppercase"
               >
                 BROWSE SHOWS
               </Button>
@@ -433,21 +506,21 @@ export default function Music() {
           <TabsList className="grid w-full grid-cols-3 bg-white/5 mb-12">
             <TabsTrigger 
               value="live"
-              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-white"
+              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black"
             >
               <RadioIcon className="w-4 h-4 mr-2" />
               LIVE
             </TabsTrigger>
             <TabsTrigger 
               value="shows"
-              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-white"
+              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black"
             >
               <Music2 className="w-4 h-4 mr-2" />
               SHOWS
             </TabsTrigger>
             <TabsTrigger 
               value="releases"
-              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-white"
+              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black"
             >
               <Disc className="w-4 h-4 mr-2" />
               RELEASES
@@ -464,7 +537,9 @@ export default function Music() {
               <p className="text-sm text-white/60 uppercase mb-8">24/7 LONDON OS SOUNDTRACK</p>
               <Button 
                 onClick={openRadio}
-                className="bg-[#B026FF] hover:bg-white text-white hover:text-black font-black uppercase px-12 py-6 text-lg"
+                variant="cyan"
+                size="xl"
+                className="font-black uppercase"
               >
                 {isRadioOpen ? (
                   <>
@@ -483,21 +558,47 @@ export default function Music() {
             <div className="mt-12">
               <h4 className="text-2xl font-black uppercase mb-6">NEXT UP</h4>
               <div className="grid gap-4">
-                {[
-                  { time: '22:00', show: 'HEAVY PULSE', host: 'DJ ARCHITECT' },
-                  { time: '00:00', show: 'NIGHT HUNTER', host: 'SELECTOR X' },
-                  { time: '02:00', show: 'DAWN PATROL', host: 'MORNING MESS' },
-                ].map((slot, idx) => (
-                  <div key={idx} className="bg-white/5 border-l-4 border-[#B026FF] p-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div>
-                        <p className="font-black uppercase text-lg">{slot.show}</p>
-                        <p className="text-sm text-white/60">{slot.host}</p>
+                {nextUp.length > 0 ? (
+                  nextUp.map(({ show, nextEpisode }) => (
+                    <div key={`${show.id}:${nextEpisode.date.toISOString()}`} className="bg-white/5 border-l-4 border-[#B026FF] p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-black uppercase text-lg truncate">{show.title}</p>
+                          <p className="text-sm text-white/60 truncate">{show.tagline}</p>
+                        </div>
+
+                        <div className="flex items-center gap-3 sm:justify-end">
+                          <div className="text-right">
+                            <p className="text-2xl font-mono font-bold text-[#B026FF] leading-none">
+                              {nextEpisode.startTime}
+                            </p>
+                            <p className="text-xs text-white/60 uppercase tracking-wider">
+                              {format(nextEpisode.date, 'EEE d MMM')} • London
+                            </p>
+                          </div>
+
+                          <Button
+                            type="button"
+                            variant="glass"
+                            onClick={() => addEpisodeToCalendar({ show, nextEpisode })}
+                            className="border-white/40 font-black uppercase"
+                          >
+                            ADD
+                          </Button>
+                        </div>
                       </div>
-                      <p className="text-2xl font-mono font-bold text-[#B026FF] sm:text-right">{slot.time}</p>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 bg-white/5 border-2 border-white/10">
+                    <p className="text-white/60 uppercase text-sm tracking-wider">Schedule coming soon</p>
+                    <Link to="/music/schedule" className="inline-block mt-4">
+                      <Button variant="glass" className="border-white/20 font-black uppercase">
+                        VIEW SCHEDULE
+                      </Button>
+                    </Link>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </TabsContent>
@@ -511,10 +612,10 @@ export default function Music() {
                     Three tentpoles. One rule: care-first.
                   </p>
                 </div>
-                <Link to={createPageUrl('RadioSchedule')} className="block w-full sm:w-auto">
+                <Link to="/music/schedule" className="block w-full sm:w-auto">
                   <Button 
-                    variant="outline"
-                    className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase w-full sm:w-auto"
+                    variant="glass"
+                    className="border-white/20 font-black uppercase w-full sm:w-auto"
                   >
                     VIEW SCHEDULE
                   </Button>
@@ -565,10 +666,10 @@ export default function Music() {
                     Live sets and upcoming beacons
                   </p>
                 </div>
-                <Link to={createPageUrl('Events')}>
+                <Link to="/events">
                   <Button
-                    variant="outline"
-                    className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase"
+                    variant="glass"
+                    className="border-white/20 font-black uppercase"
                   >
                     VIEW ALL EVENTS
                   </Button>
@@ -578,7 +679,7 @@ export default function Music() {
               {musicEvents.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {musicEvents.map((event) => (
-                    <Link key={event.id} to={createPageUrl(`BeaconDetail?id=${event.id}`)}>
+                    <Link key={event.id} to={`/events/${encodeURIComponent(event.id)}`}>
                       <div className="group relative aspect-[4/3] overflow-hidden bg-white/5 border-2 border-white/10 hover:border-[#B026FF] transition-all">
                         {event.image_url && (
                           <img 
@@ -625,10 +726,10 @@ export default function Music() {
                   <Music2 className="w-16 h-16 mx-auto mb-4 text-white/40" />
                   <h3 className="text-2xl font-black mb-2">NO MUSIC EVENTS YET</h3>
                   <p className="text-white/60 mb-6">Radio shows are live above — events land here when beacons are scheduled.</p>
-                  <Link to={createPageUrl('Events')}>
+                  <Link to="/events">
                     <Button 
-                      variant="outline"
-                      className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase"
+                      variant="glass"
+                      className="border-white/20 font-black uppercase"
                     >
                       BROWSE ALL EVENTS
                     </Button>
@@ -647,15 +748,15 @@ export default function Music() {
                     Latest drops, catalogue, and trending tracks
                   </p>
                 </div>
-                {currentUser && currentUser.role === 'admin' && (
+                {canUpload && (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="hot"
                     onClick={() => {
                       const el = document.getElementById('admin-drop-track');
                       el?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
                     }}
-                    className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase"
+                    className="font-black uppercase"
                   >
                     DROP TRACK
                   </Button>
@@ -673,24 +774,39 @@ export default function Music() {
                         {typeof soundcloudPublicProfile.track_count === 'number' ? ` • ${soundcloudPublicProfile.track_count} tracks` : ''}
                       </p>
                     </div>
-                    <a
-                      href={soundcloudPublicProfile.permalink_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center justify-center border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase h-10 px-4 text-xs"
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Follow
-                    </a>
+                    <Button asChild variant="glass" className="border-white/20 font-black uppercase">
+                      <a
+                        href={soundcloudPublicProfile.permalink_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Follow
+                      </a>
+                    </Button>
                   </div>
 
                   {Array.isArray(soundcloudPublicTracks?.tracks) && soundcloudPublicTracks.tracks.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {soundcloudPublicTracks.tracks.slice(0, 4).map((t) => (
+                      {soundcloudTracksForReleases.slice(0, 8).map((t) => (
                         <div key={t.id} className="bg-black/40 border border-white/10 p-3">
-                          <div className="font-black uppercase text-xs mb-2 truncate">{t.title || 'Track'}</div>
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="min-w-0">
+                              <div className="font-black uppercase text-xs truncate">{t.title || 'Track'}</div>
+                              {String(t?.slug || '') === 'hnhmess' || String(t?.id) === String(HNHMESS_FEATURED.id) ? (
+                                <div className="text-[10px] text-white/50 uppercase tracking-wider">
+                                  Featured release
+                                </div>
+                              ) : null}
+                            </div>
+                            {String(t?.slug || '') === 'hnhmess' || String(t?.id) === String(HNHMESS_FEATURED.id) ? (
+                              <Button asChild variant="glass" className="border-white/20 h-8 px-3 text-[10px] font-black uppercase">
+                                <Link to="/music/releases/hnhmess">Open</Link>
+                              </Button>
+                            ) : null}
+                          </div>
                           <SoundCloudEmbed
-                            urlOrUrn={`soundcloud:tracks:${t.id}`}
+                            urlOrUrn={t?.urlOrUrn || `soundcloud:tracks:${t.id}`}
                             title={t.title ? `${t.title} (SoundCloud)` : 'SoundCloud player'}
                             visual={true}
                             widgetParams={{
@@ -712,7 +828,7 @@ export default function Music() {
                 </div>
               )}
 
-              {currentUser && currentUser.role === 'admin' && (
+              {canUpload && (
                 <div id="admin-drop-track" className="bg-white/5 border-2 border-white/10 p-6 mb-8">
                   <div className="flex items-start justify-between gap-4 mb-4">
                     <div>
@@ -726,9 +842,10 @@ export default function Music() {
                       {!soundcloudStatus?.connected && (
                         <Button
                           type="button"
+                          variant="glass"
                           onClick={() => connectSoundcloudMutation.mutate()}
                           disabled={connectSoundcloudMutation.isPending}
-                          className="mt-2 bg-white/5 hover:bg-white/10 text-white border border-white/20 h-8 px-3 text-xs font-black uppercase"
+                          className="mt-2 border-white/20 h-8 px-3 text-xs font-black uppercase"
                         >
                           {connectSoundcloudMutation.isPending ? 'Connecting…' : 'Connect SoundCloud'}
                         </Button>
@@ -736,10 +853,10 @@ export default function Music() {
                       {soundcloudStatus?.connected && (
                         <Button
                           type="button"
-                          variant="outline"
+                          variant="glass"
                           onClick={() => disconnectSoundcloudMutation.mutate()}
                           disabled={disconnectSoundcloudMutation.isPending}
-                          className="mt-2 bg-white/5 hover:bg-white/10 text-white border border-white/20 h-8 px-3 text-xs font-black uppercase"
+                          className="mt-2 border-white/20 h-8 px-3 text-xs font-black uppercase"
                         >
                           {disconnectSoundcloudMutation.isPending ? 'Disconnecting…' : 'Disconnect'}
                         </Button>
@@ -801,7 +918,9 @@ export default function Music() {
                     type="button"
                     onClick={() => uploadDropMutation.mutate()}
                     disabled={!trackTitle.trim() || !wavFile || uploading}
-                    className="mt-4 w-full bg-[#FF1493] hover:bg-white text-black font-black py-6 border-2 border-white"
+                    variant="hot"
+                    size="xl"
+                    className="mt-4 w-full font-black uppercase"
                   >
                     {uploading ? (
                       <>
@@ -843,8 +962,8 @@ export default function Music() {
                             <div className="flex items-center gap-2">
                               <Button
                                 type="button"
-                                variant="outline"
-                                className="border-white/20 text-white hover:bg-white hover:text-black text-[10px] font-black uppercase h-8"
+                                variant="glass"
+                                className="border-white/20 text-[10px] font-black uppercase h-8"
                                 onClick={() => unpublishMutation.mutate(drop.id)}
                                 disabled={unpublishMutation.isPending || deleteMutation.isPending || drop.active === false}
                               >
@@ -863,8 +982,8 @@ export default function Music() {
                                   </Button>
                                   <Button
                                     type="button"
-                                    variant="outline"
-                                    className="border-white/20 text-white hover:bg-white hover:text-black text-[10px] font-black uppercase h-8"
+                                    variant="glass"
+                                    className="border-white/20 text-[10px] font-black uppercase h-8"
                                     onClick={() => setPendingDeleteDropId(null)}
                                     disabled={deleteMutation.isPending}
                                   >
@@ -960,8 +1079,8 @@ export default function Music() {
                             className="block mt-2"
                           >
                             <Button 
-                              variant="outline"
-                              className="w-full border-white/20 text-white hover:bg-white hover:text-black text-xs font-black uppercase"
+                              variant="glass"
+                              className="w-full border-white/20 text-xs font-black uppercase"
                             >
                               VIEW DETAILS
                             </Button>
@@ -979,7 +1098,8 @@ export default function Music() {
                   {currentUser && currentUser.role === 'admin' && (
                     <Link to={createPageUrl('CreateBeacon')}>
                       <Button 
-                        className="bg-[#B026FF] hover:bg-white text-white hover:text-black font-black uppercase"
+                        variant="hot"
+                        className="font-black uppercase"
                       >
                         ADD FIRST RELEASE
                       </Button>

@@ -23,6 +23,7 @@ import Connect from './pages/Connect';
 import CreateBeacon from './pages/CreateBeacon';
 import DataExport from './pages/DataExport';
 import DialADaddy from './pages/DialADaddy';
+import Directions from './pages/Directions';
 import EditBeacon from './pages/EditBeacon';
 import EditProfile from './pages/EditProfile';
 import Events from './pages/Events';
@@ -33,6 +34,7 @@ import HelpCenter from './pages/HelpCenter';
 import Home from './pages/Home';
 import Hnhmess from './pages/Hnhmess';
 import Leaderboard from './pages/Leaderboard';
+import Login from './pages/Login';
 import Marketplace from './pages/Marketplace';
 import MembershipUpgrade from './pages/MembershipUpgrade';
 import Messages from './pages/Messages';
@@ -46,12 +48,14 @@ import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
+import ProfilesGrid from './pages/ProfilesGrid';
 import ProfileSetup from './pages/ProfileSetup';
 import PromoteToAdmin from './pages/PromoteToAdmin';
 import Pulse from './pages/Pulse';
 import Radio from './pages/Radio';
 import RadioSchedule from './pages/RadioSchedule';
 import RecordManager from './pages/RecordManager';
+import ReactBitsProfileCardDemo from './pages/ReactBitsProfileCardDemo';
 import RightNowDashboard from './pages/RightNowDashboard';
 import Safety from './pages/Safety';
 import Scan from './pages/Scan';
@@ -89,6 +93,7 @@ export const PAGES = {
     "CreateBeacon": CreateBeacon,
     "DataExport": DataExport,
     "DialADaddy": DialADaddy,
+    "Directions": Directions,
     "EditBeacon": EditBeacon,
     "EditProfile": EditProfile,
     "Events": Events,
@@ -99,6 +104,7 @@ export const PAGES = {
     "Home": Home,
     "Hnhmess": Hnhmess,
     "Leaderboard": Leaderboard,
+    "Login": Login,
     "Marketplace": Marketplace,
     "MembershipUpgrade": MembershipUpgrade,
     "Messages": Messages,
@@ -112,12 +118,14 @@ export const PAGES = {
     "OrganizerDashboard": OrganizerDashboard,
     "ProductDetail": ProductDetail,
     "Profile": Profile,
+    "ProfilesGrid": ProfilesGrid,
     "ProfileSetup": ProfileSetup,
     "PromoteToAdmin": PromoteToAdmin,
     "Pulse": Pulse,
     "Radio": Radio,
     "RadioSchedule": RadioSchedule,
     "RecordManager": RecordManager,
+    "ReactBitsProfileCardDemo": ReactBitsProfileCardDemo,
     "RightNowDashboard": RightNowDashboard,
     "Safety": Safety,
     "Scan": Scan,

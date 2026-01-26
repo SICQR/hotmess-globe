@@ -1,7 +1,10 @@
 import Busboy from 'busboy';
 import { createClient } from '@supabase/supabase-js';
 import { getBearerToken, getEnv, json } from '../shopify/_utils.js';
+import { bestEffortRateLimit, minuteBucket } from '../_rateLimit.js';
+import { getRequestIp } from '../routing/_utils.js';
 import { refreshAccessToken, uploadTrack } from './_soundcloud.js';
+import { isMusicUploadAllowlisted } from './_auth.js';
 
 const isAdminUser = async ({ anonClient, serviceClient, accessToken, email }) => {
   const { data: userData, error: userErr } = await anonClient.auth.getUser(accessToken);
@@ -162,9 +165,37 @@ export default async function handler(req, res) {
   }
 
   const email = userData.user.email;
-  const adminOk = await isAdminUser({ anonClient, serviceClient, accessToken, email });
-  if (!adminOk) {
-    return json(res, 403, { error: 'Admin required' });
+  const allowlisted = isMusicUploadAllowlisted(email);
+  if (allowlisted === false) {
+    return json(res, 403, { error: 'Not authorized' });
+  }
+
+  // Back-compat: if allowlist isn't configured, keep the previous admin-only behavior.
+  if (allowlisted === null) {
+    const adminOk = await isAdminUser({ anonClient, serviceClient, accessToken, email });
+    if (!adminOk) {
+      return json(res, 403, { error: 'Admin required' });
+    }
+  }
+
+  // Rate limits: per-user + per-IP (best-effort).
+  // Upload is expensive; keep this relatively strict.
+  {
+    const ip = getRequestIp(req);
+    const userId = userData.user.id;
+    const bucketKey = `soundcloud:upload:${userId}:${ip || 'noip'}:${minuteBucket()}`;
+    const rl = await bestEffortRateLimit({
+      serviceClient,
+      bucketKey,
+      userId,
+      ip,
+      windowSeconds: 60,
+      maxRequests: 2,
+    });
+
+    if (rl.allowed === false) {
+      return json(res, 429, { error: 'Rate limit exceeded', remaining: rl.remaining ?? 0 });
+    }
   }
 
   let parsed;

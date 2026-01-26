@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { MapPin, Calendar, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
 import { format } from 'date-fns';
 
 export default function RelatedEvents({ currentEvent, userPreferences = [] }) {
@@ -65,7 +64,7 @@ export default function RelatedEvents({ currentEvent, userPreferences = [] }) {
             transition={{ delay: idx * 0.1 }}
           >
             <Link 
-              to={createPageUrl(`BeaconDetail?id=${event.id}`)}
+              to={`/events/${encodeURIComponent(event.id)}`}
               className="block group"
             >
               <div className="bg-black border-2 border-white/20 hover:border-[#FF1493] transition-all p-4">

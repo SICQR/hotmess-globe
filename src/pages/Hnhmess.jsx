@@ -1,18 +1,14 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { Play, ShoppingBag, Shield, Bell } from 'lucide-react';
+import { Play, ShoppingBag, Shield } from 'lucide-react';
 
 import { base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
-import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
-import { useServerNow } from '@/hooks/use-server-now';
-import { addToCart } from '@/components/marketplace/cartStorage';
-import { createPageUrl } from '../utils';
 
 const RELEASE_SLUG = 'hnhmess';
+const HNHMESS_PRODUCT_HANDLES = ['hnh-mess-lube-50ml', 'hnh-mess-lube-250ml'];
 const FALLBACK_RELEASE_AT = new Date('2026-01-10T00:00:00Z');
 const HNHMESS_SOUNDCLOUD_URL = 'https://soundcloud.com/rawconvictrecords/hnh-mess/s-jK7AWO2CQ6t';
 
@@ -26,23 +22,8 @@ function slugify(value) {
 
 export default function Hnhmess() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { serverNow } = useServerNow();
 
-  const [currentUser, setCurrentUser] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await base44.auth.me();
-        setCurrentUser(user);
-      } catch {
-        setCurrentUser(null);
-      }
-    };
-    fetchUser();
-  }, []);
 
   const formatLondonDateTime = (value) => {
     try {
@@ -50,20 +31,6 @@ export default function Hnhmess() {
     } catch {
       return '';
     }
-  };
-
-  const formatCountdown = (target) => {
-    const now = serverNow ?? new Date();
-    const diffMs = Math.max(0, target.getTime() - now.getTime());
-    const totalSeconds = Math.floor(diffMs / 1000);
-    const days = Math.floor(totalSeconds / 86400);
-    const hours = Math.floor((totalSeconds % 86400) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    const pad2 = (n) => String(n).padStart(2, '0');
-    if (days > 0) return `${days}d ${pad2(hours)}h ${pad2(minutes)}m`;
-    return `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`;
   };
 
   const { data: releaseBeacon = null } = useQuery({
@@ -84,8 +51,8 @@ export default function Hnhmess() {
     return fromBeacon || FALLBACK_RELEASE_AT;
   }, [releaseBeacon]);
 
-  const now = serverNow ?? new Date();
-  const isPreLaunch = now < releaseAt;
+  // Post-launch: keep the page in a simple LIVE state.
+  const isPreLaunch = false;
 
   const { data: releases = [] } = useQuery({
     queryKey: ['audio-releases', 'for-hnhmess'],
@@ -110,91 +77,75 @@ export default function Hnhmess() {
   const soundcloudUrl = release?.soundcloud_url || release?.metadata?.soundcloud_url;
   const soundcloudRef = soundcloudUrn || soundcloudUrl || HNHMESS_SOUNDCLOUD_URL;
 
-  const { data: shopifyProducts = [] } = useQuery({
-    queryKey: ['shopify-products', 'for-hnhmess'],
+  const { data: storefrontProducts = [], isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['shopify-storefront-products', ...HNHMESS_PRODUCT_HANDLES],
     queryFn: async () => {
-      const rows = await base44.entities.Product.filter(
-        { status: 'active', seller_email: 'shopify@hotmess.london' },
-        '-created_date',
-        100
+      const responses = await Promise.all(
+        HNHMESS_PRODUCT_HANDLES.map(async (handle) => {
+          const resp = await fetch(`/api/shopify/product?handle=${encodeURIComponent(handle)}`);
+          const payload = await resp.json().catch(() => null);
+          if (!resp.ok) return null;
+          return payload?.product || null;
+        })
       );
-      return Array.isArray(rows) ? rows : [];
-    },
-  });
 
-  const product = useMemo(() => {
-    const handle = RELEASE_SLUG;
-    const byHandle = shopifyProducts.find((p) => String(p?.details?.shopify_handle ?? '').toLowerCase() === handle);
-    if (byHandle) return byHandle;
+      const normalizedOrder = new Map(
+        HNHMESS_PRODUCT_HANDLES.map((handle, idx) => [String(handle).trim().toLowerCase(), idx])
+      );
 
-    const byTag = shopifyProducts.find((p) => Array.isArray(p?.tags) && p.tags.map((t) => String(t).toLowerCase()).includes(handle));
-    if (byTag) return byTag;
-
-    const byName = shopifyProducts.find((p) => String(p?.name ?? '').toLowerCase().includes('hnh'));
-    if (byName) return byName;
-
-    return null;
-  }, [shopifyProducts]);
-
-  const { data: storefrontProduct = null } = useQuery({
-    queryKey: ['shopify-storefront-product', RELEASE_SLUG],
-    queryFn: async () => {
-      const resp = await fetch(`/api/shopify/product?handle=${encodeURIComponent(RELEASE_SLUG)}`);
-      const payload = await resp.json().catch(() => null);
-      if (!resp.ok) return null;
-      return payload?.product || null;
+      return responses
+        .filter(Boolean)
+        .sort(
+          (a, b) =>
+            (normalizedOrder.get(String(a?.handle || '').toLowerCase()) ?? 999) -
+            (normalizedOrder.get(String(b?.handle || '').toLowerCase()) ?? 999)
+        );
     },
     refetchInterval: 10 * 60 * 1000,
   });
 
-  const primaryVariant = storefrontProduct?.variants?.nodes?.[0] || null;
+  // Keep these for compatibility with existing layout bits below (release card).
+  const primaryStorefrontProduct = storefrontProducts?.[0] || null;
+  const primaryVariant =
+    (Array.isArray(primaryStorefrontProduct?.variants?.nodes)
+      ? primaryStorefrontProduct.variants.nodes.find((v) => v?.availableForSale)
+      : null) ||
+    (Array.isArray(primaryStorefrontProduct?.variants?.nodes) ? primaryStorefrontProduct.variants.nodes[0] : null) ||
+    null;
+
+  const money = useCallback((amount, currency) => {
+    const n = Number(amount);
+    if (!Number.isFinite(n)) return null;
+    try {
+      return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'GBP' }).format(n);
+    } catch {
+      return `${n.toFixed(2)} ${currency || ''}`.trim();
+    }
+  }, []);
+
+  const onViewProduct = useCallback((handle) => {
+    const h = String(handle || '').trim();
+    if (!h) return;
+    navigate(`/market/p/${encodeURIComponent(h)}`);
+  }, [navigate]);
 
   const galleryImages = useMemo(() => {
-    const supabaseImages = Array.isArray(product?.image_urls)
-      ? product.image_urls.map((u) => String(u || '').trim()).filter(Boolean)
-      : [];
-    if (supabaseImages.length) return supabaseImages;
-
-    const storefrontImages = Array.isArray(storefrontProduct?.images?.nodes)
-      ? storefrontProduct.images.nodes
+    const storefrontImages = Array.isArray(primaryStorefrontProduct?.images?.nodes)
+      ? primaryStorefrontProduct.images.nodes
           .map((img) => String(img?.url || '').trim())
           .filter(Boolean)
       : [];
     if (storefrontImages.length) return storefrontImages;
 
-    const featured = String(storefrontProduct?.featuredImage?.url || '').trim();
+    const featured = String(primaryStorefrontProduct?.featuredImage?.url || '').trim();
     return featured ? [featured] : [];
-  }, [product?.image_urls, storefrontProduct]);
+  }, [primaryStorefrontProduct]);
 
   useEffect(() => {
     setSelectedImageIndex(0);
-  }, [product?.id, storefrontProduct?.id]);
+  }, [primaryStorefrontProduct?.id]);
 
-  const addToCartMutation = useMutation({
-    mutationFn: async () => {
-      if (!product?.id) throw new Error('Product not available');
-      return addToCart({ productId: product.id, quantity: 1, currentUser });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-      toast.success('Added to cart');
-    },
-    onError: (error) => {
-      toast.error(error?.message || 'Failed to add to cart');
-    },
-  });
-
-  const handleNotify = useCallback(async () => {
-    try {
-      localStorage.setItem(`notify_release_${RELEASE_SLUG}`, '1');
-      if ('Notification' in window && Notification.permission === 'default') {
-        await Notification.requestPermission();
-      }
-      toast.success('You’ll get an in-app ping at launch (while you’re here).');
-    } catch {
-      toast.success('Saved.');
-    }
-  }, []);
+  const isLoadingProduct = isLoadingProducts;
 
   return (
     <div className="min-h-screen bg-black text-white pb-20">
@@ -220,44 +171,85 @@ export default function Hnhmess() {
 
             <div className="flex flex-wrap gap-3 items-center mb-10">
               <Link to={`/music/releases/${RELEASE_SLUG}`}>
-                <Button className="bg-[#B026FF] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg">
+                <Button variant="outline" className="border-white/20 text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
                   <Play className="w-5 h-5 mr-2" />
-                  {isPreLaunch ? `Listen (${formatCountdown(releaseAt)})` : 'Listen now'}
+                  Listen now
                 </Button>
               </Link>
 
-              {product ? (
-                <Button
-                  variant="outline"
-                  onClick={() => addToCartMutation.mutate()}
-                  className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg"
-                  disabled={addToCartMutation.isPending}
-                >
+              <a href="#buy">
+                <Button className="bg-white hover:bg-white/90 text-black font-black uppercase px-8 py-6 text-lg">
                   <ShoppingBag className="w-5 h-5 mr-2" />
-                  Add lube to cart
+                  Shop
                 </Button>
-              ) : (
-                <Link to={`/market/p/${RELEASE_SLUG}`}>
-                  <Button
-                    variant="outline"
-                    className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg"
-                  >
-                    <ShoppingBag className="w-5 h-5 mr-2" />
-                    Shop HNH MESS lube
-                  </Button>
-                </Link>
+              </a>
+            </div>
+
+            <div id="buy" className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+              {(isLoadingProduct || !storefrontProducts?.length) && (
+                <div className="md:col-span-2 border-2 border-white/10 bg-white/5 p-6">
+                  <p className="text-white/70">Loading product…</p>
+                </div>
               )}
 
-              {isPreLaunch && (
-                <Button
-                  variant="ghost"
-                  onClick={handleNotify}
-                  className="text-white/70 hover:text-white font-black uppercase"
-                >
-                  <Bell className="w-4 h-4 mr-2" />
-                  Notify me
-                </Button>
-              )}
+              {storefrontProducts?.length ? (
+                storefrontProducts.map((p) => {
+                  const variants = Array.isArray(p?.variants?.nodes) ? p.variants.nodes : [];
+                  const v = variants.find((item) => item?.availableForSale) || variants[0] || null;
+
+                  const price = v?.price?.amount ? money(v.price.amount, v.price.currencyCode) : null;
+                  const canBuy = !!v?.availableForSale;
+                      const handle = String(p?.handle || '').trim();
+
+                  return (
+                    <div key={p?.id || p?.handle} className="bg-white/5 border-2 border-white/10 p-6">
+                      <p className="text-xs uppercase tracking-[0.4em] text-white/50 mb-3">Product</p>
+                      <div className="flex items-start justify-between gap-6">
+                        <div>
+                          <p className="text-2xl font-black uppercase">{p?.title || 'HNH MESS'}</p>
+                          <p className="text-white/60 uppercase tracking-wider text-sm">
+                            {v?.title && String(v.title).toLowerCase() !== 'default title'
+                              ? String(v.title)
+                              : 'Size'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          {price ? (
+                            <p className="text-2xl font-black text-[#00D9FF]">{price}</p>
+                          ) : (
+                            <p className="text-white/60">—</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {p?.descriptionHtml ? (
+                        <div className="mt-4 text-white/70 text-sm prose prose-invert max-w-none">
+                          <div dangerouslySetInnerHTML={{ __html: p.descriptionHtml }} />
+                        </div>
+                      ) : null}
+
+                      {!canBuy ? (
+                        <div className="mt-4 border border-white/10 bg-black/40 p-4">
+                          <p className="text-[#FF1493] font-bold uppercase tracking-wider text-sm">Sold out</p>
+                          <p className="text-white/60 text-sm mt-1">This size is currently sold out.</p>
+                        </div>
+                      ) : null}
+
+                      <Button
+                        onClick={() => onViewProduct(handle)}
+                        disabled={!handle}
+                        className="mt-6 w-full bg-[#00D9FF] text-black hover:bg-white font-black uppercase py-6"
+                      >
+                        View product
+                      </Button>
+                    </div>
+                  );
+                })
+              ) : !isLoadingProduct ? (
+                <div className="md:col-span-2 border-2 border-white/10 bg-white/5 p-6">
+                  <p className="text-white/70">No products found.</p>
+                </div>
+              ) : null}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -269,7 +261,7 @@ export default function Hnhmess() {
                     <div className="aspect-square rounded-xl overflow-hidden border-2 border-white/10">
                       <img
                         src={galleryImages[Math.min(selectedImageIndex, galleryImages.length - 1)]}
-                        alt={product?.name || storefrontProduct?.title || 'HNH MESS lube'}
+                        alt={primaryStorefrontProduct?.title || 'HNH MESS lube'}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -309,7 +301,7 @@ export default function Hnhmess() {
                   <div className="text-right">
                     {isPreLaunch ? (
                       <div className="text-2xl md:text-3xl font-mono font-black text-[#B026FF]">
-                        {formatCountdown(releaseAt)}
+                        LIVE
                       </div>
                     ) : (
                       <div className="text-2xl md:text-3xl font-black text-[#B026FF]">LIVE</div>
@@ -341,13 +333,6 @@ export default function Hnhmess() {
                   >
                     <Shield className="w-4 h-4 mr-2" />
                     Safety
-                  </Button>
-
-                  <Button
-                    className="bg-[#FF1493] hover:bg-white text-black font-black uppercase"
-                    onClick={() => navigate(createPageUrl('Checkout'))}
-                  >
-                    Checkout
                   </Button>
                 </div>
               </div>

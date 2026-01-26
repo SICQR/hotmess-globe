@@ -372,10 +372,10 @@ export default function OrderHistory() {
                 <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
                 <p className="text-white/40 text-lg mb-4">No purchases yet</p>
                 <Link 
-                  to={createPageUrl('Marketplace')}
+                  to="/market"
                   className="text-[#FF1493] hover:underline"
                 >
-                  Browse Marketplace
+                  Browse Market
                 </Link>
               </div>
             ) : (

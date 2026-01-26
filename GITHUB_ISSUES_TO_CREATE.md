@@ -178,44 +178,41 @@ Complete the SoundCloud OAuth integration and upload functionality. Currently, `
 
 ---
 
-### Issue 4: Implement QR Scanner and Ticket Validation
+### Issue 4: Implement Ticket Validation (Beacon scanning/check-in already implemented)
 
-**Title**: Implement QR scanner and ticket validation functionality
+**Title**: Implement event ticket validation (beacon scan/check-in already implemented)
 
 **Labels**: `enhancement`, `feature`, `high-priority`
 
 **Body**:
 ```markdown
 ## Description
-Implement QR code scanning and ticket validation functionality. Currently shows "Coming Soon" placeholders in:
-- `src/pages/Scan.jsx` (line 127)
-- `src/components/events/TicketScanner.jsx` (line 53)
+Implement event ticket validation functionality. Beacon scanning + check-in is already implemented; remaining work is event-ticket-specific validation rules and endpoints.
+
+Already implemented:
+- Beacon scanning UI: `src/pages/Scan.jsx`
+- Beacon check-in endpoint: `POST /api/scan/check-in` (idempotent)
+
+Still incomplete:
+- Event ticket scanner/validation flow: `src/components/events/TicketScanner.jsx`
 
 ## Current State
 ```javascript
-<div className="text-center text-white/40">
-  Scan QR Code (Coming Soon)
-</div>
+// Ticket validation remains placeholder in TicketScanner.
 ```
 
 ## Requirements
-1. **QR Code Scanner**
-   - Camera access and permissions
-   - QR code detection and parsing
-   - Multi-format support (QR, Data Matrix, etc.)
-
-2. **Ticket Validation**
+1. **Ticket Validation**
    - Backend validation endpoint
    - Ticket authenticity verification
    - Duplicate scan prevention
    - Check-in recording
 
-3. **Beacon Check-in**
-   - Location-based check-in
-   - Beacon QR code scanning
-   - Reward/points distribution
+2. **Ticket check-in / redemption**
+  - Redeem once rules (per ticket)
+  - Audit trail
 
-4. **UI/UX**
+3. **UI/UX**
    - Scanner camera view
    - Success/error feedback
    - Offline support
@@ -229,12 +226,12 @@ npm install @zxing/library
 ```
 
 ## Implementation Checklist
-- [ ] Add QR scanner library dependency
-- [ ] Implement camera permissions handling
-- [ ] Create QR scanner component
+- [x] Add QR scanner library dependency (Beacon scanning)
+- [x] Implement camera permissions handling (Beacon scanning)
+- [x] Create Scan page QR scanner component (Beacon scanning)
 - [ ] Build ticket validation backend endpoint
-- [ ] Implement duplicate scan prevention
-- [ ] Add check-in recording to database
+- [ ] Implement ticket duplicate prevention
+- [ ] Add ticket check-in recording to database
 - [ ] Create scan history UI
 - [ ] Add offline support (queue scans)
 - [ ] Implement error handling (invalid tickets, expired, etc.)

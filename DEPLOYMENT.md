@@ -43,16 +43,23 @@ For CI/CD setup details, see [CI_CD_SETUP.md](./CI_CD_SETUP.md).
   - [ ] `VERCEL_TOKEN` (deployment authentication)
   - [ ] `VERCEL_ORG_ID` (Vercel organization ID)
   - [ ] `VERCEL_PROJECT_ID` (Vercel project ID)
-  - [ ] `VITE_BASE44_APP_ID` (if needed during build)
-  - [ ] `VITE_BASE44_APP_BASE_URL` (if needed during build)
 - [ ] Vercel environment variables set (in Vercel dashboard):
-  - [ ] `VITE_BASE44_APP_ID`
-  - [ ] `VITE_BASE44_APP_BASE_URL`
-  - [ ] `VITE_MAPBOX_ACCESS_TOKEN`
-  - [ ] `VITE_SUPABASE_URL`
-  - [ ] `VITE_SUPABASE_ANON_KEY`
-  - [ ] `VITE_STRIPE_PUBLISHABLE_KEY`
-  - [ ] Any additional backend-only secrets (without VITE_ prefix)
+   - [ ] Supabase (required):
+      - [ ] `VITE_SUPABASE_URL`
+      - [ ] `VITE_SUPABASE_ANON_KEY`
+      - [ ] `SUPABASE_URL`
+      - [ ] `SUPABASE_ANON_KEY`
+      - [ ] `SUPABASE_SERVICE_ROLE_KEY` (recommended; required for admin/server features)
+   - [ ] Routing/ETAs (optional):
+      - [ ] `GOOGLE_MAPS_API_KEY`
+      - [ ] `GOOGLE_ROUTES_DRIVE_TRAFFIC_AWARE` (optional)
+   - [ ] Ticket QR signing (recommended for prod):
+      - [ ] `TICKET_QR_SIGNING_SECRET`
+   - [ ] Cron protection secrets (recommended):
+      - [ ] `OUTBOX_CRON_SECRET`
+      - [ ] `RATE_LIMIT_CLEANUP_SECRET`
+      - [ ] `EVENT_SCRAPER_CRON_SECRET`
+   - [ ] Integrations (optional): Shopify, SoundCloud (see `.env.example`)
 - [ ] `NODE_ENV=production` is set (automatically set by Vercel)
 - [ ] Production database configured
 - [ ] CDN/Storage for media files configured
@@ -71,7 +78,23 @@ Required server env vars in Vercel:
 - `SUPABASE_SERVICE_ROLE_KEY`
 
 Scrape input configuration:
-- Set `EVENT_SCRAPER_SOURCES_JSON` as JSON mapping city → list of JSON feed URLs, or POST `events[]` directly to `/api/events/scrape`.
+- Option A (sources): set `EVENT_SCRAPER_SOURCES_JSON` as JSON mapping city → list of JSON feed URLs.
+- Option B (push): POST `events[]` directly to `/api/events/scrape`.
+- Option C (LLM fallback): set `OPENAI_API_KEY` (and optionally `OPENAI_MODEL`) and omit `EVENT_SCRAPER_SOURCES_JSON`.
+
+`EVENT_SCRAPER_SOURCES_JSON` schema:
+- Must be a JSON object.
+- Keys are city names (case-insensitive).
+- Values are arrays of URLs.
+- Each URL must return JSON that is either an array of events or `{ "events": [...] }`.
+- Optional wildcard keys:
+   - `"*"`: URLs fetched for every city.
+   - `"all"`: alias for `"*"`.
+
+Example value (paste as a single line into Vercel env):
+```json
+{"*":[],"London":["https://example.com/events/london.json"],"Manchester":["https://example.com/events/manchester.json"],"Brighton":["https://example.com/events/brighton.json"]}
+```
 
 Security note:
 - `/api/events/scrape` requires an authenticated admin bearer token.

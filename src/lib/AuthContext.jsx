@@ -1,18 +1,18 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/components/utils/supabaseClient';
-import { appParams } from '@/lib/app-params';
-import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 import logger from '@/utils/logger';
+import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 
 const AuthContext = createContext();
+
+let warnedMissingAuthProvider = false;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
   const [authError, setAuthError] = useState(null);
-  const [appPublicSettings, setAppPublicSettings] = useState(null); // Contains only { id, public_settings }
+  const mergedGuestCartRef = React.useRef(false);
 
   useEffect(() => {
     checkAppState();
@@ -20,70 +20,17 @@ export const AuthProvider = ({ children }) => {
 
   const checkAppState = async () => {
     try {
-      setIsLoadingPublicSettings(true);
       setAuthError(null);
-      
-      // First, check app public settings (with token if available)
-      // This will tell us if auth is required, user not registered, etc.
-      const appClient = createAxiosClient({
-        baseURL: `/api/apps/public`,
-        headers: {
-          'X-App-Id': appParams.appId
-        },
-        token: appParams.token, // Include token if available
-        interceptResponses: true
-      });
-      
-      try {
-        const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
-        setAppPublicSettings(publicSettings);
-        
-        // If we got the app public settings successfully, check if user is authenticated
-        if (appParams.token) {
-          await checkUserAuth();
-        } else {
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-        }
-        setIsLoadingPublicSettings(false);
-      } catch (appError) {
-        logger.error('App state check failed', { error: appError.message, status: appError.status });
-        
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
-          } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
-          }
-        } else {
-          setAuthError({
-            type: 'unknown',
-            message: appError.message || 'Failed to load app'
-          });
-        }
-        setIsLoadingPublicSettings(false);
-        setIsLoadingAuth(false);
-      }
+
+      // Supabase-only: there is no app-level public settings gate.
+      // We only check whether a user session exists and load the current user.
+      await checkUserAuth();
     } catch (error) {
       logger.error('Unexpected error in app state check', { error: error.message });
       setAuthError({
         type: 'unknown',
         message: error.message || 'An unexpected error occurred'
       });
-      setIsLoadingPublicSettings(false);
       setIsLoadingAuth(false);
     }
   };
@@ -92,9 +39,28 @@ export const AuthProvider = ({ children }) => {
     try {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) {
+        setUser(null);
+        setIsAuthenticated(false);
+        setIsLoadingAuth(false);
+        mergedGuestCartRef.current = false;
+        return;
+      }
+
       const currentUser = await base44.auth.me();
-      setUser(currentUser);
+      setUser(currentUser || null);
       setIsAuthenticated(!!currentUser);
+
+      // Best-effort: if the user logs in while holding a creators guest cart,
+      // merge it into the DB cart once per session.
+      if (currentUser?.email && !mergedGuestCartRef.current) {
+        mergedGuestCartRef.current = true;
+        mergeGuestCartToUser({ currentUser }).catch((error) => {
+          logger.warn('Guest cart merge failed (non-fatal)', { error: error?.message });
+        });
+      }
+
       setIsLoadingAuth(false);
     } catch (error) {
       logger.error('User auth check failed', { error: error.message, status: error.status });
@@ -116,7 +82,7 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     
     if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
+      // Supabase-backed logout supports optional redirect.
       base44.auth.logout(window.location.href);
     } else {
       // Just remove the token without redirect
@@ -125,7 +91,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const navigateToLogin = () => {
-    // Use the SDK's redirectToLogin method
+    // Redirect to the app's Auth page.
     base44.auth.redirectToLogin(window.location.href);
   };
 
@@ -134,9 +100,7 @@ export const AuthProvider = ({ children }) => {
       user, 
       isAuthenticated, 
       isLoadingAuth,
-      isLoadingPublicSettings,
       authError,
-      appPublicSettings,
       logout,
       navigateToLogin,
       checkAppState
@@ -148,8 +112,26 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
+
+  // In dev, Vite HMR can briefly load two module instances (two contexts),
+  // which makes `useContext` return undefined even though an AuthProvider exists.
+  // Do not hard-crash the whole app; fall back to an unauthenticated state.
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    if (!warnedMissingAuthProvider) {
+      warnedMissingAuthProvider = true;
+      logger.warn('useAuth called without active AuthProvider; using fallback auth state');
+    }
+
+    return {
+      user: null,
+      isAuthenticated: false,
+      isLoadingAuth: false,
+      authError: { type: 'auth_required', message: 'Authentication required' },
+      logout: () => base44.auth.logout(),
+      navigateToLogin: () => base44.auth.redirectToLogin(window.location.href),
+      checkAppState: async () => {},
+    };
   }
+
   return context;
 };

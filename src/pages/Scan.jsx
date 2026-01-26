@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Zap, MapPin, Camera, CheckCircle } from 'lucide-react';
+import { supabase } from '@/components/utils/supabaseClient';
+import { BrowserMultiFormatReader } from '@zxing/browser';
+import { Zap, MapPin, Camera, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import PageShell from '@/components/shell/PageShell';
+import { toast } from 'sonner';
 
 export default function Scan() {
   const [beaconId, setBeaconId] = useState('');
   const [scannedBeacon, setScannedBeacon] = useState(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrError, setQrError] = useState(null);
+  const videoRef = useRef(null);
   const queryClient = useQueryClient();
 
   const { data: beacons = [] } = useQuery({
@@ -16,153 +23,238 @@ export default function Scan() {
     queryFn: () => base44.entities.Beacon.filter({ active: true }),
   });
 
+  const getAccessToken = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    return session?.access_token || null;
+  };
+
   const scanMutation = useMutation({
-    mutationFn: async (beacon) => {
-      const user = await base44.auth.me();
-      const newXp = (user.xp || 0) + (beacon.xp_scan || 100);
-      await base44.auth.updateMe({ xp: newXp });
-      
-      // Track interaction
-      await base44.entities.UserInteraction.create({
-        user_email: user.email,
-        interaction_type: 'scan',
-        beacon_id: beacon.id,
-        beacon_kind: beacon.kind,
-        beacon_mode: beacon.mode
+    mutationFn: async ({ code, source }) => {
+      const token = await getAccessToken();
+      if (!token) throw new Error('Not authenticated');
+
+      const res = await fetch('/api/scan/check-in', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code, source }),
       });
-      
-      return { beacon, earnedXp: beacon.xp_scan || 100 };
+
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message = payload?.error || payload?.details || 'Scan failed';
+        const err = new Error(message);
+        err.status = res.status;
+        err.payload = payload;
+        throw err;
+      }
+
+      return payload;
     },
-    onSuccess: (data) => {
-      setScannedBeacon(data);
-      queryClient.invalidateQueries(['user']);
+    onSuccess: (payload) => {
+      setScannedBeacon(payload);
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.invalidateQueries({ queryKey: ['beacon_checkins'] });
+      toast.success(`Scanned ${payload?.beacon?.title || 'beacon'}`);
       setTimeout(() => {
         setScannedBeacon(null);
         setBeaconId('');
       }, 3000);
-    }
+    },
+    onError: (error) => {
+      if (error?.status === 409) {
+        toast.message('Already scanned recently');
+        return;
+      }
+      toast.error(error?.message || 'Scan failed');
+    },
   });
 
   const handleScan = () => {
-    const beacon = beacons.find(b => b.id === beaconId);
-    if (beacon) {
-      scanMutation.mutate(beacon);
-    } else {
-      alert('Beacon not found');
-    }
+    if (!beaconId?.trim()) return;
+    scanMutation.mutate({ code: beaconId.trim(), source: 'manual' });
   };
 
+  const qrReader = useMemo(() => new BrowserMultiFormatReader(), []);
+
+  useEffect(() => {
+    if (!qrOpen) return;
+    setQrError(null);
+
+    let controls = null;
+    let cancelled = false;
+
+    const start = async () => {
+      const video = videoRef.current;
+      if (!video) {
+        setQrError('Camera not ready');
+        return;
+      }
+
+      try {
+        controls = await qrReader.decodeFromVideoDevice(
+          undefined,
+          video,
+          (result, error) => {
+            if (cancelled) return;
+            if (result) {
+              const text = result.getText?.() || String(result);
+              setQrOpen(false);
+              setBeaconId(text);
+              scanMutation.mutate({ code: text, source: 'qr' });
+            }
+            // NotFoundException is expected when nothing is in view.
+            if (error && error.name !== 'NotFoundException') {
+              // Keep this quiet; only show if it's a persistent failure.
+            }
+          }
+        );
+      } catch (e) {
+        const message = e?.message || 'Failed to start camera';
+        setQrError(message);
+        setQrOpen(false);
+      }
+    };
+
+    start();
+
+    return () => {
+      cancelled = true;
+      try {
+        controls?.stop?.();
+      } catch {
+        // ignore
+      }
+      try {
+        qrReader.reset?.();
+      } catch {
+        // ignore
+      }
+    };
+  }, [qrOpen, qrReader, scanMutation]);
+
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
+    <PageShell
+      title="Scan"
+      subtitle="Scan a beacon QR code or paste a beacon ID to check in and earn XP."
+      maxWidth="2xl"
+      back
+    >
+      {/* Scan Success */}
+      {scannedBeacon && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-gradient-to-br from-[#39FF14]/20 to-[#00D9FF]/20 border border-[#39FF14]/40 rounded-2xl p-8 mb-8 text-center"
         >
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FFEB3B]/20 to-[#FF6B35]/20 border-2 border-[#FFEB3B]/40 flex items-center justify-center mx-auto mb-4">
-            <Zap className="w-10 h-10 text-[#FFEB3B]" />
+          <CheckCircle className="w-16 h-16 text-[#39FF14] mx-auto mb-4" />
+          <h2 className="text-2xl font-black mb-2">Success!</h2>
+          <p className="text-lg text-white/80 mb-4">
+            Scanned <span className="font-bold">{scannedBeacon?.beacon?.title || 'beacon'}</span>
+          </p>
+          <div className="text-4xl font-black text-[#FFEB3B]">
+            +{scannedBeacon?.earned_xp ?? 0} XP
           </div>
-          <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">
-            Scan Beacon
-          </h1>
-          <p className="text-white/60">Enter beacon ID or scan QR code to earn XP</p>
         </motion.div>
+      )}
 
-        {/* Scan Success */}
-        {scannedBeacon && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-gradient-to-br from-[#39FF14]/20 to-[#00D9FF]/20 border border-[#39FF14]/40 rounded-2xl p-8 mb-8 text-center"
-          >
-            <CheckCircle className="w-16 h-16 text-[#39FF14] mx-auto mb-4" />
-            <h2 className="text-2xl font-black mb-2">Success!</h2>
-            <p className="text-lg text-white/80 mb-4">
-              Scanned <span className="font-bold">{scannedBeacon.beacon.title}</span>
-            </p>
-            <div className="text-4xl font-black text-[#FFEB3B]">
-              +{scannedBeacon.earnedXp} XP
-            </div>
-          </motion.div>
-        )}
+      {/* Scan Interface */}
+      {!scannedBeacon && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8"
+        >
+          <div className="mb-6">
+            <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
+              Beacon ID or QR text
+            </label>
+            <Input
+              value={beaconId}
+              onChange={(e) => setBeaconId(e.target.value)}
+              placeholder="Paste beacon UUID, BEACON-… code, or link…"
+              className="bg-black border-white/20 text-white"
+            />
+          </div>
 
-        {/* Scan Interface */}
-        {!scannedBeacon && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white/5 border border-white/10 rounded-2xl p-8"
-          >
-            <div className="mb-6">
-              <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
-                Beacon ID
-              </label>
-              <Input
-                value={beaconId}
-                onChange={(e) => setBeaconId(e.target.value)}
-                placeholder="Enter beacon ID..."
-                className="bg-black border-white/20 text-white text-lg"
-              />
-            </div>
-
+          <div className="flex flex-col md:flex-row gap-3">
             <Button
               onClick={handleScan}
               disabled={!beaconId || scanMutation.isPending}
-              className="w-full bg-[#FFEB3B] hover:bg-[#FFEB3B]/90 text-black font-bold text-lg py-6"
+              className="flex-1 bg-[#FFEB3B] hover:bg-[#FFEB3B]/90 text-black font-bold py-6"
             >
               <Zap className="w-5 h-5 mr-2" />
-              {scanMutation.isPending ? 'Scanning...' : 'Scan Beacon'}
+              {scanMutation.isPending ? 'Scanning…' : 'Scan'}
             </Button>
 
-            <div className="mt-6 pt-6 border-t border-white/10">
-              <Button
-                variant="ghost"
-                className="w-full text-white/60 hover:text-white"
-                disabled
-              >
-                <Camera className="w-5 h-5 mr-2" />
-                Scan QR Code (Coming Soon)
-              </Button>
-            </div>
-          </motion.div>
-        )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setQrOpen((v) => !v)}
+              className="border-white/20 text-white hover:bg-white/5 py-6"
+            >
+              <Camera className="w-5 h-5 mr-2" />
+              {qrOpen ? 'Close camera' : 'Scan QR'}
+            </Button>
+          </div>
 
-        {/* Nearby Beacons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mt-8"
-        >
-          <h2 className="text-xl font-black uppercase tracking-tight mb-4">Nearby Beacons</h2>
-          <div className="space-y-3">
-            {beacons.slice(0, 5).map((beacon) => (
-              <motion.button
-                key={beacon.id}
-                onClick={() => setBeaconId(beacon.id)}
-                whileHover={{ scale: 1.02 }}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all text-left"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-bold mb-1">{beacon.title}</h3>
-                    <div className="flex items-center gap-2 text-sm text-white/60">
-                      <MapPin className="w-4 h-4" />
-                      <span>{beacon.city}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[#FFEB3B] font-bold">+{beacon.xp_scan || 100} XP</div>
+          {qrError ? (
+            <div className="mt-4 flex items-start gap-2 text-sm text-red-200 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+              <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <div>
+                <div className="font-semibold">Camera error</div>
+                <div className="text-red-200/80">{qrError}</div>
+              </div>
+            </div>
+          ) : null}
+
+          {qrOpen ? (
+            <div className="mt-6 rounded-2xl overflow-hidden border border-white/10 bg-black">
+              <video ref={videoRef} className="w-full h-[320px] object-cover" muted playsInline />
+              <div className="p-3 text-xs text-white/60">
+                Point your camera at a beacon QR code.
+              </div>
+            </div>
+          ) : null}
+        </motion.div>
+      )}
+
+      {/* Nearby Beacons */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="mt-8"
+      >
+        <h2 className="text-xl font-black uppercase tracking-tight mb-4">Nearby Beacons</h2>
+        <div className="space-y-3">
+          {beacons.slice(0, 5).map((beacon) => (
+            <motion.button
+              key={beacon.id}
+              onClick={() => setBeaconId(beacon.id)}
+              whileHover={{ scale: 1.02 }}
+              className="w-full bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all text-left"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold mb-1 truncate">{beacon.title}</h3>
+                  <div className="flex items-center gap-2 text-sm text-white/60">
+                    <MapPin className="w-4 h-4" />
+                    <span className="truncate">{beacon.city}</span>
                   </div>
                 </div>
-              </motion.button>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-    </div>
+                <div className="text-right">
+                  <div className="text-[#FFEB3B] font-bold">+{beacon.xp_scan || 100} XP</div>
+                </div>
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      </motion.div>
+    </PageShell>
   );
 }

@@ -14,7 +14,7 @@ async function fetchServerNow() {
     }
   }
 
-  // Local dev fallback: Vite proxies /api to Base44, so use Supabase RPC for DB server time.
+  // Local dev fallback: use Supabase RPC for DB server time.
   const { data, error } = await supabase.rpc('get_server_time');
   if (error) throw new Error(error.message || 'Failed to fetch server time via RPC');
 

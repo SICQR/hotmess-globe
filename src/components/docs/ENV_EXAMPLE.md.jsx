@@ -3,31 +3,37 @@
 > **Copy this content to `.env.example` in your repository root**
 
 ```env
-# Base44 Configuration
-# These are automatically provided by Base44 platform
-BASE44_APP_ID=auto-provided-by-base44
-BASE44_API_URL=auto-provided-by-base44
-
-# Stripe Payment Processing
-# Get from: https://dashboard.stripe.com/apikeys
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
-stripe_key=sk_test_your_secret_key_here
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
-
-# Supabase Storage
+# Supabase (Client)
 # Get from: https://app.supabase.com/project/_/settings/api
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key-here
-supabase_key=your-service-role-key-here
+
+# Stripe Payment Processing
+# Get from: https://dashboard.stripe.com/apikeys
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key_here
+STRIPE_SECRET_KEY=your_stripe_secret_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+# Supabase (Server)
+# Use in Vercel serverless functions only
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 
 # Shopify Integration (Optional)
 # Get from: https://admin.shopify.com/store/your-store/settings/apps/development
 SHOPIFY_STORE_URL=your-store.myshopify.com
-SHOPIFY_ACCESS_TOKEN=shpat_your_access_token
+SHOPIFY_ACCESS_TOKEN=your_shopify_access_token_here
 
 # Mapbox (for enhanced maps)
 # Get from: https://account.mapbox.com/access-tokens
 VITE_MAPBOX_TOKEN=pk.your_mapbox_token
+
+# Google Maps Platform (Routing)
+# Server-only: used by /api/nearby and /api/routing/etas
+GOOGLE_MAPS_API_KEY=your_google_maps_platform_key
+# Optional: traffic-aware driving ETA using Routes API v2
+GOOGLE_ROUTES_DRIVE_TRAFFIC_AWARE=false
 
 # Telegram Bot (for handshake connections)
 # Get from: @BotFather on Telegram
@@ -42,11 +48,11 @@ SOUNDCLOUD_REDIRECT_URI=https://your-domain.com/api/soundcloud/callback
 
 # OpenAI (for AI features)
 # Get from: https://platform.openai.com/api-keys
-OPENAI_API_KEY=sk-your_openai_key
+OPENAI_API_KEY=your_openai_api_key_here
 
-# Email Service (Optional - if not using Base44 built-in)
+# Email Service (Optional)
 # Get from your email provider
-SENDGRID_API_KEY=SG.your_sendgrid_key
+SENDGRID_API_KEY=your_sendgrid_api_key_here
 SMTP_HOST=smtp.your-provider.com
 SMTP_PORT=587
 SMTP_USER=your_email@domain.com
@@ -88,7 +94,7 @@ GEOCODING_API_KEY=your_geocoding_api_key
    ```
 
 2. **Fill in required values**:
-   - Get Base44 credentials from your Base44 dashboard
+   - Create a Supabase project and get keys
    - Generate Stripe keys from Stripe dashboard
    - Create Supabase project and get keys
    - Set other optional services as needed
@@ -100,18 +106,17 @@ GEOCODING_API_KEY=your_geocoding_api_key
 ## Required for Basic Functionality
 
 Minimum required environment variables:
-- `BASE44_APP_ID` - Auto-provided by Base44
-- `VITE_STRIPE_PUBLISHABLE_KEY` - For marketplace payments
-- `stripe_key` - For server-side payment processing
-- `supabase_key` - For file storage
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` - Frontend auth + reads
+- `SUPABASE_SERVICE_ROLE_KEY` - Server-side privileged writes (Vercel only)
+- `VITE_STRIPE_PUBLISHABLE_KEY` + `stripe_key` - Payments
 
 ## Setting Production Secrets
 
-### In Base44 Dashboard
+### In Vercel Project Settings
 
-1. Go to Settings → Environment Variables
-2. Add secrets without `VITE_` prefix (server-side only)
-3. Restart the app after adding secrets
+1. Go to Project → Settings → Environment Variables
+2. Add server secrets without `VITE_` prefix
+3. Redeploy after adding secrets
 
 ### Secret Naming Convention
 

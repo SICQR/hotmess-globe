@@ -38,7 +38,7 @@ export default function EventReminders({ currentUser }) {
         type: 'event_reminder',
         title: type === '24h' ? 'Event Tomorrow!' : 'Event Starting Soon!',
         message: `${event.title} ${type === '24h' ? 'is tomorrow' : 'starts in 1 hour'}`,
-        link: `/BeaconDetail?id=${event.id}`,
+        link: `/events/${event.id}`,
         metadata: { event_id: event.id, reminder_type: type }
       });
 

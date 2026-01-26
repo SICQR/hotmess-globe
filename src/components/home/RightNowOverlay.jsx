@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, Zap, Calendar, Users, Filter, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -52,6 +52,47 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
   const filteredUsers = cityFilter === 'all' 
     ? users 
     : users.filter(u => u.city === cityFilter);
+
+  const hotScoreByEmail = useMemo(() => {
+    const nowMs = Date.now();
+    const checkinsByEmail = new Map();
+    const postsByEmail = new Map();
+
+    for (const checkIn of Array.isArray(recentCheckIns) ? recentCheckIns : []) {
+      const email = String(checkIn?.user_email || '').trim().toLowerCase();
+      if (!email) continue;
+
+      const createdMs = Date.parse(checkIn?.created_date || checkIn?.created_at || '');
+      if (!Number.isFinite(createdMs)) continue;
+      if (nowMs - createdMs > 2 * 60 * 60 * 1000) continue; // 2h window
+
+      checkinsByEmail.set(email, (checkinsByEmail.get(email) || 0) + 1);
+    }
+
+    for (const post of Array.isArray(recentPosts) ? recentPosts : []) {
+      const email = String(post?.user_email || '').trim().toLowerCase();
+      if (!email) continue;
+
+      const createdMs = Date.parse(post?.created_date || post?.created_at || '');
+      if (!Number.isFinite(createdMs)) continue;
+      if (nowMs - createdMs > 6 * 60 * 60 * 1000) continue; // 6h window
+
+      postsByEmail.set(email, (postsByEmail.get(email) || 0) + 1);
+    }
+
+    const out = new Map();
+    const emails = new Set([...checkinsByEmail.keys(), ...postsByEmail.keys()]);
+    for (const email of emails) {
+      const checkins = checkinsByEmail.get(email) || 0;
+      const posts = postsByEmail.get(email) || 0;
+
+      // Deterministic score derived from real activity.
+      const score = Math.min(checkins * 18 + posts * 12, 100);
+      out.set(email, score);
+    }
+
+    return out;
+  }, [recentCheckIns, recentPosts]);
 
   if (!isOpen) return null;
 
@@ -163,7 +204,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
                         key={user.email}
                         user={user}
                         delay={idx * 0.03}
-                        hotScore={Math.floor(Math.random() * 100)}
+                        hotScore={hotScoreByEmail.get(String(user.email || '').trim().toLowerCase()) || 0}
                       />
                     ))}
                   </div>

@@ -59,7 +59,7 @@ export default function EventWaitlist({ event, currentUser }) {
           type: 'event_reminder',
           title: 'Joined Waitlist',
           message: `You're on the waitlist for ${event.title}. We'll notify you if a spot opens up.`,
-          link: `/BeaconDetail?id=${event.id}`,
+          link: `/events/${event.id}`,
           metadata: { event_id: event.id }
         });
       }
@@ -90,7 +90,11 @@ export default function EventWaitlist({ event, currentUser }) {
       </p>
 
       <Button
-        onClick={() => joinWaitlistMutation.mutate()}
+        onClick={async () => {
+          const ok = await base44.auth.requireProfile(window.location.href);
+          if (!ok) return;
+          joinWaitlistMutation.mutate();
+        }}
         disabled={joinWaitlistMutation.isPending}
         className={`w-full font-black uppercase ${
           waitlistEntry

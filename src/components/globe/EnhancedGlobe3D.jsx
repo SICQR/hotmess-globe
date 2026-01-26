@@ -282,12 +282,29 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         const isRightNow = beacon.isRightNow;
         const isColdVibe = beacon.cold_vibe;
         const isCluster = beacon.isCluster;
+        const isPerson = beacon.kind === 'person';
 
-        const color = isCareBeacon ? 0x00d9ff : isHighlighted ? 0xffeb3b : isColdVibe ? 0x50C878 : isRightNow ? 0x39ff14 : 0xff1493;
-        const emissiveIntensity = isCareBeacon ? 1.5 : isHighlighted ? 1.2 : 0.8;
+        const color = isCareBeacon
+          ? 0x00d9ff
+          : isPerson
+            ? 0x00d9ff
+            : isHighlighted
+              ? 0xffeb3b
+              : isColdVibe
+                ? 0x50C878
+                : isRightNow
+                  ? 0x39ff14
+                  : 0xff1493;
+        const emissiveIntensity = isCareBeacon ? 1.5 : isPerson ? 1.2 : isHighlighted ? 1.2 : 0.8;
         
         // Scale up clusters
-        const scale = isCluster ? Math.min(1 + (beacon.count * 0.1), 3) : isHighlighted ? 1.5 : 1;
+        const scale = isCluster
+          ? Math.min(1 + (beacon.count * 0.1), 3)
+          : isHighlighted
+            ? 1.5
+            : isPerson
+              ? 0.9
+              : 1;
 
         // Special styling for audio drops
         const isAudioDrop = beacon.mode === 'radio' && beacon.audio_url;
@@ -336,17 +353,56 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         }
 
         // Glow sprite for special beacons
-        if (isCareBeacon || isHighlighted || isRightNow) {
+        if (isCareBeacon || isHighlighted || isRightNow || isPerson || isAudioDrop || isColdVibe) {
           const spriteMat = new THREE.SpriteMaterial({
             color,
             transparent: true,
-            opacity: isRightNow ? 1.0 : isCareBeacon ? 1.0 : 0.9,
+            opacity: isPerson ? 0.7 : isRightNow ? 1.0 : isCareBeacon ? 1.0 : 0.9,
             blending: THREE.AdditiveBlending
           });
           const sprite = new THREE.Sprite(spriteMat);
-          sprite.scale.set(isRightNow ? 0.06 : 0.04, isRightNow ? 0.06 : 0.04, 1);
+          sprite.scale.set(
+            isRightNow ? 0.06 : isPerson ? 0.035 : 0.04,
+            isRightNow ? 0.06 : isPerson ? 0.035 : 0.04,
+            1
+          );
           sprite.position.copy(pos);
           globe.add(sprite);
+
+          // Twinkle effect for selected special pins.
+          // Keep Right Now/Care on their existing pulse/glow so the globe stays readable.
+          const shouldTwinkle = isPerson || isAudioDrop || isHighlighted || isColdVibe;
+          if (shouldTwinkle) {
+            const twinkleColor = isAudioDrop
+              ? 0xB026FF
+              : isHighlighted
+                ? 0xFFEB3B
+                : isColdVibe
+                  ? 0x50C878
+                  : 0xffffff;
+
+            const twinkleMat = new THREE.SpriteMaterial({
+              color: twinkleColor,
+              transparent: true,
+              opacity: isHighlighted ? 0.22 : 0.18,
+              blending: THREE.AdditiveBlending,
+            });
+            const twinkle = new THREE.Sprite(twinkleMat);
+
+            const baseScale = isHighlighted ? 0.07 : isPerson ? 0.055 : isAudioDrop ? 0.06 : 0.05;
+            const speed = isHighlighted ? 1.25 : isAudioDrop ? 1.1 : isColdVibe ? 0.9 : 1.0;
+
+            twinkle.scale.set(baseScale, baseScale, 1);
+            twinkle.position.copy(pos);
+            twinkle.userData = {
+              isTwinkle: true,
+              baseScale,
+              baseOpacity: isHighlighted ? 0.16 : 0.12,
+              phase: Math.random() * Math.PI * 2,
+              speed,
+            };
+            globe.add(twinkle);
+          }
           
           // Pulsing effect for Right Now
           if (isRightNow) {
@@ -935,6 +991,16 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           const scale = obj.userData.baseScale * (1 + Math.sin(time * 2) * 0.3);
           obj.scale.set(scale, scale, 1);
           obj.material.opacity = 0.2 + Math.sin(time * 2) * 0.15;
+        }
+        if (obj.userData?.isTwinkle) {
+          const phase = obj.userData.phase || 0;
+          const speed = obj.userData.speed || 1;
+          // Slightly irregular twinkle by mixing two frequencies.
+          const t = time * speed;
+          const wave = (Math.sin(t * 3.3 + phase) + 0.6 * Math.sin(t * 5.7 + phase * 1.7)) / 1.6;
+          const scale = obj.userData.baseScale * (0.85 + 0.35 * (wave * 0.5 + 0.5));
+          obj.scale.set(scale, scale, 1);
+          obj.material.opacity = obj.userData.baseOpacity + 0.22 * (wave * 0.5 + 0.5);
         }
         if (obj.userData?.isPulsingBlob) {
           const scale = 1 + Math.sin(time * 1.5) * 0.2;

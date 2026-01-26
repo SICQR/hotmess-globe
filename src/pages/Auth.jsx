@@ -222,10 +222,15 @@ export default function Auth() {
               <form onSubmit={handleAuth} className="space-y-4">
                 {isSignUp && (
                   <div>
-                    <label className="block text-xs uppercase tracking-wider text-white/60 mb-2">
+                    <label
+                      htmlFor="auth-full-name"
+                      className="block text-xs uppercase tracking-wider text-white/60 mb-2"
+                    >
                       Full Name
                     </label>
                     <Input
+                      id="auth-full-name"
+                      name="fullName"
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
@@ -237,10 +242,15 @@ export default function Auth() {
                 )}
 
                 <div>
-                  <label className="block text-xs uppercase tracking-wider text-white/60 mb-2">
+                  <label
+                    htmlFor="auth-email"
+                    className="block text-xs uppercase tracking-wider text-white/60 mb-2"
+                  >
                     Email
                   </label>
                   <Input
+                    id="auth-email"
+                    name="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -251,10 +261,15 @@ export default function Auth() {
                 </div>
 
                 <div>
-                  <label className="block text-xs uppercase tracking-wider text-white/60 mb-2">
+                  <label
+                    htmlFor="auth-password"
+                    className="block text-xs uppercase tracking-wider text-white/60 mb-2"
+                  >
                     Password
                   </label>
                   <Input
+                    id="auth-password"
+                    name="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

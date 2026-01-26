@@ -1,28 +1,123 @@
-import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
+import { safeGetViewerLatLng } from '@/utils/geolocation';
 
 export default function AgeGate() {
   const [confirmed, setConfirmed] = useState(false);
+  const [locationConsent, setLocationConsent] = useState(false);
+  const [requestingLocation, setRequestingLocation] = useState(false);
+  const [locationPermissionStatus, setLocationPermissionStatus] = useState(null);
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const nextUrl = searchParams.get('next') || createPageUrl('Home');
 
-  const handleConfirm = () => {
+  useEffect(() => {
+    // Read any cached status first.
+    try {
+      const cached = sessionStorage.getItem('location_permission');
+      if (cached === 'granted' || cached === 'denied') setLocationPermissionStatus(cached);
+    } catch {
+      // ignore
+    }
+
+    // If supported, query permission state without prompting.
+    const canQuery = typeof navigator !== 'undefined' && navigator.permissions?.query;
+    if (!canQuery) return;
+
+    let cancelled = false;
+    navigator.permissions
+      .query({ name: 'geolocation' })
+      .then((result) => {
+        if (cancelled) return;
+        const state = result?.state;
+        if (state === 'granted' || state === 'denied' || state === 'prompt') {
+          setLocationPermissionStatus(state);
+        }
+
+        result.onchange = () => {
+          const next = result?.state;
+          if (next === 'granted' || next === 'denied' || next === 'prompt') {
+            setLocationPermissionStatus(next);
+            try {
+              if (next === 'granted' || next === 'denied') sessionStorage.setItem('location_permission', next);
+            } catch {
+              // ignore
+            }
+          }
+        };
+      })
+      .catch(() => {
+        // ignore
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const requestBrowserLocationPermission = async () => {
+    if (!('geolocation' in navigator)) {
+      toast.error('Location is not available in this browser');
+      return { granted: false, error: 'geolocation_unavailable' };
+    }
+
+    setRequestingLocation(true);
+    try {
+      // Best-effort: sometimes CoreLocation returns transient "unknown" errors.
+      // A short retry keeps this from looking like an immediate "deny".
+      const loc = await safeGetViewerLatLng(
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 60_000 },
+        { retries: 1, logKey: 'age-gate' }
+      );
+      if (!loc) throw new Error('Unable to get location');
+      try {
+        sessionStorage.setItem('location_permission', 'granted');
+      } catch {
+        // ignore
+      }
+      setLocationPermissionStatus('granted');
+      return { granted: true, error: null };
+    } catch (err) {
+      try {
+        sessionStorage.setItem('location_permission', 'denied');
+      } catch {
+        // ignore
+      }
+      setLocationPermissionStatus('denied');
+      return { granted: false, error: err?.message || 'denied' };
+    } finally {
+      setRequestingLocation(false);
+    }
+  };
+
+  const handleConfirm = async () => {
     if (!confirmed) {
       toast.error('You must confirm you are 18+ to continue');
       return;
     }
-    
-    // Store age verification in session
-    sessionStorage.setItem('age_verified', 'true');
-    
-    // Redirect to next URL
+
+    // Store age + location consent in session (pre-auth). Profile-level consents are handled after login.
+    try {
+      sessionStorage.setItem('age_verified', 'true');
+      sessionStorage.setItem('location_consent', locationConsent ? 'true' : 'false');
+    } catch {
+      // ignore
+    }
+
+    // Trigger the browser permission prompt so location-based features can work immediately.
+    // Only do this if the user opted in to location services.
+    if (locationConsent && locationPermissionStatus !== 'granted') {
+      const { granted } = await requestBrowserLocationPermission();
+      if (!granted) {
+        toast.error('Location permission was blocked. You can enable it in browser settings.');
+      }
+    }
+
     window.location.href = nextUrl;
   };
 
@@ -77,23 +172,71 @@ export default function AgeGate() {
           </div>
 
           <div className="bg-white/5 border border-white/20 p-4 mb-6">
-            <label className="flex items-start gap-3 cursor-pointer group">
+            <div className="flex items-start gap-3 group">
               <Checkbox 
                 checked={confirmed}
-                onCheckedChange={setConfirmed}
-                className="mt-1"
+                onCheckedChange={(value) => setConfirmed(value === true)}
+                className="mt-1 border-white data-[state=checked]:bg-[#FF1493] data-[state=checked]:border-[#FF1493]"
               />
-              <span className="text-sm group-hover:text-white transition-colors">
-                <span className="font-bold">I confirm that I am 18 years of age or older</span> and agree to view adult content. 
+              <button
+                type="button"
+                onClick={() => setConfirmed((v) => !v)}
+                className="text-left text-sm group-hover:text-white transition-colors"
+              >
+                <span className="font-bold">I confirm that I am 18 years of age or older</span> and agree to view adult content.
                 I understand this platform contains explicit material.
-              </span>
-            </label>
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/20 p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <MapPin className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <div className="flex items-start gap-3 group">
+                  <Checkbox
+                    checked={locationConsent}
+                    onCheckedChange={(value) => setLocationConsent(value === true)}
+                    className="mt-1 border-white data-[state=checked]:bg-[#00D9FF] data-[state=checked]:border-[#00D9FF]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setLocationConsent((v) => !v)}
+                    className="text-left text-sm group-hover:text-white transition-colors"
+                  >
+                    <span className="font-bold">I consent to location services</span> so HOTMESS can show nearby users, events, and beacons.
+                  </button>
+                </div>
+
+                {locationPermissionStatus === 'granted' ? (
+                  <p className="mt-2 text-xs text-white/60 uppercase tracking-wider">Location permission: granted</p>
+                ) : locationPermissionStatus === 'denied' ? (
+                  <p className="mt-2 text-xs text-white/60 uppercase tracking-wider">Location permission: blocked in browser settings</p>
+                ) : null}
+
+                <div className="mt-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={requestBrowserLocationPermission}
+                    disabled={requestingLocation || locationPermissionStatus === 'granted'}
+                    className="w-full border-2 border-white/20 text-white hover:bg-white hover:text-black font-black uppercase"
+                  >
+                    {locationPermissionStatus === 'granted'
+                      ? 'LOCATION ENABLED'
+                      : requestingLocation
+                        ? 'REQUESTING LOCATION…'
+                        : 'ENABLE LOCATION NOW'}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-3">
             <Button
               onClick={handleConfirm}
-              disabled={!confirmed}
+              disabled={!confirmed || !locationConsent || requestingLocation}
               className="w-full bg-[#FF1493] hover:bg-white text-black font-black uppercase py-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               ENTER (18+)
