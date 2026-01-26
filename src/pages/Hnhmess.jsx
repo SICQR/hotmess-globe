@@ -14,6 +14,7 @@ import { createPageUrl } from '../utils';
 
 const RELEASE_SLUG = 'hnhmess';
 const FALLBACK_RELEASE_AT = new Date('2026-01-10T00:00:00Z');
+const HNHMESS_SOUNDCLOUD_URL = 'https://soundcloud.com/rawconvictrecords/hnh-mess/s-jK7AWO2CQ6t';
 
 function slugify(value) {
   return String(value ?? '')
@@ -107,6 +108,7 @@ export default function Hnhmess() {
 
   const soundcloudUrn = release?.soundcloud_urn || release?.metadata?.soundcloud_urn;
   const soundcloudUrl = release?.soundcloud_url || release?.metadata?.soundcloud_url;
+  const soundcloudRef = soundcloudUrn || soundcloudUrl || HNHMESS_SOUNDCLOUD_URL;
 
   const { data: shopifyProducts = [] } = useQuery({
     queryKey: ['shopify-products', 'for-hnhmess'],
@@ -318,8 +320,8 @@ export default function Hnhmess() {
                 <div className="mt-4">
                   {isPreLaunch ? (
                     <p className="text-white/60 text-sm">Player unlocks at T-0.</p>
-                  ) : (soundcloudUrn || soundcloudUrl) ? (
-                    <SoundCloudEmbed urlOrUrn={soundcloudUrn || soundcloudUrl} />
+                  ) : soundcloudRef ? (
+                    <SoundCloudEmbed urlOrUrn={soundcloudRef} />
                   ) : (
                     <p className="text-white/60 text-sm">Track metadata not linked yet.</p>
                   )}

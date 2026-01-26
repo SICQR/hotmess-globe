@@ -82,7 +82,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6, allow
             className={uploadType === 'premium' ? 'bg-[#FF1493] text-black' : ''}
           >
             <Crown className="w-4 h-4 mr-2" />
-            Premium (XXX)
+            Premium (Coming Soon)
           </Button>
         </div>
       )}
@@ -109,7 +109,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6, allow
               {photo.is_premium && (
                 <div className="px-2 py-1 bg-[#FFD700] text-black text-[10px] font-black uppercase flex items-center gap-1">
                   <Crown className="w-3 h-3" />
-                  XXX
+                  PREMIUM
                 </div>
               )}
             </div>
@@ -175,7 +175,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 6, allow
       </div>
 
       <p className="text-xs text-white/40 uppercase">
-        {photos.length}/{maxPhotos} photos • {allowPremium ? 'Premium (XXX) photos require unlock • ' : ''}First photo shown in discovery
+        {photos.length}/{maxPhotos} photos • {allowPremium ? 'Premium photos coming soon • ' : ''}First photo shown in discovery
       </p>
 
       <AnimatePresence>

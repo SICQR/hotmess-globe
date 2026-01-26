@@ -98,6 +98,19 @@ export default function Connect() {
     return userTags.filter(t => t.user_email === currentUser.email);
   }, [currentUser, userTags]);
 
+  // Haversine distance calculation (in km)
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
   // Build profile objects for filtering
   const profiles = useMemo(() => {
     if (!currentUser) return [];
@@ -119,6 +132,23 @@ export default function Connect() {
         const uTags = userTags.filter(t => t.user_email === u.email);
         const uTribes = userTribes.filter(t => t.user_email === u.email);
         
+        // Calculate real distance if both users have coordinates
+        let distanceKm = null;
+        if (currentUser.lat && currentUser.lng && u.lat && u.lng) {
+          distanceKm = calculateDistance(
+            currentUser.lat,
+            currentUser.lng,
+            u.lat,
+            u.lng
+          );
+        } else if (u.city === currentUser.city) {
+          // Fallback: same city = approximate 5km
+          distanceKm = 5;
+        } else {
+          // Fallback: different city = approximate 50km
+          distanceKm = 50;
+        }
+        
         return {
           ...u,
           onlineNow: u.activity_status === 'online' || u.activity_status === 'at_event',
@@ -131,7 +161,7 @@ export default function Connect() {
           age: u.age || 25,
           tribes: uTribes.map(t => t.tribe_id),
           tags: uTags.map(t => t.tag_id),
-          distanceKm: u.city === currentUser.city ? 5 : 50, // Mock distance
+          distanceKm,
         };
       });
   }, [allUsers, currentUser, userTags, userTribes, rightNowStatuses]);

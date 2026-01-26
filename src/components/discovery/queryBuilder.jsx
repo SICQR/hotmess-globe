@@ -190,7 +190,7 @@ export function valuesToApiPayload(values) {
 }
 
 /**
- * Optional: local filtering for mocked profile arrays in dev.
+ * Local filtering for user profiles with real data.
  *
  * profile shape (example):
  * {
