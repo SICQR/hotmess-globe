@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { createPageUrl } from '../utils';
+import { createPageUrl, createUserProfileUrl } from '../utils';
 
 export default function Settings() {
   const [user, setUser] = useState(null);
@@ -182,7 +182,9 @@ export default function Settings() {
                 Save Changes
               </Button>
               <Button
-                onClick={() => navigate(createPageUrl(`Profile?email=${user.email}`))}
+                onClick={() => {
+                  navigate(createUserProfileUrl(user, createPageUrl('Profile')));
+                }}
                 variant="outline"
                 className="border-white/20 text-white"
               >
