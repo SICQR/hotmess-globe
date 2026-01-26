@@ -2,7 +2,11 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
+import { initAnalytics } from '@/components/utils/analytics'
 import ErrorBoundary from '@/components/error/ErrorBoundary'
+
+// Initialize analytics and error tracking
+initAnalytics()
 
 const showFatalOverlay = (err) => {
   if (!import.meta.env.DEV) return;

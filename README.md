@@ -18,7 +18,7 @@ HOTMESS is more than just a social network—it's a vibrant community hub that c
 
 ## 📋 Project Status
 
-**✅ SECURITY AUDIT COMPLETED** (2026-01-03)
+**🚀 BETA TESTING READY** (2026-01-26)
 
 ### Recent Updates:
 - ✅ **All npm security vulnerabilities fixed** (0 vulnerabilities remaining)
@@ -26,6 +26,28 @@ HOTMESS is more than just a social network—it's a vibrant community hub that c
 - ✅ **Security documentation created** (SECURITY.md)
 - ✅ **Structured logging system added** (replaces unsafe console statements)
 - ✅ **Code quality improvements** (fixed parsing errors, removed invalid file extensions)
+- ✅ **Mock data replaced with real API calls** (distance calculations, city data)
+- ✅ **Placeholder text updated** (user-friendly "Coming Soon" messages)
+- ✅ **Environment variables documented** (complete .env.example)
+
+### 🧪 Beta Testing Status
+
+This version is ready for beta testing. The following features are functional:
+- ✅ User authentication and profiles
+- ✅ Beacon/event creation and discovery
+- ✅ Social discovery and matching
+- ✅ Marketplace and checkout
+- ✅ Real-time features (Right Now status)
+- ✅ Globe visualization with real data
+
+**Known Limitations for Beta:**
+- ⚠️ **QR Scanner**: Coming Soon - ticket scanning not yet implemented
+- ⚠️ **SoundCloud OAuth**: Coming Soon - music uploads return 501 (not implemented)
+- ⚠️ **Premium Content**: Coming Soon - premium photo/video unlock not yet implemented
+- ⚠️ **Weather/Transit Data**: Placeholder data (real APIs to be integrated)
+- ⚠️ **Base44 SDK Functions**: Edge functions require Base44 SDK access (verify in production)
+
+These limitations are clearly marked in the UI and do not block core functionality.
 
 ### 📚 Important Documentation:
 - 🔒 [**SECURITY.md**](./SECURITY.md) - Security best practices and policies
@@ -37,11 +59,18 @@ HOTMESS is more than just a social network—it's a vibrant community hub that c
 - 🔧 [**CI_CD_SETUP.md**](./CI_CD_SETUP.md) - CI/CD pipeline documentation
 - 🧪 [**TEST_SETUP.md**](./TEST_SETUP.md) - Testing infrastructure setup guide
 
-### ⚠️ Before Production Deployment:
-1. Review [SECURITY.md](./SECURITY.md) for security best practices
-2. Complete items in [INCOMPLETE_FEATURES.md](./INCOMPLETE_FEATURES.md)
+### ⚠️ Beta Testing Notes:
+1. **Environment Setup**: Ensure all required environment variables are set (see `.env.example`)
+2. **Base44 SDK**: Verify Base44 SDK access for edge functions in production
+3. **Supabase**: Ensure Supabase database is properly configured with all migrations
+4. **Known Issues**: Review [INCOMPLETE_FEATURES.md](./INCOMPLETE_FEATURES.md) for feature limitations
+5. **Error Reporting**: Error boundaries are in place; Sentry integration is optional for beta
+
+### ⚠️ Before Full Production Deployment:
+1. Complete remaining items in [INCOMPLETE_FEATURES.md](./INCOMPLETE_FEATURES.md)
+2. Implement comprehensive test suite (see TEST_SETUP.md)
 3. Set up error tracking (Sentry recommended)
-4. Implement test suite (see TEST_SETUP.md)
+4. Complete security hardening checklist in [SECURITY.md](./SECURITY.md)
 5. Review and complete [DEPLOYMENT.md](./DEPLOYMENT.md) checklist
 
 ## 🚀 Getting Started
@@ -117,6 +146,15 @@ This app is a Vite SPA using React Router. Deep links like `/${PageKey}` require
    - Optional: see [.env.example](./.env.example) for Shopify/SoundCloud/crons.
 - Routing:
    - `vercel.json` includes an SPA rewrite to `index.html` for all routes.
+
+### Connect direct: Vercel ↔ Supabase
+
+You can **connect Vercel and Supabase directly** so env vars are synced automatically:
+
+1. **Vercel Marketplace** – [Supabase integration](https://supabase.com/docs/guides/integrations/vercel-marketplace): create or link a Supabase project from Vercel. It syncs `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PUBLISHABLE_KEY`, and `NEXT_PUBLIC_SUPABASE_*` to your project.
+2. **This app** supports those integration vars: it uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (and `SUPABASE_*` in API routes) when set. No need to duplicate values as `VITE_*` unless you prefer them.
+
+All env can live in Vercel; no local `.env` required for deploys.
 
 ## 🧪 Auth + Social e2e smoke
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Bell, Shield, LogOut, Save, Edit, Camera } from 'lucide-react';
+import { User, Bell, Shield, LogOut, Save, Edit, Camera, Download, Trash2, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -263,11 +263,52 @@ export default function Settings() {
           </div>
         </motion.div>
 
-        {/* Account Actions */}
+        {/* Data & Privacy */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
+          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <Database className="w-5 h-5 text-[#B026FF]" />
+            <h2 className="text-xl font-bold uppercase tracking-wider">Data & Privacy</h2>
+          </div>
+
+          <div className="space-y-4">
+            <Link to={createPageUrl('DataExport')}>
+              <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <Download className="w-5 h-5 text-[#FF1493]" />
+                  <div>
+                    <p className="font-semibold">Export My Data</p>
+                    <p className="text-sm text-white/60">Download a copy of all your data (GDPR)</p>
+                  </div>
+                </div>
+                <span className="text-white/40">→</span>
+              </div>
+            </Link>
+
+            <Link to={createPageUrl('AccountDeletion')}>
+              <div className="flex items-center justify-between p-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/40 rounded-lg transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <Trash2 className="w-5 h-5 text-red-500" />
+                  <div>
+                    <p className="font-semibold text-red-500">Delete Account</p>
+                    <p className="text-sm text-white/60">Permanently delete your account and data</p>
+                  </div>
+                </div>
+                <span className="text-red-500/60">→</span>
+              </div>
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* Account Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
           className="bg-white/5 border border-white/10 rounded-xl p-6"
         >
           <Button

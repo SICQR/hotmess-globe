@@ -186,6 +186,19 @@ export default function Connect() {
     return userTags.filter(t => t.user_email === currentUser.email);
   }, [currentUser, userTags]);
 
+  // Haversine distance calculation (in km)
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
   // Build profile objects for filtering
   const profiles = useMemo(() => {
     if (!currentUser) return [];
@@ -206,6 +219,23 @@ export default function Connect() {
         const photos = Array.isArray(u.photos) ? u.photos : [];
         const hasPhotos = photos.length > 0;
         const hasFacePhoto = !!u.avatar_url;
+        
+        // Calculate real distance if both users have coordinates
+        let distanceKm = null;
+        if (currentUser.lat && currentUser.lng && u.lat && u.lng) {
+          distanceKm = calculateDistance(
+            currentUser.lat,
+            currentUser.lng,
+            u.lat,
+            u.lng
+          );
+        } else if (u.city === currentUser.city) {
+          // Fallback: same city = approximate 5km
+          distanceKm = 5;
+        } else {
+          // Fallback: different city = approximate 50km
+          distanceKm = 50;
+        }
         
         return {
           ...u,
