@@ -323,7 +323,6 @@ function LayoutInner({ children, currentPageName }) {
   const isPulsePage = currentPageName === 'Pulse';
   const isChromelessPage =
     currentPageName === 'Auth' ||
-    currentPageName === 'Login' ||
     currentPageName === 'AgeGate' ||
     currentPageName === 'OnboardingGate' ||
     currentPageName === 'AccountConsents';
