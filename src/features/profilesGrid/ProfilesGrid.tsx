@@ -6,7 +6,7 @@ import type { ViewerLocationResponse } from './types';
 import type { Profile } from './types';
 import type { LatLng } from './travelTime';
 import { base44 } from '@/api/base44Client';
-import { createPageUrl } from '@/utils';
+import { createUserProfileUrl } from '@/utils';
 import { toast } from 'sonner';
 import TelegramPanel from './TelegramPanel';
 import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
@@ -242,10 +242,7 @@ export default function ProfilesGrid({
   const handleOpenProfile = (profile: Profile) => {
     if (onOpenProfile) return onOpenProfile(profile);
 
-    const email = profile?.email;
-    const uid = profile?.authUserId;
-    if (uid) return handleNavigateUrl(`/social/u/${encodeURIComponent(uid)}`);
-    if (email) return handleNavigateUrl(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
+    return handleNavigateUrl(createUserProfileUrl(profile));
   };
 
   return (
