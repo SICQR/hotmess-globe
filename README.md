@@ -126,6 +126,104 @@ There is a focused Playwright smoke test for the core member loop: Auth → Soci
 - Required env: `E2E_EMAIL`, `E2E_PASSWORD`
 - Optional (auto-seed profiles for the Social grid): `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (the runner calls `npm run seed:mock-profiles` when present)
 
+## 🧩 Social Profiles + Travel Time
+
+The Social grid pulls profile cards from a serverless endpoint and optionally decorates them with travel time estimates.
+
+### Profiles feed (`GET /api/profiles`)
+
+- Handler: `api/profiles.js`
+- Client usage: `src/features/profilesGrid/useInfiniteProfiles.ts`
+- Auth:
+   - Production/Vercel requires `Authorization: Bearer <supabase_access_token>`
+   - Local dev may allow unauthenticated requests (but the client will include a token when signed in)
+
+Query params:
+
+- `cursor`: offset as a string/integer (pagination)
+- `limit`: 1–60 (default 40)
+
+Response shape:
+
+```json
+{
+   "items": [
+      {
+         "id": "profile_<dedupeKey>",
+         "profileName": "Alex",
+         "title": "Gym rat, beach lover",
+         "locationLabel": "London",
+         "geoLat": 51.5074,
+         "geoLng": -0.1278,
+         "photos": [{ "url": "https://...", "isPrimary": true }],
+
+         "email": "alex@example.com",
+         "authUserId": "<supabase_uid>",
+         "profileType": "seller|creator|organizer",
+         "hasProducts": true,
+         "productPreviews": [{ "imageUrl": "https://..." }],
+         "tags": ["tag_a", "tag_b"]
+      }
+   ],
+   "nextCursor": "40"
+}
+```
+
+Notes:
+
+- Pagination is offset-based: pass `nextCursor` back as `cursor`.
+- The handler prefers the Supabase service role client when available; when not available it can fall back to an authenticated RPC (`list_profiles_secure`) or demo fallback profiles.
+
+### Travel time (`POST /api/travel-time`)
+
+- Handler: `api/travel-time.js`
+- Client usage: `src/features/profilesGrid/travelTime.ts`
+- Auth:
+   - Production/Vercel requires `Authorization: Bearer <supabase_access_token>`
+
+Request body:
+
+```json
+{
+   "origin": { "lat": 51.5074, "lng": -0.1278 },
+   "destination": { "lat": 51.5099, "lng": -0.1181 }
+}
+```
+
+Response shape (`TravelTimeResponse`):
+
+```json
+{
+   "walking": { "durationSeconds": 640, "label": "11 min on foot" },
+   "driving": { "durationSeconds": 420, "label": "7 min by cab" },
+   "bicycling": { "durationSeconds": 510, "label": "9 min by bike" },
+   "uber": { "durationSeconds": 420, "label": "7 min uber" },
+   "fastest": { "durationSeconds": 420, "label": "7 min by cab" },
+   "meta": { "provider": "google" }
+}
+```
+
+Notes:
+
+- If `GOOGLE_MAPS_API_KEY` is not set, the endpoint returns approximate ETAs (privacy-safe haversine + speed heuristics) and `meta.provider` becomes `approx`.
+- Results are cached server-side (when `routing_cache` is available) and also cached client-side for 2 minutes.
+- The client buckets GPS coords to ~0.001° (~110m) to avoid request spam from jitter.
+
+### Visibility hook (`useVisibility`)
+
+- Hook: `src/features/profilesGrid/useVisibility.ts`
+- Used for:
+   - Infinite-scroll sentinel (load next page when visible)
+   - Lazy-loading profile card work (travel-time fetches only after the card is near the viewport)
+
+API:
+
+```ts
+const { ref, isVisible } = useVisibility({ rootMargin: '200px', threshold: 0.2, once: true });
+```
+
+This uses `IntersectionObserver` (browser API). If you add server-side rendering later, guard any observer usage so it only runs in the browser.
+
 ## 🏗️ Technology Stack
 
 ### Frontend
