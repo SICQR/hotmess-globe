@@ -34,3 +34,32 @@ export function createPageUrl(pageName: string) {
     const basePath = routeMap[base] ?? '/' + base.replace(/ /g, '-');
     return query ? `${basePath}?${query}` : basePath;
 }
+
+type ProfileLike = {
+    auth_user_id?: string;
+    authUserId?: string;
+    email?: string;
+    id?: string;
+};
+
+export function createUserProfileUrl(profile: ProfileLike, fallbackBaseProfileUrl?: string) {
+    const rawUid =
+        (profile && typeof profile === 'object' ? (profile as any).auth_user_id : null) ||
+        (profile && typeof profile === 'object' ? (profile as any).authUserId : null);
+
+    if (rawUid && String(rawUid).trim()) {
+        return `/social/u/${encodeURIComponent(String(rawUid).trim())}`;
+    }
+
+    const rawEmail = profile && typeof profile === 'object' ? (profile as any).email : null;
+    if (rawEmail && String(rawEmail).trim()) {
+        const base =
+            typeof fallbackBaseProfileUrl === 'string' && fallbackBaseProfileUrl.trim()
+                ? fallbackBaseProfileUrl.trim()
+                : createPageUrl('Profile');
+        const joiner = base.includes('?') ? '&' : '?';
+        return `${base}${joiner}email=${encodeURIComponent(String(rawEmail).trim())}`;
+    }
+
+    return createPageUrl('Social');
+}
