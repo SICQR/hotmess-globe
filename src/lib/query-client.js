@@ -77,7 +77,7 @@ export const queryClientInstance = new QueryClient({
       gcTime: 30 * 60 * 1000,
       
       // Don't refetch when reconnecting (prevents flood of requests)
-      refetchOnReconnect: 'always',
+      refetchOnReconnect: false,
       
       // Network mode - fetch when online, use cache when offline
       networkMode: 'offlineFirst',
