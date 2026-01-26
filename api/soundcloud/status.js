@@ -24,7 +24,7 @@ export default async function handler(req, res) {
   }
 
   const supabaseUrl = getEnv('SUPABASE_URL', ['VITE_SUPABASE_URL']);
-  const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY', ['VITE_SUPABASE_ANON_KEY']);
+  const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY', ['SUPABASE_PUBLISHABLE_KEY', 'VITE_SUPABASE_ANON_KEY']);
   const supabaseServiceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
 
   if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
