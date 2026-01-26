@@ -43,11 +43,13 @@ export default function ThreadList({ threads, currentUser, allUsers, onSelectThr
         const Icon = THREAD_TYPE_ICONS[thread.thread_type] || MessageCircle;
         const color = THREAD_TYPE_COLORS[thread.thread_type] || '#FF1493';
         
-        const otherParticipants = thread.participant_emails.filter(email => email !== currentUser.email);
-        const otherUsers = allUsers.filter(u => otherParticipants.includes(u.email));
-        const unreadCount = thread.unread_count?.[currentUser.email] || 0;
+        const currentEmail = currentUser?.email || '';
+        const participantEmails = Array.isArray(thread.participant_emails) ? thread.participant_emails : [];
+        const otherParticipants = participantEmails.filter(email => email !== currentEmail);
+        const otherUsers = (allUsers || []).filter(u => u?.email && otherParticipants.includes(u.email));
+        const unreadCount = thread.unread_count?.[currentEmail] || 0;
         const isGroupChat = otherUsers.length > 1;
-        const isMuted = thread.muted_by?.includes(currentUser.email) || false;
+        const isMuted = thread.muted_by?.includes(currentEmail) || false;
 
         return (
           <motion.button

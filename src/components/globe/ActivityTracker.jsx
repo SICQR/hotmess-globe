@@ -24,15 +24,20 @@ class ActivityTracker {
       if (!isAuth) return;
       
       const user = await base44.auth.me();
-      await base44.entities.UserActivity.create({
-        user_email: user.email,
-        action_type: actionType,
-        details: details || {},
-        location: location || null,
-        visible: true
-      });
-    } catch (error) {
-      console.error('Failed to track activity:', error);
+      if (!user?.email) return;
+      
+      // UserActivity table may not exist - fail silently
+      if (typeof base44.entities.UserActivity?.create === 'function') {
+        await base44.entities.UserActivity.create({
+          user_email: user.email,
+          action_type: actionType,
+          details: details || {},
+          location: location || null,
+          visible: true
+        });
+      }
+    } catch {
+      // Activity tracking is non-critical - fail silently
     }
   }
 
