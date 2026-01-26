@@ -1,6 +1,14 @@
 import AccountConsents from './pages/AccountConsents';
+import AccountDeletion from './pages/AccountDeletion';
 import AdminDashboard from './pages/AdminDashboard';
+import BusinessAnalytics from './pages/biz/BusinessAnalytics';
+import BusinessDashboard from './pages/biz/BusinessDashboard';
+import BusinessOnboarding from './pages/biz/BusinessOnboarding';
 import AgeGate from './pages/AgeGate';
+import CommunityGuidelines from './pages/CommunityGuidelines';
+import Contact from './pages/Contact';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import Auth from './pages/Auth';
 import BeaconDetail from './pages/BeaconDetail';
 import Beacons from './pages/Beacons';
@@ -13,6 +21,7 @@ import Checkout from './pages/Checkout';
 import Community from './pages/Community';
 import Connect from './pages/Connect';
 import CreateBeacon from './pages/CreateBeacon';
+import DataExport from './pages/DataExport';
 import DialADaddy from './pages/DialADaddy';
 import EditBeacon from './pages/EditBeacon';
 import EditProfile from './pages/EditProfile';
@@ -20,6 +29,7 @@ import Events from './pages/Events';
 import Feed from './pages/Feed';
 import Globe from './pages/Globe';
 import HandNHand from './pages/HandNHand';
+import HelpCenter from './pages/HelpCenter';
 import Home from './pages/Home';
 import Hnhmess from './pages/Hnhmess';
 import Leaderboard from './pages/Leaderboard';
@@ -57,20 +67,27 @@ import __Layout from './Layout.jsx';
 
 export const PAGES = {
     "AccountConsents": AccountConsents,
+    "AccountDeletion": AccountDeletion,
     "AdminDashboard": AdminDashboard,
     "AgeGate": AgeGate,
     "Auth": Auth,
     "BeaconDetail": BeaconDetail,
     "Beacons": Beacons,
     "Bookmarks": Bookmarks,
+    "BusinessAnalytics": BusinessAnalytics,
+    "BusinessDashboard": BusinessDashboard,
+    "BusinessOnboarding": BusinessOnboarding,
     "Calendar": Calendar,
     "Care": Care,
     "Challenges": Challenges,
     "Chat": Chat,
     "Checkout": Checkout,
     "Community": Community,
+    "CommunityGuidelines": CommunityGuidelines,
     "Connect": Connect,
+    "Contact": Contact,
     "CreateBeacon": CreateBeacon,
+    "DataExport": DataExport,
     "DialADaddy": DialADaddy,
     "EditBeacon": EditBeacon,
     "EditProfile": EditProfile,
@@ -78,6 +95,7 @@ export const PAGES = {
     "Feed": Feed,
     "Globe": Globe,
     "HandNHand": HandNHand,
+    "HelpCenter": HelpCenter,
     "Home": Home,
     "Hnhmess": Hnhmess,
     "Leaderboard": Leaderboard,
@@ -108,6 +126,7 @@ export const PAGES = {
     "Social": Social,
     "SquadChat": SquadChat,
     "Stats": Stats,
+    "TermsOfService": TermsOfService,
     "TicketMarketplace": TicketMarketplace,
     "WakeTheMess": WakeTheMess,
 }

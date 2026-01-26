@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Cloud, CloudRain, Sun, Wind, Zap, Bus, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Mock real-time data generator (replace with actual APIs in production)
+// City data generator - uses real beacon/check-in data, weather/transit are placeholders for beta
 const generateCityData = (city, beacons, checkIns) => {
   const cityBeacons = beacons.filter(b => b.city === city.name && b.active);
   const recentCheckIns = checkIns.filter(
@@ -16,12 +16,12 @@ const generateCityData = (city, beacons, checkIns) => {
     return beacon && beacon.city === city.name;
   });
 
-  // Weather simulation (replace with actual weather API)
+  // Weather placeholder (beta) - will integrate real weather API in future
   const weatherTypes = ['sunny', 'cloudy', 'rainy', 'windy'];
   const weather = weatherTypes[Math.floor(Math.random() * weatherTypes.length)];
   const temp = Math.floor(Math.random() * 20) + 10; // 10-30°C
 
-  // Transit simulation (replace with actual transit API)
+  // Transit placeholder (beta) - will integrate real transit API in future
   const transitStatus = Math.random() > 0.3 ? 'normal' : 'delayed';
 
   // Heat calculation based on check-ins and weather

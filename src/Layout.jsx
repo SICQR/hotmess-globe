@@ -23,6 +23,7 @@ import PersistentRadioPlayer from '@/components/shell/PersistentRadioPlayer';
 import { Radio as RadioIcon } from 'lucide-react';
 import { useRadio } from '@/components/shell/RadioContext';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
+import CookieConsent from '@/components/legal/CookieConsent';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
@@ -412,6 +413,9 @@ function LayoutInner({ children, currentPageName }) {
 
       {/* Persistent Radio Player - Never Unmounts */}
       <PersistentRadioPlayer />
+
+      {/* Cookie Consent Banner */}
+      <CookieConsent />
       </div>
         </TaxonomyProvider>
       </ErrorBoundary>

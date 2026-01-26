@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { base44, supabase } from '@/api/base44Client';
 import { Bell, Check, Trash2, MessageCircle, Package, Heart, Flag, MapPin, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -40,8 +40,84 @@ export default function NotificationCenter({ currentUser }) {
       return base44.entities.Notification.filter({ user_email: currentUser.email }, '-created_date', 50);
     },
     enabled: !!currentUser,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: 60000, // Fallback poll every 60 seconds (reduced since we have real-time)
   });
+
+  // Set up real-time subscription for notifications
+  useEffect(() => {
+    if (!currentUser?.email) return;
+
+    // Subscribe to notifications table for real-time updates
+    const channel = supabase
+      .channel('notifications-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_email=eq.${currentUser.email}`,
+        },
+        (payload) => {
+          console.log('[NotificationCenter] New notification:', payload);
+          // Invalidate queries to refetch notifications
+          queryClient.invalidateQueries(['notifications']);
+          
+          // Show toast for new notification
+          const newNotif = payload.new;
+          if (newNotif?.title) {
+            toast(newNotif.title, {
+              description: newNotif.message,
+              action: newNotif.link ? {
+                label: 'View',
+                onClick: () => navigate(createPageUrl(newNotif.link)),
+              } : undefined,
+            });
+          }
+          
+          // Trigger browser notification if permission granted
+          if (Notification.permission === 'granted' && !document.hasFocus()) {
+            new Notification(newNotif?.title || 'New notification', {
+              body: newNotif?.message || 'You have a new notification',
+              icon: '/favicon.svg',
+              tag: `notification-${newNotif?.id}`,
+            });
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('[NotificationCenter] Subscription status:', status);
+      });
+
+    // Also subscribe for admin notifications if user is admin
+    let adminChannel;
+    if (currentUser?.role === 'admin') {
+      adminChannel = supabase
+        .channel('notifications-admin-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: 'user_email=eq.admin',
+          },
+          (payload) => {
+            console.log('[NotificationCenter] New admin notification:', payload);
+            queryClient.invalidateQueries(['notifications']);
+          }
+        )
+        .subscribe();
+    }
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      supabase.removeChannel(channel);
+      if (adminChannel) {
+        supabase.removeChannel(adminChannel);
+      }
+    };
+  }, [currentUser?.email, currentUser?.role, queryClient, navigate]);
 
   const markReadMutation = useMutation({
     mutationFn: (notificationId) => base44.entities.Notification.update(notificationId, { read: true }),
