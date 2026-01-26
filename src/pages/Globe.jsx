@@ -81,8 +81,8 @@ export default function GlobePage() {
 
   // Real-time subscriptions for beacons
   useEffect(() => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.vite_publicSUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.vite_publicSUPABASE_ANON_KEY;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL || import.meta.env.vite_publicSUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env.vite_publicSUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       console.warn('Supabase credentials not found - real-time updates disabled');
@@ -134,8 +134,8 @@ export default function GlobePage() {
 
   // Real-time subscriptions for user activities
   useEffect(() => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.vite_publicSUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.vite_publicSUPABASE_ANON_KEY;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL || import.meta.env.vite_publicSUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || import.meta.env.vite_publicSUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) return;
 

@@ -1,9 +1,84 @@
 {
-  "name": "Hotmess Globe",
-  "short_name": "Hotmess",
+  "name": "HOTMESS - Global Nightlife Discovery",
+  "short_name": "HOTMESS",
+  "description": "Discover events, connect with people, and explore the world's nightlife scene on an interactive 3D globe.",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#000000",
-  "theme_color": "#000000",
-  "icons": []
+  "theme_color": "#EC4899",
+  "categories": ["social", "lifestyle", "entertainment"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "id": "hotmess-globe",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Events",
+      "short_name": "Events",
+      "description": "Browse upcoming events",
+      "url": "/events",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Connect",
+      "short_name": "Connect",
+      "description": "Find people nearby",
+      "url": "/social",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Market",
+      "short_name": "Market",
+      "description": "Shop the marketplace",
+      "url": "/market",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Messages",
+      "short_name": "Messages",
+      "description": "View your messages",
+      "url": "/social/inbox",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "share_target": {
+    "action": "/share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "images",
+          "accept": ["image/*"]
+        }
+      ]
+    }
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred",
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }

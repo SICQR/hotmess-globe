@@ -77,6 +77,42 @@ Security note:
 - `/api/events/scrape` requires an authenticated admin bearer token.
 - `/api/events/cron` should be protected via `EVENT_SCRAPER_CRON_SECRET` when used outside Vercel Cron.
 
+### 3b. Stripe Webhooks (Required for Subscriptions)
+
+Stripe webhooks enable subscription lifecycle handling (upgrades, cancellations, payment failures).
+
+**Endpoint:** `https://your-domain.vercel.app/api/stripe/webhook`
+
+**Setup in Stripe Dashboard:**
+
+1. Go to [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks)
+2. Click "Add endpoint"
+3. Enter your webhook URL: `https://your-domain.vercel.app/api/stripe/webhook`
+4. Select events to listen for:
+   - `checkout.session.completed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+   - `invoice.paid`
+   - `invoice.payment_failed`
+5. Click "Add endpoint" and copy the **Signing secret** (starts with `whsec_`)
+
+**Vercel Environment Variables (required):**
+
+- `STRIPE_SECRET_KEY` - Your Stripe secret key (`sk_test_*` or `sk_live_*`)
+- `STRIPE_WEBHOOK_SECRET` - The signing secret from step 5 (`whsec_*`)
+- `VITE_STRIPE_PLUS_PRICE_ID` - Price ID for Plus tier (create in Stripe Products)
+- `VITE_STRIPE_CHROME_PRICE_ID` - Price ID for Chrome tier (create in Stripe Products)
+
+**Testing webhooks locally:**
+
+Use Stripe CLI to forward events to your local dev server:
+
+```bash
+stripe listen --forward-to localhost:5173/api/stripe/webhook
+```
+
+Copy the webhook signing secret from the CLI output and use it locally.
+
 ### 4. Performance
 - [ ] Bundle size analyzed (`npm run build`)
 - [ ] Images optimized
