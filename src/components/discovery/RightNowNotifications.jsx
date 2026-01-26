@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
 export default function RightNowNotifications({ currentUser }) {
+  const shownToastsRef = useRef(new Map());
+
   const { data: rightNowUsers = [] } = useQuery({
     queryKey: ['right-now-active'],
     queryFn: () => base44.entities.RightNowStatus.filter({ active: true }),
@@ -32,6 +34,16 @@ export default function RightNowNotifications({ currentUser }) {
   useEffect(() => {
     if (!currentUser || rightNowUsers.length === 0) return;
 
+    // Prevent duplicate demo notifications:
+    // - React StrictMode can double-invoke effects in dev
+    // - refetches can re-run this effect while statuses are still "fresh"
+    // Dedupe by a stable key per status and give Sonner an explicit toast id.
+    const now = Date.now();
+    const keepAfterMs = 5 * 60 * 1000;
+    for (const [key, ts] of shownToastsRef.current.entries()) {
+      if (now - ts > keepAfterMs) shownToastsRef.current.delete(key);
+    }
+
     // Find compatible matches who just went Right Now
     const myEssentialTags = userTags.filter(t => t.is_essential).map(t => t.tag_id);
     const myDealbreakers = userTags.filter(t => t.is_dealbreaker).map(t => t.tag_id);
@@ -39,10 +51,15 @@ export default function RightNowNotifications({ currentUser }) {
     rightNowUsers.forEach(status => {
       if (status.user_email === currentUser.email) return;
 
+      const createdRaw = status.created_date || status.created_at;
+      const createdMs = Date.parse(createdRaw);
+      if (!Number.isFinite(createdMs)) return;
+
+      const dedupeKey = `right-now:${status.user_email || 'unknown'}:${createdMs}`;
+      if (shownToastsRef.current.has(dedupeKey)) return;
+
       // Check if this is a new Right Now status (created in last minute)
-      const createdAt = new Date(status.created_date);
-      const now = new Date();
-      const diffMinutes = (now - createdAt) / 1000 / 60;
+      const diffMinutes = (now - createdMs) / 1000 / 60;
       
       if (diffMinutes > 1) return; // Skip old statuses
 
@@ -62,9 +79,12 @@ export default function RightNowNotifications({ currentUser }) {
         const totalTags = Math.max(userTags.length, theirTags.length);
         const matchPercent = totalTags > 0 ? Math.round((commonTags / totalTags) * 100) : 0;
 
+        shownToastsRef.current.set(dedupeKey, now);
+
         toast.success(`${userName} is Right Now! ${matchPercent}% match`, {
           description: 'Check Connect to view their profile',
-          duration: 8000
+          duration: 8000,
+          id: dedupeKey,
         });
       }
     });
