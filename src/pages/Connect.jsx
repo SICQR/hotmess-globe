@@ -213,28 +213,38 @@ export default function Connect() {
         const proximity = nearbyByEmail.get(String(u.email || '').toLowerCase()) || null;
 
         const isSelf = normalizeEmail(u?.email) && normalizeEmail(u?.email) === normalizeEmail(currentUser?.email);
-        const distanceKm = isSelf ? 0 : (proximity?.distanceKm ?? null);
-        const distanceMeters = isSelf ? 0 : (proximity?.distanceMeters ?? null);
-
+        
         const photos = Array.isArray(u.photos) ? u.photos : [];
         const hasPhotos = photos.length > 0;
         const hasFacePhoto = !!u.avatar_url;
         
         // Calculate real distance if both users have coordinates
         let distanceKm = null;
-        if (currentUser.lat && currentUser.lng && u.lat && u.lng) {
+        let distanceMeters = null;
+        
+        if (isSelf) {
+          distanceKm = 0;
+          distanceMeters = 0;
+        } else if (currentUser.lat && currentUser.lng && u.lat && u.lng) {
           distanceKm = calculateDistance(
             currentUser.lat,
             currentUser.lng,
             u.lat,
             u.lng
           );
+          distanceMeters = distanceKm * 1000;
+        } else if (proximity) {
+          // Use proximity data if available
+          distanceKm = proximity.distanceKm ?? null;
+          distanceMeters = proximity.distanceMeters ?? null;
         } else if (u.city === currentUser.city) {
           // Fallback: same city = approximate 5km
           distanceKm = 5;
+          distanceMeters = 5000;
         } else {
           // Fallback: different city = approximate 50km
           distanceKm = 50;
+          distanceMeters = 50000;
         }
         
         return {
