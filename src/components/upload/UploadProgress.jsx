@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Upload, 
   X, 
   CheckCircle2, 
   AlertCircle, 
@@ -10,7 +9,6 @@ import {
   FileVideo,
   File
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 /**
  * Upload Progress Component

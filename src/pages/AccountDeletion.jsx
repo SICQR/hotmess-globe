@@ -9,7 +9,6 @@ import {
   Loader2, 
   Trash2,
   Shield,
-  CheckCircle2,
   XCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
