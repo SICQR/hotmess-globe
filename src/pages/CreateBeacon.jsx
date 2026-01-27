@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { snapToGrid } from '../components/utils/locationPrivacy';
 import { toUTC } from '../components/utils/dateUtils';
 import MediaUploader from '../components/media/MediaUploader';
+import { logger } from '@/utils/logger';
 
 export default function CreateBeacon() {
   const navigate = useNavigate();
@@ -90,7 +91,7 @@ export default function CreateBeacon() {
       navigate(createPageUrl(`BeaconDetail?id=${newBeacon.id}`));
     },
     onError: (error) => {
-      console.error('Failed to create beacon:', error);
+      logger.error('Failed to create beacon', { error: error?.message, context: 'CreateBeacon' });
       toast.error('Failed to create event');
     }
   });
@@ -154,7 +155,7 @@ export default function CreateBeacon() {
           {[1, 2, 3, 4].map(s => (
             <div key={s} className="flex items-center">
               <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold ${
-                s === step ? 'border-[#FF1493] bg-[#FF1493] text-black' :
+                s === step ? 'border-[#E62020] bg-[#E62020] text-black' :
                 s < step ? 'border-[#39FF14] bg-[#39FF14] text-black' :
                 'border-white/20 text-white/40'
               }`}>
@@ -174,7 +175,7 @@ export default function CreateBeacon() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
+                className="bg-white/5 border-2 border-[#E62020] rounded-none p-6 space-y-6"
               >
                 <h2 className="text-2xl font-black uppercase mb-4">Step 1: Basic Info</h2>
                 
@@ -243,7 +244,7 @@ export default function CreateBeacon() {
                 </div>
 
                 <div className="pt-4 flex justify-end">
-                  <Button type="button" onClick={nextStep} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
+                  <Button type="button" onClick={nextStep} className="bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black rounded-none">
                     Next <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -256,7 +257,7 @@ export default function CreateBeacon() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
+                className="bg-white/5 border-2 border-[#E62020] rounded-none p-6 space-y-6"
               >
                 <h2 className="text-2xl font-black uppercase mb-4">Step 2: Location & Time</h2>
 
@@ -332,7 +333,7 @@ export default function CreateBeacon() {
                   <Button type="button" onClick={prevStep} variant="outline" className="border-white/20 text-white rounded-none">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
-                  <Button type="button" onClick={nextStep} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
+                  <Button type="button" onClick={nextStep} className="bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black rounded-none">
                     Next <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -345,7 +346,7 @@ export default function CreateBeacon() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
+                className="bg-white/5 border-2 border-[#E62020] rounded-none p-6 space-y-6"
               >
                 <h2 className="text-2xl font-black uppercase mb-4">Step 3: Media & Promo</h2>
 
@@ -362,7 +363,7 @@ export default function CreateBeacon() {
                     moderate={true}
                   />
                   {formData.image_url && (
-                    <img src={formData.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg border-2 border-[#FF1493] mt-3" />
+                    <img src={formData.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg border-2 border-[#E62020] mt-3" />
                   )}
                 </div>
 
@@ -379,7 +380,7 @@ export default function CreateBeacon() {
                     moderate={true}
                   />
                   {formData.video_url && (
-                    <video src={formData.video_url} controls className="w-full h-48 rounded-lg border-2 border-[#FF1493] mt-3" />
+                    <video src={formData.video_url} controls className="w-full h-48 rounded-lg border-2 border-[#E62020] mt-3" />
                   )}
                 </div>
 
@@ -387,7 +388,7 @@ export default function CreateBeacon() {
                   <Button type="button" onClick={prevStep} variant="outline" className="border-white/20 text-white rounded-none">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
-                  <Button type="button" onClick={nextStep} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
+                  <Button type="button" onClick={nextStep} className="bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black rounded-none">
                     Next <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -400,7 +401,7 @@ export default function CreateBeacon() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
+                className="bg-white/5 border-2 border-[#E62020] rounded-none p-6 space-y-6"
               >
                 <h2 className="text-2xl font-black uppercase mb-4">Step 4: Engagement</h2>
 

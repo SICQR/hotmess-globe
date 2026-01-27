@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
+import { logger } from '@/utils/logger';
 
 const DELETION_CONSEQUENCES = [
   'Your profile and all personal information will be permanently deleted',
@@ -44,7 +45,7 @@ export default function AccountDeletion() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'AccountDeletion' });
         navigate(createPageUrl('Auth'));
       } finally {
         setLoading(false);
@@ -178,7 +179,7 @@ export default function AccountDeletion() {
       }, 2000);
 
     } catch (error) {
-      console.error('Deletion failed:', error);
+      logger.error('Account deletion failed', { error: error?.message, context: 'AccountDeletion' });
       toast.error('Failed to delete account. Please contact support.');
       setDeleting(false);
     }
@@ -187,7 +188,7 @@ export default function AccountDeletion() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FF1493]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#E62020]" />
       </div>
     );
   }

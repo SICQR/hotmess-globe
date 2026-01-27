@@ -7,6 +7,7 @@ import { TrendingUp, Users, Eye, Zap, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Button } from '@/components/ui/button';
+import { logger } from '@/utils/logger';
 
 export default function OrganizerDashboard() {
   const [user, setUser] = useState(null);
@@ -17,7 +18,7 @@ export default function OrganizerDashboard() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'OrganizerDashboard' });
       }
     };
     fetchUser();
@@ -66,7 +67,7 @@ export default function OrganizerDashboard() {
             <p className="text-white/60">Track your event performance</p>
           </div>
           <Link to={createPageUrl('CreateBeacon')}>
-            <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+            <Button className="bg-[#E62020] hover:bg-[#E62020]/90 text-black">
               <Plus className="w-4 h-4 mr-2" />
               Create Event
             </Button>
@@ -78,9 +79,9 @@ export default function OrganizerDashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/40 rounded-xl p-6"
+            className="bg-gradient-to-br from-[#E62020]/20 to-[#B026FF]/20 border border-[#E62020]/40 rounded-xl p-6"
           >
-            <TrendingUp className="w-8 h-8 text-[#FF1493] mb-2" />
+            <TrendingUp className="w-8 h-8 text-[#E62020] mb-2" />
             <div className="text-3xl font-black mb-1">{myBeacons.length}</div>
             <div className="text-sm text-white/60">Active Events</div>
           </motion.div>
@@ -111,7 +112,7 @@ export default function OrganizerDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-gradient-to-br from-[#B026FF]/20 to-[#FF1493]/20 border border-[#B026FF]/40 rounded-xl p-6"
+            className="bg-gradient-to-br from-[#B026FF]/20 to-[#E62020]/20 border border-[#B026FF]/40 rounded-xl p-6"
           >
             <Zap className="w-8 h-8 text-[#B026FF] mb-2" />
             <div className="text-3xl font-black mb-1">{totalXpGiven}</div>
@@ -136,7 +137,7 @@ export default function OrganizerDashboard() {
                 contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }}
                 labelStyle={{ color: '#fff' }}
               />
-              <Bar dataKey="scans" fill="#FF1493" />
+              <Bar dataKey="scans" fill="#E62020" />
               <Bar dataKey="visits" fill="#00D9FF" />
               <Bar dataKey="likes" fill="#FFEB3B" />
             </BarChart>
@@ -193,7 +194,7 @@ export default function OrganizerDashboard() {
                       </Button>
                     </Link>
                     <Link to={createPageUrl(`EditBeacon?id=${beacon.id}`)} className="flex-1">
-                      <Button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black rounded-none text-xs font-bold">
+                      <Button className="w-full bg-[#E62020] hover:bg-[#E62020]/90 text-black rounded-none text-xs font-bold">
                         EDIT
                       </Button>
                     </Link>

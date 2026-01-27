@@ -2,13 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Bell, Shield, LogOut, Save, Edit, Camera, Download, Trash2, Database } from 'lucide-react';
+import { User, Bell, Shield, LogOut, Save, Edit, Camera, Download, Trash2, Database, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
+import { logger } from '@/utils/logger';
+import { LanguageSettingsRow } from '@/components/i18n/LanguageSwitcher';
+import { SyncStatusPanel } from '@/components/ui/PendingSyncIndicator';
+import { CloudOff } from 'lucide-react';
 
 export default function Settings() {
   const [user, setUser] = useState(null);
@@ -35,7 +39,7 @@ export default function Settings() {
         setAvatarUrl(currentUser?.avatar_url || '');
         setLocationPrivacy(currentUser?.location_privacy_mode || 'fuzzy');
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Settings' });
       }
     };
     fetchUser();
@@ -52,7 +56,7 @@ export default function Settings() {
       await base44.auth.updateMe({ avatar_url: file_url });
       toast.success('Avatar updated!');
     } catch (error) {
-      console.error('Upload failed:', error);
+      logger.error('Avatar upload failed', { error: error?.message, context: 'Settings' });
       toast.error('Failed to upload avatar');
     } finally {
       setUploading(false);
@@ -67,7 +71,7 @@ export default function Settings() {
       });
       toast.success('Settings saved successfully');
     } catch (error) {
-      console.error('Failed to save:', error);
+      logger.error('Failed to save settings', { error: error?.message, context: 'Settings' });
       toast.error('Failed to save settings');
     }
   };
@@ -108,7 +112,7 @@ export default function Settings() {
         >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-[#FF1493]" />
+              <User className="w-5 h-5 text-[#E62020]" />
               <h2 className="text-xl font-bold uppercase tracking-wider">Profile</h2>
             </div>
             <Link to={createPageUrl('EditProfile')}>
@@ -126,7 +130,7 @@ export default function Settings() {
                 Profile Picture
               </label>
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#E62020] to-[#B026FF] flex items-center justify-center overflow-hidden">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
@@ -177,7 +181,7 @@ export default function Settings() {
             </div>
 
             <div className="pt-4 flex gap-3">
-              <Button onClick={handleSave} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+              <Button onClick={handleSave} className="bg-[#E62020] hover:bg-[#E62020]/90 text-black">
                 <Save className="w-4 h-4 mr-2" />
                 Save Changes
               </Button>
@@ -213,6 +217,34 @@ export default function Settings() {
               <Switch checked={notifications} onCheckedChange={setNotifications} />
             </div>
           </div>
+        </motion.div>
+
+        {/* Language */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <Globe className="w-5 h-5 text-[#FFD700]" />
+            <h2 className="text-xl font-bold uppercase tracking-wider">Language</h2>
+          </div>
+          <LanguageSettingsRow />
+        </motion.div>
+
+        {/* Sync Status */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.27 }}
+          className="mb-4"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <CloudOff className="w-5 h-5 text-[#00D9FF]" />
+            <h2 className="text-xl font-bold uppercase tracking-wider">Offline Sync</h2>
+          </div>
+          <SyncStatusPanel />
         </motion.div>
 
         {/* Privacy */}
@@ -279,7 +311,7 @@ export default function Settings() {
             <Link to={createPageUrl('DataExport')}>
               <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
                 <div className="flex items-center gap-3">
-                  <Download className="w-5 h-5 text-[#FF1493]" />
+                  <Download className="w-5 h-5 text-[#E62020]" />
                   <div>
                     <p className="font-semibold">Export My Data</p>
                     <p className="text-sm text-white/60">Download a copy of all your data (GDPR)</p>

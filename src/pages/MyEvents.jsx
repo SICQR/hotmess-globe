@@ -11,6 +11,7 @@ import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fromUTC } from '../components/utils/dateUtils';
+import { logger } from '@/utils/logger';
 
 export default function MyEvents() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -22,7 +23,7 @@ export default function MyEvents() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'MyEvents' });
       }
     };
     fetchUser();
@@ -168,7 +169,7 @@ export default function MyEvents() {
             <p className="text-white/60 uppercase text-sm">Manage your events</p>
           </div>
           <Link to={createPageUrl('CreateBeacon')}>
-            <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black">
+            <Button className="bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black">
               <Plus className="w-4 h-4 mr-2" />
               CREATE EVENT
             </Button>
@@ -194,7 +195,7 @@ export default function MyEvents() {
                 <Calendar className="w-16 h-16 mx-auto mb-4 text-white/20" />
                 <p className="text-white/40 mb-4">No published events</p>
                 <Link to={createPageUrl('CreateBeacon')}>
-                  <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black">
+                  <Button className="bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black">
                     Create Your First Event
                   </Button>
                 </Link>

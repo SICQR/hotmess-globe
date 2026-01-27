@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import MessageButton from '../components/social/MessageButton';
 import QRCodeGenerator from '../components/orders/QRCodeGenerator';
 import OrderQRScanner from '../components/orders/OrderQRScanner';
+import { logger } from '@/utils/logger';
 import MarketplaceReviewModal from '../components/marketplace/MarketplaceReviewModal';
 
 const STATUS_CONFIG = {
@@ -36,7 +37,7 @@ export default function OrderHistory() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'OrderHistory' });
       }
     };
     fetchUser();
@@ -228,7 +229,7 @@ export default function OrderHistory() {
                   <div className="flex-1">
                     <Link 
                       to={createPageUrl(`ProductDetail?id=${item.product_id}`)}
-                      className="text-white hover:text-[#FF1493] transition-colors font-semibold block"
+                      className="text-white hover:text-[#E62020] transition-colors font-semibold block"
                     >
                       {item.product_name}
                     </Link>
@@ -373,7 +374,7 @@ export default function OrderHistory() {
                 <p className="text-white/40 text-lg mb-4">No purchases yet</p>
                 <Link 
                   to="/market"
-                  className="text-[#FF1493] hover:underline"
+                  className="text-[#E62020] hover:underline"
                 >
                   Browse Market
                 </Link>
@@ -392,7 +393,7 @@ export default function OrderHistory() {
                 <p className="text-white/40 text-lg mb-4">No sales yet</p>
                 <Link 
                   to={createPageUrl('SellerDashboard')}
-                  className="text-[#FF1493] hover:underline"
+                  className="text-[#E62020] hover:underline"
                 >
                   Start Selling
                 </Link>

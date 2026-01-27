@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowLeft, Users, Tag, Zap, Check } from 'lucide-react';
 import { taxonomyConfig } from '../components/discovery/taxonomyConfig';
 import TagSelector from '../components/discovery/TagSelector';
+import { logger } from '@/utils/logger';
 
 export default function Onboarding() {
   const [step, setStep] = useState(1);
@@ -27,7 +28,7 @@ export default function Onboarding() {
           navigate(createPageUrl('Home'));
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Onboarding' });
       }
     };
     fetchUser();
@@ -86,12 +87,12 @@ export default function Onboarding() {
               exit={{ opacity: 0, x: -20 }}
               className="text-center"
             >
-              <Zap className="w-20 h-20 text-[#FF1493] mx-auto mb-6" />
+              <Zap className="w-20 h-20 text-[#E62020] mx-auto mb-6" />
               <h1 className="text-5xl font-black uppercase mb-4">Welcome to HOTMESS</h1>
               <p className="text-xl text-white/60 mb-8">London's nightlife OS. Let's get you set up.</p>
               <Button
                 onClick={() => setStep(2)}
-                className="bg-[#FF1493] text-black font-black text-lg px-8 py-6"
+                className="bg-[#E62020] text-black font-black text-lg px-8 py-6"
               >
                 Let's go <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
@@ -190,7 +191,7 @@ export default function Onboarding() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <Check className="w-16 h-16 text-[#FF1493] mb-4" />
+              <Check className="w-16 h-16 text-[#E62020] mb-4" />
               <h2 className="text-3xl font-black uppercase mb-2">What Are You Looking For?</h2>
               <p className="text-white/60 mb-6">You can always change this later</p>
               
@@ -208,7 +209,7 @@ export default function Onboarding() {
                     }}
                     className={`px-4 py-3 text-sm font-bold uppercase border-2 ${
                       lookingFor.includes(option)
-                        ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                        ? 'bg-[#E62020] border-[#E62020] text-black'
                         : 'bg-white/5 border-white/20 text-white/60'
                     }`}
                   >
@@ -223,7 +224,7 @@ export default function Onboarding() {
                 </Button>
                 <Button 
                   onClick={handleComplete} 
-                  className="flex-1 bg-[#FF1493] text-black font-black"
+                  className="flex-1 bg-[#E62020] text-black font-black"
                 >
                   <Check className="w-4 h-4 mr-2" /> Complete Setup
                 </Button>
@@ -237,7 +238,7 @@ export default function Onboarding() {
           {[1, 2, 3, 4].map(s => (
             <div
               key={s}
-              className={`w-2 h-2 rounded-full ${s <= step ? 'bg-[#FF1493]' : 'bg-white/20'}`}
+              className={`w-2 h-2 rounded-full ${s <= step ? 'bg-[#E62020]' : 'bg-white/20'}`}
             />
           ))}
         </div>

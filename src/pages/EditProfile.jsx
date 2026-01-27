@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { ArrowLeft, Save, User, Upload, Plus, X, Users as UsersIcon, Image as ImageIcon, Video as VideoIcon, Crown, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,8 @@ import TagSelector from '../components/discovery/TagSelector';
 import { PhotoGallery, VideoUploader, PremiumVideoManager } from '../components/profile/MediaGallery';
 import { validateBio } from '../components/utils/validation';
 import { sanitizeSocialLinks } from '../components/utils/sanitize';
-import logger from '@/utils/logger';
+import { logger } from '@/utils/logger';
+import { isPersonasEnabled } from '@/lib/featureFlags';
 
 const VIBE_OPTIONS = ['techno', 'house', 'drag', 'indie', 'late_night', 'chill', 'wild', 'artsy'];
 const EVENT_VIBES = ['techno', 'house', 'drag', 'late_night', 'underground', 'warehouse', 'rooftop', 'intimate'];
@@ -25,17 +26,17 @@ const ACTIVITY_STATUSES = [
   { value: 'online', label: 'Online', color: '#00D9FF' },
   { value: 'busy', label: 'Busy', color: '#FF6B35' },
   { value: 'looking_for_collabs', label: 'Looking for Collaborators', color: '#39FF14' },
-  { value: 'at_event', label: 'At Event', color: '#FF1493' },
+  { value: 'at_event', label: 'At Event', color: '#E62020' },
   { value: 'offline', label: 'Offline', color: '#666' },
 ];
 const SKILLS = ['DJ', 'Producer', 'Designer', 'Photographer', 'Videographer', 'Promoter', 'Artist', 'Performer'];
 
 const PROFILE_THEMES = [
-  { id: 'default', label: 'Default', gradient: 'from-[#FF1493] to-[#B026FF]' },
+  { id: 'default', label: 'Default', gradient: 'from-[#E62020] to-[#B026FF]' },
   { id: 'cyber', label: 'Cyber', gradient: 'from-[#00D9FF] to-[#39FF14]' },
   { id: 'sunset', label: 'Sunset', gradient: 'from-[#FF6B35] to-[#FFEB3B]' },
   { id: 'midnight', label: 'Midnight', gradient: 'from-[#1a1a2e] to-[#16213e]' },
-  { id: 'neon', label: 'Neon', gradient: 'from-[#FF1493] to-[#00D9FF]' }
+  { id: 'neon', label: 'Neon', gradient: 'from-[#E62020] to-[#00D9FF]' }
 ];
 
 export default function EditProfile() {
@@ -75,7 +76,7 @@ export default function EditProfile() {
   const [availabilityStatus, setAvailabilityStatus] = useState('offline');
   const [preferredCommunication, setPreferredCommunication] = useState([]);
   const [profileTheme, setProfileTheme] = useState('default');
-  const [accentColor, setAccentColor] = useState('#FF1493');
+  const [accentColor, setAccentColor] = useState('#E62020');
   const [tagVisibility, setTagVisibility] = useState({
     substances_visibility: 'nobody',
     aftercare_visibility: 'matches',
@@ -139,7 +140,7 @@ export default function EditProfile() {
         setAvailabilityStatus(user.availability_status || 'offline');
         setPreferredCommunication(user.preferred_communication || []);
         setProfileTheme(user.profile_theme || 'default');
-        setAccentColor(user.accent_color || '#FF1493');
+        setAccentColor(user.accent_color || '#E62020');
         setProfileType(user.profile_type || 'standard');
         setSellerBio(user.seller_bio || '');
         setSellerTagline(user.seller_tagline || '');
@@ -312,7 +313,7 @@ export default function EditProfile() {
             }
           }
         } catch (tagSyncError) {
-          console.warn('Profile updated, but tags/tribes sync failed (non-fatal)', tagSyncError);
+          logger.warn('Profile updated, but tags/tribes sync failed (non-fatal)', { error: tagSyncError?.message, context: 'EditProfile' });
         }
       }
 
@@ -383,9 +384,28 @@ export default function EditProfile() {
           <h1 className="text-4xl font-black uppercase mb-2">Edit Profile</h1>
           <p className="text-white/40 text-sm uppercase tracking-wider mb-8">Customize your hotmess presence</p>
 
+          {/* Personas Link */}
+          {isPersonasEnabled() && (
+            <Link 
+              to="/personas"
+              className="block mb-6 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-2 border-purple-500/50 hover:border-purple-400 p-4 transition-all group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🎭</span>
+                  <div>
+                    <h3 className="font-black uppercase text-white">Manage Personas</h3>
+                    <p className="text-xs text-white/50">Create secondary profiles for travel, weekends & more</p>
+                  </div>
+                </div>
+                <ArrowLeft className="w-5 h-5 text-purple-400 rotate-180 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Profile Type */}
-            <div className="bg-black border-2 border-[#FF1493] p-6">
+            <div className="bg-black border-2 border-[#E62020] p-6">
               <Label className="text-xs uppercase tracking-widest text-white/40 mb-4 block">Profile Type</Label>
               <p className="text-xs text-white/60 mb-4">Changes how your profile displays and what features are available</p>
               <div className="grid grid-cols-2 gap-3">
@@ -401,7 +421,7 @@ export default function EditProfile() {
                     onClick={() => setProfileType(type.value)}
                     className={`p-4 text-left border-2 transition-all ${
                       profileType === type.value
-                        ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                        ? 'bg-[#E62020] border-[#E62020] text-black'
                         : 'bg-white/5 border-white/20 text-white hover:border-white/40'
                     }`}
                   >
@@ -499,7 +519,7 @@ export default function EditProfile() {
                     type="text"
                     value={accentColor}
                     onChange={(e) => setAccentColor(e.target.value)}
-                    placeholder="#FF1493"
+                    placeholder="#E62020"
                     className="bg-white/5 border-white/20 text-white flex-1"
                   />
                 </div>
@@ -555,16 +575,16 @@ export default function EditProfile() {
             <div className="bg-black border-2 border-[#FFD700] p-6">
               <Label className="text-xs uppercase tracking-widest text-[#FFD700] mb-4 flex items-center gap-2">
                 <Crown className="w-4 h-4" />
-                Premium Videos (Coming Soon)
+                Premium Videos
               </Label>
               <p className="text-xs text-white/60 mb-4">Upload locked videos that users pay XP to unlock</p>
-              <PremiumVideoManager videos={premiumVideos} onVideosChange={setPremiumVideos} />
+              <PremiumVideoManager videos={premiumVideos} onVideosChange={setPremiumVideos} maxVideos={5} unlockPrice={premiumUnlockXp} />
             </div>
 
             {/* Avatar & Bio */}
             <div className="bg-black border-2 border-white p-6">
               <div className="flex items-center gap-6 mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden border-2 border-white">
+                <div className="w-24 h-24 bg-gradient-to-br from-[#E62020] to-[#B026FF] flex items-center justify-center overflow-hidden border-2 border-white">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
@@ -576,7 +596,7 @@ export default function EditProfile() {
                     type="button"
                     onClick={() => document.getElementById('avatar-upload-edit').click()}
                     disabled={uploading}
-                    className="bg-white text-black hover:bg-[#FF1493] font-bold"
+                    className="bg-white text-black hover:bg-[#E62020] font-bold"
                   >
                     <Upload className="w-4 h-4 mr-2" />
                     {uploading ? 'Uploading...' : 'Upload Photo'}
@@ -641,7 +661,7 @@ export default function EditProfile() {
                     onClick={() => toggleVibe(vibe)}
                     className={`px-4 py-2 text-xs font-black uppercase border-2 transition-all ${
                       preferredVibes.includes(vibe)
-                        ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                        ? 'bg-[#E62020] border-[#E62020] text-black'
                         : 'bg-white/5 border-white/20 text-white/60 hover:border-white/40'
                     }`}
                   >
@@ -766,7 +786,7 @@ export default function EditProfile() {
                   { value: 'available', label: 'Available', color: '#39FF14' },
                   { value: 'busy', label: 'Busy', color: '#FF6B35' },
                   { value: 'away', label: 'Away', color: '#FFEB3B' },
-                  { value: 'do_not_disturb', label: 'Do Not Disturb', color: '#FF1493' },
+                  { value: 'do_not_disturb', label: 'Do Not Disturb', color: '#E62020' },
                   { value: 'offline', label: 'Offline', color: '#666' }
                 ].map(({ value, label, color }) => (
                   <button
@@ -848,7 +868,7 @@ export default function EditProfile() {
                       setNewDealbreaker('');
                     }
                   }}
-                  className="bg-[#FF1493] text-black hover:bg-[#FF1493]/90"
+                  className="bg-[#E62020] text-black hover:bg-[#E62020]/90"
                 >
                   <Plus className="w-4 h-4" />
                 </Button>
@@ -881,7 +901,7 @@ export default function EditProfile() {
                   type="button"
                   onClick={addPortfolioItem}
                   size="sm"
-                  className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black"
+                  className="bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black"
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Add Item
@@ -1009,7 +1029,7 @@ export default function EditProfile() {
                       }}
                       className={`px-3 py-2 text-xs font-bold uppercase border-2 ${
                         lookingFor.includes(option)
-                          ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                          ? 'bg-[#E62020] border-[#E62020] text-black'
                           : 'bg-white/5 border-white/20 text-white/60'
                       }`}
                     >
@@ -1117,7 +1137,7 @@ export default function EditProfile() {
             <Button
               type="submit"
               disabled={updateProfileMutation.isPending || isSavingProfile}
-              className="w-full bg-[#FF1493] hover:bg-white text-black font-black text-lg py-6 border-2 border-white shadow-[0_0_10px_#FF1493]"
+              className="w-full bg-[#E62020] hover:bg-white text-black font-black text-lg py-6 border-2 border-white shadow-[0_0_10px_#E62020]"
             >
               {updateProfileMutation.isPending || isSavingProfile ? 'SAVING...' : (
                 <>

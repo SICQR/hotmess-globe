@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { logger } from '@/utils/logger';
 
 export default function Bookmarks() {
   const [user, setUser] = useState(null);
@@ -24,7 +25,7 @@ export default function Bookmarks() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Bookmarks' });
       }
     };
     fetchUser();
@@ -109,7 +110,7 @@ export default function Bookmarks() {
             onClick={() => setActiveTab('beacons')}
             className={`flex items-center gap-2 px-6 py-3 rounded-lg font-black uppercase text-sm transition-all ${
               activeTab === 'beacons'
-                ? 'bg-[#FF1493] text-black'
+                ? 'bg-[#E62020] text-black'
                 : 'bg-white/5 text-white hover:bg-white/10'
             }`}
           >
@@ -120,7 +121,7 @@ export default function Bookmarks() {
             onClick={() => setActiveTab('products')}
             className={`flex items-center gap-2 px-6 py-3 rounded-lg font-black uppercase text-sm transition-all ${
               activeTab === 'products'
-                ? 'bg-[#FF1493] text-black'
+                ? 'bg-[#E62020] text-black'
                 : 'bg-white/5 text-white hover:bg-white/10'
             }`}
           >
@@ -138,7 +139,7 @@ export default function Bookmarks() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-white/5 border-2 border-white/10 rounded-xl p-5 hover:border-[#FF1493] hover:bg-white/10 transition-all"
+                  className="bg-white/5 border-2 border-white/10 rounded-xl p-5 hover:border-[#E62020] hover:bg-white/10 transition-all"
                 >
                   {beacon.image_url && (
                     <img src={beacon.image_url} alt={beacon.title} className="w-full h-32 object-cover rounded-lg mb-3" />

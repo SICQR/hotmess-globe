@@ -18,6 +18,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { debounce } from 'lodash';
 import ErrorBoundary from '../components/error/ErrorBoundary';
+import { logger } from '@/utils/logger';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 
@@ -149,7 +150,7 @@ export default function GlobePage() {
         );
         setUserActivities(activityTracker.pruneOldActivities(activities));
       } catch (error) {
-        console.error('Failed to fetch activities:', error);
+        logger.error('Failed to fetch activities', { error: error?.message, context: 'Globe' });
       }
     };
 

@@ -10,6 +10,8 @@ import { useServerNow } from '@/hooks/use-server-now';
 import { toast } from 'sonner';
 import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { format } from 'date-fns';
+import { RotatingUSPBanner } from '@/components/ui/USPBanner';
+import { logger } from '@/utils/logger';
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
 // Shopify product handles are not the same as release slugs.
@@ -265,7 +267,7 @@ export default function Home() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Home' });
         setCurrentUser(null);
       }
     };
@@ -326,6 +328,14 @@ export default function Home() {
           </div>
         </motion.div>
       </section>
+
+      {/* Rotating USP Banner */}
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <RotatingUSPBanner 
+          types={['care-first', 'privacy-grid', 'right-now', 'community']} 
+          interval={8000} 
+        />
+      </div>
 
       {/* LUBE CTA (always visible) */}
       <section className="py-16 px-6 bg-black">

@@ -1,5 +1,6 @@
 import { getEnv, getQueryParam, json } from '../../shopify/_utils.js';
 import { getSupabaseServerClients } from '../../routing/_utils.js';
+import { requireAdminOrCron } from '../../_middleware/adminAuth.js';
 
 const getHeader = (req, name) => {
   const value = req?.headers?.[name] || req?.headers?.[name.toLowerCase()] || req?.headers?.[name.toUpperCase()];
@@ -19,7 +20,7 @@ const isVercelCronRequest = (req) => {
 
 const getSecret = () => getEnv('RATE_LIMIT_CLEANUP_SECRET', ['CRON_SECRET']);
 
-const isAuthorized = (req) => {
+const isAuthorizedLegacy = (req) => {
   const secret = getSecret();
   const allowVercelCron = isRunningOnVercel() && isVercelCronRequest(req);
 
@@ -48,7 +49,11 @@ export default async function handler(req, res) {
     return json(res, 405, { error: 'Method not allowed' });
   }
 
-  if (!isAuthorized(req)) {
+  // Try new centralized admin/cron auth first
+  const authResult = await requireAdminOrCron(req);
+  
+  // Fall back to legacy cron auth if new auth fails (for backwards compatibility)
+  if (authResult.error && !isAuthorizedLegacy(req)) {
     return json(res, 401, { error: 'Unauthorized' });
   }
 

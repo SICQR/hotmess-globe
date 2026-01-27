@@ -1,217 +1,407 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 
 /**
  * Virtual List Component
- * Renders only visible items for performance with long lists
+ * Efficiently renders large lists by only rendering visible items
+ * 
+ * Usage:
+ * <VirtualList
+ *   items={items}
+ *   itemHeight={80}
+ *   renderItem={(item, index) => <ItemComponent item={item} />}
+ * />
  */
-export default function VirtualList({
+export function VirtualList({
   items,
   itemHeight,
-  containerHeight,
   renderItem,
-  overscan = 3,
+  overscan = 3, // Number of items to render above/below viewport
   className = '',
-  onEndReached,
-  endReachedThreshold = 0.8,
+  loadMore,
+  hasMore = false,
+  isLoading = false,
+  estimatedItemHeight = 80, // For variable height items
+  getItemHeight, // Function to get specific item height
+  emptyComponent,
+  loadingComponent,
 }) {
   const containerRef = useRef(null);
   const [scrollTop, setScrollTop] = useState(0);
-
-  const totalHeight = items.length * itemHeight;
-  const visibleCount = Math.ceil(containerHeight / itemHeight);
+  const [containerHeight, setContainerHeight] = useState(0);
   
-  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
-  const endIndex = Math.min(
-    items.length - 1,
-    Math.floor(scrollTop / itemHeight) + visibleCount + overscan
-  );
+  // Calculate total height and visible range
+  const { totalHeight, visibleItems, startIndex, endIndex } = useMemo(() => {
+    if (items.length === 0) {
+      return { totalHeight: 0, visibleItems: [], startIndex: 0, endIndex: 0 };
+    }
+    
+    // Calculate heights
+    let totalHeight = 0;
+    const itemHeights = [];
+    const itemOffsets = [];
+    
+    for (let i = 0; i < items.length; i++) {
+      itemOffsets.push(totalHeight);
+      const height = getItemHeight 
+        ? getItemHeight(items[i], i) 
+        : itemHeight || estimatedItemHeight;
+      itemHeights.push(height);
+      totalHeight += height;
+    }
+    
+    // Find visible range using binary search
+    let startIndex = 0;
+    let endIndex = items.length - 1;
+    
+    // Find start index
+    for (let i = 0; i < items.length; i++) {
+      if (itemOffsets[i] + itemHeights[i] > scrollTop) {
+        startIndex = Math.max(0, i - overscan);
+        break;
+      }
+    }
+    
+    // Find end index
+    const viewportBottom = scrollTop + containerHeight;
+    for (let i = startIndex; i < items.length; i++) {
+      if (itemOffsets[i] >= viewportBottom) {
+        endIndex = Math.min(items.length - 1, i + overscan);
+        break;
+      }
+    }
+    
+    // Get visible items with their offsets
+    const visibleItems = [];
+    for (let i = startIndex; i <= endIndex; i++) {
+      visibleItems.push({
+        item: items[i],
+        index: i,
+        offset: itemOffsets[i],
+        height: itemHeights[i],
+      });
+    }
+    
+    return { totalHeight, visibleItems, startIndex, endIndex };
+  }, [items, scrollTop, containerHeight, itemHeight, estimatedItemHeight, overscan, getItemHeight]);
   
-  const visibleItems = items.slice(startIndex, endIndex + 1);
-  const offsetY = startIndex * itemHeight;
-
+  // Handle scroll
   const handleScroll = useCallback((e) => {
     const newScrollTop = e.target.scrollTop;
     setScrollTop(newScrollTop);
     
-    // Check if we've scrolled near the end
-    if (onEndReached) {
-      const scrollPercentage = (newScrollTop + containerHeight) / totalHeight;
-      if (scrollPercentage >= endReachedThreshold) {
-        onEndReached();
+    // Infinite scroll: Load more when near bottom
+    if (loadMore && hasMore && !isLoading) {
+      const scrollHeight = e.target.scrollHeight;
+      const clientHeight = e.target.clientHeight;
+      const threshold = clientHeight * 2; // Load when 2x viewport from bottom
+      
+      if (scrollHeight - newScrollTop - clientHeight < threshold) {
+        loadMore();
       }
     }
-  }, [containerHeight, totalHeight, endReachedThreshold, onEndReached]);
-
+  }, [loadMore, hasMore, isLoading]);
+  
+  // Measure container
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerHeight(entry.contentRect.height);
+      }
+    });
+    
+    observer.observe(containerRef.current);
+    setContainerHeight(containerRef.current.clientHeight);
+    
+    return () => observer.disconnect();
+  }, []);
+  
+  // Empty state
+  if (items.length === 0 && !isLoading) {
+    if (emptyComponent) return emptyComponent;
+    return (
+      <div className="flex items-center justify-center py-12 text-white/40">
+        No items to display
+      </div>
+    );
+  }
+  
   return (
     <div
       ref={containerRef}
       className={`overflow-auto ${className}`}
-      style={{ height: containerHeight }}
+      onScroll={handleScroll}
+    >
+      <div 
+        style={{ 
+          height: totalHeight,
+          position: 'relative',
+        }}
+      >
+        {visibleItems.map(({ item, index, offset, height }) => (
+          <div
+            key={index}
+            style={{
+              position: 'absolute',
+              top: offset,
+              left: 0,
+              right: 0,
+              height,
+            }}
+          >
+            {renderItem(item, index)}
+          </div>
+        ))}
+      </div>
+      
+      {/* Loading indicator */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-4">
+          {loadingComponent || (
+            <Loader2 className="w-6 h-6 text-[#E62020] animate-spin" />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Simple Virtual List
+ * For when all items have the same height
+ */
+export function SimpleVirtualList({
+  items,
+  itemHeight,
+  renderItem,
+  overscan = 3,
+  className = '',
+  loadMore,
+  hasMore = false,
+  isLoading = false,
+}) {
+  const containerRef = useRef(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
+  
+  const totalHeight = items.length * itemHeight;
+  
+  // Calculate visible range
+  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
+  const endIndex = Math.min(
+    items.length - 1,
+    Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan
+  );
+  
+  const visibleItems = items.slice(startIndex, endIndex + 1);
+  const offsetY = startIndex * itemHeight;
+  
+  const handleScroll = useCallback((e) => {
+    setScrollTop(e.target.scrollTop);
+    
+    if (loadMore && hasMore && !isLoading) {
+      const { scrollHeight, clientHeight, scrollTop } = e.target;
+      if (scrollHeight - scrollTop - clientHeight < clientHeight) {
+        loadMore();
+      }
+    }
+  }, [loadMore, hasMore, isLoading]);
+  
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const observer = new ResizeObserver((entries) => {
+      setContainerHeight(entries[0].contentRect.height);
+    });
+    
+    observer.observe(containerRef.current);
+    setContainerHeight(containerRef.current.clientHeight);
+    
+    return () => observer.disconnect();
+  }, []);
+  
+  return (
+    <div
+      ref={containerRef}
+      className={`overflow-auto ${className}`}
       onScroll={handleScroll}
     >
       <div style={{ height: totalHeight, position: 'relative' }}>
         <div style={{ transform: `translateY(${offsetY}px)` }}>
-          {visibleItems.map((item, index) => (
-            <div
-              key={startIndex + index}
-              style={{ height: itemHeight }}
-            >
-              {renderItem(item, startIndex + index)}
+          {visibleItems.map((item, i) => (
+            <div key={startIndex + i} style={{ height: itemHeight }}>
+              {renderItem(item, startIndex + i)}
             </div>
           ))}
         </div>
       </div>
+      
+      {isLoading && (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="w-6 h-6 text-[#E62020] animate-spin" />
+        </div>
+      )}
     </div>
   );
 }
 
 /**
  * Virtual Grid Component
- * For grid layouts with virtualization
+ * For grid layouts with many items
  */
 export function VirtualGrid({
   items,
-  itemWidth,
+  columns = 3,
   itemHeight,
-  containerHeight,
-  columns,
+  gap = 16,
   renderItem,
   overscan = 2,
-  gap = 0,
   className = '',
+  loadMore,
+  hasMore = false,
+  isLoading = false,
 }) {
   const containerRef = useRef(null);
   const [scrollTop, setScrollTop] = useState(0);
-
-  const rowHeight = itemHeight + gap;
-  const rowCount = Math.ceil(items.length / columns);
-  const totalHeight = rowCount * rowHeight;
-  const visibleRowCount = Math.ceil(containerHeight / rowHeight);
+  const [containerHeight, setContainerHeight] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
   
-  const startRowIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
-  const endRowIndex = Math.min(
-    rowCount - 1,
-    Math.floor(scrollTop / rowHeight) + visibleRowCount + overscan
+  const rows = Math.ceil(items.length / columns);
+  const rowHeight = itemHeight + gap;
+  const totalHeight = rows * rowHeight;
+  const itemWidth = (containerWidth - (columns - 1) * gap) / columns;
+  
+  // Calculate visible rows
+  const startRow = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
+  const endRow = Math.min(
+    rows - 1,
+    Math.ceil((scrollTop + containerHeight) / rowHeight) + overscan
   );
   
-  const startItemIndex = startRowIndex * columns;
-  const endItemIndex = Math.min(items.length - 1, (endRowIndex + 1) * columns - 1);
+  // Get items for visible rows
+  const visibleItems = [];
+  for (let row = startRow; row <= endRow; row++) {
+    for (let col = 0; col < columns; col++) {
+      const index = row * columns + col;
+      if (index < items.length) {
+        visibleItems.push({
+          item: items[index],
+          index,
+          row,
+          col,
+        });
+      }
+    }
+  }
   
-  const visibleItems = items.slice(startItemIndex, endItemIndex + 1);
-  const offsetY = startRowIndex * rowHeight;
-
   const handleScroll = useCallback((e) => {
     setScrollTop(e.target.scrollTop);
+    
+    if (loadMore && hasMore && !isLoading) {
+      const { scrollHeight, clientHeight, scrollTop } = e.target;
+      if (scrollHeight - scrollTop - clientHeight < clientHeight) {
+        loadMore();
+      }
+    }
+  }, [loadMore, hasMore, isLoading]);
+  
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const observer = new ResizeObserver((entries) => {
+      setContainerHeight(entries[0].contentRect.height);
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    
+    observer.observe(containerRef.current);
+    setContainerHeight(containerRef.current.clientHeight);
+    setContainerWidth(containerRef.current.clientWidth);
+    
+    return () => observer.disconnect();
   }, []);
-
+  
   return (
     <div
       ref={containerRef}
       className={`overflow-auto ${className}`}
-      style={{ height: containerHeight }}
       onScroll={handleScroll}
     >
       <div style={{ height: totalHeight, position: 'relative' }}>
-        <div 
-          style={{ 
-            transform: `translateY(${offsetY}px)`,
-            display: 'grid',
-            gridTemplateColumns: `repeat(${columns}, ${itemWidth}px)`,
-            gap: `${gap}px`,
-          }}
-        >
-          {visibleItems.map((item, index) => (
-            <div
-              key={startItemIndex + index}
-              style={{ height: itemHeight, width: itemWidth }}
-            >
-              {renderItem(item, startItemIndex + index)}
-            </div>
-          ))}
-        </div>
+        {visibleItems.map(({ item, index, row, col }) => (
+          <div
+            key={index}
+            style={{
+              position: 'absolute',
+              top: row * rowHeight,
+              left: col * (itemWidth + gap),
+              width: itemWidth,
+              height: itemHeight,
+            }}
+          >
+            {renderItem(item, index)}
+          </div>
+        ))}
       </div>
+      
+      {isLoading && (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="w-6 h-6 text-[#E62020] animate-spin" />
+        </div>
+      )}
     </div>
   );
 }
 
 /**
- * Infinite Scroll Hook
- * For implementing infinite scroll with pagination
+ * Infinite Scroll Wrapper
+ * Wraps any content with infinite scroll capability
  */
-export function useInfiniteScroll(callback, options = {}) {
-  const { threshold = 100, enabled = true } = options;
-  const observerRef = useRef(null);
-  const loadingRef = useRef(false);
-
-  const sentinelRef = useCallback((node) => {
-    if (!enabled) return;
-    
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loadingRef.current) {
-          loadingRef.current = true;
-          Promise.resolve(callback()).finally(() => {
-            loadingRef.current = false;
-          });
-        }
-      },
-      { rootMargin: `${threshold}px` }
-    );
-
-    if (node) {
-      observerRef.current.observe(node);
-    }
-  }, [callback, threshold, enabled]);
-
-  useEffect(() => {
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
-  }, []);
-
-  return sentinelRef;
-}
-
-/**
- * Lazy Load Component Wrapper
- * Loads component only when visible
- */
-export function LazyLoad({ 
-  children, 
-  placeholder, 
-  rootMargin = '200px',
-  className = '' 
+export function InfiniteScroll({
+  children,
+  loadMore,
+  hasMore,
+  isLoading,
+  threshold = 200,
+  className = '',
+  loadingComponent,
 }) {
-  const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin }
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
+  const containerRef = useRef(null);
+  
+  const handleScroll = useCallback((e) => {
+    if (!hasMore || isLoading) return;
+    
+    const { scrollHeight, clientHeight, scrollTop } = e.target;
+    if (scrollHeight - scrollTop - clientHeight < threshold) {
+      loadMore();
     }
-
-    return () => observer.disconnect();
-  }, [rootMargin]);
-
+  }, [loadMore, hasMore, isLoading, threshold]);
+  
   return (
-    <div ref={ref} className={className}>
-      {isVisible ? children : placeholder}
+    <div
+      ref={containerRef}
+      className={`overflow-auto ${className}`}
+      onScroll={handleScroll}
+    >
+      {children}
+      
+      {isLoading && (
+        <div className="flex items-center justify-center py-4">
+          {loadingComponent || (
+            <Loader2 className="w-6 h-6 text-[#E62020] animate-spin" />
+          )}
+        </div>
+      )}
+      
+      {!hasMore && !isLoading && (
+        <div className="text-center py-4 text-white/40 text-sm">
+          No more items to load
+        </div>
+      )}
     </div>
   );
 }
+
+export default VirtualList;

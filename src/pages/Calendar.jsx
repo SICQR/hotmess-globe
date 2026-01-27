@@ -7,6 +7,7 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, Clock, Use
 import { Button } from '@/components/ui/button';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
 import PageShell from '@/components/shell/PageShell';
+import { logger } from '@/utils/logger';
 
 export default function Calendar() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -19,7 +20,7 @@ export default function Calendar() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Calendar' });
       }
     };
     fetchUser();
@@ -133,7 +134,7 @@ export default function Calendar() {
                     onClick={() => setSelectedDate(day)}
                     className={`
                       aspect-square border-2 p-2 transition-all relative
-                      ${isSelected ? 'border-[#FF1493] bg-[#FF1493]/20' : 'border-white/10 hover:border-white/30'}
+                      ${isSelected ? 'border-[#E62020] bg-[#E62020]/20' : 'border-white/10 hover:border-white/30'}
                       ${!isCurrentMonth && 'opacity-40'}
                       ${isToday && 'border-[#00D9FF]'}
                     `}
@@ -147,7 +148,7 @@ export default function Calendar() {
                           <div
                             key={idx}
                             className={`w-1.5 h-1.5 rounded-full ${
-                              myRsvpIds.has(event.id) ? 'bg-[#39FF14]' : 'bg-[#FF1493]'
+                              myRsvpIds.has(event.id) ? 'bg-[#39FF14]' : 'bg-[#E62020]'
                             }`}
                           />
                         ))}
@@ -168,7 +169,7 @@ export default function Calendar() {
                 <span className="text-white/60">Your Events</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#FF1493]" />
+                <div className="w-3 h-3 rounded-full bg-[#E62020]" />
                 <span className="text-white/60">Other Events</span>
               </div>
               <div className="flex items-center gap-2">
@@ -181,7 +182,7 @@ export default function Calendar() {
           {/* Selected Date Events */}
           <div className="bg-white/5 border-2 border-white/10 p-6">
             <div className="flex items-center gap-2 mb-6">
-              <CalendarIcon className="w-5 h-5 text-[#FF1493]" />
+              <CalendarIcon className="w-5 h-5 text-[#E62020]" />
               <h3 className="text-xl font-black uppercase">
                 {selectedDate ? format(selectedDate, 'MMM d, yyyy') : 'Select a Date'}
               </h3>
@@ -191,7 +192,7 @@ export default function Calendar() {
               <div className="space-y-4">
                 {selectedDateEvents.map(event => (
                   <Link key={event.id} to={createPageUrl(`BeaconDetail?id=${event.id}`)}>
-                    <div className="group border-2 border-white/10 hover:border-[#FF1493] transition-all p-4">
+                    <div className="group border-2 border-white/10 hover:border-[#E62020] transition-all p-4">
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-black uppercase text-sm line-clamp-2 flex-1">
                           {event.title}

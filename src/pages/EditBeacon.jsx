@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 export default function EditBeacon() {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ export default function EditBeacon() {
       navigate(createPageUrl(`BeaconDetail?id=${beaconId}`));
     },
     onError: (error) => {
-      console.error('Failed to update beacon:', error);
+      logger.error('Failed to update beacon', { error: error?.message, context: 'EditBeacon' });
       toast.error('Failed to update event');
     }
   });
@@ -70,7 +71,7 @@ export default function EditBeacon() {
       setFormData({ ...formData, image_url: file_url });
       toast.success('Image uploaded!');
     } catch (error) {
-      console.error('Upload failed:', error);
+      logger.error('Media upload failed', { error: error?.message, context: 'EditBeacon' });
       toast.error('Upload failed');
     } finally {
       setUploading(false);
@@ -87,7 +88,7 @@ export default function EditBeacon() {
       setFormData({ ...formData, video_url: file_url });
       toast.success('Video uploaded!');
     } catch (error) {
-      console.error('Upload failed:', error);
+      logger.error('Media upload failed', { error: error?.message, context: 'EditBeacon' });
       toast.error('Upload failed');
     } finally {
       setUploading(false);
@@ -159,7 +160,7 @@ export default function EditBeacon() {
               <button
                 onClick={() => setStep(s)}
                 className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold transition-all ${
-                  s === step ? 'border-[#FF1493] bg-[#FF1493] text-black' :
+                  s === step ? 'border-[#E62020] bg-[#E62020] text-black' :
                   'border-white/20 text-white/40 hover:border-white/40'
                 }`}
               >
@@ -179,7 +180,7 @@ export default function EditBeacon() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
+                className="bg-white/5 border-2 border-[#E62020] rounded-none p-6 space-y-6"
               >
                 <h2 className="text-2xl font-black uppercase mb-4">Basic Info</h2>
                 
@@ -262,7 +263,7 @@ export default function EditBeacon() {
                 </div>
 
                 <div className="pt-4 flex justify-end">
-                  <Button type="button" onClick={() => setStep(2)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
+                  <Button type="button" onClick={() => setStep(2)} className="bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black rounded-none">
                     Next <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -275,7 +276,7 @@ export default function EditBeacon() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
+                className="bg-white/5 border-2 border-[#E62020] rounded-none p-6 space-y-6"
               >
                 <h2 className="text-2xl font-black uppercase mb-4">Location & Time</h2>
 
@@ -347,7 +348,7 @@ export default function EditBeacon() {
                   <Button type="button" onClick={() => setStep(1)} variant="outline" className="border-white/20 text-white rounded-none">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
-                  <Button type="button" onClick={() => setStep(3)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
+                  <Button type="button" onClick={() => setStep(3)} className="bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black rounded-none">
                     Next <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -360,7 +361,7 @@ export default function EditBeacon() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
+                className="bg-white/5 border-2 border-[#E62020] rounded-none p-6 space-y-6"
               >
                 <h2 className="text-2xl font-black uppercase mb-4">Media & Promo</h2>
 
@@ -388,7 +389,7 @@ export default function EditBeacon() {
                       className="hidden"
                     />
                     {formData.image_url && (
-                      <img src={formData.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg border-2 border-[#FF1493]" />
+                      <img src={formData.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg border-2 border-[#E62020]" />
                     )}
                   </div>
                 </div>
@@ -417,7 +418,7 @@ export default function EditBeacon() {
                       className="hidden"
                     />
                     {formData.video_url && (
-                      <video src={formData.video_url} controls className="w-full h-48 rounded-lg border-2 border-[#FF1493]" />
+                      <video src={formData.video_url} controls className="w-full h-48 rounded-lg border-2 border-[#E62020]" />
                     )}
                   </div>
                 </div>
@@ -426,7 +427,7 @@ export default function EditBeacon() {
                   <Button type="button" onClick={() => setStep(2)} variant="outline" className="border-white/20 text-white rounded-none">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
-                  <Button type="button" onClick={() => setStep(4)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
+                  <Button type="button" onClick={() => setStep(4)} className="bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black rounded-none">
                     Next <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -439,7 +440,7 @@ export default function EditBeacon() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
+                className="bg-white/5 border-2 border-[#E62020] rounded-none p-6 space-y-6"
               >
                 <h2 className="text-2xl font-black uppercase mb-4">Engagement</h2>
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, MessageSquare, Shield, HelpCircle, Send, CheckCircle, Loader2 } from 'lucide-react';
 import { createPageUrl } from '../utils';
 import { supabase } from '../components/utils/supabaseClient';
+import { logger } from '@/utils/logger';
 
 const CATEGORIES = [
   { id: 'general', label: 'General Inquiry', icon: MessageSquare },
@@ -59,7 +60,7 @@ export default function Contact() {
 
       if (insertError) {
         // If table doesn't exist, show success anyway (for demo)
-        console.warn('Support ticket insertion failed:', insertError);
+        logger.warn('Support ticket insertion failed', { error: insertError?.message, context: 'Contact' });
       }
 
       setSuccess(true);
@@ -71,7 +72,7 @@ export default function Contact() {
         message: '',
       });
     } catch (err) {
-      console.error('Contact form error:', err);
+      logger.error('Contact form error', { error: err?.message, context: 'Contact' });
       setError('Failed to send message. Please try again or email us directly.');
     } finally {
       setLoading(false);
@@ -104,7 +105,7 @@ export default function Contact() {
               </button>
               <Link
                 to={createPageUrl('HelpCenter')}
-                className="px-6 py-3 bg-[#FF1493] hover:bg-[#FF1493]/80 font-bold uppercase transition-colors"
+                className="px-6 py-3 bg-[#E62020] hover:bg-[#E62020]/80 font-bold uppercase transition-colors"
               >
                 Visit Help Center
               </Link>
@@ -132,15 +133,15 @@ export default function Contact() {
         <div className="grid grid-cols-2 gap-4 mb-8">
           <Link
             to={createPageUrl('HelpCenter')}
-            className="bg-white/5 border-2 border-white/10 hover:border-[#FF1493] p-4 transition-colors"
+            className="bg-white/5 border-2 border-white/10 hover:border-[#E62020] p-4 transition-colors"
           >
-            <HelpCircle className="w-6 h-6 text-[#FF1493] mb-2" />
+            <HelpCircle className="w-6 h-6 text-[#E62020] mb-2" />
             <h3 className="font-bold uppercase text-sm">Help Center</h3>
             <p className="text-xs text-white/60">Search our FAQ</p>
           </Link>
           <Link
             to={createPageUrl('Safety')}
-            className="bg-white/5 border-2 border-white/10 hover:border-[#FF1493] p-4 transition-colors"
+            className="bg-white/5 border-2 border-white/10 hover:border-[#E62020] p-4 transition-colors"
           >
             <Shield className="w-6 h-6 text-red-400 mb-2" />
             <h3 className="font-bold uppercase text-sm">Safety Center</h3>
@@ -169,7 +170,7 @@ export default function Contact() {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="w-full bg-black border-2 border-white/20 focus:border-[#FF1493] p-3 outline-none transition-colors"
+                    className="w-full bg-black border-2 border-white/20 focus:border-[#E62020] p-3 outline-none transition-colors"
                     placeholder="Your name"
                   />
                 </div>
@@ -181,7 +182,7 @@ export default function Contact() {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full bg-black border-2 border-white/20 focus:border-[#FF1493] p-3 outline-none transition-colors"
+                    className="w-full bg-black border-2 border-white/20 focus:border-[#E62020] p-3 outline-none transition-colors"
                     placeholder="your@email.com"
                   />
                 </div>
@@ -199,7 +200,7 @@ export default function Contact() {
                         onClick={() => setFormData(prev => ({ ...prev, category: cat.id }))}
                         className={`p-3 border-2 transition-colors flex items-center gap-2 ${
                           formData.category === cat.id
-                            ? 'border-[#FF1493] bg-[#FF1493]/10'
+                            ? 'border-[#E62020] bg-[#E62020]/10'
                             : 'border-white/20 hover:border-white/40'
                         }`}
                       >
@@ -219,7 +220,7 @@ export default function Contact() {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full bg-black border-2 border-white/20 focus:border-[#FF1493] p-3 outline-none transition-colors"
+                  className="w-full bg-black border-2 border-white/20 focus:border-[#E62020] p-3 outline-none transition-colors"
                   placeholder="Brief description of your inquiry"
                 />
               </div>
@@ -232,7 +233,7 @@ export default function Contact() {
                   onChange={handleChange}
                   required
                   rows={6}
-                  className="w-full bg-black border-2 border-white/20 focus:border-[#FF1493] p-3 outline-none transition-colors resize-none"
+                  className="w-full bg-black border-2 border-white/20 focus:border-[#E62020] p-3 outline-none transition-colors resize-none"
                   placeholder="Please provide as much detail as possible..."
                 />
               </div>
@@ -240,7 +241,7 @@ export default function Contact() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#FF1493] hover:bg-[#FF1493]/80 disabled:opacity-50 disabled:cursor-not-allowed p-4 font-black uppercase flex items-center justify-center gap-2 transition-colors"
+                className="w-full bg-[#E62020] hover:bg-[#E62020]/80 disabled:opacity-50 disabled:cursor-not-allowed p-4 font-black uppercase flex items-center justify-center gap-2 transition-colors"
               >
                 {loading ? (
                   <>
@@ -263,10 +264,10 @@ export default function Contact() {
           <h2 className="font-black uppercase mb-4">Direct Contact</h2>
           <div className="space-y-3 text-sm">
             <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 text-[#FF1493]" />
+              <Mail className="w-5 h-5 text-[#E62020]" />
               <div>
                 <p className="text-white/60">General Inquiries</p>
-                <a href="mailto:hello@hotmess.london" className="text-[#FF1493] hover:text-white">
+                <a href="mailto:hello@hotmess.london" className="text-[#E62020] hover:text-white">
                   hello@hotmess.london
                 </a>
               </div>

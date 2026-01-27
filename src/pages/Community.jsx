@@ -10,6 +10,7 @@ import TrendingSummary from '../components/community/TrendingSummary';
 import PersonalizedFeed from '../components/community/PersonalizedFeed';
 import PostCreator from '../components/community/PostCreator';
 import { checkRateLimit } from '../components/utils/sanitize';
+import { logger } from '@/utils/logger';
 
 export default function Community() {
   const [user, setUser] = useState(null);
@@ -23,7 +24,7 @@ export default function Community() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Community' });
       }
     };
     fetchUser();
@@ -102,9 +103,9 @@ export default function Community() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/40 rounded-xl p-4 text-center"
+            className="bg-gradient-to-br from-[#E62020]/20 to-[#B026FF]/20 border border-[#E62020]/40 rounded-xl p-4 text-center"
           >
-            <Users className="w-6 h-6 text-[#FF1493] mx-auto mb-2" />
+            <Users className="w-6 h-6 text-[#E62020] mx-auto mb-2" />
             <div className="text-2xl font-black">2.4K</div>
             <div className="text-xs text-white/60 uppercase tracking-wider">Members</div>
           </motion.div>
@@ -138,7 +139,7 @@ export default function Community() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 bg-gradient-to-br from-[#FF1493]/20 to-[#FFEB3B]/20 border-2 border-[#FF1493] p-6"
+            className="mb-8 bg-gradient-to-br from-[#E62020]/20 to-[#FFEB3B]/20 border-2 border-[#E62020] p-6"
           >
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-5 h-5 text-[#FFEB3B]" />
@@ -175,7 +176,7 @@ export default function Community() {
         {user && !showCreatePost && (
           <Button
             onClick={() => setShowCreatePost(true)}
-            className="w-full mb-6 bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+            className="w-full mb-6 bg-[#E62020] hover:bg-[#E62020]/90 text-black"
           >
             <Plus className="w-4 h-4 mr-2" />
             Create Post

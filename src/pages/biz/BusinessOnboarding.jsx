@@ -20,6 +20,7 @@ import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 import { createPageUrl } from '../../utils';
+import { logger } from '@/utils/logger';
 
 const BUSINESS_TYPES = [
   { id: 'venue', name: 'Venue / Club', icon: Building2, description: 'Bars, clubs, and event spaces' },
@@ -78,7 +79,7 @@ export default function BusinessOnboarding() {
       toast.success('Business account created!');
       navigate(createPageUrl('BusinessDashboard'));
     } catch (error) {
-      console.error('Failed to create business account:', error);
+      logger.error('Failed to create business account', { error: error?.message, context: 'BusinessOnboarding' });
       toast.error('Failed to create business account');
     } finally {
       setSubmitting(false);
@@ -107,12 +108,12 @@ export default function BusinessOnboarding() {
             <div key={s} className="flex items-center">
               <div className={`
                 w-10 h-10 rounded-full flex items-center justify-center font-bold
-                ${idx <= step ? 'bg-[#FF1493] text-black' : 'bg-white/10 text-white/40'}
+                ${idx <= step ? 'bg-[#E62020] text-black' : 'bg-white/10 text-white/40'}
               `}>
                 {idx < step ? <Check className="w-5 h-5" /> : idx + 1}
               </div>
               {idx < STEPS.length - 1 && (
-                <div className={`w-16 h-1 mx-2 ${idx < step ? 'bg-[#FF1493]' : 'bg-white/10'}`} />
+                <div className={`w-16 h-1 mx-2 ${idx < step ? 'bg-[#E62020]' : 'bg-white/10'}`} />
               )}
             </div>
           ))}
@@ -139,13 +140,13 @@ export default function BusinessOnboarding() {
                     className={`
                       p-6 rounded-xl border-2 text-left transition-all
                       ${businessType === type.id 
-                        ? 'bg-[#FF1493]/20 border-[#FF1493]' 
+                        ? 'bg-[#E62020]/20 border-[#E62020]' 
                         : 'bg-white/5 border-white/10 hover:border-white/30'
                       }
                     `}
                   >
                     <type.icon className={`w-8 h-8 mb-3 ${
-                      businessType === type.id ? 'text-[#FF1493]' : 'text-white/60'
+                      businessType === type.id ? 'text-[#E62020]' : 'text-white/60'
                     }`} />
                     <div className="font-bold mb-1">{type.name}</div>
                     <div className="text-sm text-white/60">{type.description}</div>
@@ -305,7 +306,7 @@ export default function BusinessOnboarding() {
             <Button
               onClick={nextStep}
               disabled={!canProceed()}
-              className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+              className="bg-[#E62020] hover:bg-[#E62020]/90 text-black"
             >
               Continue
               <ArrowRight className="w-4 h-4 ml-2" />

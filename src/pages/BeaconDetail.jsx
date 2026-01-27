@@ -18,6 +18,7 @@ import ConvictPlayer from '../components/radio/ConvictPlayer';
 import { Music } from 'lucide-react';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 
 export default function BeaconDetail() {
@@ -35,7 +36,7 @@ export default function BeaconDetail() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'BeaconDetail' });
       }
     };
     fetchUser();
@@ -81,8 +82,8 @@ export default function BeaconDetail() {
   }
 
   const BEACON_COLORS = {
-    event: '#FF1493',
-    venue: '#FF1493',
+    event: '#E62020',
+    venue: '#E62020',
     hookup: '#FF073A',
     drop: '#FF6B35',
     popup: '#B026FF',
@@ -122,7 +123,7 @@ export default function BeaconDetail() {
       queryClient.invalidateQueries({ queryKey: ['user'] });
       queryClient.invalidateQueries({ queryKey: ['beacon_checkins'] });
     } catch (error) {
-      console.error('Failed to scan:', error);
+      logger.error('Failed to scan beacon', { error: error?.message, context: 'BeaconDetail' });
       toast.error(error?.message || 'Failed to scan');
     }
   };
@@ -130,7 +131,7 @@ export default function BeaconDetail() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Hero */}
-      <div className="relative h-64 bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-b border-white/10">
+      <div className="relative h-64 bg-gradient-to-br from-[#E62020]/20 to-[#B026FF]/20 border-b border-white/10">
         <div className="absolute inset-0 flex items-end">
           <div className="w-full p-6 md:p-8">
             <div className="flex items-center gap-2 mb-4">
@@ -153,7 +154,7 @@ export default function BeaconDetail() {
             <span
               className="inline-block px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider mb-3"
               style={{
-                backgroundColor: BEACON_COLORS[beacon.kind] || '#FF1493',
+                backgroundColor: BEACON_COLORS[beacon.kind] || '#E62020',
                 color: '#000'
               }}
             >
@@ -181,7 +182,7 @@ export default function BeaconDetail() {
               <h2 className="text-sm uppercase tracking-wider text-white/40 mb-4">Details</h2>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-[#FF1493]" />
+                  <MapPin className="w-5 h-5 text-[#E62020]" />
                   <div>
                     <div className="text-xs text-white/40">Location</div>
                     <div className="font-semibold">{beacon.city}</div>
@@ -189,7 +190,7 @@ export default function BeaconDetail() {
                 </div>
                 {beacon.created_date && (
                   <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-[#FF1493]" />
+                    <Calendar className="w-5 h-5 text-[#E62020]" />
                     <div>
                       <div className="text-xs text-white/40">Created</div>
                       <div className="font-semibold">
@@ -200,7 +201,7 @@ export default function BeaconDetail() {
                 )}
                 {beacon.mode && (
                   <div className="flex items-center gap-3">
-                    <Users className="w-5 h-5 text-[#FF1493]" />
+                    <Users className="w-5 h-5 text-[#E62020]" />
                     <div>
                       <div className="text-xs text-white/40">Mode</div>
                       <div className="font-semibold uppercase">{beacon.mode}</div>
@@ -297,7 +298,7 @@ export default function BeaconDetail() {
                 </div>
                 <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#FF1493]"
+                    className="h-full bg-[#E62020]"
                     style={{ width: `${beacon.intensity * 100}%` }}
                   />
                 </div>

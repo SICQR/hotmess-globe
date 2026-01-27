@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import PageShell from '@/components/shell/PageShell';
 import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
 import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
+import TemporaryLocationShare from '../components/safety/TemporaryLocationShare';
 
 export default function Safety() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -83,8 +84,8 @@ export default function Safety() {
             lng: position.coords.longitude,
             venue_name: currentUser.city || 'Unknown'
           };
-        } catch (error) {
-          console.log('Location access denied');
+        } catch {
+          // Location access denied - continue without location
         }
       }
 
@@ -204,6 +205,11 @@ export default function Safety() {
               </div>
             )}
 
+            {/* Temporary Location Share */}
+            <div className="mb-6">
+              <TemporaryLocationShare currentUser={currentUser} />
+            </div>
+
             <div className="bg-white/5 border border-white/10 p-6">
               <h3 className="text-xl font-black uppercase mb-2">HOW IT WORKS</h3>
               <ul className="space-y-2 text-sm text-white/60">
@@ -315,7 +321,7 @@ export default function Safety() {
               
               <div className="bg-white/5 border border-white/10 p-6">
                 <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-[#FF1493]" />
+                  <Shield className="w-5 h-5 text-[#E62020]" />
                   Safety Features
                 </h3>
                 <ul className="space-y-3 text-sm text-white/60">
@@ -341,7 +347,7 @@ export default function Safety() {
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
-                    <MessageSquare className="w-4 h-4 text-[#FF1493] mt-0.5 flex-shrink-0" />
+                    <MessageSquare className="w-4 h-4 text-[#E62020] mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-white font-bold">Custom Messages</p>
                       <p className="text-xs">Pre-define emergency messages for instant alerts.</p>

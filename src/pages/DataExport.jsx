@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
+import { logger } from '@/utils/logger';
 
 const DATA_CATEGORIES = [
   { 
@@ -89,7 +90,7 @@ export default function DataExport() {
           setExportHistory(history);
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'DataExport' });
       } finally {
         setLoading(false);
       }
@@ -248,7 +249,7 @@ export default function DataExport() {
       }
 
     } catch (error) {
-      console.error('Export failed:', error);
+      logger.error('Data export failed', { error: error?.message, context: 'DataExport' });
       toast.error('Failed to export data. Please try again.');
     } finally {
       setExporting(false);
@@ -298,7 +299,7 @@ export default function DataExport() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FF1493]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#E62020]" />
       </div>
     );
   }
@@ -321,8 +322,8 @@ export default function DataExport() {
           </Link>
           
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-[#FF1493]/20 border border-[#FF1493]/40 rounded-lg flex items-center justify-center">
-              <Database className="w-6 h-6 text-[#FF1493]" />
+            <div className="w-12 h-12 bg-[#E62020]/20 border border-[#E62020]/40 rounded-lg flex items-center justify-center">
+              <Database className="w-6 h-6 text-[#E62020]" />
             </div>
             <div>
               <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight">
@@ -368,7 +369,7 @@ export default function DataExport() {
                 className="bg-white/5 border border-white/10 rounded-lg p-4 flex items-center gap-4"
               >
                 <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                  <category.icon className="w-5 h-5 text-[#FF1493]" />
+                  <category.icon className="w-5 h-5 text-[#E62020]" />
                 </div>
                 <div>
                   <h3 className="font-semibold">{category.name}</h3>
@@ -392,11 +393,11 @@ export default function DataExport() {
               onClick={() => setSelectedFormat('json')}
               className={`flex-1 p-4 rounded-lg border-2 transition-all ${
                 selectedFormat === 'json' 
-                  ? 'bg-[#FF1493]/20 border-[#FF1493]' 
+                  ? 'bg-[#E62020]/20 border-[#E62020]' 
                   : 'bg-white/5 border-white/10 hover:border-white/30'
               }`}
             >
-              <FileJson className="w-8 h-8 mx-auto mb-2 text-[#FF1493]" />
+              <FileJson className="w-8 h-8 mx-auto mb-2 text-[#E62020]" />
               <div className="font-bold">JSON</div>
               <p className="text-xs text-white/60">Machine-readable format</p>
             </button>
@@ -425,7 +426,7 @@ export default function DataExport() {
           <Button
             onClick={handleExport}
             disabled={exporting}
-            className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold py-6 text-lg"
+            className="w-full bg-[#E62020] hover:bg-[#E62020]/90 text-black font-bold py-6 text-lg"
           >
             {exporting ? (
               <>
@@ -444,7 +445,7 @@ export default function DataExport() {
             <div className="mt-4">
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-[#FF1493] transition-all duration-300"
+                  className="h-full bg-[#E62020] transition-all duration-300"
                   style={{ width: `${exportProgress}%` }}
                 />
               </div>

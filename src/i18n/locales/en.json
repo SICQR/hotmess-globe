@@ -47,6 +47,7 @@
   },
   "nav": {
     "home": "Home",
+    "pulse": "Pulse",
     "events": "Events",
     "social": "Social",
     "market": "Market",
@@ -55,7 +56,9 @@
     "profile": "Profile",
     "settings": "Settings",
     "messages": "Messages",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "safety": "Safety",
+    "search": "Search"
   },
   "events": {
     "title": "Events",
@@ -144,5 +147,39 @@
     "today": "Today",
     "tomorrow": "Tomorrow",
     "yesterday": "Yesterday"
+  },
+  "safety": {
+    "title": "Safety",
+    "panicButton": "Panic Button",
+    "emergencyContacts": "Emergency Contacts",
+    "checkIn": "Safety Check-in",
+    "fakeCall": "Fake Call",
+    "shareLocation": "Share Location"
+  },
+  "marketplace": {
+    "title": "Marketplace",
+    "products": "Products",
+    "orders": "Orders",
+    "cart": "Cart",
+    "checkout": "Checkout",
+    "addToCart": "Add to Cart",
+    "buyNow": "Buy Now",
+    "sold": "Sold",
+    "inStock": "In Stock",
+    "outOfStock": "Out of Stock",
+    "shipping": "Shipping",
+    "delivery": "Delivery"
+  },
+  "social": {
+    "title": "Social",
+    "connect": "Connect",
+    "discover": "Discover",
+    "handshake": "Handshake",
+    "compatibility": "Compatibility",
+    "rightNow": "Right Now",
+    "goLive": "Go Live",
+    "nearby": "Nearby",
+    "online": "Online",
+    "offline": "Offline"
   }
 }

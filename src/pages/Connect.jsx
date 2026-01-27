@@ -19,6 +19,7 @@ import { ProfileCard } from '@/features/profilesGrid/ProfileCard';
 import { useNavigate } from 'react-router-dom';
 import useLiveViewerLocation, { bucketLatLng } from '@/hooks/useLiveViewerLocation';
 import useRealtimeNearbyInvalidation from '@/hooks/useRealtimeNearbyInvalidation';
+import USPBanner from '@/components/ui/USPBanner';
 
 const isMaleAllowedProfile = (u) => {
   const gender = String(u?.gender_identity || u?.gender || u?.sex || '').trim().toLowerCase();
@@ -213,28 +214,30 @@ export default function Connect() {
         const proximity = nearbyByEmail.get(String(u.email || '').toLowerCase()) || null;
 
         const isSelf = normalizeEmail(u?.email) && normalizeEmail(u?.email) === normalizeEmail(currentUser?.email);
-        const distanceKm = isSelf ? 0 : (proximity?.distanceKm ?? null);
+        const proximityDistanceKm = isSelf ? 0 : (proximity?.distanceKm ?? null);
         const distanceMeters = isSelf ? 0 : (proximity?.distanceMeters ?? null);
 
         const photos = Array.isArray(u.photos) ? u.photos : [];
         const hasPhotos = photos.length > 0;
         const hasFacePhoto = !!u.avatar_url;
         
-        // Calculate real distance if both users have coordinates
-        let distanceKm = null;
-        if (currentUser.lat && currentUser.lng && u.lat && u.lng) {
-          distanceKm = calculateDistance(
-            currentUser.lat,
-            currentUser.lng,
-            u.lat,
-            u.lng
-          );
-        } else if (u.city === currentUser.city) {
-          // Fallback: same city = approximate 5km
-          distanceKm = 5;
-        } else {
-          // Fallback: different city = approximate 50km
-          distanceKm = 50;
+        // Calculate real distance - use proximity data first, fall back to calculation
+        let distanceKm = proximityDistanceKm;
+        if (distanceKm === null) {
+          if (currentUser.lat && currentUser.lng && u.lat && u.lng) {
+            distanceKm = calculateDistance(
+              currentUser.lat,
+              currentUser.lng,
+              u.lat,
+              u.lng
+            );
+          } else if (u.city === currentUser.city) {
+            // Fallback: same city = approximate 5km
+            distanceKm = 5;
+          } else {
+            // Fallback: different city = approximate 50km
+            distanceKm = 50;
+          }
         }
         
         return {
@@ -542,6 +545,11 @@ export default function Connect() {
                 }
               </Button>
             </div>
+          </div>
+
+          {/* Privacy USP Banner */}
+          <div className="mb-6">
+            <USPBanner type="privacy-grid" compact />
           </div>
 
           {/* Lanes */}

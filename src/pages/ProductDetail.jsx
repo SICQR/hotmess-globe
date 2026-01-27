@@ -15,6 +15,7 @@ import { createPageUrl } from '../utils';
 import MessageButton from '../components/social/MessageButton';
 import ComplementaryProducts from '../components/marketplace/ComplementaryProducts';
 import { isXpPurchasingEnabled } from '@/lib/featureFlags';
+import { logger } from '@/utils/logger';
 
 export default function ProductDetail() {
   const [searchParams] = useSearchParams();
@@ -36,7 +37,7 @@ export default function ProductDetail() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'ProductDetail' });
       }
     };
     fetchUser();
@@ -159,7 +160,7 @@ export default function ProductDetail() {
           product_tags: product.tags || [],
         });
       } catch (error) {
-        console.error('Failed to track view:', error);
+        logger.debug('Failed to track view', { error: error?.message, context: 'ProductDetail' });
       }
     };
 
@@ -182,11 +183,13 @@ export default function ProductDetail() {
     }
 
     if (!xpPurchasingEnabled) {
-      toast.message('XP purchasing is coming soon.');
+      toast.error('XP purchasing is currently disabled.');
       return;
     }
 
-    toast.message('XP purchasing is not available yet.');
+    // Navigate to checkout with this product
+    navigate(`/checkout?product=${product.id}`);
+    toast.success('Proceeding to checkout...');
   };
 
   const handleReview = () => {
@@ -331,14 +334,14 @@ export default function ProductDetail() {
               <Button
                 onClick={handlePurchase}
                 disabled={isShopifyProduct ? false : !xpPurchasingEnabled}
-                className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold text-lg py-6"
+                className="w-full bg-[#E62020] hover:bg-[#E62020]/90 text-black font-bold text-lg py-6"
               >
-                {isShopifyProduct ? 'View product' : 'XP purchasing coming soon'}
+                {isShopifyProduct ? 'View product' : xpPurchasingEnabled ? `Buy for ${product.price_xp || 0} XP` : 'XP purchasing disabled'}
               </Button>
 
-              {!isShopifyProduct ? (
+              {!isShopifyProduct && xpPurchasingEnabled ? (
                 <p className="text-xs text-white/50 uppercase tracking-wider">
-                  You can browse drops now. Buying with XP is next.
+                  Pay with your XP balance
                 </p>
               ) : null}
 
@@ -347,7 +350,7 @@ export default function ProductDetail() {
                   <Link to={createPageUrl(`Profile?email=${seller.email}`)}>
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#E62020] to-[#B026FF] flex items-center justify-center">
                           <span className="font-bold">{seller.full_name?.[0] || 'S'}</span>
                         </div>
                         <div>

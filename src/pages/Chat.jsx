@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { logger } from '@/utils/logger';
 
 const QUICK_QUERIES = [
   "Find me a techno party this Friday near Shoreditch",
@@ -51,7 +52,7 @@ export default function Chat() {
           timestamp: new Date()
         }]);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Chat' });
       }
     };
     fetchUser();
@@ -117,7 +118,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Chat error:', error);
+      logger.error('Chat error', { error: error?.message, context: 'Chat' });
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -161,7 +162,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
       {/* Header */}
       <div className="bg-black/95 backdrop-blur-xl border-b border-white/10 p-4 md:p-6">
         <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#B026FF] to-[#FF1493] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#B026FF] to-[#E62020] flex items-center justify-center">
             <Sparkles className="w-6 h-6" />
           </div>
           <div>
@@ -186,7 +187,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
                 <div className={`max-w-[80%] ${message.role === 'user' ? 'order-2' : 'order-1'}`}>
                   <div className={`rounded-2xl p-4 ${
                     message.role === 'user'
-                      ? 'bg-gradient-to-br from-[#FF1493] to-[#B026FF] text-white'
+                      ? 'bg-gradient-to-br from-[#E62020] to-[#B026FF] text-white'
                       : 'bg-white/5 border border-white/10'
                   }`}>
                     {message.role === 'assistant' ? (
@@ -200,7 +201,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
                                 <div className="bg-black/30 border border-white/20 rounded-lg p-3 hover:bg-black/50 transition-colors mt-2">
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1">
-                                      <span className="inline-block px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-[#FF1493] text-black mb-1">
+                                      <span className="inline-block px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-[#E62020] text-black mb-1">
                                         {part.beacon.kind}
                                       </span>
                                       <h4 className="font-bold text-sm mb-1">{part.beacon.title}</h4>
@@ -283,7 +284,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
           <Button
             onClick={() => handleSend()}
             disabled={!input.trim() || isTyping}
-            className="bg-gradient-to-r from-[#B026FF] to-[#FF1493] hover:opacity-90 text-white"
+            className="bg-gradient-to-r from-[#B026FF] to-[#E62020] hover:opacity-90 text-white"
           >
             <Send className="w-4 h-4" />
           </Button>

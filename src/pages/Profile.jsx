@@ -25,6 +25,7 @@ import WelcomeTour from '../components/onboarding/WelcomeTour';
 import VibeSynthesisCard from '../components/vibe/VibeSynthesisCard';
 import { fetchRoutingEtas } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
+import { logger } from '@/utils/logger';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -200,11 +201,6 @@ export default function Profile() {
     queryFn: () => base44.entities.Achievement.list()
   });
 
-  const { data: _allBeacons = [] } = useQuery({
-    queryKey: ['all-beacons'],
-    queryFn: () => base44.entities.Beacon.list()
-  });
-
   const { data: squadMembers = [] } = useQuery({
     queryKey: ['squad-members-profile'],
     queryFn: () => base44.entities.SquadMember.filter({ user_email: userEmail }),
@@ -216,7 +212,6 @@ export default function Profile() {
     queryFn: () => base44.entities.Squad.list()
   });
 
-  const _isFollowing = following.some(f => f.following_email === userEmail);
   const isOwnProfile = currentUser?.email === userEmail;
 
   const { data: profileUserTags = [] } = useQuery({
@@ -363,7 +358,7 @@ export default function Profile() {
           viewed_at: new Date().toISOString(),
         });
       } catch {
-        console.log('Failed to track profile view');
+        logger.debug('Failed to track profile view', { context: 'Profile' });
       }
     };
     
@@ -378,27 +373,9 @@ export default function Profile() {
   });
 
   const viewCount = profileViews.length;
-  const tierRaw = currentUser?.membership_tier;
-  const _tier = tierRaw === 'free' ? 'basic' : tierRaw || 'basic';
   const level = Math.floor(((profileUser?.xp ?? 0) || 0) / 1000) + 1;
   // Chrome tier: Level 5+ can see WHO viewed their profile
   const canSeeViewers = level >= 5;
-
-  const _followMutation = useMutation({
-    mutationFn: () => base44.entities.UserFollow.create({
-      follower_email: currentUser.email,
-      following_email: userEmail
-    }),
-    onSuccess: () => queryClient.invalidateQueries(['following', currentUser.email])
-  });
-
-  const _unfollowMutation = useMutation({
-    mutationFn: () => {
-      const followRecord = following.find(f => f.following_email === userEmail);
-      return base44.entities.UserFollow.delete(followRecord.id);
-    },
-    onSuccess: () => queryClient.invalidateQueries(['following', currentUser.email])
-  });
 
   const pinMutation = useMutation({
     mutationFn: (data) => base44.entities.UserHighlight.create(data),
@@ -492,7 +469,7 @@ export default function Profile() {
           avatarUrl = file_url;
         } catch (uploadError) {
           // Non-fatal: still allow setup completion.
-          console.warn('Avatar upload failed; falling back to placeholder', uploadError);
+          logger.warn('Avatar upload failed; falling back to placeholder', { error: uploadError?.message, context: 'Profile' });
           avatarUrl = avatarUrl || buildInitialsAvatarDataUrl(fullName);
           toast.message('Avatar upload failed; using a placeholder for now.');
         } finally {
@@ -518,7 +495,7 @@ export default function Profile() {
       const safeNext = next.startsWith('/') ? next : '';
       window.location.href = safeNext || createPageUrl('Home');
     } catch (error) {
-      console.error('Profile setup failed:', error);
+      logger.error('Profile setup failed', { error: error?.message, context: 'Profile' });
       const msg =
         (error && typeof error === 'object' && 'message' in error && error.message)
           ? String(error.message)
@@ -1133,9 +1110,14 @@ export default function Profile() {
                 );
               })}
               {checkIns.length === 0 && (
-                <div className="col-span-2 text-center py-12 text-white/40">
-                  <Camera className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                  <p>No check-ins yet</p>
+                <div className="col-span-2 text-center py-12">
+                  <Camera className="w-12 h-12 mx-auto mb-3 text-white/20" />
+                  <p className="text-white/40 mb-4">No check-ins yet</p>
+                  <Link to={createPageUrl('Events')}>
+                    <Button variant="glass" className="border-white/20 font-black uppercase text-xs">
+                      Find Events to Check In
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>
@@ -1178,9 +1160,15 @@ export default function Profile() {
                 </motion.div>
               ))}
               {achievements.length === 0 && (
-                <div className="col-span-3 text-center py-12 text-white/40">
-                  <Award className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                  <p>No achievements unlocked yet</p>
+                <div className="col-span-3 text-center py-12">
+                  <Award className="w-12 h-12 mx-auto mb-3 text-white/20" />
+                  <p className="text-white/40 mb-2">No achievements unlocked yet</p>
+                  <p className="text-white/30 text-sm mb-4">Earn XP by checking in, connecting, and exploring</p>
+                  <Link to={createPageUrl('Challenges')}>
+                    <Button variant="glass" className="border-white/20 font-black uppercase text-xs">
+                      View Challenges
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>
@@ -1205,9 +1193,15 @@ export default function Profile() {
                 </motion.div>
               ))}
               {userSquads.length === 0 && (
-                <div className="col-span-2 text-center py-12 text-white/40">
-                  <Users className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                  <p>Not in any squads yet</p>
+                <div className="col-span-2 text-center py-12">
+                  <Users className="w-12 h-12 mx-auto mb-3 text-white/20" />
+                  <p className="text-white/40 mb-2">Not in any squads yet</p>
+                  <p className="text-white/30 text-sm mb-4">Join a squad to connect with like-minded people</p>
+                  <Link to={createPageUrl('Connect')}>
+                    <Button variant="glass" className="border-white/20 font-black uppercase text-xs">
+                      Discover People
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>

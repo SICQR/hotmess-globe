@@ -6,6 +6,7 @@ import { Check, Crown, Zap, Star, ArrowLeft, Loader2, CreditCard, X } from 'luci
 import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { logger } from '@/utils/logger';
 
 // Stripe Price IDs - Replace with your actual Stripe price IDs
 const STRIPE_PRICES = {
@@ -16,17 +17,21 @@ const STRIPE_PRICES = {
 const TIERS = [
   {
     id: 'basic',
-    name: 'BASIC',
-    price: 'FREE',
+    name: 'FREE',
+    price: '£0',
     priceAmount: 0,
     icon: Star,
     color: '#FFFFFF',
+    tagline: 'Get started',
+    keyBenefits: [
+      'Browse all profiles',
+      'Basic match scoring',
+      'Go Live once per day',
+    ],
     features: [
-      'Standard access to all features',
-      'Level 1-4 progression',
-      'Basic XP earning rate',
-      'Public profile visibility',
-      'Standard beacon scanning',
+      'Standard profile visibility',
+      'Basic XP earning',
+      'Event RSVPs',
     ],
   },
   {
@@ -35,15 +40,20 @@ const TIERS = [
     price: '£9.99/mo',
     priceAmount: 999,
     icon: Zap,
-    color: '#FF1493',
+    color: '#E62020',
     stripePriceId: STRIPE_PRICES.plus,
+    tagline: 'Most popular',
+    popular: true,
+    keyBenefits: [
+      '2x visibility in feeds',
+      'Browse anonymously',
+      'Unlimited Go Live',
+    ],
     features: [
-      'Everything in BASIC',
-      '2x XP Multiplier on all actions',
-      'Stealth Mode (browse anonymously)',
-      'Blurred profile viewers',
-      'Priority in Right Now feed',
-      'Exclusive PLUS badge',
+      'Everything in FREE',
+      'Save filter presets',
+      'See blurred viewers',
+      'Priority matching',
     ],
   },
   {
@@ -54,14 +64,17 @@ const TIERS = [
     icon: Crown,
     color: '#00D9FF',
     stripePriceId: STRIPE_PRICES.pro,
+    tagline: 'Full access',
+    keyBenefits: [
+      'See exactly who viewed you',
+      'Early access to drops',
+      'Priority support',
+    ],
     features: [
       'Everything in PLUS',
-      'Unmasked viewer list (see who viewed you)',
-      'Early access to limited drops',
-      'Night King Challenge eligibility',
-      'Custom profile gradient',
-      'Premium support',
-      'Legendary CHROME badge',
+      'Unmasked viewer list',
+      'Custom profile theme',
+      'Night King eligibility',
     ],
   },
 ];
@@ -80,7 +93,7 @@ export default function MembershipUpgrade() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'MembershipUpgrade' });
       }
     };
     fetchUser();
@@ -156,7 +169,7 @@ export default function MembershipUpgrade() {
       }
 
       // Fallback: Update tier directly (for development/demo)
-      console.warn('Stripe not configured, updating tier directly');
+      logger.warn('Stripe not configured, updating tier directly', { context: 'MembershipUpgrade' });
       await base44.auth.updateMe({
         membership_tier: tierId,
       });
@@ -164,7 +177,7 @@ export default function MembershipUpgrade() {
       toast.success(`Upgraded to ${tierId.toUpperCase()}!`);
       navigate(createPageUrl('Profile'));
     } catch (error) {
-      console.error('Upgrade error:', error);
+      logger.error('Membership upgrade failed', { error: error?.message, context: 'MembershipUpgrade' });
       toast.error('Upgrade failed. Please try again.');
     } finally {
       setLoading(false);
@@ -211,7 +224,7 @@ export default function MembershipUpgrade() {
       const user = await base44.auth.me();
       setCurrentUser(user);
     } catch (error) {
-      console.error('Cancel error:', error);
+      logger.error('Subscription cancellation failed', { error: error?.message, context: 'MembershipUpgrade' });
       toast.error('Failed to cancel subscription. Please contact support.');
     } finally {
       setLoading(false);
@@ -239,11 +252,11 @@ export default function MembershipUpgrade() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-2">
-            UPGRADE YOUR <span className="text-[#FF1493]">NIGHT</span>
+          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-3">
+            UPGRADE YOUR <span className="text-[#E62020]">EXPERIENCE</span>
           </h1>
-          <p className="text-white/60 uppercase text-sm tracking-wider">
-            Choose your tier. Level up your experience.
+          <p className="text-white/60 text-lg max-w-xl mx-auto">
+            Get more matches, more visibility, and more control over your connections.
           </p>
         </motion.div>
 
@@ -258,37 +271,67 @@ export default function MembershipUpgrade() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className="bg-black border-2 p-6 md:p-8 h-full flex flex-col"
+                className={`relative bg-black border-2 p-6 md:p-8 h-full flex flex-col ${tier.popular ? 'md:-mt-4 md:mb-4' : ''}`}
                 style={
                   isCurrentTier
                     ? {
                         borderColor: tier.color,
-                        boxShadow: `0 0 20px ${tier.color}`,
+                        boxShadow: `0 0 30px ${tier.color}40`,
                       }
-                    : { borderColor: 'rgba(255,255,255,0.2)' }
+                    : tier.popular 
+                      ? { borderColor: tier.color }
+                      : { borderColor: 'rgba(255,255,255,0.2)' }
                 }
               >
+                {/* Popular badge */}
+                {tier.popular && (
+                  <div 
+                    className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 text-xs font-black uppercase"
+                    style={{ backgroundColor: tier.color, color: 'black' }}
+                  >
+                    Most Popular
+                  </div>
+                )}
+
                 <div className="text-center mb-6">
                   <div
-                    className="w-16 h-16 mx-auto mb-4 border-2 flex items-center justify-center"
-                    style={{ borderColor: tier.color }}
+                    className="w-14 h-14 mx-auto mb-4 flex items-center justify-center"
+                    style={{ backgroundColor: `${tier.color}20` }}
                   >
-                    <Icon className="w-8 h-8" style={{ color: tier.color }} />
+                    <Icon className="w-7 h-7" style={{ color: tier.color }} />
                   </div>
                   <h2
-                    className="text-2xl font-black uppercase mb-2 break-words leading-none"
+                    className="text-2xl font-black uppercase mb-1"
                     style={{ color: tier.color }}
                   >
                     {tier.name}
                   </h2>
-                  <p className="text-3xl font-black break-words leading-none">{tier.price}</p>
+                  <p className="text-xs text-white/50 uppercase tracking-wider mb-3">{tier.tagline}</p>
+                  <p className="text-4xl font-black">{tier.price}</p>
+                  {tier.priceAmount > 0 && (
+                    <p className="text-xs text-white/40 mt-1">billed monthly</p>
+                  )}
                 </div>
 
-                <ul className="space-y-3 mb-8 min-w-0">
+                {/* Key Benefits - Highlighted */}
+                <div className="mb-6 p-4 bg-white/5 border border-white/10">
+                  <p className="text-[10px] uppercase tracking-wider text-white/40 mb-3">Key Benefits</p>
+                  <ul className="space-y-2">
+                    {tier.keyBenefits.map((benefit, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm font-medium">
+                        <Check className="w-4 h-4 flex-shrink-0" style={{ color: tier.color }} />
+                        <span className="text-white">{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Additional Features */}
+                <ul className="space-y-2 mb-8 flex-grow">
                   {tier.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm min-w-0">
-                      <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: tier.color }} />
-                      <span className="text-white/80 min-w-0 break-words">{feature}</span>
+                    <li key={i} className="flex items-start gap-2 text-xs">
+                      <Check className="w-3 h-3 flex-shrink-0 mt-0.5 text-white/40" />
+                      <span className="text-white/60">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -296,13 +339,13 @@ export default function MembershipUpgrade() {
                 <Button
                   onClick={() => handleUpgrade(tier.id)}
                   disabled={isCurrentTier || loading}
-                  size="xl"
+                  size="lg"
                   className={`w-full mt-auto font-black uppercase tracking-wide border-2 ${
                     isCurrentTier
                       ? 'bg-white/10 text-white/40 border-white/20 cursor-not-allowed'
-                      : 'text-black border-white hover:bg-white/90'
+                      : 'text-black hover:opacity-90'
                   }`}
-                  style={!isCurrentTier ? { backgroundColor: tier.color } : {}}
+                  style={!isCurrentTier ? { backgroundColor: tier.color, borderColor: tier.color } : {}}
                 >
                   {isCurrentTier ? (
                     'CURRENT TIER'
@@ -311,10 +354,12 @@ export default function MembershipUpgrade() {
                       <Loader2 className="w-4 h-4 animate-spin" />
                       PROCESSING...
                     </span>
+                  ) : tier.id === 'basic' ? (
+                    'GET STARTED FREE'
                   ) : (
                     <span className="flex items-center gap-2">
                       <CreditCard className="w-4 h-4" />
-                      {tier.id === 'basic' ? 'DOWNGRADE' : 'UPGRADE NOW'}
+                      UPGRADE TO {tier.name}
                     </span>
                   )}
                 </Button>

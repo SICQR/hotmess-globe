@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { getGuestCartItems, mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import { isXpPurchasingEnabled } from '@/lib/featureFlags';
+import { logger } from '@/utils/logger';
 
 export default function Checkout() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -182,7 +183,7 @@ export default function Checkout() {
   const checkoutMutation = useMutation({
     mutationFn: async () => {
       if (!xpPurchasingEnabled) {
-        throw new Error('XP purchasing is coming soon.');
+        throw new Error('XP purchasing is currently disabled. Please try again later.');
       }
 
       if (!currentUser) {
@@ -295,7 +296,7 @@ export default function Checkout() {
         }
       } catch (error) {
         // CRITICAL ROLLBACK: Restore inventory and XP on any failure
-        console.error('Checkout failed, initiating rollback:', error);
+        logger.error('Checkout failed, initiating rollback', { error: error?.message, context: 'Checkout' });
         
         // Rollback inventory first (reverse order of operations)
         for (const update of inventoryUpdates) {
@@ -304,7 +305,7 @@ export default function Checkout() {
               inventory_count: update.oldCount
             });
           } catch (rollbackError) {
-            console.error('Rollback failed for product', update.id, rollbackError);
+            logger.error('Rollback failed for product', { productId: update.id, error: rollbackError?.message, context: 'Checkout' });
           }
         }
         
@@ -312,7 +313,7 @@ export default function Checkout() {
         try {
           await base44.auth.updateMe({ xp: currentXP });
         } catch (rollbackError) {
-          console.error('XP rollback failed:', rollbackError);
+          logger.error('XP rollback failed', { error: rollbackError?.message, context: 'Checkout' });
         }
         
         throw error;
@@ -380,8 +381,9 @@ export default function Checkout() {
     onError: (error) => {
       toast.error(error?.message || 'Shopify checkout failed');
       // Keep a breadcrumb in DevTools for debugging 500s in prod.
-      console.error('[Checkout] Shopify checkout failed', {
+      logger.error('Shopify checkout failed', {
         status: error?.status,
+        context: 'Checkout',
         message: error?.message,
         payload: error?.payload,
       });
@@ -530,7 +532,7 @@ export default function Checkout() {
             {/* Order Summary */}
             <div className="bg-white/5 border-2 border-white/10 p-6">
               <h2 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-[#FF1493]" />
+                <ShoppingCart className="w-5 h-5 text-[#E62020]" />
                 Order Summary
               </h2>
               <div className="space-y-3 mb-6">
@@ -641,7 +643,7 @@ export default function Checkout() {
                   className="w-full bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black text-lg py-7 uppercase tracking-wider shadow-[0_0_20px_rgba(57,255,20,0.3)] border-2 border-[#39FF14]"
                 >
                   {!xpPurchasingEnabled ? (
-                    'XP PURCHASING COMING SOON'
+                    'XP PURCHASING DISABLED'
                   ) : checkoutMutation.isPending ? (
                     'PROCESSING ORDER...'
                   ) : (

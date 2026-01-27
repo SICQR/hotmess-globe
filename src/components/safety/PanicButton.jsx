@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertTriangle, MapPin, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,9 +15,52 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 
+const PANIC_SEEN_KEY = 'hm_panic_btn_seen';
+
 export default function PanicButton() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [sendingAlerts, setSendingAlerts] = useState(false);
+  const [isFirstVisit, setIsFirstVisit] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  // Check if first visit and show pulse animation
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem(PANIC_SEEN_KEY);
+      if (!seen) {
+        setIsFirstVisit(true);
+        setShowTooltip(true);
+        
+        // Auto-hide tooltip after 5 seconds
+        const tooltipTimer = setTimeout(() => {
+          setShowTooltip(false);
+        }, 5000);
+
+        // Stop pulsing after 10 seconds
+        const pulseTimer = setTimeout(() => {
+          setIsFirstVisit(false);
+          localStorage.setItem(PANIC_SEEN_KEY, '1');
+        }, 10000);
+
+        return () => {
+          clearTimeout(tooltipTimer);
+          clearTimeout(pulseTimer);
+        };
+      }
+    } catch {
+      // ignore localStorage errors
+    }
+  }, []);
+
+  const dismissFirstVisit = () => {
+    setIsFirstVisit(false);
+    setShowTooltip(false);
+    try {
+      localStorage.setItem(PANIC_SEEN_KEY, '1');
+    } catch {
+      // ignore
+    }
+  };
 
   const sendSOSAlerts = async () => {
     setSendingAlerts(true);
@@ -106,11 +149,36 @@ export default function PanicButton() {
 
   return (
     <>
+      {/* First-visit tooltip */}
+      {showTooltip && (
+        <div 
+          className="fixed bottom-16 right-4 z-50 bg-black border-2 border-red-500 p-3 max-w-[200px] animate-fade-in"
+          onClick={dismissFirstVisit}
+        >
+          <p className="text-xs text-white font-bold mb-1">Safety First</p>
+          <p className="text-[10px] text-white/70">
+            This panic button sends SOS alerts to your trusted contacts and exits immediately.
+          </p>
+          <button 
+            onClick={dismissFirstVisit}
+            className="text-[10px] text-red-400 mt-2 uppercase tracking-wider"
+          >
+            Got it
+          </button>
+        </div>
+      )}
+
       <Button
-        onClick={() => setShowConfirm(true)}
+        onClick={() => {
+          dismissFirstVisit();
+          setShowConfirm(true);
+        }}
         variant="ghost"
         size="sm"
-        className="fixed bottom-4 right-4 z-50 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-500"
+        className={`
+          fixed bottom-4 right-4 z-50 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-500
+          ${isFirstVisit ? 'animate-pulse ring-2 ring-red-500 ring-offset-2 ring-offset-black' : ''}
+        `}
       >
         <AlertTriangle className="w-4 h-4 mr-2" />
         PANIC

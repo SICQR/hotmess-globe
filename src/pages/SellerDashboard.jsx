@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
-import { Plus, Package, DollarSign, Star, TrendingUp, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Package, DollarSign, Star, TrendingUp, Edit, Trash2, Eye, Shield, HelpCircle, BadgeCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -15,27 +15,39 @@ import OffersList from '../components/marketplace/OffersList';
 import DisputeResolution from '../components/seller/DisputeResolution';
 import FeaturedListingsManager from '../components/seller/FeaturedListingsManager';
 import SellerRatingDisplay from '../components/seller/SellerRatingDisplay';
+import SellerVerification from '../components/seller/SellerVerification';
+import SellerHelpCenter from '../components/seller/SellerHelpCenter';
+import BulkProductOperations, { ProductCheckbox } from '../components/seller/BulkProductOperations';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { logger } from '@/utils/logger';
 
 export default function SellerDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [selectedProductIds, setSelectedProductIds] = useState([]);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
+        
+        // Redirect to onboarding if not onboarded as seller
+        if (user.profile_type !== 'seller' && !user.seller_onboarded) {
+          navigate(createPageUrl('SellerOnboarding'));
+          return;
+        }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'SellerDashboard' });
       }
     };
     fetchUser();
-  }, []);
+  }, [navigate]);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['seller-products', currentUser?.email],
@@ -176,7 +188,7 @@ export default function SellerDashboard() {
             {!showForm && (
               <Button 
                 onClick={() => setShowForm(true)}
-                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+                className="bg-[#E62020] hover:bg-[#E62020]/90 text-black"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 New Product
@@ -249,6 +261,14 @@ export default function SellerDashboard() {
             <TabsTrigger value="disputes">Disputes</TabsTrigger>
             <TabsTrigger value="promotions">Promotions</TabsTrigger>
             <TabsTrigger value="payouts">Payouts</TabsTrigger>
+            <TabsTrigger value="verification">
+              <Shield className="w-4 h-4 mr-1" />
+              Verify
+            </TabsTrigger>
+            <TabsTrigger value="help">
+              <HelpCircle className="w-4 h-4 mr-1" />
+              Help
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="products">
@@ -256,13 +276,20 @@ export default function SellerDashboard() {
               <div className="text-center py-20">
                 <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
                 <p className="text-white/40 text-lg mb-4">No products yet</p>
-                <Button onClick={() => setShowForm(true)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+                <Button onClick={() => setShowForm(true)} className="bg-[#E62020] hover:bg-[#E62020]/90 text-black">
                   <Plus className="w-4 h-4 mr-2" />
                   Create First Product
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <>
+                <BulkProductOperations
+                  products={products}
+                  selectedIds={selectedProductIds}
+                  onSelectionChange={setSelectedProductIds}
+                  sellerEmail={currentUser?.email}
+                />
+                <div className="space-y-4">
                 {products.map((product, idx) => (
                   <motion.div
                     key={product.id}
@@ -272,6 +299,11 @@ export default function SellerDashboard() {
                     className="bg-white/5 border border-white/10 rounded-xl p-6"
                   >
                     <div className="flex items-start gap-6">
+                      <ProductCheckbox
+                        productId={product.id}
+                        selectedIds={selectedProductIds}
+                        onSelectionChange={setSelectedProductIds}
+                      />
                       {product.image_urls?.[0] && (
                         <img src={product.image_urls[0]} alt={product.name} className="w-24 h-24 rounded-lg object-cover" />
                       )}
@@ -337,7 +369,8 @@ export default function SellerDashboard() {
                     </div>
                   </motion.div>
                 ))}
-              </div>
+                </div>
+              </>
             )}
           </TabsContent>
 
@@ -345,7 +378,22 @@ export default function SellerDashboard() {
             {orders.length === 0 ? (
               <div className="text-center py-20">
                 <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                <p className="text-white/40 text-lg">No orders yet</p>
+                <p className="text-white/40 text-lg mb-2">No orders yet</p>
+                <p className="text-white/30 text-sm mb-6">Orders will appear here when buyers purchase your products</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <Button 
+                    onClick={() => setShowForm(true)} 
+                    variant="glass" 
+                    className="border-white/20 font-black uppercase text-xs"
+                  >
+                    Add More Products
+                  </Button>
+                  <Link to={createPageUrl('Marketplace')}>
+                    <Button variant="glass" className="border-[#00D9FF]/40 text-[#00D9FF] font-black uppercase text-xs">
+                      View Your Shop
+                    </Button>
+                  </Link>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -413,6 +461,17 @@ export default function SellerDashboard() {
               sellerEmail={currentUser?.email}
               stripeConnectId={currentUser?.stripe_connect_id}
             />
+          </TabsContent>
+
+          <TabsContent value="verification">
+            <SellerVerification 
+              sellerEmail={currentUser?.email}
+              currentStatus={currentUser?.verified_seller ? 'approved' : 'not_started'}
+            />
+          </TabsContent>
+
+          <TabsContent value="help">
+            <SellerHelpCenter />
           </TabsContent>
         </Tabs>
       </div>
