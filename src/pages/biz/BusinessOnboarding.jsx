@@ -4,14 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Building2, 
   Calendar, 
-  MapPin, 
   Check, 
   ArrowRight, 
   ArrowLeft,
   Store,
-  Music,
-  Ticket,
-  Users
+  Music
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
