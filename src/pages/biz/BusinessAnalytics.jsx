@@ -8,10 +8,7 @@ import {
   Users,
   Eye,
   TrendingUp,
-  TrendingDown,
   BarChart3,
-  PieChart,
-  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

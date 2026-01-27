@@ -35,15 +35,31 @@ export function createPageUrl(pageName: string) {
     return query ? `${basePath}?${query}` : basePath;
 }
 
-export function createUserProfileUrl(profile: any): string {
-    // For now, return a hash/anchor that won't navigate away
-    // This allows the onOpenProfile handler to take over
-    // In the future, this could be a route like `/profile/${profile.id}` or `/user/${profile.email}`
-    if (profile?.id) {
-        return `#profile-${profile.id}`;
+type ProfileLike = {
+    auth_user_id?: string;
+    authUserId?: string;
+    email?: string;
+    id?: string;
+};
+
+export function createUserProfileUrl(profile: ProfileLike, fallbackBaseProfileUrl?: string) {
+    const rawUid =
+        (profile && typeof profile === 'object' ? (profile as any).auth_user_id : null) ||
+        (profile && typeof profile === 'object' ? (profile as any).authUserId : null);
+
+    if (rawUid && String(rawUid).trim()) {
+        return `/social/u/${encodeURIComponent(String(rawUid).trim())}`;
     }
-    if (profile?.email) {
-        return `#profile-${encodeURIComponent(profile.email)}`;
+
+    const rawEmail = profile && typeof profile === 'object' ? (profile as any).email : null;
+    if (rawEmail && String(rawEmail).trim()) {
+        const base =
+            typeof fallbackBaseProfileUrl === 'string' && fallbackBaseProfileUrl.trim()
+                ? fallbackBaseProfileUrl.trim()
+                : createPageUrl('Profile');
+        const joiner = base.includes('?') ? '&' : '?';
+        return `${base}${joiner}email=${encodeURIComponent(String(rawEmail).trim())}`;
     }
-    return '#profile';
+
+    return createPageUrl('Social');
 }

@@ -11,9 +11,6 @@ import {
   Settings,
   Plus,
   ChevronRight,
-  Store,
-  Ticket,
-  Eye,
   Clock,
   AlertCircle
 } from 'lucide-react';

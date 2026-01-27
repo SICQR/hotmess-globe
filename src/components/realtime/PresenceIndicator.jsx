@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { Circle, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 /**
  * Online Status Dot
