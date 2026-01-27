@@ -136,6 +136,12 @@ const ShowHeroRedirect = () => {
   return <Navigate to={target} replace />;
 };
 
+const ProfileRedirect = () => {
+  const { email } = useParams();
+  const target = `${createPageUrl('Profile')}?email=${encodeURIComponent(email ?? '')}`;
+  return <Navigate to={target} replace />;
+};
+
 const OrdersRedirect = () => {
   return <Navigate to={createPageUrl('OrderHistory')} replace />;
 };
@@ -361,6 +367,19 @@ const AuthenticatedApp = () => {
       <Route path="/hnhmess" element={<PageRoute pageKey="Hnhmess" />} />
       <Route path="/more" element={<PageRoute pageKey="More" />} />
       <Route path="/directions" element={<PageRoute pageKey="Directions" />} />
+      
+      {/* Auth sub-routes */}
+      <Route path="/auth/sign-in" element={<PageRoute pageKey="Auth" />} />
+      <Route path="/auth/sign-up" element={<PageRoute pageKey="Auth" />} />
+      <Route path="/auth/magic-link" element={<PageRoute pageKey="Auth" />} />
+      <Route path="/auth/verify" element={<PageRoute pageKey="Auth" />} />
+      <Route path="/auth/reset" element={<PageRoute pageKey="Auth" />} />
+      
+      {/* Onboarding sub-routes */}
+      <Route path="/onboarding" element={<PageRoute pageKey="Onboarding" />} />
+      <Route path="/onboarding/consent" element={<PageRoute pageKey="Onboarding" />} />
+      <Route path="/onboarding/profile" element={<PageRoute pageKey="Onboarding" />} />
+      <Route path="/onboarding/preferences" element={<PageRoute pageKey="Onboarding" />} />
 
       {/* Headless Shopify shop routes */}
       {/* Legacy/alias shop routes (keep URLs working) */}
@@ -369,18 +388,26 @@ const AuthenticatedApp = () => {
       <Route path="/p/:handle" element={<ShopProductRoute />} />
       <Route path="/cart" element={<ShopCartRoute />} />
       <Route path="/checkout/start" element={<ShopCheckoutStartRoute />} />
+      <Route path="/checkout" element={<PageRoute pageKey="Checkout" />} />
 
       {/* Legal */}
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
       <Route path="/legal/terms" element={<LegalTermsRoute />} />
       <Route path="/legal/privacy-hub" element={<LegalPrivacyHubRoute />} />
       <Route path="/legal" element={<Navigate to="/legal/privacy" replace />} />
+      <Route path="/terms" element={<PageRoute pageKey="TermsOfService" />} />
+      <Route path="/privacy" element={<PageRoute pageKey="PrivacyPolicy" />} />
+      <Route path="/guidelines" element={<PageRoute pageKey="CommunityGuidelines" />} />
+      <Route path="/contact" element={<PageRoute pageKey="Contact" />} />
 
-      {/* Bible-friendly market/order aliases */}
+      {/* Orders and market aliases */}
       <Route path="/orders" element={<OrdersRedirect />} />
       <Route path="/orders/:id" element={<OrderByIdRedirect />} />
       <Route path="/orders/:id/tracking" element={<OrderTrackingRedirect />} />
       <Route path="/returns" element={<ReturnsRedirect />} />
+      
+      {/* Social profile routes */}
+      <Route path="/social/u/:email" element={<ProfileRedirect />} />
 
       {/* Bible-friendly /more/* tool routes (aliases) */}
       <Route path="/more/beacons" element={<PageRoute pageKey="Beacons" />} />
@@ -389,25 +416,53 @@ const AuthenticatedApp = () => {
       <Route path="/more/beacons/:id/edit" element={<EditBeaconRedirect />} />
       <Route path="/more/stats" element={<PageRoute pageKey="Stats" />} />
       <Route path="/more/challenges" element={<PageRoute pageKey="Challenges" />} />
+      <Route path="/more/settings" element={<PageRoute pageKey="Settings" />} />
+      <Route path="/more/care" element={<PageRoute pageKey="Care" />} />
+
+      {/* Settings */}
+      <Route path="/settings" element={<PageRoute pageKey="Settings" />} />
+      <Route path="/settings/privacy" element={<PageRoute pageKey="Settings" />} />
+      <Route path="/settings/notifications" element={<PageRoute pageKey="Settings" />} />
+      <Route path="/settings/account" element={<PageRoute pageKey="Settings" />} />
 
       {/* Bible-friendly safety/calendar/scan subroutes */}
       <Route path="/safety/*" element={<PageRoute pageKey="Safety" />} />
+      <Route path="/safety/report" element={<PageRoute pageKey="Safety" />} />
+      <Route path="/safety/resources" element={<PageRoute pageKey="Care" />} />
       <Route path="/calendar/*" element={<PageRoute pageKey="Calendar" />} />
       <Route path="/scan/*" element={<PageRoute pageKey="Scan" />} />
       <Route path="/community/*" element={<PageRoute pageKey="Community" />} />
       <Route path="/leaderboard/*" element={<PageRoute pageKey="Leaderboard" />} />
 
-      {/* Bible-friendly notifications/account aliases */}
+      {/* Notifications/account aliases */}
       <Route path="/notifications" element={<Navigate to={createPageUrl('Settings')} replace />} />
       <Route path="/notifications/*" element={<Navigate to={createPageUrl('Settings')} replace />} />
+      <Route path="/notifications/settings" element={<PageRoute pageKey="Settings" />} />
       <Route path="/account" element={<Navigate to={createPageUrl('Settings')} replace />} />
       <Route path="/account/profile" element={<Navigate to={createPageUrl('EditProfile')} replace />} />
       <Route path="/account/membership" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
       <Route path="/account/upgrade" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
       <Route path="/account/billing" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
       <Route path="/account/receipts" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+      <Route path="/account/delete" element={<PageRoute pageKey="AccountDeletion" />} />
+      <Route path="/account/export" element={<PageRoute pageKey="DataExport" />} />
+      <Route path="/account/consents" element={<PageRoute pageKey="AccountConsents" />} />
       <Route path="/account/data" element={<Navigate to={createPageUrl('AccountConsents')} replace />} />
       <Route path="/account/data/*" element={<Navigate to={createPageUrl('AccountConsents')} replace />} />
+
+      {/* Help & Support */}
+      <Route path="/help" element={<PageRoute pageKey="HelpCenter" />} />
+      <Route path="/support" element={<PageRoute pageKey="Contact" />} />
+      
+      {/* Membership */}
+      <Route path="/membership" element={<PageRoute pageKey="MembershipUpgrade" />} />
+      <Route path="/upgrade" element={<PageRoute pageKey="MembershipUpgrade" />} />
+      
+      {/* Business dashboard */}
+      <Route path="/biz" element={<PageRoute pageKey="BusinessDashboard" />} />
+      <Route path="/biz/dashboard" element={<PageRoute pageKey="BusinessDashboard" />} />
+      <Route path="/biz/analytics" element={<PageRoute pageKey="BusinessAnalytics" />} />
+      <Route path="/biz/onboarding" element={<PageRoute pageKey="BusinessOnboarding" />} />
 
       {/* Legacy lowercase routes -> canonical V1.5 routes */}
       <Route path="/radio" element={<Navigate to={createPageUrl('Radio')} replace />} />

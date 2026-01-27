@@ -24,6 +24,7 @@ import PersistentRadioPlayer from '@/components/shell/PersistentRadioPlayer';
 import { Radio as RadioIcon } from 'lucide-react';
 import { useRadio } from '@/components/shell/RadioContext';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
+import CookieConsent from '@/components/legal/CookieConsent';
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
 
       const PRIMARY_NAV = [
@@ -323,7 +324,6 @@ function LayoutInner({ children, currentPageName }) {
   const isPulsePage = currentPageName === 'Pulse';
   const isChromelessPage =
     currentPageName === 'Auth' ||
-    currentPageName === 'Login' ||
     currentPageName === 'AgeGate' ||
     currentPageName === 'OnboardingGate' ||
     currentPageName === 'AccountConsents';
@@ -663,6 +663,9 @@ function LayoutInner({ children, currentPageName }) {
 
       {/* Persistent Radio Player - Never Unmounts */}
       <PersistentRadioPlayer />
+
+      {/* Cookie Consent Banner */}
+      <CookieConsent />
       </div>
         </TaxonomyProvider>
       </ErrorBoundary>

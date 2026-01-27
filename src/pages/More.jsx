@@ -88,8 +88,8 @@ export default function More() {
             <div className="flex flex-wrap justify-center gap-4 text-xs text-white/60">
               <Link to="/legal/terms" className="hover:text-white">Terms of Service</Link>
               <Link to="/legal/privacy" className="hover:text-white">Privacy Policy</Link>
-              <Link to={createPageUrl('Safety')} className="hover:text-white">Community Guidelines</Link>
-              <Link to={createPageUrl('Care')} className="hover:text-white">Contact</Link>
+              <Link to={createPageUrl('CommunityGuidelines')} className="hover:text-white">Community Guidelines</Link>
+              <Link to={createPageUrl('Contact')} className="hover:text-white">Contact</Link>
             </div>
             <p className="text-xs text-white/40">
               © 2026 HOTMESS LONDON OS
