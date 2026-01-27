@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, X, Star, StarOff, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 const HISTORY_KEY = 'hotmess_search_history';
 const SAVED_KEY = 'hotmess_saved_searches';
