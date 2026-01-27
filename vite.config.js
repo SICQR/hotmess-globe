@@ -464,6 +464,26 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/email/send' && method === 'POST') {
+          return importFresh('./api/email/send.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load email handler' }));
+            });
+        }
+
+        if (path === '/api/notifications/process' && (method === 'GET' || method === 'POST')) {
+          return importFresh('./api/notifications/process.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load notifications processor' }));
+            });
+        }
+
         // Scan endpoints (handled locally in dev)
         if (path === '/api/scan/check-in' && (method === 'POST' || method === 'OPTIONS')) {
           return importFresh('./api/scan/check-in.js')
@@ -496,6 +516,37 @@ function localApiRoutes() {
             });
         }
 
+        // Stripe API routes for local development
+        if (path === '/api/stripe/create-checkout-session' && method === 'POST') {
+          return importFresh('./api/stripe/create-checkout-session.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load checkout session handler' }));
+            });
+        }
+
+        if (path === '/api/stripe/cancel-subscription' && method === 'POST') {
+          return importFresh('./api/stripe/cancel-subscription.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load cancel subscription handler' }));
+            });
+        }
+
+        if (path === '/api/stripe/webhook' && method === 'POST') {
+          return importFresh('./api/stripe/webhook.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load webhook handler' }));
+            });
+        }
+
         return next();
       });
     },
@@ -514,7 +565,7 @@ export default defineConfig(({ mode }) => {
     // Vite only exposes env vars to import.meta.env when they match envPrefix.
     // We keep the default VITE_ prefix, and also support existing Vercel env vars
     // that were created with a "vite_public" prefix.
-    envPrefix: ['VITE_', 'vite_public'],
+    envPrefix: ['VITE_', 'vite_public', 'NEXT_PUBLIC_'],
     // Local dev convenience: if you only have SUPABASE_URL/SUPABASE_ANON_KEY in .env.local
     // (and not the VITE_ prefixed versions), define the VITE_ vars explicitly.
     // This keeps the client working without exposing the service role key.

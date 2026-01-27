@@ -3,20 +3,22 @@ import { createClient } from '@supabase/supabase-js';
 // Helper to create page URLs - matches Base44 pattern
 const createPageUrl = (pageName) => `/${pageName}`;
 
+// Vercel–Supabase integration sets NEXT_PUBLIC_SUPABASE_*; we also support VITE_*.
 const supabaseUrl =
   import.meta.env.VITE_SUPABASE_URL ||
+  import.meta.env.NEXT_PUBLIC_SUPABASE_URL ||
   import.meta.env.vite_publicSUPABASE_URL ||
   '';
 const supabaseKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
   import.meta.env.vite_publicSUPABASE_ANON_KEY ||
   '';
 
 if (!supabaseUrl || !supabaseKey) {
-  // Avoid hard-crashing on import (which can look like a white screen);
-  // log a clear error instead so it shows up in Vercel/DevTools.
   console.error(
-    '[supabase] Missing required env vars. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+    '[supabase] Missing Supabase env. Use VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY, ' +
+    'or connect via Vercel ↔ Supabase (NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY).'
   );
 }
 
@@ -1090,6 +1092,40 @@ export const base44 = {
         
         return { file_url: publicUrl };
       },
+      
+      /**
+       * Send email via Vercel API route
+       * @param {Object} options - Email options
+       * @param {string} options.to - Recipient email address
+       * @param {string} options.subject - Email subject
+       * @param {string} options.body - Plain text email body
+       * @param {string} [options.html] - HTML email body (optional)
+       * @returns {Promise<{success: boolean, id?: string}>}
+       */
+      SendEmail: async ({ to, subject, body, html }) => {
+        try {
+          const response = await fetch('/api/email/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ to, subject, body, html }),
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) {
+            console.error('[SendEmail] Failed:', data);
+            throw new Error(data.error || 'Failed to send email');
+          }
+          
+          return data;
+        } catch (error) {
+          console.error('[SendEmail] Error:', error);
+          // Don't throw - let the caller handle failures gracefully
+          return { success: false, error: error.message };
+        }
+      },
 
       InvokeLLM: async (args = {}) => {
         // This repo uses a Supabase-backed Base44 compatibility layer.
@@ -1155,8 +1191,9 @@ const entityTables = [
   // Marketplace cart
   'cart_items',
 
-  // Tags
+  // Tags and Tribes
   'user_tags',
+  'user_tribes',
 
   // Social/AI interaction tracking
   'user_interactions',
@@ -1256,11 +1293,26 @@ entityTables.forEach(table => {
       delete remaining.$or;
 
       Object.entries(remaining).forEach(([rawKey, rawValue]) => {
+        // Skip undefined/null values
+        if (rawValue === undefined || rawValue === null) return;
+        
         const key = normalizeFilterKey(rawKey);
 
         // Support "IN" filters (e.g. { user_email: ['admin', email] })
         if (Array.isArray(rawValue)) {
+          // Only use .in() for arrays of primitives, not arrays of objects
+          const hasObjects = rawValue.some(v => v !== null && typeof v === 'object');
+          if (hasObjects) {
+            console.warn(`[base44.entities.${entityName}.filter] Skipping complex array filter for key "${rawKey}"`);
+            return;
+          }
           query = query.in(key, rawValue);
+          return;
+        }
+
+        // Skip object values (can't use .eq() with objects)
+        if (typeof rawValue === 'object') {
+          console.warn(`[base44.entities.${entityName}.filter] Skipping object filter for key "${rawKey}"`);
           return;
         }
 

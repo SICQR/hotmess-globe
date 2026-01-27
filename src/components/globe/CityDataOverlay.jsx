@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Cloud, CloudRain, Sun, Wind, Zap, Bus, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// City data aggregation (derived from beacons + check-ins).
+// City data generator - uses real beacon/check-in data, weather/transit are placeholders for beta
 const generateCityData = (city, beacons, checkIns) => {
   const cityBeacons = beacons.filter(b => b.city === city.name && b.active);
   const recentCheckIns = checkIns.filter(
