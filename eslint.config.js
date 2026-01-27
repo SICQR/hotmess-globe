@@ -6,6 +6,13 @@ import pluginUnusedImports from "eslint-plugin-unused-imports";
 
 export default [
   {
+    ignores: [
+      // This repo contains an intentionally-ignored nested copy at `hotmess-globe/`.
+      // Do not lint it (it has different config/tooling and breaks CI).
+      "hotmess-globe/**",
+    ],
+  },
+  {
     files: [
       "src/components/**/*.{js,mjs,cjs,jsx}",
       "src/pages/**/*.{js,mjs,cjs,jsx}",
