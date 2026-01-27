@@ -6,7 +6,7 @@ import type { ViewerLocationResponse } from './types';
 import type { Profile } from './types';
 import type { LatLng } from './travelTime';
 import { base44 } from '@/api/base44Client';
-import { createPageUrl, createUserProfileUrl } from '@/utils';
+import { createUserProfileUrl } from '@/utils';
 import { toast } from 'sonner';
 import TelegramPanel from './TelegramPanel';
 import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
