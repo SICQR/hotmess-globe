@@ -34,3 +34,16 @@ export function createPageUrl(pageName: string) {
     const basePath = routeMap[base] ?? '/' + base.replace(/ /g, '-');
     return query ? `${basePath}?${query}` : basePath;
 }
+
+export function createUserProfileUrl(profile: any): string {
+    // For now, return a hash/anchor that won't navigate away
+    // This allows the onOpenProfile handler to take over
+    // In the future, this could be a route like `/profile/${profile.id}` or `/user/${profile.email}`
+    if (profile?.id) {
+        return `#profile-${profile.id}`;
+    }
+    if (profile?.email) {
+        return `#profile-${encodeURIComponent(profile.email)}`;
+    }
+    return '#profile';
+}
