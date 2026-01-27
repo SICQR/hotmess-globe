@@ -44,7 +44,7 @@ export default function RightNowManager({ currentUser }) {
     <div className="bg-black border-2 border-white p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Zap className="w-6 h-6 text-[#FF1493]" />
+          <Zap className="w-6 h-6 text-[#E62020]" />
           <h2 className="text-xl font-black uppercase">RIGHT NOW</h2>
         </div>
         
@@ -70,7 +70,7 @@ export default function RightNowManager({ currentUser }) {
               if (!ok) return;
               setShowModal(true);
             }}
-            className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black"
+            className="bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black"
           >
             <Zap className="w-4 h-4 mr-2" />
             Go Live
@@ -97,7 +97,7 @@ export default function RightNowManager({ currentUser }) {
               if (!ok) return;
               setShowModal(true);
             }}
-            className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black w-full"
+            className="bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black w-full"
           >
             <Zap className="w-4 h-4 mr-2" />
             Go Right Now

@@ -10,7 +10,7 @@ const TOUR_STEPS = [
     title: 'Welcome to HOTMESS',
     description: 'Your social operating system for London nightlife, events, and connections.',
     icon: Zap,
-    color: '#FF1493'
+    color: '#E62020'
   },
   {
     id: 'connect',
@@ -49,7 +49,7 @@ const TOUR_STEPS = [
     title: 'Stay Connected',
     description: 'Message your connections, join squads, and stay in the loop.',
     icon: MessageCircle,
-    color: '#FF1493',
+    color: '#E62020',
     link: 'Messages'
   }
 ];
@@ -163,7 +163,7 @@ export default function WelcomeTour({ onComplete }) {
                 {currentStepData.link && (
                   <a
                     href={resolveLink(currentStepData.link)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border-2 border-white/20 hover:border-[#FF1493] text-sm font-bold uppercase tracking-wider transition-colors mb-6"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border-2 border-white/20 hover:border-[#E62020] text-sm font-bold uppercase tracking-wider transition-colors mb-6"
                   >
                     Go to {currentStepData.title}
                     <ChevronRight className="w-4 h-4" />
@@ -194,7 +194,7 @@ export default function WelcomeTour({ onComplete }) {
                   )}
                   <Button
                     onClick={handleNext}
-                    className="bg-[#FF1493] hover:bg-white text-white hover:text-black font-black border-2 border-white"
+                    className="bg-[#E62020] hover:bg-white text-white hover:text-black font-black border-2 border-white"
                   >
                     {currentStep === TOUR_STEPS.length - 1 ? (
                       <>

@@ -49,7 +49,7 @@ export default function MutualConnections({ profileUserEmail, currentUserEmail }
             className="inline-block"
           >
             <div 
-              className="w-10 h-10 border-2 border-black bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden hover:z-10 transition-transform hover:scale-110"
+              className="w-10 h-10 border-2 border-black bg-gradient-to-br from-[#E62020] to-[#B026FF] flex items-center justify-center overflow-hidden hover:z-10 transition-transform hover:scale-110"
               title={user.full_name}
             >
               {user.avatar_url ? (

@@ -43,7 +43,7 @@ export default function RightNowGrid({ currentUser }) {
           className="mb-8"
         >
           <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2">
-            RIGHT <span className="text-[#FF1493]">NOW</span> GRID
+            RIGHT <span className="text-[#E62020]">NOW</span> GRID
           </h1>
           <p className="text-white/60 uppercase text-sm tracking-wider">
             {usersWithStatus.length} PEOPLE AVAILABLE IN YOUR AREA
@@ -67,7 +67,7 @@ export default function RightNowGrid({ currentUser }) {
                 className={`bg-black border-2 p-4 hover:shadow-lg transition-all ${
                   status.cold_vibe
                     ? 'border-[#50C878] shadow-[0_0_15px_#50C878] backdrop-blur-sm bg-gradient-to-br from-[#50C878]/10 to-transparent'
-                    : 'border-white/20 hover:border-[#FF1493]'
+                    : 'border-white/20 hover:border-[#E62020]'
                 }`}
               >
                 <Link to={createPageUrl(`Profile?email=${user.email}`)}>
@@ -77,7 +77,7 @@ export default function RightNowGrid({ currentUser }) {
                         className={`w-16 h-16 bg-gradient-to-br border-2 flex items-center justify-center ${
                           status.cold_vibe
                             ? 'from-[#50C878] to-[#3AA863] border-[#50C878]'
-                            : 'from-[#FF1493] to-[#B026FF] border-white'
+                            : 'from-[#E62020] to-[#B026FF] border-white'
                         }`}
                       >
                         {user.avatar_url ? (
@@ -141,7 +141,7 @@ export default function RightNowGrid({ currentUser }) {
                   className={`w-full font-black border-2 ${
                     status.cold_vibe
                       ? 'bg-[#50C878] text-black border-[#50C878] hover:bg-[#50C878]/90'
-                      : 'bg-[#FF1493] text-black border-white hover:bg-white'
+                      : 'bg-[#E62020] text-black border-white hover:bg-white'
                   }`}
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />

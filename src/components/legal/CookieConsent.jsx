@@ -110,14 +110,14 @@ export function CookieConsent() {
             // Simple Banner
             <div className="p-4 md:p-6">
               <div className="flex items-start gap-4">
-                <Cookie className="w-8 h-8 text-[#FF1493] shrink-0 mt-1" />
+                <Cookie className="w-8 h-8 text-[#E62020] shrink-0 mt-1" />
                 <div className="flex-1">
                   <h3 className="font-black uppercase mb-2">Cookie Settings</h3>
                   <p className="text-sm text-white/70 mb-4">
                     We use cookies to enhance your experience, analyze site traffic, and for marketing purposes. 
                     By clicking "Accept All", you consent to our use of cookies. 
                     Read our{' '}
-                    <Link to={createPageUrl('PrivacyPolicy')} className="text-[#FF1493] hover:underline">
+                    <Link to={createPageUrl('PrivacyPolicy')} className="text-[#E62020] hover:underline">
                       Privacy Policy
                     </Link>{' '}
                     for more information.
@@ -125,7 +125,7 @@ export function CookieConsent() {
                   <div className="flex flex-wrap gap-3">
                     <button
                       onClick={acceptAll}
-                      className="px-6 py-2 bg-[#FF1493] hover:bg-[#FF1493]/80 font-bold uppercase text-sm transition-colors"
+                      className="px-6 py-2 bg-[#E62020] hover:bg-[#E62020]/80 font-bold uppercase text-sm transition-colors"
                     >
                       Accept All
                     </button>
@@ -158,7 +158,7 @@ export function CookieConsent() {
             <div className="p-4 md:p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <Cookie className="w-6 h-6 text-[#FF1493]" />
+                  <Cookie className="w-6 h-6 text-[#E62020]" />
                   <h3 className="font-black uppercase">Cookie Preferences</h3>
                 </div>
                 <button
@@ -175,7 +175,7 @@ export function CookieConsent() {
                     key={category.id}
                     className={`p-4 border-2 transition-colors ${
                       preferences[category.id]
-                        ? 'border-[#FF1493]/50 bg-[#FF1493]/5'
+                        ? 'border-[#E62020]/50 bg-[#E62020]/5'
                         : 'border-white/10'
                     }`}
                   >
@@ -190,7 +190,7 @@ export function CookieConsent() {
                         <button
                           onClick={() => toggleCategory(category.id)}
                           className={`w-12 h-6 rounded-full transition-colors relative ${
-                            preferences[category.id] ? 'bg-[#FF1493]' : 'bg-white/20'
+                            preferences[category.id] ? 'bg-[#E62020]' : 'bg-white/20'
                           }`}
                         >
                           <span
@@ -208,7 +208,7 @@ export function CookieConsent() {
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={savePreferences}
-                  className="px-6 py-2 bg-[#FF1493] hover:bg-[#FF1493]/80 font-bold uppercase text-sm transition-colors flex items-center gap-2"
+                  className="px-6 py-2 bg-[#E62020] hover:bg-[#E62020]/80 font-bold uppercase text-sm transition-colors flex items-center gap-2"
                 >
                   <Check className="w-4 h-4" />
                   Save Preferences

@@ -11,7 +11,7 @@ export function SkipToContent({ targetId = 'main-content' }) {
       className="
         sr-only focus:not-sr-only
         fixed top-0 left-0 z-[9999]
-        bg-[#FF1493] text-black
+        bg-[#E62020] text-black
         px-4 py-2 font-bold
         focus:outline-none focus:ring-2 focus:ring-white
         transition-transform -translate-y-full focus:translate-y-0
@@ -39,7 +39,7 @@ export function VisuallyHidden({ children, as: Component = 'span' }) {
  * Consistent focus ring for accessibility
  */
 export function useFocusVisible() {
-  return 'focus:outline-none focus:ring-2 focus:ring-[#FF1493] focus:ring-offset-2 focus:ring-offset-black';
+  return 'focus:outline-none focus:ring-2 focus:ring-[#E62020] focus:ring-offset-2 focus:ring-offset-black';
 }
 
 /**

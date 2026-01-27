@@ -5,57 +5,10 @@ import { ShoppingBag, Star, Package, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../marketplace/ProductCard';
 import { isXpPurchasingEnabled } from '@/lib/featureFlags';
-
-const getUserPhotoUrls = (user) => {
-  const urls = [];
-  const push = (value) => {
-    const url = typeof value === 'string' ? value.trim() : '';
-    if (!url) return;
-    if (urls.includes(url)) return;
-    urls.push(url);
-  };
-
-  push(user?.avatar_url);
-  push(user?.avatarUrl);
-
-  const photos = Array.isArray(user?.photos) ? user.photos : [];
-  for (const item of photos) {
-    if (!item) continue;
-    if (typeof item === 'string') push(item);
-    else if (typeof item === 'object') push(item.url || item.file_url || item.href);
-  }
-
-  const more = Array.isArray(user?.photo_urls) ? user.photo_urls : [];
-  for (const u of more) push(u);
-
-  const images = Array.isArray(user?.images) ? user.images : [];
-  for (const img of images) {
-    if (!img) continue;
-    if (typeof img === 'string') push(img);
-    else if (typeof img === 'object') push(img.url || img.src || img.file_url || img.href);
-  }
-
-  return urls.slice(0, 5);
-};
-
-const isPremiumPhoto = (user, idx) => {
-  const photos = Array.isArray(user?.photos) ? user.photos : [];
-  const p = photos[idx];
-  if (!p || typeof p !== 'object') return false;
-  return !!(p.is_premium || p.isPremium || p.premium);
-};
+import PhotoGallery from './shared/PhotoGallery';
 
 export default function SellerProfileView({ user }) {
   const xpPurchasingEnabled = isXpPurchasingEnabled();
-
-  const photoUrls = getUserPhotoUrls(user);
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = React.useState(0);
-  const [previewPhotoIndex, setPreviewPhotoIndex] = React.useState(null);
-  const activePhotoIndex = previewPhotoIndex === null ? selectedPhotoIndex : previewPhotoIndex;
-  const activeUrl = photoUrls[activePhotoIndex] || null;
-  const activeIsPremium = isPremiumPhoto(user, activePhotoIndex);
-  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(String(user?.full_name || 'User'))}&size=512&background=111111&color=ffffff`;
-  const mainUrl = activeUrl || fallbackAvatar;
 
   const { data: products = [] } = useQuery({
     queryKey: ['seller-products', user.email],
@@ -77,60 +30,8 @@ export default function SellerProfileView({ user }) {
 
   return (
     <div className="space-y-6">
-      {/* Photos (seller profiles should still have the same detail-gallery UX) */}
-      <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-        <h3 className="text-sm uppercase tracking-wider text-white/40 mb-4">Photos</h3>
-
-        <div className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black/30">
-          {activeIsPremium ? (
-            <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#FF1493]/15 border border-[#FFD700]/40 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-3xl mb-2">🔒</div>
-                <div className="text-xs text-[#FFD700] font-black uppercase">Premium</div>
-              </div>
-            </div>
-          ) : (
-            <img src={mainUrl} alt="Profile photo" className="w-full h-full object-cover" />
-          )}
-        </div>
-
-        <div className="mt-3 grid grid-cols-4 gap-3">
-          {Array.from({ length: 4 }).map((_, slotIdx) => {
-            const photoIdx = slotIdx + 1;
-            const url = photoUrls[photoIdx] || null;
-            const premium = isPremiumPhoto(user, photoIdx);
-
-            return (
-              <button
-                key={photoIdx}
-                type="button"
-                className="relative aspect-square overflow-hidden rounded-md border border-white/10 bg-black/30 hover:border-white/25 transition-colors disabled:opacity-60"
-                onMouseEnter={() => setPreviewPhotoIndex(photoIdx)}
-                onMouseLeave={() => setPreviewPhotoIndex(null)}
-                onFocus={() => setPreviewPhotoIndex(photoIdx)}
-                onBlur={() => setPreviewPhotoIndex(null)}
-                onClick={() => {
-                  if (!url) return;
-                  setSelectedPhotoIndex(photoIdx);
-                  setPreviewPhotoIndex(null);
-                }}
-                disabled={!url}
-                aria-label={url ? `View photo ${photoIdx + 1}` : `Empty photo slot ${photoIdx + 1}`}
-              >
-                {premium ? (
-                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#FF1493]/15 border border-[#FFD700]/40 flex items-center justify-center">
-                    <div className="text-xs text-[#FFD700] font-black uppercase">🔒</div>
-                  </div>
-                ) : url ? (
-                  <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-white/10 to-black/30" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Photos */}
+      <PhotoGallery user={user} />
 
       {/* Seller Bio */}
       {user?.seller_bio && (
@@ -162,37 +63,38 @@ export default function SellerProfileView({ user }) {
         </div>
       </div>
 
-      {!xpPurchasingEnabled && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-          <h3 className="text-sm uppercase tracking-wider text-white/60 mb-2">Shopfront</h3>
-          <p className="text-sm text-white/70">Seller listings are coming soon.</p>
-          <div className="mt-4">
+      {/* Products */}
+      <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-black uppercase">Products</h3>
+          <Link 
+            to={`/market?seller=${encodeURIComponent(user.email || '')}`}
+            className="text-xs text-[#00D9FF] hover:text-white uppercase font-bold"
+          >
+            View All →
+          </Link>
+        </div>
+        
+        {!xpPurchasingEnabled ? (
+          <div className="text-center py-6">
+            <p className="text-sm text-white/60 mb-2">XP purchasing is currently disabled</p>
             <Link to="/market" className="text-xs text-[#00D9FF] hover:text-white uppercase font-bold">
               Browse Market →
             </Link>
           </div>
-        </div>
-      )}
-
-      {/* Products */}
-      {xpPurchasingEnabled && products.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-black uppercase">Products</h3>
-            <Link 
-              to="/market"
-              className="text-xs text-[#00D9FF] hover:text-white uppercase font-bold"
-            >
-              View All →
-            </Link>
+        ) : products.length === 0 ? (
+          <div className="text-center py-6">
+            <Package className="w-12 h-12 mx-auto mb-3 text-white/20" />
+            <p className="text-sm text-white/60">No products listed yet</p>
           </div>
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {products.slice(0, 6).map(product => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Recent Reviews */}
       {xpPurchasingEnabled && reviews.length > 0 && (

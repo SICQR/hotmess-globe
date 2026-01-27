@@ -11,14 +11,14 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
   const isPast = eventDate && eventDate < new Date();
 
   const MODE_COLORS = {
-    crowd: '#FF1493',
+    crowd: '#E62020',
     hookup: '#FF073A',
     drop: '#FF6B35',
     ticket: '#B026FF',
     radio: '#00D9FF'
   };
 
-  const color = MODE_COLORS[event.mode] || '#FF1493';
+  const color = MODE_COLORS[event.mode] || '#E62020';
 
   return (
     <motion.div
@@ -28,7 +28,7 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
       className="group relative"
     >
       {recommendationScore && recommendationScore > 40 && (
-        <div className="absolute -top-2 -right-2 z-10 bg-[#FF1493] border-2 border-white px-2 py-1 flex items-center gap-1">
+        <div className="absolute -top-2 -right-2 z-10 bg-[#E62020] border-2 border-white px-2 py-1 flex items-center gap-1">
           <Sparkles className="w-3 h-3" />
           <span className="text-[10px] font-black uppercase">Top Match</span>
         </div>
@@ -64,7 +64,7 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
             </OSCardBadge>
 
             {/* Title */}
-            <h3 className="text-xl font-black mb-2 line-clamp-2 group-hover:text-[#FF1493] transition-colors">
+            <h3 className="text-xl font-black mb-2 line-clamp-2 group-hover:text-[#E62020] transition-colors">
               {event.title}
             </h3>
 
@@ -79,14 +79,14 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
             <div className="space-y-2 text-sm">
               {event.event_date && (
                 <div className="flex items-center gap-2 text-white/80">
-                  <Calendar className="w-4 h-4 text-[#FF1493]" />
+                  <Calendar className="w-4 h-4 text-[#E62020]" />
                   <span>{formatUTCDate(event.event_date, 'EEE, MMM d • h:mm a')}</span>
                 </div>
               )}
 
               {event.venue_name && (
                 <div className="flex items-center gap-2 text-white/80">
-                  <MapPin className="w-4 h-4 text-[#FF1493]" />
+                  <MapPin className="w-4 h-4 text-[#E62020]" />
                   <span className="line-clamp-1">{event.venue_name}</span>
                 </div>
               )}

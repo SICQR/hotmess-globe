@@ -30,8 +30,8 @@ export default function Beacons() {
   const cities = [...new Set(beacons.map(b => b.city))];
 
   const BEACON_COLORS = {
-    event: '#FF1493',
-    venue: '#FF1493',
+    event: '#E62020',
+    venue: '#E62020',
     hookup: '#FF073A',
     drop: '#FF6B35',
     popup: '#B026FF',
@@ -64,7 +64,7 @@ export default function Beacons() {
               if (!ok) e.preventDefault();
             }}
           >
-            <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+            <Button className="bg-[#E62020] hover:bg-[#E62020]/90 text-black">
               <Plus className="w-4 h-4 mr-2" />
               Create
             </Button>
@@ -126,7 +126,7 @@ export default function Beacons() {
                   <span
                     className="px-2 py-1 rounded text-xs font-bold uppercase tracking-wider"
                     style={{
-                      backgroundColor: BEACON_COLORS[beacon.kind] || '#FF1493',
+                      backgroundColor: BEACON_COLORS[beacon.kind] || '#E62020',
                       color: '#000'
                     }}
                   >
@@ -152,7 +152,7 @@ export default function Beacons() {
                   </div>
                   {beacon.intensity && (
                     <div className="flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-[#FF1493]" />
+                      <Zap className="w-3 h-3 text-[#E62020]" />
                       <span className="text-xs font-bold">{Math.round(beacon.intensity * 100)}%</span>
                     </div>
                   )}

@@ -63,10 +63,10 @@ export default function TutorialTooltip({ page }) {
         exit={{ opacity: 0, scale: 0.9 }}
         className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-[9999] max-w-sm w-[calc(100vw-2rem)] md:w-auto"
       >
-        <div className="bg-black border-2 border-[#FF1493] rounded-xl p-6 shadow-2xl">
+        <div className="bg-black border-2 border-[#E62020] rounded-xl p-6 shadow-2xl">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#FF1493] flex items-center justify-center text-black font-black text-sm">
+              <div className="w-8 h-8 rounded-full bg-[#E62020] flex items-center justify-center text-black font-black text-sm">
                 {currentStep + 1}
               </div>
               <span className="text-xs text-white/40 uppercase">
@@ -86,12 +86,12 @@ export default function TutorialTooltip({ page }) {
                 <Button onClick={handleSkip} variant="outline" className="flex-1 border-white/20">
                   Skip
                 </Button>
-                <Button onClick={handleNext} className="flex-1 bg-[#FF1493] text-black font-black">
+                <Button onClick={handleNext} className="flex-1 bg-[#E62020] text-black font-black">
                   Next <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </>
             ) : (
-              <Button onClick={handleComplete} className="w-full bg-[#FF1493] text-black font-black">
+              <Button onClick={handleComplete} className="w-full bg-[#E62020] text-black font-black">
                 Got it!
               </Button>
             )}

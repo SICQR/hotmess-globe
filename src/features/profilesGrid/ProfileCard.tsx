@@ -3,10 +3,12 @@ import type { Profile, TravelTimeResponse } from './types';
 import { fetchTravelTime, type LatLng } from './travelTime';
 import { useLongPress } from './useLongPress';
 import { useVisibility } from './useVisibility';
-import { buildUberDeepLink } from '@/utils/uberDeepLink';
+import { buildUberDeepLink, buildLyftDeepLink } from '@/utils/uberDeepLink';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@/utils/travelRecommendations';
 import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
+import { MatchBreakdownCard, MatchBadge } from '@/components/match/MatchBreakdownCard';
+import { SmartTravelSelector } from '@/components/travel/SmartTravelSelector';
 
 type Props = {
   profile: Profile;
@@ -27,26 +29,26 @@ const getPhotoUrls = (profile: Profile): string[] => {
   };
 
   // Canonical API response: profile.photos: { url, isPrimary }
-  const photos = Array.isArray((profile as any)?.photos) ? (profile as any).photos : [];
+  const photos = Array.isArray(profile.photos) ? profile.photos : [];
   for (const item of photos) {
     if (typeof item === 'string') push(item);
-    else if (item && typeof item === 'object') push((item as any).url || (item as any).file_url);
+    else if (item && typeof item === 'object') push(item.url || item.file_url);
   }
 
   // Back-compat / older shapes.
-  push((profile as any)?.avatar_url);
-  push((profile as any)?.avatarUrl);
+  push(profile.avatar_url);
+  push(profile.avatarUrl);
 
-  const photoUrls = (profile as any)?.photo_urls;
+  const photoUrls = profile.photo_urls;
   if (Array.isArray(photoUrls)) {
     for (const u of photoUrls) push(u);
   }
 
-  const images = (profile as any)?.images;
+  const images = profile.images;
   if (Array.isArray(images)) {
     for (const img of images) {
       if (typeof img === 'string') push(img);
-      else if (img && typeof img === 'object') push((img as any).url || (img as any).src || (img as any).file_url);
+      else if (img && typeof img === 'object') push(img.url || img.src || img.file_url);
     }
   }
 
@@ -118,21 +120,131 @@ const initialsFromName = (name: unknown) => {
   return out || 'HM';
 };
 
+/**
+ * Profile type badges per UI Design Spec
+ * Seller = Purple, Creator = Pink→Purple, Organizer = Cyan→Blue, Premium = Gold→Orange (shimmer)
+ */
 const badgeForProfileType = (profileType: string) => {
-  if (profileType === 'seller') return { label: 'Seller', tone: 'hot' as const };
-  if (profileType === 'creator') return { label: 'Creator', tone: 'cyan' as const };
-  if (profileType === 'organizer') return { label: 'Organizer', tone: 'cyan' as const };
+  if (profileType === 'seller') return { 
+    label: 'Seller', 
+    tone: 'seller' as const, 
+    icon: '🛍️',
+    className: 'bg-[#B026FF] text-white'
+  };
+  if (profileType === 'creator') return { 
+    label: 'Creator', 
+    tone: 'creator' as const, 
+    icon: '🎨',
+    className: 'bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white'
+  };
+  if (profileType === 'organizer') return { 
+    label: 'Organizer', 
+    tone: 'organizer' as const, 
+    icon: '📅',
+    className: 'bg-gradient-to-r from-[#00D9FF] to-blue-500 text-white'
+  };
+  if (profileType === 'premium') return { 
+    label: 'Premium', 
+    tone: 'gold' as const, 
+    icon: '👑',
+    className: 'bg-gradient-to-r from-[#FFD700] to-orange-500 text-black animate-shimmer',
+    glow: true
+  };
   return null;
 };
 
+/**
+ * Get badge color based on match probability percentage
+ * Per UI Design Spec:
+ * - 80%+ = Emerald gradient ("Super Match")
+ * - 60-79% = Cyan gradient ("Great Match") 
+ * - 40-59% = Yellow/Amber ("Good Match")
+ * - <40% = Gray ("Match")
+ */
+const getMatchBadgeStyle = (probability: number): { bg: string; text: string; label: string; glow?: boolean } => {
+  if (probability >= 80) return { 
+    bg: 'bg-gradient-to-r from-emerald-400 to-[#39FF14]', 
+    text: 'text-black',
+    label: 'Super Match',
+    glow: true
+  };
+  if (probability >= 60) return { 
+    bg: 'bg-gradient-to-r from-[#00D9FF] to-blue-500', 
+    text: 'text-white',
+    label: 'Great Match'
+  };
+  if (probability >= 40) return { 
+    bg: 'bg-gradient-to-r from-yellow-400 to-amber-500', 
+    text: 'text-black',
+    label: 'Good Match'
+  };
+  return { 
+    bg: 'bg-white/20', 
+    text: 'text-white',
+    label: 'Match'
+  };
+};
+
+/**
+ * Social proof badges - Popular, Hot Right Now, Recently Active
+ */
+const getSocialProofBadge = (profile: Profile): { label: string; bg: string; icon: string } | null => {
+  // "Hot Right Now" - User has active Right Now status
+  if (profile.rightNow || profile.right_now_active) {
+    return { label: 'Right Now', bg: 'bg-gradient-to-r from-red-500 to-orange-500', icon: '🔥' };
+  }
+  
+  // "Popular" - High view count or engagement
+  const viewCount = profile.profile_views_count || profile.viewCount || 0;
+  const messageCount = profile.messages_received_count || 0;
+  if (viewCount >= 50 || messageCount >= 20) {
+    return { label: 'Popular', bg: 'bg-gradient-to-r from-purple-500 to-pink-500', icon: '⭐' };
+  }
+  
+  // "Recently Active" - Last seen within 5 minutes
+  const lastSeen = profile.last_seen || profile.lastSeen;
+  if (lastSeen) {
+    const now = Date.now();
+    const lastSeenTime = new Date(lastSeen).getTime();
+    const fiveMinutes = 5 * 60 * 1000;
+    if (now - lastSeenTime < fiveMinutes) {
+      return { label: 'Active Now', bg: 'bg-gradient-to-r from-green-500 to-emerald-500', icon: '●' };
+    }
+  }
+  
+  // Check online status
+  if (profile.onlineNow || profile.online_now) {
+    return { label: 'Online', bg: 'bg-green-500', icon: '●' };
+  }
+  
+  return null;
+};
+
+// Badge for persona type (secondary profiles)
+const badgeForPersonaType = (profile: Profile) => {
+  const isSecondary = profile.isSecondaryProfile || profile.profile_kind === 'SECONDARY';
+  if (!isSecondary) return null;
+
+  const typeKey = profile.profile_type_key || '';
+  const typeLabel = profile.profile_type_label || typeKey;
+
+  switch (typeKey) {
+    case 'TRAVEL':
+      return { label: typeLabel || 'Travel', tone: 'purple' as const, icon: '✈️' };
+    case 'WEEKEND':
+      return { label: typeLabel || 'Weekend', tone: 'purple' as const, icon: '🌙' };
+    default:
+      return { label: typeLabel || 'Persona', tone: 'purple' as const, icon: '🎭' };
+  }
+};
+
 const getProductPreviewUrls = (profile: Profile): string[] => {
-  const raw = (profile as any)?.productPreviews;
-  const previews = Array.isArray(raw) ? raw : [];
+  const previews = Array.isArray(profile.productPreviews) ? profile.productPreviews : [];
   const urls: string[] = [];
 
   for (const item of previews) {
     if (!item || typeof item !== 'object') continue;
-    const url = typeof (item as any).imageUrl === 'string' ? String((item as any).imageUrl).trim() : '';
+    const url = typeof item.imageUrl === 'string' ? String(item.imageUrl).trim() : '';
     if (!url) continue;
     if (urls.includes(url)) continue;
     urls.push(url);
@@ -179,7 +291,7 @@ export function ProfileCard({
   }, [viewerLocation]);
 
   const tags = useMemo(() => {
-    const raw = (profile as any)?.tags;
+    const raw = profile.tags;
     return Array.isArray(raw) ? raw.map((t) => String(t)).filter(Boolean).slice(0, 3) : [];
   }, [profile]);
 
@@ -306,6 +418,7 @@ export function ProfileCard({
 
   const openMode = useCallback(
     (mode: TravelModeKey) => {
+      // Handle ride services with deep links
       if (mode === 'uber') {
         const url = buildUberDeepLink({
           dropoffLat: profile.geoLat,
@@ -317,6 +430,18 @@ export function ProfileCard({
         return;
       }
 
+      if (mode === 'lyft') {
+        const url = buildLyftDeepLink({
+          dropoffLat: profile.geoLat,
+          dropoffLng: profile.geoLng,
+          dropoffNickname: profile.profileName,
+        });
+        if (!url) return;
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+
+      // Open in-app directions for other modes
       const qs = new URLSearchParams();
       qs.set('lat', String(profile.geoLat));
       qs.set('lng', String(profile.geoLng));
@@ -344,7 +469,7 @@ export function ProfileCard({
   const profileType = normalizeProfileType(profile?.profileType);
   const isSeller = profileType === 'seller';
   const isCreator = profileType === 'creator' || profileType === 'organizer';
-  const hasProducts = (profile as any)?.hasProducts === true;
+  const hasProducts = profile.hasProducts === true;
 
   const onShopClick = useCallback(
     (e: React.MouseEvent) => {
@@ -418,6 +543,8 @@ export function ProfileCard({
   const currentUrl = primaryUrl;
 
   const typeBadge = useMemo(() => badgeForProfileType(profileType), [profileType]);
+  const personaBadge = useMemo(() => badgeForPersonaType(profile), [profile]);
+  const socialProofBadge = useMemo(() => getSocialProofBadge(profile), [profile]);
   const hasTravelTimes = !!travelTime;
   const primaryModeShort = useMemo(() => {
     if (!primaryMode) return null;
@@ -426,15 +553,25 @@ export function ProfileCard({
     return `${modeLabel(primaryMode)} ${mins}`;
   }, [primaryMode, modeLabel, modeMins]);
 
+  // Match probability badge
+  const matchProbability = profile.matchProbability;
+  const hasMatchProbability = typeof matchProbability === 'number' && Number.isFinite(matchProbability);
+  const matchBadgeStyle = hasMatchProbability ? getMatchBadgeStyle(matchProbability) : null;
+
   if (useReactBits) {
     const handle =
-      (profile as any)?.handle ||
-      (profile as any)?.username ||
-      emailHandle((profile as any)?.email) ||
-      initialsFromName((profile as any)?.profileName || (profile as any)?.full_name || 'HM');
+      profile.handle ||
+      profile.username ||
+      emailHandle(profile.email) ||
+      initialsFromName(profile.profileName || profile.full_name || 'HM');
 
-    const status =
-      primaryModeShort || ((profile as any)?.onlineNow ? 'Online' : ((profile as any)?.rightNow ? 'Right now' : '')); 
+    // Build status string with match probability if available
+    const matchPercent = hasMatchProbability ? `${Math.round(matchProbability!)}% Match` : '';
+    const travelStatus = primaryModeShort || '';
+    const onlineStatus = profile.onlineNow ? 'Online' : (profile.rightNow ? 'Right now' : '');
+    
+    // Prioritize: match probability > travel time > online status
+    const status = matchPercent || travelStatus || onlineStatus; 
 
     return (
       <div
@@ -537,15 +674,42 @@ export function ProfileCard({
 
         {/* Top badges */}
         <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2 pointer-events-none">
+          {/* Social proof badge */}
+          {socialProofBadge ? (
+            <div 
+              className={`rounded-full ${socialProofBadge.bg} text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 shadow-lg`}
+            >
+              {socialProofBadge.icon} {socialProofBadge.label}
+            </div>
+          ) : null}
+
+          {/* Match probability badge */}
+          {hasMatchProbability && matchBadgeStyle ? (
+            <div 
+              className={`rounded-full ${matchBadgeStyle.bg} ${matchBadgeStyle.text} text-[10px] font-black uppercase tracking-wider px-2 py-1 shadow-lg`}
+              title="Compatibility score based on your preferences"
+            >
+              {Math.round(matchProbability)}% Match
+            </div>
+          ) : null}
+
+          {/* Persona badge for secondary profiles */}
+          {personaBadge ? (
+            <div className="rounded-full bg-purple-500 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1">
+              {personaBadge.icon ? `${personaBadge.icon} ` : ''}{personaBadge.label}
+            </div>
+          ) : null}
           {typeBadge ? (
             <div
               className={
                 typeBadge.tone === 'hot'
-                  ? 'rounded-full bg-[#FF1493] text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
-                  : 'rounded-full bg-[#00D9FF] text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
+                  ? 'rounded-full bg-[#E62020] text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
+                  : typeBadge.tone === 'gold'
+                    ? 'rounded-full bg-gradient-to-r from-[#FFD700] to-[#E62020] text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
+                    : 'rounded-full bg-[#00D9FF] text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
               }
             >
-              {typeBadge.label}
+              {typeBadge.icon ? `${typeBadge.icon} ` : ''}{typeBadge.label}
             </div>
           ) : null}
 
@@ -567,15 +731,38 @@ export function ProfileCard({
                 <div className="text-xs text-white/80 truncate">{headline}</div>
                 <div className="mt-1 text-[11px] text-white/65 truncate">{locationLine}</div>
               </div>
-              <Button
-                type="button"
-                variant="glass"
-                size="sm"
-                onClick={onViewClick}
-                className="h-8 px-3 text-[10px] font-black uppercase tracking-wider"
-              >
-                View
-              </Button>
+              <div className="flex items-center gap-1.5">
+                {/* Quick navigate button when travel times are available */}
+                {hasTravelTimes && primaryMode && (
+                  <Button
+                    type="button"
+                    variant="cyan"
+                    size="icon"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openMode(primaryMode);
+                    }}
+                    className="min-w-[40px] min-h-[40px] p-0"
+                    title={`Navigate (${modeMins(primaryMode)})`}
+                    aria-label={`Navigate via ${modeLabel(primaryMode)}, ${modeMins(primaryMode)}`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                    </svg>
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="glass"
+                  size="sm"
+                  onClick={onViewClick}
+                  className="min-h-[40px] px-3 text-xs font-black uppercase tracking-wider"
+                  aria-label={`View ${profile.profileName}'s profile`}
+                >
+                  View
+                </Button>
+              </div>
             </div>
 
             {isSeller && hasProducts && productPreviewUrls.length > 0 ? (
@@ -583,7 +770,8 @@ export function ProfileCard({
                 <button
                   type="button"
                   onClick={onShopClick}
-                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1 hover:bg-white/10"
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 min-h-[44px] hover:bg-white/10 active:bg-white/15 transition-colors touch-manipulation"
+                  aria-label={`Shop ${profile.profileName}'s products`}
                 >
                   <div className="flex items-center -space-x-2">
                     {productPreviewUrls.map((url) => (
@@ -597,7 +785,7 @@ export function ProfileCard({
                       />
                     ))}
                   </div>
-                  <div className="text-[10px] font-black uppercase tracking-wider text-white/80">Drops</div>
+                  <div className="text-xs font-black uppercase tracking-wider text-white/80">Drops</div>
                 </button>
                 <div className="text-[10px] font-black uppercase tracking-wider text-white/50">Tap to shop</div>
               </div>
@@ -618,54 +806,72 @@ export function ProfileCard({
 
             {/* Expanded panel on hover/long-press */}
             {isActive ? (
-              <div className="mt-3">
-                <div className="text-[11px] text-white/70">
-                  {viewerLocation ? (
-                    isTravelTimeLoading ? (
-                      'Loading travel time…'
-                    ) : primaryLabel ? (
-                      primaryLabel
-                    ) : (
-                      'Travel time unavailable'
-                    )
-                  ) : (
-                    'Enable location for ETAs'
-                  )}
-                </div>
-
-                {hasTravelTimes ? (
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    {orderedModes.map((mode) => {
-                      const isPrimary = mode === primaryMode;
-                      const isDisabled = mode === 'uber' ? !travelTime?.uber : false;
-
-                      return (
-                        <Button
-                          key={mode}
-                          type="button"
-                          variant={isPrimary ? 'cyan' : 'glass'}
-                          size="sm"
-                          disabled={isDisabled}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            openMode(mode);
-                          }}
-                          className={
-                            isPrimary
-                              ? 'justify-between'
-                              : 'justify-between border-white/15'
-                          }
-                        >
-                          <span>{modeLabel(mode)}</span>
-                          <span className="font-mono">{modeMins(mode)}</span>
-                        </Button>
-                      );
-                    })}
+              <div className="mt-3 space-y-3">
+                {/* Match breakdown (compact) - only show if we have match data */}
+                {hasMatchProbability && profile.matchBreakdown && (
+                  <div className="pb-2 border-b border-white/10">
+                    <MatchBreakdownCard
+                      matchProbability={matchProbability}
+                      matchBreakdown={profile.matchBreakdown}
+                      travelTimeMinutes={profile.travelTimeMinutes}
+                      distanceKm={profile.distanceKm}
+                      compact
+                    />
                   </div>
-                ) : null}
+                )}
 
-                <div className="mt-3 flex items-center gap-2">
+                {/* Smart Travel Selector */}
+                {viewerLocation && Number.isFinite(profile.geoLat) && Number.isFinite(profile.geoLng) && (
+                  <SmartTravelSelector
+                    destination={{
+                      lat: profile.geoLat,
+                      lng: profile.geoLng,
+                      name: profile.profileName,
+                    }}
+                    travelTimes={travelTime ? {
+                      walking: travelTime.walking ? {
+                        mode: 'walk',
+                        durationSeconds: travelTime.walking.durationSeconds,
+                        label: travelTime.walking.label,
+                      } : null,
+                      bicycling: travelTime.bicycling ? {
+                        mode: 'bike',
+                        durationSeconds: travelTime.bicycling.durationSeconds,
+                        label: travelTime.bicycling.label,
+                      } : null,
+                      driving: travelTime.driving ? {
+                        mode: 'drive',
+                        durationSeconds: travelTime.driving.durationSeconds,
+                        label: travelTime.driving.label,
+                      } : null,
+                      transit: travelTime.transit ? {
+                        mode: 'transit',
+                        durationSeconds: travelTime.transit.durationSeconds,
+                        label: travelTime.transit.label,
+                      } : null,
+                    } : undefined}
+                    onNavigate={(mode) => {
+                      const modeMap: Record<string, TravelModeKey> = {
+                        walk: 'foot',
+                        bike: 'bike',
+                        drive: 'cab',
+                        transit: 'transit',
+                      };
+                      openMode(modeMap[mode] || 'foot');
+                    }}
+                    compact
+                    className="w-full"
+                  />
+                )}
+
+                {/* Fallback for no location */}
+                {!viewerLocation && (
+                  <div className="text-[11px] text-white/70 text-center py-2">
+                    Enable location for smart travel suggestions
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     onClick={onPrimaryClick}
@@ -673,8 +879,8 @@ export function ProfileCard({
                       (primaryAction.key === 'shop' || primaryAction.key === 'message') &&
                       !String(profile?.email || '').trim()
                     }
-                    variant={primaryAction.key === 'message' ? 'hot' : 'cyan'}
-                    className="flex-1"
+                    variant={primaryAction.key === 'message' ? 'hotGradient' : 'cyanGradient'}
+                    className="flex-1 min-h-[44px]"
                   >
                     {primaryAction.label}
                   </Button>
@@ -682,13 +888,13 @@ export function ProfileCard({
                     type="button"
                     onClick={onViewClick}
                     variant="glass"
-                    className="border-white/15"
+                    className="border-white/15 min-h-[44px]"
                   >
                     Open
                   </Button>
                 </div>
 
-                <div className="mt-2 text-[11px] text-white/55">
+                <div className="text-[10px] text-white/50 text-center">
                   Estimates • Ask first. Confirm yes.
                 </div>
 

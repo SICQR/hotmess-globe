@@ -1,31 +1,14 @@
 /**
  * Performance optimization utilities
+ * 
+ * Re-exports debounce and throttle from the canonical performance module
+ * to maintain backwards compatibility with existing imports.
  */
 
-// Debounce function for search inputs and API calls
-export function debounce(func, wait = 300) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
+// Re-export from the canonical source
+export { debounce, throttle } from '@/utils/performance';
 
-// Throttle function for scroll/resize events
-export function throttle(func, limit = 100) {
-  let inThrottle;
-  return function(...args) {
-    if (!inThrottle) {
-      func.apply(this, args);
-      inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
-    }
-  };
-}
+// Additional utilities kept here for backwards compatibility
 
 // Memoization helper
 export function memoize(fn) {

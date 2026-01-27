@@ -1,6 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import { getBearerToken, getEnv, getQueryParam, json } from './shopify/_utils.js';
 import { getSupabaseServerClients } from './routing/_utils.js';
+import { batchCheckVisibility, resolveEffectiveProfile, isProfileActive } from './personas/_utils.js';
+import { cacheGet, cacheSet, cacheTTL, cacheKeys } from './_cache/index.js';
+
+// Feature flag for secondary profiles in discovery
+const isSecondaryProfilesEnabled = () => {
+  const flag = process.env.VITE_SECONDARY_PROFILES_IN_DISCOVERY || process.env.SECONDARY_PROFILES_IN_DISCOVERY;
+  return String(flag || 'false').toLowerCase() === 'true';
+};
 
 const isRunningOnVercel = () => {
   const flag = process.env.VERCEL || process.env.VERCEL_ENV;
@@ -11,6 +19,170 @@ const clampInt = (value, min, max, fallback) => {
   const n = Number(value);
   if (!Number.isFinite(n)) return fallback;
   return Math.min(Math.max(Math.trunc(n), min), max);
+};
+
+// Haversine distance calculation in meters
+const haversineDistance = (lat1, lng1, lat2, lng2) => {
+  const R = 6371000; // Earth's radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+const parseFilters = (req) => {
+  const filters = {};
+  
+  // Profile types
+  const profileTypes = getQueryParam(req, 'profile_types') || getQueryParam(req, 'profileTypes');
+  if (profileTypes) {
+    filters.profileTypes = profileTypes.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  }
+  
+  // Age range
+  const ageMin = getQueryParam(req, 'age_min') || getQueryParam(req, 'ageMin');
+  const ageMax = getQueryParam(req, 'age_max') || getQueryParam(req, 'ageMax');
+  if (ageMin) filters.ageMin = parseInt(ageMin, 10);
+  if (ageMax) filters.ageMax = parseInt(ageMax, 10);
+  
+  // Distance (in km)
+  const distanceKm = getQueryParam(req, 'distance_km') || getQueryParam(req, 'distanceKm');
+  if (distanceKm && distanceKm !== '-1') filters.distanceKm = parseInt(distanceKm, 10);
+  
+  // Viewer location for distance filtering
+  const viewerLat = getQueryParam(req, 'lat') || getQueryParam(req, 'viewer_lat');
+  const viewerLng = getQueryParam(req, 'lng') || getQueryParam(req, 'viewer_lng');
+  if (viewerLat && viewerLng) {
+    filters.viewerLat = parseFloat(viewerLat);
+    filters.viewerLng = parseFloat(viewerLng);
+  }
+  
+  // Boolean filters
+  if (getQueryParam(req, 'online_now') === 'true' || getQueryParam(req, 'onlineNow') === 'true') {
+    filters.onlineNow = true;
+  }
+  if (getQueryParam(req, 'has_premium') === 'true' || getQueryParam(req, 'hasPremiumContent') === 'true') {
+    filters.hasPremiumContent = true;
+  }
+  if (getQueryParam(req, 'verified') === 'true') {
+    filters.verified = true;
+  }
+  if (getQueryParam(req, 'has_face') === 'true' || getQueryParam(req, 'hasFace') === 'true') {
+    filters.hasFace = true;
+  }
+  
+  // Tags
+  const tags = getQueryParam(req, 'tags');
+  if (tags) {
+    filters.tags = tags.split(',').map(t => t.trim()).filter(Boolean);
+  }
+  
+  // Looking for
+  const lookingFor = getQueryParam(req, 'looking_for') || getQueryParam(req, 'lookingFor');
+  if (lookingFor) {
+    filters.lookingFor = lookingFor.split(',').map(l => l.trim()).filter(Boolean);
+  }
+  
+  // Sort by
+  const sortBy = getQueryParam(req, 'sort_by') || getQueryParam(req, 'sortBy');
+  if (sortBy) filters.sortBy = sortBy;
+  
+  return filters;
+};
+
+const applyFilters = (profiles, filters) => {
+  let filtered = [...profiles];
+  
+  // Filter by profile types
+  if (filters.profileTypes && filters.profileTypes.length > 0) {
+    filtered = filtered.filter(p => {
+      const type = (p.profileType || 'standard').toLowerCase();
+      return filters.profileTypes.includes(type);
+    });
+  }
+  
+  // Filter by distance
+  if (filters.distanceKm && Number.isFinite(filters.viewerLat) && Number.isFinite(filters.viewerLng)) {
+    const maxDistanceMeters = filters.distanceKm * 1000;
+    filtered = filtered.filter(p => {
+      if (!Number.isFinite(p.geoLat) || !Number.isFinite(p.geoLng)) return false;
+      const distance = haversineDistance(filters.viewerLat, filters.viewerLng, p.geoLat, p.geoLng);
+      p._distance = distance; // Attach for sorting
+      return distance <= maxDistanceMeters;
+    });
+  } else if (Number.isFinite(filters.viewerLat) && Number.isFinite(filters.viewerLng)) {
+    // Calculate distance for sorting even if no distance filter
+    filtered.forEach(p => {
+      if (Number.isFinite(p.geoLat) && Number.isFinite(p.geoLng)) {
+        p._distance = haversineDistance(filters.viewerLat, filters.viewerLng, p.geoLat, p.geoLng);
+      }
+    });
+  }
+  
+  // Filter by online status (active in last 15 minutes)
+  if (filters.onlineNow) {
+    const fifteenMinutesAgo = Date.now() - 15 * 60 * 1000;
+    filtered = filtered.filter(p => {
+      const lastSeen = p.last_seen || p.lastSeen || p.updated_at;
+      if (!lastSeen) return false;
+      return new Date(lastSeen).getTime() > fifteenMinutesAgo;
+    });
+  }
+  
+  // Filter by has premium content
+  if (filters.hasPremiumContent) {
+    filtered = filtered.filter(p => {
+      const photos = p.photos || [];
+      return photos.some(photo => photo.is_premium || photo.isPremium);
+    });
+  }
+  
+  // Filter by verified
+  if (filters.verified) {
+    filtered = filtered.filter(p => p.verified || p.verified_organizer || p.verified_seller);
+  }
+  
+  // Filter by has face (has at least one photo)
+  if (filters.hasFace) {
+    filtered = filtered.filter(p => {
+      const photos = p.photos || [];
+      return photos.length > 0 && photos.some(photo => photo.url);
+    });
+  }
+  
+  // Filter by tags
+  if (filters.tags && filters.tags.length > 0) {
+    filtered = filtered.filter(p => {
+      const profileTags = p.tags || p.tag_ids || [];
+      return filters.tags.some(t => profileTags.includes(t));
+    });
+  }
+  
+  // Sort results
+  const sortBy = filters.sortBy || 'distance';
+  if (sortBy === 'distance' && Number.isFinite(filters.viewerLat)) {
+    filtered.sort((a, b) => (a._distance || Infinity) - (b._distance || Infinity));
+  } else if (sortBy === 'lastActive') {
+    filtered.sort((a, b) => {
+      const aTime = new Date(a.last_seen || a.updated_at || 0).getTime();
+      const bTime = new Date(b.last_seen || b.updated_at || 0).getTime();
+      return bTime - aTime;
+    });
+  } else if (sortBy === 'newest') {
+    filtered.sort((a, b) => {
+      const aTime = new Date(a.created_at || 0).getTime();
+      const bTime = new Date(b.created_at || 0).getTime();
+      return bTime - aTime;
+    });
+  }
+  
+  // Clean up internal distance field
+  filtered.forEach(p => delete p._distance);
+  
+  return filtered;
 };
 
 const normalizeGender = (value) => String(value || '').trim().toLowerCase();
@@ -43,8 +215,9 @@ const buildFallbackProfiles = () => {
     {
       id: 'profile_123',
       authUserId: 'fallback_auth_123',
-      email: 'alex@example.com',
-      profileName: 'Alex',
+      username: 'alex_hm',
+      display_name: 'Alex',
+      profileName: '@alex_hm',
       title: 'Gym rat, beach lover',
       locationLabel: 'London',
       city: 'London',
@@ -80,8 +253,9 @@ const buildFallbackProfiles = () => {
     {
       id: 'profile_124',
       authUserId: 'fallback_auth_124',
-      email: 'jay@example.com',
-      profileName: 'Jay',
+      username: 'jay_seller',
+      display_name: 'Jay',
+      profileName: '@jay_seller',
       title: 'Late-night walks, loud music, no drama',
       locationLabel: 'London',
       city: 'London',
@@ -337,6 +511,126 @@ const getAuthMetaMapById = async ({ serviceClient, authUserIds }) => {
   return map;
 };
 
+/**
+ * Fetch secondary profiles for discovery
+ * Returns active, non-expired secondary profiles with their effective data
+ */
+const fetchSecondaryProfilesForDiscovery = async ({ serviceClient, viewerUserId, viewerAttributes, offset, limit }) => {
+  try {
+    // Fetch active, non-expired secondary profiles
+    const { data: secondaryProfiles, error } = await serviceClient
+      .from('profiles')
+      .select(`
+        *,
+        profile_overrides (*)
+      `)
+      .eq('kind', 'SECONDARY')
+      .eq('active', true)
+      .is('deleted_at', null)
+      .or('expires_at.is.null,expires_at.gt.now()')
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error('[fetchSecondaryProfilesForDiscovery] Error:', error);
+      return [];
+    }
+
+    if (!secondaryProfiles || secondaryProfiles.length === 0) {
+      return [];
+    }
+
+    // Batch check visibility for all profiles
+    const profileIds = secondaryProfiles.map((p) => p.id);
+    const visibilityMap = await batchCheckVisibility({
+      viewerUserId,
+      viewerAttributes,
+      profileIds,
+      serviceClient,
+    });
+
+    // Filter to only visible profiles
+    const visibleProfiles = secondaryProfiles.filter((p) => visibilityMap.get(p.id) === true);
+
+    // Resolve effective profiles for visible ones
+    const effectiveProfiles = [];
+    for (const profile of visibleProfiles) {
+      const effective = await resolveEffectiveProfile({
+        profileId: profile.id,
+        serviceClient,
+      });
+      if (effective) {
+        effectiveProfiles.push(effective);
+      }
+    }
+
+    return effectiveProfiles;
+  } catch (err) {
+    console.error('[fetchSecondaryProfilesForDiscovery] Unexpected error:', err);
+    return [];
+  }
+};
+
+/**
+ * Convert secondary profile to discovery grid item format
+ */
+const mapSecondaryProfileToGridItem = (effectiveProfile, tagMap, hasProductsByEmail, productPreviewsByEmail) => {
+  const lat = Number(effectiveProfile?.effective_lat ?? effectiveProfile?.lat);
+  const lng = Number(effectiveProfile?.effective_lng ?? effectiveProfile?.lng);
+  
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+  // Privacy: use username, never expose email
+  const username = effectiveProfile?.username ? String(effectiveProfile.username).trim() : null;
+  const displayName = effectiveProfile?.display_name ? String(effectiveProfile.display_name).trim() : null;
+  const publicName = displayName || (username ? `@${username}` : 'Anonymous');
+  
+  // Keep email for internal lookups only
+  const emailInternal = effectiveProfile?.email ? String(effectiveProfile.email).trim().toLowerCase() : null;
+  const avatar = String(effectiveProfile?.avatar_url || '').trim();
+  
+  const photos = normalizePhotos(effectiveProfile?.photos, avatar);
+  const city = effectiveProfile?.city || effectiveProfile?.effective_location_label;
+  const profileType = effectiveProfile?.profile_type || 'standard';
+  const bio = effectiveProfile?.bio || null;
+
+  const tier = String(effectiveProfile?.subscription_tier || '').toUpperCase();
+  const tierLabel = tier === 'PAID' ? 'Member (PAID)' : 'Member';
+  const title = bio ? toShortHeadline(bio, tierLabel) : tierLabel;
+
+  const tags = emailInternal ? tagMap.get(emailInternal) : null;
+  const safeTags = Array.isArray(tags) ? tags.slice(0, 5) : [];
+
+  const isSellerProfile = String(profileType).trim().toLowerCase() === 'seller';
+  const hasProducts = isSellerProfile && emailInternal ? hasProductsByEmail.get(emailInternal) === true : undefined;
+  const productPreviews = isSellerProfile && emailInternal ? productPreviewsByEmail.get(emailInternal) : undefined;
+
+  return {
+    id: `profile_${effectiveProfile.profile_id}`,
+    profile_id: effectiveProfile.profile_id,
+    profile_kind: effectiveProfile.profile_kind,
+    profile_type_key: effectiveProfile.profile_type_key,
+    profile_type_label: effectiveProfile.profile_type_label,
+    // Privacy: expose username instead of email
+    username: username || undefined,
+    display_name: displayName || undefined,
+    authUserId: effectiveProfile?.auth_user_id || undefined,
+    profileName: publicName,
+    title,
+    locationLabel: city || 'Nearby',
+    city: city || undefined,
+    profileType: profileType || undefined,
+    hasProducts,
+    productPreviews: Array.isArray(productPreviews) && productPreviews.length ? productPreviews : undefined,
+    bio: bio || undefined,
+    gender: effectiveProfile?.gender || undefined,
+    tags: safeTags,
+    geoLat: lat,
+    geoLng: lng,
+    photos,
+    isSecondaryProfile: effectiveProfile.profile_kind === 'SECONDARY',
+  };
+};
+
 const queryUsersWithFallbackOrder = async ({ serviceClient, offset, limit }) => {
   // Some environments don't have last_loc_ts; fall back to updated_at ordering.
   const base = serviceClient.from('User').select('*');
@@ -373,6 +667,9 @@ export default async function handler(req, res) {
   const cursorRaw = getQueryParam(req, 'cursor');
   const offset = clampInt(cursorRaw ?? 0, 0, 100000, 0);
   const limit = clampInt(getQueryParam(req, 'limit') ?? 40, 1, 60, 40);
+  
+  // Parse filter parameters
+  const filters = parseFilters(req);
 
   const { error: supaErr, serviceClient, anonClient: anonClientFromEnv } = getSupabaseServerClients();
 
@@ -430,16 +727,47 @@ export default async function handler(req, res) {
     const hasProductsByEmail = await getHasProductsMap({ client: serviceClient, emails: sellerEmails });
     const productPreviewsByEmail = await getProductPreviewsMap({ client: serviceClient, emails: sellerEmails, maxPerSeller: 3 });
 
+    // Fetch active Right Now statuses for social proof
+    let rightNowByEmail = new Map();
+    try {
+      const allEmails = rows.map((r) => r?.email).filter(Boolean);
+      if (allEmails.length) {
+        const { data: rightNowRows } = await serviceClient
+          .from('right_now_status')
+          .select('user_email, mode, expires_at')
+          .eq('active', true)
+          .gt('expires_at', new Date().toISOString())
+          .in('user_email', allEmails);
+        
+        if (rightNowRows) {
+          for (const row of rightNowRows) {
+            const email = String(row.user_email).toLowerCase();
+            rightNowByEmail.set(email, { mode: row.mode, expires_at: row.expires_at });
+          }
+        }
+      }
+    } catch {
+      // ignore - right_now_status might not exist
+    }
+
     const mapped = rows
       .map((row) => {
         const lat = Number(row?.last_lat ?? row?.lat);
         const lng = Number(row?.last_lng ?? row?.lng);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
 
-        const fullName = String(row?.full_name || row?.email || 'Unknown').trim();
-        const dedupeKey = String(row?.auth_user_id || row?.email || fullName).trim();
+        // Privacy: prefer username over email for public display
+        const username = row?.username ? String(row.username).trim() : null;
+        const displayName = row?.display_name ? String(row.display_name).trim() : null;
+        const fullName = String(row?.full_name || '').trim();
+        
+        // Use username for public-facing name, never expose full_name or email
+        const publicName = displayName || (username ? `@${username}` : 'Anonymous');
+        
+        const dedupeKey = String(row?.auth_user_id || username || row?.id || 'unknown').trim();
         const avatar = String(row?.avatar_url || '').trim();
-        const email = row?.email ? String(row.email).trim() : null;
+        // Keep email for internal lookups only, not exposed in response
+        const emailInternal = row?.email ? String(row.email).trim().toLowerCase() : null;
         const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : null;
 
         const meta = authUserId ? authMetaById.get(authUserId) : null;
@@ -464,18 +792,32 @@ export default async function handler(req, res) {
         const bio = row?.bio ? String(row.bio).trim() : (typeof meta?.bio === 'string' ? String(meta.bio).trim() : null);
         const title = toShortHeadline(bio, tierLabel);
 
-        const tags = email ? tagMap.get(String(email).toLowerCase()) : null;
+        const tags = emailInternal ? tagMap.get(emailInternal) : null;
         const safeTags = Array.isArray(tags) ? tags.slice(0, 5) : [];
 
         const isSellerProfile = profileType && String(profileType).trim().toLowerCase() === 'seller';
-        const hasProducts = isSellerProfile && email ? hasProductsByEmail.get(String(email).toLowerCase()) === true : undefined;
-        const productPreviews = isSellerProfile && email ? productPreviewsByEmail.get(String(email).toLowerCase()) : undefined;
+        const hasProducts = isSellerProfile && emailInternal ? hasProductsByEmail.get(emailInternal) === true : undefined;
+        const productPreviews = isSellerProfile && emailInternal ? productPreviewsByEmail.get(emailInternal) : undefined;
+
+        // Calculate online status
+        const lastSeen = row?.last_seen || row?.updated_at;
+        const lastSeenDate = lastSeen ? new Date(lastSeen) : null;
+        const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+        const fifteenMinutesAgo = Date.now() - 15 * 60 * 1000;
+        const onlineNow = lastSeenDate && lastSeenDate.getTime() > fifteenMinutesAgo;
+        const recentlyActive = lastSeenDate && lastSeenDate.getTime() > fiveMinutesAgo;
+        
+        // Get Right Now status for social proof
+        const rightNowStatus = emailInternal ? rightNowByEmail.get(emailInternal) : null;
 
         return {
           id: `profile_${dedupeKey}`,
-          email: email || undefined,
+          // Privacy: expose username instead of email
+          username: username || undefined,
+          display_name: displayName || undefined,
+          // NEVER expose email in public API responses - use username for identification
           authUserId: authUserId || undefined,
-          profileName: fullName,
+          profileName: publicName,
           title,
           locationLabel: city || 'Nearby',
           city: city || undefined,
@@ -493,13 +835,79 @@ export default async function handler(req, res) {
           geoLat: lat,
           geoLng: lng,
           photos,
+          // Social proof fields
+          last_seen: lastSeen || undefined,
+          onlineNow: onlineNow || undefined,
+          recentlyActive: recentlyActive || undefined,
+          rightNow: rightNowStatus ? true : undefined,
+          rightNowMode: rightNowStatus?.mode || undefined,
         };
       })
       .filter(Boolean);
 
-    const items = dedupeItems(mapped);
+    const deduped = dedupeItems(mapped);
+    
+    // Include secondary profiles if feature is enabled
+    let allItems = [...deduped];
+    if (isSecondaryProfilesEnabled()) {
+      try {
+        // Get viewer info for visibility checks
+        let viewerUserId = null;
+        let viewerAttributes = {};
+        
+        if (accessToken && anonClientFromEnv) {
+          const { data: userData } = await anonClientFromEnv.auth.getUser(accessToken);
+          if (userData?.user) {
+            viewerUserId = userData.user.id;
+            // Get viewer's User record for attributes
+            const { data: viewerRecord } = await serviceClient
+              .from('User')
+              .select('*')
+              .eq('auth_user_id', viewerUserId)
+              .maybeSingle();
+            
+            if (viewerRecord) {
+              viewerAttributes = {
+                lat: filters.viewerLat || viewerRecord.lat,
+                lng: filters.viewerLng || viewerRecord.lng,
+                age: viewerRecord.age,
+                sexual_preferences: viewerRecord.sexual_orientation,
+                tribes: viewerRecord.tribes,
+              };
+            }
+          }
+        }
+
+        // Fetch secondary profiles
+        const secondaryProfiles = await fetchSecondaryProfilesForDiscovery({
+          serviceClient,
+          viewerUserId,
+          viewerAttributes,
+          offset: 0,
+          limit: 20, // Limit secondary profiles per page
+        });
+
+        // Map secondary profiles to grid items
+        const secondaryItems = secondaryProfiles
+          .map((p) => mapSecondaryProfileToGridItem(p, tagMap, hasProductsByEmail, productPreviewsByEmail))
+          .filter(Boolean);
+
+        // Merge with main profiles
+        allItems = [...deduped, ...secondaryItems];
+      } catch (err) {
+        console.error('[profiles] Secondary profiles fetch error:', err);
+        // Continue with just main profiles
+      }
+    }
+    
+    const items = applyFilters(allItems, filters);
     const nextCursor = rows.length === limit ? String(offset + limit) : null;
-    return json(res, 200, { items, nextCursor });
+    return json(res, 200, { 
+      items, 
+      nextCursor, 
+      appliedFilters: Object.keys(filters).length > 0 ? filters : undefined,
+      personasEnabled: isSecondaryProfilesEnabled(),
+    });
   }
 
   // Fallback: if service role key isn't configured (common in local dev),
@@ -564,10 +972,15 @@ export default async function handler(req, res) {
       const lng = Number(row?.last_lng);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
 
-      const fullName = String(row?.full_name || row?.email || 'Unknown').trim();
-      const dedupeKey = String(row?.auth_user_id || row?.email || fullName).trim();
+      // Privacy: prefer username over email for public display
+      const username = row?.username ? String(row.username).trim() : null;
+      const displayName = row?.display_name ? String(row.display_name).trim() : null;
+      const publicName = displayName || (username ? `@${username}` : 'Anonymous');
+      
+      const dedupeKey = String(row?.auth_user_id || username || row?.id || 'unknown').trim();
       const avatar = String(row?.avatar_url || '').trim();
-      const email = row?.email ? String(row.email).trim() : null;
+      // Keep email for internal lookups only
+      const emailInternal = row?.email ? String(row.email).trim().toLowerCase() : null;
       const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : null;
 
       const gender = row?.gender ?? row?.sex ?? null;
@@ -588,20 +1001,22 @@ export default async function handler(req, res) {
       const city = row?.city ? String(row.city).trim() : null;
       const profileType = row?.profile_type ? String(row.profile_type).trim() : null;
       const isSellerProfile = profileType && String(profileType).trim().toLowerCase() === 'seller';
-      const hasProducts = isSellerProfile && email ? hasProductsByEmail.get(String(email).toLowerCase()) === true : undefined;
-      const productPreviews = isSellerProfile && email ? productPreviewsByEmail.get(String(email).toLowerCase()) : undefined;
+      const hasProducts = isSellerProfile && emailInternal ? hasProductsByEmail.get(emailInternal) === true : undefined;
+      const productPreviews = isSellerProfile && emailInternal ? productPreviewsByEmail.get(emailInternal) : undefined;
 
       const bio = row?.bio ? String(row.bio).trim() : null;
       const title = toShortHeadline(bio, tierLabel);
 
-      const tags = email ? tagMap.get(String(email).toLowerCase()) : null;
+      const tags = emailInternal ? tagMap.get(emailInternal) : null;
       const safeTags = Array.isArray(tags) ? tags.slice(0, 3) : [];
 
       return {
         id: `profile_${dedupeKey}`,
-        email: email || undefined,
+        // Privacy: expose username instead of email
+        username: username || undefined,
+        display_name: displayName || undefined,
         authUserId: authUserId || undefined,
-        profileName: fullName,
+        profileName: publicName,
         title,
         locationLabel: city || 'Nearby',
         city: city || undefined,
@@ -622,7 +1037,8 @@ export default async function handler(req, res) {
     })
     .filter(Boolean);
 
-  const items = dedupeItems(mapped);
+  const deduped = dedupeItems(mapped);
+  const items = applyFilters(deduped, filters);
   const nextCursor = rows.length === limit ? String(offset + limit) : null;
-  return json(res, 200, { items, nextCursor });
+  return json(res, 200, { items, nextCursor, appliedFilters: Object.keys(filters).length > 0 ? filters : undefined });
 }

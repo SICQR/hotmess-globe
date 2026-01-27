@@ -94,7 +94,7 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-br from-[#FFEB3B]/10 to-[#FF1493]/10 border-2 border-[#FFEB3B] p-6">
+      <div className="bg-gradient-to-br from-[#FFEB3B]/10 to-[#E62020]/10 border-2 border-[#FFEB3B] p-6">
         <h2 className="text-2xl font-black uppercase flex items-center gap-2 mb-4">
           <Star className="w-6 h-6 text-[#FFEB3B]" />
           Feature Your Listing
@@ -193,7 +193,7 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
                       <div className="text-xs text-white/40">Views</div>
                     </div>
                     <div>
-                      <div className="flex items-center justify-center gap-1 text-[#FF1493] mb-1">
+                      <div className="flex items-center justify-center gap-1 text-[#E62020] mb-1">
                         <MousePointer className="w-4 h-4" />
                       </div>
                       <div className="text-xl font-black">{listing.clicks}</div>

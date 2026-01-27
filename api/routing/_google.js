@@ -184,6 +184,7 @@ export const fetchRoutesV2Directions = async ({ apiKey, origin, destination, mod
     travelMode,
   };
 
+  // Enhanced field mask to include maneuver types, start/end locations, and polylines per step
   const fieldMask = [
     'routes.duration',
     'routes.distanceMeters',
@@ -191,6 +192,10 @@ export const fetchRoutesV2Directions = async ({ apiKey, origin, destination, mod
     'routes.legs.steps.distanceMeters',
     'routes.legs.steps.duration',
     'routes.legs.steps.navigationInstruction.instructions',
+    'routes.legs.steps.navigationInstruction.maneuver',
+    'routes.legs.steps.startLocation',
+    'routes.legs.steps.endLocation',
+    'routes.legs.steps.polyline.encodedPolyline',
   ].join(',');
 
   if (trafficAware && mode === 'DRIVE') {
@@ -243,22 +248,76 @@ export const fetchRoutesV2Directions = async ({ apiKey, origin, destination, mod
   const stepsRaw = route?.legs?.[0]?.steps;
   const steps = Array.isArray(stepsRaw)
     ? stepsRaw
-        .map((step) => {
+        .map((step, index) => {
           const instruction = step?.navigationInstruction?.instructions || null;
+          const maneuver = step?.navigationInstruction?.maneuver || null;
           const distanceMeters = typeof step?.distanceMeters === 'number' && Number.isFinite(step.distanceMeters)
             ? Math.round(step.distanceMeters)
             : null;
           const durationSeconds = toSecondsFromGoogleDuration(step?.duration);
 
-          if (!instruction && !distanceMeters && !durationSeconds) return null;
+          // Extract start/end locations for step tracking
+          const startLat = step?.startLocation?.latLng?.latitude;
+          const startLng = step?.startLocation?.latLng?.longitude;
+          const endLat = step?.endLocation?.latLng?.latitude;
+          const endLng = step?.endLocation?.latLng?.longitude;
+
+          const startLocation = Number.isFinite(startLat) && Number.isFinite(startLng)
+            ? { lat: startLat, lng: startLng }
+            : null;
+          const endLocation = Number.isFinite(endLat) && Number.isFinite(endLng)
+            ? { lat: endLat, lng: endLng }
+            : null;
+
+          // Step-specific polyline for detailed routing
+          const stepPolyline = step?.polyline?.encodedPolyline || null;
+
+          if (!instruction && !distanceMeters && !durationSeconds && !maneuver) return null;
+          
           return {
+            index,
             instruction,
+            maneuver,
             distance_meters: distanceMeters,
             duration_seconds: durationSeconds,
+            start_location: startLocation,
+            end_location: endLocation,
+            polyline: stepPolyline,
           };
         })
         .filter(Boolean)
     : [];
+
+  // Add departure step at the beginning if not present
+  if (steps.length > 0 && steps[0].maneuver !== 'DEPART') {
+    steps.unshift({
+      index: -1,
+      instruction: 'Start navigation',
+      maneuver: 'DEPART',
+      distance_meters: 0,
+      duration_seconds: 0,
+      start_location: origin,
+      end_location: steps[0]?.start_location || null,
+      polyline: null,
+    });
+    // Re-index steps
+    steps.forEach((step, i) => { step.index = i; });
+  }
+
+  // Add arrival step at the end if not present
+  const lastStep = steps[steps.length - 1];
+  if (lastStep && lastStep.maneuver !== 'ARRIVE') {
+    steps.push({
+      index: steps.length,
+      instruction: 'Arrive at destination',
+      maneuver: 'ARRIVE',
+      distance_meters: 0,
+      duration_seconds: 0,
+      start_location: lastStep?.end_location || destination,
+      end_location: destination,
+      polyline: null,
+    });
+  }
 
   return {
     ok: true,

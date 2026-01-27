@@ -1,4 +1,4 @@
-import logger from '@/utils/logger';
+import { logger } from '@/utils/logger';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 

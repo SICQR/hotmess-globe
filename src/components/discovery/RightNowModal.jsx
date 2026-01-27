@@ -45,8 +45,8 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           };
-        } catch (error) {
-          console.log('Location access denied');
+        } catch {
+          // Location access denied
         }
       }
       
@@ -61,12 +61,12 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
       }
       
       // Create new status
+      // Note: cold_vibe is stored locally only until DB column is added
       const status = await base44.entities.RightNowStatus.create({
         user_email: currentUser.email,
         duration_minutes: duration,
         expires_at: expiresAt,
         logistics,
-        cold_vibe: coldVibe,
         active: true
       });
       
@@ -103,10 +103,10 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-2 border-[#FF1493] text-white max-w-md">
+      <DialogContent className="bg-black border-2 border-[#E62020] text-white max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black uppercase flex items-center gap-2">
-            <Zap className="w-6 h-6 text-[#FF1493]" />
+            <Zap className="w-6 h-6 text-[#E62020]" />
             Go Right Now
           </DialogTitle>
         </DialogHeader>
@@ -122,7 +122,7 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
                   onClick={() => setDuration(value)}
                   className={`flex items-center justify-center gap-2 px-4 py-3 border-2 transition-all ${
                     duration === value
-                      ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                      ? 'bg-[#E62020] border-[#E62020] text-black'
                       : 'border-white/20 text-white hover:border-white/40'
                   }`}
                 >
@@ -183,7 +183,7 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
           <Button
             onClick={() => goLiveMutation.mutate()}
             disabled={goLiveMutation.isPending}
-            className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase py-6"
+            className="w-full bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black uppercase py-6"
           >
             {goLiveMutation.isPending ? 'Going live...' : 'Go live'}
           </Button>

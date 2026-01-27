@@ -21,8 +21,8 @@ const MODE_OPTIONS = [
 ];
 
 const BEACON_TYPE_OPTIONS = [
-  { id: 'event', label: 'EVENT', color: '#FF1493' },
-  { id: 'venue', label: 'VENUE', color: '#FF1493' },
+  { id: 'event', label: 'EVENT', color: '#E62020' },
+  { id: 'venue', label: 'VENUE', color: '#E62020' },
   { id: 'hookup', label: 'HOOKUP', color: '#FF073A' },
   { id: 'drop', label: 'DROP', color: '#FF6B35' },
   { id: 'popup', label: 'POPUP', color: '#B026FF' },
@@ -78,8 +78,8 @@ export default function GlobeControls({
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="w-2.5 h-2.5 rounded-full bg-[#FF1493]"
-          style={{ boxShadow: '0 0 10px #FF1493' }}
+          className="w-2.5 h-2.5 rounded-full bg-[#E62020]"
+          style={{ boxShadow: '0 0 10px #E62020' }}
         />
         <div className="flex flex-col">
           <span className="text-[9px] tracking-[0.3em] text-white/50 font-medium uppercase">
@@ -113,14 +113,14 @@ export default function GlobeControls({
                 className={`
                   flex items-start gap-3 px-3 py-2.5 rounded-xl transition-all
                   ${isActive 
-                    ? 'bg-[#FF1493]/20 border border-[#FF1493]/40' 
+                    ? 'bg-[#E62020]/20 border border-[#E62020]/40' 
                     : 'hover:bg-white/5 border border-transparent'
                   }
                 `}
               >
                 <div className={`
                   w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5
-                  ${isActive ? 'bg-[#FF1493]' : 'bg-white/10'}
+                  ${isActive ? 'bg-[#E62020]' : 'bg-white/10'}
                 `}>
                   {isActive ? (
                     <div className="w-2 h-2 rounded-full bg-black" />
@@ -132,7 +132,7 @@ export default function GlobeControls({
                   <div 
                     className="text-[10px] tracking-[0.25em] font-semibold uppercase"
                     style={{ 
-                      color: isActive ? '#FF1493' : 'rgba(255, 255, 255, 0.5)' 
+                      color: isActive ? '#E62020' : 'rgba(255, 255, 255, 0.5)' 
                     }}
                   >
                     {label}
@@ -282,7 +282,7 @@ export default function GlobeControls({
                   px-3 py-2 rounded-lg text-[9px] tracking-[0.2em] font-bold uppercase
                   transition-all text-left
                   ${isActive 
-                    ? 'bg-[#FF1493]/20 border border-[#FF1493]/40 text-[#FF1493]' 
+                    ? 'bg-[#E62020]/20 border border-[#E62020]/40 text-[#E62020]' 
                     : 'text-white/50 hover:text-white/80 bg-white/5 border border-transparent'
                   }
                 `}

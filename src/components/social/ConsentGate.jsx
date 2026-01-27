@@ -20,10 +20,10 @@ export default function ConsentGate({ onAccept, onCancel, recipientName }) {
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-black border-2 border-[#FF1493] max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto"
+        className="bg-black border-2 border-[#E62020] max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto"
       >
         <div className="text-center mb-8">
-          <Shield className="w-16 h-16 mx-auto mb-4 text-[#FF1493]" />
+          <Shield className="w-16 h-16 mx-auto mb-4 text-[#E62020]" />
           <h2 className="text-4xl font-black uppercase mb-2">CONSENT CHECK</h2>
           <p className="text-white/80 uppercase tracking-wider text-sm">
             First message to {recipientName}
@@ -31,8 +31,8 @@ export default function ConsentGate({ onAccept, onCancel, recipientName }) {
         </div>
 
         <div className="space-y-6 mb-8">
-          <div className="bg-white/5 border-l-4 border-[#FF1493] p-4">
-            <h3 className="font-black uppercase text-lg mb-3 text-[#FF1493]">
+          <div className="bg-white/5 border-l-4 border-[#E62020] p-4">
+            <h3 className="font-black uppercase text-lg mb-3 text-[#E62020]">
               OUR CONSENT CUE
             </h3>
             <p className="text-xl font-bold mb-2">
@@ -114,7 +114,7 @@ export default function ConsentGate({ onAccept, onCancel, recipientName }) {
           <Button
             onClick={onAccept}
             disabled={!canProceed}
-            className="flex-1 bg-[#FF1493] hover:bg-white text-black font-black uppercase py-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-[#E62020] hover:bg-white text-black font-black uppercase py-4 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             AGREE & SEND
           </Button>

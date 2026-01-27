@@ -319,14 +319,14 @@ We aim to respond to all privacy-related inquiries within 30 days.`
           <h2 className="font-black uppercase mb-4">Quick Navigation</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {sections.map((section) => (
-              <a key={section.id} href={`#${section.id}`} className="text-sm text-[#FF1493] hover:text-white transition-colors">
+              <a key={section.id} href={`#${section.id}`} className="text-sm text-[#E62020] hover:text-white transition-colors">
                 {section.title}
               </a>
             ))}
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-[#FF1493]/20 to-transparent border-l-4 border-[#FF1493] p-6 mb-8">
+        <div className="bg-gradient-to-r from-[#E62020]/20 to-transparent border-l-4 border-[#E62020] p-6 mb-8">
           <p className="text-white/80">
             Your privacy matters to us. This policy explains what data we collect, how we use it, 
             and your rights under GDPR and other data protection laws.
@@ -339,7 +339,7 @@ We aim to respond to all privacy-related inquiries within 30 days.`
             return (
               <div key={section.id} id={section.id} className="bg-white/5 border-2 border-white/10 p-6 scroll-mt-24">
                 <div className="flex items-center gap-3 mb-4">
-                  <Icon className="w-6 h-6 text-[#FF1493]" />
+                  <Icon className="w-6 h-6 text-[#E62020]" />
                   <h2 className="text-xl font-black uppercase">{section.title}</h2>
                 </div>
                 <div className="text-white/80 whitespace-pre-line leading-relaxed">
@@ -355,7 +355,7 @@ We aim to respond to all privacy-related inquiries within 30 days.`
           <p>Registered in England and Wales</p>
           <p className="mt-4">
             Questions? Contact us at{' '}
-            <a href="mailto:privacy@hotmess.london" className="text-[#FF1493] hover:text-white">privacy@hotmess.london</a>
+            <a href="mailto:privacy@hotmess.london" className="text-[#E62020] hover:text-white">privacy@hotmess.london</a>
           </p>
         </div>
       </div>

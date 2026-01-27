@@ -534,7 +534,7 @@ export default function FiltersDrawer({
               <button
                 type="button"
                 onClick={() => go("Radio")}
-                className="bg-[#FF1493] text-black px-3 py-2 text-xs font-black uppercase border-2 border-[#FF1493] hover:bg-black hover:text-[#FF1493] transition"
+                className="bg-[#E62020] text-black px-3 py-2 text-xs font-black uppercase border-2 border-[#E62020] hover:bg-black hover:text-[#E62020] transition"
               >
                 RADIO
               </button>
@@ -561,7 +561,7 @@ export default function FiltersDrawer({
           <button
             type="button"
             onClick={apply}
-            className="w-full bg-[#FF1493] px-4 py-4 text-sm font-black uppercase tracking-widest text-black hover:bg-black hover:text-white transition-all"
+            className="w-full bg-[#E62020] px-4 py-4 text-sm font-black uppercase tracking-widest text-black hover:bg-black hover:text-white transition-all"
           >
             Apply filters
           </button>

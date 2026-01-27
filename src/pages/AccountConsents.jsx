@@ -82,7 +82,7 @@ export default function AccountConsents() {
         <div className="bg-black border-2 border-white p-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">
-              WELCOME TO <span className="text-[#FF1493]">HOTMESS</span>
+              WELCOME TO <span className="text-[#E62020]">HOTMESS</span>
             </h1>
             <p className="text-white/60 uppercase text-sm tracking-wider">LONDON NIGHTLIFE OS</p>
           </div>
@@ -90,7 +90,7 @@ export default function AccountConsents() {
           <div className="space-y-6 mb-8">
             <div className="bg-white/5 border-2 border-white/20 p-6">
               <div className="flex items-start gap-4">
-                <Calendar className="w-6 h-6 text-[#FF1493] flex-shrink-0 mt-1" />
+                <Calendar className="w-6 h-6 text-[#E62020] flex-shrink-0 mt-1" />
                 <div className="flex-1">
                   <h3 className="font-black uppercase text-lg mb-2">AGE VERIFICATION</h3>
                   <p className="text-white/60 text-sm mb-4">
@@ -100,7 +100,7 @@ export default function AccountConsents() {
                     <Checkbox
                       checked={ageConsent}
                       onCheckedChange={setAgeConsent}
-                      className="border-white data-[state=checked]:bg-[#FF1493] data-[state=checked]:border-[#FF1493]"
+                      className="border-white data-[state=checked]:bg-[#E62020] data-[state=checked]:border-[#E62020]"
                     />
                     <span className="text-sm font-bold uppercase">I am 18 years or older</span>
                   </label>
@@ -144,7 +144,7 @@ export default function AccountConsents() {
           <Button
             onClick={handleSubmit}
             disabled={loading || (!currentUser?.consent_accepted && !ageConsent)}
-            className="w-full bg-[#FF1493] hover:bg-white text-black font-black text-lg py-6 border-2 border-white"
+            className="w-full bg-[#E62020] hover:bg-white text-black font-black text-lg py-6 border-2 border-white"
           >
             {loading ? 'PROCESSING...' : (currentUser?.consent_accepted ? 'SAVE' : 'ENTER THE NIGHT')}
           </Button>

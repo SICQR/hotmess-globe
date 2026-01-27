@@ -68,7 +68,7 @@ export default function RightNowGrid() {
 
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
-                  <div className="w-16 h-16 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border-2 border-white flex-shrink-0 overflow-hidden">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[#E62020] to-[#B026FF] border-2 border-white flex-shrink-0 overflow-hidden">
                     {user.avatar_url ? (
                       <img
                         src={user.avatar_url}

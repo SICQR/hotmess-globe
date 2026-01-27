@@ -51,7 +51,7 @@ export default function CompactGlobeControls({
                 key={id}
                 onClick={() => toggleLayer(id)}
                 className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all ${
-                  isActive ? 'bg-[#FF1493] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'
+                  isActive ? 'bg-[#E62020] text-black' : 'bg-white/5 text-white/50 hover:bg-white/10'
                 }`}
               >
                 <Icon className="w-3 h-3" />

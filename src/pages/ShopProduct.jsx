@@ -219,12 +219,12 @@ export default function ShopProduct() {
 
                 {!anyAvailable ? (
                   <div className="border border-white/10 bg-white/5 p-4">
-                    <p className="text-[#FF1493] font-bold uppercase tracking-wider text-sm">Sold out</p>
+                    <p className="text-[#E62020] font-bold uppercase tracking-wider text-sm">Sold out</p>
                     <p className="text-white/60 text-sm mt-1">This item is currently sold out.</p>
                   </div>
                 ) : !canBuy ? (
                   <div className="border border-white/10 bg-white/5 p-4">
-                    <p className="text-[#FF1493] font-bold uppercase tracking-wider text-sm">Sold out</p>
+                    <p className="text-[#E62020] font-bold uppercase tracking-wider text-sm">Sold out</p>
                     <p className="text-white/60 text-sm mt-1">This variant is sold out. Choose another.</p>
                   </div>
                 ) : null}

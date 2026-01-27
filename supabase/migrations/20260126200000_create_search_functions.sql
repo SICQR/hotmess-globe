@@ -4,6 +4,11 @@
 -- Enable pg_trgm extension for similarity search (if not already enabled)
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
+-- Ensure required columns exist on User table before creating triggers
+ALTER TABLE IF EXISTS public."User"
+  ADD COLUMN IF NOT EXISTS archetype TEXT,
+  ADD COLUMN IF NOT EXISTS interests TEXT[] DEFAULT '{}';
+
 -- Add search vector columns to User table
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS search_vector tsvector;
 
@@ -80,6 +85,12 @@ UPDATE "Beacon" SET search_vector =
   setweight(to_tsvector('english', coalesce(venue_name, '')), 'B') ||
   setweight(to_tsvector('english', coalesce(mode, '')), 'C')
 WHERE search_vector IS NULL;
+
+-- Drop existing search functions to allow return type changes
+DROP FUNCTION IF EXISTS search_users(TEXT, INTEGER);
+DROP FUNCTION IF EXISTS search_users(TEXT);
+DROP FUNCTION IF EXISTS search_beacons(TEXT, INTEGER);
+DROP FUNCTION IF EXISTS search_beacons(TEXT);
 
 -- Create search_users RPC function
 CREATE OR REPLACE FUNCTION search_users(

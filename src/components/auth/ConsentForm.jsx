@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Shield, Users, Lock, AlertCircle } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { base44 } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
 const CONSENT_VERSION = 'v1.0.0-2025';
@@ -49,7 +49,7 @@ export default function ConsentForm({ user, onAccepted }) {
             SYSTEM INITIALIZATION
           </p>
           <div className="flex items-center gap-3">
-          <Shield className="w-8 h-8 text-[#FF1493]" />
+          <Shield className="w-8 h-8 text-[#E62020]" />
             <h1 className="text-3xl font-black text-white uppercase">DECRYPTION CONSENT</h1>
           </div>
           <p className="text-white/60 text-sm mt-3 font-mono uppercase">
@@ -60,7 +60,7 @@ export default function ConsentForm({ user, onAccepted }) {
         <ScrollArea className="h-96 mb-6 pr-4">
           <div className="space-y-6 text-white/80">
             <div>
-              <h3 className="font-bold text-[#FF1493] mb-2 flex items-center gap-2">
+              <h3 className="font-bold text-[#E62020] mb-2 flex items-center gap-2">
                 <Users className="w-5 h-5" />
                 Private Association Membership
               </h3>
@@ -144,7 +144,7 @@ export default function ConsentForm({ user, onAccepted }) {
         <Button
           onClick={handleAccept}
           disabled={!accepted || loading}
-          className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black text-lg py-6"
+          className="w-full bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black text-lg py-6"
         >
           {loading ? 'DECRYPTING...' : '[ DECRYPT CITY INTEL ]'}
         </Button>

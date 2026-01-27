@@ -258,7 +258,7 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           variant={postType === 'text' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setPostType('text')}
-          className={postType === 'text' ? 'bg-[#FF1493] text-black' : 'border-white/20'}
+          className={postType === 'text' ? 'bg-[#E62020] text-black' : 'border-white/20'}
         >
           Text Post
         </Button>
@@ -423,9 +423,9 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
           {tags.map(tag => (
-            <div key={tag} className="px-3 py-1 bg-[#FF1493]/20 border border-[#FF1493]/40 rounded-full text-xs flex items-center gap-2">
+            <div key={tag} className="px-3 py-1 bg-[#E62020]/20 border border-[#E62020]/40 rounded-full text-xs flex items-center gap-2">
               #{tag}
-              <button onClick={() => removeTag(tag)} className="hover:text-[#FF1493]">
+              <button onClick={() => removeTag(tag)} className="hover:text-[#E62020]">
                 <X className="w-3 h-3" />
               </button>
             </div>
@@ -510,7 +510,7 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
             type="checkbox"
             checked={expires_in_24h}
             onChange={(e) => setExpiresIn24h(e.target.checked)}
-            className="w-4 h-4 accent-[#FF1493]"
+            className="w-4 h-4 accent-[#E62020]"
           />
           <Clock className="w-4 h-4 text-white/60" />
           <span className="text-xs text-white/60 uppercase">24hr post</span>
@@ -546,7 +546,7 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           <Button
             onClick={handlePost}
             disabled={posting || uploading || (postType === 'text' && !content.trim() && !mediaUrl) || (postType === 'poll' && (!content.trim() || pollOptions.filter(o => o.trim()).length < 2)) || (postType === 'event' && (!content.trim() || !eventData.title || !eventData.date))}
-            className="bg-[#FF1493] hover:bg-white text-black font-black"
+            className="bg-[#E62020] hover:bg-white text-black font-black"
           >
             {posting ? (
               <>

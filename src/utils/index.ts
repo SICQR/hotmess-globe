@@ -1,3 +1,32 @@
+export function createUserProfileUrl(profile: { 
+    username?: string; 
+    handle?: string; 
+    email?: string; 
+    auth_user_id?: string; 
+    authUserId?: string; 
+    id?: string 
+}) {
+    // Prefer username for privacy - emails should not be exposed in URLs
+    const username = profile?.username || profile?.handle;
+    if (username) {
+        return `/Profile?username=${encodeURIComponent(username)}`;
+    }
+    
+    // Fallback to email for legacy profiles without username
+    const email = profile?.email;
+    if (email) {
+        return `/Profile?email=${encodeURIComponent(email)}`;
+    }
+    
+    // Last resort: use uid
+    const uid = profile?.auth_user_id || profile?.authUserId || profile?.id;
+    if (uid) {
+        return `/Profile?uid=${encodeURIComponent(uid)}`;
+    }
+    
+    return '/Profile';
+}
+
 export function createPageUrl(pageName: string) {
     if (!pageName) return '/';
     if (pageName.startsWith('/')) return pageName;

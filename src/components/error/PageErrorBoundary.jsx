@@ -91,7 +91,7 @@ class PageErrorBoundary extends React.Component {
               </p>
               <Button
                 onClick={() => window.location.reload()}
-                className="bg-[#FF1493] text-black font-black"
+                className="bg-[#E62020] text-black font-black"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Hard Reload
@@ -117,7 +117,7 @@ class PageErrorBoundary extends React.Component {
               <div className="flex gap-3">
                 <Button
                   onClick={this.handleReset}
-                  className="bg-[#FF1493] text-black font-black"
+                  className="bg-[#E62020] text-black font-black"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Try Again

@@ -7,6 +7,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { notifyXpCredited } from '../notifications/premium.js';
 
 // Disable body parsing - we need raw body for signature verification
 export const config = {
@@ -15,11 +16,11 @@ export const config = {
   },
 };
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Initialized lazily per-request to pick up env changes in dev
+const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY);
+const getWebhookSecret = () => process.env.STRIPE_WEBHOOK_SECRET;
+const getSupabaseUrl = () => process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const getSupabaseServiceKey = () => process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 async function getRawBody(req) {
   const chunks = [];
@@ -35,10 +36,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (!stripe || !webhookSecret) {
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  const webhookSecret = getWebhookSecret();
+  const supabaseUrl = getSupabaseUrl();
+  const supabaseServiceKey = getSupabaseServiceKey();
+
+  if (!stripeSecretKey || !webhookSecret) {
     console.error('[Stripe Webhook] Missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET');
     return res.status(500).json({ error: 'Stripe not configured' });
   }
+
+  const stripe = getStripe();
 
   if (!supabaseServiceKey) {
     console.error('[Stripe Webhook] Missing SUPABASE_SERVICE_ROLE_KEY');
@@ -67,7 +75,61 @@ export default async function handler(req, res) {
         const session = event.data.object;
         const userId = session.metadata?.supabase_user_id;
         const tierId = session.metadata?.tier_id;
+        const xpPurchaseType = session.metadata?.type;
+        const userEmail = session.metadata?.user_email;
+        const xpAmount = session.metadata?.xp_amount;
 
+        // Handle XP purchase
+        if (xpPurchaseType === 'xp_purchase' && userEmail && xpAmount) {
+          const amount = parseInt(xpAmount, 10);
+          
+          // Get current user XP
+          const { data: user, error: userError } = await supabase
+            .from('User')
+            .select('xp')
+            .eq('email', userEmail)
+            .single();
+          
+          if (userError) {
+            console.error('[Stripe Webhook] Failed to fetch user for XP credit:', userError);
+          } else {
+            const currentXp = user?.xp || 0;
+            const newXp = currentXp + amount;
+            
+            // Credit XP to user
+            const { error: updateError } = await supabase
+              .from('User')
+              .update({ xp: newXp })
+              .eq('email', userEmail);
+            
+            if (updateError) {
+              console.error('[Stripe Webhook] Failed to credit XP:', updateError);
+            } else {
+              console.log(`[Stripe Webhook] Credited ${amount} XP to ${userEmail} (new balance: ${newXp})`);
+              
+              // Update transaction record
+              await supabase
+                .from('xp_transactions')
+                .update({
+                  description: `Completed: ${amount} XP purchase`,
+                })
+                .eq('reference_id', session.id)
+                .eq('transaction_type', 'purchase');
+
+              // Send notification (non-blocking)
+              notifyXpCredited({
+                userEmail,
+                amount,
+                packageName: session.metadata?.package_id || `${amount} XP`,
+              }).catch((err) => {
+                console.error('[Stripe Webhook] Notification error:', err);
+              });
+            }
+          }
+          break;
+        }
+
+        // Handle membership tier upgrade
         if (userId && tierId) {
           const { error } = await supabase
             .from('User')
@@ -214,6 +276,143 @@ export default async function handler(req, res) {
             .eq('id', orderId);
 
           console.log(`[Stripe Webhook] Payment failed for order ${orderId}`);
+        }
+        break;
+      }
+
+      // Stripe Connect events
+      case 'account.updated': {
+        const account = event.data.object;
+        const hotmessEmail = account.metadata?.hotmess_email;
+
+        if (hotmessEmail) {
+          const status = account.charges_enabled && account.payouts_enabled 
+            ? 'active' 
+            : account.details_submitted 
+              ? 'pending_verification'
+              : 'incomplete';
+
+          const { error } = await supabase
+            .from('User')
+            .update({
+              stripe_connect_status: status,
+              verified_seller: status === 'active' ? true : undefined,
+            })
+            .eq('email', hotmessEmail);
+
+          if (error) {
+            console.error('[Stripe Webhook] Failed to update Connect status:', error);
+          } else {
+            console.log(`[Stripe Webhook] Connect account updated for ${hotmessEmail}: ${status}`);
+          }
+        }
+        break;
+      }
+
+      case 'transfer.created':
+      case 'transfer.updated': {
+        const transfer = event.data.object;
+        const payoutId = transfer.metadata?.payout_id;
+
+        if (payoutId) {
+          await supabase
+            .from('seller_payouts')
+            .update({ 
+              status: 'in_transit',
+              stripe_transfer_id: transfer.id,
+            })
+            .eq('id', payoutId);
+
+          console.log(`[Stripe Webhook] Transfer ${transfer.id} for payout ${payoutId}`);
+        }
+        break;
+      }
+
+      case 'payout.paid': {
+        const payout = event.data.object;
+        
+        // Find payouts associated with this Stripe payout
+        // First try by stripe_connect_account_id, then fallback to transfer lookup
+        let { data: sellerPayouts } = await supabase
+          .from('seller_payouts')
+          .select('*')
+          .eq('status', 'in_transit')
+          .eq('stripe_connect_account_id', payout.destination);
+        
+        // Fallback: if no matches by account_id, this may be an older record
+        // Look up any in_transit payouts that haven't been matched yet
+        if (!sellerPayouts?.length) {
+          const { data: fallbackPayouts } = await supabase
+            .from('seller_payouts')
+            .select('*')
+            .eq('status', 'in_transit')
+            .is('stripe_payout_id', null);
+          sellerPayouts = fallbackPayouts;
+        }
+
+        if (sellerPayouts?.length > 0) {
+          for (const sellerPayout of sellerPayouts) {
+            await supabase
+              .from('seller_payouts')
+              .update({ 
+                status: 'paid',
+                stripe_payout_id: payout.id,
+                arrival_date: new Date(payout.arrival_date * 1000).toISOString(),
+              })
+              .eq('id', sellerPayout.id);
+
+            // Notify seller
+            await supabase.from('notifications').insert({
+              user_email: sellerPayout.seller_email,
+              type: 'payout',
+              title: 'Payout Complete!',
+              message: `£${sellerPayout.amount_gbp?.toFixed(2) || '0.00'} has arrived in your bank account`,
+              link: 'SellerDashboard',
+            });
+          }
+          console.log(`[Stripe Webhook] Payout ${payout.id} completed`);
+        }
+        break;
+      }
+
+      case 'payout.failed': {
+        const payout = event.data.object;
+        
+        // Find payouts - try by account_id first, then fallback
+        let { data: sellerPayouts } = await supabase
+          .from('seller_payouts')
+          .select('*')
+          .eq('status', 'in_transit')
+          .eq('stripe_connect_account_id', payout.destination);
+        
+        if (!sellerPayouts?.length) {
+          const { data: fallbackPayouts } = await supabase
+            .from('seller_payouts')
+            .select('*')
+            .eq('status', 'in_transit')
+            .is('stripe_payout_id', null);
+          sellerPayouts = fallbackPayouts;
+        }
+
+        if (sellerPayouts?.length > 0) {
+          for (const sellerPayout of sellerPayouts) {
+            await supabase
+              .from('seller_payouts')
+              .update({ 
+                status: 'failed',
+                notes: payout.failure_message || 'Payout failed',
+              })
+              .eq('id', sellerPayout.id);
+
+            await supabase.from('notifications').insert({
+              user_email: sellerPayout.seller_email,
+              type: 'payout',
+              title: 'Payout Failed',
+              message: `There was an issue with your payout. Please check your bank details.`,
+              link: 'SellerDashboard',
+            });
+          }
+          console.log(`[Stripe Webhook] Payout ${payout.id} failed`);
         }
         break;
       }

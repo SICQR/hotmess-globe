@@ -83,7 +83,7 @@ export default function SquadChallenges({ squadId, currentUser }) {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 flex items-center justify-center border-2 ${
-                      isComplete ? 'bg-green-500 border-green-600' : 'bg-[#FF1493] border-[#FF1493]'
+                      isComplete ? 'bg-green-500 border-green-600' : 'bg-[#E62020] border-[#E62020]'
                     }`}>
                       <Icon className="w-5 h-5 text-black" />
                     </div>

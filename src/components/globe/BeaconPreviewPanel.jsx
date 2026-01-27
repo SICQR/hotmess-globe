@@ -1,10 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, MapPin, Calendar, Users, Zap, ExternalLink } from 'lucide-react';
+import { X, MapPin, Calendar, Users, Zap, ExternalLink, Crown } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
+import NightKingDisplay from '../gamification/NightKingDisplay';
 
 export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
   if (!beacon) return null;
@@ -12,14 +13,14 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
   const kindColors = {
     event: '#00D9FF',
     venue: '#B026FF',
-    hookup: '#FF1493',
+    hookup: '#E62020',
     drop: '#FFEB3B',
     popup: '#39FF14',
     private: '#FF6B35',
     person: '#00D9FF',
   };
 
-  const color = kindColors[beacon.kind] || '#FF1493';
+  const color = kindColors[beacon.kind] || '#E62020';
   const isPerson = beacon.kind === 'person';
   const detailsUrl = isPerson && beacon.email
     ? createPageUrl(`Profile?email=${encodeURIComponent(beacon.email)}`)
@@ -121,11 +122,18 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
             )}
           </div>
 
+          {/* Night King for venues */}
+          {beacon.kind === 'venue' && beacon.id && (
+            <div className="pt-2 border-t border-white/10">
+              <NightKingDisplay venueId={beacon.id} />
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
             <Button
               onClick={onViewFull}
-              className="flex-1 bg-[#FF1493] hover:bg-white text-black font-black border-2 border-white"
+              className="flex-1 bg-[#E62020] hover:bg-white text-black font-black border-2 border-white"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               {isPerson ? 'VIEW PROFILE' : 'VIEW DETAILS'}

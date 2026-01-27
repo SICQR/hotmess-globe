@@ -332,7 +332,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           const ctx = canvas.getContext('2d');
           canvas.width = 64;
           canvas.height = 64;
-          ctx.fillStyle = '#FF1493';
+          ctx.fillStyle = '#E62020';
           ctx.font = 'bold 32px Arial';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
@@ -1155,14 +1155,14 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
             zIndex: 1000,
             pointerEvents: 'none'
           }}
-          className="px-4 py-3 bg-black/95 border border-[#FF1493]/40 rounded-xl backdrop-blur-xl"
+          className="px-4 py-3 bg-black/95 border border-[#E62020]/40 rounded-xl backdrop-blur-xl"
         >
           <div className="flex items-center gap-3 text-sm">
             <div className="flex flex-col items-end">
               <span className="text-white/50 text-xs tracking-wider uppercase">FROM</span>
               <span className="text-white font-bold tracking-wide">{arcTooltip.from.city || arcTooltip.from.title}</span>
             </div>
-            <div className="text-[#FF1493] text-lg">→</div>
+            <div className="text-[#E62020] text-lg">→</div>
             <div className="flex flex-col items-start">
               <span className="text-white/50 text-xs tracking-wider uppercase">TO</span>
               <span className="text-white font-bold tracking-wide">{arcTooltip.to.city || arcTooltip.to.title}</span>
@@ -1170,7 +1170,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           </div>
           <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between gap-4 text-xs">
             <span className="text-white/40 tracking-wide uppercase">Connection</span>
-            <span className="text-[#FF1493] font-semibold">{arcTooltip.to.kind || 'EVENT'}</span>
+            <span className="text-[#E62020] font-semibold">{arcTooltip.to.kind || 'EVENT'}</span>
           </div>
         </div>
       )}

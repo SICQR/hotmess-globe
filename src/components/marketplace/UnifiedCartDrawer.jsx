@@ -388,7 +388,7 @@ export default function UnifiedCartDrawer({ currentUser }) {
       >
         <ShoppingCart className="w-5 h-5" />
         {totalCount > 0 ? (
-          <span className="absolute -top-1 -right-1 bg-[#FF1493] text-black text-[10px] font-black rounded-full px-1.5 py-0.5">
+          <span className="absolute -top-1 -right-1 bg-[#E62020] text-black text-[10px] font-black rounded-full px-1.5 py-0.5">
             {totalCount}
           </span>
         ) : null}

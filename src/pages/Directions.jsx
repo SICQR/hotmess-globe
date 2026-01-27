@@ -1,22 +1,44 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+/**
+ * Directions Page
+ * 
+ * Full-featured in-app navigation with turn-by-turn directions,
+ * live tracking, voice guidance, and multiple travel modes.
+ */
+
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Loader2, Navigation, Pause } from 'lucide-react';
+import { Loader2, Navigation, Pause, Maximize2, Volume2, VolumeX, Train } from 'lucide-react';
 import { toast } from 'sonner';
 import PageShell from '@/components/shell/PageShell';
 
 import { fetchRoutingDirections } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { decodeGooglePolyline } from '@/utils/googlePolyline';
-import { buildUberDeepLink } from '@/utils/uberDeepLink';
+import { buildUberDeepLink, buildLyftDeepLink, getEstimatedFareRange } from '@/utils/uberDeepLink';
+import { SmartTravelSelector } from '@/components/travel/SmartTravelSelector';
 
-// Fix for default marker icons in Leaflet (same approach as EventsMapView)
+// Import new navigation components
+import {
+  NavigationHeader,
+  NavigationStepCard,
+  RouteProgress,
+  ArrivalCard,
+  FullScreenNavigation,
+  findCurrentStep,
+  checkArrival,
+  checkOffRoute,
+  useVoiceGuidance,
+  isVoiceSupported,
+} from '@/components/navigation';
+
+// Fix for default marker icons in Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -29,6 +51,7 @@ const normalizeModeParam = (value) => {
   if (v === 'foot' || v === 'walk' || v === 'walking') return 'foot';
   if (v === 'bike' || v === 'bicycle' || v === 'bicycling') return 'bike';
   if (v === 'cab' || v === 'drive' || v === 'driving') return 'cab';
+  if (v === 'transit' || v === 'bus' || v === 'train' || v === 'subway' || v === 'metro') return 'transit';
   if (v === 'uber') return 'uber';
   return 'foot';
 };
@@ -36,7 +59,8 @@ const normalizeModeParam = (value) => {
 const apiModeFor = (uiMode) => {
   if (uiMode === 'foot') return 'WALK';
   if (uiMode === 'bike') return 'BICYCLE';
-  return 'DRIVE'; // cab
+  if (uiMode === 'transit') return 'TRANSIT';
+  return 'DRIVE';
 };
 
 const minutesLabel = (seconds) => {
@@ -94,7 +118,6 @@ const FollowUser = ({ isNavigating, origin }) => {
     if (!isNavigating) return;
     if (!origin) return;
 
-    // Keep this gentle: don't fight the user's pan/zoom too aggressively.
     const now = Date.now();
     if (now - lastCenterAtRef.current < 1200) return;
     lastCenterAtRef.current = now;
@@ -109,9 +132,55 @@ const FollowUser = ({ isNavigating, origin }) => {
   return null;
 };
 
+// Map component for reuse
+function NavigationMap({ 
+  origin, 
+  destination, 
+  polylinePoints, 
+  isNavigating,
+  originIcon,
+  destinationIcon,
+  mapCenter,
+  className,
+}) {
+  return (
+    <MapContainer
+      center={mapCenter}
+      zoom={14}
+      style={{ height: '100%', width: '100%' }}
+      scrollWheelZoom
+      className={className}
+    >
+      <TileLayer
+        attribution='&copy; OpenStreetMap contributors'
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+      />
+
+      <FollowUser isNavigating={isNavigating} origin={origin} />
+
+      {origin && <Marker position={[origin.lat, origin.lng]} icon={originIcon} />}
+      <Marker position={[destination.lat, destination.lng]} icon={destinationIcon} />
+
+      {polylinePoints.length >= 2 && (
+        <>
+          <Polyline
+            positions={polylinePoints}
+            pathOptions={{ color: '#00D9FF', weight: 11, opacity: 0.35 }}
+          />
+          <Polyline
+            positions={polylinePoints}
+            pathOptions={{ color: '#E62020', weight: 7, opacity: 0.95 }}
+          />
+        </>
+      )}
+    </MapContainer>
+  );
+}
+
 export default function Directions() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const destLat = Number(searchParams.get('lat'));
   const destLng = Number(searchParams.get('lng'));
@@ -123,6 +192,12 @@ export default function Directions() {
   const [origin, setOrigin] = useState(null);
   const [originError, setOriginError] = useState(null);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [distanceToTurn, setDistanceToTurn] = useState(null);
+  const [isArrived, setIsArrived] = useState(false);
+  const [isOffRoute, setIsOffRoute] = useState(false);
 
   const watchIdRef = useRef(null);
   const lastFixRef = useRef(null);
@@ -138,10 +213,10 @@ export default function Directions() {
   }, [initialMode]);
 
   useEffect(() => {
-    // Stop navigation when switching to Uber.
     if (mode === 'uber') setIsNavigating(false);
   }, [mode]);
 
+  // Get initial location
   useEffect(() => {
     if (!destination) return;
     if (!navigator.geolocation) {
@@ -169,6 +244,7 @@ export default function Directions() {
     };
   }, [destination]);
 
+  // Watch position during navigation
   useEffect(() => {
     if (!navigator.geolocation) return;
     if (!destination) return;
@@ -185,11 +261,9 @@ export default function Directions() {
       return;
     }
 
-    // Start watching only when explicitly navigating.
     const onPos = (pos) => {
       const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
 
-      // Throttle updates to reduce CoreLocation noise + rerenders.
       const now = Date.now();
       const last = lastFixRef.current;
       const moved = last ? haversineMeters(last, next) : null;
@@ -204,7 +278,6 @@ export default function Directions() {
     };
 
     const onErr = (err) => {
-      // Stop retrying if permission is denied.
       if (err?.code === 1) {
         setOriginError('Location permission denied.');
         setIsNavigating(false);
@@ -212,9 +285,9 @@ export default function Directions() {
     };
 
     const id = navigator.geolocation.watchPosition(onPos, onErr, {
-      enableHighAccuracy: false,
+      enableHighAccuracy: true,
       timeout: 10000,
-      maximumAge: 5000,
+      maximumAge: 3000,
     });
     watchIdRef.current = id;
 
@@ -231,7 +304,7 @@ export default function Directions() {
 
   const canFetch = !!origin && !!destination && mode !== 'uber';
 
-  const { data: directions, isLoading, error } = useQuery({
+  const { data: directions, isLoading, error, refetch } = useQuery({
     queryKey: ['routing-directions', mode, origin?.lat, origin?.lng, destination?.lat, destination?.lng],
     queryFn: () => fetchRoutingDirections({ origin, destination, mode: apiModeFor(mode), ttlSeconds: 90 }),
     enabled: canFetch,
@@ -239,68 +312,9 @@ export default function Directions() {
     staleTime: 60000,
   });
 
-  const directionsErrorMessage = useMemo(() => {
-    if (!error) return null;
-    const status = error?.status;
-    if (status === 401 || status === 403) return 'Sign in to load turn-by-turn directions.';
-    const msg = String(error?.message || '').trim();
-    return msg || 'Failed to load directions.';
-  }, [error]);
-
-  const debugInfo = useMemo(() => {
-    if (!debug) return null;
-
-    const status = error?.status ?? null;
-    const payload = error?.payload ?? null;
-
-    return {
-      mode,
-      api_mode: mode === 'uber' ? null : apiModeFor(mode),
-      canFetch,
-      isLoading,
-      isNavigating,
-      origin,
-      destination,
-      error: error
-        ? {
-            status,
-            message: String(error?.message || ''),
-            payload,
-          }
-        : null,
-      directions: directions
-        ? {
-            provider: directions?.provider || null,
-            duration_seconds: directions?.duration_seconds ?? null,
-            distance_meters: directions?.distance_meters ?? null,
-            steps_count: Array.isArray(directions?.steps) ? directions.steps.length : 0,
-            has_encoded_polyline: !!directions?.polyline?.encoded,
-            warning: directions?.warning ?? null,
-          }
-        : null,
-    };
-  }, [canFetch, debug, destination, directions, error, isLoading, isNavigating, mode, origin]);
-
-  const debugDetails = useMemo(() => {
-    if (!error) return null;
-    const status = error?.status;
-    const payload = error?.payload;
-    const message = String(error?.message || '').trim() || null;
-
-    return {
-      status: Number.isFinite(status) ? status : null,
-      message,
-      payload: payload ?? null,
-      mode,
-      apiMode: apiModeFor(mode),
-      origin,
-      destination,
-    };
-  }, [destination, error, mode, origin]);
-
-  const steps = Array.isArray(directions?.steps) ? directions.steps : [];
-  const directionsWarning = directions?.warning;
-  const isApprox = directions?.provider === 'approx';
+  const steps = useMemo(() => {
+    return Array.isArray(directions?.steps) ? directions.steps : [];
+  }, [directions?.steps]);
 
   const polylinePoints = useMemo(() => {
     const encoded = directions?.polyline?.encoded;
@@ -325,11 +339,52 @@ export default function Directions() {
     return [];
   }, [destination, directions?.polyline?.encoded, directions?.polyline?.points, origin]);
 
+  // Live step tracking
+  useEffect(() => {
+    if (!isNavigating || !origin || !steps.length) return;
+
+    // Find current step
+    const { stepIndex, distanceToTurn: dist } = findCurrentStep(origin, steps, polylinePoints);
+    setCurrentStepIndex(stepIndex);
+    setDistanceToTurn(dist);
+
+    // Check arrival
+    const arrived = checkArrival(origin, destination, 30);
+    if (arrived && !isArrived) {
+      setIsArrived(true);
+      toast.success('You have arrived!');
+    }
+
+    // Check off-route
+    const offRoute = checkOffRoute(origin, polylinePoints, 50);
+    if (offRoute !== isOffRoute) {
+      setIsOffRoute(offRoute);
+      if (offRoute) {
+        toast.warning('You appear to be off route');
+        // Trigger re-route
+        setTimeout(() => {
+          refetch();
+        }, 2000);
+      }
+    }
+  }, [origin, steps, polylinePoints, isNavigating, destination, isArrived, isOffRoute, refetch]);
+
+  // Voice guidance
+  const currentStep = steps[currentStepIndex] || null;
+  const nextStep = steps[currentStepIndex + 1] || null;
+
+  useVoiceGuidance({
+    enabled: voiceEnabled && isNavigating,
+    currentStep,
+    distanceToTurn,
+    isArrived,
+  });
+
+  // Remaining distance/duration
   const remainingMeters = useMemo(() => {
     if (!origin || !destination) return null;
     if (!polylinePoints.length) return haversineMeters(origin, destination);
 
-    // Find the nearest polyline point to the user's current fix.
     let bestIdx = 0;
     let bestDist = Infinity;
     for (let i = 0; i < polylinePoints.length; i += 1) {
@@ -341,7 +396,6 @@ export default function Directions() {
       }
     }
 
-    // Sum remaining distance along the polyline.
     let sum = 0;
     for (let i = bestIdx; i < polylinePoints.length - 1; i += 1) {
       const a = { lat: polylinePoints[i][0], lng: polylinePoints[i][1] };
@@ -352,15 +406,23 @@ export default function Directions() {
     return Math.max(0, Math.round(sum));
   }, [destination, origin, polylinePoints]);
 
+  const remainingDuration = useMemo(() => {
+    if (!directions?.duration_seconds || !directions?.distance_meters) return null;
+    if (!remainingMeters) return directions.duration_seconds;
+    
+    const ratio = remainingMeters / directions.distance_meters;
+    return Math.round(directions.duration_seconds * ratio);
+  }, [directions?.duration_seconds, directions?.distance_meters, remainingMeters]);
+
   const remainingLabel = useMemo(() => {
     if (!Number.isFinite(remainingMeters)) return null;
-    if (remainingMeters < 1200) return `${remainingMeters} m`; 
+    if (remainingMeters < 1200) return `${remainingMeters} m`;
     return `${(remainingMeters / 1000).toFixed(1)} km`;
   }, [remainingMeters]);
 
   const mapCenter = useMemo(() => {
     if (destination) return [destination.lat, destination.lng];
-    return [51.5074, -0.1278]; // London fallback
+    return [51.5074, -0.1278];
   }, [destination]);
 
   const etaLabel = minutesLabel(directions?.duration_seconds);
@@ -370,22 +432,69 @@ export default function Directions() {
     []
   );
   const destinationIcon = useMemo(
-    () => makePinIcon({ label: 'GO', color: '#FF1493', glow: 'rgba(255,20,147,0.75)' }),
+    () => makePinIcon({ label: 'GO', color: '#E62020', glow: 'rgba(255,20,147,0.75)' }),
     []
   );
 
-  const uberUrl = useMemo(() => {
-    if (!destination) return null;
-    return buildUberDeepLink({ dropoffLat: destination.lat, dropoffLng: destination.lng, dropoffNickname: label || 'Destination' });
-  }, [destination, label]);
+  const rideServiceLinks = useMemo(() => {
+    if (!destination) return { uber: null, lyft: null };
+    const params = {
+      dropoffLat: destination.lat,
+      dropoffLng: destination.lng,
+      dropoffNickname: label || 'Destination',
+      pickupLat: origin?.lat,
+      pickupLng: origin?.lng,
+    };
+    return {
+      uber: buildUberDeepLink(params),
+      lyft: buildLyftDeepLink(params),
+    };
+  }, [destination, label, origin]);
+
+  // Rough fare estimate based on distance
+  const fareEstimate = useMemo(() => {
+    if (!remainingMeters) return null;
+    return getEstimatedFareRange(remainingMeters / 1000);
+  }, [remainingMeters]);
+
+  // Keep uberUrl for backwards compatibility
+  const uberUrl = rideServiceLinks.uber;
 
   const title = label ? `Directions to ${label}` : 'Directions';
-
   const subtitle =
     mode === 'uber'
       ? 'Request a ride (opens Uber).'
       : `${etaLabel ? `${etaLabel} • ` : ''}${remainingLabel ? `${remainingLabel} left • ` : ''}${isNavigating ? 'Live' : 'In-app'}`;
 
+  // Handlers
+  const handleStartNavigation = useCallback(() => {
+    if (isLoading) return;
+    setIsNavigating(true);
+    setIsArrived(false);
+    setCurrentStepIndex(0);
+  }, [isLoading]);
+
+  const handleStopNavigation = useCallback(() => {
+    setIsNavigating(false);
+    setIsFullScreen(false);
+  }, []);
+
+  const handleToggleFullScreen = useCallback(() => {
+    if (!isNavigating) {
+      handleStartNavigation();
+    }
+    setIsFullScreen(true);
+  }, [isNavigating, handleStartNavigation]);
+
+  const handleExitFullScreen = useCallback(() => {
+    setIsFullScreen(false);
+  }, []);
+
+  const handleRecenter = useCallback(() => {
+    // The FollowUser component handles this automatically
+  }, []);
+
+  // Missing destination
   if (!destination) {
     return (
       <div className="min-h-screen bg-black text-white">
@@ -403,6 +512,42 @@ export default function Directions() {
     );
   }
 
+  // Full-screen navigation mode
+  if (isFullScreen && mode !== 'uber') {
+    return (
+      <FullScreenNavigation
+        steps={steps}
+        currentStepIndex={currentStepIndex}
+        distanceToTurn={distanceToTurn}
+        totalRemainingDistance={remainingMeters}
+        totalRemainingDuration={remainingDuration}
+        destinationLabel={label}
+        userPosition={origin}
+        destination={destination}
+        polylinePoints={polylinePoints}
+        isNavigating={isNavigating}
+        isArrived={isArrived}
+        isOffRoute={isOffRoute}
+        voiceEnabled={voiceEnabled}
+        onVoiceToggle={() => setVoiceEnabled(!voiceEnabled)}
+        onRecenter={handleRecenter}
+        onExit={handleExitFullScreen}
+        onStepClick={(idx) => setCurrentStepIndex(idx)}
+      >
+        <NavigationMap
+          origin={origin}
+          destination={destination}
+          polylinePoints={polylinePoints}
+          isNavigating={isNavigating}
+          originIcon={originIcon}
+          destinationIcon={destinationIcon}
+          mapCenter={mapCenter}
+        />
+      </FullScreenNavigation>
+    );
+  }
+
+  // Standard view
   return (
     <div className="min-h-screen bg-black text-white">
       <PageShell
@@ -413,152 +558,297 @@ export default function Directions() {
         back
         backLabel="Back"
       >
+        {/* Smart Travel Recommendation - shows best option based on context */}
+        {origin && destination && etaLabel && (
+          <div className="mb-4">
+            <SmartTravelSelector
+              destination={{
+                lat: destination[0],
+                lng: destination[1],
+                name: label,
+              }}
+              origin={{
+                lat: origin[0],
+                lng: origin[1],
+              }}
+              travelTimes={{
+                walking: directions?.duration_seconds && mode === 'foot' ? { mode: 'walk', durationSeconds: directions.duration_seconds, label: etaLabel } : null,
+                bicycling: directions?.duration_seconds && mode === 'bike' ? { mode: 'bike', durationSeconds: directions.duration_seconds, label: etaLabel } : null,
+                driving: directions?.duration_seconds && mode === 'cab' ? { mode: 'drive', durationSeconds: directions.duration_seconds, label: etaLabel } : null,
+                transit: directions?.duration_seconds && mode === 'transit' ? { mode: 'transit', durationSeconds: directions.duration_seconds, label: etaLabel } : null,
+              }}
+              onNavigate={(navMode) => {
+                const modeMap = { walk: 'foot', bike: 'bike', drive: 'cab', transit: 'transit' };
+                const newMode = modeMap[navMode];
+                if (newMode) setMode(newMode);
+              }}
+              showRideServices={true}
+              showTransit={true}
+              compact
+              className="w-full"
+            />
+          </div>
+        )}
 
         <Tabs value={mode} onValueChange={setMode}>
-          <TabsList className="bg-white/5 border border-white/10">
-            <TabsTrigger value="foot">Foot</TabsTrigger>
-            <TabsTrigger value="bike">Bike</TabsTrigger>
-            <TabsTrigger value="cab">Cab</TabsTrigger>
-            <TabsTrigger value="uber">Uber</TabsTrigger>
+          <TabsList className="bg-white/5 border border-white/10 flex-wrap gap-1">
+            <TabsTrigger value="foot" className="min-h-[40px]">🚶 Foot</TabsTrigger>
+            <TabsTrigger value="bike" className="min-h-[40px]">🚴 Bike</TabsTrigger>
+            <TabsTrigger value="cab" className="min-h-[40px]">🚕 Cab</TabsTrigger>
+            <TabsTrigger value="transit" className="min-h-[40px]">🚇 Transit</TabsTrigger>
+            <TabsTrigger value="uber" className="min-h-[40px]">📱 Ride</TabsTrigger>
           </TabsList>
 
           <TabsContent value={mode} className="mt-4 space-y-4">
-            {debugInfo && (
-              <div className="border border-white/10 bg-black/60 p-3 text-xs text-white/70">
-                <div className="font-mono whitespace-pre-wrap break-words">{JSON.stringify(debugInfo, null, 2)}</div>
-              </div>
-            )}
-
             {originError && mode !== 'uber' && (
               <div className="border border-white/10 bg-white/5 p-3 text-sm text-white/70">
                 {originError}
               </div>
             )}
 
-            {debugDetails && mode !== 'uber' && (
-              <details className="border border-white/10 bg-black/40">
-                <summary className="cursor-pointer select-none p-3 text-xs font-black uppercase tracking-wider text-white/70">
-                  Debug details
-                </summary>
-                <div className="p-3 pt-0">
-                  <pre className="text-[11px] leading-relaxed text-white/70 overflow-auto max-h-[240px] whitespace-pre-wrap break-words">
-                    {JSON.stringify(debugDetails, null, 2)}
-                  </pre>
-                </div>
-              </details>
-            )}
-
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              {/* Map */}
               <div className="lg:col-span-3 overflow-hidden border border-white/10 bg-white/5">
                 <div className="h-[420px]">
-                  <MapContainer
-                    center={mapCenter}
-                    zoom={14}
-                    style={{ height: '100%', width: '100%' }}
-                    scrollWheelZoom
-                  >
-                    <TileLayer
-                      attribution='&copy; OpenStreetMap contributors'
-                      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                    />
-
-                    <FollowUser isNavigating={isNavigating && mode !== 'uber'} origin={origin} />
-
-                    {origin && <Marker position={[origin.lat, origin.lng]} icon={originIcon} />}
-                    <Marker position={[destination.lat, destination.lng]} icon={destinationIcon} />
-
-                    {polylinePoints.length >= 2 && (
-                      <>
-                        <Polyline
-                          positions={polylinePoints}
-                          pathOptions={{ color: '#00D9FF', weight: 11, opacity: 0.35 }}
-                        />
-                        <Polyline
-                          positions={polylinePoints}
-                          pathOptions={{ color: '#FF1493', weight: 7, opacity: 0.95 }}
-                        />
-                      </>
-                    )}
-                  </MapContainer>
+                  <NavigationMap
+                    origin={origin}
+                    destination={destination}
+                    polylinePoints={polylinePoints}
+                    isNavigating={isNavigating}
+                    originIcon={originIcon}
+                    destinationIcon={destinationIcon}
+                    mapCenter={mapCenter}
+                  />
                 </div>
               </div>
 
+              {/* Directions panel */}
               <div className="lg:col-span-2 border border-white/10 bg-white/5">
-                <div className="p-4 flex items-center justify-between">
+                {/* Header with controls */}
+                <div className="p-4 flex items-center justify-between border-b border-white/10">
                   <div className="text-sm">
-                    <div className="font-black uppercase tracking-wider">{mode === 'foot' ? 'Foot' : mode === 'bike' ? 'Bike' : mode === 'cab' ? 'Cab' : 'Uber'}</div>
-                    <div className="text-white/60">{mode === 'uber' ? 'Leaves app' : 'Stays in app'}</div>
+                    <div className="font-black uppercase tracking-wider">
+                      {mode === 'foot' ? 'Walking' : mode === 'bike' ? 'Cycling' : mode === 'cab' ? 'Driving' : mode === 'transit' ? 'Public Transit' : 'Uber'}
+                    </div>
+                    <div className="text-white/60">
+                      {mode === 'uber' ? 'Leaves app' : mode === 'transit' ? 'Bus, Train, Metro' : 'Stays in app'}
+                    </div>
                   </div>
 
-                  {mode === 'uber' ? (
-                    <Button
-                      type="button"
-                      variant="hot"
-                      className="font-black"
-                      onClick={() => {
-                        if (!uberUrl) return;
-                        window.open(uberUrl, '_blank', 'noopener,noreferrer');
-                      }}
-                      disabled={!uberUrl}
-                    >
-                      <Navigation className="w-4 h-4 mr-2" />
-                      Request Uber
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="cyan"
-                      className="font-black"
-                      onClick={() => {
-                        if (isLoading) return;
-                        if (directionsErrorMessage) {
-                          toast.error(directionsErrorMessage);
-                        }
+                  <div className="flex items-center gap-2">
+                    {mode !== 'uber' && isVoiceSupported() && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setVoiceEnabled(!voiceEnabled)}
+                        className={voiceEnabled ? 'text-cyan-400' : 'text-white/50'}
+                      >
+                        {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                      </Button>
+                    )}
 
-                        // Navigation is a location-follow mode; it should work even if
-                        // turn-by-turn directions fail (we can still show a straight line).
-                        setIsNavigating((v) => !v);
-                      }}
-                      disabled={!canFetch || isLoading}
-                    >
-                      {isLoading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : isNavigating ? (
-                        <Pause className="w-4 h-4 mr-2" />
-                      ) : (
-                        <Navigation className="w-4 h-4 mr-2" />
-                      )}
-                      {isLoading ? 'Loading…' : isNavigating ? 'Stop' : 'Start'}
-                    </Button>
-                  )}
+                    {mode === 'uber' ? (
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="hot"
+                          className="font-black"
+                          onClick={() => {
+                            if (!rideServiceLinks.uber) return;
+                            window.open(rideServiceLinks.uber, '_blank', 'noopener,noreferrer');
+                          }}
+                          disabled={!rideServiceLinks.uber}
+                        >
+                          <Navigation className="w-4 h-4 mr-2" />
+                          Uber
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="cyanGradient"
+                          className="font-black"
+                          onClick={() => {
+                            if (!rideServiceLinks.lyft) return;
+                            window.open(rideServiceLinks.lyft, '_blank', 'noopener,noreferrer');
+                          }}
+                          disabled={!rideServiceLinks.lyft}
+                        >
+                          <Navigation className="w-4 h-4 mr-2" />
+                          Lyft
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={handleToggleFullScreen}
+                          disabled={!canFetch || isLoading}
+                          className="border-white/20"
+                        >
+                          <Maximize2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="cyan"
+                          className="font-black"
+                          onClick={() => {
+                            if (isNavigating) {
+                              handleStopNavigation();
+                            } else {
+                              handleStartNavigation();
+                            }
+                          }}
+                          disabled={!canFetch || isLoading}
+                        >
+                          {isLoading ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : isNavigating ? (
+                            <Pause className="w-4 h-4 mr-2" />
+                          ) : (
+                            <Navigation className="w-4 h-4 mr-2" />
+                          )}
+                          {isLoading ? 'Loading…' : isNavigating ? 'Stop' : 'Start'}
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                {mode !== 'uber' && (
-                  <div className="px-4 pb-4">
-                    {(isApprox || directionsWarning) && !directionsErrorMessage && origin && (
-                      <div className="mb-3 border border-amber-400/30 bg-amber-500/10 p-2 text-xs text-amber-200">
-                        Approximate route shown — turn-by-turn steps unavailable right now.
+                {/* Ride service content (Uber/Lyft) */}
+                {mode === 'uber' && (
+                  <div className="p-4 space-y-4">
+                    {/* Fare estimate */}
+                    {fareEstimate && (
+                      <div className="border border-white/10 bg-white/5 rounded-lg p-4">
+                        <div className="text-xs text-white/60 uppercase tracking-wider mb-2">Estimated Fare</div>
+                        <div className="text-2xl font-black text-white">
+                          ${fareEstimate.low} - ${fareEstimate.high}
+                        </div>
+                        <div className="text-xs text-white/50 mt-1">{fareEstimate.disclaimer}</div>
                       </div>
                     )}
-                    {directionsErrorMessage ? (
-                      <div className="text-sm text-red-300">{directionsErrorMessage}</div>
-                    ) : steps.length ? (
-                      <ol className="space-y-2 text-sm">
-                        {steps.slice(0, 60).map((s, idx) => (
-                          <li key={idx} className="border border-white/10 bg-black/30 p-2">
-                            <div className="font-medium">{s.instruction || 'Continue'}</div>
-                            <div className="text-white/60">
-                              {Number.isFinite(s.distance_meters) ? `${Math.round(s.distance_meters)}m` : null}
-                              {Number.isFinite(s.duration_seconds)
-                                ? `${Number.isFinite(s.distance_meters) ? ' • ' : ''}${minutesLabel(s.duration_seconds)}`
-                                : null}
-                            </div>
-                          </li>
-                        ))}
-                      </ol>
-                    ) : (
-                      <div className="text-sm text-white/60">
-                        {isLoading ? 'Fetching route…' : origin ? 'No steps available for this route.' : 'Enable location to see turn-by-turn steps.'}
+
+                    {/* Ride options */}
+                    <div className="space-y-3">
+                      <div className="text-sm text-white/70">Choose your ride service:</div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* Uber card */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!rideServiceLinks.uber) return;
+                            window.open(rideServiceLinks.uber, '_blank', 'noopener,noreferrer');
+                          }}
+                          disabled={!rideServiceLinks.uber}
+                          className="flex flex-col items-center justify-center p-4 rounded-xl border border-white/10 bg-black hover:bg-white/5 transition-colors disabled:opacity-50"
+                        >
+                          <div className="w-12 h-12 rounded-full bg-black border-2 border-white flex items-center justify-center mb-2">
+                            <span className="text-lg font-black">U</span>
+                          </div>
+                          <span className="font-bold text-white">Uber</span>
+                          <span className="text-xs text-white/50">Opens Uber app</span>
+                        </button>
+
+                        {/* Lyft card */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!rideServiceLinks.lyft) return;
+                            window.open(rideServiceLinks.lyft, '_blank', 'noopener,noreferrer');
+                          }}
+                          disabled={!rideServiceLinks.lyft}
+                          className="flex flex-col items-center justify-center p-4 rounded-xl border border-white/10 bg-[#FF00BF]/10 hover:bg-[#FF00BF]/20 transition-colors disabled:opacity-50"
+                        >
+                          <div className="w-12 h-12 rounded-full bg-[#FF00BF] flex items-center justify-center mb-2">
+                            <span className="text-lg font-black text-white">L</span>
+                          </div>
+                          <span className="font-bold text-white">Lyft</span>
+                          <span className="text-xs text-white/50">Opens Lyft app</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-white/40">
+                      Prices and wait times may vary. Compare both apps for the best deal.
+                    </div>
+                  </div>
+                )}
+
+                {/* Navigation content */}
+                {mode !== 'uber' && (
+                  <div className="p-4 space-y-4">
+                    {/* Current instruction */}
+                    {isNavigating && (
+                      <NavigationHeader
+                        currentStep={currentStep}
+                        nextStep={nextStep}
+                        distanceToTurn={distanceToTurn}
+                        totalRemainingDistance={remainingMeters}
+                        totalRemainingDuration={remainingDuration}
+                        destinationLabel={label}
+                        isNavigating={isNavigating}
+                        isArrived={isArrived}
+                      />
+                    )}
+
+                    {/* Arrival card */}
+                    {isArrived && (
+                      <ArrivalCard
+                        destinationLabel={label}
+                        totalDistance={directions?.distance_meters}
+                        totalDuration={directions?.duration_seconds}
+                        onClose={() => navigate(-1)}
+                      />
+                    )}
+
+                    {/* Progress */}
+                    {isNavigating && steps.length > 0 && !isArrived && (
+                      <RouteProgress
+                        currentStepIndex={currentStepIndex}
+                        totalSteps={steps.length}
+                        totalDistance={directions?.distance_meters}
+                        remainingDistance={remainingMeters}
+                      />
+                    )}
+
+                    {/* Step list */}
+                    {!isArrived && (
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                        {error && (
+                          <div className="text-sm text-red-300">
+                            {String(error?.message || 'Failed to load directions')}
+                          </div>
+                        )}
+
+                        {directions?.warning && !error && origin && (
+                          <div className="border border-amber-400/30 bg-amber-500/10 p-2 text-xs text-amber-200">
+                            Approximate route shown — turn-by-turn steps unavailable right now.
+                          </div>
+                        )}
+
+                        {steps.length > 0 ? (
+                          steps.slice(0, 60).map((step, idx) => (
+                            <NavigationStepCard
+                              key={idx}
+                              step={step}
+                              stepNumber={idx + 1}
+                              isCurrentStep={isNavigating && idx === currentStepIndex}
+                              isCompleted={isNavigating && idx < currentStepIndex}
+                              isUpcoming={isNavigating && idx > currentStepIndex}
+                              compact
+                            />
+                          ))
+                        ) : (
+                          <div className="text-sm text-white/60">
+                            {isLoading
+                              ? 'Fetching route…'
+                              : origin
+                                ? 'No steps available for this route.'
+                                : 'Enable location to see turn-by-turn steps.'}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

@@ -93,8 +93,8 @@ export default function HelpCenter() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <div className="w-16 h-16 bg-[#FF1493]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <HelpCircle className="w-8 h-8 text-[#FF1493]" />
+          <div className="w-16 h-16 bg-[#E62020]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <HelpCircle className="w-8 h-8 text-[#E62020]" />
           </div>
           <h1 className="text-4xl font-black uppercase tracking-tight mb-2">
             Help Center
@@ -141,7 +141,7 @@ export default function HelpCenter() {
                 className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <category.icon className="w-5 h-5 text-[#FF1493]" />
+                  <category.icon className="w-5 h-5 text-[#E62020]" />
                   <span className="font-bold">{category.name}</span>
                   <span className="text-sm text-white/40">
                     ({category.faqs.length})

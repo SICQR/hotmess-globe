@@ -14,7 +14,7 @@ import PersonalizedRecommendations from '../components/events/PersonalizedRecomm
 import EventsMapView from '../components/events/EventsMapView';
 import NightlifeResearcher from '../components/ai/NightlifeResearcher';
 import AIEventRecommendations from '../components/events/AIEventRecommendations';
-import logger from '@/utils/logger';
+import { logger } from '@/utils/logger';
 import PageShell from '@/components/shell/PageShell';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 

@@ -92,3 +92,414 @@
     padding-left: env(safe-area-inset-left);
   }
 }
+
+/* =========================================================================
+   HOTMESS Brand Colors & Design System
+   Per UI_DESIGN_SPEC.md
+   ========================================================================= */
+
+:root {
+  /* Primary Brand Colors */
+  --hm-hot: #E62020;
+  --hm-cyan: #00D9FF;
+  --hm-gold: #FFD700;
+  --hm-lime: #39FF14;
+  --hm-purple: #B026FF;
+  --hm-orange: #FF6B35;
+  
+  /* Extended Hot Scale */
+  --hm-hot-50: #FFF0F3;
+  --hm-hot-100: #FFE0E7;
+  --hm-hot-200: #FFC2D0;
+  --hm-hot-300: #FF94AC;
+  --hm-hot-400: #FF577E;
+  --hm-hot-500: #E62020;
+  --hm-hot-600: #CC1A1A;
+  --hm-hot-700: #A01515;
+  --hm-hot-800: #7A1010;
+  --hm-hot-900: #5A0C0C;
+}
+
+/* =========================================================================
+   Keyframe Animations
+   ========================================================================= */
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px currentColor, 0 0 40px currentColor; opacity: 1; }
+  50% { box-shadow: 0 0 30px currentColor, 0 0 60px currentColor; opacity: 0.8; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes scale-in {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slide-up {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes border-flow {
+  0%, 100% { border-color: var(--hm-hot); }
+  25% { border-color: var(--hm-purple); }
+  50% { border-color: var(--hm-cyan); }
+  75% { border-color: var(--hm-lime); }
+}
+
+@keyframes ping-slow {
+  0% { transform: scale(1); opacity: 1; }
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes ripple {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes skeleton-wave {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes text-glow {
+  0%, 100% { text-shadow: 0 0 10px currentColor; }
+  50% { text-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
+}
+
+/* Animation Utility Classes */
+.animate-glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
+.animate-shimmer { 
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-scale-in { animation: scale-in 0.3s ease-out forwards; }
+.animate-slide-up { animation: slide-up 0.4s ease-out forwards; }
+.animate-gradient-shift { 
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+.animate-border-flow { animation: border-flow 4s linear infinite; }
+.animate-ping-slow { animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+.animate-ripple { animation: ripple 1.5s ease-out infinite; }
+.animate-text-glow { animation: text-glow 2s ease-in-out infinite; }
+
+/* =========================================================================
+   Glassmorphism Classes
+   ========================================================================= */
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.glass-card-hot {
+  background: rgba(230, 32, 32, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(230, 32, 32, 0.3);
+}
+
+.glass-card-cyan {
+  background: rgba(0, 217, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+.glass-card-purple {
+  background: rgba(176, 38, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(176, 38, 255, 0.3);
+}
+
+/* =========================================================================
+   Glow Effects
+   ========================================================================= */
+
+.glow-hot { box-shadow: 0 0 20px rgba(230, 32, 32, 0.4), 0 0 40px rgba(230, 32, 32, 0.2); }
+.glow-cyan { box-shadow: 0 0 20px rgba(0, 217, 255, 0.4), 0 0 40px rgba(0, 217, 255, 0.2); }
+.glow-gold { box-shadow: 0 0 20px rgba(255, 215, 0, 0.4), 0 0 40px rgba(255, 215, 0, 0.2); }
+.glow-lime { box-shadow: 0 0 20px rgba(57, 255, 20, 0.4), 0 0 40px rgba(57, 255, 20, 0.2); }
+.glow-purple { box-shadow: 0 0 20px rgba(176, 38, 255, 0.4), 0 0 40px rgba(176, 38, 255, 0.2); }
+
+/* =========================================================================
+   Dynamic Gradient Borders
+   ========================================================================= */
+
+.gradient-border {
+  position: relative;
+  background: linear-gradient(135deg, var(--hm-hot), var(--hm-purple), var(--hm-cyan));
+  padding: 2px;
+}
+
+.gradient-border > * {
+  background: black;
+  border-radius: inherit;
+}
+
+.gradient-border-animated {
+  position: relative;
+  background: linear-gradient(90deg, var(--hm-hot), var(--hm-purple), var(--hm-cyan), var(--hm-hot));
+  background-size: 300% 100%;
+  animation: gradient-shift 3s linear infinite;
+  padding: 2px;
+}
+
+/* =========================================================================
+   Status Indicators
+   ========================================================================= */
+
+.status-online {
+  position: relative;
+}
+
+.status-online::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background: var(--hm-lime);
+  border-radius: 50%;
+  border: 2px solid black;
+}
+
+.status-online-pulse::after {
+  animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.status-live {
+  position: relative;
+}
+
+.status-live::before {
+  content: 'LIVE';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 8px;
+  background: #E62020;
+  color: white;
+  font-size: 10px;
+  font-weight: 900;
+  border-radius: 4px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* =========================================================================
+   Interactive Card Hover States
+   ========================================================================= */
+
+.card-interactive {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card-interactive:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(230, 32, 32, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.card-interactive:active {
+  transform: translateY(-2px) scale(1.01);
+}
+
+.img-zoom {
+  transition: transform 0.5s ease;
+}
+
+.img-zoom:hover {
+  transform: scale(1.05);
+}
+
+/* =========================================================================
+   Badge Styles
+   ========================================================================= */
+
+.badge-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 2s infinite;
+}
+
+.badge-hot {
+  background: linear-gradient(135deg, #E62020, #B026FF);
+  color: white;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-premium {
+  background: linear-gradient(135deg, #FFD700, #FF6B35);
+  color: black;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-live {
+  background: linear-gradient(135deg, #E62020, #FF6B35);
+  color: white;
+  font-weight: 900;
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.badge-verified {
+  background: linear-gradient(135deg, #00D9FF, #3B82F6);
+  color: white;
+  font-weight: 900;
+}
+
+.badge-match {
+  background: linear-gradient(135deg, #39FF14, #00D9FF);
+  color: black;
+  font-weight: 900;
+}
+
+/* =========================================================================
+   Custom Scrollbar
+   ========================================================================= */
+
+.scrollbar-hot::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-hot::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.scrollbar-hot::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--hm-hot), var(--hm-purple));
+  border-radius: 3px;
+}
+
+.scrollbar-hot::-webkit-scrollbar-thumb:hover {
+  background: var(--hm-hot);
+}
+
+/* =========================================================================
+   Text Effects
+   ========================================================================= */
+
+.text-gradient-hot {
+  background: linear-gradient(135deg, #E62020, #B026FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-cyan {
+  background: linear-gradient(135deg, #00D9FF, #39FF14);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #FFD700, #FF6B35);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* =========================================================================
+   Skeleton Loaders
+   ========================================================================= */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-wave 1.5s ease-in-out infinite;
+}
+
+.skeleton-hot {
+  background: linear-gradient(
+    90deg,
+    rgba(230, 32, 32, 0.1) 0%,
+    rgba(230, 32, 32, 0.2) 50%,
+    rgba(230, 32, 32, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-wave 1.5s ease-in-out infinite;
+}
+
+/* =========================================================================
+   Profile Card Enhancements
+   ========================================================================= */
+
+.profile-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(230, 32, 32, 0.05) 50%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.profile-card:hover::before {
+  opacity: 1;
+}
+
+.profile-card:hover {
+  border-color: rgba(230, 32, 32, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}

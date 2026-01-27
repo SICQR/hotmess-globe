@@ -40,7 +40,7 @@ export default function GlobePerformanceMonitor({ visible = false }) {
   const getPerformanceColor = () => {
     if (fps >= 50) return '#39FF14';
     if (fps >= 30) return '#FFEB3B';
-    return '#FF1493';
+    return '#E62020';
   };
   
   return (

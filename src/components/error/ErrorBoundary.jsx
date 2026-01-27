@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import logger from '@/utils/logger';
+import { logger } from '@/utils/logger';
 import { trackError } from '@/components/utils/analytics';
 
 export default class ErrorBoundary extends React.Component {

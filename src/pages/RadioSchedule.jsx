@@ -51,7 +51,7 @@ export default function RadioSchedule() {
               <h3 className="text-xl font-black uppercase mb-2">{show.title}</h3>
               <p className="text-sm text-white/60 mb-4">{show.tagline}</p>
               <div className="flex items-start gap-2 text-sm">
-                <Clock className="w-4 h-4 text-[#FF1493] flex-shrink-0 mt-0.5" />
+                <Clock className="w-4 h-4 text-[#E62020] flex-shrink-0 mt-0.5" />
                 <span>{formatSchedule(show.schedule)}</span>
               </div>
             </motion.div>
@@ -85,7 +85,7 @@ export default function RadioSchedule() {
                         >
                           <div className="flex items-center gap-3 text-sm">
                             <span className="text-white/60 font-mono">{slot.start}</span>
-                            <span className="font-bold group-hover:text-[#FF1493] transition-colors">
+                            <span className="font-bold group-hover:text-[#E62020] transition-colors">
                               {slot.title}
                             </span>
                             <span className="text-white/40">({slot.duration}min)</span>

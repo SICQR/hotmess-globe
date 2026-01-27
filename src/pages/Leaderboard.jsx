@@ -162,10 +162,10 @@ export default function Leaderboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#FF1493]/20 border-2 border-[#FF1493] p-4 mb-6"
+            className="bg-[#E62020]/20 border-2 border-[#E62020] p-4 mb-6"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#FF1493] flex items-center justify-center font-black text-lg">
+              <div className="w-12 h-12 bg-[#E62020] flex items-center justify-center font-black text-lg">
                 #{userRank + 1}
               </div>
               <div className="flex-1">
@@ -194,7 +194,7 @@ export default function Leaderboard() {
                 transition={{ delay: idx * 0.02 }}
                 className={`flex items-center gap-4 p-4 border ${
                   isCurrentUser 
-                    ? 'bg-[#FF1493]/20 border-[#FF1493]' 
+                    ? 'bg-[#E62020]/20 border-[#E62020]' 
                     : idx < 3 
                     ? 'bg-white/10 border-white/20' 
                     : 'bg-white/5 border-white/10'
@@ -209,7 +209,7 @@ export default function Leaderboard() {
                   {idx + 1}
                 </div>
                 <Link to={createPageUrl(`Profile?email=${user.email}`)} className="flex-1 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#E62020] to-[#B026FF] border border-white flex items-center justify-center">
                     {user.avatar_url ? (
                       <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
                     ) : (

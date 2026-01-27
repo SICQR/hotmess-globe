@@ -24,7 +24,7 @@ const TYPE_COLORS = {
   service: '#39FF14',
   ticket: '#FFEB3B',
   badge: '#FF6B35',
-  merch: '#FF1493',
+  merch: '#E62020',
 };
 
 export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
@@ -62,7 +62,7 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
   }, []);
 
   const Icon = TYPE_ICONS[product.product_type] || ShoppingBag;
-  const color = TYPE_COLORS[product.product_type] || '#FF1493';
+  const color = TYPE_COLORS[product.product_type] || '#E62020';
   const isShopifyProduct = useMemo(() => {
     const sellerEmail = String(product?.seller_email || '').trim().toLowerCase();
     const tags = Array.isArray(product?.tags) ? product.tags : [];
@@ -133,7 +133,7 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
 
           <div className="p-6">
             <div className="flex items-start justify-between mb-2">
-              <h3 className="text-xl font-bold hover:text-[#FF1493] transition-colors">{product.name}</h3>
+              <h3 className="text-xl font-bold hover:text-[#E62020] transition-colors">{product.name}</h3>
               <OSCardBadge color={color}>
                 {product.product_type}
               </OSCardBadge>
@@ -170,7 +170,7 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
               </div>
               {!xpPurchasingEnabled ? (
                 <p className="text-xs text-white/50 uppercase tracking-wider">
-                  XP purchasing coming soon
+                  XP purchasing disabled
                 </p>
               ) : null}
             </div>

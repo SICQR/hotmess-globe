@@ -163,7 +163,7 @@ export default function BeaconActions({ beacon }) {
                 type="file"
                 accept="image/*"
                 onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                className="w-full text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:border-2 file:border-white file:bg-[#FF1493] file:text-black file:font-black file:uppercase file:text-xs hover:file:bg-white file:cursor-pointer"
+                className="w-full text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:border-2 file:border-white file:bg-[#E62020] file:text-black file:font-black file:uppercase file:text-xs hover:file:bg-white file:cursor-pointer"
               />
               {photoFile && (
                 <p className="text-xs text-[#00D9FF] mt-2 font-mono">

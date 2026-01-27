@@ -81,7 +81,7 @@ Focus exclusively on LGBT venues and events. Prioritise accuracy by cross-checki
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-6">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-[#FF1493]" />
+        <Sparkles className="w-5 h-5 text-[#E62020]" />
         <h3 className="text-lg font-black uppercase">AI Venue Finder</h3>
       </div>
 
@@ -96,7 +96,7 @@ Focus exclusively on LGBT venues and events. Prioritise accuracy by cross-checki
         <Button
           onClick={handleSearch}
           disabled={loading}
-          className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black"
+          className="bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -118,11 +118,11 @@ Focus exclusively on LGBT venues and events. Prioritise accuracy by cross-checki
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className="bg-black/40 border border-white/10 rounded-lg p-4 hover:border-[#FF1493] transition-colors"
+              className="bg-black/40 border border-white/10 rounded-lg p-4 hover:border-[#E62020] transition-colors"
             >
               <div className="flex items-start justify-between mb-2">
                 <h4 className="font-black text-lg">{venue.name}</h4>
-                <MapPin className="w-4 h-4 text-[#FF1493] flex-shrink-0" />
+                <MapPin className="w-4 h-4 text-[#E62020] flex-shrink-0" />
               </div>
               
               <p className="text-sm text-white/80 mb-2">{venue.description}</p>
@@ -147,7 +147,7 @@ Focus exclusively on LGBT venues and events. Prioritise accuracy by cross-checki
           ))}
 
           {results.summary && (
-            <div className="bg-[#FF1493]/10 border border-[#FF1493]/20 rounded-lg p-4 text-sm">
+            <div className="bg-[#E62020]/10 border border-[#E62020]/20 rounded-lg p-4 text-sm">
               <p className="text-white/80">{results.summary}</p>
             </div>
           )}

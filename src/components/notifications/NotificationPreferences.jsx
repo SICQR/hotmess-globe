@@ -12,7 +12,8 @@ import {
   X,
   Volume2,
   VolumeX,
-  Moon
+  Moon,
+  Loader2
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -23,13 +24,22 @@ import { supabase } from '@/components/utils/supabaseClient';
 
 const PREFS_KEY = 'hotmess_notification_preferences';
 
+// Map UI categories to API fields
+const CATEGORY_TO_API_FIELD = {
+  messages: 'message_updates',
+  events: 'event_updates',
+  social: null, // Always enabled - no opt-out
+  marketplace: 'order_updates',
+  safety: 'safety_updates',
+};
+
 const NOTIFICATION_CATEGORIES = [
   {
     id: 'messages',
     name: 'Messages',
     description: 'New messages and conversation updates',
     icon: MessageSquare,
-    color: '#FF1493',
+    color: '#E62020',
     defaultEnabled: true,
   },
   {
@@ -99,25 +109,76 @@ export default function NotificationPreferences() {
   });
   
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   
-  // Save preferences
+  // Load preferences from API on mount
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch('/api/notifications/preferences', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const apiPrefs = data.preferences || data;
+          
+          // Map API format to UI format
+          setPreferences(prev => ({
+            ...prev,
+            categories: {
+              messages: apiPrefs.message_updates !== false,
+              events: apiPrefs.event_updates !== false,
+              social: true, // Always enabled
+              marketplace: apiPrefs.order_updates !== false,
+              safety: apiPrefs.safety_updates !== false,
+            },
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load preferences:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadPreferences();
+  }, []);
+  
+  // Save preferences to API
   const savePreferences = async (newPrefs) => {
     setPreferences(newPrefs);
     localStorage.setItem(PREFS_KEY, JSON.stringify(newPrefs));
     
-    // Save to database for server-side filtering
+    // Save to API for server-side filtering
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from('notification_preferences')
-          .upsert({
-            user_id: user.id,
-            user_email: user.email,
-            preferences: newPrefs,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: 'user_id' });
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      // Map UI format to API format
+      const apiPayload = {
+        push_enabled: isSubscribed,
+        message_updates: newPrefs.categories.messages,
+        event_updates: newPrefs.categories.events,
+        order_updates: newPrefs.categories.marketplace,
+        safety_updates: newPrefs.categories.safety,
+        marketing_enabled: false, // Could be added as category later
+      };
+
+      await fetch('/api/notifications/preferences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(apiPayload),
+      });
     } catch (error) {
       console.error('Failed to save preferences:', error);
     }
@@ -251,7 +312,7 @@ export default function NotificationPreferences() {
             <Button
               onClick={handleEnableNotifications}
               disabled={saving}
-              className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+              className="bg-[#E62020] hover:bg-[#E62020]/90 text-black"
             >
               Enable
             </Button>

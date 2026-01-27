@@ -217,7 +217,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
             size="sm"
             onClick={generateDescription}
             disabled={generatingDescription || !formData.name}
-            className="text-[#FF1493] hover:text-[#FF1493]/90"
+            className="text-[#E62020] hover:text-[#E62020]/90"
           >
             {generatingDescription ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -315,9 +315,9 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
         {formData.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
             {formData.tags.map(tag => (
-              <span key={tag} className="px-3 py-1 bg-[#FF1493]/20 border border-[#FF1493] rounded-lg text-sm flex items-center gap-2">
+              <span key={tag} className="px-3 py-1 bg-[#E62020]/20 border border-[#E62020] rounded-lg text-sm flex items-center gap-2">
                 {tag}
-                <button type="button" onClick={() => removeTag(tag)} className="hover:text-[#FF1493]">
+                <button type="button" onClick={() => removeTag(tag)} className="hover:text-[#E62020]">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -367,9 +367,9 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
       </div>
 
       {marketingCopy && (
-        <div className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/40 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#E62020]/20 to-[#B026FF]/20 border border-[#E62020]/40 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-5 h-5 text-[#FF1493]" />
+            <Sparkles className="w-5 h-5 text-[#E62020]" />
             <h3 className="font-bold">AI Marketing Copy</h3>
           </div>
           <p className="text-white/90 mb-3">{marketingCopy}</p>
@@ -404,7 +404,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" className="bg-[#FF1493] hover:bg-[#FF1493]/90">
+          <Button type="submit" className="bg-[#E62020] hover:bg-[#E62020]/90">
             {product ? 'Update Product' : 'Create Product'}
           </Button>
         </div>

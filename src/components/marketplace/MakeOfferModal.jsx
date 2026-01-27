@@ -68,7 +68,7 @@ export default function MakeOfferModal({ isOpen, onClose, product, currentUser }
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-black border-2 border-[#FF1493] max-w-md w-full p-6"
+        className="bg-black border-2 border-[#E62020] max-w-md w-full p-6"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -141,7 +141,7 @@ export default function MakeOfferModal({ isOpen, onClose, product, currentUser }
             />
           </div>
 
-          <div className="bg-[#FF1493]/10 border border-[#FF1493]/40 p-3 text-xs text-white/80">
+          <div className="bg-[#E62020]/10 border border-[#E62020]/40 p-3 text-xs text-white/80">
             <strong>Note:</strong> Offer expires in 48 hours. Seller can accept, decline, or counter.
           </div>
 
@@ -157,7 +157,7 @@ export default function MakeOfferModal({ isOpen, onClose, product, currentUser }
             <Button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black"
+              className="flex-1 bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black"
             >
               {loading ? 'Submitting...' : 'Submit Offer'}
             </Button>

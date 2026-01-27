@@ -68,15 +68,15 @@ export default function AnalyticsDashboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-black border-2 border-[#FF1493] p-8"
+          className="bg-black border-2 border-[#E62020] p-8"
         >
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-[#FF1493] border-2 border-white flex items-center justify-center">
+            <div className="w-16 h-16 bg-[#E62020] border-2 border-white flex items-center justify-center">
               <TrendingUp className="w-8 h-8 text-white" />
             </div>
             <div>
               <p className="text-[10px] text-white/40 uppercase tracking-widest">TOTAL REVENUE</p>
-              <p className="text-4xl font-black text-[#FF1493]">£{totalRevenue.toFixed(2)}</p>
+              <p className="text-4xl font-black text-[#E62020]">£{totalRevenue.toFixed(2)}</p>
             </div>
           </div>
           <p className="text-xs text-white/60 uppercase font-mono">{orders.length} ORDERS TOTAL</p>
@@ -152,7 +152,7 @@ export default function AnalyticsDashboard() {
 
         <div className="bg-black border-2 border-white p-6">
           <div className="flex items-center gap-3 mb-2">
-            <Users className="w-5 h-5 text-[#FF1493]" />
+            <Users className="w-5 h-5 text-[#E62020]" />
             <p className="text-[10px] text-white/40 uppercase tracking-widest">CHECK-INS</p>
           </div>
           <p className="text-3xl font-black">{checkIns.length}</p>
@@ -209,7 +209,7 @@ export default function AnalyticsDashboard() {
             </div>
             <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
               <span className="text-white/60 uppercase text-xs font-mono">At Event</span>
-              <span className="font-black text-[#FF1493]">
+              <span className="font-black text-[#E62020]">
                 {users.filter(u => u.activity_status === 'at_event').length}
               </span>
             </div>

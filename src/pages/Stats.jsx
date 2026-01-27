@@ -76,12 +76,12 @@ export default function Stats() {
     value: count,
   }));
 
-  const COLORS = ['#FF1493', '#B026FF', '#00D9FF', '#FFEB3B', '#39FF14'];
+  const COLORS = ['#E62020', '#B026FF', '#00D9FF', '#FFEB3B', '#39FF14'];
 
   const stats = [
     { label: 'Total XP', value: currentUser?.xp || 0, icon: Zap, color: '#FFEB3B' },
     { label: 'Check-ins', value: checkIns.length, icon: MapPin, color: '#00D9FF' },
-    { label: 'Purchases', value: purchases.length, icon: ShoppingBag, color: '#FF1493' },
+    { label: 'Purchases', value: purchases.length, icon: ShoppingBag, color: '#E62020' },
     { label: 'Achievements', value: achievements.length, icon: Trophy, color: '#FFEB3B' },
     { label: 'Profile Views', value: profileViews.length, icon: Eye, color: '#B026FF' },
     { label: 'Activities', value: activities.length, icon: TrendingUp, color: '#39FF14' },
@@ -140,7 +140,7 @@ export default function Stats() {
                     <XAxis dataKey="date" stroke="#fff4" style={{ fontSize: 10 }} />
                     <YAxis stroke="#fff4" style={{ fontSize: 10 }} />
                     <Tooltip 
-                      contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }}
+                      contentStyle={{ backgroundColor: '#000', border: '1px solid #E62020' }}
                       labelStyle={{ color: '#fff' }}
                     />
                     <Line type="monotone" dataKey="xp" stroke="#FFEB3B" strokeWidth={2} />
@@ -168,7 +168,7 @@ export default function Stats() {
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }}
+                      contentStyle={{ backgroundColor: '#000', border: '1px solid #E62020' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -185,7 +185,7 @@ export default function Stats() {
                   <XAxis dataKey="venue" stroke="#fff4" style={{ fontSize: 10 }} />
                   <YAxis stroke="#fff4" style={{ fontSize: 10 }} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }}
+                    contentStyle={{ backgroundColor: '#000', border: '1px solid #E62020' }}
                     labelStyle={{ color: '#fff' }}
                   />
                   <Bar dataKey="count" fill="#00D9FF" />

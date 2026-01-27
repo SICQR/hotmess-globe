@@ -18,8 +18,6 @@ import CheckoutStart from '@/pages/CheckoutStart';
 import CreatorsCart from '@/pages/CreatorsCart';
 import CreatorsCheckout from '@/pages/CreatorsCheckout';
 import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
-import Privacy from '@/pages/legal/Privacy';
-import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
 
 const isProdBuild = import.meta.env.MODE === 'production';
@@ -56,6 +54,9 @@ const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
   // Shop/market compat is handled separately.
   'Marketplace',
   'ProductDetail',
+  'PersonaManagement',
+  'TicketReseller',
+  'TicketMarketplace',
 ]);
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -124,16 +125,14 @@ const ProductDetailGate = () => {
   );
 };
 
-const ShowHeroRedirect = () => {
-  const { slug } = useParams();
-  const map = {
-    'wake-the-mess': 'WakeTheMess',
-    'dial-a-daddy': 'DialADaddy',
-    'hand-n-hand': 'HandNHand',
-  };
-  const pageKey = slug ? map[String(slug).toLowerCase()] : null;
-  const target = pageKey ? createPageUrl(pageKey) : createPageUrl('RadioSchedule');
-  return <Navigate to={target} replace />;
+const RadioShowRoute = () => {
+  const RadioShow = Pages?.RadioShow;
+  if (!RadioShow) return <PageNotFound />;
+  return (
+    <LayoutWrapper currentPageName="RadioShow">
+      <RadioShow />
+    </LayoutWrapper>
+  );
 };
 
 const ProfileRedirect = () => {
@@ -234,18 +233,6 @@ const ShopCheckoutStartRoute = () => {
     </LayoutWrapper>
   );
 };
-
-const LegalPrivacyRoute = () => (
-  <LayoutWrapper currentPageName="More">
-    <Privacy />
-  </LayoutWrapper>
-);
-
-const LegalTermsRoute = () => (
-  <LayoutWrapper currentPageName="More">
-    <Terms />
-  </LayoutWrapper>
-);
 
 const LegalPrivacyHubRoute = () => (
   <LayoutWrapper currentPageName="More">
@@ -353,7 +340,7 @@ const AuthenticatedApp = () => {
       <Route path="/music/shows" element={<PageRoute pageKey="RadioSchedule" />} />
       <Route path="/music/shows/:show/episodes" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
       <Route path="/music/shows/:show/episodes/:id" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
-      <Route path="/music/shows/:slug" element={<ShowHeroRedirect />} />
+      <Route path="/music/shows/:slug" element={<RadioShowRoute />} />
       <Route path="/music/schedule" element={<PageRoute pageKey="RadioSchedule" />} />
       <Route path="/music/releases" element={<PageRoute pageKey="Music" />} />
       <Route path="/music/releases/:slug" element={<PageRoute pageKey="MusicRelease" />} />
@@ -391,10 +378,10 @@ const AuthenticatedApp = () => {
       <Route path="/checkout" element={<PageRoute pageKey="Checkout" />} />
 
       {/* Legal */}
-      <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
-      <Route path="/legal/terms" element={<LegalTermsRoute />} />
+      <Route path="/legal/privacy" element={<Navigate to="/legal/privacy-hub" replace />} />
+      <Route path="/legal/terms" element={<Navigate to="/terms" replace />} />
       <Route path="/legal/privacy-hub" element={<LegalPrivacyHubRoute />} />
-      <Route path="/legal" element={<Navigate to="/legal/privacy" replace />} />
+      <Route path="/legal" element={<Navigate to="/legal/privacy-hub" replace />} />
       <Route path="/terms" element={<PageRoute pageKey="TermsOfService" />} />
       <Route path="/privacy" element={<PageRoute pageKey="PrivacyPolicy" />} />
       <Route path="/guidelines" element={<PageRoute pageKey="CommunityGuidelines" />} />
@@ -458,11 +445,28 @@ const AuthenticatedApp = () => {
       <Route path="/membership" element={<PageRoute pageKey="MembershipUpgrade" />} />
       <Route path="/upgrade" element={<PageRoute pageKey="MembershipUpgrade" />} />
       
+      {/* Personas */}
+      <Route path="/personas" element={<PageRoute pageKey="PersonaManagement" />} />
+      
+      {/* Ticket Reseller Platform */}
+      <Route path="/ticket-reseller" element={<PageRoute pageKey="TicketReseller" />} />
+      <Route path="/ticket-reseller/*" element={<PageRoute pageKey="TicketReseller" />} />
+      <Route path="/tickets" element={<Navigate to="/ticket-reseller" replace />} />
+      <Route path="/tickets/*" element={<Navigate to="/ticket-reseller" replace />} />
+      
       {/* Business dashboard */}
       <Route path="/biz" element={<PageRoute pageKey="BusinessDashboard" />} />
       <Route path="/biz/dashboard" element={<PageRoute pageKey="BusinessDashboard" />} />
       <Route path="/biz/analytics" element={<PageRoute pageKey="BusinessAnalytics" />} />
       <Route path="/biz/onboarding" element={<PageRoute pageKey="BusinessOnboarding" />} />
+      <Route path="/biz/advertising" element={<PageRoute pageKey="BusinessAdvertising" />} />
+      <Route path="/biz/advertising/*" element={<PageRoute pageKey="BusinessAdvertising" />} />
+      <Route path="/advertise" element={<Navigate to="/biz/advertising" replace />} />
+      <Route path="/sponsor" element={<Navigate to="/biz/advertising" replace />} />
+      
+      {/* Organizer Analytics Dashboard */}
+      <Route path="/organizer/analytics" element={<PageRoute pageKey="OrganizerAnalyticsDashboard" />} />
+      <Route path="/dashboard/analytics" element={<PageRoute pageKey="OrganizerAnalyticsDashboard" />} />
 
       {/* Legacy lowercase routes -> canonical V1.5 routes */}
       <Route path="/radio" element={<Navigate to={createPageUrl('Radio')} replace />} />
@@ -521,7 +525,7 @@ function App() {
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <ShopCartProvider>
-          <Router>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <NavigationTracker />
             <AuthenticatedApp />
           </Router>

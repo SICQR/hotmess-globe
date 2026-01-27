@@ -162,7 +162,7 @@ export default function DiscoveryGrid({ currentUser }) {
         <h3 className="text-2xl font-black mb-2">SIGN IN TO DISCOVER</h3>
         <p className="text-white/60 mb-6">Create an account to browse profiles and message.</p>
         <Link to={`/auth?next=${encodeURIComponent('/social')}`}>
-          <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase">
+          <Button className="bg-[#E62020] hover:bg-white text-black font-black uppercase">
             SIGN IN
           </Button>
         </Link>
@@ -219,7 +219,7 @@ export default function DiscoveryGrid({ currentUser }) {
           <p className="text-white/60 mb-6">Try adjusting your filters</p>
           <Button 
             onClick={() => setShowFilters(true)}
-            className="bg-[#FF1493] hover:bg-white text-black font-black uppercase"
+            className="bg-[#E62020] hover:bg-white text-black font-black uppercase"
           >
             ADJUST FILTERS
           </Button>
@@ -244,7 +244,7 @@ export default function DiscoveryGrid({ currentUser }) {
               to={to}
               className="group"
             >
-              <div className="bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-[#FF1493] transition-all aspect-[3/4] relative overflow-hidden">
+              <div className="bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-[#E62020] transition-all aspect-[3/4] relative overflow-hidden">
                 {user.avatar_url ? (
                   <img 
                     src={user.avatar_url} 
@@ -252,7 +252,7 @@ export default function DiscoveryGrid({ currentUser }) {
                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center">
+                  <div className="w-full h-full bg-gradient-to-br from-[#E62020] to-[#B026FF] flex items-center justify-center">
                     <span className="text-4xl font-black">
                       {user.full_name?.[0] || user.email[0].toUpperCase()}
                     </span>

@@ -1,6 +1,11 @@
 -- Support Tickets Migration
 -- Creates tables for customer support system
 
+-- First, ensure admin/moderator columns exist on User table
+ALTER TABLE IF EXISTS public."User"
+  ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS is_moderator BOOLEAN NOT NULL DEFAULT false;
+
 -- Create support_tickets table
 CREATE TABLE IF NOT EXISTS support_tickets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

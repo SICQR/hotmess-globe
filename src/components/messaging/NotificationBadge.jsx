@@ -68,7 +68,7 @@ export default function NotificationBadge({ user }) {
   return (
     <div className="relative">
       <Bell className="w-5 h-5" />
-      <Badge className="absolute -top-2 -right-2 bg-[#FF1493] text-black text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0">
+      <Badge className="absolute -top-2 -right-2 bg-[#E62020] text-black text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0">
         {totalUnread > 9 ? '9+' : totalUnread}
       </Badge>
     </div>

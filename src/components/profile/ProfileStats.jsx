@@ -13,7 +13,7 @@ export default function ProfileStats({
 }) {
   const stats = [
     { icon: Zap, label: 'XP', value: xp || 0, color: '#FFEB3B' },
-    { icon: Award, label: 'Level', value: level || 1, color: '#FF1493' },
+    { icon: Award, label: 'Level', value: level || 1, color: '#E62020' },
     { icon: Users, label: 'Followers', value: followersCount, color: '#00D9FF' },
     { icon: Users, label: 'Following', value: followingCount, color: '#00D9FF' },
     { icon: MapPin, label: 'Check-ins', value: checkInsCount, color: '#39FF14' },
@@ -28,7 +28,7 @@ export default function ProfileStats({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: idx * 0.05 }}
-          className="bg-black border-2 border-white p-4 hover:border-[#FF1493] transition-all group"
+          className="bg-black border-2 border-white p-4 hover:border-[#E62020] transition-all group"
         >
           <div className="flex items-center gap-3">
             <stat.icon 

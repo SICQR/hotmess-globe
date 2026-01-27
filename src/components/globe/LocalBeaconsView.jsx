@@ -32,7 +32,7 @@ const getModeColor = (mode) => {
     radio: '#00D9FF',
     care: '#39FF14'
   };
-  return colors[mode] || '#FF1493';
+  return colors[mode] || '#E62020';
 };
 
 export default function LocalBeaconsView({ centerBeacon, allBeacons, onClose, onBeaconSelect }) {
@@ -195,7 +195,7 @@ export default function LocalBeaconsView({ centerBeacon, allBeacons, onClose, on
       {/* Footer */}
       <div className="flex-shrink-0 p-4 border-t border-white/10">
         <Link to={createPageUrl('Events')}>
-          <Button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase">
+          <Button className="w-full bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black uppercase">
             View All Events
           </Button>
         </Link>

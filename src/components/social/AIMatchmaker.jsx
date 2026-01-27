@@ -197,13 +197,13 @@ export default function AIMatchmaker({ currentUser }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-[#FF1493]" />
+        <Sparkles className="w-5 h-5 text-[#E62020]" />
         <h3 className="text-lg font-black uppercase tracking-tight">AI Matches</h3>
       </div>
 
       {loading && (
         <div className="text-center py-8">
-          <div className="w-8 h-8 border-2 border-[#FF1493] border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-2 border-[#E62020] border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       )}
 
@@ -220,7 +220,7 @@ export default function AIMatchmaker({ currentUser }) {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.1 }}
-            className="bg-white/5 border border-[#FF1493]/30 rounded-lg p-4"
+            className="bg-white/5 border border-[#E62020]/30 rounded-lg p-4"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
@@ -229,8 +229,8 @@ export default function AIMatchmaker({ currentUser }) {
                   style={{
                     background: match.vibe?.vibe_color 
                       ? `linear-gradient(135deg, ${match.vibe.vibe_color}, #000)`
-                      : 'linear-gradient(135deg, #FF1493, #B026FF)',
-                    borderColor: match.vibe?.vibe_color || '#FF1493'
+                      : 'linear-gradient(135deg, #E62020, #B026FF)',
+                    borderColor: match.vibe?.vibe_color || '#E62020'
                   }}
                 >
                   {match.user.full_name?.[0] || 'U'}
@@ -256,11 +256,11 @@ export default function AIMatchmaker({ currentUser }) {
                 className="px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-1"
                 style={{
                   background: match.score >= 80 
-                    ? 'linear-gradient(135deg, #FF1493, #B026FF)'
+                    ? 'linear-gradient(135deg, #E62020, #B026FF)'
                     : match.score >= 60
                     ? 'rgba(255, 20, 147, 0.3)'
                     : 'rgba(255, 20, 147, 0.2)',
-                  border: `2px solid ${match.score >= 80 ? '#FF1493' : 'rgba(255, 20, 147, 0.3)'}`
+                  border: `2px solid ${match.score >= 80 ? '#E62020' : 'rgba(255, 20, 147, 0.3)'}`
                 }}
               >
                 {match.score >= 80 && <Flame className="w-3 h-3" />}
@@ -270,7 +270,7 @@ export default function AIMatchmaker({ currentUser }) {
 
             <div className="space-y-1 mb-3">
               {match.reasons.map((reason, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs text-[#FF1493]">
+                <div key={i} className="flex items-center gap-2 text-xs text-[#E62020]">
                   <Heart className="w-3 h-3" />
                   <span>{reason}</span>
                 </div>
@@ -286,12 +286,12 @@ export default function AIMatchmaker({ currentUser }) {
 
             <div className="flex gap-2">
               <Link to={createPageUrl(`Profile?email=${match.user.email}`)} className="flex-1">
-                <Button variant="outline" className="w-full border-[#FF1493] text-[#FF1493] hover:bg-[#FF1493]/10 font-black rounded-lg">
+                <Button variant="outline" className="w-full border-[#E62020] text-[#E62020] hover:bg-[#E62020]/10 font-black rounded-lg">
                   PROFILE
                 </Button>
               </Link>
               <Link to={`/social/inbox?to=${encodeURIComponent(String(match?.user?.email || ''))}`} className="flex-1">
-                <Button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-lg">
+                <Button className="w-full bg-[#E62020] hover:bg-[#E62020]/90 text-black font-black rounded-lg">
                   MESSAGE
                 </Button>
               </Link>

@@ -22,12 +22,31 @@ if (!supabaseUrl || !supabaseKey) {
   );
 }
 
-// If env vars are missing, createClient still needs a URL/key.
-// Use a clearly-invalid URL so failures are obvious and debuggable.
-export const supabase = createClient(
-  supabaseUrl || 'http://invalid.localhost',
-  supabaseKey || 'invalid-anon-key'
-);
+// Singleton pattern to prevent multiple GoTrueClient instances during HMR
+// Store the client on globalThis to survive module reloads
+const SUPABASE_CLIENT_KEY = '__SUPABASE_CLIENT__';
+
+function getOrCreateSupabaseClient() {
+  // Check if client already exists (survives HMR)
+  if (typeof globalThis !== 'undefined' && globalThis[SUPABASE_CLIENT_KEY]) {
+    return globalThis[SUPABASE_CLIENT_KEY];
+  }
+
+  // Create new client
+  const client = createClient(
+    supabaseUrl || 'http://invalid.localhost',
+    supabaseKey || 'invalid-anon-key'
+  );
+
+  // Store on globalThis to prevent recreation during HMR
+  if (typeof globalThis !== 'undefined') {
+    globalThis[SUPABASE_CLIENT_KEY] = client;
+  }
+
+  return client;
+}
+
+export const supabase = getOrCreateSupabaseClient();
 
 const safeArray = (value) => (Array.isArray(value) ? value : []);
 
@@ -507,6 +526,58 @@ export const base44 = {
     
     redirectToLogin: (nextUrl) => {
       window.location.href = createPageUrl('Auth') + (nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : '');
+    },
+
+    /**
+     * Require that the user has a complete profile before continuing.
+     * If the user is not authenticated, redirects to login.
+     * If the user is authenticated but profile is incomplete, returns false.
+     * Otherwise returns true.
+     * @param {string} [returnUrl] - URL to redirect back to after login
+     * @returns {Promise<boolean>}
+     */
+    requireProfile: async (returnUrl) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        base44.auth.redirectToLogin(returnUrl);
+        return false;
+      }
+
+      // User is authenticated - check if they have a profile
+      const user = session.user;
+      if (!user) {
+        base44.auth.redirectToLogin(returnUrl);
+        return false;
+      }
+
+      // Try to get profile - if it exists, user has a profile
+      try {
+        const result = await runWithTableFallback(USER_TABLES, (table) =>
+          supabase
+            .from(table)
+            .select('id, email, full_name')
+            .eq('email', user.email)
+            .maybeSingle()
+        );
+
+        if (result?.data) {
+          return true;
+        }
+
+        // No profile found but user is authenticated - create one
+        await ensureUserProfileRow({
+          user,
+          seed: {
+            full_name: user.user_metadata?.full_name,
+            avatar_url: user.user_metadata?.avatar_url,
+          },
+        });
+
+        return true;
+      } catch {
+        // Profile check failed, but user is authenticated - allow to continue
+        return true;
+      }
     }
   },
   
@@ -1197,7 +1268,6 @@ const entityTables = [
 
   // Social/AI interaction tracking
   'user_interactions',
-  'user_tribes',
 
   // Feed
   'activity_feed',
@@ -1510,6 +1580,417 @@ base44.entities.SellerPayout = base44.entities.SellerPayout ?? base44.entities.S
 base44.entities.FeaturedListing = base44.entities.FeaturedListing ?? base44.entities.FeaturedListings;
 base44.entities.XPLedger = base44.entities.XPLedger ?? base44.entities.XpLedger;
 base44.entities.CartItem = base44.entities.CartItem ?? base44.entities.CartItems;
+
+// Premium Content entities
+base44.entities.PremiumUnlock = {
+  list: async (orderBy = '-created_at', limit) => {
+    let query = supabase.from('premium_unlocks').select('*');
+    if (orderBy) {
+      const desc = orderBy.startsWith('-');
+      const column = desc ? orderBy.slice(1) : orderBy;
+      query = query.order(column, { ascending: !desc });
+    }
+    if (limit) query = query.limit(limit);
+    try {
+      const { data, error } = await query;
+      if (error) throw error;
+      return safeArray(data);
+    } catch (error) {
+      console.error('[base44.entities.PremiumUnlock.list] Failed, returning []', error);
+      return [];
+    }
+  },
+  filter: async (filters, orderBy, limit) => {
+    let query = supabase.from('premium_unlocks').select('*');
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      query = query.eq(key, value);
+    });
+    if (orderBy) {
+      const desc = orderBy.startsWith('-');
+      const column = desc ? orderBy.slice(1) : orderBy;
+      query = query.order(column, { ascending: !desc });
+    }
+    if (limit) query = query.limit(limit);
+    try {
+      const { data, error } = await query;
+      if (error) throw error;
+      return safeArray(data);
+    } catch (error) {
+      console.error('[base44.entities.PremiumUnlock.filter] Failed, returning []', error);
+      return [];
+    }
+  },
+  create: async (data) => {
+    const { data: created, error } = await supabase
+      .from('premium_unlocks')
+      .insert(data)
+      .select()
+      .single();
+    if (error) throw error;
+    return created;
+  },
+};
+
+base44.entities.Subscription = {
+  list: async (orderBy = '-created_at', limit) => {
+    let query = supabase.from('subscriptions').select('*');
+    if (orderBy) {
+      const desc = orderBy.startsWith('-');
+      const column = desc ? orderBy.slice(1) : orderBy;
+      query = query.order(column, { ascending: !desc });
+    }
+    if (limit) query = query.limit(limit);
+    try {
+      const { data, error } = await query;
+      if (error) throw error;
+      return safeArray(data);
+    } catch (error) {
+      console.error('[base44.entities.Subscription.list] Failed, returning []', error);
+      return [];
+    }
+  },
+  filter: async (filters, orderBy, limit) => {
+    let query = supabase.from('subscriptions').select('*');
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      query = query.eq(key, value);
+    });
+    if (orderBy) {
+      const desc = orderBy.startsWith('-');
+      const column = desc ? orderBy.slice(1) : orderBy;
+      query = query.order(column, { ascending: !desc });
+    }
+    if (limit) query = query.limit(limit);
+    try {
+      const { data, error } = await query;
+      if (error) throw error;
+      return safeArray(data);
+    } catch (error) {
+      console.error('[base44.entities.Subscription.filter] Failed, returning []', error);
+      return [];
+    }
+  },
+  create: async (data) => {
+    const { data: created, error } = await supabase
+      .from('subscriptions')
+      .insert(data)
+      .select()
+      .single();
+    if (error) throw error;
+    return created;
+  },
+  update: async (id, data) => {
+    const { data: updated, error } = await supabase
+      .from('subscriptions')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return updated;
+  },
+};
+
+base44.entities.XpTransaction = {
+  list: async (orderBy = '-created_at', limit) => {
+    let query = supabase.from('xp_transactions').select('*');
+    if (orderBy) {
+      const desc = orderBy.startsWith('-');
+      const column = desc ? orderBy.slice(1) : orderBy;
+      query = query.order(column, { ascending: !desc });
+    }
+    if (limit) query = query.limit(limit);
+    try {
+      const { data, error } = await query;
+      if (error) throw error;
+      return safeArray(data);
+    } catch (error) {
+      console.error('[base44.entities.XpTransaction.list] Failed, returning []', error);
+      return [];
+    }
+  },
+  filter: async (filters, orderBy, limit) => {
+    let query = supabase.from('xp_transactions').select('*');
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      query = query.eq(key, value);
+    });
+    if (orderBy) {
+      const desc = orderBy.startsWith('-');
+      const column = desc ? orderBy.slice(1) : orderBy;
+      query = query.order(column, { ascending: !desc });
+    }
+    if (limit) query = query.limit(limit);
+    try {
+      const { data, error } = await query;
+      if (error) throw error;
+      return safeArray(data);
+    } catch (error) {
+      console.error('[base44.entities.XpTransaction.filter] Failed, returning []', error);
+      return [];
+    }
+  },
+  create: async (data) => {
+    const { data: created, error } = await supabase
+      .from('xp_transactions')
+      .insert(data)
+      .select()
+      .single();
+    if (error) throw error;
+    return created;
+  },
+};
+
+// Multi-Profile Personas entities
+base44.entities.Profile = {
+  list: async (orderBy = '-created_at', limit) => {
+    let query = supabase.from('profiles').select('*').is('deleted_at', null);
+    if (orderBy) {
+      const desc = orderBy.startsWith('-');
+      const column = desc ? orderBy.slice(1) : orderBy;
+      query = query.order(column, { ascending: !desc });
+    }
+    if (limit) query = query.limit(limit);
+    try {
+      const { data, error } = await query;
+      if (error) throw error;
+      return safeArray(data);
+    } catch (error) {
+      console.error('[base44.entities.Profile.list] Failed, returning []', error);
+      return [];
+    }
+  },
+  filter: async (filters, orderBy, limit) => {
+    let query = supabase.from('profiles').select('*').is('deleted_at', null);
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      query = query.eq(key, value);
+    });
+    if (orderBy) {
+      const desc = orderBy.startsWith('-');
+      const column = desc ? orderBy.slice(1) : orderBy;
+      query = query.order(column, { ascending: !desc });
+    }
+    if (limit) query = query.limit(limit);
+    try {
+      const { data, error } = await query;
+      if (error) throw error;
+      return safeArray(data);
+    } catch (error) {
+      console.error('[base44.entities.Profile.filter] Failed, returning []', error);
+      return [];
+    }
+  },
+  create: async (data) => {
+    const { data: created, error } = await supabase
+      .from('profiles')
+      .insert(data)
+      .select()
+      .single();
+    if (error) throw error;
+    return created;
+  },
+  update: async (id, data) => {
+    const { data: updated, error } = await supabase
+      .from('profiles')
+      .update({ ...data, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return updated;
+  },
+  delete: async (id) => {
+    // Soft delete
+    const { error } = await supabase
+      .from('profiles')
+      .update({ deleted_at: new Date().toISOString(), active: false })
+      .eq('id', id);
+    if (error) throw error;
+  },
+  // Get profile with related data
+  getWithDetails: async (id) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        profile_overrides (*),
+        profile_visibility_rules (*)
+      `)
+      .eq('id', id)
+      .is('deleted_at', null)
+      .single();
+    if (error) throw error;
+    return data;
+  },
+};
+
+base44.entities.ProfileOverrides = {
+  get: async (profileId) => {
+    const { data, error } = await supabase
+      .from('profile_overrides')
+      .select('*')
+      .eq('profile_id', profileId)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+  upsert: async (profileId, overridesData) => {
+    const { data, error } = await supabase
+      .from('profile_overrides')
+      .upsert({
+        profile_id: profileId,
+        ...overridesData,
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'profile_id',
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+};
+
+base44.entities.ProfileVisibilityRule = {
+  list: async (profileId) => {
+    const { data, error } = await supabase
+      .from('profile_visibility_rules')
+      .select('*')
+      .eq('profile_id', profileId)
+      .order('priority', { ascending: true });
+    if (error) throw error;
+    return safeArray(data);
+  },
+  create: async (data) => {
+    const { data: created, error } = await supabase
+      .from('profile_visibility_rules')
+      .insert(data)
+      .select()
+      .single();
+    if (error) throw error;
+    return created;
+  },
+  update: async (id, data) => {
+    const { data: updated, error } = await supabase
+      .from('profile_visibility_rules')
+      .update({ ...data, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return updated;
+  },
+  delete: async (id) => {
+    const { error } = await supabase
+      .from('profile_visibility_rules')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
+};
+
+base44.entities.ProfileAllowlist = {
+  list: async (profileId) => {
+    const { data, error } = await supabase
+      .from('profile_allowlist_users')
+      .select('*')
+      .eq('profile_id', profileId);
+    if (error) throw error;
+    return safeArray(data);
+  },
+  add: async (profileId, viewerUserId) => {
+    const { data, error } = await supabase
+      .from('profile_allowlist_users')
+      .upsert({
+        profile_id: profileId,
+        viewer_user_id: viewerUserId,
+      }, {
+        onConflict: 'profile_id,viewer_user_id',
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+  remove: async (profileId, viewerUserId) => {
+    const { error } = await supabase
+      .from('profile_allowlist_users')
+      .delete()
+      .eq('profile_id', profileId)
+      .eq('viewer_user_id', viewerUserId);
+    if (error) throw error;
+  },
+};
+
+base44.entities.ProfileBlocklist = {
+  list: async (profileId) => {
+    const { data, error } = await supabase
+      .from('profile_blocklist_users')
+      .select('*')
+      .eq('profile_id', profileId);
+    if (error) throw error;
+    return safeArray(data);
+  },
+  add: async (profileId, viewerUserId) => {
+    const { data, error } = await supabase
+      .from('profile_blocklist_users')
+      .upsert({
+        profile_id: profileId,
+        viewer_user_id: viewerUserId,
+      }, {
+        onConflict: 'profile_id,viewer_user_id',
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+  remove: async (profileId, viewerUserId) => {
+    const { error } = await supabase
+      .from('profile_blocklist_users')
+      .delete()
+      .eq('profile_id', profileId)
+      .eq('viewer_user_id', viewerUserId);
+    if (error) throw error;
+  },
+};
+
+base44.entities.ConversationParticipant = {
+  list: async (conversationId) => {
+    const { data, error } = await supabase
+      .from('conversation_participants')
+      .select('*')
+      .eq('conversation_id', conversationId);
+    if (error) throw error;
+    return safeArray(data);
+  },
+  getForUser: async (accountId) => {
+    const { data, error } = await supabase
+      .from('conversation_participants')
+      .select('*')
+      .eq('account_id', accountId);
+    if (error) throw error;
+    return safeArray(data);
+  },
+  create: async (data) => {
+    const { data: created, error } = await supabase
+      .from('conversation_participants')
+      .insert(data)
+      .select()
+      .single();
+    if (error) throw error;
+    return created;
+  },
+  updateProfile: async (conversationId, accountId, profileId) => {
+    const { data, error } = await supabase
+      .from('conversation_participants')
+      .update({ profile_id: profileId })
+      .eq('conversation_id', conversationId)
+      .eq('account_id', accountId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+};
 
 // Auth helpers
 export const auth = {

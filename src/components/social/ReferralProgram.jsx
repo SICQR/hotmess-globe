@@ -102,7 +102,7 @@ export default function ReferralProgram() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-8 h-8 border-4 border-white/20 border-t-[#FF1493] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-white/20 border-t-[#E62020] rounded-full animate-spin" />
       </div>
     );
   }
@@ -113,10 +113,10 @@ export default function ReferralProgram() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-2 border-[#FF1493] rounded-xl p-6"
+        className="bg-gradient-to-br from-[#E62020]/20 to-[#B026FF]/20 border-2 border-[#E62020] rounded-xl p-6"
       >
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 bg-[#FF1493] rounded-xl flex items-center justify-center flex-shrink-0">
+          <div className="w-14 h-14 bg-[#E62020] rounded-xl flex items-center justify-center flex-shrink-0">
             <Gift className="w-8 h-8 text-black" />
           </div>
           <div>
@@ -167,7 +167,7 @@ export default function ReferralProgram() {
         <div className="flex gap-3">
           <Button
             onClick={shareReferral}
-            className="flex-1 bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+            className="flex-1 bg-[#E62020] hover:bg-[#E62020]/90 text-black"
           >
             <Share2 className="w-4 h-4 mr-2" />
             Share Link
@@ -198,7 +198,7 @@ export default function ReferralProgram() {
           <div className="text-xs text-white/60">Joined</div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-          <Trophy className="w-6 h-6 mx-auto mb-2 text-[#FF1493]" />
+          <Trophy className="w-6 h-6 mx-auto mb-2 text-[#E62020]" />
           <div className="text-2xl font-black">{stats.successful * 500}</div>
           <div className="text-xs text-white/60">XP Earned</div>
         </div>
@@ -221,7 +221,7 @@ export default function ReferralProgram() {
                 className="flex items-center justify-between p-3 bg-black/30 rounded-lg"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-sm font-bold">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#E62020] to-[#B026FF] flex items-center justify-center text-sm font-bold">
                     {referral.referred_email?.[0]?.toUpperCase() || '?'}
                   </div>
                   <div>
@@ -284,7 +284,7 @@ export default function ReferralProgram() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-bold text-[#FF1493]">+{milestone.xp} XP</div>
+                <div className="font-bold text-[#E62020]">+{milestone.xp} XP</div>
               </div>
             </div>
           ))}

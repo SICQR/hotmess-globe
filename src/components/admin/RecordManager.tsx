@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Upload, Music, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import logger from '@/utils/logger';
+import { logger } from '@/utils/logger';
 
 /**
  * RecordManager - RAW CONVICT RECORDS Admin Terminal

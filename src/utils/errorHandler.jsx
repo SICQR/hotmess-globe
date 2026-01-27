@@ -355,24 +355,8 @@ export function setupGlobalErrorHandlers() {
     // Process offline queue when back online
     processOfflineQueue(async (request) => {
       // This would be implemented based on your API client
-      console.log('[Offline Queue] Processing:', request);
+      // Processing offline queue request
     });
   });
 }
 
-export default {
-  ErrorCategory,
-  categorizeError,
-  getErrorInfo,
-  calculateBackoff,
-  withRetry,
-  getOfflineQueue,
-  addToOfflineQueue,
-  removeFromOfflineQueue,
-  clearOfflineQueue,
-  processOfflineQueue,
-  withErrorHandling,
-  createUserError,
-  logError,
-  setupGlobalErrorHandlers,
-};

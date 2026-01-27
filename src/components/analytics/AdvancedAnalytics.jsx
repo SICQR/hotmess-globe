@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Users, ShoppingBag, MapPin, Zap } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const COLORS = ['#FF1493', '#00D9FF', '#B026FF', '#FFEB3B', '#39FF14', '#FF6B35'];
+const COLORS = ['#E62020', '#00D9FF', '#B026FF', '#FFEB3B', '#39FF14', '#FF6B35'];
 
 export default function AdvancedAnalytics() {
   const [timeRange, setTimeRange] = useState('7d'); // 7d, 30d, 90d
@@ -107,8 +107,8 @@ export default function AdvancedAnalytics() {
     <div className="space-y-8">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-2 border-[#FF1493] p-6">
-          <Users className="w-6 h-6 text-[#FF1493] mb-2" />
+        <div className="bg-gradient-to-br from-[#E62020]/20 to-[#B026FF]/20 border-2 border-[#E62020] p-6">
+          <Users className="w-6 h-6 text-[#E62020] mb-2" />
           <div className="text-3xl font-black">{users.length}</div>
           <div className="text-xs text-white/60 uppercase">Total Users</div>
         </div>
@@ -142,7 +142,7 @@ export default function AdvancedAnalytics() {
               labelStyle={{ color: '#fff' }}
             />
             <Legend />
-            <Line type="monotone" dataKey="total" stroke="#FF1493" strokeWidth={3} name="Total Users" />
+            <Line type="monotone" dataKey="total" stroke="#E62020" strokeWidth={3} name="Total Users" />
           </LineChart>
         </ResponsiveContainer>
       </div>

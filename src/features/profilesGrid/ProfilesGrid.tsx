@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ProfileCard } from './ProfileCard';
+import { SmartProfileCard } from './SmartProfileCard';
+import { BentoGrid, BentoGridSkeleton } from './BentoGrid';
 import { useInfiniteProfiles } from './useInfiniteProfiles';
 import { useVisibility } from './useVisibility';
 import type { ViewerLocationResponse } from './types';
@@ -13,7 +15,19 @@ import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
 
 const SkeletonCard = () => {
   return (
-    <div className="w-full aspect-[4/5] rounded-2xl border border-white/10 bg-white/5 animate-pulse" />
+    <div className="w-full aspect-[4/5] rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+      {/* Image area */}
+      <div className="h-3/4 bg-white/10 animate-pulse" />
+      {/* Content area */}
+      <div className="p-3 space-y-2">
+        <div className="h-4 bg-white/10 rounded w-3/4 animate-pulse" />
+        <div className="h-3 bg-white/10 rounded w-1/2 animate-pulse" />
+        <div className="flex gap-1.5 pt-1">
+          <div className="h-5 bg-white/10 rounded-full w-12 animate-pulse" />
+          <div className="h-5 bg-white/10 rounded-full w-16 animate-pulse" />
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -27,6 +41,10 @@ export type ProfilesGridProps = {
   containerClassName?: string;
   onOpenProfile?: (profile: Profile) => void;
   onNavigateUrl?: (url: string) => void;
+  /** Use smart bento grid layout with variable card sizes */
+  useBentoGrid?: boolean;
+  /** Use smart profile cards with context-aware styling */
+  useSmartCards?: boolean;
 };
 
 const normalizeEmail = (value: unknown) => String(value || '').trim().toLowerCase();
@@ -68,6 +86,8 @@ export default function ProfilesGrid({
   containerClassName = 'mx-auto max-w-6xl p-4',
   onOpenProfile,
   onNavigateUrl,
+  useBentoGrid = false,
+  useSmartCards = false,
 }: ProfilesGridProps) {
   const { items, nextCursor, isLoadingInitial, isLoadingMore, error, loadMore } = useInfiniteProfiles();
   const { ref: sentinelRef, isVisible: sentinelVisible } = useVisibility({ rootMargin: '600px', threshold: 0.1 });
@@ -295,22 +315,53 @@ export default function ProfilesGrid({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-          {displayItems.map((profile) => (
-            <ProfileCard
-              key={profile.id}
-              profile={profile}
-              viewerLocation={viewerLocation}
-              viewerProfile={viewerProfile}
-              onOpenProfile={handleOpenProfile}
-              onNavigateUrl={handleNavigateUrl}
-            />
-          ))}
+        {/* Smart Bento Grid Layout */}
+        {useBentoGrid ? (
+          <>
+            {isLoadingInitial ? (
+              <BentoGridSkeleton count={8} />
+            ) : (
+              <BentoGrid
+                profiles={displayItems}
+                viewerLocation={viewerLocation}
+                viewerProfile={viewerProfile}
+                onOpenProfile={handleOpenProfile}
+                onNavigateUrl={handleNavigateUrl}
+                maxSpotlights={1}
+                maxFeatured={3}
+              />
+            )}
+          </>
+        ) : (
+          /* Standard Grid Layout */
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            {displayItems.map((profile) => 
+              useSmartCards ? (
+                <SmartProfileCard
+                  key={profile.id}
+                  profile={profile}
+                  viewerLocation={viewerLocation}
+                  viewerProfile={viewerProfile}
+                  onOpenProfile={handleOpenProfile}
+                  onNavigateUrl={handleNavigateUrl}
+                />
+              ) : (
+                <ProfileCard
+                  key={profile.id}
+                  profile={profile}
+                  viewerLocation={viewerLocation}
+                  viewerProfile={viewerProfile}
+                  onOpenProfile={handleOpenProfile}
+                  onNavigateUrl={handleNavigateUrl}
+                />
+              )
+            )}
 
-          {Array.from({ length: skeletonCount }).map((_, idx) => (
-            <SkeletonCard key={`sk-${idx}`} />
-          ))}
-        </div>
+            {Array.from({ length: skeletonCount }).map((_, idx) => (
+              <SkeletonCard key={`sk-${idx}`} />
+            ))}
+          </div>
+        )}
 
         {/* Infinite scroll sentinel */}
         {typeof maxItems === 'number' ? null : (

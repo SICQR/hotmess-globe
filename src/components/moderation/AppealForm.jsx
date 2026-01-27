@@ -153,7 +153,7 @@ export default function AppealForm({
         <Button
           type="submit"
           disabled={submitting || !reason || !explanation.trim()}
-          className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+          className="w-full bg-[#E62020] hover:bg-[#E62020]/90 text-black"
         >
           {submitting ? 'Submitting...' : (
             <>

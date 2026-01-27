@@ -116,7 +116,7 @@ export default function ShopCollection() {
                     <h2 className="mt-4 text-lg font-black uppercase tracking-tight">{p.title}</h2>
                     <p className="text-sm text-white/60 mt-2">{moneyRange(p.priceRange) || '—'}</p>
                     {p.totalInventory === 0 ? (
-                      <p className="text-xs mt-2 text-[#FF1493] font-bold uppercase tracking-wider">Sold out</p>
+                      <p className="text-xs mt-2 text-[#E62020] font-bold uppercase tracking-wider">Sold out</p>
                     ) : null}
                   </Link>
 

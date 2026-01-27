@@ -52,7 +52,7 @@ export default function RelatedEvents({ currentEvent, userPreferences = [] }) {
   return (
     <div className="bg-black border-2 border-white p-6">
       <h3 className="text-xl font-black uppercase tracking-tighter mb-4 flex items-center gap-2">
-        <TrendingUp className="w-5 h-5 text-[#FF1493]" />
+        <TrendingUp className="w-5 h-5 text-[#E62020]" />
         RELATED EVENTS
       </h3>
       <div className="space-y-4">
@@ -67,7 +67,7 @@ export default function RelatedEvents({ currentEvent, userPreferences = [] }) {
               to={`/events/${encodeURIComponent(event.id)}`}
               className="block group"
             >
-              <div className="bg-black border-2 border-white/20 hover:border-[#FF1493] transition-all p-4">
+              <div className="bg-black border-2 border-white/20 hover:border-[#E62020] transition-all p-4">
                 {event.image_url && (
                   <div className="h-32 mb-3 overflow-hidden border-2 border-white/10">
                     <img 
@@ -77,7 +77,7 @@ export default function RelatedEvents({ currentEvent, userPreferences = [] }) {
                     />
                   </div>
                 )}
-                <h4 className="font-black uppercase tracking-tight mb-2 group-hover:text-[#FF1493] transition-colors">
+                <h4 className="font-black uppercase tracking-tight mb-2 group-hover:text-[#E62020] transition-colors">
                   {event.title}
                 </h4>
                 <div className="flex items-center gap-3 text-xs text-white/60">

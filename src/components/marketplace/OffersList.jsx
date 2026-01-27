@@ -99,7 +99,7 @@ export default function OffersList({ userEmail, type = 'received' }) {
                     ? 'bg-red-500 text-white'
                     : isExpired
                     ? 'bg-white/10 text-white/40'
-                    : 'bg-[#FF1493] text-black'
+                    : 'bg-[#E62020] text-black'
                 }`}
               >
                 {isExpired && offer.status === 'pending' ? 'Expired' : offer.status}
@@ -109,7 +109,7 @@ export default function OffersList({ userEmail, type = 'received' }) {
             <div className="bg-black/40 border border-white/10 rounded-lg p-3 mb-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-white/60">Offer Amount</span>
-                <span className="text-lg font-black text-[#FF1493]">
+                <span className="text-lg font-black text-[#E62020]">
                   {offer.offer_xp} XP
                   {offer.offer_gbp > 0 && ` + £${offer.offer_gbp}`}
                 </span>

@@ -26,7 +26,7 @@ export default function AgeGate({ onVerified }) {
         className="relative z-10 text-center px-4 my-auto"
       >
         <h1 className="text-6xl sm:text-8xl md:text-[10rem] lg:text-[12rem] font-black italic tracking-tighter text-white leading-none mb-3 sm:mb-4">
-          HOT<span className="text-[#FF1493]">MESS</span>
+          HOT<span className="text-[#E62020]">MESS</span>
         </h1>
         <p className="text-base sm:text-xl md:text-2xl font-bold italic uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/80 mb-8 sm:mb-12">
           London Operating System
@@ -37,7 +37,7 @@ export default function AgeGate({ onVerified }) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleEnter}
-            className="bg-[#FF1493] text-black font-black py-5 sm:py-6 text-xl sm:text-2xl uppercase italic hover:bg-white transition-all shadow-[0_0_30px_#FF1493] w-full"
+            className="bg-[#E62020] text-black font-black py-5 sm:py-6 text-xl sm:text-2xl uppercase italic hover:bg-white transition-all shadow-[0_0_30px_#E62020] w-full"
           >
             I AM 18+ // ENTER
           </motion.button>
@@ -53,7 +53,7 @@ export default function AgeGate({ onVerified }) {
       {/* EDITORIAL COOKIE CONSENT - BOTTOM PINNED */}
       <div className="absolute bottom-0 left-0 w-full px-4 sm:px-8 py-4 sm:py-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 sm:gap-4 border-t border-white/10 bg-black/60 backdrop-blur-md">
         <div className="w-full sm:max-w-md">
-          <p className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-[#FF1493] mb-1 sm:mb-2">Data Intelligence Policy</p>
+          <p className="text-[9px] sm:text-[10px] uppercase font-black tracking-widest text-[#E62020] mb-1 sm:mb-2">Data Intelligence Policy</p>
           <p className="text-[9px] sm:text-[10px] leading-relaxed text-white/50 uppercase">
             We use cookies to track XP heartbeats, geospatial pulse data, and marketplace security. By entering, you consent to the industrial surveillance of your nightlife participation.
           </p>

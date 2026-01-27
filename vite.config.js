@@ -3,6 +3,10 @@ import { defineConfig, loadEnv } from 'vite'
 import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { config as dotenvConfig } from 'dotenv'
+
+// Pre-load environment variables from .env.local for API routes
+dotenvConfig({ path: '.env.local' })
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -83,6 +87,20 @@ function localApiRoutes() {
           // ignore
         }
 
+        // Add Express/Vercel-like helper methods to response
+        if (!res.status) {
+          res.status = (code) => {
+            res.statusCode = code;
+            return res;
+          };
+        }
+        if (!res.json) {
+          res.json = (data) => {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(data));
+          };
+        }
+
         // Reload env on each request so `.env.local` edits apply without a restart.
         try {
           const mode = server?.config?.mode || process.env.NODE_ENV || 'development';
@@ -94,7 +112,7 @@ function localApiRoutes() {
           // the empty string instead of the file value. For security-sensitive
           // keys, explicitly prefer the .env* file value when the runtime value
           // is empty.
-          for (const key of ['TICKET_QR_SIGNING_SECRET', 'QR_SIGNING_SECRET']) {
+          for (const key of ['TICKET_QR_SIGNING_SECRET', 'QR_SIGNING_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET']) {
             const current = process.env[key];
             const isEmpty = typeof current === 'string' && current.trim().length === 0;
             if (!isEmpty) continue;
@@ -516,6 +534,112 @@ function localApiRoutes() {
             });
         }
 
+        // Username check endpoint
+        if (path === '/api/username/check' && method === 'GET') {
+          return importFresh('./api/username/check.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load username check handler' }));
+            });
+        }
+
+        // Match probability endpoints
+        if (path === '/api/match-probability' && method === 'GET') {
+          return importFresh('./api/match-probability/index.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load match-probability handler' }));
+            });
+        }
+
+        if (path === '/api/match-probability/single' && method === 'GET') {
+          return importFresh('./api/match-probability/single.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load match-probability single handler' }));
+            });
+        }
+
+        // Embeddings endpoints
+        if (path === '/api/embeddings' && (method === 'GET' || method === 'POST')) {
+          return importFresh('./api/embeddings/index.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load embeddings handler' }));
+            });
+        }
+
+        if (path === '/api/embeddings/trigger' && method === 'POST') {
+          return importFresh('./api/embeddings/trigger.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load embeddings trigger handler' }));
+            });
+        }
+
+        // Recommendations endpoints
+        if (path === '/api/recommendations' && method === 'GET') {
+          return importFresh('./api/recommendations/index.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load recommendations handler' }));
+            });
+        }
+
+        if (path === '/api/recommendations/learn' && method === 'POST') {
+          return importFresh('./api/recommendations/learn.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load recommendations learn handler' }));
+            });
+        }
+
+        // Daily check-in endpoint
+        if (path === '/api/daily-checkin' && method === 'POST') {
+          return importFresh('./api/daily-checkin.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load daily-checkin handler' }));
+            });
+        }
+
+        // Push notifications endpoints
+        if (path === '/api/push/subscribe' && method === 'POST') {
+          return importFresh('./api/push/subscribe.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load push subscribe handler' }));
+            });
+        }
+
+        if (path === '/api/push/send' && method === 'POST') {
+          return importFresh('./api/push/send.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load push send handler' }));
+            });
+        }
+
         // Stripe API routes for local development
         if (path === '/api/stripe/create-checkout-session' && method === 'POST') {
           return importFresh('./api/stripe/create-checkout-session.js')
@@ -580,6 +704,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
+        // Replace moment.js with date-fns (already installed)
+        'moment': 'date-fns',
       },
     },
     plugins: [
@@ -587,6 +713,58 @@ export default defineConfig(({ mode }) => {
       localApiRoutes(),
       react(),
     ],
+    // Bundle optimization
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Core vendor chunk
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            // UI libraries
+            'vendor-ui': [
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-popover',
+              '@radix-ui/react-select',
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-tooltip',
+              'framer-motion',
+              'lucide-react',
+            ],
+            // Data layer
+            'vendor-data': ['@tanstack/react-query', '@supabase/supabase-js'],
+            // Heavy visualization libraries (lazy loaded)
+            'vendor-three': ['three'],
+            'vendor-charts': ['recharts'],
+            // Form handling
+            'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+            // Utilities
+            'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge', 'lodash'],
+          },
+        },
+      },
+      // Increase chunk size warning limit for vendor bundles
+      chunkSizeWarningLimit: 600,
+      // Enable source maps for production debugging
+      sourcemap: mode === 'development',
+      // Minification options
+      minify: 'esbuild',
+      target: 'es2020',
+    },
+    // Optimize deps
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        '@tanstack/react-query',
+        'date-fns',
+        'framer-motion',
+      ],
+      exclude: [
+        'three', // Lazy loaded
+      ],
+    },
     test: {
       globals: true,
       environment: 'jsdom',

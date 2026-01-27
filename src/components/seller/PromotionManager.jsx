@@ -75,7 +75,7 @@ export default function PromotionManager({ promotions, products, sellerEmail }) 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-black uppercase">Promotions & Coupons</h3>
-        <Button onClick={() => setShowForm(!showForm)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+        <Button onClick={() => setShowForm(!showForm)} className="bg-[#E62020] hover:bg-[#E62020]/90 text-black">
           <Plus className="w-4 h-4 mr-2" />
           Create Promo
         </Button>
@@ -167,7 +167,7 @@ export default function PromotionManager({ promotions, products, sellerEmail }) 
             <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+            <Button type="submit" className="bg-[#E62020] hover:bg-[#E62020]/90 text-black">
               Create
             </Button>
           </div>

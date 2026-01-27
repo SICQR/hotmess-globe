@@ -82,7 +82,7 @@ export default function PersonalizedFeed({ user, posts, onFilterChange }) {
             <Sliders className="w-4 h-4 mr-2" />
             Filters
             {selectedCategories.length > 0 && (
-              <Badge className="ml-2 bg-[#FF1493]">{selectedCategories.length}</Badge>
+              <Badge className="ml-2 bg-[#E62020]">{selectedCategories.length}</Badge>
             )}
           </Button>
         </PopoverTrigger>
@@ -97,7 +97,7 @@ export default function PersonalizedFeed({ user, posts, onFilterChange }) {
                     onClick={() => toggleCategory(cat)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase transition-all ${
                       selectedCategories.includes(cat)
-                        ? 'bg-[#FF1493] text-black'
+                        ? 'bg-[#E62020] text-black'
                         : 'bg-white/5 text-white/60 hover:bg-white/10'
                     }`}
                   >

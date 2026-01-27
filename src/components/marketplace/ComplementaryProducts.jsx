@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Sparkles } from 'lucide-react';
 import ProductCard from './ProductCard';
-import logger from '@/utils/logger';
+import { logger } from '@/utils/logger';
 
 export default function ComplementaryProducts({ product, onBuy }) {
   const [complementary, setComplementary] = useState([]);

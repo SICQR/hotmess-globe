@@ -97,7 +97,7 @@ export default function Challenges() {
   const DIFFICULTY_COLORS = {
     easy: '#39FF14',
     medium: '#FFEB3B',
-    hard: '#FF1493',
+    hard: '#E62020',
   };
 
   return (

@@ -4,7 +4,7 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import { TrendingUp, Package, Users, DollarSign } from 'lucide-react';
 import { format, subDays, startOfDay } from 'date-fns';
 
-const COLORS = ['#FF1493', '#B026FF', '#00D9FF', '#FFEB3B', '#FF6B35'];
+const COLORS = ['#E62020', '#B026FF', '#00D9FF', '#FFEB3B', '#FF6B35'];
 
 export default function SalesAnalytics({ orders, products, allUsers }) {
   const analytics = useMemo(() => {
@@ -89,7 +89,7 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
   const stats = [
     { label: 'Total Revenue', value: `${analytics.totalRevenue.toLocaleString()} XP`, icon: DollarSign, color: '#FFEB3B' },
     { label: 'GBP Revenue', value: `£${analytics.totalRevenueGBP.toFixed(2)}`, icon: DollarSign, color: '#00D9FF' },
-    { label: 'Total Orders', value: analytics.totalOrders, icon: Package, color: '#FF1493' },
+    { label: 'Total Orders', value: analytics.totalOrders, icon: Package, color: '#E62020' },
     { label: 'Customers', value: analytics.uniqueCustomers, icon: Users, color: '#B026FF' },
   ];
 
@@ -140,7 +140,7 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
         {/* Top Products */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
           <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
-            <Package className="w-5 h-5 text-[#FF1493]" />
+            <Package className="w-5 h-5 text-[#E62020]" />
             Top Selling Products
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -152,7 +152,7 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
                 contentStyle={{ backgroundColor: '#000', border: '1px solid #ffffff20', borderRadius: '8px' }}
                 labelStyle={{ color: '#fff' }}
               />
-              <Bar dataKey="sales" fill="#FF1493" name="Sales" />
+              <Bar dataKey="sales" fill="#E62020" name="Sales" />
             </BarChart>
           </ResponsiveContainer>
         </div>

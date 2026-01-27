@@ -6,13 +6,14 @@
 
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { withRateLimit } from '../middleware/rateLimiter.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
@@ -106,3 +107,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
+export default withRateLimit(handler, { tier: 'auth' });

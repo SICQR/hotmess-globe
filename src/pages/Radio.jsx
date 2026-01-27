@@ -16,7 +16,7 @@ export default function Radio() {
   const shows = [
     {
       ...schedule.shows[0],
-      color: 'from-[#FF1493] to-[#B026FF]'
+      color: 'from-[#E62020] to-[#B026FF]'
     },
     {
       ...schedule.shows[1],
@@ -32,7 +32,7 @@ export default function Radio() {
     <div className="min-h-screen bg-black text-white">
       {/* Hero */}
       <div className="relative overflow-hidden border-b-2 border-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FF1493]/20 to-[#00D9FF]/20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#E62020]/20 to-[#00D9FF]/20" />
         <div className="relative max-w-7xl mx-auto px-6 py-24 md:py-32">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -40,7 +40,7 @@ export default function Radio() {
             className="text-center"
           >
             <div className="flex items-center justify-center gap-3 mb-6">
-              <RadioIcon className="w-12 h-12 text-[#FF1493]" />
+              <RadioIcon className="w-12 h-12 text-[#E62020]" />
               <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tight">
                 HOTMESS RADIO
               </h1>
@@ -103,20 +103,20 @@ export default function Radio() {
               transition={{ delay: idx * 0.1 }}
             >
               <Link to={`/music/shows/${show.slug}`}>
-                <div className="group bg-black border-2 border-white hover:border-[#FF1493] transition-all overflow-hidden h-full">
+                <div className="group bg-black border-2 border-white hover:border-[#E62020] transition-all overflow-hidden h-full">
                   <div className={`h-48 bg-gradient-to-br ${show.color} relative overflow-hidden`}>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <RadioIcon className="w-20 h-20 text-white/20" />
                     </div>
                   </div>
                   <div className="p-6">
-                    <h3 className="text-2xl font-black uppercase mb-3 group-hover:text-[#FF1493] transition-colors">
+                    <h3 className="text-2xl font-black uppercase mb-3 group-hover:text-[#E62020] transition-colors">
                       {show.title}
                     </h3>
                     <p className="text-white/60 mb-6 text-sm">
                       {show.tagline}
                     </p>
-                    <div className="flex items-center gap-2 text-xs uppercase font-black text-[#FF1493]">
+                    <div className="flex items-center gap-2 text-xs uppercase font-black text-[#E62020]">
                       View Show
                       <ExternalLink className="w-3 h-3" />
                     </div>

@@ -18,6 +18,66 @@ function send(res, status, body) {
   json(res, status, body);
 }
 
+/**
+ * Map notification types to preference categories
+ */
+const NOTIFICATION_CATEGORY_MAP = {
+  // Message-related
+  new_message: 'message_updates',
+  message_received: 'message_updates',
+  chat_message: 'message_updates',
+  
+  // Social/engagement (always allowed - no opt-out for engagement)
+  new_follower: null, // Always send
+  post_like: null,
+  post_comment: null,
+  profile_views: null,
+  
+  // Event-related
+  event_reminder: 'event_updates',
+  event_rsvp: 'event_updates',
+  event_update: 'event_updates',
+  event_cancelled: 'event_updates',
+  
+  // Order/marketplace
+  order_confirmation: 'order_updates',
+  order_shipped: 'order_updates',
+  order_delivered: 'order_updates',
+  payment_received: 'order_updates',
+  product_purchased: 'order_updates',
+  
+  // Safety (always send)
+  emergency: 'safety_updates',
+  sos: 'safety_updates',
+  safety_alert: 'safety_updates',
+  
+  // Marketing
+  promotion: 'marketing_enabled',
+  newsletter: 'marketing_enabled',
+  
+  // Premium/content
+  content_unlocked: 'order_updates',
+  new_subscriber: 'order_updates',
+  subscription_renewed: 'order_updates',
+  xp_credited: null, // Always send
+};
+
+/**
+ * Check if notification should be sent based on user preferences
+ */
+function shouldSendNotification(preferences, notificationType) {
+  // If no preferences set, default to allowing all
+  if (!preferences) return true;
+  
+  const category = NOTIFICATION_CATEGORY_MAP[notificationType];
+  
+  // If notification type not mapped or mapped to null, always send
+  if (category === undefined || category === null) return true;
+  
+  // Check the specific preference
+  return preferences[category] !== false;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'GET') {
     send(res, 405, { error: 'Method not allowed' });
@@ -65,8 +125,28 @@ export default async function handler(req, res) {
     let processed = 0;
     let errors = 0;
 
+    // Batch fetch preferences for all users in this batch
+    const userEmails = [...new Set(queuedNotifications.map(n => n.user_email).filter(Boolean))];
+    const { data: allPreferences } = await supabase
+      .from('notification_preferences')
+      .select('*')
+      .in('user_email', userEmails);
+    
+    const prefsMap = new Map((allPreferences || []).map(p => [p.user_email, p]));
+
     for (const notification of queuedNotifications) {
       try {
+        // Check user preferences before sending
+        const userPrefs = prefsMap.get(notification.user_email);
+        if (!shouldSendNotification(userPrefs, notification.notification_type)) {
+          // User has opted out of this notification type - mark as blocked
+          await supabase
+            .from('notification_outbox')
+            .update({ status: 'blocked', updated_at: new Date().toISOString() })
+            .eq('id', notification.id);
+          continue;
+        }
+
         // 1. Create in-app notification (table uses "type", outbox uses "notification_type")
         const { error: notifError } = await supabase
           .from('notifications')

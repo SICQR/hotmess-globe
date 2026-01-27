@@ -1,0 +1,2131 @@
+/* ============================================================================
+   HOTMESS LUX BRUTALIST DESIGN SYSTEM
+   ============================================================================
+   Chrome Luxury. Raw Power. Brutal Conviction.
+   A Global Operating System for the bold.
+   
+   "Always too much, yet never enough"
+   ============================================================================ */
+
+/* ============================================================================
+   CSS Variables - Chrome Luxury Brutalist Tokens
+   ============================================================================ */
+
+:root {
+  /* === CORE PALETTE === */
+  --lux-ink: #0D0D0D;           /* Near-black for backgrounds */
+  --lux-paper: #FAFAFA;         /* Off-white for text */
+  --lux-accent: #FF1493;        /* Hot Pink - primary accent */
+  --lux-gold: #E5A820;          /* Gold - secondary accent/CTAs */
+  --lux-white: #FFFFFF;
+  --lux-black: #000000;
+  
+  /* === PROFILE TYPE COLORS === */
+  --lux-standard: #FF1493;      /* Hot Pink - Standard users */
+  --lux-seller: #E5A820;        /* Gold - Sellers */
+  --lux-creator: #00D9FF;       /* Cyan - Creators */
+  --lux-organizer: #B026FF;     /* Purple - Organizers */
+  --lux-premium-start: #E5A820; /* Gold gradient start */
+  --lux-premium-end: #FF1493;   /* Hot Pink gradient end */
+  
+  /* === TRUST SCORE COLORS === */
+  --lux-trust-new: #6B7280;     /* Gray - 0-20 */
+  --lux-trust-bronze: #CD7F32;  /* Bronze - 21-50 */
+  --lux-trust-silver: #C0C0C0;  /* Silver - 51-75 */
+  --lux-trust-gold: #E5A820;    /* Gold - 76-90 */
+  --lux-trust-diamond: #B9F2FF; /* Diamond - 91-100 */
+  
+  /* === COMPATIBILITY COLORS === */
+  --lux-compatible: #10B981;    /* Green */
+  --lux-check: #F59E0B;         /* Amber */
+  --lux-incompatible: #EF4444; /* Red */
+  
+  /* === CHROME RED GRADIENTS === */
+  /* Chrome Red - diagonal dark to red */
+  --lux-gradient-chrome: linear-gradient(135deg, #1a0020 0%, #0D0D0D 30%, #FF1493 100%);
+  /* Gold Fade - vertical gold to dark */
+  --lux-gradient-gold: linear-gradient(180deg, #E5A820 0%, #8B6914 60%, #3d2e0a 100%);
+  /* Spotlight - radial red glow in center */
+  --lux-gradient-spotlight: radial-gradient(ellipse at center, #FF1493 0%, #B026FF 30%, #1a0020 60%, #0D0D0D 100%);
+  /* Hero - Chrome red radial from top center */
+  --lux-gradient-hero: radial-gradient(ellipse 120% 80% at 50% 20%, #FF1493 0%, #B026FF 25%, #3d0020 45%, #1a0020 60%, #0D0D0D 100%);
+  /* Hero Alt - wider spread */
+  --lux-gradient-hero-wide: radial-gradient(ellipse 150% 100% at 50% 30%, #FF1493 0%, #B026FF 20%, #4d0020 40%, #1a0020 55%, #0D0D0D 85%);
+  /* Premium - Gold to Red horizontal */
+  --lux-gradient-premium: linear-gradient(90deg, #FFD700 0%, #FF1493 100%);
+  /* Hover gradient - for interactive cards */
+  --lux-gradient-hover: linear-gradient(135deg, #FF1493 0%, #B026FF 50%, #FF1493 100%);
+  
+  /* === GLOW VALUES === */
+  --lux-glow-accent: 0 0 20px rgba(255, 20, 147, 0.6), 0 0 40px rgba(255, 20, 147, 0.3);
+  --lux-glow-accent-intense: 0 0 30px rgba(255, 20, 147, 0.8), 0 0 60px rgba(255, 20, 147, 0.4);
+  --lux-glow-gold: 0 0 20px rgba(229, 168, 32, 0.6), 0 0 40px rgba(229, 168, 32, 0.3);
+  --lux-glow-cyan: 0 0 20px rgba(0, 217, 255, 0.6), 0 0 40px rgba(0, 217, 255, 0.3);
+  --lux-glow-purple: 0 0 20px rgba(176, 38, 255, 0.6), 0 0 40px rgba(176, 38, 255, 0.3);
+  --lux-glow-live: 0 0 20px rgba(57, 255, 20, 0.6), 0 0 40px rgba(57, 255, 20, 0.3);
+  --lux-glow-pulse: 0 0 40px rgba(230, 32, 32, 0.8);
+  
+  /* === LEGACY SUPPORT === */
+  --lux-hot: #FF1493;
+  --lux-live: #39FF14;
+  
+  /* === TYPOGRAPHY === */
+  --font-display: 'Bebas Neue', 'Impact', 'Arial Black', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Space Mono', 'SF Mono', 'Monaco', 'Consolas', monospace;
+  
+  /* === BRUTALIST VALUES (no soft edges) === */
+  --radius-none: 0px;
+  --border-brutal: 2px;
+  --border-brutal-thick: 3px;
+  
+  /* === TRANSITIONS === */
+  --transition-brutal: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-page: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-hover: 300ms ease;
+  
+  /* === Z-INDEX SCALE === */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-toast: 700;
+  --z-tooltip: 800;
+  --z-page-transition: 900;
+}
+
+/* ============================================================================
+   Typography - Chrome Luxury Display
+   ============================================================================ */
+
+/* Display headings - Bold, italic, red */
+.lux-display {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+  color: var(--lux-accent);
+}
+
+.lux-h1 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-style: italic;
+  font-size: clamp(3rem, 10vw, 8rem);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.85;
+  color: var(--lux-accent);
+}
+
+.lux-h2 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-style: italic;
+  font-size: clamp(2rem, 6vw, 4rem);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+  color: var(--lux-paper);
+}
+
+.lux-h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  text-transform: uppercase;
+  letter-spacing: 0;
+  line-height: 1;
+  color: var(--lux-paper);
+}
+
+.lux-h4 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--lux-paper);
+}
+
+/* Body text */
+.lux-body-lg {
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: rgba(250, 250, 250, 0.9);
+}
+
+.lux-body {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: rgba(250, 250, 250, 0.8);
+}
+
+.lux-body-sm {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: rgba(250, 250, 250, 0.7);
+}
+
+/* Labels */
+.lux-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(250, 250, 250, 0.5);
+}
+
+/* Tagline style */
+.lux-tagline {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: rgba(250, 250, 250, 0.6);
+}
+
+/* ============================================================================
+   HOTMESS Wordmark & Hero Styling
+   ============================================================================ */
+
+/* Wordmark with multi-color gradient effect */
+.lux-wordmark {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-style: italic;
+  font-size: clamp(3rem, 12vw, 10rem);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.85;
+}
+
+/* Gradient text effect - pink to purple fade */
+.lux-wordmark-gradient {
+  background: linear-gradient(90deg, 
+    #FF1493 0%, 
+    #FF1493 15%, 
+    #B026FF 35%, 
+    #00D9FF 50%, 
+    #00D9FF 65%,
+    rgba(250, 250, 250, 0.4) 80%,
+    rgba(250, 250, 250, 0.2) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hero section with Chrome gradient background */
+.lux-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  background: var(--lux-gradient-hero-wide);
+  overflow: hidden;
+}
+
+.lux-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.3) 100%);
+  pointer-events: none;
+}
+
+/* Power words row: "BRUTAL • CHROME • POWER" */
+.lux-power-words {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1rem, 3vw, 2rem);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--lux-paper);
+}
+
+.lux-power-words .dot {
+  width: 6px;
+  height: 6px;
+  background: var(--lux-paper);
+  opacity: 0.6;
+}
+
+/* Hero CTA container */
+.lux-hero-ctas {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ============================================================================
+   Base Resets for Brutalism
+   ============================================================================ */
+
+.brutalist * {
+  border-radius: 0 !important;
+}
+
+.brutalist img,
+.brutalist video {
+  border-radius: 0;
+}
+
+/* ============================================================================
+   Chrome Luxury Buttons
+   ============================================================================ */
+
+/* PRIMARY - Red outline, fills on hover (brutalist outline style) */
+.btn-lux-primary {
+  position: relative;
+  background: transparent;
+  border: var(--border-brutal) solid var(--lux-accent);
+  color: var(--lux-accent);
+  padding: 14px 32px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all var(--transition-brutal);
+}
+
+.btn-lux-primary:hover {
+  background: var(--lux-accent);
+  color: var(--lux-white);
+}
+
+.btn-lux-primary:active {
+  transform: scale(0.98);
+}
+
+/* SECONDARY - Gold filled, outlines on hover */
+.btn-lux-secondary {
+  background: var(--lux-gold);
+  border: var(--border-brutal) solid var(--lux-gold);
+  color: var(--lux-black);
+  padding: 14px 32px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all var(--transition-brutal);
+}
+
+.btn-lux-secondary:hover {
+  background: transparent;
+  color: var(--lux-gold);
+}
+
+/* TERTIARY - Ghost style, subtle hover */
+.btn-lux-tertiary {
+  background: var(--lux-ink);
+  border: var(--border-brutal) solid rgba(250, 250, 250, 0.3);
+  color: var(--lux-paper);
+  padding: 14px 32px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all var(--transition-brutal);
+}
+
+.btn-lux-tertiary:hover {
+  border-color: var(--lux-paper);
+  background: rgba(250, 250, 250, 0.05);
+}
+
+/* ============================================================================
+   Gradient Backgrounds
+   ============================================================================ */
+
+.bg-lux-chrome {
+  background: var(--lux-gradient-chrome);
+}
+
+.bg-lux-gold {
+  background: var(--lux-gradient-gold);
+}
+
+.bg-lux-spotlight {
+  background: var(--lux-gradient-spotlight);
+}
+
+.bg-lux-hero {
+  background: var(--lux-gradient-hero);
+}
+
+/* ============================================================================
+   Patterns - Brutalist Grid, Diagonal Lines, Dots
+   ============================================================================ */
+
+.pattern-brutalist-grid {
+  background-image: 
+    linear-gradient(rgba(250, 250, 250, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250, 250, 250, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.pattern-diagonal-lines {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(250, 250, 250, 0.05) 10px,
+    rgba(250, 250, 250, 0.05) 11px
+  );
+}
+
+.pattern-dots {
+  background-image: radial-gradient(
+    circle,
+    rgba(250, 250, 250, 0.15) 1px,
+    transparent 1px
+  );
+  background-size: 20px 20px;
+}
+
+/* ============================================================================
+   Animations - Pulse Glow, Audio Pulse, Marquee
+   ============================================================================ */
+
+/* Pulse Glow - for live indicators */
+@keyframes lux-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(230, 32, 32, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(230, 32, 32, 0.8);
+    transform: scale(1.05);
+  }
+}
+
+.animate-lux-pulse {
+  animation: lux-pulse-glow 2s ease-in-out infinite;
+}
+
+/* Pulse dot indicator */
+.lux-pulse-dot {
+  width: 12px;
+  height: 12px;
+  background: var(--lux-accent);
+  animation: lux-pulse-glow 2s ease-in-out infinite;
+}
+
+/* Marquee - infinite scroll text */
+@keyframes lux-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-lux-marquee {
+  animation: lux-marquee 20s linear infinite;
+}
+
+.lux-marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.lux-marquee-content {
+  display: inline-block;
+  animation: lux-marquee 20s linear infinite;
+}
+
+/* Audio pulse bars */
+@keyframes lux-audio-bar {
+  0%, 100% { height: 20%; }
+  50% { height: 100%; }
+}
+
+.lux-audio-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 24px;
+}
+
+.lux-audio-bar {
+  width: 3px;
+  background: var(--lux-accent);
+  animation: lux-audio-bar 0.8s ease-in-out infinite;
+}
+
+.lux-audio-bar:nth-child(1) { animation-delay: 0s; }
+.lux-audio-bar:nth-child(2) { animation-delay: 0.1s; }
+.lux-audio-bar:nth-child(3) { animation-delay: 0.2s; }
+.lux-audio-bar:nth-child(4) { animation-delay: 0.3s; }
+.lux-audio-bar:nth-child(5) { animation-delay: 0.4s; }
+
+/* ============================================================================
+   LED Cards
+   ============================================================================ */
+
+.card-brutal {
+  background: var(--led-black);
+  border: var(--border-brutal) solid var(--led-white);
+  padding: 0;
+  overflow: hidden;
+}
+
+.card-brutal-highlight {
+  background: var(--led-black);
+  border: var(--border-brutal) solid var(--led-hot);
+  box-shadow: var(--led-glow-hot);
+}
+
+.card-brutal-live {
+  background: var(--led-black);
+  border: var(--border-brutal) solid var(--led-live);
+  box-shadow: var(--led-glow-live);
+}
+
+/* ============================================================================
+   LED Status Badges
+   ============================================================================ */
+
+.badge-led-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: var(--border-brutal) solid var(--led-live);
+  color: var(--led-white);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  box-shadow: var(--led-glow-live);
+  animation: led-pulse 2s ease-in-out infinite;
+}
+
+.badge-led-live::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--led-live);
+  box-shadow: var(--led-glow-live);
+  animation: led-dot-pulse 1s ease-in-out infinite;
+}
+
+.badge-led-hot {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: transparent;
+  border: var(--border-brutal) solid var(--led-hot);
+  color: var(--led-white);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  box-shadow: var(--led-glow-hot);
+}
+
+/* ============================================================================
+   LED Typography
+   ============================================================================ */
+
+.text-display-brutal {
+  font-family: var(--font-display);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  line-height: 0.85;
+}
+
+.text-mono-brutal {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.text-data-brutal {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+/* Data with dot leaders */
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.data-row::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.3);
+  margin: 0 8px 4px;
+}
+
+/* ============================================================================
+   LED Dividers
+   ============================================================================ */
+
+.divider-brutal {
+  height: 1px;
+  background: var(--led-white);
+  margin: 24px 0;
+}
+
+.divider-brutal-double {
+  height: 2px;
+  background: var(--led-white);
+  margin: 24px 0;
+  position: relative;
+}
+
+.divider-brutal-double::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--led-white);
+}
+
+.divider-led-hot {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--led-hot), transparent);
+  margin: 24px 0;
+  box-shadow: 0 0 10px rgba(255, 20, 147, 0.5);
+}
+
+/* ============================================================================
+   Side Tab Navigation (Filing Cabinet Style)
+   ============================================================================ */
+
+.sidetabs {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  border-left: var(--border-brutal) solid var(--led-white);
+}
+
+.sidetab {
+  width: 40px;
+  padding: 16px 8px;
+  background: var(--led-black);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.4);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  cursor: pointer;
+  transition: all var(--transition-brutal);
+}
+
+.sidetab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--led-white);
+}
+
+.sidetab.active {
+  background: var(--led-hot);
+  color: var(--led-white);
+  box-shadow: var(--led-glow-hot);
+}
+
+/* ============================================================================
+   LED Input Fields
+   ============================================================================ */
+
+.input-brutal {
+  width: 100%;
+  background: transparent;
+  border: var(--border-brutal) solid var(--led-white);
+  color: var(--led-white);
+  padding: 16px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all var(--transition-brutal);
+}
+
+.input-brutal::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.input-brutal:focus {
+  outline: none;
+  border-color: var(--led-hot);
+  box-shadow: var(--led-glow-hot);
+}
+
+/* ============================================================================
+   LED Checkbox
+   ============================================================================ */
+
+.checkbox-brutal {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.checkbox-brutal-box {
+  width: 20px;
+  height: 20px;
+  border: var(--border-brutal) solid var(--led-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-brutal);
+}
+
+.checkbox-brutal-box.checked {
+  border-color: var(--led-hot);
+  box-shadow: var(--led-glow-hot);
+}
+
+.checkbox-brutal-box.checked::after {
+  content: '╳';
+  color: var(--led-hot);
+  font-weight: 900;
+}
+
+/* ============================================================================
+   LED Animations
+   ============================================================================ */
+
+@keyframes led-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes led-dot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+@keyframes led-glow-breathe {
+  0%, 100% {
+    box-shadow: var(--led-glow-hot);
+  }
+  50% {
+    box-shadow: var(--led-glow-hot-intense);
+  }
+}
+
+/* Page transition - Wipe */
+@keyframes wipe-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes wipe-out-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.page-enter {
+  animation: wipe-in-right var(--transition-page) forwards;
+}
+
+.page-exit {
+  animation: wipe-out-left var(--transition-page) forwards;
+}
+
+/* ============================================================================
+   Message Bubbles - LED Style
+   ============================================================================ */
+
+.bubble-led-own {
+  background: transparent;
+  border: var(--border-brutal) solid var(--led-hot);
+  color: var(--led-white);
+  padding: 12px 16px;
+  max-width: 70%;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  box-shadow: var(--led-glow-hot);
+}
+
+.bubble-led-other {
+  background: transparent;
+  border: var(--border-brutal) solid var(--led-white);
+  color: var(--led-white);
+  padding: 12px 16px;
+  max-width: 70%;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================================
+   Corner Tear Effect
+   ============================================================================ */
+
+.corner-tear {
+  position: relative;
+  overflow: visible;
+}
+
+.corner-tear::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.1) 50%);
+  cursor: pointer;
+  transition: all var(--transition-brutal);
+}
+
+.corner-tear:hover::after {
+  width: 60px;
+  height: 60px;
+}
+
+/* ============================================================================
+   Utility Classes
+   ============================================================================ */
+
+.led-border-hot {
+  border: var(--border-brutal) solid var(--led-hot);
+  box-shadow: var(--led-glow-hot);
+}
+
+.led-border-live {
+  border: var(--border-brutal) solid var(--led-live);
+  box-shadow: var(--led-glow-live);
+}
+
+.led-border-white {
+  border: var(--border-brutal) solid var(--led-white);
+}
+
+.led-text-glow-hot {
+  text-shadow: 0 0 10px var(--led-hot), 0 0 20px var(--led-hot);
+}
+
+.led-text-glow-live {
+  text-shadow: 0 0 10px var(--led-live), 0 0 20px var(--led-live);
+}
+
+/* No border radius anywhere */
+.brutal-edges,
+.brutal-edges * {
+  border-radius: 0 !important;
+}
+
+/* ============================================================================
+   GRADIENT HOVER EFFECTS
+   ============================================================================ */
+
+/* Base gradient hover - Chrome Red to Gold shift */
+.lux-hover-gradient {
+  background: var(--lux-gradient-hover);
+  background-size: 200% 200%;
+  background-position: 0% 50%;
+  transition: background-position var(--transition-hover);
+}
+
+.lux-hover-gradient:hover {
+  background-position: 100% 50%;
+}
+
+/* Card hover with gradient border */
+.lux-card-hover {
+  position: relative;
+  background: var(--lux-ink);
+  border: var(--border-brutal) solid rgba(250, 250, 250, 0.2);
+  transition: all var(--transition-brutal);
+}
+
+.lux-card-hover::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: var(--lux-gradient-hover);
+  background-size: 200% 200%;
+  opacity: 0;
+  z-index: -1;
+  transition: opacity var(--transition-hover);
+}
+
+.lux-card-hover:hover {
+  border-color: transparent;
+  transform: translateY(-4px);
+}
+
+.lux-card-hover:hover::before {
+  opacity: 1;
+}
+
+/* Interactive button with gradient fill on hover */
+.lux-btn-gradient {
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+  border: var(--border-brutal) solid var(--lux-accent);
+  color: var(--lux-accent);
+  transition: color var(--transition-brutal);
+}
+
+.lux-btn-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--lux-gradient-hover);
+  background-size: 200% 100%;
+  transform: translateX(-100%);
+  transition: transform var(--transition-hover);
+  z-index: -1;
+}
+
+.lux-btn-gradient:hover {
+  color: var(--lux-white);
+}
+
+.lux-btn-gradient:hover::before {
+  transform: translateX(0);
+}
+
+/* Gold CTA button with gradient */
+.lux-btn-gold-gradient {
+  background: var(--lux-gradient-gold);
+  background-size: 100% 200%;
+  background-position: 0% 0%;
+  border: none;
+  color: var(--lux-black);
+  font-weight: 700;
+  transition: background-position var(--transition-hover), box-shadow var(--transition-brutal);
+}
+
+.lux-btn-gold-gradient:hover {
+  background-position: 0% 100%;
+  box-shadow: var(--lux-glow-gold);
+}
+
+/* ============================================================================
+   PAGE TRANSITIONS
+   ============================================================================ */
+
+/* Wipe Right - Default forward navigation */
+@keyframes lux-wipe-right-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes lux-wipe-right-out {
+  from {
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+
+/* Wipe Left - Back navigation */
+@keyframes lux-wipe-left-in {
+  from {
+    clip-path: inset(0 0 0 100%);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes lux-wipe-left-out {
+  from {
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+/* Shutter - For modals/sheets */
+@keyframes lux-shutter-in {
+  from {
+    clip-path: inset(50% 0 50% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes lux-shutter-out {
+  from {
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    clip-path: inset(50% 0 50% 0);
+  }
+}
+
+/* Split - Dramatic reveals (Age Gate, Auth) */
+@keyframes lux-split-in {
+  from {
+    clip-path: polygon(0 50%, 100% 50%, 100% 50%, 0 50%);
+  }
+  to {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+@keyframes lux-split-out {
+  from {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+  to {
+    clip-path: polygon(0 50%, 100% 50%, 100% 50%, 0 50%);
+  }
+}
+
+/* Drop - Globe/Pulse entry */
+@keyframes lux-drop-in {
+  from {
+    clip-path: inset(100% 0 0 0);
+    transform: translateY(-20px);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes lux-drop-out {
+  from {
+    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+  }
+  to {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(20px);
+  }
+}
+
+/* Page transition classes */
+.page-transition-wipe-enter {
+  animation: lux-wipe-right-in var(--transition-page) forwards;
+}
+
+.page-transition-wipe-exit {
+  animation: lux-wipe-right-out var(--transition-page) forwards;
+}
+
+.page-transition-wipe-back-enter {
+  animation: lux-wipe-left-in var(--transition-page) forwards;
+}
+
+.page-transition-wipe-back-exit {
+  animation: lux-wipe-left-out var(--transition-page) forwards;
+}
+
+.page-transition-shutter-enter {
+  animation: lux-shutter-in var(--transition-page) forwards;
+}
+
+.page-transition-shutter-exit {
+  animation: lux-shutter-out var(--transition-page) forwards;
+}
+
+.page-transition-split-enter {
+  animation: lux-split-in var(--transition-page) forwards;
+}
+
+.page-transition-split-exit {
+  animation: lux-split-out var(--transition-page) forwards;
+}
+
+.page-transition-drop-enter {
+  animation: lux-drop-in var(--transition-page) forwards;
+}
+
+.page-transition-drop-exit {
+  animation: lux-drop-out var(--transition-page) forwards;
+}
+
+/* Transition overlay */
+.lux-transition-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--lux-ink);
+  z-index: var(--z-page-transition);
+  pointer-events: none;
+}
+
+/* ============================================================================
+   PROFILE TYPE SPECIFIC STYLES
+   ============================================================================ */
+
+/* Standard Profile (Social) - Chrome Red */
+.profile-standard {
+  --profile-accent: var(--lux-standard);
+  --profile-glow: var(--lux-glow-accent);
+}
+
+.profile-standard .profile-cta {
+  background: var(--lux-standard);
+  color: var(--lux-white);
+}
+
+/* Seller Profile - Gold */
+.profile-seller {
+  --profile-accent: var(--lux-seller);
+  --profile-glow: var(--lux-glow-gold);
+}
+
+.profile-seller .profile-cta {
+  background: var(--lux-seller);
+  color: var(--lux-black);
+}
+
+.profile-seller .profile-badge {
+  background: var(--lux-seller);
+  color: var(--lux-black);
+}
+
+/* Creator Profile - Cyan */
+.profile-creator {
+  --profile-accent: var(--lux-creator);
+  --profile-glow: var(--lux-glow-cyan);
+}
+
+.profile-creator .profile-cta {
+  background: var(--lux-creator);
+  color: var(--lux-black);
+}
+
+/* Organizer Profile - Purple */
+.profile-organizer {
+  --profile-accent: var(--lux-organizer);
+  --profile-glow: var(--lux-glow-purple);
+}
+
+.profile-organizer .profile-cta {
+  background: var(--lux-organizer);
+  color: var(--lux-white);
+}
+
+/* Premium Profile - Gold Gradient */
+.profile-premium {
+  --profile-accent: var(--lux-gold);
+  --profile-glow: var(--lux-glow-gold);
+}
+
+.profile-premium .profile-header {
+  background: var(--lux-gradient-premium);
+}
+
+.profile-premium .profile-badge {
+  background: var(--lux-gradient-premium);
+  color: var(--lux-white);
+}
+
+/* ============================================================================
+   TRUST BADGES
+   ============================================================================ */
+
+.trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: var(--border-brutal) solid currentColor;
+}
+
+.trust-badge-new {
+  color: var(--lux-trust-new);
+  border-color: var(--lux-trust-new);
+}
+
+.trust-badge-bronze {
+  color: var(--lux-trust-bronze);
+  border-color: var(--lux-trust-bronze);
+}
+
+.trust-badge-silver {
+  color: var(--lux-trust-silver);
+  border-color: var(--lux-trust-silver);
+  box-shadow: 0 0 10px rgba(192, 192, 192, 0.3);
+}
+
+.trust-badge-gold {
+  color: var(--lux-trust-gold);
+  border-color: var(--lux-trust-gold);
+  box-shadow: var(--lux-glow-gold);
+}
+
+.trust-badge-diamond {
+  color: var(--lux-trust-diamond);
+  border-color: var(--lux-trust-diamond);
+  box-shadow: 0 0 20px rgba(185, 242, 255, 0.6);
+  background: linear-gradient(135deg, rgba(185, 242, 255, 0.1) 0%, transparent 100%);
+}
+
+/* Verification badge */
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--lux-accent);
+  color: var(--lux-white);
+}
+
+.verified-badge-gold {
+  background: var(--lux-gold);
+  color: var(--lux-black);
+}
+
+/* ============================================================================
+   COMPATIBILITY INDICATORS
+   ============================================================================ */
+
+.compatibility-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: var(--border-brutal) solid;
+}
+
+.compatibility-high {
+  color: var(--lux-compatible);
+  border-color: var(--lux-compatible);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.compatibility-check {
+  color: var(--lux-check);
+  border-color: var(--lux-check);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.compatibility-low {
+  color: var(--lux-incompatible);
+  border-color: var(--lux-incompatible);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Match percentage bar */
+.match-bar {
+  height: 4px;
+  background: rgba(250, 250, 250, 0.1);
+  overflow: hidden;
+}
+
+.match-bar-fill {
+  height: 100%;
+  background: var(--lux-accent);
+  transition: width 0.5s ease;
+}
+
+.match-bar-fill.high {
+  background: var(--lux-compatible);
+}
+
+.match-bar-fill.medium {
+  background: var(--lux-check);
+}
+
+/* ============================================================================
+   DISCOVERY LANES (GHOSTED)
+   ============================================================================ */
+
+.discovery-lane-tabs {
+  display: flex;
+  border-bottom: var(--border-brutal) solid rgba(250, 250, 250, 0.2);
+}
+
+.discovery-lane-tab {
+  flex: 1;
+  padding: 16px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(250, 250, 250, 0.5);
+  background: transparent;
+  border: none;
+  border-bottom: var(--border-brutal) solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-brutal);
+}
+
+.discovery-lane-tab:hover {
+  color: rgba(250, 250, 250, 0.8);
+}
+
+.discovery-lane-tab.active {
+  color: var(--lux-accent);
+  border-bottom-color: var(--lux-accent);
+}
+
+/* Right Now tab with pulse */
+.discovery-lane-tab.right-now {
+  position: relative;
+}
+
+.discovery-lane-tab.right-now::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: var(--lux-live);
+  animation: lux-pulse-glow 2s ease-in-out infinite;
+}
+
+/* ============================================================================
+   GHOSTED BRANDING
+   ============================================================================ */
+
+.ghosted-logo {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-style: italic;
+  font-size: clamp(2rem, 8vw, 6rem);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  color: var(--lux-paper);
+}
+
+.ghosted-tagline {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(250, 250, 250, 0.6);
+}
+
+.ghosted-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  background: transparent;
+  border: var(--border-brutal) solid var(--lux-paper);
+  transition: all var(--transition-brutal);
+}
+
+.ghosted-icon:hover {
+  background: var(--lux-accent);
+  border-color: var(--lux-accent);
+}
+
+/* ============================================================================
+   CAROUSEL STYLES
+   ============================================================================ */
+
+.lux-carousel {
+  position: relative;
+  overflow: hidden;
+}
+
+.lux-carousel-track {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lux-carousel-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+/* Carousel navigation dots */
+.lux-carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+}
+
+.lux-carousel-dot {
+  width: 12px;
+  height: 12px;
+  background: rgba(250, 250, 250, 0.3);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-brutal);
+}
+
+.lux-carousel-dot:hover {
+  background: rgba(250, 250, 250, 0.6);
+}
+
+.lux-carousel-dot.active {
+  background: var(--lux-accent);
+  box-shadow: var(--lux-glow-accent);
+  animation: lux-pulse-glow 2s ease-in-out infinite;
+}
+
+/* Carousel arrows */
+.lux-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--lux-ink);
+  border: var(--border-brutal) solid var(--lux-paper);
+  color: var(--lux-paper);
+  cursor: pointer;
+  transition: all var(--transition-brutal);
+  z-index: 10;
+}
+
+.lux-carousel-arrow:hover {
+  background: var(--lux-accent);
+  border-color: var(--lux-accent);
+}
+
+.lux-carousel-arrow.prev {
+  left: 16px;
+}
+
+.lux-carousel-arrow.next {
+  right: 16px;
+}
+
+/* Gradient fade edges */
+.lux-carousel-fade-left,
+.lux-carousel-fade-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.lux-carousel-fade-left {
+  left: 0;
+  background: linear-gradient(90deg, var(--lux-ink) 0%, transparent 100%);
+}
+
+.lux-carousel-fade-right {
+  right: 0;
+  background: linear-gradient(270deg, var(--lux-ink) 0%, transparent 100%);
+}
+
+/* ============================================================================
+   VIDEO PLAYER STYLES
+   ============================================================================ */
+
+.lux-video-container {
+  position: relative;
+  background: var(--lux-black);
+  overflow: hidden;
+}
+
+.lux-video-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+}
+
+.lux-video-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: var(--border-brutal) solid var(--lux-accent);
+  color: var(--lux-accent);
+  cursor: pointer;
+  transition: all var(--transition-brutal);
+}
+
+.lux-video-btn:hover {
+  background: var(--lux-accent);
+  color: var(--lux-white);
+}
+
+.lux-video-progress {
+  flex: 1;
+  height: 4px;
+  background: rgba(250, 250, 250, 0.3);
+  cursor: pointer;
+}
+
+.lux-video-progress-fill {
+  height: 100%;
+  background: var(--lux-accent);
+}
+
+.lux-video-time {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--lux-paper);
+}
+
+/* Poster gradient overlay */
+.lux-video-poster-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--lux-gradient-spotlight);
+  opacity: 0.6;
+}
+
+/* ============================================================================
+   BANNER STYLES
+   ============================================================================ */
+
+/* Page announcement banner */
+.lux-banner-announcement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 24px;
+  background: var(--lux-accent);
+  color: var(--lux-white);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.lux-banner-announcement-dismiss {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* Hero banner */
+.lux-banner-hero {
+  position: relative;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 48px;
+  background-size: cover;
+  background-position: center;
+}
+
+.lux-banner-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, var(--lux-ink) 0%, transparent 50%);
+}
+
+.lux-banner-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ad banner */
+.lux-banner-ad {
+  position: relative;
+  background: var(--lux-ink);
+  border: var(--border-brutal) solid rgba(250, 250, 250, 0.1);
+}
+
+.lux-banner-ad-label {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(250, 250, 250, 0.5);
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* Promotional banner with countdown */
+.lux-banner-promo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  background: var(--lux-gradient-chrome);
+  border: var(--border-brutal) solid var(--lux-accent);
+}
+
+/* ============================================================================
+   LIVE COUNTER
+   ============================================================================ */
+
+.lux-live-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: var(--border-brutal) solid var(--lux-live);
+  color: var(--lux-live);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: var(--lux-glow-live);
+}
+
+.lux-live-counter-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--lux-live);
+  animation: lux-pulse-glow 1s ease-in-out infinite;
+}
+
+/* ============================================================================
+   COUNTDOWN TIMER
+   ============================================================================ */
+
+.lux-countdown {
+  display: flex;
+  gap: 16px;
+}
+
+.lux-countdown-segment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lux-countdown-value {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--lux-accent);
+}
+
+.lux-countdown-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(250, 250, 250, 0.5);
+}
+
+/* ============================================================================
+   STORY RING
+   ============================================================================ */
+
+.story-ring {
+  position: relative;
+  padding: 3px;
+  background: var(--lux-gradient-premium);
+}
+
+.story-ring-viewed {
+  background: rgba(250, 250, 250, 0.3);
+}
+
+.story-ring-live {
+  background: linear-gradient(45deg, var(--lux-accent), var(--lux-live));
+  animation: lux-pulse-glow 2s ease-in-out infinite;
+}
+
+.story-ring-inner {
+  background: var(--lux-ink);
+  padding: 2px;
+}
+
+/* ============================================================================
+   SCROLL PROGRESS BAR
+   ============================================================================ */
+
+.lux-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(250, 250, 250, 0.1);
+  z-index: var(--z-fixed);
+}
+
+.lux-scroll-progress-fill {
+  height: 100%;
+  background: var(--lux-accent);
+  box-shadow: var(--lux-glow-accent);
+  transform-origin: left;
+}
+
+/* ============================================================================
+   FLOATING ACTION BUTTON
+   ============================================================================ */
+
+.lux-fab {
+  position: fixed;
+  bottom: 100px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--lux-accent);
+  color: var(--lux-white);
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--lux-glow-accent);
+  transition: all var(--transition-brutal);
+  z-index: var(--z-fixed);
+}
+
+.lux-fab:hover {
+  transform: scale(1.1);
+  box-shadow: var(--lux-glow-accent-intense);
+}
+
+.lux-fab.pulsing {
+  animation: lux-pulse-glow 2s ease-in-out infinite;
+}
+
+/* ============================================================================
+   TOAST NOTIFICATIONS
+   ============================================================================ */
+
+.lux-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: var(--lux-ink);
+  border: var(--border-brutal) solid var(--lux-paper);
+  color: var(--lux-paper);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  z-index: var(--z-toast);
+  animation: lux-slide-up 0.3s ease forwards;
+}
+
+.lux-toast-success {
+  border-color: var(--lux-compatible);
+}
+
+.lux-toast-error {
+  border-color: var(--lux-incompatible);
+}
+
+.lux-toast-warning {
+  border-color: var(--lux-check);
+}
+
+@keyframes lux-slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   SKELETON LOADERS
+   ============================================================================ */
+
+.lux-skeleton {
+  background: rgba(250, 250, 250, 0.1);
+  overflow: hidden;
+}
+
+.lux-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(250, 250, 250, 0.1) 50%,
+    transparent 100%
+  );
+  animation: lux-skeleton-shimmer 1.5s infinite;
+}
+
+@keyframes lux-skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ============================================================================
+   SWIPE INDICATORS
+   ============================================================================ */
+
+.swipe-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 16px 24px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 900;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.swipe-indicator.like {
+  right: 24px;
+  color: var(--lux-compatible);
+  border: 3px solid var(--lux-compatible);
+  transform: translateY(-50%) rotate(15deg);
+}
+
+.swipe-indicator.pass {
+  left: 24px;
+  color: var(--lux-incompatible);
+  border: 3px solid var(--lux-incompatible);
+  transform: translateY(-50%) rotate(-15deg);
+}
+
+.swipe-indicator.visible {
+  opacity: 1;
+}
+
+/* ============================================================================
+   FILING TABS (SIDE NAVIGATION)
+   ============================================================================ */
+
+.filing-tabs {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  z-index: var(--z-fixed);
+}
+
+.filing-tab {
+  width: 48px;
+  padding: 24px 8px;
+  background: var(--lux-ink);
+  border: var(--border-brutal) solid rgba(250, 250, 250, 0.2);
+  border-left: none;
+  color: rgba(250, 250, 250, 0.5);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  cursor: pointer;
+  transition: all var(--transition-brutal);
+}
+
+.filing-tab:hover {
+  background: rgba(250, 250, 250, 0.05);
+  color: var(--lux-paper);
+}
+
+.filing-tab.active {
+  background: var(--lux-accent);
+  border-color: var(--lux-accent);
+  color: var(--lux-white);
+  box-shadow: var(--lux-glow-accent);
+}
+
+/* ============================================================================
+   BOTTOM NAVIGATION (MOBILE)
+   ============================================================================ */
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--lux-ink);
+  border-top: var(--border-brutal) solid rgba(250, 250, 250, 0.2);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: var(--z-fixed);
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  color: rgba(250, 250, 250, 0.5);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all var(--transition-brutal);
+}
+
+.bottom-nav-item:hover {
+  color: var(--lux-paper);
+}
+
+.bottom-nav-item.active {
+  color: var(--lux-accent);
+}
+
+.bottom-nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2px;
+  background: var(--lux-accent);
+}
+
+.bottom-nav-item-icon {
+  font-size: 24px;
+}
+
+.bottom-nav-badge {
+  position: absolute;
+  top: 4px;
+  right: calc(50% - 20px);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--lux-accent);
+  color: var(--lux-white);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ============================================================================
+   RESPONSIVE UTILITIES
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .filing-tabs {
+    display: none;
+  }
+  
+  .lux-carousel-arrow {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .lux-banner-hero {
+    min-height: 300px;
+    padding: 24px;
+  }
+  
+  .lux-countdown-value {
+    font-size: 32px;
+  }
+}
+
+@media (min-width: 769px) {
+  .bottom-nav {
+    display: none;
+  }
+}
+
+/* ============================================================================
+   MUSIC PLAYER STYLES (HNHMESS Auto-play)
+   ============================================================================ */
+
+.lux-music-player {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  border: var(--border-brutal) solid rgba(250, 250, 250, 0.2);
+}
+
+.lux-music-player-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lux-music-player-title {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lux-paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lux-music-player-artist {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(250, 250, 250, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.lux-music-waveform {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 24px;
+}
+
+.lux-music-waveform-bar {
+  width: 3px;
+  background: var(--lux-accent);
+  animation: lux-audio-bar 0.8s ease-in-out infinite;
+}
+
+/* ============================================================================
+   AD SLOT PLACEHOLDER
+   ============================================================================ */
+
+.lux-ad-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 90px;
+  background: rgba(250, 250, 250, 0.02);
+  border: 1px dashed rgba(250, 250, 250, 0.1);
+}
+
+.lux-ad-slot::before {
+  content: 'SPONSORED';
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(250, 250, 250, 0.3);
+}
+
+/* Ad sizes */
+.lux-ad-slot-leaderboard {
+  width: 100%;
+  max-width: 728px;
+  height: 90px;
+}
+
+.lux-ad-slot-medium-rect {
+  width: 300px;
+  height: 250px;
+}
+
+.lux-ad-slot-mobile-banner {
+  width: 100%;
+  max-width: 320px;
+  height: 50px;
+}

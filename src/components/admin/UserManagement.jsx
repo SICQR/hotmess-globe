@@ -62,7 +62,7 @@ export default function UserManagement() {
         </div>
         <div className="bg-black border-2 border-white p-6">
           <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">ADMINS</p>
-          <p className="text-4xl font-black text-[#FF1493]">{users.filter(u => u.role === 'admin').length}</p>
+          <p className="text-4xl font-black text-[#E62020]">{users.filter(u => u.role === 'admin').length}</p>
         </div>
         <div className="bg-black border-2 border-red-600 p-6">
           <p className="text-[10px] text-red-400 uppercase tracking-widest mb-2">BANNED</p>
@@ -104,7 +104,7 @@ export default function UserManagement() {
               className="p-4 grid grid-cols-12 gap-4 items-center hover:bg-white/5 transition-colors"
             >
               <div className="col-span-3 flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center border-2 border-white">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#E62020] to-[#B026FF] flex items-center justify-center border-2 border-white">
                   {user.avatar_url ? (
                     <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (

@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/components/utils/supabaseClient';
-import logger from '@/utils/logger';
+import { logger } from '@/utils/logger';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 
 const AuthContext = createContext();
@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [authError, setAuthError] = useState(null);
+  const [needsUsernameSetup, setNeedsUsernameSetup] = useState(false);
   const mergedGuestCartRef = React.useRef(false);
 
   useEffect(() => {
@@ -51,6 +52,14 @@ export const AuthProvider = ({ children }) => {
       const currentUser = await base44.auth.me();
       setUser(currentUser || null);
       setIsAuthenticated(!!currentUser);
+      
+      // Check if user needs to set username (privacy requirement)
+      // Users without a username or with username_required flag need to set one
+      const needsUsername = currentUser && (
+        !currentUser.username || 
+        currentUser.username_required === true
+      );
+      setNeedsUsernameSetup(needsUsername);
 
       // Best-effort: if the user logs in while holding a creators guest cart,
       // merge it into the DB cart once per session.
@@ -101,6 +110,7 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated, 
       isLoadingAuth,
       authError,
+      needsUsernameSetup,
       logout,
       navigateToLogin,
       checkAppState
@@ -127,6 +137,7 @@ export const useAuth = () => {
       isAuthenticated: false,
       isLoadingAuth: false,
       authError: { type: 'auth_required', message: 'Authentication required' },
+      needsUsernameSetup: false,
       logout: () => base44.auth.logout(),
       navigateToLogin: () => base44.auth.redirectToLogin(window.location.href),
       checkAppState: async () => {},

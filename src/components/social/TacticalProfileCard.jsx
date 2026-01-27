@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { Zap, Flame, Users, Music } from 'lucide-react';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
+import { useReducedMotion } from '@/components/accessibility/SkipToContent';
 
 const getUserPhotoUrls = (user) => {
   const urls = [];
@@ -28,6 +29,7 @@ const getUserPhotoUrls = (user) => {
 export default function TacticalProfileCard({ user, delay = 0, hotScore = 0 }) {
   const level = Math.floor((user.xp || 0) / 1000) + 1;
   const isHot = hotScore > 50;
+  const prefersReducedMotion = useReducedMotion();
 
   const photoUrls = getUserPhotoUrls(user);
   const primaryPhotoUrl = photoUrls[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || 'User')}&size=400&background=FF1493&color=000`;
@@ -45,14 +47,17 @@ export default function TacticalProfileCard({ user, delay = 0, hotScore = 0 }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
+      transition={prefersReducedMotion ? { duration: 0 } : { delay }}
       className="group"
     >
-      <Link to={createPageUrl(`Profile?email=${user.email}`)}>
+      <Link 
+        to={createPageUrl(`Profile?email=${user.email}`)}
+        aria-label={`View ${user.full_name}'s profile${isHot ? ' - Trending' : ''}`}
+      >
         <OSCard 
-          className={isHot ? 'animate-pulse border-[#FF1493]' : ''}
+          className={isHot && !prefersReducedMotion ? 'animate-pulse border-[#E62020]' : isHot ? 'border-[#E62020]' : ''}
           hoverGlow={true}
         >
           {/* Grayscale Profile Photo */}
@@ -73,27 +78,29 @@ export default function TacticalProfileCard({ user, delay = 0, hotScore = 0 }) {
             {/* Intent Icon - Bottom Left with Pulse */}
             {user.current_intent && (
               <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                className="absolute bottom-3 left-3 w-10 h-10 bg-[#FF1493] flex items-center justify-center text-black border-2 border-white"
+                animate={prefersReducedMotion ? {} : { scale: [1, 1.1, 1] }}
+                transition={prefersReducedMotion ? { duration: 0 } : { repeat: Infinity, duration: 2 }}
+                className="absolute bottom-3 left-3 w-10 h-10 bg-[#E62020] flex items-center justify-center text-black border-2 border-white"
+                aria-label={`Current intent: ${user.current_intent}`}
               >
-                {getIntentIcon()}
+                <span aria-hidden="true">{getIntentIcon()}</span>
               </motion.div>
             )}
 
             {/* Hot Score Indicator */}
             {isHot && (
               <motion.div
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-                className="absolute inset-0 border-4 border-[#FF1493] pointer-events-none"
+                animate={prefersReducedMotion ? {} : { opacity: [0.5, 1, 0.5] }}
+                transition={prefersReducedMotion ? { duration: 0 } : { repeat: Infinity, duration: 1.5 }}
+                className="absolute inset-0 border-4 border-[#E62020] pointer-events-none"
+                aria-hidden="true"
               />
             )}
           </div>
 
           {/* Profile Info */}
           <div className="p-4 space-y-2">
-            <h3 className="font-black text-lg truncate group-hover:text-[#FF1493] transition-colors">
+            <h3 className="font-black text-lg truncate group-hover:text-[#E62020] transition-colors">
               {user.full_name}
             </h3>
             
@@ -106,18 +113,18 @@ export default function TacticalProfileCard({ user, delay = 0, hotScore = 0 }) {
             {/* Stats Row */}
             <div className="flex items-center gap-3 text-xs">
               <div className="flex items-center gap-1">
-                <Zap className="w-3 h-3 text-[#FFEB3B]" />
-                <span className="text-white/80">{user.xp || 0}</span>
+                <Zap className="w-3 h-3 text-[#FFEB3B]" aria-hidden="true" />
+                <span className="text-white/80" aria-label={`${user.xp || 0} experience points`}>{user.xp || 0}</span>
               </div>
               {user.preferred_vibes && user.preferred_vibes.length > 0 && (
-                <span className="text-[#FF1493]">{user.preferred_vibes[0]}</span>
+                <span className="text-[#E62020]">{user.preferred_vibes[0]}</span>
               )}
             </div>
 
             {/* Heat Score Debug */}
             {hotScore > 0 && (
-              <div className="text-[10px] text-white/40 font-mono">
-                🔥 {hotScore} views
+              <div className="text-[10px] text-white/60 font-mono" aria-label={`${hotScore} profile views`}>
+                <span aria-hidden="true">🔥</span> {hotScore} views
               </div>
             )}
           </div>

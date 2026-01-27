@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/components/utils/supabaseClient';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
-import { Users, Zap, Filter, Grid3x3 } from 'lucide-react';
+import { Users, Zap, Filter, Grid3x3, Navigation } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
+import { SmartTravelSelector } from '@/components/travel/SmartTravelSelector';
+import { Button } from '@/components/ui/button';
 
 export default function NearbyGrid({ userLocation }) {
   const [distanceFilter, setDistanceFilter] = useState(10); // km
   const [showGrid, setShowGrid] = useState(true);
+  const [expandedTravelUser, setExpandedTravelUser] = useState(null);
+  const navigate = useNavigate();
 
   const haversineMeters = (a, b) => {
     if (!a || !b) return Infinity;
@@ -121,18 +126,34 @@ export default function NearbyGrid({ userLocation }) {
     return `${Math.floor(seconds / 86400)}d ago`;
   };
 
+  const openDirections = useCallback((user, mode = 'foot') => {
+    const lat = user?.last_lat ?? user?.geoLat;
+    const lng = user?.last_lng ?? user?.geoLng;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    const qs = new URLSearchParams();
+    qs.set('lat', String(lat));
+    qs.set('lng', String(lng));
+    qs.set('label', user?.full_name || 'User');
+    qs.set('mode', mode);
+    navigate(`/directions?${qs.toString()}`);
+  }, [navigate]);
+
+  const toggleTravelPanel = useCallback((userId) => {
+    setExpandedTravelUser(prev => prev === userId ? null : userId);
+  }, []);
+
   return (
     <div className="h-full flex flex-col bg-black">
       {/* Header */}
       <div className="p-4 border-b-2 border-white/10">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Grid3x3 className="w-5 h-5 text-[#FF1493]" />
+            <Grid3x3 className="w-5 h-5 text-[#E62020]" />
             <h2 className="text-lg font-black uppercase">NEARBY</h2>
           </div>
           <button
             onClick={() => setShowGrid(!showGrid)}
-            className="px-3 py-1 bg-[#FF1493] text-black text-xs font-black uppercase border-2 border-white"
+            className="px-3 py-1 bg-[#E62020] text-black text-xs font-black uppercase border-2 border-white"
           >
             {showGrid ? 'LIST' : 'GRID'}
           </button>
@@ -145,7 +166,7 @@ export default function NearbyGrid({ userLocation }) {
               <Filter className="w-3 h-3" />
               <span className="font-mono uppercase">Within {distanceFilter}km</span>
             </div>
-            <span className="text-[#FF1493] font-bold">
+            <span className="text-[#E62020] font-bold">
               {activeUsers.length} online
               {activeUsers.length >= MAX_DISPLAYED_USERS && '+'}
             </span>
@@ -156,7 +177,7 @@ export default function NearbyGrid({ userLocation }) {
             max="50"
             value={distanceFilter}
             onChange={(e) => setDistanceFilter(parseInt(e.target.value))}
-            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#FF1493]"
+            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#E62020]"
           />
         </div>
       </div>
@@ -181,7 +202,7 @@ export default function NearbyGrid({ userLocation }) {
           </div>
         ) : activeUsers.length > 0 ? (
           <div className={showGrid 
-            ? "grid grid-cols-2 gap-3" 
+            ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" 
             : "space-y-3"
           }>
             {activeUsers.map((user, idx) => (
@@ -192,7 +213,7 @@ export default function NearbyGrid({ userLocation }) {
                 transition={{ delay: idx * 0.02 }}
               >
                 <Link to={createPageUrl(`Profile?email=${user.email}`)}>
-                  <div className="bg-black border-2 border-white hover:border-[#FF1493] transition-all group overflow-hidden">
+                  <div className="bg-black border-2 border-white hover:border-[#E62020] transition-all group overflow-hidden">
                     {/* Profile Image */}
                     <div className="aspect-square relative overflow-hidden">
                       <img
@@ -204,13 +225,13 @@ export default function NearbyGrid({ userLocation }) {
                       {/* Online Indicator */}
                       <div className="absolute top-2 right-2">
                         <div className={`w-3 h-3 rounded-full border-2 border-white animate-pulse ${
-                          user.rightNowStatus ? 'bg-[#FF1493]' : 'bg-[#00D9FF]'
+                          user.rightNowStatus ? 'bg-[#E62020]' : 'bg-[#00D9FF]'
                         }`} />
                       </div>
                       
                       {/* Right Now Badge */}
                       {user.rightNowStatus && (
-                        <div className="absolute top-2 left-2 px-2 py-1 bg-[#FF1493] text-black text-[9px] font-black uppercase flex items-center gap-1 border-2 border-white">
+                        <div className="absolute top-2 left-2 px-2 py-1 bg-[#E62020] text-black text-[9px] font-black uppercase flex items-center gap-1 border-2 border-white">
                           <Zap className="w-2.5 h-2.5" />
                           RIGHT NOW
                         </div>
@@ -231,7 +252,7 @@ export default function NearbyGrid({ userLocation }) {
                     {/* User Info */}
                     <div className="p-3 space-y-1">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-black text-sm truncate group-hover:text-[#FF1493] transition-colors">
+                        <h3 className="font-black text-sm truncate group-hover:text-[#E62020] transition-colors">
                           {user.full_name || user.email}
                         </h3>
                         <span className="text-[10px] text-white/40 font-mono whitespace-nowrap">
@@ -252,7 +273,7 @@ export default function NearbyGrid({ userLocation }) {
                           <span className="text-white/80 font-mono">{user.xp || 0}</span>
                         </div>
                         {user.preferred_vibes && user.preferred_vibes[0] && (
-                          <span className="px-1.5 py-0.5 bg-[#FF1493]/20 border border-[#FF1493] text-[#FF1493] uppercase font-bold">
+                          <span className="px-1.5 py-0.5 bg-[#E62020]/20 border border-[#E62020] text-[#E62020] uppercase font-bold">
                             {user.preferred_vibes[0]}
                           </span>
                         )}
@@ -262,7 +283,7 @@ export default function NearbyGrid({ userLocation }) {
                       {user.rightNowStatus?.logistics && user.rightNowStatus.logistics.length > 0 && (
                         <div className="flex gap-1 flex-wrap">
                           {user.rightNowStatus.logistics.map(log => (
-                            <span key={log} className="text-[9px] px-1.5 py-0.5 bg-[#FF1493]/20 border border-[#FF1493]/40 text-[#FF1493] uppercase font-mono">
+                            <span key={log} className="text-[9px] px-1.5 py-0.5 bg-[#E62020]/20 border border-[#E62020]/40 text-[#E62020] uppercase font-mono">
                               {log.replace('_', ' ')}
                             </span>
                           ))}
@@ -275,7 +296,55 @@ export default function NearbyGrid({ userLocation }) {
                           {user.availability_status || 'nearby'}
                         </div>
                       )}
+
+                      {/* Travel Button */}
+                      <Button
+                        size="xs"
+                        variant="glass"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleTravelPanel(user.email || user.auth_user_id);
+                        }}
+                        className="w-full mt-2 min-h-[36px] text-xs border-white/20 hover:border-[#E62020]"
+                      >
+                        <Navigation className="w-3 h-3 mr-1.5" />
+                        Get There
+                      </Button>
                     </div>
+
+                    {/* Expanded Travel Selector */}
+                    <AnimatePresence>
+                      {expandedTravelUser === (user.email || user.auth_user_id) && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                          onClick={(e) => e.preventDefault()}
+                        >
+                          <div className="p-3 border-t-2 border-white/10">
+                            <SmartTravelSelector
+                              destination={{
+                                lat: user.last_lat ?? user.geoLat,
+                                lng: user.last_lng ?? user.geoLng,
+                                name: user.full_name || 'User',
+                              }}
+                              origin={userLocation}
+                              travelTimes={Number.isFinite(user.etaSeconds) ? {
+                                walking: { mode: 'walk', durationSeconds: user.etaSeconds, label: `${Math.max(1, Math.round(user.etaSeconds / 60))}m` },
+                              } : undefined}
+                              onNavigate={(mode) => {
+                                const modeMap = { walk: 'foot', bike: 'bike', drive: 'cab', transit: 'transit' };
+                                openDirections(user, modeMap[mode] || mode);
+                              }}
+                              compact
+                              className="w-full"
+                            />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </Link>
               </motion.div>

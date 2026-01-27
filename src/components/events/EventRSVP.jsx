@@ -104,7 +104,7 @@ export default function EventRSVP({ event, currentUser }) {
           variant="outline"
           className={`flex-1 font-black uppercase ${
             myRsvp?.status === 'interested'
-              ? 'bg-[#FF1493] border-[#FF1493] text-black hover:bg-[#FF1493]/90'
+              ? 'bg-[#E62020] border-[#E62020] text-black hover:bg-[#E62020]/90'
               : 'border-white/20 text-white hover:bg-white/10'
           }`}
         >
@@ -130,7 +130,7 @@ export default function EventRSVP({ event, currentUser }) {
             <span className="text-white/80">{goingCount} going</span>
           </div>
           <div className="flex items-center gap-2">
-            <Star className="w-4 h-4 text-[#FF1493]" />
+            <Star className="w-4 h-4 text-[#E62020]" />
             <span className="text-white/80">{interestedCount} interested</span>
           </div>
         </div>

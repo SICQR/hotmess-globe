@@ -189,6 +189,59 @@ There is a focused Playwright smoke test for the core member loop: Auth → Soci
 - **React Leaflet** - Interactive maps
 - **Mapbox GL** - Advanced map visualization
 
+## 🗄️ Database
+
+**Supabase (PostgreSQL)** with comprehensive schema and security
+
+### Database Status
+
+- ✅ **48 migrations** properly organized and ready for production
+- ✅ **60+ tables** covering all features (users, events, marketplace, social, messaging)
+- ✅ **Row Level Security (RLS)** enabled on all tables with production-ready policies
+- ✅ **Real-time subscriptions** for live updates (Globe view, messaging, notifications)
+- ✅ **Storage buckets** configured for user uploads
+
+### Quick Start
+
+```bash
+# Run database verification
+node scripts/verify-database.js
+
+# Test database connection
+node scripts/test-database-connection.js
+
+# Audit RLS policies (run in Supabase SQL Editor)
+# Copy contents of scripts/audit-rls-policies.sql
+```
+
+### Database Documentation
+
+- 📚 [**DATABASE.md**](./DATABASE.md) - Complete schema documentation and table reference
+- 🔒 [**RLS_POLICY_ANALYSIS.md**](./RLS_POLICY_ANALYSIS.md) - Security policy audit and recommendations
+- 📋 [**DATABASE_AUDIT_REPORT.md**](./DATABASE_AUDIT_REPORT.md) - Migration status and verification
+- 🚀 [**MIGRATION_GUIDE.md**](./MIGRATION_GUIDE.md) - Step-by-step migration procedures
+- 🔍 [**scripts/verify-database.js**](./scripts/verify-database.js) - Automated verification
+- 🛡️ [**scripts/audit-rls-policies.sql**](./scripts/audit-rls-policies.sql) - SQL security audit
+
+### Key Features
+
+- **Party-only access** for financial data (orders accessible by buyer OR seller only)
+- **Participant-only access** for messaging (thread participants only)
+- **Owner-only access** for private data (cart, notifications, privacy settings)
+- **Authenticated discovery** for social features (intentionally public for user discovery)
+- **Real-time publications** enabled for live Globe updates and presence tracking
+
+### Migration Status
+
+All migrations are in `supabase/migrations/` directory and properly ordered:
+
+- **Phase 1** (2026-01-03): Foundation tables (User, Beacon, EventRSVP)
+- **Phase 2** (2026-01-04): Core features (marketplace, social, messaging)
+- **Phase 3** (2026-01-05 to 2026-01-07): Refinements and extensions
+- **Phase 4** (2026-01-08 to 2026-01-26): Advanced features and security hardening
+
+**Latest security update**: `20260126100000_tighten_rls_policies.sql` - Hardened messaging, notifications, and sensitive table policies.
+
 ## 📖 Documentation
 
 - [**Getting Started Guide**](#-getting-started) - Quick start instructions
@@ -196,6 +249,12 @@ There is a focused Playwright smoke test for the core member loop: Auth → Soci
 - [**Test Setup**](./TEST_SETUP.md) - Testing infrastructure and guidelines
 - [**Hyper Analysis Report**](./HYPER-ANALYSIS-REPORT.md) - Comprehensive codebase analysis
 - [**Issues Tracker**](./ISSUES-TRACKER.md) - Prioritized issues and sprint planning
+
+### Database Documentation
+- [**DATABASE.md**](./DATABASE.md) - Complete database schema and table documentation
+- [**RLS_POLICY_ANALYSIS.md**](./RLS_POLICY_ANALYSIS.md) - Row Level Security audit and analysis
+- [**DATABASE_AUDIT_REPORT.md**](./DATABASE_AUDIT_REPORT.md) - Migration audit and status report
+- [**MIGRATION_GUIDE.md**](./MIGRATION_GUIDE.md) - Database migration procedures
 
 ## 🏛️ Project Structure
 

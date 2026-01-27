@@ -37,7 +37,7 @@ export default function QRCodeGenerator({ orderId, size = 200 }) {
 
     // Add corner markers
     const markerSize = cellSize * 7;
-    ctx.fillStyle = '#FF1493';
+    ctx.fillStyle = '#E62020';
     
     // Top-left
     ctx.fillRect(0, 0, markerSize, cellSize);
@@ -70,7 +70,7 @@ export default function QRCodeGenerator({ orderId, size = 200 }) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="bg-white p-4 border-4 border-[#FF1493]">
+      <div className="bg-white p-4 border-4 border-[#E62020]">
         <canvas ref={canvasRef} className="block" />
       </div>
       <div className="text-center">

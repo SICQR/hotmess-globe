@@ -9,13 +9,36 @@
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(self), geolocation=(self), microphone=()" },
+        { "key": "Permissions-Policy", "value": "camera=(self), geolocation=(self), microphone=(), payment=(self), usb=()" },
         { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
+        { "key": "X-DNS-Prefetch-Control", "value": "on" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://*.stripe.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://w.soundcloud.com https://vercel.live; script-src-elem 'self' 'unsafe-inline' https://js.stripe.com https://w.soundcloud.com https://vercel.live; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.soundcloud.com https://w.soundcloud.com https://*.stripe.com https://vercel.live wss://vercel.live; frame-src https://w.soundcloud.com https://js.stripe.com https://hooks.stripe.com; media-src 'self' https: blob:"
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://*.stripe.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://w.soundcloud.com https://vercel.live https://www.googletagmanager.com; script-src-elem 'self' 'unsafe-inline' https://js.stripe.com https://w.soundcloud.com https://vercel.live https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.soundcloud.com https://w.soundcloud.com https://*.stripe.com https://vercel.live wss://vercel.live https://www.google-analytics.com https://api.mixpanel.com https://api2.amplitude.com; frame-src https://w.soundcloud.com https://js.stripe.com https://hooks.stripe.com; media-src 'self' https: blob:; worker-src 'self' blob:"
         }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate" },
+        { "key": "Pragma", "value": "no-cache" },
+        { "key": "Expires", "value": "0" }
+      ]
+    },
+    {
+      "source": "/service-worker.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
       ]
     }
   ],
@@ -35,11 +58,53 @@
     {
       "path": "/api/admin/cleanup/rate-limits",
       "schedule": "20 4 * * *"
+    },
+    {
+      "path": "/api/cron/deactivate-expired-profiles",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/profile-views-digest",
+      "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/reactivation",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/streak-reminder",
+      "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/cron/persona-prompts",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/match-alerts",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/process-payouts",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/release-escrow",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/ticket-escrow-release",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/scrape-events",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-soundcloud-token",
+      "schedule": "0 */6 * * *"
     }
   ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

@@ -80,7 +80,7 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-[#FFD700]/20 to-[#FF1493]/20 border-2 border-[#FFD700] p-6"
+      className="bg-gradient-to-br from-[#FFD700]/20 to-[#E62020]/20 border-2 border-[#FFD700] p-6"
     >
       <div className="flex items-center gap-3 mb-4">
         <Crown className="w-6 h-6 text-[#FFD700]" />

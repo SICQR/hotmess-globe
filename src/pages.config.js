@@ -1,12 +1,14 @@
 import AccountConsents from './pages/AccountConsents';
 import AccountDeletion from './pages/AccountDeletion';
 import AdminDashboard from './pages/AdminDashboard';
+import BusinessAdvertising from './pages/biz/BusinessAdvertising';
 import BusinessAnalytics from './pages/biz/BusinessAnalytics';
 import BusinessDashboard from './pages/biz/BusinessDashboard';
 import BusinessOnboarding from './pages/biz/BusinessOnboarding';
 import AgeGate from './pages/AgeGate';
 import CommunityGuidelines from './pages/CommunityGuidelines';
 import Contact from './pages/Contact';
+import DesignSystem from './pages/DesignSystem';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import Auth from './pages/Auth';
@@ -44,27 +46,29 @@ import MusicRelease from './pages/MusicRelease';
 import MyEvents from './pages/MyEvents';
 import Onboarding from './pages/Onboarding';
 import OnboardingGate from './pages/OnboardingGate';
+import PersonaManagement from './pages/PersonaManagement';
 import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
+import OrganizerAnalyticsDashboard from './pages/OrganizerAnalyticsDashboard';
 import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
 import ProfilesGrid from './pages/ProfilesGrid';
-import ProfileSetup from './pages/ProfileSetup';
 import PromoteToAdmin from './pages/PromoteToAdmin';
-import Pulse from './pages/Pulse';
 import Radio from './pages/Radio';
 import RadioSchedule from './pages/RadioSchedule';
-import RecordManager from './pages/RecordManager';
+import RadioShow from './pages/RadioShow';
 import ReactBitsProfileCardDemo from './pages/ReactBitsProfileCardDemo';
 import RightNowDashboard from './pages/RightNowDashboard';
 import Safety from './pages/Safety';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
+import SellerOnboarding from './pages/SellerOnboarding';
 import Settings from './pages/Settings';
 import Social from './pages/Social';
 import SquadChat from './pages/SquadChat';
 import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
+import TicketReseller from './pages/TicketReseller';
 import WakeTheMess from './pages/WakeTheMess';
 import __Layout from './Layout.jsx';
 
@@ -78,6 +82,7 @@ export const PAGES = {
     "BeaconDetail": BeaconDetail,
     "Beacons": Beacons,
     "Bookmarks": Bookmarks,
+    "BusinessAdvertising": BusinessAdvertising,
     "BusinessAnalytics": BusinessAnalytics,
     "BusinessDashboard": BusinessDashboard,
     "BusinessOnboarding": BusinessOnboarding,
@@ -92,6 +97,7 @@ export const PAGES = {
     "Contact": Contact,
     "CreateBeacon": CreateBeacon,
     "DataExport": DataExport,
+    "DesignSystem": DesignSystem,
     "DialADaddy": DialADaddy,
     "Directions": Directions,
     "EditBeacon": EditBeacon,
@@ -116,26 +122,29 @@ export const PAGES = {
     "OnboardingGate": OnboardingGate,
     "OrderHistory": OrderHistory,
     "OrganizerDashboard": OrganizerDashboard,
+    "OrganizerAnalyticsDashboard": OrganizerAnalyticsDashboard,
+    "PersonaManagement": PersonaManagement,
     "ProductDetail": ProductDetail,
     "Profile": Profile,
     "ProfilesGrid": ProfilesGrid,
-    "ProfileSetup": ProfileSetup,
     "PromoteToAdmin": PromoteToAdmin,
-    "Pulse": Pulse,
+    "Pulse": Globe,
     "Radio": Radio,
     "RadioSchedule": RadioSchedule,
-    "RecordManager": RecordManager,
+    "RadioShow": RadioShow,
     "ReactBitsProfileCardDemo": ReactBitsProfileCardDemo,
     "RightNowDashboard": RightNowDashboard,
     "Safety": Safety,
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
+    "SellerOnboarding": SellerOnboarding,
     "Settings": Settings,
     "Social": Social,
     "SquadChat": SquadChat,
     "Stats": Stats,
     "TermsOfService": TermsOfService,
     "TicketMarketplace": TicketMarketplace,
+    "TicketReseller": TicketReseller,
     "WakeTheMess": WakeTheMess,
 }
 

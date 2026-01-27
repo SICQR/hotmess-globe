@@ -287,7 +287,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
       <DialogContent className="bg-black border-2 border-white text-white max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Search Header */}
         <div className="flex items-center gap-3 mb-4">
-          <Search className="w-6 h-6 text-[#FF1493]" />
+          <Search className="w-6 h-6 text-[#E62020]" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -302,21 +302,21 @@ export default function GlobalSearch({ isOpen, onClose }) {
           />
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-[#FF1493] text-black' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
+            className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-[#E62020] text-black' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
           >
             <Sliders className="w-5 h-5" />
           </button>
           {query && !isSearchSaved && (
             <button 
               onClick={saveSearch}
-              className="p-2 text-white/60 hover:text-[#FF1493] transition-colors"
+              className="p-2 text-white/60 hover:text-[#E62020] transition-colors"
               title="Save search"
             >
               <Star className="w-5 h-5" />
             </button>
           )}
           {isSearchSaved && (
-            <Star className="w-5 h-5 text-[#FF1493] fill-[#FF1493]" />
+            <Star className="w-5 h-5 text-[#E62020] fill-[#E62020]" />
           )}
           <button onClick={onClose} className="text-white/60 hover:text-white">
             <X className="w-6 h-6" />
@@ -420,7 +420,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
               {savedSearches.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <Star className="w-4 h-4 text-[#FF1493]" />
+                    <Star className="w-4 h-4 text-[#E62020]" />
                     <h3 className="text-xs uppercase tracking-wider text-white/40">Saved Searches</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -431,9 +431,9 @@ export default function GlobalSearch({ isOpen, onClose }) {
                           setQuery(search.query);
                           if (search.filters) setFilters(search.filters);
                         }}
-                        className="px-3 py-1.5 bg-[#FF1493]/10 hover:bg-[#FF1493]/20 border border-[#FF1493]/40 rounded-full text-sm transition-colors flex items-center gap-2"
+                        className="px-3 py-1.5 bg-[#E62020]/10 hover:bg-[#E62020]/20 border border-[#E62020]/40 rounded-full text-sm transition-colors flex items-center gap-2"
                       >
-                        <Star className="w-3 h-3 text-[#FF1493]" />
+                        <Star className="w-3 h-3 text-[#E62020]" />
                         {search.query}
                       </button>
                     ))}
@@ -496,7 +496,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
 
           {(isLoading || isSearching) && query && (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 text-[#FF1493] animate-spin" />
+              <Loader2 className="w-6 h-6 text-[#E62020] animate-spin" />
               <span className="ml-2 text-white/40">Searching...</span>
             </div>
           )}
@@ -519,7 +519,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
                     }}
                     className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
                   >
-                    <User className="w-5 h-5 text-[#FF1493]" />
+                    <User className="w-5 h-5 text-[#E62020]" />
                     <div>
                       <div className="font-bold">{user.full_name}</div>
                       <div className="text-xs text-white/60">{user.email}</div>

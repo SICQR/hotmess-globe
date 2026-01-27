@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44, supabase } from '@/api/base44Client';
-import { Bell, Check, Trash2, MessageCircle, Package, Heart, Flag, MapPin, Shield } from 'lucide-react';
+import { 
+  Bell, Check, Trash2, MessageCircle, Package, Heart, Flag, MapPin, Shield,
+  Ticket, ShieldCheck, Globe, Megaphone, DollarSign, AlertTriangle, 
+  CheckCircle, XCircle, Clock, Star, Crown, Sparkles
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -11,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const NOTIFICATION_ICONS = {
+  // Original types
   order: Package,
   message: MessageCircle,
   post_like: Heart,
@@ -20,6 +25,44 @@ const NOTIFICATION_ICONS = {
   flagged_post: Flag,
   event_reminder: MapPin,
   admin_alert: Shield,
+  
+  // Ticket verification types
+  ticket_verified: ShieldCheck,
+  ticket_rejected: XCircle,
+  ticket_pending: Clock,
+  ticket_sold: Ticket,
+  ticket_purchased: Ticket,
+  ticket_transfer: Ticket,
+  ticket_dispute: AlertTriangle,
+  verification_request: ShieldCheck,
+  
+  // Business advertising types
+  ad_approved: CheckCircle,
+  ad_live: Globe,
+  ad_expiring: Clock,
+  ad_expired: XCircle,
+  ad_performance: Megaphone,
+  campaign_milestone: Star,
+  
+  // Seller types
+  seller_verified: Crown,
+  seller_payout: DollarSign,
+  seller_review: Star,
+  
+  // General promotional
+  promo: Sparkles,
+  feature_unlock: Sparkles,
+};
+
+// Notification color mapping
+const NOTIFICATION_COLORS = {
+  ticket_verified: 'bg-green-500',
+  ticket_rejected: 'bg-red-500',
+  ticket_sold: 'bg-[#39FF14]',
+  ad_approved: 'bg-[#39FF14]',
+  ad_live: 'bg-[#E62020]',
+  seller_payout: 'bg-[#FFEB3B]',
+  default: 'bg-[#E62020]'
 };
 
 export default function NotificationCenter({ currentUser }) {
@@ -43,57 +86,89 @@ export default function NotificationCenter({ currentUser }) {
     refetchInterval: 60000, // Fallback poll every 60 seconds (reduced since we have real-time)
   });
 
-  // Set up real-time subscription for notifications
+  // Set up real-time subscription for notifications with reconnection logic
   useEffect(() => {
     if (!currentUser?.email) return;
 
-    // Subscribe to notifications table for real-time updates
-    const channel = supabase
-      .channel('notifications-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_email=eq.${currentUser.email}`,
-        },
-        (payload) => {
-          console.log('[NotificationCenter] New notification:', payload);
-          // Invalidate queries to refetch notifications
-          queryClient.invalidateQueries(['notifications']);
-          
-          // Show toast for new notification
-          const newNotif = payload.new;
-          if (newNotif?.title) {
-            toast(newNotif.title, {
-              description: newNotif.message,
-              action: newNotif.link ? {
-                label: 'View',
-                onClick: () => navigate(createPageUrl(newNotif.link)),
-              } : undefined,
-            });
-          }
-          
-          // Trigger browser notification if permission granted
-          if (Notification.permission === 'granted' && !document.hasFocus()) {
-            new Notification(newNotif?.title || 'New notification', {
-              body: newNotif?.message || 'You have a new notification',
-              icon: '/favicon.svg',
-              tag: `notification-${newNotif?.id}`,
-            });
-          }
+    let reconnectTimeout = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECTS = 5;
+
+    const handleNewNotification = (payload) => {
+      // Invalidate queries to refetch notifications
+      queryClient.invalidateQueries(['notifications']);
+      
+      // Show toast for new notification
+      const newNotif = payload.new;
+      if (newNotif?.title) {
+        toast(newNotif.title, {
+          description: newNotif.message,
+          action: newNotif.link ? {
+            label: 'View',
+            onClick: () => navigate(createPageUrl(newNotif.link)),
+          } : undefined,
+        });
+      }
+      
+      // Trigger browser notification if permission granted
+      try {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && !document.hasFocus()) {
+          new Notification(newNotif?.title || 'New notification', {
+            body: newNotif?.message || 'You have a new notification',
+            icon: '/favicon.svg',
+            tag: `notification-${newNotif?.id}`,
+          });
         }
-      )
-      .subscribe((status) => {
-        console.log('[NotificationCenter] Subscription status:', status);
-      });
+      } catch (e) {
+        // Browser notification may not be available in all contexts
+        console.warn('[NotificationCenter] Browser notification failed:', e);
+      }
+    };
+
+    const setupChannel = () => {
+      const channel = supabase
+        .channel('notifications-realtime', {
+          config: { broadcast: { self: true } }
+        })
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_email=eq.${currentUser.email}`,
+          },
+          handleNewNotification
+        )
+        .subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') {
+            reconnectAttempts = 0;
+          } else if (status === 'CHANNEL_ERROR') {
+            if (reconnectAttempts < MAX_RECONNECTS) {
+              const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+              reconnectAttempts++;
+              reconnectTimeout = setTimeout(() => {
+                try {
+                  supabase.removeChannel(channel);
+                } catch (e) { /* ignore */ }
+                setupChannel();
+              }, delay);
+            }
+          }
+        });
+
+      return channel;
+    };
+
+    const channel = setupChannel();
 
     // Also subscribe for admin notifications if user is admin
-    let adminChannel;
+    let adminChannel = null;
     if (currentUser?.role === 'admin') {
       adminChannel = supabase
-        .channel('notifications-admin-realtime')
+        .channel('notifications-admin-realtime', {
+          config: { broadcast: { self: true } }
+        })
         .on(
           'postgres_changes',
           {
@@ -103,7 +178,6 @@ export default function NotificationCenter({ currentUser }) {
             filter: 'user_email=eq.admin',
           },
           (payload) => {
-            console.log('[NotificationCenter] New admin notification:', payload);
             queryClient.invalidateQueries(['notifications']);
           }
         )
@@ -112,9 +186,18 @@ export default function NotificationCenter({ currentUser }) {
 
     // Cleanup subscriptions on unmount
     return () => {
-      supabase.removeChannel(channel);
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      try {
+        supabase.removeChannel(channel);
+      } catch (e) {
+        console.warn('[NotificationCenter] Error removing channel:', e);
+      }
       if (adminChannel) {
-        supabase.removeChannel(adminChannel);
+        try {
+          supabase.removeChannel(adminChannel);
+        } catch (e) {
+          console.warn('[NotificationCenter] Error removing admin channel:', e);
+        }
       }
     };
   }, [currentUser?.email, currentUser?.role, queryClient, navigate]);
@@ -158,11 +241,11 @@ export default function NotificationCenter({ currentUser }) {
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-white hover:text-[#FF1493] transition-colors"
+          className="relative text-white hover:text-[#E62020] transition-colors"
         >
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF1493] text-black text-[10px] font-black flex items-center justify-center rounded-full">
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#E62020] text-black text-[10px] font-black flex items-center justify-center rounded-full">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -204,7 +287,9 @@ export default function NotificationCenter({ currentUser }) {
                   >
                     <div className="flex gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        notification.read ? 'bg-white/10' : 'bg-[#FF1493]'
+                        notification.read 
+                          ? 'bg-white/10' 
+                          : NOTIFICATION_COLORS[notification.type] || NOTIFICATION_COLORS.default
                       }`}>
                         <Icon className={`w-4 h-4 ${notification.read ? 'text-white/40' : 'text-black'}`} />
                       </div>

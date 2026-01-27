@@ -102,7 +102,7 @@ Return ONLY an array of beacon IDs in order of recommendation strength.`;
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-br from-[#B026FF]/10 to-[#FF1493]/10 border border-[#B026FF]/30 rounded-xl p-6 flex items-center justify-center">
+      <div className="bg-gradient-to-br from-[#B026FF]/10 to-[#E62020]/10 border border-[#B026FF]/30 rounded-xl p-6 flex items-center justify-center">
         <Loader2 className="w-6 h-6 text-[#B026FF] animate-spin mr-2" />
         <span className="text-white/60">Generating personalized recommendations...</span>
       </div>
@@ -114,8 +114,8 @@ Return ONLY an array of beacon IDs in order of recommendation strength.`;
   }
 
   const BEACON_COLORS = {
-    event: '#FF1493',
-    venue: '#FF1493',
+    event: '#E62020',
+    venue: '#E62020',
     hookup: '#FF073A',
     drop: '#FF6B35',
     popup: '#B026FF',
@@ -137,7 +137,7 @@ Return ONLY an array of beacon IDs in order of recommendation strength.`;
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
               whileHover={{ scale: 1.02 }}
-              className="bg-gradient-to-br from-[#B026FF]/10 to-[#FF1493]/10 border border-[#B026FF]/30 rounded-xl p-5 hover:border-[#B026FF]/50 transition-all cursor-pointer relative overflow-hidden"
+              className="bg-gradient-to-br from-[#B026FF]/10 to-[#E62020]/10 border border-[#B026FF]/30 rounded-xl p-5 hover:border-[#B026FF]/50 transition-all cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-2 right-2">
                 <Sparkles className="w-4 h-4 text-[#B026FF]" />
@@ -146,7 +146,7 @@ Return ONLY an array of beacon IDs in order of recommendation strength.`;
                 <span
                   className="px-2 py-1 rounded text-xs font-bold uppercase tracking-wider"
                   style={{
-                    backgroundColor: BEACON_COLORS[beacon.kind] || '#FF1493',
+                    backgroundColor: BEACON_COLORS[beacon.kind] || '#E62020',
                     color: '#000'
                   }}
                 >

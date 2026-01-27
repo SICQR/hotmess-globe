@@ -6,7 +6,7 @@
  * In development, all levels are available for debugging.
  * 
  * Usage:
- *   import logger from '@/utils/logger';
+ *   import { logger } from '@/utils/logger';
  *   logger.info('User logged in', { userId: '123' });
  *   logger.error('API call failed', { error, endpoint: '/api/users' });
  *   logger.debug('Computed value', { value: someValue });
@@ -120,4 +120,4 @@ const logger = {
   },
 };
 
-export default logger;
+export { logger };

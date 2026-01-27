@@ -56,7 +56,7 @@ export default function Feed() {
 
   const ACTIVITY_COLORS = {
     check_in: '#00D9FF',
-    purchase: '#FF1493',
+    purchase: '#E62020',
     achievement: '#FFEB3B',
     squad_join: '#B026FF',
     beacon_create: '#39FF14',
@@ -83,7 +83,7 @@ export default function Feed() {
       >
         <div className="flex items-start gap-3">
           <Link to={createPageUrl(`Profile?email=${user.email}`)}>
-            <div className="w-12 h-12 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#E62020] to-[#B026FF] border border-white flex items-center justify-center flex-shrink-0">
               {user.avatar_url ? (
                 <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
               ) : (
@@ -95,7 +95,7 @@ export default function Feed() {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <Link to={createPageUrl(`Profile?email=${user.email}`)}>
-                <span className="font-bold hover:text-[#FF1493] transition-colors">
+                <span className="font-bold hover:text-[#E62020] transition-colors">
                   {user.full_name}
                 </span>
               </Link>
@@ -140,7 +140,7 @@ export default function Feed() {
       case 'check_in':
         return <span className="text-sm">checked in at <span className="text-[#00D9FF]">{data.beacon_title}</span></span>;
       case 'purchase':
-        return <span className="text-sm">bought <span className="text-[#FF1493]">{data.product_name}</span></span>;
+        return <span className="text-sm">bought <span className="text-[#E62020]">{data.product_name}</span></span>;
       case 'achievement':
         return <span className="text-sm">unlocked <span className="text-[#FFEB3B]">{data.achievement_title}</span></span>;
       case 'squad_join':
@@ -171,7 +171,7 @@ export default function Feed() {
           className="mb-8"
         >
           <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2">
-            <span className="text-[#FF1493]">ACTIVITY</span> FEED
+            <span className="text-[#E62020]">ACTIVITY</span> FEED
           </h1>
           <p className="text-white/60 uppercase text-sm tracking-wider">
             What's happening in the scene
@@ -194,7 +194,7 @@ export default function Feed() {
                 <Activity className="w-16 h-16 text-white/20 mx-auto mb-4" />
                 <p className="text-white/40 mb-2">No activity from people you follow</p>
                 <Link to={createPageUrl('Connect')}>
-                  <button className="text-[#FF1493] text-sm uppercase font-bold hover:underline">
+                  <button className="text-[#E62020] text-sm uppercase font-bold hover:underline">
                     Find people to follow
                   </button>
                 </Link>

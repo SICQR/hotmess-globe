@@ -393,16 +393,3 @@ if (typeof window !== 'undefined') {
   initActionLog();
 }
 
-export default {
-  logAction,
-  isActionBlocked,
-  detectBotBehavior,
-  detectHarassment,
-  getBackoffDelay,
-  applyBackoff,
-  resetBackoff,
-  getRateLimitStatus,
-  withRateLimitHandling,
-  clearAbuseData,
-  CONFIG,
-};

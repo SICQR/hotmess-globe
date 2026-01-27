@@ -12,16 +12,30 @@ export default function OSCard({
   grayscaleImage = true,
   hoverGlow = true,
   onClick,
+  'aria-label': ariaLabel,
   ...props 
 }) {
+  const isInteractive = !!onClick;
+  
+  const handleKeyDown = (e) => {
+    if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onClick(e);
+    }
+  };
+
   return (
     <motion.div
       whileHover={hoverGlow ? { scale: 1.02 } : {}}
       onClick={onClick}
+      onKeyDown={isInteractive ? handleKeyDown : undefined}
+      role={isInteractive ? 'button' : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      aria-label={isInteractive ? ariaLabel : undefined}
       className={cn(
         'relative bg-black border-2 border-white rounded-none overflow-hidden transition-all duration-300',
-        'hover:border-[#FF1493]',
-        hoverGlow && 'hover:shadow-[0_0_10px_#FF1493]',
+        'hover:border-[#E62020]',
+        hoverGlow && 'hover:shadow-[0_0_10px_#E62020]',
         onClick && 'cursor-pointer',
         className
       )}
@@ -62,12 +76,15 @@ export default function OSCard({
   );
 }
 
-export function OSCardImage({ src, alt, locked, grayscale = true, className }) {
+export function OSCardImage({ src, alt = '', locked, grayscale = true, className }) {
+  // Provide meaningful alt text or empty string for decorative images
+  const imageAlt = alt || '';
+  
   return (
     <div className="relative overflow-hidden">
       <img
         src={src || 'https://images.unsplash.com/photo-1557683316-973673baf926?w=400'}
-        alt={alt}
+        alt={imageAlt}
         className={cn(
           'w-full h-full object-cover transition-all duration-500',
           grayscale && 'grayscale group-hover:grayscale-0',
@@ -82,7 +99,7 @@ export function OSCardImage({ src, alt, locked, grayscale = true, className }) {
   );
 }
 
-export function OSCardBadge({ children, color = '#FF1493', className }) {
+export function OSCardBadge({ children, color = '#E62020', className }) {
   return (
     <div 
       className={cn('px-2 py-1 text-[10px] font-black uppercase tracking-wider', className)}

@@ -47,7 +47,7 @@ export function InstallPrompt() {
       setIsInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
-      console.log('[PWA] App installed successfully');
+      // PWA installed successfully
     });
     
     return () => {
@@ -64,7 +64,7 @@ export function InstallPrompt() {
     // Wait for user response
     const { outcome } = await deferredPrompt.userChoice;
     
-    console.log('[PWA] User response:', outcome);
+    // User responded to install prompt
     
     if (outcome === 'accepted') {
       setShowPrompt(false);
@@ -90,7 +90,7 @@ export function InstallPrompt() {
         exit={{ opacity: 0, y: 100 }}
         className="fixed bottom-20 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50"
       >
-        <div className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 backdrop-blur-xl border-2 border-[#FF1493] rounded-xl p-5 shadow-2xl">
+        <div className="bg-gradient-to-br from-[#E62020]/20 to-[#B026FF]/20 backdrop-blur-xl border-2 border-[#E62020] rounded-xl p-5 shadow-2xl">
           <button
             onClick={handleDismiss}
             className="absolute top-3 right-3 text-white/60 hover:text-white"
@@ -99,7 +99,7 @@ export function InstallPrompt() {
           </button>
           
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 bg-[#FF1493] rounded-xl flex items-center justify-center flex-shrink-0">
+            <div className="w-14 h-14 bg-[#E62020] rounded-xl flex items-center justify-center flex-shrink-0">
               <Smartphone className="w-8 h-8 text-black" />
             </div>
             
@@ -124,7 +124,7 @@ export function InstallPrompt() {
                 </div>
                 <div className="text-center">
                   <div className="w-8 h-8 bg-white/10 rounded-lg mx-auto mb-1 flex items-center justify-center">
-                    <WifiOff className="w-4 h-4 text-[#FF1493]" />
+                    <WifiOff className="w-4 h-4 text-[#E62020]" />
                   </div>
                   <span className="text-xs text-white/60">Offline</span>
                 </div>
@@ -133,7 +133,7 @@ export function InstallPrompt() {
               <div className="flex gap-2">
                 <Button
                   onClick={handleInstall}
-                  className="flex-1 bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold"
+                  className="flex-1 bg-[#E62020] hover:bg-[#E62020]/90 text-black font-bold"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Install
@@ -280,7 +280,7 @@ export function PendingSyncIndicator({ count }) {
       animate={{ scale: 1 }}
       className="fixed bottom-24 right-4 z-50"
     >
-      <div className="bg-[#FF1493] text-black px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-lg">
+      <div className="bg-[#E62020] text-black px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-lg">
         <div className="w-2 h-2 bg-black rounded-full animate-pulse" />
         {count} pending sync
       </div>

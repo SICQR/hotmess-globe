@@ -57,10 +57,10 @@ Use a fun, energetic tone that matches HOTMESS LONDON's nightlife culture.`;
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/40 rounded-xl p-6 mb-6"
+      className="bg-gradient-to-br from-[#E62020]/20 to-[#B026FF]/20 border border-[#E62020]/40 rounded-xl p-6 mb-6"
     >
       <div className="flex items-center gap-2 mb-3">
-        <TrendingUp className="w-5 h-5 text-[#FF1493]" />
+        <TrendingUp className="w-5 h-5 text-[#E62020]" />
         <h3 className="font-black uppercase tracking-wider">What's Trending</h3>
       </div>
       {loading ? (
@@ -75,7 +75,7 @@ Use a fun, energetic tone that matches HOTMESS LONDON's nightlife culture.`;
             variant="ghost"
             size="sm"
             onClick={generateSummary}
-            className="text-xs text-[#FF1493] hover:text-[#FF1493]/90"
+            className="text-xs text-[#E62020] hover:text-[#E62020]/90"
           >
             <Sparkles className="w-3 h-3 mr-2" />
             Refresh Summary

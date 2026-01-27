@@ -88,17 +88,17 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-2 border-[#FF1493] text-white max-w-md">
+      <DialogContent className="bg-black border-2 border-[#E62020] text-white max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black uppercase flex items-center gap-2">
-            <Music className="w-6 h-6 text-[#FF1493]" />
+            <Music className="w-6 h-6 text-[#E62020]" />
             RAW Convict Records
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
           {/* Album Art */}
-          <div className="w-full aspect-square bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center border-2 border-white">
+          <div className="w-full aspect-square bg-gradient-to-br from-[#E62020] to-[#B026FF] flex items-center justify-center border-2 border-white">
             <Music className="w-24 h-24 text-white" />
           </div>
 
@@ -134,7 +134,7 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
           <div className="space-y-2">
             <div className="relative h-2 bg-white/10 overflow-hidden">
               <div 
-                className="absolute inset-y-0 left-0 bg-[#FF1493]"
+                className="absolute inset-y-0 left-0 bg-[#E62020]"
                 style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
               />
             </div>
@@ -148,7 +148,7 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
           <div className="flex items-center justify-center gap-4">
             <Button
               onClick={togglePlay}
-              className="bg-[#FF1493] hover:bg-white text-black font-black w-16 h-16 rounded-full border-2 border-white"
+              className="bg-[#E62020] hover:bg-white text-black font-black w-16 h-16 rounded-full border-2 border-white"
             >
               {isPlaying ? (
                 <Pause className="w-8 h-8" />

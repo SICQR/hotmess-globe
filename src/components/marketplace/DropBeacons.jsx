@@ -108,7 +108,7 @@ export default function DropBeacons() {
               className="bg-black border-2 border-[#FFEB3B] rounded-2xl max-w-2xl w-full overflow-hidden"
             >
               {/* Header */}
-              <div className="bg-gradient-to-r from-[#FFEB3B] to-[#FF1493] p-6">
+              <div className="bg-gradient-to-r from-[#FFEB3B] to-[#E62020] p-6">
                 <div className="flex items-center gap-3 mb-2">
                   <Zap className="w-8 h-8 text-black" />
                   <h2 className="text-3xl font-black italic text-black uppercase">LIVE DROP</h2>

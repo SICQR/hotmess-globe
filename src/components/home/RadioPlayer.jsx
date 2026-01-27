@@ -81,10 +81,10 @@ export default function RadioPlayer() {
   };
 
   return (
-    <div className="fixed bottom-20 right-4 z-30 bg-black/95 backdrop-blur-xl border-2 border-[#FF1493] rounded-none p-4 w-[calc(100vw-2rem)] max-w-80">
+    <div className="fixed bottom-20 right-4 z-30 bg-black/95 backdrop-blur-xl border-2 border-[#E62020] rounded-none p-4 w-[calc(100vw-2rem)] max-w-80">
       {/* Header */}
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center">
+        <div className="w-10 h-10 bg-gradient-to-br from-[#E62020] to-[#B026FF] rounded-full flex items-center justify-center">
           <Radio className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1">
@@ -96,7 +96,7 @@ export default function RadioPlayer() {
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="w-1 bg-[#FF1493] rounded-full animate-pulse"
+                className="w-1 bg-[#E62020] rounded-full animate-pulse"
                 style={{
                   height: `${12 + Math.random() * 12}px`,
                   animationDelay: `${i * 0.1}s`,
@@ -112,7 +112,7 @@ export default function RadioPlayer() {
         <Button
           onClick={handlePlayPause}
           size="icon"
-          className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black rounded-full w-12 h-12"
+          className="bg-[#E62020] hover:bg-[#E62020]/90 text-black rounded-full w-12 h-12"
         >
           {isPlaying ? <Pause className="w-5 h-5" fill="currentColor" /> : <Play className="w-5 h-5 ml-0.5" fill="currentColor" />}
         </Button>
@@ -146,7 +146,7 @@ export default function RadioPlayer() {
         href="https://soundcloud.com/rawconvictrecords"
         target="_blank"
         rel="noopener noreferrer"
-        className="block text-center text-xs text-white/40 hover:text-[#FF1493] transition-colors mt-2"
+        className="block text-center text-xs text-white/40 hover:text-[#E62020] transition-colors mt-2"
       >
         MORE ON SOUNDCLOUD →
       </a>

@@ -122,7 +122,7 @@ export default function CommunityGuidelines() {
             const Icon = value.icon;
             return (
               <div key={i} className="bg-white/5 border-2 border-white/10 p-4 text-center">
-                <Icon className="w-8 h-8 mx-auto mb-2 text-[#FF1493]" />
+                <Icon className="w-8 h-8 mx-auto mb-2 text-[#E62020]" />
                 <h3 className="font-black uppercase text-sm mb-1">{value.title}</h3>
                 <p className="text-xs text-white/60">{value.desc}</p>
               </div>
@@ -130,7 +130,7 @@ export default function CommunityGuidelines() {
           })}
         </div>
 
-        <div className="bg-gradient-to-r from-[#FF1493]/20 to-transparent border-l-4 border-[#FF1493] p-6 mb-8">
+        <div className="bg-gradient-to-r from-[#E62020]/20 to-transparent border-l-4 border-[#E62020] p-6 mb-8">
           <p className="text-white/80">
             HOTMESS is a community built on consent, safety, and respect. These guidelines help 
             create a space where everyone can explore and connect authentically. Violations may 
@@ -169,9 +169,9 @@ export default function CommunityGuidelines() {
         </div>
 
         {/* Reporting Section */}
-        <div className="mt-8 bg-white/5 border-2 border-[#FF1493]/50 p-6">
+        <div className="mt-8 bg-white/5 border-2 border-[#E62020]/50 p-6">
           <div className="flex items-center gap-3 mb-4">
-            <Flag className="w-6 h-6 text-[#FF1493]" />
+            <Flag className="w-6 h-6 text-[#E62020]" />
             <h2 className="text-xl font-black uppercase">Reporting Violations</h2>
           </div>
           <div className="text-white/80 space-y-4">
@@ -229,7 +229,7 @@ export default function CommunityGuidelines() {
           <p>Questions about these guidelines?</p>
           <p className="mt-2">
             Contact us at{' '}
-            <a href="mailto:community@hotmess.london" className="text-[#FF1493] hover:text-white">
+            <a href="mailto:community@hotmess.london" className="text-[#E62020] hover:text-white">
               community@hotmess.london
             </a>
           </p>

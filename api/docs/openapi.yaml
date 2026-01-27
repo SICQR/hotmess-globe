@@ -1,0 +1,541 @@
+openapi: 3.1.0
+info:
+  title: Hotmess Globe API
+  description: |
+    API for the Hotmess Globe social platform. Provides endpoints for user profiles,
+    match discovery, messaging, notifications, and third-party integrations.
+  version: 1.0.0
+  contact:
+    name: Hotmess Globe Support
+    url: https://hotmess.globe/support
+  license:
+    name: Proprietary
+    url: https://hotmess.globe/terms
+
+servers:
+  - url: https://hotmess.globe/api
+    description: Production
+  - url: http://localhost:5173/api
+    description: Local Development
+
+tags:
+  - name: Auth
+    description: Authentication and authorization
+  - name: Profiles
+    description: User profile management
+  - name: Match
+    description: Match probability and discovery
+  - name: Messaging
+    description: Chat and messaging
+  - name: Notifications
+    description: Push notifications and alerts
+  - name: Telegram
+    description: Telegram bot integration
+  - name: SoundCloud
+    description: SoundCloud music integration
+  - name: Analytics
+    description: Event tracking and analytics
+  - name: Payments
+    description: Stripe payments and subscriptions
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT access token
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        details:
+          type: string
+          description: Additional error details
+      required:
+        - error
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        bio:
+          type: string
+        city:
+          type: string
+        photos:
+          type: array
+          items:
+            type: string
+            format: uri
+        tags:
+          type: array
+          items:
+            type: string
+        looking_for:
+          type: array
+          items:
+            type: string
+        membership_tier:
+          type: string
+          enum: [basic, plus, chrome]
+        last_seen:
+          type: string
+          format: date-time
+        matchProbability:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Match probability score (only when requested)
+
+    MatchBreakdown:
+      type: object
+      properties:
+        travel:
+          type: number
+          description: Travel time score (0-20)
+        roleCompat:
+          type: number
+          description: Role compatibility score (0-15)
+        kinkOverlap:
+          type: number
+          description: Kink overlap score (0-15)
+        intent:
+          type: number
+          description: Intent alignment score (0-10)
+        semantic:
+          type: number
+          description: Bio/text similarity score (0-12)
+        lifestyle:
+          type: number
+          description: Lifestyle match score (0-10)
+        activity:
+          type: number
+          description: Activity recency score (0-8)
+        completeness:
+          type: number
+          description: Profile completeness score (0-8)
+        chem:
+          type: number
+          description: Chem-friendly alignment score (0-3)
+        hosting:
+          type: number
+          description: Hosting compatibility score (0-3)
+
+    PaginatedProfiles:
+      type: object
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Profile'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        hasMore:
+          type: boolean
+
+    TelegramStatus:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        username:
+          type: string
+        firstName:
+          type: string
+        notificationsEnabled:
+          type: boolean
+        linkedAt:
+          type: string
+          format: date-time
+        mutedUntil:
+          type: string
+          format: date-time
+
+    SoundCloudStatus:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        username:
+          type: string
+        user_id:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+
+paths:
+  /profiles:
+    get:
+      summary: Get profiles list
+      description: Retrieve paginated list of user profiles
+      operationId: getProfiles
+      tags:
+        - Profiles
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [last_seen, matchProbability, distance]
+        - name: lane
+          in: query
+          schema:
+            type: string
+            enum: [right_now, browse, dates]
+        - name: tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProfiles'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /profile:
+    get:
+      summary: Get single profile
+      description: Retrieve a specific user profile by ID
+      operationId: getProfile
+      tags:
+        - Profiles
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '404':
+          description: Profile not found
+
+  /match-probability:
+    get:
+      summary: Get match probabilities
+      description: Get profiles with computed match probabilities
+      operationId: getMatchProbabilities
+      tags:
+        - Match
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [matchProbability, last_seen, distance]
+            default: matchProbability
+        - name: minScore
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 100
+      responses:
+        '200':
+          description: Profiles with match scores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProfiles'
+
+  /match-probability/single:
+    get:
+      summary: Get match probability for single user
+      description: Calculate match probability between current user and target user
+      operationId: getSingleMatchProbability
+      tags:
+        - Match
+      parameters:
+        - name: targetUserId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Match probability result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matchProbability:
+                    type: number
+                  breakdown:
+                    $ref: '#/components/schemas/MatchBreakdown'
+                  travelTimeMinutes:
+                    type: number
+
+  /telegram/status:
+    get:
+      summary: Get Telegram connection status
+      operationId: getTelegramStatus
+      tags:
+        - Telegram
+      responses:
+        '200':
+          description: Connection status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelegramStatus'
+
+  /telegram/link:
+    post:
+      summary: Generate Telegram deep link
+      description: Generate a one-time link to connect Telegram account
+      operationId: generateTelegramLink
+      tags:
+        - Telegram
+      responses:
+        '200':
+          description: Deep link generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deepLink:
+                    type: string
+                    format: uri
+                  expiresAt:
+                    type: string
+                    format: date-time
+                  expiresInMinutes:
+                    type: integer
+
+  /telegram/disconnect:
+    post:
+      summary: Disconnect Telegram account
+      operationId: disconnectTelegram
+      tags:
+        - Telegram
+      responses:
+        '200':
+          description: Successfully disconnected
+
+  /telegram/webhook:
+    post:
+      summary: Telegram webhook endpoint
+      description: Receives updates from Telegram Bot API
+      operationId: telegramWebhook
+      tags:
+        - Telegram
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+
+  /soundcloud/status:
+    get:
+      summary: Get SoundCloud connection status
+      operationId: getSoundCloudStatus
+      tags:
+        - SoundCloud
+      responses:
+        '200':
+          description: Connection status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoundCloudStatus'
+
+  /soundcloud/authorize:
+    get:
+      summary: Initiate SoundCloud OAuth
+      operationId: initiateSoundCloudAuth
+      tags:
+        - SoundCloud
+      responses:
+        '302':
+          description: Redirect to SoundCloud authorization
+
+  /soundcloud/upload:
+    post:
+      summary: Upload track to SoundCloud
+      operationId: uploadToSoundCloud
+      tags:
+        - SoundCloud
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                track[title]:
+                  type: string
+                track[asset_data]:
+                  type: string
+                  format: binary
+                track[description]:
+                  type: string
+                track[genre]:
+                  type: string
+                track[tag_list]:
+                  type: string
+              required:
+                - track[title]
+                - track[asset_data]
+      responses:
+        '200':
+          description: Track uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  id:
+                    type: string
+                  urn:
+                    type: string
+                  permalink_url:
+                    type: string
+                    format: uri
+
+  /analytics/events:
+    post:
+      summary: Track analytics events
+      operationId: trackEvents
+      tags:
+        - Analytics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      event:
+                        type: string
+                      properties:
+                        type: object
+                      timestamp:
+                        type: string
+                        format: date-time
+      responses:
+        '200':
+          description: Events tracked
+
+  /push/subscribe:
+    post:
+      summary: Subscribe to push notifications
+      operationId: subscribePush
+      tags:
+        - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subscription:
+                  type: object
+                  description: PushSubscription object from Web Push API
+              required:
+                - subscription
+      responses:
+        '200':
+          description: Subscribed successfully
+
+  /stripe/create-checkout-session:
+    post:
+      summary: Create Stripe checkout session
+      operationId: createCheckoutSession
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                priceId:
+                  type: string
+                tier:
+                  type: string
+                  enum: [plus, chrome]
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri

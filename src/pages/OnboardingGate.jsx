@@ -86,7 +86,7 @@ export default function OnboardingGate() {
       case 0:
         return (
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-[#FF1493]/30 border-t-[#FF1493] rounded-full animate-spin mx-auto mb-4" />
+            <div className="w-12 h-12 border-4 border-[#E62020]/30 border-t-[#E62020] rounded-full animate-spin mx-auto mb-4" />
             <p className="text-white/40">Loading...</p>
           </div>
         );
@@ -97,7 +97,7 @@ export default function OnboardingGate() {
             animate={{ opacity: 1, x: 0 }}
             className="text-center"
           >
-            <Shield className="w-16 h-16 text-[#FF1493] mx-auto mb-6" />
+            <Shield className="w-16 h-16 text-[#E62020] mx-auto mb-6" />
             <h2 className="text-4xl font-black mb-4 uppercase">Age Verification</h2>
             <p className="text-lg mb-8 text-white/80">You must be 18+ to use HOTMESS</p>
             <div className="flex items-center justify-center space-x-3 mb-8">
@@ -124,7 +124,7 @@ export default function OnboardingGate() {
             <Button 
               onClick={handleNext} 
               disabled={!ageConfirmed}
-              className="bg-[#FF1493] text-black hover:bg-white font-black uppercase px-8 py-6 text-lg disabled:opacity-50"
+              className="bg-[#E62020] text-black hover:bg-white font-black uppercase px-8 py-6 text-lg disabled:opacity-50"
             >
               Continue
             </Button>
@@ -140,22 +140,22 @@ export default function OnboardingGate() {
             <FileText className="w-16 h-16 text-[#00D9FF] mx-auto mb-6" />
             <h2 className="text-4xl font-black mb-4 uppercase">Terms & Conditions</h2>
             <div className="max-h-80 overflow-y-auto bg-white/5 p-6 rounded-lg mb-6 text-sm text-left border border-white/10">
-              <h3 className="font-black text-lg mb-3 text-[#FF1493]">1. ELIGIBILITY</h3>
+              <h3 className="font-black text-lg mb-3 text-[#E62020]">1. ELIGIBILITY</h3>
               <p className="mb-4 text-white/80">Must be 18+. No exceptions.</p>
               
-              <h3 className="font-black text-lg mb-3 text-[#FF1493]">2. USER CONDUCT</h3>
+              <h3 className="font-black text-lg mb-3 text-[#E62020]">2. USER CONDUCT</h3>
               <p className="mb-4 text-white/80">No harassment, no illegal activity, no fake profiles. Be real. Be respectful.</p>
               
-              <h3 className="font-black text-lg mb-3 text-[#FF1493]">3. PRIVACY & DATA</h3>
+              <h3 className="font-black text-lg mb-3 text-[#E62020]">3. PRIVACY & DATA</h3>
               <p className="mb-4 text-white/80">We collect location data for beacons and Right Now features. Your data is encrypted and never sold. See Privacy Policy for details.</p>
               
-              <h3 className="font-black text-lg mb-3 text-[#FF1493]">4. CONTENT</h3>
+              <h3 className="font-black text-lg mb-3 text-[#E62020]">4. CONTENT</h3>
               <p className="mb-4 text-white/80">You own your content. We can moderate and remove content that violates guidelines.</p>
               
-              <h3 className="font-black text-lg mb-3 text-[#FF1493]">5. LIABILITY</h3>
+              <h3 className="font-black text-lg mb-3 text-[#E62020]">5. LIABILITY</h3>
               <p className="mb-4 text-white/80">HOTMESS is a platform. We're not responsible for user interactions. Use common sense. Stay safe.</p>
               
-              <h3 className="font-black text-lg mb-3 text-[#FF1493]">6. CHANGES</h3>
+              <h3 className="font-black text-lg mb-3 text-[#E62020]">6. CHANGES</h3>
               <p className="mb-4 text-white/80">We can update these terms. Continued use = acceptance.</p>
             </div>
             <div className="flex items-center justify-center space-x-3 mb-8">
@@ -262,7 +262,7 @@ export default function OnboardingGate() {
               <div
                 key={s}
                 className={`h-2 w-16 rounded-full transition-all ${
-                  s <= step ? 'bg-[#FF1493]' : 'bg-white/20'
+                  s <= step ? 'bg-[#E62020]' : 'bg-white/20'
                 }`}
               />
             ))}

@@ -57,11 +57,24 @@ export default function PayoutManager({ payouts, orders, sellerEmail, stripeConn
   const connectStripe = async () => {
     setConnecting(true);
     try {
-      // In production, this would redirect to Stripe Connect OAuth
-      toast.success('Opening Stripe Connect...');
-      // window.location.href = stripeConnectUrl;
+      const response = await fetch('/api/stripe/connect/onboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: sellerEmail,
+          return_url: `${window.location.origin}/seller-dashboard?stripe_connected=true`,
+          refresh_url: `${window.location.origin}/seller-dashboard?stripe_refresh=true`,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Failed to create Stripe onboarding link');
+      }
     } catch (error) {
-      toast.error('Failed to connect Stripe');
+      toast.error(error.message || 'Failed to connect Stripe');
     } finally {
       setConnecting(false);
     }

@@ -7,11 +7,20 @@ import { motion } from 'framer-motion';
 export default function BadgeDisplay({ userEmail }) {
   const { data: badges = [] } = useQuery({
     queryKey: ['profile-badges', userEmail],
-    queryFn: () => base44.entities.ProfileBadge.filter({ user_email: userEmail }),
+    queryFn: async () => {
+      try {
+        const result = await base44.entities.ProfileBadge.filter({ user_email: userEmail });
+        return Array.isArray(result) ? result : [];
+      } catch {
+        return [];
+      }
+    },
     enabled: !!userEmail,
   });
 
-  const activeBadges = badges.filter(b => !b.expires_at || new Date(b.expires_at) > new Date());
+  // Defensive: ensure badges is an array
+  const badgesList = Array.isArray(badges) ? badges : [];
+  const activeBadges = badgesList.filter(b => !b.expires_at || new Date(b.expires_at) > new Date());
 
   const BADGE_ICONS = {
     verified: Shield,
