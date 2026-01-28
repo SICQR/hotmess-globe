@@ -67,8 +67,8 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
+          head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'HEAD' }}
           extra_args: --only-verified
 
   dependency-review:
@@ -85,6 +85,8 @@ jobs:
       
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
+        # Continue on error since this requires Dependency Graph to be enabled in repo settings
+        continue-on-error: true
         with:
           fail-on-severity: moderate
           deny-licenses: GPL-3.0, AGPL-3.0
