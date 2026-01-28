@@ -18,7 +18,7 @@ import { useAuth } from '@/lib/AuthContext';
  * Optionally publish to SoundCloud if connected.
  */
 export default function RecordManager() {
-  const { user } = useAuth();
+  useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [city, setCity] = useState('London');
