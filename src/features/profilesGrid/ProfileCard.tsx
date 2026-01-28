@@ -433,8 +433,12 @@ export function ProfileCard({
       emailHandle((profile as any)?.email) ||
       initialsFromName((profile as any)?.profileName || (profile as any)?.full_name || 'HM');
 
+    const matchLabel = typeof profile.matchProbability === 'number' 
+      ? `${Math.round(profile.matchProbability)}% match`
+      : null;
+    
     const status =
-      primaryModeShort || ((profile as any)?.onlineNow ? 'Online' : ((profile as any)?.rightNow ? 'Right now' : '')); 
+      matchLabel || primaryModeShort || ((profile as any)?.onlineNow ? 'Online' : ((profile as any)?.rightNow ? 'Right now' : '')); 
 
     return (
       <div
@@ -537,6 +541,13 @@ export function ProfileCard({
 
         {/* Top badges */}
         <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2 pointer-events-none">
+          {/* Match probability badge */}
+          {typeof profile.matchProbability === 'number' && (
+            <div className="rounded-full bg-gradient-to-r from-[#FF1493] to-[#00D9FF] text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 shadow-lg">
+              {Math.round(profile.matchProbability)}% match
+            </div>
+          )}
+
           {typeBadge ? (
             <div
               className={
