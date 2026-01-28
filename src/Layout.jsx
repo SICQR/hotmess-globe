@@ -28,6 +28,7 @@ import CookieConsent from '@/components/legal/CookieConsent';
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
 import { useTranslation } from '@/hooks/useTranslation';
 import { PendingSyncBadge } from '@/components/ui/PendingSyncIndicator';
+import { ScrollProgress } from '@/components/navigation/ScrollProgress';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
