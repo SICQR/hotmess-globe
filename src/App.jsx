@@ -50,6 +50,7 @@ const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
   'Settings',
   'EditProfile',
   'MembershipUpgrade',
+  'Pricing',
   'Safety',
   'Calendar',
   'Scan',
@@ -457,9 +458,11 @@ const AuthenticatedApp = () => {
       <Route path="/help" element={<PageRoute pageKey="HelpCenter" />} />
       <Route path="/support" element={<PageRoute pageKey="Contact" />} />
       
-      {/* Membership */}
+      {/* Membership & Pricing */}
       <Route path="/membership" element={<PageRoute pageKey="MembershipUpgrade" />} />
       <Route path="/upgrade" element={<PageRoute pageKey="MembershipUpgrade" />} />
+      <Route path="/pricing" element={<PageRoute pageKey="Pricing" />} />
+      <Route path="/fees" element={<PageRoute pageKey="Pricing" />} />
       
       {/* Business dashboard */}
       <Route path="/biz" element={<PageRoute pageKey="BusinessDashboard" />} />

@@ -66,6 +66,7 @@ import SquadChat from './pages/SquadChat';
 import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
 import WakeTheMess from './pages/WakeTheMess';
+import Pricing from './pages/Pricing';
 import __Layout from './Layout.jsx';
 
 
@@ -108,6 +109,7 @@ export const PAGES = {
     "Marketplace": Marketplace,
     "MembershipUpgrade": MembershipUpgrade,
     "Messages": Messages,
+    "Pricing": Pricing,
     "More": More,
     "Music": Music,
     "MusicRelease": MusicRelease,
