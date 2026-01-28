@@ -277,9 +277,12 @@ function shouldSendNotification(prefs, notificationType) {
     'post_comment': 'engagement_updates',
     
     // Re-engagement (new)
-    'dormant_user': 'marketing_enabled',
+    'dormant_3day': 'marketing_enabled',
+    'dormant_7day': 'marketing_enabled',
+    'dormant_14day': 'marketing_enabled',
+    'dormant_30day': 'marketing_enabled',
     'streak_reminder': 'engagement_updates',
-    'daily_challenge': 'engagement_updates',
+    'checkin_milestone': 'engagement_updates',
   };
 
   const prefKey = typeMap[notificationType];

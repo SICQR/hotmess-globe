@@ -164,22 +164,26 @@ export default async function handler(req, res) {
 
     // Create badge for milestone
     if (milestone) {
-      await serviceClient
-        .from('notification_outbox')
-        .insert({
-          user_email: user.email,
-          notification_type: 'daily_challenge',
-          title: 'Milestone Reached!',
-          message: `Amazing! ${milestone} day check-in streak! +${bonusXp} bonus XP`,
-          metadata: {
-            link: '/challenges',
-            milestone,
-            bonus_xp: bonusXp,
-          },
-          status: 'queued',
-          created_at: new Date().toISOString(),
-          created_date: new Date().toISOString(),
-        });
+      try {
+        await serviceClient
+          .from('notification_outbox')
+          .insert({
+            user_email: user.email,
+            notification_type: 'checkin_milestone',
+            title: 'Milestone Reached!',
+            message: `Amazing! ${milestone} day check-in streak! +${bonusXp} bonus XP`,
+            metadata: {
+              link: '/challenges',
+              milestone,
+              bonus_xp: bonusXp,
+            },
+            status: 'queued',
+            created_at: new Date().toISOString(),
+            created_date: new Date().toISOString(),
+          });
+      } catch (notifErr) {
+        console.warn('[DailyCheckin] Failed to queue milestone notification:', notifErr);
+      }
     }
 
     return json(res, 200, {

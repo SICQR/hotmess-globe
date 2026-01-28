@@ -64,7 +64,7 @@ export default function DailyCheckin({ currentUser, onCheckinComplete }) {
           onCheckinComplete(data.checkin);
         }
       } else {
-        toast.error(data.message || 'Failed to check in');
+        toast.error(data.message || 'Failed to check in. Please try again.');
       }
     } catch (error) {
       console.error('Check-in error:', error);
