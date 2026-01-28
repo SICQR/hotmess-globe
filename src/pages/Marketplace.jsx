@@ -16,6 +16,7 @@ import EmptyState from '../components/ui/EmptyState';
 import { GridSkeleton } from '../components/ui/LoadingSkeleton';
 import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 import { Slider } from '@/components/ui/slider';
 import { addToCart } from '@/components/marketplace/cartStorage';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
@@ -254,7 +255,7 @@ export default function Marketplace() {
             expires_at: expiresAt,
           });
         } catch (error) {
-          console.log('Failed to create P2P beacon:', error);
+          logger.debug('Failed to create P2P beacon', { error: error?.message, productId: product.id });
         }
       }
 
