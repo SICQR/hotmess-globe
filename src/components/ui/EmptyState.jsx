@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { 
   MapPin, Users, Calendar, ShoppingBag, Trophy, MessageSquare, 
-  Bookmark, Music, Radio, Search, Bell, Heart, Star, Zap,
+  Bookmark, Music, Radio, Search, Bell, Heart, Zap,
   Plus, ArrowRight
 } from 'lucide-react';
 

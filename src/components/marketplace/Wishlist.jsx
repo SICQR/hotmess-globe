@@ -331,7 +331,7 @@ export default function Wishlist({
 // Hook for managing wishlist
 export function useWishlist(userId) {
   const [items, setItems] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {

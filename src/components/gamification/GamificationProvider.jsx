@@ -114,7 +114,6 @@ export function GamificationProvider({ children, currentUser }) {
 
     const { 
       position = null, 
-      reason = null, 
       showAnimation = true,
     } = options;
 

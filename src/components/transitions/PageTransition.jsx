@@ -75,13 +75,6 @@ const fadeScaleVariants = {
   },
 };
 
-// Get navigation direction based on route depth
-function getNavigationDirection(prevPath, currentPath) {
-  const prevDepth = (prevPath || '/').split('/').filter(Boolean).length;
-  const currentDepth = (currentPath || '/').split('/').filter(Boolean).length;
-  return currentDepth > prevDepth ? 1 : -1;
-}
-
 // Page transition wrapper
 export function PageTransition({ 
   children, 

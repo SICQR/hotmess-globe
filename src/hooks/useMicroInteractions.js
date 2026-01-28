@@ -194,7 +194,7 @@ export function useInteractiveCard(options = {}) {
     glowOptions = {},
   } = options;
 
-  const { tilt, isHovered: tiltHovered, tiltProps } = useTilt(tiltOptions);
+  const { isHovered: tiltHovered, tiltProps } = useTilt(tiltOptions);
   const { glowProps, glowStyle, isHovered: glowHovered } = useGlowHover(glowOptions);
   const { hoverProps, isHovered: liftHovered } = useCardHover();
 

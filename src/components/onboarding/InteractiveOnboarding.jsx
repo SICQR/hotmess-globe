@@ -117,46 +117,6 @@ function FeatureCard({ icon: Icon, label, description, color, delay = 0 }) {
   );
 }
 
-// Interactive highlight element (points to UI elements)
-function Highlight({ targetSelector, label, position = 'bottom' }) {
-  const [target, setTarget] = useState(null);
-
-  useEffect(() => {
-    if (targetSelector) {
-      const el = document.querySelector(targetSelector);
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        setTarget(rect);
-      }
-    }
-  }, [targetSelector]);
-
-  if (!target) return null;
-
-  const positions = {
-    top: { top: target.top - 60, left: target.left + target.width / 2 },
-    bottom: { top: target.bottom + 10, left: target.left + target.width / 2 },
-    left: { top: target.top + target.height / 2, left: target.left - 10 },
-    right: { top: target.top + target.height / 2, left: target.right + 10 },
-  };
-
-  const pos = positions[position];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="fixed z-[200] pointer-events-none"
-      style={{ top: pos.top, left: pos.left, transform: 'translate(-50%, 0)' }}
-    >
-      <div className="bg-[#FF1493] text-black px-3 py-1.5 rounded-lg text-sm font-bold">
-        {label}
-      </div>
-      <div className="w-3 h-3 bg-[#FF1493] rotate-45 absolute left-1/2 -translate-x-1/2 -top-1.5" />
-    </motion.div>
-  );
-}
-
 // Single step content
 function StepContent({ step, onAction }) {
   const Icon = step.icon;
@@ -281,7 +241,7 @@ export default function InteractiveOnboarding({
   className,
 }) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState([]);
+  const [, setCompletedSteps] = useState([]);
   const [isAnimating, setIsAnimating] = useState(false);
 
   const step = steps[currentStep];
