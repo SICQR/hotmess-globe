@@ -123,11 +123,20 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
   // Unlock content mutation
   const unlockMutation = useMutation({
     mutationFn: async ({ photoId, priceXp }) => {
-      // In production, this would call an API endpoint
-      // For now, simulate the unlock
+      // Get authentication token
+      const { data: { session } } = await base44.auth.getSession();
+      const token = session?.access_token;
+      
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await fetch('/api/premium/unlock', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           owner_email: user.email,
           unlock_type: 'photo',
@@ -157,9 +166,20 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
   // Subscribe mutation
   const subscribeMutation = useMutation({
     mutationFn: async () => {
+      // Get authentication token
+      const { data: { session } } = await base44.auth.getSession();
+      const token = session?.access_token;
+      
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await fetch('/api/premium/subscribe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           creator_email: user.email,
           price_xp: user.subscription_price_xp || 500,
