@@ -1,7 +1,7 @@
-import { getBearerToken, json } from '../../shopify/_utils.js';
-import { getSupabaseServerClients, getAuthedUser } from '../../routing/_utils.js';
+import { json } from '../../shopify/_utils.js';
+import { getSupabaseServerClients, getRequestIp } from '../../routing/_utils.js';
 import { bestEffortRateLimit, minuteBucket } from '../../_rateLimit.js';
-import { getRequestIp } from '../../routing/_utils.js';
+import { requireAdmin } from '../../_middleware/adminAuth.js';
 
 export default async function handler(req, res) {
   const method = (req.method || 'POST').toUpperCase();
@@ -12,17 +12,20 @@ export default async function handler(req, res) {
   const { error, anonClient, serviceClient } = getSupabaseServerClients();
   if (error) return json(res, 500, { error });
 
-  const accessToken = getBearerToken(req);
-  if (!accessToken) return json(res, 401, { error: 'Missing bearer token' });
+  // Use centralized admin authentication
+  const adminCheck = await requireAdmin(req, { anonClient, serviceClient });
+  if (adminCheck.error) {
+    return json(res, adminCheck.status, { error: adminCheck.error });
+  }
 
-  const { user, error: userError } = await getAuthedUser({ anonClient, accessToken });
-  if (userError || !user?.email) return json(res, 401, { error: 'Invalid auth token' });
+  const adminUser = adminCheck.user;
 
+  // Rate limiting for admin operations
   const ip = getRequestIp(req);
   const rl = await bestEffortRateLimit({
     serviceClient,
-    bucketKey: `adminnotifdispatch:${user.id || user.email}:${ip || 'noip'}:${minuteBucket()}`,
-    userId: user.id || null,
+    bucketKey: `adminnotifdispatch:${adminUser.id || adminUser.email}:${ip || 'noip'}:${minuteBucket()}`,
+    userId: adminUser.id || null,
     ip,
     windowSeconds: 60,
     maxRequests: 6,
@@ -30,20 +33,6 @@ export default async function handler(req, res) {
 
   if (rl.allowed === false) {
     return json(res, 429, { error: 'Rate limit exceeded', remaining: rl.remaining ?? 0 });
-  }
-
-  const { data: profile, error: profileError } = await serviceClient
-    .from('User')
-    .select('email, role')
-    .eq('email', user.email)
-    .maybeSingle();
-
-  if (profileError) {
-    return json(res, 500, { error: profileError.message || 'Failed to load user profile' });
-  }
-
-  if (profile?.role !== 'admin') {
-    return json(res, 403, { error: 'Admin privileges required' });
   }
 
   const nowIso = new Date().toISOString();

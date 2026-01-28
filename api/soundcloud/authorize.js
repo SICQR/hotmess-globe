@@ -3,22 +3,7 @@ import { getBearerToken, getEnv, getQueryParam, json } from '../shopify/_utils.j
 import { createCodeChallenge, createCodeVerifier, createState } from './_pkce.js';
 import { buildAuthorizeUrl, getSoundCloudConfig } from './_soundcloud.js';
 import { isMusicUploadAllowlisted } from './_auth.js';
-
-const isAdminUser = async ({ anonClient, serviceClient, accessToken, email }) => {
-  const { data: userData, error: userErr } = await anonClient.auth.getUser(accessToken);
-  if (userErr || !userData?.user) return false;
-  const roleFromMetadata = userData.user.user_metadata?.role;
-  if (roleFromMetadata === 'admin') return true;
-
-  const tryTables = ['User', 'users'];
-  for (const table of tryTables) {
-    const { data, error } = await serviceClient.from(table).select('role').eq('email', email).maybeSingle();
-    if (error) continue;
-    if (data?.role === 'admin') return true;
-  }
-
-  return false;
-};
+import { requireAdmin } from '../_middleware/adminAuth.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -60,11 +45,11 @@ export default async function handler(req, res) {
     return json(res, 403, { error: 'Not authorized' });
   }
 
-  // Back-compat: if allowlist isn't configured, keep the previous admin-only behavior.
+  // Back-compat: if allowlist isn't configured, use centralized admin authentication
   if (allowlisted === null) {
-    const adminOk = await isAdminUser({ anonClient, serviceClient, accessToken, email });
-    if (!adminOk) {
-      return json(res, 403, { error: 'Admin required' });
+    const adminCheck = await requireAdmin(req, { anonClient, serviceClient });
+    if (adminCheck.error) {
+      return json(res, adminCheck.status, { error: adminCheck.error });
     }
   }
 

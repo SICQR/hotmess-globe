@@ -1,6 +1,6 @@
 import { bestEffortRateLimit, minuteBucket } from '../_rateLimit.js';
-import { getRequestIp, getAuthedUser, getBearerToken, getEnv, getSupabaseServerClients, json, readJsonBody } from '../routing/_utils.js';
-import { isAdminUser } from '../events/_admin.js';
+import { getRequestIp, getBearerToken, getEnv, getSupabaseServerClients, json, readJsonBody } from '../routing/_utils.js';
+import { requireAdmin } from '../_middleware/adminAuth.js';
 import { verifyTicket } from '../tickets/_utils.js';
 
 const resolveSigningSecret = () => {
@@ -61,20 +61,13 @@ export default async function handler(req, res) {
     });
   }
 
-  const accessToken = getBearerToken(req);
-  if (!accessToken) return json(res, 401, { error: 'Missing bearer token' });
+  // Use centralized admin authentication
+  const adminCheck = await requireAdmin(req, { anonClient, serviceClient });
+  if (adminCheck.error) {
+    return json(res, adminCheck.status, { error: adminCheck.error });
+  }
 
-  const { user: scanner, error: userError } = await getAuthedUser({ anonClient, accessToken });
-  if (userError || !scanner?.id || !scanner?.email) return json(res, 401, { error: 'Invalid auth token' });
-
-  const adminOk = await isAdminUser({
-    anonClient,
-    serviceClient,
-    accessToken,
-    email: scanner.email,
-  });
-
-  if (!adminOk) return json(res, 403, { error: 'Admin privileges required' });
+  const scanner = adminCheck.user;
 
   const ip = getRequestIp(req);
   const rl = await bestEffortRateLimit({

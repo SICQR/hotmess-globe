@@ -1,6 +1,7 @@
-import { getBearerToken, getEnv, json, readJsonBody } from '../shopify/_utils.js';
-import { createSupabaseClients, getAuthedEmail, isAdminUser } from './_admin.js';
+import { getEnv, json, readJsonBody } from '../shopify/_utils.js';
+import { createSupabaseClients } from './_admin.js';
 import { fetchEventsFromConfiguredSources, generateEventsWithOpenAI, toBeaconRow } from './_scrape.js';
+import { requireAdmin } from '../_middleware/adminAuth.js';
 
 const coerceArray = (value) => (Array.isArray(value) ? value : []);
 
@@ -44,25 +45,16 @@ export default async function handler(req, res) {
     });
   }
 
-  const accessToken = getBearerToken(req);
-  if (!accessToken) {
-    return json(res, 401, { error: 'Missing Authorization bearer token' });
-  }
-
   const { anonClient, serviceClient } = createSupabaseClients({
     supabaseUrl,
     supabaseAnonKey,
     supabaseServiceRoleKey,
   });
 
-  const { email } = await getAuthedEmail({ anonClient, accessToken });
-  if (!email) {
-    return json(res, 401, { error: 'Invalid auth token' });
-  }
-
-  const adminOk = await isAdminUser({ anonClient, serviceClient, accessToken, email });
-  if (!adminOk) {
-    return json(res, 403, { error: 'Admin required' });
+  // Use centralized admin authentication
+  const adminCheck = await requireAdmin(req, { anonClient, serviceClient });
+  if (adminCheck.error) {
+    return json(res, adminCheck.status, { error: adminCheck.error });
   }
 
   const body = (await readJsonBody(req)) || {};

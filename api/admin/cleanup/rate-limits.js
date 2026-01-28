@@ -1,5 +1,6 @@
-import { getEnv, getQueryParam, json } from '../../shopify/_utils.js';
+import { getEnv, getQueryParam, json, getBearerToken } from '../../shopify/_utils.js';
 import { getSupabaseServerClients } from '../../routing/_utils.js';
+import { requireAdmin } from '../../_middleware/adminAuth.js';
 
 const getHeader = (req, name) => {
   const value = req?.headers?.[name] || req?.headers?.[name.toLowerCase()] || req?.headers?.[name.toUpperCase()];
@@ -19,7 +20,11 @@ const isVercelCronRequest = (req) => {
 
 const getSecret = () => getEnv('RATE_LIMIT_CLEANUP_SECRET', ['CRON_SECRET']);
 
-const isAuthorized = (req) => {
+/**
+ * Check if request is authorized via cron secret or Vercel cron header.
+ * For automated cron jobs.
+ */
+const isAuthorizedViaCron = (req) => {
   const secret = getSecret();
   const allowVercelCron = isRunningOnVercel() && isVercelCronRequest(req);
 
@@ -37,8 +42,8 @@ const isAuthorized = (req) => {
     return allowVercelCron;
   }
 
-  // Local dev without secrets: allow.
-  return true;
+  // Local dev without secrets: allow cron-style requests
+  return !getBearerToken(req); // Only allow if no bearer token (avoid conflict with admin auth)
 };
 
 export default async function handler(req, res) {
@@ -48,15 +53,24 @@ export default async function handler(req, res) {
     return json(res, 405, { error: 'Method not allowed' });
   }
 
-  if (!isAuthorized(req)) {
-    return json(res, 401, { error: 'Unauthorized' });
-  }
-
-  const { error, serviceClient } = getSupabaseServerClients();
+  const { error, anonClient, serviceClient } = getSupabaseServerClients();
   if (error || !serviceClient) {
     return json(res, 500, { error: error || 'Supabase service client unavailable' });
   }
 
+  // Support both cron secret auth (automated jobs) and admin JWT auth (manual triggers)
+  const hasBearerToken = !!getBearerToken(req);
+  
+  if (hasBearerToken) {
+    // Admin JWT authentication for manual triggers
+    const adminCheck = await requireAdmin(req, { anonClient, serviceClient });
+    if (adminCheck.error) {
+      return json(res, adminCheck.status, { error: adminCheck.error });
+    }
+  } else if (!isAuthorizedViaCron(req)) {
+    // Cron secret authentication for automated jobs
+    return json(res, 401, { error: 'Unauthorized' });
+  }
   // Keep some history for debugging; purge older buckets.
   const cutoffDays = Number(getQueryParam(req, 'days') || 2);
   const safeDays = Number.isFinite(cutoffDays) ? Math.min(Math.max(Math.trunc(cutoffDays), 1), 30) : 2;

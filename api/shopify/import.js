@@ -1,29 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import { getBearerToken, getEnv, json, normalizeDetails, normalizeShopDomain } from './_utils.js';
+import { getEnv, json, normalizeDetails, normalizeShopDomain } from './_utils.js';
 import { bestEffortRateLimit, minuteBucket } from '../_rateLimit.js';
 import { getRequestIp } from '../routing/_utils.js';
-
-const isAdminUser = async ({ anonClient, serviceClient, accessToken, email }) => {
-  // 1) Prefer role in auth metadata
-  const { data: userData, error: userErr } = await anonClient.auth.getUser(accessToken);
-  if (userErr || !userData?.user) return false;
-  const roleFromMetadata = userData.user.user_metadata?.role;
-  if (roleFromMetadata === 'admin') return true;
-
-  // 2) Fallback to profile table role, if present
-  const tryTables = ['User', 'users'];
-  for (const table of tryTables) {
-    const { data, error } = await serviceClient
-      .from(table)
-      .select('role')
-      .eq('email', email)
-      .maybeSingle();
-    if (error) continue;
-    if (data?.role === 'admin') return true;
-  }
-
-  return false;
-};
+import { requireAdmin } from '../_middleware/adminAuth.js';
 
 const fetchAllShopifyProducts = async ({ shopDomain, accessToken, statuses = ['active'] }) => {
   const seen = new Set();
@@ -103,27 +82,19 @@ export default async function handler(req, res) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const accessToken = getBearerToken(req);
-  if (!accessToken) {
-    return json(res, 401, { error: 'Unauthorized', details: 'Missing Authorization Bearer token' });
+  // Use centralized admin authentication
+  const adminCheck = await requireAdmin(req, { anonClient, serviceClient });
+  if (adminCheck.error) {
+    return json(res, adminCheck.status, { error: adminCheck.error });
   }
 
-  const { data: userData, error: userErr } = await anonClient.auth.getUser(accessToken);
-  if (userErr || !userData?.user?.email) {
-    return json(res, 401, { error: 'Unauthorized', details: 'Invalid session' });
-  }
-
-  const email = userData.user.email;
-  const isAdmin = await isAdminUser({ anonClient, serviceClient, accessToken, email });
-  if (!isAdmin) {
-    return json(res, 403, { error: 'Forbidden: Admin access required' });
-  }
+  const adminUser = adminCheck.user;
 
   // Rate limits: per-user + per-IP (best-effort).
   // Import can be heavy (large Shopify pagination); keep strict.
   {
     const ip = getRequestIp(req);
-    const userId = userData.user.id;
+    const userId = adminUser.id;
     const bucketKey = `shopify:import:${userId}:${ip || 'noip'}:${minuteBucket()}`;
     const rl = await bestEffortRateLimit({
       serviceClient,
