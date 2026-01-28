@@ -19,6 +19,7 @@ import { ProfileCard } from '@/features/profilesGrid/ProfileCard';
 import { useNavigate } from 'react-router-dom';
 import useLiveViewerLocation, { bucketLatLng } from '@/hooks/useLiveViewerLocation';
 import useRealtimeNearbyInvalidation from '@/hooks/useRealtimeNearbyInvalidation';
+import { KineticHeadline } from '@/components/text/KineticHeadline';
 
 const isMaleAllowedProfile = (u) => {
   const gender = String(u?.gender_identity || u?.gender || u?.sex || '').trim().toLowerCase();
@@ -520,7 +521,7 @@ export default function Connect() {
             <div className="flex items-center gap-4">
               <Users className="w-10 h-10 text-[#FF1493]" />
               <div>
-                <h1 className="text-4xl font-black uppercase">CONNECT</h1>
+                <KineticHeadline text="CONNECT" as="h1" className="text-4xl font-black uppercase" />
                 <p className="text-xs text-white/40 uppercase tracking-wider">Discovery</p>
               </div>
             </div>

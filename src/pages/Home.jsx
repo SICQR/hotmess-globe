@@ -10,6 +10,7 @@ import { useServerNow } from '@/hooks/use-server-now';
 import { toast } from 'sonner';
 import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { format } from 'date-fns';
+import { KineticHeadline } from '@/components/text/KineticHeadline';
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
 // Shopify product handles are not the same as release slugs.
@@ -858,9 +859,11 @@ export default function Home() {
           viewport={{ once: true }}
           className="max-w-4xl mx-auto"
         >
-          <h2 className="text-6xl md:text-9xl font-black italic mb-8">
-            JOIN<span className="text-[#FF1493]">.</span>
-          </h2>
+          <KineticHeadline 
+            text="HOTMESS LONDON" 
+            as="h2"
+            className="text-6xl md:text-9xl font-black italic mb-8 text-[#FF1493]"
+          />
           <p className="text-2xl uppercase tracking-wider text-white/60 mb-12">
             London OS. No ghost status. Right now ends automatically.
           </p>
