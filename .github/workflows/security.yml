@@ -94,11 +94,16 @@ jobs:
       - name: Note on Dependency Review
         if: steps.dependency-review.outcome == 'failure'
         run: |
-          echo "⚠️ Dependency Review step failed or is not enabled."
-          echo "To enable Dependency Review, ensure Dependency graph is enabled at:"
-          echo "https://github.com/${{ github.repository }}/settings/security_analysis"
+          echo "⚠️ Dependency Review step encountered an issue."
           echo ""
-          echo "This check is non-blocking but recommended for security."
+          echo "This could be due to:"
+          echo "1. Dependency graph not enabled - Enable at:"
+          echo "   https://github.com/${{ github.repository }}/settings/security_analysis"
+          echo "2. Security vulnerabilities detected in dependencies"
+          echo "3. Restricted licenses found in dependencies"
+          echo ""
+          echo "Please check the step logs above for details."
+          echo "This check is non-blocking but should be reviewed."
 
   codeql-analysis:
     name: CodeQL Security Analysis
