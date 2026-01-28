@@ -368,6 +368,34 @@ function SellersSection() {
         </div>
       </div>
 
+      {/* Radio Perks for Sellers */}
+      <div className="p-6 rounded-2xl bg-gradient-to-br from-hot-500/10 to-purple-500/10 border border-hot-500/30">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Radio className="w-5 h-5 text-hot-500" />
+          Radio Advertising Perks for Sellers
+        </h3>
+        <p className="text-white/60 text-sm mb-4">
+          Pro and Business sellers get free radio advertising credits to promote their products!
+        </p>
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="p-4 rounded-xl bg-white/5">
+            <p className="text-white/40 text-xs uppercase tracking-wider">Starter</p>
+            <p className="font-bold mt-1">No radio perks</p>
+            <p className="text-xs text-white/40 mt-1">Upgrade to Pro for radio ads</p>
+          </div>
+          <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30">
+            <p className="text-purple-400 text-xs uppercase tracking-wider">Pro Seller</p>
+            <p className="font-bold mt-1">50 pre-rolls/month</p>
+            <p className="text-sm text-emerald-400 mt-1">+ 10% off all packages</p>
+          </div>
+          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+            <p className="text-amber-400 text-xs uppercase tracking-wider">Business Seller</p>
+            <p className="font-bold mt-1">200 pre-rolls + 2 live reads/month</p>
+            <p className="text-sm text-emerald-400 mt-1">+ 20% off + priority scheduling</p>
+          </div>
+        </div>
+      </div>
+
       {/* Buyer Info */}
       <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
@@ -753,6 +781,52 @@ function AdvertisingSection() {
 function RadioSection() {
   return (
     <div className="space-y-8">
+      {/* Cross-Platform Perks Banner */}
+      <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-500/20 via-hot-500/20 to-amber-500/20 border border-white/20">
+        <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-amber-400" />
+          Radio Ads Included in Your Package!
+        </h3>
+        <p className="text-white/60 text-sm mb-4">
+          Sellers, creators, and premium members get free radio advertising credits automatically.
+        </p>
+        <div className="grid md:grid-cols-3 gap-4">
+          {/* Sellers */}
+          <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30">
+            <div className="flex items-center gap-2 mb-2">
+              <Store className="w-4 h-4 text-purple-400" />
+              <span className="font-bold text-purple-400">Sellers</span>
+            </div>
+            <ul className="space-y-1 text-sm">
+              <li className="text-white/60">Pro: 50 pre-rolls + 10% off</li>
+              <li className="text-white/80 font-medium">Business: 200 pre-rolls + 2 live reads + 20% off</li>
+            </ul>
+          </div>
+          {/* Creators */}
+          <div className="p-4 rounded-xl bg-hot-500/10 border border-hot-500/30">
+            <div className="flex items-center gap-2 mb-2">
+              <Star className="w-4 h-4 text-hot-400" />
+              <span className="font-bold text-hot-400">Creators</span>
+            </div>
+            <ul className="space-y-1 text-sm">
+              <li className="text-white/60">Verified: 25 pre-rolls + 10% off</li>
+              <li className="text-white/80 font-medium">Partner: 100 pre-rolls + 20 mid-rolls + 1 live read + 25% off</li>
+            </ul>
+          </div>
+          {/* Members */}
+          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+            <div className="flex items-center gap-2 mb-2">
+              <Crown className="w-4 h-4 text-amber-400" />
+              <span className="font-bold text-amber-400">Members</span>
+            </div>
+            <ul className="space-y-1 text-sm">
+              <li className="text-white/60">PLUS: 10% off (when selling/creating)</li>
+              <li className="text-white/80 font-medium">CHROME: 20 free pre-rolls + 25% off</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
       {/* Hero Banner */}
       <div className="p-6 rounded-2xl bg-gradient-to-br from-hot-500/20 via-purple-500/10 to-cyan-500/10 border border-hot-500/30">
         <div className="flex items-center gap-4 mb-4">

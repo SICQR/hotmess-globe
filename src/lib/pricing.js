@@ -91,6 +91,7 @@ export const MEMBERSHIP_TIERS = {
       { name: 'Ad-free experience', included: true },
       { name: '3 Boosts/month included', included: true },
       { name: 'Priority in Right Now', included: true },
+      { name: '🎙️ 10% off radio ads (sellers/creators)', included: true },
       { name: 'Night King eligibility', included: false },
       { name: 'Early access to drops', included: false },
     ],
@@ -100,6 +101,10 @@ export const MEMBERSHIP_TIERS = {
       photosInProfile: 12,
       boostsIncluded: 3,
       superLikesPerDay: 5,
+    },
+    radioPerks: {
+      discount: 0.10,
+      description: '10% off all radio advertising packages',
     },
   },
 
@@ -128,6 +133,8 @@ export const MEMBERSHIP_TIERS = {
       { name: 'Unlimited Super Likes', included: true },
       { name: 'VIP event access', included: true },
       { name: 'Verified badge priority', included: true },
+      { name: '🎙️ 20 free radio pre-rolls/month', included: true },
+      { name: '🎙️ 25% off all radio packages', included: true },
     ],
     limits: {
       messagesPerDay: Infinity,
@@ -136,6 +143,11 @@ export const MEMBERSHIP_TIERS = {
       boostsIncluded: 10,
       superLikesPerDay: Infinity,
       premiumUnlocksIncluded: 3,
+    },
+    radioPerks: {
+      preRollCredits: 20,
+      discount: 0.25,
+      description: '20 free pre-roll ads/month + 25% off all radio packages',
     },
   },
 };
@@ -194,6 +206,7 @@ export const MESSMARKET_SELLER = {
         'Standard payout (7 days)',
         'Email support',
       ],
+      radioPerks: null,
     },
     pro: {
       id: 'seller-pro',
@@ -209,7 +222,14 @@ export const MESSMARKET_SELLER = {
         'Priority support',
         '3 listing boosts/month',
         'Bulk listing tools',
+        '🎙️ 50 radio pre-roll ads/month',
+        '🎙️ 10% off radio ad packages',
       ],
+      radioPerks: {
+        preRollCredits: 50,
+        discount: 0.10,
+        liveReads: 0,
+      },
     },
     business: {
       id: 'seller-business',
@@ -226,7 +246,17 @@ export const MESSMARKET_SELLER = {
         '10 listing boosts/month',
         'Globe storefront pin',
         'Priority customer disputes',
+        '🎙️ 200 radio pre-roll ads/month',
+        '🎙️ 2 live DJ reads/month',
+        '🎙️ 20% off radio ad packages',
+        '🎙️ Priority ad scheduling',
       ],
+      radioPerks: {
+        preRollCredits: 200,
+        discount: 0.20,
+        liveReads: 2,
+        priorityScheduling: true,
+      },
     },
   },
 
@@ -813,6 +843,53 @@ export const RADIO_ADVERTISING = {
     },
   },
 
+  // Cross-platform benefits (sellers, creators, members)
+  crossPlatformPerks: {
+    sellers: {
+      starter: null,
+      pro: {
+        preRollCredits: 50,
+        discount: 0.10,
+        features: ['50 pre-roll ads/month', '10% off all packages'],
+      },
+      business: {
+        preRollCredits: 200,
+        liveReads: 2,
+        discount: 0.20,
+        priorityScheduling: true,
+        features: ['200 pre-roll ads/month', '2 live DJ reads/month', '20% off all packages', 'Priority scheduling'],
+      },
+    },
+    creators: {
+      standard: null,
+      verified: {
+        preRollCredits: 25,
+        discount: 0.10,
+        features: ['25 pre-roll ads/month', '10% off packages'],
+      },
+      partner: {
+        preRollCredits: 100,
+        midRollCredits: 20,
+        liveReads: 1,
+        discount: 0.25,
+        showFeature: true,
+        features: ['100 pre-rolls/month', '20 mid-rolls/month', '1 live read/month', '25% off', 'Show feature eligibility'],
+      },
+    },
+    members: {
+      free: null,
+      plus: {
+        discount: 0.10,
+        features: ['10% off radio ads when selling/creating'],
+      },
+      chrome: {
+        preRollCredits: 20,
+        discount: 0.25,
+        features: ['20 free pre-rolls/month', '25% off all radio packages'],
+      },
+    },
+  },
+
   // Packages / bundles
   packages: {
     starter: {
@@ -921,14 +998,28 @@ export const CREATOR_FEES = {
     standard: {
       rate: 0.20, // 20%
       description: 'Standard creator commission',
+      radioPerks: null,
     },
     verified: {
       rate: 0.15, // 15%
       requirements: ['ID verification', '100+ subscribers', '£500+ earnings'],
+      radioPerks: {
+        preRollCredits: 25,
+        discount: 0.10,
+        description: '25 radio pre-rolls/month + 10% off packages',
+      },
     },
     partner: {
       rate: 0.10, // 10%
       requirements: ['Partner program acceptance', '1000+ subscribers'],
+      radioPerks: {
+        preRollCredits: 100,
+        midRollCredits: 20,
+        liveReads: 1,
+        discount: 0.25,
+        showFeature: true,
+        description: '100 pre-rolls + 20 mid-rolls + 1 live read/month + 25% off + show feature eligibility',
+      },
     },
   },
 
