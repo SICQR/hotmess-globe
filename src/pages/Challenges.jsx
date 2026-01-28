@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import XPGainAnimation from '@/components/gamification/XPGainAnimation';
 
 export default function Challenges() {
   const [currentUser, setCurrentUser] = useState(null);
+  const [showXPGain, setShowXPGain] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -81,7 +83,11 @@ export default function Challenges() {
     onSuccess: (_, challenge) => {
       queryClient.invalidateQueries(['challenge-completions']);
       queryClient.invalidateQueries(['streaks']);
-      toast.success(`+${challenge.reward_xp} XP earned!`);
+      
+      // Show XP gain animation
+      setShowXPGain(challenge.reward_xp);
+      toast.success(`Challenge completed!`);
+      
       confetti({
         particleCount: 100,
         spread: 70,
@@ -102,6 +108,14 @@ export default function Challenges() {
 
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-8">
+      {/* XP Gain Animation */}
+      {showXPGain && (
+        <XPGainAnimation 
+          amount={showXPGain} 
+          onComplete={() => setShowXPGain(null)} 
+        />
+      )}
+      
       <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
