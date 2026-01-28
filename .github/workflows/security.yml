@@ -92,7 +92,7 @@ jobs:
           deny-licenses: GPL-3.0, AGPL-3.0
       
       - name: Note on Dependency Review
-        if: failure()
+        if: steps.dependency-review.outcome == 'failure'
         run: |
           echo "⚠️ Dependency Review step failed or is not enabled."
           echo "To enable Dependency Review, ensure Dependency graph is enabled at:"
