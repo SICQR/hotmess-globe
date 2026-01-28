@@ -67,8 +67,9 @@ export default function AchievementUnlockModal({
       });
 
       // Extra burst for legendary
+      let legendaryTimeout;
       if (rarity === 'legendary') {
-        setTimeout(() => {
+        legendaryTimeout = setTimeout(() => {
           confetti({
             particleCount: 100,
             angle: 60,
@@ -87,6 +88,12 @@ export default function AchievementUnlockModal({
           });
         }, 250);
       }
+
+      return () => {
+        if (legendaryTimeout) {
+          clearTimeout(legendaryTimeout);
+        }
+      };
     }
   }, [isOpen, rarity]);
 
@@ -104,6 +111,9 @@ export default function AchievementUnlockModal({
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/90 backdrop-blur-xl"
           onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="achievement-title"
         >
           <motion.div
             initial={{ scale: 0.3, opacity: 0, rotateY: -90 }}
@@ -187,6 +197,7 @@ export default function AchievementUnlockModal({
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6 }}
+              id="achievement-title"
               className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-4"
               style={{ color: config.color }}
             >
