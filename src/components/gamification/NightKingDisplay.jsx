@@ -6,6 +6,7 @@ import { Crown, Swords, Zap, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
+import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function NightKingDisplay({ venueId }) {
@@ -63,7 +64,7 @@ export default function NightKingDisplay({ venueId }) {
         )}
       </div>
 
-      <Link to={createPageUrl(`Profile?email=${kingData.king_email}`)}>
+      <Link to={getProfileUrl(user)}>
         <div className="bg-black/40 border border-white/20 p-4 hover:border-white/40 transition-colors mb-3">
           <div className="flex items-center justify-between">
             <div>
