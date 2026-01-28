@@ -191,5 +191,3 @@ export function SyncToast({ type, count }) {
     </motion.div>
   );
 }
-
-export default PendingSyncIndicator;
