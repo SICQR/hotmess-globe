@@ -4,7 +4,7 @@
  * Improves performance for discovery, events, and long lists
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 
 /**
  * VirtualList Component
@@ -12,6 +12,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
  * @param {Object} props
  * @param {Array} props.items - Array of items to render
  * @param {Function} props.renderItem - Function to render each item (item, index) => ReactNode
+ * @param {Function} props.keyExtractor - Function to extract unique key from item (item, index) => string
  * @param {number} props.itemHeight - Height of each item in pixels
  * @param {number} props.height - Height of the container in pixels
  * @param {number} props.overscan - Number of items to render outside visible area (default: 3)
@@ -20,6 +21,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 export function VirtualList({
   items = [],
   renderItem,
+  keyExtractor,
   itemHeight = 80,
   height = 600,
   overscan = 3,
@@ -43,13 +45,6 @@ export function VirtualList({
     setScrollTop(e.target.scrollTop);
   }, []);
 
-  // Scroll to specific index
-  const scrollToIndex = useCallback((index) => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = index * itemHeight;
-    }
-  }, [itemHeight]);
-
   return (
     <div
       ref={containerRef}
@@ -60,9 +55,10 @@ export function VirtualList({
       <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
         {visibleItems.map((item, i) => {
           const actualIndex = startIndex + i;
+          const key = keyExtractor ? keyExtractor(item, actualIndex) : actualIndex;
           return (
             <div
-              key={actualIndex}
+              key={key}
               style={{
                 position: 'absolute',
                 top: `${actualIndex * itemHeight}px`,
@@ -87,6 +83,7 @@ export function VirtualList({
  * @param {Object} props
  * @param {Array} props.items - Array of items to render
  * @param {Function} props.renderItem - Function to render each item (item, index) => ReactNode
+ * @param {Function} props.keyExtractor - Function to extract unique key from item (item, index) => string
  * @param {number} props.itemHeight - Height of each row in pixels
  * @param {number} props.columns - Number of columns in the grid
  * @param {number} props.gap - Gap between items in pixels (default: 16)
@@ -97,6 +94,7 @@ export function VirtualList({
 export function VirtualGrid({
   items = [],
   renderItem,
+  keyExtractor,
   itemHeight = 200,
   columns = 3,
   gap = 16,
@@ -140,14 +138,15 @@ export function VirtualGrid({
           const actualIndex = startIndex + i;
           const row = Math.floor(actualIndex / columns);
           const col = actualIndex % columns;
+          const key = keyExtractor ? keyExtractor(item, actualIndex) : actualIndex;
           
           return (
             <div
-              key={actualIndex}
+              key={key}
               style={{
                 position: 'absolute',
                 top: `${row * rowHeight}px`,
-                left: `calc(${(col / columns) * 100}% + ${col > 0 ? gap / 2 : 0}px)`,
+                left: `calc(${(col / columns) * 100}% + ${col * gap}px)`,
                 width: `calc(${100 / columns}% - ${gap}px)`,
                 height: `${itemHeight}px`,
               }}

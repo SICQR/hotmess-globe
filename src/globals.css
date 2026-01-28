@@ -127,24 +127,23 @@
     --muted: 0 0% 80%;
   }
   
-  .high-contrast * {
-    /* Increase contrast for text */
+  /* Increase contrast for text - apply selectively to text elements */
+  .high-contrast p,
+  .high-contrast h1,
+  .high-contrast h2,
+  .high-contrast h3,
+  .high-contrast h4,
+  .high-contrast h5,
+  .high-contrast h6,
+  .high-contrast span {
     text-shadow: 0 0 1px currentColor;
-  }
-  
-  .high-contrast button,
-  .high-contrast a,
-  .high-contrast [role="button"] {
-    /* Ensure interactive elements have clear borders */
-    outline: 2px solid currentColor;
-    outline-offset: 2px;
   }
   
   .high-contrast button:focus,
   .high-contrast a:focus,
   .high-contrast [role="button"]:focus {
     /* Enhanced focus indicators */
-    outline: 3px solid var(--accent);
+    outline: 3px solid hsl(var(--accent));
     outline-offset: 3px;
   }
   

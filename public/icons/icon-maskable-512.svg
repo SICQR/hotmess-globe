@@ -9,9 +9,10 @@
       <stop offset="100%" style="stop-color:#FF1493"/>
     </linearGradient>
   </defs>
-  <!-- Maskable icons need safe zone - 20% padding -->
+  <!-- Maskable icons need 20% safe zone - content in center 80% -->
+  <!-- 512 * 0.2 = 102.4px padding, content area 307.2x307.2 -->
   <rect width="512" height="512" fill="#000"/>
-  <rect x="61" y="61" width="390" height="390" rx="78" fill="none" stroke="url(#bgm512)" stroke-width="13"/>
-  <text x="256" y="306" text-anchor="middle" font-size="215" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" fill="#fff">H</text>
-  <rect x="163" y="360" width="186" height="16" rx="8" fill="url(#accentm512)"/>
+  <rect x="102" y="102" width="308" height="308" rx="62" fill="none" stroke="url(#bgm512)" stroke-width="10"/>
+  <text x="256" y="288" text-anchor="middle" font-size="170" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" fill="#fff">H</text>
+  <rect x="184" y="332" width="144" height="12" rx="6" fill="url(#accentm512)"/>
 </svg>
