@@ -66,6 +66,7 @@ import SquadChat from './pages/SquadChat';
 import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
 import WakeTheMess from './pages/WakeTheMess';
+import LuxShowcase from './pages/LuxShowcase';
 import __Layout from './Layout.jsx';
 
 
@@ -137,6 +138,7 @@ export const PAGES = {
     "TermsOfService": TermsOfService,
     "TicketMarketplace": TicketMarketplace,
     "WakeTheMess": WakeTheMess,
+    "LuxShowcase": LuxShowcase,
 }
 
 export const pagesConfig = {
