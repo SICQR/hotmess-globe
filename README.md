@@ -182,20 +182,59 @@ HOTMESS supports multiple specialized profile types, each with its own unique vi
 
 ### Enabling Premium Features
 
+**TL;DR**: Set `VITE_XP_PURCHASING_ENABLED=true` and run the migration!
+
 To enable premium content and XP purchasing:
 
-1. Set the environment variable:
+1. **Set the environment variable**:
    ```env
    VITE_XP_PURCHASING_ENABLED=true
    ```
+   - Add to `.env.local` for local development
+   - Or set in Vercel: Project → Settings → Environment Variables
 
-2. Ensure the premium content migration has been run on your Supabase instance:
-   - Migration file: `supabase/migrations/20260128000001_premium_content.sql`
-   - Creates tables: `subscriptions`, `premium_unlocks`, `premium_content`, `xp_transactions`
+2. **Run the premium content migration** on your Supabase instance:
+   
+   **Option A: Using Supabase Dashboard (Recommended)**
+   1. Open your Supabase project dashboard
+   2. Go to SQL Editor (left sidebar)
+   3. Click "New Query"
+   4. Copy the entire contents of `supabase/migrations/20260128000001_premium_content.sql`
+   5. Paste into the SQL Editor
+   6. Click "Run" to execute
+   
+   **Option B: Using Supabase CLI** (if installed)
+   ```bash
+   supabase db push
+   # Or apply specific migration:
+   # supabase migration up --db-url "your-connection-string"
+   ```
+   
+   **What this migration creates:**
+   - `subscriptions` table - Creator subscription relationships
+   - `premium_unlocks` table - Individual content unlock records
+   - `premium_content` table - Premium content metadata
+   - `xp_transactions` table - Audit log for all XP transactions
+   - RLS policies for secure data access
+   - Helper functions (`has_unlocked_content`, `get_subscriber_count`, etc.)
+   
+   **Verify migration succeeded:**
+   ```sql
+   -- Run in Supabase SQL Editor to verify tables exist
+   SELECT table_name FROM information_schema.tables 
+   WHERE table_schema = 'public' 
+   AND table_name IN ('subscriptions', 'premium_unlocks', 'premium_content', 'xp_transactions');
+   ```
+   You should see all 4 tables listed.
 
-3. Premium API endpoints are available at:
+3. **Premium API endpoints** are now available:
    - `POST /api/premium/unlock` - Unlock individual content items with XP
    - `POST /api/premium/subscribe` - Subscribe to a creator's premium content
+
+4. **Start using premium features**:
+   - Set user's `profile_type = 'premium'` to enable premium profile view
+   - Add `is_premium: true` to photo objects in user's `photos` array
+   - Users can now unlock content or subscribe to creators using XP
 
 ### Setting Profile Types
 
