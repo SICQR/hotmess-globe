@@ -8,6 +8,7 @@ import OSCard, { OSCardBadge } from '../ui/OSCard';
 import LazyImage from '../ui/LazyImage';
 import { base44 } from '@/api/base44Client';
 import { isXpPurchasingEnabled } from '@/lib/featureFlags';
+import { TiltCard } from '@/components/interactions/TiltCard';
 
 const TYPE_ICONS = {
   physical: Package,
@@ -97,10 +98,11 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
       whileHover={{ scale: 1.02 }}
     >
       <Link to={createPageUrl(`ProductDetail?id=${product.id}`)}>
-        <OSCard 
-          locked={isLocked}
-          xpRequired={isLocked ? product.min_xp_level : null}
-        >
+        <TiltCard intensity={5}>
+          <OSCard 
+            locked={isLocked}
+            xpRequired={isLocked ? product.min_xp_level : null}
+          >
           {/* Editorial Product Photography */}
           <div 
             className="h-48 flex items-center justify-center relative"
@@ -176,6 +178,7 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
             </div>
           </div>
         </OSCard>
+        </TiltCard>
       </Link>
     </motion.div>
   );
