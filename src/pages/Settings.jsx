@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Bell, Shield, LogOut, Save, Edit, Camera, Download, Trash2, Database, HelpCircle, MessageSquare, FileText } from 'lucide-react';
+import { User, Bell, Shield, LogOut, Save, Edit, Camera, Download, Trash2, Database, HelpCircle, MessageSquare, FileText, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { createPageUrl, createUserProfileUrl } from '../utils';
+import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
 
 export default function Settings() {
   const [user, setUser] = useState(null);
@@ -262,6 +263,31 @@ export default function Settings() {
                 🔒 <span className="font-bold">Social Links Privacy:</span> Your social media links are only visible to mutual follows. Edit them in your full profile.
               </p>
             </div>
+          </div>
+        </motion.div>
+
+        {/* Language */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <Globe className="w-5 h-5 text-[#B026FF]" />
+            <h2 className="text-xl font-bold uppercase tracking-wider">Language</h2>
+          </div>
+
+          <div className="space-y-4">
+            <p className="text-sm text-white/60">
+              Choose your preferred language for the app interface.
+            </p>
+            <LanguageSwitcher 
+              variant="list" 
+              onLanguageChange={(lang) => {
+                toast.success(`Language changed to ${lang.toUpperCase()}`);
+              }}
+            />
           </div>
         </motion.div>
 
