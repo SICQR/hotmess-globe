@@ -1,105 +1,129 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+/**
+ * Virtual Scrolling Component
+ * Efficiently renders large lists by only rendering visible items
+ * Improves performance for discovery, events, and long lists
+ */
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
- * Virtual List Component
- * Renders only visible items for performance with long lists
+ * VirtualList Component
+ * 
+ * @param {Object} props
+ * @param {Array} props.items - Array of items to render
+ * @param {Function} props.renderItem - Function to render each item (item, index) => ReactNode
+ * @param {number} props.itemHeight - Height of each item in pixels
+ * @param {number} props.height - Height of the container in pixels
+ * @param {number} props.overscan - Number of items to render outside visible area (default: 3)
+ * @param {string} props.className - Additional CSS classes for the container
  */
-export default function VirtualList({
-  items,
-  itemHeight,
-  containerHeight,
+export function VirtualList({
+  items = [],
   renderItem,
+  itemHeight = 80,
+  height = 600,
   overscan = 3,
   className = '',
-  onEndReached,
-  endReachedThreshold = 0.8,
 }) {
-  const containerRef = useRef(null);
   const [scrollTop, setScrollTop] = useState(0);
+  const containerRef = useRef(null);
 
+  // Calculate visible range
   const totalHeight = items.length * itemHeight;
-  const visibleCount = Math.ceil(containerHeight / itemHeight);
-  
   const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
   const endIndex = Math.min(
     items.length - 1,
-    Math.floor(scrollTop / itemHeight) + visibleCount + overscan
+    Math.ceil((scrollTop + height) / itemHeight) + overscan
   );
-  
-  const visibleItems = items.slice(startIndex, endIndex + 1);
-  const offsetY = startIndex * itemHeight;
 
+  const visibleItems = items.slice(startIndex, endIndex + 1);
+
+  // Handle scroll
   const handleScroll = useCallback((e) => {
-    const newScrollTop = e.target.scrollTop;
-    setScrollTop(newScrollTop);
-    
-    // Check if we've scrolled near the end
-    if (onEndReached) {
-      const scrollPercentage = (newScrollTop + containerHeight) / totalHeight;
-      if (scrollPercentage >= endReachedThreshold) {
-        onEndReached();
-      }
+    setScrollTop(e.target.scrollTop);
+  }, []);
+
+  // Scroll to specific index
+  const scrollToIndex = useCallback((index) => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = index * itemHeight;
     }
-  }, [containerHeight, totalHeight, endReachedThreshold, onEndReached]);
+  }, [itemHeight]);
 
   return (
     <div
       ref={containerRef}
-      className={`overflow-auto ${className}`}
-      style={{ height: containerHeight }}
       onScroll={handleScroll}
+      className={`overflow-auto ${className}`}
+      style={{ height: `${height}px` }}
     >
-      <div style={{ height: totalHeight, position: 'relative' }}>
-        <div style={{ transform: `translateY(${offsetY}px)` }}>
-          {visibleItems.map((item, index) => (
+      <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
+        {visibleItems.map((item, i) => {
+          const actualIndex = startIndex + i;
+          return (
             <div
-              key={startIndex + index}
-              style={{ height: itemHeight }}
+              key={actualIndex}
+              style={{
+                position: 'absolute',
+                top: `${actualIndex * itemHeight}px`,
+                left: 0,
+                right: 0,
+                height: `${itemHeight}px`,
+              }}
             >
-              {renderItem(item, startIndex + index)}
+              {renderItem(item, actualIndex)}
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 /**
- * Virtual Grid Component
- * For grid layouts with virtualization
+ * VirtualGrid Component
+ * Virtual scrolling for grid layouts
+ * 
+ * @param {Object} props
+ * @param {Array} props.items - Array of items to render
+ * @param {Function} props.renderItem - Function to render each item (item, index) => ReactNode
+ * @param {number} props.itemHeight - Height of each row in pixels
+ * @param {number} props.columns - Number of columns in the grid
+ * @param {number} props.gap - Gap between items in pixels (default: 16)
+ * @param {number} props.height - Height of the container in pixels
+ * @param {number} props.overscan - Number of rows to render outside visible area (default: 2)
+ * @param {string} props.className - Additional CSS classes for the container
  */
 export function VirtualGrid({
-  items,
-  itemWidth,
-  itemHeight,
-  containerHeight,
-  columns,
+  items = [],
   renderItem,
+  itemHeight = 200,
+  columns = 3,
+  gap = 16,
+  height = 600,
   overscan = 2,
-  gap = 0,
   className = '',
 }) {
-  const containerRef = useRef(null);
   const [scrollTop, setScrollTop] = useState(0);
+  const containerRef = useRef(null);
 
+  // Calculate grid layout
+  const rows = Math.ceil(items.length / columns);
   const rowHeight = itemHeight + gap;
-  const rowCount = Math.ceil(items.length / columns);
-  const totalHeight = rowCount * rowHeight;
-  const visibleRowCount = Math.ceil(containerHeight / rowHeight);
-  
-  const startRowIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
-  const endRowIndex = Math.min(
-    rowCount - 1,
-    Math.floor(scrollTop / rowHeight) + visibleRowCount + overscan
-  );
-  
-  const startItemIndex = startRowIndex * columns;
-  const endItemIndex = Math.min(items.length - 1, (endRowIndex + 1) * columns - 1);
-  
-  const visibleItems = items.slice(startItemIndex, endItemIndex + 1);
-  const offsetY = startRowIndex * rowHeight;
+  const totalHeight = rows * rowHeight;
 
+  // Calculate visible range
+  const startRow = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
+  const endRow = Math.min(
+    rows - 1,
+    Math.ceil((scrollTop + height) / rowHeight) + overscan
+  );
+
+  const startIndex = startRow * columns;
+  const endIndex = Math.min(items.length - 1, (endRow + 1) * columns - 1);
+  const visibleItems = items.slice(startIndex, endIndex + 1);
+
+  // Handle scroll
   const handleScroll = useCallback((e) => {
     setScrollTop(e.target.scrollTop);
   }, []);
@@ -107,111 +131,82 @@ export function VirtualGrid({
   return (
     <div
       ref={containerRef}
-      className={`overflow-auto ${className}`}
-      style={{ height: containerHeight }}
       onScroll={handleScroll}
+      className={`overflow-auto ${className}`}
+      style={{ height: `${height}px` }}
     >
-      <div style={{ height: totalHeight, position: 'relative' }}>
-        <div 
-          style={{ 
-            transform: `translateY(${offsetY}px)`,
-            display: 'grid',
-            gridTemplateColumns: `repeat(${columns}, ${itemWidth}px)`,
-            gap: `${gap}px`,
-          }}
-        >
-          {visibleItems.map((item, index) => (
+      <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
+        {visibleItems.map((item, i) => {
+          const actualIndex = startIndex + i;
+          const row = Math.floor(actualIndex / columns);
+          const col = actualIndex % columns;
+          
+          return (
             <div
-              key={startItemIndex + index}
-              style={{ height: itemHeight, width: itemWidth }}
+              key={actualIndex}
+              style={{
+                position: 'absolute',
+                top: `${row * rowHeight}px`,
+                left: `calc(${(col / columns) * 100}% + ${col > 0 ? gap / 2 : 0}px)`,
+                width: `calc(${100 / columns}% - ${gap}px)`,
+                height: `${itemHeight}px`,
+              }}
             >
-              {renderItem(item, startItemIndex + index)}
+              {renderItem(item, actualIndex)}
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 /**
- * Infinite Scroll Hook
- * For implementing infinite scroll with pagination
+ * useVirtualScroll Hook
+ * Custom hook for implementing virtual scrolling
+ * 
+ * @param {Object} options
+ * @param {number} options.itemCount - Total number of items
+ * @param {number} options.itemHeight - Height of each item in pixels
+ * @param {number} options.containerHeight - Height of the container in pixels
+ * @param {number} options.overscan - Number of items to render outside visible area
+ * @returns {Object} - Virtual scroll state and helpers
  */
-export function useInfiniteScroll(callback, options = {}) {
-  const { threshold = 100, enabled = true } = options;
-  const observerRef = useRef(null);
-  const loadingRef = useRef(false);
+export function useVirtualScroll({
+  itemCount = 0,
+  itemHeight = 80,
+  containerHeight = 600,
+  overscan = 3,
+} = {}) {
+  const [scrollTop, setScrollTop] = useState(0);
+  const containerRef = useRef(null);
 
-  const sentinelRef = useCallback((node) => {
-    if (!enabled) return;
-    
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
+  const totalHeight = itemCount * itemHeight;
+  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
+  const endIndex = Math.min(
+    itemCount - 1,
+    Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan
+  );
 
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loadingRef.current) {
-          loadingRef.current = true;
-          Promise.resolve(callback()).finally(() => {
-            loadingRef.current = false;
-          });
-        }
-      },
-      { rootMargin: `${threshold}px` }
-    );
-
-    if (node) {
-      observerRef.current.observe(node);
-    }
-  }, [callback, threshold, enabled]);
-
-  useEffect(() => {
-    return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-    };
+  const handleScroll = useCallback((e) => {
+    setScrollTop(e.target.scrollTop);
   }, []);
 
-  return sentinelRef;
-}
-
-/**
- * Lazy Load Component Wrapper
- * Loads component only when visible
- */
-export function LazyLoad({ 
-  children, 
-  placeholder, 
-  rootMargin = '200px',
-  className = '' 
-}) {
-  const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin }
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
+  const scrollToIndex = useCallback((index) => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = index * itemHeight;
     }
+  }, [itemHeight]);
 
-    return () => observer.disconnect();
-  }, [rootMargin]);
-
-  return (
-    <div ref={ref} className={className}>
-      {isVisible ? children : placeholder}
-    </div>
-  );
+  return {
+    containerRef,
+    scrollTop,
+    startIndex,
+    endIndex,
+    totalHeight,
+    handleScroll,
+    scrollToIndex,
+  };
 }
+
+export default VirtualList;
