@@ -643,14 +643,14 @@ export function ProfileCard({
                       Match Breakdown: {profile.matchProbability}%
                     </div>
                     <div className="grid grid-cols-2 gap-1 text-[10px] text-white/70">
-                      <div>Travel: {profile.matchBreakdown.travelTime}/20</div>
-                      <div>Role: {profile.matchBreakdown.roleCompat}/15</div>
-                      <div>Kinks: {profile.matchBreakdown.kinkOverlap}/15</div>
-                      <div>Intent: {profile.matchBreakdown.intent}/12</div>
-                      <div>Text: {profile.matchBreakdown.semantic}/12</div>
-                      <div>Lifestyle: {profile.matchBreakdown.lifestyle}/10</div>
-                      <div>Activity: {profile.matchBreakdown.activity}/8</div>
-                      <div>Complete: {profile.matchBreakdown.completeness}/8</div>
+                      <div>Travel: {Math.round(profile.matchBreakdown.travelTime)}/20</div>
+                      <div>Role: {Math.round(profile.matchBreakdown.roleCompat)}/15</div>
+                      <div>Kinks: {Math.round(profile.matchBreakdown.kinkOverlap)}/15</div>
+                      <div>Intent: {Math.round(profile.matchBreakdown.intent)}/12</div>
+                      <div>Text: {Math.round(profile.matchBreakdown.semantic)}/12</div>
+                      <div>Lifestyle: {Math.round(profile.matchBreakdown.lifestyle)}/10</div>
+                      <div>Activity: {Math.round(profile.matchBreakdown.activity)}/8</div>
+                      <div>Complete: {Math.round(profile.matchBreakdown.completeness)}/8</div>
                     </div>
                   </div>
                 ) : null}

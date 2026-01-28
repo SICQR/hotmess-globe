@@ -64,6 +64,11 @@ export default async function handler(req, res) {
     const offset = clampInt(req.query?.offset, 0, 10000, 0);
     const sort = String(req.query?.sort || 'match').toLowerCase();
 
+    // Note: Sorting is applied per-page after fetching. For true global sorting
+    // across all pages, clients should either fetch all results at once or
+    // implement server-side scoring with a cache. Current implementation prioritizes
+    // performance by computing scores only for the requested page.
+
     // Viewer location is optional but needed for travel time scoring
     const viewerLocation = (Number.isFinite(lat) && Number.isFinite(lng)) ? { lat, lng } : null;
 
@@ -255,6 +260,13 @@ export default async function handler(req, res) {
       scoredProfiles.sort((a, b) => (a.travelTimeMinutes || 999999) - (b.travelTimeMinutes || 999999));
     } else if (sort === 'lastActive') {
       scoredProfiles.sort((a, b) => b.matchBreakdown.activity - a.matchBreakdown.activity);
+    } else if (sort === 'newest') {
+      // Sort by profile creation date if available, otherwise by ID
+      scoredProfiles.sort((a, b) => {
+        const aTime = new Date(a.created_at || a.id).getTime();
+        const bTime = new Date(b.created_at || b.id).getTime();
+        return bTime - aTime; // Newest first
+      });
     }
 
     // Pagination cursor (simple offset-based)

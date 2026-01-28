@@ -30,13 +30,19 @@ create index if not exists idx_profile_embeddings_bio
 alter table public.profile_embeddings enable row level security;
 
 -- Service role can read/write all embeddings (needed for batch processing)
--- Users can read their own embeddings
+-- Users can read their own embeddings by joining through User table's auth_user_id
 drop policy if exists profile_embeddings_select_self on public.profile_embeddings;
 create policy profile_embeddings_select_self
   on public.profile_embeddings
   for select
   to authenticated
-  using (auth.uid() = user_id);
+  using (
+    exists (
+      select 1 from public."User" u
+      where u.id = profile_embeddings.user_id
+        and u.auth_user_id = auth.uid()
+    )
+  );
 
 -- Service role policy for insert/update (managed by backend)
 drop policy if exists profile_embeddings_service_all on public.profile_embeddings;
@@ -58,6 +64,9 @@ end
 $$;
 
 -- Optional: Create a table to store scoring configuration for A/B testing
+-- Note: This table is reserved for future use. Current implementation uses
+-- hardcoded weights in the scoring functions for simplicity and performance.
+-- Future enhancement: Implement dynamic weight loading from this table.
 create table if not exists public.scoring_config (
   id uuid primary key default gen_random_uuid(),
   config_name text not null unique,
