@@ -10,6 +10,7 @@ import { useServerNow } from '@/hooks/use-server-now';
 import { toast } from 'sonner';
 import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { format } from 'date-fns';
+import DailyCheckin from '@/components/gamification/DailyCheckin';
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
 // Shopify product handles are not the same as release slugs.
@@ -326,6 +327,19 @@ export default function Home() {
           </div>
         </motion.div>
       </section>
+
+      {/* DAILY CHECK-IN */}
+      {currentUser && (
+        <section className="px-4 md:px-8 py-8 max-w-4xl mx-auto">
+          <DailyCheckin 
+            currentUser={currentUser}
+            onCheckinComplete={(checkinData) => {
+              // Refetch user data to update XP
+              queryClient.invalidateQueries(['user']);
+            }}
+          />
+        </section>
+      )}
 
       {/* LUBE CTA (always visible) */}
       <section className="py-16 px-6 bg-black">

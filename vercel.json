@@ -19,6 +19,14 @@
     {
       "path": "/api/admin/cleanup/rate-limits",
       "schedule": "20 4 * * *"
+    },
+    {
+      "path": "/api/cron/reactivation",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/streak-reminder",
+      "schedule": "0 12 * * *"
     }
   ],
   "headers": [
