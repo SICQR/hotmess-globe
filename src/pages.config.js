@@ -116,6 +116,7 @@ export const PAGES = {
     "OnboardingGate": OnboardingGate,
     "OrderHistory": OrderHistory,
     "OrganizerDashboard": OrganizerDashboard,
+    "PrivacyPolicy": PrivacyPolicy,
     "ProductDetail": ProductDetail,
     "Profile": Profile,
     "ProfilesGrid": ProfilesGrid,
