@@ -6,12 +6,20 @@ import pluginJs from "@eslint/js";
 import pluginReact from "eslint-plugin-react";
 import pluginReactHooks from "eslint-plugin-react-hooks";
 import pluginUnusedImports from "eslint-plugin-unused-imports";
+import tseslint from "typescript-eslint";
 
 export default [{
   ignores: [
     // This repo contains an intentionally-ignored nested copy at `hotmess-globe/`.
     // Do not lint it (it has different config/tooling and breaks CI).
     "hotmess-globe/**",
+    // Storybook config and stories - handled by Storybook's own tooling
+    ".storybook/**",
+    "**/*.stories.ts",
+    "**/*.stories.tsx",
+    "**/*.stories.js",
+    "**/*.stories.jsx",
+    "**/stories/**",
   ],
 }, {
   files: [
