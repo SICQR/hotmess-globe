@@ -1185,6 +1185,111 @@ The spec defines specific copy that's not consistently implemented:
 
 ---
 
+## Recent Implementations (2026-01-28)
+
+### New Components Added
+
+#### 1. FakeCallGenerator (`src/components/safety/FakeCallGenerator.jsx`)
+**Status**: ✅ **IMPLEMENTED**
+
+Implements the spec requirement: "Fake Call - Escape awkward situations with fake incoming call"
+
+**Features**:
+- Customizable caller name (presets: Mum, Best Friend, Work, Flatmate, Partner)
+- Delay timer options: Now, 5s, 30s, 1min, 5min
+- Realistic vibration pattern
+- Full-screen incoming call UI
+- Answer redirects to Safety Hub
+- Wired into Safety page and Care page
+
+#### 2. ProfileWingman (`src/components/profile/ProfileWingman.jsx`)
+**Status**: ✅ **IMPLEMENTED**
+
+Implements the spec requirement: "AI Wingman - Conversation starters, match insights"
+
+**Features**:
+- AI-generated conversation starters based on profile analysis
+- Templates for: interests, music, location, travel, bio-based openers
+- Match insights explaining why users are compatible
+- Copy/use functionality for easy message sending
+- Refresh button to regenerate openers
+- Wired into Profile page (shows when viewing other profiles)
+
+#### 3. AftercareNudge (`src/components/safety/AftercareNudge.jsx`)
+**Status**: ✅ **IMPLEMENTED**
+
+Implements the spec requirement: "Aftercare Nudge: 'You good?' prompt after meetup"
+
+**Features**:
+- Three response options:
+  - ALL GOOD (green) - positive confirmation
+  - NEED A MINUTE (yellow) - shows care resources
+  - GET HELP (pink) - shows emergency contacts + resources
+- Private response tracking
+- `useAftercareNudge` hook for triggering
+
+#### 4. InAppDirections (`src/components/directions/InAppDirections.jsx`)
+**Status**: ✅ **IMPLEMENTED**
+
+Implements the spec requirement: "Never leave the app" for navigation
+
+**Features**:
+- Embeddable Leaflet map component
+- Travel modes: Walk, Bike, Drive + Uber deep link
+- Compact view for profile cards
+- Full expanded map view with route polylines
+- Real-time ETA display
+- `ETABadges` component for quick travel time display
+- `DirectionsButton` for modal trigger
+
+#### 5. PersonaCard (`src/components/profile/PersonaCard.jsx`)
+**Status**: ✅ **IMPLEMENTED**
+
+Implements the spec requirement: "Multi-Layered Profile Skins"
+
+**Features**:
+- Six persona types with distinct styling:
+  - Standard (white)
+  - Seller (purple)
+  - Creator (pink)
+  - Organizer (cyan)
+  - Premium (gold)
+  - DJ (green)
+- Three variants: default, compact, featured
+- Status badges: Online, Right Now, Busy, Away
+- Match score display
+- Level/XP progress indicators
+- `PersonaGrid` component for layouts
+
+#### 6. HotmessSplash (`src/components/splash/HotmessSplash.jsx`)
+**Status**: ✅ **IMPLEMENTED**
+
+Condenses the fragmented gate system into ONE bold entry experience
+
+**Features**:
+- Single "ENTER" action confirms: 18+, cookies, terms, GDPR
+- Inline auth (sign in/sign up) without page switching
+- Audio support for splash track
+- Beautiful gradient animations
+- Replaces: AgeGate, CookieGate, OnboardingGate, ConsentGate
+
+### Enhanced Pages
+
+#### HNH MESS Lube Page (`src/pages/Hnhmess.jsx`)
+**Status**: ✅ **ENHANCED**
+
+- Complete redesign with bold hero section
+- Full-viewport hero with gradient effects
+- Product gallery with thumbnails
+- Integrated SoundCloud player
+- Care-first messaging section
+- Proper copyright footer:
+  - © 2026 HOTMESS LONDON LTD. All rights reserved.
+  - HNH MESS™ is a trademark of HOTMESS LONDON LTD.
+  - Music © RAW CONVICT RECORDS. Used under license.
+
+---
+
 ## Summary
 
 HOTMESS London OS is a feature-rich, well-structured application with:
@@ -1196,6 +1301,11 @@ HOTMESS London OS is a feature-rich, well-structured application with:
   - Real-time capabilities
   - Strong safety features
   - Headless Shopify integration
+  - **NEW**: Complete safety system (Fake Call, Aftercare Nudge, Check-ins)
+  - **NEW**: AI-powered profile matching with conversation starters
+  - **NEW**: In-app navigation without leaving the platform
+  - **NEW**: Multi-layered persona system
+  - **NEW**: Streamlined onboarding with unified splash
 
 - **Areas for Improvement**:
   - Complete SoundCloud OAuth
@@ -1209,3 +1319,4 @@ The codebase is production-ready for beta testing with the documented limitation
 ---
 
 *Analysis generated: 2026-01-28*
+*Last updated: 2026-01-28 - Added new component implementations*
