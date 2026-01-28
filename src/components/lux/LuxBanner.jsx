@@ -411,7 +411,6 @@ export function LuxAdBanner({
   onLoad,
   onError,
 }) {
-  const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
 
   const sizeConfigs = {
@@ -435,7 +434,6 @@ export function LuxAdBanner({
           setHasError(true);
           onError?.();
         } else {
-          setIsLoaded(true);
           onLoad?.();
         }
       }, 100);
