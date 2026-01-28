@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/components/utils/supabaseClient';
 import logger from '@/utils/logger';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
+import { setUser as setSentryUser } from '@/lib/sentry';
 
 const AuthContext = createContext();
 
@@ -45,12 +46,16 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
         setIsLoadingAuth(false);
         mergedGuestCartRef.current = false;
+        setSentryUser(null); // Clear Sentry user context
         return;
       }
 
       const currentUser = await base44.auth.me();
       setUser(currentUser || null);
       setIsAuthenticated(!!currentUser);
+      
+      // Set user context in Sentry for better error tracking
+      setSentryUser(currentUser);
 
       // Best-effort: if the user logs in while holding a creators guest cart,
       // merge it into the DB cart once per session.
@@ -80,6 +85,7 @@ export const AuthProvider = ({ children }) => {
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
+    setSentryUser(null); // Clear Sentry user context
     
     if (shouldRedirect) {
       // Supabase-backed logout supports optional redirect.
