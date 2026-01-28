@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Heart, Phone, Shield, Users, CheckCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Heart, Phone, Shield, Users, CheckCircle, PhoneCall, X } from 'lucide-react';
+import FakeCallGenerator from '../components/safety/FakeCallGenerator';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const EMERGENCY_CONTACTS = [
   { name: 'Emergency Services', number: '999', description: 'Police, Fire, Ambulance' },
@@ -29,6 +32,7 @@ const COMMUNITY_RESOURCES = [
 
 export default function Care() {
   const [checkedItems, setCheckedItems] = useState([]);
+  const [showFakeCall, setShowFakeCall] = useState(false);
 
   const toggleCheck = (index) => {
     setCheckedItems(prev =>
@@ -61,6 +65,58 @@ export default function Care() {
       </section>
 
       <div className="max-w-7xl mx-auto px-6 pb-32">
+        {/* Quick Safety Tools */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-20"
+        >
+          <h2 className="text-2xl font-black italic mb-6 text-center">QUICK SAFETY TOOLS</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Fake Call */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowFakeCall(true)}
+              className="flex flex-col items-center gap-3 p-6 bg-[#FF1493]/10 border-2 border-[#FF1493]/50 hover:border-[#FF1493] rounded-xl transition-all"
+            >
+              <div className="w-16 h-16 rounded-full bg-[#FF1493]/20 flex items-center justify-center">
+                <PhoneCall className="w-8 h-8 text-[#FF1493]" />
+              </div>
+              <div className="text-center">
+                <p className="font-black text-white uppercase text-lg">Fake Call</p>
+                <p className="text-xs text-white/60">Schedule an escape call</p>
+              </div>
+            </motion.button>
+
+            {/* Safety Check-In */}
+            <Link
+              to="/safety"
+              className="flex flex-col items-center gap-3 p-6 bg-[#00D9FF]/10 border-2 border-[#00D9FF]/50 hover:border-[#00D9FF] rounded-xl transition-all"
+            >
+              <div className="w-16 h-16 rounded-full bg-[#00D9FF]/20 flex items-center justify-center">
+                <Shield className="w-8 h-8 text-[#00D9FF]" />
+              </div>
+              <div className="text-center">
+                <p className="font-black text-white uppercase text-lg">Safety Hub</p>
+                <p className="text-xs text-white/60">Check-ins & contacts</p>
+              </div>
+            </Link>
+
+            {/* Panic Button Info */}
+            <div className="flex flex-col items-center gap-3 p-6 bg-red-500/10 border-2 border-red-500/50 rounded-xl">
+              <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+                <span className="text-2xl">🆘</span>
+              </div>
+              <div className="text-center">
+                <p className="font-black text-white uppercase text-lg">Panic Button</p>
+                <p className="text-xs text-white/60">Always in bottom-left corner</p>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
         {/* Emergency Contacts */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -198,6 +254,29 @@ export default function Care() {
           </div>
         </motion.section>
       </div>
+
+      {/* Fake Call Modal */}
+      <AnimatePresence>
+        {showFakeCall && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowFakeCall(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md"
+            >
+              <FakeCallGenerator onClose={() => setShowFakeCall(false)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
