@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Bell, Shield, LogOut, Save, Edit, Camera, Download, Trash2, Database } from 'lucide-react';
+import { User, Bell, Shield, LogOut, Save, Edit, Camera, Download, Trash2, Database, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { createPageUrl, createUserProfileUrl } from '../utils';
+import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 export default function Settings() {
   const [user, setUser] = useState(null);
@@ -213,6 +214,33 @@ export default function Settings() {
                 <p className="text-sm text-white/60">Receive push notifications for events</p>
               </div>
               <Switch checked={notifications} onCheckedChange={setNotifications} />
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Language */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <Globe className="w-5 h-5 text-[#FFEB3B]" />
+            <h2 className="text-xl font-bold uppercase tracking-wider">Language</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold">Display Language</p>
+                <p className="text-sm text-white/60">Choose your preferred language</p>
+              </div>
+              <LanguageSwitcher 
+                variant="dropdown"
+                className="bg-black border-white/20 text-white"
+                onChange={() => toast.success('Language updated!')}
+              />
             </div>
           </div>
         </motion.div>
