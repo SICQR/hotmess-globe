@@ -349,6 +349,7 @@ function LayoutInner({ children, currentPageName }) {
 
   return (
     <ErrorBoundary>
+      <ScrollProgress />
         <TaxonomyProvider>
           <SkipToContent />
           <A11yAnnouncer />
