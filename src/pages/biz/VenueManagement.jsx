@@ -207,15 +207,6 @@ export default function VenueManagement() {
     }
   };
 
-  const getVenueStats = async (venueId) => {
-    const { count: eventCount } = await supabase
-      .from('Beacon')
-      .select('*', { count: 'exact', head: true })
-      .eq('venue_id', venueId);
-
-    return { eventCount: eventCount || 0 };
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
