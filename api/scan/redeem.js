@@ -1,5 +1,5 @@
 import { bestEffortRateLimit, minuteBucket } from '../_rateLimit.js';
-import { getRequestIp, getBearerToken, getEnv, getSupabaseServerClients, json, readJsonBody } from '../routing/_utils.js';
+import { getRequestIp, getEnv, getSupabaseServerClients, json, readJsonBody } from '../routing/_utils.js';
 import { requireAdmin } from '../_middleware/adminAuth.js';
 import { verifyTicket } from '../tickets/_utils.js';
 
