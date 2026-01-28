@@ -12,8 +12,6 @@ vi.mock('framer-motion', () => ({
 
 describe('OfflineIndicator', () => {
   let originalOnLine;
-  let onlineCallback;
-  let offlineCallback;
   let addEventListenerSpy;
   let removeEventListenerSpy;
 
