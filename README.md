@@ -182,7 +182,8 @@ HOTMESS supports multiple specialized profile types, each with its own unique vi
 
 ### Enabling Premium Features
 
-**TL;DR**: Set `VITE_XP_PURCHASING_ENABLED=true` and run the migration!
+**TL;DR**: Set `VITE_XP_PURCHASING_ENABLED=true` and run the migration!  
+📖 **[Full Quick Start Guide →](docs/PREMIUM_FEATURES_QUICKSTART.md)**
 
 To enable premium content and XP purchasing:
 
