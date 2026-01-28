@@ -9,6 +9,7 @@ import { createPageUrl } from '../utils';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 import { useCurrentUser } from '@/components/utils/queryConfig';
 import PageShell from '@/components/shell/PageShell';
+import { getProfileUrl } from '@/lib/userPrivacy';
 
 export default function Social() {
   const navigate = useNavigate();
@@ -144,15 +145,8 @@ export default function Social() {
               containerClassName="mx-0 max-w-none p-0"
               onNavigateUrl={(url) => navigate(url)}
               onOpenProfile={(profile) => {
-                const email = profile?.email;
-                const uid = profile?.authUserId;
-                if (uid) {
-                  navigate(`/social/u/${encodeURIComponent(uid)}`);
-                  return;
-                }
-                if (email) {
-                  navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
-                }
+                // Use user ID, never expose email in URL
+                navigate(getProfileUrl(profile));
               }}
             />
           </TabsContent>

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import MembershipBadge from '../membership/MembershipBadge';
+import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 
 export default function RightNowGrid({ currentUser }) {
   const { data: rightNowStatuses = [] } = useQuery({
@@ -30,9 +31,9 @@ export default function RightNowGrid({ currentUser }) {
   const usersWithStatus = rightNowStatuses
     .map(status => ({
       status,
-      user: allUsers.find(u => u.email === status.user_email),
+      user: allUsers.find(u => u.id === status.user_id || u.auth_user_id === status.user_id),
     }))
-    .filter(item => item.user && item.user.email !== currentUser?.email);
+    .filter(item => item.user && item.user.id !== currentUser?.id);
 
   return (
     <div className="min-h-screen bg-black text-white p-4">
@@ -70,7 +71,7 @@ export default function RightNowGrid({ currentUser }) {
                     : 'border-white/20 hover:border-[#FF1493]'
                 }`}
               >
-                <Link to={createPageUrl(`Profile?email=${user.email}`)}>
+                <Link to={getProfileUrl(user)}>
                   <div className="flex items-start gap-3 mb-4">
                     <div className="relative">
                       <div
