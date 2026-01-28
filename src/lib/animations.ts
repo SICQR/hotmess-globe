@@ -1,7 +1,12 @@
 /**
  * Animation configurations for Framer Motion
  * Smart spring physics and transition presets
+ * LED Brutalist motion system - snappy, sharp, accessible
  */
+
+// Check if user prefers reduced motion (accessibility)
+export const motionEnabled = typeof window !== 'undefined' &&
+  !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Spring configurations for natural motion
 export const springConfig = {
@@ -213,3 +218,36 @@ export const travelModeTransition = {
 export const createStaggerDelay = (index: number, baseDelay = 0.05) => ({
   transition: { delay: index * baseDelay },
 });
+
+// Character animation for kinetic headline (LED Brutalist - snappy)
+export const charVariant = (i: number) => ({
+  hidden: { 
+    y: 60, 
+    opacity: 0,
+    scale: 0.8,
+  },
+  show: { 
+    y: 0, 
+    opacity: 1,
+    scale: 1,
+    transition: {
+      delay: 0.08 + i * 0.035, // Faster cascade than Design Brief
+      type: "spring" as const,
+      stiffness: 500, // Snappier
+      damping: 30,
+    }
+  }
+});
+
+// Utility to conditionally return motion props (accessibility)
+export function getMotionProps<T extends Record<string, any>>(props: T): T | {} {
+  return motionEnabled ? props : {};
+}
+
+// Reduced motion fallback utility
+export function withReducedMotion<T>(
+  normalVariants: T,
+  reducedVariants: Partial<T>
+): T {
+  return motionEnabled ? normalVariants : { ...normalVariants, ...reducedVariants };
+}

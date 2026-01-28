@@ -12,6 +12,7 @@ import { schedule, getNextEpisode, generateICS, downloadICS } from '../component
 import { format } from 'date-fns';
 import { RotatingUSPBanner } from '@/components/ui/USPBanner';
 import { logger } from '@/utils/logger';
+import { KineticHeadline } from '@/components/text/KineticHeadline';
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
 // Shopify product handles are not the same as release slugs.
