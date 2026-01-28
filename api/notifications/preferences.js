@@ -39,6 +39,7 @@ export default async function handler(req, res) {
         message_updates: true,
         event_updates: true,
         safety_updates: true,
+        engagement_updates: true,
       },
     });
   }
@@ -66,6 +67,7 @@ export default async function handler(req, res) {
     'message_updates',
     'event_updates',
     'safety_updates',
+    'engagement_updates',
   ];
 
   const patch = {};

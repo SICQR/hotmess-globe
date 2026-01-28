@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield } from 'lucide-react';
+import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield, Flame } from 'lucide-react';
 import { base44 } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import PanicButton from '@/components/safety/PanicButton';
@@ -43,6 +43,7 @@ function LayoutInner({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [userStreak, setUserStreak] = useState(null);
   const location = useLocation();
   const { toggleRadio, isRadioOpen } = useRadio();
 
@@ -153,6 +154,36 @@ function LayoutInner({ children, currentPageName }) {
         }
 
         setUser(currentUser);
+
+        // Fetch user's check-in streak
+        if (currentUser?.email) {
+          try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const { data: recentCheckins } = await base44.raw
+              .from('daily_checkins')
+              .select('checked_in_at, streak_day')
+              .eq('user_email', currentUser.email)
+              .order('checked_in_at', { ascending: false })
+              .limit(1);
+
+            if (recentCheckins && recentCheckins.length > 0) {
+              const lastCheckin = new Date(recentCheckins[0].checked_in_at);
+              lastCheckin.setHours(0, 0, 0, 0);
+              const yesterday = new Date(today);
+              yesterday.setDate(yesterday.getDate() - 1);
+              
+              // Only show streak if checked in today or yesterday
+              if (lastCheckin.getTime() === today.getTime() || lastCheckin.getTime() === yesterday.getTime()) {
+                setUserStreak(recentCheckins[0].streak_day || 1);
+              } else {
+                setUserStreak(0);
+              }
+            }
+          } catch (err) {
+            console.warn('Failed to fetch streak:', err);
+          }
+        }
 
         // Merge any guest cart into the authenticated cart (once per user per session)
         if (currentUser?.email) {
@@ -343,9 +374,21 @@ function LayoutInner({ children, currentPageName }) {
           {/* Mobile Header */}
           <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10 pt-[env(safe-area-inset-top)]">
             <div className="flex items-center justify-between px-4 py-3">
-              <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
-                HOTMESS
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
+                  HOTMESS
+                </Link>
+                {user && userStreak > 0 && (
+                  <Link
+                    to={createPageUrl('Challenges')}
+                    className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-[#FF6B35]/20 to-[#FFEB3B]/20 border border-[#FF6B35] rounded-full"
+                    title={`${userStreak} day check-in streak`}
+                  >
+                    <Flame className="w-3 h-3 text-[#FF6B35]" />
+                    <span className="text-xs font-black">{userStreak}</span>
+                  </Link>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <Link
                   to={createPageUrl('Care')}
@@ -499,9 +542,21 @@ function LayoutInner({ children, currentPageName }) {
           <div className="hidden md:flex md:fixed md:left-0 md:top-0 md:bottom-0 md:w-56 md:flex-col md:bg-black md:backdrop-blur-xl md:border-r-2 md:border-white md:z-40">
             <div className="p-4 border-b-2 border-white/20">
               <div className="flex items-center justify-between mb-1">
-                <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
-                  HOT<span className="text-[#FF1493]">MESS</span>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
+                    HOT<span className="text-[#FF1493]">MESS</span>
+                  </Link>
+                  {user && userStreak > 0 && (
+                    <Link
+                      to={createPageUrl('Challenges')}
+                      className="flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-[#FF6B35]/20 to-[#FFEB3B]/20 border border-[#FF6B35] rounded-full"
+                      title={`${userStreak} day check-in streak`}
+                    >
+                      <Flame className="w-3 h-3 text-[#FF6B35]" />
+                      <span className="text-xs font-black">{userStreak}</span>
+                    </Link>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <Link
                     to={createPageUrl('Care')}

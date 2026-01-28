@@ -52,18 +52,40 @@ export default function Community() {
       }
 
       const existingLike = userLikes.find(l => l.post_id === postId);
+      const post = posts.find(p => p.id === postId);
+      
       if (existingLike) {
         await base44.entities.PostLike.delete(existingLike.id);
-        const post = posts.find(p => p.id === postId);
         await base44.entities.CommunityPost.update(postId, {
           likes_count: Math.max(0, (post.likes_count || 0) - 1)
         });
       } else {
         await base44.entities.PostLike.create({ user_email: user.email, post_id: postId });
-        const post = posts.find(p => p.id === postId);
         await base44.entities.CommunityPost.update(postId, {
           likes_count: (post.likes_count || 0) + 1
         });
+        
+        // Queue notification for post owner (only if not liking own post)
+        if (post && post.user_email !== user.email) {
+          try {
+            await base44.entities.NotificationOutbox.create({
+              user_email: post.user_email,
+              notification_type: 'post_liked',
+              title: 'Post Liked',
+              message: `${user.full_name || 'Someone'} liked your post`,
+              metadata: {
+                link: `/community`,
+                post_id: postId,
+                liker_email: user.email,
+                liker_name: user.full_name,
+              },
+              status: 'queued',
+            });
+          } catch (err) {
+            console.warn('Failed to queue like notification:', err);
+            // Don't fail the like action if notification fails
+          }
+        }
       }
     },
     onSuccess: () => {

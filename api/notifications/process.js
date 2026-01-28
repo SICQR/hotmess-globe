@@ -67,6 +67,17 @@ export default async function handler(req, res) {
 
     for (const notification of queuedNotifications) {
       try {
+        // Check notification preferences before sending
+        const prefs = await getNotificationPreferences(supabase, notification.user_email);
+        if (!shouldSendNotification(prefs, notification.notification_type)) {
+          console.log(`[NotificationProcessor] Notification blocked by user preferences: ${notification.notification_type} for ${notification.user_email}`);
+          await supabase
+            .from('notification_outbox')
+            .update({ status: 'blocked', updated_at: new Date().toISOString() })
+            .eq('id', notification.id);
+          continue;
+        }
+
         // 1. Create in-app notification (table uses "type", outbox uses "notification_type")
         const { error: notifError } = await supabase
           .from('notifications')
@@ -193,6 +204,88 @@ async function sendPushNotifications(supabase, notification) {
   } catch (e) {
     console.warn('[NotificationProcessor] Push lookup/send error:', e?.message);
   }
+}
+
+/**
+ * Get user notification preferences
+ */
+async function getNotificationPreferences(supabase, userEmail) {
+  if (!userEmail || userEmail === 'admin') {
+    return null;
+  }
+
+  try {
+    const { data } = await supabase
+      .from('notification_preferences')
+      .select('*')
+      .eq('user_email', userEmail)
+      .maybeSingle();
+
+    return data || {
+      user_email: userEmail,
+      push_enabled: false,
+      email_enabled: false,
+      marketing_enabled: false,
+      order_updates: true,
+      message_updates: true,
+      event_updates: true,
+      safety_updates: true,
+      engagement_updates: true, // new_follower, post_liked, profile_views
+    };
+  } catch (error) {
+    console.warn('[NotificationProcessor] Error fetching preferences:', error);
+    return null;
+  }
+}
+
+/**
+ * Check if notification should be sent based on user preferences
+ */
+function shouldSendNotification(prefs, notificationType) {
+  if (!prefs) return true; // If we can't fetch preferences, allow notification
+
+  // Always send safety-critical notifications
+  const criticalTypes = ['emergency', 'sos', 'panic_alert'];
+  if (criticalTypes.includes(notificationType)) return true;
+
+  // Map notification types to preference flags
+  const typeMap = {
+    // Order & payment
+    'order_confirmation': 'order_updates',
+    'order_status': 'order_updates',
+    'payment_received': 'order_updates',
+    'payment_failed': 'order_updates',
+    
+    // Messaging
+    'new_message': 'message_updates',
+    'message_reply': 'message_updates',
+    
+    // Events
+    'event_reminder': 'event_updates',
+    'event_starting': 'event_updates',
+    'event_cancelled': 'event_updates',
+    'event_rsvp': 'event_updates',
+    
+    // Safety
+    'check_in_reminder': 'safety_updates',
+    'buddy_alert': 'safety_updates',
+    
+    // Engagement (new)
+    'new_follower': 'engagement_updates',
+    'post_liked': 'engagement_updates',
+    'profile_views': 'engagement_updates',
+    'post_comment': 'engagement_updates',
+    
+    // Re-engagement (new)
+    'dormant_user': 'marketing_enabled',
+    'streak_reminder': 'engagement_updates',
+    'daily_challenge': 'engagement_updates',
+  };
+
+  const prefKey = typeMap[notificationType];
+  if (prefKey && prefs[prefKey] === false) return false;
+
+  return true;
 }
 
 /**
