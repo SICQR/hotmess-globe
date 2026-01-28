@@ -18,9 +18,10 @@ HOTMESS is more than just a social network—it's a vibrant community hub that c
 
 ## 📋 Project Status
 
-**🚀 BETA TESTING READY** (2026-01-26)
+**🚀 BETA TESTING READY** (2026-01-28)
 
 ### Recent Updates:
+- ✅ **Profile links and CSP fixed** (PR #25 - vercel.live integration)
 - ✅ **All npm security vulnerabilities fixed** (0 vulnerabilities remaining)
 - ✅ **CI/CD pipeline implemented** (GitHub Actions workflows)
 - ✅ **Security documentation created** (SECURITY.md)
