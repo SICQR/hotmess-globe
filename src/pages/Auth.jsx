@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { auth, base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star, AtSign, MessageCircle, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
+import { validateUsername, validateDisplayName } from '@/lib/userPrivacy';
 
 const MEMBERSHIP_TIERS = [
   {
@@ -37,13 +38,21 @@ const MEMBERSHIP_TIERS = [
 ];
 
 export default function Auth() {
-  const [step, setStep] = useState('auth'); // auth, forgot, reset, membership, profile, welcome
+  const [step, setStep] = useState('auth'); // auth, forgot, reset, username, membership, profile, welcome
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [telegramUsername, setTelegramUsername] = useState('');
+  const [usernameError, setUsernameError] = useState('');
+  const [displayNameError, setDisplayNameError] = useState('');
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedTier, setSelectedTier] = useState('basic');
   const [profileData, setProfileData] = useState({
@@ -65,6 +74,59 @@ export default function Auth() {
     }
   }, [mode]);
 
+  // Check if username is available
+  const checkUsernameAvailability = async (usernameToCheck) => {
+    if (!usernameToCheck || usernameToCheck.length < 3) {
+      setUsernameAvailable(null);
+      return;
+    }
+    
+    const validation = validateUsername(usernameToCheck);
+    if (!validation.valid) {
+      setUsernameError(validation.error);
+      setUsernameAvailable(false);
+      return;
+    }
+    
+    setCheckingUsername(true);
+    setUsernameError('');
+    
+    try {
+      // Check if username exists
+      const existingUsers = await base44.entities.User.filter({ username: usernameToCheck.toLowerCase() });
+      const isAvailable = !existingUsers || existingUsers.length === 0;
+      setUsernameAvailable(isAvailable);
+      if (!isAvailable) {
+        setUsernameError('This username is already taken');
+      }
+    } catch (error) {
+      console.error('Username check failed:', error);
+      setUsernameAvailable(null);
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+
+  // Debounced username check
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (username) {
+        checkUsernameAvailability(username);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [username]);
+
+  // Validate display name on change
+  useEffect(() => {
+    if (displayName) {
+      const validation = validateDisplayName(displayName);
+      setDisplayNameError(validation.valid ? '' : validation.error);
+    } else {
+      setDisplayNameError('');
+    }
+  }, [displayName]);
+
   const handleAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -80,8 +142,9 @@ export default function Auth() {
         const { error: signInError } = await auth.signIn(email, password);
         if (signInError) throw signInError;
 
-        toast.success('Account created! Let\'s set you up...');
-        setStep('membership');
+        toast.success('Account created! Now choose your name...');
+        // Go to username selection step instead of membership
+        setStep('username');
       } else {
         const { error } = await auth.signIn(email, password);
         if (error) throw error;
@@ -93,6 +156,51 @@ export default function Auth() {
       }
     } catch (error) {
       toast.error(error.message || 'Authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUsernameSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate display name is set
+    const displayValidation = validateDisplayName(displayName);
+    if (!displayValidation.valid) {
+      setDisplayNameError(displayValidation.error);
+      return;
+    }
+    
+    // Username is optional but if provided, must be valid
+    if (username) {
+      const usernameValidation = validateUsername(username);
+      if (!usernameValidation.valid) {
+        setUsernameError(usernameValidation.error);
+        return;
+      }
+      if (!usernameAvailable) {
+        setUsernameError('This username is not available');
+        return;
+      }
+    }
+    
+    setLoading(true);
+    
+    try {
+      // Update the user's profile with display_name and username
+      const currentUser = await base44.auth.me();
+      if (currentUser) {
+        await base44.entities.User.update(currentUser.id, {
+          display_name: displayName,
+          username: username ? username.toLowerCase() : null,
+          telegram_username: telegramUsername || null,
+        });
+      }
+      
+      toast.success('Profile name set! Choose your membership...');
+      setStep('membership');
+    } catch (error) {
+      toast.error(error.message || 'Failed to save profile name');
     } finally {
       setLoading(false);
     }
@@ -471,6 +579,142 @@ export default function Auth() {
                   Back to Sign In
                 </button>
               </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* USERNAME STEP - Required before membership */}
+        {step === 'username' && (
+          <motion.div
+            key="username"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="w-full max-w-md"
+          >
+            <div className="text-center mb-8">
+              <h1 className="text-5xl font-black uppercase tracking-tighter mb-2">
+                HOT<span className="text-[#FF1493]">MESS</span>
+              </h1>
+              <p className="text-white/40 uppercase text-sm tracking-wider">Choose Your Identity</p>
+            </div>
+
+            <div className="bg-white/5 border-2 border-white/10 p-8">
+              {/* Privacy Notice */}
+              <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-emerald-400">Your Email is Private</p>
+                    <p className="text-xs text-white/60 mt-1">
+                      Other users will only see your display name. Your email is never shared.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-black uppercase mb-2">Set Your Name</h2>
+                <p className="text-white/60 text-sm">This is how others will see you</p>
+              </div>
+
+              <form onSubmit={handleUsernameSubmit} className="space-y-4">
+                {/* Display Name - Required */}
+                <div>
+                  <label className="block text-xs uppercase tracking-wider text-white/60 mb-2">
+                    Display Name <span className="text-[#FF1493]">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="How you want to be called"
+                    required
+                    className={`bg-black/50 ${displayNameError ? 'border-red-500' : 'border-white/20'}`}
+                  />
+                  {displayNameError && (
+                    <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      {displayNameError}
+                    </p>
+                  )}
+                  <p className="text-xs text-white/40 mt-1">
+                    This will be shown on your profile and in chats
+                  </p>
+                </div>
+
+                {/* Username - Optional */}
+                <div>
+                  <label className="block text-xs uppercase tracking-wider text-white/60 mb-2">
+                    Username <span className="text-white/40">(optional)</span>
+                  </label>
+                  <div className="relative">
+                    <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                    <Input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                      placeholder="unique_username"
+                      className={`bg-black/50 pl-9 ${usernameError ? 'border-red-500' : usernameAvailable === true ? 'border-emerald-500' : 'border-white/20'}`}
+                    />
+                    {checkingUsername && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 animate-spin" />
+                    )}
+                    {!checkingUsername && usernameAvailable === true && username && (
+                      <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
+                    )}
+                  </div>
+                  {usernameError && (
+                    <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      {usernameError}
+                    </p>
+                  )}
+                  {!usernameError && usernameAvailable === true && username && (
+                    <p className="text-xs text-emerald-400 mt-1">✓ Username available</p>
+                  )}
+                  <p className="text-xs text-white/40 mt-1">
+                    Only letters, numbers, and underscores. Can be changed later.
+                  </p>
+                </div>
+
+                {/* Telegram Username - Optional */}
+                <div>
+                  <label className="block text-xs uppercase tracking-wider text-white/60 mb-2">
+                    Telegram Username <span className="text-white/40">(optional)</span>
+                  </label>
+                  <div className="relative">
+                    <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0088cc]" />
+                    <Input
+                      type="text"
+                      value={telegramUsername}
+                      onChange={(e) => setTelegramUsername(e.target.value.replace(/^@/, ''))}
+                      placeholder="your_telegram"
+                      className="bg-black/50 pl-9 border-white/20"
+                    />
+                  </div>
+                  <p className="text-xs text-white/40 mt-1">
+                    Connect your Telegram for enhanced messaging
+                  </p>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={loading || !displayName || displayNameError || (username && (usernameError || !usernameAvailable))}
+                  className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase py-6 text-lg mt-6"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </form>
             </div>
           </motion.div>
         )}
