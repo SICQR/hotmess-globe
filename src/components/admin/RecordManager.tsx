@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Upload, Music, Loader2, CheckCircle2, AlertCircle, Cloud, Link2, RefreshCw, ExternalLink } from 'lucide-react';
+import { Upload, Music, Loader2, CheckCircle2, Cloud, Link2, RefreshCw, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import logger from '@/utils/logger';
 import { useAuth } from '@/lib/AuthContext';
