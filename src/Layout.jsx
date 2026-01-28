@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { createPageUrl } from './utils';
 import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield } from 'lucide-react';
 import { base44 } from '@/components/utils/supabaseClient';
@@ -26,6 +27,31 @@ import { useRadio } from '@/components/shell/RadioContext';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import CookieConsent from '@/components/legal/CookieConsent';
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
+import { GamificationProvider } from '@/components/gamification/GamificationProvider';
+
+// Page transition variants
+const pageTransitionVariants = {
+  initial: {
+    opacity: 0,
+    y: 10,
+  },
+  enter: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.25,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -10,
+    transition: {
+      duration: 0.15,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
@@ -641,9 +667,21 @@ function LayoutInner({ children, currentPageName }) {
         }
         role="main"
       >
-        <PageErrorBoundary>
-          {children}
-        </PageErrorBoundary>
+        <GamificationProvider currentUser={user}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              variants={pageTransitionVariants}
+              initial="initial"
+              animate="enter"
+              exit="exit"
+            >
+              <PageErrorBoundary>
+                {children}
+              </PageErrorBoundary>
+            </motion.div>
+          </AnimatePresence>
+        </GamificationProvider>
       </main>
 
       {/* Panic Button */}
