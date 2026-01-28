@@ -58,6 +58,7 @@ These limitations are clearly marked in the UI and do not block core functionali
 - 🚧 [**INCOMPLETE_FEATURES.md**](./INCOMPLETE_FEATURES.md) - Known limitations and TODOs
 - 📋 [**ISSUES-TRACKER.md**](./ISSUES-TRACKER.md) - Trackable issues and sprint planning
 - 🔧 [**CI_CD_SETUP.md**](./CI_CD_SETUP.md) - CI/CD pipeline documentation
+- 🛠️ [**TROUBLESHOOTING_CI.md**](./TROUBLESHOOTING_CI.md) - CI/CD troubleshooting guide
 - 🧪 [**TEST_SETUP.md**](./TEST_SETUP.md) - Testing infrastructure setup guide
 
 ### ⚠️ Beta Testing Notes:
