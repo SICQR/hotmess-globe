@@ -203,11 +203,6 @@ export default function Profile() {
     queryFn: () => base44.entities.Achievement.list()
   });
 
-  const { data: _allBeacons = [] } = useQuery({
-    queryKey: ['all-beacons'],
-    queryFn: () => base44.entities.Beacon.list()
-  });
-
   const { data: squadMembers = [] } = useQuery({
     queryKey: ['squad-members-profile'],
     queryFn: () => base44.entities.SquadMember.filter({ user_email: userEmail }),
@@ -219,7 +214,6 @@ export default function Profile() {
     queryFn: () => base44.entities.Squad.list()
   });
 
-  const _isFollowing = following.some(f => f.following_email === userEmail);
   const isOwnProfile = currentUser?.email === userEmail;
 
   const { data: profileUserTags = [] } = useQuery({
@@ -381,27 +375,9 @@ export default function Profile() {
   });
 
   const viewCount = profileViews.length;
-  const tierRaw = currentUser?.membership_tier;
-  const _tier = tierRaw === 'free' ? 'basic' : tierRaw || 'basic';
   const level = Math.floor(((profileUser?.xp ?? 0) || 0) / 1000) + 1;
   // Chrome tier: Level 5+ can see WHO viewed their profile
   const canSeeViewers = level >= 5;
-
-  const _followMutation = useMutation({
-    mutationFn: () => base44.entities.UserFollow.create({
-      follower_email: currentUser.email,
-      following_email: userEmail
-    }),
-    onSuccess: () => queryClient.invalidateQueries(['following', currentUser.email])
-  });
-
-  const _unfollowMutation = useMutation({
-    mutationFn: () => {
-      const followRecord = following.find(f => f.following_email === userEmail);
-      return base44.entities.UserFollow.delete(followRecord.id);
-    },
-    onSuccess: () => queryClient.invalidateQueries(['following', currentUser.email])
-  });
 
   const pinMutation = useMutation({
     mutationFn: (data) => base44.entities.UserHighlight.create(data),
