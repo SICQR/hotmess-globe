@@ -2,7 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { TrendingUp, Users, ShoppingBag, Zap, MapPin, MessageCircle } from 'lucide-react';
+import { supabase } from '@/components/utils/supabaseClient';
+import { TrendingUp, Users, ShoppingBag, Zap, MapPin, MessageCircle, Crown, UserMinus, DollarSign } from 'lucide-react';
 
 export default function AnalyticsDashboard() {
   const { data: users = [] } = useQuery({
@@ -35,6 +36,17 @@ export default function AnalyticsDashboard() {
     queryFn: () => base44.entities.Message.list(),
   });
 
+  const { data: supportTickets = [] } = useQuery({
+    queryKey: ['analytics-support-tickets'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .order('created_at', { ascending: false });
+      return data || [];
+    },
+  });
+
   // Calculate metrics
   const totalRevenue = orders
     .filter(o => o.status === 'delivered')
@@ -45,6 +57,28 @@ export default function AnalyticsDashboard() {
 
   const activeUsers = users.filter(u => u.activity_status && u.activity_status !== 'offline').length;
   const activeBeacons = beacons.filter(b => b.active).length;
+
+  // Subscription metrics
+  const plusSubscribers = users.filter(u => u.membership_tier === 'plus' && u.subscription_status === 'active').length;
+  const chromeSubscribers = users.filter(u => u.membership_tier === 'pro' && u.subscription_status === 'active').length;
+  const totalSubscribers = plusSubscribers + chromeSubscribers;
+  
+  // Monthly Recurring Revenue (MRR) estimate
+  const PLUS_PRICE = 9.99;
+  const CHROME_PRICE = 19.99;
+  const estimatedMRR = (plusSubscribers * PLUS_PRICE) + (chromeSubscribers * CHROME_PRICE);
+  
+  // Subscription conversion rate
+  const conversionRate = users.length > 0 ? ((totalSubscribers / users.length) * 100).toFixed(1) : 0;
+  
+  // Churn - users with canceling or canceled status
+  const churningUsers = users.filter(u => 
+    u.subscription_status === 'canceling' || u.subscription_status === 'canceled'
+  ).length;
+  
+  // Support metrics
+  const openTickets = supportTickets.filter(t => t.status === 'open').length;
+  const urgentTickets = supportTickets.filter(t => t.priority === 'urgent').length;
 
   // Top events by check-ins
   const eventCheckIns = checkIns.reduce((acc, ci) => {
@@ -119,6 +153,65 @@ export default function AnalyticsDashboard() {
         </motion.div>
       </div>
 
+      {/* Subscription & Business Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-black border-2 border-[#B026FF] p-6"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <DollarSign className="w-5 h-5 text-[#B026FF]" />
+            <p className="text-[10px] text-white/40 uppercase tracking-widest">EST. MRR</p>
+          </div>
+          <p className="text-3xl font-black text-[#B026FF]">£{estimatedMRR.toFixed(2)}</p>
+          <p className="text-xs text-white/60 uppercase font-mono">{totalSubscribers} SUBSCRIBERS</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-black border-2 border-[#39FF14] p-6"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <Crown className="w-5 h-5 text-[#39FF14]" />
+            <p className="text-[10px] text-white/40 uppercase tracking-widest">CONVERSION</p>
+          </div>
+          <p className="text-3xl font-black text-[#39FF14]">{conversionRate}%</p>
+          <p className="text-xs text-white/60 uppercase font-mono">FREE → PAID</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-black border-2 border-[#FF6B35] p-6"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <UserMinus className="w-5 h-5 text-[#FF6B35]" />
+            <p className="text-[10px] text-white/40 uppercase tracking-widest">CHURNING</p>
+          </div>
+          <p className="text-3xl font-black text-[#FF6B35]">{churningUsers}</p>
+          <p className="text-xs text-white/60 uppercase font-mono">CANCELING/CANCELED</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="bg-black border-2 border-red-500 p-6"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <MessageCircle className="w-5 h-5 text-red-400" />
+            <p className="text-[10px] text-white/40 uppercase tracking-widest">SUPPORT</p>
+          </div>
+          <p className="text-3xl font-black text-red-400">{openTickets}</p>
+          <p className="text-xs text-white/60 uppercase font-mono">{urgentTickets} URGENT</p>
+        </motion.div>
+      </div>
+
       {/* Secondary Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-black border-2 border-white p-6">
@@ -187,6 +280,37 @@ export default function AnalyticsDashboard() {
           {topEvents.length === 0 && (
             <p className="text-center text-white/40 py-8 uppercase text-sm">NO EVENT DATA YET</p>
           )}
+        </div>
+      </div>
+
+      {/* Subscription Breakdown */}
+      <div className="bg-black border-2 border-white p-6">
+        <h3 className="text-xl font-black uppercase tracking-tighter mb-6">SUBSCRIPTION BREAKDOWN</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white/5 border-2 border-white/10 p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-4 h-4 bg-white/40 rounded-full" />
+              <span className="text-sm font-bold uppercase">BASIC (Free)</span>
+            </div>
+            <p className="text-3xl font-black">{users.filter(u => !u.membership_tier || u.membership_tier === 'basic' || u.membership_tier === 'free').length}</p>
+            <p className="text-xs text-white/40 mt-1">Free tier users</p>
+          </div>
+          <div className="bg-[#FF1493]/10 border-2 border-[#FF1493]/40 p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-4 h-4 bg-[#FF1493] rounded-full" />
+              <span className="text-sm font-bold uppercase text-[#FF1493]">PLUS</span>
+            </div>
+            <p className="text-3xl font-black text-[#FF1493]">{plusSubscribers}</p>
+            <p className="text-xs text-white/40 mt-1">£9.99/month • £{(plusSubscribers * PLUS_PRICE).toFixed(2)}/mo</p>
+          </div>
+          <div className="bg-[#00D9FF]/10 border-2 border-[#00D9FF]/40 p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-4 h-4 bg-[#00D9FF] rounded-full" />
+              <span className="text-sm font-bold uppercase text-[#00D9FF]">CHROME</span>
+            </div>
+            <p className="text-3xl font-black text-[#00D9FF]">{chromeSubscribers}</p>
+            <p className="text-xs text-white/40 mt-1">£19.99/month • £{(chromeSubscribers * CHROME_PRICE).toFixed(2)}/mo</p>
+          </div>
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Bell, Shield, LogOut, Save, Edit, Camera, Download, Trash2, Database } from 'lucide-react';
+import { User, Bell, Shield, LogOut, Save, Edit, Camera, Download, Trash2, Database, HelpCircle, MessageSquare, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -306,11 +306,65 @@ export default function Settings() {
           </div>
         </motion.div>
 
-        {/* Account Actions */}
+        {/* Help & Support */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
+          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <HelpCircle className="w-5 h-5 text-[#00D9FF]" />
+            <h2 className="text-xl font-bold uppercase tracking-wider">Help & Support</h2>
+          </div>
+
+          <div className="space-y-4">
+            <Link to={createPageUrl('HelpCenter')}>
+              <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <HelpCircle className="w-5 h-5 text-[#00D9FF]" />
+                  <div>
+                    <p className="font-semibold">Help Center</p>
+                    <p className="text-sm text-white/60">Search FAQs and guides</p>
+                  </div>
+                </div>
+                <span className="text-white/40">→</span>
+              </div>
+            </Link>
+
+            <Link to={createPageUrl('Contact')}>
+              <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-5 h-5 text-[#FF1493]" />
+                  <div>
+                    <p className="font-semibold">Contact Support</p>
+                    <p className="text-sm text-white/60">Submit a support ticket</p>
+                  </div>
+                </div>
+                <span className="text-white/40">→</span>
+              </div>
+            </Link>
+
+            <Link to={createPageUrl('CommunityGuidelines')}>
+              <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-[#39FF14]" />
+                  <div>
+                    <p className="font-semibold">Community Guidelines</p>
+                    <p className="text-sm text-white/60">Rules and expectations</p>
+                  </div>
+                </div>
+                <span className="text-white/40">→</span>
+              </div>
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* Account Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
           className="bg-white/5 border border-white/10 rounded-xl p-6"
         >
           <Button
