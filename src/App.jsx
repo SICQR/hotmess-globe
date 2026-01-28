@@ -22,6 +22,7 @@ import Privacy from '@/pages/legal/Privacy';
 import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
 import { I18nProvider } from '@/contexts/I18nContext';
+import { PageTransition } from '@/components/transitions/PageTransition.tsx';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -319,9 +320,10 @@ const AuthenticatedApp = () => {
     }
   }
 
-  // Render the main app
+  // Render the main app with LED Brutalist page transitions
   return (
-    <Routes>
+    <PageTransition>
+      <Routes>
       {/* V1.5 canonical routes (Bible) */}
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
@@ -511,7 +513,8 @@ const AuthenticatedApp = () => {
         );
       })}
       <Route path="*" element={<PageNotFound />} />
-    </Routes>
+      </Routes>
+    </PageTransition>
   );
 };
 

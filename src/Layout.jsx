@@ -26,6 +26,7 @@ import { useRadio } from '@/components/shell/RadioContext';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import CookieConsent from '@/components/legal/CookieConsent';
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
+import { ScrollProgress } from '@/components/navigation/ScrollProgress.tsx';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
@@ -337,6 +338,10 @@ function LayoutInner({ children, currentPageName }) {
           <A11yAnnouncer />
           <OfflineIndicator />
           {user && currentPageName === 'Home' && <WelcomeTour />}
+          
+          {/* LED Brutalist scroll progress indicator */}
+          <ScrollProgress />
+          
         <div className="min-h-[100svh] bg-black text-white">
       {shouldShowChrome && (
         <>
