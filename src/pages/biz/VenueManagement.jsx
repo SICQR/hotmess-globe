@@ -12,7 +12,6 @@ import {
   Calendar,
   Image,
   CheckCircle2,
-  AlertCircle,
   Search,
   MoreVertical,
   ExternalLink
@@ -206,15 +205,6 @@ export default function VenueManagement() {
       console.error('Failed to delete venue:', error);
       toast.error('Failed to delete venue');
     }
-  };
-
-  const getVenueStats = async (venueId) => {
-    const { count: eventCount } = await supabase
-      .from('Beacon')
-      .select('*', { count: 'exact', head: true })
-      .eq('venue_id', venueId);
-
-    return { eventCount: eventCount || 0 };
   };
 
   if (loading) {
