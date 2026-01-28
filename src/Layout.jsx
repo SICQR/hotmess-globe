@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield } from 'lucide-react';
+import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield, Zap } from 'lucide-react';
 import { base44 } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import PanicButton from '@/components/safety/PanicButton';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
-import GlobalAssistant from '@/components/ai/GlobalAssistant';
+// import GlobalAssistant from '@/components/ai/GlobalAssistant'; // Disabled - broken component
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import GlobalSearch from '@/components/search/GlobalSearch';
 import OfflineIndicator from '@/components/ui/OfflineIndicator';
@@ -26,6 +26,9 @@ import { useRadio } from '@/components/shell/RadioContext';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import CookieConsent from '@/components/legal/CookieConsent';
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
+import { useTranslation } from '@/hooks/useTranslation';
+import { PendingSyncBadge } from '@/components/ui/PendingSyncIndicator';
+import { ScrollProgress } from '@/components/navigation/ScrollProgress';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
@@ -45,6 +48,21 @@ function LayoutInner({ children, currentPageName }) {
   const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
   const { toggleRadio, isRadioOpen } = useRadio();
+  const { t } = useTranslation();
+  
+  // Navigation translation keys mapped to nav items
+  const getNavLabel = (name) => {
+    const labels = {
+      'HOME': t('nav.home'),
+      'PULSE': t('nav.pulse') || 'PULSE',
+      'EVENTS': t('nav.events') || t('events.title'),
+      'MARKET': t('nav.market'),
+      'SOCIAL': t('nav.social') || 'SOCIAL',
+      'MUSIC': t('nav.music') || 'MUSIC',
+      'MORE': t('nav.more'),
+    };
+    return labels[name] || name;
+  };
 
   const pathname = (location?.pathname || '').toLowerCase();
   const isMarketRoute =
@@ -649,8 +667,8 @@ function LayoutInner({ children, currentPageName }) {
       {/* Panic Button */}
       {user && <PanicButton />}
 
-      {/* Global AI Assistant */}
-      {user && <GlobalAssistant />}
+      {/* Global AI Assistant - Disabled */}
+      {/* {user && <GlobalAssistant />} */}
 
       {/* Global Search */}
       {user && <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />}
