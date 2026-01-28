@@ -284,7 +284,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white pb-20">
       {/* HERO */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img 
             src="/images/hung-hero.png"
@@ -293,34 +293,34 @@ export default function Home() {
               e.currentTarget.onerror = null;
               e.currentTarget.src = 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=1920&q=80';
             }}
-            className="w-full h-full object-cover opacity-40"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/90" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black" />
         </div>
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 1 }}
           className="relative z-10 text-center px-6 max-w-6xl"
         >
-          <h1 className="text-7xl md:text-9xl font-display tracking-brutal leading-tight mb-8">
-            HOT<span className="text-lux-accent">MESS</span>
+          <h1 className="text-[20vw] md:text-[12vw] font-black italic leading-[0.8] tracking-tighter mb-8 drop-shadow-2xl">
+            HOT<span className="text-[#FF1493]">MESS</span>
           </h1>
-          <p className="text-xl md:text-2xl font-mono tracking-brutal-wide uppercase mb-4">
+          <p className="text-2xl md:text-4xl font-bold uppercase tracking-wider mb-4 drop-shadow-lg">
             LONDON OS
           </p>
-          <p className="text-base md:text-lg text-white/70 uppercase tracking-wide mb-12 max-w-2xl mx-auto">
+          <p className="text-base md:text-xl text-white/90 uppercase tracking-widest mb-12 max-w-3xl mx-auto drop-shadow-lg">
             RAW / HUNG / HIGH / SUPER + HNH MESS. No filler. No shame.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/social">
-              <Button size="lg" className="bg-lux-accent hover:bg-lux-accent/90 text-white font-black uppercase shadow-lux-accent">
+              <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg shadow-2xl">
                 <Users className="w-5 h-5 mr-2" />
                 SOCIAL
               </Button>
             </Link>
             <Link to="/market">
-              <Button variant="outline" size="lg" className="border-2 border-white/20 text-white hover:bg-white/10 font-black uppercase backdrop-blur-sm">
+              <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg shadow-2xl backdrop-blur-sm">
                 <ShoppingBag className="w-5 h-5 mr-2" />
                 SHOP THE DROP
               </Button>
@@ -367,7 +367,7 @@ export default function Home() {
 
               <div className="flex flex-wrap gap-3">
                 <Link to="/hnhmess">
-                  <Button size="lg" className="bg-lux-gold hover:bg-lux-gold/90 text-white font-black uppercase">
+                  <Button className="bg-[#B026FF] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg">
                     Buy now
                   </Button>
                 </Link>
@@ -375,8 +375,7 @@ export default function Home() {
                   <Button
                     onClick={handleHnhmessNotify}
                     variant="outline"
-                    size="lg"
-                    className="border-2 border-white/20 text-white hover:bg-white/10 font-black uppercase"
+                    className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg"
                   >
                     Notify me
                   </Button>
@@ -384,8 +383,7 @@ export default function Home() {
                   <Link to={`/music/releases/${HNHMESS_RELEASE_SLUG}`}>
                     <Button
                       variant="outline"
-                      size="lg"
-                      className="border-2 border-white/20 text-white hover:bg-white/10 font-black uppercase"
+                      className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg"
                     >
                       Listen now
                     </Button>
@@ -416,12 +414,12 @@ export default function Home() {
 
               <div className="flex flex-wrap gap-3">
                 <Link to={`/music/releases/${HNHMESS_RELEASE_SLUG}`}>
-                  <Button className="bg-lux-gold hover:bg-white text-white hover:text-white font-black uppercase">
+                  <Button className="bg-[#B026FF] hover:bg-white text-white hover:text-black font-black uppercase">
                     {isHnhmessPreLaunch ? 'Open release' : 'Play'}
                   </Button>
                 </Link>
                 <Link to="/hnhmess">
-                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-white font-black uppercase">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase">
                     Buy now
                   </Button>
                 </Link>
@@ -451,18 +449,18 @@ export default function Home() {
                 </div>
                 <div className="text-right">
                   {featuredRelease.state === 'upcoming' ? (
-                    <div className="text-3xl md:text-5xl font-mono font-black text-lux-gold">
+                    <div className="text-3xl md:text-5xl font-mono font-black text-[#B026FF]">
                       {formatCountdown(new Date(featuredRelease.beacon.release_at))}
                     </div>
                   ) : (
-                    <div className="text-3xl md:text-5xl font-black text-lux-gold">LIVE</div>
+                    <div className="text-3xl md:text-5xl font-black text-[#B026FF]">LIVE</div>
                   )}
                 </div>
               </div>
 
               <div className="mt-8">
                 <Link to={`/music/releases/${encodeURIComponent(featuredRelease.beacon.release_slug)}`}>
-                  <Button className="bg-lux-gold hover:bg-white text-white hover:text-white font-black uppercase px-8 py-6 text-lg">
+                  <Button className="bg-[#B026FF] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg">
                     OPEN RELEASE
                   </Button>
                 </Link>
@@ -473,7 +471,7 @@ export default function Home() {
       )}
 
       {/* SHOP COLLECTIONS */}
-      <section className="py-16 px-6 bg-black text-white">
+      <section className="py-32 px-6 bg-white text-black">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -481,9 +479,9 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-16"
           >
-            <p className="text-xs uppercase tracking-[0.4em] text-white/40 mb-4">SHOP</p>
-            <h2 className="text-6xl md:text-8xl font-display tracking-brutal mb-6">SHOP THE DROP</h2>
-            <p className="text-xl uppercase tracking-wider text-white/60 max-w-2xl">
+            <p className="text-xs uppercase tracking-[0.4em] text-black/40 mb-4">SHOP</p>
+            <h2 className="text-6xl md:text-8xl font-black italic mb-6">SHOP THE DROP</h2>
+            <p className="text-xl uppercase tracking-wider text-black/60 max-w-2xl">
               Hardwear. Fit. Club armour. Limited runs.
             </p>
           </motion.div>
@@ -530,7 +528,7 @@ export default function Home() {
                 );
               })
             ) : (
-              <div className="border border-white/10 bg-white/5 p-6">
+              <div className="border border-black/10 bg-black/5 p-6">
                 <p className="text-black/70">Shop is loading or unavailable.</p>
                 <Link to="/market">
                   <Button className="mt-4 bg-black text-white font-black uppercase">Open Market</Button>
@@ -571,7 +569,7 @@ export default function Home() {
             alt="Connect"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-lux-accent/90 to-lux-accent/70" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FF1493]/90 to-[#FF1493]/70" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
@@ -586,7 +584,7 @@ export default function Home() {
                 Compatibility-first discovery. No swiping. No ghosts. Just good chemistry backed by real data.
               </p>
               <Link to="/social">
-                <Button className="bg-black text-white hover:bg-white hover:text-white font-black uppercase px-8 py-4 text-lg shadow-2xl">
+                <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 text-lg shadow-2xl">
                   DISCOVER
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
@@ -663,7 +661,7 @@ export default function Home() {
                     <p className="text-2xl font-black mb-2">{tonightEvent.title}</p>
                     <p className="text-white/70 text-sm mb-6 line-clamp-2">{tonightEvent.description}</p>
                     <Link to={`/events/${encodeURIComponent(tonightEvent.id)}`}>
-                      <Button className="bg-[#00D9FF] hover:bg-white text-white font-black uppercase w-full">
+                      <Button className="bg-[#00D9FF] hover:bg-white text-black font-black uppercase w-full">
                         RSVP
                       </Button>
                     </Link>
@@ -674,7 +672,7 @@ export default function Home() {
                       Find what’s on and lock it in.
                     </p>
                     <Link to="/events">
-                      <Button className="bg-[#00D9FF] hover:bg-white text-white font-black uppercase w-full">
+                      <Button className="bg-[#00D9FF] hover:bg-white text-black font-black uppercase w-full">
                         VIEW EVENTS
                       </Button>
                     </Link>
@@ -700,7 +698,7 @@ export default function Home() {
                   Map + layers. Find the energy.
                 </p>
                 <Link to="/pulse">
-                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-white font-black uppercase w-full">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase w-full">
                     OPEN PULSE
                   </Button>
                 </Link>
@@ -734,7 +732,7 @@ export default function Home() {
 
           <div className="text-center">
             <Link to="/events">
-              <Button className="bg-[#00D9FF] hover:bg-white text-white font-black uppercase px-8 py-4 text-lg shadow-2xl">
+              <Button className="bg-[#00D9FF] hover:bg-white text-black font-black uppercase px-8 py-4 text-lg shadow-2xl">
                 VIEW ALL EVENTS
               </Button>
             </Link>
@@ -750,7 +748,7 @@ export default function Home() {
             alt="Radio"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-lux-gold/85 to-black/70" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#B026FF]/85 to-black/70" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
@@ -775,19 +773,19 @@ export default function Home() {
 
               <div className="flex flex-wrap gap-3">
                 <Link to="/music/live">
-                  <Button className="bg-black text-white hover:bg-white hover:text-white font-black uppercase px-8 py-4 shadow-2xl">
+                  <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl">
                     LISTEN LIVE
                   </Button>
                 </Link>
                 <Button
                   onClick={handleAddNextShowToCalendar}
                   variant="outline"
-                  className="border-2 border-white text-white hover:bg-white hover:text-white font-black uppercase px-8 py-4 shadow-2xl backdrop-blur-sm"
+                  className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl backdrop-blur-sm"
                 >
                   ADD NEXT SHOW TO CALENDAR
                 </Button>
                 <Link to="/music/schedule">
-                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-white font-black uppercase px-8 py-4 shadow-2xl backdrop-blur-sm">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl backdrop-blur-sm">
                     BROWSE SHOWS
                   </Button>
                 </Link>
@@ -808,11 +806,11 @@ export default function Home() {
                 You good?
               </p>
               <div className="flex flex-wrap gap-3">
-                <Button className="bg-black text-white hover:bg-white hover:text-white font-black uppercase px-8 py-4 shadow-2xl">
+                <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 shadow-2xl">
                   ALL GOOD
                 </Button>
                 <Link to="/safety/resources">
-                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-white font-black uppercase shadow-2xl backdrop-blur-sm">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm">
                     NEED A MINUTE
                   </Button>
                 </Link>
@@ -829,7 +827,7 @@ export default function Home() {
             <Link to="/pulse">
               <Button
                 variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-white font-black uppercase shadow-2xl backdrop-blur-sm"
+                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm"
               >
                 OPEN PULSE
               </Button>
@@ -837,7 +835,7 @@ export default function Home() {
             <Link to="/calendar">
               <Button
                 variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-white font-black uppercase shadow-2xl backdrop-blur-sm"
+                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm"
               >
                 CALENDAR
               </Button>
@@ -845,7 +843,7 @@ export default function Home() {
             <Link to="/events">
               <Button
                 variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-white font-black uppercase shadow-2xl backdrop-blur-sm"
+                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm"
               >
                 EVENTS
               </Button>
@@ -853,7 +851,7 @@ export default function Home() {
             <Link to="/market">
               <Button
                 variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-white font-black uppercase shadow-2xl backdrop-blur-sm"
+                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm"
               >
                 MARKET
               </Button>
@@ -871,7 +869,7 @@ export default function Home() {
           className="max-w-4xl mx-auto"
         >
           <h2 className="text-6xl md:text-9xl font-black italic mb-8">
-            JOIN<span className="text-lux-accent">.</span>
+            JOIN<span className="text-[#FF1493]">.</span>
           </h2>
           <p className="text-2xl uppercase tracking-wider text-white/60 mb-12">
             London OS. No ghost status. Right now ends automatically.
@@ -881,12 +879,12 @@ export default function Home() {
               <p className="text-xl text-[#39FF14]">Welcome back, {currentUser.full_name}</p>
               <div className="flex flex-wrap gap-4 justify-center">
                 <Link to="/social">
-                  <Button className="bg-lux-accent hover:bg-white text-white font-black uppercase px-8 py-6 text-lg">
+                  <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg">
                     GO RIGHT NOW
                   </Button>
                 </Link>
                 <Link to="/pulse">
-                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-white font-black uppercase px-8 py-6 text-lg">
+                  <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
                     OPEN PULSE
                   </Button>
                 </Link>
@@ -901,7 +899,7 @@ export default function Home() {
             </div>
           ) : (
             <Link to="/auth">
-              <Button className="bg-lux-accent hover:bg-white text-white font-black uppercase px-12 py-8 text-2xl">
+              <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-12 py-8 text-2xl">
                 GET STARTED
               </Button>
             </Link>
