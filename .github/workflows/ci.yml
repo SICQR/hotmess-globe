@@ -165,7 +165,8 @@ jobs:
     # Note: test job is not included in needs because it's currently non-blocking (continue-on-error: true)
     # Once tests are fully implemented, add 'test' to the needs array
     needs: [lint, typecheck, build, security]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Only run deployment if all required secrets are configured
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.VERCEL_TOKEN != ''
     permissions:
       contents: read
     environment:
