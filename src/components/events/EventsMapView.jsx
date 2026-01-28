@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
+import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 import { Calendar, MapPin, X, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -382,7 +383,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
                     <Zap className="w-3 h-3" />
                     <span>Level {Math.floor((user.xp || 0) / 1000) + 1}</span>
                   </div>
-                  <Link to={createPageUrl(`Profile?email=${user.email}`)}>
+                  <Link to={getProfileUrl(user)}>
                     <button className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black text-xs py-2 px-3 uppercase">
                       View Profile
                     </button>
@@ -458,7 +459,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
             </div>
           )}
 
-          <Link to={createPageUrl(`Profile?email=${selectedUser.email}`)}>
+          <Link to={getProfileUrl(user)}>
             <Button className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black">
               View Full Profile
             </Button>

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 import { toast } from 'sonner';
 import SquadChallenges from '../components/squads/SquadChallenges';
 
@@ -228,7 +229,7 @@ export default function SquadChat() {
               </h3>
               <div className="space-y-2">
                 {memberUsers.slice(0, 10).map((user) => (
-                  <Link key={user.email} to={createPageUrl(`Profile?email=${user.email}`)}>
+                  <Link key={user.email} to={getProfileUrl(user)}>
                     <div className="flex items-center gap-3 p-2 hover:bg-white/5 transition-colors">
                       <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center">
                         {user.avatar_url ? (

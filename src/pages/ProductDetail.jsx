@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 import MessageButton from '../components/social/MessageButton';
 import ComplementaryProducts from '../components/marketplace/ComplementaryProducts';
 import { isXpPurchasingEnabled } from '@/lib/featureFlags';
@@ -344,7 +345,7 @@ export default function ProductDetail() {
 
               {seller && (
                 <div className="space-y-2">
-                  <Link to={createPageUrl(`Profile?email=${seller.email}`)}>
+                  <Link to={getProfileUrl(user)}>
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center">

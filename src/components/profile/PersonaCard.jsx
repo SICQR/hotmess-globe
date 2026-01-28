@@ -17,7 +17,9 @@ import {
   Navigation
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 import { createPageUrl } from '../../utils';
+import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 
 /**
  * PersonaCard - Multi-layered profile skin display
@@ -105,7 +107,7 @@ export default function PersonaCard({
   const level = Math.floor((user?.xp || 0) / 1000) + 1;
   const xpProgress = ((user?.xp || 0) % 1000) / 10; // percentage to next level
   
-  const profileUrl = createPageUrl(`Profile?email=${encodeURIComponent(user?.email || '')}`);
+  const profileUrl = getProfileUrl(user);
 
   // Avatar with fallback
   const avatarUrl = user?.avatar_url || 
