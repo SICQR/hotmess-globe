@@ -454,6 +454,10 @@ const AuthenticatedApp = () => {
       <Route path="/tickets" element={<Navigate to="/ticket-reseller" replace />} />
       <Route path="/tickets/*" element={<Navigate to="/ticket-reseller" replace />} />
       
+      {/* Admin Dashboard */}
+      <Route path="/admin" element={<PageRoute pageKey="AdminDashboard" />} />
+      <Route path="/admin/dashboard" element={<PageRoute pageKey="AdminDashboard" />} />
+      
       {/* Business dashboard */}
       <Route path="/biz" element={<PageRoute pageKey="BusinessDashboard" />} />
       <Route path="/biz/dashboard" element={<PageRoute pageKey="BusinessDashboard" />} />
