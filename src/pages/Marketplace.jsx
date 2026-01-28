@@ -22,6 +22,7 @@ import { addToCart } from '@/components/marketplace/cartStorage';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 import { openCartDrawer } from '@/utils/cartEvents';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
+import { KineticHeadline } from '@/components/text/KineticHeadline';
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
@@ -433,9 +434,11 @@ export default function Marketplace() {
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-black italic uppercase tracking-tight mb-2">
-                THE <span className="text-[#00D9FF]">SHOP</span>
-              </h1>
+              <KineticHeadline 
+                text="THE SHOP"
+                as="h1"
+                className="text-3xl md:text-4xl font-black italic uppercase tracking-tight mb-2"
+              />
               <p className="text-white/60 uppercase text-sm tracking-wider">
                 Official Gear + P2P Mess Market (10% Platform Fee)
               </p>

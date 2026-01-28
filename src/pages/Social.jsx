@@ -82,6 +82,7 @@ export default function Social() {
           title="Social"
           subtitle="Discover • Connect • Message"
           maxWidth="4xl"
+          kinetic={true}
         >
           <div className="bg-white/5 border-2 border-white/10 p-6">
             <h2 className="text-2xl font-black uppercase mb-2">SIGN IN TO CONTINUE</h2>
@@ -110,6 +111,7 @@ export default function Social() {
         eyebrow="SOCIAL"
         title="Social"
         subtitle="Discover • Connect • Message"
+          kinetic={true}
         maxWidth="7xl"
       >
         <Tabs value={activeTab} onValueChange={(v) => setTabAndUrl(v)} className="w-full">

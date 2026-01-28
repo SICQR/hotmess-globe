@@ -15,6 +15,7 @@ import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
 import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { toast } from 'sonner';
 import { snapToGrid } from '../components/utils/locationPrivacy';
+import { KineticHeadline } from '@/components/text/KineticHeadline';
 
 async function getWithAuth(url) {
   const { data } = await auth.getSession();
@@ -471,9 +472,11 @@ export default function Music() {
         </div>
         <div className="relative z-10 max-w-7xl mx-auto text-center">
           <RadioIcon className="w-20 h-20 mx-auto mb-6 drop-shadow-2xl" />
-          <h1 className="text-5xl sm:text-7xl md:text-9xl font-black italic mb-6 drop-shadow-2xl">
-            MUSIC
-          </h1>
+          <KineticHeadline 
+            text="MUSIC"
+            as="h1"
+            className="text-5xl sm:text-7xl md:text-9xl font-black italic mb-6 drop-shadow-2xl"
+          />
           <p className="text-base sm:text-xl md:text-2xl uppercase tracking-wider text-white/90 mb-8 drop-shadow-lg">
             Live radio first. Then the releases. Then the rabbit hole.
           </p>
