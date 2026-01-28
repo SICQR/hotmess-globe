@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/components/utils/supabaseClient';
-import { Shield, Users, Flag, Calendar, TrendingUp, Lock, CheckCircle, Settings as SettingsIcon, User } from 'lucide-react';
+import { Shield, Users, Flag, Calendar, TrendingUp, Lock, CheckCircle, Settings as SettingsIcon, User, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import AdvancedAnalytics from '../components/analytics/AdvancedAnalytics';
 import BulkUserInvite from '../components/admin/BulkUserInvite';
 import EventScraperControl from '../components/admin/EventScraperControl';
 import ModerationQueue from '../components/admin/ModerationQueue';
+import SupportTicketManagement from '../components/admin/SupportTicketManagement';
 import { createPageUrl } from '../utils';
 import { supabase } from '@/components/utils/supabaseClient';
 
@@ -164,7 +165,7 @@ export default function AdminDashboard() {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="analytics" className="w-full">
-          <TabsList className="grid w-full grid-cols-8 bg-black border-2 border-white mb-8 h-auto">
+          <TabsList className="grid w-full grid-cols-9 bg-black border-2 border-white mb-8 h-auto">
             <TabsTrigger 
               value="analytics" 
               className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black font-black uppercase text-xs py-3"
@@ -178,6 +179,13 @@ export default function AdminDashboard() {
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               Advanced
+            </TabsTrigger>
+            <TabsTrigger 
+              value="support" 
+              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black font-black uppercase text-xs py-3"
+            >
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Support
             </TabsTrigger>
             <TabsTrigger 
               value="curation" 
@@ -225,6 +233,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="analytics">
             <AnalyticsDashboard />
+          </TabsContent>
+
+          <TabsContent value="support">
+            <SupportTicketManagement />
           </TabsContent>
 
           <TabsContent value="curation">
