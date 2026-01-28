@@ -7,7 +7,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { MapPin, CheckCircle2, PartyPopper, Star } from 'lucide-react';
+import { MapPin, CheckCircle2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function ArrivalCard({

@@ -50,7 +50,7 @@ export async function fetchTravelTime({
   signal?: AbortSignal;
 }): Promise<TravelTimeResponse> {
   if (!isFiniteLatLng(viewer) || !isFiniteLatLng(destination)) {
-    return { walking: null, driving: null, bicycling: null, uber: null, fastest: null };
+    return { walking: null, driving: null, bicycling: null, transit: null, uber: null, lyft: null, fastest: null };
   }
 
   const viewerBucket = bucketLatLng(viewer);
@@ -82,13 +82,16 @@ export async function fetchTravelTime({
       });
 
       if (!res.ok) {
-        return { walking: null, driving: null, bicycling: null, uber: null, fastest: null };
+        return { walking: null, driving: null, bicycling: null, transit: null, uber: null, lyft: null, fastest: null };
       }
 
       const data: unknown = await res.json();
       const parsed = parseTravelTimeResponse(data);
       cache.set(key, { expiresAtMs: Date.now() + TTL_MS, value: parsed });
       return parsed;
+    } catch (err) {
+      console.error('[travelTime] Error fetching travel times:', err);
+      return { walking: null, driving: null, bicycling: null, transit: null, uber: null, lyft: null, fastest: null };
     } finally {
       inFlight.delete(key);
     }
@@ -109,16 +112,18 @@ const isModeResult = (value: unknown): value is { durationSeconds: number; label
 };
 
 export const parseTravelTimeResponse = (value: unknown): TravelTimeResponse => {
-  if (!value || typeof value !== 'object') return { walking: null, driving: null, bicycling: null, uber: null, fastest: null };
+  if (!value || typeof value !== 'object') return { walking: null, driving: null, bicycling: null, transit: null, uber: null, lyft: null, fastest: null };
   const v = value as Record<string, unknown>;
 
   const walking = isModeResult(v.walking) ? v.walking : null;
   const driving = isModeResult(v.driving) ? v.driving : null;
   const bicycling = isModeResult(v.bicycling) ? v.bicycling : null;
+  const transit = isModeResult(v.transit) ? v.transit : null;
   const uber = isModeResult(v.uber) ? v.uber : null;
+  const lyft = isModeResult(v.lyft) ? v.lyft : null;
   const fastest = isModeResult(v.fastest) ? v.fastest : null;
 
-  return { walking, driving, bicycling, uber, fastest };
+  return { walking, driving, bicycling, transit, uber, lyft, fastest };
 };
 
 export const getFastestLabel = (value: TravelTimeResponse | null) => {

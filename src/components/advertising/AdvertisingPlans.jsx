@@ -9,10 +9,6 @@ import {
   Crown,
   MapPin,
   Calendar,
-  Clock,
-  Users,
-  TrendingUp,
-  Eye,
   ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

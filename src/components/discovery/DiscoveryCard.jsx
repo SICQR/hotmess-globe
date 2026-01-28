@@ -1,18 +1,16 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
-import { MapPin, Zap, Crown, Sparkles, Play, ChevronLeft, ChevronRight, Heart, MessageCircle, Navigation } from 'lucide-react';
+import { MapPin, Zap, Crown, Play, ChevronLeft, ChevronRight, Heart, MessageCircle } from 'lucide-react';
 import CompatibilityBadge, { calculateCompatibility } from './CompatibilityBadge';
 import ReportButton from '../moderation/ReportButton';
 import LazyImage from '../ui/LazyImage';
 import AIMatchExplanation from './AIMatchExplanation';
-import { useRecordInteraction, getScoreExplanation, getDistanceLabel } from '@/hooks/useRecommendations';
+import { useRecordInteraction, getScoreExplanation } from '@/hooks/useRecommendations';
 import { MatchBadge, OnlineIndicator } from '@/components/ui/StatusBadge';
 import { MatchBreakdownCard } from '@/components/match/MatchBreakdownCard';
 import { SmartTravelSelector } from '@/components/travel/SmartTravelSelector';
 import { buildUberDeepLink, buildLyftDeepLink } from '@/utils/uberDeepLink';
-import { Button } from '@/components/ui/button';
 
 const getUserPhotoUrls = (user) => {
   const urls = [];

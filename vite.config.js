@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 import path from 'node:path'
+import { visualizer } from 'rollup-plugin-visualizer'
 import fs from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { config as dotenvConfig } from 'dotenv'
@@ -709,9 +710,14 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [
-      // Local dev handlers for /api/* endpoints.
       localApiRoutes(),
       react(),
+      visualizer({
+        filename: './dist/stats.html',
+        open: false,
+        gzipSize: true,
+        brotliSize: true,
+      }),
     ],
     // Bundle optimization
     build: {

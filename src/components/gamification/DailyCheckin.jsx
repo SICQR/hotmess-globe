@@ -10,7 +10,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Flame, 
   Gift, 
-  Calendar, 
   Star, 
   Zap, 
   Trophy,

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
-import { Plus, Package, DollarSign, Star, TrendingUp, Edit, Trash2, Eye, Shield, HelpCircle, BadgeCheck } from 'lucide-react';
+import { Plus, Package, DollarSign, Star, TrendingUp, Edit, Trash2, Eye, Shield, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';

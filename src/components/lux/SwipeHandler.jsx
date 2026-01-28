@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 
 /**
  * LUX BRUTALIST Swipe Handler

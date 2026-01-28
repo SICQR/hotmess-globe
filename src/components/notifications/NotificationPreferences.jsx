@@ -8,12 +8,9 @@ import {
   Users, 
   ShoppingBag, 
   AlertTriangle,
-  Check,
-  X,
   Volume2,
   VolumeX,
-  Moon,
-  Loader2
+  Moon
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';

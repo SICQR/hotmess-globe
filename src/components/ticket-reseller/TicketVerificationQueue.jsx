@@ -12,28 +12,21 @@ import {
   XCircle,
   Clock,
   AlertTriangle,
-  Eye,
   User,
   Calendar,
   MapPin,
   Ticket,
   FileText,
-  Mail,
   ExternalLink,
   ChevronDown,
   ChevronUp,
   Search,
-  Filter,
   Flag,
-  MessageSquare,
-  Loader2,
-  Image,
-  QrCode
+  Loader2
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { useAuth } from '../../lib/AuthContext';
-import { VERIFICATION_LEVELS } from './TicketVerification';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'All' },

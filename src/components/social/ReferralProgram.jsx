@@ -7,8 +7,7 @@ import {
   Check, 
   Share2,
   Trophy,
-  Star,
-  ArrowRight
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

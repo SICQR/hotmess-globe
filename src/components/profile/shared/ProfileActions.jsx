@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   MessageCircle, 
@@ -21,8 +21,7 @@ import {
   Zap,
   Crown,
   Check,
-  Loader2,
-  ExternalLink
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';

@@ -1,5 +1,4 @@
 import React, { Suspense, lazy } from 'react';
-import { Skeleton } from '../ui/Skeleton';
 
 // Lazy load the heavy Three.js globe component
 const EnhancedGlobe3D = lazy(() => import('../globe/EnhancedGlobe3D'));

@@ -1,5 +1,4 @@
 import React, { Suspense, lazy } from 'react';
-import { Skeleton } from '../ui/Skeleton';
 
 // Lazy load recharts components
 const RechartsModule = lazy(() => import('recharts').then(module => ({

@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
   Download, 
@@ -16,7 +15,6 @@ import {
   MapPin,
   Sparkles,
   ChevronDown,
-  Filter,
   RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

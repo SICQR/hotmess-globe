@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44, supabase } from '@/api/base44Client';
-import { Search, User, MapPin, ShoppingBag, X, Clock, Loader2, Filter, Star, TrendingUp, Calendar, Sliders } from 'lucide-react';
+import { Search, User, MapPin, ShoppingBag, X, Clock, Loader2, Star, TrendingUp, Sliders } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { addToSearchHistory, getPopularSearches, getTrendingSearches } from './SearchHistory';

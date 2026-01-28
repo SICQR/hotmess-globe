@@ -6,16 +6,25 @@ import pluginUnusedImports from "eslint-plugin-unused-imports";
 
 export default [
   {
-    files: [
-      "src/components/**/*.{js,mjs,cjs,jsx}",
-      "src/pages/**/*.{js,mjs,cjs,jsx}",
-      "src/Layout.jsx",
-    ],
     ignores: [
+      "api/**/*",
+      "functions/**/*",
+      "dist/**/*",
+      "node_modules/**/*",
       "src/lib/**/*",
       "src/components/ui/**/*",
       "src/components/docs/**/*",
       "src/components/utils/supabase-schema.sql.jsx",
+      "**/*.test.js",
+      "**/*.test.jsx",
+      "src/pages.config.lazy.js",
+    ],
+  },
+  {
+    files: [
+      "src/components/**/*.{js,mjs,cjs,jsx}",
+      "src/pages/**/*.{js,mjs,cjs,jsx}",
+      "src/Layout.jsx",
     ],
     ...pluginJs.configs.recommended,
     ...pluginReact.configs.flat.recommended,
@@ -44,6 +53,7 @@ export default [
       "react/jsx-uses-vars": "error",
       "react/jsx-uses-react": "error",
       "unused-imports/no-unused-imports": "error",
+      "no-console": ["warn", { allow: ["warn", "error"] }],
       "unused-imports/no-unused-vars": [
         "warn",
         {

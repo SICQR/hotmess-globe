@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import TemporaryLocationShare, { useTemporaryLocationShare } from './TemporaryLocationShare';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 
 // Mock dependencies
 vi.mock('@/components/utils/supabaseClient', () => ({

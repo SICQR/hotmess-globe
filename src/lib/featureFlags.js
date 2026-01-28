@@ -17,9 +17,7 @@ export const FEATURE_FLAGS = {
 };
 
 export const isXpPurchasingEnabled = () => FEATURE_FLAGS.xpPurchasingEnabled;
-export const isPremiumContentEnabled = () => FEATURE_FLAGS.premiumContentEnabled;
-
-// Personas feature flag helpers
+export const isPremiumContentEnabled = () => FEATURE_FLAGS.premiumContentEnabled;// Personas feature flag helpers
 export const isPersonasEnabled = () => FEATURE_FLAGS.personasEnabled;
 export const isSecondaryProfilesInDiscoveryEnabled = () => FEATURE_FLAGS.secondaryProfilesInDiscoveryEnabled;
 export const isPersonaBoundConversationsEnabled = () => FEATURE_FLAGS.personaBoundConversationsEnabled;

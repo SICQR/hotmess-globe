@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
 import { IncomingCallModal, VideoCallScreen } from './VideoCallUI';
 

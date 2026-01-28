@@ -168,7 +168,7 @@ export function SmartProfileCard({
   });
 
   // Long press for mobile
-  const longPressHandlers = useLongPress(() => onOpenProfile(profile), { delay: 300 });
+  const longPressHandlers = useLongPress({ delayMs: 300 });
 
   // Primary action
   const primaryAction = useMemo(() => getPrimaryAction(profile), [profile]);

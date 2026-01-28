@@ -21,10 +21,7 @@ import {
   CircleDot,
   MapPin,
   Navigation,
-  MoveUp,
   Footprints,
-  Car,
-  Bike,
   Merge,
   Split,
   Flag

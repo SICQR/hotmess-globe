@@ -12,10 +12,9 @@ import {
   LuxModal,
   LuxConfirm,
   LuxActionSheet,
-  SwipeableView,
   CornerTear,
 } from '@/components/lux';
-import { Zap, Heart, MapPin, Users, Calendar, ArrowRight } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 /**
  * LUX BRUTALIST Design System Showcase

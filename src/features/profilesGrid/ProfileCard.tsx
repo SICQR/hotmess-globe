@@ -702,11 +702,13 @@ export function ProfileCard({
           {typeBadge ? (
             <div
               className={
-                typeBadge.tone === 'hot'
-                  ? 'rounded-full bg-[#E62020] text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
+                typeBadge.tone === 'seller'
+                  ? 'rounded-full bg-[#B026FF] text-white text-[10px] font-black uppercase tracking-wider px-2 py-1'
                   : typeBadge.tone === 'gold'
                     ? 'rounded-full bg-gradient-to-r from-[#FFD700] to-[#E62020] text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
-                    : 'rounded-full bg-[#00D9FF] text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
+                    : typeBadge.tone === 'creator'
+                      ? 'rounded-full bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white text-[10px] font-black uppercase tracking-wider px-2 py-1'
+                      : 'rounded-full bg-gradient-to-r from-[#00D9FF] to-blue-500 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1'
               }
             >
               {typeBadge.icon ? `${typeBadge.icon} ` : ''}{typeBadge.label}

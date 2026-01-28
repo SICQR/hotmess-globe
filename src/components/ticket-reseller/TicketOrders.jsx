@@ -6,12 +6,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Ticket,
-  Calendar,
   Clock,
-  CheckCircle,
-  AlertTriangle,
   ChevronRight,
-  Filter,
   Package,
   ShoppingBag
 } from 'lucide-react';

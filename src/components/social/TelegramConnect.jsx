@@ -9,7 +9,6 @@ import {
   Bell,
   BellOff,
   RefreshCw,
-  QrCode,
   AtSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

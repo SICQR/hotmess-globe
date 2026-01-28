@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Hash, Heart, Music, Sparkles, Shield, AlertTriangle, Users, Palette, Zap } from 'lucide-react';
+import { Hash, Heart, Music, Sparkles, Shield, AlertTriangle, Palette, Zap } from 'lucide-react';
 import MutualConnections from './MutualConnections';
 import { taxonomyConfig } from '../discovery/taxonomyConfig';
 import PhotoGallery from './shared/PhotoGallery';

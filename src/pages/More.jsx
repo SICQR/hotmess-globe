@@ -5,7 +5,7 @@ import { createPageUrl } from '../utils';
 import { 
   MapPin, TrendingUp, Target, Shield, Calendar, 
   Scan, Users, Trophy, Settings, FileText, HelpCircle, UserCircle2, 
-  Building2, Ticket, Store, Globe, ShieldCheck, ArrowRight, Megaphone, Crown
+  Building2, Ticket, Store, Globe, ShieldCheck, ArrowRight, Crown
 } from 'lucide-react';
 import PageShell from '@/components/shell/PageShell';
 import { isPersonasEnabled } from '@/lib/featureFlags';

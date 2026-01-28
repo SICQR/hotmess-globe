@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Plus, Settings, Clock, Eye, EyeOff, Trash2, Edit, Users, Shield, Lock, Zap } from 'lucide-react';
+import { Plus, Clock, Eye, EyeOff, Edit, Users, Shield, Lock, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useCurrentUser } from '@/components/utils/queryConfig';

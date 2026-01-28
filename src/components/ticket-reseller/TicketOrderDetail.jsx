@@ -3,7 +3,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   Calendar,
@@ -14,11 +13,8 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Upload,
   MessageCircle,
-  Star,
   ExternalLink,
-  Copy,
   Image,
   Send
 } from 'lucide-react';

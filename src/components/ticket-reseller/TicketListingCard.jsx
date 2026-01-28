@@ -14,13 +14,11 @@ import {
   Eye,
   TrendingDown,
   Clock,
-  CheckCircle,
-  AlertCircle,
   BadgeCheck,
   ShieldCheck,
   Crown
 } from 'lucide-react';
-import { format, formatDistanceToNow, isToday, isTomorrow } from 'date-fns';
+import { format, isToday, isTomorrow } from 'date-fns';
 
 // Verification badge styles
 const VERIFICATION_BADGES = {

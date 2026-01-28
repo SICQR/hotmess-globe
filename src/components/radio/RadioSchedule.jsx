@@ -8,11 +8,8 @@ import {
   Calendar,
   Play,
   User,
-  ChevronLeft,
-  ChevronRight,
   Bell,
-  BellOff,
-  Music2
+  BellOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

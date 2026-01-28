@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { X, Save, Trash2, Clock, MapPin, Eye, EyeOff, Users, Search, Check, Loader2 } from 'lucide-react';
+import { X, Save, Trash2, Clock, MapPin, Eye, EyeOff, Search, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44, supabase } from '@/components/utils/supabaseClient';
 import { useCurrentUser } from '@/components/utils/queryConfig';

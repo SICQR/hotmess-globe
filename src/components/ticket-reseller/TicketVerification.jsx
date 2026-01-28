@@ -7,7 +7,6 @@ import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload,
-  Camera,
   FileText,
   QrCode,
   Mail,
@@ -17,7 +16,6 @@ import {
   X,
   ArrowRight,
   ArrowLeft,
-  Image,
   Lock,
   Eye,
   EyeOff,

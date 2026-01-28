@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Globe,
   Megaphone,
@@ -10,16 +10,11 @@ import {
   TrendingUp,
   Eye,
   MapPin,
-  Calendar,
-  Clock,
   ChevronRight,
   Plus,
   Star,
-  Zap,
   Target,
   Users,
-  CheckCircle,
-  ArrowRight,
   Building2,
   Sparkles
 } from 'lucide-react';
@@ -30,7 +25,6 @@ import { Badge } from '@/components/ui/badge';
 import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../../utils';
-import { toast } from 'sonner';
 import AdvertisingPlans from '@/components/advertising/AdvertisingPlans';
 import SponsoredPlacements from '@/components/advertising/SponsoredPlacements';
 import BannerManager from '@/components/advertising/BannerManager';

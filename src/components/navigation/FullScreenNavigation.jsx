@@ -5,19 +5,16 @@
  * current instruction overlay, and swipe-up step list.
  */
 
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
   ChevronUp, 
   ChevronDown,
   Volume2,
   VolumeX,
-  Navigation,
-  Compass,
   Locate,
-  Settings,
   AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

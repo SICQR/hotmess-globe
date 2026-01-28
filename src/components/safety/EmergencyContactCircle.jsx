@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Users, Plus, X, Phone, MapPin, Clock, Shield,
+  Users, Plus, Phone, MapPin, Clock, Shield,
   AlertTriangle, Check, Edit2, Trash2, Send
 } from 'lucide-react';
 import { LuxModal } from '../lux/LuxModal';

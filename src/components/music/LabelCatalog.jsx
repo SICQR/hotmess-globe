@@ -7,9 +7,7 @@ import {
   Play, 
   ExternalLink,
   Calendar,
-  Clock,
-  Music2,
-  Filter
+  Music2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

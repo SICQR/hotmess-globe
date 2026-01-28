@@ -16,15 +16,17 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "maxNodeModuleJsDepth": 0,
-    "types": ["vite/client"]
+    "types": ["vite/client", "vitest/globals"]
   },
-  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx", "vitest.shims.d.ts"],
   "exclude": [
     "node_modules",
     "dist",
     "src/vite-plugins",
     "src/components/ui",
     "src/**/*.md.jsx",
-    "src/**/*.sql.jsx"
+    "src/**/*.sql.jsx",
+    "**/*.test.ts",
+    "**/*.test.js"
   ]
 }

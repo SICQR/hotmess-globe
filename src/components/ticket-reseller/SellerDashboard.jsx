@@ -12,8 +12,6 @@ import {
   CheckCircle,
   AlertTriangle,
   Plus,
-  Settings,
-  BarChart3,
   Clock,
   DollarSign,
   Eye

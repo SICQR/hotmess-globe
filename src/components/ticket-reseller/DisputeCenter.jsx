@@ -10,12 +10,9 @@ import {
   CheckCircle,
   XCircle,
   MessageCircle,
-  Upload,
   ChevronRight,
   ArrowLeft,
-  FileText,
-  Image,
-  Send
+  Image
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';

@@ -14,7 +14,7 @@ import 'leaflet/dist/leaflet.css';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Loader2, Navigation, Pause, Maximize2, Volume2, VolumeX, Train } from 'lucide-react';
+import { Loader2, Navigation, Pause, Maximize2, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import PageShell from '@/components/shell/PageShell';
 

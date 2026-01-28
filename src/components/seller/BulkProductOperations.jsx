@@ -11,7 +11,6 @@ import {
   DollarSign,
   Copy,
   Download,
-  Upload,
   MoreHorizontal,
   AlertTriangle,
   X,

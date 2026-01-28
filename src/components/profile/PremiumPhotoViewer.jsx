@@ -10,8 +10,7 @@ import {
   ChevronLeft, 
   ChevronRight,
   Sparkles,
-  Eye,
-  EyeOff
+  Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';

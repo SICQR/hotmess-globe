@@ -6,17 +6,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
-  Filter, 
-  Calendar, 
-  MapPin, 
   Ticket,
-  Star,
   Shield,
-  ChevronDown,
-  X,
-  SlidersHorizontal,
-  TrendingUp,
-  Clock
+  SlidersHorizontal
 } from 'lucide-react';
 import { useAuth } from '../../lib/AuthContext';
 import TicketListingCard from './TicketListingCard';

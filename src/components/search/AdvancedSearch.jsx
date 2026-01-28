@@ -1,19 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   Search, 
-  Filter, 
   X, 
   Save, 
   Clock, 
   Trash2,
-  ChevronDown,
   MapPin,
-  Calendar,
-  Users,
-  Tag,
   Sliders,
   Star,
   Bookmark

@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Crown, Palette, Heart, Navigation, ChevronDown, Calendar, Star, Sparkles, Zap, MapPin, TrendingUp } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { ShoppingBag, Crown, Palette, Heart, Calendar, Star, Sparkles } from 'lucide-react';
 import QuickActions from './shared/ProfileActions';
 import BadgeDisplay from './BadgeDisplay';
 import { buildUberDeepLink } from '@/utils/uberDeepLink';
-import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes } from '@/utils/travelRecommendations';
 import { useNavigate } from 'react-router-dom';
 import { SmartTravelSelector } from '@/components/travel/SmartTravelSelector';

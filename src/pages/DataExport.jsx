@@ -21,7 +21,6 @@ import {
   MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 import { logger } from '@/utils/logger';

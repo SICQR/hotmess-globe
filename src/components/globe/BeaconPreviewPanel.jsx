@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, MapPin, Calendar, Users, Zap, ExternalLink, Crown } from 'lucide-react';
+import { X, MapPin, Calendar, Users, Zap, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';

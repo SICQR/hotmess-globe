@@ -11,10 +11,8 @@ import {
   AlertTriangle,
   Plus,
   ArrowLeft,
-  Home,
   Search,
-  User,
-  LayoutDashboard
+  User
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
