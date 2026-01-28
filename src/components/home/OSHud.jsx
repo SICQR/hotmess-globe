@@ -1,15 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Home, Globe, Radio, Users, ShoppingBag, Menu, Zap } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
+import LevelUpModal from '@/components/gamification/LevelUpModal';
 
 export default function OSHud({ user, onModuleChange }) {
   const location = useLocation();
   const currentPath = location.pathname;
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [previousLevel, setPreviousLevel] = useState(null);
 
   const level = user ? Math.floor((user.xp || 0) / 1000) + 1 : 1;
   const xpInLevel = user ? (user.xp || 0) % 1000 : 0;
   const xpProgress = (xpInLevel / 1000) * 100;
+
+  // Detect level up
+  useEffect(() => {
+    if (user && previousLevel !== null && level > previousLevel) {
+      setShowLevelUp(true);
+    }
+    if (user) {
+      setPreviousLevel(level);
+    }
+  }, [level, user, previousLevel]);
 
   const modules = [
     { id: 'home', icon: Home, label: 'HOME', path: '/' },
@@ -22,6 +35,18 @@ export default function OSHud({ user, onModuleChange }) {
 
   return (
     <>
+      {/* Level Up Modal */}
+      <LevelUpModal
+        isOpen={showLevelUp}
+        onClose={() => setShowLevelUp(false)}
+        level={level}
+        rewards={[
+          'New profile badge unlocked',
+          'Increased marketplace visibility',
+          'Access to exclusive events'
+        ]}
+      />
+
       {/* Top HUD */}
       <div className="fixed top-0 left-0 right-0 z-40 bg-black/80 backdrop-blur-xl border-b border-[#FF1493]/30">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">

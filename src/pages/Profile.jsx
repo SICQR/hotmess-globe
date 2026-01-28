@@ -28,6 +28,7 @@ import WelcomeTour from '../components/onboarding/WelcomeTour';
 import VibeSynthesisCard from '../components/vibe/VibeSynthesisCard';
 import { fetchRoutingEtas } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
+import { ProfileCardSkeleton, StatsGridSkeleton } from '@/components/ui/SkeletonLoaders';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -563,8 +564,13 @@ export default function Profile() {
 
     return (
       <ErrorBoundary>
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
-          <p className="text-white/60">Loading...</p>
+        <div className="min-h-screen bg-black text-white p-4 md:p-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-8">
+              <ProfileCardSkeleton />
+            </div>
+            <StatsGridSkeleton count={6} />
+          </div>
         </div>
       </ErrorBoundary>
     );
