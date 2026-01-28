@@ -54,11 +54,11 @@ function LayoutInner({ children, currentPageName }) {
   const getNavLabel = (name) => {
     const labels = {
       'HOME': t('nav.home'),
-      'PULSE': t('nav.pulse') || 'PULSE',
-      'EVENTS': t('nav.events') || t('events.title'),
+      'PULSE': t('nav.pulse'),
+      'EVENTS': t('nav.events'),
       'MARKET': t('nav.market'),
-      'SOCIAL': t('nav.social') || 'SOCIAL',
-      'MUSIC': t('nav.music') || 'MUSIC',
+      'SOCIAL': t('nav.social'),
+      'MUSIC': t('nav.music'),
       'MORE': t('nav.more'),
     };
     return labels[name] || name;
@@ -458,7 +458,7 @@ function LayoutInner({ children, currentPageName }) {
                       ) : (
                         <Icon className="w-4 h-4" />
                       )}
-                      <span className="font-black uppercase tracking-wider text-xs">{name}</span>
+                      <span className="font-black uppercase tracking-wider text-xs">{getNavLabel(name)}</span>
                     </Link>
                   ))}
                 </div>
@@ -594,7 +594,7 @@ function LayoutInner({ children, currentPageName }) {
                     ) : (
                       <Icon className="w-4 h-4" />
                     )}
-                    <span className="font-black uppercase tracking-wider text-[10px]">{name}</span>
+                    <span className="font-black uppercase tracking-wider text-[10px]">{getNavLabel(name)}</span>
                   </Link>
                 ))}
                 </div>
