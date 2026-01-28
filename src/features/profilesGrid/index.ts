@@ -3,7 +3,7 @@ export { ProfileCard } from './ProfileCard';
 export { default as ProfilesGrid } from './ProfilesGrid';
 export { default as ProfilesGridWithMatch } from './ProfilesGridWithMatch';
 export { SortSelector } from './SortSelector';
-export { TelegramPanel } from './TelegramPanel';
+export { default as TelegramPanel } from './TelegramPanel';
 export { useInfiniteProfiles } from './useInfiniteProfiles';
 export { useMatchProfiles } from './useMatchProfiles';
 export { useLongPress } from './useLongPress';
