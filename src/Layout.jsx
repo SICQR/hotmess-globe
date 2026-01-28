@@ -6,7 +6,7 @@ import { base44 } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import PanicButton from '@/components/safety/PanicButton';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
-import GlobalAssistant from '@/components/ai/GlobalAssistant';
+// import GlobalAssistant from '@/components/ai/GlobalAssistant'; // Disabled - broken component
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import GlobalSearch from '@/components/search/GlobalSearch';
 import OfflineIndicator from '@/components/ui/OfflineIndicator';

@@ -503,3 +503,35 @@
   transform: translateY(-4px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
+
+/* =========================================================================
+   Cursor Glow Effect (for SmartProfileCard and interactive elements)
+   ========================================================================= */
+
+.cursor-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.cursor-glow::before {
+  content: '';
+  position: absolute;
+  width: var(--glow-size, 200px);
+  height: var(--glow-size, 200px);
+  background: radial-gradient(
+    circle,
+    var(--glow-color, rgba(255, 20, 147, 0.15)) 0%,
+    transparent 70%
+  );
+  transform: translate(-50%, -50%);
+  left: var(--glow-x, 50%);
+  top: var(--glow-y, 50%);
+  pointer-events: none;
+  opacity: var(--glow-opacity, 0);
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.cursor-glow:hover::before {
+  opacity: var(--glow-opacity, 1);
+}

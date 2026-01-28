@@ -140,6 +140,8 @@ export default function Social() {
               showHeader={false}
               showTelegramFeedButton
               containerClassName="mx-0 max-w-none p-0"
+              useBentoGrid
+              useSmartCards
               onNavigateUrl={(url) => navigate(url)}
               onOpenProfile={(profile) => {
                 const email = profile?.email;
