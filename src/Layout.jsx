@@ -674,8 +674,8 @@ function LayoutInner({ children, currentPageName }) {
       {/* Panic Button */}
       {user && <PanicButton />}
 
-      {/* Global AI Assistant */}
-      {user && <GlobalAssistant />}
+      {/* Global AI Assistant - Temporarily disabled pending agents API implementation */}
+      {/* {user && <GlobalAssistant />} */}
 
       {/* Global Search */}
       {user && <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />}

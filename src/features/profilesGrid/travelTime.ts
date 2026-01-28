@@ -82,6 +82,10 @@ export async function fetchTravelTime({
       });
 
       if (!res.ok) {
+        // Silently handle rate limits and errors - avoid console spam
+        if (res.status !== 429) {
+          console.warn('[travelTime] API returned', res.status);
+        }
         return { walking: null, driving: null, bicycling: null, transit: null, uber: null, lyft: null, fastest: null };
       }
 
@@ -90,7 +94,10 @@ export async function fetchTravelTime({
       cache.set(key, { expiresAtMs: Date.now() + TTL_MS, value: parsed });
       return parsed;
     } catch (err) {
-      console.error('[travelTime] Error fetching travel times:', err);
+      // Only log non-abort errors to reduce console spam
+      if (err.name !== 'AbortError') {
+        console.error('[travelTime] Error fetching travel times:', err);
+      }
       return { walking: null, driving: null, bicycling: null, transit: null, uber: null, lyft: null, fastest: null };
     } finally {
       inFlight.delete(key);
