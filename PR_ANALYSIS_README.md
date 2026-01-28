@@ -7,11 +7,27 @@
 
 ---
 
+## ⚡ QUICK START
+
+**Just want to resolve the PRs?**
+
+1. **Merge this PR (#62)** on GitHub
+2. **Run the auto-resolver**:
+   ```bash
+   git checkout main && git pull
+   bash AUTO_RESOLVE_PRS.sh
+   ```
+3. **Follow the interactive prompts** - it will guide you through each PR
+
+**Questions about permissions?** → See [GRANTING_COPILOT_PERMISSIONS.md](GRANTING_COPILOT_PERMISSIONS.md)
+
+---
+
 ## 🎯 What This Package Contains
 
 This comprehensive analysis package provides end-to-end insights and actionable plans for all unfinished pull requests in the repository.
 
-### 📄 Four Key Documents
+### 📄 Six Key Documents + 2 Scripts
 
 #### 1. [EXECUTIVE_SUMMARY_PRS.md](EXECUTIVE_SUMMARY_PRS.md) - Start Here! 
 **For**: Management, Product Owners, Team Leaders  
@@ -79,6 +95,43 @@ This comprehensive analysis package provides end-to-end insights and actionable 
 - Metrics Dashboard (velocity, quality, health)
 
 **Best For**: Tracking progress, standup meetings, status updates
+
+---
+
+#### 5. [GRANTING_COPILOT_PERMISSIONS.md](GRANTING_COPILOT_PERMISSIONS.md) - Permission Guide
+**For**: Repository Owners, Anyone asking "How do I give Copilot permissions?"  
+**Purpose**: Explains GitHub Copilot's permission model and what's possible  
+**Read Time**: 10 minutes
+
+**Key Sections**:
+- What Copilot can/cannot do
+- GitHub's security model
+- How to enable automation
+- Alternative workflows
+- Specific actions you can take now
+
+**Best For**: Understanding permission limitations and working effectively with Copilot
+
+---
+
+#### 6. [AUTO_RESOLVE_PRS.sh](AUTO_RESOLVE_PRS.sh) - Interactive Merge Script
+**For**: Repository Owners executing the merge plan  
+**Purpose**: Interactive script that guides you through merging all PRs in order  
+**Execution Time**: 30-60 minutes (depends on review time)
+
+**Features**:
+- Step-by-step guidance through all 23 PRs
+- Works with or without GitHub CLI
+- Interactive prompts for decisions
+- Applies conflict resolutions automatically
+- Follows recommended merge order
+
+**Usage**:
+```bash
+bash AUTO_RESOLVE_PRS.sh
+```
+
+**Best For**: Actually executing the resolution plan
 
 ---
 
