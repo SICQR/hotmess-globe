@@ -639,12 +639,21 @@ HOTMESS runs **two parallel marketplace systems**:
 
 | System | Purpose | Status |
 |--------|---------|--------|
-| **Shopify Storefront** | Official HOTMESS products | ✅ Complete |
-| **P2P Marketplace** | User-to-user listings | ✅ Complete |
+| **Official Shop** | HOTMESS in-house brands (RAW, HUNG, HIGH) + limited editions | ✅ Complete |
+| **MESSMARKET** | Etsy-style community sellers marketplace | ✅ Complete |
 
-### Shopify Integration
+### Official Shop (Shopify Integration)
 
 **Location**: `api/shopify/*`, `src/features/shop/`
+
+**Brands Available**:
+| Brand | Type | Description |
+|-------|------|-------------|
+| **RAW** | Core | "Unfiltered. Unapologetic." - Bold basics |
+| **HUNG** | Core | "Statement pieces. Maximum impact." - Luxury streetwear |
+| **HIGH** | Core | "Elevated essentials." - Premium basics |
+| **SUPERHUNG** | Limited | Ultra-limited drops, collector pieces |
+| **SUPERRAW** | Limited | Rare, radical collector pieces |
 
 **Flow**:
 ```
@@ -657,7 +666,26 @@ Market page → Collection → Product Detail → Cart → Shopify Checkout
 - Checkout redirects to Shopify hosted checkout
 - Webhooks handle order updates
 
-### P2P Marketplace (Creators Market)
+### MESSMARKET (Community Sellers)
+
+**Brand Configuration** (`src/lib/brand.js`):
+```javascript
+messmarket: {
+  name: 'MESSMARKET',
+  tagline: 'Community sellers. Zero gatekeepers.',
+  description: 'Etsy-style marketplace for the HOTMESS community.',
+  fee: '10% platform fee',
+  features: [
+    'Verified seller badges',
+    'Escrow-protected transactions',
+    'XP rewards for buyers & sellers',
+    'Direct messaging with sellers',
+    'Rating & review system',
+  ],
+}
+```
+
+### P2P Marketplace Implementation
 
 **Location**: `src/pages/Marketplace.jsx`, `src/pages/SellerDashboard.jsx`
 
