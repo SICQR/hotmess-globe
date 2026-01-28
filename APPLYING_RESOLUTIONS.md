@@ -13,65 +13,87 @@ Conflict resolutions have been prepared in separate branches:
 
 Each resolved branch contains a merge commit that resolves the conflicts with the main branch.
 
-## Method 1: Cherry-pick the Resolution (Recommended)
+## Method 1: Automated Script (Easiest)
 
-This method applies just the conflict resolution commit to the original PR branch.
+Run the automated resolution script that handles all 5 PRs:
 
-### For PR #30:
+```bash
+# From the repository root
+bash scripts/apply-pr-resolutions.sh
+```
+
+This script will:
+1. Fetch each PR branch
+2. Merge main and resolve conflicts
+3. Commit the resolutions with detailed messages
+4. Leave changes ready for you to review and push
+
+**Note**: The script commits but does NOT push. Review the changes before pushing.
+
+## Method 2: Manual Resolution Per PR
+
+## Method 2: Manual Resolution Per PR
+
+If you prefer to resolve conflicts manually for each PR:
+
+### For PRs #30, #31, #32 (vercel.json conflicts):
 ```bash
 # Checkout the PR branch
-git fetch origin cursor/production-logger-admin-06d6
-git checkout cursor/production-logger-admin-06d6
+git fetch origin <branch-name>
+git checkout <branch-name>
 
-# Cherry-pick the resolution commit
-git fetch origin resolved-pr30
-git cherry-pick $(git log -1 --format=%H resolved-pr30)
+# Merge main (will show conflict)
+git merge origin/main
 
-# Push the updated branch
-git push origin cursor/production-logger-admin-06d6
+# Resolve by accepting main's version
+git checkout --theirs vercel.json
+git add vercel.json
+
+# Commit and push
+git commit -m "chore: resolve vercel.json conflict - use main's rewrites syntax"
+git push origin <branch-name>
 ```
 
-### For PR #31:
-```bash
-git fetch origin cursor/product-polish-and-wow-a0a3
-git checkout cursor/product-polish-and-wow-a0a3
-git fetch origin resolved-pr31
-git cherry-pick $(git log -1 --format=%H resolved-pr31)
-git push origin cursor/product-polish-and-wow-a0a3
-```
+Branch names:
+- PR #30: `cursor/production-logger-admin-06d6`
+- PR #31: `cursor/product-polish-and-wow-a0a3`
+- PR #32: `cursor/infrastructure-gaps-plan-2e41`
 
-### For PR #32:
-```bash
-git fetch origin cursor/infrastructure-gaps-plan-2e41
-git checkout cursor/infrastructure-gaps-plan-2e41
-git fetch origin resolved-pr32
-git cherry-pick $(git log -1 --format=%H resolved-pr32)
-git push origin cursor/infrastructure-gaps-plan-2e41
-```
-
-### For PR #41:
+### For PR #41 (security.yml conflict):
 ```bash
 git fetch origin copilot/investigate-pr-failures-again
 git checkout copilot/investigate-pr-failures-again
-git fetch origin resolved-pr41
-git cherry-pick $(git log -1 --format=%H resolved-pr41)
+git merge origin/main
+
+# Keep PR #41's version (it has better error handling)
+git checkout --ours .github/workflows/security.yml
+git add .github/workflows/security.yml
+
+git commit -m "chore: resolve security.yml - keep comprehensive error handling"
 git push origin copilot/investigate-pr-failures-again
 ```
 
-### For PR #42:
+### For PR #42 (security.yml conflict):
 ```bash
 git fetch origin copilot/fix-pr-merge-issues
 git checkout copilot/fix-pr-merge-issues
-git fetch origin resolved-pr42
-git cherry-pick $(git log -1 --format=%H resolved-pr42)
+git merge origin/main
+
+# Use main's version (it has the inline comment)
+git checkout --theirs .github/workflows/security.yml
+git add .github/workflows/security.yml
+
+git commit -m "chore: resolve security.yml - use main's inline comment"
 git push origin copilot/fix-pr-merge-issues
 ```
 
-## Method 2: Replace the Branch
+## Method 3: Using Resolved Branches
 
-This method completely replaces the PR branch with the resolved version.
+## Method 3: Using Resolved Branches
 
-**⚠️ Warning**: This will overwrite the PR branch history. Use with caution.
+The local `resolved-pr*` branches can be used as references or pushed to replace the PR branches.
+
+**⚠️ Warning**: This will replace the PR branch history.
 
 ```bash
 # For PR #30
@@ -95,7 +117,9 @@ git fetch origin resolved-pr42
 git push origin resolved-pr42:copilot/fix-pr-merge-issues --force-with-lease
 ```
 
-## Method 3: Manual Application
+**Note**: The resolved branches are currently local only and haven't been pushed to origin.
+
+## Method 4: Follow Documentation Manually
 
 If you prefer to manually resolve the conflicts following the documentation:
 

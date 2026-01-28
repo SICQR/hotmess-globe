@@ -34,20 +34,27 @@
 
 ## How to Apply Resolutions
 
-Three methods are available:
+Four methods are available:
 
-1. **Cherry-pick** (Recommended): Apply just the resolution commits
-2. **Branch Replace**: Replace the entire PR branch (use with caution)
-3. **Manual**: Follow the documentation and apply manually
+1. **Patch Files** (Easiest): Apply the pre-created patch files
+2. **Cherry-pick**: Apply just the resolution commits from resolved branches
+3. **Branch Replace**: Replace the entire PR branch (use with caution)
+4. **Manual**: Follow the documentation and apply manually
 
 See `APPLYING_RESOLUTIONS.md` for detailed instructions.
 
 ## Files in This Resolution Package
 
+- `SUMMARY.md` - This file - executive summary
 - `CONFLICT_RESOLUTIONS.md` - Detailed analysis of each conflict and resolution rationale
 - `APPLYING_RESOLUTIONS.md` - Step-by-step guide to apply resolutions
+- `patches/` - Directory containing patch files for each resolution:
+  - `pr30-resolution.patch` - Resolves PR #30
+  - `pr31-resolution.patch` - Resolves PR #31
+  - `pr32-resolution.patch` - Resolves PR #32
+  - `pr41-resolution.patch` - Resolves PR #41
+  - `pr42-resolution.patch` - Resolves PR #42
 - `scripts/resolve-pr-conflicts.sh` - Automated resolution script (for reference)
-- `SUMMARY.md` - This file
 
 ## Verification Checklist
 
