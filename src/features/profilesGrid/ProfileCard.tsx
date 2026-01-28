@@ -3,12 +3,14 @@ import type { Profile, TravelTimeResponse } from './types';
 import { fetchTravelTime, type LatLng } from './travelTime';
 import { useLongPress } from './useLongPress';
 import { useVisibility } from './useVisibility';
+import { useCursorGlow } from '@/hooks/useCursorGlow';
 import { buildUberDeepLink, buildLyftDeepLink } from '@/utils/uberDeepLink';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@/utils/travelRecommendations';
 import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
 import { MatchBreakdownCard, MatchBadge } from '@/components/match/MatchBreakdownCard';
 import { SmartTravelSelector } from '@/components/travel/SmartTravelSelector';
+import { cn } from '@/lib/utils';
 
 type Props = {
   profile: Profile;
@@ -270,6 +272,66 @@ export function ProfileCard({
   const { ref: visibilityRef, isVisible } = useVisibility({ rootMargin: '200px', threshold: 0.2, once: true });
 
   const cardRef = useRef<HTMLDivElement | null>(null);
+
+  // 🎨 SMART FEATURE: Cursor-following glow effect
+  useCursorGlow(cardRef, {
+    enabled: supportsHover(),
+    glowColor: 'rgba(255, 20, 147, 0.15)',
+    glowSize: 200,
+    intensity: 1,
+  });
+
+  // 🎯 SMART FEATURE: Calculate relevance score for dynamic styling
+  const relevanceScore = useMemo(() => {
+    let score = 0;
+    
+    // Match probability (0-40 points)
+    if (profile.matchProbability) score += profile.matchProbability * 0.4;
+    
+    // Proximity bonus (0-20 points)
+    if (profile.distanceKm !== undefined) {
+      if (profile.distanceKm < 1) score += 20;
+      else if (profile.distanceKm < 5) score += 15;
+      else if (profile.distanceKm < 10) score += 10;
+    }
+    
+    // Active status (0-15 points)
+    if (profile.rightNow || profile.right_now_active) score += 15;
+    else if (profile.onlineNow || profile.online_now) score += 8;
+    
+    // Engagement (0-10 points)
+    const views = profile.profile_views_count || profile.viewCount || 0;
+    if (views >= 100) score += 10;
+    else if (views >= 50) score += 5;
+    
+    // Premium/verified (0-5 points)
+    if (profile.verified) score += 3;
+    if (profile.profileType === 'premium') score += 2;
+    
+    return Math.min(100, score);
+  }, [profile]);
+
+  // 🔥 SMART FEATURE: Dynamic card styling based on relevance
+  const smartCardClass = useMemo(() => {
+    const baseClass = 'cursor-glow transition-all duration-300';
+    
+    if (relevanceScore >= 80) {
+      // Super high relevance - animated gradient border + glow
+      return cn(baseClass, 'ring-2 ring-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.5)] animate-glow-pulse');
+    }
+    
+    if (relevanceScore >= 60) {
+      // High relevance - cyan glow
+      return cn(baseClass, 'ring-2 ring-[#00D9FF] shadow-[0_0_15px_rgba(0,217,255,0.4)]');
+    }
+    
+    if (profile.rightNow || profile.right_now_active) {
+      // Right Now active - red glow
+      return cn(baseClass, 'ring-2 ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]');
+    }
+    
+    return baseClass;
+  }, [relevanceScore, profile.rightNow, profile.right_now_active]);
 
   const attachRef = useCallback(
     (node: Element | null) => {
@@ -652,7 +714,7 @@ export function ProfileCard({
       onClick={onClick}
       {...longPressHandlers}
     >
-      <div className="relative w-full aspect-[4/5] overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-sm transition-all duration-200 hover:border-white/20 hover:shadow-lg">
+      <div className={cn("relative w-full aspect-[4/5] overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-sm transition-all duration-200 hover:border-white/20 hover:shadow-lg", smartCardClass)}>
         {currentUrl ? (
           <img
             src={currentUrl}
