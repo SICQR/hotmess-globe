@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 // Test the hook's logic without fully rendering it
 // as it depends heavily on browser APIs that are difficult to mock
