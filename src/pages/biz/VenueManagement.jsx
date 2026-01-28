@@ -12,7 +12,6 @@ import {
   Calendar,
   Image,
   CheckCircle2,
-  AlertCircle,
   Search,
   MoreVertical,
   ExternalLink
