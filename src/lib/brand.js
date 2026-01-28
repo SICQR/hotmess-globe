@@ -87,6 +87,28 @@ export const BRAND = {
     description: 'We never glamourise alternative lifestyles, but we are bold and provocative, and we are here for a reason.',
   },
 
+  // MESSMARKET - 3rd Party Community Marketplace
+  messmarket: {
+    name: 'MESSMARKET',
+    tagline: 'Community sellers. Zero gatekeepers.',
+    description: 'Etsy-style marketplace for the HOTMESS community. Sell your creations, buy unique pieces, support fellow creators.',
+    fee: '10% platform fee',
+    feePercent: 10,
+    features: [
+      'Verified seller badges',
+      'Escrow-protected transactions',
+      'XP rewards for buyers & sellers',
+      'Direct messaging with sellers',
+      'Rating & review system',
+    ],
+    sellerBenefits: [
+      'No listing fees',
+      'Global reach',
+      'Built-in audience',
+      'Instant payouts',
+    ],
+  },
+
   // Record label
   recordLabel: {
     name: 'RAW CONVICT RECORDS',
@@ -132,8 +154,9 @@ export const BRAND = {
     care: 'We dress care as kink',
     aftercare: 'HNH — Hand N Hand is the only place to land',
     radio: '24/7 underground music from worldwide DJs',
-    commerce: 'Bold luxury clothing and community marketplace',
+    commerce: 'Bold luxury clothing and MESSMARKET community sellers',
     community: 'Dripping in sweat dancing next to you',
+    messmarket: 'Community sellers. Zero gatekeepers.',
   },
 
   // Colors
@@ -159,6 +182,7 @@ export const CORE_BRANDS = BRAND.coreBrands;
 export const LIMITED_EDITIONS = BRAND.limitedEditions;
 export const HNH_MESS = BRAND.hnhmess;
 export const HNH_SHOW = BRAND.hnh;
+export const MESSMARKET = BRAND.messmarket;
 export const BRAND_COPY = BRAND.copy;
 export const BRAND_COLORS = BRAND.colors;
 
