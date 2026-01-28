@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
-import { TrendingUp, Users, ShoppingBag, Zap, MapPin, MessageCircle, Crown, CreditCard, UserMinus, DollarSign } from 'lucide-react';
+import { TrendingUp, Users, ShoppingBag, Zap, MapPin, MessageCircle, Crown, UserMinus, DollarSign } from 'lucide-react';
 
 export default function AnalyticsDashboard() {
   const { data: users = [] } = useQuery({
