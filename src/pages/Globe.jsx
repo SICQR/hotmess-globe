@@ -22,6 +22,7 @@ import { debounce } from 'lodash';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
+import { getProfileUrl } from '@/lib/userPrivacy';
 
 export default function GlobePage() {
   const queryClient = useQueryClient();
@@ -413,9 +414,9 @@ export default function GlobePage() {
     // Don't handle cluster clicks
     if (beacon.isCluster) return;
 
-    // People pins: go straight to profile.
-    if (beacon?.kind === 'person' && beacon?.email) {
-      navigate(createPageUrl(`Profile?email=${encodeURIComponent(beacon.email)}`));
+    // People pins: go straight to profile using user ID.
+    if (beacon?.kind === 'person' && (beacon?.auth_user_id || beacon?.id)) {
+      navigate(getProfileUrl(beacon));
       return;
     }
     
@@ -441,8 +442,8 @@ export default function GlobePage() {
   const handleViewFullDetails = useCallback(() => {
     if (!previewBeacon) return;
 
-    if (previewBeacon?.kind === 'person' && previewBeacon?.email) {
-      navigate(createPageUrl(`Profile?email=${encodeURIComponent(previewBeacon.email)}`));
+    if (previewBeacon?.kind === 'person' && (previewBeacon?.auth_user_id || previewBeacon?.id)) {
+      navigate(getProfileUrl(previewBeacon));
       setPreviewBeacon(null);
       return;
     }
@@ -750,11 +751,9 @@ export default function GlobePage() {
             onNavigateUrl={(url) => navigate(url)}
             onOpenProfile={(profile) => {
               const email = profile?.email;
-              const uid = profile?.authUserId;
-              if (email) {
-                navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
-                return;
-              }
+              // Navigate using user ID, never expose email
+              navigate(getProfileUrl(profile));
+              return;
               if (uid) {
                 navigate(createPageUrl(`Profile?uid=${encodeURIComponent(uid)}`));
               }
