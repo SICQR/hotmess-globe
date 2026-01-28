@@ -5,5 +5,6 @@ export { default as XPGainAnimation, XPGainContainer, useXPGain } from './XPGain
 export { default as GamificationProvider, useGamification, useGamificationSafe } from './GamificationProvider';
 export { default as AchievementProgress, AchievementProgressCard, AchievementBadge } from './AchievementProgress';
 export { default as SurpriseReward, useSurpriseRewards } from './SurpriseReward';
+export { default as ChallengeStreak, StreakBadge } from './ChallengeStreak';
 export { default as DeclareWar } from './DeclareWar';
 export { default as NightKingDisplay } from './NightKingDisplay';
