@@ -7,7 +7,26 @@
 
 ---
 
-## ⚡ QUICK START
+## ⚡ SUPER QUICK START (For Users with GitHub CLI)
+
+**Have `gh` CLI installed?** You're in luck! ⚡
+
+```bash
+# 1. Merge this PR
+gh pr merge 62 --squash --delete-branch
+
+# 2. Get the optimized script
+git checkout main && git pull
+bash SUPER_FAST_RESOLVE.sh
+```
+
+**Result**: All 23 PRs resolved in 30-60 minutes!
+
+→ Full guide: [OPTIMIZED_FOR_GH_COPILOT.md](OPTIMIZED_FOR_GH_COPILOT.md)
+
+---
+
+## 📋 STANDARD QUICK START (Without gh CLI)
 
 **Just want to resolve the PRs?**
 
