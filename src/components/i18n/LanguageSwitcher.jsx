@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Globe, Check, ChevronDown } from 'lucide-react';
+import { Globe, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
   SUPPORTED_LANGUAGES, 
