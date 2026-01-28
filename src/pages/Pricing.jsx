@@ -28,7 +28,13 @@ import {
   Star,
   Shield,
   ArrowRight,
-  Info
+  Info,
+  Radio,
+  Mic,
+  Music,
+  Headphones,
+  Volume2,
+  PlayCircle
 } from 'lucide-react';
 import {
   MEMBERSHIP_TIERS,
@@ -37,6 +43,7 @@ import {
   TICKET_RESALE,
   VENUE_PACKAGES,
   GLOBE_ADVERTISING,
+  RADIO_ADVERTISING,
   XP_PACKAGES,
   CREATOR_FEES,
   formatPrice,
@@ -54,7 +61,8 @@ const TABS = [
   { id: 'sellers', label: 'Sellers', icon: Store },
   { id: 'tickets', label: 'Ticket Resale', icon: Ticket },
   { id: 'venues', label: 'Venues', icon: Building2 },
-  { id: 'advertising', label: 'Advertising', icon: Megaphone },
+  { id: 'advertising', label: 'Globe Ads', icon: Megaphone },
+  { id: 'radio', label: 'Radio Ads', icon: Radio },
 ];
 
 // =============================================================================
@@ -116,6 +124,7 @@ export default function Pricing() {
         {activeTab === 'tickets' && <TicketsSection />}
         {activeTab === 'venues' && <VenuesSection billingPeriod={billingPeriod} setBillingPeriod={setBillingPeriod} />}
         {activeTab === 'advertising' && <AdvertisingSection />}
+        {activeTab === 'radio' && <RadioSection />}
       </div>
     </div>
   );
@@ -729,6 +738,349 @@ function AdvertisingSection() {
                   ))}
                 </ul>
               )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// RADIO ADVERTISING SECTION
+// =============================================================================
+
+function RadioSection() {
+  return (
+    <div className="space-y-8">
+      {/* Hero Banner */}
+      <div className="p-6 rounded-2xl bg-gradient-to-br from-hot-500/20 via-purple-500/10 to-cyan-500/10 border border-hot-500/30">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-16 h-16 rounded-full bg-hot-500/20 flex items-center justify-center">
+            <Radio className="w-8 h-8 text-hot-500" />
+          </div>
+          <div>
+            <h3 className="text-2xl font-black">HOTMESS RADIO</h3>
+            <p className="text-white/60">24/7 Underground Music • Global LGBTQ+ Audience</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="p-3 rounded-lg bg-white/5">
+            <p className="text-2xl font-bold text-hot-500">100K+</p>
+            <p className="text-xs text-white/60">Monthly Listeners</p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5">
+            <p className="text-2xl font-bold text-cyan-400">50+</p>
+            <p className="text-xs text-white/60">Weekly Shows</p>
+          </div>
+          <div className="p-3 rounded-lg bg-white/5">
+            <p className="text-2xl font-bold text-purple-400">85%</p>
+            <p className="text-xs text-white/60">Listener Engagement</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Sponsorship Packages */}
+      <div>
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <Star className="w-5 h-5 text-amber-400" />
+          Sponsorship Packages
+        </h3>
+        <div className="grid md:grid-cols-3 gap-6">
+          {Object.values(RADIO_ADVERTISING.sponsorship).map((pkg, index) => (
+            <div
+              key={pkg.name}
+              className={cn(
+                'rounded-2xl border p-6',
+                index === 2 ? 'border-amber-500 bg-amber-500/10' : 'border-white/10 bg-white/5'
+              )}
+            >
+              {index === 2 && (
+                <span className="text-xs bg-amber-500 text-black px-2 py-0.5 rounded-full font-bold">Premier</span>
+              )}
+              <h4 className="text-lg font-bold mt-2">{pkg.name}</h4>
+              <p className="text-sm text-white/60 mt-1">{pkg.description}</p>
+              
+              <div className="mt-4 space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-white/60 text-sm">Weekly</span>
+                  <span className="font-bold">{formatPrice(pkg.price.weekly)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/60 text-sm">Monthly</span>
+                  <span className="font-bold">{formatPrice(pkg.price.monthly)}</span>
+                </div>
+                {pkg.price.quarterly && (
+                  <div className="flex justify-between">
+                    <span className="text-white/60 text-sm">Quarterly</span>
+                    <span className="font-bold text-emerald-400">{formatPrice(pkg.price.quarterly)}</span>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-xs text-cyan-400 mt-3">{pkg.reach}</p>
+
+              <ul className="mt-4 space-y-1">
+                {pkg.features.slice(0, 5).map((f, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs">
+                    <Check className="w-3 h-3 text-emerald-400 mt-0.5" />
+                    <span className="text-white/70">{f}</span>
+                  </li>
+                ))}
+                {pkg.features.length > 5 && (
+                  <li className="text-xs text-white/40">+{pkg.features.length - 5} more features</li>
+                )}
+              </ul>
+
+              <button className="w-full mt-4 py-2 rounded-lg bg-hot-500 text-white font-bold hover:bg-hot-600 transition-all">
+                Get Quote
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Ad Spots */}
+      <div>
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <Volume2 className="w-5 h-5 text-cyan-400" />
+          Audio Ad Spots
+        </h3>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Object.values(RADIO_ADVERTISING.adSpots).map((spot) => (
+            <div 
+              key={spot.name}
+              className={cn(
+                'p-4 rounded-xl border',
+                spot.premium ? 'border-hot-500 bg-hot-500/10' : 'border-white/10 bg-white/5'
+              )}
+            >
+              {spot.premium && (
+                <span className="text-xs bg-hot-500 text-white px-2 py-0.5 rounded-full">Premium</span>
+              )}
+              <h4 className="font-bold mt-2">{spot.name}</h4>
+              <p className="text-xs text-white/60">{spot.duration}</p>
+              <p className="text-sm text-white/60 mt-1">{spot.description}</p>
+              
+              <div className="mt-3 space-y-1 text-sm">
+                {spot.price.perPlay && (
+                  <div className="flex justify-between">
+                    <span className="text-white/60">Per play</span>
+                    <span className="font-bold">{formatPrice(spot.price.perPlay)}</span>
+                  </div>
+                )}
+                {spot.price.perRead && (
+                  <div className="flex justify-between">
+                    <span className="text-white/60">Per read</span>
+                    <span className="font-bold">{formatPrice(spot.price.perRead)}</span>
+                  </div>
+                )}
+                {spot.price.package100 && (
+                  <div className="flex justify-between">
+                    <span className="text-white/60">100 pack</span>
+                    <span className="font-bold text-emerald-400">{formatPrice(spot.price.package100)}</span>
+                  </div>
+                )}
+                {spot.price.package5 && (
+                  <div className="flex justify-between">
+                    <span className="text-white/60">5 pack</span>
+                    <span className="font-bold text-emerald-400">{formatPrice(spot.price.package5)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Special Placements */}
+      <div>
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-purple-400" />
+          Special Placements
+        </h3>
+        <div className="grid md:grid-cols-3 gap-4">
+          {Object.values(RADIO_ADVERTISING.specialPlacements).map((placement) => (
+            <div key={placement.name} className="p-5 rounded-xl bg-white/5 border border-white/10">
+              <h4 className="font-bold">{placement.name}</h4>
+              <p className="text-sm text-white/60 mt-1">{placement.description}</p>
+              
+              <div className="mt-3 space-y-1">
+                {placement.price.hourly && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/60">Hourly</span>
+                    <span className="font-bold">{formatPrice(placement.price.hourly)}</span>
+                  </div>
+                )}
+                {placement.price.halfDay && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/60">Half Day</span>
+                    <span className="font-bold">{formatPrice(placement.price.halfDay)}</span>
+                  </div>
+                )}
+                {placement.price.fullDay && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/60">Full Day</span>
+                    <span className="font-bold text-emerald-400">{formatPrice(placement.price.fullDay)}</span>
+                  </div>
+                )}
+                {placement.price.perEvent && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/60">Per Event</span>
+                    <span className="font-bold">{formatPrice(placement.price.perEvent)}</span>
+                  </div>
+                )}
+                {placement.price.perEpisode && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/60">Per Episode</span>
+                    <span className="font-bold">{formatPrice(placement.price.perEpisode)}</span>
+                  </div>
+                )}
+              </div>
+
+              {placement.features && (
+                <ul className="mt-3 space-y-1">
+                  {placement.features.slice(0, 4).map((f, i) => (
+                    <li key={i} className="flex items-center gap-2 text-xs text-white/70">
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Production Services */}
+      <div>
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <Mic className="w-5 h-5 text-hot-500" />
+          Production Services
+          <span className="text-xs bg-hot-500/20 text-hot-400 px-2 py-0.5 rounded-full ml-2">
+            by SMASH DADDYS
+          </span>
+        </h3>
+        <div className="grid md:grid-cols-3 gap-4">
+          {Object.values(RADIO_ADVERTISING.production).map((service) => (
+            <div key={service.name} className="p-5 rounded-xl bg-gradient-to-br from-hot-500/10 to-purple-500/10 border border-hot-500/30">
+              <h4 className="font-bold">{service.name}</h4>
+              <p className="text-sm text-white/60 mt-1">{service.description}</p>
+              
+              {service.tiers ? (
+                <div className="mt-3 space-y-2">
+                  {Object.entries(service.tiers).map(([tier, desc]) => (
+                    <div key={tier} className="p-2 rounded bg-white/5">
+                      <div className="flex justify-between">
+                        <span className="text-sm capitalize">{tier}</span>
+                        <span className="font-bold">{formatPrice(service.price[tier])}</span>
+                      </div>
+                      <p className="text-xs text-white/50 mt-1">{desc}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3">
+                  {service.price.thirtySecond && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-white/60">30 sec</span>
+                      <span className="font-bold">{formatPrice(service.price.thirtySecond)}</span>
+                    </div>
+                  )}
+                  {service.price.sixtySecond && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-white/60">60 sec</span>
+                      <span className="font-bold">{formatPrice(service.price.sixtySecond)}</span>
+                    </div>
+                  )}
+                  {typeof service.price === 'number' && (
+                    <p className="text-lg font-bold mt-2">{formatPrice(service.price)}</p>
+                  )}
+                </div>
+              )}
+
+              {service.turnaround && (
+                <p className="text-xs text-cyan-400 mt-3">Turnaround: {service.turnaround}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bundle Packages */}
+      <div>
+        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <Zap className="w-5 h-5 text-amber-400" />
+          Radio Ad Bundles
+        </h3>
+        <div className="grid md:grid-cols-3 gap-6">
+          {Object.values(RADIO_ADVERTISING.packages).map((pkg) => (
+            <div
+              key={pkg.id}
+              className={cn(
+                'rounded-2xl border p-6',
+                pkg.popular
+                  ? 'border-hot-500 bg-hot-500/10 scale-105'
+                  : 'border-white/10 bg-white/5'
+              )}
+            >
+              {pkg.popular && (
+                <span className="text-xs bg-hot-500 text-white px-2 py-0.5 rounded-full">Best Value</span>
+              )}
+              <h4 className="text-xl font-bold mt-2">{pkg.name}</h4>
+              <p className="text-sm text-white/60 mt-1">{pkg.description}</p>
+              
+              <div className="mt-4">
+                <span className="text-3xl font-black">{formatPrice(pkg.price)}</span>
+                {pkg.savings && (
+                  <span className="ml-2 text-emerald-400 text-sm">Save {pkg.savings}</span>
+                )}
+              </div>
+
+              <ul className="mt-4 space-y-2">
+                {pkg.includes.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <Check className="w-4 h-4 text-emerald-400 mt-0.5" />
+                    <span className="text-white/80">{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <button className={cn(
+                'w-full mt-6 py-3 rounded-xl font-bold transition-all',
+                pkg.popular
+                  ? 'bg-hot-500 text-white hover:bg-hot-600'
+                  : 'bg-white/10 text-white hover:bg-white/20'
+              )}>
+                Get Started
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Targeting Options */}
+      <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <MapPin className="w-5 h-5 text-cyan-400" />
+          Targeting Options
+        </h3>
+        <div className="grid md:grid-cols-3 gap-4">
+          {Object.values(RADIO_ADVERTISING.targeting).map((target) => (
+            <div key={target.name} className="p-4 rounded-lg bg-white/5">
+              <h4 className="font-medium">{target.name}</h4>
+              <p className="text-xs text-white/60 mt-1">{target.description}</p>
+              {target.surcharge > 0 && (
+                <p className="text-xs text-amber-400 mt-2">+{target.surcharge * 100}% premium</p>
+              )}
+              <div className="flex flex-wrap gap-1 mt-2">
+                {target.options.map((opt) => (
+                  <span key={opt} className="text-xs px-2 py-0.5 rounded bg-white/10">
+                    {opt}
+                  </span>
+                ))}
+              </div>
             </div>
           ))}
         </div>

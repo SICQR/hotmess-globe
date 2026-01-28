@@ -631,6 +631,240 @@ export const GLOBE_ADVERTISING = {
 };
 
 // =============================================================================
+// RADIO ADVERTISING PACKAGES
+// =============================================================================
+
+export const RADIO_ADVERTISING = {
+  // Sponsorship packages
+  sponsorship: {
+    showSponsor: {
+      name: 'Show Sponsorship',
+      description: 'Exclusive sponsor of a weekly radio show',
+      price: { weekly: 199.99, monthly: 699.99, quarterly: 1799.99 },
+      features: [
+        '"Brought to you by..." mentions (3x per show)',
+        'Logo on show artwork',
+        'Social media mentions',
+        'Show page branding',
+        'Pre-roll audio ad (30 sec)',
+        'Post-roll audio ad (30 sec)',
+        'Analytics dashboard',
+      ],
+      reach: '~5,000-15,000 listeners per show',
+    },
+    dayPartSponsor: {
+      name: 'Day Part Sponsorship',
+      description: 'Sponsor all shows during a time slot',
+      price: { weekly: 499.99, monthly: 1499.99 },
+      slots: ['Morning (6am-12pm)', 'Afternoon (12pm-6pm)', 'Prime Time (6pm-12am)', 'Late Night (12am-6am)'],
+      features: [
+        'All shows in time slot',
+        'Rotating audio ads',
+        'Priority placement',
+        'Exclusive category (no competitor ads)',
+        'Weekly performance reports',
+      ],
+      reach: '~20,000-50,000 listeners per week',
+    },
+    stationSponsor: {
+      name: 'Station Sponsorship',
+      description: 'Premier station-wide sponsorship',
+      price: { monthly: 2999.99, quarterly: 7999.99 },
+      features: [
+        'Premier partner status',
+        'All day parts included',
+        'Homepage radio banner',
+        'Event co-branding opportunities',
+        'Custom jingle production',
+        'Dedicated account manager',
+        'Quarterly strategy sessions',
+        'First right of refusal on new shows',
+      ],
+      reach: '~100,000+ listeners per month',
+    },
+  },
+
+  // Ad spots
+  adSpots: {
+    preRoll: {
+      name: 'Pre-Roll Ad',
+      description: 'Audio ad before show starts',
+      duration: '30 seconds',
+      price: { perPlay: 0.05, package100: 39.99, package500: 174.99, package1000: 299.99 },
+      minBuy: 100,
+    },
+    midRoll: {
+      name: 'Mid-Roll Ad',
+      description: 'Audio ad during show break',
+      duration: '60 seconds',
+      price: { perPlay: 0.08, package100: 64.99, package500: 299.99, package1000: 549.99 },
+      minBuy: 100,
+      premium: true,
+    },
+    postRoll: {
+      name: 'Post-Roll Ad',
+      description: 'Audio ad after show ends',
+      duration: '30 seconds',
+      price: { perPlay: 0.03, package100: 24.99, package500: 109.99, package1000: 199.99 },
+      minBuy: 100,
+    },
+    liveRead: {
+      name: 'Live Read',
+      description: 'DJ reads your ad copy live on air',
+      duration: '30-60 seconds',
+      price: { perRead: 49.99, package5: 199.99, package10: 349.99 },
+      features: [
+        'Authentic DJ endorsement',
+        'Custom script approval',
+        'Natural integration',
+        'Higher engagement rates',
+      ],
+      premium: true,
+    },
+  },
+
+  // Special placements
+  specialPlacements: {
+    takeover: {
+      name: 'Radio Takeover',
+      description: 'Full station takeover for your brand',
+      price: { hourly: 299.99, halfDay: 999.99, fullDay: 1799.99 },
+      features: [
+        'All ad slots during period',
+        'Custom DJ shoutouts',
+        'Branded "now playing" overlay',
+        'Social media blast',
+        'Globe beacon activation',
+        'Push notification to listeners',
+      ],
+      availability: 'Limited - book 2 weeks ahead',
+    },
+    eventBroadcast: {
+      name: 'Event Broadcast Sponsor',
+      description: 'Sponsor a live event broadcast',
+      price: { perEvent: 499.99 },
+      features: [
+        'Exclusive event sponsor',
+        'On-air mentions throughout',
+        'Logo on stream overlay',
+        'Social coverage',
+        'Recording rights for your use',
+      ],
+    },
+    podcastSponsor: {
+      name: 'Podcast Episode Sponsor',
+      description: 'Sponsor a podcast/recorded show',
+      price: { perEpisode: 149.99, series6: 749.99, series12: 1299.99 },
+      features: [
+        'Permanent ad in episode',
+        'Show notes link',
+        'Evergreen exposure',
+        'Download analytics',
+      ],
+    },
+  },
+
+  // Production services
+  production: {
+    jingleProduction: {
+      name: 'Custom Jingle',
+      description: 'Professional jingle produced by SMASH DADDYS',
+      price: { basic: 299.99, premium: 599.99, full: 999.99 },
+      tiers: {
+        basic: '15-second jingle, 2 revisions',
+        premium: '30-second jingle, 3 revisions, multiple versions',
+        full: '60-second full production, unlimited revisions, full rights',
+      },
+      turnaround: '5-10 business days',
+    },
+    voiceOver: {
+      name: 'Professional Voice Over',
+      description: 'Professional VO for your ad',
+      price: { thirtySecond: 79.99, sixtySecond: 129.99 },
+      includes: ['Script consultation', '2 revisions', 'Multiple formats'],
+    },
+    adCopywriting: {
+      name: 'Ad Copywriting',
+      description: 'Professional radio ad script',
+      price: 49.99,
+      includes: ['Research', 'Script draft', '2 revisions', 'Timing optimization'],
+    },
+  },
+
+  // Targeting options
+  targeting: {
+    geographic: {
+      name: 'Geographic Targeting',
+      description: 'Target listeners in specific regions',
+      surcharge: 0.15, // 15% premium
+      options: ['UK', 'Europe', 'North America', 'Global'],
+    },
+    showGenre: {
+      name: 'Genre Targeting',
+      description: 'Target specific music genres',
+      surcharge: 0.10, // 10% premium
+      options: ['House', 'Techno', 'Pop', 'Underground', 'Chill', 'Peak Time'],
+    },
+    timeSlot: {
+      name: 'Time Slot Targeting',
+      description: 'Target specific listening times',
+      surcharge: 0, // Included in day part pricing
+      options: ['Morning', 'Afternoon', 'Prime Time', 'Late Night', 'Weekend'],
+    },
+  },
+
+  // Packages / bundles
+  packages: {
+    starter: {
+      id: 'radio-starter',
+      name: 'Radio Starter',
+      price: 199.99,
+      description: 'Perfect for first-time radio advertisers',
+      includes: [
+        '100 pre-roll plays',
+        '50 post-roll plays',
+        'Basic analytics',
+        'Ad copy consultation',
+      ],
+      savings: '20%',
+    },
+    growth: {
+      id: 'radio-growth',
+      name: 'Radio Growth',
+      price: 599.99,
+      popular: true,
+      description: 'Best value for growing brands',
+      includes: [
+        '500 pre-roll plays',
+        '200 mid-roll plays',
+        '5 live reads',
+        'Custom 15-sec jingle',
+        'Full analytics dashboard',
+        'Monthly strategy call',
+      ],
+      savings: '30%',
+    },
+    premium: {
+      id: 'radio-premium',
+      name: 'Radio Premium',
+      price: 1499.99,
+      description: 'Maximum impact campaign',
+      includes: [
+        '1 week show sponsorship',
+        '1000 pre-roll plays',
+        '500 mid-roll plays',
+        '10 live reads',
+        'Custom 30-sec jingle',
+        'Globe beacon (1 week)',
+        'Push notification campaign',
+        'Dedicated account manager',
+      ],
+      savings: '40%',
+    },
+  },
+};
+
+// =============================================================================
 // XP PURCHASE PACKAGES
 // =============================================================================
 
