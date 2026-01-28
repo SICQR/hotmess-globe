@@ -13,11 +13,16 @@
 2. [Architecture Overview](#architecture-overview)
 3. [Page Hierarchy & Navigation](#page-hierarchy--navigation)
 4. [Feature Analysis](#feature-analysis)
-5. [Components Inventory](#components-inventory)
-6. [API Routes](#api-routes)
-7. [Database Schema](#database-schema)
-8. [Unfinished Work & TODOs](#unfinished-work--todos)
-9. [Technical Debt](#technical-debt)
+5. [Safety System (Deep Dive)](#safety-system-deep-dive)
+6. [Social/Ghost Status System (Deep Dive)](#socialghost-status-system-deep-dive)
+7. [Buyer/Seller Marketplace (Deep Dive)](#buyerseller-marketplace-deep-dive)
+8. [Site Copy & Messaging](#site-copy--messaging)
+9. [Components Inventory](#components-inventory)
+10. [API Routes](#api-routes)
+11. [Database Schema](#database-schema)
+12. [Unfinished Work & TODOs](#unfinished-work--todos)
+13. [Technical Debt](#technical-debt)
+14. [Missing Features](#missing-features)
 
 ---
 
@@ -417,6 +422,404 @@ The `Layout.jsx` provides:
 - ✅ Event scraper control
 - ✅ Shopify sync
 - ⚠️ SoundCloud uploads (partial)
+
+---
+
+## Safety System (Deep Dive)
+
+### Spec vs Implementation Comparison
+
+| Feature | Spec Says | Implementation Status |
+|---------|-----------|----------------------|
+| **Panic Button** | "Instant alert to trusted contacts + optional 999" | ✅ **Implemented** - Sends SOS email, clears storage, redirects to Google |
+| **Check-In Timer** | "Set a timer, get prompted to confirm you're safe" | ✅ **Implemented** - Custom durations (1-48 hours), labels, alerts trusted contacts |
+| **Trusted Contacts** | "Share location with friends during meetups" | ✅ **Implemented** - Add phone/email, notified on panic or overdue check-in |
+| **Fake Call** | "Escape awkward situations with a fake incoming call" | ❌ **NOT IMPLEMENTED** - DialADaddy is a radio show page, not fake calls |
+| **Aftercare Nudge** | "'You good?' prompt after meetup" | ⚠️ **Partial** - Exists in Care page copy, no automated post-meetup trigger |
+| **Safety Resources** | "Direct access to support services" | ✅ **Implemented** - Care.jsx has emergency numbers, helplines, checklists |
+
+### Panic Button Implementation
+
+**Location**: `src/components/safety/PanicButton.jsx`
+
+**What It Does**:
+1. Fixed button in bottom-left corner (visible to authenticated users)
+2. On activation:
+   - Fetches user's geolocation
+   - Retrieves trusted contacts and custom emergency message
+   - Sends SOS email via Base44 integration
+   - **Clears ALL localStorage and sessionStorage** (nuclear exit)
+   - Hard redirects to `https://www.google.com` (disguise exit)
+
+```jsx
+// Key implementation excerpt
+const handleEmergency = async () => {
+  // Get location
+  navigator.geolocation?.getCurrentPosition(async (position) => {
+    const mapsLink = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
+    
+    // Send SOS to each trusted contact
+    for (const contact of trustedContacts) {
+      await base44.integrations.Core.SendEmail({
+        to: contact.email,
+        subject: `🆘 EMERGENCY: ${user.full_name} needs help`,
+        body: `${emergencyMessage}\n\nLocation: ${mapsLink}`
+      });
+    }
+    
+    // Nuclear exit
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.replace('https://www.google.com');
+  });
+};
+```
+
+### Check-In Timer System
+
+**Location**: `src/components/safety/CheckInTimerCustomizer.jsx`, `src/pages/Safety.jsx`
+
+**Features**:
+- Custom timers with labels ("Date night", "Late meeting")
+- Duration options: 1, 2, 4, 8, 12, 24, 48 hours
+- If user doesn't check out, trusted contacts are alerted
+- Saved to user profile for reuse
+
+### Missing: Fake Call Feature
+
+**Spec Description**:
+> "Fake Call - Escape awkward situations with a fake incoming call"
+
+**Current State**: 
+- The route `/DialADaddy` exists but is a **radio show page** (for the "Dial A Daddy" radio program)
+- No implementation of simulated incoming phone call UI
+- No vibration/ringtone simulation
+- No fake caller screen
+
+**Recommendation**: Create new component `src/components/safety/FakeCallGenerator.jsx`:
+```jsx
+// Proposed implementation
+const FakeCallGenerator = () => {
+  const triggerFakeCall = () => {
+    // Vibrate device
+    navigator.vibrate?.([500, 200, 500, 200, 500]);
+    // Show fake incoming call overlay
+    setShowFakeCallOverlay(true);
+    // Play ringtone audio
+  };
+};
+```
+
+### Aftercare Nudge Implementation
+
+**Location**: `src/pages/Care.jsx`
+
+**Current State**:
+- Care.jsx has static "AFTERCARE CHECKLIST" content
+- Lists items like "Had water?", "Eaten something?", "Checked in with a friend?"
+- **NOT automated** - user must manually navigate to Care page
+- Spec envisions: Automatic "You good?" popup after meetup with [ALL GOOD] [NEED A MINUTE] [GET HELP] buttons
+
+**What's Missing**:
+- Post-meetup detection (when user returns from meeting someone)
+- Automated nudge modal
+- Response tracking
+
+---
+
+## Social/Ghost Status System (Deep Dive)
+
+### "No Ghost Status" Design Philosophy
+
+The platform explicitly implements a **"no ghost status"** policy, meaning users cannot be passively available indefinitely.
+
+### Right Now Feature
+
+**Location**: `src/components/discovery/RightNowManager.jsx`, `src/components/discovery/RightNowModal.jsx`
+
+**Key Microcopy** (from actual code):
+```jsx
+// RightNowManager.jsx
+"Auto-expires, no ghost status."
+
+// RightNowModal.jsx  
+"Ends automatically. No ghost status."
+```
+
+**Implementation**:
+
+| Setting | Options | Purpose |
+|---------|---------|---------|
+| **Duration** | 30 min, 1 hr, 2 hr, Tonight | Automatic expiry - prevents ghosting |
+| **Logistics** | Can host, Can travel, Hotel, Undecided | Clear intent communication |
+| **Cold Vibe Mode** | Toggle (+15 XP) | Cali Sober/substance-free intent |
+
+**Flow**:
+1. User clicks "GO LIVE" CTA
+2. Modal opens with duration + logistics options
+3. User goes live → appears on Globe with green pulse
+4. **Auto-expires** at set time → no lingering "available" status
+5. User can manually end with "END NOW" button
+
+### AI Matchmaking System
+
+**Location**: `src/components/social/AIMatchmaker.jsx`, `functions/calculateVibeCompatibility.ts`
+
+**Spec Claims**: "8-dimension compatibility scoring"
+
+**Actual Implementation**: 6 dimensions calculated:
+
+| Dimension | Points | Implementation |
+|-----------|--------|----------------|
+| **Vibe Archetype Compatibility** | 30 | Archetype matrix (architect×explorer, etc.) |
+| **Shared Traits** | 5 each | Trait intersection |
+| **Personality Alignment** | 20-25 | 5 personality trait similarity (openness, energy, social, adventure, intensity) |
+| **Intent Match** | 20 | Same current intent (Right Now) |
+| **Shared Venues** | 15-20 | Beacon check-in history overlap |
+| **Interest Overlap** | 10-15 | Interest array intersection |
+| **Proximity** | 5 | Distance < 5km |
+| **Activity Level** | 10 | Social frequency match |
+
+**Match Score Display**:
+- 80%+ → "Super Match" + Flame icon + gradient background
+- 60-79% → "Great Match" + cyan gradient
+- 40-59% → "Good Match" + yellow/amber
+- <40% → "Match" + gray
+
+### AI Wingman / Global Assistant
+
+**Location**: `src/components/ai/GlobalAssistant.jsx`
+
+**Spec Claims**:
+> "AI Wingman - Conversation starters, match insights, profile optimization"
+
+**Actual Implementation**:
+- ✅ General AI chat assistant
+- ✅ Quick questions about events, XP, safety, etc.
+- ❌ **NOT profile-specific** - doesn't analyze a target profile
+- ❌ **NO conversation starters** for specific users
+- ❌ **NO match insights** explaining "why you're compatible"
+- ❌ **NO profile optimization tips**
+
+**Current Quick Questions**:
+```javascript
+const quickQuestions = [
+  "What events are happening tonight?",
+  "Show me products under 1000 XP",
+  "Help me find people into techno",
+  "Explain the XP system",
+  "How do I use Right Now?",
+  "What's my next challenge?",
+  "Show me top-rated sellers",
+  "How do safety check-ins work?"
+];
+```
+
+**Missing Per-Profile Wingman**:
+```jsx
+// Proposed: Profile-aware AI Wingman
+<ProfileWingman 
+  targetProfile={profile}
+  onGenerateOpener={(opener) => setMessageDraft(opener)}
+/>
+
+// Would show:
+// - "Ask about the Fabric set he mentioned"
+// - "You both listed house music"  
+// - "Similar travel patterns (Mediterranean)"
+```
+
+---
+
+## Buyer/Seller Marketplace (Deep Dive)
+
+### Dual Commerce Architecture
+
+HOTMESS runs **two parallel marketplace systems**:
+
+| System | Purpose | Status |
+|--------|---------|--------|
+| **Shopify Storefront** | Official HOTMESS products | ✅ Complete |
+| **P2P Marketplace** | User-to-user listings | ✅ Complete |
+
+### Shopify Integration
+
+**Location**: `api/shopify/*`, `src/features/shop/`
+
+**Flow**:
+```
+Market page → Collection → Product Detail → Cart → Shopify Checkout
+```
+
+**Implementation**:
+- Storefront API for browsing
+- Cart stored in localStorage + synced
+- Checkout redirects to Shopify hosted checkout
+- Webhooks handle order updates
+
+### P2P Marketplace (Creators Market)
+
+**Location**: `src/pages/Marketplace.jsx`, `src/pages/SellerDashboard.jsx`
+
+**Seller Dashboard Tabs**:
+| Tab | Component | Features |
+|-----|-----------|----------|
+| **Products** | `ProductTable` | CRUD products, stock management |
+| **Orders** | `OrdersTable` | Order fulfillment, shipping |
+| **Offers** | `SellerOffers` | Negotiate offers |
+| **Analytics** | `SellerAnalytics` | Sales charts, revenue |
+| **Featured** | `FeaturedListings` | Boost visibility (XP cost) |
+| **Disputes** | `DisputeResolution` | Handle buyer complaints |
+| **Promotions** | `PromotionManager` | Discount codes |
+| **Payouts** | `PayoutManager` | Withdraw earnings |
+
+### Dispute Resolution System
+
+**Location**: `src/components/seller/DisputeResolution.jsx`
+
+**Dispute States**:
+- `open` - Buyer filed dispute
+- `under_review` - Admin reviewing
+- `resolved` - Decision made
+
+**Features**:
+- Dispute timeline view
+- Evidence upload
+- Response submission
+- Admin notification
+
+### Payout System
+
+**Location**: `src/components/seller/PayoutManager.jsx`
+
+**Implementation**:
+```jsx
+// Calculates available balance from delivered, paid orders
+const available = orders
+  .filter(o => o.status === 'delivered' && o.payment_status === 'paid')
+  .reduce((sum, o) => sum + (o.total || 0), 0);
+```
+
+**Note**: Stripe Connect integration is a **placeholder** - button says "Connect Stripe Account" but doesn't actually initiate OAuth flow.
+
+### XP Currency (Coming Soon)
+
+**Spec Says**: Products can be purchased with XP
+
+**Current State**: 
+- UI shows "COMING SOON" badges
+- No XP → purchase conversion implemented
+- `sweatCoinPurchase.ts` function exists but is placeholder
+
+---
+
+## Site Copy & Messaging
+
+### Brand Voice Guidelines (from implementation)
+
+**Observed Patterns**:
+- ALL CAPS for headlines, labels, CTAs
+- Short, punchy phrases
+- Sex-positive but not crude
+- Safety-forward messaging
+- Community-first language
+
+### Key Microcopy Examples
+
+#### Safety/Care Copy
+
+```jsx
+// Care.jsx - Emergency section
+"If you or someone you know is in immediate danger, call 999."
+
+// Aftercare checklist
+"Before You Go Out: ✓ Charger, ✓ Cash/card, ✓ Safe word, 
+✓ Someone knows where you're going"
+
+// Consent section
+"CONSENT & BOUNDARIES - A reminder that consent is ongoing, 
+enthusiastic, and can be withdrawn at any time."
+```
+
+#### Social Discovery Copy
+
+```jsx
+// RightNowModal.jsx
+"Ends automatically. No ghost status."
+
+// Home.jsx hero
+"Find your match in minutes"
+"Compatibility-first discovery. Real-time availability."
+
+// ProfilesGrid
+"RIGHT NOW" badge (red-orange gradient, pulsing)
+```
+
+#### Onboarding Copy
+
+```jsx
+// WelcomeTour.jsx steps
+Step 1: "CONNECT - Find guys near you. Go 'Right Now' when available."
+Step 2: "GLOBE - Watch the world in real-time"
+Step 3: "EVENTS - Never miss a party"
+Step 4: "MARKET - Shop official drops and creator products"
+Step 5: "MESSAGES - Chat securely, no ghost status"
+```
+
+#### Community Guidelines Copy
+
+```jsx
+// CommunityGuidelines.jsx
+"CONSENT FIRST - Always ask, always respect the answer"
+"SAFETY ALWAYS - Report concerns, block bad actors"
+"AUTHENTIC CONNECTIONS - Be real, no catfishing"
+"INCLUSIVE COMMUNITY - Respect all backgrounds"
+```
+
+### Missing Copy Elements (from spec)
+
+The spec defines specific copy that's not consistently implemented:
+
+| Element | Spec Says | Implementation |
+|---------|-----------|----------------|
+| **Age Gate** | "18+ only. Verify to enter." | ✅ Present |
+| **Consent Gate** | "Consent first. Keep it clear, keep it respectful." | ⚠️ Generic "18+ verified" |
+| **Location** | "We show ETAs, not addresses — until you both agree." | ❌ Not present in UI |
+| **Aftercare Nudge** | "You good?" → ALL GOOD / NEED A MINUTE / GET HELP | ❌ Not automated |
+| **Telegram Link** | "Link Telegram to keep chats synced (optional)." | ⚠️ Basic link only |
+
+---
+
+## Missing Features
+
+### Critical Missing (Spec vs Implementation)
+
+| Feature | Spec Description | Status |
+|---------|------------------|--------|
+| **Fake Call** | "Escape awkward situations with a fake incoming call" | ❌ **NOT IMPLEMENTED** |
+| **Automated Aftercare Nudge** | "Post-meetup check-in: You good?" | ❌ **NOT IMPLEMENTED** |
+| **Profile-Specific AI Wingman** | "Conversation starters based on profile analysis" | ❌ **NOT IMPLEMENTED** |
+| **Match Insights** | "Explains *why* you're compatible" | ❌ **NOT IMPLEMENTED** (score shown, no explanation) |
+| **Profile Optimization Tips** | "Tips to improve your profile based on data" | ❌ **NOT IMPLEMENTED** |
+| **Full Telegram Feed** | "See Telegram chats alongside HOTMESS messages" | ❌ **NOT IMPLEMENTED** (link only) |
+
+### Partially Implemented
+
+| Feature | Spec Description | Status |
+|---------|------------------|--------|
+| **8-Dimension Matching** | "8-dimension compatibility scoring" | ⚠️ 6 dimensions implemented |
+| **Uber Booking** | "One-tap Uber booking from profiles" | ⚠️ Deep link utility exists, not wired to profile UI |
+| **Creator Subscriptions** | "Premium content, subscriptions, monetization" | ⚠️ DB tables exist, UI shows "Coming Soon" |
+| **XP Purchasing** | "Buy products with XP" | ⚠️ Placeholder only |
+
+### Technical Gaps
+
+| Gap | Impact | Recommendation |
+|-----|--------|----------------|
+| **No E2E tests for safety flows** | Can't verify panic button works | Add Playwright tests |
+| **No fake call component** | Missing key safety feature | Create FakeCallGenerator.jsx |
+| **Aftercare not automated** | Users must manually access Care page | Add post-meetup detection hook |
+| **AI Wingman not profile-aware** | Generic assistant, not matchmaking helper | Enhance GlobalAssistant with profile context |
 
 ---
 
