@@ -286,7 +286,7 @@ export function calculateBentoLayout(
     columns?: number;
   } = {}
 ): BentoSize[] {
-  const { featuredCount = 1, columns = 4 } = options;
+  const { featuredCount = 1 } = options;
   const sizes: BentoSize[] = [];
 
   for (let i = 0; i < itemCount; i++) {

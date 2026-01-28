@@ -5,10 +5,7 @@ import {
   Bike, 
   FootprintsIcon as Walking,
   Navigation,
-  Clock,
-  Star,
   Shield,
-  ExternalLink,
   ChevronDown,
   ChevronUp,
   Sparkles,
@@ -18,13 +15,6 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { springConfig } from '@/lib/animations';
-
-// Uber-style ride icon
-const UberIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm4 0h-2v-6h2v6zm1-8H8V7h8v2z"/>
-  </svg>
-);
 
 export type TravelMode = 'walk' | 'bike' | 'drive' | 'uber' | 'transit';
 
@@ -78,8 +68,6 @@ function getSmartRecommendation(
   
   const walkOption = options.find(o => o.mode === 'walk');
   const bikeOption = options.find(o => o.mode === 'bike');
-  const uberOption = options.find(o => o.mode === 'uber');
-  const driveOption = options.find(o => o.mode === 'drive');
 
   // Late night (10pm-4am) + > 1km = Uber for safety
   if (timeOfDay === 'night' && walkOption && walkOption.distanceKm > 1) {

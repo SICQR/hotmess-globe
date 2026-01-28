@@ -116,7 +116,6 @@ export default function CreatorProfileView({ user, currentUser }) {
   const spotifyUrl = socialLinks.spotify;
   const appleMusicUrl = socialLinks.apple_music || socialLinks.appleMusic;
   const youtubeUrl = socialLinks.youtube;
-  const instagramUrl = socialLinks.instagram;
 
   // Upcoming shows (events in the future)
   const upcomingShows = hostedEvents

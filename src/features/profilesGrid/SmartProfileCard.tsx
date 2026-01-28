@@ -15,8 +15,7 @@ import {
   SmartBadge, 
   selectBestBadge, 
   MatchScoreBadge, 
-  ProximityBadge,
-  BadgeType 
+  ProximityBadge
 } from './components/SmartBadge';
 
 export interface Profile {

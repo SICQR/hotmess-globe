@@ -1,4 +1,4 @@
-import { useEffect, useRef, RefObject } from 'react';
+import { useEffect, RefObject } from 'react';
 
 /**
  * useCursorGlow - Add a glowing spotlight effect that follows the cursor

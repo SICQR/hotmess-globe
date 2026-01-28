@@ -82,7 +82,6 @@ export default function OrganizerProfileView({ user, currentUser }) {
       
       let totalRsvps = 0;
       let totalCheckIns = 0;
-      let ratings = [];
       
       for (const eventId of eventIds) {
         try {
