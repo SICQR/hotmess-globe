@@ -302,3 +302,32 @@ export default {
   createSpring,
   createStagger,
 };
+
+// ========================================
+// LED Brutalist Motion Enhancements
+// ========================================
+
+// Check if user prefers reduced motion (accessibility)
+export const motionEnabled = typeof window !== 'undefined' &&
+  !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Character animation variant for kinetic text
+export const charVariant = (i: number) => ({
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      ...springConfig.snappy,
+      delay: i * 0.03, // 30ms stagger
+    },
+  },
+});
+
+// Get motion props conditionally based on reduced-motion preference
+export const getMotionProps = <T extends Record<string, any>>(props: T): T | {} =>
+  motionEnabled ? props : {};
+
+// Wrap a variant object with reduced-motion fallback
+export const withReducedMotion = <T extends Record<string, any>>(variants: T): T =>
+  motionEnabled ? variants : ({} as T);
