@@ -1261,6 +1261,23 @@ export const base44 = {
         }
       },
 
+      update: async (id, data) => {
+        try {
+          const { data: updated, error } = await supabase
+            .from('premium_unlocks')
+            .update(data)
+            .eq('id', id)
+            .select()
+            .single();
+          
+          if (error) throw error;
+          return updated;
+        } catch (error) {
+          console.error('[base44.entities.PremiumUnlock.update] Failed', error);
+          throw error;
+        }
+      },
+
       delete: async (id) => {
         try {
           await supabase.from('premium_unlocks').delete().eq('id', id);
@@ -1271,7 +1288,8 @@ export const base44 = {
       },
     },
 
-    // Additional premium-related entities
+    // Supporting entities for stats - read-only operations
+    // These are primarily used for calculating organizer statistics
     BeaconCheckIn: {
       filter: async (filters, orderBy, limit) => {
         try {
