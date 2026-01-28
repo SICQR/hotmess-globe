@@ -19,6 +19,7 @@ import CreatorsCart from '@/pages/CreatorsCart';
 import CreatorsCheckout from '@/pages/CreatorsCheckout';
 import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
+import { PageTransition } from '@/components/transitions/PageTransition';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -307,13 +308,14 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
-    <Routes>
-      {/* V1.5 canonical routes (Bible) */}
-      <Route path="/" element={
-        <LayoutWrapper currentPageName={mainPageKey}>
-          <MainPage />
-        </LayoutWrapper>
-      } />
+    <PageTransition>
+      <Routes>
+        {/* V1.5 canonical routes (Bible) */}
+        <Route path="/" element={
+          <LayoutWrapper currentPageName={mainPageKey}>
+            <MainPage />
+          </LayoutWrapper>
+        } />
       <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
       <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
@@ -519,6 +521,7 @@ const AuthenticatedApp = () => {
       })}
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </PageTransition>
   );
 };
 

@@ -10,24 +10,10 @@ import { createUserProfileUrl } from '@/utils';
 import { toast } from 'sonner';
 import TelegramPanel from './TelegramPanel';
 import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
+import { ProfileCardSkeleton } from '@/components/loading/LoadingSkeleton';
+import { TiltCard } from '@/components/interactions/TiltCard';
 
-const SkeletonCard = () => {
-  return (
-    <div className="w-full aspect-[4/5] rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
-      {/* Image area */}
-      <div className="h-3/4 bg-white/10 animate-pulse" />
-      {/* Content area */}
-      <div className="p-3 space-y-2">
-        <div className="h-4 bg-white/10 rounded w-3/4 animate-pulse" />
-        <div className="h-3 bg-white/10 rounded w-1/2 animate-pulse" />
-        <div className="flex gap-1.5 pt-1">
-          <div className="h-5 bg-white/10 rounded-full w-12 animate-pulse" />
-          <div className="h-5 bg-white/10 rounded-full w-16 animate-pulse" />
-        </div>
-      </div>
-    </div>
-  );
-};
+// Removed old SkeletonCard - using new ProfileCardSkeleton component
 
 export type ProfilesGridProps = {
   showHeader?: boolean;
@@ -310,18 +296,19 @@ export default function ProfilesGrid({
         {/* Profile Grid */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
           {displayItems.map((profile) => (
-            <ProfileCard
-              key={profile.id}
-              profile={profile}
-              viewerLocation={viewerLocation}
-              viewerProfile={viewerProfile}
-              onOpenProfile={handleOpenProfile}
-              onNavigateUrl={handleNavigateUrl}
-            />
+            <TiltCard key={profile.id} strength={0.5}>
+              <ProfileCard
+                profile={profile}
+                viewerLocation={viewerLocation}
+                viewerProfile={viewerProfile}
+                onOpenProfile={handleOpenProfile}
+                onNavigateUrl={handleNavigateUrl}
+              />
+            </TiltCard>
           ))}
 
           {Array.from({ length: skeletonCount }).map((_, idx) => (
-            <SkeletonCard key={`sk-${idx}`} />
+            <ProfileCardSkeleton key={`sk-${idx}`} />
           ))}
         </div>
 

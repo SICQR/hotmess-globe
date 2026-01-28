@@ -7,6 +7,7 @@ import { buildUberDeepLink } from '@/utils/uberDeepLink';
 import { buildProfileRecText, recommendTravelModes } from '@/utils/travelRecommendations';
 import { useNavigate } from 'react-router-dom';
 import { SmartTravelSelector } from '@/components/travel/SmartTravelSelector';
+import { EditorialImage } from '@/components/media/EditorialImage';
 
 /**
  * Get match probability badge style based on score
