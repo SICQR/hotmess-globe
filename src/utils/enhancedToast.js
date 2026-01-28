@@ -1,6 +1,4 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, AlertCircle, Info, Zap } from 'lucide-react';
+import { CheckCircle, AlertCircle, Info, Zap } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
 
 // Enhanced toast with XP animations

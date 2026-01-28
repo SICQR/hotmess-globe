@@ -50,6 +50,9 @@ export default function LevelUpModal({ isOpen, onClose, level, rewards = [] }) {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/90 backdrop-blur-xl"
           onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="level-up-title"
         >
           <motion.div
             initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
@@ -101,6 +104,7 @@ export default function LevelUpModal({ isOpen, onClose, level, rewards = [] }) {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
+              id="level-up-title"
               className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-2"
             >
               LEVEL UP!

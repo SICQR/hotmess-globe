@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import XPGainAnimation from '@/components/gamification/XPGainAnimation';
 import LevelUpModal from '@/components/gamification/LevelUpModal';
