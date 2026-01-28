@@ -6,7 +6,7 @@ Resolve merge conflicts in the repository, specifically for PR #23 (branch: 2026
 ## Investigation
 - Found PR #23 had `"mergeable": false` and `"mergeable_state": "dirty"` 
 - Branch `2026-01-27-b40w-c5b2e` had unrelated histories with `main` due to shallow clone
-- Unshallowed the repository to find common ancestor
+- Converted shallow clone to full clone to find common ancestor
 - Identified 4 files with merge conflicts:
   1. `package-lock.json`
   2. `src/pages/Connect.jsx`
