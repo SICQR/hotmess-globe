@@ -3,6 +3,7 @@ import { Home, Globe, Radio, Users, ShoppingBag, Menu, Zap } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import LevelUpModal from '@/components/gamification/LevelUpModal';
+import { XPCircularProgress } from '@/components/ui/CircularProgress';
 
 export default function OSHud({ user, onModuleChange }) {
   const location = useLocation();
@@ -58,7 +59,7 @@ export default function OSHud({ user, onModuleChange }) {
           
           {user && (
             <div className="flex items-center gap-4">
-              <div className="text-right">
+              <div className="text-right hidden md:block">
                 <div className="text-xs text-white/40 font-mono uppercase tracking-wider">SWEAT EQUITY</div>
                 <div className="flex items-center gap-2">
                   <Zap className="w-3 h-3 text-[#FFEB3B]" />
@@ -66,11 +67,18 @@ export default function OSHud({ user, onModuleChange }) {
                   <span className="text-xs text-white/60">• LVL {level}</span>
                 </div>
               </div>
-              <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
+              
+              {/* Desktop: Progress bar */}
+              <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden hidden md:block">
                 <div 
                   className="h-full bg-gradient-to-r from-[#FF1493] to-[#FFEB3B] transition-all duration-300"
                   style={{ width: `${xpProgress}%` }}
                 />
+              </div>
+              
+              {/* Mobile: Circular progress */}
+              <div className="md:hidden">
+                <XPCircularProgress xp={user.xp || 0} xpToNextLevel={1000} />
               </div>
             </div>
           )}
