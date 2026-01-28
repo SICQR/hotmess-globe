@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 import ProfileHeader from '../components/profile/ProfileHeader';
 import StandardProfileView from '../components/profile/StandardProfileView';
 import SellerProfileView from '../components/profile/SellerProfileView';
@@ -365,8 +366,8 @@ export default function Profile() {
           viewed_email: userEmail,
           viewed_at: new Date().toISOString(),
         });
-      } catch {
-        console.log('Failed to track profile view');
+      } catch (error) {
+        logger.debug('Failed to track profile view', { error: error?.message });
       }
     };
     
