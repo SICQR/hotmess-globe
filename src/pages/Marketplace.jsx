@@ -24,6 +24,7 @@ import { openCartDrawer } from '@/utils/cartEvents';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { KineticHeadline } from '@/components/text/KineticHeadline';
 import { MESSMARKET, CORE_BRANDS } from '@/lib/brand';
+import { broadcast } from '@/lib/globeActivity';
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
@@ -263,9 +264,16 @@ export default function Marketplace() {
 
       return order;
     },
-    onSuccess: () => {
+    onSuccess: (order) => {
       queryClient.invalidateQueries(['marketplace-products']);
       toast.success('Purchase successful!');
+      
+      // Broadcast to globe activity stream
+      broadcast.purchase(null, null, {
+        orderId: order?.id,
+        amount: order?.total_xp,
+      });
+      
       navigate(createPageUrl('OrderHistory'));
     },
     onError: () => {
