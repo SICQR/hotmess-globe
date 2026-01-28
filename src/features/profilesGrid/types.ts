@@ -28,6 +28,20 @@ export type Profile = {
   geoLat: number;
   geoLng: number;
   photos: Photo[];
+
+  // Match probability fields
+  matchProbability?: number;
+  matchBreakdown?: {
+    travelTime: number;
+    roleCompat: number;
+    kinkOverlap: number;
+    intent: number;
+    semantic: number;
+    lifestyle: number;
+    activity: number;
+    completeness: number;
+  };
+  travelTimeMinutes?: number;
 };
 
 export type ProfilesResponse = {
