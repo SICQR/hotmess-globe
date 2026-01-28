@@ -27,6 +27,7 @@ import RightNowIndicator from '../components/discovery/RightNowIndicator';
 import ProfileCompleteness from '../components/profile/ProfileCompleteness';
 import WelcomeTour from '../components/onboarding/WelcomeTour';
 import VibeSynthesisCard from '../components/vibe/VibeSynthesisCard';
+import ProfileWingman from '../components/profile/ProfileWingman';
 import { fetchRoutingEtas } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 
@@ -785,6 +786,26 @@ export default function Profile() {
         />
 
         <div className="max-w-4xl mx-auto p-4 md:p-8">
+          {/* AI Wingman - for viewing other profiles */}
+          {!isOwnProfile && profileUser && currentUser && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6"
+            >
+              <ProfileWingman 
+                profile={profileUser}
+                currentUser={currentUser}
+                matchScore={profileUser.match_score}
+                onSendMessage={(text) => {
+                  // Navigate to messages with pre-filled opener
+                  const encodedEmail = encodeURIComponent(String(profileUser?.email || ''));
+                  const encodedText = encodeURIComponent(text);
+                  window.location.href = `/social/inbox?to=${encodedEmail}&draft=${encodedText}`;
+                }}
+              />
+            </motion.div>
+          )}
           {/* Vibe Synthesis - AI-Generated Character Profile */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
