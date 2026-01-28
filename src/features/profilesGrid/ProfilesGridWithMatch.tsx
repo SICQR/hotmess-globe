@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ProfileCard } from './ProfileCard';
 import { useMatchProfiles } from './useMatchProfiles';
 import { useVisibility } from './useVisibility';

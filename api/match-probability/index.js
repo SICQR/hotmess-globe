@@ -18,13 +18,11 @@
  *   }
  */
 
-import { createClient } from '@supabase/supabase-js';
-import { getBearerToken, getEnv, json, readJsonBody } from '../shopify/_utils.js';
+import { getBearerToken, json } from '../shopify/_utils.js';
 import { getSupabaseServerClients, getAuthedUser, parseNumber, clampInt, bucketLatLng } from '../routing/_utils.js';
 import { computeMatchScore, DEFAULT_WEIGHTS } from './_scoring.js';
 
 const SCORING_VERSION = '1.0';
-const CACHE_TTL_SECONDS = 300; // 5 minutes
 
 const isRunningOnVercel = () => {
   const flag = process.env.VERCEL || process.env.VERCEL_ENV;

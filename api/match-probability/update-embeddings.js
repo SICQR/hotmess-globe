@@ -21,18 +21,12 @@ import { getBearerToken, json, readJsonBody } from '../shopify/_utils.js';
 import { getSupabaseServerClients, getAuthedUser } from '../routing/_utils.js';
 import { updateProfileEmbeddings } from './_embeddings.js';
 
-const isRunningOnVercel = () => {
-  const flag = process.env.VERCEL || process.env.VERCEL_ENV;
-  return !!flag;
-};
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return json(res, 405, { error: 'Method not allowed' });
   }
 
-  const requireAuth = isRunningOnVercel() || process.env.NODE_ENV === 'production';
   const accessToken = getBearerToken(req);
   
   if (!accessToken) {

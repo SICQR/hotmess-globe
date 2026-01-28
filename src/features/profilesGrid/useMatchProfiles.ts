@@ -66,24 +66,6 @@ export function useMatchProfiles(options: MatchProfilesOptions = {}) {
   const cursorRef = useRef<string | null>(null);
   const hasMoreRef = useRef(true);
   const abortRef = useRef<AbortController | null>(null);
-  const sortRef = useRef(sort);
-  const locationRef = useRef({ lat: viewerLat, lng: viewerLng });
-
-  // Track if sort or location changed
-  useEffect(() => {
-    const sortChanged = sortRef.current !== sort;
-    const locationChanged = 
-      locationRef.current.lat !== viewerLat || 
-      locationRef.current.lng !== viewerLng;
-    
-    sortRef.current = sort;
-    locationRef.current = { lat: viewerLat, lng: viewerLng };
-    
-    // If sort changed, reload
-    if (sortChanged) {
-      void loadInitial();
-    }
-  }, [sort, viewerLat, viewerLng]);
 
   const fetchPage = useCallback(async (cursor: string | null) => {
     const params = new URLSearchParams();
