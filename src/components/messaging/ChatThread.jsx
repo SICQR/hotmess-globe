@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useAllUsers } from '../utils/queryConfig';
 import MediaViewer from './MediaViewer';
+import { broadcast } from '@/lib/globeActivity';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -130,6 +131,12 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       queryClient.invalidateQueries(['messages', thread.id]);
       queryClient.invalidateQueries(['chat-threads']);
       setMessageText('');
+      
+      // Broadcast to globe activity stream
+      broadcast.message({
+        threadId: thread.id,
+        isGroupChat: thread.thread_type === 'group',
+      });
     },
   });
 
