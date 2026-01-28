@@ -433,8 +433,17 @@ export function ProfileCard({
       emailHandle((profile as any)?.email) ||
       initialsFromName((profile as any)?.profileName || (profile as any)?.full_name || 'HM');
 
-    const status =
-      primaryModeShort || ((profile as any)?.onlineNow ? 'Online' : ((profile as any)?.rightNow ? 'Right now' : '')); 
+    // Show match probability if available, otherwise fall back to travel time or online status
+    let status = '';
+    if (profile.matchProbability !== undefined && profile.matchProbability > 0) {
+      status = `${profile.matchProbability}% Match`;
+    } else if (primaryModeShort) {
+      status = primaryModeShort;
+    } else if ((profile as any)?.onlineNow) {
+      status = 'Online';
+    } else if ((profile as any)?.rightNow) {
+      status = 'Right now';
+    }
 
     return (
       <div
@@ -549,6 +558,15 @@ export function ProfileCard({
             </div>
           ) : null}
 
+          {profile.matchProbability !== undefined && profile.matchProbability > 0 ? (
+            <div
+              className="rounded-full bg-gradient-to-r from-[#FF1493] to-[#00D9FF] text-white text-[10px] font-black uppercase tracking-wider px-2 py-1"
+              title={`Match: ${profile.matchProbability}%`}
+            >
+              {profile.matchProbability}% Match
+            </div>
+          ) : null}
+
           {viewerLocation ? (
             <div className="rounded-full bg-black/40 border border-white/15 text-white/85 text-[10px] font-black uppercase tracking-wider px-2 py-1">
               {isTravelTimeLoading ? 'Loading…' : primaryModeShort ? `Rec ${primaryModeShort}` : 'No ETA'}
@@ -619,6 +637,24 @@ export function ProfileCard({
             {/* Expanded panel on hover/long-press */}
             {isActive ? (
               <div className="mt-3">
+                {profile.matchProbability !== undefined && profile.matchBreakdown ? (
+                  <div className="mb-3 rounded-lg bg-black/40 border border-white/10 p-2">
+                    <div className="text-[11px] font-black text-white/90 mb-1">
+                      Match Breakdown: {profile.matchProbability}%
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 text-[10px] text-white/70">
+                      <div>Travel: {profile.matchBreakdown.travelTime}/20</div>
+                      <div>Role: {profile.matchBreakdown.roleCompat}/15</div>
+                      <div>Kinks: {profile.matchBreakdown.kinkOverlap}/15</div>
+                      <div>Intent: {profile.matchBreakdown.intent}/12</div>
+                      <div>Text: {profile.matchBreakdown.semantic}/12</div>
+                      <div>Lifestyle: {profile.matchBreakdown.lifestyle}/10</div>
+                      <div>Activity: {profile.matchBreakdown.activity}/8</div>
+                      <div>Complete: {profile.matchBreakdown.completeness}/8</div>
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="text-[11px] text-white/70">
                   {viewerLocation ? (
                     isTravelTimeLoading ? (
