@@ -166,7 +166,7 @@ jobs:
     # Once tests are fully implemented, add 'test' to the needs array
     needs: [lint, typecheck, build, security]
     # Only run deployment if all required secrets are configured
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.VERCEL_TOKEN != ''
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != ''
     permissions:
       contents: read
     environment:
