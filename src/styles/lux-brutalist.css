@@ -1,0 +1,505 @@
+/**
+ * HOTMESS Lux Brutalist Design System
+ * 
+ * Color Palette:
+ * - Chrome Red: #FF1493 (primary)
+ * - Gold: #FFD700 (premium)
+ * - Cyan: #00D9FF (interactive)
+ * - Purple: #B026FF (creator)
+ * - Neon Green: #39FF14 (success)
+ * - Yellow: #FFEB3B (warning)
+ */
+
+/* ============================================
+   CSS Variables
+   ============================================ */
+:root {
+  --lux-chrome-red: #FF1493;
+  --lux-gold: #FFD700;
+  --lux-cyan: #00D9FF;
+  --lux-purple: #B026FF;
+  --lux-neon-green: #39FF14;
+  --lux-yellow: #FFEB3B;
+  --lux-black: #000000;
+  --lux-white: #FFFFFF;
+  
+  /* Gradients */
+  --lux-gradient-primary: linear-gradient(135deg, var(--lux-chrome-red), var(--lux-purple));
+  --lux-gradient-gold: linear-gradient(135deg, var(--lux-gold), var(--lux-chrome-red));
+  --lux-gradient-cyan: linear-gradient(135deg, var(--lux-cyan), var(--lux-purple));
+  --lux-gradient-success: linear-gradient(135deg, var(--lux-neon-green), var(--lux-cyan));
+  
+  /* Shadows */
+  --lux-glow-pink: 0 0 20px rgba(255, 20, 147, 0.5);
+  --lux-glow-gold: 0 0 20px rgba(255, 215, 0, 0.5);
+  --lux-glow-cyan: 0 0 20px rgba(0, 217, 255, 0.5);
+  --lux-glow-purple: 0 0 20px rgba(176, 38, 255, 0.5);
+  --lux-glow-green: 0 0 20px rgba(57, 255, 20, 0.5);
+}
+
+/* ============================================
+   Gradient Hover Effects
+   ============================================ */
+.lux-hover-gradient {
+  background-size: 200% 200%;
+  background-position: 0% 0%;
+  transition: background-position 400ms ease, transform 200ms ease;
+}
+
+.lux-hover-gradient:hover {
+  background-position: 100% 100%;
+}
+
+.lux-hover-gradient-primary {
+  background: linear-gradient(135deg, var(--lux-chrome-red) 0%, var(--lux-purple) 50%, var(--lux-gold) 100%);
+  background-size: 200% 200%;
+  background-position: 0% 0%;
+  transition: background-position 400ms ease;
+}
+
+.lux-hover-gradient-primary:hover {
+  background-position: 100% 100%;
+}
+
+.lux-hover-gradient-gold {
+  background: linear-gradient(135deg, var(--lux-gold) 0%, var(--lux-chrome-red) 50%, var(--lux-gold) 100%);
+  background-size: 200% 200%;
+  background-position: 0% 0%;
+  transition: background-position 400ms ease;
+}
+
+.lux-hover-gradient-gold:hover {
+  background-position: 100% 100%;
+}
+
+/* ============================================
+   LED Pulse Animation
+   ============================================ */
+.lux-led-pulse {
+  animation: lux-led-pulse 2s ease-in-out infinite;
+}
+
+@keyframes lux-led-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--lux-chrome-red), 0 0 10px var(--lux-chrome-red);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 15px var(--lux-chrome-red), 0 0 30px var(--lux-chrome-red);
+    opacity: 0.8;
+  }
+}
+
+.lux-led-pulse-gold {
+  animation: lux-led-pulse-gold 2s ease-in-out infinite;
+}
+
+@keyframes lux-led-pulse-gold {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--lux-gold), 0 0 10px var(--lux-gold);
+  }
+  50% {
+    box-shadow: 0 0 15px var(--lux-gold), 0 0 30px var(--lux-gold);
+  }
+}
+
+.lux-led-pulse-cyan {
+  animation: lux-led-pulse-cyan 2s ease-in-out infinite;
+}
+
+@keyframes lux-led-pulse-cyan {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--lux-cyan), 0 0 10px var(--lux-cyan);
+  }
+  50% {
+    box-shadow: 0 0 15px var(--lux-cyan), 0 0 30px var(--lux-cyan);
+  }
+}
+
+.lux-led-pulse-green {
+  animation: lux-led-pulse-green 1.5s ease-in-out infinite;
+}
+
+@keyframes lux-led-pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--lux-neon-green), 0 0 10px var(--lux-neon-green);
+  }
+  50% {
+    box-shadow: 0 0 15px var(--lux-neon-green), 0 0 30px var(--lux-neon-green);
+  }
+}
+
+/* ============================================
+   Animated Gradient Background
+   ============================================ */
+.lux-animated-gradient {
+  background: linear-gradient(-45deg, var(--lux-chrome-red), var(--lux-purple), var(--lux-cyan), var(--lux-gold));
+  background-size: 400% 400%;
+  animation: lux-gradient-shift 15s ease infinite;
+}
+
+@keyframes lux-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  animation: lux-gradient-shift 3s ease infinite;
+}
+
+/* ============================================
+   Page Transitions
+   ============================================ */
+
+/* Wipe Right Transition */
+.lux-page-wipe-enter {
+  clip-path: inset(0 100% 0 0);
+}
+
+.lux-page-wipe-enter-active {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lux-page-wipe-exit {
+  clip-path: inset(0 0 0 0);
+}
+
+.lux-page-wipe-exit-active {
+  clip-path: inset(0 0 0 100%);
+  transition: clip-path 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Wipe Left Transition */
+.lux-page-wipe-left-enter {
+  clip-path: inset(0 0 0 100%);
+}
+
+.lux-page-wipe-left-enter-active {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Drop Transition (for Globe/Pulse) */
+.lux-page-drop-enter {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+.lux-page-drop-enter-active {
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 300ms ease;
+}
+
+/* Shutter Transition (for modals) */
+.lux-page-shutter-enter {
+  transform: scaleY(0);
+  transform-origin: center;
+}
+
+.lux-page-shutter-enter-active {
+  transform: scaleY(1);
+  transition: transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Split Transition (for dramatic reveals) */
+.lux-page-split-enter {
+  clip-path: polygon(50% 0, 50% 0, 50% 100%, 50% 100%);
+}
+
+.lux-page-split-enter-active {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  transition: clip-path 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   Button Styles
+   ============================================ */
+.lux-btn {
+  @apply font-black uppercase tracking-wider transition-all duration-300;
+  border: 2px solid transparent;
+}
+
+.lux-btn-primary {
+  background: var(--lux-chrome-red);
+  color: white;
+  border-color: var(--lux-chrome-red);
+}
+
+.lux-btn-primary:hover {
+  background: white;
+  color: black;
+  border-color: white;
+  box-shadow: var(--lux-glow-pink);
+}
+
+.lux-btn-secondary {
+  background: transparent;
+  color: white;
+  border-color: white;
+}
+
+.lux-btn-secondary:hover {
+  background: white;
+  color: black;
+}
+
+.lux-btn-gold {
+  background: linear-gradient(135deg, var(--lux-gold), var(--lux-chrome-red));
+  color: black;
+  border-color: var(--lux-gold);
+}
+
+.lux-btn-gold:hover {
+  box-shadow: var(--lux-glow-gold);
+}
+
+/* ============================================
+   Card Styles
+   ============================================ */
+.lux-card {
+  @apply bg-white/5 border-2 border-white/10 transition-all duration-300;
+}
+
+.lux-card:hover {
+  @apply border-white/30;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.lux-card-interactive {
+  @apply lux-card cursor-pointer;
+}
+
+.lux-card-interactive:hover {
+  @apply border-[var(--lux-chrome-red)];
+  transform: translateY(-2px);
+}
+
+.lux-card-premium {
+  @apply border-[var(--lux-gold)]/30;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(255, 20, 147, 0.05));
+}
+
+.lux-card-premium:hover {
+  @apply border-[var(--lux-gold)];
+  box-shadow: var(--lux-glow-gold);
+}
+
+/* ============================================
+   Badge Styles
+   ============================================ */
+.lux-badge {
+  @apply px-2 py-1 text-xs font-black uppercase tracking-wider;
+}
+
+.lux-badge-pink {
+  background: rgba(255, 20, 147, 0.2);
+  border: 1px solid rgba(255, 20, 147, 0.4);
+  color: var(--lux-chrome-red);
+}
+
+.lux-badge-gold {
+  background: rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  color: var(--lux-gold);
+}
+
+.lux-badge-cyan {
+  background: rgba(0, 217, 255, 0.2);
+  border: 1px solid rgba(0, 217, 255, 0.4);
+  color: var(--lux-cyan);
+}
+
+.lux-badge-purple {
+  background: rgba(176, 38, 255, 0.2);
+  border: 1px solid rgba(176, 38, 255, 0.4);
+  color: var(--lux-purple);
+}
+
+.lux-badge-green {
+  background: rgba(57, 255, 20, 0.2);
+  border: 1px solid rgba(57, 255, 20, 0.4);
+  color: var(--lux-neon-green);
+}
+
+/* ============================================
+   Text Styles
+   ============================================ */
+.lux-text-gradient {
+  background: linear-gradient(135deg, var(--lux-chrome-red), var(--lux-gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.lux-text-gradient-cyan {
+  background: linear-gradient(135deg, var(--lux-cyan), var(--lux-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.lux-title {
+  @apply font-black italic leading-tight tracking-tighter;
+}
+
+.lux-subtitle {
+  @apply text-xs uppercase tracking-[0.4em] text-white/50;
+}
+
+/* ============================================
+   Live/Online Indicators
+   ============================================ */
+.lux-live-dot {
+  @apply w-2 h-2 rounded-full bg-[var(--lux-neon-green)];
+  box-shadow: 0 0 8px var(--lux-neon-green);
+  animation: lux-live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes lux-live-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+.lux-online-ring {
+  @apply absolute -inset-1 rounded-full;
+  border: 2px solid var(--lux-neon-green);
+  animation: lux-online-ring-pulse 2s ease-in-out infinite;
+}
+
+@keyframes lux-online-ring-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   Progress Bar Animation
+   ============================================ */
+.animate-progress {
+  animation: progress-fill 5s linear forwards;
+}
+
+@keyframes progress-fill {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   Scrollbar Styles
+   ============================================ */
+.lux-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.lux-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lux-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--lux-chrome-red);
+  border-radius: 0;
+}
+
+.lux-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--lux-gold);
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================
+   Loading States
+   ============================================ */
+.lux-skeleton {
+  @apply bg-white/5 animate-pulse;
+}
+
+.lux-loading-bar {
+  @apply h-1 bg-gradient-to-r from-transparent via-[var(--lux-chrome-red)] to-transparent;
+  animation: lux-loading-slide 1.5s ease-in-out infinite;
+}
+
+@keyframes lux-loading-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ============================================
+   Mobile Touch Interactions
+   ============================================ */
+@media (hover: none) {
+  .lux-hover-gradient:active {
+    background-position: 100% 100%;
+  }
+  
+  .lux-card-interactive:active {
+    transform: scale(0.98);
+  }
+}
+
+/* ============================================
+   Safe Area Insets
+   ============================================ */
+.lux-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.lux-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.lux-safe-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.lux-safe-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ============================================
+   Focus States (Accessibility)
+   ============================================ */
+.lux-focus:focus-visible {
+  outline: 2px solid var(--lux-cyan);
+  outline-offset: 2px;
+}
+
+.lux-focus-ring:focus-visible {
+  box-shadow: 0 0 0 3px var(--lux-cyan);
+}

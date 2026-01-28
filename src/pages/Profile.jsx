@@ -15,6 +15,9 @@ import { toast } from 'sonner';
 import ProfileHeader from '../components/profile/ProfileHeader';
 import StandardProfileView from '../components/profile/StandardProfileView';
 import SellerProfileView from '../components/profile/SellerProfileView';
+import CreatorProfileView from '../components/profile/CreatorProfileView';
+import OrganizerProfileView from '../components/profile/OrganizerProfileView';
+import PremiumProfileView from '../components/profile/PremiumProfileView';
 import ProfileStats from '../components/profile/ProfileStats';
 import { sanitizeText, sanitizeURL, sanitizeSocialLinks } from '../components/utils/sanitize';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
@@ -903,9 +906,29 @@ export default function Profile() {
           )}
 
           {/* Profile Type Specific View */}
-          {profileTypeKey === 'seller' ? (
+          {profileTypeKey === 'seller' && (
             <SellerProfileView user={enrichedProfileUser} />
-          ) : (
+          )}
+          {profileTypeKey === 'creator' && (
+            <CreatorProfileView 
+              user={enrichedProfileUser} 
+              currentUser={currentUser}
+            />
+          )}
+          {profileTypeKey === 'organizer' && (
+            <OrganizerProfileView 
+              user={enrichedProfileUser} 
+              currentUser={currentUser}
+            />
+          )}
+          {profileTypeKey === 'premium' && (
+            <PremiumProfileView 
+              user={enrichedProfileUser} 
+              currentUser={currentUser}
+              isOwnProfile={isOwnProfile}
+            />
+          )}
+          {(profileTypeKey === 'standard' || !['seller', 'creator', 'organizer', 'premium'].includes(profileTypeKey)) && (
             <StandardProfileView 
               user={enrichedProfileUser} 
               currentUser={currentUser} 
