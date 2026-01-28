@@ -16,17 +16,26 @@ const RELEASE_SLUG = 'hnhmess';
 const FALLBACK_RELEASE_AT = new Date('2026-01-10T00:00:00Z');
 const HNHMESS_SOUNDCLOUD_URL = 'https://soundcloud.com/rawconvictrecords/hnh-mess/s-jK7AWO2CQ6t';
 
-// Product copy
+// Import brand config
+import { HNH_MESS, HNH_SHOW, BRAND } from '@/lib/brand';
+
+// Product copy - aligned with brand positioning
 const PRODUCT_COPY = {
-  tagline: "The only lube that comes with a soundtrack.",
-  subtitle: "Premium water-based formula. Aftercare energy. Made for the mess.",
+  tagline: "The only lube in the world with real aftercare.",
+  subtitle: "We dress care as kink, dripping in sweat dancing next to you.",
+  mission: "Smashing stigma. Building community.",
   features: [
-    { icon: Droplets, text: "Water-based, body-safe formula" },
-    { icon: Heart, text: "Designed for aftercare moments" },
-    { icon: Music, text: "Exclusive track included" },
+    { icon: Droplets, text: "Premium water-based, body-safe formula" },
+    { icon: Heart, text: "Real aftercare, not just product" },
+    { icon: Music, text: "Exclusive track by SMASH DADDYS" },
   ],
   careMessage: "Ask first. Confirm yes. Respect no. No pressure.",
-  aftercare: "Hydrate. Reset. Check in. Land in Care if you need it.",
+  aftercare: "HNH — Hand N Hand is the only place to land.",
+  hnh: "Our core Sunday show. We never glamourise alternative lifestyles, but we are bold and provocative.",
+  credits: {
+    producer: "SMASH DADDYS",
+    label: "RAW CONVICT RECORDS",
+  },
 };
 
 function slugify(value) {
@@ -414,7 +423,7 @@ export default function Hnhmess() {
               )}
 
               <p className="text-xs text-white/40 mt-4 uppercase tracking-wider">
-                Produced by RAW CONVICT RECORDS • Exclusive to HNH MESS
+                Produced by SMASH DADDYS for RAW CONVICT RECORDS • Exclusive to HNH MESS
               </p>
             </div>
 
@@ -476,7 +485,7 @@ export default function Hnhmess() {
                 HNH MESS™ is a trademark of HOTMESS LONDON LTD.
               </p>
               <p className="text-[10px] text-white/20 uppercase tracking-wider">
-                Music © RAW CONVICT RECORDS. Used under license.
+                Produced by SMASH DADDYS • ℗ & © RAW CONVICT RECORDS
               </p>
             </div>
           </div>
