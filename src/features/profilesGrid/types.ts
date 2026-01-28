@@ -21,6 +21,15 @@ export type Profile = {
   hasProducts?: boolean;
   productPreviews?: ProductPreview[];
   tags?: string[];
+  
+  // Engagement metrics for social proof
+  engagementMetrics?: {
+    profileViews24h?: number;
+    profileViewsWeek?: number;
+    totalLikes?: number;
+    totalFollowers?: number;
+    lastActiveMinutes?: number;
+  };
 
   profileName: string;
   title: string;

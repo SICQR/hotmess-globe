@@ -125,6 +125,30 @@ const badgeForProfileType = (profileType: string) => {
   return null;
 };
 
+const getEngagementBadges = (profile: Profile): Array<{ label: string; tone: 'hot' | 'cyan' | 'yellow' }> => {
+  const badges: Array<{ label: string; tone: 'hot' | 'cyan' | 'yellow' }> = [];
+  const metrics = profile.engagementMetrics;
+  
+  if (!metrics) return badges;
+  
+  // "Hot Right Now" - spike in profile views last 24h
+  if (metrics.profileViews24h && metrics.profileViews24h >= 20) {
+    badges.push({ label: '🔥 Hot Right Now', tone: 'hot' });
+  }
+  
+  // "Popular" - high engagement
+  if (metrics.totalLikes && metrics.totalLikes >= 50) {
+    badges.push({ label: '⭐ Popular', tone: 'yellow' });
+  }
+  
+  // "Recently Active" - last 5 minutes
+  if (metrics.lastActiveMinutes !== undefined && metrics.lastActiveMinutes <= 5) {
+    badges.push({ label: '🟢 Active Now', tone: 'cyan' });
+  }
+  
+  return badges.slice(0, 2); // Max 2 badges to avoid clutter
+};
+
 const getProductPreviewUrls = (profile: Profile): string[] => {
   const raw = (profile as any)?.productPreviews;
   const previews = Array.isArray(raw) ? raw : [];
