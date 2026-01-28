@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield, Zap } from 'lucide-react';
+import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield } from 'lucide-react';
 import { base44 } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import PanicButton from '@/components/safety/PanicButton';
@@ -354,6 +354,7 @@ function LayoutInner({ children, currentPageName }) {
           <SkipToContent />
           <A11yAnnouncer />
           <OfflineIndicator />
+          <ScrollProgress />
           {user && currentPageName === 'Home' && <WelcomeTour />}
         <div className="min-h-[100svh] bg-black text-white">
       {shouldShowChrome && (
@@ -395,6 +396,7 @@ function LayoutInner({ children, currentPageName }) {
                 >
                   <RadioIcon className="w-5 h-5" />
                 </button>
+                <PendingSyncBadge />
                 {user && <NotificationCenter currentUser={user} />}
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -543,6 +545,7 @@ function LayoutInner({ children, currentPageName }) {
                   >
                     <RadioIcon className="w-4 h-4" />
                   </button>
+                  <PendingSyncBadge />
                   {user && <NotificationCenter currentUser={user} />}
                 </div>
               </div>
