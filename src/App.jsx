@@ -21,6 +21,7 @@ import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
 import Privacy from '@/pages/legal/Privacy';
 import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
+import { I18nProvider } from '@/contexts/I18nContext';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -518,17 +519,19 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <ShopCartProvider>
-          <Router>
-            <NavigationTracker />
-            <AuthenticatedApp />
-          </Router>
-        </ShopCartProvider>
-        <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
+    <I18nProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <ShopCartProvider>
+            <Router>
+              <NavigationTracker />
+              <AuthenticatedApp />
+            </Router>
+          </ShopCartProvider>
+          <Toaster />
+        </QueryClientProvider>
+      </AuthProvider>
+    </I18nProvider>
   )
 }
 
