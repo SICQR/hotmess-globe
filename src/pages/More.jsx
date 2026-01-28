@@ -86,8 +86,8 @@ export default function More() {
               18+ • Consent-first • Care always
             </p>
             <div className="flex flex-wrap justify-center gap-4 text-xs text-white/60">
-              <Link to={createPageUrl('TermsOfService')} className="hover:text-white">Terms of Service</Link>
-              <Link to={createPageUrl('PrivacyPolicy')} className="hover:text-white">Privacy Policy</Link>
+              <Link to="/legal/terms" className="hover:text-white">Terms of Service</Link>
+              <Link to="/legal/privacy" className="hover:text-white">Privacy Policy</Link>
               <Link to={createPageUrl('CommunityGuidelines')} className="hover:text-white">Community Guidelines</Link>
               <Link to={createPageUrl('Contact')} className="hover:text-white">Contact</Link>
             </div>
