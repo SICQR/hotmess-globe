@@ -167,7 +167,7 @@ async function getAll(storeName, limit = 100) {
  * @param {string} key - Key to delete
  * @returns {Promise<void>}
  */
-async function remove(storeName, key) {
+export async function remove(storeName, key) {
   return new Promise(async (resolve, reject) => {
     try {
       const store = await getStore(storeName, 'readwrite');
@@ -179,6 +179,42 @@ async function remove(storeName, key) {
       reject(error);
     }
   });
+}
+
+/**
+ * Remove a cached message
+ * @param {string} messageId - Message ID
+ */
+export async function removeCachedMessage(messageId) {
+  try {
+    await remove(STORES.MESSAGES, messageId);
+  } catch (error) {
+    console.error('[OfflineCache] Failed to remove message:', error);
+  }
+}
+
+/**
+ * Remove a cached event
+ * @param {string} eventId - Event ID
+ */
+export async function removeCachedEvent(eventId) {
+  try {
+    await remove(STORES.EVENTS, eventId);
+  } catch (error) {
+    console.error('[OfflineCache] Failed to remove event:', error);
+  }
+}
+
+/**
+ * Remove a cached product
+ * @param {string} productId - Product ID
+ */
+export async function removeCachedProduct(productId) {
+  try {
+    await remove(STORES.PRODUCTS, productId);
+  } catch (error) {
+    console.error('[OfflineCache] Failed to remove product:', error);
+  }
 }
 
 /**
@@ -567,6 +603,7 @@ export async function getCacheStats() {
 
 export default {
   initDB,
+  remove,
   // Profile
   cacheProfile,
   getCachedProfile,
@@ -575,6 +612,7 @@ export default {
   cacheMessages,
   getCachedMessages,
   clearMessageCache,
+  removeCachedMessage,
   // Conversations
   cacheConversations,
   getCachedConversations,
@@ -583,10 +621,12 @@ export default {
   getCachedEvent,
   getCachedEvents,
   clearEventCache,
+  removeCachedEvent,
   // Products
   cacheProducts,
   getCachedProduct,
   getCachedProducts,
+  removeCachedProduct,
   // Metadata
   setMetadata,
   getMetadata,
