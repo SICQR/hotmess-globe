@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Share2, Twitter, Facebook, Link as LinkIcon, Instagram, MessageCircle, Mail, Copy, Check } from 'lucide-react';
+import { Share2, Twitter, Facebook, Link as LinkIcon, MessageCircle, Mail, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -19,11 +19,9 @@ import { toast } from 'sonner';
  * ShareButton Component
  * 
  * @param {Object} props
- * @param {string} props.url - URL to share
- * @param {string} props.title - Title of the content
+ * @param {string} props.url - URL to share (required)
+ * @param {string} props.title - Title of the content (required)
  * @param {string} props.description - Description of the content
- * @param {string} props.image - Image URL (optional)
- * @param {string} props.type - Type of content (event, profile, beacon, product)
  * @param {string} props.className - Additional CSS classes
  * @param {boolean} props.compact - Use compact button style
  */
@@ -31,21 +29,30 @@ export function ShareButton({
   url,
   title,
   description = '',
-  image,
-  type = 'content',
   className = '',
   compact = false,
 }) {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
+  // Validate required props
+  if (!url || !title) {
+    console.error('ShareButton: url and title are required props');
+    return null;
+  }
+
   // Generate share URL with UTM parameters for tracking
   const getShareUrl = (platform) => {
-    const shareUrl = new URL(url);
-    shareUrl.searchParams.set('utm_source', platform);
-    shareUrl.searchParams.set('utm_medium', 'social');
-    shareUrl.searchParams.set('utm_campaign', 'share');
-    return shareUrl.toString();
+    try {
+      const shareUrl = new URL(url);
+      shareUrl.searchParams.set('utm_source', platform);
+      shareUrl.searchParams.set('utm_medium', 'social');
+      shareUrl.searchParams.set('utm_campaign', 'share');
+      return shareUrl.toString();
+    } catch (error) {
+      console.error('Invalid URL:', url);
+      return url;
+    }
   };
 
   // Try native share API first (mobile)
@@ -122,8 +129,8 @@ export function ShareButton({
 
   // Main button click handler
   const handleMainClick = async () => {
-    // Try native share first on mobile
-    if (navigator.share && window.innerWidth < 768) {
+    // Try native share first if available
+    if (navigator.share) {
       const shared = await handleNativeShare();
       if (shared) return;
     }
@@ -192,16 +199,33 @@ export function ShareButton({
 /**
  * Quick Share Buttons
  * Display share buttons inline
+ * 
+ * @param {Object} props
+ * @param {string} props.url - URL to share (required)
+ * @param {string} props.title - Title of the content (required)
+ * @param {string} props.description - Description of the content
+ * @param {string} props.className - Additional CSS classes
  */
 export function QuickShareButtons({ url, title, description, className = '' }) {
   const [copied, setCopied] = useState(false);
 
+  // Validate required props
+  if (!url || !title) {
+    console.error('QuickShareButtons: url and title are required props');
+    return null;
+  }
+
   const getShareUrl = (platform) => {
-    const shareUrl = new URL(url);
-    shareUrl.searchParams.set('utm_source', platform);
-    shareUrl.searchParams.set('utm_medium', 'social');
-    shareUrl.searchParams.set('utm_campaign', 'share');
-    return shareUrl.toString();
+    try {
+      const shareUrl = new URL(url);
+      shareUrl.searchParams.set('utm_source', platform);
+      shareUrl.searchParams.set('utm_medium', 'social');
+      shareUrl.searchParams.set('utm_campaign', 'share');
+      return shareUrl.toString();
+    } catch (error) {
+      console.error('Invalid URL:', url);
+      return url;
+    }
   };
 
   const handleCopyLink = async () => {

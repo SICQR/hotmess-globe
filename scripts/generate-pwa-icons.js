@@ -3,7 +3,7 @@
  * Creates PNG icons in various sizes required for PWA
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
