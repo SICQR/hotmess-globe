@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
@@ -8,12 +8,14 @@ import GlobeDataPanel from '../components/globe/GlobeDataPanel';
 import GlobeSearch from '../components/globe/GlobeSearch';
 import FloatingPanel from '../components/ui/FloatingPanel';
 import { activityTracker } from '../components/globe/ActivityTracker';
+import { useActivityStream, ActivityFeed, ActivityStats, ACTIVITY_TYPES, getActivityConfig } from '../components/globe/ActivityStream';
+import { globeActivity } from '@/lib/globeActivity';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 import TelegramPanel from '@/features/profilesGrid/TelegramPanel';
 import LocalBeaconsView from '../components/globe/LocalBeaconsView';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
-import { Settings, BarChart3, Home, Grid3x3 } from 'lucide-react';
+import { Settings, BarChart3, Home, Grid3x3, Activity, Radio } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { debounce } from 'lodash';
@@ -211,6 +213,26 @@ export default function GlobePage() {
   const [localBeaconCenter, setLocalBeaconCenter] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [previewBeacon, setPreviewBeacon] = useState(null);
+  const [showActivityStream, setShowActivityStream] = useState(true);
+  const [liveActivityPulses, setLiveActivityPulses] = useState([]);
+
+  // Real-time activity stream
+  const { activities: streamActivities, stats: activityStats, addActivity, removeActivity } = useActivityStream(showActivityStream);
+
+  // Subscribe to globe activity broadcasts from other parts of the app
+  useEffect(() => {
+    const unsubscribe = globeActivity.subscribe((activity) => {
+      // Add to local pulses for visual display
+      setLiveActivityPulses(prev => [...prev.slice(-20), activity]);
+      
+      // Auto-remove after animation
+      setTimeout(() => {
+        setLiveActivityPulses(prev => prev.filter(a => a.id !== activity.id));
+      }, 3000);
+    });
+    
+    return unsubscribe;
+  }, []);
 
   const showPeoplePins = activeLayers.includes('people');
 
@@ -783,6 +805,125 @@ export default function GlobePage() {
           if (city) handleCityClick(city);
         }}
       />
+
+      {/* Live Activity Stream Overlay */}
+      <AnimatePresence>
+        {showActivityStream && (
+          <>
+            {/* Activity Feed - Bottom Left */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="absolute bottom-20 left-4 z-20"
+            >
+              <ActivityFeed activities={streamActivities} maxVisible={5} />
+            </motion.div>
+
+            {/* Activity Stats - Top Right */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-16 right-4 z-20"
+            >
+              <ActivityStats stats={activityStats} className="w-48" />
+            </motion.div>
+
+            {/* Live Activity Pulses */}
+            {liveActivityPulses.map((activity) => {
+              const config = getActivityConfig(activity.type);
+              return (
+                <motion.div
+                  key={activity.id}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0 }}
+                  className="absolute z-30 pointer-events-none"
+                  style={{
+                    // Random position if no coordinates
+                    left: activity.screenX || `${20 + Math.random() * 60}%`,
+                    top: activity.screenY || `${20 + Math.random() * 60}%`,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                >
+                  <div className="relative">
+                    {/* Outer glow ring */}
+                    <motion.div
+                      initial={{ scale: 0.5, opacity: 1 }}
+                      animate={{ scale: 2, opacity: 0 }}
+                      transition={{ duration: 1.5, ease: 'easeOut' }}
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        width: 40,
+                        height: 40,
+                        marginLeft: -20,
+                        marginTop: -20,
+                        backgroundColor: config.glowColor,
+                        boxShadow: `0 0 30px ${config.glowColor}`,
+                      }}
+                    />
+                    {/* Inner pulse */}
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: [0, 1.2, 1] }}
+                      transition={{ duration: 0.3 }}
+                      className="absolute rounded-full"
+                      style={{
+                        width: 12,
+                        height: 12,
+                        marginLeft: -6,
+                        marginTop: -6,
+                        backgroundColor: config.color,
+                        boxShadow: `0 0 15px ${config.color}`,
+                      }}
+                    />
+                    {/* Label */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="absolute whitespace-nowrap text-xs font-bold uppercase tracking-wider"
+                      style={{
+                        left: 16,
+                        top: -6,
+                        color: config.color,
+                        textShadow: `0 0 10px ${config.glowColor}`,
+                      }}
+                    >
+                      {config.icon} {config.label}
+                    </motion.div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Activity Stream Toggle Button */}
+      <button
+        onClick={() => setShowActivityStream(!showActivityStream)}
+        className={`absolute bottom-4 left-4 z-30 p-3 rounded-full backdrop-blur-xl transition-all ${
+          showActivityStream 
+            ? 'bg-[#39FF14] text-black' 
+            : 'bg-black/90 border border-white/10 text-white'
+        }`}
+        title={showActivityStream ? 'Hide Activity Stream' : 'Show Activity Stream'}
+      >
+        <Activity className="w-5 h-5" />
+      </button>
+
+      {/* Live Counter Badge */}
+      {showActivityStream && activityStats.total > 0 && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="absolute bottom-14 left-6 z-30 px-2 py-1 bg-[#FF1493] rounded-full text-xs font-black text-white"
+        >
+          {activityStats.total} LIVE
+        </motion.div>
+      )}
 
       <TelegramPanel open={showHotmessFeed} onClose={() => setShowHotmessFeed(false)} />
       </div>

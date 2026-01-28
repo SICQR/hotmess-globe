@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageShell from '@/components/shell/PageShell';
 import { toast } from 'sonner';
+import { broadcast } from '@/lib/globeActivity';
 
 // Detect if a scanned code looks like a ticket (hm1.xxx.xxx format)
 const looksLikeTicket = (code) => {
@@ -79,6 +80,14 @@ export default function Scan() {
       queryClient.invalidateQueries({ queryKey: ['user'] });
       queryClient.invalidateQueries({ queryKey: ['beacon_checkins'] });
       toast.success(`Scanned ${payload?.beacon?.title || 'beacon'}`);
+      
+      // Broadcast to globe activity stream
+      broadcast.beaconScan(null, null, {
+        beaconId: payload?.beacon?.id,
+        title: payload?.beacon?.title,
+        xpEarned: payload?.earned_xp,
+      });
+      
       setTimeout(() => {
         setScannedBeacon(null);
         setBeaconId('');
@@ -130,6 +139,13 @@ export default function Scan() {
         toast.message('Ticket already checked in');
       } else {
         toast.success(`Ticket validated! +${payload.awarded_xp || 50} XP`);
+        
+        // Broadcast to globe activity stream
+        broadcast.eventCheckin(null, null, {
+          eventId: payload?.rsvp?.event_id,
+          userEmail: payload?.rsvp?.user_email,
+          xpAwarded: payload?.awarded_xp,
+        });
       }
       
       setTimeout(() => {
