@@ -7,6 +7,7 @@ import { TrendingUp, Users, Eye, Zap, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Button } from '@/components/ui/button';
+import logger from '@/utils/logger';
 
 export default function OrganizerDashboard() {
   const [user, setUser] = useState(null);
@@ -17,7 +18,7 @@ export default function OrganizerDashboard() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'OrganizerDashboard' });
       }
     };
     fetchUser();

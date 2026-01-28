@@ -10,6 +10,7 @@ import { useServerNow } from '@/hooks/use-server-now';
 import { toast } from 'sonner';
 import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { format } from 'date-fns';
+import logger from '@/utils/logger';
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
 // Shopify product handles are not the same as release slugs.
@@ -265,7 +266,7 @@ export default function Home() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Home' });
         setCurrentUser(null);
       }
     };

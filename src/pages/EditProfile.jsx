@@ -312,7 +312,7 @@ export default function EditProfile() {
             }
           }
         } catch (tagSyncError) {
-          console.warn('Profile updated, but tags/tribes sync failed (non-fatal)', tagSyncError);
+          logger.warn('Profile updated, but tags/tribes sync failed (non-fatal)', { error: tagSyncError?.message, context: 'EditProfile' });
         }
       }
 

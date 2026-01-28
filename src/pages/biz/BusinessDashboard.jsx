@@ -19,6 +19,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../../utils';
+import logger from '@/utils/logger';
 
 export default function BusinessDashboard() {
   const [user, setUser] = useState(null);
@@ -68,7 +69,7 @@ export default function BusinessDashboard() {
 
         setRecentEvents(events?.slice(0, 5) || []);
       } catch (error) {
-        console.error('Failed to fetch data:', error);
+        logger.error('Failed to fetch dashboard data', { error: error?.message, context: 'BusinessDashboard' });
       } finally {
         setLoading(false);
       }

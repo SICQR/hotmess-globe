@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { createPageUrl, createUserProfileUrl } from '../utils';
+import logger from '@/utils/logger';
 
 export default function Settings() {
   const [user, setUser] = useState(null);
@@ -35,7 +36,7 @@ export default function Settings() {
         setAvatarUrl(currentUser?.avatar_url || '');
         setLocationPrivacy(currentUser?.location_privacy_mode || 'fuzzy');
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Settings' });
       }
     };
     fetchUser();
@@ -52,7 +53,7 @@ export default function Settings() {
       await base44.auth.updateMe({ avatar_url: file_url });
       toast.success('Avatar updated!');
     } catch (error) {
-      console.error('Upload failed:', error);
+      logger.error('Avatar upload failed', { error: error?.message, context: 'Settings' });
       toast.error('Failed to upload avatar');
     } finally {
       setUploading(false);
@@ -67,7 +68,7 @@ export default function Settings() {
       });
       toast.success('Settings saved successfully');
     } catch (error) {
-      console.error('Failed to save:', error);
+      logger.error('Failed to save settings', { error: error?.message, context: 'Settings' });
       toast.error('Failed to save settings');
     }
   };

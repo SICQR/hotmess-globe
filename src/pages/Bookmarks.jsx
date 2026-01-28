@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import logger from '@/utils/logger';
 
 export default function Bookmarks() {
   const [user, setUser] = useState(null);
@@ -24,7 +25,7 @@ export default function Bookmarks() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Bookmarks' });
       }
     };
     fetchUser();

@@ -18,6 +18,7 @@ import ConvictPlayer from '../components/radio/ConvictPlayer';
 import { Music } from 'lucide-react';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 
 export default function BeaconDetail() {
@@ -35,7 +36,7 @@ export default function BeaconDetail() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'BeaconDetail' });
       }
     };
     fetchUser();
@@ -122,7 +123,7 @@ export default function BeaconDetail() {
       queryClient.invalidateQueries({ queryKey: ['user'] });
       queryClient.invalidateQueries({ queryKey: ['beacon_checkins'] });
     } catch (error) {
-      console.error('Failed to scan:', error);
+      logger.error('Failed to scan beacon', { error: error?.message, beaconId, context: 'BeaconDetail' });
       toast.error(error?.message || 'Failed to scan');
     }
   };

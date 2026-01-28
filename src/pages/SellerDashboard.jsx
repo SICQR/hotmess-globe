@@ -18,6 +18,7 @@ import SellerRatingDisplay from '../components/seller/SellerRatingDisplay';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import logger from '@/utils/logger';
 
 export default function SellerDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -31,7 +32,7 @@ export default function SellerDashboard() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'SellerDashboard' });
       }
     };
     fetchUser();

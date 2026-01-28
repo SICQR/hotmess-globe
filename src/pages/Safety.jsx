@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import PageShell from '@/components/shell/PageShell';
 import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
 import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
+import logger from '@/utils/logger';
 
 export default function Safety() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -84,7 +85,7 @@ export default function Safety() {
             venue_name: currentUser.city || 'Unknown'
           };
         } catch (error) {
-          console.log('Location access denied');
+          logger.debug('Location access denied', { context: 'Safety' });
         }
       }
 

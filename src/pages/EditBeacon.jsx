@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 export default function EditBeacon() {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ export default function EditBeacon() {
       navigate(createPageUrl(`BeaconDetail?id=${beaconId}`));
     },
     onError: (error) => {
-      console.error('Failed to update beacon:', error);
+      logger.error('Failed to update beacon', { error: error?.message, beaconId, context: 'EditBeacon' });
       toast.error('Failed to update event');
     }
   });
@@ -70,7 +71,7 @@ export default function EditBeacon() {
       setFormData({ ...formData, image_url: file_url });
       toast.success('Image uploaded!');
     } catch (error) {
-      console.error('Upload failed:', error);
+      logger.error('Image upload failed', { error: error?.message, context: 'EditBeacon' });
       toast.error('Upload failed');
     } finally {
       setUploading(false);
@@ -87,7 +88,7 @@ export default function EditBeacon() {
       setFormData({ ...formData, video_url: file_url });
       toast.success('Video uploaded!');
     } catch (error) {
-      console.error('Upload failed:', error);
+      logger.error('Video upload failed', { error: error?.message, context: 'EditBeacon' });
       toast.error('Upload failed');
     } finally {
       setUploading(false);

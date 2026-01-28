@@ -6,6 +6,7 @@ import { Users, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import PostCard from '../components/community/PostCard';
+import logger from '@/utils/logger';
 import TrendingSummary from '../components/community/TrendingSummary';
 import PersonalizedFeed from '../components/community/PersonalizedFeed';
 import PostCreator from '../components/community/PostCreator';
@@ -23,7 +24,7 @@ export default function Community() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Community' });
       }
     };
     fetchUser();

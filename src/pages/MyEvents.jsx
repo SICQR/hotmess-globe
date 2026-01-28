@@ -11,6 +11,7 @@ import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fromUTC } from '../components/utils/dateUtils';
+import logger from '@/utils/logger';
 
 export default function MyEvents() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -22,7 +23,7 @@ export default function MyEvents() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'MyEvents' });
       }
     };
     fetchUser();

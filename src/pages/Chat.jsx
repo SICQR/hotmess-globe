@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import logger from '@/utils/logger';
 
 const QUICK_QUERIES = [
   "Find me a techno party this Friday near Shoreditch",
@@ -51,7 +52,7 @@ export default function Chat() {
           timestamp: new Date()
         }]);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Chat' });
       }
     };
     fetchUser();
@@ -117,7 +118,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Chat error:', error);
+      logger.error('Chat error', { error: error?.message, context: 'Chat' });
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',

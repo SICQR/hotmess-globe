@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 export default function TicketMarketplace() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -27,7 +28,7 @@ export default function TicketMarketplace() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'TicketMarketplace' });
       }
     };
     fetchUser();

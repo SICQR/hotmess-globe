@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowLeft, Users, Tag, Zap, Check } from 'lucide-react';
 import { taxonomyConfig } from '../components/discovery/taxonomyConfig';
 import TagSelector from '../components/discovery/TagSelector';
+import logger from '@/utils/logger';
 
 export default function Onboarding() {
   const [step, setStep] = useState(1);
@@ -27,7 +28,7 @@ export default function Onboarding() {
           navigate(createPageUrl('Home'));
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Onboarding' });
       }
     };
     fetchUser();

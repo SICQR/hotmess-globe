@@ -7,6 +7,7 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, Clock, Use
 import { Button } from '@/components/ui/button';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
 import PageShell from '@/components/shell/PageShell';
+import logger from '@/utils/logger';
 
 export default function Calendar() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -19,7 +20,7 @@ export default function Calendar() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'Calendar' });
       }
     };
     fetchUser();

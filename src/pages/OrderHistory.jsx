@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import MessageButton from '../components/social/MessageButton';
+import logger from '@/utils/logger';
 import QRCodeGenerator from '../components/orders/QRCodeGenerator';
 import OrderQRScanner from '../components/orders/OrderQRScanner';
 import MarketplaceReviewModal from '../components/marketplace/MarketplaceReviewModal';
@@ -36,7 +37,7 @@ export default function OrderHistory() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'OrderHistory' });
       }
     };
     fetchUser();

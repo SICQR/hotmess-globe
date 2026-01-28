@@ -23,6 +23,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
+import logger from '@/utils/logger';
 
 const DATA_CATEGORIES = [
   { 
@@ -88,7 +89,7 @@ export default function DataExport() {
           setExportHistory(history);
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user', { error: error?.message, context: 'DataExport' });
       } finally {
         setLoading(false);
       }
@@ -247,7 +248,7 @@ export default function DataExport() {
       }
 
     } catch (error) {
-      console.error('Export failed:', error);
+      logger.error('Data export failed', { error: error?.message, context: 'DataExport' });
       toast.error('Failed to export data. Please try again.');
     } finally {
       setExporting(false);
