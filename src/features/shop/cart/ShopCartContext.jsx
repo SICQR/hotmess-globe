@@ -96,10 +96,16 @@ export function ShopCartProvider({ children }) {
         if (hydrated?.id) return hydrated;
       }
 
+      // Don't create a cart with no items
+      const linesToAdd = initialLines || [];
+      if (!linesToAdd.length) {
+        return null;
+      }
+
       setIsLoading(true);
       setLastError(null);
       try {
-        const data = await cartCreate({ lines: initialLines || [] });
+        const data = await cartCreate({ lines: linesToAdd });
         const nextCart = data?.cart || null;
         if (nextCart?.id) persistCartId(nextCart.id);
         setCart(nextCart);
@@ -119,15 +125,21 @@ export function ShopCartProvider({ children }) {
       const qty = Number.isFinite(Number(quantity)) ? Number(quantity) : 1;
       const lines = [{ variantId, quantity: qty }];
 
-      // Always add via cartLinesAdd to avoid accidentally double-adding
-      // when a cart is created with initial lines.
-      const current = cart?.id ? cart : await ensureCart();
-      if (!current?.id) throw new Error('Missing cart id');
-
       setIsLoading(true);
       setLastError(null);
       try {
-        const data = await cartAddLines({ cartId: current.id, lines });
+        // If no cart exists, create one with the initial lines
+        if (!cart?.id) {
+          const current = await ensureCart({ initialLines: lines });
+          if (current?.id) {
+            setCart(current);
+            return current;
+          }
+          throw new Error('Failed to create cart');
+        }
+
+        // Cart exists, add lines to it
+        const data = await cartAddLines({ cartId: cart.id, lines });
         setCart(data?.cart || null);
         return data?.cart || null;
       } catch (err) {
