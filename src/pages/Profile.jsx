@@ -23,6 +23,7 @@ import ProfileStats from '../components/profile/ProfileStats';
 import { sanitizeText, sanitizeURL, sanitizeSocialLinks } from '../components/utils/sanitize';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 import ErrorBoundary from '../components/error/ErrorBoundary';
+import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 import RightNowIndicator from '../components/discovery/RightNowIndicator';
 import ProfileCompleteness from '../components/profile/ProfileCompleteness';
 import WelcomeTour from '../components/onboarding/WelcomeTour';
@@ -798,10 +799,11 @@ export default function Profile() {
                 currentUser={currentUser}
                 matchScore={profileUser.match_score}
                 onSendMessage={(text) => {
-                  // Navigate to messages with pre-filled opener
-                  const encodedEmail = encodeURIComponent(String(profileUser?.email || ''));
+                  // Navigate to messages with pre-filled opener (use user ID, not email)
+                  const userId = profileUser?.auth_user_id || profileUser?.id || '';
+                  const encodedUserId = encodeURIComponent(String(userId));
                   const encodedText = encodeURIComponent(text);
-                  window.location.href = `/social/inbox?to=${encodedEmail}&draft=${encodedText}`;
+                  window.location.href = `/social/inbox?to=${encodedUserId}&draft=${encodedText}`;
                 }}
               />
             </motion.div>
@@ -973,21 +975,21 @@ export default function Profile() {
                 <div className="space-y-2">
                   <p className="text-xs text-white/60 uppercase mb-3">Recent Viewers (Chrome Tier - Level 5+)</p>
                   {profileViews.slice(0, 10).map((view, idx) => {
-                    const viewer = allUsers.find(u => u.email === view.viewer_email);
+                    const viewer = allUsers.find(u => u.id === view.viewer_id || u.auth_user_id === view.viewer_id);
                     if (!viewer) return null;
                     
                     return (
-                      <Link key={idx} to={createPageUrl(`Profile?email=${viewer.email}`)}>
+                      <Link key={idx} to={getProfileUrl(viewer)}>
                         <div className="flex items-center gap-3 p-2 hover:bg-white/5 transition-colors">
                           <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center">
                             {viewer.avatar_url ? (
-                              <img src={viewer.avatar_url} alt={viewer.full_name} className="w-full h-full object-cover" />
+                              <img src={viewer.avatar_url} alt={getDisplayName(viewer)} className="w-full h-full object-cover" />
                             ) : (
-                              <span className="text-xs font-bold">{viewer.full_name?.[0]}</span>
+                              <span className="text-xs font-bold">{getDisplayName(viewer)?.[0]}</span>
                             )}
                           </div>
                           <div className="flex-1">
-                            <p className="font-bold text-sm">{viewer.full_name}</p>
+                            <p className="font-bold text-sm">{getDisplayName(viewer)}</p>
                             <p className="text-xs text-white/40">{format(new Date(view.viewed_at), 'MMM d, h:mm a')}</p>
                           </div>
                         </div>
