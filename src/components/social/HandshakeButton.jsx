@@ -39,7 +39,7 @@ export default function HandshakeButton({ targetUser, currentUser, variant = 'de
       queryClient.invalidateQueries(['bot-sessions']);
       
       // Deep-link to Telegram bot with token
-      const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'hotmess_london_bot';
+      const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'HOTMESS_ADMIN_BOT';
       const telegramUrl = `https://t.me/${botUsername}?start=${session.token}`;
       
       // Open Telegram
