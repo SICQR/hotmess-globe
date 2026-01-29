@@ -22,7 +22,7 @@ import Privacy from '@/pages/legal/Privacy';
 import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
 import { I18nProvider } from '@/contexts/I18nContext';
-import { PageTransition } from '@/components/transitions/PageTransition.tsx';
+import { PageTransition } from '@/components/lux/PageTransition';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
