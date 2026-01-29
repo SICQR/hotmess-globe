@@ -507,33 +507,6 @@ export const base44 = {
     
     redirectToLogin: (nextUrl) => {
       window.location.href = createPageUrl('Auth') + (nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : '');
-    },
-
-    /**
-     * Require user to be logged in before proceeding.
-     * Uses Supabase auth.getUser() to check authentication state.
-     * @param {string} redirectTo - URL to return to after login
-     * @returns {Promise<boolean>} - true if authenticated, false if redirecting to login
-     */
-    requireProfile: async (redirectTo) => {
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        
-        if (error || !user) {
-          // Not logged in - redirect to auth
-          const returnUrl = encodeURIComponent(redirectTo || window.location.href);
-          window.location.href = `/Auth?returnTo=${returnUrl}`;
-          return false;
-        }
-        
-        // User is authenticated
-        return true;
-      } catch (err) {
-        console.warn('[base44.auth.requireProfile] Auth check failed:', err);
-        const returnUrl = encodeURIComponent(redirectTo || window.location.href);
-        window.location.href = `/Auth?returnTo=${returnUrl}`;
-        return false;
-      }
     }
   },
   
@@ -1932,34 +1905,6 @@ export const auth = {
       throw new Error(`Provider ${providerId} not linked`);
     }
     return supabase.auth.unlinkIdentity(identity);
-  },
-
-  /**
-   * Require user to be logged in with a profile before proceeding.
-   * If not authenticated, redirects to login page.
-   * @param {string} redirectTo - URL to return to after login
-   * @returns {Promise<boolean>} - true if user has profile, false if redirecting
-   */
-  requireProfile: async (redirectTo) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        // Not logged in - redirect to auth
-        const returnUrl = encodeURIComponent(redirectTo || window.location.href);
-        window.location.href = `/Auth?returnTo=${returnUrl}`;
-        return false;
-      }
-      
-      // User is logged in
-      return true;
-    } catch (error) {
-      console.warn('[auth.requireProfile] Error checking auth:', error);
-      // On error, assume not authenticated
-      const returnUrl = encodeURIComponent(redirectTo || window.location.href);
-      window.location.href = `/Auth?returnTo=${returnUrl}`;
-      return false;
-    }
   },
 };
 
