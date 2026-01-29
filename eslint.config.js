@@ -15,6 +15,7 @@ export default [{
     // Storybook config and stories - not configured for TS/CSF3 parsing
     ".storybook/**",
     "src/stories/**",
+    "**/stories/**",
     "**/*.stories.js",
     "**/*.stories.jsx",
     "**/*.stories.ts",

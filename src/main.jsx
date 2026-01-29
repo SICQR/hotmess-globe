@@ -3,9 +3,13 @@ import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
 import { initAnalytics } from '@/components/utils/analytics'
+import { initSentry } from '@/lib/sentry'
 import ErrorBoundary from '@/components/error/ErrorBoundary'
 
-// Initialize analytics and error tracking
+// Initialize error monitoring first (before any errors can occur)
+initSentry()
+
+// Initialize analytics
 initAnalytics()
 
 const showFatalOverlay = (err) => {
