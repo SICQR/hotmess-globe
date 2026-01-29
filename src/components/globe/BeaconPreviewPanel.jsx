@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
+import { getProfileUrl } from '@/lib/userPrivacy';
 
 export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
   if (!beacon) return null;

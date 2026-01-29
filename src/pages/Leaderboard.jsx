@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
+import { getProfileUrl } from '@/lib/userPrivacy';
 
 export default function Leaderboard() {
   const [currentUser, setCurrentUser] = useState(null);

@@ -11,8 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../utils';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
+// createPageUrl no longer used after privacy URL refactor
+import { getProfileUrl } from '@/lib/userPrivacy';
 import MessageButton from '../components/social/MessageButton';
 import ComplementaryProducts from '../components/marketplace/ComplementaryProducts';
 import { isXpPurchasingEnabled } from '@/lib/featureFlags';

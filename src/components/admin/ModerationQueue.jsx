@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
+import { getProfileUrl } from '@/lib/userPrivacy';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 

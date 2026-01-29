@@ -3,21 +3,20 @@ import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Play, ShoppingBag, Shield, Bell, Droplets, Heart, Music, ExternalLink } from 'lucide-react';
+import { Play, ShoppingBag, Shield, Bell, Droplets, Heart, Music } from 'lucide-react';
 
 import { base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
 import { useServerNow } from '@/hooks/use-server-now';
 import { addToCart } from '@/components/marketplace/cartStorage';
-import { createPageUrl } from '../utils';
+// createPageUrl no longer used
 
 const RELEASE_SLUG = 'hnhmess';
 const FALLBACK_RELEASE_AT = new Date('2026-01-10T00:00:00Z');
 const HNHMESS_SOUNDCLOUD_URL = 'https://soundcloud.com/rawconvictrecords/hnh-mess/s-jK7AWO2CQ6t';
 
-// Import brand config
-import { HNH_MESS, HNH_SHOW, BRAND } from '@/lib/brand';
+// Import brand config - used indirectly for product data
 
 // Product copy - aligned with brand positioning
 const PRODUCT_COPY = {

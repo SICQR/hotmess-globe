@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Activity, MapPin, ShoppingBag, Trophy, Users, Crown, Radio, TrendingUp, UserPlus, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
+import { getProfileUrl } from '@/lib/userPrivacy';
 import { formatDistanceToNow } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 

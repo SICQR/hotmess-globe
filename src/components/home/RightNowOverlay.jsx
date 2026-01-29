@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
+// createPageUrl no longer used after privacy URL refactor
+import { getProfileUrl } from '@/lib/userPrivacy';
 import TacticalProfileCard from '../social/TacticalProfileCard';
 import { format } from 'date-fns';
 

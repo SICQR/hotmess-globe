@@ -5,11 +5,10 @@
  * with trusted contacts for a specified duration
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin,
-  Clock,
   Users,
   Shield,
   X,
@@ -18,9 +17,7 @@ import {
   Navigation,
   Radio,
   Loader2,
-  Share2,
-  Eye,
-  EyeOff
+  Share2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/components/utils/supabaseClient';

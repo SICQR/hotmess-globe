@@ -9,15 +9,13 @@ import { useState, useEffect, useCallback, createContext, useContext } from 'rea
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Crown,
-  Zap,
   Eye,
   MessageCircle,
   Shield,
   Sparkles,
   X,
   ChevronRight,
-  Check,
-  Gift
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';

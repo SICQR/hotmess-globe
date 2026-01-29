@@ -19,15 +19,13 @@ import {
   EyeOff, 
   AlertTriangle,
   Mail,
-  Scan,
-  Shield,
-  ChevronDown
+  Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 import { validateUsername, validateDisplayName } from '@/lib/userPrivacy';
 import FaceVerification from '@/components/auth/FaceVerification';
-import TelegramLogin, { TelegramButton } from '@/components/auth/TelegramLogin';
+import TelegramLogin from '@/components/auth/TelegramLogin';
 
 // Social provider icons (inline SVGs for brand accuracy)
 const GoogleIcon = () => (

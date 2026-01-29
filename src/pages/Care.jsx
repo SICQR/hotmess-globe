@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Phone, Shield, Users, CheckCircle, PhoneCall, X } from 'lucide-react';
+import { Heart, Phone, Shield, Users, CheckCircle, PhoneCall } from 'lucide-react';
 import FakeCallGenerator from '../components/safety/FakeCallGenerator';
-import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
 const EMERGENCY_CONTACTS = [

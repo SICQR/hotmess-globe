@@ -5,8 +5,8 @@ import { base44 } from '@/api/base44Client';
 import { Crown, Swords, Zap, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
+// createPageUrl no longer used after privacy URL refactor
+import { getProfileUrl } from '@/lib/userPrivacy';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function NightKingDisplay({ venueId }) {

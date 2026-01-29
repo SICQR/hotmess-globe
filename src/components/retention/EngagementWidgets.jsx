@@ -7,8 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Flame, Gift, Trophy, Star, Zap, Crown, 
-  Calendar, Target, TrendingUp, Award, Users, Clock
+  Flame, Gift, Trophy, Crown, Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RETENTION_MECHANICS, MEMBERSHIP_TIERS } from '@/lib/revenue';
