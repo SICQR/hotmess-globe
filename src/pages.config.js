@@ -27,6 +27,8 @@ import Directions from './pages/Directions';
 import EditBeacon from './pages/EditBeacon';
 import EditProfile from './pages/EditProfile';
 import Events from './pages/Events';
+import EventsFeatures from './pages/EventsFeatures';
+import Features from './pages/Features';
 import Feed from './pages/Feed';
 import Globe from './pages/Globe';
 import HandNHand from './pages/HandNHand';
@@ -46,6 +48,7 @@ import Onboarding from './pages/Onboarding';
 import OnboardingGate from './pages/OnboardingGate';
 import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
+import PersonaFeatures from './pages/PersonaFeatures';
 import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
 import ProfilesGrid from './pages/ProfilesGrid';
@@ -53,19 +56,23 @@ import ProfileSetup from './pages/ProfileSetup';
 import PromoteToAdmin from './pages/PromoteToAdmin';
 import Pulse from './pages/Pulse';
 import Radio from './pages/Radio';
+import RadioFeatures from './pages/RadioFeatures';
 import RadioSchedule from './pages/RadioSchedule';
 import RecordManager from './pages/RecordManager';
 import ReactBitsProfileCardDemo from './pages/ReactBitsProfileCardDemo';
 import RightNowDashboard from './pages/RightNowDashboard';
 import Safety from './pages/Safety';
+import SafetyFeatures from './pages/SafetyFeatures';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
 import Social from './pages/Social';
+import SocialFeatures from './pages/SocialFeatures';
 import SquadChat from './pages/SquadChat';
 import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
 import WakeTheMess from './pages/WakeTheMess';
+import Pricing from './pages/Pricing';
 import __Layout from './Layout.jsx';
 
 
@@ -97,6 +104,8 @@ export const PAGES = {
     "EditBeacon": EditBeacon,
     "EditProfile": EditProfile,
     "Events": Events,
+    "EventsFeatures": EventsFeatures,
+    "Features": Features,
     "Feed": Feed,
     "Globe": Globe,
     "HandNHand": HandNHand,
@@ -108,6 +117,7 @@ export const PAGES = {
     "Marketplace": Marketplace,
     "MembershipUpgrade": MembershipUpgrade,
     "Messages": Messages,
+    "Pricing": Pricing,
     "More": More,
     "Music": Music,
     "MusicRelease": MusicRelease,
@@ -116,6 +126,7 @@ export const PAGES = {
     "OnboardingGate": OnboardingGate,
     "OrderHistory": OrderHistory,
     "OrganizerDashboard": OrganizerDashboard,
+    "PersonaFeatures": PersonaFeatures,
     "ProductDetail": ProductDetail,
     "Profile": Profile,
     "ProfilesGrid": ProfilesGrid,
@@ -123,15 +134,18 @@ export const PAGES = {
     "PromoteToAdmin": PromoteToAdmin,
     "Pulse": Pulse,
     "Radio": Radio,
+    "RadioFeatures": RadioFeatures,
     "RadioSchedule": RadioSchedule,
     "RecordManager": RecordManager,
     "ReactBitsProfileCardDemo": ReactBitsProfileCardDemo,
     "RightNowDashboard": RightNowDashboard,
     "Safety": Safety,
+    "SafetyFeatures": SafetyFeatures,
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
     "Social": Social,
+    "SocialFeatures": SocialFeatures,
     "SquadChat": SquadChat,
     "Stats": Stats,
     "TermsOfService": TermsOfService,

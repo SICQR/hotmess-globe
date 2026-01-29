@@ -14,11 +14,12 @@ export default [{
     "hotmess-globe/**",
     // Storybook config and stories - handled by Storybook's own tooling
     ".storybook/**",
-    "**/*.stories.ts",
-    "**/*.stories.tsx",
+    "src/stories/**",
+    "**/stories/**",
     "**/*.stories.js",
     "**/*.stories.jsx",
-    "**/stories/**",
+    "**/*.stories.ts",
+    "**/*.stories.tsx",
   ],
 }, {
   files: [

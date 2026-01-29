@@ -1542,6 +1542,81 @@ export const auth = {
   
   onAuthStateChange: (callback) => 
     supabase.auth.onAuthStateChange(callback),
+
+  // =============================================================================
+  // SOCIAL LOGIN PROVIDERS (OAuth)
+  // =============================================================================
+
+  /**
+   * Sign in with Google OAuth
+   * Requires Google OAuth to be configured in Supabase Dashboard:
+   * Authentication > Providers > Google
+   */
+  signInWithGoogle: (redirectTo) =>
+    supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectTo || `${window.location.origin}/Auth?provider=google`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    }),
+
+  /**
+   * Sign in with Apple OAuth
+   * Requires Apple OAuth to be configured in Supabase Dashboard:
+   * Authentication > Providers > Apple
+   * Also requires Apple Developer account configuration
+   */
+  signInWithApple: (redirectTo) =>
+    supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: redirectTo || `${window.location.origin}/Auth?provider=apple`,
+      },
+    }),
+
+  /**
+   * Link existing account with OAuth provider
+   * Useful for adding Google/Apple to an existing email account
+   */
+  linkWithGoogle: () =>
+    supabase.auth.linkIdentity({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/settings?linked=google`,
+      },
+    }),
+
+  linkWithApple: () =>
+    supabase.auth.linkIdentity({
+      provider: 'apple',
+      options: {
+        redirectTo: `${window.location.origin}/settings?linked=apple`,
+      },
+    }),
+
+  /**
+   * Get linked identities for current user
+   */
+  getIdentities: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.identities || [];
+  },
+
+  /**
+   * Unlink an OAuth provider from the account
+   */
+  unlinkProvider: async (providerId) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const identity = user?.identities?.find(i => i.provider === providerId);
+    if (!identity) {
+      throw new Error(`Provider ${providerId} not linked`);
+    }
+    return supabase.auth.unlinkIdentity(identity);
+  },
 };
 
 // Database helpers

@@ -6,8 +6,9 @@ import { MapPin, Clock, Sparkles, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+// createPageUrl no longer used after privacy URL refactor
 import MembershipBadge from '../membership/MembershipBadge';
+import { getProfileUrl } from '@/lib/userPrivacy';
 
 /**
  * Calculate distance between two points using Haversine formula
@@ -62,8 +63,15 @@ export default function RightNowGrid({ currentUser }) {
   const usersWithStatus = useMemo(() => {
     return rightNowStatuses
       .map(status => {
-        const user = allUsers.find(u => u.email === status.user_email);
-        if (!user || user.email === currentUser?.email) return null;
+        // Support both email-based and ID-based matching
+        const user = allUsers.find(u => 
+          u.email === status.user_email || 
+          u.id === status.user_id || 
+          u.auth_user_id === status.user_id
+        );
+        // Filter out current user by email or ID
+        if (!user) return null;
+        if (user.email === currentUser?.email || user.id === currentUser?.id) return null;
         
         // Calculate real distance if both users have location
         const otherLat = user.last_lat || user.latitude;
@@ -80,7 +88,7 @@ export default function RightNowGrid({ currentUser }) {
         if (b.distance === null) return -1;
         return a.distance - b.distance;
       });
-  }, [rightNowStatuses, allUsers, currentUser?.email, userLat, userLng]);
+  }, [rightNowStatuses, allUsers, currentUser?.email, currentUser?.id, userLat, userLng]);
 
   return (
     <div className="min-h-screen bg-black text-white p-4">
@@ -120,7 +128,7 @@ export default function RightNowGrid({ currentUser }) {
                     : 'border-white/20 hover:border-[#FF1493]'
                 }`}
               >
-                <Link to={createPageUrl(`Profile?email=${user.email}`)}>
+                <Link to={getProfileUrl(user)}>
                   <div className="flex items-start gap-3 mb-4">
                     <div className="relative">
                       <div
