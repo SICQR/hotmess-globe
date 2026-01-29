@@ -73,6 +73,7 @@ import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
 import WakeTheMess from './pages/WakeTheMess';
 import Pricing from './pages/Pricing';
+import LuxShowcase from './pages/LuxShowcase';
 import __Layout from './Layout.jsx';
 
 
@@ -118,6 +119,7 @@ export const PAGES = {
     "MembershipUpgrade": MembershipUpgrade,
     "Messages": Messages,
     "Pricing": Pricing,
+    "LuxShowcase": LuxShowcase,
     "More": More,
     "Music": Music,
     "MusicRelease": MusicRelease,
@@ -151,6 +153,7 @@ export const PAGES = {
     "TermsOfService": TermsOfService,
     "TicketMarketplace": TicketMarketplace,
     "WakeTheMess": WakeTheMess,
+    "LuxShowcase": LuxShowcase,
 }
 
 export const pagesConfig = {
