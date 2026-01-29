@@ -27,41 +27,55 @@ export default function DomainManagement() {
   const [editEnvironment, setEditEnvironment] = useState('preview');
 
   useEffect(() => {
-    fetchDomains();
+    let mounted = true;
+    
+    const loadDomains = async () => {
+      setLoading(true);
+      try {
+        const session = await base44.auth.getSession();
+        const token = session?.access_token;
+
+        if (!token) {
+          if (mounted) {
+            toast.error('Please log in to manage domains');
+          }
+          return;
+        }
+
+        const response = await fetch('/api/domains', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch domains');
+        }
+
+        const result = await response.json();
+        if (mounted) {
+          setDomains(result.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching domains:', error);
+        if (mounted) {
+          toast.error('Failed to load domains');
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    
+    loadDomains();
+    
+    return () => {
+      mounted = false;
+    };
   }, []);
-
-  const fetchDomains = async () => {
-    setLoading(true);
-    try {
-      const session = await base44.auth.getSession();
-      const token = session?.access_token;
-
-      if (!token) {
-        toast.error('Please log in to manage domains');
-        return;
-      }
-
-      const response = await fetch('/api/domains', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch domains');
-      }
-
-      const result = await response.json();
-      setDomains(result.data || []);
-    } catch (error) {
-      console.error('Error fetching domains:', error);
-      toast.error('Failed to load domains');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAdd = async () => {
     if (!newDomain.trim() || !newBranch.trim()) {
@@ -72,6 +86,11 @@ export default function DomainManagement() {
     try {
       const session = await base44.auth.getSession();
       const token = session?.access_token;
+
+      if (!token) {
+        toast.error('Please log in to manage domains');
+        return;
+      }
 
       const response = await fetch('/api/domains', {
         method: 'POST',
@@ -105,9 +124,19 @@ export default function DomainManagement() {
   };
 
   const handleUpdate = async (id) => {
+    if (!editBranch.trim()) {
+      toast.error('Branch name is required');
+      return;
+    }
+
     try {
       const session = await base44.auth.getSession();
       const token = session?.access_token;
+
+      if (!token) {
+        toast.error('Please log in to manage domains');
+        return;
+      }
 
       const response = await fetch('/api/domains', {
         method: 'PUT',
@@ -145,6 +174,11 @@ export default function DomainManagement() {
     try {
       const session = await base44.auth.getSession();
       const token = session?.access_token;
+
+      if (!token) {
+        toast.error('Please log in to manage domains');
+        return;
+      }
 
       const response = await fetch(`/api/domains?id=${id}`, {
         method: 'DELETE',
@@ -210,7 +244,7 @@ export default function DomainManagement() {
       </div>
 
       <p className="text-sm text-white/60 mb-6">
-        Assign custom domains to specific Git branches. Production domains are automatically assigned to your main branch, while preview domains can be assigned to any branch.
+        Assign custom domains to specific Git branches. Configure which branch each domain should deploy.
       </p>
 
       {/* Add New Domain Form */}

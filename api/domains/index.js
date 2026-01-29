@@ -53,7 +53,7 @@ function validateBranchName(branch) {
     return false;
   }
   // Disallow special characters that are invalid in git branch names
-  const invalidChars = /[\s~^:?*\[\\]/;
+  const invalidChars = /[\s~^:?*\[\]\\]/;
   return !invalidChars.test(branch);
 }
 
