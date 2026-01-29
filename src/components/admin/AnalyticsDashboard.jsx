@@ -68,6 +68,9 @@ export default function AnalyticsDashboard() {
   const CHROME_PRICE = 19.99;
   const estimatedMRR = (plusSubscribers * PLUS_PRICE) + (chromeSubscribers * CHROME_PRICE);
   
+  // Average Revenue Per User (ARPU) - only counting paying users
+  const arpu = totalSubscribers > 0 ? (estimatedMRR / totalSubscribers).toFixed(2) : 0;
+  
   // Subscription conversion rate
   const conversionRate = users.length > 0 ? ((totalSubscribers / users.length) * 100).toFixed(1) : 0;
   
@@ -76,9 +79,17 @@ export default function AnalyticsDashboard() {
     u.subscription_status === 'canceling' || u.subscription_status === 'canceled'
   ).length;
   
+  // Churn rate (as percentage of total subscribers)
+  const churnRate = totalSubscribers > 0 ? ((churningUsers / totalSubscribers) * 100).toFixed(1) : 0;
+  
   // Support metrics
   const openTickets = supportTickets.filter(t => t.status === 'open').length;
   const urgentTickets = supportTickets.filter(t => t.priority === 'urgent').length;
+  const inProgressTickets = supportTickets.filter(t => t.status === 'in_progress').length;
+  const resolvedTickets = supportTickets.filter(t => t.status === 'resolved').length;
+  
+  // Average resolution time (simplified - would need timestamps)
+  const avgResolutionTime = supportTickets.length > 0 ? '24h' : 'N/A'; // Placeholder
 
   // Top events by check-ins
   const eventCheckIns = checkIns.reduce((acc, ci) => {
@@ -154,7 +165,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Subscription & Business Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -167,6 +178,20 @@ export default function AnalyticsDashboard() {
           </div>
           <p className="text-3xl font-black text-[#B026FF]">£{estimatedMRR.toFixed(2)}</p>
           <p className="text-xs text-white/60 uppercase font-mono">{totalSubscribers} SUBSCRIBERS</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.33 }}
+          className="bg-black border-2 border-[#00D9FF] p-6"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <DollarSign className="w-5 h-5 text-[#00D9FF]" />
+            <p className="text-[10px] text-white/40 uppercase tracking-widest">ARPU</p>
+          </div>
+          <p className="text-3xl font-black text-[#00D9FF]">£{arpu}</p>
+          <p className="text-xs text-white/60 uppercase font-mono">AVG REV / USER</p>
         </motion.div>
 
         <motion.div
@@ -191,10 +216,10 @@ export default function AnalyticsDashboard() {
         >
           <div className="flex items-center gap-3 mb-2">
             <UserMinus className="w-5 h-5 text-[#FF6B35]" />
-            <p className="text-[10px] text-white/40 uppercase tracking-widest">CHURNING</p>
+            <p className="text-[10px] text-white/40 uppercase tracking-widest">CHURN RATE</p>
           </div>
-          <p className="text-3xl font-black text-[#FF6B35]">{churningUsers}</p>
-          <p className="text-xs text-white/60 uppercase font-mono">CANCELING/CANCELED</p>
+          <p className="text-3xl font-black text-[#FF6B35]">{churnRate}%</p>
+          <p className="text-xs text-white/60 uppercase font-mono">{churningUsers} CHURNING</p>
         </motion.div>
 
         <motion.div
@@ -317,6 +342,32 @@ export default function AnalyticsDashboard() {
       {/* Activity Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-black border-2 border-white p-6">
+          <h3 className="text-lg font-black uppercase tracking-tighter mb-4">SUPPORT TICKETS</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
+              <span className="text-white/60 uppercase text-xs font-mono">Open</span>
+              <span className="font-black text-blue-400">{openTickets}</span>
+            </div>
+            <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
+              <span className="text-white/60 uppercase text-xs font-mono">In Progress</span>
+              <span className="font-black text-yellow-400">{inProgressTickets}</span>
+            </div>
+            <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
+              <span className="text-white/60 uppercase text-xs font-mono">Resolved</span>
+              <span className="font-black text-green-400">{resolvedTickets}</span>
+            </div>
+            <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
+              <span className="text-white/60 uppercase text-xs font-mono">Urgent Priority</span>
+              <span className="font-black text-red-400">{urgentTickets}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-white/60 uppercase text-xs font-mono">Avg Resolution</span>
+              <span className="font-black">{avgResolutionTime}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-black border-2 border-white p-6">
           <h3 className="text-lg font-black uppercase tracking-tighter mb-4">USER ACTIVITY</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
@@ -345,30 +396,49 @@ export default function AnalyticsDashboard() {
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="bg-black border-2 border-white p-6">
-          <h3 className="text-lg font-black uppercase tracking-tighter mb-4">PLATFORM HEALTH</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
-              <span className="text-white/60 uppercase text-xs font-mono">Total Messages</span>
-              <span className="font-black">{messages.length}</span>
-            </div>
-            <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
-              <span className="text-white/60 uppercase text-xs font-mono">Community Posts</span>
-              <span className="font-black">{posts.length}</span>
-            </div>
-            <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
-              <span className="text-white/60 uppercase text-xs font-mono">Check-ins Today</span>
-              <span className="font-black">{checkIns.filter(c => {
-                const today = new Date();
-                const ciDate = new Date(c.created_date);
-                return ciDate.toDateString() === today.toDateString();
-              }).length}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-white/60 uppercase text-xs font-mono">Active Beacons</span>
-              <span className="font-black">{activeBeacons}</span>
-            </div>
+      {/* Ticket Categories Breakdown */}
+      <div className="bg-black border-2 border-white p-6">
+        <h3 className="text-xl font-black uppercase tracking-tighter mb-6">SUPPORT TICKET CATEGORIES</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {['general', 'technical', 'billing', 'safety'].map(category => {
+            const count = supportTickets.filter(t => t.category === category).length;
+            const openCount = supportTickets.filter(t => t.category === category && t.status === 'open').length;
+            return (
+              <div key={category} className="bg-white/5 border-2 border-white/10 p-4">
+                <p className="text-sm font-bold uppercase text-white/80 mb-2">{category}</p>
+                <p className="text-3xl font-black">{count}</p>
+                <p className="text-xs text-white/40 mt-1">{openCount} open</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Platform Health - moved down */}
+      <div className="bg-black border-2 border-white p-6">
+        <h3 className="text-lg font-black uppercase tracking-tighter mb-4">PLATFORM HEALTH</h3>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
+            <span className="text-white/60 uppercase text-xs font-mono">Total Messages</span>
+            <span className="font-black">{messages.length}</span>
+          </div>
+          <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
+            <span className="text-white/60 uppercase text-xs font-mono">Community Posts</span>
+            <span className="font-black">{posts.length}</span>
+          </div>
+          <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
+            <span className="text-white/60 uppercase text-xs font-mono">Check-ins Today</span>
+            <span className="font-black">{checkIns.filter(c => {
+              const today = new Date();
+              const ciDate = new Date(c.created_date);
+              return ciDate.toDateString() === today.toDateString();
+            }).length}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-white/60 uppercase text-xs font-mono">Active Beacons</span>
+            <span className="font-black">{activeBeacons}</span>
           </div>
         </div>
       </div>

@@ -110,7 +110,7 @@ export default function PanicButton() {
         onClick={() => setShowConfirm(true)}
         variant="ghost"
         size="sm"
-        className="fixed bottom-4 right-4 z-50 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-500"
+        className="fixed bottom-4 right-4 z-[60] bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-500"
       >
         <AlertTriangle className="w-4 h-4 mr-2" />
         PANIC

@@ -69,7 +69,7 @@ export default async function handler(req, res) {
         const tierId = session.metadata?.tier_id;
 
         if (userId && tierId) {
-          const { error } = await supabase
+          const { data: userData, error } = await supabase
             .from('User')
             .update({
               membership_tier: tierId,
@@ -77,12 +77,34 @@ export default async function handler(req, res) {
               stripe_subscription_id: session.subscription,
               subscription_status: 'active',
             })
-            .eq('auth_user_id', userId);
+            .eq('auth_user_id', userId)
+            .select('email, full_name')
+            .single();
 
           if (error) {
             console.error('[Stripe Webhook] Failed to update user tier:', error);
           } else {
             console.log(`[Stripe Webhook] User ${userId} upgraded to ${tierId}`);
+            
+            // Send subscription confirmation email (non-blocking)
+            if (userData?.email) {
+              const tierNames = { plus: 'PLUS', pro: 'CHROME', chrome: 'CHROME' };
+              const tierPrices = { plus: '£9.99', pro: '£19.99', chrome: '£19.99' };
+              
+              fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/email/notify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'subscription_confirmation',
+                  data: {
+                    userEmail: userData.email,
+                    tierName: tierNames[tierId] || tierId.toUpperCase(),
+                    price: tierPrices[tierId] || '£9.99',
+                    billingCycle: 'month',
+                  }
+                })
+              }).catch(err => console.warn('[Stripe Webhook] Failed to send confirmation email:', err));
+            }
           }
         }
         break;

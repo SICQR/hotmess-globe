@@ -179,6 +179,7 @@ export default function Events() {
         title="Events"
         subtitle="Discover what’s happening in London tonight."
         maxWidth="7xl"
+        kinetic={true}
         right={
           <div className="flex items-center gap-2">
             <Button asChild variant="glass" className="border-white/20 font-black uppercase">

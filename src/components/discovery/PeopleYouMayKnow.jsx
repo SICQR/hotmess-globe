@@ -3,8 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Users, Zap, MapPin, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+// createPageUrl no longer used after privacy URL refactor
 import { motion } from 'framer-motion';
+import { getProfileUrl } from '@/lib/userPrivacy';
 
 export default function PeopleYouMayKnow({ currentUser, limit = 6 }) {
   const { data: allUsers = [] } = useQuery({
@@ -144,7 +145,7 @@ export default function PeopleYouMayKnow({ currentUser, limit = 6 }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
           >
-            <Link to={createPageUrl(`Profile?email=${suggestion.user.email}`)}>
+            <Link to={getProfileUrl(suggestion.user)}>
               <div className="group bg-black border-2 border-white hover:border-[#B026FF] transition-all overflow-hidden">
                 {/* Profile Image */}
                 <div className="aspect-square relative overflow-hidden">
