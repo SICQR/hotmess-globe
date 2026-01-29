@@ -122,7 +122,34 @@ export default function Auth() {
     if (provider === 'google' || provider === 'apple') {
       handleOAuthCallback(provider);
     }
-  }, [mode, provider]);
+
+    // Listen for auth state changes (handles OAuth completing in another tab)
+    const { data: { subscription } } = auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user && !provider) {
+        // User signed in (possibly from another tab)
+        setLoading(true);
+        try {
+          const profile = await base44.auth.me();
+          if (!profile?.display_name) {
+            setStep('username');
+          } else if (!profile?.onboarding_completed) {
+            setStep('membership');
+          } else {
+            toast.success('Welcome back!');
+            window.location.href = nextUrl || createPageUrl('Home');
+          }
+        } catch (err) {
+          console.error('Auth state change error:', err);
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [mode, provider, nextUrl]);
 
   // Handle OAuth callback after redirect
   const handleOAuthCallback = async (providerName) => {
