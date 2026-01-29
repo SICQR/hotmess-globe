@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 15: Business Console</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame { width: 375px; height: 812px; background: #000; border-radius: 40px; border: 8px solid #1a1a1a; overflow: hidden; position: relative; }
+    .phone-frame::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 150px; height: 30px; background: #1a1a1a; border-radius: 0 0 20px 20px; z-index: 100; }
+    .screen-content { height: 100%; overflow-y: auto; padding-top: 40px; }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .bg-hot { background-color: #FF1493; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+  </style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 15: Business Console • Venue, Events, Analytics, Sponsorships • 12 Screens</p>
+  </header>
+
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. BUSINESS DASHBOARD -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. Business Dashboard</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <p class="text-xs text-neutral-500">VENUE PRO</p>
+              <h1 class="text-2xl font-black">XXL London</h1>
+            </div>
+            <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=50&h=50&fit=crop" class="w-12 h-12 rounded-lg object-cover">
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="glass rounded-xl p-4">
+              <p class="text-xs text-neutral-500">This Week</p>
+              <p class="text-2xl font-bold text-lime">2,847</p>
+              <p class="text-xs text-neutral-500">Check-ins</p>
+            </div>
+            <div class="glass rounded-xl p-4">
+              <p class="text-xs text-neutral-500">Revenue</p>
+              <p class="text-2xl font-bold">£4,210</p>
+              <p class="text-xs text-neutral-500">+18% vs last week</p>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="space-y-2 mb-6">
+            <button class="w-full p-4 bg-hot rounded-xl flex items-center gap-3 font-bold">
+              <span>📱</span>
+              <span>Scan Check-ins</span>
+              <span class="ml-auto">→</span>
+            </button>
+            <button class="w-full p-4 bg-neutral-800 rounded-xl flex items-center gap-3">
+              <span>📅</span>
+              <span>Create Event</span>
+              <span class="ml-auto text-neutral-500">→</span>
+            </button>
+            <button class="w-full p-4 bg-neutral-800 rounded-xl flex items-center gap-3">
+              <span>📊</span>
+              <span>View Analytics</span>
+              <span class="ml-auto text-neutral-500">→</span>
+            </button>
+          </div>
+
+          <!-- Upcoming Events -->
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+              <p class="font-bold">Upcoming Events</p>
+              <button class="text-hot text-sm">See All</button>
+            </div>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                <div class="w-12 h-12 rounded-lg bg-hot/20 flex items-center justify-center">🔥</div>
+                <div class="flex-1">
+                  <p class="font-medium">MEAT RACK</p>
+                  <p class="text-xs text-neutral-500">Sat 10pm • 847 RSVPs</p>
+                </div>
+                <button class="text-neutral-400">→</button>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                <div class="w-12 h-12 rounded-lg bg-cyan/20 flex items-center justify-center">🌊</div>
+                <div class="flex-1">
+                  <p class="font-medium">Sunday Service</p>
+                  <p class="text-xs text-neutral-500">Sun 4pm • 234 RSVPs</p>
+                </div>
+                <button class="text-neutral-400">→</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div>
+            <p class="font-bold mb-3">Recent Activity</p>
+            <div class="space-y-2 text-sm">
+              <div class="flex items-center gap-3 p-3 bg-neutral-900/50 rounded-lg">
+                <span class="text-lime">●</span>
+                <span class="flex-1">New RSVP for MEAT RACK</span>
+                <span class="text-neutral-500">2m</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-neutral-900/50 rounded-lg">
+                <span class="text-cyan">●</span>
+                <span class="flex-1">Check-in from Alex</span>
+                <span class="text-neutral-500">5m</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. BUSINESS ONBOARDING -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. Business Onboarding</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="text-center mb-8">
+            <div class="w-20 h-20 rounded-full bg-hot/20 flex items-center justify-center mx-auto mb-4">
+              <span class="text-4xl">🏢</span>
+            </div>
+            <h1 class="text-2xl font-black mb-2">List Your Venue</h1>
+            <p class="text-neutral-400">Reach the HOTMESS community</p>
+          </div>
+
+          <!-- Progress -->
+          <div class="flex items-center gap-2 mb-6">
+            <div class="flex-1 h-1 bg-hot rounded-full"></div>
+            <div class="flex-1 h-1 bg-neutral-700 rounded-full"></div>
+            <div class="flex-1 h-1 bg-neutral-700 rounded-full"></div>
+            <div class="flex-1 h-1 bg-neutral-700 rounded-full"></div>
+          </div>
+
+          <h2 class="font-bold mb-4">Basic Information</h2>
+
+          <div class="space-y-4 pb-8">
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Venue Name</label>
+              <input type="text" placeholder="e.g. XXL London" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Venue Type</label>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Club</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Bar</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Sauna</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Other</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Address</label>
+              <input type="text" placeholder="Full address" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Website</label>
+              <input type="url" placeholder="https://..." class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            </div>
+
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mt-6">
+              CONTINUE
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. VENUE PROFILE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. Venue Profile Edit</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Edit Venue</h1>
+            <button class="ml-auto text-hot">Save</button>
+          </div>
+
+          <!-- Cover Image -->
+          <div class="relative mb-6">
+            <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=150&fit=crop" class="w-full h-32 rounded-xl object-cover">
+            <button class="absolute bottom-2 right-2 px-3 py-1.5 bg-black/70 rounded-lg text-sm">📷 Edit</button>
+          </div>
+
+          <div class="space-y-4 pb-8">
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Description</label>
+              <textarea rows="3" placeholder="Describe your venue..." class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none resize-none">London's largest gay club. Multiple dance floors, darkroom, and world-class DJs every weekend.</textarea>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Facilities</label>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Dancefloor</button>
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Darkroom</button>
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Coat Check</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">+ Add</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Opening Hours</label>
+              <div class="space-y-2">
+                <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                  <span class="w-16">Fri</span>
+                  <span class="flex-1">10pm - 6am</span>
+                  <button class="text-neutral-400">✏️</button>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                  <span class="w-16">Sat</span>
+                  <span class="flex-1">10pm - 6am</span>
+                  <button class="text-neutral-400">✏️</button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Contact</label>
+              <input type="email" value="info@xxl.london" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. CREATE EVENT (BIZ) -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Create Event (Business)</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">×</button>
+            <h1 class="text-xl font-bold">Create Event</h1>
+          </div>
+
+          <div class="space-y-4 pb-8">
+            <!-- Cover Upload -->
+            <div class="h-40 rounded-xl border-2 border-dashed border-neutral-700 flex flex-col items-center justify-center">
+              <span class="text-3xl mb-2">🖼️</span>
+              <p class="text-neutral-500">Add event cover</p>
+              <p class="text-xs text-neutral-600">1200 x 600 recommended</p>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Event Name</label>
+              <input type="text" placeholder="e.g. MEAT RACK" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-sm text-neutral-500 mb-2 block">Date</label>
+                <input type="date" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+              </div>
+              <div>
+                <label class="text-sm text-neutral-500 mb-2 block">Time</label>
+                <input type="time" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Ticket Price</label>
+              <div class="flex items-center gap-2">
+                <span class="text-neutral-500">£</span>
+                <input type="number" placeholder="0 for free" class="flex-1 bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Description</label>
+              <textarea rows="3" placeholder="What's this event about?" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none resize-none"></textarea>
+            </div>
+
+            <!-- Visibility -->
+            <div class="glass rounded-xl p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <p class="font-bold">Featured Event</p>
+                  <p class="text-xs text-neutral-500">Get top placement</p>
+                </div>
+                <span class="text-hot text-sm">+ £49</span>
+              </div>
+              <label class="flex items-center gap-3">
+                <input type="checkbox" class="w-5 h-5 rounded bg-neutral-800 border-neutral-600">
+                <span class="text-sm">Boost this event</span>
+              </label>
+            </div>
+
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+              PUBLISH EVENT
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. SCAN CHECK-INS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. Scan Check-ins</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Scanner View -->
+          <div class="absolute inset-0 bg-neutral-800">
+            <!-- Scan Frame -->
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="w-64 h-64 border-2 border-hot rounded-2xl relative">
+                <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-hot rounded-tl-xl"></div>
+                <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-hot rounded-tr-xl"></div>
+                <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-hot rounded-bl-xl"></div>
+                <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-hot rounded-br-xl"></div>
+                <!-- Scan Line -->
+                <div class="absolute top-0 left-0 right-0 h-1 bg-hot animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Header -->
+          <div class="absolute top-12 left-4 right-4 flex items-center justify-between">
+            <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">←</button>
+            <p class="font-bold">Scan Check-in</p>
+            <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">⚡</button>
+          </div>
+
+          <!-- Bottom Panel -->
+          <div class="absolute bottom-0 left-0 right-0 bg-neutral-900 rounded-t-3xl p-6">
+            <div class="text-center mb-4">
+              <p class="text-sm text-neutral-400">Position QR code in frame</p>
+            </div>
+            <div class="flex gap-3">
+              <button class="flex-1 bg-neutral-800 py-3 rounded-xl text-sm">Enter Code</button>
+              <button class="flex-1 bg-neutral-800 py-3 rounded-xl text-sm">Guest List</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. CHECK-IN SUCCESS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Check-in Success</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black flex flex-col items-center justify-center px-8 text-center">
+          <div class="w-24 h-24 rounded-full bg-lime/20 flex items-center justify-center mb-6">
+            <span class="text-5xl">✓</span>
+          </div>
+
+          <h1 class="text-3xl font-black text-lime mb-2">CHECKED IN</h1>
+
+          <div class="w-full glass rounded-xl p-4 mb-6">
+            <div class="flex items-center gap-3 mb-3">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop" class="w-12 h-12 rounded-full object-cover">
+              <div class="text-left">
+                <p class="font-bold">Alex</p>
+                <p class="text-xs text-neutral-500">PLUS Member</p>
+              </div>
+            </div>
+            <div class="text-left text-sm text-neutral-400">
+              <p>Event: MEAT RACK</p>
+              <p>Ticket: Early Bird</p>
+              <p>Time: 10:47 PM</p>
+            </div>
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+            SCAN NEXT
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. BUSINESS ANALYTICS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. Business Analytics</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Analytics</h1>
+          </div>
+
+          <!-- Date Range -->
+          <div class="flex gap-2 mb-6 overflow-x-auto">
+            <button class="px-4 py-2 rounded-full bg-hot text-white text-sm whitespace-nowrap">This Week</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">This Month</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">All Time</button>
+          </div>
+
+          <!-- Key Metrics -->
+          <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="glass rounded-xl p-4">
+              <p class="text-xs text-neutral-500 mb-1">Check-ins</p>
+              <p class="text-2xl font-bold text-lime">2,847</p>
+              <p class="text-xs text-lime">+18%</p>
+            </div>
+            <div class="glass rounded-xl p-4">
+              <p class="text-xs text-neutral-500 mb-1">Unique Visitors</p>
+              <p class="text-2xl font-bold">1,924</p>
+              <p class="text-xs text-lime">+12%</p>
+            </div>
+            <div class="glass rounded-xl p-4">
+              <p class="text-xs text-neutral-500 mb-1">RSVPs</p>
+              <p class="text-2xl font-bold">3,412</p>
+              <p class="text-xs text-lime">+24%</p>
+            </div>
+            <div class="glass rounded-xl p-4">
+              <p class="text-xs text-neutral-500 mb-1">Revenue</p>
+              <p class="text-2xl font-bold">£8,420</p>
+              <p class="text-xs text-lime">+9%</p>
+            </div>
+          </div>
+
+          <!-- Chart Placeholder -->
+          <div class="glass rounded-xl p-4 mb-6">
+            <p class="text-sm text-neutral-500 mb-3">Check-ins Over Time</p>
+            <div class="h-32 flex items-end justify-around gap-2">
+              <div class="w-8 bg-hot/60 rounded-t" style="height: 40%"></div>
+              <div class="w-8 bg-hot/60 rounded-t" style="height: 60%"></div>
+              <div class="w-8 bg-hot/60 rounded-t" style="height: 45%"></div>
+              <div class="w-8 bg-hot/60 rounded-t" style="height: 80%"></div>
+              <div class="w-8 bg-hot rounded-t" style="height: 100%"></div>
+              <div class="w-8 bg-hot/60 rounded-t" style="height: 70%"></div>
+              <div class="w-8 bg-hot/60 rounded-t" style="height: 55%"></div>
+            </div>
+            <div class="flex justify-around mt-2 text-xs text-neutral-500">
+              <span>Mon</span>
+              <span>Tue</span>
+              <span>Wed</span>
+              <span>Thu</span>
+              <span>Fri</span>
+              <span>Sat</span>
+              <span>Sun</span>
+            </div>
+          </div>
+
+          <!-- Export -->
+          <button class="w-full bg-neutral-800 py-3 rounded-xl text-sm">
+            📊 Export Report (CSV)
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. SPONSORSHIPS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. Sponsorships</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Sponsorships</h1>
+          </div>
+
+          <!-- Active Sponsorships -->
+          <div class="mb-6">
+            <p class="text-sm text-neutral-500 mb-3">Active</p>
+            <div class="glass rounded-xl p-4 border border-lime/30">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-12 h-12 rounded-lg bg-lime/20 flex items-center justify-center">🎙️</div>
+                <div class="flex-1">
+                  <p class="font-bold">Hand N Hand</p>
+                  <p class="text-xs text-neutral-500">Radio Show Sponsor</p>
+                </div>
+                <span class="text-lime text-sm">Active</span>
+              </div>
+              <div class="flex justify-between text-sm text-neutral-400">
+                <span>12 weeks remaining</span>
+                <span>£499/mo</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Available Inventory -->
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+              <p class="font-bold">Available Sponsorships</p>
+            </div>
+            <div class="space-y-3">
+              <div class="glass rounded-xl p-4">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-2xl">🎙️</span>
+                  <div class="flex-1">
+                    <p class="font-bold">Radio Show Sponsor</p>
+                    <p class="text-xs text-neutral-500">Weekly mention + branding</p>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-neutral-400">From £499/mo</span>
+                  <button class="px-4 py-1.5 bg-hot rounded-lg text-sm">Learn More</button>
+                </div>
+              </div>
+
+              <div class="glass rounded-xl p-4">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-2xl">🏠</span>
+                  <div class="flex-1">
+                    <p class="font-bold">Home Feed Banner</p>
+                    <p class="text-xs text-neutral-500">1M+ monthly impressions</p>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-neutral-400">From £999/mo</span>
+                  <button class="px-4 py-1.5 bg-hot rounded-lg text-sm">Learn More</button>
+                </div>
+              </div>
+
+              <div class="glass rounded-xl p-4">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-2xl">📍</span>
+                  <div class="flex-1">
+                    <p class="font-bold">Featured Pin on PULSE</p>
+                    <p class="text-xs text-neutral-500">Premium map placement</p>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-neutral-400">From £149/mo</span>
+                  <button class="px-4 py-1.5 bg-hot rounded-lg text-sm">Learn More</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. TEAM MANAGEMENT -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">9. Team Management</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-xl font-bold">Team</h1>
+            <button class="px-4 py-2 bg-hot rounded-lg text-sm font-bold">+ Invite</button>
+          </div>
+
+          <div class="space-y-3 pb-8">
+            <!-- Owner -->
+            <div class="flex items-center gap-3 p-4 glass rounded-xl border border-hot/30">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop" class="w-12 h-12 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-bold">You</p>
+                <p class="text-xs text-hot">Owner</p>
+              </div>
+            </div>
+
+            <!-- Admin -->
+            <div class="flex items-center gap-3 p-4 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=50&h=50&fit=crop" class="w-12 h-12 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-bold">Sam</p>
+                <p class="text-xs text-neutral-500">Admin</p>
+              </div>
+              <button class="text-neutral-400">⋯</button>
+            </div>
+
+            <!-- Staff -->
+            <div class="flex items-center gap-3 p-4 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=50&h=50&fit=crop" class="w-12 h-12 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-bold">Marcus</p>
+                <p class="text-xs text-neutral-500">Door Staff</p>
+              </div>
+              <button class="text-neutral-400">⋯</button>
+            </div>
+
+            <!-- Pending -->
+            <div class="flex items-center gap-3 p-4 bg-neutral-900/50 rounded-xl border border-dashed border-neutral-700">
+              <div class="w-12 h-12 rounded-full bg-neutral-800 flex items-center justify-center">✉️</div>
+              <div class="flex-1">
+                <p class="font-medium text-neutral-400">jordan@email.com</p>
+                <p class="text-xs text-yellow-500">Pending invite</p>
+              </div>
+              <button class="text-red-500 text-sm">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. BILLING -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">10. Business Billing</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Billing</h1>
+          </div>
+
+          <!-- Current Plan -->
+          <div class="glass rounded-xl p-4 mb-6 border border-hot/30">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <p class="text-xs text-neutral-500">Current Plan</p>
+                <p class="text-xl font-bold text-hot">VENUE PRO</p>
+              </div>
+              <span class="text-lg font-bold">£149/mo</span>
+            </div>
+            <p class="text-sm text-neutral-400 mb-3">Next billing: Feb 1, 2026</p>
+            <button class="w-full bg-neutral-800 py-2 rounded-lg text-sm">Manage Plan</button>
+          </div>
+
+          <!-- Payment Method -->
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+              <p class="font-bold">Payment Method</p>
+              <button class="text-hot text-sm">Edit</button>
+            </div>
+            <div class="flex items-center gap-3 p-4 bg-neutral-900 rounded-xl">
+              <span class="text-2xl">💳</span>
+              <div class="flex-1">
+                <p class="font-medium">•••• •••• •••• 4242</p>
+                <p class="text-xs text-neutral-500">Expires 12/27</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Invoices -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <p class="font-bold">Invoices</p>
+              <button class="text-hot text-sm">See All</button>
+            </div>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between p-3 bg-neutral-900 rounded-xl">
+                <div>
+                  <p class="font-medium">January 2026</p>
+                  <p class="text-xs text-neutral-500">Venue Pro + Sponsorship</p>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold">£648</p>
+                  <p class="text-xs text-lime">Paid</p>
+                </div>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-neutral-900 rounded-xl">
+                <div>
+                  <p class="font-medium">December 2025</p>
+                  <p class="text-xs text-neutral-500">Venue Pro</p>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold">£149</p>
+                  <p class="text-xs text-lime">Paid</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. EVENT LIST (BIZ) -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">11. My Events (Business)</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-xl font-bold">My Events</h1>
+            <button class="px-4 py-2 bg-hot rounded-lg text-sm font-bold">+ Create</button>
+          </div>
+
+          <!-- Tabs -->
+          <div class="flex gap-2 mb-4">
+            <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Upcoming</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Past</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Drafts</button>
+          </div>
+
+          <div class="space-y-3 pb-8">
+            <!-- Event Card -->
+            <div class="glass rounded-xl overflow-hidden">
+              <div class="flex">
+                <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100&h=100&fit=crop" class="w-24 h-24 object-cover">
+                <div class="flex-1 p-3">
+                  <div class="flex items-center gap-2 mb-1">
+                    <p class="font-bold">MEAT RACK</p>
+                    <span class="px-2 py-0.5 rounded bg-lime/20 text-lime text-xs">Live</span>
+                  </div>
+                  <p class="text-xs text-neutral-500 mb-2">Sat, Jan 31 • 10pm</p>
+                  <div class="flex gap-3 text-xs text-neutral-400">
+                    <span>847 RSVPs</span>
+                    <span>124 Check-ins</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex border-t border-neutral-800">
+                <button class="flex-1 py-2 text-sm text-neutral-400">Edit</button>
+                <button class="flex-1 py-2 text-sm text-neutral-400 border-l border-neutral-800">Analytics</button>
+                <button class="flex-1 py-2 text-sm text-neutral-400 border-l border-neutral-800">Guest List</button>
+              </div>
+            </div>
+
+            <!-- Another Event -->
+            <div class="glass rounded-xl overflow-hidden">
+              <div class="flex">
+                <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop" class="w-24 h-24 object-cover">
+                <div class="flex-1 p-3">
+                  <div class="flex items-center gap-2 mb-1">
+                    <p class="font-bold">Sunday Service</p>
+                    <span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-500 text-xs">Scheduled</span>
+                  </div>
+                  <p class="text-xs text-neutral-500 mb-2">Sun, Feb 1 • 4pm</p>
+                  <div class="flex gap-3 text-xs text-neutral-400">
+                    <span>234 RSVPs</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex border-t border-neutral-800">
+                <button class="flex-1 py-2 text-sm text-neutral-400">Edit</button>
+                <button class="flex-1 py-2 text-sm text-neutral-400 border-l border-neutral-800">Analytics</button>
+                <button class="flex-1 py-2 text-sm text-neutral-400 border-l border-neutral-800">Guest List</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. GUEST LIST -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">12. Guest List</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <div class="flex-1">
+              <h1 class="text-xl font-bold">Guest List</h1>
+              <p class="text-xs text-neutral-500">MEAT RACK • 847 guests</p>
+            </div>
+            <button class="text-hot text-sm">Export</button>
+          </div>
+
+          <!-- Search -->
+          <div class="relative mb-4">
+            <input type="text" placeholder="Search guests..." class="w-full bg-neutral-900 rounded-xl pl-10 pr-4 py-3 focus:outline-none">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">🔍</span>
+          </div>
+
+          <!-- Filters -->
+          <div class="flex gap-2 mb-4 overflow-x-auto">
+            <button class="px-4 py-2 rounded-full bg-hot text-white text-sm whitespace-nowrap">All</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Checked In</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Not Yet</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">VIP</button>
+          </div>
+
+          <!-- Guest List -->
+          <div class="space-y-2 pb-8">
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <div class="w-3 h-3 rounded-full bg-lime"></div>
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Alex</p>
+                <p class="text-xs text-neutral-500">Early Bird • 10:47 PM</p>
+              </div>
+              <span class="text-xs text-lime">Checked in</span>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <div class="w-3 h-3 rounded-full bg-lime"></div>
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Sam</p>
+                <p class="text-xs text-neutral-500">General • 11:02 PM</p>
+              </div>
+              <span class="text-xs text-lime">Checked in</span>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <div class="w-3 h-3 rounded-full bg-neutral-600"></div>
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Marcus</p>
+                <p class="text-xs text-neutral-500">VIP Table</p>
+              </div>
+              <span class="text-xs text-neutral-500">Not arrived</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 15 • Business Console</p>
+  </footer>
+</body>
+</html>

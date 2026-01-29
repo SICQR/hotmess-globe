@@ -23,8 +23,16 @@ const AppleIcon = () => (
   </svg>
 );
 
+const TelegramIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+  </svg>
+);
+
 /**
  * HotmessSplash - Unified bold entry experience
+ * 
+ * "Don't make the same mistake twice unless he's hot."
  * 
  * Condenses: Age Gate + Cookie Consent + GDPR + Terms + Auth
  * Into ONE beautiful splash screen
@@ -178,9 +186,10 @@ export default function HotmessSplash({ onComplete }) {
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black overflow-hidden">
-      {/* Background - Abstract gradient */}
+      {/* Background - Brand gradient with blue accent */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-[#1a0a14] to-black" />
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a14] to-black" />
+        {/* Hot Pink glow */}
         <motion.div
           animate={{
             scale: [1, 1.2, 1],
@@ -189,13 +198,23 @@ export default function HotmessSplash({ onComplete }) {
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#FF1493]/20 rounded-full blur-[100px]"
         />
+        {/* Royal Blue glow - from hoodie */}
         <motion.div
           animate={{
             scale: [1.2, 1, 1.2],
-            opacity: [0.2, 0.4, 0.2],
+            opacity: [0.15, 0.3, 0.15],
+          }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0047AB]/25 rounded-full blur-[100px]"
+        />
+        {/* Subtle golden warmth - from product photography */}
+        <motion.div
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.1, 0.2, 0.1],
           }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00D9FF]/20 rounded-full blur-[100px]"
+          className="absolute top-1/2 right-1/3 w-64 h-64 bg-[#FFB800]/10 rounded-full blur-[80px]"
         />
       </div>
 
@@ -237,7 +256,7 @@ export default function HotmessSplash({ onComplete }) {
                 transition={{ delay: 0.5 }}
                 className="text-lg md:text-2xl font-bold uppercase tracking-[0.3em] text-white/60 mt-4"
               >
-                Global Operating System
+                London OS
               </motion.p>
               <motion.p
                 initial={{ opacity: 0 }}
@@ -245,7 +264,7 @@ export default function HotmessSplash({ onComplete }) {
                 transition={{ delay: 0.7 }}
                 className="text-sm uppercase tracking-[0.2em] text-[#FF1493]/60 mt-2"
               >
-                Platform • Radio • Records
+                No swiping. No ghosts. Just chemistry.
               </motion.p>
             </motion.div>
 
@@ -297,7 +316,7 @@ export default function HotmessSplash({ onComplete }) {
                   </button>
                 </p>
                 <p className="text-[8px] text-white/20 font-mono">
-                  HM-OS-V2.0 • © 2026 HOTMESS
+                  School of HOTMESS;LONDON • © 2026
                 </p>
               </div>
               
@@ -407,6 +426,25 @@ export default function HotmessSplash({ onComplete }) {
                 >
                   <AppleIcon />
                   <span className="ml-3">Continue with Apple</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={() => {
+                    // Open Telegram login in popup
+                    const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'hotmess_london_bot';
+                    const redirectUrl = encodeURIComponent(`${window.location.origin}/Auth?provider=telegram`);
+                    window.open(
+                      `https://oauth.telegram.org/auth?bot_id=${botUsername}&origin=${window.location.origin}&request_access=write&return_to=${redirectUrl}`,
+                      'telegram_auth',
+                      'width=550,height=470'
+                    );
+                  }}
+                  disabled={loading}
+                  className="w-full bg-[#0088cc] hover:bg-[#0077b5] text-white font-medium py-5"
+                >
+                  <TelegramIcon />
+                  <span className="ml-3">Continue with Telegram</span>
                 </Button>
               </div>
 

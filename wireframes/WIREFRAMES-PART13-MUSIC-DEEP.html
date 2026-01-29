@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 13: Music Deep Dive</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame { width: 375px; height: 812px; background: #000; border-radius: 40px; border: 8px solid #1a1a1a; overflow: hidden; position: relative; }
+    .phone-frame::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 150px; height: 30px; background: #1a1a1a; border-radius: 0 0 20px 20px; z-index: 100; }
+    .screen-content { height: 100%; overflow-y: auto; padding-top: 40px; }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .bg-hot { background-color: #FF1493; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+  </style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 13: Music Deep Dive • Shows, Episodes, Releases, Artists • 12 Screens</p>
+  </header>
+
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. LIVE RADIO -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. Live Radio</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black">
+          <!-- Now Playing Hero -->
+          <div class="relative h-80 bg-gradient-to-b from-hot/30 to-black">
+            <div class="absolute top-4 left-4"><button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">←</button></div>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <div class="w-32 h-32 rounded-full bg-hot/20 flex items-center justify-center mb-4 animate-pulse">
+                <span class="text-6xl">📻</span>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-red-500 text-white text-xs font-bold mb-2">● LIVE</span>
+              <h1 class="text-2xl font-black">HOTMESS RADIO</h1>
+              <p class="text-neutral-400">24/7 Underground Music</p>
+            </div>
+          </div>
+
+          <div class="px-4 pb-24">
+            <!-- Now Playing -->
+            <div class="glass rounded-xl p-4 mb-6 -mt-8 relative">
+              <p class="text-xs text-neutral-500 mb-2">NOW PLAYING</p>
+              <div class="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=60&h=60&fit=crop" class="w-14 h-14 rounded-lg object-cover">
+                <div class="flex-1">
+                  <p class="font-bold">HNH MESS</p>
+                  <p class="text-sm text-neutral-400">SMASH DADDYS</p>
+                </div>
+                <button class="w-12 h-12 rounded-full bg-hot flex items-center justify-center text-xl">❚❚</button>
+              </div>
+              <!-- Progress -->
+              <div class="mt-3 h-1 bg-neutral-700 rounded-full overflow-hidden">
+                <div class="h-full w-1/3 bg-hot rounded-full"></div>
+              </div>
+              <div class="flex justify-between text-xs text-neutral-500 mt-1">
+                <span>1:24</span>
+                <span>3:42</span>
+              </div>
+            </div>
+
+            <!-- Show Info -->
+            <div class="glass rounded-xl p-4 mb-6">
+              <p class="text-xs text-neutral-500 mb-2">ON AIR NOW</p>
+              <div class="flex items-center gap-3">
+                <div class="w-14 h-14 rounded-lg bg-cyan/20 flex items-center justify-center">
+                  <span class="text-2xl">🎙️</span>
+                </div>
+                <div class="flex-1">
+                  <p class="font-bold">Wake The Mess</p>
+                  <p class="text-sm text-neutral-400">Morning energy • Until 11am</p>
+                </div>
+                <button class="text-hot text-sm">View Show</button>
+              </div>
+            </div>
+
+            <!-- Up Next -->
+            <div class="mb-6">
+              <p class="text-sm text-neutral-500 mb-3">UP NEXT</p>
+              <div class="space-y-2">
+                <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                  <span class="text-xs text-neutral-500 w-12">11:00</span>
+                  <div class="flex-1">
+                    <p class="font-medium">Lunchtime Groove</p>
+                    <p class="text-xs text-neutral-500">House classics</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                  <span class="text-xs text-neutral-500 w-12">14:00</span>
+                  <div class="flex-1">
+                    <p class="font-medium">Afternoon Techno</p>
+                    <p class="text-xs text-neutral-500">Dark beats</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3">
+              <button class="flex-1 bg-neutral-800 py-3 rounded-xl text-sm">📅 Schedule</button>
+              <button class="flex-1 bg-neutral-800 py-3 rounded-xl text-sm">♡ Save</button>
+              <button class="flex-1 bg-neutral-800 py-3 rounded-xl text-sm">↗ Share</button>
+            </div>
+          </div>
+
+          <!-- Mini Player -->
+          <div class="absolute bottom-0 left-0 right-0 bg-neutral-900 border-t border-neutral-800 p-3">
+            <div class="flex items-center gap-3">
+              <img src="https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=40&h=40&fit=crop" class="w-10 h-10 rounded object-cover">
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-sm truncate">HNH MESS</p>
+                <p class="text-xs text-neutral-500">SMASH DADDYS</p>
+              </div>
+              <button class="w-10 h-10 rounded-full bg-hot flex items-center justify-center">▶</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. SHOWS LIST -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. Shows List</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">Shows</h1>
+            <button class="text-hot text-sm">Schedule</button>
+          </div>
+
+          <!-- Featured Show -->
+          <div class="glass rounded-xl overflow-hidden mb-6">
+            <div class="h-32 bg-gradient-to-br from-hot/30 to-purple-500/30 relative">
+              <div class="absolute top-2 left-2 px-2 py-1 rounded bg-red-500 text-xs font-bold">● LIVE</div>
+            </div>
+            <div class="p-4">
+              <h3 class="font-bold text-lg">Wake The Mess</h3>
+              <p class="text-sm text-neutral-400 mb-3">Morning energy to start your day right</p>
+              <div class="flex items-center gap-4 text-xs text-neutral-500">
+                <span>🎙️ Daily 7-11am</span>
+                <span>2.4K listeners</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shows Grid -->
+          <div class="grid grid-cols-2 gap-3 pb-8">
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <div class="h-24 bg-cyan/20 flex items-center justify-center"><span class="text-3xl">🌙</span></div>
+              <div class="p-3">
+                <p class="font-bold">Dial A Daddy</p>
+                <p class="text-xs text-neutral-500">Fri 10pm</p>
+              </div>
+            </div>
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <div class="h-24 bg-lime/20 flex items-center justify-center"><span class="text-3xl">🤝</span></div>
+              <div class="p-3">
+                <p class="font-bold">Hand N Hand</p>
+                <p class="text-xs text-neutral-500">Sat 8pm</p>
+              </div>
+            </div>
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <div class="h-24 bg-purple-500/20 flex items-center justify-center"><span class="text-3xl">🔥</span></div>
+              <div class="p-3">
+                <p class="font-bold">Late Night Heat</p>
+                <p class="text-xs text-neutral-500">Fri-Sat 12am</p>
+              </div>
+            </div>
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <div class="h-24 bg-yellow-500/20 flex items-center justify-center"><span class="text-3xl">☀️</span></div>
+              <div class="p-3">
+                <p class="font-bold">Sunday Sessions</p>
+                <p class="text-xs text-neutral-500">Sun 2pm</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. SHOW DETAIL -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. Show Detail</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black">
+          <div class="relative h-48 bg-gradient-to-br from-lime/30 to-cyan/30">
+            <div class="absolute top-4 left-4"><button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">←</button></div>
+            <div class="absolute top-4 right-4"><button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">↗</button></div>
+          </div>
+
+          <div class="px-4 -mt-12 relative pb-8">
+            <div class="w-24 h-24 rounded-xl bg-lime/30 flex items-center justify-center mb-4 border-4 border-black">
+              <span class="text-4xl">🤝</span>
+            </div>
+
+            <h1 class="text-3xl font-black mb-1">Hand N Hand</h1>
+            <p class="text-neutral-400 mb-4">Saturdays 8-10pm</p>
+
+            <div class="flex gap-3 mb-6">
+              <button class="flex-1 bg-lime text-black py-3 rounded-xl font-bold">Listen Live</button>
+              <button class="flex-1 bg-neutral-800 py-3 rounded-xl">📅 Add to Calendar</button>
+            </div>
+
+            <p class="text-neutral-400 text-sm mb-6 leading-relaxed">
+              The show that brings the community together. Deep conversations, care-first vibes, and the smoothest transitions. Produced with HNH MESS lube – because aftercare matters.
+            </p>
+
+            <!-- Hosts -->
+            <div class="mb-6">
+              <p class="text-sm text-neutral-500 mb-3">HOSTS</p>
+              <div class="flex gap-3">
+                <div class="flex items-center gap-2 px-3 py-2 bg-neutral-900 rounded-full">
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=30&h=30&fit=crop" class="w-6 h-6 rounded-full object-cover">
+                  <span class="text-sm">DJ Mess</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Latest Episodes -->
+            <div class="mb-6">
+              <div class="flex items-center justify-between mb-3">
+                <p class="font-bold">Episodes</p>
+                <button class="text-hot text-sm">See All</button>
+              </div>
+              <div class="space-y-2">
+                <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                  <div class="w-12 h-12 rounded bg-neutral-800 flex items-center justify-center">
+                    <span>▶</span>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-medium">Episode 47: Care First</p>
+                    <p class="text-xs text-neutral-500">Jan 25 • 1h 58m</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                  <div class="w-12 h-12 rounded bg-neutral-800 flex items-center justify-center">
+                    <span>▶</span>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-medium">Episode 46: Community Talk</p>
+                    <p class="text-xs text-neutral-500">Jan 18 • 2h 05m</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sponsor -->
+            <div class="glass rounded-xl p-4 border border-purple-500/30">
+              <p class="text-xs text-neutral-500 mb-2">SPONSORED BY</p>
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-lg bg-hot/20 flex items-center justify-center">💧</div>
+                <div>
+                  <p class="font-bold">HNH MESS</p>
+                  <p class="text-xs text-neutral-400">The only lube with real aftercare</p>
+                </div>
+              </div>
+              <button class="text-purple-400 text-sm mt-2">Sponsor this show →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. EPISODE DETAIL -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Episode Detail</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Episode</h1>
+          </div>
+
+          <!-- Episode Info -->
+          <div class="flex gap-4 mb-6">
+            <div class="w-24 h-24 rounded-xl bg-lime/20 flex items-center justify-center shrink-0">
+              <span class="text-4xl">🎙️</span>
+            </div>
+            <div>
+              <p class="text-xs text-neutral-500">Hand N Hand • EP47</p>
+              <h2 class="font-bold text-lg">Care First</h2>
+              <p class="text-sm text-neutral-400">Jan 25, 2026 • 1h 58m</p>
+            </div>
+          </div>
+
+          <!-- Player -->
+          <div class="glass rounded-xl p-4 mb-6">
+            <div class="flex items-center gap-3 mb-4">
+              <button class="w-14 h-14 rounded-full bg-hot flex items-center justify-center text-2xl">▶</button>
+              <div class="flex-1">
+                <div class="h-2 bg-neutral-700 rounded-full overflow-hidden">
+                  <div class="h-full w-1/4 bg-hot rounded-full"></div>
+                </div>
+                <div class="flex justify-between text-xs text-neutral-500 mt-1">
+                  <span>29:45</span>
+                  <span>1:58:00</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-around">
+              <button class="text-neutral-400">⏪ 15s</button>
+              <button class="text-neutral-400">1x</button>
+              <button class="text-neutral-400">15s ⏩</button>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-6">
+            <p class="font-bold mb-2">About</p>
+            <p class="text-neutral-400 text-sm leading-relaxed">
+              In this episode, we dive deep into what aftercare really means - not just in the bedroom, but in our daily lives. Plus exclusive new music from SMASH DADDYS and community call-ins.
+            </p>
+          </div>
+
+          <!-- Chapters -->
+          <div class="mb-6">
+            <p class="font-bold mb-3">Chapters</p>
+            <div class="space-y-2">
+              <button class="w-full flex items-center gap-3 p-3 bg-neutral-900 rounded-xl text-left">
+                <span class="text-xs text-neutral-500 w-12">00:00</span>
+                <span class="text-sm">Intro & Consent Cue</span>
+              </button>
+              <button class="w-full flex items-center gap-3 p-3 bg-hot/20 rounded-xl text-left border border-hot">
+                <span class="text-xs text-hot w-12">29:45</span>
+                <span class="text-sm text-hot">Care First Discussion</span>
+              </button>
+              <button class="w-full flex items-center gap-3 p-3 bg-neutral-900 rounded-xl text-left">
+                <span class="text-xs text-neutral-500 w-12">1:15:00</span>
+                <span class="text-sm">Wetter Watch</span>
+              </button>
+              <button class="w-full flex items-center gap-3 p-3 bg-neutral-900 rounded-xl text-left">
+                <span class="text-xs text-neutral-500 w-12">1:45:00</span>
+                <span class="text-sm">Closing Affirmation</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-3">
+            <button class="flex-1 bg-neutral-800 py-3 rounded-xl text-sm">↓ Download</button>
+            <button class="flex-1 bg-neutral-800 py-3 rounded-xl text-sm">↗ Share</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. RELEASES LIST -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. Releases</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">Releases</h1>
+            <button class="text-neutral-400 text-sm">RAW CONVICT ›</button>
+          </div>
+
+          <!-- Featured Release -->
+          <div class="glass rounded-xl overflow-hidden mb-6 border border-hot/30">
+            <div class="relative">
+              <img src="https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=400&h=200&fit=crop" class="w-full h-40 object-cover">
+              <div class="absolute top-2 left-2 px-2 py-1 rounded bg-hot text-xs font-bold">NEW</div>
+            </div>
+            <div class="p-4">
+              <p class="text-xs text-neutral-500">Single • 2026</p>
+              <h3 class="font-bold text-lg">HNH MESS</h3>
+              <p class="text-neutral-400 mb-3">SMASH DADDYS</p>
+              <div class="flex gap-3">
+                <button class="flex-1 bg-hot text-white py-2 rounded-lg font-bold text-sm">Play</button>
+                <button class="flex-1 bg-neutral-800 py-2 rounded-lg text-sm">Buy £2.99</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- All Releases -->
+          <p class="text-sm text-neutral-500 mb-3">All Releases</p>
+          <div class="space-y-3 pb-8">
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=60&h=60&fit=crop" class="w-14 h-14 rounded-lg object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Now That's A HOTMESS Vol.1</p>
+                <p class="text-xs text-neutral-500">Compilation • 2026</p>
+              </div>
+              <button class="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">▶</button>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=60&h=60&fit=crop" class="w-14 h-14 rounded-lg object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Club Cuts Vol. 1</p>
+                <p class="text-xs text-neutral-500">EP • 2025</p>
+              </div>
+              <button class="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">▶</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. RELEASE DETAIL -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Release Detail</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black">
+          <div class="relative">
+            <img src="https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=400&h=300&fit=crop" class="w-full h-64 object-cover">
+            <div class="absolute top-4 left-4"><button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">←</button></div>
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-24"></div>
+          </div>
+
+          <div class="px-4 -mt-8 relative pb-8">
+            <p class="text-xs text-neutral-500 mb-1">Single • 2026</p>
+            <h1 class="text-3xl font-black mb-1">HNH MESS</h1>
+            <p class="text-neutral-400 mb-4">SMASH DADDYS</p>
+
+            <div class="flex gap-3 mb-6">
+              <button class="flex-1 bg-hot text-white py-3 rounded-xl font-bold">▶ Play</button>
+              <button class="w-14 bg-neutral-800 rounded-xl flex items-center justify-center">♡</button>
+              <button class="w-14 bg-neutral-800 rounded-xl flex items-center justify-center">↗</button>
+            </div>
+
+            <!-- Track List -->
+            <div class="mb-6">
+              <p class="font-bold mb-3">Tracks</p>
+              <div class="space-y-2">
+                <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl border border-hot">
+                  <span class="text-neutral-500 w-6">1</span>
+                  <div class="flex-1">
+                    <p class="font-medium">HNH MESS (Original Mix)</p>
+                    <p class="text-xs text-neutral-500">3:42</p>
+                  </div>
+                  <button class="w-10 h-10 rounded-full bg-hot flex items-center justify-center">▶</button>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                  <span class="text-neutral-500 w-6">2</span>
+                  <div class="flex-1">
+                    <p class="font-medium">HNH MESS (Extended)</p>
+                    <p class="text-xs text-neutral-500">6:15</p>
+                  </div>
+                  <button class="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">▶</button>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                  <span class="text-neutral-500 w-6">3</span>
+                  <div class="flex-1">
+                    <p class="font-medium">HNH MESS (Dub)</p>
+                    <p class="text-xs text-neutral-500">5:30</p>
+                  </div>
+                  <button class="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">▶</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- About -->
+            <div class="mb-6">
+              <p class="font-bold mb-2">About</p>
+              <p class="text-neutral-400 text-sm leading-relaxed">
+                The official anthem of HNH MESS lube. Produced by SMASH DADDYS for RAW CONVICT RECORDS. Every purchase includes a digital download.
+              </p>
+            </div>
+
+            <!-- Buy -->
+            <div class="glass rounded-xl p-4 border border-lime/30">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <p class="font-bold">Buy this release</p>
+                  <p class="text-sm text-neutral-400">WAV + MP3 download</p>
+                </div>
+                <span class="text-xl font-bold">£2.99</span>
+              </div>
+              <button class="w-full bg-lime text-black py-3 rounded-xl font-bold">
+                BUY NOW
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. ARTISTS LIST -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. Artists</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <h1 class="text-2xl font-black mb-6">Artists</h1>
+
+          <div class="space-y-4 pb-8">
+            <!-- Featured -->
+            <div class="glass rounded-xl p-4 border border-hot/30">
+              <div class="flex items-center gap-4">
+                <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=80&h=80&fit=crop" class="w-20 h-20 rounded-full object-cover">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-lg">SMASH DADDYS</h3>
+                    <span class="px-2 py-0.5 rounded bg-hot/20 text-hot text-xs">RESIDENT</span>
+                  </div>
+                  <p class="text-sm text-neutral-400">House • 12 releases</p>
+                  <p class="text-xs text-lime mt-1">45K plays</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Other Artists -->
+            <div class="flex items-center gap-3 p-4 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop" class="w-14 h-14 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-bold">DJ Mess</p>
+                <p class="text-xs text-neutral-500">Techno • 5 releases</p>
+              </div>
+              <button class="px-4 py-2 rounded-lg bg-neutral-800 text-sm">Follow</button>
+            </div>
+
+            <div class="flex items-center gap-3 p-4 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop" class="w-14 h-14 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-bold">Night Owl</p>
+                <p class="text-xs text-neutral-500">Deep House • 3 releases</p>
+              </div>
+              <button class="px-4 py-2 rounded-lg bg-neutral-800 text-sm">Follow</button>
+            </div>
+
+            <div class="flex items-center gap-3 p-4 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=60&h=60&fit=crop" class="w-14 h-14 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-bold">Basement Kid</p>
+                <p class="text-xs text-neutral-500">Acid • 2 releases</p>
+              </div>
+              <button class="px-4 py-2 rounded-lg bg-neutral-800 text-sm">Follow</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. SCHEDULE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. Schedule</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <h1 class="text-2xl font-black mb-6">Schedule</h1>
+
+          <!-- Day Selector -->
+          <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-medium whitespace-nowrap">Today</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Tomorrow</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Fri</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Sat</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Sun</button>
+          </div>
+
+          <!-- Schedule -->
+          <div class="space-y-2 pb-8">
+            <div class="flex items-center gap-3 p-3 bg-hot/20 rounded-xl border border-hot">
+              <div class="text-center w-14">
+                <p class="text-xs text-neutral-500">NOW</p>
+                <p class="font-bold text-hot">LIVE</p>
+              </div>
+              <div class="flex-1">
+                <p class="font-bold">Wake The Mess</p>
+                <p class="text-xs text-neutral-400">Morning energy</p>
+              </div>
+              <button class="px-3 py-1.5 rounded-lg bg-hot text-white text-sm">Listen</button>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <div class="text-center w-14">
+                <p class="font-bold">11:00</p>
+              </div>
+              <div class="flex-1">
+                <p class="font-medium">Lunchtime Groove</p>
+                <p class="text-xs text-neutral-500">House classics</p>
+              </div>
+              <button class="text-neutral-400 text-sm">🔔</button>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <div class="text-center w-14">
+                <p class="font-bold">14:00</p>
+              </div>
+              <div class="flex-1">
+                <p class="font-medium">Afternoon Techno</p>
+                <p class="text-xs text-neutral-500">Dark beats</p>
+              </div>
+              <button class="text-neutral-400 text-sm">🔔</button>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <div class="text-center w-14">
+                <p class="font-bold">18:00</p>
+              </div>
+              <div class="flex-1">
+                <p class="font-medium">Pre-Game Mix</p>
+                <p class="text-xs text-neutral-500">Getting ready</p>
+              </div>
+              <button class="text-neutral-400 text-sm">🔔</button>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl border border-lime/30">
+              <div class="text-center w-14">
+                <p class="font-bold">20:00</p>
+              </div>
+              <div class="flex-1">
+                <p class="font-medium text-lime">Hand N Hand</p>
+                <p class="text-xs text-neutral-400">Care-first vibes</p>
+              </div>
+              <button class="text-lime text-sm">📅</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. PLAYLISTS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">9. Playlists</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <h1 class="text-2xl font-black mb-6">Playlists</h1>
+
+          <div class="grid grid-cols-2 gap-3 pb-8">
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <div class="h-32 bg-gradient-to-br from-hot/30 to-purple-500/30 flex items-center justify-center">
+                <span class="text-4xl">🔥</span>
+              </div>
+              <div class="p-3">
+                <p class="font-bold">HOTMESS Hits</p>
+                <p class="text-xs text-neutral-500">24 tracks</p>
+              </div>
+            </div>
+
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <div class="h-32 bg-gradient-to-br from-cyan/30 to-lime/30 flex items-center justify-center">
+                <span class="text-4xl">🌙</span>
+              </div>
+              <div class="p-3">
+                <p class="font-bold">Late Night</p>
+                <p class="text-xs text-neutral-500">18 tracks</p>
+              </div>
+            </div>
+
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <div class="h-32 bg-gradient-to-br from-lime/30 to-yellow-500/30 flex items-center justify-center">
+                <span class="text-4xl">☀️</span>
+              </div>
+              <div class="p-3">
+                <p class="font-bold">Morning Energy</p>
+                <p class="text-xs text-neutral-500">15 tracks</p>
+              </div>
+            </div>
+
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <div class="h-32 bg-gradient-to-br from-purple-500/30 to-hot/30 flex items-center justify-center">
+                <span class="text-4xl">💜</span>
+              </div>
+              <div class="p-3">
+                <p class="font-bold">Aftercare</p>
+                <p class="text-xs text-neutral-500">12 tracks</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. PRE-LAUNCH COUNTDOWN -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">10. Pre-Launch Countdown</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black flex flex-col items-center justify-center text-center px-8">
+          <div class="w-40 h-40 rounded-full bg-hot/20 flex items-center justify-center mb-8">
+            <span class="text-6xl">🔥</span>
+          </div>
+
+          <h1 class="text-3xl font-black mb-2">DROPPING SOON</h1>
+          <p class="text-neutral-400 mb-8">Now That's A HOTMESS Vol.1</p>
+
+          <!-- Countdown -->
+          <div class="flex gap-4 mb-8">
+            <div class="glass rounded-xl p-4 w-20">
+              <p class="text-3xl font-black text-hot">02</p>
+              <p class="text-xs text-neutral-500">DAYS</p>
+            </div>
+            <div class="glass rounded-xl p-4 w-20">
+              <p class="text-3xl font-black text-hot">14</p>
+              <p class="text-xs text-neutral-500">HOURS</p>
+            </div>
+            <div class="glass rounded-xl p-4 w-20">
+              <p class="text-3xl font-black text-hot">32</p>
+              <p class="text-xs text-neutral-500">MINS</p>
+            </div>
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-3">
+            NOTIFY ME
+          </button>
+          <button class="w-full bg-neutral-800 text-white py-3 rounded-xl">
+            📅 ADD TO CALENDAR
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. WETTER WATCH -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">11. Wetter Watch Segment</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-gradient-to-b from-cyan/20 to-black flex flex-col items-center justify-center text-center px-8">
+          <div class="w-32 h-32 rounded-full bg-cyan/30 flex items-center justify-center mb-6">
+            <span class="text-6xl">💧</span>
+          </div>
+
+          <span class="px-3 py-1 rounded-full bg-cyan text-black text-xs font-bold mb-4">WETTER WATCH</span>
+
+          <h1 class="text-3xl font-black mb-2">Tonight's Forecast</h1>
+          <p class="text-neutral-400 mb-6">Saturday 8pm-4am</p>
+
+          <div class="w-full glass rounded-xl p-6 mb-6">
+            <div class="flex items-center justify-center gap-2 mb-4">
+              <span class="text-4xl">💦</span>
+              <span class="text-5xl font-black text-cyan">92%</span>
+            </div>
+            <p class="text-sm text-neutral-400">
+              High chance of getting soaked at XXL tonight. 
+              Bring your towel. HNH MESS recommended.
+            </p>
+          </div>
+
+          <div class="w-full space-y-2 text-left text-sm">
+            <div class="flex justify-between p-3 bg-neutral-900/50 rounded-lg">
+              <span class="text-neutral-400">XXL London</span>
+              <span class="text-cyan font-bold">92% 💦</span>
+            </div>
+            <div class="flex justify-between p-3 bg-neutral-900/50 rounded-lg">
+              <span class="text-neutral-400">Heaven</span>
+              <span class="text-lime font-bold">78% 💧</span>
+            </div>
+            <div class="flex justify-between p-3 bg-neutral-900/50 rounded-lg">
+              <span class="text-neutral-400">Fire</span>
+              <span class="text-yellow-400 font-bold">65% 💧</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. SUBMIT RELEASE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">12. Submit Release</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Submit Release</h1>
+          </div>
+
+          <p class="text-neutral-400 text-sm mb-6">
+            Pitch your music to RAW CONVICT RECORDS. We review all submissions.
+          </p>
+
+          <div class="space-y-4 pb-8">
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Artist/Project Name</label>
+              <input type="text" placeholder="Your artist name" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Demo Link</label>
+              <input type="url" placeholder="SoundCloud or private link" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Genre</label>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">House</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Techno</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Disco</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Other</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">About your release</label>
+              <textarea rows="4" placeholder="Tell us about your music..." class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none resize-none"></textarea>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Social Links</label>
+              <input type="text" placeholder="Instagram, SoundCloud, etc." class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            </div>
+
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+              SUBMIT FOR REVIEW
+            </button>
+
+            <p class="text-center text-neutral-600 text-xs">
+              We typically respond within 2-4 weeks
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 13 • Music Deep Dive</p>
+  </footer>
+</body>
+</html>

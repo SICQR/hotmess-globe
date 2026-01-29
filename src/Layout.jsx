@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield } from 'lucide-react';
+import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, Calendar as CalendarIcon, Search, Shield } from 'lucide-react';
 import { base44 } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import PanicButton from '@/components/safety/PanicButton';
@@ -30,18 +30,19 @@ import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
 import { ScrollProgress } from '@/components/navigation/ScrollProgress.tsx';
 import AftercareNudge from '@/components/safety/AftercareNudge';
 import { StreakBadge } from '@/components/gamification/StreakCounter';
+import BottomNav from '@/components/navigation/BottomNav';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
         { name: 'PULSE', icon: GlobeIcon, path: 'Pulse' },
         { name: 'EVENTS', icon: CalendarIcon, path: 'Events' },
         { name: 'MARKET', icon: ShoppingBag, path: 'Marketplace', href: '/market' },
-        { name: 'SOCIAL', icon: Users, path: 'Social', showBadge: true },
+        { name: 'PEOPLE', icon: Users, path: 'Social', showBadge: true },
         { name: 'MUSIC', icon: RadioIcon, path: 'Music' },
+        { name: 'SAFETY', icon: Shield, path: 'Care' },
         { name: 'MORE', icon: Menu, path: 'More' },
       ];
 
-      const SECONDARY_NAV = [];
 
 // Aftercare Nudge wrapper - listens for safety check-in completion
 function AftercareNudgeWrapper({ userName }) {
@@ -69,7 +70,7 @@ function AftercareNudgeWrapper({ userName }) {
         }
         localStorage.removeItem('aftercare_pending');
       }
-    } catch (e) {
+    } catch {
       // Ignore storage errors
     }
 
@@ -88,7 +89,6 @@ function AftercareNudgeWrapper({ userName }) {
 }
 
 function LayoutInner({ children, currentPageName }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
@@ -135,6 +135,9 @@ function LayoutInner({ children, currentPageName }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        // Pages that should bypass age gate check
+        const bypassAgeGate = ['AgeGate', 'Auth', 'OnboardingGate', 'PrivacyPolicy', 'TermsOfService'];
+        
         // Check age verification first (session-based)
         let ageVerified = null;
         try {
@@ -142,11 +145,14 @@ function LayoutInner({ children, currentPageName }) {
         } catch {
           ageVerified = null;
         }
-        if (!ageVerified && currentPageName !== 'AgeGate') {
+        
+        // Only redirect to age gate if not verified AND not on a bypass page
+        // Authenticated users still need to pass age gate once per session
+        if (!ageVerified && !bypassAgeGate.includes(currentPageName)) {
           window.location.href = createPageUrl('AgeGate') + `?next=${encodeURIComponent(window.location.pathname)}`;
           return;
         }
-
+        
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
           setUser(null);
@@ -392,30 +398,17 @@ function LayoutInner({ children, currentPageName }) {
         <div className="min-h-[100svh] bg-black text-white">
       {shouldShowChrome && (
         <>
-          {/* Mobile Header */}
+          {/* Mobile Header - Simplified for London OS */}
           <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10 pt-[env(safe-area-inset-top)]">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-2">
                 <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
-                  HOTMESS
+                  HOT<span className="text-[#FF1493]">MESS</span>
                 </Link>
-                {user?.id && <StreakBadge userId={user.id} />}
+                <span className="text-[8px] text-white/40 uppercase tracking-wider hidden sm:inline">London OS</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Link
-                  to={createPageUrl('Care')}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                  aria-label="Open care"
-                >
-                  <Shield className="w-5 h-5" />
-                </Link>
-                <Link
-                  to={createPageUrl('Settings')}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                  aria-label="Open settings"
-                >
-                  <Settings className="w-5 h-5" />
-                </Link>
+              <div className="flex items-center gap-1">
+                {user && <NotificationCenter currentUser={user} />}
                 <button
                   onClick={() => setShowSearch(true)}
                   className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
@@ -432,123 +425,9 @@ function LayoutInner({ children, currentPageName }) {
                 >
                   <RadioIcon className="w-5 h-5" />
                 </button>
-                {user && <NotificationCenter currentUser={user} />}
-                <button
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                  aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-                  aria-expanded={mobileMenuOpen}
-                >
-                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                </button>
               </div>
             </div>
           </div>
-
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="md:hidden fixed inset-0 z-40 bg-black/95 backdrop-blur-xl pt-[calc(4rem+env(safe-area-inset-top))]">
-              <div className="flex flex-col p-4">
-                {/* Admin Link - Mobile */}
-                {user && user.role === 'admin' && (
-                  <Link
-                    to={createPageUrl('AdminDashboard')}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2.5 mb-4 transition-all border-2 bg-red-600/20 border-red-600 text-red-400 hover:bg-red-600/30"
-                  >
-                    <Shield className="w-4 h-4" />
-                    <span className="font-black uppercase tracking-wider text-xs">ADMIN</span>
-                  </Link>
-                )}
-
-                {/* Promote to Admin Link - Mobile */}
-                {user && user.role !== 'admin' && (
-                  <Link
-                    to={createPageUrl('PromoteToAdmin')}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2.5 mb-4 transition-all border-2 bg-yellow-600/20 border-yellow-600 text-yellow-400 hover:bg-yellow-600/30"
-                  >
-                    <Shield className="w-4 h-4" />
-                    <span className="font-black uppercase tracking-wider text-xs">BECOME ADMIN</span>
-                  </Link>
-                )}
-
-                <div className="mb-2">
-                  <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-2 px-3">PRIMARY</p>
-                  {PRIMARY_NAV.map(({ name, icon: Icon, path, href, showBadge }) => (
-                    <Link
-                      key={path}
-                      to={href || createPageUrl(path)}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`
-                        flex items-center gap-3 px-3 py-2.5 mb-1 transition-all
-                        ${isActive(path)
-                          ? 'bg-[#FF1493] text-black border-2 border-[#FF1493]'
-                          : 'text-white/60 hover:text-white hover:bg-white/5 border-2 border-white/10'
-                        }
-                      `}
-                    >
-                      {showBadge && user ? (
-                        <NotificationBadge user={user} />
-                      ) : (
-                        <Icon className="w-4 h-4" />
-                      )}
-                      <span className="font-black uppercase tracking-wider text-xs">{name}</span>
-                    </Link>
-                  ))}
-                </div>
-                <div>
-                  <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-2 px-3 mt-4">MORE</p>
-                  {SECONDARY_NAV.map(({ name, icon: Icon, path }) => (
-                    <Link
-                      key={path}
-                      to={createPageUrl(path)}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`
-                        flex items-center gap-3 px-3 py-2 mb-1 transition-all
-                        ${isActive(path)
-                          ? 'text-[#FF1493] border-l-2 border-[#FF1493]'
-                          : 'text-white/40 hover:text-white/60 border-l-2 border-white/5'
-                        }
-                      `}
-                    >
-                      <Icon className="w-3 h-3" />
-                      <span className="font-bold uppercase tracking-wider text-[10px]">{name}</span>
-                    </Link>
-                  ))}
-                </div>
-                <Link 
-                  to={createPageUrl('Settings')}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="mt-6 flex items-center gap-2 px-3 py-2 text-white/40 hover:text-white/60 border-t border-white/10 pt-4"
-                >
-                  <Settings className="w-4 h-4" />
-                  <span className="text-xs uppercase tracking-wider font-bold">Settings</span>
-                </Link>
-                {user ? (
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      base44.auth.logout();
-                    }}
-                    className="w-full text-left px-3 py-2 text-white/60 hover:text-white border border-white/10 text-xs uppercase tracking-wider font-bold mt-2"
-                  >
-                    Logout
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      base44.auth.redirectToLogin();
-                    }}
-                    className="w-full text-left px-3 py-2 bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black text-xs uppercase tracking-wider font-bold mt-2"
-                  >
-                    Login
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Desktop Sidebar - Smart Nav */}
           <div className="hidden md:flex md:fixed md:left-0 md:top-0 md:bottom-0 md:w-56 md:flex-col md:bg-black md:backdrop-blur-xl md:border-r-2 md:border-white md:z-40">
@@ -694,7 +573,7 @@ function LayoutInner({ children, currentPageName }) {
           isPulsePage
             ? 'min-w-0'
             : shouldShowChrome
-              ? 'md:ml-56 pt-[calc(3.5rem+env(safe-area-inset-top))] md:pt-0 min-w-0'
+              ? 'md:ml-56 pt-[calc(3.5rem+env(safe-area-inset-top))] md:pt-0 pb-20 md:pb-0 min-w-0'
               : 'min-w-0'
         }
         role="main"
@@ -737,6 +616,9 @@ function LayoutInner({ children, currentPageName }) {
 
       {/* Cookie Consent Banner */}
       <CookieConsent />
+
+      {/* Bottom Navigation for Mobile */}
+      {shouldShowChrome && <BottomNav currentPageName={currentPageName} user={user} />}
       </div>
         </TaxonomyProvider>
       </ErrorBoundary>

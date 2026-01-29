@@ -104,16 +104,19 @@ export default function PanicButton() {
     window.location.replace('https://www.google.com');
   };
 
+  // SAFETY FIRST: Panic button should ALWAYS be visible and accessible
+  // This is a critical safety feature - never hide it
   return (
     <>
       <Button
         onClick={() => setShowConfirm(true)}
         variant="ghost"
         size="sm"
-        className="fixed bottom-4 right-4 z-[60] bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-500"
+        className="flex fixed bottom-20 md:bottom-4 left-4 z-[60] bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-400 backdrop-blur-sm shadow-lg"
+        aria-label="Emergency SOS panic button"
       >
-        <AlertTriangle className="w-4 h-4 mr-2" />
-        PANIC
+        <AlertTriangle className="w-4 h-4 mr-1" />
+        <span className="text-xs font-black uppercase">SOS</span>
       </Button>
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>

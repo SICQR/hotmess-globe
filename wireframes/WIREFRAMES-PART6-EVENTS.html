@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 6: Events & Pulse Map</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #000;
+      border-radius: 40px;
+      border: 8px solid #1a1a1a;
+      overflow: hidden;
+      position: relative;
+    }
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: #1a1a1a;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+    .screen-content {
+      height: 100%;
+      overflow-y: auto;
+      padding-top: 40px;
+    }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .text-purple { color: #B026FF; }
+    .text-gold { color: #FFD700; }
+    .bg-hot { background-color: #FF1493; }
+    .bg-cyan { background-color: #00D9FF; }
+    .bg-lime { background-color: #39FF14; }
+    .bg-purple { background-color: #B026FF; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, #000 80%, transparent);
+      padding: 20px 16px 30px;
+    }
+  </style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  
+  <!-- Header -->
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 6: Events & Pulse Map • 10 Screens</p>
+  </header>
+
+  <!-- Screen Grid -->
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. EVENT DETAIL -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. Event Detail</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black">
+          <!-- Hero -->
+          <div class="relative h-64">
+            <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=300&fit=crop" class="w-full h-full object-cover">
+            <div class="absolute top-4 left-4">
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">←</button>
+            </div>
+            <div class="absolute top-4 right-4 flex gap-2">
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">♡</button>
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">↗</button>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-24"></div>
+          </div>
+
+          <!-- Content -->
+          <div class="px-4 -mt-6 relative pb-32">
+            <!-- Badge -->
+            <div class="flex gap-2 mb-3">
+              <span class="px-3 py-1 rounded-full bg-hot text-white text-xs font-bold">TONIGHT</span>
+              <span class="px-3 py-1 rounded-full bg-cyan/20 text-cyan text-xs font-bold">VERIFIED</span>
+            </div>
+
+            <h1 class="text-3xl font-black mb-1">MEAT RACK</h1>
+            <p class="text-neutral-400 mb-4">by XXL London</p>
+
+            <!-- Quick Info -->
+            <div class="flex flex-wrap gap-3 mb-6">
+              <div class="flex items-center gap-2 text-sm">
+                <span>📅</span>
+                <span>Sat, Jan 31 • 10pm - 4am</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm">
+                <span>📍</span>
+                <span>XXL London, SE1</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm">
+                <span>💷</span>
+                <span>£15 - £25</span>
+              </div>
+            </div>
+
+            <!-- Attendance -->
+            <div class="glass rounded-xl p-4 mb-6">
+              <div class="flex items-center justify-between">
+                <div class="flex -space-x-3">
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop" class="w-10 h-10 rounded-full border-2 border-black object-cover">
+                  <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=50&h=50&fit=crop" class="w-10 h-10 rounded-full border-2 border-black object-cover">
+                  <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=50&h=50&fit=crop" class="w-10 h-10 rounded-full border-2 border-black object-cover">
+                  <div class="w-10 h-10 rounded-full bg-neutral-800 border-2 border-black flex items-center justify-center text-xs">+125</div>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold text-lime">128 going</p>
+                  <p class="text-xs text-neutral-500">12 friends</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-6">
+              <h3 class="font-bold mb-2">About</h3>
+              <p class="text-neutral-400 text-sm leading-relaxed">
+                London's biggest gay club night returns! Three rooms of music, go-go dancers, and the famous dark room. Dress code: Leather, rubber, or naked.
+              </p>
+              <button class="text-hot text-sm mt-2">Read more</button>
+            </div>
+
+            <!-- Tags -->
+            <div class="flex flex-wrap gap-2 mb-6">
+              <span class="px-3 py-1.5 rounded-full bg-neutral-800 text-sm">Techno</span>
+              <span class="px-3 py-1.5 rounded-full bg-neutral-800 text-sm">Leather</span>
+              <span class="px-3 py-1.5 rounded-full bg-neutral-800 text-sm">Cruising</span>
+              <span class="px-3 py-1.5 rounded-full bg-neutral-800 text-sm">18+</span>
+            </div>
+
+            <!-- Venue -->
+            <div class="glass rounded-xl p-4 mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-16 h-16 rounded-xl bg-neutral-800 flex items-center justify-center">
+                  <span class="text-2xl">🏢</span>
+                </div>
+                <div class="flex-1">
+                  <p class="font-bold">XXL London</p>
+                  <p class="text-sm text-neutral-400">51-53 Southwark St, SE1 1RU</p>
+                </div>
+                <button class="text-hot text-sm">Map</button>
+              </div>
+            </div>
+
+            <!-- Tickets -->
+            <div class="mb-6">
+              <h3 class="font-bold mb-3">Tickets</h3>
+              <div class="space-y-2">
+                <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center justify-between">
+                  <div>
+                    <p class="font-medium">Early Bird</p>
+                    <p class="text-sm text-neutral-500">Limited availability</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="font-bold text-hot">£15</p>
+                    <p class="text-xs text-red-400">5 left</p>
+                  </div>
+                </button>
+                <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center justify-between border border-hot">
+                  <div>
+                    <p class="font-medium">Standard</p>
+                    <p class="text-sm text-neutral-500">General admission</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="font-bold">£20</p>
+                  </div>
+                </button>
+                <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center justify-between">
+                  <div>
+                    <p class="font-medium">VIP</p>
+                    <p class="text-sm text-neutral-500">Skip the queue + drink</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="font-bold">£35</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fixed Bottom -->
+          <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black to-transparent pt-12">
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+              RSVP — £20
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Full event detail with tickets and attendance.</p>
+    </section>
+
+    <!-- 2. RSVP CONFIRMATION -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. RSVP Confirmation</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black flex flex-col items-center justify-center text-center px-8">
+          <!-- Success -->
+          <div class="w-24 h-24 rounded-full bg-lime/20 flex items-center justify-center mb-6">
+            <span class="text-5xl">✓</span>
+          </div>
+
+          <h1 class="text-3xl font-black mb-2">You're Going!</h1>
+          <p class="text-neutral-400 mb-8">MEAT RACK • Sat, Jan 31</p>
+
+          <!-- Ticket -->
+          <div class="w-full glass rounded-2xl p-6 mb-6 border border-neutral-700">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-hot font-bold">HOTMESS</span>
+              <span class="text-xs text-neutral-500">#TKT-2026-0131</span>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4 mb-4">
+              <!-- QR Placeholder -->
+              <div class="w-32 h-32 mx-auto bg-neutral-100 rounded flex items-center justify-center">
+                <span class="text-6xl">📱</span>
+              </div>
+            </div>
+
+            <p class="font-bold text-lg">Standard Admission</p>
+            <p class="text-neutral-400">1 ticket • £20.00</p>
+          </div>
+
+          <!-- Actions -->
+          <div class="w-full space-y-3">
+            <button class="w-full bg-neutral-800 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2">
+              <span>📅</span> Add to Calendar
+            </button>
+            <button class="w-full bg-neutral-800 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2">
+              <span>↗</span> Share with Friends
+            </button>
+            <button class="w-full bg-cyan text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2">
+              <span>👥</span> Squad Up
+            </button>
+          </div>
+
+          <p class="text-neutral-600 text-xs mt-8">
+            Show this QR code at the door
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Post-RSVP with ticket and calendar add.</p>
+    </section>
+
+    <!-- 3. MY EVENTS / TICKETS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. My Events</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black">
+          <!-- Header -->
+          <div class="px-4 pb-4">
+            <h1 class="text-2xl font-black mb-4">My Events</h1>
+            
+            <!-- Tabs -->
+            <div class="flex gap-2">
+              <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-medium">Upcoming</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Past</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Saved</button>
+            </div>
+          </div>
+
+          <!-- Events List -->
+          <div class="px-4 space-y-4 pb-32">
+            <!-- Upcoming Event -->
+            <div class="glass rounded-xl overflow-hidden border border-hot/30">
+              <div class="relative h-32">
+                <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=200&fit=crop" class="w-full h-full object-cover">
+                <div class="absolute top-2 left-2">
+                  <span class="px-2 py-1 rounded bg-hot text-white text-xs font-bold">TOMORROW</span>
+                </div>
+              </div>
+              <div class="p-4">
+                <h3 class="font-bold text-lg">MEAT RACK</h3>
+                <p class="text-sm text-neutral-400 mb-3">Sat, Jan 31 • 10pm • XXL London</p>
+                <div class="flex gap-2">
+                  <button class="flex-1 bg-hot text-white py-2 rounded-lg text-sm font-medium">View Ticket</button>
+                  <button class="flex-1 bg-neutral-800 py-2 rounded-lg text-sm">Directions</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Future Event -->
+            <div class="glass rounded-xl overflow-hidden">
+              <div class="relative h-32">
+                <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=200&fit=crop" class="w-full h-full object-cover">
+                <div class="absolute top-2 left-2">
+                  <span class="px-2 py-1 rounded bg-cyan text-black text-xs font-bold">IN 2 WEEKS</span>
+                </div>
+              </div>
+              <div class="p-4">
+                <h3 class="font-bold text-lg">ORANGE NATION</h3>
+                <p class="text-sm text-neutral-400 mb-3">Sat, Feb 14 • 11pm • Fire</p>
+                <div class="flex gap-2">
+                  <button class="flex-1 bg-neutral-700 text-white py-2 rounded-lg text-sm font-medium">View Details</button>
+                  <button class="flex-1 bg-neutral-800 py-2 rounded-lg text-sm">Cancel RSVP</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ticket to Sell -->
+            <div class="glass rounded-xl p-4 border border-yellow-500/30">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="text-yellow-500">💰</span>
+                <p class="font-medium">Got tickets you can't use?</p>
+              </div>
+              <p class="text-sm text-neutral-400 mb-3">List them on our resale marketplace</p>
+              <button class="w-full bg-yellow-500 text-black py-2 rounded-lg text-sm font-bold">
+                SELL YOUR TICKET
+              </button>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <div class="bottom-nav">
+            <div class="flex justify-around items-center">
+              <a href="#" class="flex flex-col items-center gap-1 text-neutral-500">
+                <span class="text-xl">🏠</span>
+                <span class="text-xs">Home</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-hot relative">
+                <span class="absolute -top-3 w-12 h-12 rounded-full bg-hot/20"></span>
+                <span class="text-xl relative">📅</span>
+                <span class="text-xs font-medium">Events</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-neutral-500">
+                <span class="text-xl">👥</span>
+                <span class="text-xs">Social</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-neutral-500">
+                <span class="text-xl">🛒</span>
+                <span class="text-xs">Shop</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-neutral-500">
+                <span class="text-xl">≡</span>
+                <span class="text-xs">More</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">User's events with ticket management.</p>
+    </section>
+
+    <!-- 4. PULSE MAP -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Pulse Map</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-neutral-900 relative">
+          <!-- Map Background -->
+          <div class="absolute inset-0 bg-gradient-to-br from-neutral-800 to-neutral-900">
+            <!-- Grid overlay -->
+            <div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px); background-size: 40px 40px;"></div>
+            
+            <!-- Map Pins -->
+            <div class="absolute top-32 left-12">
+              <div class="w-10 h-10 rounded-full bg-hot flex items-center justify-center animate-pulse shadow-lg shadow-hot/50">
+                <span>🎉</span>
+              </div>
+            </div>
+            <div class="absolute top-48 right-16">
+              <div class="w-8 h-8 rounded-full bg-cyan flex items-center justify-center shadow-lg shadow-cyan/50">
+                <span>👤</span>
+              </div>
+            </div>
+            <div class="absolute top-64 left-24">
+              <div class="w-8 h-8 rounded-full bg-cyan flex items-center justify-center shadow-lg shadow-cyan/50">
+                <span>👤</span>
+              </div>
+            </div>
+            <div class="absolute top-80 right-24">
+              <div class="w-10 h-10 rounded-full bg-lime flex items-center justify-center shadow-lg shadow-lime/50">
+                <span>🏢</span>
+              </div>
+            </div>
+            <div class="absolute bottom-48 left-32">
+              <div class="w-8 h-8 rounded-full bg-purple flex items-center justify-center shadow-lg shadow-purple/50">
+                <span>🛍️</span>
+              </div>
+            </div>
+            
+            <!-- Current Location -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <div class="w-4 h-4 rounded-full bg-white border-4 border-hot shadow-lg"></div>
+              <div class="absolute -inset-4 rounded-full bg-hot/20 animate-ping"></div>
+            </div>
+          </div>
+
+          <!-- Top Bar -->
+          <div class="absolute top-12 left-4 right-4">
+            <div class="flex gap-2">
+              <button class="flex-1 px-4 py-3 rounded-xl bg-black/80 backdrop-blur text-left flex items-center gap-2">
+                <span>🔍</span>
+                <span class="text-neutral-400">Search area...</span>
+              </button>
+              <button class="w-12 h-12 rounded-xl bg-black/80 backdrop-blur flex items-center justify-center">
+                <span>⚙️</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Layer Selector -->
+          <div class="absolute top-28 left-4 right-4">
+            <div class="flex gap-2 overflow-x-auto pb-2">
+              <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-medium whitespace-nowrap">All</button>
+              <button class="px-4 py-2 rounded-full bg-black/60 text-white text-sm whitespace-nowrap flex items-center gap-1">
+                <span>🎉</span> Events
+              </button>
+              <button class="px-4 py-2 rounded-full bg-black/60 text-white text-sm whitespace-nowrap flex items-center gap-1">
+                <span>👤</span> People
+              </button>
+              <button class="px-4 py-2 rounded-full bg-black/60 text-white text-sm whitespace-nowrap flex items-center gap-1">
+                <span>🏢</span> Venues
+              </button>
+              <button class="px-4 py-2 rounded-full bg-black/60 text-white text-sm whitespace-nowrap flex items-center gap-1">
+                <span>🛍️</span> Drops
+              </button>
+            </div>
+          </div>
+
+          <!-- Bottom Sheet Preview -->
+          <div class="absolute bottom-0 left-0 right-0 bg-black rounded-t-3xl p-4 pb-8">
+            <div class="w-12 h-1 bg-neutral-700 rounded-full mx-auto mb-4"></div>
+            
+            <div class="flex items-center gap-4">
+              <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100&h=100&fit=crop" class="w-16 h-16 rounded-xl object-cover">
+              <div class="flex-1">
+                <p class="font-bold">MEAT RACK</p>
+                <p class="text-sm text-neutral-400">Tonight @ XXL • 10pm</p>
+                <p class="text-sm text-lime">128 going</p>
+              </div>
+              <button class="px-4 py-2 rounded-lg bg-hot text-white font-bold text-sm">
+                RSVP
+              </button>
+            </div>
+          </div>
+
+          <!-- Zoom Controls -->
+          <div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2">
+            <button class="w-10 h-10 rounded-lg bg-black/80 backdrop-blur flex items-center justify-center text-xl">+</button>
+            <button class="w-10 h-10 rounded-lg bg-black/80 backdrop-blur flex items-center justify-center text-xl">−</button>
+            <button class="w-10 h-10 rounded-lg bg-black/80 backdrop-blur flex items-center justify-center">📍</button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Interactive map with layer filters.</p>
+    </section>
+
+    <!-- 5. SQUAD UP -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. Squad Up</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Squad Up</h1>
+          </div>
+
+          <!-- Event Context -->
+          <div class="glass rounded-xl p-4 mb-6">
+            <div class="flex items-center gap-3">
+              <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=80&h=80&fit=crop" class="w-14 h-14 rounded-lg object-cover">
+              <div>
+                <p class="font-bold">MEAT RACK</p>
+                <p class="text-sm text-neutral-400">Sat, Jan 31 • 10pm</p>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-neutral-400 text-sm mb-4">
+            Invite friends to join you at this event
+          </p>
+
+          <!-- Friends List -->
+          <div class="space-y-2 mb-6">
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop" class="w-12 h-12 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Alex</p>
+                <p class="text-xs text-lime">Already going!</p>
+              </div>
+              <span class="text-lime">✓</span>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=50&h=50&fit=crop" class="w-12 h-12 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Sam</p>
+                <p class="text-xs text-neutral-500">Online</p>
+              </div>
+              <input type="checkbox" class="w-6 h-6 rounded accent-hot">
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=50&h=50&fit=crop" class="w-12 h-12 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Marcus</p>
+                <p class="text-xs text-neutral-500">Last seen 2h ago</p>
+              </div>
+              <input type="checkbox" checked class="w-6 h-6 rounded accent-hot">
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=50&h=50&fit=crop" class="w-12 h-12 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Jordan</p>
+                <p class="text-xs text-neutral-500">Last seen yesterday</p>
+              </div>
+              <input type="checkbox" class="w-6 h-6 rounded accent-hot">
+            </div>
+          </div>
+
+          <!-- Message -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-2 block">Add a message (optional)</label>
+            <textarea rows="2" placeholder="Let's grab drinks before!" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none resize-none"></textarea>
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-3">
+            SEND INVITES (2 selected)
+          </button>
+
+          <!-- Share Link -->
+          <div class="glass rounded-xl p-4 text-center">
+            <p class="text-sm text-neutral-400 mb-2">Or share a link</p>
+            <button class="text-hot font-medium">Copy Event Link</button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Coordinate with friends for events.</p>
+    </section>
+
+    <!-- 6. CREATE EVENT -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Create Event</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-6">
+            <button class="text-neutral-400">Cancel</button>
+            <h1 class="text-lg font-bold">Create Event</h1>
+            <button class="text-hot font-semibold">Post</button>
+          </div>
+
+          <!-- Photo Upload -->
+          <div class="h-40 rounded-xl border-2 border-dashed border-neutral-700 flex flex-col items-center justify-center mb-6">
+            <span class="text-4xl mb-2">🖼️</span>
+            <span class="text-neutral-500">Add cover photo</span>
+          </div>
+
+          <!-- Form -->
+          <div class="space-y-4 pb-8">
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Event Name</label>
+              <input type="text" placeholder="What's the event called?" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Description</label>
+              <textarea rows="3" placeholder="Tell people what to expect..." class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none resize-none"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-sm text-neutral-500 mb-2 block">Date</label>
+                <button class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 text-left text-neutral-400">
+                  Select date
+                </button>
+              </div>
+              <div>
+                <label class="text-sm text-neutral-500 mb-2 block">Time</label>
+                <button class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 text-left text-neutral-400">
+                  Select time
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Location</label>
+              <button class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 text-left flex items-center gap-2">
+                <span>📍</span>
+                <span class="text-neutral-400">Add venue or address</span>
+              </button>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Ticket Price</label>
+              <div class="flex gap-2">
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Free</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Paid</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Tags</label>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-3 py-1.5 rounded-full bg-neutral-800 text-sm">+ Party</button>
+                <button class="px-3 py-1.5 rounded-full bg-neutral-800 text-sm">+ Club</button>
+                <button class="px-3 py-1.5 rounded-full bg-neutral-800 text-sm">+ Fetish</button>
+                <button class="px-3 py-1.5 rounded-full bg-neutral-800 text-sm">+ Add</button>
+              </div>
+            </div>
+
+            <!-- Business Prompt -->
+            <div class="glass rounded-xl p-4 border border-purple/30">
+              <p class="font-medium mb-2">Are you a promoter?</p>
+              <p class="text-sm text-neutral-400 mb-3">Get featured placement and analytics</p>
+              <button class="text-purple font-medium text-sm">Upgrade to Business →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">User-generated event creation.</p>
+    </section>
+
+    <!-- 7. TICKET RESALE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. Ticket Resale</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Resale Tickets</h1>
+          </div>
+
+          <!-- Event -->
+          <div class="glass rounded-xl p-4 mb-4">
+            <div class="flex items-center gap-3">
+              <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=80&h=80&fit=crop" class="w-14 h-14 rounded-lg object-cover">
+              <div>
+                <p class="font-bold">ORANGE NATION</p>
+                <p class="text-sm text-neutral-400">Sat, Feb 14 • Fire</p>
+                <span class="text-xs text-red-400">SOLD OUT</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-neutral-400 text-sm mb-4">
+            Buy verified resale tickets from other HOTMESS users
+          </p>
+
+          <!-- Listings -->
+          <div class="space-y-3 pb-8">
+            <div class="p-4 bg-neutral-900 rounded-xl border border-lime/30">
+              <div class="flex items-center justify-between mb-2">
+                <div>
+                  <p class="font-medium">Standard Admission</p>
+                  <p class="text-xs text-neutral-500">Face value: £20</p>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold text-lg">£22</p>
+                  <p class="text-xs text-lime">+10%</p>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=30&h=30&fit=crop" class="w-6 h-6 rounded-full object-cover">
+                  <span class="text-xs text-neutral-400">@seller123 • ⭐ 4.8</span>
+                </div>
+                <button class="px-4 py-2 rounded-lg bg-hot text-white text-sm font-medium">Buy</button>
+              </div>
+            </div>
+
+            <div class="p-4 bg-neutral-900 rounded-xl">
+              <div class="flex items-center justify-between mb-2">
+                <div>
+                  <p class="font-medium">VIP Entry</p>
+                  <p class="text-xs text-neutral-500">Face value: £35</p>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold text-lg">£40</p>
+                  <p class="text-xs text-yellow-400">+14%</p>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=30&h=30&fit=crop" class="w-6 h-6 rounded-full object-cover">
+                  <span class="text-xs text-neutral-400">@ticketpro • ⭐ 5.0</span>
+                </div>
+                <button class="px-4 py-2 rounded-lg bg-hot text-white text-sm font-medium">Buy</button>
+              </div>
+            </div>
+
+            <!-- Guarantee -->
+            <div class="glass rounded-xl p-4 mt-4">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-lime">✓</span>
+                <p class="font-medium">Ticket Guarantee</p>
+              </div>
+              <p class="text-sm text-neutral-400">
+                Full refund if ticket is invalid or event is cancelled. Max 150% of face value.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">P2P ticket resale with buyer protection.</p>
+    </section>
+
+    <!-- 8. SELL TICKET -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. Sell Ticket</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Sell Your Ticket</h1>
+          </div>
+
+          <!-- Ticket Being Sold -->
+          <div class="glass rounded-xl p-4 mb-6 border border-yellow-500/30">
+            <div class="flex items-center gap-3">
+              <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=80&h=80&fit=crop" class="w-14 h-14 rounded-lg object-cover">
+              <div>
+                <p class="font-bold">ORANGE NATION</p>
+                <p class="text-sm text-neutral-400">Sat, Feb 14 • Fire</p>
+                <p class="text-sm text-neutral-500">Standard • Face value: £20</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Price -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-2 block">Your asking price</label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">£</span>
+              <input type="number" value="22" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 pl-8 text-2xl font-bold focus:border-hot outline-none">
+            </div>
+            <div class="flex justify-between text-sm mt-2">
+              <span class="text-neutral-500">Max allowed: £30 (150%)</span>
+              <span class="text-lime">+10% markup</span>
+            </div>
+          </div>
+
+          <!-- Fee Breakdown -->
+          <div class="glass rounded-xl p-4 mb-6">
+            <p class="font-medium mb-3">You'll receive</p>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-neutral-400">Sale price</span>
+                <span>£22.00</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-neutral-400">Platform fee (10%)</span>
+                <span class="text-red-400">-£2.20</span>
+              </div>
+              <div class="border-t border-neutral-700 pt-2 flex justify-between font-bold">
+                <span>Your payout</span>
+                <span class="text-lime">£19.80</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Terms -->
+          <label class="flex items-start gap-3 text-left mb-6 text-sm text-neutral-400">
+            <input type="checkbox" class="mt-1 w-5 h-5 rounded bg-neutral-800 border-neutral-600 accent-hot">
+            <span>I confirm this ticket is valid and will be transferred within 24 hours of sale</span>
+          </label>
+
+          <button class="w-full bg-yellow-500 text-black font-bold py-4 rounded-xl mb-3">
+            LIST FOR SALE
+          </button>
+          <p class="text-center text-neutral-600 text-xs">
+            Payout sent 24-48 hours after event
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Ticket listing with fee breakdown.</p>
+    </section>
+
+    <!-- 9. CALENDAR VIEW -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">9. Calendar</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">Calendar</h1>
+            <button class="text-hot text-sm">+ Subscribe</button>
+          </div>
+
+          <!-- Month Nav -->
+          <div class="flex items-center justify-between mb-4">
+            <button class="text-neutral-400">‹</button>
+            <h2 class="font-bold">January 2026</h2>
+            <button class="text-neutral-400">›</button>
+          </div>
+
+          <!-- Calendar Grid -->
+          <div class="mb-6">
+            <div class="grid grid-cols-7 gap-1 text-center text-sm mb-2">
+              <span class="text-neutral-500">M</span>
+              <span class="text-neutral-500">T</span>
+              <span class="text-neutral-500">W</span>
+              <span class="text-neutral-500">T</span>
+              <span class="text-neutral-500">F</span>
+              <span class="text-neutral-500">S</span>
+              <span class="text-neutral-500">S</span>
+            </div>
+            <div class="grid grid-cols-7 gap-1 text-center">
+              <span class="py-2 text-neutral-600">29</span>
+              <span class="py-2 text-neutral-600">30</span>
+              <span class="py-2 text-neutral-600">31</span>
+              <span class="py-2">1</span>
+              <span class="py-2">2</span>
+              <span class="py-2">3</span>
+              <span class="py-2">4</span>
+              <span class="py-2">5</span>
+              <span class="py-2">6</span>
+              <span class="py-2">7</span>
+              <span class="py-2">8</span>
+              <span class="py-2">9</span>
+              <span class="py-2">10</span>
+              <span class="py-2">11</span>
+              <span class="py-2">12</span>
+              <span class="py-2">13</span>
+              <span class="py-2">14</span>
+              <span class="py-2">15</span>
+              <span class="py-2">16</span>
+              <span class="py-2 relative">
+                17
+                <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-hot"></span>
+              </span>
+              <span class="py-2">18</span>
+              <span class="py-2">19</span>
+              <span class="py-2">20</span>
+              <span class="py-2">21</span>
+              <span class="py-2">22</span>
+              <span class="py-2">23</span>
+              <span class="py-2">24</span>
+              <span class="py-2 relative">
+                25
+                <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-cyan"></span>
+              </span>
+              <span class="py-2">26</span>
+              <span class="py-2">27</span>
+              <span class="py-2">28</span>
+              <span class="py-2 rounded-full bg-white text-black font-bold">29</span>
+              <span class="py-2">30</span>
+              <span class="py-2 relative">
+                31
+                <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-hot"></span>
+              </span>
+              <span class="py-2 text-neutral-600">1</span>
+            </div>
+          </div>
+
+          <!-- Today's Events -->
+          <div>
+            <p class="text-sm text-neutral-500 mb-3">Today • Jan 29</p>
+            <div class="space-y-2">
+              <div class="p-4 bg-neutral-900 rounded-xl border-l-4 border-hot">
+                <p class="font-medium">MEAT RACK</p>
+                <p class="text-sm text-neutral-400">10pm • XXL London</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upcoming -->
+          <div class="mt-6">
+            <p class="text-sm text-neutral-500 mb-3">Upcoming</p>
+            <div class="space-y-2">
+              <div class="p-4 bg-neutral-900 rounded-xl border-l-4 border-cyan">
+                <p class="text-xs text-cyan">Sat, Jan 25</p>
+                <p class="font-medium">Hand N Hand Radio</p>
+                <p class="text-sm text-neutral-400">8pm • HOTMESS Radio</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Internal calendar with subscriptions.</p>
+    </section>
+
+    <!-- 10. EVENT FILTER -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">10. Event Filters</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold flex-1">Filter Events</h1>
+            <button class="text-hot text-sm">Reset</button>
+          </div>
+
+          <div class="space-y-6 pb-32">
+            <!-- Date -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-3 block">When</label>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Tonight</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">This Weekend</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">This Week</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Pick Date</button>
+              </div>
+            </div>
+
+            <!-- Type -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-3 block">Event Type</label>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Club Night</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Party</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Fetish</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Cruise</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Social</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Day Party</button>
+              </div>
+            </div>
+
+            <!-- Music -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-3 block">Music</label>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Techno</button>
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">House</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Pop</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Disco</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">R&B</button>
+              </div>
+            </div>
+
+            <!-- Price -->
+            <div>
+              <div class="flex justify-between mb-2">
+                <label class="text-sm text-neutral-500">Price Range</label>
+                <span class="text-sm text-hot font-medium">£0 - £50</span>
+              </div>
+              <input type="range" class="w-full accent-hot" min="0" max="100" value="50">
+              <div class="flex items-center gap-2 mt-2">
+                <input type="checkbox" class="w-5 h-5 rounded accent-hot" checked>
+                <span class="text-sm">Include free events</span>
+              </div>
+            </div>
+
+            <!-- Distance -->
+            <div>
+              <div class="flex justify-between mb-2">
+                <label class="text-sm text-neutral-500">Distance</label>
+                <span class="text-sm text-hot font-medium">10 miles</span>
+              </div>
+              <input type="range" class="w-full accent-hot" min="1" max="50" value="10">
+            </div>
+
+            <!-- Verified Only -->
+            <label class="flex items-center justify-between p-4 bg-neutral-900 rounded-xl">
+              <div>
+                <p class="font-medium">Verified Events Only</p>
+                <p class="text-sm text-neutral-500">Official promoters</p>
+              </div>
+              <div class="w-12 h-7 bg-hot rounded-full relative">
+                <div class="absolute right-1 top-1 w-5 h-5 bg-white rounded-full"></div>
+              </div>
+            </label>
+          </div>
+
+          <!-- Fixed Bottom -->
+          <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent pt-12">
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+              SHOW 24 EVENTS
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Event filtering by date, type, music, price.</p>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 6 • Events & Pulse Map</p>
+    <p class="text-neutral-600 text-sm mt-4">© 2026 HOTMESS LONDON LTD. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

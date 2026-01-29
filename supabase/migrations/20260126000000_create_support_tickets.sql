@@ -90,7 +90,7 @@ CREATE POLICY "Admins can view all tickets"
     EXISTS (
       SELECT 1 FROM "User"
       WHERE auth_user_id = auth.uid()
-      AND (is_admin = true OR is_moderator = true)
+      AND role = 'admin'
     )
   );
 
@@ -103,7 +103,7 @@ CREATE POLICY "Admins can update tickets"
     EXISTS (
       SELECT 1 FROM "User"
       WHERE auth_user_id = auth.uid()
-      AND (is_admin = true OR is_moderator = true)
+      AND role = 'admin'
     )
   );
 
@@ -150,7 +150,7 @@ CREATE POLICY "Admins can view all responses"
     EXISTS (
       SELECT 1 FROM "User"
       WHERE auth_user_id = auth.uid()
-      AND (is_admin = true OR is_moderator = true)
+      AND role = 'admin'
     )
   );
 
@@ -163,7 +163,7 @@ CREATE POLICY "Admins can add responses"
     EXISTS (
       SELECT 1 FROM "User"
       WHERE auth_user_id = auth.uid()
-      AND (is_admin = true OR is_moderator = true)
+      AND role = 'admin'
     )
   );
 

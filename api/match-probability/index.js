@@ -61,7 +61,7 @@ export default async function handler(req, res) {
     const lat = parseNumber(req.query?.lat);
     const lng = parseNumber(req.query?.lng);
     const limit = clampInt(req.query?.limit, 1, 100, 40);
-    const offset = clampInt(req.query?.cursor, 0, 10000, 0);
+    const offset = clampInt(req.query?.cursor || req.query?.offset, 0, 10000, 0);
     const sort = String(req.query?.sort || 'match').toLowerCase();
     const minMatch = clampInt(req.query?.minMatch, 0, 100, 0); // Minimum match % filter
 

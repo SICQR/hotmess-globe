@@ -4,74 +4,100 @@
 
 @layer base {
   :root {
+    /* HOTMESS Brand Colors */
+    --hot: #FF1493;
+    --hot-hsl: 328 100% 54%;
+    --blue: #0047AB;
+    --blue-hsl: 216 100% 34%;
+    --cyan: #00D9FF;
+    --cyan-hsl: 189 100% 50%;
+    --purple: #B026FF;
+    --purple-hsl: 276 100% 57%;
+    --lime: #39FF14;
+    --lime-hsl: 112 100% 54%;
+    --gold: #FFB800;
+    --gold-hsl: 43 100% 50%;
+    --red: #FF0000;
+    --red-hsl: 0 100% 50%;
+    
+    /* Alpha variations */
+    --white-5: rgba(255,255,255,0.05);
+    --white-10: rgba(255,255,255,0.1);
+    --white-20: rgba(255,255,255,0.2);
+    --white-40: rgba(255,255,255,0.4);
+    --white-60: rgba(255,255,255,0.6);
+    --white-80: rgba(255,255,255,0.8);
+    
+    /* Shadcn/UI Variables */
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
+    --primary: 328 100% 54%; /* Hot Pink */
+    --primary-foreground: 0 0% 0%;
+    --secondary: 216 100% 34%; /* Royal Blue */
+    --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 96.1%;
     --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
+    --accent: 189 100% 50%; /* Cyan */
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 100% 50%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --ring: 328 100% 54%; /* Hot Pink ring */
+    --chart-1: 328 100% 54%; /* Hot */
+    --chart-2: 189 100% 50%; /* Cyan */
+    --chart-3: 276 100% 57%; /* Purple */
+    --chart-4: 112 100% 54%; /* Lime */
+    --chart-5: 216 100% 34%; /* Blue */
     --radius: 0.5rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary: 328 100% 54%;
+    --sidebar-primary-foreground: 0 0% 0%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 328 100% 54%;
   }
 
   .dark {
-    --background: 0 0% 3.9%;
+    /* HOTMESS is dark-first - this is the primary theme */
+    --background: 0 0% 0%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    --card: 0 0% 5%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+    --popover: 0 0% 5%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
+    --primary: 328 100% 54%; /* Hot Pink */
+    --primary-foreground: 0 0% 0%;
+    --secondary: 216 100% 34%; /* Royal Blue */
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 189 100% 50%; /* Cyan */
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 100% 50%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 0 0% 15%;
+    --input: 0 0% 10%;
+    --ring: 328 100% 54%; /* Hot Pink */
+    --chart-1: 328 100% 54%; /* Hot */
+    --chart-2: 189 100% 50%; /* Cyan */
+    --chart-3: 276 100% 57%; /* Purple */
+    --chart-4: 112 100% 54%; /* Lime */
+    --chart-5: 216 100% 34%; /* Blue */
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 328 100% 54%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 328 100% 54%;
   }
 }
 
@@ -150,6 +176,15 @@
     );
   }
   
+  /* Blue variant - HOTMESS Royal Blue */
+  .cursor-glow-blue::before {
+    background: radial-gradient(
+      circle,
+      rgba(0, 71, 171, 0.2) 0%,
+      transparent 70%
+    );
+  }
+  
   /* Border glow effect */
   .border-glow {
     position: relative;
@@ -206,5 +241,99 @@
   
   .holographic:hover::after {
     transform: translateX(100%);
+  }
+  
+  /* ===== HOTMESS BRAND UTILITIES ===== */
+  
+  /* Brand Colors as Tailwind-style utilities */
+  .text-hot { color: var(--hot); }
+  .text-blue { color: var(--blue); }
+  .text-cyan { color: var(--cyan); }
+  .text-purple { color: var(--purple); }
+  .text-lime { color: var(--lime); }
+  .text-gold { color: var(--gold); }
+  
+  .bg-hot { background-color: var(--hot); }
+  .bg-blue { background-color: var(--blue); }
+  .bg-cyan { background-color: var(--cyan); }
+  .bg-purple { background-color: var(--purple); }
+  .bg-lime { background-color: var(--lime); }
+  .bg-gold { background-color: var(--gold); }
+  
+  .border-hot { border-color: var(--hot); }
+  .border-blue { border-color: var(--blue); }
+  .border-cyan { border-color: var(--cyan); }
+  .border-purple { border-color: var(--purple); }
+  .border-lime { border-color: var(--lime); }
+  .border-gold { border-color: var(--gold); }
+  
+  /* Glow Effects */
+  .glow-hot { box-shadow: 0 0 30px rgba(255, 20, 147, 0.5); }
+  .glow-blue { box-shadow: 0 0 20px rgba(0, 71, 171, 0.4); }
+  .glow-cyan { box-shadow: 0 0 20px rgba(0, 217, 255, 0.4); }
+  .glow-purple { box-shadow: 0 0 20px rgba(176, 38, 255, 0.4); }
+  .glow-lime { box-shadow: 0 0 20px rgba(57, 255, 20, 0.4); }
+  .glow-gold { box-shadow: 0 0 20px rgba(255, 184, 0, 0.4); }
+  
+  /* Glass Effect */
+  .glass {
+    background: var(--white-5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--white-10);
+  }
+  
+  .glass-strong {
+    background: var(--white-10);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--white-20);
+  }
+  
+  /* Brand Gradients */
+  .gradient-brand {
+    background: linear-gradient(135deg, #000 0%, #1a0a14 50%, #000 100%);
+  }
+  
+  .gradient-hot {
+    background: linear-gradient(135deg, var(--hot), var(--purple));
+  }
+  
+  .gradient-golden {
+    background: linear-gradient(135deg, #8B6914 0%, #D4A574 100%);
+  }
+  
+  .gradient-blue {
+    background: linear-gradient(135deg, var(--blue), #0066CC);
+  }
+  
+  /* Typography utilities */
+  .font-display {
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: -0.02em;
+  }
+  
+  .tracking-brand {
+    letter-spacing: 0.3em;
+  }
+  
+  /* Animation utilities */
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(57, 255, 20, 0.4); }
+    50% { box-shadow: 0 0 40px rgba(57, 255, 20, 0.7); }
+  }
+  
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  @keyframes breathing {
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.1); opacity: 0.5; }
+  }
+  
+  .animate-breathing {
+    animation: breathing 8s ease-in-out infinite;
   }
 }
