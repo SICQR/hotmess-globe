@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
+import { LEGACY_REDIRECTS } from './routes.config'
 import { BrowserRouter as Router, Route, Routes, Navigate, useParams, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
@@ -485,16 +486,12 @@ const AuthenticatedApp = () => {
       <Route path="/biz/analytics" element={<PageRoute pageKey="BusinessAnalytics" />} />
       <Route path="/biz/onboarding" element={<PageRoute pageKey="BusinessOnboarding" />} />
 
-      {/* Legacy lowercase routes -> canonical V1.5 routes */}
-      <Route path="/radio" element={<Navigate to={createPageUrl('Radio')} replace />} />
-      <Route path="/radio/schedule" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
-      <Route path="/connect" element={<Navigate to={createPageUrl('Social')} replace />} />
-      <Route path="/connect/*" element={<Navigate to={createPageUrl('Social')} replace />} />
-      <Route path="/marketplace" element={<Navigate to="/market" replace />} />
-      <Route path="/marketplace/p/:handle" element={<ShopProductRoute />} />
-      <Route path="/more/beacons" element={<PageRoute pageKey="Beacons" />} />
-      <Route path="/more/beacons/new" element={<PageRoute pageKey="CreateBeacon" />} />
-      <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
+      {/* Legacy redirects from routes.config.js */}
+      {Object.entries(LEGACY_REDIRECTS).map(([from, to]) => (
+        <Route key={`legacy-${from}`} path={from} element={<Navigate to={to} replace />} />
+      ))}
+      
+      {/* Additional canonical routes */}
       <Route path="/age" element={<PageRoute pageKey="AgeGate" />} />
       <Route path="/safety" element={<PageRoute pageKey="Safety" />} />
       <Route path="/calendar" element={<PageRoute pageKey="Calendar" />} />
@@ -503,6 +500,11 @@ const AuthenticatedApp = () => {
       <Route path="/leaderboard" element={<PageRoute pageKey="Leaderboard" />} />
       <Route path="/community" element={<PageRoute pageKey="Community" />} />
       <Route path="/profiles" element={<PageRoute pageKey="ProfilesGrid" />} />
+      <Route path="/challenges" element={<PageRoute pageKey="Challenges" />} />
+      <Route path="/stats" element={<PageRoute pageKey="Stats" />} />
+      <Route path="/beacons" element={<PageRoute pageKey="Beacons" />} />
+      <Route path="/beacons/new" element={<PageRoute pageKey="CreateBeacon" />} />
+      <Route path="/care" element={<PageRoute pageKey="Care" />} />
 
       {/* Backward-compatible auto-generated /PageName routes */}
       {Object.entries(Pages).map(([path, Page]) => {

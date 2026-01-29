@@ -1,80 +1,122 @@
-import AccountConsents from './pages/AccountConsents';
-import AccountDeletion from './pages/AccountDeletion';
-import AdminDashboard from './pages/AdminDashboard';
-import BusinessAnalytics from './pages/biz/BusinessAnalytics';
-import BusinessDashboard from './pages/biz/BusinessDashboard';
-import BusinessOnboarding from './pages/biz/BusinessOnboarding';
+/**
+ * Pages Configuration with Code Splitting
+ * 
+ * Heavy pages are lazy-loaded to reduce initial bundle size.
+ * Critical pages (auth, legal) are eagerly loaded.
+ */
+
+import { lazyPage } from './lib/lazyWithSkeleton';
+
+// ========================================
+// EAGER LOADS - Small, critical pages
+// ========================================
 import AgeGate from './pages/AgeGate';
-import CommunityGuidelines from './pages/CommunityGuidelines';
-import Contact from './pages/Contact';
+import Auth from './pages/Auth';
+import Login from './pages/Login';
+import OnboardingGate from './pages/OnboardingGate';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
-import Auth from './pages/Auth';
-import BeaconDetail from './pages/BeaconDetail';
-import Beacons from './pages/Beacons';
-import Bookmarks from './pages/Bookmarks';
-import Calendar from './pages/Calendar';
-import Care from './pages/Care';
-import Challenges from './pages/Challenges';
-import Chat from './pages/Chat';
-import Checkout from './pages/Checkout';
-import Community from './pages/Community';
-import Connect from './pages/Connect';
-import CreateBeacon from './pages/CreateBeacon';
-import DataExport from './pages/DataExport';
-import DialADaddy from './pages/DialADaddy';
-import Directions from './pages/Directions';
-import EditBeacon from './pages/EditBeacon';
-import EditProfile from './pages/EditProfile';
-import Events from './pages/Events';
-import EventsFeatures from './pages/EventsFeatures';
-import Features from './pages/Features';
-import Feed from './pages/Feed';
-import Globe from './pages/Globe';
-import HandNHand from './pages/HandNHand';
-import HelpCenter from './pages/HelpCenter';
-import Home from './pages/Home';
-import Hnhmess from './pages/Hnhmess';
-import Leaderboard from './pages/Leaderboard';
-import Login from './pages/Login';
-import Marketplace from './pages/Marketplace';
-import MembershipUpgrade from './pages/MembershipUpgrade';
-import Messages from './pages/Messages';
-import More from './pages/More';
-import Music from './pages/Music';
-import MusicRelease from './pages/MusicRelease';
-import MyEvents from './pages/MyEvents';
-import Onboarding from './pages/Onboarding';
-import OnboardingGate from './pages/OnboardingGate';
-import OrderHistory from './pages/OrderHistory';
-import OrganizerDashboard from './pages/OrganizerDashboard';
-import PersonaFeatures from './pages/PersonaFeatures';
-import ProductDetail from './pages/ProductDetail';
-import Profile from './pages/Profile';
-import ProfilesGrid from './pages/ProfilesGrid';
-import ProfileSetup from './pages/ProfileSetup';
-import PromoteToAdmin from './pages/PromoteToAdmin';
-import Pulse from './pages/Pulse';
-import Radio from './pages/Radio';
-import RadioFeatures from './pages/RadioFeatures';
-import RadioSchedule from './pages/RadioSchedule';
-import RecordManager from './pages/RecordManager';
-import ReactBitsProfileCardDemo from './pages/ReactBitsProfileCardDemo';
-import RightNowDashboard from './pages/RightNowDashboard';
-import Safety from './pages/Safety';
-import SafetyFeatures from './pages/SafetyFeatures';
-import Scan from './pages/Scan';
-import SellerDashboard from './pages/SellerDashboard';
-import Settings from './pages/Settings';
-import SmartUIDemo from './pages/SmartUIDemo';
-import Social from './pages/Social';
-import SocialFeatures from './pages/SocialFeatures';
-import SquadChat from './pages/SquadChat';
-import Stats from './pages/Stats';
-import TicketMarketplace from './pages/TicketMarketplace';
-import WakeTheMess from './pages/WakeTheMess';
-import Pricing from './pages/Pricing';
-import LuxShowcase from './pages/LuxShowcase';
+import CommunityGuidelines from './pages/CommunityGuidelines';
+
+// ========================================
+// LAZY LOADS - Heavy pages with skeletons
+// ========================================
+
+// Home - Large page with many components
+const Home = lazyPage.default(() => import('./pages/Home'));
+
+// Globe/3D - Heavy 3D rendering
+const Globe = lazyPage.globe(() => import('./pages/Globe'));
+const Pulse = lazyPage.globe(() => import('./pages/Pulse'));
+
+// Grid/Discovery pages
+const Social = lazyPage.grid(() => import('./pages/Social'));
+const Connect = lazyPage.grid(() => import('./pages/Connect'));
+const ProfilesGrid = lazyPage.grid(() => import('./pages/ProfilesGrid'));
+const Community = lazyPage.grid(() => import('./pages/Community'));
+
+// Profile pages
+const Profile = lazyPage.profile(() => import('./pages/Profile'));
+const EditProfile = lazyPage.profile(() => import('./pages/EditProfile'));
+const ProfileSetup = lazyPage.profile(() => import('./pages/ProfileSetup'));
+
+// Messages/Chat
+const Messages = lazyPage.messages(() => import('./pages/Messages'));
+const Chat = lazyPage.messages(() => import('./pages/Chat'));
+const SquadChat = lazyPage.messages(() => import('./pages/SquadChat'));
+
+// Marketplace
+const Marketplace = lazyPage.marketplace(() => import('./pages/Marketplace'));
+const ProductDetail = lazyPage.marketplace(() => import('./pages/ProductDetail'));
+const Checkout = lazyPage.marketplace(() => import('./pages/Checkout'));
+const SellerDashboard = lazyPage.dashboard(() => import('./pages/SellerDashboard'));
+const TicketMarketplace = lazyPage.marketplace(() => import('./pages/TicketMarketplace'));
+
+// Events
+const Events = lazyPage.events(() => import('./pages/Events'));
+const Calendar = lazyPage.events(() => import('./pages/Calendar'));
+const MyEvents = lazyPage.events(() => import('./pages/MyEvents'));
+const EventsFeatures = lazyPage.events(() => import('./pages/EventsFeatures'));
+
+// Dashboard pages
+const AdminDashboard = lazyPage.dashboard(() => import('./pages/AdminDashboard'));
+const OrganizerDashboard = lazyPage.dashboard(() => import('./pages/OrganizerDashboard'));
+const RightNowDashboard = lazyPage.dashboard(() => import('./pages/RightNowDashboard'));
+const Stats = lazyPage.dashboard(() => import('./pages/Stats'));
+const Leaderboard = lazyPage.dashboard(() => import('./pages/Leaderboard'));
+
+// Business pages
+const BusinessDashboard = lazyPage.dashboard(() => import('./pages/biz/BusinessDashboard'));
+const BusinessAnalytics = lazyPage.dashboard(() => import('./pages/biz/BusinessAnalytics'));
+const BusinessOnboarding = lazyPage.dashboard(() => import('./pages/biz/BusinessOnboarding'));
+
+// Music/Radio
+const Music = lazyPage.default(() => import('./pages/Music'));
+const MusicRelease = lazyPage.default(() => import('./pages/MusicRelease'));
+const Radio = lazyPage.default(() => import('./pages/Radio'));
+const RadioSchedule = lazyPage.default(() => import('./pages/RadioSchedule'));
+const RadioFeatures = lazyPage.default(() => import('./pages/RadioFeatures'));
+const RecordManager = lazyPage.dashboard(() => import('./pages/RecordManager'));
+
+// Beacon pages
+const Beacons = lazyPage.grid(() => import('./pages/Beacons'));
+const BeaconDetail = lazyPage.default(() => import('./pages/BeaconDetail'));
+const CreateBeacon = lazyPage.default(() => import('./pages/CreateBeacon'));
+const EditBeacon = lazyPage.default(() => import('./pages/EditBeacon'));
+
+// Other feature pages (lazy loaded)
+const AccountConsents = lazyPage.default(() => import('./pages/AccountConsents'));
+const AccountDeletion = lazyPage.default(() => import('./pages/AccountDeletion'));
+const Bookmarks = lazyPage.grid(() => import('./pages/Bookmarks'));
+const Care = lazyPage.default(() => import('./pages/Care'));
+const Challenges = lazyPage.grid(() => import('./pages/Challenges'));
+const Contact = lazyPage.default(() => import('./pages/Contact'));
+const DataExport = lazyPage.default(() => import('./pages/DataExport'));
+const DialADaddy = lazyPage.default(() => import('./pages/DialADaddy'));
+const Directions = lazyPage.default(() => import('./pages/Directions'));
+const Features = lazyPage.default(() => import('./pages/Features'));
+const Feed = lazyPage.grid(() => import('./pages/Feed'));
+const HandNHand = lazyPage.default(() => import('./pages/HandNHand'));
+const HelpCenter = lazyPage.default(() => import('./pages/HelpCenter'));
+const Hnhmess = lazyPage.default(() => import('./pages/Hnhmess'));
+const LuxShowcase = lazyPage.default(() => import('./pages/LuxShowcase'));
+const MembershipUpgrade = lazyPage.default(() => import('./pages/MembershipUpgrade'));
+const More = lazyPage.default(() => import('./pages/More'));
+const Onboarding = lazyPage.default(() => import('./pages/Onboarding'));
+const OrderHistory = lazyPage.default(() => import('./pages/OrderHistory'));
+const PersonaFeatures = lazyPage.default(() => import('./pages/PersonaFeatures'));
+const Pricing = lazyPage.default(() => import('./pages/Pricing'));
+const PromoteToAdmin = lazyPage.default(() => import('./pages/PromoteToAdmin'));
+const Safety = lazyPage.default(() => import('./pages/Safety'));
+const SafetyFeatures = lazyPage.default(() => import('./pages/SafetyFeatures'));
+const Scan = lazyPage.default(() => import('./pages/Scan'));
+const Settings = lazyPage.default(() => import('./pages/Settings'));
+const SmartUIDemo = lazyPage.default(() => import('./pages/SmartUIDemo'));
+const SocialFeatures = lazyPage.default(() => import('./pages/SocialFeatures'));
+const WakeTheMess = lazyPage.default(() => import('./pages/WakeTheMess'));
+const ReactBitsProfileCardDemo = lazyPage.default(() => import('./pages/ReactBitsProfileCardDemo'));
+
+// Layout (eager - needed for all pages)
 import __Layout from './Layout.jsx';
 
 
@@ -116,11 +158,10 @@ export const PAGES = {
     "Hnhmess": Hnhmess,
     "Leaderboard": Leaderboard,
     "Login": Login,
+    "LuxShowcase": LuxShowcase,
     "Marketplace": Marketplace,
     "MembershipUpgrade": MembershipUpgrade,
     "Messages": Messages,
-    "Pricing": Pricing,
-    "LuxShowcase": LuxShowcase,
     "More": More,
     "Music": Music,
     "MusicRelease": MusicRelease,
@@ -130,6 +171,7 @@ export const PAGES = {
     "OrderHistory": OrderHistory,
     "OrganizerDashboard": OrganizerDashboard,
     "PersonaFeatures": PersonaFeatures,
+    "Pricing": Pricing,
     "PrivacyPolicy": PrivacyPolicy,
     "ProductDetail": ProductDetail,
     "Profile": Profile,

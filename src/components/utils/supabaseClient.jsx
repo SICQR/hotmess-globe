@@ -647,7 +647,20 @@ export const base44 = {
           const run = async (table, overrides = {}) => {
             let query = supabase.from(table).select('*');
 
+            // Handle column name variations between Beacon/beacons tables
             const merged = { ...safeFilters, ...(overrides.filters || {}) };
+            
+            // Map created_by to owner_email for Beacon table
+            if (table === 'Beacon' && merged.created_by) {
+              merged.owner_email = merged.created_by;
+              delete merged.created_by;
+            }
+            // Map owner_email to created_by for beacons table
+            if (table === 'beacons' && merged.owner_email) {
+              merged.created_by = merged.owner_email;
+              delete merged.owner_email;
+            }
+            
             Object.entries(merged || {}).forEach(([key, value]) => {
               query = query.eq(key, value);
             });
@@ -675,10 +688,19 @@ export const base44 = {
               );
               return safeArray(data);
             }
+            // Back-compat: created_by vs owner_email column errors
+            if (message.includes('created_by') || message.includes('owner_email')) {
+              // Silently return empty - the column mapping should have handled this
+              return [];
+            }
             throw error;
           }
         } catch (error) {
-          console.error('[base44.entities.Beacon.filter] Failed, returning []', error);
+          // Suppress noisy errors for missing columns/tables
+          const msg = String(error?.message || '').toLowerCase();
+          if (!msg.includes('column') && !msg.includes('does not exist')) {
+            console.error('[base44.entities.Beacon.filter] Failed, returning []', error);
+          }
           return [];
         }
       },

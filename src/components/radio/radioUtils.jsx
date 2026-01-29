@@ -1,5 +1,6 @@
 const schedule = {
   "timezone": "Europe/London",
+  "heroImage": "/images/radio/hotmess-radio-hero.jpg",
   "shows": [
     {
       "id": "wake-the-mess",
@@ -7,6 +8,8 @@ const schedule = {
       "slug": "wake-the-mess",
       "tagline": "Morning menace. Clean intentions.",
       "description": "Wake it up. Mess it up. Start your day with intention and a little chaos.",
+      "image": "/images/radio/wake-the-mess.jpg",
+      "color": "from-[#FF1493] to-[#B026FF]",
       "schedule": [
         { "day": 1, "start": "09:00", "duration": 60 },
         { "day": 2, "start": "09:00", "duration": 60 },
@@ -27,6 +30,8 @@ const schedule = {
       "slug": "dial-a-daddy",
       "tagline": "Call in. Say it. Mean it.",
       "description": "Ring ring. Be brave. Say it clean. Say it dirty. Say it true.",
+      "image": "/images/radio/dial-a-daddy.png",
+      "color": "from-[#FF1493] to-[#00D9FF]",
       "schedule": [
         { "day": 1, "start": "19:00", "duration": 60 },
         { "day": 3, "start": "19:00", "duration": 60 },
@@ -45,6 +50,8 @@ const schedule = {
       "slug": "hand-n-hand",
       "tagline": "Hand N Hand is the only place to land.",
       "description": "Hands open. Heart steady. Come down gentle. Stay human.",
+      "image": "/images/radio/hand-n-hand.jpg",
+      "color": "from-[#00D9FF] to-[#39FF14]",
       "schedule": [
         { "day": 0, "start": "20:00", "duration": 120 }
       ],

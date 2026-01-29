@@ -3,6 +3,65 @@ import { getSupabaseServerClients } from '../routing/_utils.js';
 
 const getSecret = () => getEnv('OUTBOX_CRON_SECRET', ['CRON_SECRET']);
 
+/**
+ * Map notification types to user preference fields
+ */
+const NOTIFICATION_PREFERENCE_MAP = {
+  // Order/marketplace
+  product_sold: 'order_updates',
+  sale: 'order_updates',
+  order_confirmation: 'order_updates',
+  payment_received: 'order_updates',
+  
+  // Messages
+  message_received: 'message_updates',
+  
+  // Events
+  event_nearby: 'event_updates',
+  event_reminder: 'event_updates',
+  
+  // Safety - always sent, never blocked
+  emergency: null,
+  sos: null,
+  safety_updates: null,
+  
+  // Marketing/engagement
+  reactivation: 'marketing_enabled',
+  match_online: 'marketing_enabled',
+  streak_expiring: 'marketing_enabled',
+  
+  // System - always sent
+  system: null,
+};
+
+/**
+ * Check if a notification should be sent based on user preferences
+ */
+async function checkNotificationPreference(serviceClient, userEmail, notificationType) {
+  // Safety and system notifications are always sent
+  const prefField = NOTIFICATION_PREFERENCE_MAP[notificationType];
+  if (prefField === null || prefField === undefined) {
+    return true; // Always send if no preference mapping
+  }
+
+  try {
+    const { data: prefs } = await serviceClient
+      .from('notification_preferences')
+      .select(prefField)
+      .eq('user_email', userEmail)
+      .maybeSingle();
+
+    // Default to true if no preferences set (opt-out model)
+    if (!prefs) return true;
+    
+    // Check the specific preference field
+    return prefs[prefField] !== false;
+  } catch (error) {
+    console.warn('[Dispatch] Failed to check preferences:', error);
+    return true; // Default to sending on error
+  }
+}
+
 const isRunningOnVercel = () => {
   const flag = process.env.VERCEL || process.env.VERCEL_ENV;
   return !!flag;
@@ -72,13 +131,25 @@ export default async function handler(req, res) {
   for (const item of items || []) {
     try {
       const channel = String(item.channel || 'in_app');
+      const notificationType = item.notification_type;
+
+      // Check user preferences before sending
+      const shouldSend = await checkNotificationPreference(serviceClient, item.user_email, notificationType);
+      if (!shouldSend) {
+        // User has opted out - mark as skipped
+        await serviceClient
+          .from('notification_outbox')
+          .update({ status: 'skipped', sent_at: nowIso, metadata: { ...(item.metadata || {}), skip_reason: 'user_preference' } })
+          .eq('id', item.id);
+        continue;
+      }
 
       if (channel === 'in_app') {
         const link = typeof item?.metadata?.link === 'string' ? item.metadata.link : null;
 
         const { error: insertError } = await serviceClient.from('notifications').insert({
           user_email: item.user_email,
-          type: item.notification_type,
+          type: notificationType,
           title: item.title || 'Notification',
           message: item.message || '',
           link,

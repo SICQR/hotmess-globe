@@ -147,7 +147,8 @@ async function cacheFirst(request, cacheName, maxItems) {
   try {
     const networkResponse = await fetch(request);
     
-    if (networkResponse.ok) {
+    // Only cache successful full responses (not 206 partial responses)
+    if (networkResponse.ok && networkResponse.status !== 206) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
       
@@ -168,7 +169,8 @@ async function networkFirst(request, cacheName, maxItems) {
   try {
     const networkResponse = await fetch(request);
     
-    if (networkResponse.ok) {
+    // Only cache successful full responses (not 206 partial responses)
+    if (networkResponse.ok && networkResponse.status !== 206) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
       
@@ -202,7 +204,8 @@ async function staleWhileRevalidate(request, cacheName, maxItems) {
   // Start network request in background
   const networkPromise = fetch(request)
     .then(async (networkResponse) => {
-      if (networkResponse.ok) {
+      // Only cache successful full responses (not 206 partial responses)
+      if (networkResponse.ok && networkResponse.status !== 206) {
         const cache = await caches.open(cacheName);
         await cache.put(request, networkResponse.clone());
         

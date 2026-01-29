@@ -46,6 +46,8 @@ export function StoriesBar({ currentUser, className }) {
   // Fetch stories from users
   const { data: storiesData = [], isLoading } = useQuery({
     queryKey: ['stories', currentUser?.id],
+    retry: false, // Don't retry on missing table
+    staleTime: 60000, // Cache for 1 minute
     queryFn: async () => {
       // Get stories from last 24 hours
       const cutoff = new Date(Date.now() - STORY_EXPIRY_HOURS * 60 * 60 * 1000).toISOString();
@@ -64,7 +66,14 @@ export function StoriesBar({ currentUser, className }) {
         .gte('created_at', cutoff)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      // Handle missing table gracefully - return empty array
+      if (error) {
+        // Table doesn't exist or permission error - return empty
+        if (error.code === '42P01' || error.code?.startsWith('PGRST')) {
+          return [];
+        }
+        throw error;
+      }
 
       // Group by user
       const grouped = {};
