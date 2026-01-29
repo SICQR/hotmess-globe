@@ -28,6 +28,7 @@ import RightNowIndicator from '../components/discovery/RightNowIndicator';
 import ProfileCompleteness from '../components/profile/ProfileCompleteness';
 import WelcomeTour from '../components/onboarding/WelcomeTour';
 import VibeSynthesisCard from '../components/vibe/VibeSynthesisCard';
+import { trackProfileView } from '@/lib/notifications';
 import ProfileWingman from '../components/profile/ProfileWingman';
 import { fetchRoutingEtas } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
@@ -170,6 +171,15 @@ export default function Profile() {
     setGender(String(profileUser?.gender || 'male'));
     setPhotoPolicyAck(!!(profileUser?.photo_policy_ack || profileUser?.photoPolicyAck));
   }, [profileUser, isViewingOtherUser]);
+
+  // Track profile views when viewing another user's profile
+  useEffect(() => {
+    if (!isViewingOtherUser || !userEmail || !currentUser?.email) return;
+    if (userEmail === currentUser.email) return; // Don't track self-views
+    
+    // Track the view (for batched notifications later)
+    trackProfileView(userEmail);
+  }, [isViewingOtherUser, userEmail, currentUser?.email]);
 
   const { data: checkIns = [] } = useQuery({
     queryKey: ['check-ins', userEmail],
