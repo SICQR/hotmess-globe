@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users, ExternalLink, Sparkles } from 'lucide-react';
 import { formatUTCDate } from '../utils/dateUtils';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
+import { TiltCard } from '@/components/interactions/TiltCard';
 
 export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, recommendationScore, scoreBreakdown }) {
   const eventDate = event.event_date ? new Date(event.event_date) : null;
@@ -34,7 +35,8 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
         </div>
       )}
       <Link to={`/events/${encodeURIComponent(event.id)}`}>
-        <OSCard className={isPast ? 'opacity-60' : ''}>
+        <TiltCard intensity={5}>
+          <OSCard className={isPast ? 'opacity-60' : ''}>
           {/* Editorial Image */}
           {event.image_url && (
             <div className="relative h-48">
@@ -134,6 +136,7 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
             )}
           </div>
         </OSCard>
+        </TiltCard>
       </Link>
     </motion.div>
   );

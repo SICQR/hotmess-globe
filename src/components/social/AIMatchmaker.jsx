@@ -5,7 +5,8 @@ import { base44 } from '@/api/base44Client';
 import { Sparkles, MapPin, Zap, Heart, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+// createPageUrl no longer used after privacy URL refactor
+import { getProfileUrl } from '@/lib/userPrivacy';
 
 export default function AIMatchmaker({ currentUser }) {
   const [matches, setMatches] = useState([]);
@@ -285,7 +286,7 @@ export default function AIMatchmaker({ currentUser }) {
             )}
 
             <div className="flex gap-2">
-              <Link to={createPageUrl(`Profile?email=${match.user.email}`)} className="flex-1">
+              <Link to={getProfileUrl(user)} className="flex-1">
                 <Button variant="outline" className="w-full border-[#FF1493] text-[#FF1493] hover:bg-[#FF1493]/10 font-black rounded-lg">
                   PROFILE
                 </Button>

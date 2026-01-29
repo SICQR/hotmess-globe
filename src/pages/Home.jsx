@@ -10,6 +10,9 @@ import { useServerNow } from '@/hooks/use-server-now';
 import { toast } from 'sonner';
 import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { format } from 'date-fns';
+import { KineticHeadline } from '@/components/text/KineticHeadline';
+import { DailyCheckinCard } from '@/components/gamification/DailyCheckin';
+import { StreakDisplay } from '@/components/gamification/StreakCounter';
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
 // Shopify product handles are not the same as release slugs.
@@ -326,6 +329,25 @@ export default function Home() {
           </div>
         </motion.div>
       </section>
+
+      {/* DAILY CHECK-IN - Only show when logged in */}
+      {currentUser?.id && (
+        <section className="py-8 px-6 bg-black">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <DailyCheckinCard 
+                onCheckin={(result) => {
+                  // Optionally refresh user data after check-in
+                  console.log('Check-in complete:', result);
+                }}
+              />
+              <div className="hidden md:block">
+                <StreakDisplay userId={currentUser.id} />
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* LUBE CTA (always visible) */}
       <section className="py-16 px-6 bg-black">
@@ -858,9 +880,11 @@ export default function Home() {
           viewport={{ once: true }}
           className="max-w-4xl mx-auto"
         >
-          <h2 className="text-6xl md:text-9xl font-black italic mb-8">
-            JOIN<span className="text-[#FF1493]">.</span>
-          </h2>
+          <KineticHeadline 
+            text="HOTMESS LONDON" 
+            as="h2"
+            className="text-6xl md:text-9xl font-black italic mb-8 text-[#FF1493]"
+          />
           <p className="text-2xl uppercase tracking-wider text-white/60 mb-12">
             London OS. No ghost status. Right now ends automatically.
           </p>
