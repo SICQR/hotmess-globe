@@ -14,7 +14,6 @@ import {
   Camera,
   Upload,
   CheckCircle,
-  XCircle,
   Shield,
   AlertTriangle,
   ChevronRight,

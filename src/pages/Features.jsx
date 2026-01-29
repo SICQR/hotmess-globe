@@ -21,7 +21,6 @@ import {
   ChevronRight,
   Layers,
   Palette,
-  UserCheck,
   Music
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

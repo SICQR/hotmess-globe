@@ -9,12 +9,10 @@
  * - Reports/flags
  */
 
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Shield,
   ShieldCheck,
-  ShieldAlert,
   BadgeCheck,
   Clock,
   Users,
@@ -24,8 +22,7 @@ import {
   XCircle,
   Camera,
   Fingerprint,
-  FileCheck,
-  Info
+  FileCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';

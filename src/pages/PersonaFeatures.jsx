@@ -12,11 +12,8 @@ import {
   Layers,
   Eye,
   Shield,
-  Star,
-  Zap,
   CheckCircle,
-  ArrowRight,
-  Heart
+  ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PageShell from '@/components/shell/PageShell';
