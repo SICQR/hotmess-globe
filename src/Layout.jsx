@@ -47,10 +47,68 @@ import BottomNav from '@/components/navigation/BottomNav';
 
 
 // Safety Check-in Handler - Listens for pending check-ins
-// Disabled until safety_checkins table exists
 function SafetyCheckinHandler({ userId }) {
-  // TODO: Enable when migrations are applied
-  return null;
+  const [checkin, setCheckin] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    // Check for pending check-ins
+    const checkForCheckins = async () => {
+      try {
+        const { data } = await base44.entities?.SafetyCheckin?.list?.({
+          filters: { user_id: userId, status: 'pending' },
+          order: { created_at: 'desc' },
+          limit: 1
+        }) || { data: null };
+
+        if (data?.[0]) {
+          setCheckin(data[0]);
+          setShowModal(true);
+        }
+      } catch {
+        // Table may not exist yet or no pending check-ins
+      }
+    };
+
+    checkForCheckins();
+  }, [userId]);
+
+  const handleRespond = async (response) => {
+    try {
+      await fetch('/api/safety/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkinId: checkin?.id,
+          response
+        })
+      });
+
+      setShowModal(false);
+      setCheckin(null);
+
+      if (response === 'all_good') {
+        window.dispatchEvent(new CustomEvent('hotmess:aftercare', {
+          detail: { trigger: 'safety_checkin_end' }
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to respond to check-in:', err);
+    }
+  };
+
+  if (!checkin) return null;
+
+  return (
+    <SafetyCheckinModal
+      isOpen={showModal}
+      onClose={() => setShowModal(false)}
+      checkin={checkin}
+      onRespond={handleRespond}
+    />
+  );
 }
 
 // Aftercare Nudge wrapper - listens for safety check-in completion
@@ -545,10 +603,10 @@ function LayoutInner({ children, currentPageName }) {
               </div>
               {user ? (
                 <>
-                  {/* Persona Switcher - Enable after migrations */}
-                  {/* <div className="mb-3">
+                  {/* Persona Switcher */}
+                  <div className="mb-3">
                     <PersonaSwitcher compact />
-                  </div> */}
+                  </div>
                   <Link to={createPageUrl('Settings')} className="flex items-center gap-2 hover:opacity-80 transition-opacity mb-2">
                     <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
                       <span className="text-xs font-bold">{user.full_name?.[0] || 'U'}</span>
