@@ -507,6 +507,34 @@ export const base44 = {
     
     redirectToLogin: (nextUrl) => {
       window.location.href = createPageUrl('Auth') + (nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : '');
+    },
+
+    /**
+     * Require user to be logged in before proceeding.
+     * Returns true immediately if user is authenticated.
+     * Only redirects if NOT on auth page and NOT authenticated.
+     */
+    requireProfile: async (redirectTo) => {
+      // Never redirect if already on auth pages - prevents loops
+      const currentPath = window.location.pathname.toLowerCase();
+      if (currentPath.includes('/auth') || currentPath.includes('/login') || currentPath.includes('/onboarding')) {
+        return true;
+      }
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          return true; // Already logged in
+        }
+        
+        // Not logged in - redirect to auth
+        const returnUrl = encodeURIComponent(redirectTo || window.location.href);
+        window.location.href = `/Auth?returnTo=${returnUrl}`;
+        return false;
+      } catch {
+        // On error, allow action to proceed rather than blocking
+        return true;
+      }
     }
   },
   
