@@ -18,7 +18,11 @@ import {
   Calendar,
   Crown,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Layers,
+  Palette,
+  UserCheck,
+  Music
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PageShell from '@/components/shell/PageShell';
@@ -92,6 +96,20 @@ const FEATURE_CATEGORIES = [
       { icon: Sparkles, title: 'Exclusive Releases', desc: 'First access to new tracks' },
       { icon: Users, title: 'Community Playlists', desc: 'Discover what others are listening to' },
       { icon: Calendar, title: 'Show Schedule', desc: 'Never miss your favorite shows' },
+    ]
+  },
+  {
+    id: 'personas',
+    title: 'PERSONAS',
+    subtitle: 'Multi-layered profiles',
+    color: '#FFD700',
+    icon: Layers,
+    href: '/features/personas',
+    features: [
+      { icon: Layers, title: 'Context-Aware', desc: 'Your profile adapts to social, market, or events' },
+      { icon: ShoppingBag, title: 'Seller Mode', desc: 'Transform into a storefront when selling' },
+      { icon: Music, title: 'Creator Mode', desc: 'Showcase your music and exclusive content' },
+      { icon: Palette, title: 'Custom Themes', desc: 'Personalize your profile look and feel' },
     ]
   },
 ];

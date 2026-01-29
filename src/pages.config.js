@@ -48,6 +48,7 @@ import Onboarding from './pages/Onboarding';
 import OnboardingGate from './pages/OnboardingGate';
 import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
+import PersonaFeatures from './pages/PersonaFeatures';
 import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
 import ProfilesGrid from './pages/ProfilesGrid';
@@ -125,6 +126,7 @@ export const PAGES = {
     "OnboardingGate": OnboardingGate,
     "OrderHistory": OrderHistory,
     "OrganizerDashboard": OrganizerDashboard,
+    "PersonaFeatures": PersonaFeatures,
     "ProductDetail": ProductDetail,
     "Profile": Profile,
     "ProfilesGrid": ProfilesGrid,

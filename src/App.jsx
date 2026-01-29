@@ -401,6 +401,8 @@ const AuthenticatedApp = () => {
       <Route path="/features/social" element={<PageRoute pageKey="SocialFeatures" />} />
       <Route path="/features/music" element={<PageRoute pageKey="RadioFeatures" />} />
       <Route path="/features/radio" element={<PageRoute pageKey="RadioFeatures" />} />
+      <Route path="/features/personas" element={<PageRoute pageKey="PersonaFeatures" />} />
+      <Route path="/features/profiles" element={<PageRoute pageKey="PersonaFeatures" />} />
 
       {/* Legal */}
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
