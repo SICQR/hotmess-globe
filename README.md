@@ -44,7 +44,7 @@ This version is ready for beta testing. The following features are functional:
 **Known Limitations for Beta:**
 - ⚠️ **QR Scanner**: Coming Soon - ticket scanning not yet implemented
 - ⚠️ **SoundCloud OAuth**: Coming Soon - music uploads return 501 (not implemented)
-- ⚠️ **Premium Content**: Coming Soon - premium photo/video unlock not yet implemented
+- ✅ **Premium Content**: Implemented - premium photo/video unlock and subscriptions (requires `VITE_XP_PURCHASING_ENABLED=true`)
 - ⚠️ **Weather/Transit Data**: Placeholder data (real APIs to be integrated)
 - ⚠️ **Base44 SDK Functions**: Edge functions require Base44 SDK access (verify in production)
 
@@ -130,6 +130,122 @@ These limitations are clearly marked in the UI and do not block core functionali
 - `npm run lint` - Run ESLint code quality checks
 - `npm run lint:fix` - Automatically fix ESLint issues
 - `npm run typecheck` - Run TypeScript type checking (`tsc --noEmit`)
+
+## 👤 Profile Types & Premium Features
+
+HOTMESS supports multiple specialized profile types, each with its own unique view and features:
+
+### Profile Types
+
+1. **Standard Profile** (`profile_type: 'standard'`)
+   - Default profile type for all users
+   - Basic social features, photos, tags, and connections
+   - Component: `src/components/profile/StandardProfileView.jsx`
+
+2. **Seller Profile** (`profile_type: 'seller'`)
+   - For users selling products in the marketplace
+   - Shows product listings, shop stats, seller ratings
+   - Requires XP Purchasing feature flag to be enabled
+   - Component: `src/components/profile/SellerProfileView.jsx`
+
+3. **Creator Profile** (`profile_type: 'creator'`)
+   - For musicians, artists, and content creators
+   - Features:
+     - Music releases (beacons with `kind='release'`)
+     - Upcoming and past shows/performances
+     - Streaming platform links (Spotify, Apple Music, SoundCloud, YouTube)
+     - Creator stats (releases, shows, plays)
+     - Genre tags and skill listings
+   - Component: `src/components/profile/CreatorProfileView.jsx`
+
+4. **Organizer Profile** (`profile_type: 'organizer'`)
+   - For event organizers and venue managers
+   - Features:
+     - Upcoming and past events organized
+     - Organizer statistics (total events, RSVPs, attendees, ratings)
+     - Venue partnerships display
+     - Event specialties/categories
+     - Contact for booking CTA
+     - Verified organizer badge support
+   - Component: `src/components/profile/OrganizerProfileView.jsx`
+
+5. **Premium Profile** (`profile_type: 'premium'`)
+   - For creators offering premium/exclusive content
+   - Features:
+     - Premium content gallery with blur/lock previews
+     - Individual content unlock with XP (pay-per-item)
+     - Monthly subscriptions for full access
+     - Subscriber count and stats
+     - Subscription benefits display
+   - Component: `src/components/profile/PremiumProfileView.jsx`
+   - **Note**: Premium features require database migration `20260128000001_premium_content.sql`
+
+### Enabling Premium Features
+
+**TL;DR**: Set `VITE_XP_PURCHASING_ENABLED=true` and run the migration!  
+📖 **[Full Quick Start Guide →](docs/PREMIUM_FEATURES_QUICKSTART.md)**
+
+To enable premium content and XP purchasing:
+
+1. **Set the environment variable**:
+   ```env
+   VITE_XP_PURCHASING_ENABLED=true
+   ```
+   - Add to `.env.local` for local development
+   - Or set in Vercel: Project → Settings → Environment Variables
+
+2. **Run the premium content migration** on your Supabase instance:
+   
+   **Option A: Using Supabase Dashboard (Recommended)**
+   1. Open your Supabase project dashboard
+   2. Go to SQL Editor (left sidebar)
+   3. Click "New Query"
+   4. Copy the entire contents of `supabase/migrations/20260128000001_premium_content.sql`
+   5. Paste into the SQL Editor
+   6. Click "Run" to execute
+   
+   **Option B: Using Supabase CLI** (if installed)
+   ```bash
+   supabase db push
+   # Or apply specific migration:
+   # supabase migration up --db-url "your-connection-string"
+   ```
+   
+   **What this migration creates:**
+   - `subscriptions` table - Creator subscription relationships
+   - `premium_unlocks` table - Individual content unlock records
+   - `premium_content` table - Premium content metadata
+   - `xp_transactions` table - Audit log for all XP transactions
+   - RLS policies for secure data access
+   - Helper functions (`has_unlocked_content`, `get_subscriber_count`, etc.)
+   
+   **Verify migration succeeded:**
+   ```sql
+   -- Run in Supabase SQL Editor to verify tables exist
+   SELECT table_name FROM information_schema.tables 
+   WHERE table_schema = 'public' 
+   AND table_name IN ('subscriptions', 'premium_unlocks', 'premium_content', 'xp_transactions');
+   ```
+   You should see all 4 tables listed.
+
+3. **Premium API endpoints** are now available:
+   - `POST /api/premium/unlock` - Unlock individual content items with XP
+   - `POST /api/premium/subscribe` - Subscribe to a creator's premium content
+
+4. **Start using premium features**:
+   - Set user's `profile_type = 'premium'` to enable premium profile view
+   - Add `is_premium: true` to photo objects in user's `photos` array
+   - Users can now unlock content or subscribe to creators using XP
+
+### Setting Profile Types
+
+Profile types are stored in the `User` table's `profile_type` column. To set a user's profile type:
+
+```sql
+UPDATE "User" SET profile_type = 'creator' WHERE email = 'user@example.com';
+```
+
+Valid values: `'standard'`, `'seller'`, `'creator'`, `'organizer'`, `'premium'`
 
 ## ▲ Deploying to Vercel
 
