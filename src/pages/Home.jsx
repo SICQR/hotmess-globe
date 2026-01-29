@@ -17,6 +17,7 @@ import { LuxPageBanner, LuxHeroBanner } from '@/components/lux/LuxBanner';
 import { LuxLiveCounter } from '@/components/lux/LiveCounter';
 import { LuxLeaderboardAd } from '@/components/lux/AdSlot';
 import AlbumCarousel from '@/components/music/AlbumCarousel';
+import RealTalkHero from '@/components/marketing/RealTalkHero';
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
 // Shopify product handles are not the same as release slugs.
@@ -1185,6 +1186,11 @@ export default function Home() {
             </Link>
           </div>
         </div>
+      </section>
+
+      {/* REAL TALK - Honest Tags Section */}
+      <section className="section-mobile px-mobile bg-black">
+        <RealTalkHero />
       </section>
 
       {/* FINAL CTA */}

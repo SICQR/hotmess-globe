@@ -27,6 +27,47 @@ const WEIGHTS = {
   ACTIVITY_MATCH: 5
 };
 
+// Quick score calculation for batch mode (simplified)
+function calculateQuickScore(user, target) {
+  let score = 50; // Base score
+  
+  // Music taste overlap
+  const userMusic = Array.isArray(user.music_taste) ? user.music_taste : [];
+  const targetMusic = Array.isArray(target.music_taste) ? target.music_taste : [];
+  const musicOverlap = userMusic.filter(m => targetMusic.includes(m)).length;
+  score += Math.min(musicOverlap * 5, 15);
+  
+  // Tribes overlap
+  const userTribes = Array.isArray(user.tribes) ? user.tribes : [];
+  const targetTribes = Array.isArray(target.tribes) ? target.tribes : [];
+  const tribesOverlap = userTribes.filter(t => targetTribes.includes(t)).length;
+  score += Math.min(tribesOverlap * 5, 15);
+  
+  // Looking for match
+  const userLooking = Array.isArray(user.looking_for) ? user.looking_for : [];
+  const targetLooking = Array.isArray(target.looking_for) ? target.looking_for : [];
+  const lookingOverlap = userLooking.filter(l => targetLooking.includes(l)).length;
+  score += Math.min(lookingOverlap * 5, 20);
+  
+  // Position compatibility
+  const positionCompat = {
+    'top': ['bottom', 'vers', 'vers bottom'],
+    'bottom': ['top', 'vers', 'vers top'],
+    'vers': ['top', 'bottom', 'vers', 'vers top', 'vers bottom'],
+    'vers top': ['bottom', 'vers', 'vers bottom'],
+    'vers bottom': ['top', 'vers', 'vers top'],
+    'side': ['side']
+  };
+  const userPos = String(user.position || '').toLowerCase();
+  const targetPos = String(target.position || '').toLowerCase();
+  if (positionCompat[userPos]?.includes(targetPos)) {
+    score += 10;
+  }
+  
+  // Cap at 100
+  return Math.min(score, 100);
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -44,10 +85,63 @@ export default async function handler(req, res) {
   const params = req.method === 'GET' ? req.query : req.body;
 
   try {
-    const { userId, targetUserId } = params;
+    const { userId, targetUserId, sort, limit, lat, lng } = params;
 
+    // Mode 1: Batch mode - return profiles sorted by match score
+    if (sort === 'match') {
+      // Get current user from auth header
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({ error: 'Authentication required for match sorting' });
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+      
+      if (authError || !authUser) {
+        return res.status(401).json({ error: 'Invalid authentication' });
+      }
+
+      // Get current user profile
+      const { data: currentUser } = await supabase
+        .from('User')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (!currentUser) {
+        return res.status(404).json({ error: 'User profile not found' });
+      }
+
+      // Get other profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('User')
+        .select('*')
+        .neq('id', authUser.id)
+        .limit(parseInt(limit) || 40);
+
+      if (profilesError) {
+        return res.status(500).json({ error: 'Failed to fetch profiles' });
+      }
+
+      // Calculate match scores for each profile
+      const scoredProfiles = profiles.map(profile => {
+        const score = calculateQuickScore(currentUser, profile);
+        return { ...profile, matchScore: score };
+      });
+
+      // Sort by match score descending
+      scoredProfiles.sort((a, b) => b.matchScore - a.matchScore);
+
+      return res.status(200).json({
+        profiles: scoredProfiles,
+        count: scoredProfiles.length
+      });
+    }
+
+    // Mode 2: Single match - calculate score between two specific users
     if (!userId || !targetUserId) {
-      return res.status(400).json({ error: 'Missing userId or targetUserId' });
+      return res.status(400).json({ error: 'Missing userId or targetUserId (or use sort=match for batch mode)' });
     }
 
     // Fetch both profiles

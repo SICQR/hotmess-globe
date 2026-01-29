@@ -19,6 +19,7 @@ import TagSelector from '../components/discovery/TagSelector';
 import { PhotoGallery, VideoUploader, PremiumVideoManager } from '../components/profile/MediaGallery';
 import { validateBio } from '../components/utils/validation';
 import { sanitizeSocialLinks } from '../components/utils/sanitize';
+import ProfileOptimizer from '@/components/profile/ProfileOptimizer';
 import logger from '@/utils/logger';
 
 const VIBE_OPTIONS = ['techno', 'house', 'drag', 'indie', 'late_night', 'chill', 'wild', 'artsy'];
@@ -391,6 +392,9 @@ export default function EditProfile() {
 
           <h1 className="text-4xl font-black uppercase mb-2">Edit Profile</h1>
           <p className="text-white/40 text-sm uppercase tracking-wider mb-8">Customize your hotmess presence</p>
+
+          {/* AI Profile Optimizer */}
+          <ProfileOptimizer className="mb-8" />
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Profile Type */}
