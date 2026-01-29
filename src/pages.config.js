@@ -66,6 +66,7 @@ import SafetyFeatures from './pages/SafetyFeatures';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
+import SmartUIDemo from './pages/SmartUIDemo';
 import Social from './pages/Social';
 import SocialFeatures from './pages/SocialFeatures';
 import SquadChat from './pages/SquadChat';
@@ -73,6 +74,7 @@ import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
 import WakeTheMess from './pages/WakeTheMess';
 import Pricing from './pages/Pricing';
+import LuxShowcase from './pages/LuxShowcase';
 import __Layout from './Layout.jsx';
 
 
@@ -118,6 +120,7 @@ export const PAGES = {
     "MembershipUpgrade": MembershipUpgrade,
     "Messages": Messages,
     "Pricing": Pricing,
+    "LuxShowcase": LuxShowcase,
     "More": More,
     "Music": Music,
     "MusicRelease": MusicRelease,
@@ -127,6 +130,7 @@ export const PAGES = {
     "OrderHistory": OrderHistory,
     "OrganizerDashboard": OrganizerDashboard,
     "PersonaFeatures": PersonaFeatures,
+    "PrivacyPolicy": PrivacyPolicy,
     "ProductDetail": ProductDetail,
     "Profile": Profile,
     "ProfilesGrid": ProfilesGrid,
@@ -144,6 +148,7 @@ export const PAGES = {
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
+    "SmartUIDemo": SmartUIDemo,
     "Social": Social,
     "SocialFeatures": SocialFeatures,
     "SquadChat": SquadChat,
@@ -151,6 +156,7 @@ export const PAGES = {
     "TermsOfService": TermsOfService,
     "TicketMarketplace": TicketMarketplace,
     "WakeTheMess": WakeTheMess,
+    "LuxShowcase": LuxShowcase,
 }
 
 export const pagesConfig = {

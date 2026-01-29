@@ -12,7 +12,7 @@ export default [{
     // This repo contains an intentionally-ignored nested copy at `hotmess-globe/`.
     // Do not lint it (it has different config/tooling and breaks CI).
     "hotmess-globe/**",
-    // Storybook config and stories - handled by Storybook's own tooling
+    // Storybook config and stories - not configured for TS/CSF3 parsing
     ".storybook/**",
     "src/stories/**",
     "**/stories/**",

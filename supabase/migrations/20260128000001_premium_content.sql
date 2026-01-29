@@ -1,6 +1,18 @@
 -- Premium Content System Tables
 -- Migration: 20260128000001_premium_content.sql
 -- Description: Tables for premium content unlocks and subscriptions
+--
+-- TO RUN THIS MIGRATION:
+-- 1. Open Supabase Dashboard → SQL Editor
+-- 2. Copy this entire file and paste into a new query
+-- 3. Click "Run" to execute
+-- 4. Verify with: SELECT table_name FROM information_schema.tables 
+--    WHERE table_schema = 'public' AND table_name IN 
+--    ('subscriptions', 'premium_unlocks', 'premium_content', 'xp_transactions');
+--
+-- REQUIRED FOR: Premium profiles, XP purchasing, creator subscriptions
+-- ENVIRONMENT: Set VITE_XP_PURCHASING_ENABLED=true to enable these features
+
 
 -- Premium content unlocks table
 CREATE TABLE IF NOT EXISTS premium_unlocks (
