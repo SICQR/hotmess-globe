@@ -107,6 +107,40 @@ export default function More() {
           </div>
         </div>
 
+        {/* Business Tools */}
+        <div className="mb-12">
+          <h2 className="text-xl font-black uppercase mb-6 text-white/60">BUSINESS TOOLS</h2>
+          <p className="text-sm text-white/40 mb-4">Promoters, creators & sellers</p>
+          <div className="grid grid-cols-3 gap-4">
+            {BIZ_APPS.map((app) => {
+              const Icon = app.icon;
+              return (
+                <Link 
+                  key={app.path}
+                  to={createPageUrl(app.path)}
+                  className="group"
+                >
+                  <div className="bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-current p-4 transition-all h-full flex flex-col items-center text-center">
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110"
+                      style={{ 
+                        backgroundColor: `${app.color}20`,
+                        border: `2px solid ${app.color}40`
+                      }}
+                    >
+                      <Icon className="w-6 h-6" style={{ color: app.color }} />
+                    </div>
+                    <h3 className="font-black uppercase text-xs mb-1" style={{ color: app.color }}>
+                      {app.name}
+                    </h3>
+                    <p className="text-xs text-white/50">{app.desc}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Account */}
         <div className="mb-12">
           <h2 className="text-xl font-black uppercase mb-4 text-white/60">ACCOUNT</h2>
