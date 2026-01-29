@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HOTMESS Wireframes - Part 12: Utility Screens & States</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'hot': '#FF1493',
+            'blue': '#0047AB',
+          },
+          fontFamily: {
+            'sans': ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { font-family: 'Inter', sans-serif; }
@@ -45,7 +60,8 @@
     .animate-spin-slow {
       animation: spin 2s linear infinite;
     }
-  </style>
+      .glow-blue { box-shadow: 0 0 20px rgba(0, 71, 171, 0.4); }
+</style>
 </head>
 <body class="bg-neutral-950 text-white min-h-screen p-8">
   

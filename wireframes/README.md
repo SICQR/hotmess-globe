@@ -1,5 +1,9 @@
 # HOTMESS Wireframes
 
+> "Don't make the same mistake twice unless he's hot." — School of HOTMESS;LONDON
+
+**See also:** [Brand Style Guide](/docs/BRAND-STYLE-GUIDE.md) for complete brand specifications.
+
 Comprehensive high-fidelity wireframe system for the HOTMESS platform — **200+ screens** covering end-to-end user journeys.
 
 ## Files

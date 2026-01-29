@@ -42,16 +42,18 @@ export function BentoGrid({
   className,
   autoSize = false,
 }: BentoGridProps) {
+  // Mobile-first gap classes
   const gapClasses = {
-    sm: 'gap-2',
-    md: 'gap-4',
-    lg: 'gap-6',
+    sm: 'gap-2 md:gap-3',
+    md: 'gap-3 md:gap-4',
+    lg: 'gap-4 md:gap-6',
   };
 
+  // Mobile-first: Start with appropriate columns for touch, scale up
   const columnClasses = {
     2: 'grid-cols-2',
     3: 'grid-cols-2 md:grid-cols-3',
-    4: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
+    4: 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
   };
 
   // Auto-assign sizes based on priority if enabled
@@ -81,7 +83,8 @@ export function BentoGrid({
       initial="hidden"
       animate="visible"
       className={cn(
-        'grid auto-rows-[200px] md:auto-rows-[220px] lg:auto-rows-[240px]',
+        // Mobile-first: smaller rows on mobile for better touch interaction
+        'grid auto-rows-[160px] sm:auto-rows-[180px] md:auto-rows-[200px] lg:auto-rows-[220px]',
         columnClasses[columns],
         gapClasses[gap],
         className
@@ -149,16 +152,18 @@ export function BentoGridSmart<T>({
   getKey,
   className,
 }: BentoGridSmartProps<T>) {
+  // Mobile-first gap classes
   const gapClasses = {
-    sm: 'gap-2',
-    md: 'gap-4',
-    lg: 'gap-6',
+    sm: 'gap-2 md:gap-3',
+    md: 'gap-3 md:gap-4',
+    lg: 'gap-4 md:gap-6',
   };
 
+  // Mobile-first: Start with appropriate columns for touch, scale up
   const columnClasses = {
     2: 'grid-cols-2',
     3: 'grid-cols-2 md:grid-cols-3',
-    4: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
+    4: 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
   };
 
   // Calculate sizes based on priority
@@ -188,7 +193,8 @@ export function BentoGridSmart<T>({
       initial="hidden"
       animate="visible"
       className={cn(
-        'grid auto-rows-[180px] md:auto-rows-[200px] lg:auto-rows-[220px]',
+        // Mobile-first: smaller rows on mobile for better touch interaction
+        'grid auto-rows-[140px] sm:auto-rows-[160px] md:auto-rows-[180px] lg:auto-rows-[200px]',
         columnClasses[columns],
         gapClasses[gap],
         className
