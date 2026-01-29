@@ -156,7 +156,6 @@ export const PAGES = {
     "TermsOfService": TermsOfService,
     "TicketMarketplace": TicketMarketplace,
     "WakeTheMess": WakeTheMess,
-    "LuxShowcase": LuxShowcase,
 }
 
 export const pagesConfig = {
