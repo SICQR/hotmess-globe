@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Users, MessageCircle } from 'lucide-react';
+import { Users, MessageCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-// createPageUrl no longer used after privacy URL refactor
-import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
+// Use ProfilesGridWithMatch for match probability sorting
+import ProfilesGridWithMatch from '@/features/profilesGrid/ProfilesGridWithMatch';
 import { useCurrentUser } from '@/components/utils/queryConfig';
 import PageShell from '@/components/shell/PageShell';
 import { getProfileUrl } from '@/lib/userPrivacy';
@@ -125,10 +125,10 @@ export default function Social() {
           <TabsList className="grid w-full grid-cols-2 bg-white/5 mb-8">
             <TabsTrigger
               value="discover"
-              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF1493] data-[state=active]:to-[#B026FF] data-[state=active]:text-white"
             >
-              <Users className="w-4 h-4 mr-2" />
-              DISCOVER
+              <Sparkles className="w-4 h-4 mr-2" />
+              MATCH
             </TabsTrigger>
             <TabsTrigger
               value="inbox"
@@ -145,9 +145,12 @@ export default function Social() {
           </TabsList>
 
           <TabsContent value="discover">
-            <ProfilesGrid
-              showHeader={false}
+            <ProfilesGridWithMatch
+              showHeader={true}
+              headerTitle="Find Your Match"
               showTelegramFeedButton
+              showSortSelector
+              defaultSort="match"
               containerClassName="mx-0 max-w-none p-0"
               onNavigateUrl={(url) => navigate(url)}
               onOpenProfile={(profile) => {

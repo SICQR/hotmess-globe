@@ -433,8 +433,17 @@ export function ProfileCard({
       emailHandle((profile as any)?.email) ||
       initialsFromName((profile as any)?.profileName || (profile as any)?.full_name || 'HM');
 
-    const status =
-      primaryModeShort || ((profile as any)?.onlineNow ? 'Online' : ((profile as any)?.rightNow ? 'Right now' : '')); 
+    // Show match probability if available, otherwise fall back to travel time or online status
+    let status = '';
+    if (profile.matchProbability !== undefined && profile.matchProbability > 0) {
+      status = `${Math.round(profile.matchProbability)}% Match`;
+    } else if (primaryModeShort) {
+      status = primaryModeShort;
+    } else if ((profile as any)?.onlineNow) {
+      status = 'Online';
+    } else if ((profile as any)?.rightNow) {
+      status = 'Right now';
+    } 
 
     return (
       <div
@@ -537,6 +546,16 @@ export function ProfileCard({
 
         {/* Top badges */}
         <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2 pointer-events-none">
+          {/* Match probability badge - prominent gradient */}
+          {profile.matchProbability !== undefined && profile.matchProbability > 0 ? (
+            <div
+              className="rounded-full bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 shadow-lg"
+              title={`Match: ${Math.round(profile.matchProbability)}%`}
+            >
+              {Math.round(profile.matchProbability)}% Match
+            </div>
+          ) : null}
+
           {typeBadge ? (
             <div
               className={
@@ -549,7 +568,7 @@ export function ProfileCard({
             </div>
           ) : null}
 
-          {viewerLocation ? (
+          {viewerLocation && !profile.matchProbability ? (
             <div className="rounded-full bg-black/40 border border-white/15 text-white/85 text-[10px] font-black uppercase tracking-wider px-2 py-1">
               {isTravelTimeLoading ? 'Loading…' : primaryModeShort ? `Rec ${primaryModeShort}` : 'No ETA'}
             </div>
@@ -619,6 +638,49 @@ export function ProfileCard({
             {/* Expanded panel on hover/long-press */}
             {isActive ? (
               <div className="mt-3">
+                {/* Match breakdown if available */}
+                {profile.matchProbability !== undefined && profile.matchBreakdown ? (
+                  <div className="mb-3 rounded-lg bg-black/40 border border-white/10 p-2">
+                    <div className="text-[11px] font-black text-white/90 mb-1.5">
+                      Match Breakdown: {Math.round(profile.matchProbability)}%
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[9px] text-white/70">
+                      <div className="flex justify-between">
+                        <span>Travel</span>
+                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.travelTime)}/20</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Role</span>
+                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.roleCompat)}/15</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Kinks</span>
+                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.kinkOverlap)}/15</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Intent</span>
+                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.intent)}/12</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Semantic</span>
+                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.semantic)}/12</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Lifestyle</span>
+                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.lifestyle)}/10</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Activity</span>
+                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.activity)}/8</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Complete</span>
+                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.completeness)}/8</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="text-[11px] text-white/70">
                   {viewerLocation ? (
                     isTravelTimeLoading ? (
