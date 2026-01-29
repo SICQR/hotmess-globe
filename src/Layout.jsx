@@ -28,6 +28,7 @@ import CookieConsent from '@/components/legal/CookieConsent';
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
 import { ScrollProgress } from '@/components/navigation/ScrollProgress.tsx';
 import AftercareNudge from '@/components/safety/AftercareNudge';
+import { StreakBadge } from '@/components/gamification/StreakCounter';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
@@ -393,9 +394,12 @@ function LayoutInner({ children, currentPageName }) {
           {/* Mobile Header */}
           <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10 pt-[env(safe-area-inset-top)]">
             <div className="flex items-center justify-between px-4 py-3">
-              <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
-                HOTMESS
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
+                  HOTMESS
+                </Link>
+                {user?.id && <StreakBadge userId={user.id} />}
+              </div>
               <div className="flex items-center gap-2">
                 <Link
                   to={createPageUrl('Care')}
@@ -578,7 +582,10 @@ function LayoutInner({ children, currentPageName }) {
                   {user && <NotificationCenter currentUser={user} />}
                 </div>
               </div>
-              <p className="text-[8px] text-white/40 uppercase tracking-wider mt-1">LONDON OS</p>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-[8px] text-white/40 uppercase tracking-wider">LONDON OS</p>
+                {user?.id && <StreakBadge userId={user.id} />}
+              </div>
             </div>
 
             <nav className="flex-1 px-2 py-4 overflow-y-auto">

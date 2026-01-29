@@ -9,6 +9,7 @@ import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@
 import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
 import { MatchBar, MatchBreakdownBars, MatchBadge } from './MatchBar';
 import { getTopInsight, getMatchTier } from './matchInsights';
+import { SocialProofBadges, getSocialProofBadges } from './SocialProofBadges';
 
 type Props = {
   profile: Profile;
@@ -547,11 +548,27 @@ export function ProfileCard({
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
 
         {/* Top badges */}
-        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2 pointer-events-none">
+        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5 pointer-events-none">
           {/* Match probability badge - using MatchBadge component */}
           {profile.matchProbability !== undefined && profile.matchProbability > 0 ? (
             <MatchBadge matchProbability={profile.matchProbability} size="md" />
           ) : null}
+
+          {/* Social proof badges - Online, New, Popular, etc */}
+          <SocialProofBadges
+            profile={{
+              onlineNow: (profile as any)?.onlineNow,
+              rightNow: (profile as any)?.rightNow,
+              lastSeen: (profile as any)?.lastSeen || (profile as any)?.last_seen,
+              createdAt: (profile as any)?.createdAt || (profile as any)?.created_at,
+              viewCount: (profile as any)?.viewCount || (profile as any)?.view_count,
+              isVerified: (profile as any)?.isVerified || (profile as any)?.is_verified,
+              isPremium: (profile as any)?.isPremium || (profile as any)?.is_premium,
+            }}
+            size="sm"
+            showLabels={true}
+            maxBadges={1}
+          />
 
           {typeBadge ? (
             <div

@@ -9,6 +9,7 @@ export { default as TelegramPanel } from './TelegramPanel';
 export { SortSelector, SortPills } from './SortSelector';
 export { MatchFilterDropdown, MatchFilterPills, MatchFilterSlider } from './MatchFilter';
 export { MatchBar, MatchBreakdownBars, MatchBadge, MatchCircle } from './MatchBar';
+export { SocialProofBadges, SocialProofBadgeItem, getSocialProofBadges } from './SocialProofBadges';
 export { BentoGrid } from './BentoGrid';
 
 // Match insights

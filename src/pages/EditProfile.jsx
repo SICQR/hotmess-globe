@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 // createPageUrl no longer used after privacy URL refactor
 import { getProfileUrl } from '@/lib/userPrivacy';
+import { generateProfileEmbeddings } from '@/lib/embeddings';
 import { ArrowLeft, Save, User, Upload, Plus, X, Users as UsersIcon, Image as ImageIcon, Video as VideoIcon, Crown, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -177,9 +178,16 @@ export default function EditProfile() {
     mutationFn: async (data) => {
       await base44.auth.updateMe(data);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries(['users']);
       toast.success('Profile updated! 🎉');
+      
+      // Generate embeddings for match scoring (runs in background)
+      generateProfileEmbeddings().then((result) => {
+        if (result?.generated) {
+          console.log('Profile embeddings updated for better match scoring');
+        }
+      });
     },
     onError: () => {
       toast.error('Failed to update profile');
