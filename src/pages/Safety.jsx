@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Shield, UserPlus, Clock, MapPin, Phone, AlertTriangle, CheckCircle, MessageSquare, PhoneCall } from 'lucide-react';
+import { Shield, UserPlus, Clock, MapPin, Phone, AlertTriangle, CheckCircle, MessageSquare, PhoneCall, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,6 +12,7 @@ import PageShell from '@/components/shell/PageShell';
 import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
 import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
 import FakeCallGenerator, { FakeCallButton } from '../components/safety/FakeCallGenerator';
+import LiveLocationShare, { LocationShareButton } from '../components/safety/LiveLocationShare';
 
 export default function Safety() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -347,6 +348,24 @@ export default function Safety() {
               {/* Fake Call Generator - Full Feature */}
               <div className="border-2 border-[#FF1493] p-6">
                 <FakeCallGenerator compact />
+              </div>
+
+              {/* Live Location Sharing */}
+              <div className="border-2 border-[#39FF14] p-6">
+                <LiveLocationShare
+                  currentUser={currentUser}
+                  trustedContacts={trustedContacts}
+                  onShareStart={(share) => {
+                    toast.success('Location sharing started');
+                  }}
+                  onShareEnd={() => {
+                    toast.success('Location sharing ended');
+                    // Trigger aftercare nudge
+                    window.dispatchEvent(new CustomEvent('hotmess:aftercare', {
+                      detail: { trigger: 'safety_checkin_end' }
+                    }));
+                  }}
+                />
               </div>
 
               <EmergencyMessageEditor />
