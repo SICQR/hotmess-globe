@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, Music, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Upload, Music, Loader2, CheckCircle2, Cloud, Link2, RefreshCw, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import logger from '@/utils/logger';
+import { useAuth } from '@/lib/AuthContext';
 
 /**
  * RecordManager - RAW CONVICT RECORDS Admin Terminal
  *
  * Upload WAV files to storage and publish audio_drop beacons on the globe.
- * SoundCloud publishing is not wired in this UI yet.
+ * Optionally publish to SoundCloud if connected.
  */
 export default function RecordManager() {
+  useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [city, setCity] = useState('London');
@@ -23,6 +26,8 @@ export default function RecordManager() {
   const [lng, setLng] = useState(-0.1278);
   const [wavFile, setWavFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [publishToSoundCloud, setPublishToSoundCloud] = useState(false);
 
   type UploadAudioVars = {
     title: string;
@@ -31,9 +36,28 @@ export default function RecordManager() {
     lat: number;
     lng: number;
     wavFile: File;
+    publishToSoundCloud: boolean;
   };
 
   const queryClient = useQueryClient();
+
+  // Check SoundCloud connection status
+  const { data: soundCloudStatus, isLoading: scStatusLoading, refetch: refetchScStatus } = useQuery({
+    queryKey: ['soundcloud-status'],
+    queryFn: async () => {
+      const token = await base44.auth.getAccessToken?.() || localStorage.getItem('supabase.auth.token');
+      const res = await fetch('/api/soundcloud/status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        if (res.status === 403) return { connected: false, authorized: false };
+        throw new Error('Failed to check SoundCloud status');
+      }
+      return res.json();
+    },
+    retry: false,
+    staleTime: 60000,
+  });
 
   const { data: audioBeacons = [] } = useQuery({
     queryKey: ['audio-beacons'],
@@ -43,13 +67,42 @@ export default function RecordManager() {
   const uploadMutation = useMutation({
     mutationFn: async (data: UploadAudioVars) => {
       setUploading(true);
+      setUploadProgress('Uploading file...');
       
       // Step 1: Upload WAV file to storage
       const { file_url } = await base44.integrations.Core.UploadFile({ file: data.wavFile });
       
-      // Step 2: Create audio_drop beacon
-      // NOTE: In production, call Edge Function to proxy to SoundCloud Pro API
-      // For now, we'll create the beacon with the uploaded file URL
+      let soundCloudData = null;
+      
+      // Step 2: Optionally upload to SoundCloud
+      if (data.publishToSoundCloud && soundCloudStatus?.connected) {
+        setUploadProgress('Publishing to SoundCloud...');
+        
+        const token = await base44.auth.getAccessToken?.() || localStorage.getItem('supabase.auth.token');
+        const formData = new FormData();
+        formData.append('track[title]', data.title);
+        formData.append('track[description]', data.description || '');
+        formData.append('track[sharing]', 'public');
+        formData.append('track[asset_data]', data.wavFile);
+        
+        const scRes = await fetch('/api/soundcloud/upload', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        
+        if (!scRes.ok) {
+          const err = await scRes.json().catch(() => ({}));
+          throw new Error(err.error || 'SoundCloud upload failed');
+        }
+        
+        soundCloudData = await scRes.json();
+        logger.info('SoundCloud upload successful', { trackId: soundCloudData.id });
+      }
+      
+      setUploadProgress('Creating beacon...');
+      
+      // Step 3: Create audio_drop beacon
       const beacon = await base44.entities.Beacon.create({
         title: data.title,
         description: data.description,
@@ -58,30 +111,77 @@ export default function RecordManager() {
         city: data.city,
         lat: data.lat,
         lng: data.lng,
-        audio_url: file_url,
-        track_id: `raw_${Date.now()}`, // In production, this comes from SoundCloud
+        audio_url: soundCloudData?.permalink_url || file_url,
+        track_id: soundCloudData?.id ? `sc_${soundCloudData.id}` : `raw_${Date.now()}`,
         xp_scan: 10,
         active: true
       });
       
-      return beacon;
+      return { beacon, soundCloudData };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['audio-beacons'] });
-      toast.success('Audio drop created and live on globe!');
+      
+      if (result.soundCloudData) {
+        toast.success('Track published to SoundCloud and live on globe!', {
+          action: {
+            label: 'View on SoundCloud',
+            onClick: () => window.open(result.soundCloudData.permalink_url, '_blank')
+          }
+        });
+      } else {
+        toast.success('Audio drop created and live on globe!');
+      }
       
       // Reset form
       setTitle('');
       setDescription('');
       setWavFile(null);
       setUploading(false);
+      setUploadProgress('');
     },
     onError: (error: any) => {
       logger.error('Upload failed', { error: error.message, fileName: wavFile?.name });
-      toast.error('Upload failed. Try again.');
+      toast.error(error.message || 'Upload failed. Try again.');
       setUploading(false);
+      setUploadProgress('');
     }
   });
+  
+  // Connect to SoundCloud
+  const handleConnectSoundCloud = async () => {
+    try {
+      const token = await base44.auth.getAccessToken?.() || localStorage.getItem('supabase.auth.token');
+      const res = await fetch('/api/soundcloud/authorize', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!res.ok) throw new Error('Failed to start authorization');
+      
+      const { url } = await res.json();
+      window.location.href = url;
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to connect to SoundCloud');
+    }
+  };
+  
+  // Disconnect from SoundCloud
+  const handleDisconnectSoundCloud = async () => {
+    try {
+      const token = await base44.auth.getAccessToken?.() || localStorage.getItem('supabase.auth.token');
+      const res = await fetch('/api/soundcloud/disconnect', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!res.ok) throw new Error('Failed to disconnect');
+      
+      toast.success('Disconnected from SoundCloud');
+      refetchScStatus();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to disconnect');
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -98,6 +198,7 @@ export default function RecordManager() {
       lat,
       lng,
       wavFile,
+      publishToSoundCloud,
     });
   };
 
@@ -112,6 +213,61 @@ export default function RecordManager() {
             Headless Label Terminal - Admin Only
           </p>
         </div>
+
+        {/* SoundCloud Connection Status */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/5 border border-white/10 p-4 mb-6 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <Cloud className={`w-6 h-6 ${soundCloudStatus?.connected ? 'text-[#FF5500]' : 'text-white/40'}`} />
+            <div>
+              <p className="font-bold text-sm">SoundCloud</p>
+              {scStatusLoading ? (
+                <p className="text-xs text-white/60">Checking status...</p>
+              ) : soundCloudStatus?.connected ? (
+                <p className="text-xs text-[#39FF14]">
+                  Connected {soundCloudStatus.expired && <span className="text-red-400">(Token expired)</span>}
+                </p>
+              ) : soundCloudStatus?.authorized === false ? (
+                <p className="text-xs text-yellow-400">Not authorized for uploads</p>
+              ) : (
+                <p className="text-xs text-white/60">Not connected</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => refetchScStatus()}
+              disabled={scStatusLoading}
+              className="text-white/60 hover:text-white"
+            >
+              <RefreshCw className={`w-4 h-4 ${scStatusLoading ? 'animate-spin' : ''}`} />
+            </Button>
+            {soundCloudStatus?.connected ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDisconnectSoundCloud}
+                className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+              >
+                Disconnect
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={handleConnectSoundCloud}
+                className="bg-[#FF5500] hover:bg-[#FF5500]/80 text-white"
+              >
+                <Link2 className="w-4 h-4 mr-1" />
+                Connect
+              </Button>
+            )}
+          </div>
+        </motion.div>
 
         {/* Upload Form */}
         <motion.div
@@ -192,11 +348,11 @@ export default function RecordManager() {
 
             <div>
               <label className="block text-xs uppercase tracking-widest text-white/60 mb-2">
-                WAV File *
+                Audio File *
               </label>
               <input
                 type="file"
-                accept=".wav"
+                accept=".wav,.mp3,.flac,.aiff,.ogg"
                 onChange={(e) => setWavFile(e.target.files?.[0] || null)}
                 className="block w-full text-sm text-white/60
                   file:mr-4 file:py-2 file:px-4
@@ -213,6 +369,42 @@ export default function RecordManager() {
                 </p>
               )}
             </div>
+
+            {/* SoundCloud Publishing Option */}
+            {soundCloudStatus?.connected && !soundCloudStatus.expired && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="flex items-center justify-between p-4 bg-[#FF5500]/10 border border-[#FF5500]/30 rounded"
+              >
+                <div className="flex items-center gap-3">
+                  <Cloud className="w-5 h-5 text-[#FF5500]" />
+                  <div>
+                    <p className="font-bold text-sm">Publish to SoundCloud</p>
+                    <p className="text-xs text-white/60">Also upload track to your SoundCloud account</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={publishToSoundCloud}
+                  onCheckedChange={setPublishToSoundCloud}
+                />
+              </motion.div>
+            )}
+
+            {/* Upload Progress */}
+            <AnimatePresence>
+              {uploading && uploadProgress && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex items-center gap-3 p-3 bg-[#B026FF]/20 border border-[#B026FF]/40 rounded"
+                >
+                  <Loader2 className="w-5 h-5 animate-spin text-[#B026FF]" />
+                  <p className="text-sm font-medium">{uploadProgress}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <Button
               type="submit"
@@ -238,10 +430,10 @@ export default function RecordManager() {
         <div className="bg-white/5 border-2 border-white/10 p-6">
           <h2 className="text-2xl font-black uppercase mb-4">Live Audio Drops</h2>
           <div className="space-y-3">
-            {audioBeacons.map((beacon) => (
+            {audioBeacons.map((beacon: any) => (
               <div
                 key={beacon.id}
-                className="flex items-center justify-between p-3 bg-white/5 border border-white/10"
+                className="flex items-center justify-between p-3 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <Music className="w-5 h-5 text-[#B026FF]" />
@@ -250,7 +442,20 @@ export default function RecordManager() {
                     <p className="text-xs text-white/60">{beacon.city} • {beacon.xp_scan} XP</p>
                   </div>
                 </div>
-                <CheckCircle2 className="w-5 h-5 text-[#39FF14]" />
+                <div className="flex items-center gap-2">
+                  {beacon.track_id?.startsWith('sc_') && beacon.audio_url && (
+                    <a
+                      href={beacon.audio_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 hover:bg-[#FF5500]/20 rounded transition-colors"
+                      title="View on SoundCloud"
+                    >
+                      <ExternalLink className="w-4 h-4 text-[#FF5500]" />
+                    </a>
+                  )}
+                  <CheckCircle2 className="w-5 h-5 text-[#39FF14]" />
+                </div>
               </div>
             ))}
             {audioBeacons.length === 0 && (

@@ -95,8 +95,17 @@ export default function OrganizerProfileView({ user, currentUser }) {
         }
       }
       
-      // Mock avg rating - in production this would come from a reviews table
-      const avgRating = organizedEvents.length > 3 ? 4.5 + Math.random() * 0.5 : 0;
+      // Calculate rating based on engagement (check-ins / rsvps ratio)
+      // Higher engagement = better events = higher rating
+      // Scale: 0-5 stars
+      let avgRating = 0;
+      if (totalRsvps > 0 && organizedEvents.length >= 3) {
+        const engagementRate = Math.min(totalCheckIns / totalRsvps, 1);
+        // Base rating of 3.5 for having events, up to 5.0 for high engagement
+        avgRating = 3.5 + (engagementRate * 1.5);
+        // Round to one decimal place
+        avgRating = Math.round(avgRating * 10) / 10;
+      }
       
       return { totalRsvps, totalCheckIns, avgRating };
     },
