@@ -24,10 +24,27 @@ if (!supabaseUrl || !supabaseKey) {
 
 // If env vars are missing, createClient still needs a URL/key.
 // Use a clearly-invalid URL so failures are obvious and debuggable.
-export const supabase = createClient(
-  supabaseUrl || 'http://invalid.localhost',
-  supabaseKey || 'invalid-anon-key'
-);
+// Singleton pattern: prevent multiple instances in HMR/dev mode
+let _supabaseInstance = null;
+
+export const supabase = (() => {
+  if (_supabaseInstance) return _supabaseInstance;
+  
+  _supabaseInstance = createClient(
+    supabaseUrl || 'http://invalid.localhost',
+    supabaseKey || 'invalid-anon-key',
+    {
+      auth: {
+        storageKey: 'sb-axxwdjmbwkvqhcpwsters-auth-token', // Unique per project
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+      },
+    }
+  );
+  
+  return _supabaseInstance;
+})();
 
 const safeArray = (value) => (Array.isArray(value) ? value : []);
 

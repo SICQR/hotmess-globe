@@ -1,316 +1,346 @@
-import {
-  getBearerToken,
-  getAuthedUser,
-  getSupabaseServerClients,
-  json,
-  parseNumber,
-  clampInt,
-} from '../routing/_utils.js';
-import {
-  calculateTravelTimeScore,
-  calculateRoleCompatScore,
-  calculateKinkScore,
-  calculateIntentScore,
-  calculateSemanticScore,
-  calculateLifestyleScore,
-  calculateActivityScore,
-  calculateCompletenessScore,
-  aggregateMatchScore,
-} from './_scoring.js';
-
 /**
  * Match Probability API
  * 
- * Computes match scores for profiles based on multiple dimensions:
- * - Travel time (0-20 points)
- * - Role compatibility (0-15 points)
- * - Kink overlap (0-15 points)
- * - Intent alignment (0-12 points)
- * - Semantic text similarity (0-12 points)
- * - Lifestyle match (0-10 points)
- * - Activity recency (0-8 points)
- * - Profile completeness (0-8 points)
+ * POST /api/match-probability
  * 
- * Total: 0-100 points
+ * Calculates compatibility score between two users.
  */
 
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+// Scoring weights
+const WEIGHTS = {
+  MUSIC_TASTE: 15,
+  TRIBES: 15,
+  INTERESTS: 15,
+  LOOKING_FOR: 20,
+  POSITION_COMPAT: 10,
+  AGE_PREFERENCE: 10,
+  DISTANCE: 10,
+  ACTIVITY_MATCH: 5
+};
+
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
-    if (req.method !== 'GET') {
-      res.setHeader('Allow', 'GET');
-      return json(res, 405, { error: 'Method not allowed' });
+    const { userId, targetUserId } = req.body;
+
+    if (!userId || !targetUserId) {
+      return res.status(400).json({ error: 'Missing userId or targetUserId' });
     }
 
-    // Auth
-    const { error: supaErr, anonClient, serviceClient } = getSupabaseServerClients();
-    if (supaErr || !anonClient) {
-      return json(res, 500, { error: supaErr || 'Supabase client unavailable' });
-    }
-
-    const accessToken = getBearerToken(req);
-    if (!accessToken) {
-      return json(res, 401, { error: 'Missing Authorization bearer token' });
-    }
-
-    const { user: authUser, error: authErr } = await getAuthedUser({ anonClient, accessToken });
-    if (authErr || !authUser?.id) {
-      return json(res, 401, { error: 'Invalid auth token' });
-    }
-
-    // Parse query parameters
-    const lat = parseNumber(req.query?.lat);
-    const lng = parseNumber(req.query?.lng);
-    const limit = clampInt(req.query?.limit, 1, 100, 40);
-    const offset = clampInt(req.query?.cursor || req.query?.offset, 0, 10000, 0);
-    const sort = String(req.query?.sort || 'match').toLowerCase();
-    const minMatch = clampInt(req.query?.minMatch, 0, 100, 0); // Minimum match % filter
-
-    // Note: Sorting is applied per-page after fetching. For true global sorting
-    // across all pages, clients should either fetch all results at once or
-    // implement server-side scoring with a cache. Current implementation prioritizes
-    // performance by computing scores only for the requested page.
-
-    // Viewer location is optional but needed for travel time scoring
-    const viewerLocation = (Number.isFinite(lat) && Number.isFinite(lng)) ? { lat, lng } : null;
-
-    // Fetch current user's profile and private data
-    const { data: userProfile, error: userProfileErr } = await (serviceClient || anonClient)
+    // Fetch both profiles
+    const { data: profiles, error } = await supabase
       .from('User')
-      .select('*')
-      .eq('auth_user_id', authUser.id)
-      .single();
+      .select(`
+        id,
+        display_name,
+        age,
+        music_taste,
+        tribes,
+        interests,
+        looking_for,
+        position,
+        age_preference_min,
+        age_preference_max,
+        latitude,
+        longitude,
+        last_active
+      `)
+      .in('id', [userId, targetUserId]);
 
-    if (userProfileErr || !userProfile) {
-      return json(res, 404, { error: 'User profile not found' });
+    if (error || profiles.length !== 2) {
+      return res.status(404).json({ error: 'Users not found' });
     }
 
-    const { data: userPrivate } = await (serviceClient || anonClient)
-      .from('user_private_profile')
-      .select('*')
-      .eq('auth_user_id', authUser.id)
-      .maybeSingle();
+    const user = profiles.find(p => p.id === userId);
+    const target = profiles.find(p => p.id === targetUserId);
 
-    const { data: userEmbedding } = await (serviceClient || anonClient)
-      .from('profile_embeddings')
-      .select('combined_embedding')
-      .eq('user_id', userProfile.id)
-      .maybeSingle();
+    // Calculate scores
+    const scores = {};
+    const reasons = [];
 
-    // Fetch candidate profiles (exclude self)
-    // Note: For production, add additional filters like age range, distance, etc.
-    let query = (serviceClient || anonClient)
-      .from('User')
-      .select('*')
-      .neq('id', userProfile.id)
-      .eq('account_status', 'active')
-      .limit(limit);
-
-    // Apply offset if provided
-    if (offset > 0) {
-      query = query.range(offset, offset + limit - 1);
+    // 1. Music taste overlap
+    const musicOverlap = calculateOverlap(user.music_taste, target.music_taste);
+    scores.music = Math.round(musicOverlap * WEIGHTS.MUSIC_TASTE);
+    if (musicOverlap > 0.5) {
+      const common = getCommonItems(user.music_taste, target.music_taste);
+      reasons.push(`Both into ${common.slice(0, 2).join(' & ')}`);
     }
 
-    const { data: candidates, error: candidatesErr } = await query;
-
-    if (candidatesErr) {
-      return json(res, 500, { error: 'Failed to fetch candidates', details: candidatesErr.message });
+    // 2. Tribes overlap
+    const tribesOverlap = calculateOverlap(user.tribes, target.tribes);
+    scores.tribes = Math.round(tribesOverlap * WEIGHTS.TRIBES);
+    if (tribesOverlap > 0.3) {
+      const common = getCommonItems(user.tribes, target.tribes);
+      reasons.push(`${common[0]} connection`);
     }
 
-    if (!candidates || candidates.length === 0) {
-      return json(res, 200, { items: [], nextCursor: null, scoringVersion: '1.0' });
+    // 3. Interests overlap
+    const interestsOverlap = calculateOverlap(user.interests, target.interests);
+    scores.interests = Math.round(interestsOverlap * WEIGHTS.INTERESTS);
+    if (interestsOverlap > 0.3) {
+      const common = getCommonItems(user.interests, target.interests);
+      reasons.push(`Shared interest in ${common[0]}`);
     }
 
-    // Fetch private profiles for candidates (batch)
-    const candidateIds = candidates.map(c => c.id);
-    const { data: candidatePrivates } = await (serviceClient || anonClient)
-      .from('user_private_profile')
-      .select('*')
-      .in('user_id', candidateIds);
+    // 4. Looking for alignment
+    const lookingForMatch = calculateLookingForMatch(user.looking_for, target.looking_for);
+    scores.lookingFor = Math.round(lookingForMatch * WEIGHTS.LOOKING_FOR);
+    if (lookingForMatch > 0.5) {
+      reasons.push('Looking for the same things');
+    }
 
-    const privateMap = new Map();
-    (candidatePrivates || []).forEach(p => privateMap.set(p.user_id, p));
+    // 5. Position compatibility
+    const positionCompat = calculatePositionCompatibility(user.position, target.position);
+    scores.position = Math.round(positionCompat * WEIGHTS.POSITION_COMPAT);
+    if (positionCompat > 0.7) {
+      reasons.push('Compatible positions');
+    }
 
-    // Fetch embeddings for candidates (batch)
-    const { data: candidateEmbeddings } = await (serviceClient || anonClient)
-      .from('profile_embeddings')
-      .select('user_id, combined_embedding')
-      .in('user_id', candidateIds);
+    // 6. Age preference
+    const ageMatch = calculateAgeMatch(user, target);
+    scores.age = Math.round(ageMatch * WEIGHTS.AGE_PREFERENCE);
 
-    const embeddingMap = new Map();
-    (candidateEmbeddings || []).forEach(e => embeddingMap.set(e.user_id, e.combined_embedding));
-
-    // Fetch travel times if viewer location provided
-    const travelTimeMap = new Map();
-    if (viewerLocation && serviceClient) {
-      // Batch fetch travel times from routing_cache
-      // For simplicity, we'll use walking mode and approximate if not cached
-      const destinations = candidates.map(c => ({
-        lat: c.geo_lat || c.geoLat,
-        lng: c.geo_lng || c.geoLng,
-        id: c.id,
-      })).filter(d => Number.isFinite(d.lat) && Number.isFinite(d.lng));
-
-      // For each destination, compute or fetch cached travel time
-      // This is a simplified version; in production, use batch ETA endpoint
-      for (const dest of destinations) {
-        const distanceKm = haversineKm(viewerLocation, { lat: dest.lat, lng: dest.lng });
-        const estimatedMinutes = Math.round((distanceKm / 5) * 60); // ~5 km/h walking speed
-        travelTimeMap.set(dest.id, estimatedMinutes);
+    // 7. Distance (if location available)
+    let distance = null;
+    if (user.latitude && user.longitude && target.latitude && target.longitude) {
+      distance = calculateDistance(
+        user.latitude, user.longitude,
+        target.latitude, target.longitude
+      );
+      const distanceScore = distance < 5 ? 1 : distance < 20 ? 0.7 : distance < 50 ? 0.4 : 0.2;
+      scores.distance = Math.round(distanceScore * WEIGHTS.DISTANCE);
+      
+      if (distance < 5) {
+        reasons.push('Very close by');
       }
+    } else {
+      scores.distance = WEIGHTS.DISTANCE * 0.5; // Neutral if no location
     }
 
-    // Score each candidate
-    const scoredProfiles = candidates.map(candidate => {
-      const candidatePrivate = privateMap.get(candidate.id) || {};
-      const candidateEmbedding = embeddingMap.get(candidate.id);
-      const travelTimeMinutes = travelTimeMap.get(candidate.id);
-
-      // Compute sub-scores
-      const travelTime = calculateTravelTimeScore(travelTimeMinutes);
-      const roleCompat = calculateRoleCompatScore(
-        userPrivate?.position,
-        candidatePrivate?.position
-      );
-      const kinkOverlap = calculateKinkScore(
-        userPrivate?.kinks,
-        candidatePrivate?.kinks,
-        userPrivate?.hard_limits,
-        candidatePrivate?.hard_limits
-      );
-      const intent = calculateIntentScore(
-        {
-          looking_for: userPrivate?.looking_for,
-          relationship_status: userPrivate?.relationship_status,
-          time_horizon: userPrivate?.time_horizon,
-        },
-        {
-          looking_for: candidatePrivate?.looking_for,
-          relationship_status: candidatePrivate?.relationship_status,
-          time_horizon: candidatePrivate?.time_horizon,
-        }
-      );
-      const semantic = calculateSemanticScore(
-        userEmbedding?.combined_embedding,
-        candidateEmbedding
-      );
-      const lifestyle = calculateLifestyleScore(
-        {
-          smoking: userPrivate?.smoking,
-          drinking: userPrivate?.drinking,
-          fitness: userPrivate?.fitness,
-          diet: userPrivate?.diet,
-          scene_affinity: userPrivate?.scene_affinity,
-        },
-        {
-          smoking: candidatePrivate?.smoking,
-          drinking: candidatePrivate?.drinking,
-          fitness: candidatePrivate?.fitness,
-          diet: candidatePrivate?.diet,
-          scene_affinity: candidatePrivate?.scene_affinity,
-        }
-      );
-      const activity = calculateActivityScore(candidate.last_seen);
-      const completeness = calculateCompletenessScore({
-        bio: candidate.bio,
-        position: candidatePrivate?.position,
-        looking_for: candidatePrivate?.looking_for,
-        kinks: candidatePrivate?.kinks,
-        turn_ons: candidatePrivate?.turn_ons,
-        relationship_status: candidatePrivate?.relationship_status,
-        photos: candidate.photos || candidate.photo_urls,
-        age: candidate.age,
-      });
-
-      const matchBreakdown = {
-        travelTime,
-        roleCompat,
-        kinkOverlap,
-        intent,
-        semantic,
-        lifestyle,
-        activity,
-        completeness,
-      };
-
-      const matchProbability = aggregateMatchScore(matchBreakdown);
-
-      // Format profile for response
-      return {
-        id: candidate.id,
-        profileName: candidate.username || candidate.display_name || candidate.full_name || 'Anonymous',
-        title: candidate.bio || '',
-        locationLabel: candidate.city || '',
-        geoLat: candidate.geo_lat || candidate.geoLat,
-        geoLng: candidate.geo_lng || candidate.geoLng,
-        photos: candidate.photos || [],
-        matchProbability,
-        matchBreakdown,
-        travelTimeMinutes,
-        // Include other public fields as needed
-        city: candidate.city,
-        bio: candidate.bio,
-        profileType: candidate.profile_type || 'standard',
-        age: candidate.age,
-      };
-    });
-
-    // Apply minimum match filter
-    let filteredProfiles = scoredProfiles;
-    if (minMatch > 0) {
-      filteredProfiles = scoredProfiles.filter(p => p.matchProbability >= minMatch);
+    // 8. Activity match (both online recently)
+    const bothActive = isRecentlyActive(user.last_active) && isRecentlyActive(target.last_active);
+    scores.activity = bothActive ? WEIGHTS.ACTIVITY_MATCH : Math.round(WEIGHTS.ACTIVITY_MATCH * 0.5);
+    if (bothActive) {
+      reasons.push('Both active now');
     }
 
-    // Sort by match probability if requested
-    if (sort === 'match') {
-      filteredProfiles.sort((a, b) => b.matchProbability - a.matchProbability);
-    } else if (sort === 'distance' && viewerLocation) {
-      filteredProfiles.sort((a, b) => (a.travelTimeMinutes || 999999) - (b.travelTimeMinutes || 999999));
-    } else if (sort === 'lastActive') {
-      filteredProfiles.sort((a, b) => b.matchBreakdown.activity - a.matchBreakdown.activity);
-    } else if (sort === 'newest') {
-      // Sort by profile creation date if available, otherwise by ID
-      filteredProfiles.sort((a, b) => {
-        const aTime = new Date(a.created_at || a.id).getTime();
-        const bTime = new Date(b.created_at || b.id).getTime();
-        return bTime - aTime; // Newest first
-      });
+    // Calculate total
+    const totalScore = Object.values(scores).reduce((sum, s) => sum + s, 0);
+    const maxScore = Object.values(WEIGHTS).reduce((sum, w) => sum + w, 0);
+    const percentage = Math.round((totalScore / maxScore) * 100);
+
+    // Generate AI explanation if high match
+    let aiExplanation = null;
+    if (OPENAI_API_KEY && percentage >= 60) {
+      aiExplanation = await generateAIExplanation(user, target, reasons, percentage);
     }
 
-    // Pagination cursor (simple offset-based)
-    const hasMore = scoredProfiles.length === limit; // Check original count for pagination
-    const nextCursor = hasMore ? String(offset + limit) : null;
+    // Determine match level
+    let matchLevel;
+    if (percentage >= 85) matchLevel = 'exceptional';
+    else if (percentage >= 70) matchLevel = 'great';
+    else if (percentage >= 55) matchLevel = 'good';
+    else if (percentage >= 40) matchLevel = 'moderate';
+    else matchLevel = 'low';
 
-    return json(res, 200, {
-      items: filteredProfiles,
-      nextCursor,
-      scoringVersion: '1.0',
-      filters: {
-        minMatch,
-        appliedCount: filteredProfiles.length,
-        totalCount: scoredProfiles.length,
-      },
+    // Cache the result
+    await supabase
+      .from('match_explanations')
+      .upsert({
+        user_id: userId,
+        target_user_id: targetUserId,
+        score: percentage,
+        breakdown: scores,
+        reasons,
+        ai_explanation: aiExplanation,
+        calculated_at: new Date().toISOString()
+      }, { onConflict: 'user_id,target_user_id' });
+
+    return res.status(200).json({
+      score: percentage,
+      matchLevel,
+      breakdown: scores,
+      reasons: reasons.slice(0, 3),
+      aiExplanation,
+      distance: distance ? `${distance.toFixed(1)}km` : null
     });
 
   } catch (error) {
     console.error('Match probability error:', error);
-    return json(res, 500, { error: error?.message || 'Internal server error' });
+    return res.status(500).json({ error: error.message });
   }
 }
 
-/**
- * Haversine distance in kilometers
- */
-function haversineKm(a, b) {
-  const toRad = (deg) => (deg * Math.PI) / 180;
-  const R = 6371; // Earth radius in km
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
+function calculateOverlap(arr1, arr2) {
+  if (!arr1?.length || !arr2?.length) return 0;
+  const set1 = new Set(arr1.map(s => s.toLowerCase()));
+  const set2 = new Set(arr2.map(s => s.toLowerCase()));
+  const intersection = [...set1].filter(x => set2.has(x));
+  const union = new Set([...set1, ...set2]);
+  return intersection.length / union.size;
+}
 
-  const sinLat = Math.sin(dLat / 2);
-  const sinLng = Math.sin(dLng / 2);
-  const h = sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLng * sinLng;
-  const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+function getCommonItems(arr1, arr2) {
+  if (!arr1?.length || !arr2?.length) return [];
+  const set2 = new Set(arr2.map(s => s.toLowerCase()));
+  return arr1.filter(item => set2.has(item.toLowerCase()));
+}
+
+function calculateLookingForMatch(lf1, lf2) {
+  if (!lf1?.length || !lf2?.length) return 0.5;
+  
+  // Direct matches
+  const overlap = calculateOverlap(lf1, lf2);
+  if (overlap > 0) return overlap;
+  
+  // Complementary matches (e.g., "dates" matches "relationship")
+  const complementary = {
+    'dates': ['relationship', 'dating', 'fun'],
+    'fun': ['dates', 'hookups', 'nsa'],
+    'relationship': ['dates', 'dating', 'ltr'],
+    'friends': ['networking', 'chat'],
+    'hookups': ['fun', 'nsa']
+  };
+  
+  for (const item of lf1) {
+    const matches = complementary[item.toLowerCase()] || [];
+    if (lf2.some(x => matches.includes(x.toLowerCase()))) {
+      return 0.7;
+    }
+  }
+  
+  return 0.3;
+}
+
+function calculatePositionCompatibility(pos1, pos2) {
+  if (!pos1 || !pos2) return 0.5;
+  
+  const p1 = pos1.toLowerCase();
+  const p2 = pos2.toLowerCase();
+  
+  // Same position
+  if (p1 === p2) {
+    if (p1 === 'vers' || p1 === 'versatile') return 1;
+    if (p1 === 'side') return 1;
+    return 0.3; // Two tops or two bottoms
+  }
+  
+  // Complementary
+  const complementary = {
+    'top': ['bottom', 'vers', 'versatile'],
+    'bottom': ['top', 'vers', 'versatile'],
+    'vers': ['top', 'bottom', 'vers', 'versatile'],
+    'versatile': ['top', 'bottom', 'vers', 'versatile'],
+    'side': ['side', 'vers', 'versatile']
+  };
+  
+  if (complementary[p1]?.includes(p2)) return 1;
+  
+  return 0.5;
+}
+
+function calculateAgeMatch(user, target) {
+  if (!target.age) return 0.5;
+  
+  const minAge = user.age_preference_min || 18;
+  const maxAge = user.age_preference_max || 99;
+  
+  if (target.age >= minAge && target.age <= maxAge) {
+    // Bonus for being in the middle of preference range
+    const midPoint = (minAge + maxAge) / 2;
+    const distance = Math.abs(target.age - midPoint);
+    const range = (maxAge - minAge) / 2;
+    return 1 - (distance / range) * 0.3;
+  }
+  
+  // Outside preference
+  const outsideBy = target.age < minAge 
+    ? minAge - target.age 
+    : target.age - maxAge;
+  
+  return Math.max(0, 1 - (outsideBy * 0.1));
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+}
+
+function toRad(deg) {
+  return deg * (Math.PI / 180);
+}
+
+function isRecentlyActive(lastActive) {
+  if (!lastActive) return false;
+  const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
+  return new Date(lastActive) > thirtyMinsAgo;
+}
+
+async function generateAIExplanation(user, target, reasons, score) {
+  try {
+    const prompt = `Generate a brief, cheeky one-liner explaining why these two gay men might be a ${score}% match.
+
+Key compatibility factors:
+${reasons.join('\n')}
+
+Rules:
+- Max 15 words
+- Be playful but not cringe
+- HOTMESS voice: bold, cheeky, direct
+- Don't mention the percentage
+
+Examples:
+- "Both house music heads who like to vers? This could get interesting."
+- "Same tribe, same vibe. The stars are aligning here."
+- "Close enough to meet, compatible enough to click."`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-turbo-preview',
+        messages: [
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 50,
+        temperature: 0.8
+      })
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content?.trim().replace(/"/g, '') || null;
+  } catch {
+    return null;
+  }
 }
