@@ -3,6 +3,7 @@ import { base44 } from '@/components/utils/supabaseClient';
 import logger from '@/utils/logger';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import { setUser as setSentryUser } from '@/lib/sentry';
+// Auth logs: View in Supabase Dashboard > Authentication > Logs
 
 const AuthContext = createContext();
 
