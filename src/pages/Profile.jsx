@@ -33,6 +33,8 @@ import ProfileWingman from '../components/profile/ProfileWingman';
 import { fetchRoutingEtas } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { ProfileCardSkeleton, StatsGridSkeleton } from '@/components/ui/SkeletonLoaders';
+import { MatchBar } from '@/features/profilesGrid/MatchBar';
+import { LuxProfileCarousel } from '@/components/lux/LuxCarousel';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -802,6 +804,19 @@ export default function Profile() {
           travelEtas={travelEtas}
         />
 
+        {/* Match Score Bar - Only show when viewing another user's profile */}
+        {!isOwnProfile && profileUser?.match_score > 0 && (
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <MatchBar 
+              matchProbability={profileUser.match_score}
+              showLabel={true}
+              showInsights={true}
+              size="lg"
+              className="bg-white/5 border border-white/10 rounded-lg p-4"
+            />
+          </div>
+        )}
+
         <div className="max-w-4xl mx-auto p-4 md:p-8">
           {/* AI Wingman - for viewing other profiles */}
           {!isOwnProfile && profileUser && currentUser && (
@@ -1253,6 +1268,27 @@ export default function Profile() {
           </TabsContent>
         </Tabs>
         </div>
+
+        {/* Similar Profiles - Only show when viewing another user */}
+        {!isOwnProfile && profileUser && (
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <h3 className="text-xl font-black uppercase mb-6">Similar Profiles</h3>
+            <LuxProfileCarousel
+              profiles={allUsers
+                .filter(u => u.id !== profileUser.id && u.id !== currentUser?.id)
+                .slice(0, 10)
+                .map(u => ({
+                  id: u.id,
+                  name: u.full_name || 'Anonymous',
+                  image: u.avatar_url || u.profile_image,
+                  subtitle: u.tagline || u.profile_type || 'Member',
+                  href: getProfileUrl(u),
+                }))}
+              itemsPerView={3}
+              autoPlay={false}
+            />
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );
