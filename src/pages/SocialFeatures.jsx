@@ -6,17 +6,11 @@ import {
   MessageCircle, 
   Heart,
   Globe,
-  Eye,
-  Clock,
-  Sparkles,
   Camera,
-  Mic,
-  MapPin,
   Shield,
   CheckCircle,
   ArrowRight,
-  Zap,
-  Star
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PageShell from '@/components/shell/PageShell';

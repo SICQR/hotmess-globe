@@ -3,18 +3,10 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { 
   Calendar, 
-  MapPin, 
-  Users, 
   Zap,
   Globe,
   Ticket,
-  Bell,
-  Star,
   Crown,
-  Clock,
-  Filter,
-  Heart,
-  Share2,
   CheckCircle,
   ArrowRight,
   Sparkles
