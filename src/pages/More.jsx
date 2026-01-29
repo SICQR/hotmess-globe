@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { 
   MapPin, TrendingUp, Target, Shield, Calendar, 
-  Scan, Users, Trophy, Settings, FileText, HelpCircle 
+  Scan, Users, Trophy, Settings, FileText, HelpCircle,
+  Sparkles, Heart, Radio, ShoppingBag, Globe
 } from 'lucide-react';
 import PageShell from '@/components/shell/PageShell';
 
@@ -22,6 +23,14 @@ const ACCOUNT = [
   { name: 'Settings', icon: Settings, path: 'Settings' },
   { name: 'Membership', icon: FileText, path: 'MembershipUpgrade' },
   { name: 'Help & Support', icon: HelpCircle, path: 'Care' },
+];
+
+const FEATURES = [
+  { name: 'All Features', icon: Sparkles, href: '/features', desc: 'Explore everything HOTMESS offers', color: '#FF1493' },
+  { name: 'Safety Features', icon: Shield, href: '/features/safety', desc: 'Panic button, fake calls, location sharing', color: '#FF0000' },
+  { name: 'Social Features', icon: Users, href: '/features/social', desc: 'Connect, message, discover', color: '#00D9FF' },
+  { name: 'Events Features', icon: Calendar, href: '/features/events', desc: 'Find what\'s happening near you', color: '#B026FF' },
+  { name: 'Radio & Music', icon: Radio, href: '/features/music', desc: '24/7 radio, shows, exclusive releases', color: '#FF6B35' },
 ];
 
 export default function More() {
@@ -50,6 +59,39 @@ export default function More() {
                     <Icon className="w-8 h-8 mb-3 text-white/60 group-hover:text-[#00D9FF] transition-colors" />
                     <h3 className="font-black uppercase text-sm mb-1">{tool.name}</h3>
                     <p className="text-xs text-white/50">{tool.desc}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Discover Features */}
+        <div className="mb-12">
+          <h2 className="text-xl font-black uppercase mb-4 text-white/60">DISCOVER</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {FEATURES.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <Link 
+                  key={feature.href}
+                  to={feature.href}
+                  className="group"
+                >
+                  <div 
+                    className="bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-current p-5 transition-all h-full flex items-start gap-4"
+                    style={{ '--tw-border-opacity': 1, borderColor: `${feature.color}40` }}
+                  >
+                    <div 
+                      className="w-12 h-12 flex items-center justify-center flex-shrink-0 border-2"
+                      style={{ borderColor: feature.color, backgroundColor: `${feature.color}20` }}
+                    >
+                      <Icon className="w-6 h-6" style={{ color: feature.color }} />
+                    </div>
+                    <div>
+                      <h3 className="font-black uppercase text-sm mb-1">{feature.name}</h3>
+                      <p className="text-xs text-white/50">{feature.desc}</p>
+                    </div>
                   </div>
                 </Link>
               );

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn, Search, X, Bell, BellOff } from 'lucide-react';
+import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn, Search, X, Bell, BellOff, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
@@ -10,9 +10,7 @@ import { toast } from 'sonner';
 import { useAllUsers } from '../utils/queryConfig';
 import MediaViewer from './MediaViewer';
 import { broadcast } from '@/lib/globeActivity';
-// Voice notes and typing indicators - to be integrated
-// import { VoiceNoteButton, VoiceNotePlayer } from './VoiceNote';
-// import { TypingIndicator, useTypingPresence } from './TypingIndicator';
+import { VoiceNoteButton, VoiceNotePlayer } from './VoiceNote';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -584,6 +582,23 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
                         <p className="text-sm font-medium leading-relaxed">{msg.content}</p>
                       </div>
                     )}
+
+                    {/* Voice Message */}
+                    {(msg.message_type === 'voice' || msg.voice_url || msg.metadata?.voice_url) && (
+                      <div
+                        className={`px-3 py-2 border-2 ${
+                          isOwn
+                            ? 'bg-[#FF1493] border-[#FF1493]'
+                            : 'bg-black border-white'
+                        }`}
+                      >
+                        <VoiceNotePlayer
+                          audioUrl={msg.voice_url || msg.metadata?.voice_url}
+                          duration={msg.voice_duration || msg.metadata?.voice_duration}
+                          compact
+                        />
+                      </div>
+                    )}
                     
                     {msg.message_type === 'system' && (
                       <div className="text-center text-xs text-white/40 italic uppercase font-mono">
@@ -741,6 +756,42 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
               </span>
             </Button>
           </label>
+
+          {/* Voice Note Button */}
+          <VoiceNoteButton
+            onSend={async (audioBlob, duration) => {
+              try {
+                // Upload audio to storage
+                const fileName = `voice_${Date.now()}.webm`;
+                const { data: uploadData, error: uploadError } = await base44.storage
+                  .from('voice-messages')
+                  .upload(fileName, audioBlob, { contentType: 'audio/webm' });
+                
+                if (uploadError) throw uploadError;
+                
+                const { data: { publicUrl } } = base44.storage
+                  .from('voice-messages')
+                  .getPublicUrl(fileName);
+                
+                // Send as message with voice attachment
+                await sendMutation.mutateAsync({
+                  thread_id: thread.id,
+                  sender_email: currentUser.email,
+                  content: '🎤 Voice message',
+                  voice_url: publicUrl,
+                  voice_duration: duration,
+                  created_date: new Date().toISOString(),
+                });
+                
+                toast.success('Voice message sent');
+              } catch (err) {
+                console.error('Voice send error:', err);
+                toast.error('Failed to send voice message');
+              }
+            }}
+            disabled={readOnly}
+            className="border-2 border-white/20 hover:border-white"
+          />
 
           <Input
             value={messageText}
