@@ -397,6 +397,10 @@ const AuthenticatedApp = () => {
       {/* Features / USP Pages */}
       <Route path="/features" element={<PageRoute pageKey="Features" />} />
       <Route path="/features/safety" element={<PageRoute pageKey="SafetyFeatures" />} />
+      <Route path="/features/events" element={<PageRoute pageKey="EventsFeatures" />} />
+      <Route path="/features/social" element={<PageRoute pageKey="SocialFeatures" />} />
+      <Route path="/features/music" element={<PageRoute pageKey="RadioFeatures" />} />
+      <Route path="/features/radio" element={<PageRoute pageKey="RadioFeatures" />} />
 
       {/* Legal */}
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />

@@ -27,6 +27,7 @@ import Directions from './pages/Directions';
 import EditBeacon from './pages/EditBeacon';
 import EditProfile from './pages/EditProfile';
 import Events from './pages/Events';
+import EventsFeatures from './pages/EventsFeatures';
 import Features from './pages/Features';
 import Feed from './pages/Feed';
 import Globe from './pages/Globe';
@@ -54,6 +55,7 @@ import ProfileSetup from './pages/ProfileSetup';
 import PromoteToAdmin from './pages/PromoteToAdmin';
 import Pulse from './pages/Pulse';
 import Radio from './pages/Radio';
+import RadioFeatures from './pages/RadioFeatures';
 import RadioSchedule from './pages/RadioSchedule';
 import RecordManager from './pages/RecordManager';
 import ReactBitsProfileCardDemo from './pages/ReactBitsProfileCardDemo';
@@ -64,6 +66,7 @@ import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
 import Social from './pages/Social';
+import SocialFeatures from './pages/SocialFeatures';
 import SquadChat from './pages/SquadChat';
 import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
@@ -100,6 +103,7 @@ export const PAGES = {
     "EditBeacon": EditBeacon,
     "EditProfile": EditProfile,
     "Events": Events,
+    "EventsFeatures": EventsFeatures,
     "Features": Features,
     "Feed": Feed,
     "Globe": Globe,
@@ -128,6 +132,7 @@ export const PAGES = {
     "PromoteToAdmin": PromoteToAdmin,
     "Pulse": Pulse,
     "Radio": Radio,
+    "RadioFeatures": RadioFeatures,
     "RadioSchedule": RadioSchedule,
     "RecordManager": RecordManager,
     "ReactBitsProfileCardDemo": ReactBitsProfileCardDemo,
@@ -138,6 +143,7 @@ export const PAGES = {
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
     "Social": Social,
+    "SocialFeatures": SocialFeatures,
     "SquadChat": SquadChat,
     "Stats": Stats,
     "TermsOfService": TermsOfService,
