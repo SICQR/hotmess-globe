@@ -12,6 +12,13 @@ export default [{
     // This repo contains an intentionally-ignored nested copy at `hotmess-globe/`.
     // Do not lint it (it has different config/tooling and breaks CI).
     "hotmess-globe/**",
+    // Ignore TypeScript storybook files (not configured for TS parsing)
+    ".storybook/**",
+    "src/stories/**",
+    // Ignore JSX storybook files that use CSF3 syntax
+    "**/*.stories.jsx",
+    "**/*.stories.ts",
+    "**/*.stories.tsx",
   ],
 }, {
   files: [
