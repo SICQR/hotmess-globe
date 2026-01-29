@@ -40,7 +40,7 @@ export default function Contact() {
       const { data: { user } } = await supabase.auth.getUser();
 
       // Create support ticket
-      const { error: insertError } = await supabase
+      const { data: ticketData, error: insertError } = await supabase
         .from('support_tickets')
         .insert({
           user_email: formData.email,
@@ -55,11 +55,50 @@ export default function Contact() {
             source: 'contact_form',
             user_agent: navigator.userAgent,
           }
-        });
+        })
+        .select()
+        .single();
 
       if (insertError) {
-        // If table doesn't exist, show success anyway (for demo)
         console.warn('Support ticket insertion failed:', insertError);
+        throw insertError;
+      }
+
+      // Send email notifications (non-blocking)
+      if (ticketData?.id) {
+        const ticketNumber = ticketData.id.substring(0, 8).toUpperCase();
+        
+        // Send confirmation to user
+        fetch('/api/email/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'ticket_created_user',
+            data: {
+              userEmail: formData.email,
+              ticketNumber,
+              subject: formData.subject,
+              category: formData.category,
+            }
+          })
+        }).catch(err => console.warn('Failed to send user notification:', err));
+
+        // Notify admin
+        fetch('/api/email/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'ticket_created_admin',
+            data: {
+              ticketNumber,
+              userEmail: formData.email,
+              subject: formData.subject,
+              category: formData.category,
+              priority: formData.category === 'safety' ? 'high' : 'normal',
+              message: formData.message,
+            }
+          })
+        }).catch(err => console.warn('Failed to send admin notification:', err));
       }
 
       setSuccess(true);

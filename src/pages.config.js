@@ -130,6 +130,7 @@ export const PAGES = {
     "OrderHistory": OrderHistory,
     "OrganizerDashboard": OrganizerDashboard,
     "PersonaFeatures": PersonaFeatures,
+    "PrivacyPolicy": PrivacyPolicy,
     "ProductDetail": ProductDetail,
     "Profile": Profile,
     "ProfilesGrid": ProfilesGrid,
