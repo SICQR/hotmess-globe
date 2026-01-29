@@ -336,4 +336,144 @@
   .animate-breathing {
     animation: breathing 8s ease-in-out infinite;
   }
+  
+  /* ===== MOBILE-FIRST RESPONSIVE UTILITIES ===== */
+  
+  /* Dynamic viewport height - accounts for mobile browser chrome */
+  .min-h-dynamic {
+    min-height: 100svh;
+  }
+  
+  .h-dynamic {
+    height: 100svh;
+  }
+  
+  /* Mobile-first text scaling */
+  .text-fluid-xs { font-size: clamp(0.65rem, 2vw, 0.75rem); }
+  .text-fluid-sm { font-size: clamp(0.75rem, 2.5vw, 0.875rem); }
+  .text-fluid-base { font-size: clamp(0.875rem, 3vw, 1rem); }
+  .text-fluid-lg { font-size: clamp(1rem, 3.5vw, 1.125rem); }
+  .text-fluid-xl { font-size: clamp(1.125rem, 4vw, 1.25rem); }
+  .text-fluid-2xl { font-size: clamp(1.25rem, 5vw, 1.5rem); }
+  .text-fluid-3xl { font-size: clamp(1.5rem, 6vw, 1.875rem); }
+  .text-fluid-4xl { font-size: clamp(1.875rem, 7vw, 2.25rem); }
+  .text-fluid-5xl { font-size: clamp(2.25rem, 8vw, 3rem); }
+  .text-fluid-6xl { font-size: clamp(2.5rem, 10vw, 3.75rem); }
+  .text-fluid-7xl { font-size: clamp(3rem, 12vw, 4.5rem); }
+  .text-fluid-hero { font-size: clamp(3.5rem, 15vw, 6rem); }
+  
+  /* Mobile-first spacing scale */
+  .p-mobile { padding: clamp(1rem, 4vw, 1.5rem); }
+  .px-mobile { padding-left: clamp(1rem, 4vw, 1.5rem); padding-right: clamp(1rem, 4vw, 1.5rem); }
+  .py-mobile { padding-top: clamp(1rem, 4vw, 1.5rem); padding-bottom: clamp(1rem, 4vw, 1.5rem); }
+  .gap-mobile { gap: clamp(0.75rem, 3vw, 1.5rem); }
+  
+  /* Touch-friendly minimum sizes */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .touch-target-lg {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* Mobile-first grid */
+  .grid-mobile-1 { 
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  
+  .grid-mobile-2 { 
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (min-width: 640px) {
+    .sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .sm\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  }
+  
+  @media (min-width: 768px) {
+    .md\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .md\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .md\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+  }
+  
+  /* Safe area utilities for notched devices */
+  .safe-top { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-left { padding-left: env(safe-area-inset-left); }
+  .safe-right { padding-right: env(safe-area-inset-right); }
+  .safe-x { 
+    padding-left: env(safe-area-inset-left); 
+    padding-right: env(safe-area-inset-right); 
+  }
+  .safe-y { 
+    padding-top: env(safe-area-inset-top); 
+    padding-bottom: env(safe-area-inset-bottom); 
+  }
+  .safe-all {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  /* Bottom nav spacing (mobile) */
+  .pb-nav { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+  
+  /* Mobile-first aspect ratios */
+  .aspect-card { aspect-ratio: 4/5; }
+  .aspect-hero { aspect-ratio: 16/10; }
+  .aspect-thumb { aspect-ratio: 1/1; }
+  
+  /* Snap scroll for mobile carousels */
+  .snap-mobile {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  
+  .snap-mobile::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .snap-item {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+  
+  /* Mobile swipe hints */
+  .swipe-hint {
+    position: relative;
+  }
+  
+  .swipe-hint::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(to right, transparent, rgba(0,0,0,0.3));
+    pointer-events: none;
+  }
+  
+  /* Pull-to-refresh visual feedback */
+  .pull-indicator {
+    transform: translateY(var(--pull-distance, 0));
+    transition: transform 0.2s ease-out;
+  }
+  
+  /* Dynamic section spacing */
+  .section-mobile {
+    padding-top: clamp(2rem, 8vw, 4rem);
+    padding-bottom: clamp(2rem, 8vw, 4rem);
+  }
+  
+  .section-hero {
+    min-height: clamp(60vh, 80svh, 100svh);
+  }
 }

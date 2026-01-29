@@ -512,7 +512,7 @@ export default function Home() {
   }, [recentBeacons]);
 
   return (
-    <div className="min-h-screen bg-black text-white pb-20">
+    <div className="min-h-dynamic bg-black text-white pb-nav">
       {/* ANNOUNCEMENT BANNER */}
       <LuxPageBanner
         message="🔥 RIGHT NOW is live - See who's available near you"
@@ -522,8 +522,8 @@ export default function Home() {
         storageKey="home-banner-dismissed"
       />
 
-      {/* HERO */}
-      <section className="relative min-h-[80svh] flex items-center justify-center overflow-hidden">
+      {/* HERO - Mobile First Dynamic */}
+      <section className="relative section-hero flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img 
             src="/images/HNHMESS HERO.PNG"
@@ -540,26 +540,26 @@ export default function Home() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1 }}
-          className="relative z-10 text-center px-6 max-w-4xl"
+          className="relative z-10 text-center px-mobile max-w-4xl"
         >
-          <h1 className="text-[15vw] md:text-[10vw] font-black italic leading-[0.85] tracking-tighter mb-6 drop-shadow-2xl">
+          <h1 className="text-fluid-hero font-black italic leading-[0.85] tracking-tighter mb-4 md:mb-6 drop-shadow-2xl">
             HOT<span className="text-[#FF1493]">MESS</span>
           </h1>
-          <p className="text-xl md:text-3xl font-black uppercase tracking-wide mb-3 text-[#00D9FF] drop-shadow-lg">
+          <p className="text-fluid-xl font-black uppercase tracking-wide mb-2 md:mb-3 text-[#00D9FF] drop-shadow-lg">
             No swiping. No ghosts. Just chemistry.
           </p>
-          <p className="text-sm md:text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+          <p className="text-fluid-sm text-white/80 mb-6 md:mb-8 max-w-2xl mx-auto">
             Compatibility-first discovery for gay men. Right Now ends automatically. Ask first. Confirm yes.
           </p>
-          <div className="flex flex-wrap gap-3 justify-center">
-            <Link to="/social">
-              <Button className="bg-[#FF1493] hover:bg-white text-white hover:text-black font-black uppercase px-6 py-5 text-base shadow-2xl">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <Link to="/social" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto bg-[#FF1493] hover:bg-white text-white hover:text-black font-black uppercase px-6 py-5 text-base shadow-2xl touch-target">
                 <Zap className="w-5 h-5 mr-2" />
                 SEE WHO'S ON NOW
               </Button>
             </Link>
-            <Link to="/events">
-              <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-6 py-5 text-base backdrop-blur-sm">
+            <Link to="/events" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-6 py-5 text-base backdrop-blur-sm touch-target">
                 <Calendar className="w-5 h-5 mr-2" />
                 TONIGHT'S EVENTS
               </Button>
@@ -621,27 +621,26 @@ export default function Home() {
 
       {/* DAILY CHECK-IN - Only show when logged in */}
       {currentUser?.id && (
-        <section className="py-8 px-6 bg-black">
+        <section className="section-mobile px-mobile bg-black">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-mobile">
               <DailyCheckinCard 
                 onCheckin={(result) => {
                   // Optionally refresh user data after check-in
                   console.log('Check-in complete:', result);
                 }}
               />
-              <div className="hidden md:block">
-                <StreakDisplay userId={currentUser.id} />
-              </div>
+              {/* Streak display - visible on all screens */}
+              <StreakDisplay userId={currentUser.id} />
             </div>
           </div>
         </section>
       )}
 
       {/* LUBE CTA (always visible) */}
-      <section className="py-16 px-6 bg-black">
+      <section className="section-mobile px-mobile bg-black">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center bg-white/5 border-2 border-white/10 p-6 md:p-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-center bg-white/5 border-2 border-white/10 p-mobile">
             <div className="relative aspect-[4/3] overflow-hidden">
               {lubeImageUrl ? (
                 <img
@@ -772,22 +771,22 @@ export default function Home() {
       )}
 
       {/* SHOP COLLECTIONS */}
-      <section className="py-32 px-6 bg-white text-black">
+      <section className="section-mobile px-mobile bg-white text-black">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-16"
+            className="mb-8 md:mb-16"
           >
-            <p className="text-xs uppercase tracking-[0.4em] text-black/40 mb-4">SHOP</p>
-            <h2 className="text-6xl md:text-8xl font-black italic mb-6">SHOP THE DROP</h2>
-            <p className="text-xl uppercase tracking-wider text-black/60 max-w-2xl">
+            <p className="text-xs uppercase tracking-[0.4em] text-black/40 mb-3 md:mb-4">SHOP</p>
+            <h2 className="text-fluid-6xl font-black italic mb-4 md:mb-6">SHOP THE DROP</h2>
+            <p className="text-fluid-lg uppercase tracking-wider text-black/60 max-w-2xl">
               Hardwear. Fit. Club armour. Limited runs.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8">
             {featuredShopifyProducts.length ? (
               featuredShopifyProducts.slice(0, 2).map((p, idx) => {
                 const handle = p?.handle ? String(p.handle) : '';
@@ -890,7 +889,7 @@ export default function Home() {
       <ArchiveSection />
 
       {/* CONNECT */}
-      <section className="relative py-32 px-6 overflow-hidden">
+      <section className="relative section-mobile px-mobile overflow-hidden">
         <div className="absolute inset-0">
           <img 
             src="https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=1920&q=80" 
@@ -900,19 +899,19 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-r from-[#FF1493]/90 to-[#FF1493]/70" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <p className="text-xs uppercase tracking-[0.4em] text-white/80 mb-4">SOCIAL</p>
-              <h2 className="text-6xl md:text-8xl font-black italic mb-8 drop-shadow-2xl">RIGHT NOW</h2>
-              <p className="text-xl mb-8 leading-relaxed drop-shadow-lg">
+              <p className="text-xs uppercase tracking-[0.4em] text-white/80 mb-3 md:mb-4">SOCIAL</p>
+              <h2 className="text-fluid-6xl font-black italic mb-4 md:mb-8 drop-shadow-2xl">RIGHT NOW</h2>
+              <p className="text-fluid-lg mb-6 md:mb-8 leading-relaxed drop-shadow-lg">
                 Compatibility-first discovery. No swiping. No ghosts. Just good chemistry backed by real data.
               </p>
-              <Link to="/social">
-                <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 text-lg shadow-2xl">
+              <Link to="/social" className="block">
+                <Button className="w-full sm:w-auto bg-black text-white hover:bg-white hover:text-black font-black uppercase px-6 md:px-8 py-4 text-base md:text-lg shadow-2xl touch-target">
                   BROWSE PROFILES
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
@@ -922,7 +921,7 @@ export default function Home() {
               initial={{ opacity: 0, x: 40 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="grid grid-cols-1 gap-6"
+              className="grid grid-cols-1 gap-4 md:gap-6"
             >
               <div className="bg-black/40 backdrop-blur-md p-6 border-2 border-white/30 shadow-2xl">
                 <div className="flex items-center gap-3 mb-3">
@@ -952,24 +951,24 @@ export default function Home() {
       </section>
 
       {/* BEACONS */}
-      <section className="py-32 px-6 bg-black">
+      <section className="section-mobile px-mobile bg-black">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-16"
+            className="mb-8 md:mb-16"
           >
-            <p className="text-xs uppercase tracking-[0.4em] text-white/40 mb-4">EVENTS</p>
-            <h2 className="text-6xl md:text-8xl font-black italic mb-6 text-white">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/40 mb-3 md:mb-4">EVENTS</p>
+            <h2 className="text-fluid-6xl font-black italic mb-4 md:mb-6 text-white">
               TONIGHT<span className="text-[#00D9FF]">.</span>
             </h2>
-            <p className="text-xl uppercase tracking-wider text-white/60 max-w-2xl">
+            <p className="text-fluid-lg uppercase tracking-wider text-white/60 max-w-2xl">
               Three moves you can actually make.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1069,7 +1068,7 @@ export default function Home() {
       </section>
 
       {/* RADIO + CARE */}
-      <section className="relative py-32 px-6 overflow-hidden">
+      <section className="relative section-mobile px-mobile overflow-hidden">
         <div className="absolute inset-0">
           <img 
             src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=1920&q=80" 
@@ -1079,7 +1078,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-br from-[#B026FF]/85 to-black/70" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1189,7 +1188,7 @@ export default function Home() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="py-32 px-6 bg-black text-white text-center">
+      <section className="section-mobile px-mobile bg-black text-white text-center">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -1199,12 +1198,12 @@ export default function Home() {
           <KineticHeadline 
             text="HOTMESS LONDON" 
             as="h2"
-            className="text-6xl md:text-9xl font-black italic mb-8 text-[#FF1493]"
+            className="text-fluid-hero font-black italic mb-6 md:mb-8 text-[#FF1493]"
           />
-          <p className="text-lg uppercase tracking-[0.2em] text-[#0047AB] font-bold mb-4">
+          <p className="text-fluid-base uppercase tracking-[0.2em] text-[#0047AB] font-bold mb-3 md:mb-4">
             School of HOTMESS;LONDON
           </p>
-          <p className="text-xl uppercase tracking-wider text-white/60 mb-12">
+          <p className="text-fluid-lg uppercase tracking-wider text-white/60 mb-8 md:mb-12">
             Don't make the same mistake twice unless he's hot.
           </p>
           {currentUser ? (

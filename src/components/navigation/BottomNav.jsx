@@ -248,24 +248,24 @@ export default function BottomNav({ currentPageName, user }) {
             <span className="text-[9px] font-black uppercase mt-1 text-[#FF1493]">LIVE</span>
           </Link>
 
-          {/* SHOP */}
+          {/* SHOP - Touch Target 44px min */}
           <Link
             to="/market"
-            className={`flex flex-col items-center py-2 px-3 transition-all ${
-              isShopActive ? 'text-white' : 'text-white/50'
+            className={`flex flex-col items-center justify-center min-w-[52px] min-h-[48px] py-1.5 px-2 rounded-lg transition-all active:scale-95 ${
+              isShopActive ? 'text-white bg-white/5' : 'text-white/50'
             }`}
           >
             <ShoppingBag className={`w-6 h-6 ${isShopActive ? 'text-[#B026FF]' : ''}`} />
-            <span className="text-[9px] font-black uppercase mt-1">Shop</span>
+            <span className="text-[9px] font-black uppercase mt-0.5">Shop</span>
           </Link>
 
-          {/* APPS */}
+          {/* APPS - Touch Target 44px min */}
           <button
             onClick={() => setShowApps(true)}
-            className="flex flex-col items-center py-2 px-3 text-white/50 hover:text-white transition-all"
+            className="flex flex-col items-center justify-center min-w-[52px] min-h-[48px] py-1.5 px-2 rounded-lg text-white/50 active:text-white active:bg-white/5 transition-all active:scale-95"
           >
             <LayoutGrid className="w-6 h-6" />
-            <span className="text-[9px] font-black uppercase mt-1">Apps</span>
+            <span className="text-[9px] font-black uppercase mt-0.5">Apps</span>
           </button>
         </div>
       </nav>
