@@ -124,27 +124,33 @@ export default function Auth() {
     }
 
     // Listen for auth state changes (handles OAuth completing in another tab)
-    const { data: { subscription } } = auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user && !provider) {
-        // User signed in (possibly from another tab)
-        setLoading(true);
-        try {
-          const profile = await base44.auth.me();
-          if (!profile?.display_name) {
-            setStep('username');
-          } else if (!profile?.onboarding_completed) {
-            setStep('membership');
-          } else {
-            toast.success('Welcome back!');
-            window.location.href = nextUrl || createPageUrl('Home');
+    let subscription = null;
+    try {
+      const result = auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user && !provider) {
+          // User signed in (possibly from another tab)
+          setLoading(true);
+          try {
+            const profile = await base44.auth.me();
+            if (!profile?.display_name) {
+              setStep('username');
+            } else if (!profile?.onboarding_completed) {
+              setStep('membership');
+            } else {
+              toast.success('Welcome back!');
+              window.location.href = nextUrl || createPageUrl('Home');
+            }
+          } catch (err) {
+            console.error('Auth state change error:', err);
+          } finally {
+            setLoading(false);
           }
-        } catch (err) {
-          console.error('Auth state change error:', err);
-        } finally {
-          setLoading(false);
         }
-      }
-    });
+      });
+      subscription = result?.data?.subscription;
+    } catch (err) {
+      console.error('Failed to set up auth listener:', err);
+    }
 
     return () => {
       subscription?.unsubscribe();
