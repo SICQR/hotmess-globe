@@ -90,6 +90,13 @@ jobs:
         with:
           fail-on-severity: moderate
           deny-licenses: GPL-3.0, AGPL-3.0
+      
+      - name: Note about Dependency Graph
+        if: failure()
+        run: |
+          echo "⚠️ Dependency Review requires GitHub Dependency Graph to be enabled."
+          echo "Please enable it at: https://github.com/SICQR/hotmess-globe/settings/security_analysis"
+          echo "This is informational only and won't block the workflow."
 
   codeql-analysis:
     name: CodeQL Security Analysis
