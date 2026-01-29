@@ -4,6 +4,9 @@ import AdminDashboard from './pages/AdminDashboard';
 import BusinessAnalytics from './pages/biz/BusinessAnalytics';
 import BusinessDashboard from './pages/biz/BusinessDashboard';
 import BusinessOnboarding from './pages/biz/BusinessOnboarding';
+import PromoterDashboard from './pages/biz/PromoterDashboard';
+import CreateBeaconBiz from './pages/biz/CreateBeacon';
+import CreatorDashboard from './pages/CreatorDashboard';
 import AgeGate from './pages/AgeGate';
 import CommunityGuidelines from './pages/CommunityGuidelines';
 import Contact from './pages/Contact';
@@ -90,6 +93,9 @@ export const PAGES = {
     "BusinessAnalytics": BusinessAnalytics,
     "BusinessDashboard": BusinessDashboard,
     "BusinessOnboarding": BusinessOnboarding,
+    "PromoterDashboard": PromoterDashboard,
+    "CreateBeaconBiz": CreateBeaconBiz,
+    "CreatorDashboard": CreatorDashboard,
     "Calendar": Calendar,
     "Care": Care,
     "Challenges": Challenges,

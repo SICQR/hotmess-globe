@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { 
   Users, Calendar, Radio, Ticket, Sparkles, Shield,
-  Navigation, BarChart3, ShoppingBag, Settings, FileText, HelpCircle
+  Navigation, BarChart3, ShoppingBag, Settings, FileText, HelpCircle,
+  Megaphone, Camera, Store
 } from 'lucide-react';
 import PageShell from '@/components/shell/PageShell';
 
@@ -19,6 +20,12 @@ const APPS = [
   { name: 'STATS', icon: BarChart3, path: 'Stats', desc: 'Your XP & activity', color: '#FFEB3B' },
   { name: 'SHOP', icon: ShoppingBag, path: 'Marketplace', desc: 'Shop the drop', color: '#B026FF' },
   { name: 'SETTINGS', icon: Settings, path: 'Settings', desc: 'Preferences', color: '#FFFFFF' },
+];
+
+const BIZ_APPS = [
+  { name: 'PROMOTER', icon: Megaphone, path: 'PromoterDashboard', desc: 'Event beacons & promos', color: '#FF6B35' },
+  { name: 'CREATOR', icon: Camera, path: 'CreatorDashboard', desc: 'Content & subscriptions', color: '#FF1493' },
+  { name: 'SELLER', icon: Store, path: 'SellerDashboard', desc: 'Your shop & sales', color: '#00D9FF' },
 ];
 
 const ACCOUNT = [

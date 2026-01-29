@@ -57,6 +57,10 @@ const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
   'Community',
   'Leaderboard',
   'AdminDashboard',
+  // Business pages
+  'PromoterDashboard',
+  'CreateBeaconBiz',
+  'CreatorDashboard',
   // Shop/market compat is handled separately.
   'Marketplace',
   'ProductDetail',
