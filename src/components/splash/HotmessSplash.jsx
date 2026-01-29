@@ -431,11 +431,15 @@ export default function HotmessSplash({ onComplete }) {
                 <Button
                   type="button"
                   onClick={() => {
-                    // Open Telegram login in popup
-                    const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'hotmess_london_bot';
+                    // Open Telegram login - use bot ID (numeric) not username
+                    const botId = import.meta.env.VITE_TELEGRAM_BOT_ID;
+                    if (!botId) {
+                      toast?.error?.('Telegram login not configured') || alert('Telegram login not configured');
+                      return;
+                    }
                     const redirectUrl = encodeURIComponent(`${window.location.origin}/Auth?provider=telegram`);
                     window.open(
-                      `https://oauth.telegram.org/auth?bot_id=${botUsername}&origin=${window.location.origin}&request_access=write&return_to=${redirectUrl}`,
+                      `https://oauth.telegram.org/auth?bot_id=${botId}&origin=${window.location.origin}&request_access=write&return_to=${redirectUrl}`,
                       'telegram_auth',
                       'width=550,height=470'
                     );
