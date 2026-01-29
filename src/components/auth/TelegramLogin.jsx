@@ -182,9 +182,15 @@ export default function TelegramLogin({
     };
   }, [handleTelegramAuth]);
 
+  const [widgetLoading, setWidgetLoading] = useState(true);
+  const [widgetError, setWidgetError] = useState(false);
+
   // Load Telegram Login Widget script
   useEffect(() => {
     if (!containerRef.current) return;
+    
+    setWidgetLoading(true);
+    setWidgetError(false);
     
     // Clear existing content
     containerRef.current.innerHTML = '';
@@ -200,6 +206,22 @@ export default function TelegramLogin({
     script.setAttribute('data-userpic', String(showAvatar));
     script.setAttribute('data-onauth', 'onTelegramAuth(user)');
     
+    script.onload = () => {
+      // Give the widget time to render
+      setTimeout(() => {
+        setWidgetLoading(false);
+        // Check if widget rendered (creates an iframe)
+        if (containerRef.current && !containerRef.current.querySelector('iframe')) {
+          setWidgetError(true);
+        }
+      }, 2000);
+    };
+    
+    script.onerror = () => {
+      setWidgetLoading(false);
+      setWidgetError(true);
+    };
+    
     containerRef.current.appendChild(script);
     
     return () => {
@@ -214,10 +236,37 @@ export default function TelegramLogin({
       {/* Telegram Widget Container */}
       <div 
         ref={containerRef} 
-        className="flex justify-center min-h-[40px]"
+        className={cn("flex justify-center min-h-[40px]", widgetError && "hidden")}
       />
       
-      {/* Loading State */}
+      {/* Widget Loading */}
+      {widgetLoading && !widgetError && (
+        <div className="flex items-center justify-center gap-2 text-[#0088cc] py-2">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-sm">Loading Telegram...</span>
+        </div>
+      )}
+      
+      {/* Widget Failed - Fallback Link */}
+      {widgetError && (
+        <div className="space-y-3">
+          <div className="text-center text-sm text-white/60">
+            Widget unavailable. Open Telegram directly:
+          </div>
+          <a
+            href={`https://t.me/${TELEGRAM_BOT_USERNAME}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-3 bg-[#0088cc] hover:bg-[#0077b5] text-white rounded-lg transition-colors"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Open @{TELEGRAM_BOT_USERNAME}
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </div>
+      )}
+      
+      {/* Auth Loading State */}
       {loading && (
         <div className="flex items-center justify-center gap-2 text-[#0088cc]">
           <Loader2 className="w-4 h-4 animate-spin" />
