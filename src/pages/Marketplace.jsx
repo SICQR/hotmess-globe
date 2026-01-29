@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
-import { ShoppingBag, Plus, Search } from 'lucide-react';
+import { ShoppingBag, Plus, Search, Sparkles, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,6 +25,9 @@ import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { KineticHeadline } from '@/components/text/KineticHeadline';
 import { MESSMARKET, CORE_BRANDS } from '@/lib/brand';
 import { broadcast } from '@/lib/globeActivity';
+import { LuxHeroBanner, LuxPageBanner } from '@/components/lux/LuxBanner';
+import { LuxLeaderboardAd, LuxMediumRectangleAd } from '@/components/lux/AdSlot';
+import { LuxProductCarousel } from '@/components/lux/LuxCarousel';
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
@@ -434,8 +437,32 @@ export default function Marketplace() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-black text-white">
+      {/* Announcement Banner */}
+      <LuxPageBanner
+        message="NEW DROP: HNH MESS Lube - Shop Now"
+        cta="Shop"
+        ctaHref="/hnhmess"
+        type="promo"
+        dismissible
+        storageKey="market-drop-banner"
+      />
+
+      {/* Hero Banner */}
+      <LuxHeroBanner
+        subtitle="Marketplace"
+        title="THE DROP"
+        description="Official gear + creator marketplace. Brutalist luxury."
+        cta="Start Selling"
+        ctaHref="/seller-dashboard"
+        ctaVariant="primary"
+        height="md"
+        overlay
+        alignment="center"
+        image="/images/shop-hero.jpg"
+      />
+
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -443,11 +470,16 @@ export default function Marketplace() {
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <KineticHeadline 
-                text="THE SHOP"
-                as="h1"
-                className="text-3xl md:text-4xl font-black italic uppercase tracking-tight mb-2"
-              />
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-[#B026FF] flex items-center justify-center">
+                  <ShoppingBag className="w-5 h-5 text-white" />
+                </div>
+                <KineticHeadline 
+                  text="THE SHOP"
+                  as="h1"
+                  className="text-3xl md:text-4xl font-black italic uppercase tracking-tight"
+                />
+              </div>
               <p className="text-white/60 uppercase text-sm tracking-wider">
                 Official Gear + {MESSMARKET.name} ({MESSMARKET.fee})
               </p>
@@ -703,6 +735,17 @@ export default function Marketplace() {
                   ))}
                 </div>
 
+                {/* Ad Slot after row 2 */}
+                {paginatedProducts.length > 6 && (
+                  <div className="col-span-full flex justify-center py-4">
+                    <LuxLeaderboardAd
+                      slotId="market-inline"
+                      fallbackImage="/images/ad-placeholder-wide.jpg"
+                      fallbackHref="/events"
+                    />
+                  </div>
+                )}
+
                 {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 mt-8">
@@ -710,18 +753,18 @@ export default function Marketplace() {
                       onClick={() => setPage(p => Math.max(1, p - 1))}
                       disabled={page === 1}
                       variant="outline"
-                      className="border-white/20"
+                      className="border-white/20 hover:bg-white hover:text-black"
                     >
                       Previous
                     </Button>
-                    <span className="text-sm text-white/60">
-                      Page {page} of {totalPages}
+                    <span className="text-sm text-white/60 font-mono">
+                      {String(page).padStart(2, '0')} / {String(totalPages).padStart(2, '0')}
                     </span>
                     <Button
                       onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
                       variant="outline"
-                      className="border-white/20"
+                      className="border-white/20 hover:bg-white hover:text-black"
                     >
                       Next
                     </Button>
@@ -731,6 +774,30 @@ export default function Marketplace() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Bottom CTA Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-12 p-8 bg-gradient-to-r from-[#B026FF]/20 to-[#FF1493]/20 border-2 border-[#B026FF]/30"
+        >
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <h3 className="text-2xl font-black text-white mb-2">START SELLING TODAY</h3>
+              <p className="text-white/70 uppercase tracking-wider text-sm">
+                Join {MESSMARKET.name} • {MESSMARKET.fee} platform fee • Instant payouts
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate(createPageUrl('SellerDashboard'))}
+              className="bg-[#B026FF] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-4"
+            >
+              <TrendingUp className="w-5 h-5 mr-2" />
+              Become a Seller
+            </Button>
+          </div>
+        </motion.div>
       </div>
 
       <TutorialTooltip page="marketplace" />

@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { MessageCircle, Plus } from 'lucide-react';
+import { MessageCircle, Plus, Inbox, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ChatThread from '../components/messaging/ChatThread';
 import ThreadList from '../components/messaging/ThreadList';
 import NewMessageModal from '../components/messaging/NewMessageModal';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { LuxMobileBannerAd } from '@/components/lux/AdSlot';
 
 export default function Messages() {
   const [selectedThread, setSelectedThread] = useState(null);
@@ -112,43 +113,59 @@ export default function Messages() {
     <div className="min-h-screen bg-black text-white">
       <div className="max-w-7xl mx-auto h-screen flex flex-col md:flex-row">
         {/* Thread List - Left Sidebar */}
-        <div className={`${selectedThread ? 'hidden md:block' : 'block'} md:w-96 border-r-2 border-white/20 flex flex-col bg-black`}>
-          <div className="p-6 border-b-2 border-white/20 bg-black">
+        <div className={`${selectedThread ? 'hidden md:block' : 'block'} md:w-96 border-r-2 border-white/10 flex flex-col bg-black`}>
+          <div className="p-6 border-b-2 border-white/10 bg-gradient-to-r from-black to-[#FF1493]/10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <h1 className="text-3xl font-black uppercase tracking-tighter mb-1">MESSAGES</h1>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">IN-APP DMS</p>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-[#FF1493] flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-black uppercase tracking-tighter">MESSAGES</h1>
+                  <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">IN-APP DMS</p>
+                </div>
+              </div>
             </motion.div>
 
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button
                 type="button"
-                variant="glass"
+                variant="outline"
                 onClick={() => goToSocial('discover')}
-                className="border-white/20"
+                className="border-white/20 hover:bg-white hover:text-black font-bold uppercase text-xs"
               >
                 BACK TO GRID
               </Button>
               <Button
                 type="button"
-                variant="glass"
+                variant="outline"
                 onClick={() => goToSocial('inbox')}
-                className="border-white/20"
+                className="border-white/20 hover:bg-white hover:text-black font-bold uppercase text-xs"
               >
+                <Inbox className="w-3 h-3 mr-1" />
                 INBOX
               </Button>
             </div>
 
             <Button
               onClick={() => setShowNewMessage(true)}
-              variant="hot"
-              className="w-full mt-4 font-black uppercase"
+              className="w-full mt-4 font-black uppercase bg-[#FF1493] hover:bg-white text-white hover:text-black"
             >
               <Plus className="w-4 h-4 mr-2" />
               NEW MESSAGE
             </Button>
+
+            {/* Ad Slot in Sidebar */}
+            <div className="mt-4">
+              <LuxMobileBannerAd
+                slotId="messages-sidebar"
+                fallbackImage="/images/ad-placeholder-small.jpg"
+                fallbackHref="/market"
+              />
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">

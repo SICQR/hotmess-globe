@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { supabase } from '@/components/utils/supabaseClient';
-import { User, Users, Calendar, Award, Camera, Star, Pin, Trophy, Shield, Music, Lock, Instagram, Twitter, Upload, Loader2 } from 'lucide-react';
+import { User, Users, Calendar, Award, Camera, Star, Pin, Trophy, Shield, Music, Lock, Instagram, Twitter, Upload, Loader2, MessageCircle, Share2, Flag, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,7 @@ import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { ProfileCardSkeleton, StatsGridSkeleton } from '@/components/ui/SkeletonLoaders';
 import { MatchBar } from '@/features/profilesGrid/MatchBar';
 import { LuxProfileCarousel } from '@/components/lux/LuxCarousel';
+import { LuxMobileBannerAd } from '@/components/lux/AdSlot';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();

@@ -15,7 +15,7 @@ import TelegramPanel from '@/features/profilesGrid/TelegramPanel';
 import LocalBeaconsView from '../components/globe/LocalBeaconsView';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
-import { Settings, BarChart3, Home, Grid3x3, Activity } from 'lucide-react';
+import { Settings, BarChart3, Home, Grid3x3, Activity, Zap, Crown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { debounce } from 'lodash';
@@ -23,6 +23,8 @@ import ErrorBoundary from '../components/error/ErrorBoundary';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { getProfileUrl } from '@/lib/userPrivacy';
+import { LuxLiveCounter } from '@/components/lux/LiveCounter';
+import { LuxPageBanner } from '@/components/lux/LuxBanner';
 
 export default function GlobePage() {
   const queryClient = useQueryClient();
@@ -547,9 +549,34 @@ export default function GlobePage() {
     );
   }
 
+  // Find the "Night King" - top active user
+  const nightKing = useMemo(() => {
+    const activeUsers = rightNowUsers.filter(u => u.isRightNow);
+    if (activeUsers.length === 0) return null;
+    return activeUsers[0];
+  }, [rightNowUsers]);
+
   return (
     <ErrorBoundary>
-      <div className="relative w-full min-h-screen bg-black overflow-hidden">
+      {/* Drop transition wrapper */}
+      <motion.div
+        initial={{ y: '-100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
+        transition={{ duration: 0.5, ease: [0.43, 0.13, 0.23, 0.96] }}
+        className="relative w-full min-h-screen bg-black overflow-hidden"
+      >
+        {/* Night King Banner */}
+        {nightKing && (
+          <LuxPageBanner
+            message={`👑 ${nightKing.title || 'Someone'} is the Night King - Most Active Right Now`}
+            type="promo"
+            dismissible
+            storageKey="globe-night-king"
+            fixed
+          />
+        )}
+
         {/* Globe - Full Screen */}
         <div className="relative w-full h-screen">
           <EnhancedGlobe3D
@@ -925,7 +952,7 @@ export default function GlobePage() {
       )}
 
       <TelegramPanel open={showHotmessFeed} onClose={() => setShowHotmessFeed(false)} />
-      </div>
+      </motion.div>
     </ErrorBoundary>
   );
 }
