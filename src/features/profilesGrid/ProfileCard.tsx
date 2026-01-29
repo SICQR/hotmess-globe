@@ -9,7 +9,7 @@ import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@
 import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
 import { MatchBar, MatchBreakdownBars, MatchBadge } from './MatchBar';
 import { getTopInsight, getMatchTier } from './matchInsights';
-import { SocialProofBadges, getSocialProofBadges } from './SocialProofBadges';
+import { SocialProofBadges } from './SocialProofBadges';
 
 type Props = {
   profile: Profile;
