@@ -27,6 +27,7 @@ import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import CookieConsent from '@/components/legal/CookieConsent';
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
 import { ScrollProgress } from '@/components/navigation/ScrollProgress.tsx';
+import AftercareNudge, { useAftercareNudge } from '@/components/safety/AftercareNudge';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
@@ -39,6 +40,50 @@ import { ScrollProgress } from '@/components/navigation/ScrollProgress.tsx';
       ];
 
       const SECONDARY_NAV = [];
+
+// Aftercare Nudge wrapper - listens for safety check-in completion
+function AftercareNudgeWrapper({ userName }) {
+  const [showNudge, setShowNudge] = useState(false);
+
+  useEffect(() => {
+    // Listen for aftercare trigger events (from safety check-ins)
+    const handleAftercareEvent = (e) => {
+      if (e.detail?.trigger === 'safety_checkin_end') {
+        // Delay slightly so it doesn't feel abrupt
+        setTimeout(() => setShowNudge(true), 2000);
+      }
+    };
+
+    window.addEventListener('hotmess:aftercare', handleAftercareEvent);
+    
+    // Also check localStorage for pending aftercare (e.g., if page was refreshed)
+    try {
+      const pending = localStorage.getItem('aftercare_pending');
+      if (pending) {
+        const { timestamp } = JSON.parse(pending);
+        // Show if within last 30 minutes
+        if (Date.now() - timestamp < 30 * 60 * 1000) {
+          setTimeout(() => setShowNudge(true), 3000);
+        }
+        localStorage.removeItem('aftercare_pending');
+      }
+    } catch (e) {
+      // Ignore storage errors
+    }
+
+    return () => {
+      window.removeEventListener('hotmess:aftercare', handleAftercareEvent);
+    };
+  }, []);
+
+  return (
+    <AftercareNudge
+      isOpen={showNudge}
+      onClose={() => setShowNudge(false)}
+      userName={userName}
+    />
+  );
+}
 
 function LayoutInner({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -665,6 +710,9 @@ function LayoutInner({ children, currentPageName }) {
 
       {/* Right Now Match Notifications */}
       {user && <RightNowNotifications currentUser={user} />}
+
+      {/* Aftercare Nudge - Shows after safety check-ins */}
+      {user && <AftercareNudgeWrapper userName={user?.full_name?.split(' ')[0]} />}
 
       {/* Persistent Radio Player - Never Unmounts */}
       <PersistentRadioPlayer />
