@@ -26,6 +26,7 @@ import { createPageUrl } from '../utils';
 import { validateUsername, validateDisplayName } from '@/lib/userPrivacy';
 import FaceVerification from '@/components/auth/FaceVerification';
 import TelegramLogin from '@/components/auth/TelegramLogin';
+// Auth logs are handled by Supabase Dashboard > Authentication > Logs
 
 // Social provider icons (inline SVGs for brand accuracy)
 const GoogleIcon = () => (
@@ -99,6 +100,8 @@ export default function Auth() {
   const [selectedTier, setSelectedTier] = useState('basic');
   const [faceVerified, setFaceVerified] = useState(false);
   const [telegramData, setTelegramData] = useState(null);
+  const [showMagicLink, setShowMagicLink] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [profileData, setProfileData] = useState({
     bio: '',
     city: 'London',
@@ -194,7 +197,6 @@ export default function Auth() {
         `${window.location.origin}/Auth?provider=google${nextUrl ? `&next=${encodeURIComponent(nextUrl)}` : ''}`
       );
       if (error) throw error;
-      // Redirect happens automatically
     } catch (error) {
       toast.error(error.message || 'Google sign in failed');
       setSocialLoading(null);
@@ -208,10 +210,30 @@ export default function Auth() {
         `${window.location.origin}/Auth?provider=apple${nextUrl ? `&next=${encodeURIComponent(nextUrl)}` : ''}`
       );
       if (error) throw error;
-      // Redirect happens automatically
     } catch (error) {
       toast.error(error.message || 'Apple sign in failed');
       setSocialLoading(null);
+    }
+  };
+
+  // Magic Link - passwordless login
+  const handleMagicLink = async (e) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error('Please enter your email');
+      return;
+    }
+    setLoading(true);
+    try {
+      const redirectTo = `${window.location.origin}${nextUrl || createPageUrl('Home')}`;
+      const { error } = await auth.sendMagicLink(email, redirectTo);
+      if (error) throw error;
+      setMagicLinkSent(true);
+      toast.success('Check your email for the login link!');
+    } catch (error) {
+      toast.error(error.message || 'Failed to send magic link');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -299,14 +321,12 @@ export default function Auth() {
         const { error } = await auth.signUp(email, password, {
           full_name: fullName,
         });
-
         if (error) throw error;
 
         const { error: signInError } = await auth.signIn(email, password);
         if (signInError) throw signInError;
 
         toast.success('Account created! Now choose your name...');
-        // Go to username selection step instead of membership
         setStep('username');
       } else {
         const { error } = await auth.signIn(email, password);
@@ -611,17 +631,106 @@ export default function Auth() {
                     </div>
                   </div>
 
-                  {/* Email Option Button */}
-                  <Button
-                    type="button"
-                    onClick={() => setShowEmailForm(true)}
-                    variant="outline"
-                    className="w-full border-white/20 text-white hover:bg-white/5 py-6"
-                  >
-                    <Mail className="w-5 h-5 mr-2" />
-                    Use Email & Password
-                  </Button>
+                  {/* Email Options */}
+                  <div className="space-y-2">
+                    <Button
+                      type="button"
+                      onClick={() => setShowMagicLink(true)}
+                      variant="outline"
+                      className="w-full border-[#FF1493]/50 text-[#FF1493] hover:bg-[#FF1493]/10 py-6"
+                    >
+                      <Mail className="w-5 h-5 mr-2" />
+                      Email me a login link
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => setShowEmailForm(true)}
+                      variant="outline"
+                      className="w-full border-white/20 text-white/60 hover:bg-white/5 py-4 text-sm"
+                    >
+                      Use email & password instead
+                    </Button>
+                  </div>
                 </div>
+              )}
+
+              {/* Magic Link Form - Simple passwordless login */}
+              {showMagicLink && !showEmailForm && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  {magicLinkSent ? (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-[#39FF14]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Check className="w-8 h-8 text-[#39FF14]" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Check your email!</h3>
+                      <p className="text-white/60 text-sm mb-4">
+                        We sent a login link to <span className="text-white">{email}</span>
+                      </p>
+                      <p className="text-white/40 text-xs">
+                        Click the link in the email to sign in. No password needed.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMagicLinkSent(false);
+                          setEmail('');
+                        }}
+                        className="text-sm text-[#00D9FF] hover:underline mt-4"
+                      >
+                        Use a different email
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleMagicLink} className="space-y-4">
+                      <div>
+                        <label className="block text-xs uppercase tracking-wider text-white/60 mb-2">
+                          Email
+                        </label>
+                        <Input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="your@email.com"
+                          required
+                          className="bg-black/50 border-white/20"
+                        />
+                      </div>
+
+                      <Button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase py-6 text-lg"
+                      >
+                        {loading ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <>
+                            <Mail className="w-5 h-5 mr-2" />
+                            Send Login Link
+                          </>
+                        )}
+                      </Button>
+
+                      <p className="text-center text-xs text-white/40">
+                        No password required - we'll email you a secure link
+                      </p>
+                    </form>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMagicLink(false);
+                      setMagicLinkSent(false);
+                    }}
+                    className="w-full text-center text-sm text-white/40 hover:text-white mt-4 py-2"
+                  >
+                    ← Back to login options
+                  </button>
+                </motion.div>
               )}
 
               {/* Email/Password Form - Secondary */}
@@ -742,6 +851,19 @@ export default function Auth() {
                     ← Back to social login options
                   </button>
                 </motion.div>
+              )}
+
+              {/* Forgot Password - Always visible */}
+              {!isSignUp && (
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setStep('forgot')}
+                    className="text-sm text-[#FF1493] hover:text-[#FF1493]/80 transition-colors font-medium"
+                  >
+                    Forgot your password?
+                  </button>
+                </div>
               )}
 
               {/* Toggle Sign Up / Sign In */}
