@@ -12,6 +12,9 @@ export default [{
     // This repo contains an intentionally-ignored nested copy at `hotmess-globe/`.
     // Do not lint it (it has different config/tooling and breaks CI).
     "hotmess-globe/**",
+    // Ignore Storybook stories with parsing issues
+    "**/*.stories.{js,jsx,ts,tsx}",
+    ".storybook/**",
   ],
 }, {
   files: [
