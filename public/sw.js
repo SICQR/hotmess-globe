@@ -136,6 +136,11 @@ async function trimCache(cacheName, maxItems) {
   }, 5000);
 }
 
+// Check if response can be cached (must be 200, not 206 partial)
+function canCacheResponse(response) {
+  return response && response.ok && response.status === 200;
+}
+
 // Cache-first strategy
 async function cacheFirst(request, cacheName, maxItems) {
   const cachedResponse = await caches.match(request);
@@ -147,7 +152,7 @@ async function cacheFirst(request, cacheName, maxItems) {
   try {
     const networkResponse = await fetch(request);
     
-    if (networkResponse.ok) {
+    if (canCacheResponse(networkResponse)) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
       
@@ -168,7 +173,7 @@ async function networkFirst(request, cacheName, maxItems) {
   try {
     const networkResponse = await fetch(request);
     
-    if (networkResponse.ok) {
+    if (canCacheResponse(networkResponse)) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
       
@@ -202,7 +207,7 @@ async function staleWhileRevalidate(request, cacheName, maxItems) {
   // Start network request in background
   const networkPromise = fetch(request)
     .then(async (networkResponse) => {
-      if (networkResponse.ok) {
+      if (canCacheResponse(networkResponse)) {
         const cache = await caches.open(cacheName);
         await cache.put(request, networkResponse.clone());
         
