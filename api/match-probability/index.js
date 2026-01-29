@@ -63,6 +63,7 @@ export default async function handler(req, res) {
     const limit = clampInt(req.query?.limit, 1, 100, 40);
     const offset = clampInt(req.query?.offset, 0, 10000, 0);
     const sort = String(req.query?.sort || 'match').toLowerCase();
+    const minMatch = clampInt(req.query?.minMatch, 0, 100, 0); // Minimum match % filter
 
     // Note: Sorting is applied per-page after fetching. For true global sorting
     // across all pages, clients should either fetch all results at once or
@@ -253,16 +254,22 @@ export default async function handler(req, res) {
       };
     });
 
+    // Apply minimum match filter
+    let filteredProfiles = scoredProfiles;
+    if (minMatch > 0) {
+      filteredProfiles = scoredProfiles.filter(p => p.matchProbability >= minMatch);
+    }
+
     // Sort by match probability if requested
     if (sort === 'match') {
-      scoredProfiles.sort((a, b) => b.matchProbability - a.matchProbability);
+      filteredProfiles.sort((a, b) => b.matchProbability - a.matchProbability);
     } else if (sort === 'distance' && viewerLocation) {
-      scoredProfiles.sort((a, b) => (a.travelTimeMinutes || 999999) - (b.travelTimeMinutes || 999999));
+      filteredProfiles.sort((a, b) => (a.travelTimeMinutes || 999999) - (b.travelTimeMinutes || 999999));
     } else if (sort === 'lastActive') {
-      scoredProfiles.sort((a, b) => b.matchBreakdown.activity - a.matchBreakdown.activity);
+      filteredProfiles.sort((a, b) => b.matchBreakdown.activity - a.matchBreakdown.activity);
     } else if (sort === 'newest') {
       // Sort by profile creation date if available, otherwise by ID
-      scoredProfiles.sort((a, b) => {
+      filteredProfiles.sort((a, b) => {
         const aTime = new Date(a.created_at || a.id).getTime();
         const bTime = new Date(b.created_at || b.id).getTime();
         return bTime - aTime; // Newest first
@@ -270,12 +277,18 @@ export default async function handler(req, res) {
     }
 
     // Pagination cursor (simple offset-based)
-    const nextCursor = scoredProfiles.length === limit ? String(offset + limit) : null;
+    const hasMore = scoredProfiles.length === limit; // Check original count for pagination
+    const nextCursor = hasMore ? String(offset + limit) : null;
 
     return json(res, 200, {
-      items: scoredProfiles,
+      items: filteredProfiles,
       nextCursor,
       scoringVersion: '1.0',
+      filters: {
+        minMatch,
+        appliedCount: filteredProfiles.length,
+        totalCount: scoredProfiles.length,
+      },
     });
 
   } catch (error) {

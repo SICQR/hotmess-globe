@@ -7,6 +7,8 @@ import { buildUberDeepLink } from '@/utils/uberDeepLink';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@/utils/travelRecommendations';
 import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
+import { MatchBar, MatchBreakdownBars, MatchBadge } from './MatchBar';
+import { getTopInsight, getMatchTier } from './matchInsights';
 
 type Props = {
   profile: Profile;
@@ -546,14 +548,9 @@ export function ProfileCard({
 
         {/* Top badges */}
         <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2 pointer-events-none">
-          {/* Match probability badge - prominent gradient */}
+          {/* Match probability badge - using MatchBadge component */}
           {profile.matchProbability !== undefined && profile.matchProbability > 0 ? (
-            <div
-              className="rounded-full bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 shadow-lg"
-              title={`Match: ${Math.round(profile.matchProbability)}%`}
-            >
-              {Math.round(profile.matchProbability)}% Match
-            </div>
+            <MatchBadge matchProbability={profile.matchProbability} size="md" />
           ) : null}
 
           {typeBadge ? (
@@ -574,6 +571,25 @@ export function ProfileCard({
             </div>
           ) : null}
         </div>
+
+        {/* Top insight badge - bottom left */}
+        {profile.matchProbability !== undefined && profile.matchBreakdown ? (() => {
+          const insight = getTopInsight(profile.matchBreakdown, profile.travelTimeMinutes);
+          return insight ? (
+            <div className="absolute left-3 bottom-[140px] pointer-events-none">
+              <span className={`
+                inline-flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-semibold backdrop-blur-sm
+                ${insight.score === 'great' ? 'bg-green-500/30 text-green-200' : ''}
+                ${insight.score === 'good' ? 'bg-blue-500/30 text-blue-200' : ''}
+                ${insight.score === 'neutral' ? 'bg-white/20 text-white/80' : ''}
+                ${insight.score === 'low' ? 'bg-orange-500/30 text-orange-200' : ''}
+              `}>
+                <span>{insight.icon}</span>
+                <span>{insight.text}</span>
+              </span>
+            </div>
+          ) : null;
+        })() : null}
 
         {/* Bottom identity + CTAs (always visible) */}
         <div className="absolute inset-x-0 bottom-0 p-3 pointer-events-auto">
@@ -638,45 +654,19 @@ export function ProfileCard({
             {/* Expanded panel on hover/long-press */}
             {isActive ? (
               <div className="mt-3">
-                {/* Match breakdown if available */}
+                {/* Visual match breakdown if available */}
                 {profile.matchProbability !== undefined && profile.matchBreakdown ? (
-                  <div className="mb-3 rounded-lg bg-black/40 border border-white/10 p-2">
-                    <div className="text-[11px] font-black text-white/90 mb-1.5">
-                      Match Breakdown: {Math.round(profile.matchProbability)}%
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[9px] text-white/70">
-                      <div className="flex justify-between">
-                        <span>Travel</span>
-                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.travelTime)}/20</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Role</span>
-                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.roleCompat)}/15</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Kinks</span>
-                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.kinkOverlap)}/15</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Intent</span>
-                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.intent)}/12</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Semantic</span>
-                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.semantic)}/12</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Lifestyle</span>
-                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.lifestyle)}/10</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Activity</span>
-                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.activity)}/8</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Complete</span>
-                        <span className="text-[#FF1493]">{Math.round(profile.matchBreakdown.completeness)}/8</span>
-                      </div>
+                  <div className="mb-3 rounded-lg bg-black/40 border border-white/10 p-3">
+                    <MatchBar
+                      matchProbability={profile.matchProbability}
+                      breakdown={profile.matchBreakdown}
+                      travelTimeMinutes={profile.travelTimeMinutes}
+                      size="md"
+                      showLabel={true}
+                      showInsights={true}
+                    />
+                    <div className="mt-3 pt-2 border-t border-white/10">
+                      <MatchBreakdownBars breakdown={profile.matchBreakdown} />
                     </div>
                   </div>
                 ) : null}

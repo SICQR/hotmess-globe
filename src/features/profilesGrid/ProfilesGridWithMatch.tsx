@@ -3,6 +3,7 @@ import { ProfileCard } from './ProfileCard';
 import { useMatchProfiles } from './useMatchProfiles';
 import { useVisibility } from './useVisibility';
 import { SortSelector, SortPills } from './SortSelector';
+import { MatchFilterDropdown, MatchFilterPills, type MatchFilterValue } from './MatchFilter';
 import type { Profile, SortOption } from './types';
 import type { LatLng } from './travelTime';
 import { base44 } from '@/api/base44Client';
@@ -10,7 +11,7 @@ import { createUserProfileUrl } from '@/utils';
 import { toast } from 'sonner';
 import TelegramPanel from './TelegramPanel';
 import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
-import { Sparkles, MapPin } from 'lucide-react';
+import { Sparkles, MapPin, Filter } from 'lucide-react';
 
 const SkeletonCard = () => {
   return (
@@ -22,12 +23,14 @@ export type ProfilesGridWithMatchProps = {
   showHeader?: boolean;
   showTelegramFeedButton?: boolean;
   showSortSelector?: boolean;
+  showMatchFilter?: boolean;
   headerTitle?: string;
   filterProfiles?: (profile: Profile) => boolean;
   maxItems?: number;
   hideWhenEmpty?: boolean;
   containerClassName?: string;
   defaultSort?: SortOption;
+  defaultMinMatch?: number;
   onOpenProfile?: (profile: Profile) => void;
   onNavigateUrl?: (url: string) => void;
 };
@@ -64,16 +67,19 @@ export default function ProfilesGridWithMatch({
   showHeader = true,
   showTelegramFeedButton = showHeader,
   showSortSelector = true,
+  showMatchFilter = true,
   headerTitle = 'Discover',
   filterProfiles,
   maxItems,
   hideWhenEmpty = false,
   containerClassName = 'mx-auto max-w-6xl p-4',
   defaultSort = 'match',
+  defaultMinMatch = 0,
   onOpenProfile,
   onNavigateUrl,
 }: ProfilesGridWithMatchProps) {
   const [sort, setSort] = useState<SortOption>(defaultSort);
+  const [matchFilter, setMatchFilter] = useState<MatchFilterValue>({ minMatch: defaultMinMatch });
   const [viewerLocation, setViewerLocation] = useState<LatLng | null>(null);
   const [viewerEmail, setViewerEmail] = useState<string | null>(null);
   const [viewerProfile, setViewerProfile] = useState<any>(null);
@@ -106,6 +112,7 @@ export default function ProfilesGridWithMatch({
     viewerLat: viewerLocation?.lat,
     viewerLng: viewerLocation?.lng,
     sort,
+    minMatch: matchFilter.minMatch,
     limit: 40,
     enabled: true,
   });
@@ -287,7 +294,14 @@ export default function ProfilesGridWithMatch({
                 )}
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                {showMatchFilter && (
+                  <MatchFilterDropdown
+                    value={matchFilter}
+                    onChange={setMatchFilter}
+                    disabled={isLoadingInitial}
+                  />
+                )}
                 {showSortSelector && (
                   <div className="hidden sm:block">
                     <SortSelector
@@ -309,16 +323,23 @@ export default function ProfilesGridWithMatch({
               </div>
             </div>
 
-            {/* Mobile sort pills */}
-            {showSortSelector && (
-              <div className="sm:hidden mt-3">
+            {/* Mobile sort and filter pills */}
+            <div className="sm:hidden mt-3 space-y-2">
+              {showSortSelector && (
                 <SortPills
                   value={sort}
                   onChange={setSort}
                   disabled={isLoadingInitial}
                 />
-              </div>
-            )}
+              )}
+              {showMatchFilter && (
+                <MatchFilterPills
+                  value={matchFilter}
+                  onChange={setMatchFilter}
+                  disabled={isLoadingInitial}
+                />
+              )}
+            </div>
           </div>
         )}
 

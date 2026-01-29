@@ -47,6 +47,7 @@ export type UseMatchProfilesOptions = {
   viewerLat?: number | null;
   viewerLng?: number | null;
   sort?: SortOption;
+  minMatch?: number;
   limit?: number;
   enabled?: boolean;
 };
@@ -56,6 +57,7 @@ export function useMatchProfiles(options: UseMatchProfilesOptions = {}) {
     viewerLat = null,
     viewerLng = null,
     sort = 'match',
+    minMatch = 0,
     limit = 40,
     enabled = true,
   } = options;
@@ -83,6 +85,9 @@ export function useMatchProfiles(options: UseMatchProfilesOptions = {}) {
     }
     params.set('sort', sort);
     params.set('limit', String(limit));
+    if (minMatch > 0) {
+      params.set('minMatch', String(minMatch));
+    }
 
     const queryString = params.toString();
     const url = `/api/match-probability${queryString ? `?${queryString}` : ''}`;
@@ -118,7 +123,7 @@ export function useMatchProfiles(options: UseMatchProfilesOptions = {}) {
 
     const data: unknown = await res.json();
     return parseMatchResponse(data);
-  }, [viewerLat, viewerLng, sort, limit]);
+  }, [viewerLat, viewerLng, sort, minMatch, limit]);
 
   const loadInitial = useCallback(async () => {
     if (!enabled) return;
