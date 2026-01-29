@@ -8,49 +8,25 @@ const TOUR_STEPS = [
   {
     id: 'welcome',
     title: 'Welcome to HOTMESS',
-    description: 'Your social operating system for London nightlife, events, and connections.',
+    description: 'Your social OS for London nightlife. Discover people, events, and connections.',
     icon: Zap,
     color: '#FF1493'
   },
   {
     id: 'connect',
-    title: 'Discover People',
-    description: 'Use Connect to find your tribe. Filter by interests, tags, and activity. Go "Right Now" when you\'re available.',
+    title: 'Go Right Now',
+    description: 'Tap "Right Now" when you\'re available. Find people near you who are ready to connect.',
     icon: Users,
     color: '#00D9FF',
-    link: 'Connect'
+    link: 'Social'
   },
   {
-    id: 'globe',
-    title: 'Explore the Globe',
-    description: 'See real-time events, beacons, and activity happening around the world. Click to explore.',
+    id: 'explore',
+    title: 'Explore Everything',
+    description: 'Events, market, radio, and more. Use the bottom nav to discover.',
     icon: GlobeIcon,
     color: '#B026FF',
-    link: 'Globe'
-  },
-  {
-    id: 'events',
-    title: 'Events & Beacons',
-    description: 'RSVP to events, check in at venues, create your own beacons. Earn XP and unlock achievements.',
-    icon: Zap,
-    color: '#FFEB3B',
-    link: 'Events'
-  },
-  {
-    id: 'marketplace',
-    title: 'Shop the Market',
-    description: 'Browse merch, drops, and essentials—fast checkout, no clutter.',
-    icon: ShoppingBag,
-    color: '#39FF14',
-    link: '/market'
-  },
-  {
-    id: 'messages',
-    title: 'Stay Connected',
-    description: 'Message your connections, join squads, and stay in the loop.',
-    icon: MessageCircle,
-    color: '#FF1493',
-    link: 'Messages'
+    link: 'Pulse'
   }
 ];
 
@@ -60,8 +36,15 @@ export default function WelcomeTour({ onComplete }) {
 
   useEffect(() => {
     const hasSeenTour = localStorage.getItem('hotmess_welcome_tour_completed');
-    if (!hasSeenTour) {
-      setIsOpen(true);
+    const hasCookieConsent = localStorage.getItem('hotmess_cookie_consent');
+    
+    // Only show tour if:
+    // 1. User hasn't seen it before
+    // 2. User has already handled cookie consent (so we don't stack modals)
+    if (!hasSeenTour && hasCookieConsent) {
+      // Add delay to avoid competing with other UI elements
+      const timer = setTimeout(() => setIsOpen(true), 3000);
+      return () => clearTimeout(timer);
     }
   }, []);
 

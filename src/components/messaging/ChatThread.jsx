@@ -295,12 +295,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Request notification permission on mount
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }, []);
+  // Don't auto-request notification permission - let user opt-in from settings
 
   // Process typing indicators
   useEffect(() => {

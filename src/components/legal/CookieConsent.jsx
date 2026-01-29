@@ -37,12 +37,25 @@ export function CookieConsent() {
   });
 
   useEffect(() => {
+    // Check if already consented via splash screen or previous visit
     const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
-    if (!stored) {
-      // Show banner after a short delay
-      const timer = setTimeout(() => setVisible(true), 1500);
+    const splashConsent = sessionStorage.getItem('cookies_accepted');
+    
+    if (splashConsent === 'true' && !stored) {
+      // User accepted via splash - save to localStorage and don't show banner
+      saveConsent({
+        essential: true,
+        analytics: true,
+        marketing: true,
+      });
+      return;
+    }
+    
+    if (!stored && !splashConsent) {
+      // No consent yet - show banner after delay (but only if no splash consent)
+      const timer = setTimeout(() => setVisible(true), 2000);
       return () => clearTimeout(timer);
-    } else {
+    } else if (stored) {
       try {
         const parsed = JSON.parse(stored);
         setPreferences(parsed);
