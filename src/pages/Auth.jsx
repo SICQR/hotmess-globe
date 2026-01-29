@@ -545,6 +545,18 @@ export default function Auth() {
                 </p>
               </div>
 
+              {/* Password Reset Banner - Very visible */}
+              {!isSignUp && !showEmailForm && !showMagicLink && (
+                <button
+                  type="button"
+                  onClick={() => setStep('forgot')}
+                  className="w-full mb-6 p-3 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm font-medium hover:bg-yellow-500/20 transition-colors flex items-center justify-center gap-2"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  Can't login? Reset your password
+                </button>
+              )}
+
               {/* Social Login Buttons - Primary */}
               {!showEmailForm && (
                 <div className="space-y-3 mb-6">
@@ -717,6 +729,15 @@ export default function Auth() {
                       <p className="text-center text-xs text-white/40">
                         No password required - we'll email you a secure link
                       </p>
+
+                      {/* Password reset option */}
+                      <button
+                        type="button"
+                        onClick={() => setStep('forgot')}
+                        className="w-full text-center text-sm text-[#FF1493] hover:underline mt-3"
+                      >
+                        Or reset your password instead
+                      </button>
                     </form>
                   )}
 
@@ -831,13 +852,13 @@ export default function Auth() {
                   </form>
 
                   {!isSignUp && (
-                    <div className="text-center mt-4">
+                    <div className="text-center mt-4 p-3 bg-[#FF1493]/10 border border-[#FF1493]/30">
                       <button
                         type="button"
                         onClick={() => setStep('forgot')}
-                        className="text-sm text-white/60 hover:text-white transition-colors"
+                        className="text-sm text-[#FF1493] hover:text-[#FF1493]/80 font-bold transition-colors"
                       >
-                        Forgot password?
+                        Forgot your password? Click here to reset
                       </button>
                     </div>
                   )}
@@ -853,18 +874,6 @@ export default function Auth() {
                 </motion.div>
               )}
 
-              {/* Forgot Password - Always visible */}
-              {!isSignUp && (
-                <div className="text-center mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setStep('forgot')}
-                    className="text-sm text-[#FF1493] hover:text-[#FF1493]/80 transition-colors font-medium"
-                  >
-                    Forgot your password?
-                  </button>
-                </div>
-              )}
 
               {/* Toggle Sign Up / Sign In */}
               <div className="text-center pt-4 border-t border-white/10 mt-6">
