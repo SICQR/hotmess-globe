@@ -24,8 +24,8 @@ import { cn } from '@/lib/utils';
 // CONFIGURATION
 // =============================================================================
 
-// Telegram bot usernames are case-insensitive but widget requires lowercase
-const TELEGRAM_BOT_USERNAME = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'HOTMESS_ADMIN_BOT').toLowerCase();
+// Telegram bot username - must match exactly what's configured in BotFather
+const TELEGRAM_BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'HOTMESS_ADMIN_BOT';
 
 // =============================================================================
 // TELEGRAM AUTH HELPER
