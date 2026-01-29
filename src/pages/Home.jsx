@@ -13,6 +13,9 @@ import { format } from 'date-fns';
 import { KineticHeadline } from '@/components/text/KineticHeadline';
 import { DailyCheckinCard } from '@/components/gamification/DailyCheckin';
 import { StreakDisplay } from '@/components/gamification/StreakCounter';
+import { LuxPageBanner, LuxHeroBanner } from '@/components/lux/LuxBanner';
+import { LuxLiveCounter } from '@/components/lux/LiveCounter';
+import { LuxLeaderboardAd } from '@/components/lux/AdSlot';
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
 // Shopify product handles are not the same as release slugs.
@@ -284,6 +287,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-20">
+      {/* ANNOUNCEMENT BANNER */}
+      <LuxPageBanner
+        message="🔥 RIGHT NOW is live - See who's available near you"
+        ctaText="GO LIVE"
+        ctaHref="/social"
+        dismissible
+        storageKey="home-banner-dismissed"
+      />
+
       {/* HERO */}
       <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
@@ -328,6 +340,32 @@ export default function Home() {
             </Link>
           </div>
         </motion.div>
+      </section>
+
+      {/* SOCIAL PROOF - Live Counter */}
+      <section className="py-6 px-6 bg-black border-y border-white/10">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-8">
+          <LuxLiveCounter 
+            label="Online Now"
+            baseCount={127}
+            variance={25}
+            icon="users"
+          />
+          <LuxLiveCounter 
+            label="Right Now Active"
+            baseCount={34}
+            variance={12}
+            icon="zap"
+            accentColor="#FF1493"
+          />
+          <LuxLiveCounter 
+            label="Events Tonight"
+            baseCount={8}
+            variance={2}
+            icon="calendar"
+            accentColor="#00D9FF"
+          />
+        </div>
       </section>
 
       {/* DAILY CHECK-IN - Only show when logged in */}
@@ -548,6 +586,20 @@ export default function Home() {
               </div>
             )}
           </div>
+        </div>
+      </section>
+
+      {/* AD SLOT */}
+      <section className="py-8 px-6 bg-black">
+        <div className="max-w-7xl mx-auto">
+          <LuxLeaderboardAd 
+            slot="home-leaderboard-1"
+            fallbackContent={
+              <div className="text-center py-4">
+                <p className="text-white/40 text-xs uppercase tracking-widest">Advertisement</p>
+              </div>
+            }
+          />
         </div>
       </section>
 
