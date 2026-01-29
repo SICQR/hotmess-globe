@@ -4,6 +4,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 
 /**
  * Fetch user's current streak from user_streaks table
+ * Handles missing tables gracefully
  */
 async function fetchUserStreak(userId) {
   if (!userId) return null;
@@ -15,7 +16,17 @@ async function fetchUserStreak(userId) {
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (error || !data) return null;
+    // Handle missing table or RLS errors silently
+    if (error) {
+      // Common errors: table doesn't exist (42P01), permission denied, etc.
+      // Don't spam console with these expected errors
+      if (!error.code?.startsWith('PGRST') && error.code !== '42P01') {
+        console.warn('Streak fetch error:', error.code);
+      }
+      return null;
+    }
+    
+    if (!data) return null;
     
     // Check if streak is still valid (activity within last 24-48 hours depending on grace period)
     const lastActivity = new Date(data.last_activity_date);
@@ -34,8 +45,8 @@ async function fetchUserStreak(userId) {
       longest: data.longest_streak || 0,
       isExpiring,
     };
-  } catch (error) {
-    console.warn('Failed to fetch streak:', error);
+  } catch {
+    // Silently handle network errors
     return null;
   }
 }
