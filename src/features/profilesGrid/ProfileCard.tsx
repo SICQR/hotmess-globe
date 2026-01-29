@@ -446,7 +446,7 @@ export function ProfileCard({
       status = 'Online';
     } else if ((profile as any)?.rightNow) {
       status = 'Right now';
-    } 
+    }
 
     return (
       <div
@@ -758,7 +758,7 @@ export function ProfileCard({
                 </div>
 
                 <div className="mt-2 text-[11px] text-white/55">
-                  Estimates • Ask first. Confirm yes.
+                  Ask first. Confirm yes. Respect no.
                 </div>
 
               </div>

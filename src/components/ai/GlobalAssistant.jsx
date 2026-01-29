@@ -98,7 +98,7 @@ export default function GlobalAssistant() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - hidden on mobile to avoid nav overlap */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -106,10 +106,9 @@ export default function GlobalAssistant() {
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-20 right-4 z-50 w-14 h-14 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_20px_rgba(255,20,147,0.5)] hover:shadow-[0_0_30px_rgba(255,20,147,0.8)] transition-all"
+            className="hidden md:flex fixed bottom-4 right-4 z-50 w-12 h-12 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full items-center justify-center border-2 border-white shadow-lg hover:shadow-xl transition-all"
           >
-            <Bot className="w-6 h-6 text-white" />
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#39FF14] rounded-full border-2 border-black animate-pulse" />
+            <Bot className="w-5 h-5 text-white" />
           </motion.button>
         )}
       </AnimatePresence>

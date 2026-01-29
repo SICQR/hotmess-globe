@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 3: Onboarding & Auth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #000;
+      border-radius: 40px;
+      border: 8px solid #1a1a1a;
+      overflow: hidden;
+      position: relative;
+    }
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: #1a1a1a;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+    .screen-content {
+      height: 100%;
+      overflow-y: auto;
+      padding-top: 40px;
+    }
+    .gradient-hot { background: linear-gradient(135deg, #FF1493, #FF6B6B); }
+    .gradient-brand { background: linear-gradient(135deg, #FF1493, #B026FF); }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .bg-hot { background-color: #FF1493; }
+    .bg-cyan { background-color: #00D9FF; }
+    .border-hot { border-color: #FF1493; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+  </style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  
+  <!-- Header -->
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 3: Onboarding & Authentication • 8 Screens</p>
+  </header>
+
+  <!-- Screen Grid -->
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. SPLASH / WELCOME -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. Splash / Welcome</h3>
+      <div class="phone-frame">
+        <div class="screen-content gradient-brand flex flex-col items-center justify-center text-center px-8">
+          <!-- Logo -->
+          <div class="mb-8">
+            <h1 class="text-5xl font-black tracking-tight">
+              <span class="text-white">HOT</span><span class="text-hot">MESS</span>
+            </h1>
+            <p class="text-white/60 text-sm mt-2 tracking-widest">LONDON OS</p>
+          </div>
+
+          <!-- Tagline -->
+          <p class="text-white/90 text-xl font-medium mb-2">Brutalist Luxury</p>
+          <p class="text-white/60 mb-12">for the Modern Man</p>
+
+          <!-- Features -->
+          <div class="space-y-3 mb-12 text-left w-full max-w-xs">
+            <div class="flex items-center gap-3 text-white/80">
+              <span class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">🔥</span>
+              <span>No swiping. No ghosts.</span>
+            </div>
+            <div class="flex items-center gap-3 text-white/80">
+              <span class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">🛡️</span>
+              <span>Safety-first dating</span>
+            </div>
+            <div class="flex items-center gap-3 text-white/80">
+              <span class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">📻</span>
+              <span>24/7 underground radio</span>
+            </div>
+          </div>
+
+          <!-- CTAs -->
+          <button class="w-full bg-white text-black font-bold py-4 rounded-xl mb-3">
+            GET STARTED
+          </button>
+          <button class="w-full bg-white/10 text-white font-bold py-4 rounded-xl border border-white/20">
+            I HAVE AN ACCOUNT
+          </button>
+
+          <p class="text-white/40 text-xs mt-8">18+ • Consent-first • Care always</p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">First screen users see. Brand intro with key USPs.</p>
+    </section>
+
+    <!-- 2. AGE GATE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. Age Gate (18+)</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black flex flex-col items-center justify-center text-center px-8">
+          <!-- Warning Icon -->
+          <div class="w-24 h-24 rounded-full bg-hot/20 flex items-center justify-center mb-8">
+            <span class="text-5xl">🔞</span>
+          </div>
+
+          <h1 class="text-3xl font-black mb-4">Age Verification</h1>
+          <p class="text-neutral-400 mb-8">
+            HOTMESS is an adult platform. You must be 18 or older to enter.
+          </p>
+
+          <!-- Birth Date Input -->
+          <div class="w-full mb-6">
+            <label class="text-left block text-sm text-neutral-500 mb-2">Date of Birth</label>
+            <div class="flex gap-2">
+              <select class="flex-1 bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-center">
+                <option>Day</option>
+              </select>
+              <select class="flex-1 bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-center">
+                <option>Month</option>
+              </select>
+              <select class="flex-1 bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-center">
+                <option>Year</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Confirmation -->
+          <label class="flex items-start gap-3 text-left mb-8 text-sm text-neutral-400">
+            <input type="checkbox" class="mt-1 w-5 h-5 rounded bg-neutral-800 border-neutral-600">
+            <span>I confirm I am 18 years or older and agree to the <span class="text-hot">Terms of Service</span> and <span class="text-hot">Privacy Policy</span></span>
+          </label>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-4">
+            VERIFY AGE
+          </button>
+
+          <p class="text-neutral-600 text-xs">
+            We do not store your date of birth. This is for verification only.
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Required gate before any content. Legal compliance.</p>
+    </section>
+
+    <!-- 3. SIGN IN -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. Sign In</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-6 pt-12">
+          <!-- Back -->
+          <button class="text-neutral-400 mb-8">← Back</button>
+
+          <h1 class="text-3xl font-black mb-2">Welcome Back</h1>
+          <p class="text-neutral-400 mb-8">Sign in to continue</p>
+
+          <!-- Email -->
+          <div class="mb-4">
+            <label class="text-sm text-neutral-500 mb-2 block">Email</label>
+            <input type="email" placeholder="you@email.com" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+          </div>
+
+          <!-- Password -->
+          <div class="mb-2">
+            <label class="text-sm text-neutral-500 mb-2 block">Password</label>
+            <div class="relative">
+              <input type="password" placeholder="••••••••" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 pr-12 focus:border-hot outline-none">
+              <button class="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500">👁️</button>
+            </div>
+          </div>
+
+          <button class="text-hot text-sm mb-8 block text-right w-full">Forgot password?</button>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-6">
+            SIGN IN
+          </button>
+
+          <!-- Divider -->
+          <div class="flex items-center gap-4 mb-6">
+            <div class="flex-1 h-px bg-neutral-800"></div>
+            <span class="text-neutral-500 text-sm">or continue with</span>
+            <div class="flex-1 h-px bg-neutral-800"></div>
+          </div>
+
+          <!-- Social -->
+          <div class="flex gap-3 mb-8">
+            <button class="flex-1 bg-neutral-900 border border-neutral-700 rounded-xl p-4 flex items-center justify-center gap-2">
+              <span>📧</span> Magic Link
+            </button>
+            <button class="flex-1 bg-neutral-900 border border-neutral-700 rounded-xl p-4 flex items-center justify-center gap-2">
+              <span>📱</span> Telegram
+            </button>
+          </div>
+
+          <p class="text-center text-neutral-500">
+            Don't have an account? <button class="text-hot font-semibold">Sign up</button>
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Email/password + magic link + Telegram options.</p>
+    </section>
+
+    <!-- 4. SIGN UP -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Sign Up</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-6 pt-12">
+          <!-- Back -->
+          <button class="text-neutral-400 mb-8">← Back</button>
+
+          <h1 class="text-3xl font-black mb-2">Create Account</h1>
+          <p class="text-neutral-400 mb-8">Join the community</p>
+
+          <!-- Username -->
+          <div class="mb-4">
+            <label class="text-sm text-neutral-500 mb-2 block">Username</label>
+            <input type="text" placeholder="@yourusername" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+          </div>
+
+          <!-- Email -->
+          <div class="mb-4">
+            <label class="text-sm text-neutral-500 mb-2 block">Email</label>
+            <input type="email" placeholder="you@email.com" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+          </div>
+
+          <!-- Password -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-2 block">Password</label>
+            <input type="password" placeholder="Min. 8 characters" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            <div class="flex gap-1 mt-2">
+              <div class="flex-1 h-1 rounded bg-hot"></div>
+              <div class="flex-1 h-1 rounded bg-hot"></div>
+              <div class="flex-1 h-1 rounded bg-neutral-700"></div>
+              <div class="flex-1 h-1 rounded bg-neutral-700"></div>
+            </div>
+            <p class="text-xs text-neutral-500 mt-1">Medium strength</p>
+          </div>
+
+          <!-- Terms -->
+          <label class="flex items-start gap-3 text-left mb-6 text-sm text-neutral-400">
+            <input type="checkbox" class="mt-1 w-5 h-5 rounded bg-neutral-800 border-neutral-600">
+            <span>I agree to the <span class="text-hot">Terms</span>, <span class="text-hot">Privacy Policy</span>, and <span class="text-hot">Community Guidelines</span></span>
+          </label>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-6">
+            CREATE ACCOUNT
+          </button>
+
+          <p class="text-center text-neutral-500">
+            Already have an account? <button class="text-hot font-semibold">Sign in</button>
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Account creation with password strength indicator.</p>
+    </section>
+
+    <!-- 5. VERIFY EMAIL -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. Verify Email</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black flex flex-col items-center justify-center text-center px-8">
+          <!-- Icon -->
+          <div class="w-24 h-24 rounded-full bg-cyan/20 flex items-center justify-center mb-8">
+            <span class="text-5xl">📧</span>
+          </div>
+
+          <h1 class="text-3xl font-black mb-4">Check Your Email</h1>
+          <p class="text-neutral-400 mb-8">
+            We sent a verification link to<br>
+            <span class="text-white font-medium">you@email.com</span>
+          </p>
+
+          <!-- Code Input -->
+          <div class="flex gap-3 mb-8">
+            <input type="text" maxlength="1" class="w-14 h-16 bg-neutral-900 border border-neutral-700 rounded-xl text-center text-2xl font-bold focus:border-hot outline-none">
+            <input type="text" maxlength="1" class="w-14 h-16 bg-neutral-900 border border-neutral-700 rounded-xl text-center text-2xl font-bold focus:border-hot outline-none">
+            <input type="text" maxlength="1" class="w-14 h-16 bg-neutral-900 border border-neutral-700 rounded-xl text-center text-2xl font-bold focus:border-hot outline-none">
+            <input type="text" maxlength="1" class="w-14 h-16 bg-neutral-900 border border-neutral-700 rounded-xl text-center text-2xl font-bold focus:border-hot outline-none">
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-4">
+            VERIFY
+          </button>
+
+          <p class="text-neutral-500 text-sm mb-2">Didn't receive the email?</p>
+          <button class="text-hot font-semibold">Resend Code</button>
+
+          <p class="text-neutral-600 text-xs mt-8">
+            Code expires in 10:00
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Email verification with code entry.</p>
+    </section>
+
+    <!-- 6. RESET PASSWORD -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Reset Password</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-6 pt-12">
+          <!-- Back -->
+          <button class="text-neutral-400 mb-8">← Back</button>
+
+          <h1 class="text-3xl font-black mb-2">Reset Password</h1>
+          <p class="text-neutral-400 mb-8">Enter your email to receive a reset link</p>
+
+          <!-- Email -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-2 block">Email</label>
+            <input type="email" placeholder="you@email.com" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-6">
+            SEND RESET LINK
+          </button>
+
+          <div class="glass rounded-xl p-4 text-center">
+            <p class="text-neutral-400 text-sm">
+              Remember your password? <button class="text-hot font-semibold">Sign in</button>
+            </p>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Password reset request flow.</p>
+    </section>
+
+    <!-- 7. ONBOARDING - PROFILE SETUP -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. Onboarding - Profile</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-6 pt-12">
+          <!-- Progress -->
+          <div class="flex gap-1 mb-8">
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-neutral-700"></div>
+            <div class="flex-1 h-1 rounded-full bg-neutral-700"></div>
+            <div class="flex-1 h-1 rounded-full bg-neutral-700"></div>
+            <div class="flex-1 h-1 rounded-full bg-neutral-700"></div>
+          </div>
+
+          <p class="text-neutral-500 text-sm mb-2">Step 1 of 5</p>
+          <h1 class="text-3xl font-black mb-2">Your Profile</h1>
+          <p class="text-neutral-400 mb-8">Tell us about yourself</p>
+
+          <!-- Photo Upload -->
+          <div class="flex justify-center mb-6">
+            <div class="relative">
+              <div class="w-32 h-32 rounded-full bg-neutral-800 border-2 border-dashed border-neutral-600 flex items-center justify-center">
+                <span class="text-4xl">📷</span>
+              </div>
+              <button class="absolute bottom-0 right-0 w-10 h-10 bg-hot rounded-full flex items-center justify-center">
+                <span class="text-xl">+</span>
+              </button>
+            </div>
+          </div>
+          <p class="text-center text-neutral-500 text-sm mb-6">Add your main photo</p>
+
+          <!-- Display Name -->
+          <div class="mb-4">
+            <label class="text-sm text-neutral-500 mb-2 block">Display Name</label>
+            <input type="text" placeholder="What should we call you?" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+          </div>
+
+          <!-- Age -->
+          <div class="mb-4">
+            <label class="text-sm text-neutral-500 mb-2 block">Age</label>
+            <input type="number" placeholder="18+" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+          </div>
+
+          <!-- Bio -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-2 block">Bio</label>
+            <textarea rows="3" placeholder="Tell others about yourself..." class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none resize-none"></textarea>
+            <p class="text-xs text-neutral-600 mt-1 text-right">0/300</p>
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+            CONTINUE
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Profile creation step with photo upload.</p>
+    </section>
+
+    <!-- 8. ONBOARDING - CONSENT -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. Onboarding - Consent</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-6 pt-12">
+          <!-- Progress -->
+          <div class="flex gap-1 mb-8">
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-neutral-700"></div>
+            <div class="flex-1 h-1 rounded-full bg-neutral-700"></div>
+            <div class="flex-1 h-1 rounded-full bg-neutral-700"></div>
+          </div>
+
+          <p class="text-neutral-500 text-sm mb-2">Step 2 of 5</p>
+          <h1 class="text-3xl font-black mb-2">Consent & Care</h1>
+          <p class="text-neutral-400 mb-8">Our community values</p>
+
+          <!-- Consent Card -->
+          <div class="glass rounded-2xl p-6 mb-6 border border-hot/30">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-3xl">💜</span>
+              <h3 class="font-bold text-lg">Consent is Everything</h3>
+            </div>
+            <p class="text-neutral-400 text-sm leading-relaxed">
+              Ask first. Confirm yes. Respect no. No pressure. Every interaction on HOTMESS should be consensual.
+            </p>
+          </div>
+
+          <!-- Aftercare Card -->
+          <div class="glass rounded-2xl p-6 mb-6 border border-cyan/30">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-3xl">🤝</span>
+              <h3 class="font-bold text-lg">Aftercare Matters</h3>
+            </div>
+            <p class="text-neutral-400 text-sm leading-relaxed">
+              Hydrate. Reset. Check in. Land in Safety if you need it. We dress care as kink.
+            </p>
+          </div>
+
+          <!-- Safety Card -->
+          <div class="glass rounded-2xl p-6 mb-6 border border-lime/30">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-3xl">🛡️</span>
+              <h3 class="font-bold text-lg">Safety Tools</h3>
+            </div>
+            <p class="text-neutral-400 text-sm leading-relaxed">
+              Panic button, fake calls, check-ins, trusted contacts. Preparation isn't paranoia.
+            </p>
+          </div>
+
+          <!-- Acknowledgment -->
+          <label class="flex items-start gap-3 text-left mb-6 text-sm text-neutral-400">
+            <input type="checkbox" class="mt-1 w-5 h-5 rounded bg-neutral-800 border-neutral-600 accent-hot">
+            <span>I understand and agree to respect consent and community guidelines</span>
+          </label>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+            I UNDERSTAND
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Consent acknowledgment - mandatory step.</p>
+    </section>
+
+  </div>
+
+  <!-- Additional Onboarding Screens -->
+  <h2 class="text-2xl font-bold mt-16 mb-8 text-neutral-300">Additional Onboarding Steps</h2>
+
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 9. ONBOARDING - PREFERENCES -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">9. Onboarding - Preferences</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-6 pt-12">
+          <!-- Progress -->
+          <div class="flex gap-1 mb-8">
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-neutral-700"></div>
+            <div class="flex-1 h-1 rounded-full bg-neutral-700"></div>
+          </div>
+
+          <p class="text-neutral-500 text-sm mb-2">Step 3 of 5</p>
+          <h1 class="text-3xl font-black mb-2">Your Preferences</h1>
+          <p class="text-neutral-400 mb-6">Help us find your matches</p>
+
+          <!-- Looking For -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">What are you looking for?</label>
+            <div class="flex flex-wrap gap-2">
+              <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-medium">Dates</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Friends</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Chat</button>
+              <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-medium">Right Now</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Networking</button>
+            </div>
+          </div>
+
+          <!-- Position/Role -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">Position (optional)</label>
+            <div class="flex flex-wrap gap-2">
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Top</button>
+              <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-medium">Vers</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Bottom</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Side</button>
+            </div>
+          </div>
+
+          <!-- Tribes -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">Tribes (select up to 3)</label>
+            <div class="flex flex-wrap gap-2">
+              <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-medium">Bear</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Otter</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Twink</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Jock</button>
+              <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-medium">Daddy</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Muscle</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Cub</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Geek</button>
+            </div>
+          </div>
+
+          <!-- Distance -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">Max distance</label>
+            <input type="range" class="w-full accent-hot" min="1" max="100" value="25">
+            <div class="flex justify-between text-xs text-neutral-500 mt-1">
+              <span>1 mi</span>
+              <span class="text-white font-medium">25 mi</span>
+              <span>100 mi</span>
+            </div>
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+            CONTINUE
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Preference selection for matching algorithm.</p>
+    </section>
+
+    <!-- 10. ONBOARDING - NOTIFICATIONS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">10. Onboarding - Notifications</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-6 pt-12">
+          <!-- Progress -->
+          <div class="flex gap-1 mb-8">
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-neutral-700"></div>
+          </div>
+
+          <p class="text-neutral-500 text-sm mb-2">Step 4 of 5</p>
+          <h1 class="text-3xl font-black mb-2">Stay Updated</h1>
+          <p class="text-neutral-400 mb-8">Choose your notifications</p>
+
+          <!-- Illustration -->
+          <div class="flex justify-center mb-8">
+            <div class="w-32 h-32 rounded-full bg-gradient-to-br from-hot/20 to-purple-500/20 flex items-center justify-center">
+              <span class="text-6xl">🔔</span>
+            </div>
+          </div>
+
+          <!-- Notification Options -->
+          <div class="space-y-4 mb-8">
+            <label class="flex items-center justify-between p-4 bg-neutral-900 rounded-xl">
+              <div>
+                <p class="font-medium">Messages</p>
+                <p class="text-sm text-neutral-500">New messages and replies</p>
+              </div>
+              <input type="checkbox" checked class="w-6 h-6 rounded accent-hot">
+            </label>
+
+            <label class="flex items-center justify-between p-4 bg-neutral-900 rounded-xl">
+              <div>
+                <p class="font-medium">Matches</p>
+                <p class="text-sm text-neutral-500">High match notifications</p>
+              </div>
+              <input type="checkbox" checked class="w-6 h-6 rounded accent-hot">
+            </label>
+
+            <label class="flex items-center justify-between p-4 bg-neutral-900 rounded-xl">
+              <div>
+                <p class="font-medium">Events</p>
+                <p class="text-sm text-neutral-500">Nearby events & RSVPs</p>
+              </div>
+              <input type="checkbox" checked class="w-6 h-6 rounded accent-hot">
+            </label>
+
+            <label class="flex items-center justify-between p-4 bg-neutral-900 rounded-xl">
+              <div>
+                <p class="font-medium">Safety Check-ins</p>
+                <p class="text-sm text-neutral-500">Wellness reminders</p>
+              </div>
+              <input type="checkbox" checked class="w-6 h-6 rounded accent-hot">
+            </label>
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-3">
+            ENABLE NOTIFICATIONS
+          </button>
+          <button class="w-full text-neutral-500 py-2">
+            Skip for now
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Notification preferences with categories.</p>
+    </section>
+
+    <!-- 11. ONBOARDING - LOCATION -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">11. Onboarding - Location</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-6 pt-12">
+          <!-- Progress -->
+          <div class="flex gap-1 mb-8">
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+            <div class="flex-1 h-1 rounded-full bg-hot"></div>
+          </div>
+
+          <p class="text-neutral-500 text-sm mb-2">Step 5 of 5</p>
+          <h1 class="text-3xl font-black mb-2">Enable Location</h1>
+          <p class="text-neutral-400 mb-8">Find people near you</p>
+
+          <!-- Map Illustration -->
+          <div class="relative h-48 bg-neutral-900 rounded-2xl mb-6 overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-hot/10 to-purple-500/10"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <div class="w-16 h-16 rounded-full bg-hot/30 flex items-center justify-center animate-pulse">
+                <div class="w-8 h-8 rounded-full bg-hot flex items-center justify-center">
+                  <span class="text-xl">📍</span>
+                </div>
+              </div>
+            </div>
+            <!-- Grid lines -->
+            <div class="absolute inset-0 opacity-10">
+              <div class="h-full w-full" style="background-image: linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px); background-size: 20px 20px;"></div>
+            </div>
+          </div>
+
+          <!-- Benefits -->
+          <div class="space-y-3 mb-8">
+            <div class="flex items-center gap-3 text-neutral-300">
+              <span class="w-8 h-8 rounded-full bg-hot/20 flex items-center justify-center text-hot">✓</span>
+              <span>See travel times to people</span>
+            </div>
+            <div class="flex items-center gap-3 text-neutral-300">
+              <span class="w-8 h-8 rounded-full bg-hot/20 flex items-center justify-center text-hot">✓</span>
+              <span>Find nearby events</span>
+            </div>
+            <div class="flex items-center gap-3 text-neutral-300">
+              <span class="w-8 h-8 rounded-full bg-hot/20 flex items-center justify-center text-hot">✓</span>
+              <span>Safety location sharing</span>
+            </div>
+          </div>
+
+          <!-- Privacy Note -->
+          <div class="glass rounded-xl p-4 mb-6 border border-neutral-700">
+            <div class="flex items-start gap-3">
+              <span class="text-xl">🔒</span>
+              <p class="text-sm text-neutral-400">
+                Your exact location is never shown. We use <span class="text-lime">location fuzzing</span> to protect your privacy.
+              </p>
+            </div>
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-3">
+            ENABLE LOCATION
+          </button>
+          <button class="w-full text-neutral-500 py-2">
+            Set location manually
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Final step with privacy assurance.</p>
+    </section>
+
+    <!-- 12. ONBOARDING COMPLETE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">12. Onboarding Complete</h3>
+      <div class="phone-frame">
+        <div class="screen-content gradient-brand flex flex-col items-center justify-center text-center px-8">
+          <!-- Success Animation -->
+          <div class="w-32 h-32 rounded-full bg-white/20 flex items-center justify-center mb-8">
+            <span class="text-6xl">🎉</span>
+          </div>
+
+          <h1 class="text-4xl font-black mb-4">You're In!</h1>
+          <p class="text-white/80 text-lg mb-2">Welcome to HOTMESS</p>
+          <p class="text-white/60 mb-8">Your profile is ready</p>
+
+          <!-- Quick Stats -->
+          <div class="w-full glass rounded-2xl p-6 mb-8">
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p class="text-2xl font-bold text-lime">127</p>
+                <p class="text-xs text-white/60">Nearby</p>
+              </div>
+              <div>
+                <p class="text-2xl font-bold text-cyan">12</p>
+                <p class="text-xs text-white/60">Right Now</p>
+              </div>
+              <div>
+                <p class="text-2xl font-bold text-hot">3</p>
+                <p class="text-xs text-white/60">Events</p>
+              </div>
+            </div>
+          </div>
+
+          <button class="w-full bg-white text-black font-bold py-4 rounded-xl mb-3">
+            START EXPLORING
+          </button>
+          <button class="w-full bg-white/10 text-white py-3 rounded-xl border border-white/20">
+            Complete Your Profile
+          </button>
+
+          <p class="text-white/40 text-xs mt-8">
+            Consent-first • Care always • 18+
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Success screen with quick entry points.</p>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 3 • Onboarding & Auth</p>
+    <p class="text-neutral-600 text-sm mt-4">© 2026 HOTMESS LONDON LTD. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

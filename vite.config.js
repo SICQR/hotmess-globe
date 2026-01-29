@@ -273,6 +273,21 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/match-probability' && method === 'GET') {
+          return importFresh('./api/match-probability/index.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              try {
+                if (res.headersSent || res.writableEnded) return;
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ error: error?.message || 'Failed to load match-probability handler' }));
+              } catch {
+                // If the client disconnected mid-request, do not crash dev server.
+              }
+            });
+        }
+
         if (path === '/api/presence/update' && method === 'POST') {
           return importFresh('./api/presence/update.js')
             .then((handler) => handler(req, res))

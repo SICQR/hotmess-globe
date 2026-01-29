@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 12: Utility Screens & States</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #000;
+      border-radius: 40px;
+      border: 8px solid #1a1a1a;
+      overflow: hidden;
+      position: relative;
+    }
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: #1a1a1a;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+    .screen-content {
+      height: 100%;
+      overflow-y: auto;
+      padding-top: 40px;
+    }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .bg-hot { background-color: #FF1493; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin-slow {
+      animation: spin 2s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  
+  <!-- Header -->
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 12: Utility Screens & States • 10 Screens</p>
+  </header>
+
+  <!-- Screen Grid -->
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. LOADING STATE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. Loading State</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black flex flex-col items-center justify-center">
+          <!-- Spinner -->
+          <div class="relative w-16 h-16 mb-6">
+            <div class="absolute inset-0 rounded-full border-4 border-neutral-800"></div>
+            <div class="absolute inset-0 rounded-full border-4 border-hot border-t-transparent animate-spin-slow"></div>
+          </div>
+          <p class="text-neutral-400">Loading...</p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Generic loading spinner.</p>
+    </section>
+
+    <!-- 2. SKELETON LOADING -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. Skeleton Loading</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header Skeleton -->
+          <div class="flex items-center justify-between mb-6">
+            <div class="h-8 w-32 bg-neutral-800 rounded animate-pulse"></div>
+            <div class="h-10 w-10 bg-neutral-800 rounded-full animate-pulse"></div>
+          </div>
+
+          <!-- Cards Skeleton -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <div class="h-40 bg-neutral-800 animate-pulse"></div>
+              <div class="p-3 space-y-2">
+                <div class="h-4 w-20 bg-neutral-800 rounded animate-pulse"></div>
+                <div class="h-3 w-16 bg-neutral-800 rounded animate-pulse"></div>
+              </div>
+            </div>
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <div class="h-40 bg-neutral-800 animate-pulse"></div>
+              <div class="p-3 space-y-2">
+                <div class="h-4 w-20 bg-neutral-800 rounded animate-pulse"></div>
+                <div class="h-3 w-16 bg-neutral-800 rounded animate-pulse"></div>
+              </div>
+            </div>
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <div class="h-40 bg-neutral-800 animate-pulse"></div>
+              <div class="p-3 space-y-2">
+                <div class="h-4 w-20 bg-neutral-800 rounded animate-pulse"></div>
+                <div class="h-3 w-16 bg-neutral-800 rounded animate-pulse"></div>
+              </div>
+            </div>
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <div class="h-40 bg-neutral-800 animate-pulse"></div>
+              <div class="p-3 space-y-2">
+                <div class="h-4 w-20 bg-neutral-800 rounded animate-pulse"></div>
+                <div class="h-3 w-16 bg-neutral-800 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Skeleton loading for content placeholders.</p>
+    </section>
+
+    <!-- 3. EMPTY STATE - NO MESSAGES -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. Empty State - Messages</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="mb-6">
+            <h1 class="text-2xl font-black">Messages</h1>
+          </div>
+
+          <!-- Empty State -->
+          <div class="flex flex-col items-center justify-center text-center py-16">
+            <div class="w-24 h-24 rounded-full bg-neutral-900 flex items-center justify-center mb-6">
+              <span class="text-5xl">💬</span>
+            </div>
+            <h2 class="text-xl font-bold mb-2">No messages yet</h2>
+            <p class="text-neutral-400 mb-6 max-w-xs">
+              Start a conversation by messaging someone from the Social tab
+            </p>
+            <button class="bg-hot text-white font-bold px-8 py-3 rounded-xl">
+              FIND PEOPLE
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Empty messages with action prompt.</p>
+    </section>
+
+    <!-- 4. EMPTY STATE - NO EVENTS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Empty State - Events</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="mb-6">
+            <h1 class="text-2xl font-black">My Events</h1>
+          </div>
+
+          <!-- Empty State -->
+          <div class="flex flex-col items-center justify-center text-center py-16">
+            <div class="w-24 h-24 rounded-full bg-neutral-900 flex items-center justify-center mb-6">
+              <span class="text-5xl">🎉</span>
+            </div>
+            <h2 class="text-xl font-bold mb-2">No events yet</h2>
+            <p class="text-neutral-400 mb-6 max-w-xs">
+              You haven't RSVPd to any events. Browse what's happening tonight!
+            </p>
+            <button class="bg-hot text-white font-bold px-8 py-3 rounded-xl">
+              BROWSE EVENTS
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Empty events with browse CTA.</p>
+    </section>
+
+    <!-- 5. EMPTY STATE - NO RESULTS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. Empty State - No Results</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Search Results</h1>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="relative mb-6">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">🔍</span>
+            <input type="text" value="unicorn lover" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 pl-12 focus:border-hot outline-none">
+          </div>
+
+          <!-- Empty State -->
+          <div class="flex flex-col items-center justify-center text-center py-12">
+            <div class="w-20 h-20 rounded-full bg-neutral-900 flex items-center justify-center mb-4">
+              <span class="text-4xl">🔍</span>
+            </div>
+            <h2 class="text-lg font-bold mb-2">No results found</h2>
+            <p class="text-neutral-400 mb-4 text-sm">
+              Try adjusting your filters or search terms
+            </p>
+            <button class="text-hot font-medium">Clear filters</button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Search with no matching results.</p>
+    </section>
+
+    <!-- 6. ERROR STATE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Error State</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black flex flex-col items-center justify-center text-center px-8">
+          <!-- Icon -->
+          <div class="w-24 h-24 rounded-full bg-red-500/20 flex items-center justify-center mb-6">
+            <span class="text-5xl">⚠️</span>
+          </div>
+
+          <h1 class="text-2xl font-black mb-2">Something went wrong</h1>
+          <p class="text-neutral-400 mb-6">
+            We couldn't load this page. Please try again.
+          </p>
+
+          <button class="bg-hot text-white font-bold px-8 py-3 rounded-xl mb-3">
+            TRY AGAIN
+          </button>
+          <button class="text-neutral-400">
+            Go back
+          </button>
+
+          <p class="text-neutral-600 text-xs mt-8">
+            Error code: ERR_500
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Generic error with retry action.</p>
+    </section>
+
+    <!-- 7. 404 PAGE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. 404 Not Found</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black flex flex-col items-center justify-center text-center px-8">
+          <!-- 404 Text -->
+          <h1 class="text-8xl font-black text-hot mb-4">404</h1>
+          <h2 class="text-xl font-bold mb-2">Page not found</h2>
+          <p class="text-neutral-400 mb-8">
+            The page you're looking for doesn't exist or has been moved.
+          </p>
+
+          <button class="bg-hot text-white font-bold px-8 py-3 rounded-xl mb-3">
+            GO HOME
+          </button>
+          <button class="text-neutral-400">
+            Go back
+          </button>
+
+          <!-- Fun Message -->
+          <p class="text-neutral-600 text-sm mt-8">
+            Lost in the dark room? 🕳️
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">404 error page with brand personality.</p>
+    </section>
+
+    <!-- 8. OFFLINE STATE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. Offline State</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black flex flex-col items-center justify-center text-center px-8">
+          <!-- Icon -->
+          <div class="w-24 h-24 rounded-full bg-neutral-800 flex items-center justify-center mb-6">
+            <span class="text-5xl">📡</span>
+          </div>
+
+          <h1 class="text-2xl font-black mb-2">You're offline</h1>
+          <p class="text-neutral-400 mb-6">
+            Check your internet connection and try again
+          </p>
+
+          <button class="bg-neutral-800 text-white font-bold px-8 py-3 rounded-xl mb-3">
+            TRY AGAIN
+          </button>
+
+          <!-- Offline Features -->
+          <div class="w-full glass rounded-xl p-4 mt-8 text-left">
+            <p class="text-sm text-neutral-500 mb-2">While offline you can:</p>
+            <ul class="text-sm text-neutral-400 space-y-1">
+              <li>• View saved profiles</li>
+              <li>• Browse cached events</li>
+              <li>• Access safety resources</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">No connection with offline capabilities.</p>
+    </section>
+
+    <!-- 9. MAINTENANCE MODE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">9. Maintenance Mode</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black flex flex-col items-center justify-center text-center px-8">
+          <!-- Icon -->
+          <div class="w-24 h-24 rounded-full bg-cyan/20 flex items-center justify-center mb-6">
+            <span class="text-5xl">🔧</span>
+          </div>
+
+          <h1 class="text-2xl font-black mb-2">Under Maintenance</h1>
+          <p class="text-neutral-400 mb-6">
+            We're making HOTMESS even better. Back soon!
+          </p>
+
+          <!-- Progress -->
+          <div class="w-full mb-6">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-neutral-500">Progress</span>
+              <span class="text-cyan">75%</span>
+            </div>
+            <div class="h-2 bg-neutral-800 rounded-full overflow-hidden">
+              <div class="h-full w-3/4 bg-cyan rounded-full"></div>
+            </div>
+          </div>
+
+          <!-- ETA -->
+          <div class="glass rounded-xl p-4 w-full mb-6">
+            <p class="text-sm text-neutral-400">
+              Estimated time: <span class="text-white font-medium">~30 minutes</span>
+            </p>
+          </div>
+
+          <!-- Social Links -->
+          <p class="text-neutral-500 text-sm mb-3">Follow us for updates:</p>
+          <div class="flex gap-4">
+            <button class="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">📱</button>
+            <button class="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">🐦</button>
+            <button class="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">📸</button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Scheduled maintenance with progress.</p>
+    </section>
+
+    <!-- 10. SUCCESS TOAST / CONFIRMATION -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">10. Toast Notifications</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Mock Content Background -->
+          <div class="space-y-4 opacity-30">
+            <div class="h-20 bg-neutral-800 rounded-xl"></div>
+            <div class="h-20 bg-neutral-800 rounded-xl"></div>
+            <div class="h-20 bg-neutral-800 rounded-xl"></div>
+          </div>
+
+          <!-- Toast Examples -->
+          <div class="absolute bottom-24 left-4 right-4 space-y-3">
+            <!-- Success -->
+            <div class="bg-lime/20 border border-lime/30 rounded-xl p-4 flex items-center gap-3">
+              <span class="w-8 h-8 rounded-full bg-lime/30 flex items-center justify-center">✓</span>
+              <div class="flex-1">
+                <p class="font-medium text-lime">Message sent!</p>
+              </div>
+              <button class="text-neutral-400 text-sm">×</button>
+            </div>
+
+            <!-- Error -->
+            <div class="bg-red-500/20 border border-red-500/30 rounded-xl p-4 flex items-center gap-3">
+              <span class="w-8 h-8 rounded-full bg-red-500/30 flex items-center justify-center">!</span>
+              <div class="flex-1">
+                <p class="font-medium text-red-400">Failed to load</p>
+                <p class="text-xs text-neutral-500">Tap to retry</p>
+              </div>
+              <button class="text-neutral-400 text-sm">×</button>
+            </div>
+
+            <!-- Info -->
+            <div class="bg-cyan/20 border border-cyan/30 rounded-xl p-4 flex items-center gap-3">
+              <span class="w-8 h-8 rounded-full bg-cyan/30 flex items-center justify-center">ℹ</span>
+              <div class="flex-1">
+                <p class="font-medium text-cyan">New message from Alex</p>
+              </div>
+              <button class="text-cyan text-sm font-medium">View</button>
+            </div>
+
+            <!-- Warning -->
+            <div class="bg-yellow-500/20 border border-yellow-500/30 rounded-xl p-4 flex items-center gap-3">
+              <span class="w-8 h-8 rounded-full bg-yellow-500/30 flex items-center justify-center">⚠</span>
+              <div class="flex-1">
+                <p class="font-medium text-yellow-400">Low battery</p>
+                <p class="text-xs text-neutral-500">Safety features may be affected</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Toast notification variants.</p>
+    </section>
+
+  </div>
+
+  <!-- Additional States -->
+  <h2 class="text-2xl font-bold mt-16 mb-8 text-neutral-300">Modal States & Overlays</h2>
+
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 11. CONFIRM DIALOG -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">11. Confirm Dialog</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Dialog -->
+          <div class="absolute inset-x-8 top-1/2 -translate-y-1/2 bg-neutral-900 rounded-2xl p-6 text-center">
+            <h2 class="text-xl font-black mb-2">Delete message?</h2>
+            <p class="text-neutral-400 mb-6">
+              This action cannot be undone.
+            </p>
+            <div class="flex gap-3">
+              <button class="flex-1 bg-neutral-800 text-white py-3 rounded-xl font-bold">
+                Cancel
+              </button>
+              <button class="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Destructive action confirmation.</p>
+    </section>
+
+    <!-- 12. ACTION SHEET -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">12. Action Sheet</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Action Sheet -->
+          <div class="absolute bottom-0 left-0 right-0 bg-neutral-900 rounded-t-3xl p-4 pb-8">
+            <div class="w-12 h-1 bg-neutral-700 rounded-full mx-auto mb-4"></div>
+            
+            <div class="space-y-1">
+              <button class="w-full p-4 rounded-xl text-left hover:bg-neutral-800 flex items-center gap-4">
+                <span class="text-xl">📷</span>
+                <span>Take Photo</span>
+              </button>
+              <button class="w-full p-4 rounded-xl text-left hover:bg-neutral-800 flex items-center gap-4">
+                <span class="text-xl">🖼️</span>
+                <span>Choose from Library</span>
+              </button>
+              <button class="w-full p-4 rounded-xl text-left hover:bg-neutral-800 flex items-center gap-4">
+                <span class="text-xl">📁</span>
+                <span>Browse Files</span>
+              </button>
+            </div>
+
+            <button class="w-full mt-4 p-4 bg-neutral-800 rounded-xl text-center font-bold">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">iOS-style action sheet.</p>
+    </section>
+
+    <!-- 13. PERMISSION REQUEST -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">13. Permission Request</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Permission Modal -->
+          <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 bg-neutral-900 rounded-2xl p-6 text-center">
+            <div class="w-16 h-16 rounded-full bg-cyan/20 flex items-center justify-center mx-auto mb-4">
+              <span class="text-3xl">📍</span>
+            </div>
+
+            <h2 class="text-xl font-black mb-2">Allow Location Access</h2>
+            <p class="text-neutral-400 text-sm mb-6">
+              HOTMESS needs your location to show people near you and calculate travel times
+            </p>
+
+            <div class="space-y-2">
+              <button class="w-full bg-hot text-white py-3 rounded-xl font-bold">
+                Allow While Using App
+              </button>
+              <button class="w-full bg-neutral-800 text-white py-3 rounded-xl">
+                Allow Once
+              </button>
+              <button class="w-full text-neutral-400 py-2">
+                Don't Allow
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">System permission request explanation.</p>
+    </section>
+
+    <!-- 14. FEATURE GATE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">14. Feature Gate</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Feature Gate Modal -->
+          <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 bg-neutral-900 rounded-2xl p-6 text-center">
+            <div class="w-16 h-16 rounded-full bg-purple/20 flex items-center justify-center mx-auto mb-4">
+              <span class="text-3xl">🔒</span>
+            </div>
+
+            <h2 class="text-xl font-black mb-2">PLUS Feature</h2>
+            <p class="text-neutral-400 text-sm mb-4">
+              Unlimited messages is a PLUS feature
+            </p>
+
+            <!-- Usage -->
+            <div class="glass rounded-xl p-4 mb-6">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm text-neutral-400">Today's messages</span>
+                <span class="text-hot font-bold">50/50</span>
+              </div>
+              <div class="h-2 bg-neutral-800 rounded-full overflow-hidden">
+                <div class="h-full w-full bg-hot rounded-full"></div>
+              </div>
+              <p class="text-xs text-neutral-500 mt-2">Resets in 8 hours</p>
+            </div>
+
+            <button class="w-full bg-purple text-white py-4 rounded-xl font-bold mb-3">
+              UPGRADE TO PLUS — £9.99/mo
+            </button>
+            <button class="w-full text-neutral-400 py-2">
+              Maybe later
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Feature limit reached with upgrade prompt.</p>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 12 • Utility Screens & States</p>
+    <p class="text-neutral-600 text-sm mt-4">© 2026 HOTMESS LONDON LTD. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

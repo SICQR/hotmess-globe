@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 11: Beacons, Creator, Notifications</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #000;
+      border-radius: 40px;
+      border: 8px solid #1a1a1a;
+      overflow: hidden;
+      position: relative;
+    }
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: #1a1a1a;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+    .screen-content {
+      height: 100%;
+      overflow-y: auto;
+      padding-top: 40px;
+    }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .text-purple { color: #B026FF; }
+    .text-gold { color: #FFD700; }
+    .bg-hot { background-color: #FF1493; }
+    .bg-cyan { background-color: #00D9FF; }
+    .bg-lime { background-color: #39FF14; }
+    .bg-purple { background-color: #B026FF; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+  </style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  
+  <!-- Header -->
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 11: Beacons, Creator, Notifications, Telegram • 10 Screens</p>
+  </header>
+
+  <!-- Screen Grid -->
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. BEACONS LIST -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. Beacons List</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">Beacons</h1>
+            <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-bold">+ Create</button>
+          </div>
+
+          <!-- Filters -->
+          <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-medium whitespace-nowrap">All</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Events</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Venues</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Drops</button>
+          </div>
+
+          <!-- Beacons -->
+          <div class="space-y-3 pb-8">
+            <!-- Event Beacon -->
+            <div class="p-4 bg-neutral-900 rounded-xl border-l-4 border-hot">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="w-10 h-10 rounded-full bg-hot/20 flex items-center justify-center">🎉</span>
+                <div class="flex-1">
+                  <p class="font-bold">MEAT RACK</p>
+                  <p class="text-xs text-neutral-500">XXL London • Tonight</p>
+                </div>
+                <span class="text-lime text-xs font-bold">+150 XP</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-neutral-400">
+                <span>📍 0.8 mi away</span>
+                <span>•</span>
+                <span>128 checked in</span>
+              </div>
+            </div>
+
+            <!-- Venue Beacon -->
+            <div class="p-4 bg-neutral-900 rounded-xl border-l-4 border-cyan">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="w-10 h-10 rounded-full bg-cyan/20 flex items-center justify-center">🏢</span>
+                <div class="flex-1">
+                  <p class="font-bold">XXL London</p>
+                  <p class="text-xs text-neutral-500">Club • Southwark</p>
+                </div>
+                <span class="text-lime text-xs font-bold">+75 XP</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-neutral-400">
+                <span>📍 0.8 mi away</span>
+                <span>•</span>
+                <span>Dark room rules</span>
+              </div>
+            </div>
+
+            <!-- Drop Beacon -->
+            <div class="p-4 bg-neutral-900 rounded-xl border-l-4 border-purple">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="w-10 h-10 rounded-full bg-purple/20 flex items-center justify-center">🛍️</span>
+                <div class="flex-1">
+                  <p class="font-bold">HNH MESS Launch</p>
+                  <p class="text-xs text-neutral-500">Product drop • Shoreditch</p>
+                </div>
+                <span class="text-lime text-xs font-bold">+100 XP</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-neutral-400">
+                <span>📍 1.2 mi away</span>
+                <span>•</span>
+                <span>Limited run merch</span>
+              </div>
+            </div>
+
+            <!-- Your Beacon -->
+            <div class="p-4 bg-neutral-900 rounded-xl border border-lime/30">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="w-10 h-10 rounded-full bg-lime/20 flex items-center justify-center">📍</span>
+                <div class="flex-1">
+                  <p class="font-bold text-lime">Your Beacon</p>
+                  <p class="text-xs text-neutral-500">Active • 45 min left</p>
+                </div>
+                <button class="text-neutral-400 text-sm">Edit</button>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-neutral-400">
+                <span>3 nearby</span>
+                <span>•</span>
+                <span>Shoreditch</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Beacon directory with types and XP rewards.</p>
+    </section>
+
+    <!-- 2. CREATE BEACON -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. Create Beacon</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Drop a Beacon</h1>
+          </div>
+
+          <p class="text-neutral-400 text-sm mb-6">
+            Let people know where you are. Earn XP from check-ins.
+          </p>
+
+          <!-- Type -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">Beacon Type</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button class="p-4 rounded-xl bg-hot/20 border border-hot text-center">
+                <span class="text-2xl mb-1 block">👤</span>
+                <span class="text-xs text-hot font-medium">Meetup</span>
+              </button>
+              <button class="p-4 rounded-xl bg-neutral-800 text-center">
+                <span class="text-2xl mb-1 block">🎉</span>
+                <span class="text-xs text-neutral-400">Event</span>
+              </button>
+              <button class="p-4 rounded-xl bg-neutral-800 text-center">
+                <span class="text-2xl mb-1 block">🛍️</span>
+                <span class="text-xs text-neutral-400">Drop</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Title -->
+          <div class="mb-4">
+            <label class="text-sm text-neutral-500 mb-2 block">Title</label>
+            <input type="text" placeholder="What's happening?" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+          </div>
+
+          <!-- Duration -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">Active for</label>
+            <div class="flex gap-2">
+              <button class="flex-1 py-3 rounded-xl bg-hot text-white font-medium text-sm">1 hour</button>
+              <button class="flex-1 py-3 rounded-xl bg-neutral-800 text-sm">2 hours</button>
+              <button class="flex-1 py-3 rounded-xl bg-neutral-800 text-sm">4 hours</button>
+              <button class="flex-1 py-3 rounded-xl bg-neutral-800 text-sm">Tonight</button>
+            </div>
+          </div>
+
+          <!-- Location Precision -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">Location precision</label>
+            <div class="flex gap-2">
+              <button class="flex-1 p-4 rounded-xl bg-neutral-800 text-center">
+                <p class="font-medium">Fuzzy</p>
+                <p class="text-xs text-neutral-500">±1km radius</p>
+              </button>
+              <button class="flex-1 p-4 rounded-xl bg-hot/20 border border-hot text-center">
+                <p class="font-medium text-hot">Precise</p>
+                <p class="text-xs text-neutral-400">Exact location</p>
+              </button>
+            </div>
+          </div>
+
+          <!-- Privacy -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">Who can see</label>
+            <div class="space-y-2">
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between border border-hot">
+                <span>Everyone</span>
+                <span class="text-hot">●</span>
+              </button>
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between">
+                <span>Matches only</span>
+                <span class="text-neutral-600">○</span>
+              </button>
+            </div>
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+            DROP BEACON
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Create a location beacon with privacy controls.</p>
+    </section>
+
+    <!-- 3. QR SCANNER -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. QR Scanner</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Camera View -->
+          <div class="absolute inset-0 bg-neutral-900">
+            <!-- Scan overlay -->
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="w-64 h-64 border-2 border-hot rounded-3xl relative">
+                <!-- Corner markers -->
+                <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-hot rounded-tl-xl"></div>
+                <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-hot rounded-tr-xl"></div>
+                <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-hot rounded-bl-xl"></div>
+                <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-hot rounded-br-xl"></div>
+                <!-- Scan line -->
+                <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-hot animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Header -->
+          <div class="absolute top-12 left-4 right-4">
+            <div class="flex items-center justify-between">
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">←</button>
+              <h1 class="text-lg font-bold">Scan Beacon</h1>
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">⚡</button>
+            </div>
+          </div>
+
+          <!-- Instructions -->
+          <div class="absolute bottom-24 left-4 right-4 text-center">
+            <p class="text-white mb-4">Point at a HOTMESS QR code</p>
+            <div class="flex justify-center gap-4">
+              <button class="px-6 py-3 rounded-xl bg-black/50 text-sm">📷 Gallery</button>
+              <button class="px-6 py-3 rounded-xl bg-black/50 text-sm">🔦 Flash</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">QR code scanner for beacon check-ins.</p>
+    </section>
+
+    <!-- 4. NOTIFICATIONS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Notifications</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">Notifications</h1>
+            <button class="text-hot text-sm">Mark all read</button>
+          </div>
+
+          <!-- Notifications List -->
+          <div class="space-y-2 pb-8">
+            <!-- Unread -->
+            <div class="p-4 bg-hot/10 rounded-xl border-l-4 border-hot">
+              <div class="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop" class="w-10 h-10 rounded-full object-cover">
+                <div class="flex-1">
+                  <p><span class="font-bold">Alex</span> sent you a message</p>
+                  <p class="text-xs text-neutral-500">2 minutes ago</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 bg-cyan/10 rounded-xl border-l-4 border-cyan">
+              <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-full bg-cyan/20 flex items-center justify-center">📍</span>
+                <div class="flex-1">
+                  <p><span class="font-bold">Sam</span> is nearby and available</p>
+                  <p class="text-xs text-neutral-500">15 minutes ago</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 bg-lime/10 rounded-xl border-l-4 border-lime">
+              <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-full bg-lime/20 flex items-center justify-center">⚡</span>
+                <div class="flex-1">
+                  <p>Daily check-in bonus: <span class="font-bold text-lime">+20 XP</span></p>
+                  <p class="text-xs text-neutral-500">1 hour ago</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Read -->
+            <div class="p-4 bg-neutral-900 rounded-xl">
+              <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-full bg-purple/20 flex items-center justify-center">🎉</span>
+                <div class="flex-1">
+                  <p><span class="font-bold">MEAT RACK</span> is tonight</p>
+                  <p class="text-xs text-neutral-500">3 hours ago</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 bg-neutral-900 rounded-xl">
+              <div class="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=50&h=50&fit=crop" class="w-10 h-10 rounded-full object-cover opacity-60">
+                <div class="flex-1 text-neutral-400">
+                  <p><span class="font-medium">Marcus</span> viewed your profile</p>
+                  <p class="text-xs text-neutral-500">Yesterday</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 bg-neutral-900 rounded-xl">
+              <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">📻</span>
+                <div class="flex-1 text-neutral-400">
+                  <p><span class="font-medium">Hand N Hand</span> starts in 1 hour</p>
+                  <p class="text-xs text-neutral-500">Yesterday</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Notification center with read/unread states.</p>
+    </section>
+
+    <!-- 5. LINK TELEGRAM -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. Link Telegram</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Link Telegram</h1>
+          </div>
+
+          <!-- Hero -->
+          <div class="bg-gradient-to-br from-cyan/20 to-purple/20 rounded-2xl p-6 text-center mb-6">
+            <div class="w-20 h-20 rounded-full bg-cyan/30 flex items-center justify-center mx-auto mb-4">
+              <span class="text-4xl">📱</span>
+            </div>
+            <h2 class="text-xl font-black mb-2">Get Telegram Alerts</h2>
+            <p class="text-neutral-400 text-sm">
+              Instant notifications for messages, matches, and safety alerts
+            </p>
+          </div>
+
+          <!-- Benefits -->
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <span class="w-10 h-10 rounded-full bg-cyan/20 flex items-center justify-center">⚡</span>
+              <div>
+                <p class="font-medium">Instant Alerts</p>
+                <p class="text-xs text-neutral-500">Faster than push notifications</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <span class="w-10 h-10 rounded-full bg-hot/20 flex items-center justify-center">💬</span>
+              <div>
+                <p class="font-medium">Message Previews</p>
+                <p class="text-xs text-neutral-500">See who messaged without opening app</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <span class="w-10 h-10 rounded-full bg-lime/20 flex items-center justify-center">🛡️</span>
+              <div>
+                <p class="font-medium">Safety Alerts</p>
+                <p class="text-xs text-neutral-500">Critical alerts even when app is closed</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Steps -->
+          <div class="glass rounded-xl p-4 mb-6">
+            <p class="font-medium mb-3">How it works:</p>
+            <div class="space-y-2 text-sm text-neutral-400">
+              <p>1. Tap "Open Telegram" below</p>
+              <p>2. Start the HOTMESS bot</p>
+              <p>3. Tap "Link Account"</p>
+              <p>4. Done! You'll receive alerts in Telegram</p>
+            </div>
+          </div>
+
+          <button class="w-full bg-cyan text-black font-bold py-4 rounded-xl mb-3">
+            OPEN TELEGRAM
+          </button>
+          <button class="w-full text-neutral-400 py-2">
+            Skip for now
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Telegram integration setup flow.</p>
+    </section>
+
+    <!-- 6. CREATOR PROFILE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Creator Profile</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black">
+          <!-- Header Image -->
+          <div class="relative h-40 bg-gradient-to-br from-hot/30 to-purple/30">
+            <div class="absolute top-4 left-4">
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">←</button>
+            </div>
+          </div>
+
+          <div class="px-4 -mt-12 relative pb-8">
+            <!-- Avatar -->
+            <div class="flex items-end gap-4 mb-4">
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&h=100&fit=crop" class="w-24 h-24 rounded-xl object-cover border-4 border-black">
+              <div class="pb-2">
+                <div class="flex items-center gap-2">
+                  <h1 class="text-xl font-black">SMASH DADDYS</h1>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-hot/20 text-hot text-xs font-bold">CREATOR</span>
+                  <span class="px-2 py-0.5 rounded bg-lime/20 text-lime text-xs">✓ VERIFIED</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="flex gap-6 mb-6">
+              <div class="text-center">
+                <p class="font-bold text-xl">2.4K</p>
+                <p class="text-xs text-neutral-500">Followers</p>
+              </div>
+              <div class="text-center">
+                <p class="font-bold text-xl">12</p>
+                <p class="text-xs text-neutral-500">Tracks</p>
+              </div>
+              <div class="text-center">
+                <p class="font-bold text-xl">45K</p>
+                <p class="text-xs text-neutral-500">Plays</p>
+              </div>
+            </div>
+
+            <!-- Bio -->
+            <p class="text-neutral-400 text-sm mb-6">
+              The sound of HOTMESS. House music duo. All original productions. RAW CONVICT RECORDS.
+            </p>
+
+            <!-- Actions -->
+            <div class="flex gap-3 mb-6">
+              <button class="flex-1 bg-hot text-white py-3 rounded-xl font-bold">Follow</button>
+              <button class="flex-1 bg-neutral-800 py-3 rounded-xl font-bold flex items-center justify-center gap-2">
+                <span>💜</span> Tip
+              </button>
+            </div>
+
+            <!-- Latest Release -->
+            <div class="mb-6">
+              <h3 class="font-bold mb-3">Latest Release</h3>
+              <div class="glass rounded-xl p-4">
+                <div class="flex items-center gap-3">
+                  <img src="https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=80&h=80&fit=crop" class="w-16 h-16 rounded-lg object-cover">
+                  <div class="flex-1">
+                    <p class="font-bold">HNH MESS</p>
+                    <p class="text-sm text-neutral-400">Single • 2026</p>
+                  </div>
+                  <button class="w-12 h-12 rounded-full bg-hot flex items-center justify-center">
+                    <span class="text-xl">▶</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- All Tracks -->
+            <div>
+              <h3 class="font-bold mb-3">Tracks</h3>
+              <div class="space-y-2">
+                <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                  <span class="text-neutral-500">1</span>
+                  <div class="flex-1">
+                    <p class="font-medium">HNH MESS</p>
+                    <p class="text-xs text-neutral-500">12.4K plays</p>
+                  </div>
+                  <span class="text-neutral-400">3:42</span>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                  <span class="text-neutral-500">2</span>
+                  <div class="flex-1">
+                    <p class="font-medium">Club Cuts Vol. 1</p>
+                    <p class="text-xs text-neutral-500">8.2K plays</p>
+                  </div>
+                  <span class="text-neutral-400">5:18</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Music creator profile with tracks and tips.</p>
+    </section>
+
+    <!-- 7. TIP CREATOR -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. Tip Creator</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Bottom Sheet -->
+          <div class="absolute bottom-0 left-0 right-0 bg-neutral-900 rounded-t-3xl p-6">
+            <!-- Handle -->
+            <div class="w-12 h-1 bg-neutral-700 rounded-full mx-auto mb-6"></div>
+
+            <!-- Creator -->
+            <div class="flex items-center gap-3 mb-6">
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=60&h=60&fit=crop" class="w-14 h-14 rounded-full object-cover">
+              <div>
+                <p class="font-bold">SMASH DADDYS</p>
+                <p class="text-sm text-neutral-400">Send a tip to support</p>
+              </div>
+            </div>
+
+            <!-- Amounts -->
+            <div class="grid grid-cols-4 gap-2 mb-6">
+              <button class="py-4 rounded-xl bg-neutral-800 text-center">
+                <p class="font-bold">£1</p>
+              </button>
+              <button class="py-4 rounded-xl bg-hot text-center">
+                <p class="font-bold">£5</p>
+              </button>
+              <button class="py-4 rounded-xl bg-neutral-800 text-center">
+                <p class="font-bold">£10</p>
+              </button>
+              <button class="py-4 rounded-xl bg-neutral-800 text-center">
+                <p class="font-bold">£20</p>
+              </button>
+            </div>
+
+            <!-- Custom -->
+            <div class="mb-6">
+              <label class="text-sm text-neutral-500 mb-2 block">Or enter custom amount</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">£</span>
+                <input type="number" placeholder="0.00" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl p-4 pl-8 focus:border-hot outline-none">
+              </div>
+            </div>
+
+            <!-- Message -->
+            <div class="mb-6">
+              <label class="text-sm text-neutral-500 mb-2 block">Add a message (optional)</label>
+              <input type="text" placeholder="Love your music!" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            </div>
+
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-3">
+              SEND £5 TIP
+            </button>
+            <button class="w-full text-neutral-400 py-2">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Tip sheet with preset and custom amounts.</p>
+    </section>
+
+    <!-- 8. AI ASSISTANT -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. AI Assistant</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Chat Panel -->
+          <div class="absolute bottom-0 left-0 right-0 h-[80%] bg-neutral-900 rounded-t-3xl flex flex-col">
+            <!-- Header -->
+            <div class="p-4 border-b border-neutral-800">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-hot to-purple flex items-center justify-center">
+                    <span class="text-xl">🤖</span>
+                  </div>
+                  <div>
+                    <p class="font-bold">HOTMESS AI</p>
+                    <p class="text-xs text-lime">Online</p>
+                  </div>
+                </div>
+                <button class="text-neutral-400">×</button>
+              </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="flex-1 p-4 overflow-y-auto space-y-4">
+              <!-- Bot Message -->
+              <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-hot/20 flex items-center justify-center shrink-0">
+                  <span>🤖</span>
+                </div>
+                <div class="bg-neutral-800 rounded-2xl rounded-tl-none p-3 max-w-[80%]">
+                  <p class="text-sm">Hey! I'm your HOTMESS assistant. I can help you with events, marketplace, connections, safety features, and more. What would you like to know?</p>
+                </div>
+              </div>
+
+              <!-- Quick Questions -->
+              <div class="flex flex-wrap gap-2">
+                <button class="px-3 py-2 rounded-full bg-neutral-800 text-xs">What's on tonight?</button>
+                <button class="px-3 py-2 rounded-full bg-neutral-800 text-xs">How does matching work?</button>
+                <button class="px-3 py-2 rounded-full bg-neutral-800 text-xs">Safety features</button>
+              </div>
+
+              <!-- User Message -->
+              <div class="flex justify-end">
+                <div class="bg-hot rounded-2xl rounded-tr-none p-3 max-w-[80%]">
+                  <p class="text-sm">What events are on tonight?</p>
+                </div>
+              </div>
+
+              <!-- Bot Response -->
+              <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-hot/20 flex items-center justify-center shrink-0">
+                  <span>🤖</span>
+                </div>
+                <div class="bg-neutral-800 rounded-2xl rounded-tl-none p-3 max-w-[80%]">
+                  <p class="text-sm mb-2">Here are tonight's events:</p>
+                  <div class="space-y-2">
+                    <div class="p-2 bg-neutral-700 rounded-lg">
+                      <p class="font-medium text-sm">🎉 MEAT RACK</p>
+                      <p class="text-xs text-neutral-400">10pm @ XXL London</p>
+                    </div>
+                    <div class="p-2 bg-neutral-700 rounded-lg">
+                      <p class="font-medium text-sm">🎵 G-A-Y Late</p>
+                      <p class="text-xs text-neutral-400">11pm @ Heaven</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Input -->
+            <div class="p-4 border-t border-neutral-800">
+              <div class="flex gap-2">
+                <input type="text" placeholder="Ask me anything..." class="flex-1 bg-neutral-800 border border-neutral-700 rounded-xl px-4 py-3 focus:border-hot outline-none">
+                <button class="w-12 h-12 rounded-xl bg-hot flex items-center justify-center">
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">AI assistant chat interface.</p>
+    </section>
+
+    <!-- 9. UPLOAD TRACK -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">9. Upload Track (Creator)</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Upload Track</h1>
+          </div>
+
+          <!-- Upload Area -->
+          <div class="h-32 rounded-xl border-2 border-dashed border-neutral-700 flex flex-col items-center justify-center mb-6">
+            <span class="text-3xl mb-2">🎵</span>
+            <p class="text-neutral-400 text-sm">Drop audio file or tap to browse</p>
+            <p class="text-neutral-600 text-xs">MP3, WAV, FLAC (max 50MB)</p>
+          </div>
+
+          <!-- Track Info -->
+          <div class="space-y-4 pb-8">
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Track Title</label>
+              <input type="text" placeholder="Enter track name" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Cover Art</label>
+              <div class="flex items-center gap-4">
+                <div class="w-20 h-20 rounded-xl bg-neutral-800 flex items-center justify-center">
+                  <span class="text-2xl">🖼️</span>
+                </div>
+                <button class="text-hot text-sm">Upload image</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Genre</label>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">House</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Techno</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Disco</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Other</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Release Type</label>
+              <div class="space-y-2">
+                <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between border border-hot">
+                  <div>
+                    <p class="font-medium">Free</p>
+                    <p class="text-xs text-neutral-500">Stream for all</p>
+                  </div>
+                  <span class="text-hot">●</span>
+                </button>
+                <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between">
+                  <div>
+                    <p class="font-medium">Exclusive</p>
+                    <p class="text-xs text-neutral-500">Subscribers only</p>
+                  </div>
+                  <span class="text-neutral-600">○</span>
+                </button>
+              </div>
+            </div>
+
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+              UPLOAD TRACK
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Creator track upload with metadata.</p>
+    </section>
+
+    <!-- 10. SAVED ITEMS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">10. Saved Items</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Saved</h1>
+          </div>
+
+          <!-- Tabs -->
+          <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-medium whitespace-nowrap">All</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Profiles</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Events</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Products</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Tracks</button>
+          </div>
+
+          <!-- Saved Grid -->
+          <div class="grid grid-cols-2 gap-3 pb-8">
+            <!-- Profile -->
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" class="w-full h-32 object-cover">
+              <div class="p-3">
+                <p class="font-medium">Alex, 28</p>
+                <p class="text-xs text-neutral-500">Profile</p>
+              </div>
+            </div>
+
+            <!-- Event -->
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200&h=200&fit=crop" class="w-full h-32 object-cover">
+              <div class="p-3">
+                <p class="font-medium">MEAT RACK</p>
+                <p class="text-xs text-neutral-500">Event</p>
+              </div>
+            </div>
+
+            <!-- Product -->
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=200&fit=crop" class="w-full h-32 object-cover">
+              <div class="p-3">
+                <p class="font-medium">RAW Club Tee</p>
+                <p class="text-xs text-hot">£39.99</p>
+              </div>
+            </div>
+
+            <!-- Track -->
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=200&h=200&fit=crop" class="w-full h-32 object-cover">
+              <div class="p-3">
+                <p class="font-medium">HNH MESS</p>
+                <p class="text-xs text-neutral-500">Track</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Saved items across all content types.</p>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 11 • Beacons, Creator, Notifications</p>
+    <p class="text-neutral-600 text-sm mt-4">© 2026 HOTMESS LONDON LTD. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 10: Safety Features</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #000;
+      border-radius: 40px;
+      border: 8px solid #1a1a1a;
+      overflow: hidden;
+      position: relative;
+    }
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: #1a1a1a;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+    .screen-content {
+      height: 100%;
+      overflow-y: auto;
+      padding-top: 40px;
+    }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .text-purple { color: #B026FF; }
+    .bg-hot { background-color: #FF1493; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+  </style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  
+  <!-- Header -->
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 10: Safety Features Deep Dive • 10 Screens</p>
+  </header>
+
+  <!-- Screen Grid -->
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. FAKE CALL SETUP -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. Fake Call Setup</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Fake Call</h1>
+          </div>
+
+          <p class="text-neutral-400 text-sm mb-6">
+            Schedule a fake incoming call to help you exit an uncomfortable situation.
+          </p>
+
+          <!-- Caller Selection -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">Call from</label>
+            <div class="space-y-2">
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center gap-3 border border-hot">
+                <span class="w-10 h-10 rounded-full bg-hot/20 flex items-center justify-center">👩</span>
+                <div>
+                  <p class="font-medium">Mum</p>
+                  <p class="text-xs text-neutral-500">Classic excuse</p>
+                </div>
+              </button>
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center gap-3">
+                <span class="w-10 h-10 rounded-full bg-cyan/20 flex items-center justify-center">👔</span>
+                <div>
+                  <p class="font-medium">Work</p>
+                  <p class="text-xs text-neutral-500">Emergency at office</p>
+                </div>
+              </button>
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center gap-3">
+                <span class="w-10 h-10 rounded-full bg-lime/20 flex items-center justify-center">🏠</span>
+                <div>
+                  <p class="font-medium">Flatmate</p>
+                  <p class="text-xs text-neutral-500">Locked out</p>
+                </div>
+              </button>
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center gap-3">
+                <span class="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center">✏️</span>
+                <div>
+                  <p class="font-medium">Custom</p>
+                  <p class="text-xs text-neutral-500">Create your own</p>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Timer -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">When</label>
+            <div class="flex gap-2">
+              <button class="flex-1 py-3 px-4 rounded-xl bg-hot text-white font-medium text-sm">5 min</button>
+              <button class="flex-1 py-3 px-4 rounded-xl bg-neutral-800 text-sm">10 min</button>
+              <button class="flex-1 py-3 px-4 rounded-xl bg-neutral-800 text-sm">15 min</button>
+              <button class="flex-1 py-3 px-4 rounded-xl bg-neutral-800 text-sm">30 min</button>
+            </div>
+          </div>
+
+          <!-- Ringtone -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">Ringtone</label>
+            <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span>🔔</span>
+                <span>Default iPhone</span>
+              </div>
+              <span class="text-neutral-400">›</span>
+            </button>
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-3">
+            SCHEDULE CALL
+          </button>
+          <p class="text-center text-neutral-600 text-xs">
+            You'll get a realistic incoming call screen
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Fake call scheduling with preset excuses.</p>
+    </section>
+
+    <!-- 2. FAKE CALL ACTIVE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. Fake Call Active</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-gradient-to-b from-neutral-800 to-black flex flex-col items-center justify-center text-center px-8">
+          <!-- Caller Avatar -->
+          <div class="w-32 h-32 rounded-full bg-hot/20 flex items-center justify-center mb-6">
+            <span class="text-6xl">👩</span>
+          </div>
+
+          <p class="text-neutral-400 text-sm mb-2">incoming call</p>
+          <h1 class="text-3xl font-bold mb-2">Mum</h1>
+          <p class="text-neutral-500 mb-12">mobile</p>
+
+          <!-- Call Actions -->
+          <div class="flex items-center justify-center gap-8">
+            <!-- Decline -->
+            <div class="text-center">
+              <button class="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center mb-2">
+                <span class="text-2xl">📞</span>
+              </button>
+              <p class="text-xs text-neutral-400">Decline</p>
+            </div>
+            <!-- Accept -->
+            <div class="text-center">
+              <button class="w-16 h-16 rounded-full bg-lime flex items-center justify-center mb-2 animate-pulse">
+                <span class="text-2xl">📞</span>
+              </button>
+              <p class="text-xs text-neutral-400">Accept</p>
+            </div>
+          </div>
+
+          <p class="text-neutral-600 text-xs mt-12">
+            slide up to message
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Realistic incoming call screen.</p>
+    </section>
+
+    <!-- 3. SAFETY CHECK-IN -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. Safety Check-in Setup</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Safety Check-in</h1>
+          </div>
+
+          <p class="text-neutral-400 text-sm mb-6">
+            Set a timer. If you don't check in, we'll alert your trusted contacts.
+          </p>
+
+          <!-- Timer Selection -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">Check in after</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button class="py-4 rounded-xl bg-neutral-800 text-center">
+                <p class="font-bold">30 min</p>
+              </button>
+              <button class="py-4 rounded-xl bg-hot text-center">
+                <p class="font-bold">1 hour</p>
+              </button>
+              <button class="py-4 rounded-xl bg-neutral-800 text-center">
+                <p class="font-bold">2 hours</p>
+              </button>
+              <button class="py-4 rounded-xl bg-neutral-800 text-center">
+                <p class="font-bold">3 hours</p>
+              </button>
+              <button class="py-4 rounded-xl bg-neutral-800 text-center">
+                <p class="font-bold">4 hours</p>
+              </button>
+              <button class="py-4 rounded-xl bg-neutral-800 text-center">
+                <p class="font-bold">Custom</p>
+              </button>
+            </div>
+          </div>
+
+          <!-- Alert Contacts -->
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+              <label class="text-sm text-neutral-500">Alert these contacts</label>
+              <button class="text-hot text-sm">Edit</button>
+            </div>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                <span class="w-10 h-10 rounded-full bg-hot/20 flex items-center justify-center">JD</span>
+                <div class="flex-1">
+                  <p class="font-medium">John Doe</p>
+                  <p class="text-xs text-neutral-500">SMS + Email</p>
+                </div>
+                <span class="text-lime">✓</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                <span class="w-10 h-10 rounded-full bg-cyan/20 flex items-center justify-center">AB</span>
+                <div class="flex-1">
+                  <p class="font-medium">Alex B</p>
+                  <p class="text-xs text-neutral-500">SMS only</p>
+                </div>
+                <span class="text-lime">✓</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Message -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-2 block">Alert message</label>
+            <textarea rows="3" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none resize-none text-sm">Hey, I set a safety check-in on HOTMESS and didn't respond. I was last at [LOCATION]. Please check I'm okay.</textarea>
+          </div>
+
+          <!-- Share Location -->
+          <label class="flex items-center justify-between p-4 bg-neutral-900 rounded-xl mb-6">
+            <div>
+              <p class="font-medium">Include my location</p>
+              <p class="text-sm text-neutral-500">Share where you are</p>
+            </div>
+            <div class="w-12 h-7 bg-hot rounded-full relative">
+              <div class="absolute right-1 top-1 w-5 h-5 bg-white rounded-full"></div>
+            </div>
+          </label>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+            START CHECK-IN TIMER
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Timed safety check-in configuration.</p>
+    </section>
+
+    <!-- 4. CHECK-IN ACTIVE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Check-in Active</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Modal -->
+          <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 bg-neutral-900 rounded-2xl p-6 text-center">
+            <!-- Timer -->
+            <div class="w-32 h-32 rounded-full border-4 border-hot flex items-center justify-center mx-auto mb-6">
+              <div class="text-center">
+                <p class="text-4xl font-black">45</p>
+                <p class="text-sm text-neutral-400">minutes left</p>
+              </div>
+            </div>
+
+            <h2 class="text-2xl font-black mb-2">Check-in Active</h2>
+            <p class="text-neutral-400 mb-6">
+              Respond before timer ends or contacts will be alerted
+            </p>
+
+            <!-- Status -->
+            <div class="glass rounded-xl p-4 mb-6 text-left">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-neutral-500">Started</span>
+                <span class="text-sm">10:30 PM</span>
+              </div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-neutral-500">Ends</span>
+                <span class="text-sm">11:30 PM</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-neutral-500">Will alert</span>
+                <span class="text-sm">2 contacts</span>
+              </div>
+            </div>
+
+            <button class="w-full bg-lime text-black font-bold py-4 rounded-xl mb-3">
+              I'M OKAY — CHECK IN
+            </button>
+            <button class="w-full bg-neutral-800 text-white font-bold py-3 rounded-xl mb-3">
+              EXTEND 30 MIN
+            </button>
+            <button class="w-full text-red-400 py-2">
+              Cancel check-in
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Active check-in timer with extend option.</p>
+    </section>
+
+    <!-- 5. LOCATION SHARING -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. Location Sharing</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Share Location</h1>
+          </div>
+
+          <!-- Active Share -->
+          <div class="bg-cyan/10 border border-cyan/30 rounded-xl p-4 mb-6">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-3 h-3 bg-cyan rounded-full animate-pulse"></div>
+              <p class="font-medium text-cyan">Sharing Live</p>
+            </div>
+            <p class="text-sm text-neutral-400 mb-3">
+              Your location is being shared with 2 contacts
+            </p>
+            <div class="flex justify-between text-sm">
+              <span class="text-neutral-500">Started 15 min ago</span>
+              <span class="text-neutral-500">Ends in 45 min</span>
+            </div>
+          </div>
+
+          <!-- Map Preview -->
+          <div class="h-48 bg-neutral-800 rounded-xl mb-6 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px); background-size: 30px 30px;"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <div class="w-4 h-4 rounded-full bg-cyan border-4 border-white"></div>
+              <div class="absolute -inset-4 rounded-full bg-cyan/20 animate-ping"></div>
+            </div>
+            <div class="absolute bottom-2 left-2 bg-black/70 rounded px-2 py-1 text-xs">
+              📍 Shoreditch, London
+            </div>
+          </div>
+
+          <!-- Sharing With -->
+          <div class="mb-6">
+            <p class="text-sm text-neutral-500 mb-3">Sharing with</p>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                <span class="w-10 h-10 rounded-full bg-hot/20 flex items-center justify-center">JD</span>
+                <div class="flex-1">
+                  <p class="font-medium">John Doe</p>
+                  <p class="text-xs text-cyan">Viewing now</p>
+                </div>
+                <button class="text-red-400 text-sm">Stop</button>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                <span class="w-10 h-10 rounded-full bg-cyan/20 flex items-center justify-center">AB</span>
+                <div class="flex-1">
+                  <p class="font-medium">Alex B</p>
+                  <p class="text-xs text-neutral-500">Last checked 5m ago</p>
+                </div>
+                <button class="text-red-400 text-sm">Stop</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <button class="w-full bg-neutral-800 text-white font-bold py-3 rounded-xl mb-3">
+            SHARE WITH MORE CONTACTS
+          </button>
+          <button class="w-full bg-red-500/20 text-red-400 font-bold py-3 rounded-xl border border-red-500/30">
+            STOP ALL SHARING
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Live location sharing with contacts.</p>
+    </section>
+
+    <!-- 6. TRUSTED CONTACTS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Trusted Contacts</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Trusted Contacts</h1>
+          </div>
+
+          <p class="text-neutral-400 text-sm mb-6">
+            These people will be contacted in emergencies and can receive your location.
+          </p>
+
+          <!-- Contacts List -->
+          <div class="space-y-3 mb-6">
+            <div class="p-4 bg-neutral-900 rounded-xl">
+              <div class="flex items-center gap-3 mb-3">
+                <span class="w-12 h-12 rounded-full bg-hot/20 flex items-center justify-center text-lg">JD</span>
+                <div class="flex-1">
+                  <p class="font-bold">John Doe</p>
+                  <p class="text-sm text-neutral-500">+44 7XXX XXX XXX</p>
+                </div>
+                <button class="text-neutral-400">⋯</button>
+              </div>
+              <div class="flex gap-2">
+                <span class="px-2 py-1 rounded bg-hot/20 text-hot text-xs">SOS</span>
+                <span class="px-2 py-1 rounded bg-cyan/20 text-cyan text-xs">Location</span>
+                <span class="px-2 py-1 rounded bg-lime/20 text-lime text-xs">Check-in</span>
+              </div>
+            </div>
+
+            <div class="p-4 bg-neutral-900 rounded-xl">
+              <div class="flex items-center gap-3 mb-3">
+                <span class="w-12 h-12 rounded-full bg-cyan/20 flex items-center justify-center text-lg">AB</span>
+                <div class="flex-1">
+                  <p class="font-bold">Alex B</p>
+                  <p class="text-sm text-neutral-500">alex@email.com</p>
+                </div>
+                <button class="text-neutral-400">⋯</button>
+              </div>
+              <div class="flex gap-2">
+                <span class="px-2 py-1 rounded bg-hot/20 text-hot text-xs">SOS</span>
+                <span class="px-2 py-1 rounded bg-lime/20 text-lime text-xs">Check-in</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Contact -->
+          <button class="w-full p-4 bg-neutral-900 rounded-xl border-2 border-dashed border-neutral-700 flex items-center justify-center gap-2 mb-6">
+            <span class="text-2xl">+</span>
+            <span class="font-medium">Add Trusted Contact</span>
+          </button>
+
+          <!-- Info -->
+          <div class="glass rounded-xl p-4">
+            <p class="text-sm text-neutral-400">
+              <span class="text-hot">⚠️</span> Trusted contacts receive your location and alerts in emergencies. Only add people you trust completely.
+            </p>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Manage emergency contacts.</p>
+    </section>
+
+    <!-- 7. SOS PANIC -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. SOS Panic Mode</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-red-900/30 flex flex-col items-center justify-center text-center px-8">
+          <!-- Pulsing Alert -->
+          <div class="relative mb-8">
+            <div class="w-40 h-40 rounded-full bg-red-500/30 flex items-center justify-center">
+              <div class="w-32 h-32 rounded-full bg-red-500/50 flex items-center justify-center">
+                <div class="w-24 h-24 rounded-full bg-red-500 flex items-center justify-center animate-pulse">
+                  <span class="text-5xl">🆘</span>
+                </div>
+              </div>
+            </div>
+            <div class="absolute -inset-8 rounded-full border-2 border-red-500/50 animate-ping"></div>
+          </div>
+
+          <h1 class="text-3xl font-black text-red-400 mb-4">ALERTING CONTACTS</h1>
+          <p class="text-neutral-300 mb-8">
+            Your location is being sent to your trusted contacts
+          </p>
+
+          <!-- Status -->
+          <div class="w-full glass rounded-xl p-4 mb-6 text-left">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-lime">✓</span>
+              <span>John Doe alerted (SMS)</span>
+            </div>
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-lime">✓</span>
+              <span>Alex B alerted (Email)</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-cyan animate-pulse">●</span>
+              <span>Sharing live location</span>
+            </div>
+          </div>
+
+          <!-- Emergency Services -->
+          <div class="w-full space-y-3 mb-6">
+            <a href="tel:999" class="block w-full bg-red-500 text-white font-bold py-4 rounded-xl text-center">
+              CALL 999
+            </a>
+            <a href="tel:116123" class="block w-full bg-neutral-800 text-white font-bold py-3 rounded-xl text-center">
+              Samaritans: 116 123
+            </a>
+          </div>
+
+          <button class="w-full text-neutral-400 py-2">
+            I'm safe — cancel alert
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Active SOS alert with emergency contacts.</p>
+    </section>
+
+    <!-- 8. AFTERCARE NUDGE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. Aftercare Nudge</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Modal -->
+          <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 bg-neutral-900 rounded-2xl p-6 text-center">
+            <!-- Icon -->
+            <div class="w-20 h-20 rounded-full bg-purple/20 flex items-center justify-center mx-auto mb-4">
+              <span class="text-4xl">💜</span>
+            </div>
+
+            <h2 class="text-2xl font-black mb-2">Hey, you good?</h2>
+            <p class="text-neutral-400 mb-6">
+              Just checking in after your meetup. How are you feeling?
+            </p>
+
+            <!-- Responses -->
+            <div class="space-y-3 mb-6">
+              <button class="w-full p-4 bg-lime/10 rounded-xl text-left flex items-center gap-3 border border-lime/30">
+                <span class="text-2xl">😊</span>
+                <div>
+                  <p class="font-medium text-lime">I'm great!</p>
+                  <p class="text-xs text-neutral-500">Had a good time</p>
+                </div>
+              </button>
+              <button class="w-full p-4 bg-neutral-800 rounded-xl text-left flex items-center gap-3">
+                <span class="text-2xl">😐</span>
+                <div>
+                  <p class="font-medium">Meh, it was okay</p>
+                  <p class="text-xs text-neutral-500">Nothing special</p>
+                </div>
+              </button>
+              <button class="w-full p-4 bg-neutral-800 rounded-xl text-left flex items-center gap-3">
+                <span class="text-2xl">😔</span>
+                <div>
+                  <p class="font-medium">Not feeling great</p>
+                  <p class="text-xs text-neutral-500">Could use support</p>
+                </div>
+              </button>
+            </div>
+
+            <!-- Reminders -->
+            <div class="glass rounded-xl p-4 text-left text-sm text-neutral-400">
+              <p class="font-medium text-white mb-2">Remember:</p>
+              <p>Hydrate. Reset. Check in with yourself. 💜</p>
+            </div>
+
+            <button class="w-full text-neutral-500 py-2 mt-4">
+              Remind me later
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Post-meetup wellness check-in.</p>
+    </section>
+
+    <!-- 9. SAFETY RESOURCES -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">9. Safety Resources</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Resources</h1>
+          </div>
+
+          <div class="space-y-4 pb-8">
+            <!-- Emergency -->
+            <div>
+              <p class="text-sm text-red-400 font-bold mb-3">🆘 Emergency</p>
+              <a href="tel:999" class="block p-4 bg-red-500/10 rounded-xl border border-red-500/30 mb-2">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-bold text-red-400">Emergency Services</p>
+                    <p class="text-sm text-neutral-400">Police, Ambulance, Fire</p>
+                  </div>
+                  <span class="text-2xl font-bold text-red-400">999</span>
+                </div>
+              </a>
+            </div>
+
+            <!-- Mental Health -->
+            <div>
+              <p class="text-sm text-purple font-bold mb-3">💜 Mental Health</p>
+              <div class="space-y-2">
+                <a href="tel:116123" class="block p-4 bg-neutral-900 rounded-xl">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="font-bold">Samaritans</p>
+                      <p class="text-sm text-neutral-400">24/7 emotional support</p>
+                    </div>
+                    <span class="text-hot">116 123</span>
+                  </div>
+                </a>
+                <a href="tel:08006895652" class="block p-4 bg-neutral-900 rounded-xl">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="font-bold">Mind Infoline</p>
+                      <p class="text-sm text-neutral-400">Mental health support</p>
+                    </div>
+                    <span class="text-hot">0800 689 5652</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <!-- LGBTQ+ -->
+            <div>
+              <p class="text-sm text-cyan font-bold mb-3">🌈 LGBTQ+ Support</p>
+              <div class="space-y-2">
+                <a href="tel:08009995428" class="block p-4 bg-neutral-900 rounded-xl">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="font-bold">Galop</p>
+                      <p class="text-sm text-neutral-400">LGBTQ+ hate crime helpline</p>
+                    </div>
+                    <span class="text-hot">0800 999 5428</span>
+                  </div>
+                </a>
+                <a href="tel:03003300630" class="block p-4 bg-neutral-900 rounded-xl">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="font-bold">Switchboard</p>
+                      <p class="text-sm text-neutral-400">LGBTQ+ listening service</p>
+                    </div>
+                    <span class="text-hot">0300 330 0630</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <!-- Sexual Health -->
+            <div>
+              <p class="text-sm text-lime font-bold mb-3">🏥 Sexual Health</p>
+              <div class="space-y-2">
+                <a href="#" class="block p-4 bg-neutral-900 rounded-xl">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="font-bold">CliniQ</p>
+                      <p class="text-sm text-neutral-400">Trans & non-binary clinic</p>
+                    </div>
+                    <span class="text-neutral-400">›</span>
+                  </div>
+                </a>
+                <a href="#" class="block p-4 bg-neutral-900 rounded-xl">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="font-bold">56 Dean Street</p>
+                      <p class="text-sm text-neutral-400">Sexual health services</p>
+                    </div>
+                    <span class="text-neutral-400">›</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Emergency and support resource directory.</p>
+    </section>
+
+    <!-- 10. EXIT TERMINAL -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">10. Exit Terminal</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Modal -->
+          <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 bg-neutral-900 rounded-2xl p-6 text-center">
+            <!-- Icon -->
+            <div class="w-16 h-16 rounded-full bg-neutral-800 flex items-center justify-center mx-auto mb-4">
+              <span class="text-3xl">🚪</span>
+            </div>
+
+            <h2 class="text-xl font-black mb-2">Quick Exit</h2>
+            <p class="text-neutral-400 text-sm mb-6">
+              This will immediately redirect to Google and clear your recent app history.
+            </p>
+
+            <!-- Options -->
+            <div class="space-y-3 mb-6">
+              <button class="w-full p-4 bg-neutral-800 rounded-xl text-left flex items-center gap-3">
+                <span class="text-xl">🔍</span>
+                <div>
+                  <p class="font-medium">Exit to Google</p>
+                  <p class="text-xs text-neutral-500">Opens google.com</p>
+                </div>
+              </button>
+              <button class="w-full p-4 bg-neutral-800 rounded-xl text-left flex items-center gap-3">
+                <span class="text-xl">📰</span>
+                <div>
+                  <p class="font-medium">Exit to BBC News</p>
+                  <p class="text-xs text-neutral-500">Opens bbc.co.uk</p>
+                </div>
+              </button>
+              <button class="w-full p-4 bg-neutral-800 rounded-xl text-left flex items-center gap-3">
+                <span class="text-xl">☁️</span>
+                <div>
+                  <p class="font-medium">Exit to Weather</p>
+                  <p class="text-xs text-neutral-500">Opens weather.com</p>
+                </div>
+              </button>
+            </div>
+
+            <p class="text-xs text-neutral-500 mb-4">
+              💜 Preparation isn't paranoia. Stay safe.
+            </p>
+
+            <button class="w-full text-neutral-400 py-2">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Discreet exit to neutral website.</p>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 10 • Safety Features</p>
+    <p class="text-neutral-600 text-sm mt-4">© 2026 HOTMESS LONDON LTD. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

@@ -2,21 +2,23 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { 
-  MapPin, TrendingUp, Target, Shield, Calendar, 
-  Scan, Users, Trophy, Settings, FileText, HelpCircle,
-  Sparkles, Radio
+  Users, Calendar, Radio, Ticket, Sparkles, Shield,
+  Navigation, BarChart3, ShoppingBag, Settings, FileText, HelpCircle
 } from 'lucide-react';
 import PageShell from '@/components/shell/PageShell';
 
-const TOOLS = [
-  { name: 'Beacons', icon: MapPin, path: 'Beacons', desc: 'Create location drops' },
-  { name: 'Stats', icon: TrendingUp, path: 'Stats', desc: 'Your activity dashboard' },
-  { name: 'Challenges', icon: Target, path: 'Challenges', desc: 'Daily and weekly goals' },
-  { name: 'Safety', icon: Shield, path: 'Safety', desc: 'Reports, blocks, resources' },
-  { name: 'Calendar', icon: Calendar, path: 'Calendar', desc: 'Events and subscriptions' },
-  { name: 'Scan', icon: Scan, path: 'Scan', desc: 'QR check-in and redeem' },
-  { name: 'Community', icon: Users, path: 'Community', desc: 'Posts and discussions' },
-  { name: 'Leaderboard', icon: Trophy, path: 'Leaderboard', desc: 'Top users and scores' },
+const APPS = [
+  { name: 'SOCIAL', icon: Users, path: 'Social', desc: 'Find people nearby', color: '#FF1493' },
+  { name: 'EVENTS', icon: Calendar, path: 'Events', desc: "What's on tonight", color: '#00D9FF' },
+  { name: 'RADIO', icon: Radio, path: 'Music', desc: 'Live shows & music', color: '#B026FF' },
+  { name: 'TICKETS', icon: Ticket, path: 'TicketMarketplace', desc: 'Buy & sell tickets', color: '#FF6B35' },
+  { name: 'COMMUNITY', icon: Sparkles, path: 'Community', desc: 'Posts & discussions', color: '#FFEB3B' },
+  { name: 'SAFETY', icon: Shield, path: 'Care', desc: 'You good? Get help', color: '#FF0000' },
+  { name: 'PULSE', icon: Navigation, path: 'Pulse', desc: 'Live map & beacons', color: '#39FF14' },
+  { name: 'DIRECTIONS', icon: Navigation, path: 'Directions', desc: 'Get there fast', color: '#00D9FF' },
+  { name: 'STATS', icon: BarChart3, path: 'Stats', desc: 'Your XP & activity', color: '#FFEB3B' },
+  { name: 'SHOP', icon: ShoppingBag, path: 'Marketplace', desc: 'Shop the drop', color: '#B026FF' },
+  { name: 'SETTINGS', icon: Settings, path: 'Settings', desc: 'Preferences', color: '#FFFFFF' },
 ];
 
 const ACCOUNT = [
@@ -25,73 +27,72 @@ const ACCOUNT = [
   { name: 'Help & Support', icon: HelpCircle, path: 'Care' },
 ];
 
-const FEATURES = [
-  { name: 'All Features', icon: Sparkles, href: '/features', desc: 'Explore everything HOTMESS offers', color: '#FF1493' },
-  { name: 'Safety Features', icon: Shield, href: '/features/safety', desc: 'Panic button, fake calls, location sharing', color: '#FF0000' },
-  { name: 'Social Features', icon: Users, href: '/features/social', desc: 'Connect, message, discover', color: '#00D9FF' },
-  { name: 'Events Features', icon: Calendar, href: '/features/events', desc: 'Find what\'s happening near you', color: '#B026FF' },
-  { name: 'Radio & Music', icon: Radio, href: '/features/music', desc: '24/7 radio, shows, exclusive releases', color: '#FF6B35' },
-];
-
 export default function More() {
   return (
     <div className="min-h-screen bg-black text-white pb-20">
       <PageShell
-        eyebrow="MORE"
-        title="More"
-        subtitle="Tools • Settings • Legal"
+        eyebrow="ALL APPS"
+        title="All Apps"
+        subtitle="HOTMESS LONDON OS"
         maxWidth="7xl"
       >
-
-        {/* Tools Grid */}
-        <div className="mb-12">
-          <h2 className="text-xl font-black uppercase mb-4 text-white/60">TOOLS</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {TOOLS.map((tool) => {
-              const Icon = tool.icon;
-              return (
-                <Link 
-                  key={tool.path}
-                  to={createPageUrl(tool.path)}
-                  className="group"
-                >
-                  <div className="bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-[#00D9FF] p-6 transition-all h-full">
-                    <Icon className="w-8 h-8 mb-3 text-white/60 group-hover:text-[#00D9FF] transition-colors" />
-                    <h3 className="font-black uppercase text-sm mb-1">{tool.name}</h3>
-                    <p className="text-xs text-white/50">{tool.desc}</p>
-                  </div>
-                </Link>
-              );
-            })}
+        {/* Hero Banner */}
+        <div className="mb-10 relative overflow-hidden">
+          <div className="bg-gradient-to-r from-[#FF1493]/20 via-[#B026FF]/20 to-[#00D9FF]/20 border-2 border-white/20 p-8 text-center">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.1),transparent_70%)]" />
+            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight relative z-10">
+              <span className="text-[#FF1493]">11</span> apps. 
+              <span className="text-[#00D9FF]"> One</span> place. 
+              <span className="text-[#B026FF]"> London OS.</span>
+            </h1>
+            <p className="text-white/60 mt-3 text-sm uppercase tracking-widest relative z-10">
+              Everything you need for a night out
+            </p>
           </div>
         </div>
 
-        {/* Discover Features */}
+        {/* Apps Grid */}
         <div className="mb-12">
-          <h2 className="text-xl font-black uppercase mb-4 text-white/60">DISCOVER</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {FEATURES.map((feature) => {
-              const Icon = feature.icon;
+          <h2 className="text-xl font-black uppercase mb-6 text-white/60">11 APPS IN ONE</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {APPS.map((app) => {
+              const Icon = app.icon;
               return (
                 <Link 
-                  key={feature.href}
-                  to={feature.href}
+                  key={app.path + app.name}
+                  to={createPageUrl(app.path)}
                   className="group"
                 >
-                  <div 
-                    className="bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-current p-5 transition-all h-full flex items-start gap-4"
-                    style={{ '--tw-border-opacity': 1, borderColor: `${feature.color}40` }}
+                  <div className="bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-current p-5 transition-all h-full flex flex-col items-center text-center"
+                    style={{ '--hover-color': app.color }}
                   >
+                    {/* Icon Box */}
                     <div 
-                      className="w-12 h-12 flex items-center justify-center flex-shrink-0 border-2"
-                      style={{ borderColor: feature.color, backgroundColor: `${feature.color}20` }}
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110"
+                      style={{ 
+                        backgroundColor: `${app.color}20`,
+                        border: `2px solid ${app.color}40`
+                      }}
                     >
-                      <Icon className="w-6 h-6" style={{ color: feature.color }} />
+                      <Icon 
+                        className="w-8 h-8 transition-colors" 
+                        style={{ color: app.color }}
+                      />
                     </div>
-                    <div>
-                      <h3 className="font-black uppercase text-sm mb-1">{feature.name}</h3>
-                      <p className="text-xs text-white/50">{feature.desc}</p>
-                    </div>
+                    
+                    {/* App Name */}
+                    <h3 
+                      className="font-black uppercase text-sm mb-1 transition-colors group-hover:text-current"
+                      style={{ '--tw-text-opacity': 1 }}
+                    >
+                      <span className="group-hover:hidden">{app.name}</span>
+                      <span className="hidden group-hover:inline" style={{ color: app.color }}>{app.name}</span>
+                    </h3>
+                    
+                    {/* Description */}
+                    <p className="text-xs text-white/50 group-hover:text-white/70 transition-colors">
+                      {app.desc}
+                    </p>
                   </div>
                 </Link>
               );

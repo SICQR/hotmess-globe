@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 4: Social Deep Dive</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #000;
+      border-radius: 40px;
+      border: 8px solid #1a1a1a;
+      overflow: hidden;
+      position: relative;
+    }
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: #1a1a1a;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+    .screen-content {
+      height: 100%;
+      overflow-y: auto;
+      padding-top: 40px;
+    }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .text-purple { color: #B026FF; }
+    .bg-hot { background-color: #FF1493; }
+    .bg-cyan { background-color: #00D9FF; }
+    .bg-lime { background-color: #39FF14; }
+    .bg-purple { background-color: #B026FF; }
+    .border-hot { border-color: #FF1493; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, #000 80%, transparent);
+      padding: 20px 16px 30px;
+    }
+  </style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  
+  <!-- Header -->
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 4: Social Deep Dive • Inbox, Right Now, Filters, Consent, Reports</p>
+  </header>
+
+  <!-- Screen Grid -->
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. MESSAGES INBOX -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. Messages Inbox</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black">
+          <!-- Header -->
+          <div class="px-4 pb-4">
+            <div class="flex items-center justify-between mb-4">
+              <h1 class="text-2xl font-black">Messages</h1>
+              <div class="flex gap-2">
+                <button class="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">🔍</button>
+                <button class="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">⚙️</button>
+              </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex gap-2">
+              <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-medium">All</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Unread</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Right Now</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Requests</button>
+            </div>
+          </div>
+
+          <!-- Message List -->
+          <div class="px-4 space-y-2 pb-32">
+            <!-- Online + Unread -->
+            <div class="flex items-center gap-3 p-3 bg-neutral-900/50 rounded-xl border border-hot/30">
+              <div class="relative">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" class="w-14 h-14 rounded-full object-cover">
+                <span class="absolute bottom-0 right-0 w-4 h-4 bg-lime rounded-full border-2 border-black"></span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <p class="font-semibold">Alex</p>
+                  <span class="px-2 py-0.5 rounded-full bg-lime/20 text-lime text-xs">Online</span>
+                </div>
+                <p class="text-sm text-neutral-400 truncate">Hey! Are you free tonight?</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-neutral-500">2m</p>
+                <span class="inline-block w-5 h-5 rounded-full bg-hot text-xs font-bold flex items-center justify-center mt-1">3</span>
+              </div>
+            </div>
+
+            <!-- Right Now Active -->
+            <div class="flex items-center gap-3 p-3 bg-neutral-900/50 rounded-xl border border-cyan/30">
+              <div class="relative">
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop" class="w-14 h-14 rounded-full object-cover">
+                <span class="absolute bottom-0 right-0 w-4 h-4 bg-cyan rounded-full border-2 border-black"></span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <p class="font-semibold">Sam</p>
+                  <span class="px-2 py-0.5 rounded-full bg-cyan/20 text-cyan text-xs">Right Now</span>
+                </div>
+                <p class="text-sm text-neutral-400 truncate">Can host • Shoreditch</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-neutral-500">15m</p>
+              </div>
+            </div>
+
+            <!-- Regular messages -->
+            <div class="flex items-center gap-3 p-3 bg-neutral-900/50 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&h=100&fit=crop" class="w-14 h-14 rounded-full object-cover">
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold">Marcus</p>
+                <p class="text-sm text-neutral-400 truncate">That event was amazing!</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-neutral-500">1h</p>
+                <span class="text-xs text-lime">✓✓</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900/50 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&h=100&fit=crop" class="w-14 h-14 rounded-full object-cover">
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold">Jordan</p>
+                <p class="text-sm text-neutral-400 truncate">Thanks for the recommendation</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-neutral-500">3h</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900/50 rounded-xl opacity-60">
+              <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop" class="w-14 h-14 rounded-full object-cover">
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold">Chris</p>
+                <p class="text-sm text-neutral-500 truncate">You: Sounds good!</p>
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-neutral-500">Yesterday</p>
+              </div>
+            </div>
+
+            <!-- Message Request -->
+            <div class="mt-6 mb-2">
+              <p class="text-sm text-neutral-500 font-medium">Message Requests</p>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-neutral-900/50 rounded-xl border border-dashed border-neutral-700">
+              <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&h=100&fit=crop" class="w-14 h-14 rounded-full object-cover opacity-70">
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold">New User</p>
+                <p class="text-sm text-neutral-500">Wants to message you</p>
+              </div>
+              <div class="flex gap-2">
+                <button class="px-3 py-1.5 rounded-lg bg-hot text-white text-sm">Accept</button>
+                <button class="px-3 py-1.5 rounded-lg bg-neutral-700 text-sm">Decline</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <div class="bottom-nav">
+            <div class="flex justify-around items-center">
+              <a href="#" class="flex flex-col items-center gap-1 text-neutral-500">
+                <span class="text-xl">🏠</span>
+                <span class="text-xs">Home</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-neutral-500">
+                <span class="text-xl">📅</span>
+                <span class="text-xs">Events</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-hot relative">
+                <span class="absolute -top-3 w-12 h-12 rounded-full bg-hot/20"></span>
+                <span class="text-xl relative">👥</span>
+                <span class="text-xs font-medium">Social</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-neutral-500">
+                <span class="text-xl">🛒</span>
+                <span class="text-xs">Shop</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-neutral-500">
+                <span class="text-xl">≡</span>
+                <span class="text-xs">More</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Message threads with status indicators and requests.</p>
+    </section>
+
+    <!-- 2. RIGHT NOW MODE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. Right Now Mode</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black">
+          <!-- Header -->
+          <div class="px-4 pb-4">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h1 class="text-2xl font-black text-cyan">RIGHT NOW</h1>
+                <p class="text-sm text-neutral-400">12 available near you</p>
+              </div>
+              <button class="px-4 py-2 rounded-full bg-cyan text-black font-bold text-sm">
+                Go Live
+              </button>
+            </div>
+
+            <!-- Active Status Banner -->
+            <div class="bg-cyan/10 border border-cyan/30 rounded-xl p-4 mb-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-3 h-3 bg-cyan rounded-full animate-pulse"></div>
+                  <div>
+                    <p class="font-semibold text-cyan">You're Live</p>
+                    <p class="text-sm text-neutral-400">Can Travel • Tonight</p>
+                  </div>
+                </div>
+                <button class="text-sm text-neutral-400">Edit</button>
+              </div>
+              <div class="mt-3 flex gap-2">
+                <span class="px-3 py-1 rounded-full bg-cyan/20 text-cyan text-xs">Expires in 2h</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Now Grid -->
+          <div class="px-4 grid grid-cols-2 gap-3 pb-32">
+            <!-- Active User Card -->
+            <div class="bg-neutral-900 rounded-xl overflow-hidden border border-cyan/30">
+              <div class="relative">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" class="w-full h-40 object-cover">
+                <div class="absolute top-2 left-2">
+                  <span class="px-2 py-1 rounded-full bg-cyan text-black text-xs font-bold">LIVE</span>
+                </div>
+                <div class="absolute top-2 right-2">
+                  <span class="px-2 py-1 rounded-full bg-lime/90 text-black text-xs font-bold">87%</span>
+                </div>
+                <div class="absolute bottom-2 left-2 right-2">
+                  <span class="px-2 py-1 rounded-full bg-black/70 text-white text-xs">Can Host</span>
+                </div>
+              </div>
+              <div class="p-3">
+                <p class="font-semibold">Alex, 28</p>
+                <p class="text-xs text-neutral-400">8 min walk</p>
+              </div>
+            </div>
+
+            <div class="bg-neutral-900 rounded-xl overflow-hidden border border-cyan/30">
+              <div class="relative">
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop" class="w-full h-40 object-cover">
+                <div class="absolute top-2 left-2">
+                  <span class="px-2 py-1 rounded-full bg-cyan text-black text-xs font-bold">LIVE</span>
+                </div>
+                <div class="absolute bottom-2 left-2 right-2">
+                  <span class="px-2 py-1 rounded-full bg-black/70 text-white text-xs">Can Travel</span>
+                </div>
+              </div>
+              <div class="p-3">
+                <p class="font-semibold">Sam, 26</p>
+                <p class="text-xs text-neutral-400">12 min drive</p>
+              </div>
+            </div>
+
+            <div class="bg-neutral-900 rounded-xl overflow-hidden border border-cyan/30">
+              <div class="relative">
+                <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=200&h=200&fit=crop" class="w-full h-40 object-cover">
+                <div class="absolute top-2 left-2">
+                  <span class="px-2 py-1 rounded-full bg-cyan text-black text-xs font-bold">LIVE</span>
+                </div>
+                <div class="absolute bottom-2 left-2 right-2">
+                  <span class="px-2 py-1 rounded-full bg-black/70 text-white text-xs">Hotel</span>
+                </div>
+              </div>
+              <div class="p-3">
+                <p class="font-semibold">Marcus, 31</p>
+                <p class="text-xs text-neutral-400">15 min cab</p>
+              </div>
+            </div>
+
+            <div class="bg-neutral-900 rounded-xl overflow-hidden border border-cyan/30">
+              <div class="relative">
+                <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop" class="w-full h-40 object-cover">
+                <div class="absolute top-2 left-2">
+                  <span class="px-2 py-1 rounded-full bg-cyan text-black text-xs font-bold">LIVE</span>
+                </div>
+                <div class="absolute bottom-2 left-2 right-2">
+                  <span class="px-2 py-1 rounded-full bg-black/70 text-white text-xs">30 min only</span>
+                </div>
+              </div>
+              <div class="p-3">
+                <p class="font-semibold">Jordan, 29</p>
+                <p class="text-xs text-neutral-400">5 min walk</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Floating SOS -->
+          <button class="absolute bottom-28 left-4 px-4 py-2 rounded-full bg-red-500/20 border border-red-500/50 text-red-400 text-sm font-medium flex items-center gap-2">
+            <span>⚠️</span> SOS
+          </button>
+
+          <!-- Bottom Nav -->
+          <div class="bottom-nav">
+            <div class="flex justify-around items-center">
+              <a href="#" class="flex flex-col items-center gap-1 text-neutral-500">
+                <span class="text-xl">🏠</span>
+                <span class="text-xs">Home</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-neutral-500">
+                <span class="text-xl">📅</span>
+                <span class="text-xs">Events</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-cyan relative">
+                <span class="absolute -top-3 w-12 h-12 rounded-full bg-cyan/20"></span>
+                <span class="text-xl relative">👥</span>
+                <span class="text-xs font-medium">Social</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-neutral-500">
+                <span class="text-xl">🛒</span>
+                <span class="text-xs">Shop</span>
+              </a>
+              <a href="#" class="flex flex-col items-center gap-1 text-neutral-500">
+                <span class="text-xl">≡</span>
+                <span class="text-xs">More</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Real-time availability with logistics (Host/Travel/Hotel).</p>
+    </section>
+
+    <!-- 3. GO LIVE SHEET -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. Go Live Sheet</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Bottom Sheet -->
+          <div class="absolute bottom-0 left-0 right-0 bg-neutral-900 rounded-t-3xl p-6">
+            <!-- Handle -->
+            <div class="w-12 h-1 bg-neutral-700 rounded-full mx-auto mb-6"></div>
+
+            <h2 class="text-2xl font-black mb-2">Go Live</h2>
+            <p class="text-neutral-400 mb-6">Set your availability for Right Now</p>
+
+            <!-- Availability Options -->
+            <div class="mb-6">
+              <label class="text-sm text-neutral-500 mb-3 block">I can...</label>
+              <div class="grid grid-cols-3 gap-2">
+                <button class="p-4 rounded-xl bg-cyan/20 border border-cyan text-center">
+                  <span class="text-2xl mb-1 block">🏠</span>
+                  <span class="text-sm text-cyan font-medium">Host</span>
+                </button>
+                <button class="p-4 rounded-xl bg-neutral-800 border border-neutral-700 text-center">
+                  <span class="text-2xl mb-1 block">🚗</span>
+                  <span class="text-sm text-neutral-400">Travel</span>
+                </button>
+                <button class="p-4 rounded-xl bg-neutral-800 border border-neutral-700 text-center">
+                  <span class="text-2xl mb-1 block">🏨</span>
+                  <span class="text-sm text-neutral-400">Hotel</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Duration -->
+            <div class="mb-6">
+              <label class="text-sm text-neutral-500 mb-3 block">Available for...</label>
+              <div class="flex gap-2 flex-wrap">
+                <button class="px-4 py-2 rounded-full bg-cyan/20 border border-cyan text-cyan text-sm">30 min</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">1 hour</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">2 hours</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Tonight</button>
+              </div>
+            </div>
+
+            <!-- Location -->
+            <div class="mb-6">
+              <label class="text-sm text-neutral-500 mb-3 block">Location precision</label>
+              <div class="flex gap-2">
+                <button class="flex-1 px-4 py-3 rounded-xl bg-neutral-800 text-neutral-300 text-sm">
+                  <span class="block text-lg mb-1">🔒</span>
+                  Fuzzy (±1km)
+                </button>
+                <button class="flex-1 px-4 py-3 rounded-xl bg-cyan/20 border border-cyan text-cyan text-sm">
+                  <span class="block text-lg mb-1">📍</span>
+                  Precise
+                </button>
+              </div>
+            </div>
+
+            <!-- Note -->
+            <div class="mb-6">
+              <label class="text-sm text-neutral-500 mb-2 block">Quick note (optional)</label>
+              <input type="text" placeholder="e.g. Near Old Street" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl p-4 focus:border-cyan outline-none">
+            </div>
+
+            <button class="w-full bg-cyan text-black font-bold py-4 rounded-xl mb-3">
+              GO LIVE NOW
+            </button>
+            <button class="w-full text-neutral-500 py-2">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Set availability with logistics and duration options.</p>
+    </section>
+
+    <!-- 4. CONSENT GATE MODAL -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Consent Gate Modal</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background (chat) -->
+          <div class="absolute inset-0 bg-black/90"></div>
+
+          <!-- Modal -->
+          <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 bg-neutral-900 rounded-2xl p-6 border border-hot/30">
+            <!-- Icon -->
+            <div class="flex justify-center mb-4">
+              <div class="w-16 h-16 rounded-full bg-hot/20 flex items-center justify-center">
+                <span class="text-3xl">💜</span>
+              </div>
+            </div>
+
+            <h2 class="text-2xl font-black text-center mb-2">Before You Message</h2>
+            <p class="text-neutral-400 text-center mb-6">A quick reminder about consent</p>
+
+            <!-- Consent Points -->
+            <div class="space-y-4 mb-6">
+              <div class="flex items-start gap-3">
+                <span class="w-8 h-8 rounded-full bg-hot/20 flex items-center justify-center shrink-0 text-hot">✓</span>
+                <div>
+                  <p class="font-medium">Ask First</p>
+                  <p class="text-sm text-neutral-500">Always ask before sending explicit content</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="w-8 h-8 rounded-full bg-hot/20 flex items-center justify-center shrink-0 text-hot">✓</span>
+                <div>
+                  <p class="font-medium">Confirm Yes</p>
+                  <p class="text-sm text-neutral-500">Silence isn't consent — get a clear yes</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="w-8 h-8 rounded-full bg-hot/20 flex items-center justify-center shrink-0 text-hot">✓</span>
+                <div>
+                  <p class="font-medium">Respect No</p>
+                  <p class="text-sm text-neutral-500">Accept boundaries without pushing</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="w-8 h-8 rounded-full bg-hot/20 flex items-center justify-center shrink-0 text-hot">✓</span>
+                <div>
+                  <p class="font-medium">No Pressure</p>
+                  <p class="text-sm text-neutral-500">Never guilt or manipulate</p>
+                </div>
+              </div>
+            </div>
+
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-3">
+              I UNDERSTAND
+            </button>
+            <p class="text-center text-neutral-600 text-xs">
+              This appears once per conversation
+            </p>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Mandatory consent acknowledgment before first message.</p>
+    </section>
+
+    <!-- 5. FILTERS / SEARCH -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. Filters / Search</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black">
+          <!-- Header -->
+          <div class="px-4 pb-4">
+            <div class="flex items-center gap-3 mb-4">
+              <button class="text-neutral-400">←</button>
+              <h1 class="text-xl font-bold flex-1">Filters</h1>
+              <button class="text-hot text-sm">Reset</button>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="px-4 space-y-6 pb-32">
+            <!-- Search -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Search</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">🔍</span>
+                <input type="text" placeholder="Username or keyword..." class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 pl-12 focus:border-hot outline-none">
+              </div>
+            </div>
+
+            <!-- Distance -->
+            <div>
+              <div class="flex justify-between mb-2">
+                <label class="text-sm text-neutral-500">Distance</label>
+                <span class="text-sm text-hot font-medium">25 mi</span>
+              </div>
+              <input type="range" class="w-full accent-hot" min="1" max="100" value="25">
+              <div class="flex justify-between text-xs text-neutral-600 mt-1">
+                <span>1 mi</span>
+                <span>100 mi</span>
+              </div>
+            </div>
+
+            <!-- Age Range -->
+            <div>
+              <div class="flex justify-between mb-2">
+                <label class="text-sm text-neutral-500">Age Range</label>
+                <span class="text-sm text-hot font-medium">21 - 45</span>
+              </div>
+              <div class="h-2 bg-neutral-800 rounded-full relative">
+                <div class="absolute left-[15%] right-[35%] h-full bg-hot rounded-full"></div>
+              </div>
+              <div class="flex justify-between text-xs text-neutral-600 mt-1">
+                <span>18</span>
+                <span>65+</span>
+              </div>
+            </div>
+
+            <!-- Looking For -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-3 block">Looking For</label>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Dates</button>
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Right Now</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Friends</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Chat</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Networking</button>
+              </div>
+            </div>
+
+            <!-- Position -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-3 block">Position</label>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Top</button>
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Vers</button>
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Bottom</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Side</button>
+              </div>
+            </div>
+
+            <!-- Tribes -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-3 block">Tribes</label>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Bear</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Otter</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Twink</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Jock</button>
+                <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Daddy</button>
+                <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Muscle</button>
+              </div>
+            </div>
+
+            <!-- Online Now -->
+            <div class="flex items-center justify-between p-4 bg-neutral-900 rounded-xl">
+              <div>
+                <p class="font-medium">Online Now</p>
+                <p class="text-sm text-neutral-500">Only show active users</p>
+              </div>
+              <div class="w-12 h-7 bg-hot rounded-full relative">
+                <div class="absolute right-1 top-1 w-5 h-5 bg-white rounded-full"></div>
+              </div>
+            </div>
+
+            <!-- Has Photos -->
+            <div class="flex items-center justify-between p-4 bg-neutral-900 rounded-xl">
+              <div>
+                <p class="font-medium">Has Photos</p>
+                <p class="text-sm text-neutral-500">Only show profiles with photos</p>
+              </div>
+              <div class="w-12 h-7 bg-hot rounded-full relative">
+                <div class="absolute right-1 top-1 w-5 h-5 bg-white rounded-full"></div>
+              </div>
+            </div>
+
+            <!-- Save Preset (PLUS) -->
+            <div class="glass rounded-xl p-4 border border-purple/30">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="font-medium">Save Filter Preset</p>
+                  <p class="text-sm text-neutral-500">PLUS feature</p>
+                </div>
+                <button class="px-4 py-2 rounded-full bg-purple text-white text-sm font-medium">
+                  PLUS
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fixed Bottom Button -->
+          <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent pt-12">
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+              APPLY FILTERS (127 Results)
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Comprehensive filter controls with PLUS upsell.</p>
+    </section>
+
+    <!-- 6. REPORT USER -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Report User</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Report User</h1>
+          </div>
+
+          <!-- User Being Reported -->
+          <div class="flex items-center gap-3 p-4 bg-neutral-900 rounded-xl mb-6">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" class="w-12 h-12 rounded-full object-cover">
+            <div>
+              <p class="font-semibold">Alex, 28</p>
+              <p class="text-sm text-neutral-500">@alex_london</p>
+            </div>
+          </div>
+
+          <!-- Report Categories -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-3 block">What's the issue?</label>
+            <div class="space-y-2">
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between hover:border-hot border border-transparent">
+                <span>Harassment or bullying</span>
+                <span class="text-neutral-600">›</span>
+              </button>
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between border border-hot">
+                <span>Inappropriate content</span>
+                <span class="text-hot">›</span>
+              </button>
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between hover:border-hot border border-transparent">
+                <span>Spam or fake profile</span>
+                <span class="text-neutral-600">›</span>
+              </button>
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between hover:border-hot border border-transparent">
+                <span>Underage user</span>
+                <span class="text-neutral-600">›</span>
+              </button>
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between hover:border-hot border border-transparent">
+                <span>Threatening behavior</span>
+                <span class="text-neutral-600">›</span>
+              </button>
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between hover:border-hot border border-transparent">
+                <span>Something else</span>
+                <span class="text-neutral-600">›</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Details -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-2 block">Additional details</label>
+            <textarea rows="4" placeholder="Tell us what happened..." class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none resize-none"></textarea>
+          </div>
+
+          <!-- Evidence -->
+          <div class="mb-6">
+            <label class="text-sm text-neutral-500 mb-2 block">Add screenshots (optional)</label>
+            <button class="w-full p-4 bg-neutral-900 border border-dashed border-neutral-700 rounded-xl text-neutral-500 flex items-center justify-center gap-2">
+              <span>📎</span> Attach files
+            </button>
+          </div>
+
+          <!-- Block Option -->
+          <label class="flex items-center gap-3 p-4 bg-neutral-900 rounded-xl mb-6">
+            <input type="checkbox" checked class="w-5 h-5 rounded accent-hot">
+            <span>Also block this user</span>
+          </label>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-3">
+            SUBMIT REPORT
+          </button>
+          <p class="text-center text-neutral-600 text-xs">
+            We take all reports seriously and will review within 24 hours.
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Detailed report flow with categories and evidence.</p>
+    </section>
+
+    <!-- 7. BLOCK USER -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. Block Confirmation</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Modal -->
+          <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 bg-neutral-900 rounded-2xl p-6">
+            <!-- User -->
+            <div class="flex flex-col items-center mb-6">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" class="w-20 h-20 rounded-full object-cover mb-3">
+              <p class="font-semibold text-lg">Block Alex?</p>
+            </div>
+
+            <p class="text-neutral-400 text-center mb-6">
+              They won't be able to see your profile, message you, or find you in search.
+            </p>
+
+            <!-- What happens -->
+            <div class="space-y-3 mb-6">
+              <div class="flex items-center gap-3 text-sm text-neutral-400">
+                <span class="text-red-400">✕</span>
+                <span>They can't see your profile</span>
+              </div>
+              <div class="flex items-center gap-3 text-sm text-neutral-400">
+                <span class="text-red-400">✕</span>
+                <span>They can't message you</span>
+              </div>
+              <div class="flex items-center gap-3 text-sm text-neutral-400">
+                <span class="text-red-400">✕</span>
+                <span>They won't know they're blocked</span>
+              </div>
+              <div class="flex items-center gap-3 text-sm text-neutral-400">
+                <span class="text-lime">✓</span>
+                <span>You can unblock them later</span>
+              </div>
+            </div>
+
+            <button class="w-full bg-red-500 text-white font-bold py-4 rounded-xl mb-3">
+              BLOCK
+            </button>
+            <button class="w-full text-neutral-400 py-2">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Block confirmation with clear consequences.</p>
+    </section>
+
+    <!-- 8. CHAT MENU -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. Chat Menu Options</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Bottom Sheet -->
+          <div class="absolute bottom-0 left-0 right-0 bg-neutral-900 rounded-t-3xl p-6">
+            <!-- Handle -->
+            <div class="w-12 h-1 bg-neutral-700 rounded-full mx-auto mb-6"></div>
+
+            <!-- User Header -->
+            <div class="flex items-center gap-3 mb-6 pb-4 border-b border-neutral-800">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" class="w-12 h-12 rounded-full object-cover">
+              <div>
+                <p class="font-semibold">Alex, 28</p>
+                <p class="text-sm text-neutral-500">Online now</p>
+              </div>
+            </div>
+
+            <!-- Options -->
+            <div class="space-y-1">
+              <button class="w-full p-4 rounded-xl text-left flex items-center gap-4 hover:bg-neutral-800">
+                <span class="text-xl">👤</span>
+                <span>View Profile</span>
+              </button>
+              <button class="w-full p-4 rounded-xl text-left flex items-center gap-4 hover:bg-neutral-800">
+                <span class="text-xl">📍</span>
+                <span>Share Location</span>
+              </button>
+              <button class="w-full p-4 rounded-xl text-left flex items-center gap-4 hover:bg-neutral-800">
+                <span class="text-xl">🔔</span>
+                <span>Mute Notifications</span>
+              </button>
+              <button class="w-full p-4 rounded-xl text-left flex items-center gap-4 hover:bg-neutral-800">
+                <span class="text-xl">📌</span>
+                <span>Pin Conversation</span>
+              </button>
+              <div class="border-t border-neutral-800 my-2"></div>
+              <button class="w-full p-4 rounded-xl text-left flex items-center gap-4 hover:bg-neutral-800 text-yellow-500">
+                <span class="text-xl">⚠️</span>
+                <span>Report</span>
+              </button>
+              <button class="w-full p-4 rounded-xl text-left flex items-center gap-4 hover:bg-neutral-800 text-red-500">
+                <span class="text-xl">🚫</span>
+                <span>Block</span>
+              </button>
+              <button class="w-full p-4 rounded-xl text-left flex items-center gap-4 hover:bg-neutral-800 text-red-400">
+                <span class="text-xl">🗑️</span>
+                <span>Delete Conversation</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Chat options with safety actions easily accessible.</p>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 4 • Social Deep Dive</p>
+    <p class="text-neutral-600 text-sm mt-4">© 2026 HOTMESS LONDON LTD. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

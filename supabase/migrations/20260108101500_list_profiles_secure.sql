@@ -30,8 +30,8 @@ as $$
     u.full_name,
     u.avatar_url,
     u.subscription_tier,
-    coalesce(u.last_lat, u.lat) as last_lat,
-    coalesce(u.last_lng, u.lng) as last_lng,
+    u.last_lat,
+    u.last_lng,
     u.city,
     u.bio,
     u.profile_type,
@@ -41,8 +41,8 @@ as $$
     on upp.auth_user_id = u.auth_user_id
   where
     u.auth_user_id is not null
-    and coalesce(u.last_lat, u.lat) is not null
-    and coalesce(u.last_lng, u.lng) is not null
+    and u.last_lat is not null
+    and u.last_lng is not null
     and not (
       lower(coalesce(upp.gender_identity, '')) like '%female%'
       or lower(coalesce(upp.gender_identity, '')) like '%woman%'
