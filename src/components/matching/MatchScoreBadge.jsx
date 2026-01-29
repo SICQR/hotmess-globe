@@ -16,7 +16,7 @@ import {
   MapPin,
   Loader2
 } from 'lucide-react';
-import { useAuth } from '@/components/utils/AuthProvider';
+import { useAuth } from '@/lib/AuthContext';
 
 // Score level colors
 const LEVEL_COLORS = {

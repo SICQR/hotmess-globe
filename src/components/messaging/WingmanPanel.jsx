@@ -19,7 +19,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/components/utils/AuthProvider';
+import { useAuth } from '@/lib/AuthContext';
 
 const OPENER_TYPES = {
   personal: { label: 'Personal', icon: Heart, color: '#FF1493' },
