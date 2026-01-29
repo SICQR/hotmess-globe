@@ -7,7 +7,12 @@ export { ProfileCard } from './ProfileCard';
 export { default as SmartProfileCard } from './SmartProfileCard';
 export { default as TelegramPanel } from './TelegramPanel';
 export { SortSelector, SortPills } from './SortSelector';
+export { MatchFilterDropdown, MatchFilterPills, MatchFilterSlider } from './MatchFilter';
+export { MatchBar, MatchBreakdownBars, MatchBadge, MatchCircle } from './MatchBar';
 export { BentoGrid } from './BentoGrid';
+
+// Match insights
+export { generateMatchInsights, getTopInsight, getMatchTier, getBreakdownPercentages } from './matchInsights';
 
 // Hooks
 export { useInfiniteProfiles } from './useInfiniteProfiles';
@@ -28,6 +33,9 @@ export type {
   SortOption,
   MatchProfilesResponse,
 } from './types';
+
+export type { MatchInsight } from './matchInsights';
+export type { MatchFilterValue } from './MatchFilter';
 
 export { SORT_OPTIONS } from './types';
 
