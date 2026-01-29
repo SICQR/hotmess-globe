@@ -66,6 +66,7 @@ import SafetyFeatures from './pages/SafetyFeatures';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
+import SmartUIDemo from './pages/SmartUIDemo';
 import Social from './pages/Social';
 import SocialFeatures from './pages/SocialFeatures';
 import SquadChat from './pages/SquadChat';
@@ -146,6 +147,7 @@ export const PAGES = {
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
+    "SmartUIDemo": SmartUIDemo,
     "Social": Social,
     "SocialFeatures": SocialFeatures,
     "SquadChat": SquadChat,
