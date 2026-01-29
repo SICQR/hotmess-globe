@@ -56,6 +56,7 @@ const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
   'Scan',
   'Community',
   'Leaderboard',
+  'AdminDashboard',
   // Shop/market compat is handled separately.
   'Marketplace',
   'ProductDetail',
@@ -474,6 +475,10 @@ const AuthenticatedApp = () => {
       <Route path="/pricing" element={<PageRoute pageKey="Pricing" />} />
       <Route path="/fees" element={<PageRoute pageKey="Pricing" />} />
       
+      {/* Admin dashboard */}
+      <Route path="/admin" element={<PageRoute pageKey="AdminDashboard" />} />
+      <Route path="/admin/*" element={<PageRoute pageKey="AdminDashboard" />} />
+
       {/* Business dashboard */}
       <Route path="/biz" element={<PageRoute pageKey="BusinessDashboard" />} />
       <Route path="/biz/dashboard" element={<PageRoute pageKey="BusinessDashboard" />} />

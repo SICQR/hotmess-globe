@@ -28,7 +28,7 @@ const accentColors = {
 };
 
 const sizes = {
-  sm: { container: 'py-8', icon: 'w-12 h-12', iconBox: 'w-16 h-16', title: 'text-lg' },
+  sm: { container: 'py-8', icon: 'w-8 h-8', iconBox: 'w-16 h-16', title: 'text-lg' },
   default: { container: 'py-16', icon: 'w-10 h-10', iconBox: 'w-20 h-20', title: 'text-xl' },
   lg: { container: 'py-24', icon: 'w-12 h-12', iconBox: 'w-24 h-24', title: 'text-2xl' },
 };
@@ -53,6 +53,7 @@ export default function EmptyState({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
       className={cn(
         "flex flex-col items-center justify-center px-4 text-center",
         sizeStyles.container,
@@ -62,9 +63,14 @@ export default function EmptyState({
     >
       {Icon && (
         <motion.div 
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ 
+            type: 'spring',
+            stiffness: 200,
+            damping: 15,
+            delay: 0.1
+          }}
           className={cn(
             "rounded-full flex items-center justify-center mb-6 border-2",
             sizeStyles.iconBox,
@@ -76,8 +82,8 @@ export default function EmptyState({
       )}
       
       <motion.h3 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
         className={cn("font-black uppercase mb-2", sizeStyles.title)}
       >
@@ -85,38 +91,40 @@ export default function EmptyState({
       </motion.h3>
       
       <motion.p 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
         className="text-white/60 mb-6 max-w-md text-sm"
       >
         {description}
       </motion.p>
       
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="flex flex-col sm:flex-row gap-3"
-      >
-        {action && actionLabel && (
-          <Button 
-            onClick={action} 
-            className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase"
-          >
-            {actionLabel}
-          </Button>
-        )}
-        {secondaryAction && secondaryLabel && (
-          <Button 
-            onClick={secondaryAction} 
-            variant="outline"
-            className="border-white/20 text-white hover:bg-white hover:text-black font-black uppercase"
-          >
-            {secondaryLabel}
-          </Button>
-        )}
-      </motion.div>
+      {(action && actionLabel) || (secondaryAction && secondaryLabel) ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="flex flex-col sm:flex-row gap-3"
+        >
+          {action && actionLabel && (
+            <Button 
+              onClick={action} 
+              className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase"
+            >
+              {actionLabel}
+            </Button>
+          )}
+          {secondaryAction && secondaryLabel && (
+            <Button 
+              onClick={secondaryAction} 
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white hover:text-black font-black uppercase"
+            >
+              {secondaryLabel}
+            </Button>
+          )}
+        </motion.div>
+      ) : null}
     </motion.div>
   );
 }

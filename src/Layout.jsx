@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { createPageUrl } from './utils';
 import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield } from 'lucide-react';
 import { base44 } from '@/components/utils/supabaseClient';
@@ -699,7 +700,17 @@ function LayoutInner({ children, currentPageName }) {
         role="main"
       >
         <PageErrorBoundary>
-          {children}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </PageErrorBoundary>
       </main>
 
