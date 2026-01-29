@@ -1,14 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Users, MessageCircle } from 'lucide-react';
+import { Users, MessageCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { createPageUrl } from '../utils';
-import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
+// Use ProfilesGridWithMatch for match probability sorting
+import ProfilesGridWithMatch from '@/features/profilesGrid/ProfilesGridWithMatch';
 import { useCurrentUser } from '@/components/utils/queryConfig';
 import PageShell from '@/components/shell/PageShell';
+import { getProfileUrl } from '@/lib/userPrivacy';
+import StoriesBar from '@/components/social/Stories';
 
 export default function Social() {
   const navigate = useNavigate();
@@ -114,14 +116,19 @@ export default function Social() {
           kinetic={true}
         maxWidth="7xl"
       >
+        {/* Stories Bar */}
+        <div className="mb-6 -mx-4 md:mx-0">
+          <StoriesBar currentUser={currentUser} className="bg-white/5 border-b border-white/10" />
+        </div>
+
         <Tabs value={activeTab} onValueChange={(v) => setTabAndUrl(v)} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-white/5 mb-8">
             <TabsTrigger
               value="discover"
-              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF1493] data-[state=active]:to-[#B026FF] data-[state=active]:text-white"
             >
-              <Users className="w-4 h-4 mr-2" />
-              DISCOVER
+              <Sparkles className="w-4 h-4 mr-2" />
+              MATCH
             </TabsTrigger>
             <TabsTrigger
               value="inbox"
@@ -138,21 +145,17 @@ export default function Social() {
           </TabsList>
 
           <TabsContent value="discover">
-            <ProfilesGrid
-              showHeader={false}
+            <ProfilesGridWithMatch
+              showHeader={true}
+              headerTitle="Find Your Match"
               showTelegramFeedButton
+              showSortSelector
+              defaultSort="match"
               containerClassName="mx-0 max-w-none p-0"
               onNavigateUrl={(url) => navigate(url)}
               onOpenProfile={(profile) => {
-                const email = profile?.email;
-                const uid = profile?.authUserId;
-                if (uid) {
-                  navigate(`/social/u/${encodeURIComponent(uid)}`);
-                  return;
-                }
-                if (email) {
-                  navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
-                }
+                // Use user ID, never expose email in URL
+                navigate(getProfileUrl(profile));
               }}
             />
           </TabsContent>
