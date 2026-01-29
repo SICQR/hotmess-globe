@@ -11,6 +11,8 @@ import { useCurrentUser } from '@/components/utils/queryConfig';
 import PageShell from '@/components/shell/PageShell';
 import { getProfileUrl } from '@/lib/userPrivacy';
 import StoriesBar from '@/components/social/Stories';
+import { LuxHeroBanner } from '@/components/lux/LuxBanner';
+import { Zap } from 'lucide-react';
 
 export default function Social() {
   const navigate = useNavigate();
@@ -108,7 +110,18 @@ export default function Social() {
 
 
   return (
-    <div className="min-h-screen bg-black text-white pb-20">
+    <div className="min-h-screen bg-black text-white pb-20 relative">
+      {/* Hero Banner */}
+      <LuxHeroBanner
+        title="FIND YOUR MATCH"
+        subtitle="AI-powered compatibility • Real-time availability • Zero ghosting"
+        ctaText="GO RIGHT NOW"
+        ctaHref="/social?tab=discover"
+        backgroundImage="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80"
+        overlay="gradient"
+        size="sm"
+      />
+
       <PageShell
         eyebrow="SOCIAL"
         title="Social"
@@ -219,6 +232,18 @@ export default function Social() {
           </TabsContent>
         </Tabs>
       </PageShell>
+
+      {/* Floating "Go Live" CTA */}
+      <div className="fixed bottom-24 right-4 z-40 md:bottom-8 md:right-8">
+        <Link to="/social?tab=discover">
+          <Button 
+            className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-6 py-4 text-lg shadow-2xl animate-pulse hover:animate-none"
+          >
+            <Zap className="w-5 h-5 mr-2" />
+            GO LIVE NOW
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }
