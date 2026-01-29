@@ -1,14 +1,15 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { auth } from '@/components/utils/supabaseClient';
-import { Radio as RadioIcon, Music2, Disc, Play, Pause, Calendar, MapPin, ExternalLink, TrendingUp, Upload, Loader2 } from 'lucide-react';
+import { Radio as RadioIcon, Music2, Disc, Play, Pause, Calendar, MapPin, ExternalLink, TrendingUp, Upload, Loader2, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRadio } from '@/components/shell/RadioContext';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
@@ -16,6 +17,10 @@ import { schedule, getNextEpisode, generateICS, downloadICS } from '../component
 import { toast } from 'sonner';
 import { snapToGrid } from '../components/utils/locationPrivacy';
 import { KineticHeadline } from '@/components/text/KineticHeadline';
+import { LuxHeroBanner, LuxPageBanner, LuxPromoBanner } from '@/components/lux/LuxBanner';
+import { LuxVideo, LuxVideoBackground } from '@/components/lux/LuxVideo';
+import { LuxCarousel } from '@/components/lux/LuxCarousel';
+import { LuxMediumRectangleAd } from '@/components/lux/AdSlot';
 
 async function getWithAuth(url) {
   const { data } = await auth.getSession();
@@ -458,50 +463,63 @@ export default function Music() {
     },
   });
 
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-black text-white pb-20">
+      {/* Live Radio Banner */}
+      <LuxPromoBanner
+        title="HOTMESS RADIO"
+        description="Live now - Tune in for the latest mixes"
+        cta="LISTEN LIVE"
+        ctaHref="#"
+        className="cursor-pointer"
+        onClick={openRadio}
+      />
+
       {/* Hero */}
-      <section className="relative py-20 sm:py-32 px-4 sm:px-6 overflow-hidden">
-        <div className="absolute inset-0">
-          <img 
-            src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1920&q=80" 
-            alt="Music"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-[#B026FF]/40 to-black" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto text-center">
-          <RadioIcon className="w-20 h-20 mx-auto mb-6 drop-shadow-2xl" />
-          <KineticHeadline 
-            text="MUSIC"
-            as="h1"
-            className="text-5xl sm:text-7xl md:text-9xl font-black italic mb-6 drop-shadow-2xl"
-          />
-          <p className="text-base sm:text-xl md:text-2xl uppercase tracking-wider text-white/90 mb-8 drop-shadow-lg">
-            Live radio first. Then the releases. Then the rabbit hole.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Button 
-              onClick={openRadio}
-              variant="cyan"
-              size="xl"
-              className="shadow-2xl w-full sm:w-auto font-black uppercase"
-            >
-              <Play className="w-5 h-5 mr-2" />
-              LISTEN LIVE
-            </Button>
-            <Link to="/music/shows" className="block w-full sm:w-auto">
+      <LuxVideoBackground
+        src="https://assets.mixkit.co/videos/preview/mixkit-dj-mixing-in-a-nightclub-4804-large.mp4"
+        poster="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1920&q=80"
+        className="min-h-[60vh] flex items-center justify-center"
+      >
+        <div className="relative z-10 max-w-7xl mx-auto text-center px-6 py-20">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <div className="w-20 h-20 bg-[#B026FF] flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(176,38,255,0.5)]">
+              <Headphones className="w-10 h-10 text-white" />
+            </div>
+            <KineticHeadline 
+              text="MUSIC"
+              as="h1"
+              className="text-5xl sm:text-7xl md:text-9xl font-black italic mb-6 drop-shadow-2xl"
+            />
+            <p className="text-base sm:text-xl md:text-2xl uppercase tracking-wider text-white/90 mb-8 drop-shadow-lg max-w-2xl mx-auto">
+              Live radio first. Then the releases. Then the rabbit hole.
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
               <Button 
-                variant="glass"
-                size="xl"
-                className="border-white/20 shadow-2xl backdrop-blur-sm w-full sm:w-auto font-black uppercase"
+                onClick={openRadio}
+                className="bg-[#B026FF] hover:bg-white text-white hover:text-black shadow-2xl w-full sm:w-auto font-black uppercase px-8 py-6 text-lg"
               >
-                BROWSE SHOWS
+                <Play className="w-5 h-5 mr-2" />
+                LISTEN LIVE
               </Button>
-            </Link>
-          </div>
+              <Link to="/music/shows" className="block w-full sm:w-auto">
+                <Button 
+                  variant="outline"
+                  className="border-2 border-white text-white hover:bg-white hover:text-black shadow-2xl backdrop-blur-sm w-full sm:w-auto font-black uppercase px-8 py-6 text-lg"
+                >
+                  BROWSE SHOWS
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
         </div>
-      </section>
+      </LuxVideoBackground>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-12">

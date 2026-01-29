@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { base44, supabase } from '@/components/utils/supabaseClient';
 import { PAGINATION, QUERY_CONFIG } from '../components/utils/constants';
-import { Users, Zap, Heart, Filter, Grid3x3 } from 'lucide-react';
+import { Users, Zap, Heart, Filter, Grid3x3, MapPin, Sparkles } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import FiltersDrawer from '../components/discovery/FiltersDrawer';
@@ -21,6 +22,9 @@ import useLiveViewerLocation, { bucketLatLng } from '@/hooks/useLiveViewerLocati
 import useRealtimeNearbyInvalidation from '@/hooks/useRealtimeNearbyInvalidation';
 import { KineticHeadline } from '@/components/text/KineticHeadline';
 import { getProfileUrl } from '@/lib/userPrivacy';
+import { LuxHeroBanner, LuxPageBanner } from '@/components/lux/LuxBanner';
+import { LuxLiveCounter } from '@/components/lux/LiveCounter';
+import { LuxMediumRectangleAd } from '@/components/lux/AdSlot';
 
 const isMaleAllowedProfile = (u) => {
   const gender = String(u?.gender_identity || u?.gender || u?.sex || '').trim().toLowerCase();
@@ -513,45 +517,67 @@ export default function Connect() {
 
 
 
+  const isUserLive = rightNowStatuses.some(s => s.user_email === currentUser.email && s.active && new Date(s.expires_at) > new Date());
+  const liveCount = rightNowStatuses.filter(s => s.active && new Date(s.expires_at) > new Date()).length;
+
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header */}
+    <div className="min-h-screen bg-black text-white pb-24">
+      {/* Announcement Banner */}
+      <LuxPageBanner
+        message="RIGHT NOW is live - See who's available near you instantly"
+        cta="Learn More"
+        ctaHref="/features"
+        type="promo"
+        dismissible
+        storageKey="connect-rightnow-banner"
+      />
+
+      {/* Hero Banner */}
+      <LuxHeroBanner
+        subtitle="Discovery"
+        title="FIND YOUR MATCH"
+        description="87% match rate. Real-time availability. Zero ghosting."
+        height="sm"
+        overlay
+        alignment="center"
+        className="border-b-2 border-white/10"
+      />
+
+      {/* Live Stats Bar */}
+      <div className="bg-black border-b border-white/10 py-4">
+        <div className="max-w-7xl mx-auto px-6 flex flex-wrap items-center justify-center gap-6">
+          <LuxLiveCounter count={liveCount} label="Right Now" variant="badge" pulsing />
+          <LuxLiveCounter count={reorderedUsers.length} label="Matches" variant="minimal" pulsing={false} />
+          {proximityStatus === 'ok' && (
+            <div className="flex items-center gap-2 text-xs text-[#39FF14]">
+              <MapPin className="w-3 h-3" />
+              <span className="uppercase tracking-wider font-bold">Location Active</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Header Controls */}
       <div className="border-b-2 border-white/10 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <Users className="w-10 h-10 text-[#FF1493]" />
+              <div className="w-12 h-12 bg-[#FF1493] flex items-center justify-center">
+                <Users className="w-6 h-6 text-white" />
+              </div>
               <div>
                 <KineticHeadline text="CONNECT" as="h1" className="text-4xl font-black uppercase" />
-                <p className="text-xs text-white/40 uppercase tracking-wider">Discovery</p>
+                <p className="text-xs text-white/40 uppercase tracking-wider">AI-Powered Discovery</p>
               </div>
             </div>
             <div className="flex gap-2">
               <Button
                 onClick={() => setShowFilters(!showFilters)}
                 variant="outline"
-                className="border-white/20 text-white"
+                className="border-white/20 text-white hover:bg-white hover:text-black"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
-              </Button>
-              <Button
-                onClick={async () => {
-                  const ok = await base44.auth.requireProfile(window.location.href);
-                  if (!ok) return;
-                  setShowRightNow(true);
-                }}
-                className={`font-black border-2 border-white ${
-                  rightNowStatuses.some(s => s.user_email === currentUser.email && s.active && new Date(s.expires_at) > new Date())
-                    ? 'bg-[#39FF14] text-black animate-pulse'
-                    : 'bg-[#FF1493] text-black'
-                }`}
-              >
-                <Zap className="w-4 h-4 mr-2" />
-                {rightNowStatuses.some(s => s.user_email === currentUser.email && s.active && new Date(s.expires_at) > new Date())
-                  ? 'You\'re Live'
-                  : 'Go Right Now'
-                }
               </Button>
             </div>
           </div>
@@ -705,6 +731,39 @@ export default function Connect() {
         initialValues={filters}
         onApply={handleFiltersApply}
       />
+
+      {/* Ad Slot */}
+      <div className="max-w-7xl mx-auto px-6 py-8 flex justify-center">
+        <LuxMediumRectangleAd
+          slotId="connect-bottom"
+          fallbackImage="/images/ad-placeholder.jpg"
+          fallbackHref="/market"
+        />
+      </div>
+
+      {/* Floating Go Live CTA */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40"
+      >
+        <Button
+          onClick={async () => {
+            const ok = await base44.auth.requireProfile(window.location.href);
+            if (!ok) return;
+            setShowRightNow(true);
+          }}
+          className={`font-black uppercase px-8 py-6 text-lg shadow-2xl transition-all ${
+            isUserLive
+              ? 'bg-[#39FF14] text-black animate-pulse shadow-[0_0_30px_rgba(57,255,20,0.5)]'
+              : 'bg-[#FF1493] text-white hover:bg-white hover:text-black shadow-[0_0_30px_rgba(255,20,147,0.5)]'
+          }`}
+        >
+          <Zap className="w-5 h-5 mr-2" />
+          {isUserLive ? "YOU'RE LIVE" : 'GO RIGHT NOW'}
+        </Button>
+      </motion.div>
 
       <TutorialTooltip page="connect" />
     </div>

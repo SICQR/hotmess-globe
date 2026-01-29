@@ -1,13 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { Calendar, Filter, Search, Map } from 'lucide-react';
+import { Calendar, Filter, Search, Map, Plus, Ticket, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { isAfter, isBefore, startOfDay, endOfDay, addDays } from 'date-fns';
+import { isAfter, isBefore, startOfDay, endOfDay, addDays, format } from 'date-fns';
 import { fromUTC } from '../components/utils/dateUtils';
 import EventCard from '../components/events/EventCard';
 import PersonalizedRecommendations from '../components/events/PersonalizedRecommendations';
@@ -17,6 +18,11 @@ import AIEventRecommendations from '../components/events/AIEventRecommendations'
 import logger from '@/utils/logger';
 import PageShell from '@/components/shell/PageShell';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
+import { LuxCarousel, LuxEventCarousel } from '@/components/lux/LuxCarousel';
+import { LuxHeroBanner, LuxPageBanner } from '@/components/lux/LuxBanner';
+import { LuxMediumRectangleAd } from '@/components/lux/AdSlot';
+import { LuxCountdownTimer } from '@/components/lux/CountdownTimer';
+import { KineticHeadline } from '@/components/text/KineticHeadline';
 
 export default function Events() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -161,6 +167,31 @@ export default function Events() {
 
   const myRsvpIds = new Set(rsvps.map(r => r.event_id));
 
+  const navigate = useNavigate();
+  
+  // Get tonight's top events for hero carousel
+  const tonightEvents = useMemo(() => {
+    const now = new Date();
+    return filteredEvents
+      .filter(e => {
+        if (!e.event_date) return false;
+        const eventDate = fromUTC(e.event_date);
+        return isAfter(eventDate, startOfDay(now)) && isBefore(eventDate, addDays(endOfDay(now), 1));
+      })
+      .slice(0, 5)
+      .map(e => ({
+        id: e.id,
+        type: 'image',
+        src: e.image_url || e.cover_image || '/images/event-placeholder.jpg',
+        title: e.title,
+        subtitle: e.venue_name || e.city,
+        description: e.event_date ? format(fromUTC(e.event_date), 'EEEE, MMM d • h:mm a') : 'Tonight',
+        cta: 'GET TICKETS',
+        ctaHref: `/events/${e.id}`,
+        ctaVariant: 'primary',
+      }));
+  }, [filteredEvents]);
+
   if (viewMode === 'map') {
     return (
       <EventsMapView
@@ -174,9 +205,44 @@ export default function Events() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* Announcement Banner */}
+      <LuxPageBanner
+        message="New events added daily - RSVP to unlock exclusive perks"
+        cta="Create Event"
+        ctaHref="/create-beacon"
+        type="info"
+        dismissible
+        storageKey="events-create-banner"
+      />
+
+      {/* Hero Carousel - Tonight's Events */}
+      {tonightEvents.length > 0 ? (
+        <LuxCarousel
+          slides={tonightEvents}
+          autoPlay
+          interval={6000}
+          aspectRatio="16:9"
+          gradientOverlay
+          showArrows
+          showDots
+          className="border-b-2 border-white/10"
+        />
+      ) : (
+        <LuxHeroBanner
+          subtitle="Events"
+          title="TONIGHT"
+          description="Discover what's happening in London"
+          cta="Create Event"
+          ctaHref="/create-beacon"
+          height="md"
+          overlay
+          alignment="center"
+        />
+      )}
+
       <PageShell
         eyebrow="EVENTS"
-        title="Events"
+        title="What's On"
         subtitle="Discover what’s happening in London tonight."
         maxWidth="7xl"
         kinetic={true}
