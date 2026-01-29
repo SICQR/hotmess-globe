@@ -1073,7 +1073,274 @@ export const base44 = {
         );
         return created;
       }
-    }
+    },
+
+    // Premium content subscriptions
+    Subscription: {
+      list: async (orderBy = '-created_at', limit) => {
+        try {
+          let query = supabase.from('subscriptions').select('*');
+          
+          if (orderBy) {
+            const desc = orderBy.startsWith('-');
+            const column = desc ? orderBy.slice(1) : orderBy;
+            query = query.order(column, { ascending: !desc });
+          }
+
+          if (limit) query = query.limit(limit);
+          
+          const { data } = await query;
+          return safeArray(data);
+        } catch (error) {
+          console.error('[base44.entities.Subscription.list] Failed, returning []', error);
+          return [];
+        }
+      },
+
+      filter: async (filters, orderBy, limit) => {
+        try {
+          let query = supabase.from('subscriptions').select('*');
+
+          Object.entries(filters || {}).forEach(([key, value]) => {
+            query = query.eq(key, value);
+          });
+
+          if (orderBy) {
+            const desc = orderBy.startsWith('-');
+            const column = desc ? orderBy.slice(1) : orderBy;
+            query = query.order(column, { ascending: !desc });
+          }
+
+          if (limit) query = query.limit(limit);
+          
+          const { data } = await query;
+          return safeArray(data);
+        } catch (error) {
+          console.error('[base44.entities.Subscription.filter] Failed, returning []', error);
+          return [];
+        }
+      },
+
+      get: async (id) => {
+        try {
+          const { data, error } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('id', id)
+            .single();
+          
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error('[base44.entities.Subscription.get] Failed', error);
+          return null;
+        }
+      },
+
+      create: async (data) => {
+        const nowIso = new Date().toISOString();
+        try {
+          const { data: created, error } = await supabase
+            .from('subscriptions')
+            .insert({ ...data, created_at: nowIso, updated_at: nowIso })
+            .select()
+            .single();
+          
+          if (error) throw error;
+          return created;
+        } catch (error) {
+          console.error('[base44.entities.Subscription.create] Failed', error);
+          throw error;
+        }
+      },
+
+      update: async (id, data) => {
+        const nowIso = new Date().toISOString();
+        try {
+          const { data: updated, error } = await supabase
+            .from('subscriptions')
+            .update({ ...data, updated_at: nowIso })
+            .eq('id', id)
+            .select()
+            .single();
+          
+          if (error) throw error;
+          return updated;
+        } catch (error) {
+          console.error('[base44.entities.Subscription.update] Failed', error);
+          throw error;
+        }
+      },
+
+      delete: async (id) => {
+        try {
+          await supabase.from('subscriptions').delete().eq('id', id);
+        } catch (error) {
+          console.error('[base44.entities.Subscription.delete] Failed', error);
+          throw error;
+        }
+      },
+    },
+
+    // Premium content unlocks
+    PremiumUnlock: {
+      list: async (orderBy = '-purchased_at', limit) => {
+        try {
+          let query = supabase.from('premium_unlocks').select('*');
+          
+          if (orderBy) {
+            const desc = orderBy.startsWith('-');
+            const column = desc ? orderBy.slice(1) : orderBy;
+            query = query.order(column, { ascending: !desc });
+          }
+
+          if (limit) query = query.limit(limit);
+          
+          const { data } = await query;
+          return safeArray(data);
+        } catch (error) {
+          console.error('[base44.entities.PremiumUnlock.list] Failed, returning []', error);
+          return [];
+        }
+      },
+
+      filter: async (filters, orderBy, limit) => {
+        try {
+          let query = supabase.from('premium_unlocks').select('*');
+
+          Object.entries(filters || {}).forEach(([key, value]) => {
+            query = query.eq(key, value);
+          });
+
+          if (orderBy) {
+            const desc = orderBy.startsWith('-');
+            const column = desc ? orderBy.slice(1) : orderBy;
+            query = query.order(column, { ascending: !desc });
+          }
+
+          if (limit) query = query.limit(limit);
+          
+          const { data } = await query;
+          return safeArray(data);
+        } catch (error) {
+          console.error('[base44.entities.PremiumUnlock.filter] Failed, returning []', error);
+          return [];
+        }
+      },
+
+      get: async (id) => {
+        try {
+          const { data, error } = await supabase
+            .from('premium_unlocks')
+            .select('*')
+            .eq('id', id)
+            .single();
+          
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error('[base44.entities.PremiumUnlock.get] Failed', error);
+          return null;
+        }
+      },
+
+      create: async (data) => {
+        const nowIso = new Date().toISOString();
+        try {
+          const { data: created, error } = await supabase
+            .from('premium_unlocks')
+            .insert({ ...data, created_at: nowIso })
+            .select()
+            .single();
+          
+          if (error) throw error;
+          return created;
+        } catch (error) {
+          console.error('[base44.entities.PremiumUnlock.create] Failed', error);
+          throw error;
+        }
+      },
+
+      update: async (id, data) => {
+        try {
+          const { data: updated, error } = await supabase
+            .from('premium_unlocks')
+            .update(data)
+            .eq('id', id)
+            .select()
+            .single();
+          
+          if (error) throw error;
+          return updated;
+        } catch (error) {
+          console.error('[base44.entities.PremiumUnlock.update] Failed', error);
+          throw error;
+        }
+      },
+
+      delete: async (id) => {
+        try {
+          await supabase.from('premium_unlocks').delete().eq('id', id);
+        } catch (error) {
+          console.error('[base44.entities.PremiumUnlock.delete] Failed', error);
+          throw error;
+        }
+      },
+    },
+
+    // Supporting entities for stats - read-only operations
+    // These are primarily used for calculating organizer statistics
+    BeaconCheckIn: {
+      filter: async (filters, orderBy, limit) => {
+        try {
+          let query = supabase.from('beacon_check_ins').select('*');
+
+          Object.entries(filters || {}).forEach(([key, value]) => {
+            query = query.eq(key, value);
+          });
+
+          if (orderBy) {
+            const desc = orderBy.startsWith('-');
+            const column = desc ? orderBy.slice(1) : orderBy;
+            query = query.order(column, { ascending: !desc });
+          }
+
+          if (limit) query = query.limit(limit);
+          
+          const { data } = await query;
+          return safeArray(data);
+        } catch (error) {
+          console.error('[base44.entities.BeaconCheckIn.filter] Failed, returning []', error);
+          return [];
+        }
+      },
+    },
+
+    EventRSVP: {
+      filter: async (filters, orderBy, limit) => {
+        try {
+          let query = supabase.from('event_rsvps').select('*');
+
+          Object.entries(filters || {}).forEach(([key, value]) => {
+            query = query.eq(key, value);
+          });
+
+          if (orderBy) {
+            const desc = orderBy.startsWith('-');
+            const column = desc ? orderBy.slice(1) : orderBy;
+            query = query.order(column, { ascending: !desc });
+          }
+
+          if (limit) query = query.limit(limit);
+          
+          const { data } = await query;
+          return safeArray(data);
+        } catch (error) {
+          console.error('[base44.entities.EventRSVP.filter] Failed, returning []', error);
+          return [];
+        }
+      },
+    },
   },
   
   integrations: {
