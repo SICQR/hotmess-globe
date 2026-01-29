@@ -20,6 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import useLiveViewerLocation, { bucketLatLng } from '@/hooks/useLiveViewerLocation';
 import useRealtimeNearbyInvalidation from '@/hooks/useRealtimeNearbyInvalidation';
 import { KineticHeadline } from '@/components/text/KineticHeadline';
+import { getProfileUrl } from '@/lib/userPrivacy';
 
 const isMaleAllowedProfile = (u) => {
   const gender = String(u?.gender_identity || u?.gender || u?.sex || '').trim().toLowerCase();
@@ -600,15 +601,8 @@ export default function Connect() {
             containerClassName="mx-0 max-w-none p-0"
             onNavigateUrl={(url) => navigate(url)}
             onOpenProfile={(profile) => {
-              const email = profile?.email;
-              const uid = profile?.authUserId;
-              if (email) {
-                navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
-                return;
-              }
-              if (uid) {
-                navigate(createPageUrl(`Profile?uid=${encodeURIComponent(uid)}`));
-              }
+              // Use user ID, never expose email
+              navigate(getProfileUrl(profile));
             }}
           />
         ) : (
@@ -650,15 +644,8 @@ export default function Connect() {
                   viewerProfile={currentUser}
                   onNavigateUrl={(url) => navigate(url)}
                   onOpenProfile={(p) => {
-                    const email = p?.email;
-                    const uid = p?.authUserId;
-                    if (email) {
-                      navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
-                      return;
-                    }
-                    if (uid) {
-                      navigate(createPageUrl(`Profile?uid=${encodeURIComponent(uid)}`));
-                    }
+                    // Use user ID, never expose email
+                    navigate(getProfileUrl(p));
                   }}
                 />
               );

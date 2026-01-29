@@ -106,7 +106,7 @@ export default function GlobalAssistant() {
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_20px_rgba(255,20,147,0.5)] hover:shadow-[0_0_30px_rgba(255,20,147,0.8)] transition-all"
+            className="fixed bottom-20 right-4 z-50 w-14 h-14 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_20px_rgba(255,20,147,0.5)] hover:shadow-[0_0_30px_rgba(255,20,147,0.8)] transition-all"
           >
             <Bot className="w-6 h-6 text-white" />
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#39FF14] rounded-full border-2 border-black animate-pulse" />
@@ -122,7 +122,7 @@ export default function GlobalAssistant() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed bottom-6 right-6 w-full md:w-[420px] h-[600px] bg-black border-2 border-[#FF1493] z-50 flex flex-col shadow-[0_0_40px_rgba(255,20,147,0.3)]"
+            className="fixed bottom-20 right-4 w-full md:w-[420px] h-[550px] bg-black border-2 border-[#FF1493] z-50 flex flex-col shadow-[0_0_40px_rgba(255,20,147,0.3)]"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-[#FF1493] to-[#B026FF] border-b-2 border-white p-4">

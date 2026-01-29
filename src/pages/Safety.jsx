@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Shield, UserPlus, Clock, MapPin, Phone, AlertTriangle, CheckCircle, MessageSquare } from 'lucide-react';
+import { Shield, UserPlus, Clock, MapPin, Phone, AlertTriangle, CheckCircle, MessageSquare, PhoneCall } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import PageShell from '@/components/shell/PageShell';
 import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
 import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
+import FakeCallGenerator from '../components/safety/FakeCallGenerator';
+import LiveLocationShare from '../components/safety/LiveLocationShare';
 
 export default function Safety() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -19,6 +21,7 @@ export default function Safety() {
   const [contactEmail, setContactEmail] = useState('');
   const [relationship, setRelationship] = useState('friend');
   const [checkOutHours, setCheckOutHours] = useState(4);
+  const [showFakeCallModal, setShowFakeCallModal] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -204,6 +207,37 @@ export default function Safety() {
               </div>
             )}
 
+            {/* Quick Safety Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowFakeCallModal(true)}
+                className="flex items-center gap-4 p-4 bg-[#FF1493]/10 border-2 border-[#FF1493]/50 hover:border-[#FF1493] transition-all text-left"
+              >
+                <div className="w-12 h-12 rounded-full bg-[#FF1493]/20 flex items-center justify-center">
+                  <PhoneCall className="w-6 h-6 text-[#FF1493]" />
+                </div>
+                <div>
+                  <p className="font-black text-white uppercase">Fake Call</p>
+                  <p className="text-xs text-white/60">Escape awkward situations</p>
+                </div>
+              </motion.button>
+
+              <a 
+                href="/safety/resources" 
+                className="flex items-center gap-4 p-4 bg-[#00D9FF]/10 border-2 border-[#00D9FF]/50 hover:border-[#00D9FF] transition-all text-left"
+              >
+                <div className="w-12 h-12 rounded-full bg-[#00D9FF]/20 flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-[#00D9FF]" />
+                </div>
+                <div>
+                  <p className="font-black text-white uppercase">Care Resources</p>
+                  <p className="text-xs text-white/60">Support & helplines</p>
+                </div>
+              </a>
+            </div>
+
             <div className="bg-white/5 border border-white/10 p-6">
               <h3 className="text-xl font-black uppercase mb-2">HOW IT WORKS</h3>
               <ul className="space-y-2 text-sm text-white/60">
@@ -211,6 +245,7 @@ export default function Safety() {
                 <li>• Set expected return time</li>
                 <li>• We'll send alerts to trusted contacts if you're overdue</li>
                 <li>• Check out when you're safe</li>
+                <li>• Use Fake Call to exit awkward situations gracefully</li>
                 <li>• SOS button always available via panic button</li>
               </ul>
             </div>
@@ -310,6 +345,29 @@ export default function Safety() {
 
           <TabsContent value="settings">
             <div className="space-y-6">
+              {/* Fake Call Generator - Full Feature */}
+              <div className="border-2 border-[#FF1493] p-6">
+                <FakeCallGenerator compact />
+              </div>
+
+              {/* Live Location Sharing */}
+              <div className="border-2 border-[#39FF14] p-6">
+                <LiveLocationShare
+                  currentUser={currentUser}
+                  trustedContacts={trustedContacts}
+                  onShareStart={(share) => {
+                    toast.success('Location sharing started');
+                  }}
+                  onShareEnd={() => {
+                    toast.success('Location sharing ended');
+                    // Trigger aftercare nudge
+                    window.dispatchEvent(new CustomEvent('hotmess:aftercare', {
+                      detail: { trigger: 'safety_checkin_end' }
+                    }));
+                  }}
+                />
+              </div>
+
               <EmergencyMessageEditor />
               <CheckInTimerCustomizer />
               
@@ -319,6 +377,13 @@ export default function Safety() {
                   Safety Features
                 </h3>
                 <ul className="space-y-3 text-sm text-white/60">
+                  <li className="flex items-start gap-3">
+                    <PhoneCall className="w-4 h-4 text-[#FF1493] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-white font-bold">Fake Call</p>
+                      <p className="text-xs">Schedule a fake incoming call to gracefully exit awkward or unsafe situations.</p>
+                    </div>
+                  </li>
                   <li className="flex items-start gap-3">
                     <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                     <div>
@@ -341,7 +406,7 @@ export default function Safety() {
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
-                    <MessageSquare className="w-4 h-4 text-[#FF1493] mt-0.5 flex-shrink-0" />
+                    <MessageSquare className="w-4 h-4 text-[#B026FF] mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-white font-bold">Custom Messages</p>
                       <p className="text-xs">Pre-define emergency messages for instant alerts.</p>
@@ -352,6 +417,29 @@ export default function Safety() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Fake Call Modal */}
+        <AnimatePresence>
+          {showFakeCallModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+              onClick={() => setShowFakeCallModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md"
+              >
+                <FakeCallGenerator onClose={() => setShowFakeCallModal(false)} />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </PageShell>
     </div>
   );
