@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn, Search, X, Bell, BellOff } from 'lucide-react';
+import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn, Search, X, Bell, BellOff, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { useAllUsers } from '../utils/queryConfig';
 import MediaViewer from './MediaViewer';
 import { broadcast } from '@/lib/globeActivity';
+import { VoiceNoteButton, VoiceNotePlayer } from './VoiceNote';
+import { TypingIndicator, useTypingPresence } from './TypingIndicator';
 import {
   DropdownMenu,
   DropdownMenuContent,

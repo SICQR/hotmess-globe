@@ -10,6 +10,7 @@ import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 import { useCurrentUser } from '@/components/utils/queryConfig';
 import PageShell from '@/components/shell/PageShell';
 import { getProfileUrl } from '@/lib/userPrivacy';
+import StoriesBar from '@/components/social/Stories';
 
 export default function Social() {
   const navigate = useNavigate();
@@ -115,6 +116,11 @@ export default function Social() {
           kinetic={true}
         maxWidth="7xl"
       >
+        {/* Stories Bar */}
+        <div className="mb-6 -mx-4 md:mx-0">
+          <StoriesBar currentUser={currentUser} className="bg-white/5 border-b border-white/10" />
+        </div>
+
         <Tabs value={activeTab} onValueChange={(v) => setTabAndUrl(v)} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-white/5 mb-8">
             <TabsTrigger
