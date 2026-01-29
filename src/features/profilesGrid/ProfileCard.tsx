@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@/utils/travelRecommendations';
 import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
 import { MatchBar, MatchBreakdownBars, MatchBadge } from './MatchBar';
-import { getTopInsight, getMatchTier } from './matchInsights';
-import { SocialProofBadges, getSocialProofBadges } from './SocialProofBadges';
+import { getTopInsight } from './matchInsights';
+import { SocialProofBadges } from './SocialProofBadges';
 
 type Props = {
   profile: Profile;
