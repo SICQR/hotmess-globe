@@ -1,6 +1,8 @@
 import { toSecondsFromGoogleDuration } from './_utils.js';
 
-const DEFAULT_TIMEOUT_MS = 10000;
+// Increased from 10s to 20s to reduce CONNECTION_RESET errors
+// Google Maps can be slow, especially for batch requests
+const DEFAULT_TIMEOUT_MS = 20000;
 
 const fetchJsonSafe = async (url, init, { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) => {
   const controller = new AbortController();

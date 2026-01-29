@@ -16,11 +16,15 @@ import EmptyState from '../components/ui/EmptyState';
 import { GridSkeleton } from '../components/ui/LoadingSkeleton';
 import TutorialTooltip from '../components/tutorial/TutorialTooltip';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 import { Slider } from '@/components/ui/slider';
 import { addToCart } from '@/components/marketplace/cartStorage';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 import { openCartDrawer } from '@/utils/cartEvents';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
+import { KineticHeadline } from '@/components/text/KineticHeadline';
+import { MESSMARKET, CORE_BRANDS } from '@/lib/brand';
+import { broadcast } from '@/lib/globeActivity';
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
@@ -254,15 +258,22 @@ export default function Marketplace() {
             expires_at: expiresAt,
           });
         } catch (error) {
-          console.log('Failed to create P2P beacon:', error);
+          logger.debug('Failed to create P2P beacon', { error: error?.message, productId: product.id });
         }
       }
 
       return order;
     },
-    onSuccess: () => {
+    onSuccess: (order) => {
       queryClient.invalidateQueries(['marketplace-products']);
       toast.success('Purchase successful!');
+      
+      // Broadcast to globe activity stream
+      broadcast.purchase(null, null, {
+        orderId: order?.id,
+        amount: order?.total_xp,
+      });
+      
       navigate(createPageUrl('OrderHistory'));
     },
     onError: () => {
@@ -432,11 +443,13 @@ export default function Marketplace() {
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-black italic uppercase tracking-tight mb-2">
-                THE <span className="text-[#00D9FF]">SHOP</span>
-              </h1>
+              <KineticHeadline 
+                text="THE SHOP"
+                as="h1"
+                className="text-3xl md:text-4xl font-black italic uppercase tracking-tight mb-2"
+              />
               <p className="text-white/60 uppercase text-sm tracking-wider">
-                Official Gear + P2P Mess Market (10% Platform Fee)
+                Official Gear + {MESSMARKET.name} ({MESSMARKET.fee})
               </p>
               {sellerEmailFilter && (
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/70">
@@ -567,7 +580,7 @@ export default function Marketplace() {
               Official Shop
             </TabsTrigger>
             <TabsTrigger value="p2p" className="shrink-0 data-[state=active]:bg-[#B026FF] data-[state=active]:text-white">
-              P2P Market
+              {MESSMARKET.name}
             </TabsTrigger>
             <TabsTrigger value="physical" className="shrink-0 data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black">
               Physical
@@ -578,6 +591,83 @@ export default function Marketplace() {
           </TabsList>
 
           <TabsContent value={activeTab} className="mt-6">
+            {/* Official Shop Banner */}
+            {activeTab === 'official' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-[#FF1493]/20 via-[#00D9FF]/10 to-black border border-[#FF1493]/30"
+              >
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
+                      OFFICIAL HOTMESS SHOP
+                    </h2>
+                    <p className="text-[#FF1493] font-bold text-sm uppercase tracking-wider mt-1">
+                      Brutalist Luxury. In-House Brands.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {Object.values(CORE_BRANDS).map((brand) => (
+                      <span 
+                        key={brand.name}
+                        className="text-sm px-4 py-2 rounded-lg font-black uppercase tracking-wider"
+                        style={{ 
+                          backgroundColor: `${brand.color}20`,
+                          borderColor: `${brand.color}50`,
+                          color: brand.color,
+                          border: '1px solid'
+                        }}
+                      >
+                        {brand.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* MESSMARKET Community Banner */}
+            {activeTab === 'p2p' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-[#B026FF]/20 via-[#FF1493]/10 to-black border border-[#B026FF]/30"
+              >
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
+                      {MESSMARKET.name}
+                    </h2>
+                    <p className="text-[#B026FF] font-bold text-sm uppercase tracking-wider mt-1">
+                      {MESSMARKET.tagline}
+                    </p>
+                    <p className="text-white/60 text-sm mt-2 max-w-lg">
+                      {MESSMARKET.description}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      {MESSMARKET.features.slice(0, 3).map((feature) => (
+                        <span 
+                          key={feature}
+                          className="text-xs px-3 py-1 bg-[#B026FF]/20 border border-[#B026FF]/30 rounded-full text-white/80"
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                    <Button 
+                      onClick={() => navigate(createPageUrl('SellerOnboarding'))}
+                      className="bg-[#B026FF] hover:bg-[#B026FF]/90 text-white font-bold uppercase text-sm"
+                    >
+                      Become a Seller
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {currentUser && activeTab === 'all' && !searchQuery && (
               <AIRecommendations 
                 currentUser={currentUser} 
@@ -589,9 +679,15 @@ export default function Marketplace() {
               <EmptyState
                 icon={ShoppingBag}
                 title="No products found"
-                description={searchQuery ? "Try a different search term" : "Be the first to list a product!"}
-                action={() => navigate(createPageUrl('SellerDashboard'))}
-                actionLabel="Start Selling"
+                description={
+                  searchQuery 
+                    ? "Try a different search term" 
+                    : activeTab === 'p2p' 
+                      ? `Be the first to list on ${MESSMARKET.name}!`
+                      : "Be the first to list a product!"
+                }
+                action={() => navigate(createPageUrl(activeTab === 'p2p' ? 'SellerOnboarding' : 'SellerDashboard'))}
+                actionLabel={activeTab === 'p2p' ? `Join ${MESSMARKET.name}` : "Start Selling"}
               />
             ) : (
               <>

@@ -3,6 +3,7 @@ import { defineConfig, loadEnv } from 'vite'
 import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -586,7 +587,15 @@ export default defineConfig(({ mode }) => {
       // Local dev handlers for /api/* endpoints.
       localApiRoutes(),
       react(),
-    ],
+      // Bundle analysis - generates stats.html on build
+      // Set ANALYZE=true env var to enable: ANALYZE=true npm run build
+      process.env.ANALYZE === 'true' && visualizer({
+        filename: './dist/stats.html',
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+      }),
+    ].filter(Boolean),
     test: {
       globals: true,
       environment: 'jsdom',
