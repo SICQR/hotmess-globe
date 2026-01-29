@@ -19,6 +19,14 @@
     {
       "path": "/api/admin/cleanup/rate-limits",
       "schedule": "20 4 * * *"
+    },
+    {
+      "path": "/api/safety/check-ins",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/telegram/send",
+      "schedule": "*/2 * * * *"
     }
   ],
   "headers": [
