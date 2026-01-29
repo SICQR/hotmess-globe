@@ -548,6 +548,17 @@ function localApiRoutes() {
             });
         }
 
+        // Domains API route (GET, POST, PUT, DELETE)
+        if (path === '/api/domains' && ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'].includes(method)) {
+          return importFresh('./api/domains/index.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load domains handler' }));
+            });
+        }
+
         return next();
       });
     },

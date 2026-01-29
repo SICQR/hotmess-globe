@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { createPageUrl, createUserProfileUrl } from '../utils';
 import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
+import DomainManagement from '@/components/domains/DomainManagement';
 
 export default function Settings() {
   const [user, setUser] = useState(null);
@@ -291,11 +292,14 @@ export default function Settings() {
           </div>
         </motion.div>
 
+        {/* Domain Management */}
+        <DomainManagement />
+
         {/* Data & Privacy */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.5 }}
           className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
         >
           <div className="flex items-center gap-3 mb-6">
@@ -336,7 +340,7 @@ export default function Settings() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.55 }}
           className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
         >
           <div className="flex items-center gap-3 mb-6">
