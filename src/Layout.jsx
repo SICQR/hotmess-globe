@@ -47,86 +47,10 @@ import BottomNav from '@/components/navigation/BottomNav';
 
 
 // Safety Check-in Handler - Listens for pending check-ins
+// Disabled until safety_checkins table exists
 function SafetyCheckinHandler({ userId }) {
-  const [checkin, setCheckin] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    // Check for pending check-ins
-    const checkForCheckins = async () => {
-      try {
-        const { data } = await base44.supabase
-          .from('safety_checkins')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (data) {
-          setCheckin(data);
-          setShowModal(true);
-        }
-      } catch {
-        // No pending check-ins
-      }
-    };
-
-    checkForCheckins();
-
-    // Subscribe to new check-ins
-    const subscription = base44.supabase
-      .channel('safety-checkins')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'safety_checkins',
-        filter: `user_id=eq.${userId}`
-      }, (payload) => {
-        setCheckin(payload.new);
-        setShowModal(true);
-      })
-      .subscribe();
-
-    return () => subscription.unsubscribe();
-  }, [userId]);
-
-  const handleRespond = async (response) => {
-    try {
-      await fetch('/api/safety/respond', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          checkinId: checkin.id,
-          response
-        })
-      });
-
-      setShowModal(false);
-      setCheckin(null);
-
-      // Trigger aftercare if responded positively
-      if (response === 'all_good') {
-        window.dispatchEvent(new CustomEvent('hotmess:aftercare', {
-          detail: { trigger: 'safety_checkin_end' }
-        }));
-      }
-    } catch (err) {
-      console.error('Failed to respond to check-in:', err);
-    }
-  };
-
-  return (
-    <SafetyCheckinModal
-      isOpen={showModal}
-      onClose={() => setShowModal(false)}
-      checkin={checkin}
-      onRespond={handleRespond}
-    />
-  );
+  // TODO: Enable when migrations are applied
+  return null;
 }
 
 // Aftercare Nudge wrapper - listens for safety check-in completion
@@ -621,10 +545,10 @@ function LayoutInner({ children, currentPageName }) {
               </div>
               {user ? (
                 <>
-                  {/* Persona Switcher */}
-                  <div className="mb-3">
+                  {/* Persona Switcher - Enable after migrations */}
+                  {/* <div className="mb-3">
                     <PersonaSwitcher compact />
-                  </div>
+                  </div> */}
                   <Link to={createPageUrl('Settings')} className="flex items-center gap-2 hover:opacity-80 transition-opacity mb-2">
                     <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
                       <span className="text-xs font-bold">{user.full_name?.[0] || 'U'}</span>
