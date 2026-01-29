@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { createPageUrl } from './utils';
 import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield } from 'lucide-react';
 import { base44 } from '@/components/utils/supabaseClient';
@@ -27,6 +28,8 @@ import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import CookieConsent from '@/components/legal/CookieConsent';
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
 import { ScrollProgress } from '@/components/navigation/ScrollProgress.tsx';
+import AftercareNudge from '@/components/safety/AftercareNudge';
+import { StreakBadge } from '@/components/gamification/StreakCounter';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
@@ -39,6 +42,50 @@ import { ScrollProgress } from '@/components/navigation/ScrollProgress.tsx';
       ];
 
       const SECONDARY_NAV = [];
+
+// Aftercare Nudge wrapper - listens for safety check-in completion
+function AftercareNudgeWrapper({ userName }) {
+  const [showNudge, setShowNudge] = useState(false);
+
+  useEffect(() => {
+    // Listen for aftercare trigger events (from safety check-ins)
+    const handleAftercareEvent = (e) => {
+      if (e.detail?.trigger === 'safety_checkin_end') {
+        // Delay slightly so it doesn't feel abrupt
+        setTimeout(() => setShowNudge(true), 2000);
+      }
+    };
+
+    window.addEventListener('hotmess:aftercare', handleAftercareEvent);
+    
+    // Also check localStorage for pending aftercare (e.g., if page was refreshed)
+    try {
+      const pending = localStorage.getItem('aftercare_pending');
+      if (pending) {
+        const { timestamp } = JSON.parse(pending);
+        // Show if within last 30 minutes
+        if (Date.now() - timestamp < 30 * 60 * 1000) {
+          setTimeout(() => setShowNudge(true), 3000);
+        }
+        localStorage.removeItem('aftercare_pending');
+      }
+    } catch (e) {
+      // Ignore storage errors
+    }
+
+    return () => {
+      window.removeEventListener('hotmess:aftercare', handleAftercareEvent);
+    };
+  }, []);
+
+  return (
+    <AftercareNudge
+      isOpen={showNudge}
+      onClose={() => setShowNudge(false)}
+      userName={userName}
+    />
+  );
+}
 
 function LayoutInner({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -348,9 +395,12 @@ function LayoutInner({ children, currentPageName }) {
           {/* Mobile Header */}
           <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10 pt-[env(safe-area-inset-top)]">
             <div className="flex items-center justify-between px-4 py-3">
-              <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
-                HOTMESS
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
+                  HOTMESS
+                </Link>
+                {user?.id && <StreakBadge userId={user.id} />}
+              </div>
               <div className="flex items-center gap-2">
                 <Link
                   to={createPageUrl('Care')}
@@ -533,7 +583,10 @@ function LayoutInner({ children, currentPageName }) {
                   {user && <NotificationCenter currentUser={user} />}
                 </div>
               </div>
-              <p className="text-[8px] text-white/40 uppercase tracking-wider mt-1">LONDON OS</p>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-[8px] text-white/40 uppercase tracking-wider">LONDON OS</p>
+                {user?.id && <StreakBadge userId={user.id} />}
+              </div>
             </div>
 
             <nav className="flex-1 px-2 py-4 overflow-y-auto">
@@ -647,7 +700,17 @@ function LayoutInner({ children, currentPageName }) {
         role="main"
       >
         <PageErrorBoundary>
-          {children}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </PageErrorBoundary>
       </main>
 
@@ -665,6 +728,9 @@ function LayoutInner({ children, currentPageName }) {
 
       {/* Right Now Match Notifications */}
       {user && <RightNowNotifications currentUser={user} />}
+
+      {/* Aftercare Nudge - Shows after safety check-ins */}
+      {user && <AftercareNudgeWrapper userName={user?.full_name?.split(' ')[0]} />}
 
       {/* Persistent Radio Player - Never Unmounts */}
       <PersistentRadioPlayer />

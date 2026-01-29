@@ -340,31 +340,73 @@ const ProfileCardComponent = ({
             <div className="pc-shine" />
             <div className="pc-glare" />
             <div className="pc-content pc-avatar-content">
-              <img
-                className="avatar"
-                src={avatarUrl}
-                alt={`${name || 'User'} avatar`}
-                loading="lazy"
-                onError={(e) => {
-                  const t = e.target;
-                  if (t) t.style.display = 'none';
-                }}
-              />
+              {avatarUrl ? (
+                <img
+                  className="avatar"
+                  src={avatarUrl}
+                  alt={`${name || 'User'} avatar`}
+                  loading="lazy"
+                  onError={(e) => {
+                    const t = e.target;
+                    if (t) t.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div 
+                  className="avatar"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(135deg, #FF1493 0%, #B026FF 50%, #00D9FF 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'absolute',
+                    bottom: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                  }}
+                >
+                  <span style={{ 
+                    fontSize: '4rem', 
+                    fontWeight: 900, 
+                    color: 'white',
+                    textShadow: '0 2px 10px rgba(0,0,0,0.3)'
+                  }}>
+                    {(name || 'HM').slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+              )}
               {showUserInfo && (
                 <div className="pc-user-info">
                   <div className="pc-user-details">
                     <div className="pc-mini-avatar">
-                      <img
-                        src={miniAvatarUrl || avatarUrl}
-                        alt={`${name || 'User'} mini avatar`}
-                        loading="lazy"
-                        onError={(e) => {
-                          const t = e.target;
-                          if (!t) return;
-                          t.style.opacity = '0.5';
-                          t.src = avatarUrl;
-                        }}
-                      />
+                      {(miniAvatarUrl || avatarUrl) ? (
+                        <img
+                          src={miniAvatarUrl || avatarUrl}
+                          alt={`${name || 'User'} mini avatar`}
+                          loading="lazy"
+                          onError={(e) => {
+                            const t = e.target;
+                            if (!t) return;
+                            t.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div style={{
+                          width: '100%',
+                          height: '100%',
+                          background: 'linear-gradient(135deg, #FF1493, #B026FF)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '50%',
+                        }}>
+                          <span style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>
+                            {(name || 'HM').slice(0, 2).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="pc-user-text">
                       <div className="pc-handle">@{handle}</div>

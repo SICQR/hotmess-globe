@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { broadcast } from '@/lib/globeActivity';
 
 const DURATIONS = [
   { value: 30, label: '30 min', icon: Clock },
@@ -88,6 +89,15 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
       queryClient.invalidateQueries(['right-now-status']);
       queryClient.invalidateQueries(['recent-activities-nearby']);
       queryClient.invalidateQueries(['user-activities-globe']);
+      
+      // Broadcast to globe activity stream
+      broadcast.rightNow(null, null, {
+        duration,
+        logistics,
+        coldVibe,
+        userName: currentUser?.full_name,
+      });
+      
       toast.success('You\'re live! Status auto-expires.');
       onClose();
     }

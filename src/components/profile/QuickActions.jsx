@@ -5,6 +5,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { notifyNewFollower } from '@/lib/notifications';
 
 export default function QuickActions({ profileUser, currentUser, isOwnProfile }) {
   const queryClient = useQueryClient();
@@ -39,6 +40,13 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
     onSuccess: () => {
       queryClient.invalidateQueries(['following']);
       toast.success(`Following ${profileUser.full_name}!`);
+      
+      // Send notification to the followed user (fire and forget)
+      notifyNewFollower(
+        currentUser.full_name || currentUser.email?.split('@')[0] || 'Someone',
+        currentUser.email,
+        profileUser.email
+      );
     }
   });
 
