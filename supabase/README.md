@@ -1,10 +1,37 @@
 # Supabase setup (hotmess-globe)
 
-## Required env
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+## Project Reference
 
-See `.env.example`.
+This project uses Supabase as its backend database and authentication provider.
+
+**Project Reference:** `rfoftonnlwudilafhfkl`
+**Project URL:** `https://rfoftonnlwudilafhfkl.supabase.co`
+
+### MCP (Model Context Protocol) Configuration
+
+For AI-assisted development with Cursor or other MCP-compatible tools, use this configuration:
+
+```json
+{
+  "mcpServers": {
+    "supabase": {
+      "url": "https://mcp.supabase.com/mcp?project_ref=rfoftonnlwudilafhfkl"
+    }
+  }
+}
+```
+
+This enables AI assistants to:
+- Query your database schema
+- Understand table relationships
+- Generate type-safe queries
+- Access migration history
+
+## Required env
+- `VITE_SUPABASE_URL` - Set to `https://rfoftonnlwudilafhfkl.supabase.co`
+- `VITE_SUPABASE_ANON_KEY` - Get from Supabase Dashboard → Project Settings → API
+
+See `.env.example` for full configuration.
 
 ## Running Migrations
 

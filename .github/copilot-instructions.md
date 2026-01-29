@@ -20,6 +20,9 @@
 - Server routes commonly require `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and (for routing/ETAs) `GOOGLE_MAPS_API_KEY`.
 
 ## Supabase + auth conventions
+
+**Project Reference:** `rfoftonnlwudilafhfkl`  
+**MCP URL:** `https://mcp.supabase.com/mcp?project_ref=rfoftonnlwudilafhfkl`
 - Client Supabase + the “Base44 compatibility wrapper” live in [src/components/utils/supabaseClient.jsx](../src/components/utils/supabaseClient.jsx).
   - Many components still import `base44` from there; prefer extending that wrapper rather than introducing a new SDK.
   - Many newer modules import `base44` from [src/api/base44Client.js](../src/api/base44Client.js) (it re-exports the same wrapper).
