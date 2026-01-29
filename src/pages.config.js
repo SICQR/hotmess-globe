@@ -27,6 +27,7 @@ import Directions from './pages/Directions';
 import EditBeacon from './pages/EditBeacon';
 import EditProfile from './pages/EditProfile';
 import Events from './pages/Events';
+import Features from './pages/Features';
 import Feed from './pages/Feed';
 import Globe from './pages/Globe';
 import HandNHand from './pages/HandNHand';
@@ -58,6 +59,7 @@ import RecordManager from './pages/RecordManager';
 import ReactBitsProfileCardDemo from './pages/ReactBitsProfileCardDemo';
 import RightNowDashboard from './pages/RightNowDashboard';
 import Safety from './pages/Safety';
+import SafetyFeatures from './pages/SafetyFeatures';
 import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
@@ -98,6 +100,7 @@ export const PAGES = {
     "EditBeacon": EditBeacon,
     "EditProfile": EditProfile,
     "Events": Events,
+    "Features": Features,
     "Feed": Feed,
     "Globe": Globe,
     "HandNHand": HandNHand,
@@ -130,6 +133,7 @@ export const PAGES = {
     "ReactBitsProfileCardDemo": ReactBitsProfileCardDemo,
     "RightNowDashboard": RightNowDashboard,
     "Safety": Safety,
+    "SafetyFeatures": SafetyFeatures,
     "Scan": Scan,
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,

@@ -394,6 +394,10 @@ const AuthenticatedApp = () => {
       <Route path="/checkout/start" element={<ShopCheckoutStartRoute />} />
       <Route path="/checkout" element={<PageRoute pageKey="Checkout" />} />
 
+      {/* Features / USP Pages */}
+      <Route path="/features" element={<PageRoute pageKey="Features" />} />
+      <Route path="/features/safety" element={<PageRoute pageKey="SafetyFeatures" />} />
+
       {/* Legal */}
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
       <Route path="/legal/terms" element={<LegalTermsRoute />} />
