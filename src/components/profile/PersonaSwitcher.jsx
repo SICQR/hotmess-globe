@@ -80,31 +80,61 @@ export default function PersonaSwitcher({
 
       setLoading(true);
 
-      // Get main profile and all secondary profiles
-      const { data, error } = await supabase
-        .from('User')
-        .select('id, display_name, avatar_url, persona_type, persona_visibility, parent_profile_id')
-        .or(`id.eq.${user.id},parent_profile_id.eq.${user.id}`)
-        .order('persona_type', { ascending: true });
+      try {
+        // Get main profile and all secondary profiles
+        const { data, error } = await supabase
+          .from('User')
+          .select('id, display_name, avatar_url, persona_type, persona_visibility, parent_profile_id')
+          .or(`id.eq.${user.id},parent_profile_id.eq.${user.id}`)
+          .order('persona_type', { ascending: true });
+        
+        // If columns don't exist yet, fall back to basic profile
+        if (error?.code === '42703') {
+          // Column doesn't exist - show basic profile only
+          const { data: basicData } = await supabase
+            .from('User')
+            .select('id, display_name, avatar_url')
+            .eq('id', user.id)
+            .single();
+          
+          if (basicData) {
+            setPersonas([{
+              ...basicData,
+              persona_type: 'MAIN',
+              persona_visibility: 'PUBLIC'
+            }]);
+            setActivePersona({
+              ...basicData,
+              persona_type: 'MAIN',
+              persona_visibility: 'PUBLIC'
+            });
+          }
+          setLoading(false);
+          return;
+        }
 
-      if (error) {
-        console.error('Failed to fetch personas:', error);
+        if (error) {
+          console.error('Failed to fetch personas:', error);
+          setLoading(false);
+          return;
+        }
+
+        // Separate main and secondary
+        const mainProfile = data?.find(p => !p.parent_profile_id) || data?.[0];
+        const secondaryProfiles = data?.filter(p => p.parent_profile_id) || [];
+
+        setPersonas([mainProfile, ...secondaryProfiles].filter(Boolean));
+        
+        // Set active - could be stored in user context or local storage
+        const activeId = localStorage.getItem('activePersonaId') || mainProfile?.id;
+        const active = data?.find(p => p.id === activeId) || mainProfile;
+        setActivePersona(active);
+
+      } catch (err) {
+        console.error('Error fetching personas:', err);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      // Separate main and secondary
-      const mainProfile = data?.find(p => !p.parent_profile_id) || data?.[0];
-      const secondaryProfiles = data?.filter(p => p.parent_profile_id) || [];
-
-      setPersonas([mainProfile, ...secondaryProfiles].filter(Boolean));
-      
-      // Set active - could be stored in user context or local storage
-      const activeId = localStorage.getItem('activePersonaId') || mainProfile?.id;
-      const active = data?.find(p => p.id === activeId) || mainProfile;
-      setActivePersona(active);
-
-      setLoading(false);
     }
 
     fetchPersonas();
