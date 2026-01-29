@@ -4,7 +4,7 @@ import { createPageUrl } from '../utils';
 import { 
   MapPin, TrendingUp, Target, Shield, Calendar, 
   Scan, Users, Trophy, Settings, FileText, HelpCircle,
-  Sparkles, Heart, Radio, ShoppingBag, Globe
+  Sparkles, Radio
 } from 'lucide-react';
 import PageShell from '@/components/shell/PageShell';
 

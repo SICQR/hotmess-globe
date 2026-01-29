@@ -9,15 +9,11 @@ import {
   Heart,
   Users,
   Clock,
-  Bell,
-  Eye,
   EyeOff,
   Lock,
   CheckCircle,
   ArrowRight,
-  MessageCircle,
-  Zap,
-  ChevronRight
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PageShell from '@/components/shell/PageShell';
