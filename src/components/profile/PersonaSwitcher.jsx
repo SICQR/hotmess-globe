@@ -83,7 +83,7 @@ export default function PersonaSwitcher({
       // Get main profile and all secondary profiles
       const { data, error } = await supabase
         .from('User')
-        .select('id, display_name, photo_url, persona_type, persona_visibility, parent_profile_id')
+        .select('id, display_name, avatar_url, persona_type, persona_visibility, parent_profile_id')
         .or(`id.eq.${user.id},parent_profile_id.eq.${user.id}`)
         .order('persona_type', { ascending: true });
 
