@@ -32,6 +32,11 @@ export default function RightNowNotifications({ currentUser }) {
   useEffect(() => {
     if (!currentUser || rightNowUsers.length === 0) return;
 
+    // Don't show notifications during onboarding
+    const hasCompletedTour = localStorage.getItem('hotmess_welcome_tour_completed');
+    const hasCookieConsent = localStorage.getItem('hotmess_cookie_consent');
+    if (!hasCompletedTour || !hasCookieConsent) return;
+
     // Find compatible matches who just went Right Now
     const myEssentialTags = userTags.filter(t => t.is_essential).map(t => t.tag_id);
     const myDealbreakers = userTags.filter(t => t.is_dealbreaker).map(t => t.tag_id);
