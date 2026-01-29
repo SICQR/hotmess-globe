@@ -8,7 +8,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+// Button imported for documentation purposes but not directly used
+// import { Button } from '@/components/ui/button';
 import { 
   Zap, ArrowRight, Users, Heart, ShoppingBag, CreditCard, 
   Store, MessageCircle, Plus, Calendar, MapPin, Shield, 

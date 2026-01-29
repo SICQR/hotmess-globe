@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Shield, UserPlus, Clock, MapPin, Phone, AlertTriangle, CheckCircle, MessageSquare, PhoneCall, Radio } from 'lucide-react';
+import { Shield, UserPlus, Clock, MapPin, Phone, AlertTriangle, CheckCircle, MessageSquare, PhoneCall } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import PageShell from '@/components/shell/PageShell';
 import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
 import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
-import FakeCallGenerator, { FakeCallButton } from '../components/safety/FakeCallGenerator';
-import LiveLocationShare, { LocationShareButton } from '../components/safety/LiveLocationShare';
+import FakeCallGenerator from '../components/safety/FakeCallGenerator';
+import LiveLocationShare from '../components/safety/LiveLocationShare';
 
 export default function Safety() {
   const [currentUser, setCurrentUser] = useState(null);

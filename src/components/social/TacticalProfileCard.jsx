@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+// createPageUrl no longer used after privacy URL refactor
 import { Zap, Flame, Users, Music } from 'lucide-react';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
 import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';

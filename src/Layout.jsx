@@ -27,7 +27,7 @@ import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import CookieConsent from '@/components/legal/CookieConsent';
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
 import { ScrollProgress } from '@/components/navigation/ScrollProgress.tsx';
-import AftercareNudge, { useAftercareNudge } from '@/components/safety/AftercareNudge';
+import AftercareNudge from '@/components/safety/AftercareNudge';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },

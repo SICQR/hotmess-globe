@@ -5,7 +5,7 @@ import { base44 } from '@/components/utils/supabaseClient';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { Users, Zap, Filter, Grid3x3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+// createPageUrl no longer used after privacy URL refactor
 import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 
 export default function NearbyGrid({ userLocation }) {

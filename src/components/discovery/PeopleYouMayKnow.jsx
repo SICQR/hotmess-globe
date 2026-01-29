@@ -3,9 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Users, Zap, MapPin, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+// createPageUrl no longer used after privacy URL refactor
 import { motion } from 'framer-motion';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
+import { getProfileUrl } from '@/lib/userPrivacy';
 
 export default function PeopleYouMayKnow({ currentUser, limit = 6 }) {
   const { data: allUsers = [] } = useQuery({

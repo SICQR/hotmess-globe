@@ -19,7 +19,6 @@ import {
   Loader2,
   Circle,
   Eye,
-  Image,
   Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

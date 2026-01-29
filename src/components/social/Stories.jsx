@@ -4,7 +4,7 @@
  * Ephemeral content (24-hour expiration) similar to Instagram/Snapchat stories
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -12,20 +12,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Camera,
-  Image,
   Trash2,
-  Eye,
-  Heart,
-  MessageCircle,
-  Send,
   Loader2,
-  Clock,
-  Sparkles
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/components/utils/supabaseClient';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { getDisplayName, getProfileUrl } from '@/lib/userPrivacy';

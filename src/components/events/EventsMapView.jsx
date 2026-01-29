@@ -2,8 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
+// createPageUrl no longer used after privacy URL refactor
+import { getProfileUrl } from '@/lib/userPrivacy';
 import { Calendar, MapPin, X, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';

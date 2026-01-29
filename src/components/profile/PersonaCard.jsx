@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { 
@@ -12,14 +12,11 @@ import {
   Calendar,
   Verified,
   Flame,
-  Heart,
-  MessageCircle,
   Navigation
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
-import { createPageUrl } from '../../utils';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
+import { getProfileUrl } from '@/lib/userPrivacy';
+// createPageUrl no longer used after privacy URL refactor
 
 /**
  * PersonaCard - Multi-layered profile skin display
