@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, Play, ArrowRight, Check } from 'lucide-react';
+import { Volume2, VolumeX, Play, ArrowRight, Check, MessageCircle } from 'lucide-react';
 import { auth, base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { createPageUrl } from '../../utils';
+import TelegramLogin from '@/components/auth/TelegramLogin';
 
 // Social provider icons
 const GoogleIcon = () => (
@@ -20,6 +21,12 @@ const GoogleIcon = () => (
 const AppleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
     <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+  </svg>
+);
+
+const TelegramIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
   </svg>
 );
 
@@ -45,6 +52,7 @@ export default function HotmessSplash({ onComplete }) {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showTelegram, setShowTelegram] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [showLegalNote, setShowLegalNote] = useState(false);
   const audioRef = useRef(null);
@@ -408,6 +416,46 @@ export default function HotmessSplash({ onComplete }) {
                   <AppleIcon />
                   <span className="ml-3">Continue with Apple</span>
                 </Button>
+
+                {/* Telegram Login */}
+                {!showTelegram ? (
+                  <Button
+                    type="button"
+                    onClick={() => setShowTelegram(true)}
+                    disabled={loading}
+                    className="w-full bg-[#0088cc] hover:bg-[#0077b5] text-white font-medium py-5"
+                  >
+                    <TelegramIcon />
+                    <span className="ml-3">Continue with Telegram</span>
+                  </Button>
+                ) : (
+                  <div className="p-4 bg-[#0088cc]/10 border border-[#0088cc]/30 rounded-lg">
+                    <p className="text-sm text-white/80 mb-3 text-center">
+                      Click the Telegram button to sign in
+                    </p>
+                    <TelegramLogin
+                      onSuccess={(result) => {
+                        if (result.linked || result.needsRegistration) {
+                          setStage('complete');
+                          setTimeout(() => {
+                            onComplete?.();
+                          }, 1500);
+                        }
+                      }}
+                      onError={(err) => {
+                        toast.error(err.message || 'Telegram login failed');
+                        setShowTelegram(false);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowTelegram(false)}
+                      className="w-full mt-3 text-center text-xs text-white/40 hover:text-white"
+                    >
+                      ← Back to options
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Divider */}
