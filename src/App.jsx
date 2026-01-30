@@ -21,16 +21,8 @@ import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
 import Privacy from '@/pages/legal/Privacy';
 import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
-// Signal System: Two Layers
-// Layer 1: WorldPulse (ambient, globe-driven)
-// Layer 2: NowSignals (contextual, clickable)
-import { 
-  GlobeProvider, 
-  WorldPulseProvider, 
-  NowSignalProvider, 
-  PersonaProvider, 
-  SafetyGateProvider 
-} from '@/contexts';
+import { I18nProvider } from '@/contexts/I18nContext';
+import { PageTransition } from '@/components/lux/PageTransition';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -58,14 +50,31 @@ const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
   'Settings',
   'EditProfile',
   'MembershipUpgrade',
+  'Pricing',
   'Safety',
   'Calendar',
   'Scan',
   'Community',
   'Leaderboard',
+  'AdminDashboard',
+  // Business pages
+  'PromoterDashboard',
+  'BusinessDashboard',
+  'BusinessAnalytics',
+  'BusinessOnboarding',
+  'BusinessSettings',
+  'BusinessVenue',
+  'BusinessBilling',
+  'CreateBeaconBiz',
+  'CreatorDashboard',
+  'SellerDashboard',
+  'SellerOnboarding',
+  'OrganizerDashboard',
+  'ReferralProgram',
   // Shop/market compat is handled separately.
   'Marketplace',
   'ProductDetail',
+  'OrderHistory',
 ]);
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -328,9 +337,10 @@ const AuthenticatedApp = () => {
     }
   }
 
-  // Render the main app
+  // Render the main app with LED Brutalist page transitions
   return (
-    <Routes>
+    <PageTransition>
+      <Routes>
       {/* V1.5 canonical routes (Bible) */}
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
@@ -400,6 +410,16 @@ const AuthenticatedApp = () => {
       <Route path="/checkout/start" element={<ShopCheckoutStartRoute />} />
       <Route path="/checkout" element={<PageRoute pageKey="Checkout" />} />
 
+      {/* Features / USP Pages */}
+      <Route path="/features" element={<PageRoute pageKey="Features" />} />
+      <Route path="/features/safety" element={<PageRoute pageKey="SafetyFeatures" />} />
+      <Route path="/features/events" element={<PageRoute pageKey="EventsFeatures" />} />
+      <Route path="/features/social" element={<PageRoute pageKey="SocialFeatures" />} />
+      <Route path="/features/music" element={<PageRoute pageKey="RadioFeatures" />} />
+      <Route path="/features/radio" element={<PageRoute pageKey="RadioFeatures" />} />
+      <Route path="/features/personas" element={<PageRoute pageKey="PersonaFeatures" />} />
+      <Route path="/features/profiles" element={<PageRoute pageKey="PersonaFeatures" />} />
+
       {/* Legal */}
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
       <Route path="/legal/terms" element={<LegalTermsRoute />} />
@@ -444,11 +464,6 @@ const AuthenticatedApp = () => {
       <Route path="/community/*" element={<PageRoute pageKey="Community" />} />
       <Route path="/leaderboard/*" element={<PageRoute pageKey="Leaderboard" />} />
 
-      {/* Tickets (resale + future official) */}
-      <Route path="/tickets" element={<PageRoute pageKey="Tickets" />} />
-      <Route path="/tickets/:id" element={<PageRoute pageKey="TicketDetail" />} />
-      <Route path="/tickets/chat/:threadId" element={<PageRoute pageKey="TicketChat" />} />
-
       {/* Notifications/account aliases */}
       <Route path="/notifications" element={<Navigate to={createPageUrl('Settings')} replace />} />
       <Route path="/notifications/*" element={<Navigate to={createPageUrl('Settings')} replace />} />
@@ -469,31 +484,21 @@ const AuthenticatedApp = () => {
       <Route path="/help" element={<PageRoute pageKey="HelpCenter" />} />
       <Route path="/support" element={<PageRoute pageKey="Contact" />} />
       
-      {/* Membership */}
+      {/* Membership & Pricing */}
       <Route path="/membership" element={<PageRoute pageKey="MembershipUpgrade" />} />
       <Route path="/upgrade" element={<PageRoute pageKey="MembershipUpgrade" />} />
+      <Route path="/pricing" element={<PageRoute pageKey="Pricing" />} />
+      <Route path="/fees" element={<PageRoute pageKey="Pricing" />} />
       
+      {/* Admin dashboard */}
+      <Route path="/admin" element={<PageRoute pageKey="AdminDashboard" />} />
+      <Route path="/admin/*" element={<PageRoute pageKey="AdminDashboard" />} />
+
       {/* Business dashboard */}
       <Route path="/biz" element={<PageRoute pageKey="BusinessDashboard" />} />
       <Route path="/biz/dashboard" element={<PageRoute pageKey="BusinessDashboard" />} />
       <Route path="/biz/analytics" element={<PageRoute pageKey="BusinessAnalytics" />} />
       <Route path="/biz/onboarding" element={<PageRoute pageKey="BusinessOnboarding" />} />
-
-      {/* Business Globe UI */}
-      <Route path="/business/globe" element={<PageRoute pageKey="BusinessGlobe" />} />
-      <Route path="/business/amplify" element={<PageRoute pageKey="BusinessAmplify" />} />
-      <Route path="/business/insights" element={<PageRoute pageKey="BusinessInsights" />} />
-
-      {/* Admin tools */}
-      <Route path="/admin/cadence" element={<PageRoute pageKey="CadencePanel" />} />
-      <Route path="/admin/cities" element={<PageRoute pageKey="CityReadiness" />} />
-
-      {/* Creator dashboard */}
-      <Route path="/creator" element={<PageRoute pageKey="CreatorDashboard" />} />
-      <Route path="/creator/dashboard" element={<PageRoute pageKey="CreatorDashboard" />} />
-
-      {/* Welcome onboarding */}
-      <Route path="/welcome" element={<PageRoute pageKey="Welcome" />} />
 
       {/* Legacy lowercase routes -> canonical V1.5 routes */}
       <Route path="/radio" element={<Navigate to={createPageUrl('Radio')} replace />} />
@@ -541,7 +546,8 @@ const AuthenticatedApp = () => {
         );
       })}
       <Route path="*" element={<PageNotFound />} />
-    </Routes>
+      </Routes>
+    </PageTransition>
   );
 };
 
@@ -549,29 +555,19 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        {/* Layer 1: World Pulse (ambient, globe-driven) */}
-        <WorldPulseProvider>
-          {/* Layer 2: Now Signals (contextual, clickable) */}
-          <NowSignalProvider>
-            <GlobeProvider>
-              <PersonaProvider>
-                <SafetyGateProvider>
-                  <ShopCartProvider>
-                    <Router>
-                      <NavigationTracker />
-                      <AuthenticatedApp />
-                    </Router>
-                  </ShopCartProvider>
-                </SafetyGateProvider>
-              </PersonaProvider>
-            </GlobeProvider>
-          </NowSignalProvider>
-        </WorldPulseProvider>
-        <Toaster />
-      </QueryClientProvider>
-    </AuthProvider>
+    <I18nProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <ShopCartProvider>
+            <Router>
+              <NavigationTracker />
+              <AuthenticatedApp />
+            </Router>
+          </ShopCartProvider>
+          <Toaster />
+        </QueryClientProvider>
+      </AuthProvider>
+    </I18nProvider>
   )
 }
 
