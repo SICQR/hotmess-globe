@@ -24,7 +24,12 @@ export default function Onboarding() {
         setCurrentUser(user);
         // Skip if already onboarded
         if (user.onboarding_completed) {
-          navigate(createPageUrl('Home'));
+          // Check if profile is complete
+          if (user.full_name && user.avatar_url) {
+            navigate(createPageUrl('Home'));
+          } else {
+            navigate(createPageUrl('Profile'));
+          }
         }
       } catch (error) {
         console.error('Failed to fetch user:', error);
@@ -69,7 +74,12 @@ export default function Onboarding() {
       onboarding_completed: true 
     });
 
-    navigate(createPageUrl('Home'));
+    // After preferences, redirect to Profile setup if not complete
+    if (!currentUser.full_name || !currentUser.avatar_url) {
+      navigate(createPageUrl('Profile'));
+    } else {
+      navigate(createPageUrl('Home'));
+    }
   };
 
   if (!currentUser) return null;
