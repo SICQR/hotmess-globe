@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -170,19 +169,14 @@ function CreatorsCartPanel({ currentUser, enabled }) {
       ) : (
         <>
           <div className="space-y-3 max-h-[50vh] overflow-y-auto">
-            <AnimatePresence mode="popLayout">
-            {cartWithProducts.map((item, idx) => {
+            {cartWithProducts.map((item) => {
               const product = item.product;
               const qty = Number(item.quantity) || 0;
 
               return (
-                <motion.div
+                <div
                   key={item.id ?? creatorsItemKey(item)}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20, height: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="border border-white/10 bg-white/5 p-3 hover:bg-white/10 transition-colors"
+                  className="border border-white/10 bg-white/5 p-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -247,10 +241,9 @@ function CreatorsCartPanel({ currentUser, enabled }) {
                       </Button>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               );
             })}
-            </AnimatePresence>
           </div>
 
           <div className="border border-white/10 bg-white/5 p-4 space-y-3">

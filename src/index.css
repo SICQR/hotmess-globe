@@ -4,100 +4,74 @@
 
 @layer base {
   :root {
-    /* HOTMESS Brand Colors */
-    --hot: #FF1493;
-    --hot-hsl: 328 100% 54%;
-    --blue: #0047AB;
-    --blue-hsl: 216 100% 34%;
-    --cyan: #00D9FF;
-    --cyan-hsl: 189 100% 50%;
-    --purple: #B026FF;
-    --purple-hsl: 276 100% 57%;
-    --lime: #39FF14;
-    --lime-hsl: 112 100% 54%;
-    --gold: #FFB800;
-    --gold-hsl: 43 100% 50%;
-    --red: #FF0000;
-    --red-hsl: 0 100% 50%;
-    
-    /* Alpha variations */
-    --white-5: rgba(255,255,255,0.05);
-    --white-10: rgba(255,255,255,0.1);
-    --white-20: rgba(255,255,255,0.2);
-    --white-40: rgba(255,255,255,0.4);
-    --white-60: rgba(255,255,255,0.6);
-    --white-80: rgba(255,255,255,0.8);
-    
-    /* Shadcn/UI Variables */
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 328 100% 54%; /* Hot Pink */
-    --primary-foreground: 0 0% 0%;
-    --secondary: 216 100% 34%; /* Royal Blue */
-    --secondary-foreground: 0 0% 98%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96.1%;
     --muted-foreground: 0 0% 45.1%;
-    --accent: 189 100% 50%; /* Cyan */
-    --accent-foreground: 0 0% 0%;
-    --destructive: 0 100% 50%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 328 100% 54%; /* Hot Pink ring */
-    --chart-1: 328 100% 54%; /* Hot */
-    --chart-2: 189 100% 50%; /* Cyan */
-    --chart-3: 276 100% 57%; /* Purple */
-    --chart-4: 112 100% 54%; /* Lime */
-    --chart-5: 216 100% 34%; /* Blue */
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
     --radius: 0.5rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 328 100% 54%;
-    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 328 100% 54%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    /* HOTMESS is dark-first - this is the primary theme */
-    --background: 0 0% 0%;
+    --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 5%;
+    --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 5%;
+    --popover: 0 0% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 328 100% 54%; /* Hot Pink */
-    --primary-foreground: 0 0% 0%;
-    --secondary: 216 100% 34%; /* Royal Blue */
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 189 100% 50%; /* Cyan */
-    --accent-foreground: 0 0% 0%;
-    --destructive: 0 100% 50%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 15%;
-    --input: 0 0% 10%;
-    --ring: 328 100% 54%; /* Hot Pink */
-    --chart-1: 328 100% 54%; /* Hot */
-    --chart-2: 189 100% 50%; /* Cyan */
-    --chart-3: 276 100% 57%; /* Purple */
-    --chart-4: 112 100% 54%; /* Lime */
-    --chart-5: 216 100% 34%; /* Blue */
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 328 100% 54%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 328 100% 54%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -116,364 +90,5 @@
     padding-right: env(safe-area-inset-right);
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
-  }
-}
-
-/* Cursor Glow Effects - Smart Dynamic UI System */
-@layer components {
-  /* Basic cursor glow */
-  .cursor-glow {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .cursor-glow::before {
-    content: '';
-    position: absolute;
-    width: 200px;
-    height: 200px;
-    background: radial-gradient(
-      circle,
-      rgba(255, 20, 147, 0.15) 0%,
-      transparent 70%
-    );
-    transform: translate(-50%, -50%);
-    left: var(--glow-x, 50%);
-    top: var(--glow-y, 50%);
-    pointer-events: none;
-    transition: opacity 0.3s;
-    opacity: var(--glow-opacity, 0);
-  }
-  
-  .cursor-glow:hover::before {
-    opacity: 1;
-  }
-  
-  /* Cyan variant */
-  .cursor-glow-cyan::before {
-    background: radial-gradient(
-      circle,
-      rgba(0, 217, 255, 0.15) 0%,
-      transparent 70%
-    );
-  }
-  
-  /* Gold variant */
-  .cursor-glow-gold::before {
-    background: radial-gradient(
-      circle,
-      rgba(255, 215, 0, 0.15) 0%,
-      transparent 70%
-    );
-  }
-  
-  /* Purple variant */
-  .cursor-glow-purple::before {
-    background: radial-gradient(
-      circle,
-      rgba(176, 38, 255, 0.15) 0%,
-      transparent 70%
-    );
-  }
-  
-  /* Blue variant - HOTMESS Royal Blue */
-  .cursor-glow-blue::before {
-    background: radial-gradient(
-      circle,
-      rgba(0, 71, 171, 0.2) 0%,
-      transparent 70%
-    );
-  }
-  
-  /* Border glow effect */
-  .border-glow {
-    position: relative;
-  }
-  
-  .border-glow::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 2px;
-    background: linear-gradient(
-      calc(var(--border-x, 50%) * 3.6deg),
-      transparent,
-      #FF1493,
-      transparent
-    );
-    -webkit-mask: 
-      linear-gradient(#fff 0 0) content-box, 
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  
-  .border-glow:hover::after {
-    opacity: 1;
-  }
-  
-  /* Holographic shine effect */
-  .holographic {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .holographic::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      105deg,
-      transparent 40%,
-      rgba(255, 255, 255, 0.1) 45%,
-      rgba(255, 255, 255, 0.2) 50%,
-      rgba(255, 255, 255, 0.1) 55%,
-      transparent 60%
-    );
-    transform: translateX(-100%);
-    transition: transform 0.6s ease;
-    pointer-events: none;
-  }
-  
-  .holographic:hover::after {
-    transform: translateX(100%);
-  }
-  
-  /* ===== HOTMESS BRAND UTILITIES ===== */
-  
-  /* Brand Colors as Tailwind-style utilities */
-  .text-hot { color: var(--hot); }
-  .text-blue { color: var(--blue); }
-  .text-cyan { color: var(--cyan); }
-  .text-purple { color: var(--purple); }
-  .text-lime { color: var(--lime); }
-  .text-gold { color: var(--gold); }
-  
-  .bg-hot { background-color: var(--hot); }
-  .bg-blue { background-color: var(--blue); }
-  .bg-cyan { background-color: var(--cyan); }
-  .bg-purple { background-color: var(--purple); }
-  .bg-lime { background-color: var(--lime); }
-  .bg-gold { background-color: var(--gold); }
-  
-  .border-hot { border-color: var(--hot); }
-  .border-blue { border-color: var(--blue); }
-  .border-cyan { border-color: var(--cyan); }
-  .border-purple { border-color: var(--purple); }
-  .border-lime { border-color: var(--lime); }
-  .border-gold { border-color: var(--gold); }
-  
-  /* Glow Effects */
-  .glow-hot { box-shadow: 0 0 30px rgba(255, 20, 147, 0.5); }
-  .glow-blue { box-shadow: 0 0 20px rgba(0, 71, 171, 0.4); }
-  .glow-cyan { box-shadow: 0 0 20px rgba(0, 217, 255, 0.4); }
-  .glow-purple { box-shadow: 0 0 20px rgba(176, 38, 255, 0.4); }
-  .glow-lime { box-shadow: 0 0 20px rgba(57, 255, 20, 0.4); }
-  .glow-gold { box-shadow: 0 0 20px rgba(255, 184, 0, 0.4); }
-  
-  /* Glass Effect */
-  .glass {
-    background: var(--white-5);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--white-10);
-  }
-  
-  .glass-strong {
-    background: var(--white-10);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--white-20);
-  }
-  
-  /* Brand Gradients */
-  .gradient-brand {
-    background: linear-gradient(135deg, #000 0%, #1a0a14 50%, #000 100%);
-  }
-  
-  .gradient-hot {
-    background: linear-gradient(135deg, var(--hot), var(--purple));
-  }
-  
-  .gradient-golden {
-    background: linear-gradient(135deg, #8B6914 0%, #D4A574 100%);
-  }
-  
-  .gradient-blue {
-    background: linear-gradient(135deg, var(--blue), #0066CC);
-  }
-  
-  /* Typography utilities */
-  .font-display {
-    font-weight: 900;
-    font-style: italic;
-    letter-spacing: -0.02em;
-  }
-  
-  .tracking-brand {
-    letter-spacing: 0.3em;
-  }
-  
-  /* Animation utilities */
-  @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 20px rgba(57, 255, 20, 0.4); }
-    50% { box-shadow: 0 0 40px rgba(57, 255, 20, 0.7); }
-  }
-  
-  .animate-pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite;
-  }
-  
-  @keyframes breathing {
-    0%, 100% { transform: scale(1); opacity: 0.3; }
-    50% { transform: scale(1.1); opacity: 0.5; }
-  }
-  
-  .animate-breathing {
-    animation: breathing 8s ease-in-out infinite;
-  }
-  
-  /* ===== MOBILE-FIRST RESPONSIVE UTILITIES ===== */
-  
-  /* Dynamic viewport height - accounts for mobile browser chrome */
-  .min-h-dynamic {
-    min-height: 100svh;
-  }
-  
-  .h-dynamic {
-    height: 100svh;
-  }
-  
-  /* Mobile-first text scaling */
-  .text-fluid-xs { font-size: clamp(0.65rem, 2vw, 0.75rem); }
-  .text-fluid-sm { font-size: clamp(0.75rem, 2.5vw, 0.875rem); }
-  .text-fluid-base { font-size: clamp(0.875rem, 3vw, 1rem); }
-  .text-fluid-lg { font-size: clamp(1rem, 3.5vw, 1.125rem); }
-  .text-fluid-xl { font-size: clamp(1.125rem, 4vw, 1.25rem); }
-  .text-fluid-2xl { font-size: clamp(1.25rem, 5vw, 1.5rem); }
-  .text-fluid-3xl { font-size: clamp(1.5rem, 6vw, 1.875rem); }
-  .text-fluid-4xl { font-size: clamp(1.875rem, 7vw, 2.25rem); }
-  .text-fluid-5xl { font-size: clamp(2.25rem, 8vw, 3rem); }
-  .text-fluid-6xl { font-size: clamp(2.5rem, 10vw, 3.75rem); }
-  .text-fluid-7xl { font-size: clamp(3rem, 12vw, 4.5rem); }
-  .text-fluid-hero { font-size: clamp(3.5rem, 15vw, 6rem); }
-  
-  /* Mobile-first spacing scale */
-  .p-mobile { padding: clamp(1rem, 4vw, 1.5rem); }
-  .px-mobile { padding-left: clamp(1rem, 4vw, 1.5rem); padding-right: clamp(1rem, 4vw, 1.5rem); }
-  .py-mobile { padding-top: clamp(1rem, 4vw, 1.5rem); padding-bottom: clamp(1rem, 4vw, 1.5rem); }
-  .gap-mobile { gap: clamp(0.75rem, 3vw, 1.5rem); }
-  
-  /* Touch-friendly minimum sizes */
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
-  .touch-target-lg {
-    min-height: 48px;
-    min-width: 48px;
-  }
-  
-  /* Mobile-first grid */
-  .grid-mobile-1 { 
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-  
-  .grid-mobile-2 { 
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  @media (min-width: 640px) {
-    .sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-    .sm\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-  }
-  
-  @media (min-width: 768px) {
-    .md\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-    .md\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-    .md\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
-  }
-  
-  /* Safe area utilities for notched devices */
-  .safe-top { padding-top: env(safe-area-inset-top); }
-  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
-  .safe-left { padding-left: env(safe-area-inset-left); }
-  .safe-right { padding-right: env(safe-area-inset-right); }
-  .safe-x { 
-    padding-left: env(safe-area-inset-left); 
-    padding-right: env(safe-area-inset-right); 
-  }
-  .safe-y { 
-    padding-top: env(safe-area-inset-top); 
-    padding-bottom: env(safe-area-inset-bottom); 
-  }
-  .safe-all {
-    padding-top: env(safe-area-inset-top);
-    padding-right: env(safe-area-inset-right);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-  }
-  
-  /* Bottom nav spacing (mobile) */
-  .pb-nav { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
-  
-  /* Mobile-first aspect ratios */
-  .aspect-card { aspect-ratio: 4/5; }
-  .aspect-hero { aspect-ratio: 16/10; }
-  .aspect-thumb { aspect-ratio: 1/1; }
-  
-  /* Snap scroll for mobile carousels */
-  .snap-mobile {
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  
-  .snap-mobile::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .snap-item {
-    scroll-snap-align: start;
-    flex-shrink: 0;
-  }
-  
-  /* Mobile swipe hints */
-  .swipe-hint {
-    position: relative;
-  }
-  
-  .swipe-hint::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 40px;
-    background: linear-gradient(to right, transparent, rgba(0,0,0,0.3));
-    pointer-events: none;
-  }
-  
-  /* Pull-to-refresh visual feedback */
-  .pull-indicator {
-    transform: translateY(var(--pull-distance, 0));
-    transition: transform 0.2s ease-out;
-  }
-  
-  /* Dynamic section spacing */
-  .section-mobile {
-    padding-top: clamp(2rem, 8vw, 4rem);
-    padding-bottom: clamp(2rem, 8vw, 4rem);
-  }
-  
-  .section-hero {
-    min-height: clamp(60vh, 80svh, 100svh);
   }
 }

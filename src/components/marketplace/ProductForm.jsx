@@ -1,415 +1,324 @@
-/**
- * Product Form Component
- * 
- * For sellers to create/edit products with content rating support.
- */
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Package, 
-  Image, 
-  DollarSign, 
-  Tag,
-  AlertTriangle,
-  Info,
-  Upload,
-  X,
-  Check,
-  Loader2
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/lib/AuthContext';
-import { supabase } from '@/components/utils/supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { X, Upload, Loader2, Sparkles } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
-// Content rating options
-const CONTENT_RATINGS = [
-  { 
-    id: 'sfw', 
-    label: 'Safe for Work', 
-    description: 'General audience content',
-    color: '#39FF14',
-    requiresVerification: false
-  },
-  { 
-    id: 'suggestive', 
-    label: 'Suggestive', 
-    description: 'Mild adult themes, no explicit content',
-    color: '#FFB800',
-    requiresVerification: false
-  },
-  { 
-    id: 'nsfw', 
-    label: 'NSFW', 
-    description: 'Adult content, requires age verification',
-    color: '#FF1493',
-    requiresVerification: true
-  },
-  { 
-    id: 'xxx', 
-    label: 'Explicit (XXX)', 
-    description: 'Explicit adult content, 2257 compliance required',
-    color: '#B026FF',
-    requiresVerification: true,
-    requires2257: true
-  }
+const PRODUCT_TYPES = [
+  { value: 'physical', label: 'Physical Goods' },
+  { value: 'digital', label: 'Digital Download' },
+  { value: 'service', label: 'Service' },
+  { value: 'ticket', label: 'Event Ticket' },
+  { value: 'badge', label: 'Achievement Badge' },
+  { value: 'merch', label: 'Merch' },
 ];
 
-// Product categories
-const CATEGORIES = [
-  'Apparel', 'Accessories', 'Art', 'Digital', 'Health & Wellness',
-  'Home & Living', 'Jewelry', 'Adult', 'Vintage', 'Other'
-];
+const CATEGORIES = ['Apparel', 'Accessories', 'Art', 'Music', 'Events', 'Experiences', 'Digital', 'Other'];
 
-export default function ProductForm({ 
-  productId, // For editing existing product
-  onSuccess,
-  className = '' 
-}) {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [has2257, setHas2257] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
+export default function ProductForm({ product, onSubmit, onCancel }) {
+  const [formData, setFormData] = useState(product || {
+    name: '',
     description: '',
-    price: '',
+    price_xp: 1000,
+    price_gbp: null,
+    product_type: 'physical',
     category: '',
-    images: [],
-    content_rating: 'sfw',
-    tags: []
+    tags: [],
+    image_urls: [],
+    status: 'draft',
+    inventory_count: 1,
+    min_xp_level: null,
+    details: {},
   });
+  
   const [tagInput, setTagInput] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [generatingTags, setGeneratingTags] = useState(false);
+  const [generatingMarketing, setGeneratingMarketing] = useState(false);
+  const [marketingCopy, setMarketingCopy] = useState('');
 
-  // Load existing product if editing
-  useEffect(() => {
-    async function loadProduct() {
-      if (!productId) return;
-      
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('Product')
-        .select('*')
-        .eq('id', productId)
-        .single();
-
-      if (!error && data) {
-        setFormData({
-          title: data.title || '',
-          description: data.description || '',
-          price: data.price_cents ? (data.price_cents / 100).toFixed(2) : '',
-          category: data.category || '',
-          images: data.images || [],
-          content_rating: data.content_rating || 'sfw',
-          tags: data.tags || []
-        });
-      }
-      setLoading(false);
-    }
-
-    loadProduct();
-  }, [productId]);
-
-  // Check 2257 compliance
-  useEffect(() => {
-    async function check2257() {
-      if (!user?.id) return;
-      
-      const { data } = await supabase
-        .from('compliance_2257')
-        .select('id')
-        .eq('seller_id', user.id)
-        .not('id_verified_at', 'is', null)
-        .single();
-
-      setHas2257(!!data);
-    }
-
-    check2257();
-  }, [user?.id]);
-
-  // Update form field
-  const updateField = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  // Add tag
-  const addTag = () => {
-    if (!tagInput.trim()) return;
-    if (formData.tags.includes(tagInput.trim())) return;
-    
-    updateField('tags', [...formData.tags, tagInput.trim()]);
-    setTagInput('');
-  };
-
-  // Remove tag
-  const removeTag = (tag) => {
-    updateField('tags', formData.tags.filter(t => t !== tag));
-  };
-
-  // Handle image upload (simplified - would use Supabase Storage)
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
-    // In production, upload to Supabase Storage and get URLs
-    const newImages = files.map(f => URL.createObjectURL(f));
-    updateField('images', [...formData.images, ...newImages].slice(0, 10));
+    if (files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const uploadPromises = files.map(file => base44.integrations.Core.UploadFile({ file }));
+      const results = await Promise.all(uploadPromises);
+      const urls = results.map(r => r.file_url);
+      
+      setFormData(prev => ({
+        ...prev,
+        image_urls: [...(prev.image_urls || []), ...urls]
+      }));
+      
+      toast.success(`${files.length} image(s) uploaded`);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast.error('Upload failed');
+    } finally {
+      setUploading(false);
+    }
   };
 
-  // Remove image
   const removeImage = (index) => {
-    updateField('images', formData.images.filter((_, i) => i !== index));
+    setFormData(prev => ({
+      ...prev,
+      image_urls: prev.image_urls.filter((_, i) => i !== index)
+    }));
   };
 
-  // Submit form
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    const selectedRating = CONTENT_RATINGS.find(r => r.id === formData.content_rating);
-    
-    // Check 2257 if required
-    if (selectedRating?.requires2257 && !has2257) {
-      alert('You need to complete 2257 compliance verification for explicit content.');
-      navigate('/seller/compliance');
+  const addTag = () => {
+    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, tagInput.trim()]
+      }));
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tag) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(t => t !== tag)
+    }));
+  };
+
+  const generateDescription = async () => {
+    if (!formData.name) {
+      toast.error('Please enter a product name first');
       return;
     }
 
-    setSaving(true);
-
+    setGeneratingDescription(true);
     try {
-      const productData = {
-        seller_id: user.id,
-        title: formData.title,
-        description: formData.description,
-        price_cents: Math.round(parseFloat(formData.price) * 100),
-        category: formData.category,
-        images: formData.images,
-        content_rating: formData.content_rating,
-        age_verified_only: selectedRating?.requiresVerification || false,
-        requires_2257: selectedRating?.requires2257 || false,
-        tags: formData.tags,
-        status: 'active'
-      };
+      const prompt = `Generate a compelling, detailed product description for a ${formData.product_type} product called "${formData.name}"${formData.category ? ` in the ${formData.category} category` : ''}. Make it engaging, highlight key features and benefits, and use a tone that appeals to the HOTMESS LONDON audience (nightlife, creative, urban culture). Keep it 2-3 sentences.`;
+      
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        add_context_from_internet: false,
+      });
 
-      if (productId) {
-        await supabase
-          .from('Product')
-          .update(productData)
-          .eq('id', productId);
-      } else {
-        await supabase
-          .from('Product')
-          .insert(productData);
-      }
-
-      onSuccess?.();
-      navigate('/shop/my-products');
-
+      setFormData(prev => ({ ...prev, description: response }));
+      toast.success('Description generated!');
     } catch (error) {
-      console.error('Save product error:', error);
-      alert('Failed to save product. Please try again.');
+      console.error('Failed to generate description:', error);
+      toast.error('Failed to generate description');
     } finally {
-      setSaving(false);
+      setGeneratingDescription(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FF1493]" />
-      </div>
-    );
-  }
+  const generateTags = async () => {
+    if (!formData.name || !formData.description) {
+      toast.error('Please enter product name and description first');
+      return;
+    }
 
-  const selectedRating = CONTENT_RATINGS.find(r => r.id === formData.content_rating);
+    setGeneratingTags(true);
+    try {
+      const prompt = `Based on this product: "${formData.name}" - ${formData.description}. Suggest 5-8 relevant, searchable tags that would help users find this product. Return ONLY the tags as a comma-separated list, no explanations.`;
+      
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        add_context_from_internet: false,
+      });
+
+      const tags = response.split(',').map(tag => tag.trim()).filter(tag => tag && !formData.tags.includes(tag));
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, ...tags]
+      }));
+      toast.success(`${tags.length} tags suggested!`);
+    } catch (error) {
+      console.error('Failed to generate tags:', error);
+      toast.error('Failed to generate tags');
+    } finally {
+      setGeneratingTags(false);
+    }
+  };
+
+  const generateMarketingCopy = async () => {
+    if (!formData.name || !formData.description) {
+      toast.error('Please enter product name and description first');
+      return;
+    }
+
+    setGeneratingMarketing(true);
+    try {
+      const prompt = `Create compelling marketing copy for a featured product listing: "${formData.name}" - ${formData.description}. Price: ${formData.price_xp} XP. Write a short, punchy promotional message (1-2 sentences) that creates urgency and excitement. Use emojis and caps lock strategically for emphasis. Think Instagram/social media style.`;
+      
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        add_context_from_internet: false,
+      });
+
+      setMarketingCopy(response);
+      toast.success('Marketing copy generated!');
+    } catch (error) {
+      console.error('Failed to generate marketing copy:', error);
+      toast.error('Failed to generate marketing copy');
+    } finally {
+      setGeneratingMarketing(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
 
   return (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${className}`}>
-      {/* Title */}
-      <div>
-        <label className="block text-sm text-white/60 mb-2">Product Title *</label>
-        <Input
-          value={formData.title}
-          onChange={(e) => updateField('title', e.target.value)}
-          placeholder="What are you selling?"
-          required
-          className="bg-white/5 border-white/20"
-        />
-      </div>
-
-      {/* Description */}
-      <div>
-        <label className="block text-sm text-white/60 mb-2">Description *</label>
-        <Textarea
-          value={formData.description}
-          onChange={(e) => updateField('description', e.target.value)}
-          placeholder="Describe your product..."
-          rows={4}
-          required
-          className="bg-white/5 border-white/20"
-        />
-      </div>
-
-      {/* Price & Category */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm text-white/60 mb-2">Price (£) *</label>
+    <motion.form
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      onSubmit={handleSubmit}
+      className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-6"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label>Product Name</Label>
           <Input
-            type="number"
-            step="0.01"
-            min="0.50"
-            value={formData.price}
-            onChange={(e) => updateField('price', e.target.value)}
-            placeholder="0.00"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="Enter product name"
             required
-            className="bg-white/5 border-white/20"
           />
         </div>
-        <div>
-          <label className="block text-sm text-white/60 mb-2">Category *</label>
-          <select
-            value={formData.category}
-            onChange={(e) => updateField('category', e.target.value)}
-            required
-            className="w-full h-10 px-3 bg-white/5 border border-white/20 text-white"
+
+        <div className="space-y-2">
+          <Label>Product Type</Label>
+          <Select value={formData.product_type} onValueChange={(value) => setFormData({ ...formData, product_type: value })}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PRODUCT_TYPES.map(type => (
+                <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Description</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={generateDescription}
+            disabled={generatingDescription || !formData.name}
+            className="text-[#FF1493] hover:text-[#FF1493]/90"
           >
-            <option value="">Select category</option>
-            {CATEGORIES.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Images */}
-      <div>
-        <label className="block text-sm text-white/60 mb-2">Images (up to 10)</label>
-        <div className="grid grid-cols-5 gap-2">
-          {formData.images.map((img, i) => (
-            <div key={i} className="relative aspect-square bg-white/5 border border-white/10">
-              <img src={img} alt="" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => removeImage(i)}
-                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 flex items-center justify-center"
-              >
-                <X className="w-3 h-3 text-white" />
-              </button>
-            </div>
-          ))}
-          {formData.images.length < 10 && (
-            <label className="aspect-square bg-white/5 border border-dashed border-white/20 flex flex-col items-center justify-center cursor-pointer hover:border-[#FF1493] transition-colors">
-              <Upload className="w-5 h-5 text-white/40" />
-              <span className="text-[10px] text-white/40 mt-1">Add</span>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </label>
-          )}
-        </div>
-      </div>
-
-      {/* Content Rating */}
-      <div>
-        <label className="block text-sm text-white/60 mb-2">Content Rating *</label>
-        <div className="grid grid-cols-2 gap-2">
-          {CONTENT_RATINGS.map((rating) => (
-            <button
-              key={rating.id}
-              type="button"
-              onClick={() => updateField('content_rating', rating.id)}
-              className={`
-                p-3 border-2 text-left transition-all
-                ${formData.content_rating === rating.id 
-                  ? 'bg-white/10' 
-                  : 'border-white/10 hover:border-white/30'
-                }
-              `}
-              style={{
-                borderColor: formData.content_rating === rating.id ? rating.color : undefined
-              }}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <div 
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: rating.color }}
-                />
-                <span className="font-bold text-sm text-white">{rating.label}</span>
-              </div>
-              <p className="text-xs text-white/50">{rating.description}</p>
-            </button>
-          ))}
-        </div>
-
-        {/* Rating warnings */}
-        {selectedRating?.requiresVerification && (
-          <div className="mt-3 p-3 bg-[#FFB800]/10 border border-[#FFB800]/30 flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-[#FFB800] flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-white/80">
-              <p>This content requires buyers to verify their age (18+).</p>
-            </div>
-          </div>
-        )}
-
-        {selectedRating?.requires2257 && (
-          <div className={`mt-3 p-3 flex items-start gap-2 ${has2257 ? 'bg-[#39FF14]/10 border-[#39FF14]/30' : 'bg-red-500/10 border-red-500/30'} border`}>
-            {has2257 ? (
-              <>
-                <Check className="w-4 h-4 text-[#39FF14] flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-white/80">2257 compliance verified ✓</p>
-              </>
+            {generatingDescription ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (
-              <>
-                <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="text-red-400 font-bold">2257 compliance required</p>
-                  <p className="text-white/60">You must verify your identity before selling explicit content.</p>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/seller/compliance')}
-                    className="text-[#FF1493] underline mt-1"
-                  >
-                    Complete verification →
-                  </button>
-                </div>
-              </>
+              <Sparkles className="w-4 h-4 mr-2" />
             )}
-          </div>
-        )}
+            AI Generate
+          </Button>
+        </div>
+        <Textarea
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Describe your product..."
+          rows={4}
+        />
       </div>
 
-      {/* Tags */}
-      <div>
-        <label className="block text-sm text-white/60 mb-2">Tags</label>
-        <div className="flex gap-2 mb-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-2">
+          <Label>Price (XP)</Label>
+          <Input
+            type="number"
+            value={Number.isFinite(formData.price_xp) ? formData.price_xp : ''}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setFormData({
+                ...formData,
+                price_xp: raw === '' ? '' : parseInt(raw, 10),
+              });
+            }}
+            min="0"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Category</Label>
+          <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Stock</Label>
+          <Input
+            type="number"
+            value={Number.isFinite(formData.inventory_count) ? formData.inventory_count : ''}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setFormData({
+                ...formData,
+                inventory_count: raw === '' ? '' : parseInt(raw, 10),
+              });
+            }}
+            min="0"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Tags</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={generateTags}
+            disabled={generatingTags || !formData.name || !formData.description}
+            className="text-[#00D9FF] hover:text-[#00D9FF]/90"
+          >
+            {generatingTags ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4 mr-2" />
+            )}
+            AI Suggest
+          </Button>
+        </div>
+        <div className="flex gap-2">
           <Input
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-            placeholder="Add a tag"
-            className="bg-white/5 border-white/20"
+            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+            placeholder="Add tags..."
           />
-          <Button type="button" onClick={addTag} variant="outline">
-            Add
-          </Button>
+          <Button type="button" onClick={addTag}>Add</Button>
         </div>
         {formData.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {formData.tags.map((tag) => (
-              <span 
-                key={tag}
-                className="px-2 py-1 bg-white/10 text-sm text-white/80 flex items-center gap-1"
-              >
+          <div className="flex flex-wrap gap-2 mt-2">
+            {formData.tags.map(tag => (
+              <span key={tag} className="px-3 py-1 bg-[#FF1493]/20 border border-[#FF1493] rounded-lg text-sm flex items-center gap-2">
                 {tag}
-                <button type="button" onClick={() => removeTag(tag)}>
-                  <X className="w-3 h-3 text-white/40 hover:text-white" />
+                <button type="button" onClick={() => removeTag(tag)} className="hover:text-[#FF1493]">
+                  <X className="w-3 h-3" />
                 </button>
               </span>
             ))}
@@ -417,20 +326,89 @@ export default function ProductForm({
         )}
       </div>
 
-      {/* Submit */}
-      <Button
-        type="submit"
-        disabled={saving || (selectedRating?.requires2257 && !has2257)}
-        className="w-full bg-[#FF1493] hover:bg-[#FF1493]/80 h-12 font-bold"
-      >
-        {saving ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
-        ) : productId ? (
-          'Update Product'
-        ) : (
-          'List Product'
+      <div className="space-y-2">
+        <Label>Images</Label>
+        <div className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center">
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageUpload}
+            className="hidden"
+            id="image-upload"
+            disabled={uploading}
+          />
+          <label htmlFor="image-upload" className="cursor-pointer">
+            {uploading ? (
+              <Loader2 className="w-12 h-12 text-white/40 mx-auto mb-2 animate-spin" />
+            ) : (
+              <Upload className="w-12 h-12 text-white/40 mx-auto mb-2" />
+            )}
+            <p className="text-white/60">Click to upload images</p>
+          </label>
+        </div>
+        
+        {formData.image_urls.length > 0 && (
+          <div className="grid grid-cols-4 gap-4 mt-4">
+            {formData.image_urls.map((url, index) => (
+              <div key={index} className="relative group">
+                <img src={url} alt="" className="w-full h-24 object-cover rounded-lg" />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute top-1 right-1 bg-black/80 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
         )}
-      </Button>
-    </form>
+      </div>
+
+      {marketingCopy && (
+        <div className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/40 rounded-xl p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-5 h-5 text-[#FF1493]" />
+            <h3 className="font-bold">AI Marketing Copy</h3>
+          </div>
+          <p className="text-white/90 mb-3">{marketingCopy}</p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => navigator.clipboard.writeText(marketingCopy)}
+            className="text-xs"
+          >
+            Copy to Clipboard
+          </Button>
+        </div>
+      )}
+
+      <div className="flex justify-between items-center">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={generateMarketingCopy}
+          disabled={generatingMarketing || !formData.name || !formData.description}
+          className="border-[#B026FF] text-[#B026FF] hover:bg-[#B026FF]/10"
+        >
+          {generatingMarketing ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Sparkles className="w-4 h-4 mr-2" />
+          )}
+          Generate Marketing Copy
+        </Button>
+        <div className="flex gap-3">
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" className="bg-[#FF1493] hover:bg-[#FF1493]/90">
+            {product ? 'Update Product' : 'Create Product'}
+          </Button>
+        </div>
+      </div>
+    </motion.form>
   );
 }

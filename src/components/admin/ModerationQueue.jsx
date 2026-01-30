@@ -7,7 +7,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { getProfileUrl } from '@/lib/userPrivacy';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -196,7 +195,7 @@ export default function ModerationQueue() {
                 <div className="flex gap-2 pt-4 border-t border-white/10">
                   {report.reported_item_type === 'user' && (
                     <>
-                      <Link to={getProfileUrl(user)}>
+                      <Link to={createPageUrl(`Profile?email=${report.reported_item_id}`)}>
                         <Button variant="outline" size="sm" className="border-white/20">
                           <Eye className="w-3 h-3 mr-1" />
                           View Profile

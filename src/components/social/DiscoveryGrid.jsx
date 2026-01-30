@@ -9,7 +9,6 @@ import FiltersDrawer from '@/components/discovery/FiltersDrawer';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import useLiveViewerLocation, { bucketLatLng } from '@/hooks/useLiveViewerLocation';
 import useRealtimeNearbyInvalidation from '@/hooks/useRealtimeNearbyInvalidation';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 
 const formatDistanceMeters = (distanceMeters) => {
   if (!Number.isFinite(distanceMeters) || distanceMeters <= 0) return null;
@@ -229,6 +228,12 @@ export default function DiscoveryGrid({ currentUser }) {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {enrichedUsers.map((user) => (
             (() => {
+              const uid = user?.auth_user_id || user?.authUserId;
+              const email = user?.email;
+              const to = uid
+                ? `/social/u/${encodeURIComponent(uid)}`
+                : createPageUrl(`Profile?email=${encodeURIComponent(email || '')}`);
+
               const distanceLabel = formatDistanceMeters(user?.distanceMeters);
               const etaLabel = formatEta(user?.etaSeconds);
               const etaMode = user?.etaMode ? String(user.etaMode).toLowerCase() : null;
@@ -236,27 +241,27 @@ export default function DiscoveryGrid({ currentUser }) {
               return (
             <Link 
               key={user.id}
-              to={getProfileUrl(user)}
+              to={to}
               className="group"
             >
               <div className="bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-[#FF1493] transition-all aspect-[3/4] relative overflow-hidden">
                 {user.avatar_url ? (
                   <img 
                     src={user.avatar_url} 
-                    alt={getDisplayName(user)}
+                    alt={user.full_name}
                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center">
                     <span className="text-4xl font-black">
-                      {getDisplayName(user)?.[0]?.toUpperCase() || '?'}
+                      {user.full_name?.[0] || user.email[0].toUpperCase()}
                     </span>
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform">
                   <p className="font-black uppercase text-sm mb-1 truncate">
-                    {getDisplayName(user)}
+                    {user.full_name || 'Anonymous'}
                   </p>
                   {user.city && (
                     <div className="flex items-center gap-1 text-xs text-white/80">

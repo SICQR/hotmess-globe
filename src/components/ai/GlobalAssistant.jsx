@@ -1,23 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Bot, Loader2, Sparkles, AlertTriangle, ExternalLink } from 'lucide-react';
+import { X, Send, Bot, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/lib/AuthContext';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { base44 } from '@/components/utils/supabaseClient';
 import ReactMarkdown from 'react-markdown';
-
-// Context-aware quick questions based on current page
-const CONTEXT_QUESTIONS = {
-  '/events': ['What events are tonight?', 'Find techno parties', 'Pride events this month', 'Events near me'],
-  '/market': ['Products under £50', 'New drops this week', 'HNH MESS products', 'Best sellers'],
-  '/music': ["What's playing now?", 'SMASH DADDYS releases', 'Radio schedule', 'Upcoming live shows'],
-  '/social': ["Who's nearby?", 'Best matches for me', 'How does Right Now work?', 'Message tips'],
-  '/safety': ['Crisis support', 'PrEP clinics near me', 'I need to talk to someone', 'Safety resources'],
-  '/pulse': ['Show me the map', 'Events near me', 'Care resources', 'What are beacons?'],
-  '/profile': ['Optimize my profile', 'Explain XP system', 'How to get more matches', 'Privacy settings'],
-  default: ['What can you help with?', 'Explain XP system', 'Tonight in London', 'How do I use this app?']
-};
 
 export default function GlobalAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,106 +12,71 @@ export default function GlobalAssistant() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
-  
-  const { session } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
 
-  // Get context-aware quick questions
-  const currentPath = location.pathname;
-  const quickQuestions = CONTEXT_QUESTIONS[currentPath] || CONTEXT_QUESTIONS.default;
+  // Initialize conversation on first open
+  useEffect(() => {
+    if (isOpen && !conversationId) {
+      initializeConversation();
+    }
+  }, [isOpen]);
+
+  // Subscribe to conversation updates
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const unsubscribe = base44.agents.subscribeToConversation(conversationId, (data) => {
+      setMessages(data.messages || []);
+    });
+
+    return () => unsubscribe();
+  }, [conversationId]);
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Send message to AI
-  const sendMessage = async (messageText) => {
-    if (!messageText.trim() || sending) return;
-
-    const userMessage = messageText.trim();
-    setInput('');
-    setSending(true);
-    setError(null);
-
-    // Add user message to UI immediately
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-
+  const initializeConversation = async () => {
     try {
-      const response = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(session?.access_token && { 'Authorization': `Bearer ${session.access_token}` })
-        },
-        body: JSON.stringify({
-          message: userMessage,
-          conversationId,
-          context: {
-            page: currentPath,
-            intent: detectIntent(userMessage)
-          }
-        })
+      const conversation = await base44.agents.createConversation({
+        agent_name: 'event_assistant',
+        metadata: {
+          name: 'HOTMESS Assistant'
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get response');
-      }
+      setConversationId(conversation.id);
 
-      const data = await response.json();
+      // Send welcome message
+      await base44.agents.addMessage(conversation, {
+        role: 'user',
+        content: "Hello! I'm exploring events on HOTMESS."
+      });
+    } catch (error) {
+      console.error('Failed to initialize conversation:', error);
+    }
+  };
 
-      // Update conversation ID if new
-      if (data.conversationId && !conversationId) {
-        setConversationId(data.conversationId);
-      }
+  const handleSend = async () => {
+    if (!input.trim() || !conversationId || sending) return;
 
-      // Add assistant response
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: data.response,
-        crisis: data.crisis,
-        action: data.action,
-        toolResults: data.toolResults
-      }]);
+    const userMessage = input.trim();
+    setInput('');
+    setSending(true);
 
-      // Handle actions (navigation, modals, etc.)
-      if (data.action) {
-        handleAction(data.action);
-      }
-
-    } catch (err) {
-      console.error('AI Chat error:', err);
-      setError('Something went wrong. Please try again.');
-      // Remove the user message if we got an error
-      setMessages(prev => prev.slice(0, -1));
+    try {
+      const conversation = await base44.agents.getConversation(conversationId);
+      await base44.agents.addMessage(conversation, {
+        role: 'user',
+        content: userMessage
+      });
+    } catch (error) {
+      console.error('Failed to send message:', error);
     } finally {
       setSending(false);
     }
   };
-
-  // Handle AI-triggered actions
-  const handleAction = (action) => {
-    if (action.type === 'navigate' && action.url) {
-      navigate(action.url);
-    }
-    // Add more action handlers as needed
-  };
-
-  // Detect intent from message for context
-  const detectIntent = (message) => {
-    const lowerMessage = message.toLowerCase();
-    if (/event|party|tonight|weekend/.test(lowerMessage)) return 'events';
-    if (/product|buy|shop|market/.test(lowerMessage)) return 'shopping';
-    if (/music|radio|play/.test(lowerMessage)) return 'music';
-    if (/match|profile|connect/.test(lowerMessage)) return 'social';
-    if (/help|crisis|support|safe/.test(lowerMessage)) return 'safety';
-    return 'general';
-  };
-
-  const handleSend = () => sendMessage(input);
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -133,14 +85,20 @@ export default function GlobalAssistant() {
     }
   };
 
-  const handleQuickQuestion = (question) => {
-    setInput(question);
-    sendMessage(question);
-  };
+  const quickQuestions = [
+    "What events are happening tonight?",
+    "Show me products under 1000 XP",
+    "Help me find people into techno",
+    "Explain the XP system",
+    "How do I use Right Now?",
+    "What's my next challenge?",
+    "Show me top-rated sellers",
+    "How do safety check-ins work?"
+  ];
 
   return (
     <>
-      {/* Floating Button - hidden on mobile to avoid nav overlap */}
+      {/* Floating Button */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -148,9 +106,10 @@ export default function GlobalAssistant() {
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
             onClick={() => setIsOpen(true)}
-            className="hidden md:flex fixed bottom-4 right-4 z-50 w-12 h-12 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full items-center justify-center border-2 border-white shadow-lg hover:shadow-xl transition-all"
+            className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_20px_rgba(255,20,147,0.5)] hover:shadow-[0_0_30px_rgba(255,20,147,0.8)] transition-all"
           >
-            <Bot className="w-5 h-5 text-white" />
+            <Bot className="w-6 h-6 text-white" />
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#39FF14] rounded-full border-2 border-black animate-pulse" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -163,7 +122,7 @@ export default function GlobalAssistant() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed bottom-20 right-4 w-full md:w-[420px] h-[550px] bg-black border-2 border-[#FF1493] z-50 flex flex-col shadow-[0_0_40px_rgba(255,20,147,0.3)]"
+            className="fixed bottom-6 right-6 w-full md:w-[420px] h-[600px] bg-black border-2 border-[#FF1493] z-50 flex flex-col shadow-[0_0_40px_rgba(255,20,147,0.3)]"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-[#FF1493] to-[#B026FF] border-b-2 border-white p-4">
@@ -200,14 +159,14 @@ export default function GlobalAssistant() {
                     Hey! I'm your HOTMESS AI assistant
                   </p>
                   <p className="text-xs text-white/60 mb-6">
-                    I know about London's gay scene, venues, events, terminology, and everything HOTMESS
+                    Ask me about events, marketplace, connections, safety, XP, challenges, or any app feature
                   </p>
                   <div className="space-y-2">
                     <p className="text-xs text-white/40 uppercase tracking-wider mb-3">Try asking:</p>
                     {quickQuestions.map((q, idx) => (
                       <button
                         key={idx}
-                        onClick={() => handleQuickQuestion(q)}
+                        onClick={() => setInput(q)}
                         className="block w-full text-left px-3 py-2 bg-white/5 border border-white/10 hover:border-[#FF1493] text-xs text-white/80 transition-all"
                       >
                         {q}
@@ -222,14 +181,8 @@ export default function GlobalAssistant() {
                     className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     {msg.role === 'assistant' && (
-                      <div className={`w-8 h-8 flex items-center justify-center flex-shrink-0 border-2 border-white ${
-                        msg.crisis ? 'bg-red-500' : 'bg-gradient-to-br from-[#FF1493] to-[#B026FF]'
-                      }`}>
-                        {msg.crisis ? (
-                          <AlertTriangle className="w-4 h-4 text-white" />
-                        ) : (
-                          <Bot className="w-4 h-4 text-white" />
-                        )}
+                      <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
+                        <Bot className="w-4 h-4" />
                       </div>
                     )}
                     <div className={`max-w-[80%] ${msg.role === 'user' ? 'order-first' : ''}`}>
@@ -237,8 +190,6 @@ export default function GlobalAssistant() {
                         className={`px-4 py-2.5 text-sm ${
                           msg.role === 'user'
                             ? 'bg-[#FF1493] text-white border-2 border-white'
-                            : msg.crisis
-                            ? 'bg-red-500/20 border-2 border-red-500 text-white'
                             : 'bg-white/5 border border-white/10 text-white'
                         }`}
                       >
@@ -254,15 +205,9 @@ export default function GlobalAssistant() {
                               code: ({ children }) => (
                                 <code className="bg-white/10 px-1 py-0.5 text-xs">{children}</code>
                               ),
-                              a: ({ href, children }) => (
-                                <a 
-                                  href={href} 
-                                  className="text-[#00D9FF] underline inline-flex items-center gap-1" 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                >
+                              a: ({ children, ...props }) => (
+                                <a {...props} className="text-[#00D9FF] underline" target="_blank" rel="noopener noreferrer">
                                   {children}
-                                  <ExternalLink className="w-3 h-3" />
                                 </a>
                               ),
                             }}
@@ -273,66 +218,20 @@ export default function GlobalAssistant() {
                           <p>{msg.content}</p>
                         )}
                       </div>
-                      
-                      {/* Tool results indicator */}
-                      {msg.toolResults && msg.toolResults.length > 0 && (
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {msg.toolResults.map((tr, i) => (
-                            <span 
-                              key={i} 
-                              className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded"
-                            >
-                              {tr.tool.replace(/([A-Z])/g, ' $1').trim()}
-                            </span>
+                      {msg.tool_calls && msg.tool_calls.length > 0 && (
+                        <div className="mt-1 space-y-1">
+                          {msg.tool_calls.map((call, i) => (
+                            <div key={i} className="text-[10px] text-white/40 flex items-center gap-1">
+                              <Loader2 className={`w-3 h-3 ${call.status === 'running' ? 'animate-spin' : ''}`} />
+                              <span>{call.name?.split('.').pop()}</span>
+                            </div>
                           ))}
                         </div>
-                      )}
-
-                      {/* Action button if navigable */}
-                      {msg.action?.type === 'navigate' && (
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            navigate(msg.action.url);
-                            setIsOpen(false);
-                          }}
-                          className="mt-2 bg-[#00D9FF] hover:bg-[#00D9FF]/80 text-black text-xs"
-                        >
-                          Go there →
-                        </Button>
                       )}
                     </div>
                   </div>
                 ))
               )}
-              
-              {/* Typing indicator */}
-              {sending && (
-                <div className="flex gap-3 justify-start">
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
-                    <Bot className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="bg-white/5 border border-white/10 px-4 py-2.5 flex items-center gap-1">
-                    <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                </div>
-              )}
-
-              {/* Error message */}
-              {error && (
-                <div className="text-center py-2">
-                  <p className="text-xs text-red-400">{error}</p>
-                  <button 
-                    onClick={() => setError(null)}
-                    className="text-xs text-white/40 underline mt-1"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              )}
-
               <div ref={messagesEndRef} />
             </div>
 
@@ -344,12 +243,12 @@ export default function GlobalAssistant() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Ask me anything..."
-                  disabled={sending}
+                  disabled={sending || !conversationId}
                   className="flex-1 bg-white/5 border-2 border-white/20 text-white placeholder:text-white/40"
                 />
                 <Button
                   onClick={handleSend}
-                  disabled={sending || !input.trim()}
+                  disabled={sending || !input.trim() || !conversationId}
                   className="bg-[#FF1493] hover:bg-white text-white hover:text-black font-black border-2 border-white"
                 >
                   {sending ? (

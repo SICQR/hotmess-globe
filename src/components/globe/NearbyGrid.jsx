@@ -5,8 +5,7 @@ import { base44 } from '@/components/utils/supabaseClient';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { Users, Zap, Filter, Grid3x3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-// createPageUrl no longer used after privacy URL refactor
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
+import { createPageUrl } from '../../utils';
 
 export default function NearbyGrid({ userLocation }) {
   const [distanceFilter, setDistanceFilter] = useState(10); // km
@@ -68,13 +67,13 @@ export default function NearbyGrid({ userLocation }) {
         // keep a stable ID for links/keys
         id: profile?.id || candidate.user_id,
         auth_user_id: profile?.auth_user_id || candidate.user_id,
+        email: profile?.email,
       };
 
-      // Require a valid user ID
-      if (!user?.id && !user?.auth_user_id) return null;
+      if (!user?.email) return null;
 
       const rightNowStatus = rightNowStatuses.find(
-        (s) => s.user_id === user.id && s.active && new Date(s.expires_at) > new Date()
+        (s) => s.user_email === user.email && s.active && new Date(s.expires_at) > new Date()
       );
 
       const origin = userLocation?.lat && userLocation?.lng ? { lat: userLocation.lat, lng: userLocation.lng } : null;
@@ -187,18 +186,18 @@ export default function NearbyGrid({ userLocation }) {
           }>
             {activeUsers.map((user, idx) => (
               <motion.div
-                key={user.auth_user_id || user.id || idx}
+                key={user.email || user.auth_user_id || idx}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: idx * 0.02 }}
               >
-                <Link to={getProfileUrl(user)}>
+                <Link to={createPageUrl(`Profile?email=${user.email}`)}>
                   <div className="bg-black border-2 border-white hover:border-[#FF1493] transition-all group overflow-hidden">
                     {/* Profile Image */}
                     <div className="aspect-square relative overflow-hidden">
                       <img
-                        src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(getDisplayName(user))}&size=400&background=FF1493&color=000`}
-                        alt={getDisplayName(user)}
+                        src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&size=400&background=FF1493&color=000`}
+                        alt={user.full_name || user.email}
                         className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
                       />
                       
@@ -233,7 +232,7 @@ export default function NearbyGrid({ userLocation }) {
                     <div className="p-3 space-y-1">
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="font-black text-sm truncate group-hover:text-[#FF1493] transition-colors">
-                          {getDisplayName(user)}
+                          {user.full_name || user.email}
                         </h3>
                         <span className="text-[10px] text-white/40 font-mono whitespace-nowrap">
                           {getTimeAgo(user.updated_date || user.updated_at)}

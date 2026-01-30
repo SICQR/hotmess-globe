@@ -21,8 +21,6 @@ import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
 import Privacy from '@/pages/legal/Privacy';
 import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
-import { I18nProvider } from '@/contexts/I18nContext';
-import { PageTransition } from '@/components/lux/PageTransition';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -50,17 +48,11 @@ const LEGACY_PAGE_ROUTE_ALLOWLIST = new Set([
   'Settings',
   'EditProfile',
   'MembershipUpgrade',
-  'Pricing',
   'Safety',
   'Calendar',
   'Scan',
   'Community',
   'Leaderboard',
-  'AdminDashboard',
-  // Business pages
-  'PromoterDashboard',
-  'CreateBeaconBiz',
-  'CreatorDashboard',
   // Shop/market compat is handled separately.
   'Marketplace',
   'ProductDetail',
@@ -326,10 +318,9 @@ const AuthenticatedApp = () => {
     }
   }
 
-  // Render the main app with LED Brutalist page transitions
+  // Render the main app
   return (
-    <PageTransition>
-      <Routes>
+    <Routes>
       {/* V1.5 canonical routes (Bible) */}
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
@@ -338,6 +329,8 @@ const AuthenticatedApp = () => {
       } />
       <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
+      <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
+      <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
       <Route path="/pulse" element={<PageRoute pageKey="Pulse" />} />
       <Route path="/events" element={<PageRoute pageKey="Events" />} />
       <Route path="/events/:id" element={<EventDetailRedirect />} />
@@ -383,8 +376,8 @@ const AuthenticatedApp = () => {
       <Route path="/auth/reset" element={<PageRoute pageKey="Auth" />} />
       
       {/* Onboarding sub-routes */}
-      <Route path="/onboarding" element={<Navigate to="/onboarding/consent" replace />} />
-      <Route path="/onboarding/consent" element={<PageRoute pageKey="OnboardingGate" />} />
+      <Route path="/onboarding" element={<PageRoute pageKey="Onboarding" />} />
+      <Route path="/onboarding/consent" element={<PageRoute pageKey="Onboarding" />} />
       <Route path="/onboarding/profile" element={<PageRoute pageKey="Onboarding" />} />
       <Route path="/onboarding/preferences" element={<PageRoute pageKey="Onboarding" />} />
 
@@ -396,16 +389,6 @@ const AuthenticatedApp = () => {
       <Route path="/cart" element={<ShopCartRoute />} />
       <Route path="/checkout/start" element={<ShopCheckoutStartRoute />} />
       <Route path="/checkout" element={<PageRoute pageKey="Checkout" />} />
-
-      {/* Features / USP Pages */}
-      <Route path="/features" element={<PageRoute pageKey="Features" />} />
-      <Route path="/features/safety" element={<PageRoute pageKey="SafetyFeatures" />} />
-      <Route path="/features/events" element={<PageRoute pageKey="EventsFeatures" />} />
-      <Route path="/features/social" element={<PageRoute pageKey="SocialFeatures" />} />
-      <Route path="/features/music" element={<PageRoute pageKey="RadioFeatures" />} />
-      <Route path="/features/radio" element={<PageRoute pageKey="RadioFeatures" />} />
-      <Route path="/features/personas" element={<PageRoute pageKey="PersonaFeatures" />} />
-      <Route path="/features/profiles" element={<PageRoute pageKey="PersonaFeatures" />} />
 
       {/* Legal */}
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
@@ -471,16 +454,10 @@ const AuthenticatedApp = () => {
       <Route path="/help" element={<PageRoute pageKey="HelpCenter" />} />
       <Route path="/support" element={<PageRoute pageKey="Contact" />} />
       
-      {/* Membership & Pricing */}
+      {/* Membership */}
       <Route path="/membership" element={<PageRoute pageKey="MembershipUpgrade" />} />
       <Route path="/upgrade" element={<PageRoute pageKey="MembershipUpgrade" />} />
-      <Route path="/pricing" element={<PageRoute pageKey="Pricing" />} />
-      <Route path="/fees" element={<PageRoute pageKey="Pricing" />} />
       
-      {/* Admin dashboard */}
-      <Route path="/admin" element={<PageRoute pageKey="AdminDashboard" />} />
-      <Route path="/admin/*" element={<PageRoute pageKey="AdminDashboard" />} />
-
       {/* Business dashboard */}
       <Route path="/biz" element={<PageRoute pageKey="BusinessDashboard" />} />
       <Route path="/biz/dashboard" element={<PageRoute pageKey="BusinessDashboard" />} />
@@ -533,8 +510,7 @@ const AuthenticatedApp = () => {
         );
       })}
       <Route path="*" element={<PageNotFound />} />
-      </Routes>
-    </PageTransition>
+    </Routes>
   );
 };
 
@@ -542,19 +518,17 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
-    <I18nProvider>
-      <AuthProvider>
-        <QueryClientProvider client={queryClientInstance}>
-          <ShopCartProvider>
-            <Router>
-              <NavigationTracker />
-              <AuthenticatedApp />
-            </Router>
-          </ShopCartProvider>
-          <Toaster />
-        </QueryClientProvider>
-      </AuthProvider>
-    </I18nProvider>
+    <AuthProvider>
+      <QueryClientProvider client={queryClientInstance}>
+        <ShopCartProvider>
+          <Router>
+            <NavigationTracker />
+            <AuthenticatedApp />
+          </Router>
+        </ShopCartProvider>
+        <Toaster />
+      </QueryClientProvider>
+    </AuthProvider>
   )
 }
 

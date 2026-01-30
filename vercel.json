@@ -19,34 +19,22 @@
     {
       "path": "/api/admin/cleanup/rate-limits",
       "schedule": "20 4 * * *"
-    },
-    {
-      "path": "/api/safety/check-ins",
-      "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/telegram/send",
-      "schedule": "*/2 * * * *"
     }
   ],
-  "headers": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(self), geolocation=(self), microphone=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://*.stripe.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://w.soundcloud.com https://vercel.live; script-src-elem 'self' 'unsafe-inline' https://js.stripe.com https://w.soundcloud.com https://vercel.live; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.soundcloud.com https://w.soundcloud.com https://*.stripe.com https://vercel.live wss://vercel.live; frame-src https://w.soundcloud.com https://js.stripe.com https://hooks.stripe.com; media-src 'self' https: blob:"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+      "src": "/(.*)",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(self), geolocation=(self), microphone=()",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Content-Security-Policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://*.stripe.com; script-src 'self' 'unsafe-inline' https://js.stripe.com https://w.soundcloud.com https://vercel.live; script-src-elem 'self' 'unsafe-inline' https://js.stripe.com https://w.soundcloud.com https://vercel.live; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.soundcloud.com https://w.soundcloud.com https://*.stripe.com https://vercel.live wss://vercel.live; frame-src https://w.soundcloud.com https://js.stripe.com https://hooks.stripe.com; media-src 'self' https: blob:"
+      }
+    },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

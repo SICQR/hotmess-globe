@@ -3,9 +3,7 @@ import { motion } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-// createPageUrl no longer used after privacy URL refactor
-import { getProfileUrl } from '@/lib/userPrivacy';
-import { generateProfileEmbeddings } from '@/lib/embeddings';
+import { createPageUrl } from '../utils';
 import { ArrowLeft, Save, User, Upload, Plus, X, Users as UsersIcon, Image as ImageIcon, Video as VideoIcon, Crown, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +17,6 @@ import TagSelector from '../components/discovery/TagSelector';
 import { PhotoGallery, VideoUploader, PremiumVideoManager } from '../components/profile/MediaGallery';
 import { validateBio } from '../components/utils/validation';
 import { sanitizeSocialLinks } from '../components/utils/sanitize';
-import ProfileOptimizer from '@/components/profile/ProfileOptimizer';
 import logger from '@/utils/logger';
 
 const VIBE_OPTIONS = ['techno', 'house', 'drag', 'indie', 'late_night', 'chill', 'wild', 'artsy'];
@@ -179,16 +176,9 @@ export default function EditProfile() {
     mutationFn: async (data) => {
       await base44.auth.updateMe(data);
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       queryClient.invalidateQueries(['users']);
       toast.success('Profile updated! 🎉');
-      
-      // Generate embeddings for match scoring (runs in background)
-      generateProfileEmbeddings().then((result) => {
-        if (result?.generated) {
-          console.log('Profile embeddings updated for better match scoring');
-        }
-      });
     },
     onError: () => {
       toast.error('Failed to update profile');
@@ -328,7 +318,7 @@ export default function EditProfile() {
 
       queryClient.invalidateQueries(['user-tags']);
       queryClient.invalidateQueries(['user-tribes']);
-      navigate(getProfileUrl(user));
+      navigate(createPageUrl(`Profile?email=${currentUser.email}`));
     } finally {
       setIsSavingProfile(false);
     }
@@ -392,9 +382,6 @@ export default function EditProfile() {
 
           <h1 className="text-4xl font-black uppercase mb-2">Edit Profile</h1>
           <p className="text-white/40 text-sm uppercase tracking-wider mb-8">Customize your hotmess presence</p>
-
-          {/* AI Profile Optimizer */}
-          <ProfileOptimizer className="mb-8" />
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Profile Type */}

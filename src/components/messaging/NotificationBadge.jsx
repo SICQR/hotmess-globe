@@ -56,7 +56,12 @@ export default function NotificationBadge({ user }) {
     }
   }, [threads, user]);
 
-  // Don't auto-request notification permission - let user opt-in from settings
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   if (totalUnread === 0) return null;
 

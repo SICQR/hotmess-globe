@@ -5,7 +5,6 @@ import { base44 } from '@/api/base44Client';
 import { Activity, MapPin, ShoppingBag, Trophy, Users, Crown, Radio, TrendingUp, UserPlus, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { getProfileUrl } from '@/lib/userPrivacy';
 import { formatDistanceToNow } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -83,7 +82,7 @@ export default function Feed() {
         className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors"
       >
         <div className="flex items-start gap-3">
-          <Link to={getProfileUrl(user)}>
+          <Link to={createPageUrl(`Profile?email=${user.email}`)}>
             <div className="w-12 h-12 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center flex-shrink-0">
               {user.avatar_url ? (
                 <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
@@ -95,7 +94,7 @@ export default function Feed() {
           
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <Link to={getProfileUrl(user)}>
+              <Link to={createPageUrl(`Profile?email=${user.email}`)}>
                 <span className="font-bold hover:text-[#FF1493] transition-colors">
                   {user.full_name}
                 </span>

@@ -91,7 +91,12 @@ export default function EventReminders({ currentUser }) {
     };
   }, [upcomingRsvps, allEvents, currentUser, sendReminderMutation]);
 
-  // Don't auto-request notification permission - let user opt-in from settings
+  // Request notification permission
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   return null; // Background service, no UI
 }

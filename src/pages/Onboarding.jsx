@@ -24,12 +24,7 @@ export default function Onboarding() {
         setCurrentUser(user);
         // Skip if already onboarded
         if (user.onboarding_completed) {
-          // Check if profile is complete
-          if (user.full_name && user.avatar_url) {
-            navigate(createPageUrl('Home'));
-          } else {
-            navigate(createPageUrl('Profile'));
-          }
+          navigate(createPageUrl('Home'));
         }
       } catch (error) {
         console.error('Failed to fetch user:', error);
@@ -74,15 +69,7 @@ export default function Onboarding() {
       onboarding_completed: true 
     });
 
-    // Fetch updated user data to check profile completeness
-    const updatedUser = await base44.auth.me();
-
-    // After preferences, redirect to Profile setup if not complete
-    if (!updatedUser?.full_name || !updatedUser?.avatar_url) {
-      navigate(createPageUrl('Profile'));
-    } else {
-      navigate(createPageUrl('Home'));
-    }
+    navigate(createPageUrl('Home'));
   };
 
   if (!currentUser) return null;

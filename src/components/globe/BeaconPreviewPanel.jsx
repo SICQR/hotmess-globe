@@ -5,7 +5,6 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { getProfileUrl } from '@/lib/userPrivacy';
 
 export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
   if (!beacon) return null;
@@ -23,7 +22,7 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
   const color = kindColors[beacon.kind] || '#FF1493';
   const isPerson = beacon.kind === 'person';
   const detailsUrl = isPerson && beacon.email
-    ? getProfileUrl(user)
+    ? createPageUrl(`Profile?email=${encodeURIComponent(beacon.email)}`)
     : createPageUrl('BeaconDetail') + '?id=' + encodeURIComponent(beacon.id);
 
   return (

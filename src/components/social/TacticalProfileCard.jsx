@@ -1,10 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-// createPageUrl no longer used after privacy URL refactor
+import { createPageUrl } from '../../utils';
 import { Zap, Flame, Users, Music } from 'lucide-react';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 
 const getUserPhotoUrls = (user) => {
   const urls = [];
@@ -31,8 +30,7 @@ export default function TacticalProfileCard({ user, delay = 0, hotScore = 0 }) {
   const isHot = hotScore > 50;
 
   const photoUrls = getUserPhotoUrls(user);
-  const displayName = getDisplayName(user);
-  const primaryPhotoUrl = photoUrls[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&size=400&background=FF1493&color=000`;
+  const primaryPhotoUrl = photoUrls[0] || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || 'User')}&size=400&background=FF1493&color=000`;
   
   const getIntentIcon = () => {
     if (!user.current_intent) return null;
@@ -52,7 +50,7 @@ export default function TacticalProfileCard({ user, delay = 0, hotScore = 0 }) {
       transition={{ delay }}
       className="group"
     >
-      <Link to={getProfileUrl(user)}>
+      <Link to={createPageUrl(`Profile?email=${user.email}`)}>
         <OSCard 
           className={isHot ? 'animate-pulse border-[#FF1493]' : ''}
           hoverGlow={true}
@@ -61,7 +59,7 @@ export default function TacticalProfileCard({ user, delay = 0, hotScore = 0 }) {
           <div className="relative aspect-square">
             <OSCardImage
               src={primaryPhotoUrl}
-              alt={displayName}
+              alt={user.full_name}
               grayscale={true}
             />
             

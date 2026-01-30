@@ -14,7 +14,6 @@ import PersonalizedRecommendations from '../components/events/PersonalizedRecomm
 import EventsMapView from '../components/events/EventsMapView';
 import NightlifeResearcher from '../components/ai/NightlifeResearcher';
 import AIEventRecommendations from '../components/events/AIEventRecommendations';
-import SceneScout from '@/components/discovery/SceneScout';
 import logger from '@/utils/logger';
 import PageShell from '@/components/shell/PageShell';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
@@ -180,7 +179,6 @@ export default function Events() {
         title="Events"
         subtitle="Discover what’s happening in London tonight."
         maxWidth="7xl"
-        kinetic={true}
         right={
           <div className="flex items-center gap-2">
             <Button asChild variant="glass" className="border-white/20 font-black uppercase">
@@ -275,13 +273,6 @@ export default function Events() {
             )}
           </div>
         </div>
-
-        {/* Scene Scout - AI Nightlife Recommendations */}
-        {currentUser && (
-          <div className="mb-8">
-            <SceneScout maxPicks={3} className="bg-white/5 border border-white/10 rounded-xl p-6" />
-          </div>
-        )}
 
         {/* AI Event Recommendations */}
         {currentUser && <AIEventRecommendations currentUser={currentUser} />}
