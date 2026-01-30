@@ -7,9 +7,6 @@ import { buildUberDeepLink } from '@/utils/uberDeepLink';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@/utils/travelRecommendations';
 import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
-import { MatchBar, MatchBreakdownBars, MatchBadge } from './MatchBar';
-import { getTopInsight } from './matchInsights';
-import { SocialProofBadges } from './SocialProofBadges';
 
 type Props = {
   profile: Profile;
@@ -436,17 +433,12 @@ export function ProfileCard({
       emailHandle((profile as any)?.email) ||
       initialsFromName((profile as any)?.profileName || (profile as any)?.full_name || 'HM');
 
-    // Show match probability if available, otherwise fall back to travel time or online status
-    let status = '';
-    if (profile.matchProbability !== undefined && profile.matchProbability > 0) {
-      status = `${Math.round(profile.matchProbability)}% Match`;
-    } else if (primaryModeShort) {
-      status = primaryModeShort;
-    } else if ((profile as any)?.onlineNow) {
-      status = 'Online';
-    } else if ((profile as any)?.rightNow) {
-      status = 'Right now';
-    }
+    const matchLabel = typeof profile.matchProbability === 'number' 
+      ? `${Math.round(profile.matchProbability)}% match`
+      : null;
+    
+    const status =
+      matchLabel || primaryModeShort || ((profile as any)?.onlineNow ? 'Online' : ((profile as any)?.rightNow ? 'Right now' : '')); 
 
     return (
       <div
@@ -548,27 +540,13 @@ export function ProfileCard({
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
 
         {/* Top badges */}
-        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5 pointer-events-none">
-          {/* Match probability badge - using MatchBadge component */}
-          {profile.matchProbability !== undefined && profile.matchProbability > 0 ? (
-            <MatchBadge matchProbability={profile.matchProbability} size="md" />
-          ) : null}
-
-          {/* Social proof badges - Online, New, Popular, etc */}
-          <SocialProofBadges
-            profile={{
-              onlineNow: (profile as any)?.onlineNow,
-              rightNow: (profile as any)?.rightNow,
-              lastSeen: (profile as any)?.lastSeen || (profile as any)?.last_seen,
-              createdAt: (profile as any)?.createdAt || (profile as any)?.created_at,
-              viewCount: (profile as any)?.viewCount || (profile as any)?.view_count,
-              isVerified: (profile as any)?.isVerified || (profile as any)?.is_verified,
-              isPremium: (profile as any)?.isPremium || (profile as any)?.is_premium,
-            }}
-            size="sm"
-            showLabels={true}
-            maxBadges={1}
-          />
+        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2 pointer-events-none">
+          {/* Match probability badge */}
+          {typeof profile.matchProbability === 'number' && (
+            <div className="rounded-full bg-gradient-to-r from-[#FF1493] to-[#00D9FF] text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 shadow-lg">
+              {Math.round(profile.matchProbability)}% match
+            </div>
+          )}
 
           {typeBadge ? (
             <div
@@ -582,31 +560,12 @@ export function ProfileCard({
             </div>
           ) : null}
 
-          {viewerLocation && !profile.matchProbability ? (
+          {viewerLocation ? (
             <div className="rounded-full bg-black/40 border border-white/15 text-white/85 text-[10px] font-black uppercase tracking-wider px-2 py-1">
               {isTravelTimeLoading ? 'Loading…' : primaryModeShort ? `Rec ${primaryModeShort}` : 'No ETA'}
             </div>
           ) : null}
         </div>
-
-        {/* Top insight badge - bottom left */}
-        {profile.matchProbability !== undefined && profile.matchBreakdown ? (() => {
-          const insight = getTopInsight(profile.matchBreakdown, profile.travelTimeMinutes);
-          return insight ? (
-            <div className="absolute left-3 bottom-[140px] pointer-events-none">
-              <span className={`
-                inline-flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-semibold backdrop-blur-sm
-                ${insight.score === 'great' ? 'bg-green-500/30 text-green-200' : ''}
-                ${insight.score === 'good' ? 'bg-blue-500/30 text-blue-200' : ''}
-                ${insight.score === 'neutral' ? 'bg-white/20 text-white/80' : ''}
-                ${insight.score === 'low' ? 'bg-orange-500/30 text-orange-200' : ''}
-              `}>
-                <span>{insight.icon}</span>
-                <span>{insight.text}</span>
-              </span>
-            </div>
-          ) : null;
-        })() : null}
 
         {/* Bottom identity + CTAs (always visible) */}
         <div className="absolute inset-x-0 bottom-0 p-3 pointer-events-auto">
@@ -671,23 +630,6 @@ export function ProfileCard({
             {/* Expanded panel on hover/long-press */}
             {isActive ? (
               <div className="mt-3">
-                {/* Visual match breakdown if available */}
-                {profile.matchProbability !== undefined && profile.matchBreakdown ? (
-                  <div className="mb-3 rounded-lg bg-black/40 border border-white/10 p-3">
-                    <MatchBar
-                      matchProbability={profile.matchProbability}
-                      breakdown={profile.matchBreakdown}
-                      travelTimeMinutes={profile.travelTimeMinutes}
-                      size="md"
-                      showLabel={true}
-                      showInsights={true}
-                    />
-                    <div className="mt-3 pt-2 border-t border-white/10">
-                      <MatchBreakdownBars breakdown={profile.matchBreakdown} />
-                    </div>
-                  </div>
-                ) : null}
-
                 <div className="text-[11px] text-white/70">
                   {viewerLocation ? (
                     isTravelTimeLoading ? (
@@ -758,7 +700,7 @@ export function ProfileCard({
                 </div>
 
                 <div className="mt-2 text-[11px] text-white/55">
-                  Ask first. Confirm yes. Respect no.
+                  Estimates • Ask first. Confirm yes.
                 </div>
 
               </div>

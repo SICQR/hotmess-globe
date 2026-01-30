@@ -12,29 +12,19 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import logger from '@/utils/logger';
 import ProfileHeader from '../components/profile/ProfileHeader';
 import StandardProfileView from '../components/profile/StandardProfileView';
 import SellerProfileView from '../components/profile/SellerProfileView';
-import CreatorProfileView from '../components/profile/CreatorProfileView';
-import OrganizerProfileView from '../components/profile/OrganizerProfileView';
-import PremiumProfileView from '../components/profile/PremiumProfileView';
 import ProfileStats from '../components/profile/ProfileStats';
 import { sanitizeText, sanitizeURL, sanitizeSocialLinks } from '../components/utils/sanitize';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 import ErrorBoundary from '../components/error/ErrorBoundary';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 import RightNowIndicator from '../components/discovery/RightNowIndicator';
 import ProfileCompleteness from '../components/profile/ProfileCompleteness';
 import WelcomeTour from '../components/onboarding/WelcomeTour';
 import VibeSynthesisCard from '../components/vibe/VibeSynthesisCard';
-import { trackProfileView } from '@/lib/notifications';
-import ProfileWingman from '../components/profile/ProfileWingman';
 import { fetchRoutingEtas } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
-import { ProfileCardSkeleton, StatsGridSkeleton } from '@/components/ui/SkeletonLoaders';
-import { MatchBar } from '@/features/profilesGrid/MatchBar';
-import { LuxProfileCarousel } from '@/components/lux/LuxCarousel';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -175,15 +165,6 @@ export default function Profile() {
     setPhotoPolicyAck(!!(profileUser?.photo_policy_ack || profileUser?.photoPolicyAck));
   }, [profileUser, isViewingOtherUser]);
 
-  // Track profile views when viewing another user's profile
-  useEffect(() => {
-    if (!isViewingOtherUser || !userEmail || !currentUser?.email) return;
-    if (userEmail === currentUser.email) return; // Don't track self-views
-    
-    // Track the view (for batched notifications later)
-    trackProfileView(userEmail);
-  }, [isViewingOtherUser, userEmail, currentUser?.email]);
-
   const { data: checkIns = [] } = useQuery({
     queryKey: ['check-ins', userEmail],
     queryFn: () => base44.entities.BeaconCheckIn.filter({ user_email: userEmail }, '-created_date', 20),
@@ -219,6 +200,11 @@ export default function Profile() {
     queryFn: () => base44.entities.Achievement.list()
   });
 
+  const { data: _allBeacons = [] } = useQuery({
+    queryKey: ['all-beacons'],
+    queryFn: () => base44.entities.Beacon.list()
+  });
+
   const { data: squadMembers = [] } = useQuery({
     queryKey: ['squad-members-profile'],
     queryFn: () => base44.entities.SquadMember.filter({ user_email: userEmail }),
@@ -230,6 +216,7 @@ export default function Profile() {
     queryFn: () => base44.entities.Squad.list()
   });
 
+  const _isFollowing = following.some(f => f.following_email === userEmail);
   const isOwnProfile = currentUser?.email === userEmail;
 
   const { data: profileUserTags = [] } = useQuery({
@@ -375,8 +362,8 @@ export default function Profile() {
           viewed_email: userEmail,
           viewed_at: new Date().toISOString(),
         });
-      } catch (error) {
-        logger.debug('Failed to track profile view', { error: error?.message });
+      } catch {
+        console.log('Failed to track profile view');
       }
     };
     
@@ -391,9 +378,27 @@ export default function Profile() {
   });
 
   const viewCount = profileViews.length;
+  const tierRaw = currentUser?.membership_tier;
+  const _tier = tierRaw === 'free' ? 'basic' : tierRaw || 'basic';
   const level = Math.floor(((profileUser?.xp ?? 0) || 0) / 1000) + 1;
   // Chrome tier: Level 5+ can see WHO viewed their profile
   const canSeeViewers = level >= 5;
+
+  const _followMutation = useMutation({
+    mutationFn: () => base44.entities.UserFollow.create({
+      follower_email: currentUser.email,
+      following_email: userEmail
+    }),
+    onSuccess: () => queryClient.invalidateQueries(['following', currentUser.email])
+  });
+
+  const _unfollowMutation = useMutation({
+    mutationFn: () => {
+      const followRecord = following.find(f => f.following_email === userEmail);
+      return base44.entities.UserFollow.delete(followRecord.id);
+    },
+    onSuccess: () => queryClient.invalidateQueries(['following', currentUser.email])
+  });
 
   const pinMutation = useMutation({
     mutationFn: (data) => base44.entities.UserHighlight.create(data),
@@ -555,13 +560,8 @@ export default function Profile() {
 
     return (
       <ErrorBoundary>
-        <div className="min-h-screen bg-black text-white p-4 md:p-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
-              <ProfileCardSkeleton />
-            </div>
-            <StatsGridSkeleton count={6} />
-          </div>
+        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+          <p className="text-white/60">Loading...</p>
         </div>
       </ErrorBoundary>
     );
@@ -804,41 +804,7 @@ export default function Profile() {
           travelEtas={travelEtas}
         />
 
-        {/* Match Score Bar - Only show when viewing another user's profile */}
-        {!isOwnProfile && profileUser?.match_score > 0 && (
-          <div className="max-w-4xl mx-auto px-4 py-4">
-            <MatchBar 
-              matchProbability={profileUser.match_score}
-              showLabel={true}
-              showInsights={true}
-              size="lg"
-              className="bg-white/5 border border-white/10 rounded-lg p-4"
-            />
-          </div>
-        )}
-
         <div className="max-w-4xl mx-auto p-4 md:p-8">
-          {/* AI Wingman - for viewing other profiles */}
-          {!isOwnProfile && profileUser && currentUser && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6"
-            >
-              <ProfileWingman 
-                profile={profileUser}
-                currentUser={currentUser}
-                matchScore={profileUser.match_score}
-                onSendMessage={(text) => {
-                  // Navigate to messages with pre-filled opener (use user ID, not email)
-                  const userId = profileUser?.auth_user_id || profileUser?.id || '';
-                  const encodedUserId = encodeURIComponent(String(userId));
-                  const encodedText = encodeURIComponent(text);
-                  window.location.href = `/social/inbox?to=${encodedUserId}&draft=${encodedText}`;
-                }}
-              />
-            </motion.div>
-          )}
           {/* Vibe Synthesis - AI-Generated Character Profile */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -937,29 +903,9 @@ export default function Profile() {
           )}
 
           {/* Profile Type Specific View */}
-          {profileTypeKey === 'seller' && (
+          {profileTypeKey === 'seller' ? (
             <SellerProfileView user={enrichedProfileUser} />
-          )}
-          {profileTypeKey === 'creator' && (
-            <CreatorProfileView 
-              user={enrichedProfileUser} 
-              currentUser={currentUser}
-            />
-          )}
-          {profileTypeKey === 'organizer' && (
-            <OrganizerProfileView 
-              user={enrichedProfileUser} 
-              currentUser={currentUser}
-            />
-          )}
-          {profileTypeKey === 'premium' && (
-            <PremiumProfileView 
-              user={enrichedProfileUser} 
-              currentUser={currentUser}
-              isOwnProfile={isOwnProfile}
-            />
-          )}
-          {(profileTypeKey === 'standard' || !['seller', 'creator', 'organizer', 'premium'].includes(profileTypeKey)) && (
+          ) : (
             <StandardProfileView 
               user={enrichedProfileUser} 
               currentUser={currentUser} 
@@ -1006,21 +952,21 @@ export default function Profile() {
                 <div className="space-y-2">
                   <p className="text-xs text-white/60 uppercase mb-3">Recent Viewers (Chrome Tier - Level 5+)</p>
                   {profileViews.slice(0, 10).map((view, idx) => {
-                    const viewer = allUsers.find(u => u.id === view.viewer_id || u.auth_user_id === view.viewer_id);
+                    const viewer = allUsers.find(u => u.email === view.viewer_email);
                     if (!viewer) return null;
                     
                     return (
-                      <Link key={idx} to={getProfileUrl(viewer)}>
+                      <Link key={idx} to={createPageUrl(`Profile?email=${viewer.email}`)}>
                         <div className="flex items-center gap-3 p-2 hover:bg-white/5 transition-colors">
                           <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center">
                             {viewer.avatar_url ? (
-                              <img src={viewer.avatar_url} alt={getDisplayName(viewer)} className="w-full h-full object-cover" />
+                              <img src={viewer.avatar_url} alt={viewer.full_name} className="w-full h-full object-cover" />
                             ) : (
-                              <span className="text-xs font-bold">{getDisplayName(viewer)?.[0]}</span>
+                              <span className="text-xs font-bold">{viewer.full_name?.[0]}</span>
                             )}
                           </div>
                           <div className="flex-1">
-                            <p className="font-bold text-sm">{getDisplayName(viewer)}</p>
+                            <p className="font-bold text-sm">{viewer.full_name}</p>
                             <p className="text-xs text-white/40">{format(new Date(view.viewed_at), 'MMM d, h:mm a')}</p>
                           </div>
                         </div>
@@ -1268,27 +1214,6 @@ export default function Profile() {
           </TabsContent>
         </Tabs>
         </div>
-
-        {/* Similar Profiles - Only show when viewing another user */}
-        {!isOwnProfile && profileUser && (
-          <div className="max-w-4xl mx-auto px-4 py-8">
-            <h3 className="text-xl font-black uppercase mb-6">Similar Profiles</h3>
-            <LuxProfileCarousel
-              profiles={allUsers
-                .filter(u => u.id !== profileUser.id && u.id !== currentUser?.id)
-                .slice(0, 10)
-                .map(u => ({
-                  id: u.id,
-                  name: u.full_name || 'Anonymous',
-                  image: u.avatar_url || u.profile_image,
-                  subtitle: u.tagline || u.profile_type || 'Member',
-                  href: getProfileUrl(u),
-                }))}
-              itemsPerView={3}
-              autoPlay={false}
-            />
-          </div>
-        )}
       </div>
     </ErrorBoundary>
   );

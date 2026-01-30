@@ -2,50 +2,6 @@
 
 create extension if not exists pgcrypto;
 
--- Add missing columns to existing tables before creating indexes
-do $$
-begin
-  -- chat_threads
-  if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'chat_threads') then
-    if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'chat_threads' and column_name = 'created_date') then
-      alter table public.chat_threads add column created_date timestamptz not null default now();
-    end if;
-    if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'chat_threads' and column_name = 'updated_date') then
-      alter table public.chat_threads add column updated_date timestamptz not null default now();
-    end if;
-  end if;
-  
-  -- messages
-  if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'messages') then
-    if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'messages' and column_name = 'created_date') then
-      alter table public.messages add column created_date timestamptz not null default now();
-    end if;
-    if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'messages' and column_name = 'updated_date') then
-      alter table public.messages add column updated_date timestamptz not null default now();
-    end if;
-  end if;
-  
-  -- bot_sessions
-  if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'bot_sessions') then
-    if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'bot_sessions' and column_name = 'created_date') then
-      alter table public.bot_sessions add column created_date timestamptz not null default now();
-    end if;
-    if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'bot_sessions' and column_name = 'updated_date') then
-      alter table public.bot_sessions add column updated_date timestamptz not null default now();
-    end if;
-  end if;
-  
-  -- notifications
-  if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'notifications') then
-    if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'notifications' and column_name = 'created_date') then
-      alter table public.notifications add column created_date timestamptz not null default now();
-    end if;
-    if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'notifications' and column_name = 'updated_date') then
-      alter table public.notifications add column updated_date timestamptz not null default now();
-    end if;
-  end if;
-end $$;
-
 -- Chat threads
 create table if not exists public.chat_threads (
   id uuid primary key default gen_random_uuid(),

@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, ShoppingCart, Check, Loader2, CreditCard, Truck, Shield, Clock } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import {
@@ -320,20 +320,11 @@ export default function Checkout() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
-      toast.success('Order placed successfully!', {
-        description: 'Check your order history for updates',
-        duration: 5000,
-        icon: <Check className="w-5 h-5 text-[#39FF14]" />,
-      });
-      // Small delay for user to see success state
-      setTimeout(() => navigate(createPageUrl('OrderHistory')), 500);
+      toast.success('Order placed!');
+      navigate(createPageUrl('OrderHistory'));
     },
     onError: (error) => {
-      const message = error.message || 'Checkout failed';
-      toast.error(message, {
-        description: 'Please try again or contact support',
-        duration: 6000,
-      });
+      toast.error(error.message || 'Checkout failed');
     }
   });
 
@@ -647,24 +638,17 @@ export default function Checkout() {
                     (!currentUser ? false : (!hasEnoughXP || checkoutMutation.isPending)) ||
                     !isShippingComplete
                   }
-                  className={`w-full font-black text-lg py-7 uppercase tracking-wider border-2 transition-all ${
-                    checkoutMutation.isPending
-                      ? 'bg-[#39FF14]/50 border-[#39FF14]/50 text-black/70'
-                      : 'bg-[#39FF14] hover:bg-[#39FF14]/90 text-black shadow-[0_0_20px_rgba(57,255,20,0.3)] border-[#39FF14] hover:shadow-[0_0_30px_rgba(57,255,20,0.5)]'
-                  }`}
+                  className="w-full bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black text-lg py-7 uppercase tracking-wider shadow-[0_0_20px_rgba(57,255,20,0.3)] border-2 border-[#39FF14]"
                 >
                   {!xpPurchasingEnabled ? (
                     'XP PURCHASING COMING SOON'
                   ) : checkoutMutation.isPending ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      PROCESSING ORDER...
-                    </span>
+                    'PROCESSING ORDER...'
                   ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      <Check className="w-5 h-5" />
+                    <>
+                      <Check className="w-5 h-5 mr-2" />
                       {currentUser ? 'COMPLETE XP ORDER' : 'SIGN IN TO COMPLETE'} • {totalXP.toLocaleString()} XP
-                    </span>
+                    </>
                   )}
                 </Button>
 
@@ -674,23 +658,14 @@ export default function Checkout() {
                   </div>
                 )}
                 
-                {/* Order Features */}
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-black/40 border border-white/10 text-center">
-                    <Shield className="w-5 h-5 text-[#39FF14] mx-auto mb-1" />
-                    <p className="text-[10px] text-white/60 uppercase tracking-wider">Secure</p>
-                  </div>
-                  <div className="p-3 bg-black/40 border border-white/10 text-center">
-                    <Clock className="w-5 h-5 text-[#00D9FF] mx-auto mb-1" />
-                    <p className="text-[10px] text-white/60 uppercase tracking-wider">Instant</p>
-                  </div>
-                  <div className="p-3 bg-black/40 border border-white/10 text-center">
-                    <Truck className="w-5 h-5 text-[#FF1493] mx-auto mb-1" />
-                    <p className="text-[10px] text-white/60 uppercase tracking-wider">Tracked</p>
-                  </div>
-                  <div className="p-3 bg-black/40 border border-white/10 text-center">
-                    <CreditCard className="w-5 h-5 text-[#FFEB3B] mx-auto mb-1" />
-                    <p className="text-[10px] text-white/60 uppercase tracking-wider">XP Pay</p>
+                <div className="mt-4 p-4 bg-black/40 border border-white/10 text-xs text-white/60 uppercase tracking-wider">
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 mt-0.5 text-[#39FF14]" />
+                    <div className="space-y-1">
+                      <div>Instant XP deduction</div>
+                      <div>Order tracking available</div>
+                      <div>Seller notified immediately</div>
+                    </div>
                   </div>
                 </div>
               </div>

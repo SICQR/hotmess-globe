@@ -5,7 +5,6 @@ import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, MapPin, ShoppingBag, Trophy, Zap, Eye } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AnimatedCard } from '@/components/ui/AnimatedCard';
 
 export default function Stats() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -107,26 +106,19 @@ export default function Stats() {
         {/* Key Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {stats.map((stat, idx) => (
-            <AnimatedCard
+            <motion.div
               key={stat.label}
-              delay={idx * 0.05}
-              hover={true}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
               className="bg-white/5 border border-white/10 p-4 text-center"
             >
-              <motion.div
-                whileHover={{ 
-                  scale: 1.1,
-                  rotate: [0, -5, 5, 0],
-                  transition: { duration: 0.3 }
-                }}
-              >
-                <stat.icon className="w-6 h-6 mx-auto mb-2" style={{ color: stat.color }} />
-              </motion.div>
+              <stat.icon className="w-6 h-6 mx-auto mb-2" style={{ color: stat.color }} />
               <div className="text-2xl font-black mb-1" style={{ color: stat.color }}>
                 {stat.value.toLocaleString()}
               </div>
               <div className="text-xs text-white/60 uppercase">{stat.label}</div>
-            </AnimatedCard>
+            </motion.div>
           ))}
         </div>
 

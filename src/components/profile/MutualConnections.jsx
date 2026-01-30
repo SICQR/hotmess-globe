@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
-// createPageUrl no longer used after privacy URL refactor
-import { getProfileUrl } from '@/lib/userPrivacy';
+import { createPageUrl } from '../../utils';
 
 export default function MutualConnections({ profileUserEmail, currentUserEmail }) {
   const { data: currentUserFollowing = [] } = useQuery({
@@ -46,7 +45,7 @@ export default function MutualConnections({ profileUserEmail, currentUserEmail }
         {mutualUsers.slice(0, 5).map((user) => (
           <Link 
             key={user.email} 
-            to={getProfileUrl(user)}
+            to={createPageUrl(`Profile?email=${user.email}`)}
             className="inline-block"
           >
             <div 

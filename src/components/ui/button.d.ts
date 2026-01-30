@@ -9,27 +9,9 @@ type ButtonVariant =
   | "outline"
   | "secondary"
   | "ghost"
-  | "link"
-  // Gradient variants
-  | "hotGradient"
-  | "cyanGradient"
-  | "premium"
-  | "purpleGradient"
-  | "greenGradient"
-  // Glow variants
-  | "hotGlow"
-  | "cyanGlow"
-  | "goldGlow"
-  | "greenGlow"
-  // Ghost gradient
-  | "ghostGradient"
-  // Outline variants with color
-  | "outlineHot"
-  | "outlineCyan"
-  | "outlineGold"
-  | "outlineWhite";
+  | "link";
 
-type ButtonSize = "default" | "sm" | "lg" | "xl" | "2xl" | "icon" | "icon-sm" | "icon-lg";
+type ButtonSize = "default" | "sm" | "lg" | "xl" | "icon";
 
 export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;

@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Cookie, X, Settings, Check } from 'lucide-react';
 import { createPageUrl } from '../../utils';
 
 const COOKIE_CONSENT_KEY = 'hotmess_cookie_consent';
-
-// Pages where cookie banner should not show (they handle consent themselves)
-const HIDE_ON_PAGES = ['/age', '/AgeGate', '/auth', '/Auth', '/onboarding'];
 
 const COOKIE_CATEGORIES = [
   {
@@ -38,35 +35,14 @@ export function CookieConsent() {
     analytics: false,
     marketing: false,
   });
-  const location = useLocation();
 
   useEffect(() => {
-    // Don't show cookie banner on age gate or auth pages - they handle consent themselves
-    const currentPath = location?.pathname || '';
-    if (HIDE_ON_PAGES.some(p => currentPath.toLowerCase().startsWith(p.toLowerCase()))) {
-      setVisible(false);
-      return;
-    }
-
-    // Check if already consented via splash screen or previous visit
     const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
-    const splashConsent = sessionStorage.getItem('cookies_accepted');
-    
-    if (splashConsent === 'true' && !stored) {
-      // User accepted via splash - save to localStorage and don't show banner
-      saveConsent({
-        essential: true,
-        analytics: true,
-        marketing: true,
-      });
-      return;
-    }
-    
-    if (!stored && !splashConsent) {
-      // No consent yet - show banner after delay (but only if no splash consent)
-      const timer = setTimeout(() => setVisible(true), 2000);
+    if (!stored) {
+      // Show banner after a short delay
+      const timer = setTimeout(() => setVisible(true), 1500);
       return () => clearTimeout(timer);
-    } else if (stored) {
+    } else {
       try {
         const parsed = JSON.parse(stored);
         setPreferences(parsed);
@@ -74,7 +50,7 @@ export function CookieConsent() {
         console.error('Failed to parse cookie consent:', e);
       }
     }
-  }, [location?.pathname]);
+  }, []);
 
   const saveConsent = (newPreferences) => {
     const consent = {

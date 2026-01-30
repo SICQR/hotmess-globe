@@ -4,17 +4,17 @@
 create extension if not exists pgcrypto;
 
 -- Demo users (public."User")
--- Only insert minimal columns - role has a check constraint on remote
-insert into public."User" (id, email, full_name, avatar_url, city, xp)
+insert into public."User" (id, email, full_name, avatar_url, city, xp, consent_accepted, has_agreed_terms, has_consented_data, has_consented_gps, membership_tier, role)
 values
-  ('11111111-1111-1111-1111-111111111111', 'demo1@hotmess.london', 'Demo One', null, 'London', 2200),
-  ('22222222-2222-2222-2222-222222222222', 'demo2@hotmess.london', 'Demo Two', null, 'London', 1450),
-  ('33333333-3333-3333-3333-333333333333', 'demo3@hotmess.london', 'Demo Three', null, 'London', 900)
+  ('11111111-1111-1111-1111-111111111111', 'demo1@hotmess.london', 'Demo One', null, 'London', 2200, true, true, true, true, 'basic', 'member'),
+  ('22222222-2222-2222-2222-222222222222', 'demo2@hotmess.london', 'Demo Two', null, 'London', 1450, true, true, true, true, 'plus', 'member'),
+  ('33333333-3333-3333-3333-333333333333', 'demo3@hotmess.london', 'Demo Three', null, 'London', 900, true, true, true, false, 'basic', 'member')
 on conflict (email)
 do update set
   full_name = excluded.full_name,
   city = excluded.city,
-  xp = excluded.xp,
+  membership_tier = excluded.membership_tier,
+  role = public."User".role,
   updated_date = now();
 
 -- Cities
@@ -52,13 +52,13 @@ on conflict (user_email, tag_id) do update set
   category_id = excluded.category_id,
   visibility = excluded.visibility;
 
--- User tribes (only insert columns that exist)
-insert into public.user_tribes (user_email, tribe_id)
+-- User tribes
+insert into public.user_tribes (user_email, tribe_id, tribe_label)
 values
-  ('demo1@hotmess.london', 'ravers'),
-  ('demo2@hotmess.london', 'daddies'),
-  ('demo3@hotmess.london', 'explorers')
-on conflict (user_email, tribe_id) do nothing;
+  ('demo1@hotmess.london', 'ravers', 'Ravers'),
+  ('demo2@hotmess.london', 'daddies', 'Daddies'),
+  ('demo3@hotmess.london', 'explorers', 'Explorers')
+on conflict (user_email, tribe_id) do update set tribe_label = excluded.tribe_label;
 
 -- Activity feed (public)
 insert into public.activity_feed (id, user_email, activity_type, visibility, xp_earned, activity_data, location)
@@ -89,10 +89,10 @@ values
   ('ffffffff-ffff-ffff-ffff-fffffffffff1', array['demo1@hotmess.london','demo2@hotmess.london'], 'dm', true, 'See you at HOTMESS Friday?', now() - interval '10 minutes')
 on conflict (id) do nothing;
 
-insert into public.messages (id, thread_id, sender_email, content, message_type, read_by)
+insert into public.messages (id, thread_id, sender_email, sender_name, content, message_type, read_by)
 values
-  ('abababab-abab-abab-abab-ababababab01', 'ffffffff-ffff-ffff-ffff-fffffffffff1', 'demo1@hotmess.london', 'See you at HOTMESS Friday?', 'text', array['demo1@hotmess.london']),
-  ('abababab-abab-abab-abab-ababababab02', 'ffffffff-ffff-ffff-ffff-fffffffffff1', 'demo2@hotmess.london', 'Yes. Ask first 😉', 'text', array['demo2@hotmess.london'])
+  ('abababab-abab-abab-abab-ababababab01', 'ffffffff-ffff-ffff-ffff-fffffffffff1', 'demo1@hotmess.london', 'Demo One', 'See you at HOTMESS Friday?', 'text', array['demo1@hotmess.london']),
+  ('abababab-abab-abab-abab-ababababab02', 'ffffffff-ffff-ffff-ffff-fffffffffff1', 'demo2@hotmess.london', 'Demo Two', 'Yes. Ask first 😉', 'text', array['demo2@hotmess.london'])
 on conflict (id) do nothing;
 
 -- Preferences defaults

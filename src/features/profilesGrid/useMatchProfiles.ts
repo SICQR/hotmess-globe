@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Profile, SortOption, MatchProfilesResponse } from './types';
+import type { Profile, ProfilesResponse, SortOption } from './types';
 import { supabase } from '@/components/utils/supabaseClient';
 
 const getAccessToken = async (): Promise<string | null> => {
@@ -25,10 +25,8 @@ const dedupeProfiles = (profiles: Profile[]): Profile[] => {
   return out;
 };
 
-const parseMatchResponse = (value: unknown): MatchProfilesResponse => {
-  if (!value || typeof value !== 'object') {
-    return { items: [], nextCursor: null, scoringVersion: '1.0' };
-  }
+const parseProfilesResponse = (value: unknown): ProfilesResponse => {
+  if (!value || typeof value !== 'object') return { items: [], nextCursor: null };
   const v = value as Record<string, unknown>;
 
   const rawItems = Array.isArray(v.items) ? v.items : [];
@@ -37,34 +35,30 @@ const parseMatchResponse = (value: unknown): MatchProfilesResponse => {
     .filter((p) => !!p && typeof p.id === 'string');
 
   const uniqueItems = dedupeProfiles(items);
-  const nextCursor = typeof v.nextCursor === 'string' ? v.nextCursor : null;
-  const scoringVersion = typeof v.scoringVersion === 'string' ? v.scoringVersion : '1.0';
 
+  const nextCursor = typeof v.nextCursor === 'string' ? v.nextCursor : null;
+  const scoringVersion = typeof v.scoringVersion === 'string' ? v.scoringVersion : undefined;
+  
   return { items: uniqueItems, nextCursor, scoringVersion };
 };
 
-export type UseMatchProfilesOptions = {
+export type MatchProfilesOptions = {
+  /** Viewer's latitude for travel time calculation */
   viewerLat?: number | null;
+  /** Viewer's longitude for travel time calculation */
   viewerLng?: number | null;
+  /** Sort order: 'match' | 'distance' | 'lastActive' | 'newest' */
   sort?: SortOption;
-  minMatch?: number;
+  /** Max items per page */
   limit?: number;
-  enabled?: boolean;
 };
 
-export function useMatchProfiles(options: UseMatchProfilesOptions = {}) {
-  const {
-    viewerLat = null,
-    viewerLng = null,
-    sort = 'match',
-    minMatch = 0,
-    limit = 40,
-    enabled = true,
-  } = options;
-
+export function useMatchProfiles(options: MatchProfilesOptions = {}) {
+  const { viewerLat, viewerLng, sort = 'match', limit = 40 } = options;
+  
   const [items, setItems] = useState<Profile[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [scoringVersion, setScoringVersion] = useState<string>('1.0');
+  const [scoringVersion, setScoringVersion] = useState<string | undefined>();
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,61 +67,41 @@ export function useMatchProfiles(options: UseMatchProfilesOptions = {}) {
   const hasMoreRef = useRef(true);
   const abortRef = useRef<AbortController | null>(null);
 
-  const fetchPage = useCallback(async (cursor: string | null): Promise<MatchProfilesResponse> => {
+  const fetchPage = useCallback(async (cursor: string | null) => {
     const params = new URLSearchParams();
     
     if (cursor) {
       params.set('cursor', cursor);
     }
-    if (Number.isFinite(viewerLat) && Number.isFinite(viewerLng)) {
+    
+    params.set('limit', String(limit));
+    params.set('sort', sort);
+    
+    if (viewerLat !== null && viewerLat !== undefined && Number.isFinite(viewerLat)) {
       params.set('lat', String(viewerLat));
+    }
+    if (viewerLng !== null && viewerLng !== undefined && Number.isFinite(viewerLng)) {
       params.set('lng', String(viewerLng));
     }
-    params.set('sort', sort);
-    params.set('limit', String(limit));
-    if (minMatch > 0) {
-      params.set('minMatch', String(minMatch));
-    }
-
-    const queryString = params.toString();
-    const url = `/api/match-probability${queryString ? `?${queryString}` : ''}`;
-
+    
     const token = await getAccessToken();
     const headers: Record<string, string> = {};
     if (token) {
-      headers.Authorization = `Bearer ${token}`;
+      headers['Authorization'] = `Bearer ${token}`;
     }
-
+    
+    const url = `/api/match-probability?${params.toString()}`;
     const res = await fetch(url, { method: 'GET', headers });
     
     if (!res.ok) {
-      // Fall back to regular profiles endpoint if match-probability isn't available
-      if (res.status === 404) {
-        const fallbackParams = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
-        const fallbackRes = await fetch(`/api/profiles${fallbackParams}`, { 
-          method: 'GET', 
-          headers 
-        });
-        if (!fallbackRes.ok) {
-          throw new Error(`Failed to fetch profiles (${fallbackRes.status})`);
-        }
-        const fallbackData = await fallbackRes.json();
-        return {
-          items: Array.isArray(fallbackData.items) ? fallbackData.items : [],
-          nextCursor: fallbackData.nextCursor || null,
-          scoringVersion: 'fallback',
-        };
-      }
-      throw new Error(`Failed to fetch match profiles (${res.status})`);
+      throw new Error(`Failed to fetch profiles (${res.status})`);
     }
-
+    
     const data: unknown = await res.json();
-    return parseMatchResponse(data);
-  }, [viewerLat, viewerLng, sort, minMatch, limit]);
+    return parseProfilesResponse(data);
+  }, [limit, sort, viewerLat, viewerLng]);
 
   const loadInitial = useCallback(async () => {
-    if (!enabled) return;
-
     abortRef.current?.abort();
     abortRef.current = new AbortController();
 
@@ -149,10 +123,9 @@ export function useMatchProfiles(options: UseMatchProfilesOptions = {}) {
     } finally {
       setIsLoadingInitial(false);
     }
-  }, [enabled, fetchPage]);
+  }, [fetchPage]);
 
   const loadMore = useCallback(async () => {
-    if (!enabled) return;
     if (isLoadingInitial || isLoadingMore) return;
     if (!hasMoreRef.current) return;
 
@@ -174,9 +147,8 @@ export function useMatchProfiles(options: UseMatchProfilesOptions = {}) {
     } finally {
       setIsLoadingMore(false);
     }
-  }, [enabled, fetchPage, isLoadingInitial, isLoadingMore]);
+  }, [fetchPage, isLoadingInitial, isLoadingMore]);
 
-  // Reload when sort or location changes significantly
   useEffect(() => {
     void loadInitial();
   }, [loadInitial]);

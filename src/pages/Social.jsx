@@ -1,18 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Users, MessageCircle, Sparkles } from 'lucide-react';
+import { Users, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-// Use ProfilesGridWithMatch for match probability sorting
-import ProfilesGridWithMatch from '@/features/profilesGrid/ProfilesGridWithMatch';
+import { createPageUrl } from '../utils';
+import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 import { useCurrentUser } from '@/components/utils/queryConfig';
 import PageShell from '@/components/shell/PageShell';
-import { getProfileUrl } from '@/lib/userPrivacy';
-import StoriesBar from '@/components/social/Stories';
-import { LuxHeroBanner } from '@/components/lux/LuxBanner';
-import { Zap } from 'lucide-react';
 
 export default function Social() {
   const navigate = useNavigate();
@@ -86,7 +82,6 @@ export default function Social() {
           title="Social"
           subtitle="Discover • Connect • Message"
           maxWidth="4xl"
-          kinetic={true}
         >
           <div className="bg-white/5 border-2 border-white/10 p-6">
             <h2 className="text-2xl font-black uppercase mb-2">SIGN IN TO CONTINUE</h2>
@@ -110,38 +105,21 @@ export default function Social() {
 
 
   return (
-    <div className="min-h-screen bg-black text-white pb-20 relative">
-      {/* Hero Banner */}
-      <LuxHeroBanner
-        title="FIND YOUR MATCH"
-        subtitle="AI-powered compatibility • Real-time availability • Zero ghosting"
-        ctaText="GO RIGHT NOW"
-        ctaHref="/social?tab=discover"
-        backgroundImage="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80"
-        overlay="gradient"
-        size="sm"
-      />
-
+    <div className="min-h-screen bg-black text-white pb-20">
       <PageShell
         eyebrow="SOCIAL"
         title="Social"
         subtitle="Discover • Connect • Message"
-          kinetic={true}
         maxWidth="7xl"
       >
-        {/* Stories Bar */}
-        <div className="mb-6 -mx-4 md:mx-0">
-          <StoriesBar currentUser={currentUser} className="bg-white/5 border-b border-white/10" />
-        </div>
-
         <Tabs value={activeTab} onValueChange={(v) => setTabAndUrl(v)} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-white/5 mb-8">
             <TabsTrigger
               value="discover"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#FF1493] data-[state=active]:to-[#B026FF] data-[state=active]:text-white"
+              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
-              MATCH
+              <Users className="w-4 h-4 mr-2" />
+              DISCOVER
             </TabsTrigger>
             <TabsTrigger
               value="inbox"
@@ -158,17 +136,21 @@ export default function Social() {
           </TabsList>
 
           <TabsContent value="discover">
-            <ProfilesGridWithMatch
-              showHeader={true}
-              headerTitle="Find Your Match"
+            <ProfilesGrid
+              showHeader={false}
               showTelegramFeedButton
-              showSortSelector
-              defaultSort="match"
               containerClassName="mx-0 max-w-none p-0"
               onNavigateUrl={(url) => navigate(url)}
               onOpenProfile={(profile) => {
-                // Use user ID, never expose email in URL
-                navigate(getProfileUrl(profile));
+                const email = profile?.email;
+                const uid = profile?.authUserId;
+                if (uid) {
+                  navigate(`/social/u/${encodeURIComponent(uid)}`);
+                  return;
+                }
+                if (email) {
+                  navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
+                }
               }}
             />
           </TabsContent>
@@ -232,18 +214,6 @@ export default function Social() {
           </TabsContent>
         </Tabs>
       </PageShell>
-
-      {/* Floating "Go Live" CTA */}
-      <div className="fixed bottom-24 right-4 z-40 md:bottom-8 md:right-8">
-        <Link to="/social?tab=discover">
-          <Button 
-            className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-6 py-4 text-lg shadow-2xl animate-pulse hover:animate-none"
-          >
-            <Zap className="w-5 h-5 mr-2" />
-            GO LIVE NOW
-          </Button>
-        </Link>
-      </div>
     </div>
   );
 }

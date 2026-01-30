@@ -7,8 +7,6 @@ import { buildUberDeepLink } from '@/utils/uberDeepLink';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes } from '@/utils/travelRecommendations';
 import { useNavigate } from 'react-router-dom';
-import { EditorialImage } from '@/components/media/EditorialImage';
-import { KineticHeadline } from '@/components/text/KineticHeadline';
 
 export default function ProfileHeader({ user, isOwnProfile, currentUser, travelEtas }) {
   const navigate = useNavigate();
@@ -121,18 +119,6 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
           className="absolute inset-0 w-full h-full object-cover opacity-30" 
         />
       )}
-      
-      {/* EditorialImage for standard profiles with avatar */}
-      {profileType !== 'seller' && user?.avatar_url && (
-        <EditorialImage 
-          src={user.avatar_url}
-          alt={`${user?.full_name}'s profile`}
-          mode="multiply"
-          zoom
-          parallax
-          className="absolute inset-0 w-full h-full opacity-20"
-        />
-      )}
 
       <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
         <div className="flex flex-col md:flex-row items-start md:items-end gap-6">
@@ -152,11 +138,7 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
           {/* Info */}
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-3 mb-2">
-              <KineticHeadline 
-                text={user?.full_name || 'User'} 
-                as="h1"
-                className="text-4xl md:text-6xl font-black"
-              />
+              <h1 className="text-4xl md:text-6xl font-black">{user?.full_name}</h1>
               
               {/* Profile Type Badge */}
               {config.badge && (

@@ -136,11 +136,6 @@ async function trimCache(cacheName, maxItems) {
   }, 5000);
 }
 
-// Check if response can be cached (must be 200, not 206 partial)
-function canCacheResponse(response) {
-  return response && response.ok && response.status === 200;
-}
-
 // Cache-first strategy
 async function cacheFirst(request, cacheName, maxItems) {
   const cachedResponse = await caches.match(request);
@@ -152,7 +147,7 @@ async function cacheFirst(request, cacheName, maxItems) {
   try {
     const networkResponse = await fetch(request);
     
-    if (canCacheResponse(networkResponse)) {
+    if (networkResponse.ok) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
       
@@ -173,7 +168,7 @@ async function networkFirst(request, cacheName, maxItems) {
   try {
     const networkResponse = await fetch(request);
     
-    if (canCacheResponse(networkResponse)) {
+    if (networkResponse.ok) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
       
@@ -207,7 +202,7 @@ async function staleWhileRevalidate(request, cacheName, maxItems) {
   // Start network request in background
   const networkPromise = fetch(request)
     .then(async (networkResponse) => {
-      if (canCacheResponse(networkResponse)) {
+      if (networkResponse.ok) {
         const cache = await caches.open(cacheName);
         await cache.put(request, networkResponse.clone());
         
@@ -368,10 +363,6 @@ self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-notifications') {
     event.waitUntil(syncNotifications());
   }
-  
-  if (event.tag === 'hotmess-offline-sync') {
-    event.waitUntil(syncOfflineQueue());
-  }
 });
 
 async function syncNotifications() {
@@ -382,62 +373,5 @@ async function syncNotifications() {
     console.log('[SW] Notifications synced');
   } catch (error) {
     console.error('[SW] Sync failed:', error);
-  }
-}
-
-// Sync offline queue when back online
-async function syncOfflineQueue() {
-  console.log('[SW] Syncing offline queue...');
-  
-  try {
-    // Notify all clients to process their offline queues
-    const clients = await self.clients.matchAll({ type: 'window' });
-    
-    for (const client of clients) {
-      client.postMessage({
-        type: 'SYNC_OFFLINE_QUEUE',
-        timestamp: Date.now(),
-      });
-    }
-    
-    console.log('[SW] Offline queue sync message sent to clients');
-  } catch (error) {
-    console.error('[SW] Offline queue sync failed:', error);
-    throw error; // Re-throw to trigger retry
-  }
-}
-
-// Periodic background sync (when supported)
-self.addEventListener('periodicsync', (event) => {
-  console.log('[SW] Periodic sync:', event.tag);
-  
-  if (event.tag === 'content-sync') {
-    event.waitUntil(syncContent());
-  }
-});
-
-async function syncContent() {
-  // Refresh key cached data in the background
-  try {
-    const cache = await caches.open(API_CACHE);
-    const requests = [
-      '/api/events?limit=20',
-      '/api/beacons?limit=20',
-    ];
-    
-    for (const url of requests) {
-      try {
-        const response = await fetch(url);
-        if (response.ok) {
-          await cache.put(url, response);
-        }
-      } catch {
-        // Silently fail individual requests
-      }
-    }
-    
-    console.log('[SW] Content synced');
-  } catch (error) {
-    console.error('[SW] Content sync failed:', error);
   }
 }

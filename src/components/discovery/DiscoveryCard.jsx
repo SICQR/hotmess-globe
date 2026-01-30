@@ -1,13 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-// createPageUrl no longer used after privacy URL refactor
+import { createPageUrl } from '../../utils';
 import { MapPin, Zap, Crown } from 'lucide-react';
 import CompatibilityBadge, { calculateCompatibility } from './CompatibilityBadge';
 import ReportButton from '../moderation/ReportButton';
 import LazyImage from '../ui/LazyImage';
 import AIMatchExplanation from './AIMatchExplanation';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 
 const getUserPhotoUrls = (user) => {
   const urls = [];
@@ -85,7 +84,7 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
     >
-      <Link to={getProfileUrl(user)}>
+      <Link to={createPageUrl(`Profile?email=${user.email}`)}>
         <div 
           className="group relative overflow-hidden border-2 border-white/10 hover:border-[#FF1493] transition-all"
           onMouseEnter={() => setIsHovering(true)}
@@ -96,7 +95,7 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
             {primaryPhotoUrl ? (
               <LazyImage
                 src={primaryPhotoUrl}
-                alt={getDisplayName(user)}
+                alt={user.full_name}
                 className="w-full h-full object-cover"
                 containerClassName="w-full h-full absolute inset-0"
               />
@@ -264,7 +263,7 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
                 <span className="text-[10px] font-bold text-[#FFEB3B]">{user.xp || 0}</span>
               </div>
               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                <ReportButton itemType="user" itemId={user.auth_user_id || user.id} variant="ghost" />
+                <ReportButton itemType="user" itemId={user.email} variant="ghost" />
               </div>
             </div>
           </div>

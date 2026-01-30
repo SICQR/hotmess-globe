@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { supabase } from '@/components/utils/supabaseClient';
+import { supabase } from '@/api/supabaseClient';
 
 function useReturnUrl() {
   const location = useLocation();

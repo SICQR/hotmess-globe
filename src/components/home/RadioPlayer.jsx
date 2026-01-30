@@ -3,7 +3,6 @@ import { Radio, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { base44 } from '@/api/base44Client';
-import { broadcast } from '@/lib/globeActivity';
 
 export default function RadioPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -55,11 +54,6 @@ export default function RadioPlayer() {
         audioRef.current.src = STREAM_URL;
         await audioRef.current.play();
         setIsPlaying(true);
-        
-        // Broadcast to globe activity stream
-        broadcast.radioTuneIn(null, null, {
-          stream: 'RAW CONVICT RECORDS',
-        });
         
         // Start XP timer - award XP every 5 minutes
         xpTimerRef.current = setInterval(async () => {

@@ -19,8 +19,6 @@ export function createPageUrl(pageName: string) {
         More: '/more',
 
         AgeGate: '/age',
-        OnboardingGate: '/onboarding/consent',
-        Onboarding: '/onboarding/preferences',
         Safety: '/safety',
         Calendar: '/calendar',
         Scan: '/scan',

@@ -68,50 +68,27 @@ export async function fetchTravelTime({
     try {
       const token = await getAccessToken();
 
-      // Create timeout controller (25s to allow server 20s + network overhead)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const res = await fetch('/api/travel-time', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        signal,
+        body: JSON.stringify({
+          origin: { lat: viewerBucket.lat, lng: viewerBucket.lng },
+          destination: { lat: destinationBucket.lat, lng: destinationBucket.lng },
+        }),
+      });
 
-      // Combine abort signals
-      const combinedSignal = signal 
-        ? AbortSignal.any([signal, controller.signal])
-        : controller.signal;
-
-      try {
-        const res = await fetch('/api/travel-time', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          signal: combinedSignal,
-          body: JSON.stringify({
-            origin: { lat: viewerBucket.lat, lng: viewerBucket.lng },
-            destination: { lat: destinationBucket.lat, lng: destinationBucket.lng },
-          }),
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!res.ok) {
-          return { walking: null, driving: null, bicycling: null, uber: null, fastest: null };
-        }
-
-        const data: unknown = await res.json();
-        const parsed = parseTravelTimeResponse(data);
-        cache.set(key, { expiresAtMs: Date.now() + TTL_MS, value: parsed });
-        return parsed;
-      } catch (error) {
-        clearTimeout(timeoutId);
-        // Gracefully handle timeouts/connection resets
-        if (error instanceof Error && error.name === 'AbortError') {
-          console.warn('[travelTime] Request timed out or was aborted');
-        }
-        throw error;
+      if (!res.ok) {
+        return { walking: null, driving: null, bicycling: null, uber: null, fastest: null };
       }
-    } catch (error) {
-      // Return empty response on any error to prevent UI breaks
-      return { walking: null, driving: null, bicycling: null, uber: null, fastest: null };
+
+      const data: unknown = await res.json();
+      const parsed = parseTravelTimeResponse(data);
+      cache.set(key, { expiresAtMs: Date.now() + TTL_MS, value: parsed });
+      return parsed;
     } finally {
       inFlight.delete(key);
     }
