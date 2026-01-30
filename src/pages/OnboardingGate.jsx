@@ -33,13 +33,19 @@ export default function OnboardingGate() {
         const user = await base44.auth.me();
         setCurrentUser(user);
         
-        // If all consents already given, redirect to Home (Pulse)
+        // If all consents already given, redirect appropriately
         if (user.has_agreed_terms && user.has_consented_data && user.has_consented_gps) {
-          if (user.full_name && user.avatar_url) {
-            window.location.href = createPageUrl('Home');
+          // If onboarding preferences are complete, go to Profile or Home
+          if (user.onboarding_completed) {
+            if (user.full_name && user.avatar_url) {
+              window.location.href = createPageUrl('Home');
+            } else {
+              // Profile setup is needed
+              window.location.href = createPageUrl('Profile');
+            }
           } else {
-        // Profile setup is handled by the consolidated Profile page (setup mode)
-        window.location.href = createPageUrl('Profile');
+            // Consents are done, but need preferences
+            window.location.href = createPageUrl('Onboarding');
           }
         } else {
           // Avoid showing age verification twice: the global /age gate already stores sessionStorage.age_verified.
@@ -78,7 +84,8 @@ export default function OnboardingGate() {
   };
 
   const handleCreateProfile = () => {
-    window.location.href = createPageUrl('Profile');
+    // After consents, go to preferences onboarding
+    window.location.href = createPageUrl('Onboarding');
   };
 
   const renderStep = () => {
@@ -231,15 +238,15 @@ export default function OnboardingGate() {
             className="text-center"
           >
             <User className="w-16 h-16 text-[#39FF14] mx-auto mb-6" />
-            <h2 className="text-4xl font-black mb-4 uppercase">Complete Profile</h2>
+            <h2 className="text-4xl font-black mb-4 uppercase">Complete Setup</h2>
             <p className="text-lg mb-8 text-white/80">
-              Almost there! Create your profile and upload a photo to unlock HOTMESS.
+              Almost there! Let's set up your preferences to personalize your experience.
             </p>
             <Button 
               onClick={handleCreateProfile}
               className="bg-[#39FF14] text-black hover:bg-white font-black uppercase px-8 py-6 text-lg"
             >
-              Setup Profile
+              Continue to Preferences
             </Button>
           </motion.div>
         );

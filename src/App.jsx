@@ -338,8 +338,6 @@ const AuthenticatedApp = () => {
       } />
       <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
-      <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
-      <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
       <Route path="/pulse" element={<PageRoute pageKey="Pulse" />} />
       <Route path="/events" element={<PageRoute pageKey="Events" />} />
       <Route path="/events/:id" element={<EventDetailRedirect />} />
@@ -385,8 +383,8 @@ const AuthenticatedApp = () => {
       <Route path="/auth/reset" element={<PageRoute pageKey="Auth" />} />
       
       {/* Onboarding sub-routes */}
-      <Route path="/onboarding" element={<PageRoute pageKey="Onboarding" />} />
-      <Route path="/onboarding/consent" element={<PageRoute pageKey="Onboarding" />} />
+      <Route path="/onboarding" element={<Navigate to="/onboarding/consent" replace />} />
+      <Route path="/onboarding/consent" element={<PageRoute pageKey="OnboardingGate" />} />
       <Route path="/onboarding/profile" element={<PageRoute pageKey="Onboarding" />} />
       <Route path="/onboarding/preferences" element={<PageRoute pageKey="Onboarding" />} />
 
