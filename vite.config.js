@@ -613,7 +613,9 @@ export default defineConfig(({ mode }) => {
     ].filter(Boolean),
     esbuild: {
       // Strip console.log and debugger statements in production
-      drop: mode === 'production' ? ['console', 'debugger'] : [],
+      // Keep console.error and console.warn for production debugging
+      drop: mode === 'production' ? ['debugger'] : [],
+      pure: mode === 'production' ? ['console.log', 'console.debug'] : [],
     },
     test: {
       globals: true,
