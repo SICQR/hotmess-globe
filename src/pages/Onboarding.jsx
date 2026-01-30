@@ -74,8 +74,11 @@ export default function Onboarding() {
       onboarding_completed: true 
     });
 
+    // Fetch updated user data to check profile completeness
+    const updatedUser = await base44.auth.me();
+
     // After preferences, redirect to Profile setup if not complete
-    if (!currentUser.full_name || !currentUser.avatar_url) {
+    if (!updatedUser?.full_name || !updatedUser?.avatar_url) {
       navigate(createPageUrl('Profile'));
     } else {
       navigate(createPageUrl('Home'));
