@@ -10,7 +10,6 @@ import TrendingSummary from '../components/community/TrendingSummary';
 import PersonalizedFeed from '../components/community/PersonalizedFeed';
 import PostCreator from '../components/community/PostCreator';
 import { checkRateLimit } from '../components/utils/sanitize';
-import { notifyPostLiked } from '@/lib/notifications';
 
 export default function Community() {
   const [user, setUser] = useState(null);
@@ -53,38 +52,23 @@ export default function Community() {
       }
 
       const existingLike = userLikes.find(l => l.post_id === postId);
-      const post = posts.find(p => p.id === postId);
-      
       if (existingLike) {
-        // Unlike
         await base44.entities.PostLike.delete(existingLike.id);
+        const post = posts.find(p => p.id === postId);
         await base44.entities.CommunityPost.update(postId, {
-          likes_count: Math.max(0, (post?.likes_count || 0) - 1)
+          likes_count: Math.max(0, (post.likes_count || 0) - 1)
         });
-        return { action: 'unlike', post };
       } else {
-        // Like
         await base44.entities.PostLike.create({ user_email: user.email, post_id: postId });
+        const post = posts.find(p => p.id === postId);
         await base44.entities.CommunityPost.update(postId, {
-          likes_count: (post?.likes_count || 0) + 1
+          likes_count: (post.likes_count || 0) + 1
         });
-        return { action: 'like', post };
       }
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries(['community-posts']);
       queryClient.invalidateQueries(['user-likes']);
-      
-      // Send notification on like (not unlike), and not to self
-      if (result?.action === 'like' && result?.post?.user_email && result.post.user_email !== user.email) {
-        notifyPostLiked(
-          user.full_name || user.email?.split('@')[0] || 'Someone',
-          user.email,
-          result.post.user_email,
-          result.post.id,
-          result.post.content?.slice(0, 50)
-        );
-      }
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to like post');

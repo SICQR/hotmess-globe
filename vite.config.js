@@ -3,7 +3,6 @@ import { defineConfig, loadEnv } from 'vite'
 import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { visualizer } from 'rollup-plugin-visualizer'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -267,21 +266,6 @@ function localApiRoutes() {
                 res.statusCode = 500;
                 res.setHeader('Content-Type', 'application/json');
                 res.end(JSON.stringify({ error: error?.message || 'Failed to load directions handler' }));
-              } catch {
-                // If the client disconnected mid-request, do not crash dev server.
-              }
-            });
-        }
-
-        if (path === '/api/match-probability' && method === 'GET') {
-          return importFresh('./api/match-probability/index.js')
-            .then((handler) => handler(req, res))
-            .catch((error) => {
-              try {
-                if (res.headersSent || res.writableEnded) return;
-                res.statusCode = 500;
-                res.setHeader('Content-Type', 'application/json');
-                res.end(JSON.stringify({ error: error?.message || 'Failed to load match-probability handler' }));
               } catch {
                 // If the client disconnected mid-request, do not crash dev server.
               }
@@ -602,15 +586,7 @@ export default defineConfig(({ mode }) => {
       // Local dev handlers for /api/* endpoints.
       localApiRoutes(),
       react(),
-      // Bundle analysis - generates stats.html on build
-      // Set ANALYZE=true env var to enable: ANALYZE=true npm run build
-      process.env.ANALYZE === 'true' && visualizer({
-        filename: './dist/stats.html',
-        open: true,
-        gzipSize: true,
-        brotliSize: true,
-      }),
-    ].filter(Boolean),
+    ],
     test: {
       globals: true,
       environment: 'jsdom',

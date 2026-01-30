@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -6,37 +6,8 @@ import { MapPin, Clock, Sparkles, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-// createPageUrl no longer used after privacy URL refactor
+import { createPageUrl } from '../../utils';
 import MembershipBadge from '../membership/MembershipBadge';
-import { getProfileUrl } from '@/lib/userPrivacy';
-
-/**
- * Calculate distance between two points using Haversine formula
- * @returns Distance in kilometers
- */
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-  
-  const R = 6371; // Earth's radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-/**
- * Format distance for display
- */
-function formatDistance(distanceKm) {
-  if (distanceKm === null) return null;
-  if (distanceKm < 1) return `${Math.round(distanceKm * 1000)}m away`;
-  if (distanceKm < 10) return `${distanceKm.toFixed(1)}km away`;
-  return `${Math.round(distanceKm)}km away`;
-}
 
 export default function RightNowGrid({ currentUser }) {
   const { data: rightNowStatuses = [] } = useQuery({
@@ -56,39 +27,12 @@ export default function RightNowGrid({ currentUser }) {
     queryFn: () => base44.entities.User.list(),
   });
 
-  // Get current user's location
-  const userLat = currentUser?.last_lat || currentUser?.latitude;
-  const userLng = currentUser?.last_lng || currentUser?.longitude;
-
-  const usersWithStatus = useMemo(() => {
-    return rightNowStatuses
-      .map(status => {
-        // Support both email-based and ID-based matching
-        const user = allUsers.find(u => 
-          u.email === status.user_email || 
-          u.id === status.user_id || 
-          u.auth_user_id === status.user_id
-        );
-        // Filter out current user by email or ID
-        if (!user) return null;
-        if (user.email === currentUser?.email || user.id === currentUser?.id) return null;
-        
-        // Calculate real distance if both users have location
-        const otherLat = user.last_lat || user.latitude;
-        const otherLng = user.last_lng || user.longitude;
-        const distance = calculateDistance(userLat, userLng, otherLat, otherLng);
-        
-        return { status, user, distance };
-      })
-      .filter(Boolean)
-      .sort((a, b) => {
-        // Sort by distance (nearest first), nulls last
-        if (a.distance === null && b.distance === null) return 0;
-        if (a.distance === null) return 1;
-        if (b.distance === null) return -1;
-        return a.distance - b.distance;
-      });
-  }, [rightNowStatuses, allUsers, currentUser?.email, currentUser?.id, userLat, userLng]);
+  const usersWithStatus = rightNowStatuses
+    .map(status => ({
+      status,
+      user: allUsers.find(u => u.email === status.user_email),
+    }))
+    .filter(item => item.user && item.user.email !== currentUser?.email);
 
   return (
     <div className="min-h-screen bg-black text-white p-4">
@@ -114,9 +58,7 @@ export default function RightNowGrid({ currentUser }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {usersWithStatus.map((item, idx) => {
-              const { status, user, distance } = item;
-              return (
+            {usersWithStatus.map(({ status, user }, idx) => (
               <motion.div
                 key={status.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -128,7 +70,7 @@ export default function RightNowGrid({ currentUser }) {
                     : 'border-white/20 hover:border-[#FF1493]'
                 }`}
               >
-                <Link to={getProfileUrl(user)}>
+                <Link to={createPageUrl(`Profile?email=${user.email}`)}>
                   <div className="flex items-start gap-3 mb-4">
                     <div className="relative">
                       <div
@@ -189,17 +131,10 @@ export default function RightNowGrid({ currentUser }) {
                     </div>
                   )}
 
-                  {distance !== null ? (
-                    <div className="flex items-center gap-2 text-xs text-white/40">
-                      <MapPin className="w-3 h-3" />
-                      <span>{formatDistance(distance)}</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-xs text-white/40">
-                      <MapPin className="w-3 h-3" />
-                      <span>Distance unknown</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 text-xs text-white/40">
+                    <MapPin className="w-3 h-3" />
+                    <span>~{Math.floor(Math.random() * 5)}km away</span>
+                  </div>
                 </div>
 
                 <Button
@@ -213,8 +148,7 @@ export default function RightNowGrid({ currentUser }) {
                   CONNECT
                 </Button>
               </motion.div>
-              );
-            })}
+            ))}
           </div>
         )}
       </div>

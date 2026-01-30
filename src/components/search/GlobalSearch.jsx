@@ -9,7 +9,6 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { addToSearchHistory, getPopularSearches, getTrendingSearches } from './SearchHistory';
 import { trackEvent } from '@/components/utils/analytics';
-import { getProfileUrl, getDisplayName } from '@/lib/userPrivacy';
 
 const RECENT_SEARCHES_KEY = 'hotmess_search_history';
 const SAVED_SEARCHES_KEY = 'hotmess_saved_searches';
@@ -511,8 +510,8 @@ export default function GlobalSearch({ isOpen, onClose }) {
               <div className="space-y-2">
                 {filteredUsers.map(user => (
                   <Link
-                    key={user.id || user.auth_user_id}
-                    to={getProfileUrl(user)}
+                    key={user.email}
+                    to={createPageUrl(`Profile?email=${user.email}`)}
                     onClick={() => {
                       saveRecentSearch(query);
                       onClose();
@@ -521,8 +520,8 @@ export default function GlobalSearch({ isOpen, onClose }) {
                   >
                     <User className="w-5 h-5 text-[#FF1493]" />
                     <div>
-                      <div className="font-bold">{getDisplayName(user)}</div>
-                      {user.city && <div className="text-xs text-white/60">{user.city}</div>}
+                      <div className="font-bold">{user.full_name}</div>
+                      <div className="text-xs text-white/60">{user.email}</div>
                     </div>
                   </Link>
                 ))}

@@ -98,8 +98,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Full history for better scanning
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -118,9 +116,8 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
           head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'HEAD' }}
-          extra_args: --only-verified
 
   test:
     name: Run Tests
@@ -168,8 +165,7 @@ jobs:
     # Note: test job is not included in needs because it's currently non-blocking (continue-on-error: true)
     # Once tests are fully implemented, add 'test' to the needs array
     needs: [lint, typecheck, build, security]
-    # Only run deployment if all required secrets are configured
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.VERCEL_TOKEN != '' && secrets.VERCEL_ORG_ID != '' && secrets.VERCEL_PROJECT_ID != ''
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
     environment:

@@ -26,14 +26,13 @@ BASE and HEAD commits are the same. TruffleHog won't scan anything.
 Updated TruffleHog configuration in both `.github/workflows/ci.yml` and `.github/workflows/security.yml` to:
 
 ```yaml
-base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
 head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'HEAD' }}
-extra_args: --only-verified
 ```
 
 This ensures:
 - On pull_request events: Compare PR head vs base (works correctly)
-- On push events: Use `github.event.before` as base to scan only the newly pushed commits (not entire history)
+- On push events: Leave base empty, scan only HEAD (TruffleHog scans the pushed commit)
 
 ### Issue 2: Dependency Review Action Requires Repository Feature
 

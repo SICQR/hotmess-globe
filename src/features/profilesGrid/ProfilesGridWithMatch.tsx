@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ProfileCard } from './ProfileCard';
 import { useMatchProfiles } from './useMatchProfiles';
 import { useVisibility } from './useVisibility';
-import { SortSelector, SortPills } from './SortSelector';
-import { MatchFilterDropdown, MatchFilterPills, type MatchFilterValue } from './MatchFilter';
+import { SortSelector } from './SortSelector';
 import type { Profile, SortOption } from './types';
 import type { LatLng } from './travelTime';
 import { base44 } from '@/api/base44Client';
@@ -11,7 +10,6 @@ import { createUserProfileUrl } from '@/utils';
 import { toast } from 'sonner';
 import TelegramPanel from './TelegramPanel';
 import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
-import { Sparkles, MapPin, Filter } from 'lucide-react';
 
 const SkeletonCard = () => {
   return (
@@ -23,16 +21,14 @@ export type ProfilesGridWithMatchProps = {
   showHeader?: boolean;
   showTelegramFeedButton?: boolean;
   showSortSelector?: boolean;
-  showMatchFilter?: boolean;
   headerTitle?: string;
   filterProfiles?: (profile: Profile) => boolean;
   maxItems?: number;
   hideWhenEmpty?: boolean;
   containerClassName?: string;
-  defaultSort?: SortOption;
-  defaultMinMatch?: number;
   onOpenProfile?: (profile: Profile) => void;
   onNavigateUrl?: (url: string) => void;
+  defaultSort?: SortOption;
 };
 
 const normalizeEmail = (value: unknown) => String(value || '').trim().toLowerCase();
@@ -67,19 +63,16 @@ export default function ProfilesGridWithMatch({
   showHeader = true,
   showTelegramFeedButton = showHeader,
   showSortSelector = true,
-  showMatchFilter = true,
-  headerTitle = 'Discover',
+  headerTitle = 'People',
   filterProfiles,
   maxItems,
   hideWhenEmpty = false,
   containerClassName = 'mx-auto max-w-6xl p-4',
-  defaultSort = 'match',
-  defaultMinMatch = 0,
   onOpenProfile,
   onNavigateUrl,
+  defaultSort = 'match',
 }: ProfilesGridWithMatchProps) {
   const [sort, setSort] = useState<SortOption>(defaultSort);
-  const [matchFilter, setMatchFilter] = useState<MatchFilterValue>({ minMatch: defaultMinMatch });
   const [viewerLocation, setViewerLocation] = useState<LatLng | null>(null);
   const [viewerEmail, setViewerEmail] = useState<string | null>(null);
   const [viewerProfile, setViewerProfile] = useState<any>(null);
@@ -99,7 +92,7 @@ export default function ProfilesGridWithMatch({
     setViewerLocation(liveLocation);
   }, [liveLocation]);
 
-  // Fetch match-scored profiles
+  // Fetch profiles with match probability
   const {
     items,
     nextCursor,
@@ -112,19 +105,15 @@ export default function ProfilesGridWithMatch({
     viewerLat: viewerLocation?.lat,
     viewerLng: viewerLocation?.lng,
     sort,
-    minMatch: matchFilter.minMatch,
-    limit: 40,
-    enabled: true,
   });
 
-  const { ref: sentinelRef, isVisible: sentinelVisible } = useVisibility({ 
-    rootMargin: '600px', 
-    threshold: 0.1 
+  const { ref: sentinelRef, isVisible: sentinelVisible } = useVisibility({
+    rootMargin: '600px',
+    threshold: 0.1,
   });
 
   const prevSentinelVisibleRef = useRef(false);
 
-  // Load user info
   useEffect(() => {
     let cancelled = false;
 
@@ -138,9 +127,10 @@ export default function ProfilesGridWithMatch({
 
         const hasGpsConsent = !!me?.has_consented_gps;
         setGpsEnabled(hasGpsConsent);
+        
         if (hasGpsConsent) return;
 
-        // Dev fallback
+        // Dev-only fallback
         if (import.meta.env.DEV) {
           try {
             const res = await fetch('/api/viewer-location', { method: 'GET' });
@@ -173,7 +163,6 @@ export default function ProfilesGridWithMatch({
     };
   }, []);
 
-  // Infinite scroll trigger
   useEffect(() => {
     const wasVisible = prevSentinelVisibleRef.current;
     prevSentinelVisibleRef.current = sentinelVisible;
@@ -191,6 +180,26 @@ export default function ProfilesGridWithMatch({
     if (typeof maxItems === 'number') return prioritized.slice(0, Math.max(0, maxItems));
     return prioritized;
   }, [filterProfiles, items, maxItems, viewerEmail]);
+
+  const totalFilteredCount = useMemo(() => {
+    if (typeof maxItems !== 'number') return null;
+    if (typeof filterProfiles !== 'function') return null;
+    const base = Array.isArray(items) ? items : [];
+    return base.filter(filterProfiles).length;
+  }, [filterProfiles, items, maxItems]);
+
+  useEffect(() => {
+    if (typeof maxItems !== 'number') return;
+    if (typeof filterProfiles !== 'function') return;
+    if (isLoadingInitial || isLoadingMore) return;
+    if (typeof totalFilteredCount !== 'number') return;
+
+    const hasMore = nextCursor !== null;
+    if (!hasMore) return;
+    if (totalFilteredCount >= maxItems) return;
+
+    void loadMore();
+  }, [filterProfiles, isLoadingInitial, isLoadingMore, loadMore, maxItems, nextCursor, totalFilteredCount]);
 
   const skeletonCount = useMemo(() => {
     if (isLoadingInitial && items.length === 0) return 12;
@@ -230,7 +239,7 @@ export default function ProfilesGridWithMatch({
         // Non-fatal
       }
 
-      toast.success('Location enabled - match scores updated!');
+      toast.success('Location enabled');
     } catch (err: any) {
       const code = Number(err?.code);
       if (code === 1) toast.error('Location permission denied');
@@ -243,117 +252,95 @@ export default function ProfilesGridWithMatch({
     return handleNavigateUrl(createUserProfileUrl(profile));
   };
 
-  // Stats for header
-  const matchedCount = displayItems.filter(p => p.matchProbability !== undefined).length;
-  const avgMatch = matchedCount > 0
-    ? Math.round(displayItems.reduce((sum, p) => sum + (p.matchProbability || 0), 0) / matchedCount)
-    : null;
+  // Calculate average match score for display
+  const avgMatchScore = useMemo(() => {
+    const withScores = displayItems.filter(
+      (p) => typeof p.matchProbability === 'number'
+    );
+    if (withScores.length === 0) return null;
+    const sum = withScores.reduce((acc, p) => acc + (p.matchProbability || 0), 0);
+    return Math.round(sum / withScores.length);
+  }, [displayItems]);
 
   return (
     <div className="w-full">
       <div className={containerClassName}>
-        {/* Location CTA */}
         {showEnableLocationCta && (
-          <div className="mb-4 rounded-lg border border-[#FF1493]/30 bg-gradient-to-r from-[#FF1493]/10 to-[#B026FF]/10 p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#FF1493]/20 flex items-center justify-center flex-shrink-0">
-                <MapPin className="w-5 h-5 text-[#FF1493]" />
-              </div>
-              <div className="flex-1">
-                <div className="text-sm font-bold text-white">Enable location for better matches</div>
-                <div className="mt-1 text-xs text-white/60">
-                  Location helps calculate travel time and improves match accuracy.
-                </div>
-                <button
-                  type="button"
-                  onClick={handleEnableLocation}
-                  className="mt-3 rounded-lg bg-[#FF1493] px-4 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#FF1493]/80 transition-colors"
-                >
-                  Enable Location
-                </button>
-              </div>
+          <div className="mb-4 rounded-lg border border-white/10 bg-white/5 p-3">
+            <div className="text-sm font-semibold text-white">
+              Enable location for better matches
+            </div>
+            <div className="mt-1 text-xs text-white/60">
+              Location helps calculate travel time and improve match scoring.
+            </div>
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={handleEnableLocation}
+                className="rounded-md border border-border bg-background px-3 py-2 text-sm font-semibold hover:bg-black/5"
+              >
+                Enable location
+              </button>
             </div>
           </div>
         )}
 
-        {/* Header with Sort */}
         {(showHeader || showTelegramFeedButton || showSortSelector) && (
-          <div className="mb-4 sticky top-0 z-20 bg-background/95 backdrop-blur-sm py-3 -mx-4 px-4 border-b border-white/5">
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-3">
-                {showHeader && (
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-[#FF1493]" />
-                    <span className="text-sm font-bold text-white">{headerTitle}</span>
-                    {avgMatch !== null && (
-                      <span className="text-xs text-white/50">
-                        ({avgMatch}% avg match)
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                {showMatchFilter && (
-                  <MatchFilterDropdown
-                    value={matchFilter}
-                    onChange={setMatchFilter}
-                    disabled={isLoadingInitial}
-                  />
-                )}
-                {showSortSelector && (
-                  <div className="hidden sm:block">
-                    <SortSelector
-                      value={sort}
-                      onChange={setSort}
-                      disabled={isLoadingInitial}
-                    />
-                  </div>
-                )}
-                {showTelegramFeedButton && (
-                  <button
-                    type="button"
-                    onClick={() => setIsTelegramOpen(true)}
-                    className="rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors"
-                  >
-                    Feed
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Mobile sort and filter pills */}
-            <div className="sm:hidden mt-3 space-y-2">
+          <div
+            className={
+              showHeader
+                ? 'mb-4 sticky top-0 z-20 bg-background py-2 md:static md:z-auto md:bg-transparent md:py-0'
+                : 'mb-3 sticky top-0 z-20 bg-background py-2 md:static md:z-auto md:bg-transparent md:py-0'
+            }
+          >
+            <div className="flex items-center gap-3 flex-wrap">
+              {showHeader && (
+                <div className="text-sm font-semibold text-foreground">
+                  {headerTitle}
+                  {avgMatchScore !== null && (
+                    <span className="ml-2 text-xs text-white/50 font-normal">
+                      (avg {avgMatchScore}% match)
+                    </span>
+                  )}
+                </div>
+              )}
+              
               {showSortSelector && (
-                <SortPills
+                <SortSelector
                   value={sort}
                   onChange={setSort}
                   disabled={isLoadingInitial}
+                  className="ml-auto"
                 />
               )}
-              {showMatchFilter && (
-                <MatchFilterPills
-                  value={matchFilter}
-                  onChange={setMatchFilter}
-                  disabled={isLoadingInitial}
-                />
+              
+              {showTelegramFeedButton && !showSortSelector && (
+                <button
+                  type="button"
+                  onClick={() => setIsTelegramOpen(true)}
+                  className="ml-auto rounded-md border border-border bg-background px-3 py-1.5 text-sm font-semibold hover:bg-black/5"
+                >
+                  Hotmess Feed
+                </button>
+              )}
+              
+              {showTelegramFeedButton && showSortSelector && (
+                <button
+                  type="button"
+                  onClick={() => setIsTelegramOpen(true)}
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-semibold hover:bg-black/5"
+                >
+                  Hotmess Feed
+                </button>
               )}
             </div>
-          </div>
-        )}
-
-        {/* Scoring version indicator (dev only) */}
-        {import.meta.env.DEV && scoringVersion && scoringVersion !== 'fallback' && (
-          <div className="mb-2 text-[10px] text-white/30 font-mono">
-            Scoring v{scoringVersion} · {displayItems.length} profiles
           </div>
         )}
 
         {hideWhenEmpty && !isLoadingInitial && displayItems.length === 0 ? null : (
           <>
             {error && (
-              <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
+              <div className="mb-4 rounded-md border border-border bg-background p-3 text-sm">
                 {error}
               </div>
             )}
@@ -380,17 +367,10 @@ export default function ProfilesGridWithMatch({
               <div ref={sentinelRef as unknown as React.Ref<HTMLDivElement>} className="h-10" />
             )}
 
-            {/* Load more indicator */}
-            {isLoadingMore && (
-              <div className="mt-4 text-center text-xs text-white/50">
-                Loading more profiles...
-              </div>
-            )}
-
-            {/* End of results */}
-            {!isLoadingInitial && !isLoadingMore && nextCursor === null && displayItems.length > 0 && (
-              <div className="mt-6 text-center text-xs text-white/40">
-                You've seen all {displayItems.length} profiles
+            {/* Scoring version footer */}
+            {scoringVersion && !isLoadingInitial && displayItems.length > 0 && (
+              <div className="mt-4 text-center text-[10px] text-white/30">
+                Match scoring v{scoringVersion}
               </div>
             )}
           </>

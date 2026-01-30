@@ -18,7 +18,6 @@ import SellerRatingDisplay from '../components/seller/SellerRatingDisplay';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { MESSMARKET } from '@/lib/brand';
 
 export default function SellerDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -170,9 +169,9 @@ export default function SellerDashboard() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">
-                <span className="text-[#B026FF]">{MESSMARKET.name}</span> SELLER
+                Seller Dashboard
               </h1>
-              <p className="text-white/60">{MESSMARKET.tagline} • {MESSMARKET.fee}</p>
+              <p className="text-white/60">Manage your products and orders</p>
             </div>
             {!showForm && (
               <Button 

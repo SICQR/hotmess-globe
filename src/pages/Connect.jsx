@@ -19,8 +19,6 @@ import { ProfileCard } from '@/features/profilesGrid/ProfileCard';
 import { useNavigate } from 'react-router-dom';
 import useLiveViewerLocation, { bucketLatLng } from '@/hooks/useLiveViewerLocation';
 import useRealtimeNearbyInvalidation from '@/hooks/useRealtimeNearbyInvalidation';
-import { KineticHeadline } from '@/components/text/KineticHeadline';
-import { getProfileUrl } from '@/lib/userPrivacy';
 
 const isMaleAllowedProfile = (u) => {
   const gender = String(u?.gender_identity || u?.gender || u?.sex || '').trim().toLowerCase();
@@ -522,7 +520,7 @@ export default function Connect() {
             <div className="flex items-center gap-4">
               <Users className="w-10 h-10 text-[#FF1493]" />
               <div>
-                <KineticHeadline text="CONNECT" as="h1" className="text-4xl font-black uppercase" />
+                <h1 className="text-4xl font-black uppercase">CONNECT</h1>
                 <p className="text-xs text-white/40 uppercase tracking-wider">Discovery</p>
               </div>
             </div>
@@ -601,8 +599,15 @@ export default function Connect() {
             containerClassName="mx-0 max-w-none p-0"
             onNavigateUrl={(url) => navigate(url)}
             onOpenProfile={(profile) => {
-              // Use user ID, never expose email
-              navigate(getProfileUrl(profile));
+              const email = profile?.email;
+              const uid = profile?.authUserId;
+              if (email) {
+                navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
+                return;
+              }
+              if (uid) {
+                navigate(createPageUrl(`Profile?uid=${encodeURIComponent(uid)}`));
+              }
             }}
           />
         ) : (
@@ -644,8 +649,15 @@ export default function Connect() {
                   viewerProfile={currentUser}
                   onNavigateUrl={(url) => navigate(url)}
                   onOpenProfile={(p) => {
-                    // Use user ID, never expose email
-                    navigate(getProfileUrl(p));
+                    const email = p?.email;
+                    const uid = p?.authUserId;
+                    if (email) {
+                      navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
+                      return;
+                    }
+                    if (uid) {
+                      navigate(createPageUrl(`Profile?uid=${encodeURIComponent(uid)}`));
+                    }
                   }}
                 />
               );

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { KineticHeadline } from '@/components/text/KineticHeadline';
 
 const MAX_WIDTH = {
   sm: 'max-w-sm',
@@ -29,7 +28,6 @@ export function PageShell({
   children,
   className,
   headerClassName,
-  kinetic = false, // Enable kinetic headline animation
 }) {
   const navigate = useNavigate();
 
@@ -68,17 +66,9 @@ export function PageShell({
                 ) : null}
 
                 {title ? (
-                  kinetic ? (
-                    <KineticHeadline 
-                      text={title} 
-                      as="h1"
-                      className="mt-2 text-3xl md:text-4xl font-black uppercase tracking-tight"
-                    />
-                  ) : (
-                    <h1 className="mt-2 text-3xl md:text-4xl font-black uppercase tracking-tight break-words">
-                      {title}
-                    </h1>
-                  )
+                  <h1 className="mt-2 text-3xl md:text-4xl font-black uppercase tracking-tight break-words">
+                    {title}
+                  </h1>
                 ) : null}
 
                 {subtitle ? (

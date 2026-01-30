@@ -1,29 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Home, Globe, Radio, Users, ShoppingBag, Menu, Zap } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import LevelUpModal from '@/components/gamification/LevelUpModal';
-import { XPCircularProgress } from '@/components/ui/CircularProgress';
 
 export default function OSHud({ user, onModuleChange }) {
   const location = useLocation();
   const currentPath = location.pathname;
-  const [showLevelUp, setShowLevelUp] = useState(false);
-  const [previousLevel, setPreviousLevel] = useState(null);
 
   const level = user ? Math.floor((user.xp || 0) / 1000) + 1 : 1;
   const xpInLevel = user ? (user.xp || 0) % 1000 : 0;
   const xpProgress = (xpInLevel / 1000) * 100;
-
-  // Detect level up
-  useEffect(() => {
-    if (user && previousLevel !== null && level > previousLevel) {
-      setShowLevelUp(true);
-    }
-    if (user) {
-      setPreviousLevel(level);
-    }
-  }, [level, user, previousLevel]);
 
   const modules = [
     { id: 'home', icon: Home, label: 'HOME', path: '/' },
@@ -36,18 +22,6 @@ export default function OSHud({ user, onModuleChange }) {
 
   return (
     <>
-      {/* Level Up Modal */}
-      <LevelUpModal
-        isOpen={showLevelUp}
-        onClose={() => setShowLevelUp(false)}
-        level={level}
-        rewards={[
-          'New profile badge unlocked',
-          'Increased marketplace visibility',
-          'Access to exclusive events'
-        ]}
-      />
-
       {/* Top HUD */}
       <div className="fixed top-0 left-0 right-0 z-40 bg-black/80 backdrop-blur-xl border-b border-[#FF1493]/30">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -59,7 +33,7 @@ export default function OSHud({ user, onModuleChange }) {
           
           {user && (
             <div className="flex items-center gap-4">
-              <div className="text-right hidden md:block">
+              <div className="text-right">
                 <div className="text-xs text-white/40 font-mono uppercase tracking-wider">SWEAT EQUITY</div>
                 <div className="flex items-center gap-2">
                   <Zap className="w-3 h-3 text-[#FFEB3B]" />
@@ -67,18 +41,11 @@ export default function OSHud({ user, onModuleChange }) {
                   <span className="text-xs text-white/60">• LVL {level}</span>
                 </div>
               </div>
-              
-              {/* Desktop: Progress bar */}
-              <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden hidden md:block">
+              <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-[#FF1493] to-[#FFEB3B] transition-all duration-300"
                   style={{ width: `${xpProgress}%` }}
                 />
-              </div>
-              
-              {/* Mobile: Circular progress */}
-              <div className="md:hidden">
-                <XPCircularProgress xp={user.xp || 0} xpToNextLevel={1000} />
               </div>
             </div>
           )}

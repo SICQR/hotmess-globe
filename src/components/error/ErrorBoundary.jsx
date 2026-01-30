@@ -3,7 +3,6 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logger from '@/utils/logger';
 import { trackError } from '@/components/utils/analytics';
-import { captureError, addBreadcrumb } from '@/lib/sentry';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -17,30 +16,17 @@ export default class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     this.setState({ error, errorInfo });
-    
-    // Log to structured logger
     logger.error('ErrorBoundary caught error', { 
       error: error.message, 
       stack: error.stack,
       componentStack: errorInfo.componentStack 
     });
     
-    // Send to Sentry
-    captureError(error, {
-      componentStack: errorInfo.componentStack,
-      boundary: this.props.boundary || 'ErrorBoundary',
-    });
-    
-    // Also track in analytics
+    // Send to error tracking service (Sentry, GA4, etc.)
     trackError(error, {
       componentStack: errorInfo.componentStack,
       fatal: true,
       boundary: 'ErrorBoundary',
-    });
-    
-    // Add breadcrumb for context
-    addBreadcrumb('Error boundary triggered', 'error', {
-      errorMessage: error.message,
     });
   }
 
