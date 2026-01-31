@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { 
-  ArrowLeft, Settings, Building2, Mail, Phone, Globe, MapPin,
-  Bell, Shield, Users, Save, Loader2, CheckCircle, Image
+  ArrowLeft, Building2, Mail, Phone, Globe, MapPin,
+  Bell, Shield, Users, Save, Loader2, Image
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import { supabase } from '@/components/utils/supabaseClient';

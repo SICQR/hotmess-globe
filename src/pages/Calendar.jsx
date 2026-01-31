@@ -3,15 +3,17 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, Clock, Users } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, Clock, Users, Download, Share2, Bell, BellOff, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
 import PageShell from '@/components/shell/PageShell';
+import { toast } from 'sonner';
 
 export default function Calendar() {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
+  const [reminders, setReminders] = useState({});
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -23,6 +25,9 @@ export default function Calendar() {
       }
     };
     fetchUser();
+    // Load reminders from localStorage
+    const saved = localStorage.getItem('event_reminders');
+    if (saved) setReminders(JSON.parse(saved));
   }, []);
 
   const { data: events = [] } = useQuery({
@@ -69,6 +74,104 @@ export default function Calendar() {
     return eventsByDate[dateKey] || [];
   }, [selectedDate, eventsByDate]);
 
+  // Generate ICS file for export
+  const generateICS = (eventsList = events) => {
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//HOTMESS//Calendar//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+    ];
+
+    eventsList.forEach(event => {
+      if (!event.event_date) return;
+      const start = new Date(event.event_date);
+      const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // 2 hours default
+      
+      lines.push('BEGIN:VEVENT');
+      lines.push(`DTSTART:${format(start, "yyyyMMdd'T'HHmmss")}`);
+      lines.push(`DTEND:${format(end, "yyyyMMdd'T'HHmmss")}`);
+      lines.push(`SUMMARY:${event.title}`);
+      lines.push(`DESCRIPTION:${event.description || 'HOTMESS Event'}`);
+      if (event.venue_name) lines.push(`LOCATION:${event.venue_name}`);
+      lines.push(`UID:${event.id}@hotmess.london`);
+      lines.push('END:VEVENT');
+    });
+
+    lines.push('END:VCALENDAR');
+    return lines.join('\r\n');
+  };
+
+  const handleExportAll = () => {
+    const ics = generateICS();
+    const blob = new Blob([ics], { type: 'text/calendar' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'hotmess-events.ics';
+    a.click();
+    toast.success('Calendar exported!');
+  };
+
+  const handleExportMyEvents = () => {
+    const myEvents = events.filter(e => myRsvpIds.has(e.id));
+    if (myEvents.length === 0) {
+      toast.error('No events to export');
+      return;
+    }
+    const ics = generateICS(myEvents);
+    const blob = new Blob([ics], { type: 'text/calendar' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'my-hotmess-events.ics';
+    a.click();
+    toast.success(`${myEvents.length} events exported!`);
+  };
+
+  const handleAddToGoogleCalendar = (event) => {
+    if (!event.event_date) return;
+    const start = new Date(event.event_date);
+    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: event.title,
+      dates: `${format(start, "yyyyMMdd'T'HHmmss")}/${format(end, "yyyyMMdd'T'HHmmss")}`,
+      details: event.description || 'HOTMESS Event',
+      location: event.venue_name || '',
+    });
+    
+    window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, '_blank');
+  };
+
+  const toggleReminder = (eventId) => {
+    const newReminders = { ...reminders };
+    if (newReminders[eventId]) {
+      delete newReminders[eventId];
+      toast.success('Reminder removed');
+    } else {
+      newReminders[eventId] = true;
+      toast.success('Reminder set!');
+    }
+    setReminders(newReminders);
+    localStorage.setItem('event_reminders', JSON.stringify(newReminders));
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      await navigator.share({
+        title: 'HOTMESS Events Calendar',
+        text: 'Check out the events on HOTMESS!',
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success('Link copied!');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white pb-20">
       <PageShell
@@ -77,9 +180,17 @@ export default function Calendar() {
         subtitle="Your events schedule"
         maxWidth="7xl"
         right={
-          <Button asChild variant="glass" className="border-white/20 font-black uppercase">
-            <Link to={createPageUrl('Events')}>Browse events</Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleExportMyEvents} variant="glass" size="sm" className="border-white/20">
+              <Download className="w-4 h-4 mr-1" /> My Events
+            </Button>
+            <Button onClick={handleShare} variant="glass" size="sm" className="border-white/20">
+              <Share2 className="w-4 h-4" />
+            </Button>
+            <Button asChild variant="glass" className="border-white/20 font-black uppercase">
+              <Link to={createPageUrl('Events')}>Browse events</Link>
+            </Button>
+          </div>
         }
       >
 
@@ -196,11 +307,13 @@ export default function Calendar() {
                         <h4 className="font-black uppercase text-sm line-clamp-2 flex-1">
                           {event.title}
                         </h4>
-                        {myRsvpIds.has(event.id) && (
-                          <div className="px-2 py-0.5 bg-[#39FF14] text-black text-[10px] font-black uppercase ml-2">
-                            GOING
-                          </div>
-                        )}
+                        <div className="flex items-center gap-1 ml-2">
+                          {myRsvpIds.has(event.id) && (
+                            <div className="px-2 py-0.5 bg-[#39FF14] text-black text-[10px] font-black uppercase">
+                              GOING
+                            </div>
+                          )}
+                        </div>
                       </div>
                       
                       <div className="space-y-1 text-xs text-white/60">
@@ -216,6 +329,33 @@ export default function Calendar() {
                             {event.venue_name}
                           </div>
                         )}
+                      </div>
+
+                      {/* Quick actions */}
+                      <div className="flex gap-2 mt-3 pt-3 border-t border-white/10">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleReminder(event.id);
+                          }}
+                          className={`flex-1 py-1.5 text-xs font-bold uppercase flex items-center justify-center gap-1 rounded ${
+                            reminders[event.id] 
+                              ? 'bg-[#FFD700]/20 text-[#FFD700]' 
+                              : 'bg-white/5 text-white/60 hover:bg-white/10'
+                          }`}
+                        >
+                          {reminders[event.id] ? <BellOff className="w-3 h-3" /> : <Bell className="w-3 h-3" />}
+                          {reminders[event.id] ? 'Reminded' : 'Remind'}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAddToGoogleCalendar(event);
+                          }}
+                          className="flex-1 py-1.5 text-xs font-bold uppercase flex items-center justify-center gap-1 bg-white/5 text-white/60 hover:bg-white/10 rounded"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Google
+                        </button>
                       </div>
                     </div>
                   </Link>

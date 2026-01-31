@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { BrowserMultiFormatReader } from '@zxing/browser';
-import { Zap, MapPin, Camera, CheckCircle, XCircle, History, Clock } from 'lucide-react';
+import { Zap, MapPin, Camera, CheckCircle, XCircle, History, Clock, Nfc, Layers, QrCode, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageShell from '@/components/shell/PageShell';
@@ -17,8 +17,19 @@ export default function Scan() {
   const [scannedBeacon, setScannedBeacon] = useState(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [qrError, setQrError] = useState(null);
+  const [scanMode, setScanMode] = useState('single'); // 'single' | 'batch'
+  const [batchScans, setBatchScans] = useState([]);
+  const [nfcSupported, setNfcSupported] = useState(false);
+  const [nfcReading, setNfcReading] = useState(false);
   const videoRef = useRef(null);
   const queryClient = useQueryClient();
+
+  // Check NFC support
+  useEffect(() => {
+    if ('NDEFReader' in window) {
+      setNfcSupported(true);
+    }
+  }, []);
 
   const { data: beacons = [] } = useQuery({
     queryKey: ['beacons'],
@@ -75,14 +86,19 @@ export default function Scan() {
       return payload;
     },
     onSuccess: (payload) => {
-      setScannedBeacon(payload);
+      if (scanMode === 'batch') {
+        setBatchScans(prev => [...prev, { ...payload, timestamp: new Date() }]);
+        toast.success(`Added ${payload?.beacon?.title || 'beacon'} (+${payload?.earned_xp || 0} XP)`);
+      } else {
+        setScannedBeacon(payload);
+        toast.success(`Scanned ${payload?.beacon?.title || 'beacon'}`);
+        setTimeout(() => {
+          setScannedBeacon(null);
+          setBeaconId('');
+        }, 3000);
+      }
       queryClient.invalidateQueries({ queryKey: ['user'] });
       queryClient.invalidateQueries({ queryKey: ['beacon_checkins'] });
-      toast.success(`Scanned ${payload?.beacon?.title || 'beacon'}`);
-      setTimeout(() => {
-        setScannedBeacon(null);
-        setBeaconId('');
-      }, 3000);
     },
     onError: (error) => {
       if (error?.status === 409) {
@@ -96,6 +112,55 @@ export default function Scan() {
   const handleScan = () => {
     if (!beaconId?.trim()) return;
     scanMutation.mutate({ code: beaconId.trim(), source: 'manual' });
+    if (scanMode === 'batch') setBeaconId(''); // Clear for next scan in batch mode
+  };
+
+  // NFC scanning
+  const startNfcScan = async () => {
+    if (!nfcSupported) {
+      toast.error('NFC not supported on this device');
+      return;
+    }
+
+    try {
+      setNfcReading(true);
+      const ndef = new window.NDEFReader();
+      await ndef.scan();
+      
+      ndef.addEventListener('reading', ({ message }) => {
+        for (const record of message.records) {
+          if (record.recordType === 'text') {
+            const textDecoder = new TextDecoder();
+            const text = textDecoder.decode(record.data);
+            scanMutation.mutate({ code: text, source: 'nfc' });
+          } else if (record.recordType === 'url') {
+            const textDecoder = new TextDecoder();
+            const url = textDecoder.decode(record.data);
+            // Extract beacon ID from URL
+            const match = url.match(/beacon[\/=]([a-zA-Z0-9-]+)/i);
+            if (match) {
+              scanMutation.mutate({ code: match[1], source: 'nfc' });
+            }
+          }
+        }
+      });
+
+      toast.success('Hold your phone near the NFC tag');
+    } catch (error) {
+      toast.error(error?.message || 'NFC scan failed');
+      setNfcReading(false);
+    }
+  };
+
+  const stopNfcScan = () => {
+    setNfcReading(false);
+  };
+
+  const totalBatchXP = batchScans.reduce((sum, s) => sum + (s.earned_xp || 0), 0);
+
+  const clearBatch = () => {
+    setBatchScans([]);
+    toast.success('Batch cleared');
   };
 
   const qrReader = useMemo(() => new BrowserMultiFormatReader(), []);
@@ -163,6 +228,59 @@ export default function Scan() {
       maxWidth="2xl"
       back
     >
+      {/* Scan Mode Toggle */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setScanMode('single')}
+          className={`flex-1 py-3 px-4 rounded-xl font-bold uppercase text-sm flex items-center justify-center gap-2 transition-all ${
+            scanMode === 'single'
+              ? 'bg-[#FF1493] text-black'
+              : 'bg-white/5 border border-white/20 text-white/60 hover:bg-white/10'
+          }`}
+        >
+          <QrCode className="w-4 h-4" /> Single Scan
+        </button>
+        <button
+          onClick={() => setScanMode('batch')}
+          className={`flex-1 py-3 px-4 rounded-xl font-bold uppercase text-sm flex items-center justify-center gap-2 transition-all ${
+            scanMode === 'batch'
+              ? 'bg-[#00D9FF] text-black'
+              : 'bg-white/5 border border-white/20 text-white/60 hover:bg-white/10'
+          }`}
+        >
+          <Layers className="w-4 h-4" /> Batch Mode
+        </button>
+      </div>
+
+      {/* Batch Mode Summary */}
+      <AnimatePresence>
+        {scanMode === 'batch' && batchScans.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 rounded-xl p-4 mb-6 overflow-hidden"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <span className="text-[#00D9FF] font-black text-xl">{batchScans.length}</span>
+                <span className="text-white/60 ml-2">scans collected</span>
+              </div>
+              <div className="text-[#FFD700] font-black text-xl">+{totalBatchXP} XP</div>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {batchScans.map((scan, idx) => (
+                <span key={idx} className="text-xs bg-white/10 px-2 py-1 rounded">
+                  {scan.beacon?.title || 'Beacon'}
+                </span>
+              ))}
+            </div>
+            <Button onClick={clearBatch} variant="outline" size="sm" className="border-white/20">
+              <RefreshCw className="w-3 h-3 mr-1" /> Clear Batch
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Scan Success */}
       {scannedBeacon && (
         <motion.div
@@ -207,7 +325,7 @@ export default function Scan() {
               className="flex-1 bg-[#FFEB3B] hover:bg-[#FFEB3B]/90 text-black font-bold py-6"
             >
               <Zap className="w-5 h-5 mr-2" />
-              {scanMutation.isPending ? 'Scanning…' : 'Scan'}
+              {scanMutation.isPending ? 'Scanning…' : scanMode === 'batch' ? 'Add to Batch' : 'Scan'}
             </Button>
 
             <Button
@@ -219,6 +337,18 @@ export default function Scan() {
               <Camera className="w-5 h-5 mr-2" />
               {qrOpen ? 'Close camera' : 'Scan QR'}
             </Button>
+
+            {nfcSupported && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={nfcReading ? stopNfcScan : startNfcScan}
+                className={`border-white/20 py-6 ${nfcReading ? 'bg-[#B026FF]/20 border-[#B026FF]' : 'hover:bg-white/5'}`}
+              >
+                <Nfc className={`w-5 h-5 mr-2 ${nfcReading && 'animate-pulse'}`} />
+                {nfcReading ? 'Scanning NFC...' : 'Tap NFC'}
+              </Button>
+            )}
           </div>
 
           {qrError ? (

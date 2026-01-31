@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { 
-  TrendingUp, Users, Eye, MousePointer, Clock, MapPin,
-  BarChart3, PieChart, Activity, Target, Zap, ArrowUpRight,
-  Calendar, Filter, Download, RefreshCw
+  TrendingUp, Users, Eye, MousePointer, MapPin,
+  BarChart3, Activity, Target, Zap,
+  Calendar, Download, RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
