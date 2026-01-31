@@ -210,13 +210,15 @@ describe('Match Probability Scoring', () => {
       const twoDaysAgo = new Date(now - 50 * 60 * 60 * 1000); // ~2 days (< 72)
       const weekAgo = new Date(now - 150 * 60 * 60 * 1000); // ~6.25 days (< 168)
       
+      // 8 * 0.875 = 7, 8 * 0.75 = 6, 8 * 0.5 = 4
       expect(calculateActivityScore(yesterday)).toBe(7);
-      expect(calculateActivityScore(twoDaysAgo)).toBe(5);
-      expect(calculateActivityScore(weekAgo)).toBe(3);
+      expect(calculateActivityScore(twoDaysAgo)).toBe(6);
+      expect(calculateActivityScore(weekAgo)).toBe(4);
     });
 
     it('should return neutral score for missing data', () => {
-      expect(calculateActivityScore(null)).toBe(4);
+      // 8 * 0.25 = 2
+      expect(calculateActivityScore(null)).toBe(2);
     });
   });
 
@@ -224,27 +226,32 @@ describe('Match Probability Scoring', () => {
     it('should count filled fields', () => {
       const profile = {
         bio: 'Test bio',
+        avatar_url: 'photo1.jpg',
+        city: 'London',
+      };
+      const privateProfile = {
         position: 'vers',
         looking_for: ['dating'],
         kinks: ['bondage'],
         turn_ons: 'Intelligence',
-        relationship_status: 'single',
-        photos: ['photo1.jpg'],
-        age: 28,
+        height_cm: 180,
       };
-      const score = calculateCompletenessScore(profile);
-      expect(score).toBe(8); // All fields filled
+      const score = calculateCompletenessScore(profile, privateProfile);
+      expect(score).toBe(8); // All 8 fields filled
     });
 
     it('should ignore empty fields', () => {
       const profile = {
         bio: 'Test bio',
+        avatar_url: '',
+        city: null,
+      };
+      const privateProfile = {
         position: '',
         looking_for: [],
-        age: 28,
       };
-      const score = calculateCompletenessScore(profile);
-      expect(score).toBe(2); // Only bio and age count
+      const score = calculateCompletenessScore(profile, privateProfile);
+      expect(score).toBe(1); // Only bio counts
     });
   });
 
