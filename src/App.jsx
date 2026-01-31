@@ -21,6 +21,7 @@ import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
 import Privacy from '@/pages/legal/Privacy';
 import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
+import { GlobeProvider, PulseProvider, PersonaProvider, SafetyGateProvider } from '@/contexts';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -434,6 +435,11 @@ const AuthenticatedApp = () => {
       <Route path="/community/*" element={<PageRoute pageKey="Community" />} />
       <Route path="/leaderboard/*" element={<PageRoute pageKey="Leaderboard" />} />
 
+      {/* Tickets (resale + future official) */}
+      <Route path="/tickets" element={<PageRoute pageKey="Tickets" />} />
+      <Route path="/tickets/:id" element={<PageRoute pageKey="TicketDetail" />} />
+      <Route path="/tickets/chat/:threadId" element={<PageRoute pageKey="TicketChat" />} />
+
       {/* Notifications/account aliases */}
       <Route path="/notifications" element={<Navigate to={createPageUrl('Settings')} replace />} />
       <Route path="/notifications/*" element={<Navigate to={createPageUrl('Settings')} replace />} />
@@ -520,12 +526,20 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <ShopCartProvider>
-          <Router>
-            <NavigationTracker />
-            <AuthenticatedApp />
-          </Router>
-        </ShopCartProvider>
+        <GlobeProvider>
+          <PulseProvider>
+            <PersonaProvider>
+              <SafetyGateProvider>
+                <ShopCartProvider>
+                  <Router>
+                    <NavigationTracker />
+                    <AuthenticatedApp />
+                  </Router>
+                </ShopCartProvider>
+              </SafetyGateProvider>
+            </PersonaProvider>
+          </PulseProvider>
+        </GlobeProvider>
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>
