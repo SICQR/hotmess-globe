@@ -274,11 +274,11 @@ CREATE INDEX IF NOT EXISTS idx_cadence_log_city ON cadence_escalation_log(city_i
 ALTER TABLE city_cadence ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cadence_escalation_log ENABLE ROW LEVEL SECURITY;
 
--- Admin only
+-- Admin only (check user_roles for admin role)
 CREATE POLICY "Admins can manage cadence"
   ON city_cadence FOR ALL
-  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = TRUE));
+  USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin'));
 
 CREATE POLICY "Admins can view cadence logs"
   ON cadence_escalation_log FOR SELECT
-  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = TRUE));
+  USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin'));

@@ -1,4 +1,15 @@
 -- Business verification + trust scoring
+-- First create business_profiles if it doesn't exist
+CREATE TABLE IF NOT EXISTS business_profiles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  type text CHECK (type IN ('venue','label','brand','club')),
+  city text,
+  verified boolean DEFAULT false,
+  created_at timestamptz DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS business_verifications (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   business_id uuid REFERENCES business_profiles(id) ON DELETE CASCADE,
@@ -10,7 +21,7 @@ CREATE TABLE IF NOT EXISTS business_verifications (
   notes text,
   created_at timestamptz DEFAULT now()
 );
-CREATE INDEX idx_bv_status ON business_verifications(status);
+CREATE INDEX IF NOT EXISTS idx_bv_status ON business_verifications(status);
 
 -- Creator profiles
 CREATE TABLE IF NOT EXISTS creator_profiles (
@@ -22,7 +33,7 @@ CREATE TABLE IF NOT EXISTS creator_profiles (
   trust_score numeric DEFAULT 0,
   created_at timestamptz DEFAULT now()
 );
-CREATE INDEX idx_cp_city ON creator_profiles(city);
+CREATE INDEX IF NOT EXISTS idx_cp_city ON creator_profiles(city);
 
 -- Creator products (monetisation)
 CREATE TABLE IF NOT EXISTS creator_products (
@@ -36,7 +47,7 @@ CREATE TABLE IF NOT EXISTS creator_products (
   status text DEFAULT 'active',
   created_at timestamptz DEFAULT now()
 );
-CREATE INDEX idx_crp_creator ON creator_products(creator_id);
+CREATE INDEX IF NOT EXISTS idx_crp_creator ON creator_products(creator_id);
 
 -- City readiness index snapshots
 CREATE TABLE IF NOT EXISTS city_readiness (
