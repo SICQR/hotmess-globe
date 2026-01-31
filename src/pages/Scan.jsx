@@ -4,13 +4,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { BrowserMultiFormatReader } from '@zxing/browser';
-import { Zap, MapPin, Camera, CheckCircle, XCircle } from 'lucide-react';
+import { Zap, MapPin, Camera, CheckCircle, XCircle, History, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageShell from '@/components/shell/PageShell';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Scan() {
+  const { currentUser } = useAuth();
   const [beaconId, setBeaconId] = useState('');
   const [scannedBeacon, setScannedBeacon] = useState(null);
   const [qrOpen, setQrOpen] = useState(false);
@@ -21,6 +23,23 @@ export default function Scan() {
   const { data: beacons = [] } = useQuery({
     queryKey: ['beacons'],
     queryFn: () => base44.entities.Beacon.filter({ active: true }),
+  });
+
+  // Fetch user's recent check-ins
+  const { data: recentCheckins = [] } = useQuery({
+    queryKey: ['my-checkins', currentUser?.email],
+    queryFn: async () => {
+      if (!currentUser?.email) return [];
+      const { data, error } = await supabase
+        .from('beacon_checkins')
+        .select('id, beacon_id, earned_xp, created_at, beacon:beacon_id(title, city)')
+        .eq('user_email', currentUser.email)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (error) return [];
+      return data || [];
+    },
+    enabled: !!currentUser?.email,
   });
 
   const getAccessToken = async () => {
@@ -255,6 +274,42 @@ export default function Scan() {
           ))}
         </div>
       </motion.div>
+
+      {/* Scan History */}
+      {recentCheckins.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-8"
+        >
+          <h2 className="text-xl font-black uppercase tracking-tight mb-4 flex items-center gap-2">
+            <History className="w-5 h-5" />
+            Recent Scans
+          </h2>
+          <div className="space-y-2">
+            {recentCheckins.map((checkin) => (
+              <div
+                key={checkin.id}
+                className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between"
+              >
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium truncate">{checkin.beacon?.title || 'Unknown Beacon'}</h3>
+                  <div className="flex items-center gap-2 text-xs text-white/40">
+                    <Clock className="w-3 h-3" />
+                    <span>{new Date(checkin.created_at).toLocaleDateString()}</span>
+                    <span>•</span>
+                    <span>{checkin.beacon?.city || ''}</span>
+                  </div>
+                </div>
+                <div className="text-[#39FF14] font-bold text-sm">
+                  +{checkin.earned_xp || 0} XP
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
     </PageShell>
   );
 }
