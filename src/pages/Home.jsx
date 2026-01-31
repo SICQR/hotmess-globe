@@ -459,15 +459,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-              <div className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/50 rounded-lg p-4 transition-all">
-                <Store className="w-6 h-6 text-pink-500 mb-2" />
-                <p className="font-bold text-sm">MessMarket</p>
-                <p className="text-[10px] text-white/50 uppercase">P2P commerce</p>
-              </div>
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* LUBE CTA (always visible) */}
       <section className="py-16 px-6 bg-black">
