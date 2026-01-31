@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { auth, base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 
@@ -312,6 +312,19 @@ export default function Auth() {
                   </button>
                 </div>
               )}
+
+              <div className="text-center pt-4 border-t border-white/10 mt-6">
+                <p className="text-xs text-white/40 uppercase tracking-wider mb-4">Or continue with</p>
+                <a
+                  href="https://t.me/hotmess_london_bot?start=login"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold rounded-lg transition-colors"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  Continue with Telegram
+                </a>
+              </div>
 
               <div className="text-center pt-4 border-t border-white/10 mt-6">
                 <button
