@@ -57,20 +57,26 @@ self.addEventListener('activate', (event) => {
   const currentCaches = [STATIC_CACHE, DYNAMIC_CACHE, API_CACHE, IMAGE_CACHE];
   
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name.startsWith('hotmess-') && !currentCaches.includes(name))
-          .map((name) => {
-            console.log('[SW] Deleting old cache:', name);
-            return caches.delete(name);
-          })
-      );
-    })
+    caches.keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((name) => name.startsWith('hotmess-') && !currentCaches.includes(name))
+            .map((name) => {
+              console.log('[SW] Deleting old cache:', name);
+              return caches.delete(name);
+            })
+        );
+      })
+      .then(() => {
+        // Take control immediately - must be called after activation is complete
+        console.log('[SW] Claiming clients...');
+        return self.clients.claim();
+      })
+      .catch((error) => {
+        console.error('[SW] Activation error:', error);
+      })
   );
-  
-  // Take control immediately
-  self.clients.claim();
 });
 
 // Determine caching strategy based on request

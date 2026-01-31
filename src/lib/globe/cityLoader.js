@@ -8,16 +8,16 @@
 // Cache loaded city packs
 const cityCache = new Map();
 
-// City pack paths
+// City pack paths - use actual file names
 const CITY_PACKS = {
   london: '/data/cities/london.json',
-  tokyo: '/data/cities/tokyo.pilot.json',
-  sao_paulo: '/data/cities/sao_paulo.pilot.json',
-  los_angeles: '/data/cities/los_angeles.pilot.json',
-  san_francisco: '/data/cities/san_francisco.pilot.json',
-  sydney: '/data/cities/sydney.pilot.json',
-  berlin: '/data/cities/berlin.pilot.json',
-  paris: '/data/cities/paris.pilot.json',
+  tokyo: '/data/cities/tokyo.json',
+  sao_paulo: '/data/cities/sao_paulo.json',
+  los_angeles: '/data/cities/la.json',
+  san_francisco: '/data/cities/sf.json',
+  sydney: '/data/cities/sydney.json',
+  berlin: '/data/cities/berlin.json',
+  paris: '/data/cities/paris.json',
 };
 
 // City coordinates for globe positioning
