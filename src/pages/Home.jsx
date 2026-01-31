@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { MapPin, ShoppingBag, Users, Radio, Heart, Calendar, Zap, ArrowRight, Globe, Mic, Store, Sparkles, Play } from 'lucide-react';
+import { MapPin, ShoppingBag, Users, Radio, Heart, Calendar, Zap, ArrowRight, Globe, Mic, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useServerNow } from '@/hooks/use-server-now';
 import { toast } from 'sonner';

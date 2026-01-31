@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Radio, MapPin, Users, ShoppingBag, Ticket, Sparkles, Heart, AlertCircle } from 'lucide-react';
+import { Radio, MapPin, Users, Ticket, Sparkles, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { isEligible, prepareFeedItems, getClickRoute, FEED_ITEM_TYPES } from '@/lib/globe/glassFeed';
+import { prepareFeedItems, getClickRoute } from '@/lib/globe/glassFeed';
 import { filterBySafety } from '@/lib/safety/killSwitch';
 
 // Icon mapping for feed item types

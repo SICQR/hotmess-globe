@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Radio, Zap, Users, Flame, Loader2 } from 'lucide-react';
+import { Radio, Zap, Flame, Loader2 } from 'lucide-react';
 import { loadCityPack, isInPeakWindow } from '@/lib/globe/cityLoader';
 import { isDisabled } from '@/lib/safety/killSwitch';
 

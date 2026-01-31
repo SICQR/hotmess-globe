@@ -1,5 +1,4 @@
 import { cn } from '@/lib/utils';
-import { usePulse } from '@/contexts/PulseContext';
 import { Button } from '@/components/ui/button';
 import { Ticket, MessageCircle, Shield, TrendingUp } from 'lucide-react';
 
