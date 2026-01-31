@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Radio, Zap, Users, Flame, Loader2 } from 'lucide-react';
 import { loadCityPack, isInPeakWindow } from '@/lib/globe/cityLoader';
@@ -21,8 +21,11 @@ export default function CityPulseBar({ onCitySelect, currentZoom = 5 }) {
   const [loading, setLoading] = useState(false);
   const [peakZones, setPeakZones] = useState([]);
 
-  // Filter out disabled cities
-  const availableCities = CITIES.filter(c => !isDisabled(c.id));
+  // Filter out disabled cities - memoize to prevent infinite re-renders
+  const availableCities = useMemo(() => 
+    CITIES.filter(c => !isDisabled(c.id)),
+    [] // CITIES is static, isDisabled is stable
+  );
 
   // Auto-rotate through cities
   useEffect(() => {

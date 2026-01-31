@@ -20,9 +20,9 @@ export function SortSelector({ value, onChange, disabled = false, className = ''
         onChange={(e) => onChange(e.target.value as SortOption)}
         disabled={disabled}
         className="
-          rounded-md border border-white/15 bg-black/40 backdrop-blur-sm
+          rounded-md border border-glass-border bg-black/40 backdrop-blur-sm
           px-2 py-1 text-xs font-semibold text-white/90
-          focus:outline-none focus:ring-1 focus:ring-[#00D9FF]
+          focus:outline-none focus:ring-1 focus:ring-cyan
           disabled:opacity-50 disabled:cursor-not-allowed
           appearance-none cursor-pointer
           pr-6 bg-no-repeat bg-right
