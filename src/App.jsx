@@ -22,6 +22,7 @@ import Privacy from '@/pages/legal/Privacy';
 import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
 import { I18nProvider } from '@/contexts/I18nContext';
+import { WorldPulseProvider } from '@/contexts/WorldPulseContext';
 import { PageTransition } from '@/components/lux/PageTransition';
 
 const isProdBuild = import.meta.env.MODE === 'production';
@@ -558,12 +559,14 @@ function App() {
     <I18nProvider>
       <AuthProvider>
         <QueryClientProvider client={queryClientInstance}>
-          <ShopCartProvider>
-            <Router>
-              <NavigationTracker />
-              <AuthenticatedApp />
-            </Router>
-          </ShopCartProvider>
+          <WorldPulseProvider>
+            <ShopCartProvider>
+              <Router>
+                <NavigationTracker />
+                <AuthenticatedApp />
+              </Router>
+            </ShopCartProvider>
+          </WorldPulseProvider>
           <Toaster />
         </QueryClientProvider>
       </AuthProvider>
