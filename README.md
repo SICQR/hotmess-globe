@@ -1,78 +1,394 @@
 # HOTMESS - LGBT+ Social Network & Nightlife Platform
 
-A comprehensive social networking and nightlife discovery platform designed specifically for the LGBT+ community. Built with React + Vite and backed by Supabase (via a Base44-compatible wrapper).
+A full-stack social networking and nightlife discovery platform for the LGBT+ community.  
+**React 18 + Vite + Supabase + Vercel**
 
-## 🌈 About HOTMESS
+---
 
-HOTMESS is more than just a social network—it's a vibrant community hub that connects LGBT+ individuals through social interactions, event discovery, and nightlife experiences. The platform combines social networking features with location-based services to help users discover events, venues, and connect with like-minded people in their area.
+## 📊 Build Stats
 
-## ✨ Key Features
+| Category | Count |
+|----------|-------|
+| **Pages/Routes** | 85 |
+| **Component Folders** | 61 |
+| **API Endpoints** | 8 |
+| **Database Migrations** | 70 |
+| **UI Components** | 73 (shadcn/ui + custom) |
 
-- **🌍 Interactive Globe View**: Explore global LGBT+ events and venues with an immersive 3D globe interface
-- **👥 Social Networking**: Connect with friends, create posts, and engage with the community
-- **🎉 Event Discovery**: Find and share LGBT+ events, parties, and gatherings
-- **📍 Venue Mapping**: Discover LGBT+-friendly bars, clubs, and venues near you
-- **💬 Real-time Chat**: Connect with community members through instant messaging
-- **📱 Mobile-First Design**: Fully responsive design optimized for all devices
-- **🎨 Customizable Profiles**: Express yourself with rich profile customization options
+---
 
-## 📋 Project Status
+## 🗂️ All Pages (85)
 
-**🚀 BETA TESTING READY** (2026-01-28)
+### Core User Pages
+| Page | Route | Description |
+|------|-------|-------------|
+| Home | `/` | Landing with globe hero |
+| Auth | `/auth` | Email/password + Telegram + Google |
+| Profile | `/profile/:id` | User profiles with stats |
+| EditProfile | `/profile/edit` | Profile editor |
+| ProfileSetup | `/profile/setup` | Onboarding flow |
+| Settings | `/settings` | Privacy, notifications, account |
+| Messages | `/messages` | DM inbox |
+| Chat | `/chat/:id` | Individual conversation |
 
-### Recent Updates:
-- ✅ **Profile links and CSP fixed** (PR #25 - vercel.live integration)
-- ✅ **All npm security vulnerabilities fixed** (0 vulnerabilities remaining)
-- ✅ **CI/CD pipeline implemented** (GitHub Actions workflows)
-- ✅ **Security documentation created** (SECURITY.md)
-- ✅ **Structured logging system added** (replaces unsafe console statements)
-- ✅ **Code quality improvements** (fixed parsing errors, removed invalid file extensions)
-- ✅ **Mock data replaced with real API calls** (distance calculations, city data)
-- ✅ **Placeholder text updated** (user-friendly "Coming Soon" messages)
-- ✅ **Environment variables documented** (complete .env.example)
+### Social & Discovery
+| Page | Route | Description |
+|------|-------|-------------|
+| Social | `/social` | Profile grid with filters |
+| ProfilesGrid | `/profiles` | Infinite scroll profiles |
+| Connect | `/connect` | AI matchmaker |
+| Feed | `/feed` | Community posts |
+| Community | `/community` | Forums/discussions |
+| SquadChat | `/squads/:id` | Group chats |
 
-### 🧪 Beta Testing Status
+### Events & Nightlife
+| Page | Route | Description |
+|------|-------|-------------|
+| Events | `/events` | Event listings |
+| MyEvents | `/my-events` | RSVPs & tickets |
+| Calendar | `/calendar` | Event calendar view |
+| Globe | `/globe` | 3D interactive globe |
+| Beacons | `/beacons` | Location drops |
+| CreateBeacon | `/beacons/create` | Post a beacon |
+| BeaconDetail | `/beacons/:id` | Beacon page |
+| Directions | `/directions` | Navigation/travel time |
 
-This version is ready for beta testing. The following features are functional:
-- ✅ User authentication and profiles
-- ✅ Beacon/event creation and discovery
-- ✅ Social discovery and matching
-- ✅ Marketplace and checkout
-- ✅ Real-time features (Right Now status)
-- ✅ Globe visualization with real data
+### Music & Radio
+| Page | Route | Description |
+|------|-------|-------------|
+| Radio | `/radio` | Live streaming radio |
+| RadioSchedule | `/radio/schedule` | Show timetable |
+| Music | `/music` | Music discovery |
+| MusicRelease | `/music/release` | Submit tracks |
+| Pulse | `/pulse` | What's trending now |
 
-**Known Limitations for Beta:**
-- ⚠️ **QR Scanner**: Coming Soon - ticket scanning not yet implemented
-- ⚠️ **SoundCloud OAuth**: Coming Soon - music uploads return 501 (not implemented)
-- ⚠️ **Premium Content**: Coming Soon - premium photo/video unlock not yet implemented
-- ⚠️ **Weather/Transit Data**: Placeholder data (real APIs to be integrated)
-- ⚠️ **Base44 SDK Functions**: Edge functions require Base44 SDK access (verify in production)
+### Marketplace & Commerce
+| Page | Route | Description |
+|------|-------|-------------|
+| Shop | `/shop` | Product listings |
+| ShopCart | `/cart` | Shopping cart |
+| ShopProduct | `/shop/:id` | Product detail |
+| ShopCollection | `/shop/collection/:id` | Collection page |
+| Checkout | `/checkout` | Payment flow |
+| Marketplace | `/marketplace` | P2P marketplace |
+| TicketMarketplace | `/tickets` | Resale tickets |
+| ProductDetail | `/product/:id` | Item page |
+| OrderHistory | `/orders` | Purchase history |
 
-These limitations are clearly marked in the UI and do not block core functionality.
+### Creator & Seller Tools
+| Page | Route | Description |
+|------|-------|-------------|
+| SellerDashboard | `/seller` | Seller analytics & products |
+| CreatorDashboard | `/creator` | Creator tools |
+| OrganizerDashboard | `/organizer` | Event management |
+| CreatorsCart | `/creators/cart` | Creator shop cart |
+| CreatorsCheckout | `/creators/checkout` | Creator checkout |
 
-### 📚 Important Documentation:
-- 🔒 [**SECURITY.md**](./SECURITY.md) - Security best practices and policies
-- 📘 [**HOTMESS LONDON OS — V1.5 Bible**](./docs/HOTMESS-LONDON-OS-BIBLE-v1.5.md) - Canonical product navigation, routes, and build sequence
-- 🚀 [**DEPLOYMENT.md**](./DEPLOYMENT.md) - Deployment checklist and guide
-- 📊 [**CODE_QUALITY_RECOMMENDATIONS.md**](./CODE_QUALITY_RECOMMENDATIONS.md) - Code improvement roadmap
-- 🚧 [**INCOMPLETE_FEATURES.md**](./INCOMPLETE_FEATURES.md) - Known limitations and TODOs
-- 📋 [**ISSUES-TRACKER.md**](./ISSUES-TRACKER.md) - Trackable issues and sprint planning
-- 🔧 [**CI_CD_SETUP.md**](./CI_CD_SETUP.md) - CI/CD pipeline documentation
-- 🧪 [**TEST_SETUP.md**](./TEST_SETUP.md) - Testing infrastructure setup guide
+### Safety & Care
+| Page | Route | Description |
+|------|-------|-------------|
+| Safety | `/safety` | Panic button, check-ins |
+| Care | `/care` | Mental health resources |
+| HandNHand | `/hand-n-hand` | Community support |
+| DialADaddy | `/dial-a-daddy` | Mentor matching |
 
-### ⚠️ Beta Testing Notes:
-1. **Environment Setup**: Ensure all required environment variables are set (see `.env.example`)
-2. **Base44 SDK**: Verify Base44 SDK access for edge functions in production
-3. **Supabase**: Ensure Supabase database is properly configured with all migrations
-4. **Known Issues**: Review [INCOMPLETE_FEATURES.md](./INCOMPLETE_FEATURES.md) for feature limitations
-5. **Error Reporting**: Error boundaries are in place; Sentry integration is optional for beta
+### Admin & Moderation
+| Page | Route | Description |
+|------|-------|-------------|
+| AdminDashboard | `/admin` | Full admin panel |
+| RecordManager | `/admin/records` | Data management |
+| PromoteToAdmin | `/admin/promote` | Role management |
 
-### ⚠️ Before Full Production Deployment:
-1. Complete remaining items in [INCOMPLETE_FEATURES.md](./INCOMPLETE_FEATURES.md)
-2. Implement comprehensive test suite (see TEST_SETUP.md)
-3. Set up error tracking (Sentry recommended)
-4. Complete security hardening checklist in [SECURITY.md](./SECURITY.md)
-5. Review and complete [DEPLOYMENT.md](./DEPLOYMENT.md) checklist
+### Account & Legal
+| Page | Route | Description |
+|------|-------|-------------|
+| AccountConsents | `/account/consents` | GDPR consents |
+| AccountDeletion | `/account/delete` | Delete account |
+| DataExport | `/account/export` | GDPR export |
+| PrivacyPolicy | `/privacy` | Privacy policy |
+| TermsOfService | `/terms` | Terms |
+| CommunityGuidelines | `/guidelines` | Rules |
+
+### Misc & Features
+| Page | Route | Description |
+|------|-------|-------------|
+| Onboarding | `/onboarding` | New user tour |
+| AgeGate | `/age-gate` | 18+ verification |
+| Features | `/features` | Feature showcase |
+| Pricing | `/pricing` | Membership tiers |
+| MembershipUpgrade | `/upgrade` | Premium upgrade |
+| HelpCenter | `/help` | Support & FAQs |
+| Contact | `/contact` | Contact form |
+| Bookmarks | `/bookmarks` | Saved items |
+| Stats | `/stats` | User statistics |
+| Leaderboard | `/leaderboard` | Gamification |
+| Challenges | `/challenges` | Community challenges |
+| InviteFriends | `/invite` | Referral system |
+| Scan | `/scan` | QR scanner |
+| RightNowDashboard | `/right-now` | Live status manager |
+| LuxShowcase | `/lux` | Premium showcase |
+| WakeTheMess | `/wake` | Push notifications |
+
+---
+
+## 🧩 Component Architecture (61 folders)
+
+```
+src/components/
+├── accessibility/     # FocusTrap, KeyboardNav, SkipToContent
+├── admin/            # 12 components - UserManagement, Analytics, Moderation
+├── ai/               # GlobalAssistant, NightlifeResearcher
+├── analytics/        # ABTesting, AdvancedAnalytics
+├── auth/             # AgeGate, TelegramLogin, TwoFactorSetup, FaceVerification
+├── beacon/           # BeaconActions, CommentsSection
+├── commerce/         # FeeDisplay
+├── community/        # PostCard, PostCreator, PersonalizedFeed, TrendingSummary
+├── cta/              # CTAButton
+├── directions/       # InAppDirections
+├── discovery/        # AIMatchmaker, RightNowIndicator, FiltersDrawer
+├── docs/             # Documentation components
+├── error/            # Error boundaries
+├── events/           # 12 components - EventCard, RSVP, Ticketing, MapView
+├── gamification/     # Challenges, rewards
+├── globe/            # 3D globe, controls, overlays
+├── home/             # Landing page sections
+├── i18n/             # Language switcher
+├── interactions/     # Like, share, follow
+├── legal/            # Terms, privacy components
+├── loading/          # Spinners, skeletons
+├── lux/              # Premium UI variants
+├── marketing/        # CTAs, banners
+├── marketplace/      # ProductCard, Cart, Offers
+├── matching/         # AI matching UI
+├── media/            # MediaGallery, MediaUploader
+├── membership/       # Tier badges, upgrade prompts
+├── messaging/        # ChatThread, ThreadList, NewMessageModal
+├── mobile/           # Mobile-specific components
+├── moderation/       # Report, block UI
+├── monetization/     # Payment components
+├── music/            # SoundCloudEmbed, ConvictPlayer, NightKingDisplay
+├── navigation/       # Navbar, sidebar, mobile nav
+├── notifications/    # Toast, push notifications
+├── onboarding/       # WelcomeTour, tips
+├── orders/           # OrderHistory, QRScanner
+├── profile/          # ProfileHeader, ProfileStats, ProfileCompleteness
+├── pwa/              # Install prompt, offline indicator
+├── radio/            # RadioPlayer, schedule components
+├── react-bits/       # Animated UI components
+├── realtime/         # Live presence indicators
+├── recommendations/  # AI recommendations
+├── retention/        # Re-engagement components
+├── safety/           # EmergencyEditor, CheckInTimer
+├── search/           # Search bar, filters
+├── seller/           # SalesAnalytics, PayoutManager, InventoryAlerts
+├── shell/            # Layout, PageShell
+├── skeletons/        # Loading placeholders
+├── social/           # Social feed components
+├── splash/           # Splash screens
+├── squads/           # Group chat components
+├── taxonomy/         # Tags, categories
+├── text/             # Typography components
+├── transitions/      # Page transitions
+├── travel/           # Travel time, directions
+├── tutorial/         # TutorialTooltip
+├── ui/               # 73 shadcn components (button, card, dialog, etc.)
+├── upload/           # File upload components
+├── utils/            # supabaseClient, helpers
+├── vibe/             # VibeSynthesis cards
+└── video/            # Video player components
+```
+
+---
+
+## 🔌 API Endpoints (8 routes)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/profiles` | GET | Paginated profile feed |
+| `/api/travel-time` | POST | ETA calculations (Google/fallback) |
+| `/api/soundcloud/*` | Various | SoundCloud OAuth & uploads |
+| `/api/scraper/*` | POST | Event scraper triggers |
+| `/api/webhook/*` | POST | Stripe/Shopify webhooks |
+| `/api/telegram/*` | POST | Telegram bot integration |
+| `/api/cron/*` | GET | Scheduled jobs |
+| `/api/health` | GET | Health check |
+
+---
+
+## 🗄️ Database (70 migrations)
+
+**Supabase PostgreSQL** with tables for:
+- `profiles` - User profiles with geo, photos, tags
+- `events` - Event listings with venues, tickets
+- `beacons` - Location-based drops
+- `messages` / `threads` - Real-time messaging
+- `products` / `orders` - Marketplace
+- `safety_checkins` - Check-in timer system
+- `radio_shows` / `music_releases` - Radio/music
+- `squads` - Group chats
+- `reports` / `blocks` - Moderation
+- `analytics_events` - Usage tracking
+
+---
+
+## 🎯 Feature Status
+
+### ✅ Fully Working
+- Email/password + Google auth (Supabase)
+- Telegram login button
+- Profile CRUD with photos
+- Event listings & RSVPs
+- Beacon creation & discovery
+- Real-time messaging
+- Shopping cart & Stripe checkout
+- 3D Globe visualization
+- Radio player & schedule
+- Safety check-in timer
+- Admin dashboard
+- GDPR data export/deletion
+- PWA with offline support
+
+### ⚠️ Partial / Coming Soon
+- QR ticket scanning (UI exists, backend partial)
+- SoundCloud OAuth (endpoints exist, needs hardening)
+- Premium content unlock (payment flow incomplete)
+- Face verification (UI exists, needs integration)
+- Push notifications (setup exists, needs VAPID keys)
+
+### 🔜 Planned
+- Video chat
+- AI event recommendations (ML model)
+- Uber deep-link integration
+
+---
+
+## 🚀 Quick Start
+
+```bash
+# Clone
+git clone https://github.com/SICQR/hotmess-globe.git
+cd hotmess-globe
+
+# Install
+npm install
+
+# Configure
+cp .env.example .env.local
+# Edit .env.local with your Supabase credentials
+
+# Run
+npm run dev
+# → http://localhost:5173
+```
+
+### Required Environment Variables
+
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key  # Server-side only
+```
+
+### Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development server (port 5173) |
+| `npm run build` | Production build → `dist/` |
+| `npm run preview` | Preview production build |
+| `npm run lint` | ESLint check |
+| `npm run typecheck` | TypeScript check |
+| `npm run test:e2e` | Playwright tests |
+
+---
+
+## 🏗️ Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | React 18, Vite, React Router |
+| **Styling** | Tailwind CSS, shadcn/ui, Radix UI |
+| **State** | React Query, Context API |
+| **3D** | Three.js, React Three Fiber |
+| **Maps** | Leaflet, Mapbox GL |
+| **Backend** | Supabase (Postgres, Auth, Storage, Realtime) |
+| **Payments** | Stripe |
+| **Hosting** | Vercel |
+| **CI/CD** | GitHub Actions |
+
+---
+
+## 📁 Project Structure
+
+```
+hotmess-globe/
+├── src/
+│   ├── pages/           # 85 route pages
+│   ├── components/      # 61 component folders
+│   ├── features/        # Feature modules
+│   ├── hooks/           # Custom React hooks
+│   ├── contexts/        # Auth, i18n, Cart contexts
+│   ├── lib/             # Core utilities
+│   ├── utils/           # Helper functions
+│   └── api/             # API client modules
+├── api/                 # Vercel serverless functions
+├── supabase/
+│   ├── migrations/      # 70 SQL migrations
+│   └── functions/       # Edge functions
+├── public/              # Static assets, PWA manifest
+├── e2e/                 # Playwright tests
+└── docs/                # Additional documentation
+```
+
+---
+
+## 🔒 Security
+
+- ✅ All npm vulnerabilities resolved
+- ✅ Secret scanning (TruffleHog)
+- ✅ CodeQL analysis on PRs
+- ✅ CSP headers configured
+- ✅ GDPR compliance (export/delete)
+
+See [SECURITY.md](./SECURITY.md) for full details.
+
+---
+
+## 📚 Documentation
+
+| Doc | Description |
+|-----|-------------|
+| [SECURITY.md](./SECURITY.md) | Security policies |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Deploy checklist |
+| [CODEBASE_ANALYSIS.md](./CODEBASE_ANALYSIS.md) | Deep technical analysis |
+| [INCOMPLETE_FEATURES.md](./INCOMPLETE_FEATURES.md) | Known limitations |
+| [AI_WORKFLOW.md](./AI_WORKFLOW.md) | Multi-AI collaboration guide |
+
+---
+
+## 🚢 Deployment
+
+Auto-deploys to **Vercel** on push to `main`.
+
+```
+Production: https://hotmessldn.com
+Preview: https://hotmess-globe-*.vercel.app
+```
+
+Vercel settings:
+- Framework: Vite
+- Build: `npm run build`
+- Output: `dist`
+
+---
+
+## 📄 License
+
+Proprietary - SICQR Ltd
+
+---
+
+Made with 🏳️‍🌈 for the LGBT+ community
 
 ## 🚀 Getting Started
 

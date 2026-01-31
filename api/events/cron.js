@@ -95,9 +95,19 @@ export default async function handler(req, res) {
 
   let events = coerceArray(body.events);
   const sourceErrors = [];
+  const runId = crypto.randomUUID();
+
+  // Log run start
+  await serviceClient.from('event_scraper_runs').insert({
+    id: runId,
+    status: 'running',
+    mode: body.events ? 'manual' : 'cron',
+    target_cities: cities,
+    initiator: 'cron',
+  });
 
   if (!events.length) {
-    const fetched = await fetchEventsFromConfiguredSources({ cities, daysAhead });
+    const fetched = await fetchEventsFromConfiguredSources({ cities, daysAhead, serviceClient });
     if (fetched.ok) {
       events = fetched.events;
       sourceErrors.push(...(fetched.errors || []));
@@ -173,6 +183,17 @@ export default async function handler(req, res) {
       results.errors.push(`Failed to upsert ${row.title} (${row.city}): ${e?.message || String(e)}`);
     }
   }
+
+  // Update run log
+  await serviceClient.from('event_scraper_runs').update({
+    status: results.errors.length === 0 ? 'completed' : 'partial',
+    finished_at: new Date().toISOString(),
+    events_found: events.length,
+    events_created: results.created,
+    events_updated: results.updated,
+    error_count: results.errors.length + results.sourceErrors.length,
+    logs: results.errors,
+  }).eq('id', runId);
 
   return json(res, 200, {
     success: results.errors.length === 0,

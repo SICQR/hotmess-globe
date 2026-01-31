@@ -6,7 +6,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { 
   ShieldCheck, 
   AlertTriangle, 
@@ -88,11 +87,6 @@ export default function AgeVerificationGate({
 
   // Handle verification method selection
   const handleSelectMethod = async (method) => {
-    if (!user) {
-      setError('You must be logged in to verify your age.');
-      return;
-    }
-
     setSelectedMethod(method);
     setVerifying(true);
     setError(null);
@@ -177,22 +171,13 @@ export default function AgeVerificationGate({
             This content is rated {contentRating.toUpperCase()} and requires age verification to view.
           </p>
 
-          {user ? (
-            <Button
-              onClick={() => setShowModal(true)}
-              className="bg-[#FF1493] hover:bg-[#FF1493]/80 text-white font-bold"
-            >
-              <ShieldCheck className="w-4 h-4 mr-2" />
-              Verify Age (18+)
-            </Button>
-          ) : (
-            <Link to="/auth">
-              <Button className="bg-[#FF1493] hover:bg-[#FF1493]/80 text-white font-bold">
-                <ShieldCheck className="w-4 h-4 mr-2" />
-                Log in to Verify
-              </Button>
-            </Link>
-          )}
+          <Button
+            onClick={() => setShowModal(true)}
+            className="bg-[#FF1493] hover:bg-[#FF1493]/80 text-white font-bold"
+          >
+            <ShieldCheck className="w-4 h-4 mr-2" />
+            Verify Age (18+)
+          </Button>
 
           <p className="mt-4 text-xs text-white/40">
             One-time verification. We don't store your documents.

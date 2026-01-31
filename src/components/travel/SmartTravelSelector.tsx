@@ -286,12 +286,11 @@ export function SmartTravelSelector({
                 {recommendedOption.mode === 'uber' ? (
                   <Button
                     size="sm"
-                    variant="hotGradient"
+                    className="text-xs bg-gradient-to-r from-[#FF1493] to-[#FFD700] hover:from-[#FF0080] hover:to-[#FFC700] border-none text-black font-bold"
                     onClick={(e) => {
                       e.stopPropagation();
                       onRequestRide?.();
                     }}
-                    className="text-xs"
                   >
                     Request
                   </Button>

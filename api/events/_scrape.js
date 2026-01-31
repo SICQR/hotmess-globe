@@ -49,13 +49,40 @@ export const toBeaconRow = (event) => {
  * - { "events": [ ... ] }
  * - [ ... ]
  */
-export const fetchEventsFromConfiguredSources = async ({ cities }) => {
-  const raw = getEnv('EVENT_SCRAPER_SOURCES_JSON');
-  if (!raw) return { ok: false, error: 'Missing EVENT_SCRAPER_SOURCES_JSON' };
+export const fetchEventsFromConfiguredSources = async ({ cities, serviceClient }) => {
+  let parsed = {};
 
-  const parsed = safeJsonParse(raw);
-  if (!parsed || typeof parsed !== 'object') {
-    return { ok: false, error: 'Invalid EVENT_SCRAPER_SOURCES_JSON (must be JSON object)' };
+  // Try DB first if client provided
+  if (serviceClient) {
+    const { data: sources, error } = await serviceClient
+      .from('event_scraper_sources')
+      .select('city, source_url')
+      .eq('enabled', true);
+
+    if (!error && sources?.length > 0) {
+      // Convert DB rows to expected format: { "City": ["url1", "url2"] }
+      parsed = sources.reduce((acc, row) => {
+        const c = row.city;
+        if (!acc[c]) acc[c] = [];
+        acc[c].push(row.source_url);
+        return acc;
+      }, {});
+    }
+  }
+
+  // Fallback to env var if empty
+  if (Object.keys(parsed).length === 0) {
+    const raw = getEnv('EVENT_SCRAPER_SOURCES_JSON');
+    if (raw) {
+      const fromEnv = safeJsonParse(raw);
+      if (fromEnv && typeof fromEnv === 'object') {
+        parsed = fromEnv;
+      }
+    }
+  }
+
+  if (Object.keys(parsed).length === 0) {
+     return { ok: false, error: 'No configured sources (DB or ENV)' };
   }
 
   const out = [];
