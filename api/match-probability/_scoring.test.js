@@ -8,7 +8,7 @@ import {
   calculateLifestyleScore,
   calculateActivityScore,
   calculateCompletenessScore,
-  aggregateMatchScore,
+  aggregateScores,
   cosineSimilarity,
 } from './_scoring.js';
 
@@ -255,7 +255,7 @@ describe('Match Probability Scoring', () => {
     });
   });
 
-  describe('aggregateMatchScore', () => {
+  describe('aggregateScores', () => {
     it('should sum all scores', () => {
       const breakdown = {
         travelTime: 20,
@@ -267,7 +267,7 @@ describe('Match Probability Scoring', () => {
         activity: 8,
         completeness: 8,
       };
-      expect(aggregateMatchScore(breakdown)).toBe(100);
+      expect(aggregateScores(breakdown).matchProbability).toBe(100);
     });
 
     it('should handle partial scores', () => {
@@ -281,7 +281,7 @@ describe('Match Probability Scoring', () => {
         activity: 4,
         completeness: 4,
       };
-      expect(aggregateMatchScore(breakdown)).toBe(48);
+      expect(aggregateScores(breakdown).matchProbability).toBe(48);
     });
 
     it('should cap at 100', () => {
@@ -295,7 +295,7 @@ describe('Match Probability Scoring', () => {
         activity: 50,
         completeness: 50,
       };
-      expect(aggregateMatchScore(breakdown)).toBe(100);
+      expect(aggregateScores(breakdown).matchProbability).toBe(100);
     });
   });
 });
