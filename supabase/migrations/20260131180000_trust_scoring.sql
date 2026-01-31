@@ -289,8 +289,8 @@ ALTER TABLE anomaly_events ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Admins can manage trust"
   ON source_trust FOR ALL
-  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = TRUE));
+  USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin'));
 
 CREATE POLICY "Admins can manage anomalies"
   ON anomaly_events FOR ALL
-  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = TRUE));
+  USING (EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin'));

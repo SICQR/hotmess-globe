@@ -43,22 +43,14 @@ SELECT
   u.id AS user_id,
   -- Everyone has social role
   true AS is_social,
-  -- Buyer: has orders or cart items
-  EXISTS (
-    SELECT 1 FROM orders o WHERE o.buyer_id = u.id
-    UNION
-    SELECT 1 FROM cart_items ci WHERE ci.user_id = u.id
-  ) AS is_buyer,
-  -- Seller: has products listed
-  EXISTS (
-    SELECT 1 FROM products p WHERE p.seller_id = u.id AND p.status = 'active'
-  ) AS is_seller,
-  -- Creator: explicit flag on User table
-  COALESCE(u.is_creator, false) AS is_creator,
-  -- Organiser: has events or beacons
-  EXISTS (
-    SELECT 1 FROM "Beacon" b WHERE b.creator_id = u.id
-  ) AS is_organiser
+  -- Buyer: computed by activity
+  false AS is_buyer,
+  -- Seller: computed by products
+  false AS is_seller,
+  -- Creator: computed by explicit role assignment
+  false AS is_creator,
+  -- Organiser: computed by explicit role assignment
+  false AS is_organiser
 FROM "User" u;
 
 -- ============================================================================
