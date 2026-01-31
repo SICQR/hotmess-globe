@@ -67,6 +67,13 @@ import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
 import { Tickets, TicketDetail, TicketChat } from './pages/tickets';
 import WakeTheMess from './pages/WakeTheMess';
+import BusinessGlobe from './pages/business/BusinessGlobe';
+import BusinessAmplify from './pages/business/BusinessAmplify';
+import BusinessInsights from './pages/business/BusinessInsights';
+import CadencePanel from './pages/admin/CadencePanel';
+import CityReadiness from './pages/admin/CityReadiness';
+import CreatorDashboard from './pages/creator/CreatorDashboard';
+import Welcome from './pages/Welcome';
 import __Layout from './Layout.jsx';
 
 
@@ -141,6 +148,13 @@ export const PAGES = {
     "TicketDetail": TicketDetail,
     "TicketChat": TicketChat,
     "WakeTheMess": WakeTheMess,
+    "BusinessGlobe": BusinessGlobe,
+    "BusinessAmplify": BusinessAmplify,
+    "BusinessInsights": BusinessInsights,
+    "CadencePanel": CadencePanel,
+    "CityReadiness": CityReadiness,
+    "CreatorDashboard": CreatorDashboard,
+    "Welcome": Welcome,
 }
 
 export const pagesConfig = {
