@@ -4,12 +4,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { MapPin, ShoppingBag, Users, Radio, Heart, Calendar, Zap, ArrowRight } from 'lucide-react';
+import { MapPin, ShoppingBag, Users, Radio, Heart, Calendar, Zap, ArrowRight, Globe, Mic, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useServerNow } from '@/hooks/use-server-now';
 import { toast } from 'sonner';
 import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { format } from 'date-fns';
+import { useWorldPulse } from '@/contexts/WorldPulseContext';
+import GlobeHero from '@/components/globe/GlobeHero';
+import CityPulseBar from '@/components/globe/CityPulseBar';
+import LiveFeed from '@/components/globe/LiveFeed';
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
 // Shopify product handles are not the same as release slugs.
@@ -279,52 +283,181 @@ export default function Home() {
     return events[0] || null;
   }, [recentBeacons]);
 
+  // World Pulse for ambient city signals
+  const { pulses } = useWorldPulse();
+  const recentPulses = pulses?.slice(0, 3) || [];
+
   return (
-    <div className="min-h-screen bg-black text-white pb-20">
-      {/* HERO */}
+    <div className="min-h-screen bg-black text-white">
+      {/* CITY PULSE BAR - Sticky top */}
+      <div className="sticky top-0 z-50">
+        <CityPulseBar />
+      </div>
+
+      {/* GLOBE HERO - Full viewport with live visualization */}
       <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
+        {/* Animated globe background */}
         <div className="absolute inset-0">
-          <img 
-            src="/images/hung-hero.png"
-            alt="HUNG Hero"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=1920&q=80';
-            }}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black" />
+          <GlobeHero />
         </div>
+
+        {/* Live Feed overlay */}
+        <div className="absolute top-24 right-4 z-20 hidden md:block">
+          <LiveFeed />
+        </div>
+
+        {/* Main content */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 1, delay: 0.5 }}
           className="relative z-10 text-center px-6 max-w-6xl"
         >
-          <h1 className="text-[20vw] md:text-[12vw] font-black italic leading-[0.8] tracking-tighter mb-8 drop-shadow-2xl">
+          <motion.h1 
+            className="text-[20vw] md:text-[12vw] font-black italic leading-[0.8] tracking-tighter mb-4 drop-shadow-2xl"
+            animate={{ 
+              textShadow: [
+                '0 0 20px rgba(255,20,147,0.5)',
+                '0 0 60px rgba(255,20,147,0.8)',
+                '0 0 20px rgba(255,20,147,0.5)'
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
             HOT<span className="text-[#FF1493]">MESS</span>
-          </h1>
-          <p className="text-2xl md:text-4xl font-bold uppercase tracking-wider mb-4 drop-shadow-lg">
-            LONDON OS
-          </p>
-          <p className="text-base md:text-xl text-white/90 uppercase tracking-widest mb-12 max-w-3xl mx-auto drop-shadow-lg">
-            RAW / HUNG / HIGH / SUPER + HNH MESS. No filler. No shame.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link to="/social">
-              <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg shadow-2xl">
-                <Users className="w-5 h-5 mr-2" />
-                SOCIAL
+          </motion.h1>
+          
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="mb-8"
+          >
+            <p className="text-lg md:text-2xl font-bold uppercase tracking-[0.3em] text-white/80 mb-2">
+              The Living World
+            </p>
+            <p className="text-sm md:text-base text-white/50 uppercase tracking-widest">
+              Nights • Radio • Connection • Commerce
+            </p>
+          </motion.div>
+
+          <motion.div 
+            className="flex flex-wrap gap-4 justify-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2 }}
+          >
+            <Link to="/welcome">
+              <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg shadow-2xl group">
+                <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                ENTER THE MESS
               </Button>
             </Link>
-            <Link to="/market">
-              <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg shadow-2xl backdrop-blur-sm">
-                <ShoppingBag className="w-5 h-5 mr-2" />
-                SHOP THE DROP
+            <Link to="/music/live">
+              <Button variant="outline" className="border-2 border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-black font-black uppercase px-8 py-6 text-lg shadow-2xl backdrop-blur-sm">
+                <Radio className="w-5 h-5 mr-2" />
+                LIVE RADIO
               </Button>
             </Link>
+          </motion.div>
+        </motion.div>
+
+        {/* Scroll indicator */}
+        <motion.div 
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex items-start justify-center p-2">
+            <motion.div 
+              className="w-1.5 h-1.5 bg-pink-500 rounded-full"
+              animate={{ y: [0, 16, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
           </div>
         </motion.div>
+      </section>
+
+      {/* MODES GRID - What you can do */}
+      <section className="py-16 px-6 bg-black">
+        <div className="max-w-7xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl md:text-6xl font-black italic mb-4">
+              WHAT'S <span className="text-pink-500">YOURS</span>
+            </h2>
+            <p className="text-white/50 uppercase tracking-widest">Choose your mode</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { to: '/social', icon: Users, title: 'Connect', desc: 'Find your people tonight', color: 'from-pink-500 to-red-500' },
+              { to: '/events', icon: Zap, title: 'Events', desc: 'What\'s happening now', color: 'from-yellow-500 to-orange-500' },
+              { to: '/music/live', icon: Radio, title: 'Radio', desc: 'Live sets & culture', color: 'from-green-500 to-emerald-500' },
+              { to: '/market', icon: ShoppingBag, title: 'Market', desc: 'Drops & P2P commerce', color: 'from-purple-500 to-violet-500' },
+            ].map((mode, i) => (
+              <motion.div
+                key={mode.to}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Link to={mode.to}>
+                  <div className="group relative overflow-hidden rounded-xl bg-white/5 border border-white/10 hover:border-pink-500/50 p-6 h-48 transition-all hover:scale-[1.02]">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${mode.color} opacity-0 group-hover:opacity-20 transition-opacity`} />
+                    <mode.icon className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
+                    <h3 className="text-2xl font-black uppercase mb-2">{mode.title}</h3>
+                    <p className="text-sm text-white/50">{mode.desc}</p>
+                    <ArrowRight className="absolute bottom-6 right-6 w-5 h-5 text-white/30 group-hover:text-pink-500 group-hover:translate-x-1 transition-all" />
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* BUSINESS / CREATOR STRIP */}
+      <section className="py-12 px-6 bg-gradient-to-r from-pink-950/30 via-black to-purple-950/30 border-y border-white/10">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Link to="/creator" className="group">
+              <div className="bg-black/50 border border-white/10 hover:border-pink-500/50 rounded-xl p-8 transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-pink-500/20 flex items-center justify-center">
+                    <Mic className="w-6 h-6 text-pink-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-pink-500 uppercase tracking-widest">For Creators</p>
+                    <h3 className="text-xl font-black">Monetize Your Art</h3>
+                  </div>
+                </div>
+                <p className="text-white/50 text-sm mb-4">Radio shows, drops, tickets — earn from what you create.</p>
+                <span className="text-pink-500 text-sm group-hover:underline">Start creating →</span>
+              </div>
+            </Link>
+            <Link to="/business/globe" className="group">
+              <div className="bg-black/50 border border-white/10 hover:border-pink-500/50 rounded-xl p-8 transition-all">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <Globe className="w-6 h-6 text-purple-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-purple-500 uppercase tracking-widest">For Business</p>
+                    <h3 className="text-xl font-black">Amplify Your Presence</h3>
+                  </div>
+                </div>
+                <p className="text-white/50 text-sm mb-4">See city heat, schedule signals, measure impact.</p>
+                <span className="text-purple-500 text-sm group-hover:underline">View dashboard →</span>
+              </div>
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* LUBE CTA (always visible) */}

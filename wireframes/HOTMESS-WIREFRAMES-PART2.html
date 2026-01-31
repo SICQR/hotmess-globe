@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS - Wireframes Part 2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'hot': '#FF1493',
+            'blue': '#0047AB',
+            'cyan': '#00D9FF',
+            'purple': '#B026FF',
+            'lime': '#39FF14',
+            'yellow': '#FFEB3B',
+            'gold': '#FFD700',
+            'orange': '#FF6B35',
+          },
+          fontFamily: {
+            'sans': ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #0a0a0a; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    .glow-hot { box-shadow: 0 0 30px rgba(255, 20, 147, 0.5); }
+    .glow-cyan { box-shadow: 0 0 20px rgba(0, 217, 255, 0.4); }
+    .glow-purple { box-shadow: 0 0 20px rgba(176, 38, 255, 0.4); }
+    .glow-lime { box-shadow: 0 0 20px rgba(57, 255, 20, 0.4); }
+    .glow-blue { box-shadow: 0 0 20px rgba(0, 71, 171, 0.4); }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .animate-pulse { animation: pulse 2s ease-in-out infinite; }
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      border-radius: 40px;
+      border: 8px solid #1a1a1a;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 2px rgba(255,255,255,0.1);
+      overflow: hidden;
+      position: relative;
+      background: #000;
+    }
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: #000;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+    .wireframe-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 80px;
+      padding: 60px;
+    }
+    .screen-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .screen-title {
+      margin-bottom: 20px;
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.6);
+    }
+    .screen-description {
+      margin-top: 16px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      text-align: center;
+      max-width: 300px;
+    }
+  </style>
+</head>
+<body class="text-white min-h-screen">
+
+  <!-- HEADER -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-xl border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-black">HOT<span class="text-hot">MESS</span> <span class="text-white/40 text-sm font-medium">WIREFRAMES PT.2</span></h1>
+        <p class="text-[10px] uppercase tracking-widest text-white/40">Events • Market • HNH MESS • More</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="pt-24">
+
+    <div class="wireframe-grid">
+
+      <!-- ============================================ -->
+      <!-- SCREEN 7: EVENTS LIST -->
+      <!-- ============================================ -->
+      <div class="screen-container">
+        <p class="screen-title">7. Events List</p>
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="h-full overflow-y-auto bg-black">
+            
+            <!-- Status Bar -->
+            <div class="fixed top-0 left-0 right-0 z-50 bg-black px-6 py-2 flex justify-between items-center text-[11px]">
+              <span class="font-semibold">9:41</span>
+              <div class="flex items-center gap-1.5">
+                <div class="w-4 h-4 flex items-center justify-center">
+                  <div class="w-3 h-3 border-2 border-white rounded-sm"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Header -->
+            <header class="sticky top-6 z-40 bg-black/95 backdrop-blur-xl border-b border-white/10">
+              <div class="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p class="text-[9px] uppercase tracking-[0.2em] text-white/40">EVENTS</p>
+                  <h1 class="text-lg font-black">TONIGHT<span class="text-cyan">.</span></h1>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="p-2 rounded-xl bg-white/5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                  </button>
+                  <button class="p-2 rounded-xl bg-cyan text-black">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Date Tabs -->
+              <div class="flex gap-2 px-4 pb-3 overflow-x-auto">
+                <button class="flex-shrink-0 px-4 py-2 bg-cyan text-black rounded-full text-xs font-black uppercase">Today</button>
+                <button class="flex-shrink-0 px-4 py-2 bg-white/5 rounded-full text-xs font-bold uppercase text-white/70">Fri 31</button>
+                <button class="flex-shrink-0 px-4 py-2 bg-white/5 rounded-full text-xs font-bold uppercase text-white/70">Sat 1</button>
+                <button class="flex-shrink-0 px-4 py-2 bg-white/5 rounded-full text-xs font-bold uppercase text-white/70">Sun 2</button>
+              </div>
+            </header>
+
+            <!-- Content -->
+            <main class="px-4 py-4 pb-28">
+              
+              <!-- Featured Event -->
+              <section class="mb-6">
+                <div class="relative h-48 rounded-2xl overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&q=80" class="w-full h-full object-cover">
+                  <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                  <div class="absolute top-3 left-3">
+                    <span class="px-2 py-1 rounded-full bg-hot text-white text-[9px] font-black uppercase">Featured</span>
+                  </div>
+                  <div class="absolute bottom-4 left-4 right-4">
+                    <p class="text-[10px] text-cyan uppercase mb-1">Tonight @ XXL • 10pm</p>
+                    <h2 class="text-xl font-black uppercase mb-2">MEAT RACK</h2>
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <div class="flex -space-x-2">
+                          <div class="w-6 h-6 rounded-full bg-white/20 border-2 border-black"></div>
+                          <div class="w-6 h-6 rounded-full bg-white/20 border-2 border-black"></div>
+                          <div class="w-6 h-6 rounded-full bg-white/20 border-2 border-black"></div>
+                        </div>
+                        <span class="text-[10px] text-white/60">+128 going</span>
+                      </div>
+                      <button class="px-4 py-2 bg-cyan text-black text-[10px] font-black uppercase rounded-lg">RSVP</button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Event List -->
+              <section>
+                <h3 class="text-xs font-black uppercase text-white/50 mb-3">All Events</h3>
+                <div class="space-y-3">
+                  
+                  <div class="glass border border-white/10 rounded-xl p-4 flex gap-4">
+                    <div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                      <img src="https://images.unsplash.com/photo-1571266028243-3716f02d3f1e?w=200&q=80" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-[10px] text-white/50 uppercase">Fire • 11pm</p>
+                      <h4 class="font-black text-sm uppercase">ORANGE NATION</h4>
+                      <p class="text-[10px] text-white/60 mb-2">Electronic • Techno</p>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-lime">87 going</span>
+                        <span class="text-[10px] text-white/30">•</span>
+                        <span class="text-[10px] text-white/50">£15</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="glass border border-white/10 rounded-xl p-4 flex gap-4">
+                    <div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                      <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200&q=80" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-[10px] text-white/50 uppercase">The Yard • 9pm</p>
+                      <h4 class="font-black text-sm uppercase">DISCO BRUNCH</h4>
+                      <p class="text-[10px] text-white/60 mb-2">Disco • House</p>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-lime">52 going</span>
+                        <span class="text-[10px] text-white/30">•</span>
+                        <span class="text-[10px] text-white/50">Free</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="glass border border-white/10 rounded-xl p-4 flex gap-4">
+                    <div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                      <img src="https://images.unsplash.com/photo-1504680177321-2e6a879aac86?w=200&q=80" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-[10px] text-white/50 uppercase">Heaven • Midnight</p>
+                      <h4 class="font-black text-sm uppercase">G-A-Y LATE</h4>
+                      <p class="text-[10px] text-white/60 mb-2">Pop • Dance</p>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-lime">234 going</span>
+                        <span class="text-[10px] text-white/30">•</span>
+                        <span class="text-[10px] text-white/50">£5</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </section>
+
+            </main>
+
+            <!-- Bottom Nav -->
+            <nav class="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-t border-white/10">
+              <div class="grid grid-cols-5 gap-1 px-2 py-2 pb-6">
+                <a href="#" class="flex flex-col items-center py-2 text-white/50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                  </svg>
+                  <span class="text-[8px] font-black uppercase mt-0.5">Home</span>
+                </a>
+                <a href="#" class="flex flex-col items-center py-2 text-cyan">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <span class="text-[8px] font-black uppercase mt-0.5">Events</span>
+                </a>
+                <a href="#" class="flex flex-col items-center -mt-4">
+                  <div class="w-12 h-12 bg-hot rounded-full flex items-center justify-center glow-hot border-4 border-black">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                  </div>
+                  <span class="text-[8px] font-black uppercase mt-1">Social</span>
+                </a>
+                <a href="#" class="flex flex-col items-center py-2 text-white/50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                  </svg>
+                  <span class="text-[8px] font-black uppercase mt-0.5">Shop</span>
+                </a>
+                <a href="#" class="flex flex-col items-center py-2 text-white/50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                  </svg>
+                  <span class="text-[8px] font-black uppercase mt-0.5">More</span>
+                </a>
+              </div>
+            </nav>
+
+          </div>
+        </div>
+        <p class="screen-description">Events list with featured hero, date tabs, and event cards showing attendance.</p>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- SCREEN 8: MARKET / SHOP -->
+      <!-- ============================================ -->
+      <div class="screen-container">
+        <p class="screen-title">8. Market / Shop</p>
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="h-full overflow-y-auto bg-black">
+            
+            <!-- Status Bar -->
+            <div class="fixed top-0 left-0 right-0 z-50 bg-black px-6 py-2 flex justify-between items-center text-[11px]">
+              <span class="font-semibold">9:41</span>
+              <div class="flex items-center gap-1.5">
+                <div class="w-4 h-4 flex items-center justify-center">
+                  <div class="w-3 h-3 border-2 border-white rounded-sm"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Header -->
+            <header class="sticky top-6 z-40 bg-black/95 backdrop-blur-xl border-b border-white/10">
+              <div class="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p class="text-[9px] uppercase tracking-[0.2em] text-white/40">SHOP</p>
+                  <h1 class="text-lg font-black">THE <span class="text-hot">DROP</span></h1>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="p-2 rounded-xl bg-white/5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                  </button>
+                  <button class="p-2 rounded-xl bg-white/5 relative">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    <span class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-hot rounded-full text-[9px] font-bold flex items-center justify-center">2</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Category Tabs -->
+              <div class="flex gap-2 px-4 pb-3 overflow-x-auto">
+                <button class="flex-shrink-0 px-4 py-2 bg-hot text-white rounded-full text-xs font-black uppercase">All</button>
+                <button class="flex-shrink-0 px-4 py-2 bg-white/5 rounded-full text-xs font-bold uppercase text-white/70">HNH</button>
+                <button class="flex-shrink-0 px-4 py-2 bg-white/5 rounded-full text-xs font-bold uppercase text-white/70">RAW</button>
+                <button class="flex-shrink-0 px-4 py-2 bg-white/5 rounded-full text-xs font-bold uppercase text-white/70">HUNG</button>
+                <button class="flex-shrink-0 px-4 py-2 bg-white/5 rounded-full text-xs font-bold uppercase text-white/70">HIGH</button>
+              </div>
+            </header>
+
+            <!-- Content -->
+            <main class="px-4 py-4 pb-28">
+              
+              <!-- Featured Product -->
+              <section class="mb-6">
+                <div class="relative h-56 rounded-2xl overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80" class="w-full h-full object-cover">
+                  <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                  <div class="absolute top-3 left-3">
+                    <span class="px-2 py-1 rounded-full bg-purple text-white text-[9px] font-black uppercase">New Drop</span>
+                  </div>
+                  <div class="absolute bottom-4 left-4 right-4">
+                    <p class="text-[10px] text-purple uppercase mb-1">HNH MESS × Raw Convict</p>
+                    <h2 class="text-2xl font-black italic mb-1">HNH<span class="text-purple">MESS</span></h2>
+                    <p class="text-xs text-white/70 mb-3">The only lube with real aftercare.</p>
+                    <div class="flex items-center justify-between">
+                      <span class="text-xl font-black">£24.99</span>
+                      <button class="px-6 py-2 bg-purple text-white text-xs font-black uppercase rounded-lg glow-purple">Shop Now</button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Products Grid -->
+              <section>
+                <h3 class="text-xs font-black uppercase text-white/50 mb-3">All Products</h3>
+                <div class="grid grid-cols-2 gap-3">
+                  
+                  <div class="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                    <div class="aspect-square">
+                      <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=300&q=80" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-3">
+                      <p class="text-[9px] text-hot uppercase">RAW</p>
+                      <p class="font-bold text-sm">Club Tee</p>
+                      <p class="text-xs text-white/50">£39.99</p>
+                    </div>
+                  </div>
+
+                  <div class="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                    <div class="aspect-square">
+                      <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&q=80" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-3">
+                      <p class="text-[9px] text-cyan uppercase">HUNG</p>
+                      <p class="font-bold text-sm">Statement Hoodie</p>
+                      <p class="text-xs text-white/50">£69.99</p>
+                    </div>
+                  </div>
+
+                  <div class="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                    <div class="aspect-square">
+                      <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=300&q=80" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-3">
+                      <p class="text-[9px] text-lime uppercase">HIGH</p>
+                      <p class="font-bold text-sm">Tank Top</p>
+                      <p class="text-xs text-white/50">£29.99</p>
+                    </div>
+                  </div>
+
+                  <div class="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                    <div class="aspect-square relative">
+                      <img src="https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=300&q=80" class="w-full h-full object-cover">
+                      <div class="absolute top-2 right-2">
+                        <span class="px-2 py-0.5 rounded-full bg-gold text-black text-[8px] font-black">SOLD OUT</span>
+                      </div>
+                    </div>
+                    <div class="p-3">
+                      <p class="text-[9px] text-gold uppercase">SUPERHUNG</p>
+                      <p class="font-bold text-sm">Limited Cap</p>
+                      <p class="text-xs text-white/50">£49.99</p>
+                    </div>
+                  </div>
+
+                </div>
+              </section>
+
+              <!-- MESSMARKET Section -->
+              <section class="mt-6">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-xs font-black uppercase text-white/50">MESSMARKET</h3>
+                  <button class="text-[10px] text-cyan font-bold uppercase">Browse All</button>
+                </div>
+                <p class="text-[10px] text-white/40 mb-3">Community sellers. Zero gatekeepers.</p>
+                
+                <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+                  <div class="flex-shrink-0 w-36 bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                    <div class="aspect-square bg-gradient-to-br from-purple/20 to-hot/20 flex items-center justify-center">
+                      <span class="text-4xl">🎨</span>
+                    </div>
+                    <div class="p-3">
+                      <p class="font-bold text-xs">Custom Harness</p>
+                      <p class="text-[10px] text-white/50">by @leatherboy</p>
+                      <p class="text-xs text-lime font-bold mt-1">£89.99</p>
+                    </div>
+                  </div>
+                  <div class="flex-shrink-0 w-36 bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                    <div class="aspect-square bg-gradient-to-br from-cyan/20 to-purple/20 flex items-center justify-center">
+                      <span class="text-4xl">💎</span>
+                    </div>
+                    <div class="p-3">
+                      <p class="font-bold text-xs">Chain Necklace</p>
+                      <p class="text-[10px] text-white/50">by @jewels</p>
+                      <p class="text-xs text-lime font-bold mt-1">£45.00</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+            </main>
+
+            <!-- Bottom Nav -->
+            <nav class="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-t border-white/10">
+              <div class="grid grid-cols-5 gap-1 px-2 py-2 pb-6">
+                <a href="#" class="flex flex-col items-center py-2 text-white/50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                  </svg>
+                  <span class="text-[8px] font-black uppercase mt-0.5">Home</span>
+                </a>
+                <a href="#" class="flex flex-col items-center py-2 text-white/50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <span class="text-[8px] font-black uppercase mt-0.5">Events</span>
+                </a>
+                <a href="#" class="flex flex-col items-center -mt-4">
+                  <div class="w-12 h-12 bg-hot rounded-full flex items-center justify-center glow-hot border-4 border-black">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                  </div>
+                  <span class="text-[8px] font-black uppercase mt-1">Social</span>
+                </a>
+                <a href="#" class="flex flex-col items-center py-2 text-hot">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                  </svg>
+                  <span class="text-[8px] font-black uppercase mt-0.5">Shop</span>
+                </a>
+                <a href="#" class="flex flex-col items-center py-2 text-white/50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                  </svg>
+                  <span class="text-[8px] font-black uppercase mt-0.5">More</span>
+                </a>
+              </div>
+            </nav>
+
+          </div>
+        </div>
+        <p class="screen-description">Shop with official products (RAW, HUNG, HIGH, HNH) + MESSMARKET community sellers.</p>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- SCREEN 9: HNH MESS PRODUCT PAGE -->
+      <!-- ============================================ -->
+      <div class="screen-container">
+        <p class="screen-title">9. HNH MESS Product</p>
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="h-full overflow-y-auto bg-black">
+            
+            <!-- Hero Image -->
+            <div class="relative h-[50%]">
+              <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80" class="w-full h-full object-cover">
+              <div class="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+              
+              <!-- Back Button -->
+              <button class="absolute top-12 left-4 w-10 h-10 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+
+              <!-- Badge -->
+              <div class="absolute top-12 right-4">
+                <span class="px-3 py-1 bg-purple text-white text-[10px] font-black uppercase">New Drop</span>
+              </div>
+
+              <!-- Photo Indicators -->
+              <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+                <div class="w-2 h-2 rounded-full bg-white"></div>
+                <div class="w-2 h-2 rounded-full bg-white/30"></div>
+                <div class="w-2 h-2 rounded-full bg-white/30"></div>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="px-4 pb-32">
+              
+              <!-- Product Info -->
+              <div class="mb-6">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="px-2 py-1 rounded-full bg-purple/20 border border-purple/50 text-purple text-[10px] font-black uppercase">RAW CONVICT RECORDS</span>
+                  <span class="px-2 py-1 rounded-full bg-white/10 border border-white/20 text-white/60 text-[10px] font-black uppercase">× HOTMESS</span>
+                </div>
+                <h1 class="text-4xl font-black italic mb-1">HNH<span class="text-purple">MESS</span></h1>
+                <p class="text-lg text-white/80 mb-4">The only lube with real aftercare.</p>
+                
+                <div class="flex items-center gap-4 mb-4">
+                  <span class="text-3xl font-black">£24.99</span>
+                  <span class="text-sm text-white/50 line-through">£29.99</span>
+                  <span class="px-2 py-1 bg-lime/20 text-lime text-[10px] font-black rounded">-17%</span>
+                </div>
+
+                <!-- Features -->
+                <div class="flex flex-wrap gap-2 mb-6">
+                  <div class="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full">
+                    <span class="text-sm">💧</span>
+                    <span class="text-[10px] font-bold">Water-based</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full">
+                    <span class="text-sm">💜</span>
+                    <span class="text-[10px] font-bold">Real aftercare</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full">
+                    <span class="text-sm">🎵</span>
+                    <span class="text-[10px] font-bold">Exclusive track</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Music Player -->
+              <div class="glass border border-purple/30 rounded-xl p-4 mb-6">
+                <div class="flex items-center gap-2 mb-3">
+                  <svg class="w-5 h-5 text-purple" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"/>
+                  </svg>
+                  <span class="text-xs font-black uppercase">The Track</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <button class="w-12 h-12 bg-purple rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </button>
+                  <div class="flex-1">
+                    <p class="font-bold text-sm">HNH MESS</p>
+                    <p class="text-[10px] text-white/50">SMASH DADDYS • RAW CONVICT</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Care Message -->
+              <div class="glass border border-hot/30 rounded-xl p-4 mb-6">
+                <div class="flex items-center gap-2 mb-2">
+                  <svg class="w-5 h-5 text-hot" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                  </svg>
+                  <span class="text-xs font-black uppercase">Care First</span>
+                </div>
+                <p class="text-sm font-bold mb-1">Ask first. Confirm yes. Respect no.</p>
+                <p class="text-[10px] text-white/60">HNH — Hand N Hand is the only place to land.</p>
+              </div>
+
+              <!-- Description -->
+              <div>
+                <h3 class="text-xs font-black uppercase text-white/50 mb-2">About</h3>
+                <p class="text-sm text-white/80 leading-relaxed">
+                  We dress care as kink, dripping in sweat dancing next to you. Smashing stigma. Building community. Premium water-based, body-safe formula with real aftercare support.
+                </p>
+              </div>
+
+            </div>
+
+            <!-- Fixed CTA -->
+            <div class="fixed bottom-0 left-0 right-0 p-4 bg-black/95 backdrop-blur-xl border-t border-white/10">
+              <div class="flex gap-3">
+                <button class="flex-1 bg-purple text-white font-black uppercase py-4 rounded-xl glow-purple">
+                  Add to Cart — £24.99
+                </button>
+              </div>
+              <p class="text-center text-[9px] text-white/30 mt-2 uppercase">
+                Produced by SMASH DADDYS • ℗ © RAW CONVICT RECORDS
+              </p>
+            </div>
+
+          </div>
+        </div>
+        <p class="screen-description">HNH MESS product page with exclusive track player, care messaging, and brand collab details.</p>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- SCREEN 10: MORE MENU -->
+      <!-- ============================================ -->
+      <div class="screen-container">
+        <p class="screen-title">10. More Menu</p>
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="h-full overflow-y-auto bg-black">
+            
+            <!-- Status Bar -->
+            <div class="fixed top-0 left-0 right-0 z-50 bg-black px-6 py-2 flex justify-between items-center text-[11px]">
+              <span class="font-semibold">9:41</span>
+              <div class="flex items-center gap-1.5">
+                <div class="w-4 h-4 flex items-center justify-center">
+                  <div class="w-3 h-3 border-2 border-white rounded-sm"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Header -->
+            <header class="sticky top-6 z-40 bg-black/95 backdrop-blur-xl border-b border-white/10">
+              <div class="px-4 py-3">
+                <h1 class="text-lg font-black">MORE</h1>
+              </div>
+            </header>
+
+            <!-- Content -->
+            <main class="px-4 py-4 pb-28">
+              
+              <!-- Profile Card -->
+              <section class="mb-6">
+                <div class="glass border border-white/10 rounded-xl p-4 flex items-center gap-4">
+                  <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-hot">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80" class="w-full h-full object-cover">
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-black text-lg">Your Name</p>
+                    <p class="text-[10px] text-white/50 uppercase">Level 4 • 2,450 XP</p>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="px-2 py-0.5 rounded-full bg-hot/20 border border-hot/50 text-hot text-[9px] font-black">PLUS</span>
+                    </div>
+                  </div>
+                  <svg class="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </div>
+              </section>
+
+              <!-- Quick Actions -->
+              <section class="mb-6">
+                <div class="grid grid-cols-4 gap-3">
+                  <button class="flex flex-col items-center gap-2 p-3 bg-white/5 border border-white/10 rounded-xl">
+                    <div class="w-10 h-10 rounded-full bg-lime/20 flex items-center justify-center">
+                      <svg class="w-5 h-5 text-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                      </svg>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase">Go Live</span>
+                  </button>
+                  <button class="flex flex-col items-center gap-2 p-3 bg-white/5 border border-white/10 rounded-xl">
+                    <div class="w-10 h-10 rounded-full bg-cyan/20 flex items-center justify-center">
+                      <svg class="w-5 h-5 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                      </svg>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase">Beacon</span>
+                  </button>
+                  <button class="flex flex-col items-center gap-2 p-3 bg-white/5 border border-white/10 rounded-xl">
+                    <div class="w-10 h-10 rounded-full bg-purple/20 flex items-center justify-center">
+                      <svg class="w-5 h-5 text-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h2m10 0h.01"/>
+                      </svg>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase">Scan</span>
+                  </button>
+                  <button class="flex flex-col items-center gap-2 p-3 bg-white/5 border border-white/10 rounded-xl">
+                    <div class="w-10 h-10 rounded-full bg-yellow/20 flex items-center justify-center">
+                      <svg class="w-5 h-5 text-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                      </svg>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase">Stats</span>
+                  </button>
+                </div>
+              </section>
+
+              <!-- Menu Items -->
+              <section class="space-y-2">
+                
+                <!-- Safety -->
+                <a href="#" class="block glass border border-red-500/30 rounded-xl p-4 flex items-center gap-4">
+                  <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-bold text-sm">Safety Hub</p>
+                    <p class="text-[10px] text-white/50">Panic • Fake Call • Check-ins</p>
+                  </div>
+                  <svg class="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </a>
+
+                <!-- Membership -->
+                <a href="#" class="block glass border border-hot/30 rounded-xl p-4 flex items-center gap-4">
+                  <div class="w-10 h-10 rounded-full bg-hot/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-hot" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-bold text-sm">Upgrade to Chrome</p>
+                    <p class="text-[10px] text-white/50">5x visibility • Early drops • VIP</p>
+                  </div>
+                  <span class="px-2 py-1 bg-gold text-black text-[9px] font-black rounded">CHROME</span>
+                </a>
+
+                <!-- Challenges -->
+                <a href="#" class="block glass border border-white/10 rounded-xl p-4 flex items-center gap-4">
+                  <div class="w-10 h-10 rounded-full bg-yellow/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-bold text-sm">Challenges</p>
+                    <p class="text-[10px] text-white/50">2 active • 150 XP available</p>
+                  </div>
+                  <svg class="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </a>
+
+                <!-- Settings -->
+                <a href="#" class="block glass border border-white/10 rounded-xl p-4 flex items-center gap-4">
+                  <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-bold text-sm">Settings</p>
+                    <p class="text-[10px] text-white/50">Account • Privacy • Notifications</p>
+                  </div>
+                  <svg class="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </a>
+
+                <!-- Help -->
+                <a href="#" class="block glass border border-white/10 rounded-xl p-4 flex items-center gap-4">
+                  <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-bold text-sm">Help & Support</p>
+                    <p class="text-[10px] text-white/50">FAQ • Contact • Report issue</p>
+                  </div>
+                  <svg class="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </a>
+
+              </section>
+
+              <!-- Footer -->
+              <div class="mt-8 text-center">
+                <p class="text-3xl font-black italic text-hot mb-2">HOTMESS</p>
+                <p class="text-[10px] text-white/30 uppercase tracking-wider">v2.0.1 • London OS</p>
+                <p class="text-[9px] text-white/20 mt-2">18+ • Consent-first • Care always</p>
+              </div>
+
+            </main>
+
+            <!-- Bottom Nav -->
+            <nav class="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-t border-white/10">
+              <div class="grid grid-cols-5 gap-1 px-2 py-2 pb-6">
+                <a href="#" class="flex flex-col items-center py-2 text-white/50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                  </svg>
+                  <span class="text-[8px] font-black uppercase mt-0.5">Home</span>
+                </a>
+                <a href="#" class="flex flex-col items-center py-2 text-white/50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <span class="text-[8px] font-black uppercase mt-0.5">Events</span>
+                </a>
+                <a href="#" class="flex flex-col items-center -mt-4">
+                  <div class="w-12 h-12 bg-hot rounded-full flex items-center justify-center glow-hot border-4 border-black">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                  </div>
+                  <span class="text-[8px] font-black uppercase mt-1">Social</span>
+                </a>
+                <a href="#" class="flex flex-col items-center py-2 text-white/50">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                  </svg>
+                  <span class="text-[8px] font-black uppercase mt-0.5">Shop</span>
+                </a>
+                <a href="#" class="flex flex-col items-center py-2 text-white">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                  </svg>
+                  <span class="text-[8px] font-black uppercase mt-0.5">More</span>
+                </a>
+              </div>
+            </nav>
+
+          </div>
+        </div>
+        <p class="screen-description">More menu with profile, quick actions, safety, membership upgrade, and settings.</p>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-12 px-6 border-t border-white/10 text-center">
+    <p class="text-4xl font-black italic text-hot mb-4">HOTMESS</p>
+    <p class="text-xs uppercase tracking-widest text-white/40 mb-6">Wireframes Part 2 • Events • Market • More</p>
+    <p class="text-[10px] text-white/30">
+      © 2026 HOTMESS LONDON LTD. All rights reserved.<br>
+      Consent-first • Care always • 18+
+    </p>
+  </footer>
+
+</body>
+</html>

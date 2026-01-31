@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 7: Commerce & Shopping</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'hot': '#FF1493',
+            'blue': '#0047AB',
+          },
+          fontFamily: {
+            'sans': ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #000;
+      border-radius: 40px;
+      border: 8px solid #1a1a1a;
+      overflow: hidden;
+      position: relative;
+    }
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: #1a1a1a;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+    .screen-content {
+      height: 100%;
+      overflow-y: auto;
+      padding-top: 40px;
+    }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .text-purple { color: #B026FF; }
+    .text-gold { color: #FFD700; }
+    .bg-hot { background-color: #FF1493; }
+    .bg-cyan { background-color: #00D9FF; }
+    .bg-lime { background-color: #39FF14; }
+    .bg-purple { background-color: #B026FF; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+      .glow-blue { box-shadow: 0 0 20px rgba(0, 71, 171, 0.4); }
+</style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  
+  <!-- Header -->
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 7: Commerce & Shopping • 10 Screens</p>
+  </header>
+
+  <!-- Screen Grid -->
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. PRODUCT DETAIL -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. Product Detail</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black">
+          <!-- Product Images -->
+          <div class="relative h-80">
+            <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop" class="w-full h-full object-cover">
+            <div class="absolute top-4 left-4">
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">←</button>
+            </div>
+            <div class="absolute top-4 right-4 flex gap-2">
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">♡</button>
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">↗</button>
+            </div>
+            <!-- Image dots -->
+            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+              <div class="w-2 h-2 rounded-full bg-white"></div>
+              <div class="w-2 h-2 rounded-full bg-white/40"></div>
+              <div class="w-2 h-2 rounded-full bg-white/40"></div>
+            </div>
+          </div>
+
+          <!-- Product Info -->
+          <div class="px-4 pt-4 pb-32">
+            <!-- Brand -->
+            <div class="flex items-center gap-2 mb-2">
+              <span class="px-2 py-1 rounded bg-hot text-white text-xs font-bold">RAW</span>
+              <span class="px-2 py-1 rounded bg-lime/20 text-lime text-xs">IN STOCK</span>
+            </div>
+
+            <h1 class="text-2xl font-black mb-1">Club Tee</h1>
+            <p class="text-neutral-400 mb-4">Limited edition streetwear</p>
+
+            <!-- Price -->
+            <div class="flex items-baseline gap-2 mb-6">
+              <span class="text-3xl font-black">£39.99</span>
+              <span class="text-neutral-500 line-through">£49.99</span>
+              <span class="px-2 py-1 rounded bg-hot/20 text-hot text-xs font-bold">-20%</span>
+            </div>
+
+            <!-- Size Selector -->
+            <div class="mb-6">
+              <div class="flex justify-between mb-2">
+                <label class="text-sm text-neutral-500">Size</label>
+                <button class="text-hot text-sm">Size Guide</button>
+              </div>
+              <div class="flex gap-2">
+                <button class="w-12 h-12 rounded-lg bg-neutral-800 text-sm">S</button>
+                <button class="w-12 h-12 rounded-lg bg-hot text-white text-sm font-bold">M</button>
+                <button class="w-12 h-12 rounded-lg bg-neutral-800 text-sm">L</button>
+                <button class="w-12 h-12 rounded-lg bg-neutral-800 text-sm">XL</button>
+                <button class="w-12 h-12 rounded-lg bg-neutral-800 text-sm text-neutral-600">XXL</button>
+              </div>
+            </div>
+
+            <!-- Color -->
+            <div class="mb-6">
+              <label class="text-sm text-neutral-500 mb-2 block">Color: Black</label>
+              <div class="flex gap-2">
+                <button class="w-10 h-10 rounded-full bg-black border-2 border-hot"></button>
+                <button class="w-10 h-10 rounded-full bg-white border-2 border-neutral-700"></button>
+                <button class="w-10 h-10 rounded-full bg-hot border-2 border-neutral-700"></button>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-6">
+              <h3 class="font-bold mb-2">Description</h3>
+              <p class="text-neutral-400 text-sm leading-relaxed">
+                Premium cotton tee with signature RAW branding. Oversized fit. Made in Portugal. Limited run of 200 pieces.
+              </p>
+            </div>
+
+            <!-- XP Bonus -->
+            <div class="glass rounded-xl p-4 border border-lime/30">
+              <div class="flex items-center gap-2">
+                <span class="text-lime">⚡</span>
+                <p class="text-sm">Earn <span class="font-bold text-lime">40 XP</span> with this purchase</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fixed Bottom -->
+          <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black to-transparent pt-12">
+            <div class="flex gap-3">
+              <button class="flex-1 bg-hot text-white font-bold py-4 rounded-xl">
+                ADD TO CART
+              </button>
+              <button class="w-14 h-14 bg-neutral-800 rounded-xl flex items-center justify-center">
+                🛒
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Product detail with size/color selection.</p>
+    </section>
+
+    <!-- 2. CART -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. Shopping Cart</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold flex-1">Cart</h1>
+            <span class="text-neutral-500">3 items</span>
+          </div>
+
+          <!-- Cart Items -->
+          <div class="space-y-4 pb-48">
+            <!-- Item 1 -->
+            <div class="flex gap-3 p-3 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100&h=100&fit=crop" class="w-20 h-20 rounded-lg object-cover">
+              <div class="flex-1">
+                <p class="font-medium">RAW Club Tee</p>
+                <p class="text-sm text-neutral-500">Black • M</p>
+                <p class="font-bold text-hot mt-1">£39.99</p>
+              </div>
+              <div class="flex flex-col justify-between items-end">
+                <button class="text-neutral-500 text-sm">×</button>
+                <div class="flex items-center gap-2 bg-neutral-800 rounded-lg">
+                  <button class="w-8 h-8 flex items-center justify-center">−</button>
+                  <span class="font-medium">1</span>
+                  <button class="w-8 h-8 flex items-center justify-center">+</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Item 2 -->
+            <div class="flex gap-3 p-3 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=100&h=100&fit=crop" class="w-20 h-20 rounded-lg object-cover">
+              <div class="flex-1">
+                <p class="font-medium">HUNG Statement Hoodie</p>
+                <p class="text-sm text-neutral-500">Grey • L</p>
+                <p class="font-bold mt-1">£69.99</p>
+              </div>
+              <div class="flex flex-col justify-between items-end">
+                <button class="text-neutral-500 text-sm">×</button>
+                <div class="flex items-center gap-2 bg-neutral-800 rounded-lg">
+                  <button class="w-8 h-8 flex items-center justify-center">−</button>
+                  <span class="font-medium">1</span>
+                  <button class="w-8 h-8 flex items-center justify-center">+</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Item 3 - HNH MESS -->
+            <div class="flex gap-3 p-3 bg-neutral-900 rounded-xl border border-hot/30">
+              <img src="https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=100&h=100&fit=crop" class="w-20 h-20 rounded-lg object-cover">
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <p class="font-medium">HNH MESS Lube</p>
+                  <span class="px-1.5 py-0.5 rounded bg-hot/20 text-hot text-xs">NEW</span>
+                </div>
+                <p class="text-sm text-neutral-500">Water-based • 100ml</p>
+                <p class="font-bold text-hot mt-1">£24.99</p>
+              </div>
+              <div class="flex flex-col justify-between items-end">
+                <button class="text-neutral-500 text-sm">×</button>
+                <div class="flex items-center gap-2 bg-neutral-800 rounded-lg">
+                  <button class="w-8 h-8 flex items-center justify-center">−</button>
+                  <span class="font-medium">1</span>
+                  <button class="w-8 h-8 flex items-center justify-center">+</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Promo Code -->
+            <div class="flex gap-2">
+              <input type="text" placeholder="Promo code" class="flex-1 bg-neutral-900 border border-neutral-700 rounded-xl px-4 py-3 focus:border-hot outline-none">
+              <button class="px-6 bg-neutral-800 rounded-xl font-medium">Apply</button>
+            </div>
+
+            <!-- XP Bonus -->
+            <div class="glass rounded-xl p-4 border border-lime/30">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-lime">⚡</span>
+                  <span class="text-sm">XP Bonus</span>
+                </div>
+                <span class="font-bold text-lime">+135 XP</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fixed Bottom -->
+          <div class="absolute bottom-0 left-0 right-0 p-4 bg-black border-t border-neutral-800">
+            <div class="space-y-2 mb-4">
+              <div class="flex justify-between text-sm">
+                <span class="text-neutral-400">Subtotal</span>
+                <span>£134.97</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-neutral-400">Shipping</span>
+                <span class="text-lime">FREE</span>
+              </div>
+              <div class="flex justify-between font-bold text-lg">
+                <span>Total</span>
+                <span>£134.97</span>
+              </div>
+            </div>
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+              CHECKOUT
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Cart with quantity controls and XP bonus.</p>
+    </section>
+
+    <!-- 3. CHECKOUT -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. Checkout</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Checkout</h1>
+          </div>
+
+          <!-- Progress -->
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-hot flex items-center justify-center text-sm font-bold">1</div>
+              <span class="text-sm font-medium">Shipping</span>
+            </div>
+            <div class="h-px bg-neutral-700 flex-1 mx-2"></div>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-sm">2</div>
+              <span class="text-sm text-neutral-500">Payment</span>
+            </div>
+            <div class="h-px bg-neutral-700 flex-1 mx-2"></div>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-sm">3</div>
+              <span class="text-sm text-neutral-500">Review</span>
+            </div>
+          </div>
+
+          <div class="space-y-6 pb-32">
+            <!-- Shipping Address -->
+            <div>
+              <h3 class="font-bold mb-3">Shipping Address</h3>
+              <button class="w-full p-4 bg-neutral-900 rounded-xl text-left border border-hot">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-medium">Home</span>
+                  <span class="text-hot text-sm">Default</span>
+                </div>
+                <p class="text-sm text-neutral-400">
+                  Your Name<br>
+                  123 Street Name<br>
+                  London, E1 6AN
+                </p>
+              </button>
+              <button class="w-full mt-2 p-3 bg-neutral-900 rounded-xl text-center text-neutral-400">
+                + Add new address
+              </button>
+            </div>
+
+            <!-- Shipping Method -->
+            <div>
+              <h3 class="font-bold mb-3">Shipping Method</h3>
+              <div class="space-y-2">
+                <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between border border-hot">
+                  <div>
+                    <p class="font-medium">Standard Delivery</p>
+                    <p class="text-sm text-neutral-500">3-5 business days</p>
+                  </div>
+                  <span class="text-lime font-bold">FREE</span>
+                </button>
+                <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between">
+                  <div>
+                    <p class="font-medium">Express Delivery</p>
+                    <p class="text-sm text-neutral-500">1-2 business days</p>
+                  </div>
+                  <span class="font-bold">£4.99</span>
+                </button>
+                <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between">
+                  <div>
+                    <p class="font-medium">Click & Collect</p>
+                    <p class="text-sm text-neutral-500">Shoreditch • Ready tomorrow</p>
+                  </div>
+                  <span class="text-lime font-bold">FREE</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Contact -->
+            <div>
+              <h3 class="font-bold mb-3">Contact</h3>
+              <div class="space-y-3">
+                <input type="email" value="you@email.com" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+                <input type="tel" value="+44 7XXX XXX XXX" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+              </div>
+            </div>
+          </div>
+
+          <!-- Fixed Bottom -->
+          <div class="absolute bottom-0 left-0 right-0 p-4 bg-black border-t border-neutral-800">
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+              CONTINUE TO PAYMENT
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Checkout step 1 - shipping details.</p>
+    </section>
+
+    <!-- 4. PAYMENT -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Payment</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Payment</h1>
+          </div>
+
+          <div class="space-y-6 pb-32">
+            <!-- Payment Methods -->
+            <div>
+              <h3 class="font-bold mb-3">Payment Method</h3>
+              <div class="space-y-2">
+                <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center gap-3 border border-hot">
+                  <span class="text-2xl">💳</span>
+                  <div class="flex-1">
+                    <p class="font-medium">Credit / Debit Card</p>
+                    <p class="text-sm text-neutral-500">Visa, Mastercard, Amex</p>
+                  </div>
+                  <span class="text-hot">●</span>
+                </button>
+                <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center gap-3">
+                  <span class="text-2xl">🍎</span>
+                  <div class="flex-1">
+                    <p class="font-medium">Apple Pay</p>
+                    <p class="text-sm text-neutral-500">Quick checkout</p>
+                  </div>
+                </button>
+                <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center gap-3">
+                  <span class="text-2xl">💜</span>
+                  <div class="flex-1">
+                    <p class="font-medium">Klarna</p>
+                    <p class="text-sm text-neutral-500">Pay in 3 instalments</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Card Details -->
+            <div>
+              <h3 class="font-bold mb-3">Card Details</h3>
+              <div class="space-y-3">
+                <input type="text" placeholder="Card number" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+                <div class="grid grid-cols-2 gap-3">
+                  <input type="text" placeholder="MM/YY" class="bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+                  <input type="text" placeholder="CVC" class="bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+                </div>
+                <input type="text" placeholder="Name on card" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+              </div>
+            </div>
+
+            <!-- Save Card -->
+            <label class="flex items-center gap-3 p-4 bg-neutral-900 rounded-xl">
+              <input type="checkbox" class="w-5 h-5 rounded accent-hot">
+              <span>Save card for future purchases</span>
+            </label>
+
+            <!-- Order Summary -->
+            <div class="glass rounded-xl p-4">
+              <h3 class="font-bold mb-3">Order Summary</h3>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-neutral-400">Subtotal (3 items)</span>
+                  <span>£134.97</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-neutral-400">Shipping</span>
+                  <span class="text-lime">FREE</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-neutral-400">XP Earned</span>
+                  <span class="text-lime">+135 XP</span>
+                </div>
+                <div class="border-t border-neutral-700 pt-2 flex justify-between font-bold text-lg">
+                  <span>Total</span>
+                  <span>£134.97</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fixed Bottom -->
+          <div class="absolute bottom-0 left-0 right-0 p-4 bg-black border-t border-neutral-800">
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2">
+              <span>🔒</span> PAY £134.97
+            </button>
+            <p class="text-center text-neutral-600 text-xs mt-2">
+              Secured by Stripe
+            </p>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Payment with multiple methods.</p>
+    </section>
+
+    <!-- 5. ORDER CONFIRMATION -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. Order Confirmation</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black flex flex-col items-center justify-center text-center px-8">
+          <!-- Success -->
+          <div class="w-24 h-24 rounded-full bg-lime/20 flex items-center justify-center mb-6">
+            <span class="text-5xl">✓</span>
+          </div>
+
+          <h1 class="text-3xl font-black mb-2">Order Confirmed!</h1>
+          <p class="text-neutral-400 mb-6">Order #HM-2026-0129</p>
+
+          <!-- Order Summary -->
+          <div class="w-full glass rounded-2xl p-6 mb-6 text-left">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-neutral-500">Est. delivery</span>
+              <span class="font-bold">Feb 1-3</span>
+            </div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-neutral-500">Ship to</span>
+              <span class="font-medium">E1 6AN</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-neutral-500">XP Earned</span>
+              <span class="font-bold text-lime">+135 XP</span>
+            </div>
+          </div>
+
+          <!-- Items Preview -->
+          <div class="w-full flex justify-center gap-2 mb-6">
+            <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=80&h=80&fit=crop" class="w-16 h-16 rounded-lg object-cover">
+            <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=80&h=80&fit=crop" class="w-16 h-16 rounded-lg object-cover">
+            <img src="https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=80&h=80&fit=crop" class="w-16 h-16 rounded-lg object-cover">
+          </div>
+
+          <!-- Actions -->
+          <div class="w-full space-y-3">
+            <button class="w-full bg-neutral-800 text-white font-bold py-4 rounded-xl">
+              TRACK ORDER
+            </button>
+            <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+              CONTINUE SHOPPING
+            </button>
+          </div>
+
+          <p class="text-neutral-600 text-xs mt-6">
+            Confirmation email sent to you@email.com
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Post-purchase confirmation with XP reward.</p>
+    </section>
+
+    <!-- 6. ORDER TRACKING -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Order Tracking</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Track Order</h1>
+          </div>
+
+          <!-- Order Info -->
+          <div class="glass rounded-xl p-4 mb-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-neutral-500 text-sm">Order #HM-2026-0129</p>
+                <p class="font-bold">3 items • £134.97</p>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-cyan/20 text-cyan text-sm font-bold">In Transit</span>
+            </div>
+          </div>
+
+          <!-- Timeline -->
+          <div class="space-y-0 mb-6">
+            <div class="flex gap-4">
+              <div class="flex flex-col items-center">
+                <div class="w-4 h-4 rounded-full bg-lime"></div>
+                <div class="w-0.5 h-16 bg-lime"></div>
+              </div>
+              <div class="pb-4">
+                <p class="font-medium">Order Placed</p>
+                <p class="text-sm text-neutral-500">Jan 29 • 2:30 PM</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex flex-col items-center">
+                <div class="w-4 h-4 rounded-full bg-lime"></div>
+                <div class="w-0.5 h-16 bg-lime"></div>
+              </div>
+              <div class="pb-4">
+                <p class="font-medium">Processing</p>
+                <p class="text-sm text-neutral-500">Jan 29 • 3:15 PM</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex flex-col items-center">
+                <div class="w-4 h-4 rounded-full bg-lime"></div>
+                <div class="w-0.5 h-16 bg-cyan"></div>
+              </div>
+              <div class="pb-4">
+                <p class="font-medium">Shipped</p>
+                <p class="text-sm text-neutral-500">Jan 30 • 9:00 AM</p>
+                <p class="text-xs text-cyan mt-1">DPD UK • 12345678</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex flex-col items-center">
+                <div class="w-4 h-4 rounded-full bg-cyan border-2 border-cyan animate-pulse"></div>
+                <div class="w-0.5 h-16 bg-neutral-700"></div>
+              </div>
+              <div class="pb-4">
+                <p class="font-medium text-cyan">In Transit</p>
+                <p class="text-sm text-neutral-500">Jan 31 • 8:30 AM</p>
+                <p class="text-xs text-neutral-400 mt-1">Out for delivery</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="flex flex-col items-center">
+                <div class="w-4 h-4 rounded-full bg-neutral-700"></div>
+              </div>
+              <div>
+                <p class="font-medium text-neutral-500">Delivered</p>
+                <p class="text-sm text-neutral-600">Est. today by 6pm</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Delivery Info -->
+          <div class="glass rounded-xl p-4 mb-4">
+            <h3 class="font-medium mb-2">Delivering to</h3>
+            <p class="text-sm text-neutral-400">
+              Your Name<br>
+              123 Street Name<br>
+              London, E1 6AN
+            </p>
+          </div>
+
+          <button class="w-full bg-neutral-800 text-white py-4 rounded-xl font-medium">
+            View on Carrier Website
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Real-time order tracking timeline.</p>
+    </section>
+
+    <!-- 7. ORDER HISTORY -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. Order History</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">My Orders</h1>
+          </div>
+
+          <!-- Orders -->
+          <div class="space-y-4 pb-8">
+            <!-- In Transit -->
+            <div class="p-4 bg-neutral-900 rounded-xl border-l-4 border-cyan">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-sm text-neutral-500">#HM-2026-0129</span>
+                <span class="px-2 py-1 rounded bg-cyan/20 text-cyan text-xs font-bold">In Transit</span>
+              </div>
+              <div class="flex gap-2 mb-3">
+                <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=50&h=50&fit=crop" class="w-12 h-12 rounded-lg object-cover">
+                <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=50&h=50&fit=crop" class="w-12 h-12 rounded-lg object-cover">
+                <img src="https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=50&h=50&fit=crop" class="w-12 h-12 rounded-lg object-cover">
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="font-bold">£134.97</span>
+                <button class="text-hot text-sm font-medium">Track →</button>
+              </div>
+            </div>
+
+            <!-- Delivered -->
+            <div class="p-4 bg-neutral-900 rounded-xl border-l-4 border-lime">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-sm text-neutral-500">#HM-2026-0115</span>
+                <span class="px-2 py-1 rounded bg-lime/20 text-lime text-xs font-bold">Delivered</span>
+              </div>
+              <div class="flex gap-2 mb-3">
+                <img src="https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=50&h=50&fit=crop" class="w-12 h-12 rounded-lg object-cover">
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="font-bold">£49.99</span>
+                <button class="text-hot text-sm font-medium">Reorder →</button>
+              </div>
+            </div>
+
+            <!-- Older -->
+            <div class="p-4 bg-neutral-900 rounded-xl">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-sm text-neutral-500">#HM-2025-1220</span>
+                <span class="px-2 py-1 rounded bg-neutral-700 text-neutral-400 text-xs">Delivered</span>
+              </div>
+              <div class="flex gap-2 mb-3">
+                <img src="https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=50&h=50&fit=crop" class="w-12 h-12 rounded-lg object-cover">
+                <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=50&h=50&fit=crop" class="w-12 h-12 rounded-lg object-cover">
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="font-bold">£89.98</span>
+                <button class="text-neutral-400 text-sm">View details →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Order history with status indicators.</p>
+    </section>
+
+    <!-- 8. MESSMARKET SELLER PROFILE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. MESSMARKET Seller</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black">
+          <!-- Seller Header -->
+          <div class="relative h-40 bg-gradient-to-br from-hot/30 to-purple/30">
+            <div class="absolute top-4 left-4">
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">←</button>
+            </div>
+          </div>
+
+          <div class="px-4 -mt-12 relative pb-8">
+            <!-- Avatar -->
+            <div class="flex items-end gap-4 mb-4">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" class="w-24 h-24 rounded-xl object-cover border-4 border-black">
+              <div class="pb-2">
+                <div class="flex items-center gap-2">
+                  <h1 class="text-xl font-black">@leatherboy</h1>
+                  <span class="px-2 py-0.5 rounded bg-lime/20 text-lime text-xs">✓ Verified</span>
+                </div>
+                <p class="text-neutral-400 text-sm">Handmade leather goods</p>
+              </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="flex gap-6 mb-6">
+              <div class="text-center">
+                <p class="font-bold text-xl">4.9</p>
+                <p class="text-xs text-neutral-500">⭐ Rating</p>
+              </div>
+              <div class="text-center">
+                <p class="font-bold text-xl">127</p>
+                <p class="text-xs text-neutral-500">Sales</p>
+              </div>
+              <div class="text-center">
+                <p class="font-bold text-xl">98%</p>
+                <p class="text-xs text-neutral-500">Response</p>
+              </div>
+            </div>
+
+            <!-- Bio -->
+            <p class="text-neutral-400 text-sm mb-6">
+              Creating custom leather harnesses, collars, and accessories since 2020. Based in East London. Custom orders welcome.
+            </p>
+
+            <!-- Actions -->
+            <div class="flex gap-3 mb-6">
+              <button class="flex-1 bg-hot text-white py-3 rounded-xl font-bold">Message</button>
+              <button class="flex-1 bg-neutral-800 py-3 rounded-xl font-bold">Follow</button>
+            </div>
+
+            <!-- Products -->
+            <h3 class="font-bold mb-3">Products</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-neutral-900 rounded-xl overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1609709295948-17d77cb2a69b?w=200&h=200&fit=crop" class="w-full h-32 object-cover">
+                <div class="p-3">
+                  <p class="font-medium text-sm">Custom Harness</p>
+                  <p class="text-hot font-bold">£89.99</p>
+                </div>
+              </div>
+              <div class="bg-neutral-900 rounded-xl overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=200&h=200&fit=crop" class="w-full h-32 object-cover">
+                <div class="p-3">
+                  <p class="font-medium text-sm">Leather Collar</p>
+                  <p class="text-hot font-bold">£45.00</p>
+                </div>
+              </div>
+              <div class="bg-neutral-900 rounded-xl overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1598560917505-59a3ad559071?w=200&h=200&fit=crop" class="w-full h-32 object-cover">
+                <div class="p-3">
+                  <p class="font-medium text-sm">Wrist Cuffs</p>
+                  <p class="text-hot font-bold">£35.00</p>
+                </div>
+              </div>
+              <div class="bg-neutral-900 rounded-xl overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=200&h=200&fit=crop" class="w-full h-32 object-cover">
+                <div class="p-3">
+                  <p class="font-medium text-sm">Arm Band</p>
+                  <p class="text-hot font-bold">£25.00</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Community seller profile with products.</p>
+    </section>
+
+    <!-- 9. SELLER DASHBOARD -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">9. Seller Dashboard</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">Seller Dashboard</h1>
+            <span class="px-3 py-1 rounded-full bg-purple text-white text-xs font-bold">PRO</span>
+          </div>
+
+          <!-- Stats Overview -->
+          <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="glass rounded-xl p-4">
+              <p class="text-neutral-500 text-sm">This Month</p>
+              <p class="text-2xl font-black text-lime">£1,245</p>
+              <p class="text-xs text-lime">+23% vs last month</p>
+            </div>
+            <div class="glass rounded-xl p-4">
+              <p class="text-neutral-500 text-sm">Orders</p>
+              <p class="text-2xl font-black">24</p>
+              <p class="text-xs text-neutral-500">5 pending</p>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <button class="px-4 py-3 bg-hot rounded-xl text-sm font-medium whitespace-nowrap flex items-center gap-2">
+              <span>+</span> Add Product
+            </button>
+            <button class="px-4 py-3 bg-neutral-800 rounded-xl text-sm whitespace-nowrap">📦 Orders</button>
+            <button class="px-4 py-3 bg-neutral-800 rounded-xl text-sm whitespace-nowrap">📊 Analytics</button>
+            <button class="px-4 py-3 bg-neutral-800 rounded-xl text-sm whitespace-nowrap">💬 Messages</button>
+          </div>
+
+          <!-- Pending Orders -->
+          <div class="mb-6">
+            <h3 class="font-bold mb-3">Pending Orders</h3>
+            <div class="space-y-2">
+              <div class="p-3 bg-neutral-900 rounded-xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <img src="https://images.unsplash.com/photo-1609709295948-17d77cb2a69b?w=50&h=50&fit=crop" class="w-12 h-12 rounded-lg object-cover">
+                  <div>
+                    <p class="font-medium">Custom Harness</p>
+                    <p class="text-xs text-neutral-500">#ORD-0129 • 2h ago</p>
+                  </div>
+                </div>
+                <button class="px-3 py-1.5 bg-hot rounded-lg text-sm">Ship</button>
+              </div>
+              <div class="p-3 bg-neutral-900 rounded-xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <img src="https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=50&h=50&fit=crop" class="w-12 h-12 rounded-lg object-cover">
+                  <div>
+                    <p class="font-medium">Leather Collar</p>
+                    <p class="text-xs text-neutral-500">#ORD-0128 • 5h ago</p>
+                  </div>
+                </div>
+                <button class="px-3 py-1.5 bg-hot rounded-lg text-sm">Ship</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Products -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold">My Products</h3>
+              <button class="text-hot text-sm">View All</button>
+            </div>
+            <div class="space-y-2">
+              <div class="p-3 bg-neutral-900 rounded-xl flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1609709295948-17d77cb2a69b?w=50&h=50&fit=crop" class="w-12 h-12 rounded-lg object-cover">
+                <div class="flex-1">
+                  <p class="font-medium">Custom Harness</p>
+                  <p class="text-sm text-lime">12 sold • £89.99</p>
+                </div>
+                <button class="text-neutral-500">⋯</button>
+              </div>
+              <div class="p-3 bg-neutral-900 rounded-xl flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=50&h=50&fit=crop" class="w-12 h-12 rounded-lg object-cover">
+                <div class="flex-1">
+                  <p class="font-medium">Leather Collar</p>
+                  <p class="text-sm text-lime">8 sold • £45.00</p>
+                </div>
+                <button class="text-neutral-500">⋯</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Seller analytics and order management.</p>
+    </section>
+
+    <!-- 10. ADD PRODUCT -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">10. Add Product</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-6">
+            <button class="text-neutral-400">Cancel</button>
+            <h1 class="text-lg font-bold">Add Product</h1>
+            <button class="text-hot font-semibold">Publish</button>
+          </div>
+
+          <div class="space-y-6 pb-8">
+            <!-- Photos -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Photos (up to 5)</label>
+              <div class="flex gap-2">
+                <div class="w-24 h-24 rounded-xl border-2 border-dashed border-neutral-700 flex items-center justify-center">
+                  <span class="text-2xl">+</span>
+                </div>
+                <div class="w-24 h-24 rounded-xl border-2 border-dashed border-neutral-700 flex items-center justify-center">
+                  <span class="text-neutral-600">📷</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Title -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Product Title</label>
+              <input type="text" placeholder="e.g. Custom Leather Harness" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none">
+            </div>
+
+            <!-- Description -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Description</label>
+              <textarea rows="4" placeholder="Describe your product..." class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-hot outline-none resize-none"></textarea>
+            </div>
+
+            <!-- Price -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Price</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">£</span>
+                <input type="number" placeholder="0.00" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 pl-8 focus:border-hot outline-none">
+              </div>
+            </div>
+
+            <!-- Category -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-2 block">Category</label>
+              <button class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 text-left text-neutral-400 flex justify-between">
+                <span>Select category</span>
+                <span>›</span>
+              </button>
+            </div>
+
+            <!-- Shipping -->
+            <div>
+              <label class="text-sm text-neutral-500 mb-3 block">Shipping</label>
+              <div class="space-y-2">
+                <label class="flex items-center gap-3 p-4 bg-neutral-900 rounded-xl">
+                  <input type="radio" name="shipping" checked class="accent-hot">
+                  <div>
+                    <p class="font-medium">Standard (3-5 days)</p>
+                    <p class="text-sm text-neutral-500">Free for buyers</p>
+                  </div>
+                </label>
+                <label class="flex items-center gap-3 p-4 bg-neutral-900 rounded-xl">
+                  <input type="radio" name="shipping" class="accent-hot">
+                  <div>
+                    <p class="font-medium">Pickup Only</p>
+                    <p class="text-sm text-neutral-500">Local collection</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Fee Preview -->
+            <div class="glass rounded-xl p-4">
+              <p class="text-sm text-neutral-400 mb-2">Platform fee: <span class="text-white">8%</span> (PRO seller)</p>
+              <p class="text-sm text-neutral-400">You'll receive: <span class="text-lime font-bold">£82.79</span> on £89.99 sale</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Product listing creation for sellers.</p>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 7 • Commerce & Shopping</p>
+    <p class="text-neutral-600 text-sm mt-4">© 2026 HOTMESS LONDON LTD. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

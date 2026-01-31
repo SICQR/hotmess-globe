@@ -25,8 +25,13 @@ export default function PersistentRadioPlayer() {
   const { data: audioBeacons = [] } = useQuery({
     queryKey: ['audio-drops'],
     queryFn: async () => {
-      const beacons = await base44.entities.Beacon.filter({ mode: 'radio', active: true });
-      return beacons.filter(b => b.audio_url);
+      try {
+        const beacons = await base44.entities.Beacon.filter({ mode: 'radio', active: true });
+        return beacons.filter(b => b.audio_url);
+      } catch (error) {
+        console.warn('Failed to fetch audio beacons:', error);
+        return [];
+      }
     },
     refetchInterval: 60000
   });

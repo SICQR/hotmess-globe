@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { ShoppingBag, Star, Package, Award, Ticket, Shirt } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import OSCard, { OSCardBadge } from '../ui/OSCard';
 import LazyImage from '../ui/LazyImage';
 import { base44 } from '@/api/base44Client';
@@ -159,14 +158,12 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
                 )}
               </div>
               <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  className="flex-1 text-black font-bold"
+                <div
+                  className="flex-1 text-black font-bold h-9 px-3 flex items-center justify-center rounded-md text-sm transition-colors cursor-pointer"
                   style={{ backgroundColor: color }}
-                  disabled={false}
                 >
                   View product
-                </Button>
+                </div>
               </div>
               {!xpPurchasingEnabled ? (
                 <p className="text-xs text-white/50 uppercase tracking-wider">

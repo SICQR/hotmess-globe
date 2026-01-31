@@ -1,0 +1,74 @@
+{
+  "city": "london",
+  "country": "GB",
+  "timezone": "Europe/London",
+  "center": [51.5074, -0.1278],
+  "anchors": [
+    { "id": "big_ben", "type": "orientation", "geo": [51.5007, -0.1246] },
+    { "id": "tower_bridge", "type": "orientation", "geo": [51.5055, -0.0754] },
+    { "id": "thames", "type": "river", "visibility": "always" }
+  ],
+  "zones": [
+    {
+      "id": "soho_core",
+      "name": "Soho",
+      "category": "historic_core",
+      "energy": "social_nightlife",
+      "visibility": "earned",
+      "streets": ["old_compton_street", "wardour_street", "dean_street"],
+      "cultural_weight": 1.0
+    },
+    {
+      "id": "vauxhall_cluster",
+      "name": "Vauxhall",
+      "category": "late_night",
+      "energy": "club_intensity",
+      "visibility": "time_gated",
+      "venues_landmark": ["fire", "eagle", "union"],
+      "cultural_weight": 0.9
+    },
+    {
+      "id": "shoreditch_east",
+      "name": "Shoreditch",
+      "category": "creative_hub",
+      "energy": "mixed_alternative",
+      "visibility": "earned",
+      "cultural_weight": 0.7
+    },
+    {
+      "id": "dalston_kingsland",
+      "name": "Dalston",
+      "category": "emerging",
+      "energy": "underground_queer",
+      "visibility": "signal_only",
+      "cultural_weight": 0.6
+    },
+    {
+      "id": "clapham_common",
+      "name": "Clapham",
+      "category": "open_space",
+      "energy": "after_dark_seasonal",
+      "visibility": "time_gated",
+      "cultural_weight": 0.4
+    }
+  ],
+  "behaviour": {
+    "peak_windows": {
+      "soho_core": ["18:00-23:00"],
+      "vauxhall_cluster": ["23:00-04:00"],
+      "dalston_kingsland": ["22:00-03:00"],
+      "clapham_common": ["22:00-02:00"]
+    },
+    "day_boost": {
+      "friday": 1.3,
+      "saturday": 1.5,
+      "sunday": 0.7
+    }
+  },
+  "safety": {
+    "care_zones": [
+      { "id": "56_dean_street", "type": "clinic", "geo": [51.5127, -0.1310] },
+      { "id": "london_friend", "type": "support", "geo": [51.5230, -0.1050] }
+    ]
+  }
+}

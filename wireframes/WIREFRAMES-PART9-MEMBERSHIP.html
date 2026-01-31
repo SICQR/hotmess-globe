@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 9: Membership & Billing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'hot': '#FF1493',
+            'blue': '#0047AB',
+          },
+          fontFamily: {
+            'sans': ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #000;
+      border-radius: 40px;
+      border: 8px solid #1a1a1a;
+      overflow: hidden;
+      position: relative;
+    }
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: #1a1a1a;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+    .screen-content {
+      height: 100%;
+      overflow-y: auto;
+      padding-top: 40px;
+    }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .text-purple { color: #B026FF; }
+    .text-gold { color: #FFD700; }
+    .bg-hot { background-color: #FF1493; }
+    .bg-purple { background-color: #B026FF; }
+    .bg-gold { background-color: #FFD700; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+      .glow-blue { box-shadow: 0 0 20px rgba(0, 71, 171, 0.4); }
+</style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  
+  <!-- Header -->
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 9: Membership & Billing • 8 Screens</p>
+  </header>
+
+  <!-- Screen Grid -->
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. MEMBERSHIP COMPARISON -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. Compare Plans</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Choose Your Plan</h1>
+          </div>
+
+          <!-- Billing Toggle -->
+          <div class="flex justify-center mb-6">
+            <div class="bg-neutral-900 rounded-full p-1 flex">
+              <button class="px-6 py-2 rounded-full bg-hot text-white text-sm font-medium">Monthly</button>
+              <button class="px-6 py-2 rounded-full text-neutral-400 text-sm">Yearly <span class="text-lime text-xs">-33%</span></button>
+            </div>
+          </div>
+
+          <!-- Plans -->
+          <div class="space-y-4 pb-8">
+            <!-- FREE -->
+            <div class="glass rounded-xl p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="font-bold text-lg">FREE</h3>
+                  <p class="text-sm text-neutral-500">Basic access</p>
+                </div>
+                <p class="text-2xl font-black">£0</p>
+              </div>
+              <ul class="space-y-2 text-sm mb-4">
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> Browse profiles</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> 50 messages/day</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> Listen to radio</li>
+                <li class="flex items-center gap-2 text-neutral-500"><span>✕</span> Stealth mode</li>
+                <li class="flex items-center gap-2 text-neutral-500"><span>✕</span> See who viewed you</li>
+              </ul>
+              <button class="w-full bg-neutral-800 text-white py-3 rounded-xl font-bold">
+                CURRENT PLAN
+              </button>
+            </div>
+
+            <!-- PLUS -->
+            <div class="bg-gradient-to-br from-purple/20 to-hot/20 rounded-xl p-4 border border-purple">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-lg">PLUS</h3>
+                    <span class="px-2 py-0.5 rounded bg-purple/30 text-purple text-xs">POPULAR</span>
+                  </div>
+                  <p class="text-sm text-neutral-400">Unlock more</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-2xl font-black">£9.99</p>
+                  <p class="text-xs text-neutral-500">/month</p>
+                </div>
+              </div>
+              <ul class="space-y-2 text-sm mb-4">
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> Everything in FREE</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> Unlimited messages</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> <span class="text-purple font-bold">2x</span> XP multiplier</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> Stealth mode</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> Blurred viewer list</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> 3 boosts/month</li>
+              </ul>
+              <button class="w-full bg-purple text-white py-3 rounded-xl font-bold">
+                GO PLUS
+              </button>
+            </div>
+
+            <!-- CHROME -->
+            <div class="bg-gradient-to-br from-gold/20 to-purple/20 rounded-xl p-4 border border-gold">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-lg text-gold">CHROME</h3>
+                    <span class="text-gold">👑</span>
+                  </div>
+                  <p class="text-sm text-neutral-400">Full experience</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-2xl font-black text-gold">£19.99</p>
+                  <p class="text-xs text-neutral-500">/month</p>
+                </div>
+              </div>
+              <ul class="space-y-2 text-sm mb-4">
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> Everything in PLUS</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> <span class="text-gold font-bold">5x</span> visibility</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> See full viewer list</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> Early access to drops</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> Night King challenges</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> 10 boosts/month</li>
+                <li class="flex items-center gap-2"><span class="text-lime">✓</span> Custom profile gradient</li>
+              </ul>
+              <button class="w-full bg-gold text-black py-3 rounded-xl font-bold">
+                GO CHROME
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Plan comparison with feature lists.</p>
+    </section>
+
+    <!-- 2. UPGRADE FLOW -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. Upgrade to PLUS</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Upgrade to PLUS</h1>
+          </div>
+
+          <!-- Hero -->
+          <div class="bg-gradient-to-br from-purple/30 to-hot/30 rounded-2xl p-6 text-center mb-6">
+            <div class="w-20 h-20 rounded-full bg-purple/30 flex items-center justify-center mx-auto mb-4">
+              <span class="text-4xl">⚡</span>
+            </div>
+            <h2 class="text-2xl font-black mb-2">HOTMESS PLUS</h2>
+            <p class="text-neutral-400">Unlock the full experience</p>
+          </div>
+
+          <!-- Features -->
+          <div class="space-y-3 mb-6">
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <span class="w-10 h-10 rounded-full bg-purple/20 flex items-center justify-center">💬</span>
+              <div>
+                <p class="font-medium">Unlimited Messages</p>
+                <p class="text-xs text-neutral-500">No daily limits</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <span class="w-10 h-10 rounded-full bg-purple/20 flex items-center justify-center">👻</span>
+              <div>
+                <p class="font-medium">Stealth Mode</p>
+                <p class="text-xs text-neutral-500">Browse invisibly</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <span class="w-10 h-10 rounded-full bg-purple/20 flex items-center justify-center">⚡</span>
+              <div>
+                <p class="font-medium">2x XP Multiplier</p>
+                <p class="text-xs text-neutral-500">Level up faster</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <span class="w-10 h-10 rounded-full bg-purple/20 flex items-center justify-center">🚀</span>
+              <div>
+                <p class="font-medium">3 Profile Boosts</p>
+                <p class="text-xs text-neutral-500">Every month</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pricing -->
+          <div class="space-y-3 mb-6">
+            <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center justify-between border border-purple">
+              <div>
+                <p class="font-medium">Monthly</p>
+                <p class="text-sm text-neutral-500">Cancel anytime</p>
+              </div>
+              <div class="text-right">
+                <p class="font-bold text-purple">£9.99/mo</p>
+              </div>
+            </button>
+            <button class="w-full p-4 bg-purple/10 rounded-xl flex items-center justify-between">
+              <div>
+                <div class="flex items-center gap-2">
+                  <p class="font-medium">Yearly</p>
+                  <span class="px-2 py-0.5 rounded bg-lime/20 text-lime text-xs font-bold">SAVE 33%</span>
+                </div>
+                <p class="text-sm text-neutral-500">Best value</p>
+              </div>
+              <div class="text-right">
+                <p class="font-bold">£79.99/yr</p>
+                <p class="text-xs text-neutral-500">£6.67/mo</p>
+              </div>
+            </button>
+          </div>
+
+          <button class="w-full bg-purple text-white font-bold py-4 rounded-xl mb-3">
+            CONTINUE — £9.99/mo
+          </button>
+          <p class="text-center text-neutral-600 text-xs">
+            Cancel anytime. No commitment.
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">PLUS upgrade with feature highlights.</p>
+    </section>
+
+    <!-- 3. PAYMENT SCREEN -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. Subscription Payment</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Payment</h1>
+          </div>
+
+          <!-- Summary -->
+          <div class="glass rounded-xl p-4 mb-6">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-purple/20 flex items-center justify-center">
+                  <span class="text-xl">⚡</span>
+                </div>
+                <div>
+                  <p class="font-bold">HOTMESS PLUS</p>
+                  <p class="text-sm text-neutral-500">Monthly subscription</p>
+                </div>
+              </div>
+              <p class="font-bold text-purple">£9.99/mo</p>
+            </div>
+          </div>
+
+          <!-- Payment Methods -->
+          <div class="mb-6">
+            <p class="text-sm text-neutral-500 mb-3">Payment Method</p>
+            <div class="space-y-2">
+              <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center gap-3 border border-hot">
+                <span class="text-2xl">💳</span>
+                <span class="flex-1 text-left">Card</span>
+                <span class="text-hot">●</span>
+              </button>
+              <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center gap-3">
+                <span class="text-2xl">🍎</span>
+                <span class="flex-1 text-left">Apple Pay</span>
+              </button>
+              <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center gap-3">
+                <span class="text-2xl">🅿️</span>
+                <span class="flex-1 text-left">PayPal</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card Form -->
+          <div class="space-y-3 mb-6">
+            <input type="text" placeholder="Card number" class="w-full bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-purple outline-none">
+            <div class="grid grid-cols-2 gap-3">
+              <input type="text" placeholder="MM/YY" class="bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-purple outline-none">
+              <input type="text" placeholder="CVC" class="bg-neutral-900 border border-neutral-700 rounded-xl p-4 focus:border-purple outline-none">
+            </div>
+          </div>
+
+          <!-- Terms -->
+          <p class="text-xs text-neutral-500 mb-6">
+            By subscribing, you agree to our <span class="text-hot">Terms of Service</span>. Your subscription will auto-renew monthly. Cancel anytime.
+          </p>
+
+          <button class="w-full bg-purple text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2">
+            <span>🔒</span> SUBSCRIBE — £9.99/mo
+          </button>
+          <p class="text-center text-neutral-600 text-xs mt-2">
+            Secured by Stripe
+          </p>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Subscription payment with multiple methods.</p>
+    </section>
+
+    <!-- 4. SUBSCRIPTION SUCCESS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Subscription Success</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-gradient-to-br from-purple/20 to-hot/20 flex flex-col items-center justify-center text-center px-8">
+          <!-- Success -->
+          <div class="w-24 h-24 rounded-full bg-purple/30 flex items-center justify-center mb-6">
+            <span class="text-5xl">⚡</span>
+          </div>
+
+          <h1 class="text-3xl font-black mb-2">Welcome to PLUS!</h1>
+          <p class="text-neutral-400 mb-8">Your upgrade is now active</p>
+
+          <!-- Unlocks -->
+          <div class="w-full glass rounded-xl p-4 mb-6">
+            <p class="font-medium mb-3">You now have access to:</p>
+            <div class="space-y-2 text-left text-sm">
+              <div class="flex items-center gap-2">
+                <span class="text-lime">✓</span>
+                <span>Unlimited messages</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-lime">✓</span>
+                <span>Stealth mode</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-lime">✓</span>
+                <span>2x XP multiplier (active now!)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-lime">✓</span>
+                <span>3 profile boosts</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- XP Bonus -->
+          <div class="w-full glass rounded-xl p-4 mb-6 border border-lime/30">
+            <p class="text-lime text-2xl font-black">+500 XP</p>
+            <p class="text-sm text-neutral-400">Subscriber bonus!</p>
+          </div>
+
+          <button class="w-full bg-purple text-white font-bold py-4 rounded-xl mb-3">
+            START EXPLORING
+          </button>
+          <button class="w-full text-neutral-400 py-2">
+            View my subscription
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Subscription confirmed with unlocks.</p>
+    </section>
+
+    <!-- 5. MY SUBSCRIPTION -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. My Subscription</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">My Subscription</h1>
+          </div>
+
+          <!-- Current Plan -->
+          <div class="bg-gradient-to-br from-purple/20 to-hot/20 rounded-xl p-4 mb-6 border border-purple">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <span class="px-3 py-1 rounded-full bg-purple text-white text-sm font-bold">PLUS</span>
+                <span class="text-lime text-sm">Active</span>
+              </div>
+              <p class="font-bold text-purple">£9.99/mo</p>
+            </div>
+            <div class="text-sm text-neutral-400">
+              <p>Next billing: Feb 29, 2026</p>
+              <p>Member since: Jan 15, 2026</p>
+            </div>
+          </div>
+
+          <!-- Features -->
+          <div class="mb-6">
+            <h3 class="font-bold mb-3">Your Benefits</h3>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between p-3 bg-neutral-900 rounded-xl">
+                <span>Unlimited messages</span>
+                <span class="text-lime">✓</span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-neutral-900 rounded-xl">
+                <span>Stealth mode</span>
+                <span class="text-lime">✓</span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-neutral-900 rounded-xl">
+                <span>XP Multiplier</span>
+                <span class="text-purple font-bold">2x</span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-neutral-900 rounded-xl">
+                <span>Monthly boosts</span>
+                <span class="font-bold">2/3 remaining</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upgrade Prompt -->
+          <div class="glass rounded-xl p-4 mb-6 border border-gold/30">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-gold">👑</span>
+              <div>
+                <p class="font-bold">Upgrade to CHROME</p>
+                <p class="text-sm text-neutral-400">5x visibility, early drops, more</p>
+              </div>
+            </div>
+            <button class="w-full bg-gold text-black py-2 rounded-lg font-bold text-sm">
+              UPGRADE — £19.99/mo
+            </button>
+          </div>
+
+          <!-- Actions -->
+          <div class="space-y-2">
+            <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between">
+              <span>Payment Method</span>
+              <span class="text-neutral-400">•••• 4242 ›</span>
+            </button>
+            <button class="w-full p-4 bg-neutral-900 rounded-xl text-left flex items-center justify-between">
+              <span>Billing History</span>
+              <span class="text-neutral-400">›</span>
+            </button>
+            <button class="w-full p-4 bg-neutral-900 rounded-xl text-left text-yellow-500">
+              Cancel Subscription
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Subscription management with upgrade upsell.</p>
+    </section>
+
+    <!-- 6. BILLING HISTORY -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Billing History</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Billing History</h1>
+          </div>
+
+          <!-- Invoices -->
+          <div class="space-y-3 pb-8">
+            <div class="p-4 bg-neutral-900 rounded-xl">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-medium">PLUS Subscription</span>
+                <span class="text-lime text-sm">Paid</span>
+              </div>
+              <div class="flex items-center justify-between text-sm text-neutral-400">
+                <span>Jan 29, 2026</span>
+                <span>£9.99</span>
+              </div>
+              <button class="text-hot text-sm mt-2">Download receipt</button>
+            </div>
+
+            <div class="p-4 bg-neutral-900 rounded-xl">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-medium">XP Package - Popular</span>
+                <span class="text-lime text-sm">Paid</span>
+              </div>
+              <div class="flex items-center justify-between text-sm text-neutral-400">
+                <span>Jan 22, 2026</span>
+                <span>£9.99</span>
+              </div>
+              <button class="text-hot text-sm mt-2">Download receipt</button>
+            </div>
+
+            <div class="p-4 bg-neutral-900 rounded-xl">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-medium">PLUS Subscription</span>
+                <span class="text-lime text-sm">Paid</span>
+              </div>
+              <div class="flex items-center justify-between text-sm text-neutral-400">
+                <span>Dec 29, 2025</span>
+                <span>£9.99</span>
+              </div>
+              <button class="text-hot text-sm mt-2">Download receipt</button>
+            </div>
+
+            <div class="p-4 bg-neutral-900 rounded-xl">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-medium">Shop Order #HM-2025-1220</span>
+                <span class="text-lime text-sm">Paid</span>
+              </div>
+              <div class="flex items-center justify-between text-sm text-neutral-400">
+                <span>Dec 20, 2025</span>
+                <span>£89.98</span>
+              </div>
+              <button class="text-hot text-sm mt-2">View order</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Invoice history with download options.</p>
+    </section>
+
+    <!-- 7. CANCEL SUBSCRIPTION -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. Cancel Subscription</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Cancel Subscription</h1>
+          </div>
+
+          <!-- Warning -->
+          <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-yellow-500">⚠️</span>
+              <p class="font-medium text-yellow-500">You'll lose access to:</p>
+            </div>
+            <ul class="space-y-1 text-sm text-neutral-400">
+              <li>• Unlimited messages (back to 50/day)</li>
+              <li>• Stealth mode</li>
+              <li>• 2x XP multiplier</li>
+              <li>• Monthly profile boosts</li>
+            </ul>
+          </div>
+
+          <!-- Reason -->
+          <div class="mb-6">
+            <p class="text-sm text-neutral-500 mb-3">Why are you cancelling?</p>
+            <div class="space-y-2">
+              <label class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                <input type="radio" name="reason" class="accent-hot">
+                <span>Too expensive</span>
+              </label>
+              <label class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                <input type="radio" name="reason" class="accent-hot">
+                <span>Not using it enough</span>
+              </label>
+              <label class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                <input type="radio" name="reason" class="accent-hot">
+                <span>Found someone</span>
+              </label>
+              <label class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                <input type="radio" name="reason" class="accent-hot">
+                <span>Other</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Offer -->
+          <div class="glass rounded-xl p-4 mb-6 border border-purple/30">
+            <div class="flex items-center gap-2 mb-2">
+              <span>🎁</span>
+              <p class="font-medium">Before you go...</p>
+            </div>
+            <p class="text-sm text-neutral-400 mb-3">
+              Stay with us at <span class="text-purple font-bold">50% off</span> for your next month?
+            </p>
+            <button class="w-full bg-purple text-white py-2 rounded-lg font-bold text-sm">
+              KEEP PLUS AT £4.99
+            </button>
+          </div>
+
+          <button class="w-full bg-red-500 text-white font-bold py-4 rounded-xl mb-3">
+            CANCEL SUBSCRIPTION
+          </button>
+          <button class="w-full text-neutral-400 py-2">
+            Keep my subscription
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Cancellation with retention offer.</p>
+    </section>
+
+    <!-- 8. UPGRADE PROMPT (CONTEXTUAL) -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. Upgrade Prompt</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Modal -->
+          <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 bg-neutral-900 rounded-2xl p-6">
+            <!-- Icon -->
+            <div class="flex justify-center mb-4">
+              <div class="w-16 h-16 rounded-full bg-purple/20 flex items-center justify-center">
+                <span class="text-3xl">👻</span>
+              </div>
+            </div>
+
+            <h2 class="text-2xl font-black text-center mb-2">Go Stealth</h2>
+            <p class="text-neutral-400 text-center mb-6">
+              Browse profiles without anyone knowing you viewed them
+            </p>
+
+            <!-- Feature Preview -->
+            <div class="glass rounded-xl p-4 mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-neutral-800 flex items-center justify-center">
+                  <span class="text-xl">🔒</span>
+                </div>
+                <div>
+                  <p class="font-medium">Stealth Mode</p>
+                  <p class="text-sm text-neutral-500">PLUS feature</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- CTA -->
+            <button class="w-full bg-purple text-white font-bold py-4 rounded-xl mb-3">
+              UNLOCK WITH PLUS — £9.99/mo
+            </button>
+            <button class="w-full text-neutral-400 py-2">
+              Maybe later
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Contextual upgrade when hitting limit.</p>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 9 • Membership & Billing</p>
+    <p class="text-neutral-600 text-sm mt-4">© 2026 HOTMESS LONDON LTD. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

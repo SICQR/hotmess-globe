@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 8: Gamification & XP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'hot': '#FF1493',
+            'blue': '#0047AB',
+          },
+          fontFamily: {
+            'sans': ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame {
+      width: 375px;
+      height: 812px;
+      background: #000;
+      border-radius: 40px;
+      border: 8px solid #1a1a1a;
+      overflow: hidden;
+      position: relative;
+    }
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 30px;
+      background: #1a1a1a;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+    .screen-content {
+      height: 100%;
+      overflow-y: auto;
+      padding-top: 40px;
+    }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .text-purple { color: #B026FF; }
+    .text-gold { color: #FFD700; }
+    .bg-hot { background-color: #FF1493; }
+    .bg-cyan { background-color: #00D9FF; }
+    .bg-lime { background-color: #39FF14; }
+    .bg-purple { background-color: #B026FF; }
+    .bg-gold { background-color: #FFD700; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+      .glow-blue { box-shadow: 0 0 20px rgba(0, 71, 171, 0.4); }
+</style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  
+  <!-- Header -->
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 8: Gamification & XP System • 8 Screens</p>
+  </header>
+
+  <!-- Screen Grid -->
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. XP DASHBOARD -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. XP Dashboard</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">My Stats</h1>
+            <button class="text-hot text-sm">How XP Works</button>
+          </div>
+
+          <!-- Level Card -->
+          <div class="bg-gradient-to-br from-hot/30 to-purple/30 rounded-2xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <p class="text-neutral-400 text-sm">Current Level</p>
+                <p class="text-4xl font-black">Level 4</p>
+              </div>
+              <div class="w-20 h-20 rounded-full bg-gradient-to-br from-hot to-purple flex items-center justify-center">
+                <span class="text-4xl">🔥</span>
+              </div>
+            </div>
+            
+            <!-- Progress -->
+            <div class="mb-2">
+              <div class="flex justify-between text-sm mb-1">
+                <span>2,450 XP</span>
+                <span class="text-neutral-400">3,000 XP</span>
+              </div>
+              <div class="h-3 bg-black/30 rounded-full overflow-hidden">
+                <div class="h-full w-[82%] bg-gradient-to-r from-hot to-purple rounded-full"></div>
+              </div>
+            </div>
+            <p class="text-sm text-neutral-400">550 XP to Level 5</p>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="grid grid-cols-3 gap-3 mb-6">
+            <div class="glass rounded-xl p-4 text-center">
+              <p class="text-2xl font-bold text-lime">7</p>
+              <p class="text-xs text-neutral-500">Day Streak</p>
+            </div>
+            <div class="glass rounded-xl p-4 text-center">
+              <p class="text-2xl font-bold">12</p>
+              <p class="text-xs text-neutral-500">Badges</p>
+            </div>
+            <div class="glass rounded-xl p-4 text-center">
+              <p class="text-2xl font-bold text-cyan">#47</p>
+              <p class="text-xs text-neutral-500">Rank</p>
+            </div>
+          </div>
+
+          <!-- XP Multiplier -->
+          <div class="glass rounded-xl p-4 mb-6 border border-purple/30">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">⚡</span>
+                <div>
+                  <p class="font-medium">2x XP Multiplier</p>
+                  <p class="text-sm text-purple">PLUS member bonus</p>
+                </div>
+              </div>
+              <span class="text-2xl font-bold text-purple">2x</span>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div>
+            <h3 class="font-bold mb-3">Recent XP</h3>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between p-3 bg-neutral-900 rounded-xl">
+                <div class="flex items-center gap-3">
+                  <span class="w-10 h-10 rounded-full bg-lime/20 flex items-center justify-center">✓</span>
+                  <div>
+                    <p class="font-medium">Daily Check-in</p>
+                    <p class="text-xs text-neutral-500">Today</p>
+                  </div>
+                </div>
+                <span class="font-bold text-lime">+20 XP</span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-neutral-900 rounded-xl">
+                <div class="flex items-center gap-3">
+                  <span class="w-10 h-10 rounded-full bg-hot/20 flex items-center justify-center">💬</span>
+                  <div>
+                    <p class="font-medium">Messages Sent</p>
+                    <p class="text-xs text-neutral-500">Today</p>
+                  </div>
+                </div>
+                <span class="font-bold text-lime">+15 XP</span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-neutral-900 rounded-xl">
+                <div class="flex items-center gap-3">
+                  <span class="w-10 h-10 rounded-full bg-cyan/20 flex items-center justify-center">🎉</span>
+                  <div>
+                    <p class="font-medium">Event RSVP</p>
+                    <p class="text-xs text-neutral-500">Yesterday</p>
+                  </div>
+                </div>
+                <span class="font-bold text-lime">+50 XP</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">XP overview with level progress and activity.</p>
+    </section>
+
+    <!-- 2. CHALLENGES LIST -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. Challenges</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">Challenges</h1>
+            <span class="px-3 py-1 rounded-full bg-lime/20 text-lime text-sm font-bold">3 Active</span>
+          </div>
+
+          <!-- Daily Challenge -->
+          <div class="mb-6">
+            <p class="text-sm text-neutral-500 mb-3">Today's Challenge</p>
+            <div class="bg-gradient-to-r from-hot/20 to-purple/20 rounded-xl p-4 border border-hot/30">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-12 h-12 rounded-xl bg-hot/30 flex items-center justify-center">
+                  <span class="text-2xl">🎯</span>
+                </div>
+                <div class="flex-1">
+                  <p class="font-bold">Social Butterfly</p>
+                  <p class="text-sm text-neutral-400">Start 3 new conversations</p>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold text-lime">+100 XP</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="flex-1 h-2 bg-black/30 rounded-full overflow-hidden">
+                  <div class="h-full w-[66%] bg-hot rounded-full"></div>
+                </div>
+                <span class="text-sm text-neutral-400">2/3</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weekly Challenges -->
+          <div class="mb-6">
+            <p class="text-sm text-neutral-500 mb-3">This Week</p>
+            <div class="space-y-3">
+              <div class="glass rounded-xl p-4">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-12 h-12 rounded-xl bg-cyan/20 flex items-center justify-center">
+                    <span class="text-2xl">📻</span>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-bold">Radio Head</p>
+                    <p class="text-sm text-neutral-400">Listen for 60 minutes</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="font-bold text-cyan">+150 XP</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 h-2 bg-neutral-800 rounded-full overflow-hidden">
+                    <div class="h-full w-[45%] bg-cyan rounded-full"></div>
+                  </div>
+                  <span class="text-sm text-neutral-400">27/60 min</span>
+                </div>
+              </div>
+
+              <div class="glass rounded-xl p-4">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-12 h-12 rounded-xl bg-purple/20 flex items-center justify-center">
+                    <span class="text-2xl">🛍️</span>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-bold">Shop the Drop</p>
+                    <p class="text-sm text-neutral-400">Make a purchase</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="font-bold text-purple">+200 XP</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 h-2 bg-neutral-800 rounded-full overflow-hidden">
+                    <div class="h-full w-0 bg-purple rounded-full"></div>
+                  </div>
+                  <span class="text-sm text-neutral-400">0/1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Special Challenge -->
+          <div>
+            <p class="text-sm text-neutral-500 mb-3">Special</p>
+            <div class="glass rounded-xl p-4 border border-gold/30">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-12 h-12 rounded-xl bg-gold/20 flex items-center justify-center">
+                  <span class="text-2xl">👑</span>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <p class="font-bold">Night King</p>
+                    <span class="px-2 py-0.5 rounded bg-gold/20 text-gold text-xs">CHROME</span>
+                  </div>
+                  <p class="text-sm text-neutral-400">Attend 5 events this month</p>
+                </div>
+                <div class="text-right">
+                  <p class="font-bold text-gold">+500 XP</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="flex-1 h-2 bg-neutral-800 rounded-full overflow-hidden">
+                  <div class="h-full w-[40%] bg-gold rounded-full"></div>
+                </div>
+                <span class="text-sm text-neutral-400">2/5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Daily and weekly challenges with progress.</p>
+    </section>
+
+    <!-- 3. ACHIEVEMENTS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. Achievements</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">Achievements</h1>
+            <span class="text-neutral-500">12/48</span>
+          </div>
+
+          <!-- Categories -->
+          <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-medium whitespace-nowrap">All</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Social</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Events</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Shop</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm whitespace-nowrap">Radio</button>
+          </div>
+
+          <!-- Achievement Grid -->
+          <div class="grid grid-cols-3 gap-3 pb-8">
+            <!-- Unlocked -->
+            <div class="glass rounded-xl p-4 text-center">
+              <div class="w-16 h-16 rounded-full bg-lime/20 flex items-center justify-center mx-auto mb-2">
+                <span class="text-3xl">🌟</span>
+              </div>
+              <p class="font-medium text-sm">First Steps</p>
+              <p class="text-xs text-lime">Unlocked</p>
+            </div>
+
+            <div class="glass rounded-xl p-4 text-center">
+              <div class="w-16 h-16 rounded-full bg-hot/20 flex items-center justify-center mx-auto mb-2">
+                <span class="text-3xl">💬</span>
+              </div>
+              <p class="font-medium text-sm">Chatterbox</p>
+              <p class="text-xs text-lime">Unlocked</p>
+            </div>
+
+            <div class="glass rounded-xl p-4 text-center">
+              <div class="w-16 h-16 rounded-full bg-cyan/20 flex items-center justify-center mx-auto mb-2">
+                <span class="text-3xl">📻</span>
+              </div>
+              <p class="font-medium text-sm">Radio Fan</p>
+              <p class="text-xs text-lime">Unlocked</p>
+            </div>
+
+            <div class="glass rounded-xl p-4 text-center">
+              <div class="w-16 h-16 rounded-full bg-purple/20 flex items-center justify-center mx-auto mb-2">
+                <span class="text-3xl">🎉</span>
+              </div>
+              <p class="font-medium text-sm">Party Animal</p>
+              <p class="text-xs text-lime">Unlocked</p>
+            </div>
+
+            <div class="glass rounded-xl p-4 text-center">
+              <div class="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-2">
+                <span class="text-3xl">🔥</span>
+              </div>
+              <p class="font-medium text-sm">7 Day Streak</p>
+              <p class="text-xs text-lime">Unlocked</p>
+            </div>
+
+            <!-- Locked -->
+            <div class="glass rounded-xl p-4 text-center opacity-50">
+              <div class="w-16 h-16 rounded-full bg-neutral-800 flex items-center justify-center mx-auto mb-2">
+                <span class="text-3xl">🔒</span>
+              </div>
+              <p class="font-medium text-sm">30 Day Streak</p>
+              <p class="text-xs text-neutral-500">Locked</p>
+            </div>
+
+            <div class="glass rounded-xl p-4 text-center opacity-50">
+              <div class="w-16 h-16 rounded-full bg-neutral-800 flex items-center justify-center mx-auto mb-2">
+                <span class="text-3xl">🔒</span>
+              </div>
+              <p class="font-medium text-sm">Top 10</p>
+              <p class="text-xs text-neutral-500">Locked</p>
+            </div>
+
+            <div class="glass rounded-xl p-4 text-center opacity-50">
+              <div class="w-16 h-16 rounded-full bg-neutral-800 flex items-center justify-center mx-auto mb-2">
+                <span class="text-3xl">🔒</span>
+              </div>
+              <p class="font-medium text-sm">Night King</p>
+              <p class="text-xs text-neutral-500">Locked</p>
+            </div>
+
+            <div class="glass rounded-xl p-4 text-center opacity-50">
+              <div class="w-16 h-16 rounded-full bg-neutral-800 flex items-center justify-center mx-auto mb-2">
+                <span class="text-3xl">🔒</span>
+              </div>
+              <p class="font-medium text-sm">OG Member</p>
+              <p class="text-xs text-neutral-500">Locked</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Badge collection with locked/unlocked states.</p>
+    </section>
+
+    <!-- 4. LEADERBOARD -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Leaderboard</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">Leaderboard</h1>
+            <button class="text-neutral-400 text-sm">This Week ▾</button>
+          </div>
+
+          <!-- Top 3 -->
+          <div class="flex items-end justify-center gap-4 mb-6">
+            <!-- 2nd -->
+            <div class="text-center">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop" class="w-16 h-16 rounded-full object-cover mx-auto mb-2 border-2 border-neutral-500">
+              <p class="font-medium">Sam</p>
+              <p class="text-sm text-neutral-400">8,450 XP</p>
+              <div class="w-8 h-8 rounded-full bg-neutral-500 flex items-center justify-center mx-auto mt-1 font-bold">2</div>
+            </div>
+            <!-- 1st -->
+            <div class="text-center -mb-4">
+              <div class="relative">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" class="w-20 h-20 rounded-full object-cover mx-auto mb-2 border-2 border-gold">
+                <span class="absolute -top-2 left-1/2 -translate-x-1/2 text-2xl">👑</span>
+              </div>
+              <p class="font-bold">Alex</p>
+              <p class="text-sm text-gold">12,340 XP</p>
+              <div class="w-10 h-10 rounded-full bg-gold text-black flex items-center justify-center mx-auto mt-1 font-bold text-lg">1</div>
+            </div>
+            <!-- 3rd -->
+            <div class="text-center">
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=80&h=80&fit=crop" class="w-16 h-16 rounded-full object-cover mx-auto mb-2 border-2 border-amber-700">
+              <p class="font-medium">Marcus</p>
+              <p class="text-sm text-neutral-400">7,890 XP</p>
+              <div class="w-8 h-8 rounded-full bg-amber-700 flex items-center justify-center mx-auto mt-1 font-bold">3</div>
+            </div>
+          </div>
+
+          <!-- List -->
+          <div class="space-y-2 pb-8">
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <span class="w-8 text-center font-bold text-neutral-500">4</span>
+              <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=50&h=50&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Jordan</p>
+              </div>
+              <span class="font-bold">6,780 XP</span>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <span class="w-8 text-center font-bold text-neutral-500">5</span>
+              <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=50&h=50&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Chris</p>
+              </div>
+              <span class="font-bold">5,430 XP</span>
+            </div>
+
+            <!-- You -->
+            <div class="flex items-center gap-3 p-3 bg-hot/20 rounded-xl border border-hot">
+              <span class="w-8 text-center font-bold text-hot">47</span>
+              <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=50&h=50&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">You</p>
+              </div>
+              <span class="font-bold text-hot">2,450 XP</span>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <span class="w-8 text-center font-bold text-neutral-500">48</span>
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&h=50&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Taylor</p>
+              </div>
+              <span class="font-bold">2,410 XP</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Weekly leaderboard with top 3 podium.</p>
+    </section>
+
+    <!-- 5. BUY XP -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. Buy XP</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Buy XP</h1>
+          </div>
+
+          <!-- Current XP -->
+          <div class="glass rounded-xl p-4 mb-6 text-center">
+            <p class="text-neutral-500 text-sm">Current Balance</p>
+            <p class="text-4xl font-black text-lime">2,450 XP</p>
+          </div>
+
+          <!-- Packages -->
+          <div class="space-y-3 pb-8">
+            <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">⚡</span>
+                <div class="text-left">
+                  <p class="font-bold">Starter</p>
+                  <p class="text-sm text-neutral-500">500 XP</p>
+                </div>
+              </div>
+              <span class="font-bold">£4.99</span>
+            </button>
+
+            <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center justify-between border border-hot">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">🔥</span>
+                <div class="text-left">
+                  <div class="flex items-center gap-2">
+                    <p class="font-bold">Popular</p>
+                    <span class="px-2 py-0.5 rounded bg-hot/20 text-hot text-xs">BEST VALUE</span>
+                  </div>
+                  <p class="text-sm text-neutral-500">1,100 XP (+10% bonus)</p>
+                </div>
+              </div>
+              <span class="font-bold">£9.99</span>
+            </button>
+
+            <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">💎</span>
+                <div class="text-left">
+                  <p class="font-bold">Value</p>
+                  <p class="text-sm text-neutral-500">2,750 XP (+10% bonus)</p>
+                </div>
+              </div>
+              <span class="font-bold">£19.99</span>
+            </button>
+
+            <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">🚀</span>
+                <div class="text-left">
+                  <p class="font-bold">Pro</p>
+                  <p class="text-sm text-neutral-500">6,000 XP (+20% bonus)</p>
+                </div>
+              </div>
+              <span class="font-bold">£34.99</span>
+            </button>
+
+            <button class="w-full p-4 bg-gradient-to-r from-gold/20 to-purple/20 rounded-xl flex items-center justify-between border border-gold/30">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">👑</span>
+                <div class="text-left">
+                  <p class="font-bold text-gold">Ultimate</p>
+                  <p class="text-sm text-neutral-400">15,000 XP (+20% bonus)</p>
+                </div>
+              </div>
+              <span class="font-bold text-gold">£79.99</span>
+            </button>
+          </div>
+
+          <!-- What XP Gets You -->
+          <div class="glass rounded-xl p-4">
+            <p class="font-medium mb-3">What can you do with XP?</p>
+            <div class="space-y-2 text-sm text-neutral-400">
+              <div class="flex items-center gap-2">
+                <span class="text-lime">✓</span>
+                <span>Boost your profile visibility</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-lime">✓</span>
+                <span>Unlock premium features</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-lime">✓</span>
+                <span>Buy exclusive drops</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-lime">✓</span>
+                <span>Feature your products</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">XP purchase packages with bonuses.</p>
+    </section>
+
+    <!-- 6. DAILY CHECK-IN -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Daily Check-in</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Modal -->
+          <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 bg-neutral-900 rounded-2xl p-6 text-center">
+            <!-- Animation -->
+            <div class="w-24 h-24 rounded-full bg-lime/20 flex items-center justify-center mx-auto mb-4">
+              <span class="text-5xl">🎉</span>
+            </div>
+
+            <h2 class="text-2xl font-black mb-2">Day 7 Streak!</h2>
+            <p class="text-neutral-400 mb-6">You've checked in 7 days in a row</p>
+
+            <!-- Reward -->
+            <div class="bg-lime/10 rounded-xl p-4 mb-6">
+              <p class="text-lime text-3xl font-black">+100 XP</p>
+              <p class="text-sm text-neutral-400">Weekly bonus earned!</p>
+            </div>
+
+            <!-- Streak Calendar -->
+            <div class="flex justify-center gap-2 mb-6">
+              <div class="w-10 h-10 rounded-lg bg-lime/20 flex items-center justify-center text-lime">✓</div>
+              <div class="w-10 h-10 rounded-lg bg-lime/20 flex items-center justify-center text-lime">✓</div>
+              <div class="w-10 h-10 rounded-lg bg-lime/20 flex items-center justify-center text-lime">✓</div>
+              <div class="w-10 h-10 rounded-lg bg-lime/20 flex items-center justify-center text-lime">✓</div>
+              <div class="w-10 h-10 rounded-lg bg-lime/20 flex items-center justify-center text-lime">✓</div>
+              <div class="w-10 h-10 rounded-lg bg-lime/20 flex items-center justify-center text-lime">✓</div>
+              <div class="w-10 h-10 rounded-lg bg-lime flex items-center justify-center font-bold">7</div>
+            </div>
+
+            <!-- Next Bonus -->
+            <p class="text-sm text-neutral-500 mb-6">
+              Next bonus: <span class="text-gold font-bold">+250 XP</span> at Day 14
+            </p>
+
+            <button class="w-full bg-lime text-black font-bold py-4 rounded-xl">
+              CLAIM REWARD
+            </button>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Daily check-in reward celebration.</p>
+    </section>
+
+    <!-- 7. CHALLENGE DETAIL -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. Challenge Detail</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Challenge</h1>
+          </div>
+
+          <!-- Challenge Card -->
+          <div class="bg-gradient-to-br from-gold/20 to-purple/20 rounded-2xl p-6 mb-6 border border-gold/30">
+            <div class="flex justify-center mb-4">
+              <div class="w-24 h-24 rounded-full bg-gold/30 flex items-center justify-center">
+                <span class="text-5xl">👑</span>
+              </div>
+            </div>
+
+            <h2 class="text-2xl font-black text-center mb-2">Night King</h2>
+            <p class="text-center text-neutral-400 mb-4">Attend 5 events this month</p>
+
+            <div class="flex items-center justify-center gap-2 mb-4">
+              <span class="px-3 py-1 rounded-full bg-gold/20 text-gold text-sm font-bold">CHROME EXCLUSIVE</span>
+            </div>
+
+            <!-- Progress -->
+            <div class="mb-4">
+              <div class="flex justify-between text-sm mb-2">
+                <span>Progress</span>
+                <span class="font-bold">2/5 events</span>
+              </div>
+              <div class="h-4 bg-black/30 rounded-full overflow-hidden">
+                <div class="h-full w-[40%] bg-gold rounded-full"></div>
+              </div>
+            </div>
+
+            <div class="text-center">
+              <p class="text-gold text-2xl font-black">+500 XP</p>
+              <p class="text-sm text-neutral-400">+ Night King Badge</p>
+            </div>
+          </div>
+
+          <!-- Requirements -->
+          <div class="mb-6">
+            <h3 class="font-bold mb-3">Requirements</h3>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                <span class="text-lime">✓</span>
+                <span>MEAT RACK @ XXL</span>
+                <span class="text-xs text-neutral-500 ml-auto">Jan 15</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+                <span class="text-lime">✓</span>
+                <span>ORANGE NATION @ Fire</span>
+                <span class="text-xs text-neutral-500 ml-auto">Jan 22</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl text-neutral-500">
+                <span class="w-5 h-5 rounded-full border border-neutral-600"></span>
+                <span>Attend 3 more events</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upcoming Events -->
+          <div>
+            <h3 class="font-bold mb-3">Upcoming Events</h3>
+            <div class="space-y-2">
+              <div class="p-3 bg-neutral-900 rounded-xl flex items-center justify-between">
+                <div>
+                  <p class="font-medium">G-A-Y Late</p>
+                  <p class="text-xs text-neutral-500">Tonight • Heaven</p>
+                </div>
+                <button class="px-4 py-2 rounded-lg bg-hot text-white text-sm">RSVP</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Challenge detail with progress tracking.</p>
+    </section>
+
+    <!-- 8. LEVEL UP -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. Level Up Celebration</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-gradient-to-br from-hot/20 to-purple/20 flex flex-col items-center justify-center text-center px-8">
+          <!-- Animation -->
+          <div class="relative mb-6">
+            <div class="w-32 h-32 rounded-full bg-gradient-to-br from-hot to-purple flex items-center justify-center">
+              <span class="text-6xl font-black">5</span>
+            </div>
+            <div class="absolute -inset-4 rounded-full border-2 border-hot/50 animate-ping"></div>
+          </div>
+
+          <h1 class="text-4xl font-black mb-2">LEVEL UP!</h1>
+          <p class="text-neutral-400 text-lg mb-6">You've reached Level 5</p>
+
+          <!-- Unlocks -->
+          <div class="w-full glass rounded-xl p-4 mb-6">
+            <p class="font-medium mb-3">New Unlocks</p>
+            <div class="space-y-2 text-left">
+              <div class="flex items-center gap-3">
+                <span class="text-lime">✓</span>
+                <span>Custom profile theme</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-lime">✓</span>
+                <span>Level 5 badge</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-lime">✓</span>
+                <span>+1 daily boost</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="w-full grid grid-cols-2 gap-3 mb-6">
+            <div class="glass rounded-xl p-4 text-center">
+              <p class="text-2xl font-bold">3,000</p>
+              <p class="text-xs text-neutral-500">Total XP</p>
+            </div>
+            <div class="glass rounded-xl p-4 text-center">
+              <p class="text-2xl font-bold">#32</p>
+              <p class="text-xs text-neutral-500">New Rank</p>
+            </div>
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-3">
+            SHARE ACHIEVEMENT
+          </button>
+          <button class="w-full text-neutral-400 py-2">
+            Continue
+          </button>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-sm mt-3 max-w-xs">Level up celebration with unlocks.</p>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 8 • Gamification & XP</p>
+    <p class="text-neutral-600 text-sm mt-4">© 2026 HOTMESS LONDON LTD. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

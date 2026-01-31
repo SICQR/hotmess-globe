@@ -35,6 +35,8 @@ const buttonVariants = cva(
           "bg-primary text-primary-foreground shadow hover:bg-primary/90",
         hot:
           "bg-[#FF1493] text-black shadow hover:bg-white",
+        hotGradient:
+          "bg-gradient-to-r from-[#FF1493] via-[#FF69B4] to-[#FF1493] text-white shadow-lg hover:brightness-110 border-0",
         cyan:
           "bg-[#00D9FF] text-black shadow hover:bg-white",
         glass:

@@ -1,0 +1,1 @@
+{"city":"berlin","zones":[{"id":"schoneberg","category":"historic_core","energy":"community_pride"},{"id":"kreuzberg","category":"underground","energy":"queer_alternative"},{"id":"friedrichshain","category":"late_night","energy":"club_intensity"}],"behaviour":{"peak_windows":{"kreuzberg":["22:00-05:00"],"friedrichshain":["23:00-06:00"]}}}

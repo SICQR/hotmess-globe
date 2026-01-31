@@ -69,6 +69,16 @@ export default async function handler(req, res) {
   const cities = normalizeCities(body.cities || ['London', 'Manchester', 'Brighton']);
   const daysAhead = Number.isFinite(Number(body.daysAhead)) ? Number(body.daysAhead) : 14;
   const dryRun = !!body.dryRun;
+  const runId = crypto.randomUUID();
+
+  // Log run start
+  await serviceClient.from('event_scraper_runs').insert({
+    id: runId,
+    status: 'running',
+    mode: body.events ? 'manual' : 'sources',
+    target_cities: cities,
+    initiator: `admin:${email}`,
+  });
 
   // Source events can be supplied directly (recommended if you have your own scraper)
   // OR fetched from configured JSON sources (EVENT_SCRAPER_SOURCES_JSON).
@@ -76,7 +86,7 @@ export default async function handler(req, res) {
   const sourceErrors = [];
 
   if (!events.length) {
-    const fetched = await fetchEventsFromConfiguredSources({ cities, daysAhead });
+    const fetched = await fetchEventsFromConfiguredSources({ cities, daysAhead, serviceClient });
     if (fetched.ok) {
       events = fetched.events;
       sourceErrors.push(...(fetched.errors || []));
@@ -157,6 +167,17 @@ export default async function handler(req, res) {
       results.errors.push(`Failed to upsert ${row.title} (${row.city}): ${e?.message || String(e)}`);
     }
   }
+
+  // Update run log
+  await serviceClient.from('event_scraper_runs').update({
+    status: results.errors.length === 0 ? 'completed' : 'partial',
+    finished_at: new Date().toISOString(),
+    events_found: events.length,
+    events_created: results.created,
+    events_updated: results.updated,
+    error_count: results.errors.length + results.sourceErrors.length,
+    logs: results.errors,
+  }).eq('id', runId);
 
   return json(res, 200, {
     success: results.errors.length === 0,

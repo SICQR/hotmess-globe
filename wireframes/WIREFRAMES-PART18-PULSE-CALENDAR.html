@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 18: PULSE Map & Calendar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'hot': '#FF1493',
+            'blue': '#0047AB',
+          },
+          fontFamily: {
+            'sans': ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame { width: 375px; height: 812px; background: #000; border-radius: 40px; border: 8px solid #1a1a1a; overflow: hidden; position: relative; }
+    .phone-frame::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 150px; height: 30px; background: #1a1a1a; border-radius: 0 0 20px 20px; z-index: 100; }
+    .screen-content { height: 100%; overflow-y: auto; padding-top: 40px; }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .bg-hot { background-color: #FF1493; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+      .glow-blue { box-shadow: 0 0 20px rgba(0, 71, 171, 0.4); }
+</style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 18: PULSE Map Deep & Calendar Features • 12 Screens</p>
+  </header>
+
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. PULSE MAP -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. PULSE Map View</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-neutral-900 relative">
+          <!-- Map Background -->
+          <div class="absolute inset-0 bg-gradient-to-b from-neutral-800 to-neutral-900">
+            <!-- Map pins -->
+            <div class="absolute top-1/3 left-1/4 w-10 h-10 rounded-full bg-hot flex items-center justify-center animate-pulse border-2 border-white">
+              <span>🔥</span>
+            </div>
+            <div class="absolute top-1/2 right-1/3 w-8 h-8 rounded-full bg-cyan flex items-center justify-center border-2 border-white">
+              <span>🎵</span>
+            </div>
+            <div class="absolute bottom-1/3 left-1/2 w-8 h-8 rounded-full bg-lime flex items-center justify-center border-2 border-white">
+              <span>📍</span>
+            </div>
+            <div class="absolute top-2/3 right-1/4 w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center">
+              <span class="text-xs">👤</span>
+            </div>
+            <!-- Current location -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-blue-500 border-4 border-white shadow-lg"></div>
+          </div>
+
+          <!-- Header -->
+          <div class="absolute top-12 left-4 right-4 flex items-center gap-3">
+            <button class="w-10 h-10 rounded-full glass flex items-center justify-center">←</button>
+            <div class="flex-1 relative">
+              <input type="text" placeholder="Search area..." class="w-full bg-black/70 backdrop-blur rounded-full pl-10 pr-4 py-2 text-sm">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">🔍</span>
+            </div>
+            <button class="w-10 h-10 rounded-full glass flex items-center justify-center">⚙️</button>
+          </div>
+
+          <!-- Layer Switcher -->
+          <div class="absolute top-28 left-4 flex flex-col gap-2">
+            <button class="px-3 py-2 rounded-full bg-hot text-white text-xs font-bold flex items-center gap-1">
+              <span>🔥</span> Events
+            </button>
+            <button class="px-3 py-2 rounded-full glass text-xs flex items-center gap-1">
+              <span>👤</span> People
+            </button>
+            <button class="px-3 py-2 rounded-full glass text-xs flex items-center gap-1">
+              <span>🏪</span> Venues
+            </button>
+            <button class="px-3 py-2 rounded-full glass text-xs flex items-center gap-1">
+              <span>💊</span> Care
+            </button>
+          </div>
+
+          <!-- Bottom Sheet Preview -->
+          <div class="absolute bottom-0 left-0 right-0 bg-black rounded-t-3xl p-4 pb-8">
+            <div class="w-12 h-1 bg-neutral-700 rounded-full mx-auto mb-4"></div>
+            <p class="text-sm text-neutral-500 mb-2">NEARBY • 5 places</p>
+            <div class="flex gap-3 overflow-x-auto">
+              <div class="shrink-0 w-40 glass rounded-xl p-3">
+                <span class="text-xl">🔥</span>
+                <p class="font-bold text-sm mt-1">XXL London</p>
+                <p class="text-xs text-neutral-500">0.3 mi • 847 here</p>
+              </div>
+              <div class="shrink-0 w-40 glass rounded-xl p-3">
+                <span class="text-xl">🎵</span>
+                <p class="font-bold text-sm mt-1">Heaven</p>
+                <p class="text-xs text-neutral-500">0.5 mi • Open now</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. MAP PIN DETAIL -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. Map Pin Detail Sheet</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-neutral-900 relative">
+          <!-- Dimmed Map -->
+          <div class="absolute inset-0 bg-neutral-800 opacity-50"></div>
+
+          <!-- Bottom Sheet -->
+          <div class="absolute bottom-0 left-0 right-0 bg-black rounded-t-3xl" style="height: 70%">
+            <div class="w-12 h-1 bg-neutral-700 rounded-full mx-auto mt-4"></div>
+
+            <div class="p-4">
+              <!-- Venue Header -->
+              <div class="flex gap-4 mb-4">
+                <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=80&h=80&fit=crop" class="w-20 h-20 rounded-xl object-cover">
+                <div class="flex-1">
+                  <h2 class="text-xl font-black">XXL London</h2>
+                  <p class="text-sm text-neutral-400">Nightclub • Vauxhall</p>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="text-lime text-sm">● Open now</span>
+                    <span class="text-neutral-500 text-sm">• 0.3 mi</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Stats -->
+              <div class="flex gap-3 mb-4">
+                <div class="flex-1 glass rounded-xl p-3 text-center">
+                  <p class="text-xl font-bold text-lime">847</p>
+                  <p class="text-xs text-neutral-500">Here now</p>
+                </div>
+                <div class="flex-1 glass rounded-xl p-3 text-center">
+                  <p class="text-xl font-bold">4.2</p>
+                  <p class="text-xs text-neutral-500">Rating</p>
+                </div>
+              </div>
+
+              <!-- Tonight's Event -->
+              <div class="glass rounded-xl p-4 mb-4 border border-hot/30">
+                <p class="text-xs text-neutral-500 mb-2">TONIGHT</p>
+                <p class="font-bold">MEAT RACK</p>
+                <p class="text-sm text-neutral-400">10pm - 6am • £15</p>
+              </div>
+
+              <!-- Actions -->
+              <div class="flex gap-3">
+                <button class="flex-1 bg-hot text-white font-bold py-3 rounded-xl">RSVP</button>
+                <button class="flex-1 bg-neutral-800 py-3 rounded-xl">Directions</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. PEOPLE LAYER -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. People Layer (Pro)</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-neutral-900 relative">
+          <!-- Map with people pins -->
+          <div class="absolute inset-0 bg-gradient-to-b from-neutral-800 to-neutral-900">
+            <!-- Fuzzy location circles -->
+            <div class="absolute top-1/3 left-1/3 w-16 h-16 rounded-full bg-lime/20 flex items-center justify-center">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover border-2 border-lime">
+            </div>
+            <div class="absolute top-1/2 right-1/4 w-16 h-16 rounded-full bg-cyan/20 flex items-center justify-center">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover border-2 border-cyan">
+            </div>
+            <div class="absolute bottom-1/3 left-1/4 w-16 h-16 rounded-full bg-hot/20 flex items-center justify-center">
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover border-2 border-hot">
+            </div>
+          </div>
+
+          <!-- Layer Indicator -->
+          <div class="absolute top-12 left-4">
+            <div class="flex items-center gap-2 px-3 py-2 glass rounded-full">
+              <span class="text-lime">●</span>
+              <span class="text-sm font-bold">People Nearby</span>
+              <span class="text-xs bg-hot rounded-full px-2 py-0.5">PRO</span>
+            </div>
+          </div>
+
+          <!-- Privacy Note -->
+          <div class="absolute top-24 left-4 right-4">
+            <div class="glass rounded-xl p-3 border border-yellow-500/30">
+              <p class="text-xs text-yellow-400">📍 Locations are approximate (±500m) to protect privacy</p>
+            </div>
+          </div>
+
+          <!-- Bottom Sheet -->
+          <div class="absolute bottom-0 left-0 right-0 bg-black rounded-t-3xl p-4 pb-8">
+            <p class="text-sm text-neutral-500 mb-3">12 people nearby</p>
+            <div class="flex gap-3 overflow-x-auto">
+              <div class="shrink-0">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop" class="w-14 h-14 rounded-full object-cover border-2 border-lime">
+                <p class="text-xs text-center mt-1">Alex</p>
+              </div>
+              <div class="shrink-0">
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop" class="w-14 h-14 rounded-full object-cover border-2 border-cyan">
+                <p class="text-xs text-center mt-1">Sam</p>
+              </div>
+              <div class="shrink-0">
+                <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=60&h=60&fit=crop" class="w-14 h-14 rounded-full object-cover border-2 border-hot">
+                <p class="text-xs text-center mt-1">Marcus</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. CARE LAYER -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Care Layer</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-neutral-900 relative">
+          <!-- Map with care pins -->
+          <div class="absolute inset-0 bg-gradient-to-b from-neutral-800 to-neutral-900">
+            <div class="absolute top-1/3 left-1/4 w-10 h-10 rounded-full bg-lime flex items-center justify-center border-2 border-white">
+              <span>💊</span>
+            </div>
+            <div class="absolute top-1/2 right-1/3 w-10 h-10 rounded-full bg-cyan flex items-center justify-center border-2 border-white">
+              <span>🏥</span>
+            </div>
+            <div class="absolute bottom-1/3 left-1/2 w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center border-2 border-white">
+              <span>💙</span>
+            </div>
+          </div>
+
+          <!-- Layer Indicator -->
+          <div class="absolute top-12 left-4">
+            <div class="flex items-center gap-2 px-3 py-2 glass rounded-full">
+              <span class="text-lime">●</span>
+              <span class="text-sm font-bold">Care Resources</span>
+            </div>
+          </div>
+
+          <!-- Bottom Sheet -->
+          <div class="absolute bottom-0 left-0 right-0 bg-black rounded-t-3xl p-4 pb-8">
+            <p class="text-sm text-neutral-500 mb-3">Nearby resources</p>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3 p-3 glass rounded-xl">
+                <span class="text-2xl">💊</span>
+                <div class="flex-1">
+                  <p class="font-bold text-sm">56 Dean Street</p>
+                  <p class="text-xs text-neutral-500">Sexual health clinic • 0.4 mi</p>
+                </div>
+                <button class="text-hot text-sm">→</button>
+              </div>
+              <div class="flex items-center gap-3 p-3 glass rounded-xl">
+                <span class="text-2xl">🏥</span>
+                <div class="flex-1">
+                  <p class="font-bold text-sm">A&E UCLH</p>
+                  <p class="text-xs text-neutral-500">Emergency • 1.2 mi</p>
+                </div>
+                <button class="text-hot text-sm">→</button>
+              </div>
+              <div class="flex items-center gap-3 p-3 glass rounded-xl">
+                <span class="text-2xl">💙</span>
+                <div class="flex-1">
+                  <p class="font-bold text-sm">London Friend</p>
+                  <p class="text-xs text-neutral-500">Support service • 0.8 mi</p>
+                </div>
+                <button class="text-hot text-sm">→</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. IN-APP DIRECTIONS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. In-App Directions</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-neutral-900 relative">
+          <!-- Route Map -->
+          <div class="absolute inset-0 bg-gradient-to-b from-neutral-800 to-neutral-900">
+            <!-- Route line (simulated) -->
+            <div class="absolute top-1/2 left-1/4 w-1/2 h-1 bg-cyan rounded"></div>
+          </div>
+
+          <!-- Top Bar -->
+          <div class="absolute top-12 left-4 right-4 glass rounded-xl p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+              <div class="flex-1">
+                <p class="text-xs text-neutral-500">From your location</p>
+                <p class="font-bold">XXL London</p>
+              </div>
+              <button class="text-neutral-400">×</button>
+            </div>
+          </div>
+
+          <!-- Transport Options -->
+          <div class="absolute top-32 left-4 right-4 flex gap-2">
+            <button class="flex-1 glass rounded-xl p-3 text-center border border-hot">
+              <span class="text-xl">🚶</span>
+              <p class="text-xs mt-1">12 min</p>
+            </button>
+            <button class="flex-1 glass rounded-xl p-3 text-center">
+              <span class="text-xl">🚇</span>
+              <p class="text-xs mt-1">8 min</p>
+            </button>
+            <button class="flex-1 glass rounded-xl p-3 text-center">
+              <span class="text-xl">🚕</span>
+              <p class="text-xs mt-1">£8</p>
+            </button>
+          </div>
+
+          <!-- Bottom Sheet -->
+          <div class="absolute bottom-0 left-0 right-0 bg-black rounded-t-3xl p-4 pb-8">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <p class="text-2xl font-bold">12 min</p>
+                <p class="text-sm text-neutral-500">0.6 miles • Walking</p>
+              </div>
+              <button class="bg-hot text-white font-bold px-6 py-3 rounded-xl">START</button>
+            </div>
+
+            <!-- Directions -->
+            <div class="space-y-3">
+              <div class="flex items-start gap-3">
+                <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-xs">1</div>
+                <div>
+                  <p class="font-medium">Head south on Kennington Lane</p>
+                  <p class="text-xs text-neutral-500">350m</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-6 h-6 rounded-full bg-neutral-700 flex items-center justify-center text-xs">2</div>
+                <div>
+                  <p class="font-medium">Turn left onto Vauxhall Walk</p>
+                  <p class="text-xs text-neutral-500">200m</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. CALENDAR VIEW -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Calendar View</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">Calendar</h1>
+            <button class="text-hot text-sm">+ Add</button>
+          </div>
+
+          <!-- Month Navigation -->
+          <div class="flex items-center justify-between mb-4">
+            <button class="text-neutral-400">←</button>
+            <h2 class="text-lg font-bold">January 2026</h2>
+            <button class="text-neutral-400">→</button>
+          </div>
+
+          <!-- Calendar Grid -->
+          <div class="glass rounded-xl p-4 mb-6">
+            <div class="grid grid-cols-7 gap-2 text-center text-xs text-neutral-500 mb-2">
+              <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+            </div>
+            <div class="grid grid-cols-7 gap-2 text-center">
+              <!-- Week 1 -->
+              <span class="text-neutral-600 p-2">29</span>
+              <span class="text-neutral-600 p-2">30</span>
+              <span class="text-neutral-600 p-2">31</span>
+              <span class="p-2">1</span>
+              <span class="p-2">2</span>
+              <span class="p-2 rounded-full bg-hot">3</span>
+              <span class="p-2">4</span>
+              <!-- Week 2 -->
+              <span class="p-2">5</span>
+              <span class="p-2">6</span>
+              <span class="p-2">7</span>
+              <span class="p-2">8</span>
+              <span class="p-2">9</span>
+              <span class="p-2 rounded-full bg-cyan">10</span>
+              <span class="p-2">11</span>
+            </div>
+          </div>
+
+          <!-- Events -->
+          <div class="space-y-2 pb-8">
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <div class="w-1 h-12 rounded-full bg-hot"></div>
+              <div class="flex-1">
+                <p class="font-bold">MEAT RACK</p>
+                <p class="text-xs text-neutral-500">Sat, Jan 3 • 10pm</p>
+              </div>
+              <span class="px-2 py-1 bg-lime/20 text-lime text-xs rounded">Going</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <div class="w-1 h-12 rounded-full bg-cyan"></div>
+              <div class="flex-1">
+                <p class="font-bold">HNH MESS Release</p>
+                <p class="text-xs text-neutral-500">Fri, Jan 10 • 12am</p>
+              </div>
+              <span class="px-2 py-1 bg-neutral-700 text-xs rounded">Reminder</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. CALENDAR SUBSCRIPTIONS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. Calendar Subscriptions</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Subscriptions</h1>
+          </div>
+
+          <p class="text-neutral-400 text-sm mb-6">
+            Subscribe to calendars to automatically sync events to your personal calendar.
+          </p>
+
+          <div class="space-y-3 pb-8">
+            <!-- Active Subscriptions -->
+            <div class="glass rounded-xl p-4 border border-lime/30">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-3">
+                  <span class="text-xl">🎵</span>
+                  <div>
+                    <p class="font-bold">Radio Schedule</p>
+                    <p class="text-xs text-neutral-500">All shows & episodes</p>
+                  </div>
+                </div>
+                <div class="w-12 h-6 rounded-full bg-lime flex items-center justify-end px-1">
+                  <div class="w-4 h-4 rounded-full bg-white"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass rounded-xl p-4">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-3">
+                  <span class="text-xl">📅</span>
+                  <div>
+                    <p class="font-bold">My RSVPs</p>
+                    <p class="text-xs text-neutral-500">Events you're attending</p>
+                  </div>
+                </div>
+                <div class="w-12 h-6 rounded-full bg-lime flex items-center justify-end px-1">
+                  <div class="w-4 h-4 rounded-full bg-white"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass rounded-xl p-4">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-3">
+                  <span class="text-xl">🏢</span>
+                  <div>
+                    <p class="font-bold">XXL London</p>
+                    <p class="text-xs text-neutral-500">All venue events</p>
+                  </div>
+                </div>
+                <div class="w-12 h-6 rounded-full bg-neutral-700 flex items-center px-1">
+                  <div class="w-4 h-4 rounded-full bg-neutral-400"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add Subscription -->
+            <button class="w-full p-4 border-2 border-dashed border-neutral-700 rounded-xl text-neutral-500">
+              + Add subscription
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. LEADERBOARD -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. Leaderboard</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">Leaderboard</h1>
+            <button class="text-neutral-400 text-sm">How it works</button>
+          </div>
+
+          <!-- Top 3 -->
+          <div class="flex items-end justify-center gap-4 mb-8">
+            <!-- 2nd Place -->
+            <div class="text-center">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop" class="w-16 h-16 rounded-full object-cover border-4 border-neutral-500 mx-auto mb-2">
+              <p class="font-bold">Sam</p>
+              <p class="text-xs text-neutral-500">18,420 XP</p>
+              <div class="w-16 h-20 bg-neutral-500/30 rounded-t-lg mt-2 flex items-center justify-center">
+                <span class="text-2xl">🥈</span>
+              </div>
+            </div>
+
+            <!-- 1st Place -->
+            <div class="text-center">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=70&h=70&fit=crop" class="w-20 h-20 rounded-full object-cover border-4 border-yellow-500 mx-auto mb-2">
+              <p class="font-bold">Alex</p>
+              <p class="text-xs text-yellow-500">24,891 XP</p>
+              <div class="w-20 h-28 bg-yellow-500/30 rounded-t-lg mt-2 flex items-center justify-center">
+                <span class="text-3xl">👑</span>
+              </div>
+            </div>
+
+            <!-- 3rd Place -->
+            <div class="text-center">
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=60&h=60&fit=crop" class="w-16 h-16 rounded-full object-cover border-4 border-amber-700 mx-auto mb-2">
+              <p class="font-bold">Marcus</p>
+              <p class="text-xs text-neutral-500">15,210 XP</p>
+              <div class="w-16 h-16 bg-amber-700/30 rounded-t-lg mt-2 flex items-center justify-center">
+                <span class="text-2xl">🥉</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Your Position -->
+          <div class="glass rounded-xl p-4 mb-4 border border-hot/30">
+            <div class="flex items-center gap-3">
+              <span class="text-neutral-500 w-8">#47</span>
+              <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-bold">You</p>
+                <p class="text-xs text-neutral-500">4,210 XP</p>
+              </div>
+              <span class="text-lime text-sm">↑ 12</span>
+            </div>
+          </div>
+
+          <!-- Rest of List -->
+          <div class="space-y-2 pb-8">
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <span class="text-neutral-500 w-8">4</span>
+              <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Jordan</p>
+                <p class="text-xs text-neutral-500">12,847 XP</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <span class="text-neutral-500 w-8">5</span>
+              <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-medium">Chris</p>
+                <p class="text-xs text-neutral-500">11,420 XP</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. LEADERBOARD OPT-IN -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">9. Leaderboard Opt-in</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Leaderboard Settings</h1>
+          </div>
+
+          <div class="text-center mb-8">
+            <div class="w-20 h-20 rounded-full bg-hot/20 flex items-center justify-center mx-auto mb-4">
+              <span class="text-4xl">🏆</span>
+            </div>
+            <h2 class="text-xl font-bold mb-2">Join the Leaderboard</h2>
+            <p class="text-neutral-400 text-sm">Compete with the community and earn rewards</p>
+          </div>
+
+          <div class="glass rounded-xl p-4 mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <p class="font-bold">Show me on leaderboard</p>
+                <p class="text-xs text-neutral-500">Others can see your ranking</p>
+              </div>
+              <div class="w-12 h-6 rounded-full bg-neutral-700 flex items-center px-1">
+                <div class="w-4 h-4 rounded-full bg-neutral-400"></div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="font-bold">Use display name</p>
+                <p class="text-xs text-neutral-500">Show nickname instead of real name</p>
+              </div>
+              <div class="w-12 h-6 rounded-full bg-lime flex items-center justify-end px-1">
+                <div class="w-4 h-4 rounded-full bg-white"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rewards Info -->
+          <div class="glass rounded-xl p-4 mb-6">
+            <p class="font-bold mb-3">Weekly Rewards</p>
+            <div class="space-y-2 text-sm">
+              <div class="flex items-center justify-between">
+                <span>🥇 Top 1</span>
+                <span class="text-lime">1 month CHROME free</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>🥈 Top 2-10</span>
+                <span class="text-neutral-400">500 XP bonus</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>🥉 Top 11-50</span>
+                <span class="text-neutral-400">100 XP bonus</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl">
+            JOIN LEADERBOARD
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. STATS DASHBOARD -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">10. Personal Stats</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <h1 class="text-2xl font-black mb-6">My Stats</h1>
+
+          <!-- Overview -->
+          <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="glass rounded-xl p-4 text-center">
+              <p class="text-3xl font-black text-hot">247</p>
+              <p class="text-xs text-neutral-500">Profile Views</p>
+              <p class="text-xs text-lime">+18% this week</p>
+            </div>
+            <div class="glass rounded-xl p-4 text-center">
+              <p class="text-3xl font-black">48</p>
+              <p class="text-xs text-neutral-500">New Connections</p>
+              <p class="text-xs text-lime">+5 today</p>
+            </div>
+          </div>
+
+          <!-- Activity Chart -->
+          <div class="glass rounded-xl p-4 mb-6">
+            <p class="text-sm text-neutral-500 mb-3">Profile Views (7 days)</p>
+            <div class="h-24 flex items-end justify-around gap-2">
+              <div class="w-6 bg-hot/40 rounded-t" style="height: 40%"></div>
+              <div class="w-6 bg-hot/40 rounded-t" style="height: 60%"></div>
+              <div class="w-6 bg-hot/40 rounded-t" style="height: 35%"></div>
+              <div class="w-6 bg-hot/40 rounded-t" style="height: 80%"></div>
+              <div class="w-6 bg-hot/40 rounded-t" style="height: 95%"></div>
+              <div class="w-6 bg-hot/60 rounded-t" style="height: 70%"></div>
+              <div class="w-6 bg-hot rounded-t" style="height: 100%"></div>
+            </div>
+            <div class="flex justify-around mt-2 text-xs text-neutral-500">
+              <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+            </div>
+          </div>
+
+          <!-- More Stats -->
+          <div class="space-y-3">
+            <div class="flex justify-between p-3 bg-neutral-900 rounded-xl">
+              <span class="text-neutral-500">Response rate</span>
+              <span class="text-lime">87%</span>
+            </div>
+            <div class="flex justify-between p-3 bg-neutral-900 rounded-xl">
+              <span class="text-neutral-500">Average reply time</span>
+              <span>< 1 hour</span>
+            </div>
+            <div class="flex justify-between p-3 bg-neutral-900 rounded-xl">
+              <span class="text-neutral-500">Events attended</span>
+              <span>12 this month</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. SCAN QR -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">11. Scan QR Code</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Scanner -->
+          <div class="absolute inset-0 bg-neutral-800">
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="w-64 h-64 border-2 border-hot rounded-2xl relative">
+                <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-hot rounded-tl-xl"></div>
+                <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-hot rounded-tr-xl"></div>
+                <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-hot rounded-bl-xl"></div>
+                <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-hot rounded-br-xl"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Header -->
+          <div class="absolute top-12 left-4 right-4 text-center">
+            <div class="flex items-center justify-between">
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">←</button>
+              <p class="font-bold">Scan QR Code</p>
+              <div class="w-10"></div>
+            </div>
+          </div>
+
+          <!-- Options -->
+          <div class="absolute bottom-0 left-0 right-0 bg-black rounded-t-3xl p-6">
+            <div class="flex gap-3 mb-4">
+              <button class="flex-1 glass rounded-xl p-4 text-center border border-hot">
+                <span class="text-2xl">🎫</span>
+                <p class="text-xs mt-1">Event Check-in</p>
+              </button>
+              <button class="flex-1 glass rounded-xl p-4 text-center">
+                <span class="text-2xl">👤</span>
+                <p class="text-xs mt-1">Add Profile</p>
+              </button>
+              <button class="flex-1 glass rounded-xl p-4 text-center">
+                <span class="text-2xl">🎁</span>
+                <p class="text-xs mt-1">Redeem</p>
+              </button>
+            </div>
+            <button class="w-full bg-neutral-800 py-3 rounded-xl text-sm">
+              Enter Code Manually
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. SCAN SUCCESS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">12. Scan Success</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black flex flex-col items-center justify-center text-center px-8">
+          <div class="w-24 h-24 rounded-full bg-lime/20 flex items-center justify-center mb-6">
+            <span class="text-5xl">✓</span>
+          </div>
+
+          <h1 class="text-3xl font-black text-lime mb-2">SUCCESS!</h1>
+          <p class="text-neutral-400 mb-8">You're checked in</p>
+
+          <div class="w-full glass rounded-xl p-4 mb-6">
+            <div class="flex items-center gap-3 text-left">
+              <span class="text-3xl">🔥</span>
+              <div>
+                <p class="font-bold">MEAT RACK</p>
+                <p class="text-sm text-neutral-400">XXL London • Jan 31, 2026</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- XP Earned -->
+          <div class="glass rounded-xl p-4 mb-6 border border-lime/30 w-full">
+            <p class="text-center">
+              <span class="text-lime font-bold">+50 XP</span>
+              <span class="text-neutral-400"> earned for check-in!</span>
+            </p>
+          </div>
+
+          <button class="w-full bg-hot text-white font-bold py-4 rounded-xl mb-3">
+            VIEW EVENT
+          </button>
+          <button class="w-full bg-neutral-800 py-3 rounded-xl">
+            Back to Home
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 18 • PULSE Map & Calendar</p>
+  </footer>
+</body>
+</html>

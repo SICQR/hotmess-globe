@@ -360,6 +360,36 @@ export default function Settings() {
           </div>
         </motion.div>
 
+        {/* Developer Tools (Admin Only) */}
+        {user?.role === 'admin' || user?.role === 'superadmin' ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+            className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <Database className="w-5 h-5 text-yellow-500" />
+              <h2 className="text-xl font-bold uppercase tracking-wider">Developer Tools</h2>
+            </div>
+
+            <div className="space-y-4">
+              <Button
+                onClick={() => {
+                  throw new Error('Sentry test error from Settings page');
+                }}
+                variant="outline"
+                className="w-full bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/40"
+              >
+                🐛 Test Sentry Error
+              </Button>
+              <p className="text-xs text-white/40 text-center">
+                Throws a test error to verify Sentry is working
+              </p>
+            </div>
+          </motion.div>
+        ) : null}
+
         {/* Account Actions */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

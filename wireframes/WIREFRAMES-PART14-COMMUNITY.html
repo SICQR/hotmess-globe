@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS Wireframes - Part 14: Community & Social Features</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'hot': '#FF1493',
+            'blue': '#0047AB',
+          },
+          fontFamily: {
+            'sans': ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .phone-frame { width: 375px; height: 812px; background: #000; border-radius: 40px; border: 8px solid #1a1a1a; overflow: hidden; position: relative; }
+    .phone-frame::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 150px; height: 30px; background: #1a1a1a; border-radius: 0 0 20px 20px; z-index: 100; }
+    .screen-content { height: 100%; overflow-y: auto; padding-top: 40px; }
+    .text-hot { color: #FF1493; }
+    .text-cyan { color: #00D9FF; }
+    .text-lime { color: #39FF14; }
+    .bg-hot { background-color: #FF1493; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+      .glow-blue { box-shadow: 0 0 20px rgba(0, 71, 171, 0.4); }
+</style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen p-8">
+  <header class="mb-12 border-b border-neutral-800 pb-8">
+    <h1 class="text-4xl font-black"><span class="text-hot">HOT</span>MESS WIREFRAMES</h1>
+    <p class="text-neutral-400 mt-2">Part 14: Community, Stories, Messaging Deep • 12 Screens</p>
+  </header>
+
+  <div class="flex flex-wrap gap-12">
+
+    <!-- 1. STORIES -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">1. Stories View</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Story Content -->
+          <div class="absolute inset-0">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=800&fit=crop" class="w-full h-full object-cover">
+          </div>
+
+          <!-- Progress Bars -->
+          <div class="absolute top-12 left-4 right-4 flex gap-1">
+            <div class="flex-1 h-1 bg-white rounded-full"></div>
+            <div class="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+              <div class="w-1/2 h-full bg-white"></div>
+            </div>
+            <div class="flex-1 h-1 bg-white/30 rounded-full"></div>
+          </div>
+
+          <!-- Header -->
+          <div class="absolute top-16 left-4 right-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop" class="w-10 h-10 rounded-full object-cover border-2 border-hot">
+              <div>
+                <p class="font-bold text-white text-shadow">Alex</p>
+                <p class="text-xs text-white/70">2h ago</p>
+              </div>
+            </div>
+            <button class="text-white text-2xl">×</button>
+          </div>
+
+          <!-- Bottom Actions -->
+          <div class="absolute bottom-8 left-4 right-4">
+            <div class="flex items-center gap-3">
+              <input type="text" placeholder="Send a message..." class="flex-1 bg-white/10 backdrop-blur rounded-full px-4 py-3 text-white placeholder-white/50 border border-white/20">
+              <button class="w-12 h-12 rounded-full bg-hot flex items-center justify-center">❤️</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. STORIES TRAY -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">2. Stories Tray</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Stories Row -->
+          <div class="mb-6">
+            <p class="text-sm text-neutral-500 mb-3">Stories</p>
+            <div class="flex gap-3 overflow-x-auto pb-2">
+              <!-- Add Story -->
+              <div class="flex flex-col items-center shrink-0">
+                <div class="w-16 h-16 rounded-full bg-neutral-800 flex items-center justify-center border-2 border-dashed border-neutral-600">
+                  <span class="text-2xl">+</span>
+                </div>
+                <p class="text-xs text-neutral-500 mt-1">Add</p>
+              </div>
+              <!-- Active Stories -->
+              <div class="flex flex-col items-center shrink-0">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-hot to-purple-500 p-0.5">
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop" class="w-full h-full rounded-full object-cover border-2 border-black">
+                </div>
+                <p class="text-xs mt-1">Alex</p>
+              </div>
+              <div class="flex flex-col items-center shrink-0">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-hot to-purple-500 p-0.5">
+                  <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&h=60&fit=crop" class="w-full h-full rounded-full object-cover border-2 border-black">
+                </div>
+                <p class="text-xs mt-1">Sam</p>
+              </div>
+              <div class="flex flex-col items-center shrink-0">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-cyan to-lime p-0.5">
+                  <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=60&h=60&fit=crop" class="w-full h-full rounded-full object-cover border-2 border-black">
+                </div>
+                <p class="text-xs mt-1">Marcus</p>
+              </div>
+              <!-- Viewed -->
+              <div class="flex flex-col items-center shrink-0 opacity-50">
+                <div class="w-16 h-16 rounded-full bg-neutral-700 p-0.5">
+                  <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=60&h=60&fit=crop" class="w-full h-full rounded-full object-cover border-2 border-black">
+                </div>
+                <p class="text-xs text-neutral-500 mt-1">Jordan</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rest of Social Grid -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" class="w-full h-40 object-cover">
+              <div class="p-3">
+                <p class="font-medium">Alex, 28</p>
+                <p class="text-xs text-lime">Online</p>
+              </div>
+            </div>
+            <div class="bg-neutral-900 rounded-xl overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop" class="w-full h-40 object-cover">
+              <div class="p-3">
+                <p class="font-medium">Sam, 26</p>
+                <p class="text-xs text-cyan">Right Now</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. CREATE STORY -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">3. Create Story</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Camera View -->
+          <div class="absolute inset-0 bg-neutral-800">
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-6xl">📷</span>
+            </div>
+          </div>
+
+          <!-- Header -->
+          <div class="absolute top-12 left-4 right-4 flex items-center justify-between">
+            <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">×</button>
+            <div class="flex gap-2">
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">⚡</button>
+              <button class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">⚙️</button>
+            </div>
+          </div>
+
+          <!-- Bottom Controls -->
+          <div class="absolute bottom-8 left-4 right-4">
+            <!-- Mode Selector -->
+            <div class="flex justify-center gap-4 mb-6 text-sm">
+              <button class="text-neutral-500">Text</button>
+              <button class="text-white font-bold border-b-2 border-hot pb-1">Photo</button>
+              <button class="text-neutral-500">Video</button>
+              <button class="text-neutral-500">Boomerang</button>
+            </div>
+
+            <!-- Capture -->
+            <div class="flex items-center justify-center gap-8">
+              <button class="w-10 h-10 rounded-lg bg-white/10">🖼️</button>
+              <button class="w-20 h-20 rounded-full bg-white border-4 border-hot"></button>
+              <button class="w-10 h-10 rounded-full bg-white/10">🔄</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. VOICE NOTE -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">4. Voice Note Recording</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black relative">
+          <!-- Dimmed Chat Background -->
+          <div class="absolute inset-0 bg-black/80"></div>
+
+          <!-- Recording Modal -->
+          <div class="absolute bottom-0 left-0 right-0 bg-neutral-900 rounded-t-3xl p-6">
+            <div class="w-12 h-1 bg-neutral-700 rounded-full mx-auto mb-6"></div>
+
+            <div class="text-center mb-8">
+              <div class="w-24 h-24 rounded-full bg-hot/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <span class="text-4xl">🎙️</span>
+              </div>
+              <p class="text-2xl font-bold text-hot">0:12</p>
+              <p class="text-neutral-400">Recording...</p>
+            </div>
+
+            <!-- Waveform -->
+            <div class="flex items-center justify-center gap-1 h-16 mb-8">
+              <div class="w-1 bg-hot rounded-full" style="height: 20%"></div>
+              <div class="w-1 bg-hot rounded-full" style="height: 45%"></div>
+              <div class="w-1 bg-hot rounded-full" style="height: 80%"></div>
+              <div class="w-1 bg-hot rounded-full" style="height: 60%"></div>
+              <div class="w-1 bg-hot rounded-full" style="height: 90%"></div>
+              <div class="w-1 bg-hot rounded-full" style="height: 40%"></div>
+              <div class="w-1 bg-hot rounded-full" style="height: 70%"></div>
+              <div class="w-1 bg-hot rounded-full" style="height: 50%"></div>
+              <div class="w-1 bg-hot rounded-full" style="height: 85%"></div>
+              <div class="w-1 bg-hot rounded-full" style="height: 30%"></div>
+              <div class="w-1 bg-hot rounded-full animate-pulse" style="height: 95%"></div>
+            </div>
+
+            <div class="flex items-center justify-center gap-6">
+              <button class="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center text-2xl">🗑️</button>
+              <button class="w-20 h-20 rounded-full bg-hot flex items-center justify-center text-3xl">⬆️</button>
+              <button class="w-14 h-14 rounded-full bg-neutral-700 flex items-center justify-center text-2xl">⏸️</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. VOICE NOTE PLAYBACK -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">5. Voice Note in Chat</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover">
+            <div class="flex-1">
+              <p class="font-bold">Alex</p>
+              <p class="text-xs text-lime">Online</p>
+            </div>
+          </div>
+
+          <!-- Messages -->
+          <div class="space-y-4 pb-24">
+            <div class="flex justify-end">
+              <div class="bg-hot rounded-2xl rounded-tr-none p-3 max-w-[80%]">
+                <p class="text-sm">Hey, you free tonight?</p>
+                <p class="text-xs text-white/60 mt-1">10:30</p>
+              </div>
+            </div>
+
+            <!-- Voice Note Received -->
+            <div class="flex gap-3">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=30&h=30&fit=crop" class="w-8 h-8 rounded-full object-cover">
+              <div class="bg-neutral-800 rounded-2xl rounded-tl-none p-3 max-w-[80%]">
+                <div class="flex items-center gap-3">
+                  <button class="w-10 h-10 rounded-full bg-cyan flex items-center justify-center">▶</button>
+                  <div class="flex-1">
+                    <div class="flex items-center gap-1 h-6">
+                      <div class="w-1 bg-cyan rounded-full" style="height: 30%"></div>
+                      <div class="w-1 bg-cyan rounded-full" style="height: 60%"></div>
+                      <div class="w-1 bg-cyan rounded-full" style="height: 90%"></div>
+                      <div class="w-1 bg-cyan rounded-full" style="height: 45%"></div>
+                      <div class="w-1 bg-cyan rounded-full" style="height: 75%"></div>
+                      <div class="w-1 bg-neutral-600 rounded-full" style="height: 50%"></div>
+                      <div class="w-1 bg-neutral-600 rounded-full" style="height: 80%"></div>
+                      <div class="w-1 bg-neutral-600 rounded-full" style="height: 35%"></div>
+                    </div>
+                    <p class="text-xs text-neutral-500">0:12 / 0:28</p>
+                  </div>
+                </div>
+                <p class="text-xs text-neutral-500 mt-2">10:32</p>
+              </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="flex gap-3">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=30&h=30&fit=crop" class="w-8 h-8 rounded-full object-cover">
+              <div class="bg-neutral-800 rounded-2xl rounded-tl-none px-4 py-3">
+                <div class="flex gap-1">
+                  <div class="w-2 h-2 bg-neutral-500 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                  <div class="w-2 h-2 bg-neutral-500 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                  <div class="w-2 h-2 bg-neutral-500 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. GROUP CHAT -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">6. Group Chat</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <!-- Header -->
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <div class="flex -space-x-2">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=30&h=30&fit=crop" class="w-8 h-8 rounded-full object-cover border-2 border-black">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=30&h=30&fit=crop" class="w-8 h-8 rounded-full object-cover border-2 border-black">
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=30&h=30&fit=crop" class="w-8 h-8 rounded-full object-cover border-2 border-black">
+            </div>
+            <div class="flex-1">
+              <p class="font-bold">XXL Squad</p>
+              <p class="text-xs text-neutral-500">4 members</p>
+            </div>
+            <button class="text-neutral-400">⋯</button>
+          </div>
+
+          <!-- Messages -->
+          <div class="space-y-4 pb-24">
+            <div class="flex gap-3">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=30&h=30&fit=crop" class="w-8 h-8 rounded-full object-cover">
+              <div>
+                <p class="text-xs text-neutral-500 mb-1">Alex</p>
+                <div class="bg-neutral-800 rounded-2xl rounded-tl-none p-3">
+                  <p class="text-sm">Who's coming to XXL tonight?</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex gap-3">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=30&h=30&fit=crop" class="w-8 h-8 rounded-full object-cover">
+              <div>
+                <p class="text-xs text-neutral-500 mb-1">Sam</p>
+                <div class="bg-neutral-800 rounded-2xl rounded-tl-none p-3">
+                  <p class="text-sm">I'm in! Meet at 11?</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <div class="bg-hot rounded-2xl rounded-tr-none p-3 max-w-[80%]">
+                <p class="text-sm">Yep! See you at the queue</p>
+              </div>
+            </div>
+
+            <div class="flex gap-3">
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=30&h=30&fit=crop" class="w-8 h-8 rounded-full object-cover">
+              <div>
+                <p class="text-xs text-neutral-500 mb-1">Marcus</p>
+                <div class="bg-neutral-800 rounded-2xl rounded-tl-none p-3">
+                  <p class="text-sm">Running late, save me a spot!</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reactions -->
+            <div class="flex justify-center">
+              <div class="flex gap-1 bg-neutral-800 rounded-full px-3 py-1 text-sm">
+                <span>😂 2</span>
+                <span>❤️ 1</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. COMMUNITY FEED -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">7. Community Feed</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black">Community</h1>
+            <button class="px-4 py-2 rounded-full bg-hot text-white text-sm font-bold">+ Post</button>
+          </div>
+
+          <!-- Tabs -->
+          <div class="flex gap-2 mb-4">
+            <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">For You</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Following</button>
+            <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Trending</button>
+          </div>
+
+          <!-- Posts -->
+          <div class="space-y-4 pb-8">
+            <!-- Post with Image -->
+            <div class="glass rounded-xl overflow-hidden">
+              <div class="p-4">
+                <div class="flex items-center gap-3 mb-3">
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover">
+                  <div>
+                    <p class="font-bold">Alex</p>
+                    <p class="text-xs text-neutral-500">2h ago</p>
+                  </div>
+                </div>
+                <p class="text-sm mb-3">Last night at XXL was insane! Who else was there? 🔥</p>
+              </div>
+              <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=200&fit=crop" class="w-full h-48 object-cover">
+              <div class="p-4 flex items-center justify-between">
+                <div class="flex gap-4">
+                  <button class="flex items-center gap-1 text-sm text-hot">❤️ 24</button>
+                  <button class="flex items-center gap-1 text-sm text-neutral-400">💬 8</button>
+                </div>
+                <button class="text-neutral-400">↗</button>
+              </div>
+            </div>
+
+            <!-- Text Post -->
+            <div class="glass rounded-xl p-4">
+              <div class="flex items-center gap-3 mb-3">
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover">
+                <div>
+                  <p class="font-bold">Sam</p>
+                  <p class="text-xs text-neutral-500">4h ago</p>
+                </div>
+              </div>
+              <p class="text-sm mb-3">Anyone know a good barber in Shoreditch? Need a fresh cut before the weekend</p>
+              <div class="flex items-center justify-between">
+                <div class="flex gap-4">
+                  <button class="flex items-center gap-1 text-sm text-neutral-400">❤️ 5</button>
+                  <button class="flex items-center gap-1 text-sm text-neutral-400">💬 12</button>
+                </div>
+                <button class="text-neutral-400">↗</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. CREATE POST -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">8. Create Post</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center justify-between mb-6">
+            <button class="text-neutral-400">Cancel</button>
+            <h1 class="font-bold">New Post</h1>
+            <button class="text-hot font-bold">Post</button>
+          </div>
+
+          <div class="flex gap-3 mb-4">
+            <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=50&h=50&fit=crop" class="w-12 h-12 rounded-full object-cover">
+            <textarea rows="4" placeholder="What's happening?" class="flex-1 bg-transparent text-lg resize-none outline-none" autofocus></textarea>
+          </div>
+
+          <!-- Media Attachment -->
+          <div class="mb-4">
+            <div class="h-48 rounded-xl border-2 border-dashed border-neutral-700 flex flex-col items-center justify-center">
+              <span class="text-3xl mb-2">📷</span>
+              <p class="text-neutral-500">Add photo or video</p>
+            </div>
+          </div>
+
+          <!-- Options -->
+          <div class="space-y-3">
+            <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center gap-3">
+              <span>📍</span>
+              <span>Add location</span>
+            </button>
+            <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center gap-3">
+              <span>🏷️</span>
+              <span>Tag people</span>
+            </button>
+            <button class="w-full p-4 bg-neutral-900 rounded-xl flex items-center gap-3">
+              <span>⏰</span>
+              <span>Set expiry (24h stories)</span>
+            </button>
+          </div>
+
+          <!-- Audience -->
+          <div class="mt-6">
+            <p class="text-sm text-neutral-500 mb-3">Who can see this?</p>
+            <div class="flex gap-2">
+              <button class="px-4 py-2 rounded-full bg-hot text-white text-sm">Everyone</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Connections</button>
+              <button class="px-4 py-2 rounded-full bg-neutral-800 text-neutral-300 text-sm">Only Me</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. COMMENTS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">9. Comments Thread</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Comments</h1>
+            <span class="text-neutral-500">12</span>
+          </div>
+
+          <div class="space-y-4 pb-24">
+            <!-- Comment -->
+            <div class="flex gap-3">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <p class="font-bold">Sam</p>
+                  <p class="text-xs text-neutral-500">2h</p>
+                </div>
+                <p class="text-sm mb-2">I was there! Best night in ages 🙌</p>
+                <div class="flex gap-4 text-xs text-neutral-500">
+                  <button>❤️ 5</button>
+                  <button>Reply</button>
+                </div>
+
+                <!-- Reply -->
+                <div class="mt-3 ml-4 flex gap-3">
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=30&h=30&fit=crop" class="w-8 h-8 rounded-full object-cover">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <p class="font-bold text-sm">Alex</p>
+                      <p class="text-xs text-neutral-500">1h</p>
+                    </div>
+                    <p class="text-sm mb-2">Right?! We should go again this weekend</p>
+                    <div class="flex gap-4 text-xs text-neutral-500">
+                      <button>❤️ 2</button>
+                      <button>Reply</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Another Comment -->
+            <div class="flex gap-3">
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <p class="font-bold">Marcus</p>
+                  <p class="text-xs text-neutral-500">1h</p>
+                </div>
+                <p class="text-sm mb-2">Missed it 😭 Take me next time!</p>
+                <div class="flex gap-4 text-xs text-neutral-500">
+                  <button>❤️ 3</button>
+                  <button>Reply</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comment Input -->
+          <div class="absolute bottom-0 left-0 right-0 p-4 bg-black border-t border-neutral-800">
+            <div class="flex gap-3">
+              <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=40&h=40&fit=crop" class="w-10 h-10 rounded-full object-cover">
+              <input type="text" placeholder="Add a comment..." class="flex-1 bg-neutral-900 rounded-full px-4 py-3 focus:outline-none">
+              <button class="w-10 h-10 rounded-full bg-hot flex items-center justify-center">↑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. REFERRAL PROGRAM -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">10. Referral Program</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Invite Friends</h1>
+          </div>
+
+          <!-- Hero -->
+          <div class="bg-gradient-to-br from-hot/30 to-purple-500/30 rounded-2xl p-6 text-center mb-6">
+            <div class="w-20 h-20 rounded-full bg-hot/30 flex items-center justify-center mx-auto mb-4">
+              <span class="text-4xl">🎁</span>
+            </div>
+            <h2 class="text-2xl font-black mb-2">Get 500 XP</h2>
+            <p class="text-neutral-400">For every friend who joins</p>
+          </div>
+
+          <!-- Your Code -->
+          <div class="glass rounded-xl p-4 mb-6">
+            <p class="text-sm text-neutral-500 mb-2">Your invite code</p>
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-neutral-800 rounded-lg p-3 font-mono text-lg text-center">
+                HOTMESS-X7K9
+              </div>
+              <button class="px-4 py-3 bg-hot rounded-lg font-bold">Copy</button>
+            </div>
+          </div>
+
+          <!-- Share Options -->
+          <div class="flex gap-3 mb-6">
+            <button class="flex-1 bg-neutral-800 py-3 rounded-xl text-sm">📱 SMS</button>
+            <button class="flex-1 bg-neutral-800 py-3 rounded-xl text-sm">📧 Email</button>
+            <button class="flex-1 bg-neutral-800 py-3 rounded-xl text-sm">↗ Share</button>
+          </div>
+
+          <!-- Rewards Tiers -->
+          <div class="mb-6">
+            <p class="font-bold mb-3">Rewards</p>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between p-3 bg-neutral-900 rounded-xl">
+                <div class="flex items-center gap-3">
+                  <span class="text-xl">🥉</span>
+                  <span>5 invites</span>
+                </div>
+                <span class="text-neutral-400">Bronze Badge</span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-neutral-900 rounded-xl">
+                <div class="flex items-center gap-3">
+                  <span class="text-xl">🥈</span>
+                  <span>15 invites</span>
+                </div>
+                <span class="text-neutral-400">1 mo PLUS free</span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-neutral-900 rounded-xl">
+                <div class="flex items-center gap-3">
+                  <span class="text-xl">🥇</span>
+                  <span>50 invites</span>
+                </div>
+                <span class="text-neutral-400">1 mo CHROME</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="glass rounded-xl p-4">
+            <div class="flex justify-around text-center">
+              <div>
+                <p class="text-2xl font-bold text-lime">7</p>
+                <p class="text-xs text-neutral-500">Invites sent</p>
+              </div>
+              <div>
+                <p class="text-2xl font-bold">3</p>
+                <p class="text-xs text-neutral-500">Joined</p>
+              </div>
+              <div>
+                <p class="text-2xl font-bold text-hot">1,500</p>
+                <p class="text-xs text-neutral-500">XP earned</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. MUTUAL CONNECTIONS -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">11. Mutual Connections</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <div class="flex items-center gap-3 mb-6">
+            <button class="text-neutral-400">←</button>
+            <h1 class="text-xl font-bold">Mutual Connections</h1>
+          </div>
+
+          <p class="text-neutral-400 text-sm mb-4">You and Alex have 5 mutual connections</p>
+
+          <div class="space-y-3 pb-8">
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=50&h=50&fit=crop" class="w-12 h-12 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-bold">Sam</p>
+                <p class="text-xs text-neutral-500">Connected 3 months ago</p>
+              </div>
+              <button class="text-hot text-sm">View</button>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=50&h=50&fit=crop" class="w-12 h-12 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-bold">Marcus</p>
+                <p class="text-xs text-neutral-500">Connected 1 month ago</p>
+              </div>
+              <button class="text-hot text-sm">View</button>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl">
+              <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=50&h=50&fit=crop" class="w-12 h-12 rounded-full object-cover">
+              <div class="flex-1">
+                <p class="font-bold">Jordan</p>
+                <p class="text-xs text-neutral-500">Connected 2 weeks ago</p>
+              </div>
+              <button class="text-hot text-sm">View</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. PEOPLE YOU MAY KNOW -->
+    <section>
+      <h3 class="text-lg font-bold mb-4 text-neutral-400">12. People You May Know</h3>
+      <div class="phone-frame">
+        <div class="screen-content bg-black px-4 pt-4">
+          <h1 class="text-2xl font-black mb-6">For You</h1>
+
+          <div class="space-y-4 pb-8">
+            <!-- Based on mutuals -->
+            <div class="glass rounded-xl p-4">
+              <div class="flex items-center gap-3 mb-3">
+                <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=60&h=60&fit=crop" class="w-14 h-14 rounded-full object-cover">
+                <div class="flex-1">
+                  <p class="font-bold">Chris</p>
+                  <p class="text-xs text-neutral-500">4 mutual connections</p>
+                </div>
+              </div>
+              <div class="flex gap-2 mb-3">
+                <div class="flex -space-x-2">
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=20&h=20&fit=crop" class="w-6 h-6 rounded-full object-cover border border-black">
+                  <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=20&h=20&fit=crop" class="w-6 h-6 rounded-full object-cover border border-black">
+                </div>
+                <p class="text-xs text-neutral-500">Alex, Sam + 2 more</p>
+              </div>
+              <div class="flex gap-2">
+                <button class="flex-1 bg-hot text-white py-2 rounded-lg font-bold text-sm">Connect</button>
+                <button class="px-4 bg-neutral-800 rounded-lg text-sm">✕</button>
+              </div>
+            </div>
+
+            <!-- Based on events -->
+            <div class="glass rounded-xl p-4">
+              <div class="flex items-center gap-3 mb-3">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&h=60&fit=crop" class="w-14 h-14 rounded-full object-cover">
+                <div class="flex-1">
+                  <p class="font-bold">Taylor</p>
+                  <p class="text-xs text-neutral-500">Also going to MEAT RACK</p>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button class="flex-1 bg-hot text-white py-2 rounded-lg font-bold text-sm">Connect</button>
+                <button class="px-4 bg-neutral-800 rounded-lg text-sm">✕</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="mt-16 pt-8 border-t border-neutral-800 text-center">
+    <p class="text-2xl font-black"><span class="text-hot">HOT</span>MESS</p>
+    <p class="text-neutral-500 mt-2">Wireframes Part 14 • Community & Social Features</p>
+  </footer>
+</body>
+</html>

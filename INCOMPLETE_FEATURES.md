@@ -138,31 +138,19 @@ Event ticket flows support:
 ---
 
 ### 3. Mock Data in Production Code
-**Status**: 🟡 Partially Replaced (randomized values removed where possible)
-**Priority**: Medium
-**Effort**: 8 hours
+**Status**: ✅ Mostly Complete
+**Priority**: Low
+**Effort**: 2 hours (optional weather/transit APIs)
 
-#### Location 1: City Data Overlay
-**File**: `src/components/globe/CityDataOverlay.jsx`
+#### Status Update (2026-01-31):
+- ✅ City Data Overlay now uses real beacon/check-in data
+- ✅ Distance calculations use real Haversine formula
+- ✅ Activity Stream simulations are disabled by default
+- ⚠️ Weather/transit data shows "unknown" (acceptable for beta)
 
-```javascript
-// Mock real-time data generator
-const generateMockData = () => ({
-  activeUsers: Math.floor(Math.random() * 1000),
-  events: Math.floor(Math.random() * 50),
-  vibeScore: Math.floor(Math.random() * 100),
-});
-```
-
-**Issue**: Historically used simulated weather/transit/temp; now derives heat + counts from beacons/check-ins, but still lacks real weather/transit APIs.
-
-**Solution**:
-- Optional: create backend endpoint for city statistics (aggregate in SQL)
-- Optional: integrate real weather/transit APIs (server-side) and cache results
-
-```javascript
-// Recommended implementation
-const { data: cityData } = useQuery({
+#### Remaining (Optional):
+- Weather API integration (OpenWeatherMap)
+- Transit status API (TfL for London)
   queryKey: ['city-stats', cityId],
   queryFn: () => base44.functions.getCityStatistics({ cityId }),
   refetchInterval: 30000, // Refresh every 30 seconds

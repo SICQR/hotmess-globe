@@ -40,10 +40,8 @@ export function initAnalytics() {
     initMixpanel();
   }
   
-  // Initialize Sentry (if configured)
-  if (config.sentryDsn) {
-    initSentry();
-  }
+  // Sentry is now initialized in main.jsx (before React renders)
+  // Do not initialize here to avoid duplicate SDK conflicts
   
   // Track web vitals
   trackWebVitals();

@@ -1,0 +1,276 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { createPageUrl } from '../../utils';
+import { 
+  Home, 
+  Globe, 
+  Zap, 
+  ShoppingBag, 
+  LayoutGrid,
+  Users,
+  Calendar,
+  Radio,
+  Ticket,
+  Shield,
+  Sparkles,
+  Navigation,
+  BarChart3,
+  Settings,
+  X
+} from 'lucide-react';
+
+// The 11 apps within HOTMESS London OS
+const ALL_APPS = [
+  { id: 'social', name: 'SOCIAL', icon: Users, path: 'Social', color: '#FF1493', desc: 'Find people' },
+  { id: 'events', name: 'EVENTS', icon: Calendar, path: 'Events', color: '#00D9FF', desc: "What's on" },
+  { id: 'radio', name: 'RADIO', icon: Radio, path: 'Music', color: '#B026FF', desc: 'Live shows' },
+  { id: 'tickets', name: 'TICKETS', icon: Ticket, path: 'TicketMarketplace', color: '#FF6B35', desc: 'Buy & sell' },
+  { id: 'community', name: 'COMMUNITY', icon: Sparkles, path: 'Community', color: '#FFEB3B', desc: 'Posts' },
+  { id: 'safety', name: 'SAFETY', icon: Shield, path: 'Care', color: '#FF0000', desc: 'You good?' },
+  { id: 'pulse', name: 'PULSE', icon: Globe, path: 'Pulse', color: '#39FF14', desc: 'Live map' },
+  { id: 'directions', name: 'TRAVEL', icon: Navigation, path: 'Directions', color: '#00D9FF', desc: 'Get there' },
+  { id: 'stats', name: 'STATS', icon: BarChart3, path: 'Stats', color: '#FFEB3B', desc: 'Your data' },
+  { id: 'settings', name: 'SETTINGS', icon: Settings, path: 'Settings', color: '#FFFFFF', desc: 'Preferences' },
+];
+
+// Live counter component
+function LiveCounter({ count, label, color = '#FF1493' }) {
+  return (
+    <div className="flex items-center gap-1">
+      <span 
+        className="w-2 h-2 rounded-full animate-pulse"
+        style={{ backgroundColor: color }}
+      />
+      <span className="text-[10px] font-bold" style={{ color }}>
+        {count}
+      </span>
+    </div>
+  );
+}
+
+// Apps Grid Modal
+function AppsGridModal({ isOpen, onClose }) {
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
+          className="h-full flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-white/10">
+            <div>
+              <h2 className="text-xl font-black">HOTMESS APPS</h2>
+              <p className="text-xs text-white/50 uppercase tracking-wider">London OS</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Apps Grid */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="grid grid-cols-4 gap-3">
+              {ALL_APPS.map((app) => {
+                const Icon = app.icon;
+                return (
+                  <Link
+                    key={app.id}
+                    to={createPageUrl(app.path)}
+                    onClick={onClose}
+                    className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 transition-all active:scale-95"
+                  >
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center"
+                      style={{ backgroundColor: `${app.color}20` }}
+                    >
+                      <Icon className="w-6 h-6" style={{ color: app.color }} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-center">
+                      {app.name}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="mt-8">
+              <p className="text-xs text-white/40 uppercase tracking-widest mb-3">QUICK LINKS</p>
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  to={createPageUrl('Care')}
+                  onClick={onClose}
+                  className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg"
+                >
+                  <Shield className="w-5 h-5 text-red-500" />
+                  <div>
+                    <p className="text-sm font-black">You good?</p>
+                    <p className="text-[10px] text-white/50">Care & support</p>
+                  </div>
+                </Link>
+                <Link
+                  to={createPageUrl('MembershipUpgrade')}
+                  onClick={onClose}
+                  className="flex items-center gap-3 p-4 bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-lg"
+                >
+                  <Sparkles className="w-5 h-5 text-[#FFD700]" />
+                  <div>
+                    <p className="text-sm font-black">Upgrade</p>
+                    <p className="text-[10px] text-white/50">PLUS / CHROME</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+
+            {/* Features */}
+            <div className="mt-8">
+              <p className="text-xs text-white/40 uppercase tracking-widest mb-3">DISCOVER</p>
+              <Link
+                to="/features"
+                onClick={onClose}
+                className="block p-4 bg-gradient-to-r from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/30 rounded-lg"
+              >
+                <p className="text-sm font-black mb-1">All Features</p>
+                <p className="text-[10px] text-white/50">Explore everything HOTMESS offers</p>
+              </Link>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-white/10 text-center">
+            <p className="text-[10px] text-white/40 uppercase tracking-widest">
+              11 apps in one • London OS
+            </p>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// Main Bottom Navigation
+export default function BottomNav({ currentPageName, user }) {
+  const [showApps, setShowApps] = useState(false);
+  const [liveCounts, setLiveCounts] = useState({
+    rightNow: 34,
+    online: 127,
+    events: 8
+  });
+  const location = useLocation();
+
+  // Simulate live counts (in production, fetch from API)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveCounts(prev => ({
+        rightNow: Math.max(10, prev.rightNow + Math.floor(Math.random() * 5) - 2),
+        online: Math.max(50, prev.online + Math.floor(Math.random() * 10) - 5),
+        events: Math.max(3, prev.events + (Math.random() > 0.8 ? 1 : 0) - (Math.random() > 0.8 ? 1 : 0))
+      }));
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isActive = (path) => {
+    if (path === 'Home') return location.pathname === '/' || currentPageName === 'Home';
+    return currentPageName === path;
+  };
+
+  const isPulseActive = currentPageName === 'Pulse' || currentPageName === 'Globe';
+  const isShopActive = currentPageName === 'Marketplace' || location.pathname.startsWith('/market');
+
+  return (
+    <>
+      {/* Bottom Navigation Bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-end justify-around px-2 py-1">
+          
+          {/* HOME */}
+          <Link
+            to={createPageUrl('Home')}
+            className={`flex flex-col items-center py-2 px-3 transition-all ${
+              isActive('Home') ? 'text-white' : 'text-white/50'
+            }`}
+          >
+            <Home className={`w-6 h-6 ${isActive('Home') ? 'text-[#FF1493]' : ''}`} />
+            <span className="text-[9px] font-black uppercase mt-1">Home</span>
+          </Link>
+
+          {/* PULSE */}
+          <Link
+            to={createPageUrl('Pulse')}
+            className={`flex flex-col items-center py-2 px-3 transition-all ${
+              isPulseActive ? 'text-white' : 'text-white/50'
+            }`}
+          >
+            <Globe className={`w-6 h-6 ${isPulseActive ? 'text-[#00D9FF]' : ''}`} />
+            <span className="text-[9px] font-black uppercase mt-1">Pulse</span>
+          </Link>
+
+          {/* LIVE - Center Prominent Button */}
+          <Link
+            to={createPageUrl('Social')}
+            className="relative flex flex-col items-center -mt-4"
+          >
+            <motion.div
+              whileTap={{ scale: 0.95 }}
+              className="relative"
+            >
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-[#FF1493] rounded-full blur-lg opacity-50 animate-pulse" />
+              
+              {/* Main button */}
+              <div className="relative w-14 h-14 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center border-4 border-black shadow-lg">
+                <Zap className="w-7 h-7 text-white" />
+              </div>
+
+              {/* Live counter badge */}
+              <div className="absolute -top-1 -right-1 bg-black rounded-full px-1.5 py-0.5 border border-[#FF1493]">
+                <span className="text-[9px] font-black text-[#FF1493]">{liveCounts.rightNow}</span>
+              </div>
+            </motion.div>
+            <span className="text-[9px] font-black uppercase mt-1 text-[#FF1493]">LIVE</span>
+          </Link>
+
+          {/* SHOP - Touch Target 44px min */}
+          <Link
+            to="/market"
+            className={`flex flex-col items-center justify-center min-w-[52px] min-h-[48px] py-1.5 px-2 rounded-lg transition-all active:scale-95 ${
+              isShopActive ? 'text-white bg-white/5' : 'text-white/50'
+            }`}
+          >
+            <ShoppingBag className={`w-6 h-6 ${isShopActive ? 'text-[#B026FF]' : ''}`} />
+            <span className="text-[9px] font-black uppercase mt-0.5">Shop</span>
+          </Link>
+
+          {/* APPS - Touch Target 44px min */}
+          <button
+            onClick={() => setShowApps(true)}
+            className="flex flex-col items-center justify-center min-w-[52px] min-h-[48px] py-1.5 px-2 rounded-lg text-white/50 active:text-white active:bg-white/5 transition-all active:scale-95"
+          >
+            <LayoutGrid className="w-6 h-6" />
+            <span className="text-[9px] font-black uppercase mt-0.5">Apps</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* Apps Grid Modal */}
+      <AppsGridModal isOpen={showApps} onClose={() => setShowApps(false)} />
+    </>
+  );
+}
