@@ -142,7 +142,7 @@ export default function Safety() {
 
           <TabsContent value="checkin">
             {activeCheckIn ? (
-              <div className="bg-green-500/20 border-2 border-green-500 p-6 mb-6">
+              <div className="glass border-2 border-[#39FF14] p-6 mb-6 shadow-glow-green/30 rounded-xl">
                 <div className="flex items-center gap-3 mb-4">
                   <CheckCircle className="w-8 h-8 text-green-500" />
                   <div>
@@ -161,7 +161,7 @@ export default function Safety() {
                 </Button>
               </div>
             ) : (
-              <div className="bg-white/5 border border-white/10 p-6 mb-6">
+              <div className="glass border border-[#00D9FF]/20 p-6 mb-6 hover:border-[#00D9FF]/40 hover:shadow-glow-cyan/10 transition-all duration-300 rounded-xl">
                 <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
                   <Clock className="w-5 h-5 text-[#00D9FF]" />
                   Start Safety Check-In
@@ -204,8 +204,8 @@ export default function Safety() {
               </div>
             )}
 
-            <div className="bg-white/5 border border-white/10 p-6">
-              <h3 className="text-xl font-black uppercase mb-2">HOW IT WORKS</h3>
+            <div className="glass border border-white/10 p-6 rounded-xl">
+              <h3 className="text-xl font-black uppercase mb-2 text-gradient-cyan">HOW IT WORKS</h3>
               <ul className="space-y-2 text-sm text-white/60">
                 <li>• Check in when you go out</li>
                 <li>• Set expected return time</li>
@@ -217,7 +217,7 @@ export default function Safety() {
           </TabsContent>
 
           <TabsContent value="contacts">
-            <div className="bg-white/5 border border-white/10 p-6 mb-6">
+            <div className="glass border border-[#00D9FF]/20 p-6 mb-6 hover:border-[#00D9FF]/40 transition-all duration-300 rounded-xl">
               <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
                 <UserPlus className="w-5 h-5 text-[#00D9FF]" />
                 Add Trusted Contact
@@ -313,10 +313,10 @@ export default function Safety() {
               <EmergencyMessageEditor />
               <CheckInTimerCustomizer />
               
-              <div className="bg-white/5 border border-white/10 p-6">
+              <div className="glass border border-[#FF1493]/20 p-6 rounded-xl hover:border-[#FF1493]/40 hover:shadow-glow-hot/10 transition-all duration-300">
                 <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
                   <Shield className="w-5 h-5 text-[#FF1493]" />
-                  Safety Features
+                  <span className="text-gradient-hot">Safety Features</span>
                 </h3>
                 <ul className="space-y-3 text-sm text-white/60">
                   <li className="flex items-start gap-3">

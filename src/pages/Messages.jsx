@@ -109,16 +109,21 @@ export default function Messages() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto h-screen flex flex-col md:flex-row">
+    <div className="min-h-screen bg-black text-white relative">
+      {/* Subtle background glow */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#FF1493]/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#00D9FF]/5 rounded-full blur-[150px]" />
+      </div>
+      <div className="max-w-7xl mx-auto h-screen flex flex-col md:flex-row relative z-10">
         {/* Thread List - Left Sidebar */}
-        <div className={`${selectedThread ? 'hidden md:block' : 'block'} md:w-96 border-r-2 border-white/20 flex flex-col bg-black`}>
-          <div className="p-6 border-b-2 border-white/20 bg-black">
+        <div className={`${selectedThread ? 'hidden md:block' : 'block'} md:w-96 border-r border-white/10 flex flex-col glass`}>
+          <div className="p-6 border-b border-white/10 backdrop-blur-xl">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <h1 className="text-3xl font-black uppercase tracking-tighter mb-1">MESSAGES</h1>
+              <h1 className="text-3xl font-black uppercase tracking-tighter mb-1 text-gradient-hot">MESSAGES</h1>
               <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">IN-APP DMS</p>
             </motion.div>
 
@@ -163,10 +168,10 @@ export default function Messages() {
         </div>
 
         {/* Chat Thread - Main Area */}
-        <div className={`${selectedThread ? 'block' : 'hidden md:block'} flex-1 bg-black`}>
+        <div className={`${selectedThread ? 'block' : 'hidden md:block'} flex-1 backdrop-blur-sm`}>
           {selectedThread ? (
             <>
-              <div className="p-4 border-b-2 border-white/20 bg-black flex items-center gap-2">
+              <div className="p-4 border-b border-white/10 backdrop-blur-xl flex items-center gap-2">
                 <Button
                   type="button"
                   variant="glass"
@@ -191,10 +196,10 @@ export default function Messages() {
               />
             </>
           ) : (
-            <div className="h-full flex items-center justify-center bg-black">
+            <div className="h-full flex items-center justify-center">
               <div className="text-center">
-                <div className="w-32 h-32 bg-black border-2 border-white flex items-center justify-center mb-8 mx-auto">
-                  <MessageCircle className="w-16 h-16 text-white/20" />
+                <div className="w-32 h-32 glass border border-[#FF1493]/20 rounded-xl flex items-center justify-center mb-8 mx-auto hover:shadow-glow-hot/20 transition-all duration-300">
+                  <MessageCircle className="w-16 h-16 text-[#FF1493]/40" />
                 </div>
                 <p className="text-white/60 text-xl font-black uppercase tracking-wider mb-2">SELECT A CONVERSATION</p>
                 <p className="text-white/20 text-xs uppercase font-mono">MESSAGES STAY IN-APP</p>

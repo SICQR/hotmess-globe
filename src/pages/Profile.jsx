@@ -571,20 +571,25 @@ export default function Profile() {
   // NOTE: previously this was gated by `!userEmail`, but `userEmail` is always present for authenticated users.
   if (isSetupMode && !isViewingOtherUser) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Animated background */}
+        <div className="fixed inset-0 bg-gradient-mesh opacity-30" />
+        <div className="fixed top-1/4 -left-32 w-96 h-96 bg-[#FF1493]/20 rounded-full blur-[120px] animate-pulse" />
+        <div className="fixed bottom-1/4 -right-32 w-96 h-96 bg-[#B026FF]/20 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full"
+          className="max-w-md w-full relative z-10"
         >
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black uppercase mb-2">
-              <span className="text-[#FF1493]">HOT</span>MESS
+              <span className="text-gradient-hot">HOT</span>MESS
             </h1>
             <p className="text-sm text-white/60 uppercase tracking-wider">Complete Your Profile</p>
           </div>
 
-          <form onSubmit={handleSetupSubmit} className="bg-white/5 border-2 border-white p-8 space-y-6">
+          <form onSubmit={handleSetupSubmit} className="glass-glow-hot p-8 space-y-6 rounded-xl">
             <div className="flex flex-col items-center gap-4">
               <div className="w-32 h-32 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border-2 border-white flex items-center justify-center overflow-hidden">
                 {avatarFile ? (
@@ -786,7 +791,9 @@ export default function Profile() {
   return (
     <ErrorBoundary>
       <WelcomeTour />
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-black text-white relative">
+        {/* Subtle animated background */}
+        <div className="fixed inset-0 bg-gradient-mesh opacity-10 pointer-events-none" />
         {/* Profile Completeness */}
         {isOwnProfile && (
           <div className="p-4 md:p-8">
@@ -830,7 +837,7 @@ export default function Profile() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6"
+              className="glass border border-white/10 rounded-xl p-6 mb-6 hover:shadow-glow-cyan/20 transition-all duration-300"
             >
 
               {isConnection ? (
@@ -938,7 +945,7 @@ export default function Profile() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="mb-6 bg-white/5 border border-white/10 rounded-xl p-6"
+              className="mb-6 glass border border-[#00D9FF]/20 rounded-xl p-6 hover:shadow-glow-cyan/20 transition-all duration-300"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -1013,7 +1020,7 @@ export default function Profile() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="bg-gradient-to-br from-[#FFEB3B]/10 to-[#FF1493]/10 border-2 border-[#FFEB3B] rounded-none p-4"
+                    className="glass border-2 border-[#FFEB3B]/50 rounded-xl p-4 hover:shadow-glow-gold/30 hover:border-[#FFEB3B] transition-all duration-300"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <Star className="w-5 h-5 text-[#FFEB3B]" />
@@ -1106,7 +1113,7 @@ export default function Profile() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="bg-white/5 border border-white/10 rounded-xl p-4 relative"
+                    className="glass border border-white/10 rounded-xl p-4 relative hover:border-[#00D9FF]/30 hover:shadow-glow-cyan/10 transition-all duration-300"
                   >
                     {isOwnProfile && (
                       <Button
@@ -1149,8 +1156,8 @@ export default function Profile() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-gradient-to-br from-[#FFEB3B]/10 to-[#FF6B35]/10 border-2 rounded-none p-5"
-                  style={{ borderColor: ach.color || '#FFEB3B' }}
+                  className="glass rounded-xl p-5 hover:scale-[1.02] transition-all duration-300"
+                  style={{ borderColor: ach.color || '#FFEB3B', borderWidth: '2px', boxShadow: `0 0 20px ${ach.color || '#FFEB3B'}20` }}
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <div 
@@ -1194,7 +1201,7 @@ export default function Profile() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-white/5 border border-white/10 rounded-xl p-5"
+                  className="glass border border-[#B026FF]/20 rounded-xl p-5 hover:border-[#B026FF]/50 hover:shadow-glow-purple/20 transition-all duration-300"
                 >
                   <h3 className="font-black text-lg mb-2">{squad.name}</h3>
                   <p className="text-sm text-white/60 mb-3">{squad.description}</p>

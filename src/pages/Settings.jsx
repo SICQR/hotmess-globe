@@ -85,15 +85,20 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-black text-white p-4 md:p-8 relative">
+      {/* Background effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-20 right-20 w-72 h-72 bg-[#FF1493]/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-20 left-20 w-72 h-72 bg-[#00D9FF]/5 rounded-full blur-[120px]" />
+      </div>
+      <div className="max-w-2xl mx-auto relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">
+          <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2 text-gradient-hot">
             Settings
           </h1>
           <p className="text-white/60">Manage your account and preferences</p>
@@ -104,7 +109,7 @@ export default function Settings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+          className="glass border border-[#FF1493]/20 rounded-xl p-6 mb-4 hover:border-[#FF1493]/40 hover:shadow-glow-hot/10 transition-all duration-300"
         >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -199,7 +204,7 @@ export default function Settings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+          className="glass border border-[#00D9FF]/20 rounded-xl p-6 mb-4 hover:border-[#00D9FF]/40 hover:shadow-glow-cyan/10 transition-all duration-300"
         >
           <div className="flex items-center gap-3 mb-6">
             <Bell className="w-5 h-5 text-[#00D9FF]" />
@@ -222,7 +227,7 @@ export default function Settings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+          className="glass border border-[#39FF14]/20 rounded-xl p-6 mb-4 hover:border-[#39FF14]/40 hover:shadow-glow-green/10 transition-all duration-300"
         >
           <div className="flex items-center gap-3 mb-6">
             <Shield className="w-5 h-5 text-[#39FF14]" />
@@ -270,7 +275,7 @@ export default function Settings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+          className="glass border border-[#B026FF]/20 rounded-xl p-6 mb-4 hover:border-[#B026FF]/40 hover:shadow-glow-purple/10 transition-all duration-300"
         >
           <div className="flex items-center gap-3 mb-6">
             <Database className="w-5 h-5 text-[#B026FF]" />
@@ -311,7 +316,7 @@ export default function Settings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+          className="glass border border-[#00D9FF]/20 rounded-xl p-6 mb-4 hover:border-[#00D9FF]/40 hover:shadow-glow-cyan/10 transition-all duration-300"
         >
           <div className="flex items-center gap-3 mb-6">
             <HelpCircle className="w-5 h-5 text-[#00D9FF]" />
@@ -395,7 +400,7 @@ export default function Settings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white/5 border border-white/10 rounded-xl p-6"
+          className="glass border border-red-500/20 rounded-xl p-6"
         >
           <Button
             onClick={handleLogout}

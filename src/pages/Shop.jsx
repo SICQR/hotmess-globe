@@ -87,7 +87,7 @@ export default function Shop() {
                 return (
                   <div
                     key={p.id}
-                    className="border-2 border-white/10 bg-white/5 p-5"
+                    className="glass border border-white/10 rounded-xl p-5 hover:border-[#FF1493]/30 hover:shadow-glow-hot/20 transition-all duration-300 group"
                   >
                     <Link
                       to={href}
