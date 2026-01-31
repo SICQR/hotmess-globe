@@ -193,24 +193,39 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background gradient mesh */}
+      <div className="fixed inset-0 bg-gradient-mesh opacity-30" />
+      
+      {/* Animated glow orbs */}
+      <div className="fixed top-1/4 -left-32 w-64 h-64 bg-[#FF1493]/30 rounded-full blur-[100px] animate-float" />
+      <div className="fixed bottom-1/4 -right-32 w-64 h-64 bg-[#B026FF]/20 rounded-full blur-[100px] animate-float" style={{ animationDelay: '1s' }} />
+      <div className="fixed top-3/4 left-1/4 w-48 h-48 bg-[#00D9FF]/20 rounded-full blur-[80px] animate-float" style={{ animationDelay: '2s' }} />
+      
       <AnimatePresence mode="wait">
         {step === 'auth' && (
           <motion.div
             key="auth"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="w-full max-w-md"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="w-full max-w-md relative z-10"
           >
-            <div className="text-center mb-8">
-              <h1 className="text-5xl font-black uppercase tracking-tighter mb-2">
-                HOT<span className="text-[#FF1493]">MESS</span>
+            <motion.div 
+              className="text-center mb-8"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <h1 className="text-6xl font-black uppercase tracking-tighter mb-2">
+                <span className="text-white">HOT</span>
+                <span className="text-gradient-hot">MESS</span>
               </h1>
-              <p className="text-white/40 uppercase text-sm tracking-wider">LONDON OS</p>
-            </div>
+              <p className="text-white/40 uppercase text-sm tracking-[0.3em]">LONDON OS</p>
+            </motion.div>
 
-            <div className="bg-white/5 border-2 border-white/10 p-8">
+            <div className="glass-glow-hot rounded-2xl p-8">
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-black uppercase mb-2">
                   {isSignUp ? 'Create Account' : 'Welcome Back'}
@@ -284,7 +299,8 @@ export default function Auth() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase py-6 text-lg"
+                  variant="hotGlow"
+                  className="w-full font-black uppercase py-6 text-lg"
                 >
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -505,53 +521,79 @@ export default function Auth() {
         {step === 'membership' && (
           <motion.div
             key="membership"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="w-full max-w-5xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="w-full max-w-5xl relative z-10"
           >
             <div className="text-center mb-12">
-              <h2 className="text-5xl font-black uppercase mb-3">CHOOSE YOUR TIER</h2>
-              <p className="text-white/60 text-lg">Start free, upgrade anytime</p>
+              <motion.h2 
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="text-5xl md:text-6xl font-black uppercase mb-3"
+              >
+                CHOOSE YOUR <span className="text-gradient-hot">TIER</span>
+              </motion.h2>
+              <motion.p 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="text-white/60 text-lg uppercase tracking-wider"
+              >
+                Start free, upgrade anytime
+              </motion.p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              {MEMBERSHIP_TIERS.map((tier) => {
+              {MEMBERSHIP_TIERS.map((tier, idx) => {
                 const Icon = tier.icon;
+                const isSelected = selectedTier === tier.id;
+                const glowClass = tier.id === 'plus' ? 'shadow-glow-hot' : tier.id === 'pro' ? 'shadow-glow-cyan' : '';
+                
                 return (
                   <motion.button
                     key={tier.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 + idx * 0.1 }}
                     onClick={() => setSelectedTier(tier.id)}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.02, y: -5 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`relative p-6 border-2 transition-all ${
-                      selectedTier === tier.id
-                        ? 'border-[#FF1493] bg-[#FF1493]/10'
-                        : 'border-white/20 bg-white/5 hover:border-white/40'
+                    className={`relative p-6 rounded-2xl transition-all duration-300 ${
+                      isSelected
+                        ? `border-2 border-[${tier.color}] bg-white/10 ${glowClass}`
+                        : 'border-2 border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
                     }`}
                   >
                     {tier.popular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#FF1493] text-black text-xs font-black uppercase">
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white text-xs font-black uppercase rounded-full shadow-glow-hot">
                         POPULAR
                       </div>
                     )}
                     <div className="text-center mb-6">
-                      <Icon className="w-12 h-12 mx-auto mb-4" style={{ color: tier.color }} />
+                      <div 
+                        className="w-16 h-16 mx-auto mb-4 rounded-xl flex items-center justify-center"
+                        style={{ backgroundColor: `${tier.color}20` }}
+                      >
+                        <Icon className="w-8 h-8" style={{ color: tier.color }} />
+                      </div>
                       <h3 className="text-3xl font-black uppercase mb-2">{tier.name}</h3>
                       <p className="text-2xl font-bold" style={{ color: tier.color }}>{tier.price}</p>
                     </div>
                     <ul className="space-y-3 text-left">
-                      {tier.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm">
+                      {tier.features.map((feature, fidx) => (
+                        <li key={fidx} className="flex items-start gap-2 text-sm">
                           <Check className="w-4 h-4 mt-0.5 text-[#39FF14] flex-shrink-0" />
                           <span className="text-white/80">{feature}</span>
                         </li>
                       ))}
                     </ul>
-                    {selectedTier === tier.id && (
+                    {isSelected && (
                       <motion.div
-                        layoutId="selected"
-                        className="absolute inset-0 border-2 border-[#FF1493] pointer-events-none"
+                        layoutId="tier-selected"
+                        className="absolute inset-0 rounded-2xl border-2 pointer-events-none"
+                        style={{ borderColor: tier.color }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                       />
                     )}
                   </motion.button>
@@ -668,26 +710,52 @@ export default function Auth() {
             key="welcome"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-2xl text-center"
+            className="w-full max-w-2xl text-center relative z-10"
           >
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring' }}
-              className="w-32 h-32 bg-[#FF1493] flex items-center justify-center mx-auto mb-8"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              className="w-32 h-32 bg-gradient-to-br from-[#FF1493] via-[#B026FF] to-[#00D9FF] flex items-center justify-center mx-auto mb-8 rounded-2xl shadow-glow-hot animate-glow-pulse"
             >
-              <Check className="w-16 h-16 text-black" />
+              <Check className="w-16 h-16 text-white" />
             </motion.div>
-            <h2 className="text-6xl font-black uppercase mb-6">
-              WELCOME TO<br />HOT<span className="text-[#FF1493]">MESS</span>
-            </h2>
-            <p className="text-2xl text-white/80 mb-4">You're all set!</p>
-            <p className="text-white/60 mb-8">Redirecting you to the app...</p>
-            <div className="flex justify-center gap-2">
-              <div className="w-2 h-2 bg-[#FF1493] animate-pulse" />
-              <div className="w-2 h-2 bg-[#FF1493] animate-pulse delay-75" />
-              <div className="w-2 h-2 bg-[#FF1493] animate-pulse delay-150" />
-            </div>
+            <motion.h2 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-5xl md:text-6xl font-black uppercase mb-6"
+            >
+              WELCOME TO<br />
+              <span className="text-white">HOT</span>
+              <span className="text-gradient-hot">MESS</span>
+            </motion.h2>
+            <motion.p 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-2xl text-white/80 mb-4"
+            >
+              You're all set!
+            </motion.p>
+            <motion.p 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="text-white/50 uppercase tracking-wider mb-8"
+            >
+              Redirecting you to the app...
+            </motion.p>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="flex justify-center gap-3"
+            >
+              <div className="w-3 h-3 rounded-full bg-[#FF1493] animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-3 h-3 rounded-full bg-[#B026FF] animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-3 h-3 rounded-full bg-[#00D9FF] animate-bounce" style={{ animationDelay: '300ms' }} />
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
