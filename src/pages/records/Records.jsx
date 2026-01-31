@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Disc, Radio, Calendar, MapPin, Sparkles, ArrowRight } from 'lucide-react';
+import { Disc, Radio, MapPin, Sparkles, ArrowRight } from 'lucide-react';
 
 /**
  * Records Page
