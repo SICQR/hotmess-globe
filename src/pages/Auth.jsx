@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { auth, base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star, MessageCircle } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
+import TelegramLogin from '@/components/auth/TelegramLogin';
 
 const MEMBERSHIP_TIERS = [
   {
@@ -315,15 +316,28 @@ export default function Auth() {
 
               <div className="text-center pt-4 border-t border-white/10 mt-6">
                 <p className="text-xs text-white/40 uppercase tracking-wider mb-4">Or continue with</p>
-                <a
-                  href="https://t.me/hotmess_london_bot?start=login"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold rounded-lg transition-colors"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  Continue with Telegram
-                </a>
+                <TelegramLogin 
+                  onSuccess={(result) => {
+                    if (result.linked) {
+                      toast.success('Telegram connected! Redirecting...');
+                      const next = searchParams.get('next') || '/social';
+                      window.location.href = next;
+                    } else if (result.needsLogin) {
+                      toast.info(result.message);
+                    } else if (result.needsRegistration) {
+                      toast.info('Please sign up with your email, then link Telegram');
+                      setIsSignUp(true);
+                    }
+                  }}
+                  onError={(err) => {
+                    toast.error('Telegram auth failed: ' + (err.message || 'Unknown error'));
+                  }}
+                  buttonSize="large"
+                />
+                {/* Fallback link for localhost */}
+                <p className="text-xs text-white/30 mt-2">
+                  Widget not loading? <a href="https://t.me/hotmess_london_bot?start=login" target="_blank" rel="noopener noreferrer" className="text-[#0088cc] hover:underline">Open in Telegram</a>
+                </p>
               </div>
 
               <div className="text-center pt-4 border-t border-white/10 mt-6">

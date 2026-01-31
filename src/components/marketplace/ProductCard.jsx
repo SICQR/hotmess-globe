@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { ShoppingBag, Star, Package, Award, Ticket, Shirt } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import OSCard, { OSCardBadge } from '../ui/OSCard';
 import LazyImage from '../ui/LazyImage';
 import { base44 } from '@/api/base44Client';
