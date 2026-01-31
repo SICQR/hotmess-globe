@@ -49,25 +49,25 @@ const badgeConfig: Record<BadgeType, {
     label: 'Match',
     icon: Heart,
     color: 'text-white',
-    bgColor: 'bg-gradient-to-r from-[#FF1493] to-[#B026FF]',
-    borderColor: 'border-[#FF1493]',
-    glow: 'shadow-[0_0_15px_rgba(255,20,147,0.5)]',
+    bgColor: 'bg-gradient-to-r from-hot to-neon-purple',
+    borderColor: 'border-hot',
+    glow: 'shadow-[0_0_15px_theme(colors.hot.glow)]',
     pulse: true,
   },
   nearby: {
     label: 'Nearby',
     icon: MapPin,
     color: 'text-black',
-    bgColor: 'bg-[#00D9FF]',
-    borderColor: 'border-[#00D9FF]',
-    glow: 'shadow-[0_0_10px_rgba(0,217,255,0.4)]',
+    bgColor: 'bg-cyan',
+    borderColor: 'border-cyan',
+    glow: 'shadow-[0_0_10px_theme(colors.cyan.glow)]',
   },
   live: {
     label: 'Live',
     icon: Zap,
     color: 'text-black',
-    bgColor: 'bg-[#39FF14]',
-    borderColor: 'border-[#39FF14]',
+    bgColor: 'bg-neon-green',
+    borderColor: 'border-neon-green',
     glow: 'shadow-[0_0_15px_rgba(57,255,20,0.5)]',
     pulse: true,
   },
@@ -75,58 +75,58 @@ const badgeConfig: Record<BadgeType, {
     label: 'Premium',
     icon: Crown,
     color: 'text-black',
-    bgColor: 'bg-gradient-to-r from-[#FFD700] to-[#FF6B35]',
-    borderColor: 'border-[#FFD700]',
+    bgColor: 'bg-gradient-to-r from-neon-gold to-neon-orange',
+    borderColor: 'border-neon-gold',
     glow: 'shadow-[0_0_10px_rgba(255,215,0,0.4)]',
   },
   seller: {
     label: 'Shop',
     icon: ShoppingBag,
     color: 'text-black',
-    bgColor: 'bg-[#00D9FF]',
-    borderColor: 'border-[#00D9FF]',
+    bgColor: 'bg-cyan',
+    borderColor: 'border-cyan',
   },
   creator: {
     label: 'Creator',
     icon: Mic2,
     color: 'text-white',
-    bgColor: 'bg-[#B026FF]',
-    borderColor: 'border-[#B026FF]',
+    bgColor: 'bg-neon-purple',
+    borderColor: 'border-neon-purple',
   },
   organizer: {
     label: 'Events',
     icon: Calendar,
     color: 'text-black',
-    bgColor: 'bg-[#00D9FF]',
-    borderColor: 'border-[#00D9FF]',
+    bgColor: 'bg-cyan',
+    borderColor: 'border-cyan',
   },
   verified: {
     label: 'Verified',
     icon: BadgeCheck,
     color: 'text-white',
-    bgColor: 'bg-[#3B82F6]',
-    borderColor: 'border-[#3B82F6]',
+    bgColor: 'bg-blue-500',
+    borderColor: 'border-blue-500',
   },
   new: {
     label: 'New',
     icon: Sparkles,
     color: 'text-black',
-    bgColor: 'bg-[#FFEB3B]',
-    borderColor: 'border-[#FFEB3B]',
+    bgColor: 'bg-neon-yellow',
+    borderColor: 'border-neon-yellow',
   },
   online: {
     label: 'Online',
     icon: Clock,
     color: 'text-black',
-    bgColor: 'bg-[#39FF14]',
-    borderColor: 'border-[#39FF14]',
+    bgColor: 'bg-neon-green',
+    borderColor: 'border-neon-green',
   },
   mutual: {
     label: 'Mutual',
     icon: Star,
     color: 'text-black',
-    bgColor: 'bg-[#FFD700]',
-    borderColor: 'border-[#FFD700]',
+    bgColor: 'bg-neon-gold',
+    borderColor: 'border-neon-gold',
   },
 };
 
@@ -332,10 +332,10 @@ interface MatchScoreBadgeProps {
 
 export function MatchScoreBadge({ score, className }: MatchScoreBadgeProps) {
   const getVariant = (score: number) => {
-    if (score >= 90) return { color: 'from-[#FF1493] to-[#FFD700]', label: 'Perfect Match' };
-    if (score >= 80) return { color: 'from-[#FF1493] to-[#B026FF]', label: 'Great Match' };
-    if (score >= 70) return { color: 'from-[#B026FF] to-[#00D9FF]', label: 'Good Match' };
-    return { color: 'from-[#00D9FF] to-[#3B82F6]', label: 'Potential' };
+    if (score >= 90) return { color: 'from-hot to-neon-gold', label: 'Perfect Match' };
+    if (score >= 80) return { color: 'from-hot to-neon-purple', label: 'Great Match' };
+    if (score >= 70) return { color: 'from-neon-purple to-cyan', label: 'Good Match' };
+    return { color: 'from-cyan to-blue-500', label: 'Potential' };
   };
 
   const variant = getVariant(score);
@@ -348,7 +348,7 @@ export function MatchScoreBadge({ score, className }: MatchScoreBadgeProps) {
         'inline-flex items-center gap-1.5 px-2 py-1',
         `bg-gradient-to-r ${variant.color}`,
         'text-white text-[10px] font-black uppercase tracking-wider',
-        score >= 80 && 'shadow-[0_0_15px_rgba(255,20,147,0.5)] animate-glow-pulse',
+        score >= 80 && 'shadow-[0_0_15px_theme(colors.hot.glow)] animate-glow-pulse',
         className
       )}
     >
@@ -383,8 +383,8 @@ export function ProximityBadge({ minutes, className }: ProximityBadgeProps) {
       className={cn(
         'inline-flex items-center gap-1 px-2 py-1',
         isVeryClose 
-          ? 'bg-[#39FF14] text-black shadow-[0_0_10px_rgba(57,255,20,0.4)]'
-          : 'bg-[#00D9FF] text-black',
+          ? 'bg-neon-green text-black shadow-[0_0_10px_rgba(57,255,20,0.4)]'
+          : 'bg-cyan text-black',
         'text-[10px] font-black uppercase tracking-wider',
         className
       )}

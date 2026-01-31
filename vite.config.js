@@ -64,6 +64,38 @@ const readEnvKeyFromFiles = ({ envDir, mode, key }) => {
   return value && String(value).trim() ? String(value) : null;
 };
 
+function serveDataFolder() {
+  return {
+    name: 'serve-data-folder',
+    configureServer(server) {
+      // Serve /data/* from project root in development
+      server.middlewares.use((req, res, next) => {
+        const url = req.url || '';
+        const reqPath = url.split('?')[0];
+        
+        if (reqPath.startsWith('/data/')) {
+          const filePath = path.join(__dirname, reqPath);
+          if (fs.existsSync(filePath)) {
+            const content = fs.readFileSync(filePath);
+            const ext = path.extname(filePath).toLowerCase();
+            const mimeTypes = {
+              '.json': 'application/json',
+              '.png': 'image/png',
+              '.jpg': 'image/jpeg',
+              '.jpeg': 'image/jpeg',
+              '.svg': 'image/svg+xml',
+            };
+            res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+            res.end(content);
+            return;
+          }
+        }
+        next();
+      });
+    },
+  };
+}
+
 function localApiRoutes() {
   return {
     name: 'local-api-routes',
@@ -583,6 +615,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [
+      // Serve /data folder in development
+      serveDataFolder(),
       // Local dev handlers for /api/* endpoints.
       localApiRoutes(),
       react(),

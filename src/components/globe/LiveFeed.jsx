@@ -1,9 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Radio, MapPin, Users, ShoppingBag, Ticket, Sparkles, Heart, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { isEligible, prepareFeedItems, getClickRoute, FEED_ITEM_TYPES } from '@/lib/globe/glassFeed';
 import { filterBySafety } from '@/lib/safety/killSwitch';
+
+// Stable default to prevent infinite re-renders
+const DEFAULT_VIEWER_CONTEXT = {};
 
 // Icon mapping for feed item types
 const ICONS = {
@@ -75,7 +78,7 @@ const RAW_FEED_ITEMS = [
   },
 ];
 
-export default function LiveFeed({ viewerContext = {} }) {
+export default function LiveFeed({ viewerContext = DEFAULT_VIEWER_CONTEXT }) {
   const [items, setItems] = useState([]);
   const navigate = useNavigate();
 

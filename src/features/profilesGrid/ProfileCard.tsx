@@ -469,7 +469,7 @@ export function ProfileCard({
             enableTilt={true}
             enableMobileTilt={false}
             behindGlowEnabled={true}
-            behindGlowColor={isSeller ? 'rgba(244, 63, 94, 0.55)' : 'rgba(56, 189, 248, 0.55)'}
+            behindGlowColor={isSeller ? 'rgba(255, 20, 147, 0.55)' : 'rgba(0, 217, 255, 0.55)'}
             behindGlowSize="60%"
             name={String(profile.profileName || 'HOTMESS')}
             title={String(headline || '')}
@@ -519,7 +519,7 @@ export function ProfileCard({
       onClick={onClick}
       {...longPressHandlers}
     >
-      <div className="relative w-full aspect-[4/5] overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-sm transition-all duration-200 hover:border-white/20 hover:shadow-lg">
+      <div className="relative w-full aspect-[4/5] overflow-hidden rounded-2xl border border-glass-border bg-glass shadow-sm transition-all duration-200 hover:border-white/20 hover:shadow-lg">
         {currentUrl ? (
           <img
             src={currentUrl}
@@ -543,7 +543,7 @@ export function ProfileCard({
         <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2 pointer-events-none">
           {/* Match probability badge */}
           {typeof profile.matchProbability === 'number' && (
-            <div className="rounded-full bg-gradient-to-r from-[#FF1493] to-[#00D9FF] text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 shadow-lg">
+            <div className="rounded-full bg-gradient-to-r from-hot to-cyan text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 shadow-lg">
               {Math.round(profile.matchProbability)}% match
             </div>
           )}
@@ -552,8 +552,8 @@ export function ProfileCard({
             <div
               className={
                 typeBadge.tone === 'hot'
-                  ? 'rounded-full bg-[#FF1493] text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
-                  : 'rounded-full bg-[#00D9FF] text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
+                  ? 'rounded-full bg-hot text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
+                  : 'rounded-full bg-cyan text-black text-[10px] font-black uppercase tracking-wider px-2 py-1'
               }
             >
               {typeBadge.label}
@@ -561,7 +561,7 @@ export function ProfileCard({
           ) : null}
 
           {viewerLocation ? (
-            <div className="rounded-full bg-black/40 border border-white/15 text-white/85 text-[10px] font-black uppercase tracking-wider px-2 py-1">
+            <div className="rounded-full bg-black/40 border border-white/10 text-white/85 text-[10px] font-black uppercase tracking-wider px-2 py-1">
               {isTravelTimeLoading ? 'Loading…' : primaryModeShort ? `Rec ${primaryModeShort}` : 'No ETA'}
             </div>
           ) : null}
@@ -665,7 +665,7 @@ export function ProfileCard({
                           className={
                             isPrimary
                               ? 'justify-between'
-                              : 'justify-between border-white/15'
+                              : 'justify-between border-glass-border'
                           }
                         >
                           <span>{modeLabel(mode)}</span>
@@ -693,7 +693,7 @@ export function ProfileCard({
                     type="button"
                     onClick={onViewClick}
                     variant="glass"
-                    className="border-white/15"
+                    className="border-glass-border"
                   >
                     Open
                   </Button>
