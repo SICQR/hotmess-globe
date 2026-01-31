@@ -36,14 +36,22 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
       setCurrentTime(0);
     };
 
+    const handleError = (e) => {
+      console.error('Audio playback error:', e);
+      setIsPlaying(false);
+      toast.error('Failed to play audio track.');
+    };
+
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
 
     return () => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
       audio.pause();
     };
   }, [beacon, hasAwarded, currentUser]);
@@ -160,7 +168,9 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
 
           {/* Info */}
           <p className="text-xs text-white/40 text-center">
-            Listen for 30s to earn XP. Headless label, no algorithm.
+            {currentUser 
+              ? 'Listen for 30s to earn XP. Headless label, no algorithm.'
+              : 'Log in to earn XP while listening. Headless label, no algorithm.'}
           </p>
         </div>
       </DialogContent>

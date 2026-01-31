@@ -39,7 +39,7 @@ export default function MarketplaceReviewModal({ isOpen, onClose, order, current
     try {
       await base44.entities.MarketplaceReview.create({
         order_id: order.id,
-        product_id: order.id, // Assuming order has product info
+        product_id: order.id, // TODO: Confirm if this should be order.product_id or null for user reviews
         reviewer_email: currentUser.email,
         reviewed_user_email: reviewedUserEmail,
         rating,
@@ -51,7 +51,7 @@ export default function MarketplaceReviewModal({ isOpen, onClose, order, current
       // Create notification for reviewed user
       await base44.entities.Notification.create({
         user_email: reviewedUserEmail,
-        type: 'post_like',
+        type: 'system',
         title: 'New Marketplace Review',
         message: `${currentUser.full_name} left you a ${rating}-star review`,
         link: `/profile?email=${currentUser.email}`

@@ -9,7 +9,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { 
   DollarSign, 
   Users, 
@@ -17,13 +16,11 @@ import {
   Heart,
   Plus,
   Settings,
-  TrendingUp,
   Image,
   Video,
   FileText,
   Loader2,
   ChevronRight,
-  Clock,
   MessageSquare,
   Gift
 } from 'lucide-react';

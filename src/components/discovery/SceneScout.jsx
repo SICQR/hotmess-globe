@@ -13,9 +13,6 @@ import {
   Clock, 
   Users, 
   ChevronRight,
-  Calendar,
-  Music,
-  Star,
   Loader2,
   RefreshCw
 } from 'lucide-react';

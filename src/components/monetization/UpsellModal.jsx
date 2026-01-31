@@ -5,7 +5,6 @@
  */
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
   Crown, 
@@ -218,7 +217,7 @@ export default function UpsellModal({
               {TIERS.find(t => t.id === selectedTier)?.name} includes:
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {TIERS.find(t => t.id === selectedTier)?.features.map((feature, i) => (
+              {(TIERS.find(t => t.id === selectedTier)?.features || []).map((feature, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-white/80">
                   <Check className="w-3 h-3 text-[#39FF14]" />
                   {feature}
