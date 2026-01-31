@@ -14,6 +14,7 @@ import ShopifyManager from '../components/admin/ShopifyManager';
 import AdvancedAnalytics from '../components/analytics/AdvancedAnalytics';
 import BulkUserInvite from '../components/admin/BulkUserInvite';
 import EventScraperControl from '../components/admin/EventScraperControl';
+import EventCurationQueue from '../components/admin/EventCurationQueue';
 import ModerationQueue from '../components/admin/ModerationQueue';
 import SupportTicketManagement from '../components/admin/SupportTicketManagement';
 import { createPageUrl } from '../utils';
@@ -257,6 +258,7 @@ export default function AdminDashboard() {
           <TabsContent value="events">
             <div className="space-y-6">
               <EventScraperControl />
+              <EventCurationQueue />
               <EventManagement />
             </div>
           </TabsContent>

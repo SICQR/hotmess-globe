@@ -23,7 +23,7 @@ export const toBeaconRow = (event) => {
 
   return {
     kind: 'event',
-    status: 'published',
+    status: 'draft', // Scraped events require moderation before publishing
     active: true,
     title: title || null,
     description: event?.description ? String(event.description) : null,
