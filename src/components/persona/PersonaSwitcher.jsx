@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { usePersona, PERSONA_TYPES } from '@/contexts/PersonaContext';
+import { usePersona } from '@/contexts/PersonaContext';
 import { usePulse } from '@/contexts/PulseContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';

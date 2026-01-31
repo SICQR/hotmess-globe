@@ -2,9 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWorldPulse } from '@/contexts/WorldPulseContext';
 import { createChoreographer, ZOOM_STATES, VISUAL_STATES } from '@/lib/globe/zoomChoreography';
-import { VISUAL_TYPES, ANIMATIONS, getVisualType, TIME_JITTER } from '@/lib/globe/visualLanguage';
-import { canRender, filterRenderableTiles } from '@/lib/globe/canRender';
-import { loadCityPack, getVisibleZones, isInPeakWindow } from '@/lib/globe/cityLoader';
+import { TIME_JITTER } from '@/lib/globe/visualLanguage';
+import { loadCityPack } from '@/lib/globe/cityLoader';
 import { isDisabled } from '@/lib/safety/killSwitch';
 
 const CITIES = [
