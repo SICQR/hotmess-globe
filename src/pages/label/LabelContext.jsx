@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Disc, Radio, Calendar, MapPin, Users, Shield } from 'lucide-react';
-import { LABEL_ARCHETYPES, getLabelVisibility, calculateLabelCityImpact } from '@/lib/dj/labels';
+import { ArrowLeft, Disc, Calendar, MapPin, Users, Shield } from 'lucide-react';
+import { LABEL_ARCHETYPES, getLabelVisibility } from '@/lib/dj/labels';
 
 /**
  * Label Context Page

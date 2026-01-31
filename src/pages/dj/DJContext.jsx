@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Radio, Calendar, MapPin, Disc, Shield } from 'lucide-react';
-import { DJ_ARCHETYPES, getVisibility, calculateHeatContribution } from '@/lib/dj/archetypes';
+import { DJ_ARCHETYPES, getVisibility } from '@/lib/dj/archetypes';
 
 /**
  * DJ Context Page

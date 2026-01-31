@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Radio, Users, ShoppingBag, Shield, Sparkles, ChevronRight, Globe, Zap, Heart } from 'lucide-react';
+import { MapPin, Radio, ShoppingBag, Shield, Sparkles, ChevronRight, Globe, Zap, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const STEPS = ['intro', 'city', 'modes', 'safety', 'done'];
