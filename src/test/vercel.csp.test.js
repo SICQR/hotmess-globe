@@ -9,23 +9,32 @@ const readVercelJson = () => {
 };
 
 const getCspHeaderValue = (vercelJson) => {
-  const collectHeaderRules = () => {
-    // Modern Vercel config (used by this repo): headers live on `routes[].headers`.
-    const fromRoutes = Array.isArray(vercelJson?.routes) ? vercelJson.routes : [];
-    const routeRules = fromRoutes.filter((rule) => Array.isArray(rule?.headers));
+  // Check routes for headers (can be array or object format)
+  const fromRoutes = Array.isArray(vercelJson?.routes) ? vercelJson.routes : [];
+  for (const route of fromRoutes) {
+    if (!route?.headers) continue;
+    
+    // Object format: { "Content-Security-Policy": "..." }
+    if (typeof route.headers === 'object' && !Array.isArray(route.headers)) {
+      const csp = route.headers['Content-Security-Policy'];
+      if (csp) return String(csp);
+    }
+    
+    // Array format: [{ key: "Content-Security-Policy", value: "..." }]
+    if (Array.isArray(route.headers)) {
+      const found = route.headers.find((h) => h?.key === 'Content-Security-Policy');
+      if (found?.value) return String(found.value);
+    }
+  }
 
-    // Legacy/alternative config: top-level `headers` array.
-    const fromHeaders = Array.isArray(vercelJson?.headers) ? vercelJson.headers : [];
-
-    return [...routeRules, ...fromHeaders];
-  };
-
-  const rules = collectHeaderRules();
-  for (const rule of rules) {
+  // Legacy/alternative config: top-level `headers` array
+  const fromHeaders = Array.isArray(vercelJson?.headers) ? vercelJson.headers : [];
+  for (const rule of fromHeaders) {
     const ruleHeaders = Array.isArray(rule?.headers) ? rule.headers : [];
     const found = ruleHeaders.find((h) => h?.key === 'Content-Security-Policy');
     if (found?.value) return String(found.value);
   }
+  
   return null;
 };
 
