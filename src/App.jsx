@@ -21,7 +21,16 @@ import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
 import Privacy from '@/pages/legal/Privacy';
 import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
-import { GlobeProvider, PulseProvider, PersonaProvider, SafetyGateProvider } from '@/contexts';
+// Signal System: Two Layers
+// Layer 1: WorldPulse (ambient, globe-driven)
+// Layer 2: NowSignals (contextual, clickable)
+import { 
+  GlobeProvider, 
+  WorldPulseProvider, 
+  NowSignalProvider, 
+  PersonaProvider, 
+  SafetyGateProvider 
+} from '@/contexts';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -526,20 +535,24 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <GlobeProvider>
-          <PulseProvider>
-            <PersonaProvider>
-              <SafetyGateProvider>
-                <ShopCartProvider>
-                  <Router>
-                    <NavigationTracker />
-                    <AuthenticatedApp />
-                  </Router>
-                </ShopCartProvider>
-              </SafetyGateProvider>
-            </PersonaProvider>
-          </PulseProvider>
-        </GlobeProvider>
+        {/* Layer 1: World Pulse (ambient, globe-driven) */}
+        <WorldPulseProvider>
+          {/* Layer 2: Now Signals (contextual, clickable) */}
+          <NowSignalProvider>
+            <GlobeProvider>
+              <PersonaProvider>
+                <SafetyGateProvider>
+                  <ShopCartProvider>
+                    <Router>
+                      <NavigationTracker />
+                      <AuthenticatedApp />
+                    </Router>
+                  </ShopCartProvider>
+                </SafetyGateProvider>
+              </PersonaProvider>
+            </GlobeProvider>
+          </NowSignalProvider>
+        </WorldPulseProvider>
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>
