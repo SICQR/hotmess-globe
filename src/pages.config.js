@@ -65,6 +65,7 @@ import Social from './pages/Social';
 import SquadChat from './pages/SquadChat';
 import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
+import { Tickets, TicketDetail, TicketChat } from './pages/tickets';
 import WakeTheMess from './pages/WakeTheMess';
 import __Layout from './Layout.jsx';
 
@@ -136,6 +137,9 @@ export const PAGES = {
     "Stats": Stats,
     "TermsOfService": TermsOfService,
     "TicketMarketplace": TicketMarketplace,
+    "Tickets": Tickets,
+    "TicketDetail": TicketDetail,
+    "TicketChat": TicketChat,
     "WakeTheMess": WakeTheMess,
 }
 
