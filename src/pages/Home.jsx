@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { MapPin, ShoppingBag, Users, Radio, Heart, Calendar, Zap, ArrowRight } from 'lucide-react';
+import { MapPin, ShoppingBag, Users, Radio, Heart, Calendar, Zap, ArrowRight, Globe, Mic, Store, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useServerNow } from '@/hooks/use-server-now';
 import { toast } from 'sonner';
 import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { format } from 'date-fns';
+import { useWorldPulse } from '@/contexts/WorldPulseContext';
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
 // Shopify product handles are not the same as release slugs.
@@ -279,8 +280,40 @@ export default function Home() {
     return events[0] || null;
   }, [recentBeacons]);
 
+  // World Pulse for ambient city signals
+  const { pulses } = useWorldPulse();
+  const recentPulses = pulses?.slice(0, 3) || [];
+
   return (
     <div className="min-h-screen bg-black text-white pb-20">
+      {/* WORLD PULSE OVERLAY */}
+      <AnimatePresence>
+        {recentPulses.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="fixed bottom-24 left-4 z-50 max-w-xs"
+          >
+            <div className="bg-black/80 backdrop-blur-md rounded-lg p-3 border border-pink-500/30">
+              <p className="text-[10px] uppercase tracking-widest text-pink-500 mb-2">World Pulse</p>
+              {recentPulses.map((p, i) => (
+                <motion.div 
+                  key={p.id || i}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center gap-2 text-xs text-white/80 mb-1"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
+                  <span>{p.city || 'Global'}</span>
+                  <span className="text-white/50">{p.type?.replace('_', ' ')}</span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* HERO */}
       <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
@@ -325,6 +358,51 @@ export default function Home() {
             </Link>
           </div>
         </motion.div>
+      </section>
+
+      {/* NEW: GLOBE MODES STRIP */}
+      <section className="py-8 px-6 bg-gradient-to-r from-pink-950/50 via-black to-purple-950/50">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-pink-500" />
+              <span className="text-xs uppercase tracking-widest text-white/60">New</span>
+            </div>
+            <Link to="/welcome" className="text-xs text-pink-500 hover:text-pink-400 uppercase tracking-wider">
+              Take the tour →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Link to="/creator" className="group">
+              <div className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/50 rounded-lg p-4 transition-all">
+                <Mic className="w-6 h-6 text-pink-500 mb-2" />
+                <p className="font-bold text-sm">Creator</p>
+                <p className="text-[10px] text-white/50 uppercase">Monetize your art</p>
+              </div>
+            </Link>
+            <Link to="/business/globe" className="group">
+              <div className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/50 rounded-lg p-4 transition-all">
+                <Globe className="w-6 h-6 text-pink-500 mb-2" />
+                <p className="font-bold text-sm">Business</p>
+                <p className="text-[10px] text-white/50 uppercase">City heat + amplify</p>
+              </div>
+            </Link>
+            <Link to="/tickets" className="group">
+              <div className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/50 rounded-lg p-4 transition-all">
+                <Calendar className="w-6 h-6 text-pink-500 mb-2" />
+                <p className="font-bold text-sm">Tickets</p>
+                <p className="text-[10px] text-white/50 uppercase">Buy + resell safe</p>
+              </div>
+            </Link>
+            <Link to="/market/creators" className="group">
+              <div className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/50 rounded-lg p-4 transition-all">
+                <Store className="w-6 h-6 text-pink-500 mb-2" />
+                <p className="font-bold text-sm">MessMarket</p>
+                <p className="text-[10px] text-white/50 uppercase">P2P commerce</p>
+              </div>
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* LUBE CTA (always visible) */}
