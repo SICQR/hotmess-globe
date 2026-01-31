@@ -47,12 +47,17 @@ export default function Beacons() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-black text-white p-4 md:p-8 relative">
+      {/* Background effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-20 left-20 w-80 h-80 bg-[#FF1493]/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-20 right-20 w-80 h-80 bg-[#39FF14]/5 rounded-full blur-[150px]" />
+      </div>
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">
+            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2 text-gradient-hot">
               Beacons
             </h1>
             <p className="text-white/60">{filteredBeacons.length} active beacons</p>
@@ -72,7 +77,7 @@ export default function Beacons() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
+        <div className="glass border border-white/10 rounded-xl p-4 mb-6 hover:border-[#FF1493]/20 transition-all duration-300">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -120,7 +125,7 @@ export default function Beacons() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
                 whileHover={{ scale: 1.02 }}
-                className="bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 transition-all cursor-pointer"
+                className="glass border border-white/10 rounded-xl p-5 hover:border-[#FF1493]/30 hover:shadow-glow-hot/10 transition-all cursor-pointer"
               >
                 <div className="flex items-start justify-between mb-3">
                   <span

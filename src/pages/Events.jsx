@@ -197,10 +197,10 @@ export default function Events() {
       >
 
         {/* Filters */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8">
+        <div className="glass border border-white/10 rounded-xl p-6 mb-8 hover:border-[#FF1493]/20 transition-all duration-300">
           <div className="flex items-center gap-2 mb-4">
             <Filter className="w-4 h-4 text-[#FF1493]" />
-            <span className="text-xs uppercase tracking-wider font-bold">Filters</span>
+            <span className="text-xs uppercase tracking-wider font-bold text-gradient-hot">Filters</span>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

@@ -29,10 +29,15 @@ export default function Radio() {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white relative">
+      {/* Background effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#FF1493]/10 rounded-full blur-[180px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#00D9FF]/10 rounded-full blur-[180px]" />
+      </div>
       {/* Hero */}
-      <div className="relative overflow-hidden border-b-2 border-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FF1493]/20 to-[#00D9FF]/20" />
+      <div className="relative overflow-hidden border-b border-white/20">
+        <div className="absolute inset-0 bg-gradient-mesh opacity-30" />
         <div className="relative max-w-7xl mx-auto px-6 py-24 md:py-32">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -67,7 +72,7 @@ export default function Radio() {
             </div>
 
             <div className="mt-10 max-w-xl mx-auto">
-              <div className="bg-black/40 border border-white/20 p-4">
+              <div className="glass border border-white/20 p-4 rounded-xl hover:shadow-glow-hot/20 transition-all duration-300">
                 <p className="text-xs text-white/60 uppercase tracking-wider mb-3">
                   Live stream player
                 </p>
@@ -103,7 +108,7 @@ export default function Radio() {
               transition={{ delay: idx * 0.1 }}
             >
               <Link to={`/music/shows/${show.slug}`}>
-                <div className="group bg-black border-2 border-white hover:border-[#FF1493] transition-all overflow-hidden h-full">
+                <div className="group glass border border-white/20 hover:border-[#FF1493]/50 hover:shadow-glow-hot/20 transition-all overflow-hidden h-full rounded-xl">
                   <div className={`h-48 bg-gradient-to-br ${show.color} relative overflow-hidden`}>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <RadioIcon className="w-20 h-20 text-white/20" />
@@ -129,7 +134,7 @@ export default function Radio() {
       </div>
 
       {/* Footer Links */}
-      <div className="border-t-2 border-white">
+      <div className="border-t border-white/20 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
             <Link to={createPageUrl('Home')} className="text-white/60 hover:text-white uppercase font-bold">
