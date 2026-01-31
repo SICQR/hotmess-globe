@@ -11,15 +11,12 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   MapPin, 
-  Clock, 
   Eye, 
   MousePointer, 
   Users,
   Plus,
   Calendar,
   TrendingUp,
-  Ticket,
-  Share2,
   Loader2,
   ChevronRight,
   Sparkles
@@ -48,36 +45,53 @@ export default function PromoterDashboard() {
 
   // Fetch promoter data
   useEffect(() => {
-    async function fetchData() {
-      if (!user?.id) return;
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
 
-      setLoading(true);
+    async function fetchData() {
 
       // Fetch beacons
-      const { data: beaconsData } = await supabase
+      const { data: beaconsData, error: beaconsError } = await supabase
         .from('Beacon')
         .select('*, event_rsvps(count)')
         .eq('promoter_id', user.id)
         .eq('beacon_type', 'event')
         .order('created_at', { ascending: false });
 
+      if (beaconsError) {
+        console.error('Error fetching beacons:', beaconsError);
+      }
+
       // Fetch tiers
-      const { data: tiersData } = await supabase
+      const { data: tiersData, error: tiersError } = await supabase
         .from('beacon_tiers')
         .select('*')
         .order('price_cents', { ascending: true });
 
+      if (tiersError) {
+        console.error('Error fetching tiers:', tiersError);
+      }
+
+      // Process beacons to flattened structure
+      const processedBeacons = (beaconsData || []).map(beacon => ({
+        ...beacon,
+        // Use exact count from relation if available, otherwise fallback to column or 0
+        rsvp_count: beacon.event_rsvps?.[0]?.count ?? beacon.rsvp_count ?? 0
+      }));
+
       // Calculate aggregate stats
       const aggregateStats = {
-        totalViews: beaconsData?.reduce((sum, b) => sum + (b.view_count || 0), 0) || 0,
-        totalClicks: beaconsData?.reduce((sum, b) => sum + (b.click_count || 0), 0) || 0,
-        totalRsvps: beaconsData?.reduce((sum, b) => sum + (b.rsvp_count || 0), 0) || 0,
-        activeBeacons: beaconsData?.filter(b => 
+        totalViews: processedBeacons.reduce((sum, b) => sum + (b.view_count || 0), 0),
+        totalClicks: processedBeacons.reduce((sum, b) => sum + (b.click_count || 0), 0),
+        totalRsvps: processedBeacons.reduce((sum, b) => sum + (b.rsvp_count || 0), 0),
+        activeBeacons: processedBeacons.filter(b => 
           b.beacon_expires_at && new Date(b.beacon_expires_at) > new Date()
-        ).length || 0
+        ).length
       };
 
-      setBeacons(beaconsData || []);
+      setBeacons(processedBeacons);
       setTiers(tiersData || []);
       setStats(aggregateStats);
       setLoading(false);

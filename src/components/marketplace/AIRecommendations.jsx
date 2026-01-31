@@ -154,7 +154,6 @@ Return ONLY a JSON array of product IDs, like: ["id1", "id2", "id3", "id4", "id5
             key={product.id}
             product={product}
             index={idx}
-            onBuy={onBuy}
           />
         ))}
       </div>

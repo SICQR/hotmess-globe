@@ -19,7 +19,6 @@ import {
   Settings,
   X
 } from 'lucide-react';
-import { base44 } from '@/components/utils/supabaseClient';
 
 // The 11 apps within HOTMESS London OS
 const ALL_APPS = [

@@ -7,6 +7,7 @@ import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { toast } from 'sonner';
+import LazyImage from '../ui/LazyImage';
 
 import {
   getGuestCartItems,
@@ -127,10 +128,11 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
                   <div key={item.id ?? `${item.product_id}::${item.shopify_variant_id || ''}`}
                     className="flex gap-3 p-4 bg-white/5 border border-white/10">
                     {item.product.image_urls?.[0] && (
-                      <img 
+                      <LazyImage 
                         src={item.product.image_urls[0]} 
                         alt={item.product.name}
-                        className="w-20 h-20 object-cover"
+                        className="w-full h-full object-cover"
+                        containerClassName="w-20 h-20 flex-shrink-0"
                       />
                     )}
                     <div className="flex-1">
@@ -160,6 +162,7 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
                         >
                           <Minus className="w-3 h-3" />
                         </Button>
+                        <span className="text-sm font-mono w-4 text-center">{item.quantity}</span>
                         <Button
                           size="sm"
                           variant="outline"
@@ -170,6 +173,7 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
                             variantId: item.shopify_variant_id,
                           })}
                           className="h-6 w-6 p-0"
+                          disabled={item.product.inventory_count !== undefined && item.quantity >= item.product.inventory_count}
                         >
                           <Plus className="w-3 h-3" />
                         </Button>

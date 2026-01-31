@@ -4,20 +4,13 @@
  * Form for promoters to create event beacons on the globe.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  MapPin, 
-  Calendar, 
-  Clock, 
-  DollarSign,
-  Ticket,
-  Image,
+import {
   ArrowRight,
   ArrowLeft,
   Check,
-  Loader2,
-  Info
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -84,6 +77,10 @@ export default function CreateBeacon() {
     setLoading(true);
 
     try {
+      // Parse price safely
+      const priceFloat = parseFloat(formData.ticketPrice);
+      const ticketPriceCents = !isNaN(priceFloat) ? Math.round(priceFloat * 100) : null;
+
       // Create beacon
       const { data: beacon, error: beaconError } = await supabase
         .from('Beacon')
@@ -98,7 +95,8 @@ export default function CreateBeacon() {
           longitude: formData.longitude,
           event_start: `${formData.eventDate}T${formData.eventTime}:00`,
           ticket_url: formData.ticketUrl,
-          ticket_price_cents: formData.ticketPrice ? Math.round(parseFloat(formData.ticketPrice) * 100) : null,
+          ticket_price_cents: ticketPriceCents,
+          image_url: formData.imageUrl,
           tier_id: formData.selectedTier,
           title: formData.title,
           description: formData.description
@@ -190,6 +188,16 @@ export default function CreateBeacon() {
                 onChange={(e) => updateField('description', e.target.value)}
                 placeholder="What's the vibe? Who's performing?"
                 rows={4}
+                className="bg-white/5 border-white/20"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-white/60 mb-2">Image URL</label>
+              <Input
+                value={formData.imageUrl}
+                onChange={(e) => updateField('imageUrl', e.target.value)}
+                placeholder="https://..."
                 className="bg-white/5 border-white/20"
               />
             </div>
