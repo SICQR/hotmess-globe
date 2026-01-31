@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useSafetyGate, GATE_TYPES } from '@/contexts/SafetyGateContext';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, X } from 'lucide-react';
 
 /**
  * Commerce Gate
@@ -11,7 +11,30 @@ import { AlertTriangle, ShieldCheck } from 'lucide-react';
  * - Sexual services
  * - Escort advertising
  * - Pay-per-meet sexual access
+ * 
+ * "Items are not people. This boundary is enforced."
  */
+
+// Blocked keywords (server also enforces via SQL trigger)
+const BLOCKED_KEYWORDS = [
+  'escort', 'outcall', 'incall', 'per hour', 'hourly rate',
+  'sex work', 'sexual service', 'pay per meet', 'meet for pay',
+  'services', 'companionship', 'gfe', 'pse', 'full service',
+  'meet up fee', 'donation', 'roses', 'generous', 'party and play',
+  'pnp', 'chem friendly for', 'hosting for'
+];
+
+// Allowed categories (must match schema enum)
+const ALLOWED_CATEGORIES = [
+  'clothing',
+  'fetish_gear', 
+  'worn_items',
+  'physical_goods',
+  'digital_goods',
+  'telegram_access',
+  'event_access',
+  'custom'
+];
 
 export function CommerceGate({ children, onProceed, productType }) {
   const { requireGate, hasPassedGate } = useSafetyGate();
@@ -34,9 +57,12 @@ export function CommerceGate({ children, onProceed, productType }) {
             Commerce Safety Check
           </h3>
           <p className="text-sm text-white/70 mb-4">
-            HOTMESS allows physical goods, digital items, and community access. 
+            MessMarket allows physical goods, digital items, worn items, and community access.
             Sexual services are not permitted.
           </p>
+          <div className="text-xs text-white/50 mb-4">
+            Items are not people. This boundary is enforced.
+          </div>
           <Button variant="cyan" onClick={handleProceed}>
             I understand, continue
           </Button>
@@ -51,32 +77,74 @@ export function CommerceGate({ children, onProceed, productType }) {
 
 /**
  * Commerce Validator
- * Server-side validation hook for product listings
+ * Client-side validation for product listings (server also validates)
  */
 export function useCommerceValidator() {
-  const BLOCKED_KEYWORDS = [
-    'escort', 'outcall', 'incall', 'per hour', 'hourly rate',
-    'services', 'companionship', 'gfe', 'pse', 'full service',
-    'meet up fee', 'donation', 'roses', 'generous'
-  ];
+  const [lastError, setLastError] = useState(null);
 
-  const validate = useCallback((title, description) => {
-    const text = `${title} ${description}`.toLowerCase();
+  const validate = useCallback((title, description, category) => {
+    setLastError(null);
+    const text = `${title || ''} ${description || ''}`.toLowerCase();
     
+    // Check category is allowed
+    if (category && !ALLOWED_CATEGORIES.includes(category)) {
+      const error = {
+        valid: false,
+        reason: 'Category not allowed on MessMarket.',
+        field: 'category',
+      };
+      setLastError(error);
+      return error;
+    }
+
+    // Check for blocked keywords
     for (const keyword of BLOCKED_KEYWORDS) {
-      if (text.includes(keyword)) {
-        return {
+      if (text.includes(keyword.toLowerCase())) {
+        const error = {
           valid: false,
-          reason: 'Listing appears to advertise services, not items.',
+          reason: 'Listing appears to advertise services, not items. This is not allowed.',
           blocked_keyword: keyword,
+          field: 'description',
         };
+        setLastError(error);
+        return error;
       }
     }
 
     return { valid: true };
   }, []);
 
-  return { validate };
+  const validateCategory = useCallback((category) => {
+    return ALLOWED_CATEGORIES.includes(category);
+  }, []);
+
+  return { validate, validateCategory, lastError, ALLOWED_CATEGORIES };
+}
+
+/**
+ * Blocked Content Warning
+ * Shows when validation fails
+ */
+export function BlockedContentWarning({ reason, onDismiss }) {
+  return (
+    <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="text-red-400 shrink-0 mt-0.5" size={20} />
+        <div className="flex-1">
+          <div className="font-semibold text-red-400 mb-1">Listing Not Allowed</div>
+          <div className="text-sm text-red-300/80">{reason}</div>
+          <div className="text-xs text-white/40 mt-2">
+            MessMarket is for items only. Sexual services, escorts, and pay-per-meet are prohibited.
+          </div>
+        </div>
+        {onDismiss && (
+          <button onClick={onDismiss} className="text-white/40 hover:text-white">
+            <X size={16} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default CommerceGate;
