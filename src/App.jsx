@@ -479,6 +479,22 @@ const AuthenticatedApp = () => {
       <Route path="/biz/analytics" element={<PageRoute pageKey="BusinessAnalytics" />} />
       <Route path="/biz/onboarding" element={<PageRoute pageKey="BusinessOnboarding" />} />
 
+      {/* Business Globe UI */}
+      <Route path="/business/globe" element={<PageRoute pageKey="BusinessGlobe" />} />
+      <Route path="/business/amplify" element={<PageRoute pageKey="BusinessAmplify" />} />
+      <Route path="/business/insights" element={<PageRoute pageKey="BusinessInsights" />} />
+
+      {/* Admin tools */}
+      <Route path="/admin/cadence" element={<PageRoute pageKey="CadencePanel" />} />
+      <Route path="/admin/cities" element={<PageRoute pageKey="CityReadiness" />} />
+
+      {/* Creator dashboard */}
+      <Route path="/creator" element={<PageRoute pageKey="CreatorDashboard" />} />
+      <Route path="/creator/dashboard" element={<PageRoute pageKey="CreatorDashboard" />} />
+
+      {/* Welcome onboarding */}
+      <Route path="/welcome" element={<PageRoute pageKey="Welcome" />} />
+
       {/* Legacy lowercase routes -> canonical V1.5 routes */}
       <Route path="/radio" element={<Navigate to={createPageUrl('Radio')} replace />} />
       <Route path="/radio/schedule" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
