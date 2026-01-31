@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, MapPin, ShoppingBag, Trophy, Zap, Eye } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
+import { TrendingUp, MapPin, ShoppingBag, Trophy, Zap, Eye, Download, Share2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function Stats() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -78,6 +80,78 @@ export default function Stats() {
 
   const COLORS = ['#FF1493', '#B026FF', '#00D9FF', '#FFEB3B', '#39FF14'];
 
+  // Weekly comparison data
+  const thisWeekXP = activities.filter(a => {
+    const date = new Date(a.created_date);
+    const now = new Date();
+    const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+    return date >= weekAgo && a.xp_earned;
+  }).reduce((sum, a) => sum + (a.xp_earned || 0), 0);
+
+  const lastWeekXP = activities.filter(a => {
+    const date = new Date(a.created_date);
+    const now = new Date();
+    const twoWeeksAgo = new Date(now - 14 * 24 * 60 * 60 * 1000);
+    const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+    return date >= twoWeeksAgo && date < weekAgo && a.xp_earned;
+  }).reduce((sum, a) => sum + (a.xp_earned || 0), 0);
+
+  const xpChange = lastWeekXP > 0 ? ((thisWeekXP - lastWeekXP) / lastWeekXP * 100).toFixed(0) : 100;
+
+  // Profile engagement radar
+  const engagementData = [
+    { subject: 'Views', A: profileViews.length, fullMark: 100 },
+    { subject: 'Check-ins', A: checkIns.length, fullMark: 50 },
+    { subject: 'Purchases', A: purchases.length * 5, fullMark: 50 },
+    { subject: 'Achievements', A: achievements.length * 10, fullMark: 100 },
+    { subject: 'Activities', A: Math.min(activities.length, 100), fullMark: 100 },
+  ];
+
+  // Daily activity heatmap (last 7 days)
+  const dailyActivity = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - i));
+    const dayActivities = activities.filter(a => {
+      const actDate = new Date(a.created_date);
+      return actDate.toDateString() === date.toDateString();
+    });
+    return {
+      day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      count: dayActivities.length,
+      xp: dayActivities.reduce((sum, a) => sum + (a.xp_earned || 0), 0),
+    };
+  });
+
+  const handleExport = () => {
+    const data = {
+      totalXP: currentUser?.xp || 0,
+      checkIns: checkIns.length,
+      purchases: purchases.length,
+      achievements: achievements.length,
+      exportDate: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'hotmess-stats.json';
+    a.click();
+    toast.success('Stats exported!');
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'My HOTMESS Stats',
+        text: `I have ${currentUser?.xp || 0} XP and ${achievements.length} achievements on HOTMESS!`,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(`Check out my HOTMESS stats: ${currentUser?.xp || 0} XP, ${achievements.length} achievements!`);
+      toast.success('Copied to clipboard!');
+    }
+  };
+
   const stats = [
     { label: 'Total XP', value: currentUser?.xp || 0, icon: Zap, color: '#FFEB3B' },
     { label: 'Check-ins', value: checkIns.length, icon: MapPin, color: '#00D9FF' },
@@ -93,14 +167,55 @@ export default function Stats() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between"
         >
-          <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2">
-            YOUR <span className="text-[#00D9FF]">STATS</span>
-          </h1>
-          <p className="text-white/60 uppercase text-sm tracking-wider">
-            Performance analytics. Track your journey.
-          </p>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2">
+              YOUR <span className="text-[#00D9FF]">STATS</span>
+            </h1>
+            <p className="text-white/60 uppercase text-sm tracking-wider">
+              Performance analytics. Track your journey.
+            </p>
+          </div>
+          <div className="flex gap-2 mt-4 md:mt-0">
+            <Button variant="outline" size="sm" onClick={handleExport} className="border-white/20">
+              <Download className="w-4 h-4 mr-2" /> Export
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleShare} className="border-white/20">
+              <Share2 className="w-4 h-4 mr-2" /> Share
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Weekly Summary Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-gradient-to-r from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/30 rounded-xl p-6 mb-8"
+        >
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <h3 className="text-white/60 uppercase text-sm mb-1">This Week</h3>
+              <div className="flex items-center gap-3">
+                <span className="text-4xl font-black text-[#FFD700]">{thisWeekXP.toLocaleString()} XP</span>
+                <span className={`flex items-center text-sm ${Number(xpChange) >= 0 ? 'text-[#39FF14]' : 'text-red-500'}`}>
+                  {Number(xpChange) >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                  {Math.abs(Number(xpChange))}% vs last week
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 md:mt-0 flex gap-6">
+              <div className="text-center">
+                <div className="text-2xl font-black text-[#00D9FF]">{dailyActivity.reduce((sum, d) => sum + d.count, 0)}</div>
+                <div className="text-xs text-white/40">Activities</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-black text-[#FF1493]">{checkIns.filter(c => new Date(c.created_date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}</div>
+                <div className="text-xs text-white/40">Check-ins</div>
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         {/* Key Metrics */}
@@ -126,6 +241,7 @@ export default function Stats() {
           <TabsList className="bg-white/5 border border-white/10">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="venues">Venues</TabsTrigger>
+            <TabsTrigger value="engagement">Engagement</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
 
@@ -135,7 +251,13 @@ export default function Stats() {
               <div className="bg-white/5 border border-white/10 rounded-xl p-6">
                 <h3 className="text-xl font-black uppercase mb-4">XP Growth</h3>
                 <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={xpOverTime}>
+                  <AreaChart data={xpOverTime}>
+                    <defs>
+                      <linearGradient id="xpGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#FFEB3B" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#FFEB3B" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#fff1" />
                     <XAxis dataKey="date" stroke="#fff4" style={{ fontSize: 10 }} />
                     <YAxis stroke="#fff4" style={{ fontSize: 10 }} />
@@ -143,8 +265,8 @@ export default function Stats() {
                       contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }}
                       labelStyle={{ color: '#fff' }}
                     />
-                    <Line type="monotone" dataKey="xp" stroke="#FFEB3B" strokeWidth={2} />
-                  </LineChart>
+                    <Area type="monotone" dataKey="xp" stroke="#FFEB3B" fill="url(#xpGradient)" strokeWidth={2} />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
 
@@ -173,24 +295,139 @@ export default function Stats() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
+
+              {/* Daily Activity */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <h3 className="text-xl font-black uppercase mb-4">Last 7 Days</h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={dailyActivity}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#fff1" />
+                    <XAxis dataKey="day" stroke="#fff4" style={{ fontSize: 10 }} />
+                    <YAxis stroke="#fff4" style={{ fontSize: 10 }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }}
+                    />
+                    <Bar dataKey="count" fill="#00D9FF" name="Activities" />
+                    <Bar dataKey="xp" fill="#FFD700" name="XP Earned" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Milestones */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <h3 className="text-xl font-black uppercase mb-4">Next Milestones</h3>
+                <div className="space-y-4">
+                  {[
+                    { label: '1K XP', target: 1000, icon: Zap, color: '#FFD700' },
+                    { label: '10 Check-ins', target: 10, current: checkIns.length, icon: MapPin, color: '#00D9FF' },
+                    { label: '5 Achievements', target: 5, current: achievements.length, icon: Trophy, color: '#FF1493' },
+                    { label: '100 Profile Views', target: 100, current: profileViews.length, icon: Eye, color: '#B026FF' },
+                  ].map((milestone) => {
+                    const current = milestone.current ?? currentUser?.xp ?? 0;
+                    const progress = Math.min((current / milestone.target) * 100, 100);
+                    return (
+                      <div key={milestone.label} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="flex items-center gap-2">
+                            <milestone.icon className="w-4 h-4" style={{ color: milestone.color }} />
+                            {milestone.label}
+                          </span>
+                          <span className="text-white/60">{current}/{milestone.target}</span>
+                        </div>
+                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${progress}%`, backgroundColor: milestone.color }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </TabsContent>
 
           <TabsContent value="venues">
-            <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-              <h3 className="text-xl font-black uppercase mb-4">Top Venues</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={topVenues}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#fff1" />
-                  <XAxis dataKey="venue" stroke="#fff4" style={{ fontSize: 10 }} />
-                  <YAxis stroke="#fff4" style={{ fontSize: 10 }} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }}
-                    labelStyle={{ color: '#fff' }}
-                  />
-                  <Bar dataKey="count" fill="#00D9FF" />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <h3 className="text-xl font-black uppercase mb-4">Top Venues</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={topVenues} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#fff1" />
+                    <XAxis type="number" stroke="#fff4" style={{ fontSize: 10 }} />
+                    <YAxis type="category" dataKey="venue" stroke="#fff4" style={{ fontSize: 10 }} width={100} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }}
+                      labelStyle={{ color: '#fff' }}
+                    />
+                    <Bar dataKey="count" fill="#00D9FF" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <h3 className="text-xl font-black uppercase mb-4">Recent Check-ins</h3>
+                <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                  {checkIns.slice(0, 10).map((ci, idx) => (
+                    <div key={ci.id || idx} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
+                      <MapPin className="w-5 h-5 text-[#00D9FF]" />
+                      <div className="flex-1">
+                        <p className="font-bold text-sm">{ci.beacon_title || 'Unknown Venue'}</p>
+                        <p className="text-xs text-white/40">{new Date(ci.created_date).toLocaleString()}</p>
+                      </div>
+                      {ci.xp_earned && (
+                        <span className="text-[#FFD700] font-bold text-sm">+{ci.xp_earned} XP</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="engagement">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Engagement Radar */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <h3 className="text-xl font-black uppercase mb-4">Engagement Profile</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={engagementData}>
+                    <PolarGrid stroke="#fff2" />
+                    <PolarAngleAxis dataKey="subject" stroke="#fff6" style={{ fontSize: 11 }} />
+                    <Radar name="You" dataKey="A" stroke="#FF1493" fill="#FF1493" fillOpacity={0.4} />
+                    <Tooltip contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Profile Views Over Time */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <h3 className="text-xl font-black uppercase mb-4">Who's Viewing You</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#B026FF]/20 to-transparent rounded-lg">
+                    <div>
+                      <p className="text-3xl font-black text-[#B026FF]">{profileViews.length}</p>
+                      <p className="text-xs text-white/40">Total Profile Views</p>
+                    </div>
+                    <Eye className="w-10 h-10 text-[#B026FF]/50" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-white/5 rounded-lg text-center">
+                      <p className="text-xl font-black text-[#00D9FF]">
+                        {profileViews.filter(v => new Date(v.created_date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}
+                      </p>
+                      <p className="text-xs text-white/40">This Week</p>
+                    </div>
+                    <div className="p-3 bg-white/5 rounded-lg text-center">
+                      <p className="text-xl font-black text-[#FF1493]">
+                        {profileViews.filter(v => new Date(v.created_date) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length}
+                      </p>
+                      <p className="text-xs text-white/40">This Month</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </TabsContent>
 

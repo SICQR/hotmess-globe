@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { 
-  ArrowLeft, CreditCard, Download, CheckCircle, AlertCircle,
+  ArrowLeft, CreditCard, Download, CheckCircle,
   Calendar, Receipt, Sparkles, Crown, Building2, Zap
 } from 'lucide-react';
 import { createPageUrl } from '@/utils';

@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  Zap, Calendar, MapPin, Radio, PartyPopper, ShoppingBag,
-  Clock, CreditCard, Target, TrendingUp, CheckCircle, AlertCircle,
+  Zap, Radio, PartyPopper, ShoppingBag, CheckCircle, AlertCircle,
   ChevronRight, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
