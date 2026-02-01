@@ -24,6 +24,145 @@ import { toast } from 'sonner';
 // Ghosted components
 import { GhostedSwipeView, GhostedRadarView, StatusSelector, GhostedGrid } from '@/features/ghosted';
 
+// Fallback demo profiles for dev/testing when API is slow
+const DEMO_PROFILES = [
+  {
+    id: 'demo_1',
+    profileName: 'Roxy Voltage',
+    title: 'Late-night walks, loud music',
+    locationLabel: 'Shoreditch',
+    bio: 'Late-night walks, loud music, no drama',
+    geoLat: 51.5225,
+    geoLng: -0.0808,
+    photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800',
+    photos: [{ url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800', isPrimary: true }],
+    onlineNow: true,
+    rightNow: false,
+    matchProbability: 87,
+    profileType: 'creator',
+  },
+  {
+    id: 'demo_2',
+    profileName: 'Milo Afterhours',
+    title: 'Gym rat, beach lover',
+    locationLabel: 'Hackney',
+    bio: 'Gym rat, beach lover',
+    geoLat: 51.5465,
+    geoLng: -0.0556,
+    photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800',
+    photos: [{ url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800', isPrimary: true }],
+    onlineNow: true,
+    rightNow: true, // LIVE!
+    matchProbability: 92,
+    profileType: 'standard',
+  },
+  {
+    id: 'demo_3',
+    profileName: 'Jade Neon',
+    title: 'DJ / Producer',
+    locationLabel: 'Dalston',
+    bio: 'DJ / Producer',
+    geoLat: 51.5493,
+    geoLng: -0.0754,
+    photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800',
+    photos: [{ url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800', isPrimary: true }],
+    onlineNow: false,
+    rightNow: false,
+    matchProbability: 75,
+    profileType: 'creator',
+  },
+  {
+    id: 'demo_4',
+    profileName: 'Kris Kensington',
+    title: 'Looking for drinks tonight',
+    locationLabel: 'Camden',
+    bio: 'Looking for drinks tonight',
+    geoLat: 51.5390,
+    geoLng: -0.1426,
+    photoUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800',
+    photos: [{ url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800', isPrimary: true }],
+    onlineNow: true,
+    rightNow: true, // LIVE!
+    matchProbability: 95,
+    profileType: 'standard',
+  },
+  {
+    id: 'demo_5',
+    profileName: 'Nova Hotwire',
+    title: 'Clubwear drops',
+    locationLabel: 'Soho',
+    bio: 'Clubwear drops + limited runs',
+    geoLat: 51.5136,
+    geoLng: -0.1365,
+    photoUrl: 'https://images.unsplash.com/photo-1520975693411-6c5fe1e26f0a?w=800',
+    photos: [{ url: 'https://images.unsplash.com/photo-1520975693411-6c5fe1e26f0a?w=800', isPrimary: true }],
+    onlineNow: true,
+    rightNow: false,
+    matchProbability: 68,
+    profileType: 'seller',
+  },
+  {
+    id: 'demo_6',
+    profileName: 'Skyline Sage',
+    title: 'New to the scene',
+    locationLabel: 'Kings Cross',
+    bio: 'New to the scene',
+    geoLat: 51.5308,
+    geoLng: -0.1238,
+    photoUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800',
+    photos: [{ url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800', isPrimary: true }],
+    onlineNow: false,
+    rightNow: false,
+    matchProbability: 55,
+    profileType: 'standard',
+  },
+  {
+    id: 'demo_7',
+    profileName: 'Vanta Rose',
+    title: 'Coffee then chaos',
+    locationLabel: 'Brixton',
+    bio: 'Coffee then chaos',
+    geoLat: 51.4613,
+    geoLng: -0.1156,
+    photoUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800',
+    photos: [{ url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800', isPrimary: true }],
+    onlineNow: true,
+    rightNow: false,
+    matchProbability: 82,
+    profileType: 'standard',
+  },
+  {
+    id: 'demo_8',
+    profileName: 'Lexi LDN',
+    title: 'Party planner',
+    locationLabel: 'Peckham',
+    bio: 'Party planner',
+    geoLat: 51.4732,
+    geoLng: -0.0689,
+    photoUrl: 'https://images.unsplash.com/photo-1520962917960-20a70b7f212a?w=800',
+    photos: [{ url: 'https://images.unsplash.com/photo-1520962917960-20a70b7f212a?w=800', isPrimary: true }],
+    onlineNow: false,
+    rightNow: false,
+    matchProbability: 71,
+    profileType: 'organizer',
+  },
+  {
+    id: 'demo_9',
+    profileName: 'Harper Bassline',
+    title: 'Warehouse vibes only',
+    locationLabel: 'Bermondsey',
+    bio: 'Warehouse vibes only',
+    geoLat: 51.4965,
+    geoLng: -0.0632,
+    photoUrl: 'https://images.unsplash.com/photo-1520974735194-6a9a3a559b97?w=800',
+    photos: [{ url: 'https://images.unsplash.com/photo-1520974735194-6a9a3a559b97?w=800', isPrimary: true }],
+    onlineNow: true,
+    rightNow: true, // LIVE!
+    matchProbability: 89,
+    profileType: 'creator',
+  },
+];
+
 // View modes
 const VIEW_MODES = [
   { id: 'grid', label: 'Grid', icon: LayoutGrid },
@@ -69,7 +208,15 @@ export default function Social() {
   
   // Data
   const { data: currentUser } = useCurrentUser();
-  const { items: profiles, isLoadingInitial } = useInfiniteProfiles();
+  const { items: apiProfiles, isLoadingInitial } = useInfiniteProfiles();
+  
+  // Use demo profiles as fallback when API is empty/slow (dev mode)
+  const profiles = useMemo(() => {
+    if (apiProfiles.length > 0) return apiProfiles;
+    // In dev mode, use demo profiles after a short wait
+    if (import.meta.env.DEV && !isLoadingInitial) return DEMO_PROFILES;
+    return [];
+  }, [apiProfiles, isLoadingInitial]);
   
   // Location
   const { location: liveLocation } = useLiveViewerLocation({
