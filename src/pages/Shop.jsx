@@ -47,7 +47,7 @@ export default function Shop() {
           <motion.div 
             animate={{ rotate: 360 }}
             transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
-            className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] border border-yellow-500/10 rounded-full"
+            className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] border border-pink-500/10 rounded-full"
           />
           <motion.div 
             animate={{ rotate: -360 }}
@@ -63,11 +63,11 @@ export default function Shop() {
           className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20"
         >
           <div className="max-w-3xl">
-            <p className="text-sm uppercase tracking-[0.4em] text-yellow-400 mb-4">
+            <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">
               MESSMARKET
             </p>
             <h1 className="text-[12vw] md:text-[8vw] font-black italic leading-[0.85] tracking-tighter mb-6">
-              SHOP<span className="text-yellow-500">.</span>
+              SHOP<span className="text-pink-500">.</span>
             </h1>
             <p className="text-xl md:text-2xl text-white/70 mb-10 max-w-xl">
               Limited drops. Exclusive merch. Fund the culture without extraction.
@@ -76,7 +76,7 @@ export default function Shop() {
             <div className="flex flex-wrap gap-4">
               <Button 
                 onClick={() => openCartDrawer('shopify')}
-                className="bg-yellow-500 hover:bg-white text-black font-black uppercase px-8 py-6 text-lg"
+                className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg"
               >
                 <ShoppingCart className="w-5 h-5 mr-3" />
                 VIEW CART
@@ -101,10 +101,10 @@ export default function Shop() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <p className="text-sm uppercase tracking-[0.4em] text-yellow-400 mb-6">FEATURED DROP</p>
+              <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-6">FEATURED DROP</p>
               
               <Link to={`/market/p/${encodeURIComponent(featuredProduct.handle)}`}>
-                <div className="group grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white/5 border border-white/10 hover:border-yellow-500/50 rounded-2xl overflow-hidden transition-all">
+                <div className="group grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white/5 border border-white/10 hover:border-pink-500/50 rounded-2xl overflow-hidden transition-all">
                   {/* Image */}
                   <div className="relative aspect-square">
                     {featuredProduct.featuredImage?.url ? (
@@ -114,18 +114,18 @@ export default function Shop() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-yellow-500/20 to-orange-500/20 flex items-center justify-center">
-                        <ShoppingBag className="w-24 h-24 text-yellow-500/30" />
+                      <div className="w-full h-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
+                        <ShoppingBag className="w-24 h-24 text-pink-500/30" />
                       </div>
                     )}
-                    <div className="absolute top-4 left-4 px-4 py-2 bg-yellow-500 text-black text-sm font-black uppercase rounded-full">
+                    <div className="absolute top-4 left-4 px-4 py-2 bg-pink-500 text-white text-sm font-black uppercase rounded-full">
                       NEW DROP
                     </div>
                   </div>
                   
                   {/* Content */}
                   <div className="p-8 lg:p-12 flex flex-col justify-center">
-                    <h2 className="text-4xl md:text-5xl font-black uppercase mb-4 group-hover:text-yellow-400 transition-colors">
+                    <h2 className="text-4xl md:text-5xl font-black uppercase mb-4 group-hover:text-pink-500 transition-colors">
                       {featuredProduct.title}
                     </h2>
                     {featuredProduct.description && (
@@ -134,11 +134,11 @@ export default function Shop() {
                       </p>
                     )}
                     {featuredProduct.variants?.nodes?.[0]?.price?.amount && (
-                      <p className="text-4xl font-black text-yellow-500 mb-8">
+                      <p className="text-4xl font-black text-pink-500 mb-8">
                         £{Number(featuredProduct.variants.nodes[0].price.amount).toFixed(0)}
                       </p>
                     )}
-                    <div className="flex items-center gap-2 text-yellow-400 font-black uppercase group-hover:text-white transition-colors">
+                    <div className="flex items-center gap-2 text-pink-500 font-black uppercase group-hover:text-white transition-colors">
                       VIEW PRODUCT
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                     </div>
@@ -171,7 +171,7 @@ export default function Shop() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-20 bg-white/5 rounded-2xl border border-white/10"
             >
-              <ShoppingBag className="w-20 h-20 mx-auto mb-6 text-yellow-500/30" />
+              <ShoppingBag className="w-20 h-20 mx-auto mb-6 text-pink-500/30" />
               <h3 className="text-2xl font-black mb-2">SHOP COMING SOON</h3>
               <p className="text-white/60 mb-2">
                 Shopify Storefront isn't configured for this deployment yet.
@@ -196,7 +196,7 @@ export default function Shop() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-20 bg-white/5 rounded-2xl border border-white/10"
             >
-              <ShoppingBag className="w-20 h-20 mx-auto mb-6 text-yellow-500/30" />
+              <ShoppingBag className="w-20 h-20 mx-auto mb-6 text-pink-500/30" />
               <h3 className="text-2xl font-black mb-2">NO PRODUCTS YET</h3>
               <p className="text-white/60">Check back soon for drops.</p>
             </motion.div>
@@ -216,7 +216,7 @@ export default function Shop() {
                     transition={{ delay: idx * 0.05 }}
                   >
                     <Link to={href}>
-                      <div className="group bg-white/5 border border-white/10 hover:border-yellow-500/50 rounded-xl overflow-hidden transition-all">
+                      <div className="group bg-white/5 border border-white/10 hover:border-pink-500/50 rounded-xl overflow-hidden transition-all">
                         {/* Image */}
                         <div className="relative aspect-square overflow-hidden">
                           {primaryUrl ? (
@@ -237,19 +237,19 @@ export default function Shop() {
                               )}
                             </>
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-yellow-500/10 to-orange-500/10 flex items-center justify-center">
-                              <ShoppingBag className="w-16 h-16 text-yellow-500/30" />
+                            <div className="w-full h-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
+                              <ShoppingBag className="w-16 h-16 text-pink-500/30" />
                             </div>
                           )}
                         </div>
                         
                         {/* Content */}
                         <div className="p-5">
-                          <h3 className="text-lg font-black uppercase mb-2 group-hover:text-yellow-400 transition-colors">
+                          <h3 className="text-lg font-black uppercase mb-2 group-hover:text-pink-500 transition-colors">
                             {p.title}
                           </h3>
                           {p?.variants?.nodes?.[0]?.price?.amount && (
-                            <p className="text-2xl font-black text-yellow-500">
+                            <p className="text-2xl font-black text-pink-500">
                               £{Number(p.variants.nodes[0].price.amount).toFixed(0)}
                             </p>
                           )}
@@ -272,7 +272,7 @@ export default function Shop() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <ShoppingBag className="w-16 h-16 mx-auto mb-6 text-yellow-500" />
+            <ShoppingBag className="w-16 h-16 mx-auto mb-6 text-pink-500" />
             <h2 className="text-3xl md:text-5xl font-black italic mb-6">
               SUPPORT THE PLATFORM
             </h2>
@@ -281,7 +281,7 @@ export default function Shop() {
             </p>
             <Button
               onClick={() => openCartDrawer('shopify')}
-              className="bg-yellow-500 hover:bg-white text-black font-black uppercase px-12 py-6 text-xl"
+              className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-12 py-6 text-xl"
             >
               <ShoppingCart className="w-6 h-6 mr-3" />
               VIEW CART

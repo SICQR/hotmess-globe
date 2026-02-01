@@ -58,17 +58,17 @@ export default function Radio() {
           <motion.div 
             animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
             transition={{ duration: 3, repeat: Infinity }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border-2 border-purple-500/30"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border-2 border-pink-500/30"
           />
           <motion.div 
             animate={{ scale: [1.2, 1, 1.2], opacity: [0.15, 0.3, 0.15] }}
             transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full border border-purple-500/20"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full border border-pink-500/20"
           />
           <motion.div 
             animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
             transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full border border-purple-500/10"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full border border-pink-500/10"
           />
         </div>
 
@@ -87,7 +87,7 @@ export default function Radio() {
           <h1 className="text-[12vw] md:text-[8vw] font-black italic leading-[0.85] tracking-tighter mb-4">
             HOTMESS
           </h1>
-          <h2 className="text-[8vw] md:text-[5vw] font-black italic leading-[0.85] tracking-tighter mb-8 text-purple-400">
+          <h2 className="text-[8vw] md:text-[5vw] font-black italic leading-[0.85] tracking-tighter mb-8 text-pink-500">
             RADIO<span className="text-white">.</span>
           </h2>
           
@@ -102,7 +102,7 @@ export default function Radio() {
           <div className="flex flex-wrap gap-6 justify-center">
             <Button 
               onClick={openRadio}
-              className="bg-purple-500 hover:bg-white text-white hover:text-black font-black uppercase px-12 py-7 text-xl"
+              className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-12 py-7 text-xl"
             >
               <Play className="w-7 h-7 mr-3" />
               {isRadioOpen ? 'NOW PLAYING' : 'LISTEN LIVE'}
@@ -126,7 +126,7 @@ export default function Radio() {
             <motion.div 
               animate={{ y: [0, 12, 0] }}
               transition={{ duration: 1.5, repeat: Infinity }}
-              className="w-1.5 h-1.5 bg-purple-500 rounded-full"
+              className="w-1.5 h-1.5 bg-pink-500 rounded-full"
             />
           </div>
         </motion.div>
@@ -141,9 +141,9 @@ export default function Radio() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <p className="text-sm uppercase tracking-[0.4em] text-purple-400 mb-4">PROGRAMMING</p>
+            <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">PROGRAMMING</p>
             <h2 className="text-5xl md:text-7xl font-black italic mb-6">
-              THE SHOWS<span className="text-purple-500">.</span>
+              THE SHOWS<span className="text-pink-500">.</span>
             </h2>
             <p className="text-xl text-white/60 max-w-2xl mx-auto">
               Three tentpoles. Different vibes. Same commitment to the culture.
@@ -160,11 +160,11 @@ export default function Radio() {
                 transition={{ delay: idx * 0.1 }}
               >
                 <Link to={`/music/shows/${show.slug}`}>
-                  <div className="group relative h-[500px] overflow-hidden rounded-2xl border border-white/10 hover:border-purple-500/50 transition-all">
+                  <div className="group relative h-[500px] overflow-hidden rounded-2xl border border-white/10 hover:border-pink-500/50 transition-all">
                     <div className={`absolute inset-0 bg-gradient-to-br ${
-                      idx === 0 ? 'from-pink-500/40 to-purple-900/60' :
-                      idx === 1 ? 'from-cyan-500/40 to-blue-900/60' :
-                      'from-yellow-500/40 to-orange-900/60'
+                      idx === 0 ? 'from-pink-500/40 to-black/60' :
+                      idx === 1 ? 'from-white/20 to-black/60' :
+                      'from-white/10 to-black/60'
                     }`} />
                     
                     <div className="relative h-full flex flex-col justify-end p-8">
@@ -182,7 +182,7 @@ export default function Radio() {
                         <p className="text-white/60 mb-6">
                           {show.tagline}
                         </p>
-                        <div className="flex items-center gap-2 text-sm font-black text-purple-400 group-hover:text-white transition-colors">
+                        <div className="flex items-center gap-2 text-sm font-black text-pink-500 group-hover:text-white transition-colors">
                           VIEW SHOW
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
                         </div>
@@ -205,7 +205,7 @@ export default function Radio() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <p className="text-sm uppercase tracking-[0.4em] text-purple-400 mb-4">SCHEDULE</p>
+            <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">SCHEDULE</p>
             <h2 className="text-4xl md:text-5xl font-black italic mb-4">
               NEXT UP
             </h2>
@@ -221,13 +221,13 @@ export default function Radio() {
                 transition={{ delay: idx * 0.1 }}
               >
                 <Link to={`/music/shows/${show.slug}`}>
-                  <div className="group flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white/5 border border-white/10 hover:border-purple-500/50 rounded-xl transition-all">
+                  <div className="group flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white/5 border border-white/10 hover:border-pink-500/50 rounded-xl transition-all">
                     <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                        <RadioIcon className="w-8 h-8 text-purple-500" />
+                      <div className="w-16 h-16 bg-pink-500/20 rounded-lg flex items-center justify-center">
+                        <RadioIcon className="w-8 h-8 text-pink-500" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-black uppercase group-hover:text-purple-400 transition-colors">
+                        <h3 className="text-xl font-black uppercase group-hover:text-pink-500 transition-colors">
                           {show.title}
                         </h3>
                         <p className="text-white/50">{show.tagline}</p>
@@ -235,14 +235,14 @@ export default function Radio() {
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="text-right">
-                        <p className="text-3xl font-mono font-black text-purple-400">
+                        <p className="text-3xl font-mono font-black text-pink-500">
                           {nextEpisode.startTime}
                         </p>
                         <p className="text-sm text-white/50 uppercase">
                           {format(nextEpisode.date, 'EEE d MMM')}
                         </p>
                       </div>
-                      <ArrowRight className="w-6 h-6 text-white/30 group-hover:text-purple-500 group-hover:translate-x-2 transition-all" />
+                      <ArrowRight className="w-6 h-6 text-white/30 group-hover:text-pink-500 group-hover:translate-x-2 transition-all" />
                     </div>
                   </div>
                 </Link>
@@ -379,16 +379,16 @@ export default function Radio() {
           viewport={{ once: true }}
           className="max-w-3xl mx-auto"
         >
-          <RadioIcon className="w-20 h-20 mx-auto mb-8 text-purple-500" />
+          <RadioIcon className="w-20 h-20 mx-auto mb-8 text-pink-500" />
           <h2 className="text-4xl md:text-6xl font-black italic mb-6">
-            TUNE IN<span className="text-purple-500">.</span>
+            TUNE IN<span className="text-pink-500">.</span>
           </h2>
           <p className="text-xl text-white/60 mb-10">
             The sound of London's queer underground. Always on.
           </p>
           <Button 
             onClick={openRadio}
-            className="bg-purple-500 hover:bg-white text-white hover:text-black font-black uppercase px-14 py-8 text-2xl"
+            className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-14 py-8 text-2xl"
           >
             <Play className="w-8 h-8 mr-3" />
             LISTEN NOW

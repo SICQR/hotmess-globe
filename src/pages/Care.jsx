@@ -177,7 +177,7 @@ export default function Care() {
             </div>
             <div className="h-3 bg-white/10 rounded-full overflow-hidden">
               <motion.div 
-                className="h-full bg-gradient-to-r from-green-500 to-cyan-500"
+                className="h-full bg-pink-500"
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.3 }}
@@ -239,7 +239,7 @@ export default function Care() {
           className="mb-20"
         >
           <div className="flex items-center gap-4 mb-8">
-            <Users className="w-10 h-10 text-purple-500" />
+            <Users className="w-10 h-10 text-pink-500" />
             <div>
               <h2 className="text-4xl md:text-5xl font-black italic">COMMUNITY RESOURCES</h2>
               <p className="text-white/50">LGBT+ support organizations</p>
@@ -254,12 +254,12 @@ export default function Care() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="bg-white/5 border border-white/10 hover:border-purple-500/50 rounded-xl p-6 transition-all"
+                className="bg-white/5 border border-white/10 hover:border-pink-500/50 rounded-xl p-6 transition-all"
               >
                 <h3 className="font-black text-xl mb-3">{resource.name}</h3>
                 <a 
                   href={`tel:${resource.contact.replace(/\s/g, '')}`} 
-                  className="text-2xl font-mono text-purple-400 hover:text-purple-300 block mb-3"
+                  className="text-2xl font-mono text-pink-500 hover:text-purple-300 block mb-3"
                 >
                   {resource.contact}
                 </a>
@@ -285,14 +285,14 @@ export default function Care() {
           className="mb-20"
         >
           <div className="flex items-center gap-4 mb-8">
-            <Shield className="w-10 h-10 text-yellow-500" />
+            <Shield className="w-10 h-10 text-white" />
             <div>
               <h2 className="text-4xl md:text-5xl font-black italic">CONSENT & BOUNDARIES</h2>
               <p className="text-white/50">Non-negotiable. Always.</p>
             </div>
           </div>
           
-          <div className="bg-yellow-500/10 border-2 border-yellow-500 rounded-2xl p-8">
+          <div className="bg-white/5 border-2 border-white/20 rounded-2xl p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
               {[
                 'Consent is continuous — you can change your mind',
@@ -303,7 +303,7 @@ export default function Care() {
                 'Never feel pressured — your safety comes first'
               ].map((item, idx) => (
                 <div key={idx} className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-1" />
+                  <CheckCircle className="w-6 h-6 text-pink-500 flex-shrink-0 mt-1" />
                   <span className="font-bold">{item}</span>
                 </div>
               ))}
