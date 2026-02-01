@@ -46,7 +46,7 @@ export default function Radio() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="/images/HOTMESS RADIO BRUTAL.jpg" 
+            src="/images/hotmess-radio-hero.png" 
             alt="HOTMESS Radio" 
             className="w-full h-full object-cover"
           />
