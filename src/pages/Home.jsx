@@ -521,36 +521,89 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. SHOP SECTION - Full width with product preview */}
-      <section className="relative min-h-[60vh] flex items-center bg-gradient-to-br from-yellow-950/30 via-black to-orange-950/30">
+      {/* 7. OUR BRANDS - In-house drops */}
+      <section className="py-20 px-6 bg-black border-y border-white/10">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <p className="text-sm uppercase tracking-[0.4em] text-yellow-400 mb-4">IN-HOUSE BRANDS</p>
+            <h2 className="text-5xl md:text-7xl font-black italic mb-6">
+              OUR DROPS<span className="text-yellow-500">.</span>
+            </h2>
+            <p className="text-lg text-white/50 max-w-xl mx-auto">
+              Limited edition. No restocks. When it's gone, it's gone.
+            </p>
+          </motion.div>
+
+          {/* Brand Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+            {[
+              { name: 'RAW', tagline: 'Unfiltered', color: 'from-red-500 to-orange-500', textColor: 'text-red-400' },
+              { name: 'HUNG AND HIGH', tagline: 'Party essentials', color: 'from-purple-500 to-pink-500', textColor: 'text-purple-400' },
+              { name: 'SUPERHUNG', tagline: 'Statement pieces', color: 'from-cyan-500 to-blue-500', textColor: 'text-cyan-400' },
+              { name: 'SUPERHIGH', tagline: 'Elevated', color: 'from-green-500 to-cyan-500', textColor: 'text-green-400' },
+            ].map((brand, i) => (
+              <motion.div
+                key={brand.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Link to={`/market?brand=${brand.name.toLowerCase().replace(/ /g, '-')}`} className="group block">
+                  <div className={`aspect-square rounded-2xl bg-gradient-to-br ${brand.color} p-1`}>
+                    <div className="w-full h-full bg-black rounded-xl flex flex-col items-center justify-center group-hover:bg-black/80 transition-colors">
+                      <span className={`text-2xl md:text-3xl font-black ${brand.textColor}`}>{brand.name}</span>
+                      <span className="text-xs text-white/50 uppercase tracking-wider mt-2">{brand.tagline}</span>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Link to="/market?category=drops">
+              <Button className="bg-yellow-500 hover:bg-white text-black font-black uppercase px-10 py-6 text-lg">
+                <ShoppingBag className="w-6 h-6 mr-3" />
+                SHOP DROPS
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. MESS MARKET - Community marketplace */}
+      <section className="relative min-h-[60vh] flex items-center bg-gradient-to-br from-amber-950/30 via-black to-orange-950/30">
         <div className="w-full max-w-7xl mx-auto px-6 py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Product card with image */}
+            {/* Categories */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               className="order-2 lg:order-1"
             >
-              <Link to="/market" className="group block">
-                <div className="relative bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-yellow-500/50 transition-all">
-                  <div className="absolute top-4 right-4 z-10 bg-yellow-500 text-black text-sm font-black uppercase px-4 py-2 rounded-full">
-                    NEW DROP
-                  </div>
-                  <div className="aspect-square overflow-hidden">
-                    <img 
-                      src="/images/hero/hero-main.png" 
-                      alt="HOTMESS Merch"
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <p className="text-white/50 text-sm uppercase tracking-wider mb-2">Limited Edition</p>
-                    <h3 className="text-2xl font-black mb-2 group-hover:text-yellow-400 transition-colors">HOTMESS MERCH</h3>
-                    <p className="text-3xl font-black text-yellow-500">£35</p>
-                  </div>
-                </div>
-              </Link>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { name: 'PRELOVED', desc: 'Secondhand finds', icon: '♻️', link: '/market?category=preloved' },
+                  { name: 'DIGITAL', desc: 'Content & assets', icon: '💾', link: '/market?category=digital' },
+                  { name: 'RETAIL', desc: 'Partner brands', icon: '🏪', link: '/market?category=retail' },
+                  { name: 'ALL', desc: 'Browse everything', icon: '🛒', link: '/market' },
+                ].map((cat) => (
+                  <Link key={cat.name} to={cat.link} className="group">
+                    <div className="aspect-square rounded-xl bg-white/5 border border-white/10 hover:border-amber-500/50 transition-all flex flex-col items-center justify-center p-6">
+                      <span className="text-4xl mb-3">{cat.icon}</span>
+                      <span className="font-black text-lg group-hover:text-amber-400 transition-colors">{cat.name}</span>
+                      <span className="text-xs text-white/50 mt-1">{cat.desc}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </motion.div>
 
             {/* Content */}
@@ -560,30 +613,37 @@ export default function Home() {
               viewport={{ once: true }}
               className="order-1 lg:order-2"
             >
-              <p className="text-sm uppercase tracking-[0.4em] text-yellow-400 mb-4">
-                MESSMARKET
+              <p className="text-sm uppercase tracking-[0.4em] text-amber-400 mb-4">
+                COMMUNITY MARKETPLACE
               </p>
               <h2 className="text-5xl md:text-7xl font-black italic mb-6">
-                SHOP<span className="text-yellow-500">.</span>
+                MESS<br/>MARKET<span className="text-amber-500">.</span>
               </h2>
               <p className="text-xl md:text-2xl text-white/70 mb-4">
-                Support the platform
+                Buy. Sell. Trade.
               </p>
               <p className="text-lg text-white/50 mb-10 max-w-lg">
-                Limited drops. Exclusive merch. Fund the culture without extraction.
+                Peer-to-peer marketplace. Preloved gems, digital content, and curated retail partners. Community commerce.
               </p>
-              <Link to="/market">
-                <Button className="bg-yellow-500 hover:bg-white text-black font-black uppercase px-10 py-6 text-lg">
-                  <ShoppingBag className="w-6 h-6 mr-3" />
-                  SHOP NOW
-                </Button>
-              </Link>
+              <div className="flex flex-wrap gap-4">
+                <Link to="/market">
+                  <Button className="bg-amber-500 hover:bg-white text-black font-black uppercase px-10 py-6 text-lg">
+                    <ShoppingBag className="w-6 h-6 mr-3" />
+                    BROWSE MARKET
+                  </Button>
+                </Link>
+                <Link to="/sell">
+                  <Button variant="outline" className="border-2 border-white/30 text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
+                    START SELLING
+                  </Button>
+                </Link>
+              </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* 8. B2B SECTION - For Venues */}
+      {/* 9. B2B SECTION - For Venues */}
       <section className="py-24 px-6 bg-gradient-to-r from-cyan-950/20 via-black to-cyan-950/20 border-y border-white/10">
         <div className="max-w-5xl mx-auto text-center">
           <motion.div
@@ -613,7 +673,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 9. CARE SECTION */}
+      {/* 10. CARE SECTION */}
       <section className="py-32 px-6 bg-gradient-to-b from-black via-red-950/10 to-black">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
