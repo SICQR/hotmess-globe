@@ -210,13 +210,22 @@ export default function Social() {
   const { data: currentUser } = useCurrentUser();
   const { items: apiProfiles, isLoadingInitial } = useInfiniteProfiles();
   
+  // Timeout to force show demo profiles if API is slow
+  const [forceDemo, setForceDemo] = useState(false);
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      const timer = setTimeout(() => setForceDemo(true), 3000); // 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, []);
+  
   // Use demo profiles as fallback when API is empty/slow (dev mode)
   const profiles = useMemo(() => {
     if (apiProfiles.length > 0) return apiProfiles;
-    // In dev mode, use demo profiles after a short wait
-    if (import.meta.env.DEV && !isLoadingInitial) return DEMO_PROFILES;
+    // In dev mode, use demo profiles after timeout or when loading completes empty
+    if (import.meta.env.DEV && (forceDemo || !isLoadingInitial)) return DEMO_PROFILES;
     return [];
-  }, [apiProfiles, isLoadingInitial]);
+  }, [apiProfiles, isLoadingInitial, forceDemo]);
   
   // Location
   const { location: liveLocation } = useLiveViewerLocation({
@@ -568,7 +577,7 @@ export default function Social() {
 
       {/* Main Content */}
       <main className="pb-20">
-        {isLoadingInitial ? (
+        {isLoadingInitial && profiles.length === 0 && !forceDemo ? (
           <div className="flex items-center justify-center h-[60vh]">
             <div className="w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full animate-spin" />
           </div>
@@ -598,7 +607,7 @@ export default function Social() {
                   onMessage={handleMessageProfile}
                   showQuickActions={true}
                   columns={3}
-                  loading={isLoadingInitial}
+                  loading={isLoadingInitial && !forceDemo && profiles.length === 0}
                   emptyMessage="No one nearby. Try expanding your distance filter."
                 />
               </motion.div>

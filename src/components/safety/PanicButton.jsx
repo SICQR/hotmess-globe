@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AlertTriangle, MapPin, Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,9 +14,103 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 
+/**
+ * PanicButton - Discrete SOS trigger using hardware volume buttons
+ * 
+ * Trigger: Press volume button 5 times quickly (within 2 seconds)
+ * This is discrete - no visible button on screen
+ */
+
+// Number of rapid presses needed to trigger
+const REQUIRED_PRESSES = 5;
+// Time window for presses (ms)
+const TIME_WINDOW = 2000;
+
 export default function PanicButton() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [sendingAlerts, setSendingAlerts] = useState(false);
+  
+  // Track volume button presses
+  const pressTimesRef = useRef([]);
+  const toastShownRef = useRef(false);
+  
+  // Listen for volume button presses (detected via volume change events)
+  const handleVolumePress = useCallback(() => {
+    const now = Date.now();
+    pressTimesRef.current.push(now);
+    
+    // Filter to only recent presses within the time window
+    pressTimesRef.current = pressTimesRef.current.filter(
+      (time) => now - time < TIME_WINDOW
+    );
+    
+    // Check if we have enough presses
+    if (pressTimesRef.current.length >= REQUIRED_PRESSES) {
+      pressTimesRef.current = []; // Reset
+      setShowConfirm(true);
+    } else if (pressTimesRef.current.length >= 3 && !toastShownRef.current) {
+      // Show hint after 3 presses
+      toastShownRef.current = true;
+      toast.info(`${REQUIRED_PRESSES - pressTimesRef.current.length} more for SOS`, {
+        duration: 2000,
+        icon: '🆘',
+      });
+      setTimeout(() => { toastShownRef.current = false; }, 2000);
+    }
+  }, []);
+  
+  useEffect(() => {
+    // Method 1: Listen for keyboard volume keys (desktop/laptop)
+    const handleKeyDown = (e) => {
+      if (e.key === 'AudioVolumeUp' || e.key === 'AudioVolumeDown' || 
+          e.code === 'VolumeUp' || e.code === 'VolumeDown') {
+        handleVolumePress();
+      }
+    };
+    
+    // Method 2: Listen for volume change events (mobile)
+    // Note: This works when the page is focused on mobile browsers
+    let lastVolume = null;
+    const checkVolume = () => {
+      if (typeof navigator !== 'undefined' && 'mediaDevices' in navigator) {
+        // Try to detect volume changes via audio context
+        try {
+          const audio = new Audio();
+          if (lastVolume !== null && audio.volume !== lastVolume) {
+            handleVolumePress();
+          }
+          lastVolume = audio.volume;
+        } catch {
+          // Ignore
+        }
+      }
+    };
+    
+    // Method 3: Use a hidden video element to detect hardware volume changes
+    const setupMediaVolumeListener = () => {
+      const video = document.createElement('video');
+      video.style.display = 'none';
+      video.muted = true;
+      document.body.appendChild(video);
+      
+      video.addEventListener('volumechange', handleVolumePress);
+      
+      return () => {
+        video.removeEventListener('volumechange', handleVolumePress);
+        video.remove();
+      };
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    const cleanupMedia = setupMediaVolumeListener();
+    const volumeCheckInterval = setInterval(checkVolume, 100);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      cleanupMedia();
+      clearInterval(volumeCheckInterval);
+    };
+  }, [handleVolumePress]);
 
   const sendSOSAlerts = async () => {
     setSendingAlerts(true);
@@ -106,22 +199,14 @@ export default function PanicButton() {
 
   return (
     <>
-      <Button
-        onClick={() => setShowConfirm(true)}
-        variant="ghost"
-        size="sm"
-        className="fixed bottom-20 left-4 md:bottom-4 md:left-4 z-40 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-500"
-      >
-        <AlertTriangle className="w-4 h-4 mr-2" />
-        PANIC
-      </Button>
-
+      {/* No visible button - SOS triggered by pressing volume button 5 times quickly */}
+      
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
         <AlertDialogContent className="bg-black border-red-500">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-red-500 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              🚨 Emergency Panic
+              🚨 Emergency SOS
             </AlertDialogTitle>
             <AlertDialogDescription className="text-white/80 space-y-3">
               <p className="font-bold text-white">This will:</p>
@@ -158,4 +243,12 @@ export default function PanicButton() {
       </AlertDialog>
     </>
   );
+}
+
+/**
+ * Export a helper to allow manual triggering from other components (e.g., Settings)
+ */
+export function usePanicTrigger() {
+  const [show, setShow] = useState(false);
+  return { showPanic: show, triggerPanic: () => setShow(true), closePanic: () => setShow(false) };
 }
