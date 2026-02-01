@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '../utils';
-import { MapPin, Zap, Search, Plus } from 'lucide-react';
+import { MapPin, Zap, Search, Plus, Filter, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -27,7 +27,7 @@ export default function Beacons() {
     return matchesSearch && matchesKind && matchesCity;
   });
 
-  const cities = [...new Set(beacons.map(b => b.city))];
+  const cities = [...new Set(beacons.map(b => b.city).filter(Boolean))];
 
   const BEACON_COLORS = {
     event: '#FF1493',
@@ -38,46 +38,61 @@ export default function Beacons() {
     private: '#00D9FF',
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-white/60">Loading beacons...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8 relative">
-      {/* Background effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-20 left-20 w-80 h-80 bg-[#FF1493]/5 rounded-full blur-[150px]" />
-        <div className="absolute bottom-20 right-20 w-80 h-80 bg-[#39FF14]/5 rounded-full blur-[150px]" />
-      </div>
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2 text-gradient-hot">
-              Beacons
-            </h1>
-            <p className="text-white/60">{filteredBeacons.length} active beacons</p>
+    <div className="min-h-screen bg-black text-white">
+      
+      {/* 1. HERO */}
+      <section className="relative py-20 md:py-28 px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/50 via-black to-pink-950/30" />
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative z-10 max-w-7xl mx-auto"
+        >
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+              <p className="text-sm uppercase tracking-[0.4em] text-cyan-400 mb-4">LOCATION DROPS</p>
+              <h1 className="text-5xl md:text-7xl font-black italic mb-4">
+                BEACONS<span className="text-cyan-500">.</span>
+              </h1>
+              <p className="text-xl text-white/60 max-w-xl">
+                Drop a pin. Signal your presence. Find what's happening around you.
+              </p>
+              <p className="text-base text-white/40 mt-2">{filteredBeacons.length} active beacons</p>
+            </div>
+            
+            <div className="flex gap-3">
+              <Link to="/pulse">
+                <Button variant="outline" className="border-2 border-white/20 text-white hover:bg-white hover:text-black font-black uppercase">
+                  <Globe className="w-5 h-5 mr-2" />
+                  MAP VIEW
+                </Button>
+              </Link>
+              <Link
+                to={createPageUrl('CreateBeacon')}
+                onClick={async (e) => {
+                  const ok = await base44.auth.requireProfile(createPageUrl('CreateBeacon'));
+                  if (!ok) e.preventDefault();
+                }}
+              >
+                <Button className="bg-cyan-500 hover:bg-white text-black font-black uppercase">
+                  <Plus className="w-5 h-5 mr-2" />
+                  CREATE
+                </Button>
+              </Link>
+            </div>
           </div>
-          <Link
-            to={createPageUrl('CreateBeacon')}
-            onClick={async (e) => {
-              const ok = await base44.auth.requireProfile(createPageUrl('CreateBeacon'));
-              if (!ok) e.preventDefault();
-            }}
-          >
-            <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
-              <Plus className="w-4 h-4 mr-2" />
-              Create
-            </Button>
-          </Link>
-        </div>
+        </motion.div>
+      </section>
 
-        {/* Filters */}
-        <div className="glass border border-white/10 rounded-xl p-4 mb-6 hover:border-[#FF1493]/20 transition-all duration-300">
+      {/* 2. FILTERS */}
+      <section className="px-6 py-6 bg-black border-y border-white/10 sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-3 mb-4">
+            <Filter className="w-4 h-4 text-cyan-500" />
+            <span className="text-xs uppercase tracking-wider font-bold text-cyan-400">Filters</span>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -85,14 +100,14 @@ export default function Beacons() {
                 placeholder="Search beacons..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-black border-white/20 text-white"
+                className="pl-10 bg-white/5 border-white/20 text-white h-12"
               />
             </div>
             <Select value={kindFilter} onValueChange={setKindFilter}>
-              <SelectTrigger className="bg-black border-white/20 text-white">
+              <SelectTrigger className="bg-white/5 border-white/20 text-white h-12">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black text-white border-white/20">
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="event">Event</SelectItem>
                 <SelectItem value="venue">Venue</SelectItem>
@@ -103,10 +118,10 @@ export default function Beacons() {
               </SelectContent>
             </Select>
             <Select value={cityFilter} onValueChange={setCityFilter}>
-              <SelectTrigger className="bg-black border-white/20 text-white">
+              <SelectTrigger className="bg-white/5 border-white/20 text-white h-12">
                 <SelectValue placeholder="City" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black text-white border-white/20">
                 <SelectItem value="all">All Cities</SelectItem>
                 {cities.map(city => (
                   <SelectItem key={city} value={city}>{city}</SelectItem>
@@ -115,65 +130,94 @@ export default function Beacons() {
             </Select>
           </div>
         </div>
+      </section>
 
-        {/* Beacons Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredBeacons.map((beacon, idx) => (
-            <Link key={beacon.id} to={createPageUrl(`BeaconDetail?id=${beacon.id}`)}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                whileHover={{ scale: 1.02 }}
-                className="glass border border-white/10 rounded-xl p-5 hover:border-[#FF1493]/30 hover:shadow-glow-hot/10 transition-all cursor-pointer"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <span
-                    className="px-2 py-1 rounded text-xs font-bold uppercase tracking-wider"
-                    style={{
-                      backgroundColor: BEACON_COLORS[beacon.kind] || '#FF1493',
-                      color: '#000'
-                    }}
+      {/* 3. BEACONS GRID */}
+      <section className="px-6 py-12">
+        <div className="max-w-7xl mx-auto">
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} className="h-48 bg-white/5 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : filteredBeacons.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredBeacons.map((beacon, idx) => (
+                <Link key={beacon.id} to={createPageUrl(`BeaconDetail?id=${beacon.id}`)}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="group bg-white/5 border border-white/10 hover:border-cyan-500/50 rounded-xl p-6 transition-all"
                   >
-                    {beacon.kind}
-                  </span>
-                  {beacon.xp_scan && (
-                    <span className="text-xs text-[#FFEB3B] font-bold">+{beacon.xp_scan} XP</span>
-                  )}
-                </div>
-                
-                <h3 className="text-lg font-bold mb-2">{beacon.title}</h3>
-                
-                {beacon.description && (
-                  <p className="text-sm text-white/60 mb-3 line-clamp-2">
-                    {beacon.description}
-                  </p>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-white/60">
-                    <MapPin className="w-4 h-4" />
-                    <span>{beacon.city}</span>
-                  </div>
-                  {beacon.intensity && (
-                    <div className="flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-[#FF1493]" />
-                      <span className="text-xs font-bold">{Math.round(beacon.intensity * 100)}%</span>
+                    <div className="flex items-start justify-between mb-4">
+                      <span
+                        className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider"
+                        style={{
+                          backgroundColor: BEACON_COLORS[beacon.kind] || '#FF1493',
+                          color: '#000'
+                        }}
+                      >
+                        {beacon.kind}
+                      </span>
+                      {beacon.xp_scan && (
+                        <span className="text-sm text-yellow-400 font-black">+{beacon.xp_scan} XP</span>
+                      )}
                     </div>
-                  )}
-                </div>
-              </motion.div>
-            </Link>
-          ))}
-        </div>
+                    
+                    <h3 className="text-xl font-black mb-2 group-hover:text-cyan-400 transition-colors">
+                      {beacon.title}
+                    </h3>
+                    
+                    {beacon.description && (
+                      <p className="text-sm text-white/50 mb-4 line-clamp-2">
+                        {beacon.description}
+                      </p>
+                    )}
 
-        {filteredBeacons.length === 0 && (
-          <div className="text-center py-20">
-            <MapPin className="w-16 h-16 text-white/20 mx-auto mb-4" />
-            <p className="text-white/40 text-lg">No beacons found</p>
-          </div>
-        )}
-      </div>
+                    <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                      <div className="flex items-center gap-2 text-sm text-white/60">
+                        <MapPin className="w-4 h-4 text-cyan-500" />
+                        <span>{beacon.city || 'Unknown'}</span>
+                      </div>
+                      {beacon.intensity && (
+                        <div className="flex items-center gap-1">
+                          <Zap className="w-4 h-4 text-pink-500" />
+                          <span className="text-sm font-black text-pink-500">{Math.round(beacon.intensity * 100)}%</span>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-20 bg-white/5 rounded-2xl border border-white/10"
+            >
+              <MapPin className="w-20 h-20 text-white/20 mx-auto mb-6" />
+              <h3 className="text-2xl font-black mb-2">NO BEACONS FOUND</h3>
+              <p className="text-white/50 mb-8">Try adjusting your filters or create a new beacon</p>
+              <Link
+                to={createPageUrl('CreateBeacon')}
+                onClick={async (e) => {
+                  const ok = await base44.auth.requireProfile(createPageUrl('CreateBeacon'));
+                  if (!ok) e.preventDefault();
+                }}
+              >
+                <Button className="bg-cyan-500 hover:bg-white text-black font-black uppercase px-8 py-4">
+                  <Plus className="w-5 h-5 mr-2" />
+                  CREATE BEACON
+                </Button>
+              </Link>
+            </motion.div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

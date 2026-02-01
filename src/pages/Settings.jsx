@@ -25,7 +25,6 @@ export default function Settings() {
       try {
         const currentUser = await base44.auth.me();
         if (!currentUser) {
-          // If the session is missing/expired, bounce to Auth instead of crashing.
           base44.auth.redirectToLogin(window.location.href);
           return;
         }
@@ -79,139 +78,143 @@ export default function Settings() {
   if (!user) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-white/60">Loading...</div>
+        <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8 relative">
-      {/* Background effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-20 right-20 w-72 h-72 bg-[#FF1493]/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-20 left-20 w-72 h-72 bg-[#00D9FF]/5 rounded-full blur-[120px]" />
-      </div>
-      <div className="max-w-2xl mx-auto relative z-10">
-        {/* Header */}
+    <div className="min-h-screen bg-black text-white">
+      
+      {/* 1. HERO */}
+      <section className="relative py-16 md:py-24 px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/50 via-black to-purple-950/30" />
+        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="relative z-10 max-w-2xl mx-auto"
         >
-          <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2 text-gradient-hot">
-            Settings
+          <p className="text-sm uppercase tracking-[0.4em] text-white/40 mb-4">ACCOUNT</p>
+          <h1 className="text-5xl md:text-6xl font-black italic mb-4">
+            SETTINGS<span className="text-pink-500">.</span>
           </h1>
-          <p className="text-white/60">Manage your account and preferences</p>
+          <p className="text-xl text-white/60">
+            Manage your account and preferences
+          </p>
         </motion.div>
+      </section>
 
-        {/* Profile Section */}
-        <motion.div
+      <div className="max-w-2xl mx-auto px-6 pb-32">
+        
+        {/* 2. PROFILE SECTION */}
+        <motion.section
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="glass border border-[#FF1493]/20 rounded-xl p-6 mb-4 hover:border-[#FF1493]/40 hover:shadow-glow-hot/10 transition-all duration-300"
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-6"
         >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-[#FF1493]" />
-              <h2 className="text-xl font-bold uppercase tracking-wider">Profile</h2>
+          <div className="bg-white/5 border border-pink-500/20 rounded-2xl p-6 hover:border-pink-500/40 transition-all">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <User className="w-5 h-5 text-pink-500" />
+                <h2 className="text-xl font-bold uppercase tracking-wider">Profile</h2>
+              </div>
+              <Link to={createPageUrl('EditProfile')}>
+                <Button variant="outline" className="border-white/20 text-white font-black uppercase">
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Full Profile
+                </Button>
+              </Link>
             </div>
-            <Link to={createPageUrl('EditProfile')}>
-              <Button variant="outline" className="border-white/20 text-white">
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Full Profile
-              </Button>
-            </Link>
-          </div>
 
-          <div className="space-y-6">
-            {/* Avatar Upload */}
-            <div>
-              <label className="text-sm text-white/60 uppercase tracking-wider mb-3 block">
-                Profile Picture
-              </label>
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-2xl font-bold">{user.full_name?.[0] || 'U'}</span>
-                  )}
-                </div>
-                <div>
-                  <Button
-                    onClick={() => document.getElementById('avatar-upload').click()}
-                    disabled={uploading}
-                    variant="outline"
-                    className="border-white/20 text-white"
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    {uploading ? 'Uploading...' : 'Change Avatar'}
-                  </Button>
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                  />
+            <div className="space-y-6">
+              {/* Avatar Upload */}
+              <div>
+                <label className="text-sm text-white/60 uppercase tracking-wider mb-3 block">
+                  Profile Picture
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center overflow-hidden border-2 border-white/20">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-2xl font-bold">{user.full_name?.[0] || 'U'}</span>
+                    )}
+                  </div>
+                  <div>
+                    <Button
+                      onClick={() => document.getElementById('avatar-upload').click()}
+                      disabled={uploading}
+                      variant="outline"
+                      className="border-white/20 text-white font-black uppercase"
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      {uploading ? 'Uploading...' : 'Change Avatar'}
+                    </Button>
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div>
-              <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
-                Full Name
-              </label>
-              <Input
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="bg-black border-white/20 text-white"
-              />
-            </div>
+              <div>
+                <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
+                  Full Name
+                </label>
+                <Input
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="bg-white/5 border-white/20 text-white h-12"
+                />
+              </div>
 
-            <div>
-              <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
-                Email
-              </label>
-              <Input
-                value={user.email}
-                disabled
-                className="bg-black/50 border-white/10 text-white/40"
-              />
-            </div>
+              <div>
+                <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
+                  Email
+                </label>
+                <Input
+                  value={user.email}
+                  disabled
+                  className="bg-white/5 border-white/10 text-white/40 h-12"
+                />
+              </div>
 
-            <div className="pt-4 flex gap-3">
-              <Button onClick={handleSave} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
-              </Button>
-              <Button
-                onClick={() => {
-                  navigate(createUserProfileUrl(user, createPageUrl('Profile')));
-                }}
-                variant="outline"
-                className="border-white/20 text-white"
-              >
-                View Profile
-              </Button>
+              <div className="pt-4 flex gap-3">
+                <Button onClick={handleSave} className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase">
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Changes
+                </Button>
+                <Button
+                  onClick={() => navigate(createUserProfileUrl(user, createPageUrl('Profile')))}
+                  variant="outline"
+                  className="border-white/20 text-white font-black uppercase"
+                >
+                  View Profile
+                </Button>
+              </div>
             </div>
           </div>
-        </motion.div>
+        </motion.section>
 
-        {/* Notifications */}
-        <motion.div
+        {/* 3. NOTIFICATIONS */}
+        <motion.section
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="glass border border-[#00D9FF]/20 rounded-xl p-6 mb-4 hover:border-[#00D9FF]/40 hover:shadow-glow-cyan/10 transition-all duration-300"
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-6"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <Bell className="w-5 h-5 text-[#00D9FF]" />
-            <h2 className="text-xl font-bold uppercase tracking-wider">Notifications</h2>
-          </div>
+          <div className="bg-white/5 border border-cyan-500/20 rounded-2xl p-6 hover:border-cyan-500/40 transition-all">
+            <div className="flex items-center gap-3 mb-6">
+              <Bell className="w-5 h-5 text-cyan-500" />
+              <h2 className="text-xl font-bold uppercase tracking-wider">Notifications</h2>
+            </div>
 
-          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-semibold">Push Notifications</p>
@@ -220,197 +223,203 @@ export default function Settings() {
               <Switch checked={notifications} onCheckedChange={setNotifications} />
             </div>
           </div>
-        </motion.div>
+        </motion.section>
 
-        {/* Privacy */}
-        <motion.div
+        {/* 4. PRIVACY */}
+        <motion.section
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="glass border border-[#39FF14]/20 rounded-xl p-6 mb-4 hover:border-[#39FF14]/40 hover:shadow-glow-green/10 transition-all duration-300"
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-6"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <Shield className="w-5 h-5 text-[#39FF14]" />
-            <h2 className="text-xl font-bold uppercase tracking-wider">Privacy</h2>
-          </div>
-
-          <div className="space-y-6">
-            <div>
-              <label className="text-sm text-white/60 uppercase tracking-wider mb-3 block">
-                Location Privacy
-              </label>
-              <Select value={locationPrivacy} onValueChange={setLocationPrivacy}>
-                <SelectTrigger className="bg-black border-white/20 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="precise">Precise - Show exact location</SelectItem>
-                  <SelectItem value="fuzzy">Fuzzy - Show approximate area (recommended)</SelectItem>
-                  <SelectItem value="hidden">Hidden - Don't show location</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-white/40 mt-2">
-                Controls how your location is displayed on beacons and check-ins
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold">Public Profile</p>
-                <p className="text-sm text-white/60">Show your profile to other users</p>
-              </div>
-              <Switch checked={publicProfile} onCheckedChange={setPublicProfile} />
-            </div>
-
-            <div className="bg-[#00D9FF]/10 border border-[#00D9FF]/40 rounded-lg p-4">
-              <p className="text-xs text-white/80 leading-relaxed">
-                🔒 <span className="font-bold">Social Links Privacy:</span> Your social media links are only visible to mutual follows. Edit them in your full profile.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Data & Privacy */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="glass border border-[#B026FF]/20 rounded-xl p-6 mb-4 hover:border-[#B026FF]/40 hover:shadow-glow-purple/10 transition-all duration-300"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <Database className="w-5 h-5 text-[#B026FF]" />
-            <h2 className="text-xl font-bold uppercase tracking-wider">Data & Privacy</h2>
-          </div>
-
-          <div className="space-y-4">
-            <Link to={createPageUrl('DataExport')}>
-              <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <Download className="w-5 h-5 text-[#FF1493]" />
-                  <div>
-                    <p className="font-semibold">Export My Data</p>
-                    <p className="text-sm text-white/60">Download a copy of all your data (GDPR)</p>
-                  </div>
-                </div>
-                <span className="text-white/40">→</span>
-              </div>
-            </Link>
-
-            <Link to={createPageUrl('AccountDeletion')}>
-              <div className="flex items-center justify-between p-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/40 rounded-lg transition-colors cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <Trash2 className="w-5 h-5 text-red-500" />
-                  <div>
-                    <p className="font-semibold text-red-500">Delete Account</p>
-                    <p className="text-sm text-white/60">Permanently delete your account and data</p>
-                  </div>
-                </div>
-                <span className="text-red-500/60">→</span>
-              </div>
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Help & Support */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="glass border border-[#00D9FF]/20 rounded-xl p-6 mb-4 hover:border-[#00D9FF]/40 hover:shadow-glow-cyan/10 transition-all duration-300"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <HelpCircle className="w-5 h-5 text-[#00D9FF]" />
-            <h2 className="text-xl font-bold uppercase tracking-wider">Help & Support</h2>
-          </div>
-
-          <div className="space-y-4">
-            <Link to={createPageUrl('HelpCenter')}>
-              <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <HelpCircle className="w-5 h-5 text-[#00D9FF]" />
-                  <div>
-                    <p className="font-semibold">Help Center</p>
-                    <p className="text-sm text-white/60">Search FAQs and guides</p>
-                  </div>
-                </div>
-                <span className="text-white/40">→</span>
-              </div>
-            </Link>
-
-            <Link to={createPageUrl('Contact')}>
-              <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <MessageSquare className="w-5 h-5 text-[#FF1493]" />
-                  <div>
-                    <p className="font-semibold">Contact Support</p>
-                    <p className="text-sm text-white/60">Submit a support ticket</p>
-                  </div>
-                </div>
-                <span className="text-white/40">→</span>
-              </div>
-            </Link>
-
-            <Link to={createPageUrl('CommunityGuidelines')}>
-              <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-[#39FF14]" />
-                  <div>
-                    <p className="font-semibold">Community Guidelines</p>
-                    <p className="text-sm text-white/60">Rules and expectations</p>
-                  </div>
-                </div>
-                <span className="text-white/40">→</span>
-              </div>
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Developer Tools (Admin Only) */}
-        {user?.role === 'admin' || user?.role === 'superadmin' ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.55 }}
-            className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
-          >
+          <div className="bg-white/5 border border-green-500/20 rounded-2xl p-6 hover:border-green-500/40 transition-all">
             <div className="flex items-center gap-3 mb-6">
-              <Database className="w-5 h-5 text-yellow-500" />
-              <h2 className="text-xl font-bold uppercase tracking-wider">Developer Tools</h2>
+              <Shield className="w-5 h-5 text-green-500" />
+              <h2 className="text-xl font-bold uppercase tracking-wider">Privacy</h2>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <label className="text-sm text-white/60 uppercase tracking-wider mb-3 block">
+                  Location Privacy
+                </label>
+                <Select value={locationPrivacy} onValueChange={setLocationPrivacy}>
+                  <SelectTrigger className="bg-white/5 border-white/20 text-white h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black text-white border-white/20">
+                    <SelectItem value="precise">Precise - Show exact location</SelectItem>
+                    <SelectItem value="fuzzy">Fuzzy - Show approximate area (recommended)</SelectItem>
+                    <SelectItem value="hidden">Hidden - Don't show location</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-white/40 mt-2">
+                  Controls how your location is displayed on beacons and check-ins
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold">Public Profile</p>
+                  <p className="text-sm text-white/60">Show your profile to other users</p>
+                </div>
+                <Switch checked={publicProfile} onCheckedChange={setPublicProfile} />
+              </div>
+
+              <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
+                <p className="text-sm text-white/80">
+                  <span className="font-bold text-cyan-400">Social Links Privacy:</span> Your social media links are only visible to mutual follows.
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* 5. DATA & PRIVACY */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-6"
+        >
+          <div className="bg-white/5 border border-purple-500/20 rounded-2xl p-6 hover:border-purple-500/40 transition-all">
+            <div className="flex items-center gap-3 mb-6">
+              <Database className="w-5 h-5 text-purple-500" />
+              <h2 className="text-xl font-bold uppercase tracking-wider">Data & Privacy</h2>
             </div>
 
             <div className="space-y-4">
+              <Link to={createPageUrl('DataExport')}>
+                <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors">
+                  <div className="flex items-center gap-3">
+                    <Download className="w-5 h-5 text-pink-500" />
+                    <div>
+                      <p className="font-semibold">Export My Data</p>
+                      <p className="text-sm text-white/60">Download a copy of all your data (GDPR)</p>
+                    </div>
+                  </div>
+                  <span className="text-white/40">→</span>
+                </div>
+              </Link>
+
+              <Link to={createPageUrl('AccountDeletion')}>
+                <div className="flex items-center justify-between p-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/40 rounded-xl transition-colors">
+                  <div className="flex items-center gap-3">
+                    <Trash2 className="w-5 h-5 text-red-500" />
+                    <div>
+                      <p className="font-semibold text-red-400">Delete Account</p>
+                      <p className="text-sm text-white/60">Permanently delete your account and data</p>
+                    </div>
+                  </div>
+                  <span className="text-red-500/60">→</span>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* 6. HELP & SUPPORT */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-6"
+        >
+          <div className="bg-white/5 border border-cyan-500/20 rounded-2xl p-6 hover:border-cyan-500/40 transition-all">
+            <div className="flex items-center gap-3 mb-6">
+              <HelpCircle className="w-5 h-5 text-cyan-500" />
+              <h2 className="text-xl font-bold uppercase tracking-wider">Help & Support</h2>
+            </div>
+
+            <div className="space-y-4">
+              <Link to={createPageUrl('HelpCenter')}>
+                <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors">
+                  <div className="flex items-center gap-3">
+                    <HelpCircle className="w-5 h-5 text-cyan-500" />
+                    <div>
+                      <p className="font-semibold">Help Center</p>
+                      <p className="text-sm text-white/60">Search FAQs and guides</p>
+                    </div>
+                  </div>
+                  <span className="text-white/40">→</span>
+                </div>
+              </Link>
+
+              <Link to={createPageUrl('Contact')}>
+                <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors">
+                  <div className="flex items-center gap-3">
+                    <MessageSquare className="w-5 h-5 text-pink-500" />
+                    <div>
+                      <p className="font-semibold">Contact Support</p>
+                      <p className="text-sm text-white/60">Submit a support ticket</p>
+                    </div>
+                  </div>
+                  <span className="text-white/40">→</span>
+                </div>
+              </Link>
+
+              <Link to={createPageUrl('CommunityGuidelines')}>
+                <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors">
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-5 h-5 text-green-500" />
+                    <div>
+                      <p className="font-semibold">Community Guidelines</p>
+                      <p className="text-sm text-white/60">Rules and expectations</p>
+                    </div>
+                  </div>
+                  <span className="text-white/40">→</span>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* 7. DEVELOPER TOOLS (Admin Only) */}
+        {(user?.role === 'admin' || user?.role === 'superadmin') && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-6"
+          >
+            <div className="bg-white/5 border border-yellow-500/20 rounded-2xl p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Database className="w-5 h-5 text-yellow-500" />
+                <h2 className="text-xl font-bold uppercase tracking-wider">Developer Tools</h2>
+              </div>
+
               <Button
                 onClick={() => {
                   throw new Error('Sentry test error from Settings page');
                 }}
                 variant="outline"
-                className="w-full bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/40"
+                className="w-full bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/40 font-black uppercase"
               >
-                🐛 Test Sentry Error
+                Test Sentry Error
               </Button>
-              <p className="text-xs text-white/40 text-center">
+              <p className="text-xs text-white/40 text-center mt-2">
                 Throws a test error to verify Sentry is working
               </p>
             </div>
-          </motion.div>
-        ) : null}
+          </motion.section>
+        )}
 
-        {/* Account Actions */}
-        <motion.div
+        {/* 8. LOGOUT */}
+        <motion.section
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="glass border border-red-500/20 rounded-xl p-6"
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
         >
-          <Button
-            onClick={handleLogout}
-            variant="destructive"
-            className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-500 border border-red-500/40"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
-        </motion.div>
+          <div className="bg-white/5 border border-red-500/20 rounded-2xl p-6">
+            <Button
+              onClick={handleLogout}
+              className="w-full bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/40 font-black uppercase py-6"
+            >
+              <LogOut className="w-5 h-5 mr-2" />
+              Logout
+            </Button>
+          </div>
+        </motion.section>
       </div>
     </div>
   );
