@@ -1,16 +1,19 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Heart, Calendar, Zap, ArrowRight, Ghost, Play, Mic, Users, Sparkles, MapPin } from 'lucide-react';
+import { ShoppingBag, Heart, Calendar, Zap, ArrowRight, Ghost, Play, Mic, Users, Sparkles, MapPin, Disc, ChevronLeft, ChevronRight, Radio as RadioIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useServerNow } from '@/hooks/use-server-now';
 import { schedule, getNextEpisode } from '../components/radio/radioUtils';
+import { useRadio } from '../components/shell/RadioContext';
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
   const { serverNow } = useServerNow();
+  const { openRadio } = useRadio();
+  const releasesRef = useRef(null);
 
   // Get next radio show
   const nextRadioUp = useMemo(() => {
@@ -68,26 +71,41 @@ export default function Home() {
     fetchUser();
   }, []);
 
-  const tonightEvent = useMemo(() => {
+  const tonightEvents = useMemo(() => {
     const events = Array.isArray(recentBeacons)
       ? recentBeacons.filter((b) => String(b?.kind || '').toLowerCase() === 'event')
       : [];
-    return events[0] || null;
+    return events.slice(0, 4);
   }, [recentBeacons]);
+
+  // Mock releases for RAW CONVICT RECORDS carousel
+  const releases = [
+    { id: 1, title: 'HNHMESS', artist: 'Raw Convict', cover: '/images/hero/radio-cover.jpg', year: '2024' },
+    { id: 2, title: 'LATE NIGHT', artist: 'HOTMESS', cover: '/images/hero/hero-pink.jpg', year: '2024' },
+    { id: 3, title: 'UNDERGROUND', artist: 'Raw Convict', cover: '/images/hero/hero-red.jpg', year: '2024' },
+    { id: 4, title: 'AFTER HOURS', artist: 'HOTMESS', cover: '/images/hero/hero-green.jpg', year: '2024' },
+    { id: 5, title: 'DARK ROOM', artist: 'Raw Convict', cover: '/images/hero/hero-main.png', year: '2024' },
+  ];
+
+  const scrollReleases = (direction) => {
+    if (releasesRef.current) {
+      const scrollAmount = 300;
+      releasesRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
       
       {/* 1. HERO - Full viewport with image */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
         <div className="absolute inset-0">
           <img 
             src="/images/hero/hero-main.png" 
             alt="HOTMESS" 
-            className="w-full h-full object-cover opacity-60"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black" />
         </div>
 
         <motion.div
@@ -109,12 +127,13 @@ export default function Home() {
           </p>
 
           <div className="flex flex-wrap gap-6 justify-center">
-            <Link to="/music/live">
-              <Button className="bg-[#FF1493] hover:bg-white text-white hover:text-black font-black uppercase px-10 py-7 text-lg md:text-xl">
-                <Play className="w-6 h-6 mr-3" />
-                LISTEN LIVE
-              </Button>
-            </Link>
+            <Button 
+              onClick={openRadio}
+              className="bg-[#FF1493] hover:bg-white text-white hover:text-black font-black uppercase px-10 py-7 text-lg md:text-xl"
+            >
+              <Play className="w-6 h-6 mr-3" />
+              LISTEN LIVE
+            </Button>
             <Link to="/events">
               <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-10 py-7 text-lg md:text-xl backdrop-blur-sm">
                 <Zap className="w-6 h-6 mr-3" />
@@ -124,7 +143,6 @@ export default function Home() {
           </div>
         </motion.div>
 
-        {/* Scroll indicator */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -169,21 +187,19 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. RADIO SECTION - Full width with image */}
+      {/* 3. HOTMESS RADIO - Live Station */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
-        {/* Background Image */}
         <div className="absolute inset-0">
           <img 
             src="/images/hero/hero-pink.jpg" 
             alt="Radio" 
-            className="w-full h-full object-cover opacity-40"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/90 to-black/70" />
         </div>
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Content */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -191,40 +207,63 @@ export default function Home() {
             >
               <p className="text-sm uppercase tracking-[0.4em] text-purple-400 mb-4 flex items-center gap-3">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                LIVE NOW
+                LIVE 24/7
               </p>
-              <h2 className="text-5xl md:text-7xl font-black italic mb-6">
-                RADIO<span className="text-purple-500">.</span>
+              <h2 className="text-5xl md:text-7xl font-black italic mb-4">
+                HOTMESS<br/>RADIO<span className="text-purple-500">.</span>
               </h2>
               <p className="text-xl md:text-2xl text-white/70 mb-4">
-                {nextRadioUp?.show?.title || 'RAW CONVICT RADIO'}
+                The heartbeat of London's queer underground
               </p>
-              <p className="text-lg text-white/50 mb-10 max-w-lg">
-                The heartbeat of London's queer underground. Live shows, DJ culture, and music that moves you.
+              <p className="text-lg text-white/50 mb-6 max-w-lg">
+                24/7 live stream. DJ culture. Shows that care about the community. This is our frequency.
               </p>
-              <Link to="/music/live">
-                <Button className="bg-purple-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg">
+              {nextRadioUp && (
+                <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-8">
+                  <p className="text-xs text-white/40 uppercase tracking-wider mb-1">NEXT SHOW</p>
+                  <p className="text-lg font-black">{nextRadioUp.show.title}</p>
+                  <p className="text-sm text-purple-400">{nextRadioUp.nextEpisode.startTime}</p>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-4">
+                <Button 
+                  onClick={openRadio}
+                  className="bg-purple-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg"
+                >
                   <Play className="w-6 h-6 mr-3" />
                   LISTEN NOW
                 </Button>
-              </Link>
+                <Link to="/music/schedule">
+                  <Button variant="outline" className="border-2 border-white/30 text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
+                    <Calendar className="w-5 h-5 mr-3" />
+                    SCHEDULE
+                  </Button>
+                </Link>
+              </div>
             </motion.div>
 
-            {/* Album Art */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="hidden lg:block"
+              className="hidden lg:flex items-center justify-center"
             >
-              <div className="relative">
-                <img 
-                  src="/images/hero/radio-cover.jpg" 
-                  alt="Now Playing" 
-                  className="w-full max-w-md mx-auto rounded-2xl shadow-2xl shadow-purple-500/20"
+              <div className="relative w-80 h-80">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                  className="absolute inset-0 rounded-full border-4 border-purple-500/30"
                 />
-                <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
-                  <Play className="w-10 h-10 text-black ml-1" />
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+                  className="absolute inset-4 rounded-full border-2 border-pink-500/20"
+                />
+                <div className="absolute inset-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <RadioIcon className="w-24 h-24 text-white" />
+                </div>
+                <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
+                  <span className="text-black font-black text-xs">LIVE</span>
                 </div>
               </div>
             </motion.div>
@@ -232,32 +271,143 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. TONIGHT SECTION - Full width with image */}
+      {/* 4. RAW CONVICT RECORDS - Label & Releases */}
+      <section className="py-20 px-6 bg-black border-y border-white/10">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10"
+          >
+            <div>
+              <p className="text-sm uppercase tracking-[0.4em] text-orange-400 mb-4">THE LABEL</p>
+              <h2 className="text-4xl md:text-6xl font-black italic">
+                RAW CONVICT<br/>RECORDS<span className="text-orange-500">.</span>
+              </h2>
+              <p className="text-lg text-white/50 mt-4 max-w-xl">
+                Underground releases. No compromise. The sound of London's queer nightlife, pressed and distributed.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => scrollReleases('left')}
+                className="border-white/20 text-white w-12 h-12 p-0"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => scrollReleases('right')}
+                className="border-white/20 text-white w-12 h-12 p-0"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Releases Carousel */}
+          <div 
+            ref={releasesRef}
+            className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {releases.map((release, idx) => (
+              <motion.div
+                key={release.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                className="flex-shrink-0 w-64 snap-start"
+              >
+                <Link to="/music/releases" className="group block">
+                  <div className="relative aspect-square rounded-xl overflow-hidden mb-4">
+                    <img 
+                      src={release.cover} 
+                      alt={release.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Play className="w-16 h-16 text-white" />
+                    </div>
+                    <div className="absolute bottom-3 left-3 px-3 py-1 bg-orange-500 text-black text-xs font-black uppercase rounded-full">
+                      {release.year}
+                    </div>
+                  </div>
+                  <h3 className="font-black uppercase text-lg group-hover:text-orange-400 transition-colors">{release.title}</h3>
+                  <p className="text-white/50 text-sm">{release.artist}</p>
+                </Link>
+              </motion.div>
+            ))}
+            {/* View All Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex-shrink-0 w-64 snap-start"
+            >
+              <Link to="/music/releases" className="group block">
+                <div className="aspect-square rounded-xl border-2 border-dashed border-white/20 flex flex-col items-center justify-center hover:border-orange-500 transition-colors">
+                  <Disc className="w-16 h-16 text-white/30 group-hover:text-orange-500 transition-colors mb-4" />
+                  <span className="font-black uppercase text-white/50 group-hover:text-white transition-colors">VIEW ALL</span>
+                  <ArrowRight className="w-5 h-5 text-white/30 group-hover:text-orange-500 mt-2 transition-colors" />
+                </div>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. TONIGHT SECTION - Full width with real event previews */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
-        {/* Background Image */}
         <div className="absolute inset-0">
           <img 
             src="/images/hero/hero-green.jpg" 
             alt="Tonight" 
-            className="w-full h-full object-cover opacity-40"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-l from-black via-black/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-l from-black via-black/90 to-black/70" />
         </div>
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Image side */}
+            {/* Event Cards */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="hidden lg:block order-1"
+              className="order-2 lg:order-1"
             >
               <div className="grid grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="aspect-square bg-white/10 rounded-xl backdrop-blur-sm border border-white/10 flex items-center justify-center">
-                    <Calendar className="w-12 h-12 text-cyan-500/50" />
-                  </div>
+                {(tonightEvents.length > 0 ? tonightEvents : [1,2,3,4]).map((event, i) => (
+                  <Link 
+                    key={event?.id || i} 
+                    to={event?.id ? `/events/${event.id}` : '/events'}
+                    className="group"
+                  >
+                    <div className="relative aspect-square rounded-xl overflow-hidden border border-white/10 hover:border-cyan-500/50 transition-all">
+                      {event?.image_url ? (
+                        <img 
+                          src={event.image_url} 
+                          alt={event.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-cyan-500/30 to-blue-500/30" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                      <div className="absolute bottom-3 left-3 right-3">
+                        <p className="text-xs text-cyan-400 uppercase tracking-wider mb-1">
+                          {event?.event_date ? new Date(event.event_date).toLocaleDateString('en-GB', { weekday: 'short' }) : 'TONIGHT'}
+                        </p>
+                        <p className="text-sm font-black line-clamp-2">
+                          {event?.title || 'Event ' + (i + 1)}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
                 ))}
               </div>
             </motion.div>
@@ -267,7 +417,7 @@ export default function Home() {
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="lg:order-2 text-right lg:text-left"
+              className="order-1 lg:order-2"
             >
               <p className="text-sm uppercase tracking-[0.4em] text-cyan-400 mb-4">
                 EVENTS
@@ -276,12 +426,12 @@ export default function Home() {
                 TONIGHT<span className="text-cyan-500">.</span>
               </h2>
               <p className="text-xl md:text-2xl text-white/70 mb-4">
-                {tonightEvent?.title || "What's happening in London"}
+                What's happening in London
               </p>
-              <p className="text-lg text-white/50 mb-10 max-w-lg ml-auto lg:ml-0">
-                Find the energy. RSVP to nights. See who's going. Three moves you can make.
+              <p className="text-lg text-white/50 mb-10 max-w-lg">
+                Find the energy. RSVP to nights. See who's going. The pulse of queer London, mapped.
               </p>
-              <div className="flex flex-wrap gap-4 justify-end lg:justify-start">
+              <div className="flex flex-wrap gap-4">
                 <Link to="/events">
                   <Button className="bg-cyan-500 hover:bg-white text-black font-black uppercase px-10 py-6 text-lg">
                     <Calendar className="w-6 h-6 mr-3" />
@@ -300,21 +450,19 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. GHOSTED SECTION - Full width with image */}
+      {/* 6. GHOSTED SECTION - Full width with profile previews */}
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
-        {/* Background Image */}
         <div className="absolute inset-0">
           <img 
             src="/images/hero/hero-red.jpg" 
             alt="Ghosted" 
-            className="w-full h-full object-cover opacity-40"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/90 to-black/70" />
         </div>
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Content */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -340,7 +488,7 @@ export default function Home() {
               </Link>
             </motion.div>
 
-            {/* Profile grid mockup */}
+            {/* Profile grid with filled images */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -348,9 +496,23 @@ export default function Home() {
               className="hidden lg:block"
             >
               <div className="grid grid-cols-3 gap-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="aspect-[3/4] bg-white/10 rounded-xl backdrop-blur-sm border border-white/10 flex items-end justify-center pb-4">
-                    <Ghost className="w-8 h-8 text-pink-500/50" />
+                {[
+                  { color: 'from-pink-500 to-purple-500' },
+                  { color: 'from-cyan-500 to-blue-500' },
+                  { color: 'from-orange-500 to-red-500' },
+                  { color: 'from-green-500 to-cyan-500' },
+                  { color: 'from-purple-500 to-pink-500' },
+                  { color: 'from-yellow-500 to-orange-500' },
+                ].map((item, i) => (
+                  <div 
+                    key={i} 
+                    className="aspect-[3/4] rounded-xl overflow-hidden border border-white/10 hover:border-pink-500/50 transition-all group"
+                  >
+                    <div className={`w-full h-full bg-gradient-to-br ${item.color} flex items-end justify-center pb-6`}>
+                      <div className="w-16 h-16 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Ghost className="w-8 h-8 text-white" />
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -359,28 +521,36 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. SHOP SECTION - Full width */}
+      {/* 7. SHOP SECTION - Full width with product preview */}
       <section className="relative min-h-[60vh] flex items-center bg-gradient-to-br from-yellow-950/30 via-black to-orange-950/30">
         <div className="w-full max-w-7xl mx-auto px-6 py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Product mockup */}
+            {/* Product card with image */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               className="order-2 lg:order-1"
             >
-              <div className="relative bg-white/5 rounded-2xl p-8 border border-white/10">
-                <div className="absolute top-4 right-4 bg-yellow-500 text-black text-sm font-black uppercase px-4 py-2 rounded-full">
-                  NEW DROP
+              <Link to="/market" className="group block">
+                <div className="relative bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-yellow-500/50 transition-all">
+                  <div className="absolute top-4 right-4 z-10 bg-yellow-500 text-black text-sm font-black uppercase px-4 py-2 rounded-full">
+                    NEW DROP
+                  </div>
+                  <div className="aspect-square overflow-hidden">
+                    <img 
+                      src="/images/hero/hero-main.png" 
+                      alt="HOTMESS Merch"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="p-6">
+                    <p className="text-white/50 text-sm uppercase tracking-wider mb-2">Limited Edition</p>
+                    <h3 className="text-2xl font-black mb-2 group-hover:text-yellow-400 transition-colors">HOTMESS MERCH</h3>
+                    <p className="text-3xl font-black text-yellow-500">£35</p>
+                  </div>
                 </div>
-                <div className="aspect-square bg-white/5 rounded-xl flex items-center justify-center mb-6">
-                  <ShoppingBag className="w-24 h-24 text-yellow-500/30" />
-                </div>
-                <p className="text-white/50 text-sm uppercase tracking-wider mb-2">Limited Edition</p>
-                <h3 className="text-2xl font-black mb-2">HOTMESS MERCH</h3>
-                <p className="text-3xl font-black text-yellow-500">£35</p>
-              </div>
+              </Link>
             </motion.div>
 
             {/* Content */}
@@ -413,7 +583,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. B2B SECTION - For Venues */}
+      {/* 8. B2B SECTION - For Venues */}
       <section className="py-24 px-6 bg-gradient-to-r from-cyan-950/20 via-black to-cyan-950/20 border-y border-white/10">
         <div className="max-w-5xl mx-auto text-center">
           <motion.div
@@ -443,7 +613,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 8. CARE SECTION */}
+      {/* 9. CARE SECTION */}
       <section className="py-32 px-6 bg-gradient-to-b from-black via-red-950/10 to-black">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
@@ -473,7 +643,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 9. FINAL CTA */}
+      {/* 10. FINAL CTA */}
       <section className="py-32 px-6 bg-black text-white text-center border-t border-white/5">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
