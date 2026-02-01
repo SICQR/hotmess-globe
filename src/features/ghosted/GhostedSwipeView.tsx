@@ -36,6 +36,8 @@ interface GhostedSwipeViewProps {
   viewerLocation?: { lat: number; lng: number } | null;
   viewerEmail?: string;
   viewerName?: string;
+  /** Set of profile IDs that have been swiped (controlled by parent) */
+  swipedIds?: Set<string>;
   className?: string;
 }
 
@@ -355,46 +357,33 @@ export default function GhostedSwipeView({
   viewerLocation,
   viewerEmail,
   viewerName,
+  swipedIds = new Set(),
   className
 }: GhostedSwipeViewProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [exitDirection, setExitDirection] = useState<'left' | 'right' | 'up' | null>(null);
+  // Filter out swiped profiles - parent controls what's swiped via swipedIds prop
+  const availableProfiles = useMemo(() => {
+    return profiles.filter(p => !swipedIds.has(p.id));
+  }, [profiles, swipedIds]);
 
   const visibleProfiles = useMemo(() => {
-    return profiles.slice(currentIndex, currentIndex + 3);
-  }, [profiles, currentIndex]);
+    return availableProfiles.slice(0, 3);
+  }, [availableProfiles]);
 
-  const currentProfile = profiles[currentIndex];
+  const currentProfile = availableProfiles[0];
 
   const handleSwipeRight = useCallback(() => {
     if (!currentProfile) return;
-    setExitDirection('right');
     onSwipeRight?.(currentProfile);
-    onMessage?.(currentProfile);
-    setTimeout(() => {
-      setCurrentIndex((i) => i + 1);
-      setExitDirection(null);
-    }, 300);
-  }, [currentProfile, onSwipeRight, onMessage]);
+  }, [currentProfile, onSwipeRight]);
 
   const handleSwipeLeft = useCallback(() => {
     if (!currentProfile) return;
-    setExitDirection('left');
     onSwipeLeft?.(currentProfile);
-    setTimeout(() => {
-      setCurrentIndex((i) => i + 1);
-      setExitDirection(null);
-    }, 300);
   }, [currentProfile, onSwipeLeft]);
 
   const handleSwipeUp = useCallback(() => {
     if (!currentProfile) return;
-    setExitDirection('up');
     onSwipeUp?.(currentProfile);
-    setTimeout(() => {
-      setCurrentIndex((i) => i + 1);
-      setExitDirection(null);
-    }, 300);
   }, [currentProfile, onSwipeUp]);
 
   const handleTap = useCallback(() => {
@@ -414,20 +403,13 @@ export default function GhostedSwipeView({
     );
   }
 
-  if (currentIndex >= profiles.length) {
+  if (availableProfiles.length === 0) {
     return (
       <div className={cn('flex items-center justify-center h-full', className)}>
         <div className="text-center p-8">
           <div className="text-6xl mb-4">✨</div>
           <h3 className="text-2xl font-black text-white mb-2">THAT'S EVERYONE</h3>
-          <p className="text-white/60 mb-6">You've seen all the profiles nearby</p>
-          <button
-            type="button"
-            onClick={() => setCurrentIndex(0)}
-            className="px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-black uppercase rounded-full transition-colors"
-          >
-            Start Over
-          </button>
+          <p className="text-white/60 mb-6">You've seen all {profiles.length} profiles</p>
         </div>
       </div>
     );
