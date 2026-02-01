@@ -48,6 +48,7 @@ import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
+import ProfileNew from './pages/ProfileNew';
 import ProfilesGrid from './pages/ProfilesGrid';
 import ProfileSetup from './pages/ProfileSetup';
 import PromoteToAdmin from './pages/PromoteToAdmin';
@@ -61,7 +62,7 @@ import Scan from './pages/Scan';
 import SellerDashboard from './pages/SellerDashboard';
 import Settings from './pages/Settings';
 import Social from './pages/Social';
-import SquadChat from './pages/SquadChat';
+// SquadChat removed - group messaging deprecated
 import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
 import { Tickets, TicketDetail, TicketChat } from './pages/tickets';
@@ -125,6 +126,7 @@ export const PAGES = {
     "OrganizerDashboard": OrganizerDashboard,
     "ProductDetail": ProductDetail,
     "Profile": Profile,
+    "ProfileNew": ProfileNew,
     "ProfilesGrid": ProfilesGrid,
     "ProfileSetup": ProfileSetup,
     "PromoteToAdmin": PromoteToAdmin,
@@ -138,7 +140,7 @@ export const PAGES = {
     "SellerDashboard": SellerDashboard,
     "Settings": Settings,
     "Social": Social,
-    "SquadChat": SquadChat,
+    // "SquadChat": removed - group messaging deprecated
     "Stats": Stats,
     "TermsOfService": TermsOfService,
     "TicketMarketplace": TicketMarketplace,
