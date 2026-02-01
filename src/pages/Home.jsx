@@ -628,7 +628,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
             {[
               { name: 'RAW', tagline: 'Unfiltered', image: '/images/brand-raw-swim.png', color: 'border-blue-500' },
-              { name: 'HUNG', tagline: 'Statement pieces', image: '/images/hung-hero.png', color: 'border-red-800' },
+              { name: 'HUNG', tagline: 'Statement pieces', image: '/images/hung-hero.png', color: 'border-red-500' },
               { name: 'ESSENTIALS', tagline: 'Everyday basics', image: '/images/brand-essentials-hoodie.png', color: 'border-white/50' },
               { name: 'SUPERHUNG', tagline: 'Limited drops', image: '/images/brand-hung-black.png', color: 'border-red-500' },
             ].map((brand, i) => (
