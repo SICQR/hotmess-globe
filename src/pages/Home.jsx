@@ -203,36 +203,36 @@ export default function Home() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <p className="text-sm uppercase tracking-[0.4em] text-purple-400 mb-4 flex items-center gap-3">
+              <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4 flex items-center gap-3">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 LIVE 24/7
               </p>
               <h2 className="text-5xl md:text-7xl font-black italic mb-4">
-                HOTMESS<br/>RADIO<span className="text-purple-500">.</span>
+                HOTMESS<br/>RADIO<span className="text-pink-500">.</span>
               </h2>
               <p className="text-xl md:text-2xl text-white/70 mb-4">
                 The heartbeat of London's queer underground
               </p>
               <p className="text-lg text-white/50 mb-6 max-w-lg">
-                24/7 live stream. DJ culture. Shows that care about the community. This is our frequency.
+                24/7 live stream. DJ culture. Shows that care. This is our frequency.
               </p>
               {nextRadioUp && (
-                <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-8">
+                <div className="bg-white/5 border border-white/20 rounded-lg p-4 mb-8">
                   <p className="text-xs text-white/40 uppercase tracking-wider mb-1">NEXT SHOW</p>
                   <p className="text-lg font-black">{nextRadioUp.show.title}</p>
-                  <p className="text-sm text-purple-400">{nextRadioUp.nextEpisode.startTime}</p>
+                  <p className="text-sm text-pink-500">{nextRadioUp.nextEpisode.startTime}</p>
                 </div>
               )}
               <div className="flex flex-wrap gap-4">
                 <Button 
                   onClick={openRadio}
-                  className="bg-purple-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg"
+                  className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg"
                 >
                   <Play className="w-6 h-6 mr-3" />
                   LISTEN NOW
                 </Button>
                 <Link to="/music/schedule">
-                  <Button variant="outline" className="border-2 border-white/30 text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
+                  <Button variant="outline" className="border-2 border-white/20 text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
                     <Calendar className="w-5 h-5 mr-3" />
                     SCHEDULE
                   </Button>
@@ -250,14 +250,14 @@ export default function Home() {
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                  className="absolute inset-0 rounded-full border-4 border-purple-500/30"
+                  className="absolute inset-0 rounded-full border-4 border-pink-500/30"
                 />
                 <motion.div
                   animate={{ rotate: -360 }}
                   transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-                  className="absolute inset-4 rounded-full border-2 border-pink-500/20"
+                  className="absolute inset-4 rounded-full border-2 border-white/20"
                 />
-                <div className="absolute inset-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <div className="absolute inset-8 rounded-full bg-pink-500 flex items-center justify-center">
                   <RadioIcon className="w-24 h-24 text-white" />
                 </div>
                 <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
@@ -287,9 +287,9 @@ export default function Home() {
             className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10"
           >
             <div>
-              <p className="text-sm uppercase tracking-[0.4em] text-yellow-400 mb-4">THE LABEL</p>
+              <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">THE LABEL</p>
               <h2 className="text-4xl md:text-6xl font-black italic">
-                RAW CONVICT<br/>RECORDS<span className="text-yellow-500">.</span>
+                RAW CONVICT<br/>RECORDS<span className="text-pink-500">.</span>
               </h2>
               <p className="text-lg text-white/70 mt-4 max-w-xl">
                 Underground releases. No compromise. The sound of London's queer nightlife, pressed and distributed.
@@ -338,11 +338,11 @@ export default function Home() {
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Play className="w-16 h-16 text-white" />
                     </div>
-                    <div className="absolute bottom-3 left-3 px-3 py-1 bg-yellow-400 text-black text-xs font-black uppercase rounded-full">
+                    <div className="absolute bottom-3 left-3 px-3 py-1 bg-pink-500 text-white text-xs font-black uppercase rounded-full">
                       {release.year}
                     </div>
                   </div>
-                  <h3 className="font-black uppercase text-lg group-hover:text-yellow-400 transition-colors">{release.title}</h3>
+                  <h3 className="font-black uppercase text-lg group-hover:text-pink-500 transition-colors">{release.title}</h3>
                   <p className="text-white/50 text-sm">{release.artist}</p>
                 </Link>
               </motion.div>
@@ -355,10 +355,10 @@ export default function Home() {
               className="flex-shrink-0 w-64 snap-start"
             >
               <Link to="/music/releases" className="group block">
-                <div className="aspect-square rounded-xl border-2 border-dashed border-white/20 flex flex-col items-center justify-center hover:border-yellow-500 transition-colors">
-                  <Disc className="w-16 h-16 text-white/30 group-hover:text-yellow-500 transition-colors mb-4" />
+                <div className="aspect-square rounded-xl border-2 border-dashed border-white/20 flex flex-col items-center justify-center hover:border-pink-500 transition-colors">
+                  <Disc className="w-16 h-16 text-white/30 group-hover:text-pink-500 transition-colors mb-4" />
                   <span className="font-black uppercase text-white/50 group-hover:text-white transition-colors">VIEW ALL</span>
-                  <ArrowRight className="w-5 h-5 text-white/30 group-hover:text-yellow-500 mt-2 transition-colors" />
+                  <ArrowRight className="w-5 h-5 text-white/30 group-hover:text-pink-500 mt-2 transition-colors" />
                 </div>
               </Link>
             </motion.div>
@@ -393,7 +393,7 @@ export default function Home() {
                     to={event?.id ? `/events/${event.id}` : '/events'}
                     className="group"
                   >
-                    <div className="relative aspect-square rounded-xl overflow-hidden border border-white/10 hover:border-cyan-500/50 transition-all">
+                    <div className="relative aspect-square rounded-xl overflow-hidden border border-white/20 hover:border-pink-500 transition-all">
                       {event?.image_url ? (
                         <img 
                           src={event.image_url} 
@@ -401,11 +401,11 @@ export default function Home() {
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-cyan-500/30 to-blue-500/30" />
+                        <div className="w-full h-full bg-white/10" />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                       <div className="absolute bottom-3 left-3 right-3">
-                        <p className="text-xs text-cyan-400 uppercase tracking-wider mb-1">
+                        <p className="text-xs text-pink-500 uppercase tracking-wider mb-1">
                           {event?.event_date ? new Date(event.event_date).toLocaleDateString('en-GB', { weekday: 'short' }) : 'TONIGHT'}
                         </p>
                         <p className="text-sm font-black line-clamp-2">
@@ -425,11 +425,11 @@ export default function Home() {
               viewport={{ once: true }}
               className="order-1 lg:order-2"
             >
-              <p className="text-sm uppercase tracking-[0.4em] text-cyan-400 mb-4">
+              <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">
                 EVENTS
               </p>
               <h2 className="text-5xl md:text-7xl font-black italic mb-6">
-                TONIGHT<span className="text-cyan-500">.</span>
+                TONIGHT<span className="text-pink-500">.</span>
               </h2>
               <p className="text-xl md:text-2xl text-white/70 mb-4">
                 What's happening in London
@@ -439,13 +439,13 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/events">
-                  <Button className="bg-cyan-500 hover:bg-white text-black font-black uppercase px-10 py-6 text-lg">
+                  <Button className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg">
                     <Calendar className="w-6 h-6 mr-3" />
                     VIEW EVENTS
                   </Button>
                 </Link>
                 <Link to="/pulse">
-                  <Button variant="outline" className="border-2 border-white/30 text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
+                  <Button variant="outline" className="border-2 border-white/20 text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
                     <MapPin className="w-6 h-6 mr-3" />
                     PULSE MAP
                   </Button>
@@ -502,19 +502,12 @@ export default function Home() {
               className="hidden lg:block"
             >
               <div className="grid grid-cols-3 gap-3">
-                {[
-                  { color: 'from-pink-500 to-purple-500' },
-                  { color: 'from-cyan-500 to-blue-500' },
-                  { color: 'from-orange-500 to-red-500' },
-                  { color: 'from-green-500 to-cyan-500' },
-                  { color: 'from-purple-500 to-pink-500' },
-                  { color: 'from-yellow-500 to-orange-500' },
-                ].map((item, i) => (
+                {[1,2,3,4,5,6].map((i) => (
                   <div 
                     key={i} 
-                    className="aspect-[3/4] rounded-xl overflow-hidden border border-white/10 hover:border-pink-500/50 transition-all group"
+                    className="aspect-[3/4] rounded-xl overflow-hidden border border-white/20 hover:border-pink-500 transition-all group"
                   >
-                    <div className={`w-full h-full bg-gradient-to-br ${item.color} flex items-end justify-center pb-6`}>
+                    <div className="w-full h-full bg-white/10 flex items-end justify-center pb-6">
                       <div className="w-16 h-16 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
                         <Ghost className="w-8 h-8 text-white" />
                       </div>
@@ -627,9 +620,9 @@ export default function Home() {
           {/* Home Collection Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             {[
-              { name: 'RAW', tagline: 'Unfiltered swimwear & basics', image: '/images/brand-raw-swim.png', color: 'border-blue-500' },
-              { name: 'HUNG', tagline: 'Statement streetwear', image: '/images/hung-hero.png', color: 'border-red-500' },
-              { name: 'HIGH', tagline: 'Elevated essentials', image: '/images/brand-essentials-hoodie.png', color: 'border-white/50' },
+              { name: 'RAW', tagline: 'Unfiltered swimwear & basics', image: '/images/brand-raw-swim.png' },
+              { name: 'HUNG', tagline: 'Statement streetwear', image: '/images/hung-hero.png' },
+              { name: 'HIGH', tagline: 'Elevated essentials', image: '/images/brand-essentials-hoodie.png' },
             ].map((brand, i) => (
               <motion.div
                 key={brand.name}
@@ -639,7 +632,7 @@ export default function Home() {
                 transition={{ delay: i * 0.1 }}
               >
                 <Link to={`/market?brand=${brand.name.toLowerCase()}`} className="group block">
-                  <div className={`aspect-[3/4] rounded-2xl overflow-hidden border-2 ${brand.color} group-hover:border-pink-500 transition-colors`}>
+                  <div className="aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white/20 group-hover:border-pink-500 transition-colors">
                     <img 
                       src={brand.image} 
                       alt={brand.name}
@@ -667,7 +660,7 @@ export default function Home() {
       </section>
 
       {/* 9. LIMITED DROPS - SUPERHUNG & SUPERHIGH */}
-      <section className="py-20 px-6 bg-gradient-to-b from-black via-yellow-950/20 to-black">
+      <section className="py-20 px-6 bg-black border-y border-white/10">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -675,9 +668,9 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <p className="text-sm uppercase tracking-[0.4em] text-yellow-400 mb-4">EXCLUSIVE</p>
+            <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">EXCLUSIVE</p>
             <h2 className="text-4xl md:text-6xl font-black italic mb-6">
-              LIMITED DROPS<span className="text-yellow-500">.</span>
+              LIMITED DROPS<span className="text-pink-500">.</span>
             </h2>
             <p className="text-lg text-white/50 max-w-xl mx-auto">
               When it's gone, it's gone. No restocks.
@@ -686,8 +679,8 @@ export default function Home() {
 
           <div className="grid grid-cols-2 gap-8 mb-12">
             {[
-              { name: 'SUPERHUNG', tagline: 'Ultra-limited statement pieces', image: '/images/brand-hung-black.png', color: 'from-red-500 to-orange-500' },
-              { name: 'SUPERHIGH', tagline: 'Rare elevated drops', image: '/images/brand-hung-yellow.png', color: 'from-yellow-500 to-amber-500' },
+              { name: 'SUPERHUNG', tagline: 'Ultra-limited statement pieces', image: '/images/brand-hung-black.png' },
+              { name: 'SUPERHIGH', tagline: 'Rare elevated drops', image: '/images/brand-hung-yellow.png' },
             ].map((brand, i) => (
               <motion.div
                 key={brand.name}
@@ -697,14 +690,12 @@ export default function Home() {
                 transition={{ delay: i * 0.1 }}
               >
                 <Link to={`/market?brand=${brand.name.toLowerCase()}`} className="group block">
-                  <div className={`aspect-square rounded-2xl overflow-hidden bg-gradient-to-br ${brand.color} p-1`}>
-                    <div className="w-full h-full rounded-xl overflow-hidden">
-                      <img 
-                        src={brand.image} 
-                        alt={brand.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
+                  <div className="aspect-square rounded-2xl overflow-hidden border-2 border-white/20 group-hover:border-pink-500 transition-colors">
+                    <img 
+                      src={brand.image} 
+                      alt={brand.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                   </div>
                   <div className="mt-4 text-center">
                     <span className="text-2xl font-black">{brand.name}</span>
@@ -717,7 +708,7 @@ export default function Home() {
 
           <div className="text-center">
             <Link to="/market?category=limited">
-              <Button className="bg-yellow-500 hover:bg-white text-black font-black uppercase px-10 py-6 text-lg">
+              <Button className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg">
                 <ShoppingBag className="w-6 h-6 mr-3" />
                 SHOP LIMITED DROPS
               </Button>
@@ -727,7 +718,7 @@ export default function Home() {
       </section>
 
       {/* 10. MESS MARKET - Third-party marketplace */}
-      <section className="relative min-h-[60vh] flex items-center bg-gradient-to-br from-amber-950/30 via-black to-orange-950/30">
+      <section className="relative min-h-[60vh] flex items-center bg-black">
         <div className="w-full max-w-7xl mx-auto px-6 py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Categories */}
@@ -745,9 +736,9 @@ export default function Home() {
                   { name: 'ALL', desc: 'Browse everything', icon: '🛒', link: '/market' },
                 ].map((cat) => (
                   <Link key={cat.name} to={cat.link} className="group">
-                    <div className="aspect-square rounded-xl bg-white/5 border border-white/10 hover:border-amber-500/50 transition-all flex flex-col items-center justify-center p-6">
+                    <div className="aspect-square rounded-xl bg-white/5 border border-white/20 hover:border-pink-500 transition-all flex flex-col items-center justify-center p-6">
                       <span className="text-4xl mb-3">{cat.icon}</span>
-                      <span className="font-black text-lg group-hover:text-amber-400 transition-colors">{cat.name}</span>
+                      <span className="font-black text-lg group-hover:text-pink-500 transition-colors">{cat.name}</span>
                       <span className="text-xs text-white/50 mt-1">{cat.desc}</span>
                     </div>
                   </Link>
@@ -762,11 +753,11 @@ export default function Home() {
               viewport={{ once: true }}
               className="order-1 lg:order-2"
             >
-              <p className="text-sm uppercase tracking-[0.4em] text-amber-400 mb-4">
+              <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">
                 THIRD-PARTY MARKETPLACE
               </p>
               <h2 className="text-5xl md:text-7xl font-black italic mb-6">
-                MESS<br/>MARKET<span className="text-amber-500">.</span>
+                MESS<br/>MARKET<span className="text-pink-500">.</span>
               </h2>
               <p className="text-xl md:text-2xl text-white/70 mb-4">
                 Buy. Sell. Trade.
@@ -776,13 +767,13 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/market">
-                  <Button className="bg-amber-500 hover:bg-white text-black font-black uppercase px-10 py-6 text-lg">
+                  <Button className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg">
                     <ShoppingBag className="w-6 h-6 mr-3" />
                     BROWSE MARKET
                   </Button>
                 </Link>
                 <Link to="/sell">
-                  <Button variant="outline" className="border-2 border-white/30 text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
+                  <Button variant="outline" className="border-2 border-white/20 text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
                     BECOME A SELLER
                   </Button>
                 </Link>
@@ -793,27 +784,27 @@ export default function Home() {
       </section>
 
       {/* 11. B2B SECTION - For Venues */}
-      <section className="py-24 px-6 bg-gradient-to-r from-cyan-950/20 via-black to-cyan-950/20 border-y border-white/10">
+      <section className="py-24 px-6 bg-black border-y border-white/10">
         <div className="max-w-5xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
-              <Mic className="w-10 h-10 text-cyan-500" />
+            <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-white/10 flex items-center justify-center">
+              <Mic className="w-10 h-10 text-white" />
             </div>
-            <p className="text-sm uppercase tracking-[0.4em] text-cyan-400 mb-4">
+            <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">
               FOR VENUES & PROMOTERS
             </p>
             <h2 className="text-4xl md:text-6xl font-black italic mb-6">
               GOT A NIGHT?
             </h2>
             <p className="text-xl text-white/60 mb-10 max-w-2xl mx-auto">
-              List your event. Reach London's queer nightlife scene. Analytics, promotion, and direct access to the community.
+              List your event. Reach London's queer nightlife scene. Analytics, promotion, and direct access.
             </p>
             <Link to="/for-venues">
-              <Button className="bg-cyan-500 hover:bg-white text-black font-black uppercase px-12 py-6 text-lg">
+              <Button className="bg-white hover:bg-pink-500 text-black hover:text-white font-black uppercase px-12 py-6 text-lg">
                 LIST YOUR EVENT
                 <ArrowRight className="w-6 h-6 ml-3" />
               </Button>
@@ -823,17 +814,17 @@ export default function Home() {
       </section>
 
       {/* 12. CARE SECTION */}
-      <section className="py-32 px-6 bg-gradient-to-b from-black via-red-950/10 to-black">
+      <section className="py-32 px-6 bg-black">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="w-24 h-24 mx-auto mb-10 rounded-full bg-red-500/20 flex items-center justify-center">
-              <Heart className="w-12 h-12 text-red-400" />
+            <div className="w-24 h-24 mx-auto mb-10 rounded-full bg-white/10 flex items-center justify-center">
+              <Heart className="w-12 h-12 text-white/80" />
             </div>
-            <p className="text-sm uppercase tracking-[0.4em] text-red-400 mb-6">
+            <p className="text-sm uppercase tracking-[0.4em] text-white/60 mb-6">
               CARE
             </p>
             <h2 className="text-4xl md:text-6xl font-black mb-8">
@@ -843,7 +834,7 @@ export default function Home() {
               You good? Care is always here. No judgment. No shame. Just support when you need it.
             </p>
             <Link to="/care">
-              <Button variant="outline" className="border-2 border-red-500/50 text-red-400 hover:bg-red-500 hover:text-white font-black uppercase px-10 py-6 text-lg">
+              <Button variant="outline" className="border-2 border-white/20 text-white hover:bg-white hover:text-black font-black uppercase px-10 py-6 text-lg">
                 <Heart className="w-6 h-6 mr-3" />
                 OPEN CARE
               </Button>
