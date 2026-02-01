@@ -270,8 +270,16 @@ export default function Home() {
       </section>
 
       {/* 4. RAW CONVICT RECORDS - Label & Releases */}
-      <section className="py-20 px-6 bg-black border-y border-white/10">
-        <div className="max-w-7xl mx-auto">
+      <section className="relative min-h-[80vh] flex items-center overflow-hidden">
+        <div className="absolute inset-0">
+          <img 
+            src="/images/raw-convict-hero.png" 
+            alt="Raw Convict Records" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/90 to-black/60" />
+        </div>
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -279,11 +287,11 @@ export default function Home() {
             className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10"
           >
             <div>
-              <p className="text-sm uppercase tracking-[0.4em] text-orange-400 mb-4">THE LABEL</p>
+              <p className="text-sm uppercase tracking-[0.4em] text-yellow-400 mb-4">THE LABEL</p>
               <h2 className="text-4xl md:text-6xl font-black italic">
-                RAW CONVICT<br/>RECORDS<span className="text-orange-500">.</span>
+                RAW CONVICT<br/>RECORDS<span className="text-yellow-500">.</span>
               </h2>
-              <p className="text-lg text-white/50 mt-4 max-w-xl">
+              <p className="text-lg text-white/70 mt-4 max-w-xl">
                 Underground releases. No compromise. The sound of London's queer nightlife, pressed and distributed.
               </p>
             </div>
@@ -330,11 +338,11 @@ export default function Home() {
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Play className="w-16 h-16 text-white" />
                     </div>
-                    <div className="absolute bottom-3 left-3 px-3 py-1 bg-orange-500 text-black text-xs font-black uppercase rounded-full">
+                    <div className="absolute bottom-3 left-3 px-3 py-1 bg-yellow-400 text-black text-xs font-black uppercase rounded-full">
                       {release.year}
                     </div>
                   </div>
-                  <h3 className="font-black uppercase text-lg group-hover:text-orange-400 transition-colors">{release.title}</h3>
+                  <h3 className="font-black uppercase text-lg group-hover:text-yellow-400 transition-colors">{release.title}</h3>
                   <p className="text-white/50 text-sm">{release.artist}</p>
                 </Link>
               </motion.div>
@@ -347,10 +355,10 @@ export default function Home() {
               className="flex-shrink-0 w-64 snap-start"
             >
               <Link to="/music/releases" className="group block">
-                <div className="aspect-square rounded-xl border-2 border-dashed border-white/20 flex flex-col items-center justify-center hover:border-orange-500 transition-colors">
-                  <Disc className="w-16 h-16 text-white/30 group-hover:text-orange-500 transition-colors mb-4" />
+                <div className="aspect-square rounded-xl border-2 border-dashed border-white/20 flex flex-col items-center justify-center hover:border-yellow-500 transition-colors">
+                  <Disc className="w-16 h-16 text-white/30 group-hover:text-yellow-500 transition-colors mb-4" />
                   <span className="font-black uppercase text-white/50 group-hover:text-white transition-colors">VIEW ALL</span>
-                  <ArrowRight className="w-5 h-5 text-white/30 group-hover:text-orange-500 mt-2 transition-colors" />
+                  <ArrowRight className="w-5 h-5 text-white/30 group-hover:text-yellow-500 mt-2 transition-colors" />
                 </div>
               </Link>
             </motion.div>
@@ -616,13 +624,13 @@ export default function Home() {
             </p>
           </motion.div>
 
-          {/* Brand Cards */}
+          {/* Brand Cards with Product Images */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
             {[
-              { name: 'RAW', tagline: 'Unfiltered streetwear', color: 'from-red-500 to-orange-500', textColor: 'text-red-400' },
-              { name: 'HUNG & HIGH', tagline: 'Party essentials', color: 'from-purple-500 to-pink-500', textColor: 'text-purple-400' },
-              { name: 'SUPERHUNG', tagline: 'Statement pieces', color: 'from-cyan-500 to-blue-500', textColor: 'text-cyan-400' },
-              { name: 'SUPERHIGH', tagline: 'Elevated basics', color: 'from-green-500 to-cyan-500', textColor: 'text-green-400' },
+              { name: 'RAW', tagline: 'Unfiltered', image: '/images/brand-raw-swim.png', color: 'border-blue-500' },
+              { name: 'HUNG', tagline: 'Statement pieces', image: '/images/brand-hung-yellow.png', color: 'border-yellow-500' },
+              { name: 'ESSENTIALS', tagline: 'Everyday basics', image: '/images/brand-essentials-hoodie.png', color: 'border-white/50' },
+              { name: 'SUPERHUNG', tagline: 'Limited drops', image: '/images/brand-hung-black.png', color: 'border-red-500' },
             ].map((brand, i) => (
               <motion.div
                 key={brand.name}
@@ -631,12 +639,17 @@ export default function Home() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
               >
-                <Link to={`/market?brand=${brand.name.toLowerCase().replace(/ /g, '-')}`} className="group block">
-                  <div className={`aspect-square rounded-2xl bg-gradient-to-br ${brand.color} p-1`}>
-                    <div className="w-full h-full bg-black rounded-xl flex flex-col items-center justify-center group-hover:bg-black/80 transition-colors">
-                      <span className={`text-xl md:text-2xl font-black text-center px-2 ${brand.textColor}`}>{brand.name}</span>
-                      <span className="text-[10px] text-white/50 uppercase tracking-wider mt-2 text-center px-2">{brand.tagline}</span>
-                    </div>
+                <Link to={`/market?brand=${brand.name.toLowerCase()}`} className="group block">
+                  <div className={`aspect-[3/4] rounded-2xl overflow-hidden border-2 ${brand.color} group-hover:border-pink-500 transition-colors`}>
+                    <img 
+                      src={brand.image} 
+                      alt={brand.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="mt-4 text-center">
+                    <span className="text-lg font-black">{brand.name}</span>
+                    <p className="text-xs text-white/50 uppercase tracking-wider mt-1">{brand.tagline}</p>
                   </div>
                 </Link>
               </motion.div>
