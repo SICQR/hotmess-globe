@@ -102,7 +102,7 @@ export default function Radio() {
           <div className="flex flex-wrap gap-6 justify-center">
             <Button 
               onClick={openRadio}
-              className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-12 py-7 text-xl"
+              variant="hot" size="lg" className="font-black uppercase px-12 text-xl"
             >
               <Play className="w-7 h-7 mr-3" />
               {isRadioOpen ? 'NOW PLAYING' : 'LISTEN LIVE'}
@@ -388,7 +388,7 @@ export default function Radio() {
           </p>
           <Button 
             onClick={openRadio}
-            className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-14 py-8 text-2xl"
+            variant="hot" size="lg" className="font-black uppercase px-14 text-2xl"
           >
             <Play className="w-8 h-8 mr-3" />
             LISTEN NOW

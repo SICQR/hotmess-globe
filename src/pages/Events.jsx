@@ -240,7 +240,7 @@ export default function Events() {
             <div className="flex flex-wrap gap-4">
               <Button 
                 onClick={() => setViewMode('map')}
-                className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg"
+                variant="hot" size="lg" className="font-black uppercase px-8"
               >
                 <Map className="w-5 h-5 mr-3" />
                 MAP VIEW
@@ -471,7 +471,7 @@ export default function Events() {
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link to={createPageUrl('CreateBeacon')}>
-                <Button className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg">
+                <Button variant="hot" size="lg" className="font-black uppercase px-10">
                   SUBMIT EVENT
                 </Button>
               </Link>

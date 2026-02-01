@@ -78,7 +78,7 @@ export default function Shop() {
             <div className="flex flex-wrap gap-4">
               <Button 
                 onClick={() => openCartDrawer('shopify')}
-                className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg"
+                variant="hot" size="lg" className="font-black uppercase px-8"
               >
                 <ShoppingCart className="w-5 h-5 mr-3" />
                 VIEW CART
@@ -268,7 +268,7 @@ export default function Shop() {
             </p>
             <Button
               onClick={() => openCartDrawer('shopify')}
-              className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-12 py-6 text-xl"
+              variant="hot" size="lg" className="font-black uppercase px-12 text-xl"
             >
               <ShoppingCart className="w-6 h-6 mr-3" />
               VIEW CART

@@ -226,7 +226,7 @@ export default function Home() {
               <div className="flex flex-wrap gap-4">
                 <Button 
                   onClick={openRadio}
-                  className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg"
+                  variant="hot" size="lg" className="font-black uppercase px-10"
                 >
                   <Play className="w-6 h-6 mr-3" />
                   LISTEN NOW
@@ -439,7 +439,7 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/events">
-                  <Button className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg">
+                  <Button variant="hot" size="lg" className="font-black uppercase px-10">
                     <Calendar className="w-6 h-6 mr-3" />
                     VIEW EVENTS
                   </Button>
@@ -487,7 +487,7 @@ export default function Home() {
                 Opt-in. Contextual. Your pace. Find people without the pressure. Presence over performance.
               </p>
               <Link to="/social">
-                <Button className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg">
+                <Button variant="hot" size="lg" className="font-black uppercase px-10">
                   <Ghost className="w-6 h-6 mr-3" />
                   DISCOVER
                 </Button>
@@ -563,7 +563,7 @@ export default function Home() {
               </div>
               <div className="flex flex-wrap gap-4">
                 <Link to="/market?brand=hnhmess">
-                  <Button className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg">
+                  <Button variant="hot" size="lg" className="font-black uppercase px-10">
                     <ShoppingBag className="w-6 h-6 mr-3" />
                     SHOP HNHMESS
                   </Button>
@@ -708,7 +708,7 @@ export default function Home() {
 
           <div className="text-center">
             <Link to="/market?category=limited">
-              <Button className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg">
+              <Button variant="hot" size="lg" className="font-black uppercase px-10">
                 <ShoppingBag className="w-6 h-6 mr-3" />
                 SHOP LIMITED DROPS
               </Button>
@@ -767,7 +767,7 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/market">
-                  <Button className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg">
+                  <Button variant="hot" size="lg" className="font-black uppercase px-10">
                     <ShoppingBag className="w-6 h-6 mr-3" />
                     BROWSE MARKET
                   </Button>

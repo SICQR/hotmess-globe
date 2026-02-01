@@ -110,7 +110,7 @@ export default function Beacons() {
                   if (!ok) e.preventDefault();
                 }}
               >
-                <Button className="bg-cyan-500 hover:bg-white text-black font-black uppercase">
+                <Button variant="cyan" className="font-black uppercase">
                   <Plus className="w-5 h-5 mr-2" />
                   CREATE
                 </Button>

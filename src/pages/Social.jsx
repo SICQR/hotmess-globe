@@ -850,7 +850,7 @@ export default function Social() {
                       <p className="text-white/60 mb-6">Radar needs your location to work</p>
                       <Button
                         onClick={handleEnableLocation}
-                        className="bg-pink-500 hover:bg-pink-600 text-white font-black uppercase"
+                        variant="hot" className="font-black uppercase"
                       >
                         <MapPin className="w-4 h-4 mr-2" />
                         Enable Location
@@ -886,7 +886,7 @@ function EmptyState({ icon, title, subtitle, onAction, actionLabel }) {
         {onAction && (
           <Button
             onClick={onAction}
-            className="bg-pink-500 hover:bg-pink-600 text-white font-black uppercase"
+            variant="hot" className="font-black uppercase"
           >
             {actionLabel}
           </Button>

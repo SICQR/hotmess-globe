@@ -186,7 +186,7 @@ export default function Settings() {
               </div>
 
               <div className="pt-4 flex gap-3">
-                <Button onClick={handleSave} className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase">
+                <Button onClick={handleSave} variant="hot" className="font-black uppercase">
                   <Save className="w-4 h-4 mr-2" />
                   Save Changes
                 </Button>
