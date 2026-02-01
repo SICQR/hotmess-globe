@@ -470,7 +470,7 @@ export default function GhostedSwipeView({
       {/* Progress indicator */}
       <div className="absolute top-4 inset-x-4 z-20">
         <div className="flex items-center justify-between text-xs text-white/60">
-          <span>{currentIndex + 1} / {profiles.length}</span>
+          <span>{swipedIds.size + 1} / {profiles.length}</span>
         </div>
       </div>
     </div>

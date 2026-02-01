@@ -22,9 +22,7 @@ import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
 import { toast } from 'sonner';
 
 // Ghosted components
-import { GhostedSwipeView, GhostedRadarView, StatusSelector } from '@/features/ghosted';
-import { BentoGridSmart } from '@/features/profilesGrid/BentoGrid';
-import { SmartProfileCard } from '@/features/profilesGrid/SmartProfileCard';
+import { GhostedSwipeView, GhostedRadarView, StatusSelector, GhostedGrid } from '@/features/ghosted';
 
 // View modes
 const VIEW_MODES = [
@@ -225,20 +223,6 @@ export default function Social() {
       return true;
     });
   }, [profiles, viewerLocation, maxDistance, showOnlineOnly, showRightNowOnly]);
-
-  // Priority calculation for smart grid
-  const getPriority = useCallback((profile) => {
-    let score = 50;
-    if (profile.rightNow) score += 30;
-    if (profile.onlineNow) score += 15;
-    if (profile.matchProbability) score += profile.matchProbability * 0.3;
-    if (viewerLocation && profile.geoLat && profile.geoLng) {
-      const dist = calculateDistance(viewerLocation.lat, viewerLocation.lng, profile.geoLat, profile.geoLng);
-      if (dist < 1) score += 20;
-      else if (dist < 3) score += 10;
-    }
-    return Math.min(100, score);
-  }, [viewerLocation]);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -443,7 +427,7 @@ export default function Social() {
           </div>
         ) : (
           <AnimatePresence mode="wait">
-            {/* Grid View */}
+            {/* Grid View - New streamlined cards */}
             {viewMode === 'grid' && (
               <motion.div
                 key="grid"
@@ -452,54 +436,24 @@ export default function Social() {
                 exit={{ opacity: 0 }}
                 className="max-w-7xl mx-auto px-3 py-4"
               >
-                {filteredProfiles.length === 0 ? (
-                  <EmptyState 
-                    icon="🔍" 
-                    title="No one nearby" 
-                    subtitle="Try expanding your distance filter"
-                    onAction={() => setMaxDistance(100)}
-                    actionLabel="Show all"
-                  />
-                ) : (
-                  <BentoGridSmart
-                    items={filteredProfiles}
-                    columns={4}
-                    gap="md"
-                    getPriority={getPriority}
-                    getKey={(p) => p.id}
-                    renderItem={(profile, size, index) => (
-                      <SmartProfileCard
-                        profile={{
-                          id: profile.id,
-                          email: profile.email,
-                          full_name: profile.profileName,
-                          avatar_url: profile.photoUrl,
-                          photos: profile.photos,
-                          profile_type: profile.profileType,
-                          bio: profile.title,
-                          city: profile.locationLabel,
-                          is_verified: profile.verified,
-                          is_online: profile.onlineNow,
-                          is_right_now: profile.rightNow,
-                          tags: profile.tags,
-                        }}
-                        viewerContext={{ location: viewerLocation }}
-                        distanceMinutes={
-                          viewerLocation && profile.geoLat && profile.geoLng
-                            ? Math.round((calculateDistance(
-                                viewerLocation.lat, viewerLocation.lng,
-                                profile.geoLat, profile.geoLng
-                              ) / 5) * 60)
-                            : undefined
-                        }
-                        onClick={handleOpenProfile}
-                        onMessage={handleMessageProfile}
-                        forceSize={size}
-                        index={index}
-                      />
-                    )}
-                  />
-                )}
+                <GhostedGrid
+                  profiles={filteredProfiles.map((p) => ({
+                    ...p,
+                    // Calculate travel time in minutes (rough estimate: 5km/h walking)
+                    travelTimeMinutes: viewerLocation && p.geoLat && p.geoLng
+                      ? Math.round((calculateDistance(
+                          viewerLocation.lat, viewerLocation.lng,
+                          p.geoLat, p.geoLng
+                        ) / 5) * 60)
+                      : undefined,
+                  }))}
+                  onTap={handleOpenProfile}
+                  onMessage={handleMessageProfile}
+                  showQuickActions={true}
+                  columns={3}
+                  loading={isLoadingInitial}
+                  emptyMessage="No one nearby. Try expanding your distance filter."
+                />
               </motion.div>
             )}
 
