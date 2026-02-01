@@ -40,7 +40,7 @@ export default function More() {
         >
           <p className="text-sm uppercase tracking-[0.4em] text-white/40 mb-4">TOOLS & SETTINGS</p>
           <h1 className="text-5xl md:text-7xl font-black italic mb-4">
-            MORE<span className="text-purple-500">.</span>
+            MORE<span className="text-pink-500">.</span>
           </h1>
           <p className="text-xl text-white/60 max-w-xl">
             Everything else you need. Tools, settings, and legal stuff.
@@ -72,15 +72,15 @@ export default function More() {
             </Link>
             
             <Link to={createPageUrl('MembershipUpgrade')}>
-              <div className="group p-6 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-xl hover:from-yellow-500/20 hover:to-orange-500/20 transition-all flex items-center gap-4">
-                <div className="w-14 h-14 bg-yellow-500/20 rounded-xl flex items-center justify-center">
-                  <Crown className="w-7 h-7 text-yellow-500" />
+              <div className="group p-6 bg-white/5 border border-white/20 rounded-xl hover:bg-white/10 hover:border-pink-500 transition-all flex items-center gap-4">
+                <div className="w-14 h-14 bg-pink-500/20 rounded-xl flex items-center justify-center">
+                  <Crown className="w-7 h-7 text-pink-500" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-black text-lg">UPGRADE</h3>
                   <p className="text-sm text-white/60">PLUS / CHROME membership</p>
                 </div>
-                <ArrowRight className="w-5 h-5 text-yellow-500 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-5 h-5 text-pink-500 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
           </div>
@@ -143,8 +143,8 @@ export default function More() {
                   transition={{ delay: idx * 0.1 }}
                 >
                   <Link to={createPageUrl(item.path)} className="group block">
-                    <div className="bg-white/5 hover:bg-white/10 border-l-4 border-cyan-500 rounded-r-xl p-5 transition-all flex items-center gap-4">
-                      <Icon className="w-6 h-6 text-cyan-500" />
+                    <div className="bg-white/5 hover:bg-white/10 border-l-4 border-pink-500 rounded-r-xl p-5 transition-all flex items-center gap-4">
+                      <Icon className="w-6 h-6 text-pink-500" />
                       <div className="flex-1">
                         <span className="font-black uppercase">{item.name}</span>
                         <p className="text-sm text-white/50">{item.desc}</p>

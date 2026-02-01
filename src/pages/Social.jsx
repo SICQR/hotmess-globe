@@ -176,7 +176,7 @@ export default function Social() {
               </TabsTrigger>
               <TabsTrigger
                 value="inbox"
-                className="data-[state=active]:bg-cyan-500 data-[state=active]:text-black relative font-black uppercase py-4"
+                className="data-[state=active]:bg-pink-500 data-[state=active]:text-white relative font-black uppercase py-4"
               >
                 <MessageCircle className="w-5 h-5 mr-2" />
                 INBOX
@@ -249,7 +249,7 @@ export default function Social() {
                         >
                           <div className="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/50 rounded-xl p-5 transition-all">
                             <div className="flex items-center gap-4">
-                              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
+                              <div className="w-14 h-14 rounded-full bg-pink-500 flex items-center justify-center">
                                 <span className="text-xl font-black">
                                   {otherParticipant[0]?.toUpperCase()}
                                 </span>
