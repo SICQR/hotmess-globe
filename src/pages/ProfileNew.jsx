@@ -38,7 +38,7 @@ const getUsername = (user) => {
   return user.username ? `@${user.username}` : null;
 };
 
-export default function ProfileNew() {
+export default function Profile() {
   const [searchParams] = useSearchParams();
   const emailParam = searchParams.get('email');
   const uidParam = searchParams.get('uid') || searchParams.get('auth_user_id');
