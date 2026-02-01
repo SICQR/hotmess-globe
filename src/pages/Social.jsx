@@ -169,7 +169,7 @@ export default function Social() {
             <TabsList className="grid w-full max-w-md grid-cols-2 bg-white/5 mb-8">
               <TabsTrigger
                 value="discover"
-                className="data-[state=active]:bg-pink-500 data-[state=active]:text-black font-black uppercase py-4"
+                className="data-[state=active]:bg-pink-500 data-[state=active]:text-white font-black uppercase py-4"
               >
                 <Ghost className="w-5 h-5 mr-2" />
                 DISCOVER
