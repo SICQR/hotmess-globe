@@ -138,11 +138,17 @@ export default function Social() {
   }, [navigate]);
 
   const handleMessageProfile = useCallback((profile) => {
+    // Require sign-in to message
+    if (!currentUser) {
+      toast.info('Sign in to send messages', { icon: '👻' });
+      navigate(`/auth?next=${encodeURIComponent('/social?tab=inbox')}`);
+      return;
+    }
     const email = profile?.email;
     if (email) {
       navigate(`/social/inbox?to=${encodeURIComponent(email)}`);
     }
-  }, [navigate]);
+  }, [navigate, currentUser]);
 
   // Priority calculation for smart grid
   const getPriority = useCallback((profile) => {
@@ -161,55 +167,8 @@ export default function Social() {
     return Math.min(100, score);
   }, [viewerLocation]);
 
-  // Loading state
-  if (currentUserLoading) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  // Not logged in
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-black text-white">
-        <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0">
-            <img 
-              src="/images/ghosted-cover.jpg" 
-              alt="Ghosted" 
-              className="w-full h-full object-cover opacity-50"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-pink-950/80 via-black/60 to-black" />
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative z-10 text-center px-6 max-w-3xl"
-          >
-            <Ghost className="w-20 h-20 mx-auto mb-8 text-pink-500" />
-            <h1 className="text-[15vw] md:text-[10vw] font-black italic leading-[0.85] tracking-tighter mb-6">
-              GHOSTED<span className="text-pink-500">.</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-white/70 mb-6">
-              Real-time social radar for nightlife.
-            </p>
-            <p className="text-base text-white/50 mb-12 max-w-lg mx-auto">
-              See who's out. Who's nearby. Who's heading where. Your pace, your rules.
-            </p>
-            <Button
-              onClick={() => navigate(`/auth?next=${encodeURIComponent('/social')}`)}
-              className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-12 py-7 text-xl"
-            >
-              ENTER GHOSTED
-            </Button>
-          </motion.div>
-        </section>
-      </div>
-    );
-  }
+  // Show brief loading only on initial mount, don't block the page
+  // Auth is optional - users can browse without signing in
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -455,7 +414,23 @@ export default function Social() {
           {/* Inbox Tab */}
           <TabsContent value="inbox" className="mt-0">
             <div className="max-w-2xl mx-auto px-4 py-6">
-              {threads.length === 0 ? (
+              {!currentUser ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center py-20 bg-white/5 rounded-2xl border border-white/10"
+                >
+                  <Ghost className="w-20 h-20 mx-auto mb-6 text-pink-500/50" />
+                  <h3 className="text-2xl font-black mb-2">SIGN IN TO MESSAGE</h3>
+                  <p className="text-white/60 mb-8">Browse profiles first, sign in when you're ready to connect</p>
+                  <Button
+                    onClick={() => navigate(`/auth?next=${encodeURIComponent('/social?tab=inbox')}`)}
+                    className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-8 py-4"
+                  >
+                    SIGN IN
+                  </Button>
+                </motion.div>
+              ) : threads.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
