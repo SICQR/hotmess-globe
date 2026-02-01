@@ -78,13 +78,11 @@ export default function Home() {
     return events.slice(0, 4);
   }, [recentBeacons]);
 
-  // Mock releases for RAW CONVICT RECORDS carousel
+  // RAW CONVICT RECORDS releases
   const releases = [
-    { id: 1, title: 'HNHMESS', artist: 'Raw Convict', cover: '/images/hero/radio-cover.jpg', year: '2024' },
-    { id: 2, title: 'LATE NIGHT', artist: 'HOTMESS', cover: '/images/hero/hero-pink.jpg', year: '2024' },
-    { id: 3, title: 'UNDERGROUND', artist: 'Raw Convict', cover: '/images/hero/hero-red.jpg', year: '2024' },
-    { id: 4, title: 'AFTER HOURS', artist: 'HOTMESS', cover: '/images/hero/hero-green.jpg', year: '2024' },
-    { id: 5, title: 'DARK ROOM', artist: 'Raw Convict', cover: '/images/hero/hero-main.png', year: '2024' },
+    { id: 1, title: 'HOTMESS', artist: 'Paul King ft Stewart Who', cover: '/images/RCR001 Paul King ft Stewart Who - Hotmess.JPEG', year: '2024', catalog: 'RCR001' },
+    { id: 2, title: 'WALKING RED FLAG', artist: 'Raw Convict', cover: '/images/walking-red-flag-cover.jpg', year: '2024', catalog: 'RCR002' },
+    { id: 3, title: 'RADIO COVER', artist: 'HOTMESS', cover: '/images/hero/radio-cover.jpg', year: '2024', catalog: 'RCR003' },
   ];
 
   const scrollReleases = (direction) => {
@@ -191,8 +189,8 @@ export default function Home() {
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="/images/hero/hero-pink.jpg" 
-            alt="Radio" 
+            src="/images/HOTMESS RADIO BRUTAL.jpg" 
+            alt="HOTMESS Radio" 
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black via-black/90 to-black/70" />
@@ -454,7 +452,7 @@ export default function Home() {
       <section className="relative min-h-[80vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="/images/hero/hero-red.jpg" 
+            src="/images/ghosted-cover.jpg" 
             alt="Ghosted" 
             className="w-full h-full object-cover"
           />
@@ -521,7 +519,86 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. OUR BRANDS - In-house drops */}
+      {/* 7. HNHMESS - Stigma-smashing lube */}
+      <section className="relative min-h-[80vh] flex items-center overflow-hidden">
+        <div className="absolute inset-0">
+          <img 
+            src="/images/HNHMESS HERO.PNG" 
+            alt="HNHMESS" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+        </div>
+
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <p className="text-sm uppercase tracking-[0.4em] text-pink-400 mb-4">
+                STIGMA-SMASHING ESSENTIALS
+              </p>
+              <h2 className="text-5xl md:text-8xl font-black italic mb-6">
+                HNH<span className="text-pink-500">MESS</span><span className="text-pink-500">.</span>
+              </h2>
+              <p className="text-xl md:text-2xl text-white/80 mb-4">
+                Lube without the shame.
+              </p>
+              <p className="text-lg text-white/60 mb-8 max-w-lg">
+                Sex-positive. Queer-owned. Designed for the community, by the community. 
+                No whispers. No brown paper bags. Just quality essentials that celebrate who we are.
+              </p>
+              <div className="bg-white/5 rounded-xl p-6 border border-pink-500/30 mb-10">
+                <div className="flex items-center gap-4 mb-3">
+                  <RadioIcon className="w-6 h-6 text-pink-500" />
+                  <span className="font-black uppercase text-pink-400">As heard on</span>
+                </div>
+                <p className="text-2xl font-black mb-2">HAND N HAND</p>
+                <p className="text-white/60">
+                  Every Sunday on HOTMESS RADIO. Real talk about sex, health, and connection.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <Link to="/market?brand=hnhmess">
+                  <Button className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg">
+                    <ShoppingBag className="w-6 h-6 mr-3" />
+                    SHOP HNHMESS
+                  </Button>
+                </Link>
+                <Button 
+                  onClick={openRadio}
+                  variant="outline" 
+                  className="border-2 border-white/30 text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg"
+                >
+                  <Play className="w-6 h-6 mr-3" />
+                  HAND N HAND
+                </Button>
+              </div>
+            </motion.div>
+
+            {/* Product visual */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="hidden lg:flex items-center justify-center"
+            >
+              <div className="relative">
+                <div className="w-80 h-80 rounded-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 blur-3xl absolute inset-0" />
+                <img 
+                  src="/images/HOTMESS HERO HNH.PNG" 
+                  alt="HNHMESS Product"
+                  className="relative w-80 h-auto rounded-2xl shadow-2xl"
+                />
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. OTHER BRANDS - In-house drops */}
       <section className="py-20 px-6 bg-black border-y border-white/10">
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -530,22 +607,22 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <p className="text-sm uppercase tracking-[0.4em] text-yellow-400 mb-4">IN-HOUSE BRANDS</p>
-            <h2 className="text-5xl md:text-7xl font-black italic mb-6">
-              OUR DROPS<span className="text-yellow-500">.</span>
+            <p className="text-sm uppercase tracking-[0.4em] text-yellow-400 mb-4">MORE FROM HOTMESS</p>
+            <h2 className="text-4xl md:text-6xl font-black italic mb-6">
+              LIMITED DROPS<span className="text-yellow-500">.</span>
             </h2>
             <p className="text-lg text-white/50 max-w-xl mx-auto">
-              Limited edition. No restocks. When it's gone, it's gone.
+              When it's gone, it's gone.
             </p>
           </motion.div>
 
           {/* Brand Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
             {[
-              { name: 'RAW', tagline: 'Unfiltered', color: 'from-red-500 to-orange-500', textColor: 'text-red-400' },
-              { name: 'HUNG AND HIGH', tagline: 'Party essentials', color: 'from-purple-500 to-pink-500', textColor: 'text-purple-400' },
+              { name: 'RAW', tagline: 'Unfiltered streetwear', color: 'from-red-500 to-orange-500', textColor: 'text-red-400' },
+              { name: 'HUNG & HIGH', tagline: 'Party essentials', color: 'from-purple-500 to-pink-500', textColor: 'text-purple-400' },
               { name: 'SUPERHUNG', tagline: 'Statement pieces', color: 'from-cyan-500 to-blue-500', textColor: 'text-cyan-400' },
-              { name: 'SUPERHIGH', tagline: 'Elevated', color: 'from-green-500 to-cyan-500', textColor: 'text-green-400' },
+              { name: 'SUPERHIGH', tagline: 'Elevated basics', color: 'from-green-500 to-cyan-500', textColor: 'text-green-400' },
             ].map((brand, i) => (
               <motion.div
                 key={brand.name}
@@ -557,8 +634,8 @@ export default function Home() {
                 <Link to={`/market?brand=${brand.name.toLowerCase().replace(/ /g, '-')}`} className="group block">
                   <div className={`aspect-square rounded-2xl bg-gradient-to-br ${brand.color} p-1`}>
                     <div className="w-full h-full bg-black rounded-xl flex flex-col items-center justify-center group-hover:bg-black/80 transition-colors">
-                      <span className={`text-2xl md:text-3xl font-black ${brand.textColor}`}>{brand.name}</span>
-                      <span className="text-xs text-white/50 uppercase tracking-wider mt-2">{brand.tagline}</span>
+                      <span className={`text-xl md:text-2xl font-black text-center px-2 ${brand.textColor}`}>{brand.name}</span>
+                      <span className="text-[10px] text-white/50 uppercase tracking-wider mt-2 text-center px-2">{brand.tagline}</span>
                     </div>
                   </div>
                 </Link>
@@ -570,14 +647,14 @@ export default function Home() {
             <Link to="/market?category=drops">
               <Button className="bg-yellow-500 hover:bg-white text-black font-black uppercase px-10 py-6 text-lg">
                 <ShoppingBag className="w-6 h-6 mr-3" />
-                SHOP DROPS
+                SHOP ALL DROPS
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* 8. MESS MARKET - Community marketplace */}
+      {/* 9. MESS MARKET - Community marketplace */}
       <section className="relative min-h-[60vh] flex items-center bg-gradient-to-br from-amber-950/30 via-black to-orange-950/30">
         <div className="w-full max-w-7xl mx-auto px-6 py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -643,7 +720,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 9. B2B SECTION - For Venues */}
+      {/* 10. B2B SECTION - For Venues */}
       <section className="py-24 px-6 bg-gradient-to-r from-cyan-950/20 via-black to-cyan-950/20 border-y border-white/10">
         <div className="max-w-5xl mx-auto text-center">
           <motion.div
@@ -673,7 +750,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 10. CARE SECTION */}
+      {/* 11. CARE SECTION */}
       <section className="py-32 px-6 bg-gradient-to-b from-black via-red-950/10 to-black">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div

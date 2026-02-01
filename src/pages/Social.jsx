@@ -76,7 +76,7 @@ export default function Social() {
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0">
             <img 
-              src="/images/hero/hero-red.jpg" 
+              src="/images/ghosted-cover.jpg" 
               alt="Ghosted" 
               className="w-full h-full object-cover opacity-50"
             />
@@ -117,7 +117,7 @@ export default function Social() {
       <section className="relative py-20 md:py-32 overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="/images/hero/hero-red.jpg" 
+            src="/images/ghosted-cover.jpg" 
             alt="Ghosted" 
             className="w-full h-full object-cover opacity-40"
           />
