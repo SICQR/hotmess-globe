@@ -10,6 +10,10 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS search_vector tsvector;
 -- Add search vector column to Beacon table  
 ALTER TABLE "Beacon" ADD COLUMN IF NOT EXISTS search_vector tsvector;
 
+-- Drop existing functions if they exist (to allow return type changes)
+DROP FUNCTION IF EXISTS search_users(TEXT, INTEGER);
+DROP FUNCTION IF EXISTS search_beacons(TEXT, INTEGER);
+
 -- Create function to update User search vector
 CREATE OR REPLACE FUNCTION update_user_search_vector()
 RETURNS TRIGGER AS $$
@@ -19,7 +23,7 @@ BEGIN
     setweight(to_tsvector('english', coalesce(NEW.username, '')), 'A') ||
     setweight(to_tsvector('english', coalesce(NEW.bio, '')), 'B') ||
     setweight(to_tsvector('english', coalesce(NEW.city, '')), 'C') ||
-    setweight(to_tsvector('english', coalesce(NEW.archetype, '')), 'C') ||
+    -- archetype removed
     setweight(to_tsvector('english', coalesce(array_to_string(NEW.interests, ' '), '')), 'B');
   RETURN NEW;
 END;
@@ -42,7 +46,7 @@ $$ LANGUAGE plpgsql;
 -- Create triggers for search vector updates
 DROP TRIGGER IF EXISTS trigger_update_user_search_vector ON "User";
 CREATE TRIGGER trigger_update_user_search_vector
-  BEFORE INSERT OR UPDATE OF full_name, username, bio, city, archetype, interests
+  BEFORE INSERT OR UPDATE OF full_name, username, bio, city, interests
   ON "User"
   FOR EACH ROW
   EXECUTE FUNCTION update_user_search_vector();
@@ -69,7 +73,7 @@ UPDATE "User" SET search_vector =
   setweight(to_tsvector('english', coalesce(username, '')), 'A') ||
   setweight(to_tsvector('english', coalesce(bio, '')), 'B') ||
   setweight(to_tsvector('english', coalesce(city, '')), 'C') ||
-  setweight(to_tsvector('english', coalesce(archetype, '')), 'C') ||
+  -- archetype removed
   setweight(to_tsvector('english', coalesce(array_to_string(interests, ' '), '')), 'B')
 WHERE search_vector IS NULL;
 
@@ -94,7 +98,6 @@ RETURNS TABLE (
   avatar_url TEXT,
   bio TEXT,
   city TEXT,
-  archetype TEXT,
   xp INTEGER,
   level INTEGER,
   is_verified BOOLEAN,
@@ -111,7 +114,7 @@ BEGIN
     u.avatar_url,
     u.bio,
     u.city,
-    u.archetype,
+    -- u.archetype removed
     u.xp,
     u.level,
     u.is_verified,

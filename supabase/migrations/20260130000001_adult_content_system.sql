@@ -57,12 +57,12 @@ CREATE POLICY "Service role full access moderation queue"
   ON content_moderation_queue FOR ALL
   USING (auth.jwt() ->> 'role' = 'service_role');
 
--- Admin users can review (assumes is_admin field exists)
+-- Admin users can review
 CREATE POLICY "Admins can review moderation queue"
   ON content_moderation_queue FOR UPDATE
   USING (
     EXISTS (
       SELECT 1 FROM "User" 
-      WHERE id = auth.uid() AND is_admin = true
+      WHERE auth_user_id = auth.uid() AND role = 'admin'
     )
   );
