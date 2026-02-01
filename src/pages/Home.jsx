@@ -334,10 +334,10 @@ export default function Home() {
             className="mb-8"
           >
             <p className="text-lg md:text-2xl font-bold uppercase tracking-[0.3em] text-white/80 mb-2">
-              The Living World
+              The Heartbeat
             </p>
             <p className="text-sm md:text-base text-white/50 uppercase tracking-widest">
-              Nights • Radio • Connection • Commerce
+              Radio • Tonight • Ghosted • Commerce
             </p>
           </motion.div>
 
@@ -378,6 +378,47 @@ export default function Home() {
         </motion.div>
       </section>
 
+      {/* RADIO NOW - The heartbeat */}
+      <section className="py-8 px-6 bg-gradient-to-b from-black to-purple-950/20 border-b border-white/10">
+        <div className="max-w-7xl mx-auto">
+          <Link to="/music/live" className="block">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex items-center justify-between bg-white/5 border border-white/10 hover:border-purple-500/50 rounded-xl p-6 transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <Radio className="w-8 h-8 text-purple-500" />
+                  </div>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse border-2 border-black" />
+                </div>
+                <div>
+                  <p className="text-xs text-green-500 uppercase tracking-widest font-bold flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    LIVE NOW
+                  </p>
+                  <h3 className="text-2xl font-black uppercase">
+                    {nextRadioUp?.show?.title || 'RAW CONVICT RADIO'}
+                  </h3>
+                  <p className="text-sm text-white/50">
+                    {nextRadioUp?.nextEpisode ? `Next: ${format(nextRadioUp.nextEpisode.date, 'EEE HH:mm')}` : 'Live shows & DJ culture'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <Button className="bg-purple-500 hover:bg-purple-400 text-white font-black uppercase group-hover:scale-105 transition-transform">
+                  <Play className="w-5 h-5 mr-2" />
+                  LISTEN
+                </Button>
+              </div>
+            </motion.div>
+          </Link>
+        </div>
+      </section>
+
       {/* MODES GRID - What you can do */}
       <section className="py-16 px-6 bg-black">
         <div className="max-w-7xl mx-auto">
@@ -395,10 +436,10 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { to: '/social', icon: Users, title: 'Connect', desc: 'Find your people tonight', color: 'from-pink-500 to-red-500' },
-              { to: '/events', icon: Zap, title: 'Events', desc: 'What\'s happening now', color: 'from-yellow-500 to-orange-500' },
-              { to: '/music/live', icon: Radio, title: 'Radio', desc: 'Live sets & culture', color: 'from-green-500 to-emerald-500' },
-              { to: '/market', icon: ShoppingBag, title: 'Market', desc: 'Drops & P2P commerce', color: 'from-purple-500 to-violet-500' },
+              { to: '/music/live', icon: Radio, title: 'Radio', desc: 'Live shows & culture', color: 'from-purple-500 to-violet-500' },
+              { to: '/events', icon: Zap, title: 'Tonight', desc: 'What\'s happening now', color: 'from-cyan-500 to-blue-500' },
+              { to: '/social', icon: Users, title: 'Ghosted', desc: 'Find your people', color: 'from-pink-500 to-red-500' },
+              { to: '/market', icon: ShoppingBag, title: 'Shop', desc: 'Drops & merch', color: 'from-yellow-500 to-orange-500' },
             ].map((mode, i) => (
               <motion.div
                 key={mode.to}

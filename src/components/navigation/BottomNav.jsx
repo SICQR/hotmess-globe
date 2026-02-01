@@ -3,32 +3,32 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPageUrl } from '../../utils';
 import { 
-  Home, 
-  Globe, 
+  Radio,
   Zap, 
+  Ghost,
   ShoppingBag, 
-  LayoutGrid,
+  MoreHorizontal,
   Users,
   Calendar,
-  Radio,
   Ticket,
   Shield,
   Sparkles,
   Navigation,
   BarChart3,
   Settings,
+  Globe,
   X
 } from 'lucide-react';
 
-// The 11 apps within HOTMESS London OS
+// Apps available in MORE menu
 const ALL_APPS = [
-  { id: 'social', name: 'SOCIAL', icon: Users, path: 'Social', color: '#FF1493', desc: 'Find people' },
-  { id: 'events', name: 'EVENTS', icon: Calendar, path: 'Events', color: '#00D9FF', desc: "What's on" },
+  { id: 'events', name: 'TONIGHT', icon: Zap, path: 'Events', color: '#00D9FF', desc: "What's on" },
+  { id: 'ghosted', name: 'GHOSTED', icon: Ghost, path: 'Social', color: '#FF1493', desc: 'Find people' },
   { id: 'radio', name: 'RADIO', icon: Radio, path: 'Music', color: '#B026FF', desc: 'Live shows' },
-  { id: 'tickets', name: 'TICKETS', icon: Ticket, path: 'TicketMarketplace', color: '#FF6B35', desc: 'Buy & sell' },
+  { id: 'pulse', name: 'GLOBE', icon: Globe, path: 'Pulse', color: '#39FF14', desc: 'Live map' },
+  { id: 'safety', name: 'CARE', icon: Shield, path: 'Care', color: '#FF0000', desc: 'You good?' },
   { id: 'community', name: 'COMMUNITY', icon: Sparkles, path: 'Community', color: '#FFEB3B', desc: 'Posts' },
-  { id: 'safety', name: 'SAFETY', icon: Shield, path: 'Care', color: '#FF0000', desc: 'You good?' },
-  { id: 'pulse', name: 'PULSE', icon: Globe, path: 'Pulse', color: '#39FF14', desc: 'Live map' },
+  { id: 'tickets', name: 'TICKETS', icon: Ticket, path: 'TicketMarketplace', color: '#FF6B35', desc: 'Buy & sell' },
   { id: 'directions', name: 'TRAVEL', icon: Navigation, path: 'Directions', color: '#00D9FF', desc: 'Get there' },
   { id: 'stats', name: 'STATS', icon: BarChart3, path: 'Stats', color: '#FFEB3B', desc: 'Your data' },
   { id: 'settings', name: 'SETTINGS', icon: Settings, path: 'Settings', color: '#FFFFFF', desc: 'Preferences' },
@@ -72,8 +72,8 @@ function AppsGridModal({ isOpen, onClose }) {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
             <div>
-              <h2 className="text-xl font-black">HOTMESS APPS</h2>
-              <p className="text-xs text-white/50 uppercase tracking-wider">London OS</p>
+              <h2 className="text-xl font-black">MORE</h2>
+              <p className="text-xs text-white/50 uppercase tracking-wider">HOTMESS London</p>
             </div>
             <button
               onClick={onClose}
@@ -155,7 +155,7 @@ function AppsGridModal({ isOpen, onClose }) {
           {/* Footer */}
           <div className="p-4 border-t border-white/10 text-center">
             <p className="text-[10px] text-white/40 uppercase tracking-widest">
-              11 apps in one • London OS
+              18+ • Consent-first • Care always
             </p>
           </div>
         </motion.div>
@@ -187,84 +187,81 @@ export default function BottomNav({ currentPageName, user }) {
   }, []);
 
   const isActive = (path) => {
-    if (path === 'Home') return location.pathname === '/' || currentPageName === 'Home';
+    if (path === 'Home' || path === 'Music') return location.pathname === '/' || currentPageName === 'Home' || currentPageName === 'Music';
     return currentPageName === path;
   };
 
-  const isPulseActive = currentPageName === 'Pulse' || currentPageName === 'Globe';
+  const isRadioActive = location.pathname === '/' || currentPageName === 'Home' || currentPageName === 'Music';
+  const isTonightActive = currentPageName === 'Events' || currentPageName === 'Beacons' || currentPageName === 'Pulse';
+  const isGhostedActive = currentPageName === 'Social' || currentPageName === 'ProfilesGrid' || currentPageName === 'Connect';
   const isShopActive = currentPageName === 'Marketplace' || location.pathname.startsWith('/market');
 
   return (
     <>
-      {/* Bottom Navigation Bar */}
+      {/* Bottom Navigation Bar - RADIO • TONIGHT • GHOSTED • SHOP • MORE */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-end justify-around px-2 py-1">
           
-          {/* HOME */}
+          {/* RADIO - The heartbeat */}
           <Link
-            to={createPageUrl('Home')}
+            to="/"
             className={`flex flex-col items-center py-2 px-3 transition-all ${
-              isActive('Home') ? 'text-white' : 'text-white/50'
+              isRadioActive ? 'text-white' : 'text-white/50'
             }`}
           >
-            <Home className={`w-6 h-6 ${isActive('Home') ? 'text-[#FF1493]' : ''}`} />
-            <span className="text-[9px] font-black uppercase mt-1">Home</span>
+            <Radio className={`w-6 h-6 ${isRadioActive ? 'text-[#B026FF]' : ''}`} />
+            <span className="text-[9px] font-black uppercase mt-1">Radio</span>
+            {isRadioActive && (
+              <span className="w-1 h-1 rounded-full bg-[#39FF14] mt-0.5 animate-pulse" />
+            )}
           </Link>
 
-          {/* PULSE */}
+          {/* TONIGHT - What's happening */}
           <Link
-            to={createPageUrl('Pulse')}
+            to={createPageUrl('Events')}
             className={`flex flex-col items-center py-2 px-3 transition-all ${
-              isPulseActive ? 'text-white' : 'text-white/50'
+              isTonightActive ? 'text-white' : 'text-white/50'
             }`}
           >
-            <Globe className={`w-6 h-6 ${isPulseActive ? 'text-[#00D9FF]' : ''}`} />
-            <span className="text-[9px] font-black uppercase mt-1">Pulse</span>
+            <Zap className={`w-6 h-6 ${isTonightActive ? 'text-[#00D9FF]' : ''}`} />
+            <span className="text-[9px] font-black uppercase mt-1">Tonight</span>
+            {liveCounts.events > 0 && (
+              <span className="text-[8px] text-[#00D9FF]">{liveCounts.events} on</span>
+            )}
           </Link>
 
-          {/* LIVE - Center Prominent Button */}
+          {/* GHOSTED - Social discovery (center, but not dominant) */}
           <Link
             to={createPageUrl('Social')}
-            className="relative flex flex-col items-center -mt-4"
+            className={`flex flex-col items-center py-2 px-3 transition-all ${
+              isGhostedActive ? 'text-white' : 'text-white/50'
+            }`}
           >
-            <motion.div
-              whileTap={{ scale: 0.95 }}
-              className="relative"
-            >
-              {/* Glow effect */}
-              <div className="absolute inset-0 bg-[#FF1493] rounded-full blur-lg opacity-50 animate-pulse" />
-              
-              {/* Main button */}
-              <div className="relative w-14 h-14 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center border-4 border-black shadow-lg">
-                <Zap className="w-7 h-7 text-white" />
-              </div>
-
-              {/* Live counter badge */}
-              <div className="absolute -top-1 -right-1 bg-black rounded-full px-1.5 py-0.5 border border-[#FF1493]">
-                <span className="text-[9px] font-black text-[#FF1493]">{liveCounts.rightNow}</span>
-              </div>
-            </motion.div>
-            <span className="text-[9px] font-black uppercase mt-1 text-[#FF1493]">LIVE</span>
+            <Ghost className={`w-6 h-6 ${isGhostedActive ? 'text-[#FF1493]' : ''}`} />
+            <span className="text-[9px] font-black uppercase mt-1">Ghosted</span>
+            {liveCounts.rightNow > 0 && (
+              <span className="text-[8px] text-[#FF1493]">{liveCounts.rightNow} out</span>
+            )}
           </Link>
 
-          {/* SHOP - Touch Target 44px min */}
+          {/* SHOP */}
           <Link
             to="/market"
             className={`flex flex-col items-center justify-center min-w-[52px] min-h-[48px] py-1.5 px-2 rounded-lg transition-all active:scale-95 ${
               isShopActive ? 'text-white bg-white/5' : 'text-white/50'
             }`}
           >
-            <ShoppingBag className={`w-6 h-6 ${isShopActive ? 'text-[#B026FF]' : ''}`} />
+            <ShoppingBag className={`w-6 h-6 ${isShopActive ? 'text-[#FFB800]' : ''}`} />
             <span className="text-[9px] font-black uppercase mt-0.5">Shop</span>
           </Link>
 
-          {/* APPS - Touch Target 44px min */}
+          {/* MORE */}
           <button
             onClick={() => setShowApps(true)}
             className="flex flex-col items-center justify-center min-w-[52px] min-h-[48px] py-1.5 px-2 rounded-lg text-white/50 active:text-white active:bg-white/5 transition-all active:scale-95"
           >
-            <LayoutGrid className="w-6 h-6" />
-            <span className="text-[9px] font-black uppercase mt-0.5">Apps</span>
+            <MoreHorizontal className="w-6 h-6" />
+            <span className="text-[9px] font-black uppercase mt-0.5">More</span>
           </button>
         </div>
       </nav>

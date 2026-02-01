@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Users, MessageCircle } from 'lucide-react';
+import { Ghost, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
@@ -78,9 +78,9 @@ export default function Social() {
     return (
       <div className="min-h-screen bg-black text-white pb-20">
         <PageShell
-          eyebrow="SOCIAL"
-          title="Social"
-          subtitle="Discover • Connect • Message"
+          eyebrow="GHOSTED"
+          title="Ghosted"
+          subtitle="Opt-in • Contextual • Your pace"
           maxWidth="4xl"
         >
           <div className="bg-white/5 border-2 border-white/10 p-6">
@@ -107,18 +107,18 @@ export default function Social() {
   return (
     <div className="min-h-screen bg-black text-white pb-20">
       <PageShell
-        eyebrow="SOCIAL"
-        title="Social"
-        subtitle="Discover • Connect • Message"
+        eyebrow="GHOSTED"
+        title="Ghosted"
+        subtitle="Opt-in • Contextual • Your pace"
         maxWidth="7xl"
       >
         <Tabs value={activeTab} onValueChange={(v) => setTabAndUrl(v)} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-white/5 mb-8">
             <TabsTrigger
               value="discover"
-              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black"
+              className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black"
             >
-              <Users className="w-4 h-4 mr-2" />
+              <Ghost className="w-4 h-4 mr-2" />
               DISCOVER
             </TabsTrigger>
             <TabsTrigger
