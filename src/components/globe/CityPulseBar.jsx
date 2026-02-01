@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Radio, Zap, Users, Flame, Loader2 } from 'lucide-react';
+import { Radio, Zap, Flame, Loader2 } from 'lucide-react';
 import { loadCityPack, isInPeakWindow } from '@/lib/globe/cityLoader';
 import { isDisabled } from '@/lib/safety/killSwitch';
 
@@ -40,9 +40,15 @@ export default function CityPulseBar({ onCitySelect, currentZoom = 5 }) {
     const city = availableCities[activeCity];
     if (!city) return;
 
+    let cancelled = false;
+
     const loadPack = async () => {
       setLoading(true);
       const pack = await loadCityPack(city.id, currentZoom);
+      
+      // Prevent state updates if component unmounted or city changed
+      if (cancelled) return;
+      
       setCityPack(pack);
       
       // Check peak windows for zones
@@ -58,6 +64,10 @@ export default function CityPulseBar({ onCitySelect, currentZoom = 5 }) {
     };
 
     loadPack();
+    
+    return () => {
+      cancelled = true;
+    };
   }, [activeCity, currentZoom, availableCities]);
 
   const handleCityClick = useCallback((index) => {

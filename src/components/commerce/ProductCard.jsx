@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { usePulse } from '@/contexts/PulseContext';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, MessageCircle, Heart } from 'lucide-react';
+import { ShoppingBag, MessageCircle } from 'lucide-react';
 
 /**
  * Product Card
