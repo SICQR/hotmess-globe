@@ -460,38 +460,38 @@ export default function Music() {
   return (
     <div className="min-h-screen bg-black text-white pb-20">
       {/* Hero */}
-      <section className="relative py-20 sm:py-32 px-4 sm:px-6 overflow-hidden">
+      <section className="relative min-h-[70vh] flex items-center px-4 sm:px-6 overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1920&q=80" 
+            src="/images/hero/radio-cover.jpg" 
             alt="Music"
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.src = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1920&q=80';
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-[#B026FF]/40 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-purple-950/50 to-black" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto text-center">
-          <RadioIcon className="w-20 h-20 mx-auto mb-6 drop-shadow-2xl" />
-          <h1 className="text-5xl sm:text-7xl md:text-9xl font-black italic mb-6 drop-shadow-2xl">
-            MUSIC
+        <div className="relative z-10 w-full max-w-7xl mx-auto text-center py-20">
+          <p className="text-sm uppercase tracking-[0.4em] text-purple-400 mb-6">HOTMESS RADIO</p>
+          <h1 className="text-[15vw] sm:text-[12vw] md:text-[10vw] font-black italic leading-[0.85] mb-6 drop-shadow-2xl">
+            MUSIC<span className="text-purple-500">.</span>
           </h1>
-          <p className="text-base sm:text-xl md:text-2xl uppercase tracking-wider text-white/90 mb-8 drop-shadow-lg">
+          <p className="text-lg sm:text-xl md:text-2xl uppercase tracking-wider text-white/80 mb-10 drop-shadow-lg max-w-2xl mx-auto">
             Live radio first. Then the releases. Then the rabbit hole.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Button 
               onClick={openRadio}
-              variant="cyan"
-              size="xl"
-              className="shadow-2xl w-full sm:w-auto font-black uppercase"
+              className="bg-purple-500 hover:bg-white text-white hover:text-black shadow-2xl w-full sm:w-auto font-black uppercase px-10 py-6 text-lg"
             >
-              <Play className="w-5 h-5 mr-2" />
+              <Play className="w-6 h-6 mr-3" />
               LISTEN LIVE
             </Button>
             <Link to="/music/shows" className="block w-full sm:w-auto">
               <Button 
-                variant="glass"
-                size="xl"
-                className="border-white/20 shadow-2xl backdrop-blur-sm w-full sm:w-auto font-black uppercase"
+                variant="outline"
+                className="border-2 border-white/30 text-white hover:bg-white hover:text-black shadow-2xl backdrop-blur-sm w-full sm:w-auto font-black uppercase px-10 py-6 text-lg"
               >
                 BROWSE SHOWS
               </Button>
