@@ -1,54 +1,19 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Heart, Calendar, Zap, ArrowRight, Ghost, Play, Mic, Users, Sparkles, MapPin, Disc, ChevronLeft, ChevronRight, Radio as RadioIcon, RefreshCw, Loader2 } from 'lucide-react';
+import { ShoppingBag, Heart, Calendar, Zap, ArrowRight, Ghost, Play, Mic, Users, Sparkles, MapPin, Disc, ChevronLeft, ChevronRight, Radio as RadioIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useServerNow } from '@/hooks/use-server-now';
 import { schedule, getNextEpisode } from '../components/radio/radioUtils';
 import { useRadio } from '../components/shell/RadioContext';
-import { toast } from 'sonner';
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [scraping, setScraping] = useState(false);
   const { serverNow } = useServerNow();
   const { openRadio } = useRadio();
   const releasesRef = useRef(null);
-  const queryClient = useQueryClient();
-
-  // Manual event scrape trigger
-  const triggerScrape = async () => {
-    setScraping(true);
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      
-      const resp = await fetch('/api/events/cron', {
-        method: 'GET',
-        headers,
-      });
-      
-      const result = await resp.json().catch(() => ({}));
-      
-      if (resp.ok && result.success) {
-        toast.success(`Scraped ${result.results?.created || 0} new events!`);
-        queryClient.invalidateQueries(['recent-beacons']);
-      } else {
-        toast.error(result.error || 'Scrape failed - check Vercel logs');
-        console.error('Scrape result:', result);
-      }
-    } catch (err) {
-      toast.error('Scrape request failed');
-      console.error('Scrape error:', err);
-    } finally {
-      setScraping(false);
-    }
-  };
 
   // Get next radio show
   const nextRadioUp = useMemo(() => {
@@ -477,21 +442,7 @@ export default function Home() {
                     PULSE MAP
                   </Button>
                 </Link>
-                <Button 
-                  onClick={triggerScrape}
-                  disabled={scraping}
-                  variant="outline" 
-                  className="border-2 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500 hover:text-black font-black uppercase px-6 py-6 text-sm"
-                >
-                  {scraping ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <RefreshCw className="w-5 h-5 mr-2" />}
-                  {scraping ? 'SCRAPING...' : 'FETCH EVENTS'}
-                </Button>
               </div>
-              {tonightEvents.length === 0 && (
-                <p className="text-sm text-white/40 mt-4">
-                  No events yet. Click "FETCH EVENTS" to scrape from sources.
-                </p>
-              )}
             </motion.div>
           </div>
         </div>
