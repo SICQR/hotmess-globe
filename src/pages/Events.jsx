@@ -17,6 +17,8 @@ import NightlifeResearcher from '../components/ai/NightlifeResearcher';
 import AIEventRecommendations from '../components/events/AIEventRecommendations';
 import logger from '@/utils/logger';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
+import { EventListSkeleton } from '@/components/skeletons/PageSkeletons';
+import EmptyState, { ErrorState } from '@/components/ui/EmptyState';
 
 export default function Events() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -61,7 +63,7 @@ export default function Events() {
     };
   }, []);
 
-  const { data: events = [] } = useQuery({
+  const { data: events = [], isLoading, error, refetch } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
       const beacons = await base44.entities.Beacon.filter(
@@ -69,7 +71,8 @@ export default function Events() {
         '-event_date'
       );
       return beacons;
-    }
+    },
+    retry: 2,
   });
 
   const { data: rsvps = [] } = useQuery({
@@ -156,6 +159,41 @@ export default function Events() {
 
   const featuredEvent = filteredEvents[0];
   const upcomingEvents = filteredEvents.slice(1);
+
+  // Loading state with skeleton
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header skeleton */}
+          <div className="h-12 w-64 bg-white/10 rounded mb-8 animate-pulse" />
+          {/* Filters skeleton */}
+          <div className="flex gap-4 mb-8">
+            <div className="h-10 w-32 bg-white/10 rounded animate-pulse" />
+            <div className="h-10 w-32 bg-white/10 rounded animate-pulse" />
+            <div className="h-10 w-32 bg-white/10 rounded animate-pulse" />
+          </div>
+          {/* Events skeleton */}
+          <EventListSkeleton count={6} />
+        </div>
+      </div>
+    );
+  }
+
+  // Error state with retry
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <ErrorState
+          title="Couldn't load events"
+          description="We had trouble fetching upcoming events."
+          type="network"
+          onRetry={() => refetch()}
+          error={error}
+        />
+      </div>
+    );
+  }
 
   if (viewMode === 'map') {
     return (
@@ -407,16 +445,12 @@ export default function Events() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/10">
-              <Calendar className="w-16 h-16 mx-auto mb-4 text-white/20" />
-              <h3 className="text-xl font-bold mb-2">No events found</h3>
-              <p className="text-white/60 mb-6">Try adjusting your filters</p>
-              <Link to={createPageUrl('CreateBeacon')}>
-                <Button className="bg-pink-500 text-white hover:bg-white hover:text-black font-black uppercase">
-                  Create Event
-                </Button>
-              </Link>
-            </div>
+            <EmptyState
+              preset="events"
+              description={searchQuery ? 'Try different search terms or filters' : 'Check back later for upcoming events'}
+              action={() => window.location.href = createPageUrl('CreateBeacon')}
+              actionLabel="Create Event"
+            />
           )}
         </div>
       </section>

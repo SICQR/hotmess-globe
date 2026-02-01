@@ -8,15 +8,18 @@ import { MapPin, Zap, Search, Plus, Filter, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BeaconListSkeleton } from '@/components/skeletons/PageSkeletons';
+import EmptyState, { ErrorState } from '@/components/ui/EmptyState';
 
 export default function Beacons() {
   const [searchQuery, setSearchQuery] = useState('');
   const [kindFilter, setKindFilter] = useState('all');
   const [cityFilter, setCityFilter] = useState('all');
 
-  const { data: beacons = [], isLoading } = useQuery({
+  const { data: beacons = [], isLoading, error, refetch } = useQuery({
     queryKey: ['beacons'],
     queryFn: () => base44.entities.Beacon.filter({ active: true }, '-created_date'),
+    retry: 2,
   });
 
   const filteredBeacons = beacons.filter(beacon => {
@@ -28,6 +31,37 @@ export default function Beacons() {
   });
 
   const cities = [...new Set(beacons.map(b => b.city).filter(Boolean))];
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="h-12 w-48 bg-white/10 rounded mb-8 animate-pulse" />
+          <div className="flex gap-4 mb-8">
+            <div className="h-10 w-40 bg-white/10 rounded animate-pulse" />
+            <div className="h-10 w-32 bg-white/10 rounded animate-pulse" />
+          </div>
+          <BeaconListSkeleton count={8} />
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <ErrorState
+          title="Couldn't load beacons"
+          description="We had trouble fetching location drops."
+          type="network"
+          onRetry={() => refetch()}
+          error={error}
+        />
+      </div>
+    );
+  }
 
   const BEACON_COLORS = {
     event: '#FF1493',
@@ -194,27 +228,15 @@ export default function Beacons() {
               ))}
             </div>
           ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-20 bg-white/5 rounded-2xl border border-white/10"
-            >
-              <MapPin className="w-20 h-20 text-white/20 mx-auto mb-6" />
-              <h3 className="text-2xl font-black mb-2">NO BEACONS FOUND</h3>
-              <p className="text-white/50 mb-8">Try adjusting your filters or create a new beacon</p>
-              <Link
-                to={createPageUrl('CreateBeacon')}
-                onClick={async (e) => {
-                  const ok = await base44.auth.requireProfile(createPageUrl('CreateBeacon'));
-                  if (!ok) e.preventDefault();
-                }}
-              >
-                <Button className="bg-cyan-500 hover:bg-white text-black font-black uppercase px-8 py-4">
-                  <Plus className="w-5 h-5 mr-2" />
-                  CREATE BEACON
-                </Button>
-              </Link>
-            </motion.div>
+            <EmptyState
+              preset="beacons"
+              description={searchQuery ? 'Try different search terms' : 'Be the first to drop a beacon in your area'}
+              action={async () => {
+                const ok = await base44.auth.requireProfile(createPageUrl('CreateBeacon'));
+                if (ok) window.location.href = createPageUrl('CreateBeacon');
+              }}
+              actionLabel="Create Beacon"
+            />
           )}
         </div>
       </section>

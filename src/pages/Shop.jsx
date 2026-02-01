@@ -3,12 +3,13 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, ShoppingCart, ArrowRight, Sparkles } from 'lucide-react';
-import { GridSkeleton } from '@/components/ui/LoadingSkeleton';
+import { ProductGridSkeleton } from '@/components/skeletons/PageSkeletons';
 import { Button } from '@/components/ui/button';
 import { openCartDrawer } from '@/utils/cartEvents';
+import EmptyState, { ErrorState } from '@/components/ui/EmptyState';
 
 export default function Shop() {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['shopify', 'featured-products'],
     queryFn: async () => {
       const resp = await fetch('/api/shopify/featured');
@@ -28,6 +29,7 @@ export default function Shop() {
       return payload;
     },
     refetchInterval: 10 * 60 * 1000,
+    retry: 2,
   });
 
   const products = data?.products || [];
@@ -164,42 +166,27 @@ export default function Shop() {
           </motion.div>
 
           {isLoading ? (
-            <GridSkeleton count={4} />
+            <ProductGridSkeleton count={6} />
           ) : notConfigured ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-20 bg-white/5 rounded-2xl border border-white/10"
-            >
-              <ShoppingBag className="w-20 h-20 mx-auto mb-6 text-pink-500/30" />
-              <h3 className="text-2xl font-black mb-2">SHOP COMING SOON</h3>
-              <p className="text-white/60 mb-2">
-                Shopify Storefront isn't configured for this deployment yet.
-              </p>
-              {data?.details && (
-                <p className="text-white/40 text-sm">{data.details}</p>
-              )}
-            </motion.div>
+            <EmptyState
+              preset="shop"
+              title="Shop Coming Soon"
+              description="Shopify Storefront isn't configured for this deployment yet."
+            />
           ) : error ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-20 bg-white/5 rounded-2xl border border-red-500/20"
-            >
-              <ShoppingBag className="w-20 h-20 mx-auto mb-6 text-red-500/30" />
-              <h3 className="text-2xl font-black text-red-400 mb-2">FAILED TO LOAD</h3>
-              <p className="text-white/60">{error?.message || 'Unknown error'}</p>
-            </motion.div>
+            <ErrorState
+              title="Couldn't load products"
+              description="We had trouble connecting to the shop."
+              type="network"
+              onRetry={() => refetch()}
+              error={error}
+            />
           ) : otherProducts.length === 0 && !featuredProduct ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-20 bg-white/5 rounded-2xl border border-white/10"
-            >
-              <ShoppingBag className="w-20 h-20 mx-auto mb-6 text-pink-500/30" />
-              <h3 className="text-2xl font-black mb-2">NO PRODUCTS YET</h3>
-              <p className="text-white/60">Check back soon for drops.</p>
-            </motion.div>
+            <EmptyState
+              preset="shop"
+              title="No Products Yet"
+              description="Check back soon for drops."
+            />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {(featuredProduct ? otherProducts : products).map((p, idx) => {

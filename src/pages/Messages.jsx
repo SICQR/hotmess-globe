@@ -9,6 +9,8 @@ import ThreadList from '../components/messaging/ThreadList';
 import NewMessageModal from '../components/messaging/NewMessageModal';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { ConversationListSkeleton } from '@/components/skeletons/PageSkeletons';
+import { ErrorState } from '@/components/ui/EmptyState';
 
 export default function Messages() {
   const [selectedThread, setSelectedThread] = useState(null);
@@ -40,14 +42,15 @@ export default function Messages() {
     }
   }, [location.search]);
 
-  const { data: threads = [], isLoading } = useQuery({
+  const { data: threads = [], isLoading, error, refetch } = useQuery({
     queryKey: ['chat-threads', currentUser?.email],
     queryFn: async () => {
       const allThreads = await base44.entities.ChatThread.filter({ active: true }, '-last_message_at');
       return allThreads.filter(t => t.participant_emails.includes(currentUser.email));
     },
     enabled: !!currentUser,
-    refetchInterval: 5000, // Poll every 5s (optimized)
+    refetchInterval: 5000,
+    retry: 2,
   });
 
   // Deep-link: /social/inbox?to=email → open compose with recipient prefilled.
@@ -99,11 +102,34 @@ export default function Messages() {
 
   if (!currentUser || isLoading || userLoading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <MessageCircle className="w-12 h-12 text-white/40 mx-auto mb-4 animate-pulse" />
-          <p className="text-white/60 font-mono">LOADING MESSAGES...</p>
+      <div className="min-h-screen bg-black text-white">
+        <div className="max-w-7xl mx-auto flex">
+          {/* Sidebar skeleton */}
+          <div className="w-full md:w-96 border-r border-white/10 p-6">
+            <div className="h-8 w-40 bg-white/10 rounded mb-4 animate-pulse" />
+            <div className="h-10 w-full bg-white/10 rounded mb-6 animate-pulse" />
+            <ConversationListSkeleton count={6} />
+          </div>
+          {/* Main area skeleton (hidden on mobile) */}
+          <div className="hidden md:flex flex-1 items-center justify-center">
+            <div className="w-32 h-32 bg-white/5 rounded-xl animate-pulse" />
+          </div>
         </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <ErrorState
+          title="Couldn't load messages"
+          description="We had trouble connecting to your inbox."
+          type="network"
+          onRetry={() => refetch()}
+          error={error}
+        />
       </div>
     );
   }
