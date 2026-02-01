@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Radio, Heart, Calendar, Zap, ArrowRight, Ghost, Play } from 'lucide-react';
+import { ShoppingBag, Radio, Heart, Calendar, Zap, ArrowRight, Ghost, Play, Mic, Users, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useServerNow } from '@/hooks/use-server-now';
 import { schedule, getNextEpisode } from '../components/radio/radioUtils';
@@ -155,7 +155,33 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* 3. MODES GRID */}
+      {/* 3. RIGHT NOW STRIP */}
+      <section className="py-4 px-6 bg-gradient-to-r from-pink-950/30 via-black to-cyan-950/30 border-y border-white/5">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="flex flex-wrap items-center justify-center gap-6 md:gap-10 text-sm"
+          >
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-white/60">London is</span>
+              <span className="text-green-400 font-bold">warm tonight</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-pink-500" />
+              <span className="text-white/60">{recentBeacons.length || 0} active</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-cyan-500" />
+              <span className="text-white/60">{recentBeacons.filter(b => b.kind === 'event').length || 0} events tonight</span>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* 4. MODES GRID */}
       <section className="py-16 px-6 bg-black">
         <div className="max-w-7xl mx-auto">
           <motion.div 
@@ -199,7 +225,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. TONIGHT SECTION */}
+      {/* 5. TONIGHT SECTION */}
       <section className="py-20 px-6 bg-black">
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -319,7 +345,79 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. CARE LANDING */}
+      {/* 6. SHOP PREVIEW */}
+      <section className="py-16 px-6 bg-black border-t border-white/5">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <p className="text-xs uppercase tracking-[0.4em] text-yellow-500/70 mb-2">MESSMARKET</p>
+                <h2 className="text-3xl md:text-4xl font-black italic">NEW DROP</h2>
+              </div>
+              <Link to="/market">
+                <Button variant="outline" className="border-white/20 text-white/70 hover:bg-white hover:text-black font-bold uppercase text-sm">
+                  SHOP ALL
+                </Button>
+              </Link>
+            </div>
+
+            <Link to="/market">
+              <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-white/10 hover:border-yellow-500/50 p-6 md:p-8 transition-all">
+                <div className="absolute top-4 right-4 bg-yellow-500 text-black text-xs font-black uppercase px-3 py-1 rounded-full">
+                  NEW
+                </div>
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="w-32 h-32 md:w-40 md:h-40 bg-white/5 rounded-lg flex items-center justify-center">
+                    <ShoppingBag className="w-16 h-16 text-yellow-500/50" />
+                  </div>
+                  <div className="text-center md:text-left flex-1">
+                    <p className="text-white/50 text-sm uppercase tracking-wider mb-2">Limited Edition</p>
+                    <h3 className="text-2xl md:text-3xl font-black mb-2">HOTMESS MERCH</h3>
+                    <p className="text-white/60 mb-4">Support the platform. Look good doing it.</p>
+                    <p className="text-2xl font-black text-yellow-500">£35</p>
+                  </div>
+                  <ArrowRight className="w-8 h-8 text-white/30 group-hover:text-yellow-500 group-hover:translate-x-2 transition-all hidden md:block" />
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* 7. B2B HOOK - For Venues */}
+      <section className="py-12 px-6 bg-gradient-to-r from-cyan-950/20 via-black to-cyan-950/20">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <Link to="/for-venues">
+              <div className="group flex flex-col md:flex-row items-center justify-between gap-6 bg-white/5 border border-white/10 hover:border-cyan-500/50 rounded-xl p-6 md:p-8 transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                    <Mic className="w-7 h-7 text-cyan-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl md:text-2xl font-black uppercase mb-1">Got a night?</h3>
+                    <p className="text-white/60">List your event. Reach the scene.</p>
+                  </div>
+                </div>
+                <Button className="bg-cyan-500 hover:bg-white text-black font-black uppercase group-hover:scale-105 transition-transform">
+                  FOR VENUES & PROMOTERS
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </div>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* 8. CARE LANDING */}
       <section className="py-16 px-6 bg-gradient-to-b from-black to-red-950/20 border-t border-white/5">
         <div className="max-w-2xl mx-auto text-center">
           <motion.div
@@ -344,7 +442,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. FINAL CTA */}
+      {/* 9. FINAL CTA */}
       <section className="py-24 px-6 bg-black text-white text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
