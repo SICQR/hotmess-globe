@@ -466,7 +466,7 @@ export default function Home() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <p className="text-sm uppercase tracking-[0.4em] text-pink-400 mb-4">
+              <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">
                 DISCOVERY
               </p>
               <h2 className="text-5xl md:text-7xl font-black italic mb-6">
@@ -537,7 +537,7 @@ export default function Home() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <p className="text-sm uppercase tracking-[0.4em] text-pink-400 mb-4">
+              <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">
                 STIGMA-SMASHING ESSENTIALS
               </p>
               <h2 className="text-5xl md:text-8xl font-black italic mb-6">
@@ -553,7 +553,7 @@ export default function Home() {
               <div className="bg-white/5 rounded-xl p-6 border border-pink-500/30 mb-10">
                 <div className="flex items-center gap-4 mb-3">
                   <RadioIcon className="w-6 h-6 text-pink-500" />
-                  <span className="font-black uppercase text-pink-400">As heard on</span>
+                  <span className="font-black uppercase text-pink-500">As heard on</span>
                 </div>
                 <p className="text-2xl font-black mb-2">HAND N HAND</p>
                 <p className="text-white/60">

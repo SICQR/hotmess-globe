@@ -131,7 +131,7 @@ export default function Social() {
         >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
             <div>
-              <p className="text-sm uppercase tracking-[0.4em] text-pink-400 mb-4">DISCOVERY</p>
+              <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">DISCOVERY</p>
               <h1 className="text-5xl md:text-7xl font-black italic mb-4">
                 GHOSTED<span className="text-pink-500">.</span>
               </h1>
@@ -255,7 +255,7 @@ export default function Social() {
                                 </span>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="font-black uppercase text-lg group-hover:text-pink-400 transition-colors">
+                                <p className="font-black uppercase text-lg group-hover:text-pink-500 transition-colors">
                                   {otherParticipant}
                                 </p>
                                 <p className="text-sm text-white/50 truncate">
