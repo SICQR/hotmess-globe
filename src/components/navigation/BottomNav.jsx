@@ -8,8 +8,6 @@ import {
   Ghost,
   ShoppingBag, 
   MoreHorizontal,
-  Users,
-  Calendar,
   Ticket,
   Shield,
   Sparkles,
