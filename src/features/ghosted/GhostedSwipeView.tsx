@@ -5,6 +5,8 @@
  * Swipe left = Pass
  * Swipe up = Super like (priority)
  * Tap = View profile
+ * 
+ * v2.0 - Fixed controlled swipedIds prop
  */
 
 import React, { useState, useCallback, useMemo, useRef } from 'react';
