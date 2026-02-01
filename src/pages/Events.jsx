@@ -179,7 +179,7 @@ export default function Events() {
             alt="Tonight" 
             className="w-full h-full object-cover opacity-50"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/80 via-black/60 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black" />
         </div>
 
         <motion.div
@@ -189,11 +189,11 @@ export default function Events() {
           className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20"
         >
           <div className="max-w-3xl">
-            <p className="text-sm uppercase tracking-[0.4em] text-cyan-400 mb-4">
+            <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">
               {format(new Date(), 'EEEE, MMMM d')}
             </p>
             <h1 className="text-[12vw] md:text-[8vw] font-black italic leading-[0.85] tracking-tighter mb-6">
-              TONIGHT<span className="text-cyan-500">.</span>
+              TONIGHT<span className="text-pink-500">.</span>
             </h1>
             <p className="text-xl md:text-2xl text-white/70 mb-10 max-w-xl">
               What's happening in London. Find the energy. RSVP. Go.
@@ -202,7 +202,7 @@ export default function Events() {
             <div className="flex flex-wrap gap-4">
               <Button 
                 onClick={() => setViewMode('map')}
-                className="bg-cyan-500 hover:bg-white text-black font-black uppercase px-8 py-6 text-lg"
+                className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg"
               >
                 <Map className="w-5 h-5 mr-3" />
                 MAP VIEW
@@ -220,17 +220,17 @@ export default function Events() {
 
       {/* 2. FEATURED EVENT */}
       {featuredEvent && (
-        <section className="py-16 px-6 bg-gradient-to-b from-black to-cyan-950/10">
+        <section className="py-16 px-6 bg-black">
           <div className="max-w-7xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <p className="text-sm uppercase tracking-[0.4em] text-cyan-400 mb-6">FEATURED</p>
+              <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-6">FEATURED</p>
               
               <Link to={`/events/${encodeURIComponent(featuredEvent.id)}`}>
-                <div className="group grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white/5 border border-white/10 hover:border-cyan-500/50 rounded-2xl overflow-hidden transition-all">
+                <div className="group grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white/5 border border-white/10 hover:border-pink-500 rounded-2xl overflow-hidden transition-all">
                   {/* Image */}
                   <div className="relative h-64 lg:h-auto">
                     {featuredEvent.image_url ? (
@@ -240,8 +240,8 @@ export default function Events() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center">
-                        <Calendar className="w-20 h-20 text-cyan-500/30" />
+                      <div className="w-full h-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
+                        <Calendar className="w-20 h-20 text-pink-500/30" />
                       </div>
                     )}
                   </div>
@@ -250,7 +250,7 @@ export default function Events() {
                   <div className="p-8 lg:p-12 flex flex-col justify-center">
                     <div className="flex items-center gap-3 mb-4">
                       {featuredEvent.event_date && (
-                        <span className="px-3 py-1 bg-cyan-500 text-black text-xs font-black uppercase rounded-full">
+                        <span className="px-3 py-1 bg-pink-500 text-black text-xs font-black uppercase rounded-full">
                           {format(fromUTC(featuredEvent.event_date), 'EEE d MMM')}
                         </span>
                       )}
@@ -260,7 +260,7 @@ export default function Events() {
                         </span>
                       )}
                     </div>
-                    <h2 className="text-3xl md:text-5xl font-black mb-4 group-hover:text-cyan-400 transition-colors">
+                    <h2 className="text-3xl md:text-5xl font-black mb-4 group-hover:text-pink-500 transition-colors">
                       {featuredEvent.title}
                     </h2>
                     {featuredEvent.venue_name && (
@@ -272,7 +272,7 @@ export default function Events() {
                     <p className="text-white/50 mb-8 line-clamp-3">
                       {featuredEvent.description}
                     </p>
-                    <div className="flex items-center gap-2 text-cyan-400 font-black uppercase group-hover:text-white transition-colors">
+                    <div className="flex items-center gap-2 text-pink-500 font-black uppercase group-hover:text-white transition-colors">
                       VIEW EVENT
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                     </div>
@@ -288,8 +288,8 @@ export default function Events() {
       <section className="py-8 px-6 bg-black sticky top-0 z-20 border-b border-white/10">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
-            <Filter className="w-4 h-4 text-cyan-500" />
-            <span className="text-xs uppercase tracking-wider font-bold text-cyan-400">Filters</span>
+            <Filter className="w-4 h-4 text-pink-500" />
+            <span className="text-xs uppercase tracking-wider font-bold text-pink-500">Filters</span>
             <span className="text-xs text-white/40">• {filteredEvents.length} events</span>
           </div>
           
@@ -355,7 +355,7 @@ export default function Events() {
             <Button
               onClick={() => setViewMode('map')}
               variant="outline"
-              className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500 hover:text-black h-12 font-black uppercase"
+              className="border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-black h-12 font-black uppercase"
             >
               <Map className="w-4 h-4 mr-2" />
               MAP
@@ -412,7 +412,7 @@ export default function Events() {
               <h3 className="text-xl font-bold mb-2">No events found</h3>
               <p className="text-white/60 mb-6">Try adjusting your filters</p>
               <Link to={createPageUrl('CreateBeacon')}>
-                <Button className="bg-cyan-500 text-black font-black uppercase">
+                <Button className="bg-pink-500 text-white hover:bg-white hover:text-black font-black uppercase">
                   Create Event
                 </Button>
               </Link>
@@ -422,7 +422,7 @@ export default function Events() {
       </section>
 
       {/* 6. B2B CTA */}
-      <section className="py-20 px-6 bg-gradient-to-b from-black to-cyan-950/20 border-t border-white/5">
+      <section className="py-20 px-6 bg-black border-t border-white/5">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -437,7 +437,7 @@ export default function Events() {
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link to={createPageUrl('CreateBeacon')}>
-                <Button className="bg-cyan-500 hover:bg-white text-black font-black uppercase px-10 py-6 text-lg">
+                <Button className="bg-pink-500 hover:bg-white text-white hover:text-black font-black uppercase px-10 py-6 text-lg">
                   SUBMIT EVENT
                 </Button>
               </Link>
