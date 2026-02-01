@@ -22,7 +22,8 @@ import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
 import { toast } from 'sonner';
 
 // Ghosted components
-import { GhostedSwipeView, GhostedRadarView, StatusSelector, GhostedGrid } from '@/features/ghosted';
+import { GhostedSwipeView, GhostedRadarView, StatusSelector, GrindrGrid, ProfileSheet, UberShareButton } from '@/features/ghosted';
+import { fetchRoutingEtas } from '@/api/connectProximity';
 
 // Fallback demo profiles for dev/testing when API is slow
 const DEMO_PROFILES = [
@@ -197,6 +198,11 @@ export default function Social() {
   const [showMenu, setShowMenu] = useState(false);
   const [gpsEnabled, setGpsEnabled] = useState(false);
   
+  // Profile sheet state
+  const [selectedProfile, setSelectedProfile] = useState(null);
+  const [profileSheetOpen, setProfileSheetOpen] = useState(false);
+  const [travelTimes, setTravelTimes] = useState([]);
+  
   // Filter state
   const [maxDistance, setMaxDistance] = useState(10); // km
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
@@ -301,17 +307,63 @@ export default function Social() {
     }
   };
 
-  // Navigation handlers
-  const handleOpenProfile = useCallback((profile) => {
-    const uid = profile?.authUserId || profile?.id;
-    if (uid) {
-      navigate(`/social/u/${encodeURIComponent(uid)}`);
+  // Open profile in bottom sheet
+  const handleOpenProfile = useCallback(async (profile) => {
+    setSelectedProfile(profile);
+    setProfileSheetOpen(true);
+    setTravelTimes([]);
+    
+    // Fetch travel times if we have location
+    if (viewerLocation && profile?.geoLat && profile?.geoLng) {
+      try {
+        const etas = await fetchRoutingEtas({
+          origin: viewerLocation,
+          destination: { lat: profile.geoLat, lng: profile.geoLng },
+          modes: ['WALK', 'DRIVE', 'BICYCLE'],
+          ttlSeconds: 120
+        });
+        
+        if (etas) {
+          const times = [];
+          if (etas.walk?.durationSeconds) times.push({ mode: 'walk', minutes: Math.round(etas.walk.durationSeconds / 60) });
+          if (etas.drive?.durationSeconds) times.push({ mode: 'drive', minutes: Math.round(etas.drive.durationSeconds / 60) });
+          if (etas.bike?.durationSeconds) times.push({ mode: 'bike', minutes: Math.round(etas.bike.durationSeconds / 60) });
+          setTravelTimes(times);
+        }
+      } catch (err) {
+        console.log('Failed to fetch travel times:', err);
+      }
+    }
+  }, [viewerLocation]);
+  
+  // Close profile sheet
+  const handleCloseProfile = useCallback(() => {
+    setProfileSheetOpen(false);
+    setSelectedProfile(null);
+    setTravelTimes([]);
+  }, []);
+  
+  // Handle Uber booking from sheet
+  const handleUberBook = useCallback((profile) => {
+    // Build Uber deep link
+    if (!profile?.geoLat || !profile?.geoLng) {
+      toast.error('Location not available');
       return;
     }
-    if (profile?.email) {
-      navigate(createPageUrl(`Profile?email=${encodeURIComponent(profile.email)}`));
-    }
-  }, [navigate]);
+    
+    const pickup = viewerLocation ? `pickup[latitude]=${viewerLocation.lat}&pickup[longitude]=${viewerLocation.lng}` : '';
+    const dropoff = `dropoff[latitude]=${profile.geoLat}&dropoff[longitude]=${profile.geoLng}&dropoff[nickname]=${encodeURIComponent(profile.profileName || 'Destination')}`;
+    const uberUrl = `uber://?action=setPickup&${pickup}&${dropoff}`;
+    const webUrl = `https://m.uber.com/ul/?action=setPickup&${pickup}&${dropoff}`;
+    
+    // Try app first, fall back to web
+    window.location.href = uberUrl;
+    setTimeout(() => {
+      window.open(webUrl, '_blank');
+    }, 500);
+    
+    toast.success(`Opening Uber to ${profile.profileName || 'destination'}`);
+  }, [viewerLocation]);
 
   const handleMessageProfile = useCallback((profile) => {
     if (!currentUser) {
@@ -575,6 +627,22 @@ export default function Social() {
         />
       )}
 
+      {/* Profile Sheet */}
+      <ProfileSheet
+        profile={selectedProfile}
+        isOpen={profileSheetOpen}
+        onClose={handleCloseProfile}
+        onMessage={(p) => {
+          handleCloseProfile();
+          handleMessageProfile(p);
+        }}
+        onUber={handleUberBook}
+        travelTimes={travelTimes}
+        viewerLocation={viewerLocation}
+        currentUserEmail={currentUser?.email}
+        currentUserName={currentUser?.full_name}
+      />
+
       {/* Main Content */}
       <main className="pb-20">
         {isLoadingInitial && profiles.length === 0 && !forceDemo ? (
@@ -583,18 +651,22 @@ export default function Social() {
           </div>
         ) : (
           <AnimatePresence mode="wait">
-            {/* Grid View - New streamlined cards */}
+            {/* Grid View - Grindr-style tight cards */}
             {viewMode === 'grid' && (
               <motion.div
                 key="grid"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="max-w-7xl mx-auto px-3 py-4"
+                className="px-1 py-2"
               >
-                <GhostedGrid
+                <GrindrGrid
                   profiles={filteredProfiles.map((p) => ({
                     ...p,
+                    // Calculate distance in meters
+                    distanceMeters: viewerLocation && p.geoLat && p.geoLng
+                      ? calculateDistance(viewerLocation.lat, viewerLocation.lng, p.geoLat, p.geoLng) * 1000
+                      : undefined,
                     // Calculate travel time in minutes (rough estimate: 5km/h walking)
                     travelTimeMinutes: viewerLocation && p.geoLat && p.geoLng
                       ? Math.round((calculateDistance(
@@ -602,13 +674,11 @@ export default function Social() {
                           p.geoLat, p.geoLng
                         ) / 5) * 60)
                       : undefined,
+                    travelMode: 'walk',
                   }))}
                   onTap={handleOpenProfile}
-                  onMessage={handleMessageProfile}
-                  showQuickActions={true}
                   columns={3}
                   loading={isLoadingInitial && !forceDemo && profiles.length === 0}
-                  emptyMessage="No one nearby. Try expanding your distance filter."
                 />
               </motion.div>
             )}
