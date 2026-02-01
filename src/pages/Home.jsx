@@ -606,7 +606,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 8. OTHER BRANDS - In-house drops */}
+      {/* 8. HOME COLLECTIONS - Permanent lines */}
       <section className="py-20 px-6 bg-black border-y border-white/10">
         <div className="max-w-7xl mx-auto">
           <motion.div
@@ -615,22 +615,21 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <p className="text-sm uppercase tracking-[0.4em] text-yellow-400 mb-4">MORE FROM HOTMESS</p>
+            <p className="text-sm uppercase tracking-[0.4em] text-white/60 mb-4">HOTMESS CLOTHING</p>
             <h2 className="text-4xl md:text-6xl font-black italic mb-6">
-              LIMITED DROPS<span className="text-yellow-500">.</span>
+              HOME COLLECTIONS<span className="text-pink-500">.</span>
             </h2>
             <p className="text-lg text-white/50 max-w-xl mx-auto">
-              When it's gone, it's gone.
+              Our permanent lines. Always in stock.
             </p>
           </motion.div>
 
-          {/* Brand Cards with Product Images */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+          {/* Home Collection Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             {[
-              { name: 'RAW', tagline: 'Unfiltered', image: '/images/brand-raw-swim.png', color: 'border-blue-500' },
-              { name: 'HUNG', tagline: 'Statement pieces', image: '/images/hung-hero.png', color: 'border-red-500' },
-              { name: 'ESSENTIALS', tagline: 'Everyday basics', image: '/images/brand-essentials-hoodie.png', color: 'border-white/50' },
-              { name: 'SUPERHUNG', tagline: 'Limited drops', image: '/images/brand-hung-black.png', color: 'border-red-500' },
+              { name: 'RAW', tagline: 'Unfiltered swimwear & basics', image: '/images/brand-raw-swim.png', color: 'border-blue-500' },
+              { name: 'HUNG', tagline: 'Statement streetwear', image: '/images/hung-hero.png', color: 'border-red-500' },
+              { name: 'HIGH', tagline: 'Elevated essentials', image: '/images/brand-essentials-hoodie.png', color: 'border-white/50' },
             ].map((brand, i) => (
               <motion.div
                 key={brand.name}
@@ -648,8 +647,8 @@ export default function Home() {
                     />
                   </div>
                   <div className="mt-4 text-center">
-                    <span className="text-lg font-black">{brand.name}</span>
-                    <p className="text-xs text-white/50 uppercase tracking-wider mt-1">{brand.tagline}</p>
+                    <span className="text-2xl font-black">{brand.name}</span>
+                    <p className="text-sm text-white/50 uppercase tracking-wider mt-1">{brand.tagline}</p>
                   </div>
                 </Link>
               </motion.div>
@@ -657,17 +656,77 @@ export default function Home() {
           </div>
 
           <div className="text-center">
-            <Link to="/market?category=drops">
-              <Button className="bg-yellow-500 hover:bg-white text-black font-black uppercase px-10 py-6 text-lg">
+            <Link to="/market">
+              <Button className="bg-white hover:bg-pink-500 text-black hover:text-white font-black uppercase px-10 py-6 text-lg">
                 <ShoppingBag className="w-6 h-6 mr-3" />
-                SHOP ALL DROPS
+                SHOP COLLECTIONS
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* 9. MESS MARKET - Community marketplace */}
+      {/* 9. LIMITED DROPS - SUPERHUNG & SUPERHIGH */}
+      <section className="py-20 px-6 bg-gradient-to-b from-black via-yellow-950/20 to-black">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <p className="text-sm uppercase tracking-[0.4em] text-yellow-400 mb-4">EXCLUSIVE</p>
+            <h2 className="text-4xl md:text-6xl font-black italic mb-6">
+              LIMITED DROPS<span className="text-yellow-500">.</span>
+            </h2>
+            <p className="text-lg text-white/50 max-w-xl mx-auto">
+              When it's gone, it's gone. No restocks.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 gap-8 mb-12">
+            {[
+              { name: 'SUPERHUNG', tagline: 'Ultra-limited statement pieces', image: '/images/brand-hung-black.png', color: 'from-red-500 to-orange-500' },
+              { name: 'SUPERHIGH', tagline: 'Rare elevated drops', image: '/images/brand-hung-yellow.png', color: 'from-yellow-500 to-amber-500' },
+            ].map((brand, i) => (
+              <motion.div
+                key={brand.name}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Link to={`/market?brand=${brand.name.toLowerCase()}`} className="group block">
+                  <div className={`aspect-square rounded-2xl overflow-hidden bg-gradient-to-br ${brand.color} p-1`}>
+                    <div className="w-full h-full rounded-xl overflow-hidden">
+                      <img 
+                        src={brand.image} 
+                        alt={brand.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4 text-center">
+                    <span className="text-2xl font-black">{brand.name}</span>
+                    <p className="text-sm text-white/50 uppercase tracking-wider mt-1">{brand.tagline}</p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Link to="/market?category=limited">
+              <Button className="bg-yellow-500 hover:bg-white text-black font-black uppercase px-10 py-6 text-lg">
+                <ShoppingBag className="w-6 h-6 mr-3" />
+                SHOP LIMITED DROPS
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 10. MESS MARKET - Third-party marketplace */}
       <section className="relative min-h-[60vh] flex items-center bg-gradient-to-br from-amber-950/30 via-black to-orange-950/30">
         <div className="w-full max-w-7xl mx-auto px-6 py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -680,8 +739,8 @@ export default function Home() {
             >
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { name: 'PRELOVED', desc: 'Secondhand finds', icon: '♻️', link: '/market?category=preloved' },
-                  { name: 'DIGITAL', desc: 'Content & assets', icon: '💾', link: '/market?category=digital' },
+                  { name: 'PRELOVED', desc: 'Secondhand luxury', icon: '♻️', link: '/market?category=preloved' },
+                  { name: 'DIGITAL', desc: 'Content & downloads', icon: '💾', link: '/market?category=digital' },
                   { name: 'RETAIL', desc: 'Partner brands', icon: '🏪', link: '/market?category=retail' },
                   { name: 'ALL', desc: 'Browse everything', icon: '🛒', link: '/market' },
                 ].map((cat) => (
@@ -704,7 +763,7 @@ export default function Home() {
               className="order-1 lg:order-2"
             >
               <p className="text-sm uppercase tracking-[0.4em] text-amber-400 mb-4">
-                COMMUNITY MARKETPLACE
+                THIRD-PARTY MARKETPLACE
               </p>
               <h2 className="text-5xl md:text-7xl font-black italic mb-6">
                 MESS<br/>MARKET<span className="text-amber-500">.</span>
@@ -713,7 +772,7 @@ export default function Home() {
                 Buy. Sell. Trade.
               </p>
               <p className="text-lg text-white/50 mb-10 max-w-lg">
-                Peer-to-peer marketplace. Preloved gems, digital content, and curated retail partners. Community commerce.
+                Preloved luxury, digital content, and curated retail partners. 10% platform fee. Verified sellers only.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/market">
@@ -724,7 +783,7 @@ export default function Home() {
                 </Link>
                 <Link to="/sell">
                   <Button variant="outline" className="border-2 border-white/30 text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
-                    START SELLING
+                    BECOME A SELLER
                   </Button>
                 </Link>
               </div>
@@ -733,7 +792,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 10. B2B SECTION - For Venues */}
+      {/* 11. B2B SECTION - For Venues */}
       <section className="py-24 px-6 bg-gradient-to-r from-cyan-950/20 via-black to-cyan-950/20 border-y border-white/10">
         <div className="max-w-5xl mx-auto text-center">
           <motion.div
@@ -763,7 +822,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 11. CARE SECTION */}
+      {/* 12. CARE SECTION */}
       <section className="py-32 px-6 bg-gradient-to-b from-black via-red-950/10 to-black">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div

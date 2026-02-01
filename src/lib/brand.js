@@ -87,25 +87,25 @@ export const BRAND = {
     description: 'We never glamourise alternative lifestyles, but we are bold and provocative, and we are here for a reason.',
   },
 
-  // MESSMARKET - 3rd Party Community Marketplace
+  // MESSMARKET - 3rd Party Marketplace
   messmarket: {
     name: 'MESSMARKET',
-    tagline: 'Community sellers. Zero gatekeepers.',
-    description: 'Etsy-style marketplace for the HOTMESS community. Sell your creations, buy unique pieces, support fellow creators.',
+    tagline: 'Third-party marketplace. Verified sellers.',
+    description: 'Preloved luxury, digital content, and curated retail partners. Buy and sell on the HOTMESS platform.',
     fee: '10% platform fee',
     feePercent: 10,
     features: [
       'Verified seller badges',
       'Escrow-protected transactions',
-      'XP rewards for buyers & sellers',
       'Direct messaging with sellers',
       'Rating & review system',
+      'Secure payments',
     ],
     sellerBenefits: [
       'No listing fees',
-      'Global reach',
-      'Built-in audience',
-      'Instant payouts',
+      'Access to HOTMESS audience',
+      'Seller dashboard & analytics',
+      'Fast payouts',
     ],
   },
 
