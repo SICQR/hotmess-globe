@@ -23,7 +23,7 @@ import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { WorldPulseProvider } from '@/contexts/WorldPulseContext';
-import { PageTransition } from '@/components/lux/PageTransition';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -340,215 +340,223 @@ const AuthenticatedApp = () => {
 
   // Render the main app with LED Brutalist page transitions
   return (
-    <PageTransition>
-      <Routes>
-      {/* V1.5 canonical routes (Bible) */}
-      <Route path="/" element={
-        <LayoutWrapper currentPageName={mainPageKey}>
-          <MainPage />
-        </LayoutWrapper>
-      } />
-      <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
-      <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
-      <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
-      <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
-      <Route path="/pulse" element={<PageRoute pageKey="Pulse" />} />
-      <Route path="/events" element={<PageRoute pageKey="Events" />} />
-      <Route path="/events/:id" element={<EventDetailRedirect />} />
-      {/* Market (canonical) -> headless Shopify shop */}
-      <Route path="/market" element={<ShopHomeRoute />} />
-      <Route path="/market/creators" element={<CreatorsMarketRoute />} />
-      <Route path="/market/creators/p/:id" element={<CreatorsProductRoute />} />
-      <Route path="/market/creators/cart" element={<CreatorsCartRoute />} />
-      <Route path="/market/creators/checkout" element={<CreatorsCheckoutRoute />} />
-      <Route path="/market/creators/checkout-success" element={<CreatorsCheckoutSuccessRoute />} />
-      <Route path="/market/:collection" element={<ShopCollectionRoute />} />
-      <Route path="/market/p/:handle" element={<ShopProductRoute />} />
-      <Route path="/social" element={<PageRoute pageKey="Social" />} />
-      <Route path="/social/discover" element={<SocialDiscoverRedirect />} />
-      <Route path="/social/inbox" element={<PageRoute pageKey="Messages" />} />
-      <Route path="/social/u/:id" element={<SocialUserRedirect />} />
-      <Route path="/social/t/:threadId" element={<SocialThreadRedirect />} />
-      <Route path="/music" element={<PageRoute pageKey="Music" />} />
-      <Route path="/music/live" element={<PageRoute pageKey="Radio" />} />
-      <Route path="/music/shows" element={<PageRoute pageKey="RadioSchedule" />} />
-      <Route path="/music/shows/:show/episodes" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
-      <Route path="/music/shows/:show/episodes/:id" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
-      <Route path="/music/shows/:slug" element={<ShowHeroRedirect />} />
-      <Route path="/music/schedule" element={<PageRoute pageKey="RadioSchedule" />} />
-      <Route path="/music/releases" element={<PageRoute pageKey="Music" />} />
-      <Route path="/music/releases/:slug" element={<PageRoute pageKey="MusicRelease" />} />
-      <Route path="/music/tracks" element={<Navigate to={createPageUrl('Music')} replace />} />
-      <Route path="/music/tracks/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
-      <Route path="/music/playlists" element={<Navigate to={createPageUrl('Music')} replace />} />
-      <Route path="/music/playlists/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
-      <Route path="/music/artists" element={<Navigate to={createPageUrl('Music')} replace />} />
-      <Route path="/music/artists/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
-      <Route path="/music/clips/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
-      <Route path="/hnhmess" element={<PageRoute pageKey="Hnhmess" />} />
-      <Route path="/more" element={<PageRoute pageKey="More" />} />
-      <Route path="/directions" element={<PageRoute pageKey="Directions" />} />
-      
-      {/* Auth sub-routes */}
-      <Route path="/auth/sign-in" element={<PageRoute pageKey="Auth" />} />
-      <Route path="/auth/sign-up" element={<PageRoute pageKey="Auth" />} />
-      <Route path="/auth/magic-link" element={<PageRoute pageKey="Auth" />} />
-      <Route path="/auth/verify" element={<PageRoute pageKey="Auth" />} />
-      <Route path="/auth/reset" element={<PageRoute pageKey="Auth" />} />
-      
-      {/* Onboarding sub-routes */}
-      <Route path="/onboarding" element={<PageRoute pageKey="Onboarding" />} />
-      <Route path="/onboarding/consent" element={<PageRoute pageKey="Onboarding" />} />
-      <Route path="/onboarding/profile" element={<PageRoute pageKey="Onboarding" />} />
-      <Route path="/onboarding/preferences" element={<PageRoute pageKey="Onboarding" />} />
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <Routes location={location}>
+        {/* V1.5 canonical routes (Bible) */}
+        <Route path="/" element={
+          <LayoutWrapper currentPageName={mainPageKey}>
+            <MainPage />
+          </LayoutWrapper>
+        } />
+        <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
+        <Route path="/auth/*" element={<PageRoute pageKey="Auth" />} />
+        <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
+        <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
+        <Route path="/pulse" element={<PageRoute pageKey="Pulse" />} />
+        <Route path="/events" element={<PageRoute pageKey="Events" />} />
+        <Route path="/events/:id" element={<EventDetailRedirect />} />
+        {/* Market (canonical) -> headless Shopify shop */}
+        <Route path="/market" element={<ShopHomeRoute />} />
+        <Route path="/market/creators" element={<CreatorsMarketRoute />} />
+        <Route path="/market/creators/p/:id" element={<CreatorsProductRoute />} />
+        <Route path="/market/creators/cart" element={<CreatorsCartRoute />} />
+        <Route path="/market/creators/checkout" element={<CreatorsCheckoutRoute />} />
+        <Route path="/market/creators/checkout-success" element={<CreatorsCheckoutSuccessRoute />} />
+        <Route path="/market/:collection" element={<ShopCollectionRoute />} />
+        <Route path="/market/p/:handle" element={<ShopProductRoute />} />
+        <Route path="/social" element={<PageRoute pageKey="Social" />} />
+        <Route path="/social/discover" element={<SocialDiscoverRedirect />} />
+        <Route path="/social/inbox" element={<PageRoute pageKey="Messages" />} />
+        <Route path="/social/u/:id" element={<SocialUserRedirect />} />
+        <Route path="/social/t/:threadId" element={<SocialThreadRedirect />} />
+        <Route path="/music" element={<PageRoute pageKey="Music" />} />
+        <Route path="/music/live" element={<PageRoute pageKey="Radio" />} />
+        <Route path="/music/shows" element={<PageRoute pageKey="RadioSchedule" />} />
+        <Route path="/music/shows/:show/episodes" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
+        <Route path="/music/shows/:show/episodes/:id" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
+        <Route path="/music/shows/:slug" element={<ShowHeroRedirect />} />
+        <Route path="/music/schedule" element={<PageRoute pageKey="RadioSchedule" />} />
+        <Route path="/music/releases" element={<PageRoute pageKey="Music" />} />
+        <Route path="/music/releases/:slug" element={<PageRoute pageKey="MusicRelease" />} />
+        <Route path="/music/tracks" element={<Navigate to={createPageUrl('Music')} replace />} />
+        <Route path="/music/tracks/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
+        <Route path="/music/playlists" element={<Navigate to={createPageUrl('Music')} replace />} />
+        <Route path="/music/playlists/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
+        <Route path="/music/artists" element={<Navigate to={createPageUrl('Music')} replace />} />
+        <Route path="/music/artists/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
+        <Route path="/music/clips/:id" element={<Navigate to={createPageUrl('Music')} replace />} />
+        <Route path="/hnhmess" element={<PageRoute pageKey="Hnhmess" />} />
+        <Route path="/more" element={<PageRoute pageKey="More" />} />
+        <Route path="/directions" element={<PageRoute pageKey="Directions" />} />
+        
+        {/* Auth sub-routes */}
+        <Route path="/auth/sign-in" element={<PageRoute pageKey="Auth" />} />
+        <Route path="/auth/sign-up" element={<PageRoute pageKey="Auth" />} />
+        <Route path="/auth/magic-link" element={<PageRoute pageKey="Auth" />} />
+        <Route path="/auth/verify" element={<PageRoute pageKey="Auth" />} />
+        <Route path="/auth/reset" element={<PageRoute pageKey="Auth" />} />
+        
+        {/* Onboarding sub-routes */}
+        <Route path="/onboarding" element={<PageRoute pageKey="Onboarding" />} />
+        <Route path="/onboarding/consent" element={<PageRoute pageKey="Onboarding" />} />
+        <Route path="/onboarding/profile" element={<PageRoute pageKey="Onboarding" />} />
+        <Route path="/onboarding/preferences" element={<PageRoute pageKey="Onboarding" />} />
 
-      {/* Headless Shopify shop routes */}
-      {/* Legacy/alias shop routes (keep URLs working) */}
-      <Route path="/shop" element={<Navigate to="/market" replace />} />
-      <Route path="/shop/:handle" element={<LegacyShopCollectionRedirect />} />
-      <Route path="/p/:handle" element={<ShopProductRoute />} />
-      <Route path="/cart" element={<ShopCartRoute />} />
-      <Route path="/checkout/start" element={<ShopCheckoutStartRoute />} />
-      <Route path="/checkout" element={<PageRoute pageKey="Checkout" />} />
+        {/* Headless Shopify shop routes */}
+        {/* Legacy/alias shop routes (keep URLs working) */}
+        <Route path="/shop" element={<Navigate to="/market" replace />} />
+        <Route path="/shop/:handle" element={<LegacyShopCollectionRedirect />} />
+        <Route path="/p/:handle" element={<ShopProductRoute />} />
+        <Route path="/cart" element={<ShopCartRoute />} />
+        <Route path="/checkout/start" element={<ShopCheckoutStartRoute />} />
+        <Route path="/checkout" element={<PageRoute pageKey="Checkout" />} />
 
-      {/* Features / USP Pages */}
-      <Route path="/features" element={<PageRoute pageKey="Features" />} />
-      <Route path="/features/safety" element={<PageRoute pageKey="SafetyFeatures" />} />
-      <Route path="/features/events" element={<PageRoute pageKey="EventsFeatures" />} />
-      <Route path="/features/social" element={<PageRoute pageKey="SocialFeatures" />} />
-      <Route path="/features/music" element={<PageRoute pageKey="RadioFeatures" />} />
-      <Route path="/features/radio" element={<PageRoute pageKey="RadioFeatures" />} />
-      <Route path="/features/personas" element={<PageRoute pageKey="PersonaFeatures" />} />
-      <Route path="/features/profiles" element={<PageRoute pageKey="PersonaFeatures" />} />
+        {/* Features / USP Pages */}
+        <Route path="/features" element={<PageRoute pageKey="Features" />} />
+        <Route path="/features/safety" element={<PageRoute pageKey="SafetyFeatures" />} />
+        <Route path="/features/events" element={<PageRoute pageKey="EventsFeatures" />} />
+        <Route path="/features/social" element={<PageRoute pageKey="SocialFeatures" />} />
+        <Route path="/features/music" element={<PageRoute pageKey="RadioFeatures" />} />
+        <Route path="/features/radio" element={<PageRoute pageKey="RadioFeatures" />} />
+        <Route path="/features/personas" element={<PageRoute pageKey="PersonaFeatures" />} />
+        <Route path="/features/profiles" element={<PageRoute pageKey="PersonaFeatures" />} />
 
-      {/* Legal */}
-      <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
-      <Route path="/legal/terms" element={<LegalTermsRoute />} />
-      <Route path="/legal/privacy-hub" element={<LegalPrivacyHubRoute />} />
-      <Route path="/legal" element={<Navigate to="/legal/privacy" replace />} />
-      <Route path="/terms" element={<PageRoute pageKey="TermsOfService" />} />
-      <Route path="/privacy" element={<PageRoute pageKey="PrivacyPolicy" />} />
-      <Route path="/guidelines" element={<PageRoute pageKey="CommunityGuidelines" />} />
-      <Route path="/contact" element={<PageRoute pageKey="Contact" />} />
+        {/* Legal */}
+        <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
+        <Route path="/legal/terms" element={<LegalTermsRoute />} />
+        <Route path="/legal/privacy-hub" element={<LegalPrivacyHubRoute />} />
+        <Route path="/legal" element={<Navigate to="/legal/privacy" replace />} />
+        <Route path="/terms" element={<PageRoute pageKey="TermsOfService" />} />
+        <Route path="/privacy" element={<PageRoute pageKey="PrivacyPolicy" />} />
+        <Route path="/guidelines" element={<PageRoute pageKey="CommunityGuidelines" />} />
+        <Route path="/contact" element={<PageRoute pageKey="Contact" />} />
 
-      {/* Orders and market aliases */}
-      <Route path="/orders" element={<OrdersRedirect />} />
-      <Route path="/orders/:id" element={<OrderByIdRedirect />} />
-      <Route path="/orders/:id/tracking" element={<OrderTrackingRedirect />} />
-      <Route path="/returns" element={<ReturnsRedirect />} />
-      
-      {/* Social profile routes */}
-      <Route path="/social/u/:email" element={<ProfileRedirect />} />
+        {/* Orders and market aliases */}
+        <Route path="/orders" element={<OrdersRedirect />} />
+        <Route path="/orders/:id" element={<OrderByIdRedirect />} />
+        <Route path="/orders/:id/tracking" element={<OrderTrackingRedirect />} />
+        <Route path="/returns" element={<ReturnsRedirect />} />
+        
+        {/* Social profile routes */}
+        <Route path="/social/u/:email" element={<ProfileRedirect />} />
 
-      {/* Bible-friendly /more/* tool routes (aliases) */}
-      <Route path="/more/beacons" element={<PageRoute pageKey="Beacons" />} />
-      <Route path="/more/beacons/new" element={<PageRoute pageKey="CreateBeacon" />} />
-      <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
-      <Route path="/more/beacons/:id/edit" element={<EditBeaconRedirect />} />
-      <Route path="/more/stats" element={<PageRoute pageKey="Stats" />} />
-      <Route path="/more/challenges" element={<PageRoute pageKey="Challenges" />} />
-      <Route path="/more/settings" element={<PageRoute pageKey="Settings" />} />
-      <Route path="/more/care" element={<PageRoute pageKey="Care" />} />
+        {/* Bible-friendly /more/* tool routes (aliases) */}
+        <Route path="/more/beacons" element={<PageRoute pageKey="Beacons" />} />
+        <Route path="/more/beacons/new" element={<PageRoute pageKey="CreateBeacon" />} />
+        <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
+        <Route path="/more/beacons/:id/edit" element={<EditBeaconRedirect />} />
+        <Route path="/more/stats" element={<PageRoute pageKey="Stats" />} />
+        <Route path="/more/challenges" element={<PageRoute pageKey="Challenges" />} />
+        <Route path="/more/settings" element={<PageRoute pageKey="Settings" />} />
+        <Route path="/more/care" element={<PageRoute pageKey="Care" />} />
 
-      {/* Settings */}
-      <Route path="/settings" element={<PageRoute pageKey="Settings" />} />
-      <Route path="/settings/privacy" element={<PageRoute pageKey="Settings" />} />
-      <Route path="/settings/notifications" element={<PageRoute pageKey="Settings" />} />
-      <Route path="/settings/account" element={<PageRoute pageKey="Settings" />} />
+        {/* Settings */}
+        <Route path="/settings" element={<PageRoute pageKey="Settings" />} />
+        <Route path="/settings/privacy" element={<PageRoute pageKey="Settings" />} />
+        <Route path="/settings/notifications" element={<PageRoute pageKey="Settings" />} />
+        <Route path="/settings/account" element={<PageRoute pageKey="Settings" />} />
 
-      {/* Bible-friendly safety/calendar/scan subroutes */}
-      <Route path="/safety/*" element={<PageRoute pageKey="Safety" />} />
-      <Route path="/safety/report" element={<PageRoute pageKey="Safety" />} />
-      <Route path="/safety/resources" element={<PageRoute pageKey="Care" />} />
-      <Route path="/calendar/*" element={<PageRoute pageKey="Calendar" />} />
-      <Route path="/scan/*" element={<PageRoute pageKey="Scan" />} />
-      <Route path="/community/*" element={<PageRoute pageKey="Community" />} />
-      <Route path="/leaderboard/*" element={<PageRoute pageKey="Leaderboard" />} />
+        {/* Bible-friendly safety/calendar/scan subroutes */}
+        <Route path="/safety/*" element={<PageRoute pageKey="Safety" />} />
+        <Route path="/safety/report" element={<PageRoute pageKey="Safety" />} />
+        <Route path="/safety/resources" element={<PageRoute pageKey="Care" />} />
+        <Route path="/calendar/*" element={<PageRoute pageKey="Calendar" />} />
+        <Route path="/scan/*" element={<PageRoute pageKey="Scan" />} />
+        <Route path="/community/*" element={<PageRoute pageKey="Community" />} />
+        <Route path="/leaderboard/*" element={<PageRoute pageKey="Leaderboard" />} />
 
-      {/* Notifications/account aliases */}
-      <Route path="/notifications" element={<Navigate to={createPageUrl('Settings')} replace />} />
-      <Route path="/notifications/*" element={<Navigate to={createPageUrl('Settings')} replace />} />
-      <Route path="/notifications/settings" element={<PageRoute pageKey="Settings" />} />
-      <Route path="/account" element={<Navigate to={createPageUrl('Settings')} replace />} />
-      <Route path="/account/profile" element={<Navigate to={createPageUrl('EditProfile')} replace />} />
-      <Route path="/account/membership" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
-      <Route path="/account/upgrade" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
-      <Route path="/account/billing" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
-      <Route path="/account/receipts" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
-      <Route path="/account/delete" element={<PageRoute pageKey="AccountDeletion" />} />
-      <Route path="/account/export" element={<PageRoute pageKey="DataExport" />} />
-      <Route path="/account/consents" element={<PageRoute pageKey="AccountConsents" />} />
-      <Route path="/account/data" element={<Navigate to={createPageUrl('AccountConsents')} replace />} />
-      <Route path="/account/data/*" element={<Navigate to={createPageUrl('AccountConsents')} replace />} />
+        {/* Notifications/account aliases */}
+        <Route path="/notifications" element={<Navigate to={createPageUrl('Settings')} replace />} />
+        <Route path="/notifications/*" element={<Navigate to={createPageUrl('Settings')} replace />} />
+        <Route path="/notifications/settings" element={<PageRoute pageKey="Settings" />} />
+        <Route path="/account" element={<Navigate to={createPageUrl('Settings')} replace />} />
+        <Route path="/account/profile" element={<Navigate to={createPageUrl('EditProfile')} replace />} />
+        <Route path="/account/membership" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+        <Route path="/account/upgrade" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+        <Route path="/account/billing" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+        <Route path="/account/receipts" element={<Navigate to={createPageUrl('MembershipUpgrade')} replace />} />
+        <Route path="/account/delete" element={<PageRoute pageKey="AccountDeletion" />} />
+        <Route path="/account/export" element={<PageRoute pageKey="DataExport" />} />
+        <Route path="/account/consents" element={<PageRoute pageKey="AccountConsents" />} />
+        <Route path="/account/data" element={<Navigate to={createPageUrl('AccountConsents')} replace />} />
+        <Route path="/account/data/*" element={<Navigate to={createPageUrl('AccountConsents')} replace />} />
 
-      {/* Help & Support */}
-      <Route path="/help" element={<PageRoute pageKey="HelpCenter" />} />
-      <Route path="/support" element={<PageRoute pageKey="Contact" />} />
-      
-      {/* Membership & Pricing */}
-      <Route path="/membership" element={<PageRoute pageKey="MembershipUpgrade" />} />
-      <Route path="/upgrade" element={<PageRoute pageKey="MembershipUpgrade" />} />
-      <Route path="/pricing" element={<PageRoute pageKey="Pricing" />} />
-      <Route path="/fees" element={<PageRoute pageKey="Pricing" />} />
-      
-      {/* Admin dashboard */}
-      <Route path="/admin" element={<PageRoute pageKey="AdminDashboard" />} />
-      <Route path="/admin/*" element={<PageRoute pageKey="AdminDashboard" />} />
+        {/* Help & Support */}
+        <Route path="/help" element={<PageRoute pageKey="HelpCenter" />} />
+        <Route path="/support" element={<PageRoute pageKey="Contact" />} />
+        
+        {/* Membership & Pricing */}
+        <Route path="/membership" element={<PageRoute pageKey="MembershipUpgrade" />} />
+        <Route path="/upgrade" element={<PageRoute pageKey="MembershipUpgrade" />} />
+        <Route path="/pricing" element={<PageRoute pageKey="Pricing" />} />
+        <Route path="/fees" element={<PageRoute pageKey="Pricing" />} />
+        
+        {/* Admin dashboard */}
+        <Route path="/admin" element={<PageRoute pageKey="AdminDashboard" />} />
+        <Route path="/admin/*" element={<PageRoute pageKey="AdminDashboard" />} />
 
-      {/* Business dashboard */}
-      <Route path="/biz" element={<PageRoute pageKey="BusinessDashboard" />} />
-      <Route path="/biz/dashboard" element={<PageRoute pageKey="BusinessDashboard" />} />
-      <Route path="/biz/analytics" element={<PageRoute pageKey="BusinessAnalytics" />} />
-      <Route path="/biz/onboarding" element={<PageRoute pageKey="BusinessOnboarding" />} />
+        {/* Business dashboard */}
+        <Route path="/biz" element={<PageRoute pageKey="BusinessDashboard" />} />
+        <Route path="/biz/dashboard" element={<PageRoute pageKey="BusinessDashboard" />} />
+        <Route path="/biz/analytics" element={<PageRoute pageKey="BusinessAnalytics" />} />
+        <Route path="/biz/onboarding" element={<PageRoute pageKey="BusinessOnboarding" />} />
 
-      {/* Legacy lowercase routes -> canonical V1.5 routes */}
-      <Route path="/radio" element={<Navigate to={createPageUrl('Radio')} replace />} />
-      <Route path="/radio/schedule" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
-      <Route path="/connect" element={<Navigate to={createPageUrl('Social')} replace />} />
-      <Route path="/connect/*" element={<Navigate to={createPageUrl('Social')} replace />} />
-      <Route path="/marketplace" element={<Navigate to="/market" replace />} />
-      <Route path="/marketplace/p/:handle" element={<ShopProductRoute />} />
-      <Route path="/more/beacons" element={<PageRoute pageKey="Beacons" />} />
-      <Route path="/more/beacons/new" element={<PageRoute pageKey="CreateBeacon" />} />
-      <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
-      <Route path="/age" element={<PageRoute pageKey="AgeGate" />} />
-      <Route path="/safety" element={<PageRoute pageKey="Safety" />} />
-      <Route path="/calendar" element={<PageRoute pageKey="Calendar" />} />
-      <Route path="/scan" element={<PageRoute pageKey="Scan" />} />
-      <Route path="/saved" element={<PageRoute pageKey="Bookmarks" />} />
-      <Route path="/leaderboard" element={<PageRoute pageKey="Leaderboard" />} />
-      <Route path="/community" element={<PageRoute pageKey="Community" />} />
-      <Route path="/profiles" element={<PageRoute pageKey="ProfilesGrid" />} />
+        {/* Legacy lowercase routes -> canonical V1.5 routes */}
+        <Route path="/radio" element={<Navigate to={createPageUrl('Radio')} replace />} />
+        <Route path="/radio/schedule" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
+        <Route path="/connect" element={<Navigate to={createPageUrl('Social')} replace />} />
+        <Route path="/connect/*" element={<Navigate to={createPageUrl('Social')} replace />} />
+        <Route path="/marketplace" element={<Navigate to="/market" replace />} />
+        <Route path="/marketplace/p/:handle" element={<ShopProductRoute />} />
+        <Route path="/more/beacons" element={<PageRoute pageKey="Beacons" />} />
+        <Route path="/more/beacons/new" element={<PageRoute pageKey="CreateBeacon" />} />
+        <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
+        <Route path="/age" element={<PageRoute pageKey="AgeGate" />} />
+        <Route path="/safety" element={<PageRoute pageKey="Safety" />} />
+        <Route path="/calendar" element={<PageRoute pageKey="Calendar" />} />
+        <Route path="/scan" element={<PageRoute pageKey="Scan" />} />
+        <Route path="/saved" element={<PageRoute pageKey="Bookmarks" />} />
+        <Route path="/leaderboard" element={<PageRoute pageKey="Leaderboard" />} />
+        <Route path="/community" element={<PageRoute pageKey="Community" />} />
+        <Route path="/profiles" element={<PageRoute pageKey="ProfilesGrid" />} />
 
-      {/* Backward-compatible auto-generated /PageName routes */}
-      {Object.entries(Pages).map(([path, Page]) => {
-        if (isProdBuild && !LEGACY_PAGE_ROUTE_ALLOWLIST.has(path)) {
-          return null;
-        }
+        {/* Backward-compatible auto-generated /PageName routes */}
+        {Object.entries(Pages).map(([path, Page]) => {
+          if (isProdBuild && !LEGACY_PAGE_ROUTE_ALLOWLIST.has(path)) {
+            return null;
+          }
 
-        if (path === 'Marketplace') {
-          return <Route key={path} path={`/${path}`} element={<Navigate to="/market" replace />} />;
-        }
+          if (path === 'Marketplace') {
+            return <Route key={path} path={`/${path}`} element={<Navigate to="/market" replace />} />;
+          }
 
-        if (path === 'ProductDetail') {
-          return <Route key={path} path={`/${path}`} element={<ProductDetailGate />} />;
-        }
+          if (path === 'ProductDetail') {
+            return <Route key={path} path={`/${path}`} element={<ProductDetailGate />} />;
+          }
 
-        return (
-          <Route
-            key={path}
-            path={`/${path}`}
-            element={
-              <LayoutWrapper currentPageName={path}>
-                <Page />
-              </LayoutWrapper>
-            }
-          />
-        );
-      })}
-      <Route path="*" element={<PageNotFound />} />
-      </Routes>
-    </PageTransition>
+          return (
+            <Route
+              key={path}
+              path={`/${path}`}
+              element={
+                <LayoutWrapper currentPageName={path}>
+                  <Page />
+                </LayoutWrapper>
+              }
+            />
+          );
+        })}
+        <Route path="*" element={<PageNotFound />} />
+        </Routes>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
@@ -574,4 +582,4 @@ function App() {
   )
 }
 
-export default App
+export default App;
