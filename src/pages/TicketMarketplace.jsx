@@ -44,6 +44,30 @@ export default function TicketMarketplace() {
     enabled: !!currentUser
   });
 
+  const handleCashBuy = async (ticket) => {
+    try {
+      const response = await fetch('/api/stripe/create-marketplace-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ticketId: ticket.id,
+          customerEmail: currentUser.email,
+          successUrl: `${window.location.origin}/tickets/success`,
+          cancelUrl: window.location.href,
+        }),
+      });
+
+      const { url, error } = await response.json();
+      if (error) throw new Error(error);
+      
+      window.location.href = url;
+    } catch (err) {
+      toast.error('Failed to start checkout: ' + err.message);
+    }
+  };
+
   const purchaseMutation = useMutation({
     mutationFn: async (ticket) => {
       const order = await base44.entities.Order.create({
@@ -187,13 +211,25 @@ export default function TicketMarketplace() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={() => purchaseMutation.mutate(ticket)}
-                  disabled={purchaseMutation.isPending || ticket.inventory_count === 0 || (currentUser.xp || 0) < ticket.price_xp}
-                  className="w-full bg-[#FFEB3B] hover:bg-white text-black font-black uppercase"
-                >
-                  {ticket.inventory_count === 0 ? 'Sold Out' : 'Buy Now'}
-                </Button>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    onClick={() => purchaseMutation.mutate(ticket)}
+                    disabled={purchaseMutation.isPending || ticket.inventory_count === 0 || (currentUser.xp || 0) < ticket.price_xp}
+                    className="w-full bg-[#FFEB3B] hover:bg-white text-black font-black uppercase"
+                  >
+                    {ticket.inventory_count === 0 ? 'Sold Out' : 'Buy with XP'}
+                  </Button>
+                  
+                  {ticket.price_gbp && (
+                    <Button
+                      onClick={() => handleCashBuy(ticket)}
+                      disabled={ticket.inventory_count === 0}
+                      className="w-full bg-white text-black hover:bg-gray-200 font-black uppercase"
+                    >
+                      Buy £{ticket.price_gbp}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
