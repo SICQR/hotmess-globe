@@ -29,6 +29,13 @@ export default function Home() {
     return candidates.sort((a, b) => a.nextEpisode.date - b.nextEpisode.date)[0];
   }, [serverNow]);
 
+  // Current show (simulated for now, would come from live API)
+  const currentShow = useMemo(() => {
+     // If we are "live", maybe we show the current slot? 
+     // For MVP, let's just assume we are always "Live" and show the branding.
+     return { title: "RAW CONVICT RADIO", dj: "Resident" };
+  }, []);
+
   // Get tonight's events
   const { data: recentBeacons = [] } = useQuery({
     queryKey: ['recent-beacons'],
@@ -120,9 +127,20 @@ export default function Home() {
             HOT<span className="text-[#FF1493]">MESS</span>
           </h1>
           
-          <p className="text-xl md:text-2xl font-bold uppercase tracking-[0.15em] text-white/80 mb-12">
+          <p className="text-xl md:text-2xl font-bold uppercase tracking-[0.15em] text-white/80 mb-8">
             Radio • Tonight • Ghosted • Shop
           </p>
+
+          {/* Radio Status Indicator */}
+          <div className="flex items-center justify-center gap-3 mb-12">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-pink-500"></span>
+            </span>
+            <span className="text-white font-black uppercase tracking-wider text-sm">
+              LIVE NOW: <span className="text-pink-500">{currentShow.title}</span>
+            </span>
+          </div>
 
           <div className="flex flex-wrap gap-6 justify-center">
             <Button 
