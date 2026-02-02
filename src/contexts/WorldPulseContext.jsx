@@ -158,50 +158,61 @@ export function WorldPulseProvider({ children }) {
 
   // Subscribe to anonymised global events
   useEffect(() => {
-    // Listen to beacon activity (anonymised)
-    const beaconChannel = supabase
-      .channel('world-pulse-beacons')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'beacons',
-      }, (payload) => {
-        const cityId = payload.new?.city_id;
-        if (cityId) {
-          dispatch({
-            type: 'EMIT_PULSE',
-            payload: {
-              type: PULSE_TYPES.HEAT_BLOOM,
-              cityId,
-              intensity: 0.6,
-              durationMs: 5000,
-            },
-          });
-        }
-      })
-      .subscribe();
+    let beaconChannel = null;
+    let checkinChannel = null;
+    
+    try {
+      // Listen to beacon activity (anonymised)
+      beaconChannel = supabase
+        .channel('world-pulse-beacons')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'beacons',
+        }, (payload) => {
+          const cityId = payload.new?.city_id;
+          if (cityId) {
+            dispatch({
+              type: 'EMIT_PULSE',
+              payload: {
+                type: PULSE_TYPES.HEAT_BLOOM,
+                cityId,
+                intensity: 0.6,
+                durationMs: 5000,
+              },
+            });
+          }
+        })
+        .subscribe();
 
-    // Listen to check-ins (anonymised)
-    const checkinChannel = supabase
-      .channel('world-pulse-checkins')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'checkins',
-      }, (payload) => {
-        const cityId = payload.new?.city_id;
-        if (cityId) {
-          dispatch({
-            type: 'UPDATE_CITY_HEAT',
-            payload: { cityId, heat: Math.min(1, (state.cityHeat[cityId] || 0) + 0.05) },
-          });
-        }
-      })
-      .subscribe();
+      // Listen to check-ins (anonymised)
+      checkinChannel = supabase
+        .channel('world-pulse-checkins')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'checkins',
+        }, (payload) => {
+          const cityId = payload.new?.city_id;
+          if (cityId) {
+            dispatch({
+              type: 'UPDATE_CITY_HEAT',
+              payload: { cityId, heat: Math.min(1, (state.cityHeat[cityId] || 0) + 0.05) },
+            });
+          }
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn('[WorldPulse] Supabase subscription failed:', err);
+    }
 
     return () => {
-      supabase.removeChannel(beaconChannel);
-      supabase.removeChannel(checkinChannel);
+      try {
+        if (beaconChannel) supabase.removeChannel(beaconChannel);
+        if (checkinChannel) supabase.removeChannel(checkinChannel);
+      } catch {
+        // ignore cleanup errors
+      }
     };
   }, [state.cityHeat]);
 
