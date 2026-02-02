@@ -16,7 +16,7 @@ const TOOLS = [
   { name: 'Calendar', icon: Calendar, path: 'Calendar', desc: 'Events and subscriptions', color: '#B026FF' },
   { name: 'Scan', icon: Scan, path: 'Scan', desc: 'QR check-in and redeem', color: '#FFEB3B' },
   { name: 'Community', icon: Users, path: 'Community', desc: 'Posts and discussions', color: '#FF1493' },
-  { name: 'Leaderboard', icon: Trophy, path: 'Leaderboard', desc: 'Top users and scores', color: '#FFD700' },
+  { name: 'For Business', icon: Trophy, path: 'BusinessDashboard', desc: 'Venue & Promoter tools', color: '#FFD700' },
 ];
 
 const ACCOUNT = [
