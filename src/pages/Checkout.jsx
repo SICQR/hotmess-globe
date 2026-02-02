@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { auth, base44, supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, ShoppingCart, Check } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Check, Gift, Tag, Sparkles, X, Clock, Shield, Truck, Percent } from 'lucide-react';
 import { toast } from 'sonner';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import {
@@ -21,6 +21,14 @@ import {
 import { getGuestCartItems, mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import { isXpPurchasingEnabled } from '@/lib/featureFlags';
 
+// Promo code validation
+const PROMO_CODES = {
+  'HOTMESS10': { type: 'percent', value: 10, minXP: 100 },
+  'WELCOME20': { type: 'percent', value: 20, minXP: 200, newUsersOnly: true },
+  'SQUAD50': { type: 'fixed', value: 50, minXP: 200 },
+  'FREEDELIVERY': { type: 'freeDelivery', value: 0 },
+};
+
 export default function Checkout() {
   const [currentUser, setCurrentUser] = useState(null);
   const [shippingAddress, setShippingAddress] = useState({});
@@ -30,6 +38,13 @@ export default function Checkout() {
   const [sendingLink, setSendingLink] = useState(false);
   const [embeddedShopifyCheckoutUrl, setEmbeddedShopifyCheckoutUrl] = useState('');
   const [isShopifyCheckoutOpen, setIsShopifyCheckoutOpen] = useState(false);
+  // New features
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [isGift, setIsGift] = useState(false);
+  const [giftRecipient, setGiftRecipient] = useState({ name: '', email: '', message: '' });
+  const [paymentMethod, setPaymentMethod] = useState('xp');
+  const [showPromoInput, setShowPromoInput] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const xpPurchasingEnabled = isXpPurchasingEnabled();
@@ -178,6 +193,53 @@ export default function Checkout() {
     (shippingAddress.city || '').trim() &&
     (shippingAddress.postcode || '').trim()
   );
+
+  // Promo code discount calculation
+  const calculateDiscount = () => {
+    if (!appliedPromo) return 0;
+    if (appliedPromo.type === 'percent') {
+      return Math.floor(totalXP * (appliedPromo.value / 100));
+    }
+    if (appliedPromo.type === 'fixed') {
+      return Math.min(appliedPromo.value, totalXP);
+    }
+    return 0;
+  };
+
+  const discount = calculateDiscount();
+  const finalTotal = Math.max(0, totalXP - discount);
+
+  const applyPromoCode = () => {
+    const code = promoCode.toUpperCase().trim();
+    const promo = PROMO_CODES[code];
+    
+    if (!promo) {
+      toast.error('Invalid promo code');
+      return;
+    }
+    
+    if (promo.minXP && totalXP < promo.minXP) {
+      toast.error(`Minimum ${promo.minXP} XP required for this code`);
+      return;
+    }
+    
+    if (promo.newUsersOnly && currentUser?.created_date) {
+      const daysSinceJoin = (Date.now() - new Date(currentUser.created_date).getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceJoin > 7) {
+        toast.error('This code is for new users only');
+        return;
+      }
+    }
+    
+    setAppliedPromo({ ...promo, code });
+    setShowPromoInput(false);
+    toast.success(`Promo ${code} applied!`);
+  };
+
+  const removePromo = () => {
+    setAppliedPromo(null);
+    setPromoCode('');
+  };
 
   const checkoutMutation = useMutation({
     mutationFn: async () => {
@@ -565,6 +627,47 @@ export default function Checkout() {
               </div>
 
               <div className="border-t-2 border-white/20 pt-4">
+                {/* Promo Code Section */}
+                <div className="mb-4">
+                  {appliedPromo ? (
+                    <div className="flex items-center justify-between p-3 bg-[#39FF14]/10 border border-[#39FF14]/30 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-[#39FF14]" />
+                        <span className="font-bold text-[#39FF14]">{appliedPromo.code}</span>
+                        <span className="text-white/60 text-sm">
+                          {appliedPromo.type === 'percent' ? `-${appliedPromo.value}%` : `-${appliedPromo.value} XP`}
+                        </span>
+                      </div>
+                      <button onClick={removePromo} className="text-white/40 hover:text-white">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : showPromoInput ? (
+                    <div className="flex gap-2">
+                      <Input
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value)}
+                        placeholder="Enter promo code"
+                        className="bg-white/5 border-white/20 text-white flex-1"
+                        onKeyPress={(e) => e.key === 'Enter' && applyPromoCode()}
+                      />
+                      <Button onClick={applyPromoCode} variant="outline" className="border-white/20">
+                        Apply
+                      </Button>
+                      <button onClick={() => setShowPromoInput(false)} className="text-white/40 hover:text-white px-2">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowPromoInput(true)}
+                      className="flex items-center gap-2 text-[#00D9FF] text-sm hover:underline"
+                    >
+                      <Percent className="w-4 h-4" /> Have a promo code?
+                    </button>
+                  )}
+                </div>
+
                 {currentUser ? (
                   <>
                     <div className="flex justify-between items-center mb-3 text-sm">
@@ -572,18 +675,28 @@ export default function Checkout() {
                       <span className="font-black text-[#39FF14]">{userXP.toLocaleString()} XP</span>
                     </div>
                     <div className="flex justify-between items-center mb-3 text-sm">
-                      <span className="text-white/60 uppercase tracking-wider">Order Total</span>
-                      <span className="font-black text-[#FFEB3B]">-{totalXP.toLocaleString()} XP</span>
+                      <span className="text-white/60 uppercase tracking-wider">Subtotal</span>
+                      <span className="font-black text-[#FFEB3B]">{totalXP.toLocaleString()} XP</span>
                     </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between items-center mb-3 text-sm">
+                        <span className="text-white/60 uppercase tracking-wider">Discount</span>
+                        <span className="font-black text-[#39FF14]">-{discount.toLocaleString()} XP</span>
+                      </div>
+                    )}
                     <div className="border-t border-white/20 pt-3 flex justify-between items-center text-xl font-black">
-                      <span className="uppercase">After Order</span>
-                      <span className={hasEnoughXP ? 'text-[#39FF14]' : 'text-red-500'}>
-                        {(userXP - totalXP).toLocaleString()} XP
+                      <span className="uppercase">Order Total</span>
+                      <span className="text-[#FFEB3B]">{finalTotal.toLocaleString()} XP</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2 text-sm">
+                      <span className="text-white/60 uppercase tracking-wider">After Order</span>
+                      <span className={(userXP - finalTotal) >= 0 ? 'text-[#39FF14]' : 'text-red-500'}>
+                        {(userXP - finalTotal).toLocaleString()} XP
                       </span>
                     </div>
-                    {!hasEnoughXP && (
+                    {userXP < finalTotal && (
                       <div className="mt-4 bg-red-600/20 border-2 border-red-600 p-4 text-sm font-bold uppercase tracking-wider">
-                        ⚠️ Need {(totalXP - userXP).toLocaleString()} more XP
+                        ⚠️ Need {(finalTotal - userXP).toLocaleString()} more XP
                       </div>
                     )}
                   </>
@@ -598,6 +711,66 @@ export default function Checkout() {
             {/* Shipping Info */}
             <div className="bg-white/5 border-2 border-white/10 p-6">
               <h2 className="text-xl font-black uppercase mb-4">DELIVERY DETAILS</h2>
+
+              {/* Gift Option */}
+              <div className="mb-6">
+                <button
+                  onClick={() => setIsGift(!isGift)}
+                  className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition-all ${
+                    isGift 
+                      ? 'border-[#FF1493] bg-[#FF1493]/10' 
+                      : 'border-white/20 hover:border-white/40'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Gift className={`w-5 h-5 ${isGift ? 'text-[#FF1493]' : 'text-white/60'}`} />
+                    <div className="text-left">
+                      <p className="font-bold">Send as Gift</p>
+                      <p className="text-xs text-white/40">Add a personal message</p>
+                    </div>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    isGift ? 'border-[#FF1493] bg-[#FF1493]' : 'border-white/40'
+                  }`}>
+                    {isGift && <Check className="w-3 h-3 text-black" />}
+                  </div>
+                </button>
+
+                <AnimatePresence>
+                  {isGift && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-4 space-y-3">
+                        <Input
+                          placeholder="Recipient's Name"
+                          value={giftRecipient.name}
+                          onChange={(e) => setGiftRecipient({ ...giftRecipient, name: e.target.value })}
+                          className="bg-white/5 border-white/20 text-white"
+                        />
+                        <Input
+                          placeholder="Recipient's Email"
+                          type="email"
+                          value={giftRecipient.email}
+                          onChange={(e) => setGiftRecipient({ ...giftRecipient, email: e.target.value })}
+                          className="bg-white/5 border-white/20 text-white"
+                        />
+                        <Textarea
+                          placeholder="Gift message (optional)"
+                          value={giftRecipient.message}
+                          onChange={(e) => setGiftRecipient({ ...giftRecipient, message: e.target.value })}
+                          className="bg-white/5 border-white/20 text-white h-20"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Shipping Address */}
               <div className="space-y-4">
                 <Input
                   placeholder="Street Address"
@@ -659,12 +832,22 @@ export default function Checkout() {
                 )}
                 
                 <div className="mt-4 p-4 bg-black/40 border border-white/10 text-xs text-white/60 uppercase tracking-wider">
-                  <div className="flex items-start gap-2">
-                    <Check className="w-4 h-4 mt-0.5 text-[#39FF14]" />
-                    <div className="space-y-1">
-                      <div>Instant XP deduction</div>
-                      <div>Order tracking available</div>
-                      <div>Seller notified immediately</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#39FF14]" />
+                      <span>Instant XP deduction</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-[#00D9FF]" />
+                      <span>Order tracking</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-[#B026FF]" />
+                      <span>Secure checkout</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Truck className="w-4 h-4 text-[#FF1493]" />
+                      <span>Seller notified</span>
                     </div>
                   </div>
                 </div>

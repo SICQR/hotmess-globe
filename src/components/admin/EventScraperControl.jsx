@@ -1,10 +1,121 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/components/utils/supabaseClient';
-import { RefreshCw, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { RefreshCw, Loader2, CheckCircle, AlertCircle, Clock, History } from 'lucide-react';
 import { toast } from 'sonner';
+
+/**
+ * Format relative time (e.g., "2 hours ago")
+ */
+const formatRelativeTime = (dateStr) => {
+  if (!dateStr) return 'Unknown';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
+};
+
+/**
+ * Scrape Run History Panel
+ */
+function ScrapeRunHistory({ onRefresh }) {
+  const [runs, setRuns] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRuns = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('event_scraper_runs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      setRuns(data || []);
+    } catch (err) {
+      console.error('Failed to fetch scrape runs:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRuns();
+  }, [onRefresh]);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed': return 'text-green-500 bg-green-500/10';
+      case 'partial': return 'text-yellow-500 bg-yellow-500/10';
+      case 'failed': return 'text-red-500 bg-red-500/10';
+      case 'running': return 'text-blue-500 bg-blue-500/10';
+      default: return 'text-white/50 bg-white/5';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="w-5 h-5 animate-spin text-white/40" />
+      </div>
+    );
+  }
+
+  if (runs.length === 0) {
+    return (
+      <div className="text-center py-6 text-white/40 text-sm">
+        No scrape runs yet. Run your first scrape above.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {runs.map((run) => (
+        <div 
+          key={run.id} 
+          className="bg-white/5 rounded-lg p-3 border border-white/10"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(run.status)}`}>
+                {run.status}
+              </span>
+              <span className="text-xs text-white/40">{run.mode}</span>
+            </div>
+            <span className="text-xs text-white/40 flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {formatRelativeTime(run.created_at)}
+            </span>
+          </div>
+          <div className="flex items-center gap-4 text-xs text-white/60">
+            <span>✅ {run.events_created || 0} created</span>
+            <span>🔄 {run.events_updated || 0} updated</span>
+            {run.error_count > 0 && (
+              <span className="text-red-400">⚠️ {run.error_count} errors</span>
+            )}
+          </div>
+          {run.initiator && (
+            <div className="mt-1 text-xs text-white/30">
+              By: {run.initiator}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /**
  * Admin control panel for manual event scraping
@@ -13,6 +124,7 @@ export default function EventScraperControl() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [cities, setCities] = useState('London, Manchester, Brighton');
+  const [historyRefresh, setHistoryRefresh] = useState(0);
 
   const handleScrape = async () => {
     setLoading(true);
@@ -66,6 +178,7 @@ export default function EventScraperControl() {
       });
     } finally {
       setLoading(false);
+      setHistoryRefresh(prev => prev + 1);
     }
   };
 
@@ -166,6 +279,15 @@ export default function EventScraperControl() {
             <li>Set it to run daily at 3 AM UTC</li>
             <li>Set <code className="bg-white/10 px-1 rounded">EVENT_SCRAPER_SOURCES_JSON</code> (JSON feeds) OR <code className="bg-white/10 px-1 rounded">OPENAI_API_KEY</code> (LLM) in Vercel env</li>
           </ol>
+        </div>
+
+        {/* Scrape Run History */}
+        <div className="border-t border-white/10 pt-4 mt-4">
+          <div className="flex items-center gap-2 mb-3">
+            <History className="w-4 h-4 text-[#00D9FF]" />
+            <h4 className="text-sm font-bold uppercase">Recent Runs</h4>
+          </div>
+          <ScrapeRunHistory onRefresh={historyRefresh} />
         </div>
       </div>
     </div>

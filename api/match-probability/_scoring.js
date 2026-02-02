@@ -479,9 +479,3 @@ export const computeMatchScore = ({
   
   return aggregateScores(scores, weights);
 };
-
-// Alias for backward compatibility with tests
-export const aggregateMatchScore = (breakdown) => {
-  const total = Object.values(breakdown).reduce((sum, val) => sum + (val || 0), 0);
-  return Math.min(100, Math.max(0, total));
-};
