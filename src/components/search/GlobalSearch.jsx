@@ -520,8 +520,8 @@ export default function GlobalSearch({ isOpen, onClose }) {
                   >
                     <User className="w-5 h-5 text-[#FF1493]" />
                     <div>
-                      <div className="font-bold">{user.full_name}</div>
-                      <div className="text-xs text-white/60">{user.email}</div>
+                      <div className="font-bold">{user.full_name || user.display_name || user.username || 'Unknown'}</div>
+                      {user.username && <div className="text-xs text-white/60">@{user.username}</div>}
                     </div>
                   </Link>
                 ))}

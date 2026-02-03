@@ -360,7 +360,7 @@ export default function SellerDashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-bold mb-1">Order #{order.id.slice(0, 8)}</h3>
-                        <p className="text-sm text-white/60">Buyer: {order.buyer_email}</p>
+                        <p className="text-sm text-white/60">Buyer: {order.buyer_name || order.buyer_username || 'Anonymous'}</p>
                       </div>
                       <div className="text-right">
                         <div className="text-xl font-black text-[#FFEB3B] mb-1">

@@ -221,10 +221,10 @@ export default function ReferralProgram() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-sm font-bold">
-                    {referral.referred_email?.[0]?.toUpperCase() || '?'}
+                    {(referral.referred_name || referral.referred_username || '?')[0]?.toUpperCase()}
                   </div>
                   <div>
-                    <div className="font-semibold">{referral.referred_email}</div>
+                    <div className="font-semibold">{referral.referred_name || referral.referred_username || 'Invited User'}</div>
                     <div className="text-xs text-white/60">
                       {new Date(referral.created_at).toLocaleDateString()}
                     </div>
