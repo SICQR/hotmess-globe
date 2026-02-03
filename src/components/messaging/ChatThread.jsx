@@ -359,7 +359,10 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
                 )}
               </div>
               <div>
-                <p className="font-black uppercase tracking-tight">{otherUsers[0]?.full_name || 'Unknown'}</p>
+                <p className="font-black uppercase tracking-tight">{otherUsers[0]?.full_name || otherUsers[0]?.display_name || otherUsers[0]?.username || 'Unknown'}</p>
+                {otherUsers[0]?.username && (
+                  <p className="text-[10px] text-white/50 font-mono mb-0.5">@{otherUsers[0].username}</p>
+                )}
                 <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono flex items-center gap-1">
                   {thread.thread_type}
                   {isTelegramEncrypted && (
@@ -378,7 +381,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
                 <UsersIcon className="w-5 h-5 text-white/60" />
               </div>
               <div>
-                <p className="font-black uppercase tracking-tight">{otherUsers.slice(0, 2).map(u => u.full_name).join(', ')}</p>
+                <p className="font-black uppercase tracking-tight">{otherUsers.slice(0, 2).map(u => u.full_name || u.display_name || u.username || 'Unknown').join(', ')}</p>
                 {otherUsers.length > 2 && (
                   <p className="text-[10px] text-white/60">+{otherUsers.length - 2} more</p>
                 )}

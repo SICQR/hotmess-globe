@@ -273,11 +273,13 @@ export default function Messages() {
                     </div>
                     <div className="min-w-0">
                       <p className="font-black truncate">
-                        {selectedParticipant?.full_name || selectedParticipant?.display_name || selectedParticipant?.email?.split('@')[0] || 'Unknown'}
+                        {selectedParticipant?.full_name || selectedParticipant?.display_name || selectedParticipant?.username || 'Unknown'}
                       </p>
-                      <p className="text-xs text-white/40 truncate">
-                        {selectedParticipant?.email}
-                      </p>
+                      {selectedParticipant?.username && (
+                        <p className="text-xs text-white/40 truncate">
+                          @{selectedParticipant.username}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -374,9 +376,11 @@ export default function Messages() {
                     </div>
                     <div>
                       <p className="font-black">
-                        {selectedParticipant?.full_name || selectedParticipant?.display_name || selectedParticipant?.email?.split('@')[0]}
+                        {selectedParticipant?.full_name || selectedParticipant?.display_name || selectedParticipant?.username || 'Unknown'}
                       </p>
-                      <p className="text-xs text-white/40">{selectedParticipant?.email}</p>
+                      {selectedParticipant?.username && (
+                        <p className="text-xs text-white/40">@{selectedParticipant.username}</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
