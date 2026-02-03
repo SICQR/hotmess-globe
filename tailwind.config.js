@@ -177,7 +177,12 @@ module.exports = {
 			'slide-up': 'slide-up 0.5s ease-out',
 			'scale-in': 'scale-in 0.3s ease-out',
 			'spin-slow': 'spin-slow 8s linear infinite'
-  		}
+  		},
+		// Safe area insets for notched devices (iPhone)
+		padding: {
+			'safe': 'env(safe-area-inset-bottom, 16px)',
+			'safe-top': 'env(safe-area-inset-top, 0px)',
+		}
   	}
   },
   plugins: [require("tailwindcss-animate")],

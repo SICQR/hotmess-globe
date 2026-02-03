@@ -11,7 +11,7 @@
  */
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { MessageCircle, Plus, ArrowLeft, Search, MoreVertical, Phone, Video } from 'lucide-react';
@@ -24,25 +24,13 @@ import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ConversationListSkeleton } from '@/components/skeletons/PageSkeletons';
 import EmptyState, { ErrorState } from '@/components/ui/EmptyState';
+import { cn } from '@/lib/utils';
 
 // Get other participant info
 function getOtherParticipant(thread, currentUser, allUsers) {
   const otherEmail = thread?.participant_emails?.find(e => e !== currentUser?.email);
   return allUsers?.find(u => u.email === otherEmail) || { email: otherEmail };
 }
-
-// Helper to get display name (username preferred over email)
-const getDisplayName = (user) => {
-  if (!user) return 'Unknown';
-  return user.display_name || user.full_name || user.username || user.email?.split('@')[0] || 'Unknown';
-};
-
-// Helper to get username handle
-const getUsername = (user) => {
-  if (!user) return '';
-  if (user.username) return `@${user.username}`;
-  return '';
-};
 
 export default function Messages() {
   const [selectedThread, setSelectedThread] = useState(null);
@@ -256,54 +244,52 @@ export default function Messages() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-30 bg-black flex flex-col"
+              className="min-h-screen flex flex-col"
             >
               {/* Thread Header */}
-              <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-xl border-b-2 border-white/20 safe-area-top">
+              <div className="sticky top-0 z-20 bg-black/90 backdrop-blur-xl border-b border-white/10">
                 <div className="flex items-center gap-3 p-3">
                   <button
                     onClick={backToInbox}
-                    className="p-2 -ml-2 hover:bg-white/10 active:bg-white/20 transition-colors"
+                    className="p-2 -ml-2 rounded-full hover:bg-white/10 active:bg-white/20 transition-colors"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
                   
                   {/* Avatar + Name */}
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0">
                       {selectedParticipant?.avatar_url ? (
                         <img
                           src={selectedParticipant.avatar_url}
                           alt=""
-                          className="w-full h-full object-cover"
+                          className="w-full h-full rounded-full object-cover"
                         />
                       ) : (
                         <span className="text-sm font-black">
-                          {getDisplayName(selectedParticipant)[0].toUpperCase()}
+                          {(selectedParticipant?.full_name || selectedParticipant?.email || '?')[0].toUpperCase()}
                         </span>
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-black uppercase tracking-tight truncate">
-                        {getDisplayName(selectedParticipant)}
+                      <p className="font-black truncate">
+                        {selectedParticipant?.full_name || selectedParticipant?.display_name || selectedParticipant?.email?.split('@')[0] || 'Unknown'}
                       </p>
-                      {getUsername(selectedParticipant) && (
-                        <p className="text-[10px] text-white/40 font-mono truncate">
-                          {getUsername(selectedParticipant)}
-                        </p>
-                      )}
+                      <p className="text-xs text-white/40 truncate">
+                        {selectedParticipant?.email}
+                      </p>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <button className="p-2 hover:bg-white/10 transition-colors">
+                  <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
                     <MoreVertical className="w-5 h-5 text-white/60" />
                   </button>
                 </div>
               </div>
 
-              {/* Chat Content - fills remaining space */}
-              <div className="flex-1 overflow-hidden">
+              {/* Chat Content */}
+              <div className="flex-1">
                 <ChatThread
                   thread={selectedThread}
                   currentUser={currentUser}
@@ -374,35 +360,33 @@ export default function Messages() {
           {selectedThread ? (
             <>
               {/* Desktop Thread Header */}
-              <div className="p-4 border-b-2 border-white/20 bg-black/50 backdrop-blur-sm">
+              <div className="p-4 border-b border-white/10 bg-black/50 backdrop-blur-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center border-2 border-white">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center">
                       {selectedParticipant?.avatar_url ? (
-                        <img src={selectedParticipant.avatar_url} alt="" className="w-full h-full object-cover" />
+                        <img src={selectedParticipant.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
                       ) : (
                         <span className="text-sm font-black">
-                          {getDisplayName(selectedParticipant)[0].toUpperCase()}
+                          {(selectedParticipant?.full_name || selectedParticipant?.email || '?')[0].toUpperCase()}
                         </span>
                       )}
                     </div>
                     <div>
-                      <p className="font-black uppercase tracking-tight">
-                        {getDisplayName(selectedParticipant)}
+                      <p className="font-black">
+                        {selectedParticipant?.full_name || selectedParticipant?.display_name || selectedParticipant?.email?.split('@')[0]}
                       </p>
-                      {getUsername(selectedParticipant) && (
-                        <p className="text-[10px] text-white/40 font-mono">{getUsername(selectedParticipant)}</p>
-                      )}
+                      <p className="text-xs text-white/40">{selectedParticipant?.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="text-white/60 hover:text-white border-2 border-white/20 hover:border-white">
+                    <Button variant="ghost" size="icon" className="text-white/60 hover:text-white">
                       <Phone className="w-5 h-5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-white/60 hover:text-white border-2 border-white/20 hover:border-white">
+                    <Button variant="ghost" size="icon" className="text-white/60 hover:text-white">
                       <Video className="w-5 h-5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-white/60 hover:text-white border-2 border-white/20 hover:border-white">
+                    <Button variant="ghost" size="icon" className="text-white/60 hover:text-white">
                       <MoreVertical className="w-5 h-5" />
                     </Button>
                   </div>

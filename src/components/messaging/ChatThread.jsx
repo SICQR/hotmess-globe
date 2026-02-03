@@ -16,20 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Helper to get display name (username preferred over email)
-const getDisplayName = (user) => {
-  if (!user) return 'Unknown';
-  return user.display_name || user.full_name || user.username || user.email?.split('@')[0] || 'Unknown';
-};
-
-// Helper to get username handle
-const getUsername = (user) => {
-  if (!user) return '';
-  if (user.username) return `@${user.username}`;
-  return '';
-};
-
-export default function ChatThread({ thread, currentUser, onBack, readOnly = false, hideHeader = false }) {
+export default function ChatThread({ thread, currentUser, onBack, readOnly = false }) {
   const [messageText, setMessageText] = useState('');
   const [uploading, setUploading] = useState(false);
   const [isTyping, setIsTyping] = useState({});
@@ -354,96 +341,94 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     : messages;
 
   return (
-    <div className="flex flex-col h-full bg-black overflow-hidden">
-      {/* Header - only show if not hidden by parent */}
-      {!hideHeader && (
-        <div className="bg-black border-b-2 border-white/20 p-4 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden text-white hover:bg-white/10">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          
-          <div className="flex items-center gap-3 flex-1">
-            {!isGroupChat ? (
-              <>
-                <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center border-2 border-white">
-                  {otherUsers[0]?.avatar_url ? (
-                    <img src={otherUsers[0].avatar_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="font-bold text-sm">{getDisplayName(otherUsers[0])[0].toUpperCase()}</span>
-                  )}
-                </div>
-                <div>
-                  <p className="font-black uppercase tracking-tight">{getDisplayName(otherUsers[0])}</p>
-                  <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono flex items-center gap-1">
-                    {getUsername(otherUsers[0]) || thread.thread_type}
-                    {isTelegramEncrypted && (
-                      <>
-                        <span>•</span>
-                        <Lock className="w-3 h-3 text-[#00D9FF]" />
-                        <span className="text-[#00D9FF]">E2E</span>
-                      </>
-                    )}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="w-10 h-10 bg-white/10 border-2 border-white flex items-center justify-center">
-                  <UsersIcon className="w-5 h-5 text-white/60" />
-                </div>
-                <div>
-                  <p className="font-black uppercase tracking-tight">{otherUsers.slice(0, 2).map(u => getDisplayName(u)).join(', ')}</p>
-                  {otherUsers.length > 2 && (
-                    <p className="text-[10px] text-white/60">+{otherUsers.length - 2} more</p>
-                  )}
-                  <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono flex items-center gap-1">
-                    GROUP • {thread.thread_type}
-                    {isTelegramEncrypted && (
-                      <>
-                        <span>•</span>
-                        <Lock className="w-3 h-3 text-[#00D9FF]" />
-                        <span className="text-[#00D9FF]">E2E</span>
-                      </>
-                    )}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowSearch(!showSearch)}
-            className="text-white/60 hover:text-white hover:bg-white/10"
-          >
-            <Search className="w-5 h-5" />
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-white/60 hover:text-white hover:bg-white/10">
-                <MoreVertical className="w-5 h-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-black border-2 border-white text-white">
-              <DropdownMenuItem onClick={toggleMute} className="hover:bg-white/10 cursor-pointer">
-                {isMuted ? (
-                  <>
-                    <Bell className="w-4 h-4 mr-2" />
-                    Unmute Conversation
-                  </>
+    <div className="flex flex-col h-full bg-black">
+      {/* Header */}
+      <div className="bg-black border-b-2 border-white/20 p-4 flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden text-white hover:bg-white/10">
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        
+        <div className="flex items-center gap-3 flex-1">
+          {!isGroupChat ? (
+            <>
+              <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center border-2 border-white">
+                {otherUsers[0]?.avatar_url ? (
+                  <img src={otherUsers[0].avatar_url} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <>
-                    <BellOff className="w-4 h-4 mr-2" />
-                    Mute Conversation
-                  </>
+                  <span className="font-bold text-sm">{otherUsers[0]?.full_name?.[0] || 'U'}</span>
                 )}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </div>
+              <div>
+                <p className="font-black uppercase tracking-tight">{otherUsers[0]?.full_name || 'Unknown'}</p>
+                <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono flex items-center gap-1">
+                  {thread.thread_type}
+                  {isTelegramEncrypted && (
+                    <>
+                      <span>•</span>
+                      <Lock className="w-3 h-3 text-[#00D9FF]" />
+                      <span className="text-[#00D9FF]">E2E</span>
+                    </>
+                  )}
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-10 h-10 bg-white/10 border-2 border-white flex items-center justify-center">
+                <UsersIcon className="w-5 h-5 text-white/60" />
+              </div>
+              <div>
+                <p className="font-black uppercase tracking-tight">{otherUsers.slice(0, 2).map(u => u.full_name).join(', ')}</p>
+                {otherUsers.length > 2 && (
+                  <p className="text-[10px] text-white/60">+{otherUsers.length - 2} more</p>
+                )}
+                <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono flex items-center gap-1">
+                  GROUP • {thread.thread_type}
+                  {isTelegramEncrypted && (
+                    <>
+                      <span>•</span>
+                      <Lock className="w-3 h-3 text-[#00D9FF]" />
+                      <span className="text-[#00D9FF]">E2E</span>
+                    </>
+                  )}
+                </p>
+              </div>
+            </>
+          )}
         </div>
-      )}
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowSearch(!showSearch)}
+          className="text-white/60 hover:text-white hover:bg-white/10"
+        >
+          <Search className="w-5 h-5" />
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-white/60 hover:text-white hover:bg-white/10">
+              <MoreVertical className="w-5 h-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-black border-2 border-white text-white">
+            <DropdownMenuItem onClick={toggleMute} className="hover:bg-white/10 cursor-pointer">
+              {isMuted ? (
+                <>
+                  <Bell className="w-4 h-4 mr-2" />
+                  Unmute Conversation
+                </>
+              ) : (
+                <>
+                  <BellOff className="w-4 h-4 mr-2" />
+                  Mute Conversation
+                </>
+              )}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       {/* Search Bar */}
       {showSearch && (
@@ -487,14 +472,14 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
         </div>
       )}
 
-      {/* Messages - scrollable area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#0a0a0a] min-h-0">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#0a0a0a]">
         {/* Load More Button */}
         {messages.length >= MESSAGES_PER_PAGE && (
           <div className="flex justify-center mb-4">
             <button 
               onClick={loadMoreMessages}
-              className="px-4 py-2 bg-white/5 hover:bg-white/10 border-2 border-white/20 text-white/60 text-xs uppercase font-bold transition-colors"
+              className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/20 text-white/60 text-xs uppercase font-bold transition-colors"
             >
               Load Earlier Messages
             </button>
@@ -513,26 +498,26 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ delay: idx * 0.01 }}
-                className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group`}
+                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`flex gap-3 max-w-[75%] ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`flex gap-3 max-w-[70%] ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
                   {!isOwn && (
                     <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
                       {sender?.avatar_url ? (
                         <img src={sender.avatar_url} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-xs font-bold">{getDisplayName(sender)[0].toUpperCase()}</span>
+                        <span className="text-xs font-bold">{sender?.full_name?.[0] || 'U'}</span>
                       )}
                     </div>
                   )}
                   
-                  <div className="space-y-1">
+                  <div>
                     {isGroupChat && !isOwn && (
-                      <p className="text-[10px] text-white/40 uppercase font-bold ml-1">{getDisplayName(sender)}</p>
+                      <p className="text-[10px] text-white/40 uppercase font-bold mb-1 ml-1">{sender?.full_name}</p>
                     )}
                     
                     {msg.message_type === 'image' && msg.metadata?.image_url && (
-                      <div className="relative border-2 border-white overflow-hidden group cursor-pointer"
+                      <div className="relative border-2 border-white overflow-hidden mb-2 group cursor-pointer"
                         onClick={() => {
                           const allMedia = messages
                             .filter(m => m.message_type === 'image' || m.message_type === 'video')
@@ -557,7 +542,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
                     )}
 
                     {msg.message_type === 'video' && msg.metadata?.video_url && (
-                      <div className="relative border-2 border-white overflow-hidden group cursor-pointer"
+                      <div className="relative border-2 border-white overflow-hidden mb-2 group cursor-pointer"
                         onClick={() => {
                           const allMedia = messages
                             .filter(m => m.message_type === 'image' || m.message_type === 'video')
@@ -635,7 +620,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
                           <button
                             key={emoji}
                             onClick={() => handleReaction(msg.id, emoji)}
-                            className="px-2 py-1 bg-white/10 border-2 border-white/20 hover:border-white/40 text-sm flex items-center gap-1 transition-colors hover:bg-white/20"
+                            className="px-2 py-1 bg-white/10 border border-white/20 hover:border-white/40 rounded-full text-sm flex items-center gap-1 transition-colors hover:bg-white/20"
                             title="Click to toggle reaction"
                           >
                             <span className="text-base">{emoji}</span>
@@ -647,7 +632,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
                     {/* Reaction Picker */}
                     {showReactions === msg.id && (
-                      <div className="absolute z-10 mt-1 p-2 bg-black border-2 border-white flex gap-2">
+                      <div className="absolute z-10 mt-1 p-2 bg-black border-2 border-white rounded-lg flex gap-2">
                         {REACTIONS.map(emoji => (
                           <button
                             key={emoji}
@@ -685,7 +670,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
                   <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   <span className="ml-2 text-xs text-white/60 font-mono uppercase">
                     {Object.keys(isTyping).length === 1 
-                      ? getDisplayName(allUsers.find(u => u.email === Object.keys(isTyping)[0]))
+                      ? allUsers.find(u => u.email === Object.keys(isTyping)[0])?.full_name?.split(' ')[0] || 'Someone'
                       : `${Object.keys(isTyping).length} people`
                     } typing
                   </span>
@@ -698,60 +683,54 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input - Fixed at bottom on mobile, sticky on desktop */}
-      <form 
-        onSubmit={handleSend} 
-        className="bg-black border-t-2 border-white/20 p-4 pb-safe md:pb-4 sticky bottom-0 z-30"
-      >
+      {/* Input */}
+      <form onSubmit={handleSend} className="bg-black border-t-2 border-white/20 p-4">
         <div className="flex items-center gap-2">
-          {/* Media buttons */}
-          <div className="flex gap-1">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-              id={`image-upload-${thread?.id}`}
-              disabled={uploading || readOnly}
-            />
-            <label htmlFor={`image-upload-${thread?.id}`}>
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="icon" 
-                disabled={uploading || readOnly} 
-                asChild
-                className="text-white/60 hover:text-white hover:bg-white/10 border-2 border-white/20 hover:border-white h-10 w-10"
-              >
-                <span>
-                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
-                </span>
-              </Button>
-            </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+            id="image-upload"
+            disabled={uploading || readOnly}
+          />
+          <label htmlFor="image-upload">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="icon" 
+              disabled={uploading || readOnly} 
+              asChild
+              className="text-white/60 hover:text-white hover:bg-white/10 border-2 border-white/20 hover:border-white"
+            >
+              <span>
+                {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Image className="w-5 h-5" />}
+              </span>
+            </Button>
+          </label>
 
-            <input
-              type="file"
-              accept="video/*"
-              onChange={handleVideoUpload}
-              className="hidden"
-              id={`video-upload-${thread?.id}`}
-              disabled={uploading || readOnly}
-            />
-            <label htmlFor={`video-upload-${thread?.id}`} className="hidden md:block">
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="icon" 
-                disabled={uploading || readOnly} 
-                asChild
-                className="text-white/60 hover:text-white hover:bg-white/10 border-2 border-white/20 hover:border-white h-10 w-10"
-              >
-                <span>
-                  <Video className="w-4 h-4" />
-                </span>
-              </Button>
-            </label>
-          </div>
+          <input
+            type="file"
+            accept="video/*"
+            onChange={handleVideoUpload}
+            className="hidden"
+            id="video-upload"
+            disabled={uploading || readOnly}
+          />
+          <label htmlFor="video-upload">
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="icon" 
+              disabled={uploading || readOnly} 
+              asChild
+              className="text-white/60 hover:text-white hover:bg-white/10 border-2 border-white/20 hover:border-white"
+            >
+              <span>
+                <Video className="w-5 h-5" />
+              </span>
+            </Button>
+          </label>
 
           <Input
             value={messageText}
@@ -759,21 +738,21 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
               setMessageText(e.target.value);
               if (!readOnly) handleTyping();
             }}
-            placeholder="TYPE A MESSAGE..."
+            placeholder="TYPE MESSAGE..."
             disabled={readOnly}
-            className="flex-1 bg-black border-2 border-white/20 text-white placeholder:text-white/40 placeholder:uppercase placeholder:text-xs focus:border-[#FF1493] h-10"
+            className="flex-1 bg-black border-2 border-white/20 text-white placeholder:text-white/40 placeholder:uppercase placeholder:font-mono placeholder:text-xs focus:border-white"
           />
 
           <Button 
             type="submit" 
             size="icon"
             disabled={readOnly || !messageText.trim() || sendMutation.isPending}
-            className="bg-[#FF1493] hover:bg-white hover:text-black text-black border-2 border-white h-10 w-10 flex-shrink-0"
+            className="bg-[#FF1493] hover:bg-white text-black border-2 border-white"
           >
             {sendMutation.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
             )}
           </Button>
         </div>

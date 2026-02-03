@@ -42,7 +42,16 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
     setSearchQuery(email);
     
     const user = allUsers.find(u => u?.email?.toLowerCase() === email);
-    if (user) setSelectedUser(user);
+    if (user) {
+      setSelectedUser(user);
+    } else if (email.includes('@')) {
+      // User not in list but email looks valid - create a placeholder
+      setSelectedUser({
+        email: email,
+        full_name: email.split('@')[0],
+        display_name: email.split('@')[0],
+      });
+    }
   }, [currentUser?.email, prefillToEmail, allUsers]);
 
   const createThreadMutation = useMutation({
