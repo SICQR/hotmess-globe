@@ -291,7 +291,7 @@ export default function Messages() {
               </div>
 
               {/* Chat Content */}
-              <div className="flex-1">
+              <div className="flex-1 pb-20">
                 <ChatThread
                   thread={selectedThread}
                   currentUser={currentUser}
