@@ -16,14 +16,16 @@ import DisputeResolution from '../components/seller/DisputeResolution';
 import FeaturedListingsManager from '../components/seller/FeaturedListingsManager';
 import SellerRatingDisplay from '../components/seller/SellerRatingDisplay';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { User } from 'lucide-react';
 
 export default function SellerDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -173,6 +175,15 @@ export default function SellerDashboard() {
               </h1>
               <p className="text-white/60">Manage your products and orders</p>
             </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/profile/${currentUser?.id || ''}`)}
+                className="border-white/20"
+              >
+                <User className="w-4 h-4 mr-2" />
+                View Public Profile
+              </Button>
             {!showForm && (
               <Button 
                 onClick={() => setShowForm(true)}
@@ -182,6 +193,7 @@ export default function SellerDashboard() {
                 New Product
               </Button>
             )}
+            </div>
           </div>
 
           {/* Stats */}
