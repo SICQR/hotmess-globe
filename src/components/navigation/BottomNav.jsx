@@ -31,21 +31,38 @@ import {
   User
 } from 'lucide-react';
 
-// Apps available in MORE menu
+// Apps available in MORE menu - organized by pillar
 const ALL_APPS = [
-  { id: 'events', name: 'TONIGHT', icon: Zap, path: 'Events', color: '#00D9FF', desc: "What's on" },
-  { id: 'ghosted', name: 'GHOSTED', icon: Ghost, path: 'Social', color: '#FF1493', desc: 'Find people' },
-  { id: 'radio', name: 'RADIO', icon: Radio, path: 'Music', color: '#B026FF', desc: 'Live shows' },
-  { id: 'pulse', name: 'GLOBE', icon: Globe, path: 'Pulse', color: '#39FF14', desc: 'Live map' },
-  { id: 'messages', name: 'MESSAGES', icon: MessageCircle, path: 'Messages', color: '#FF1493', desc: 'DMs' },
-  { id: 'profile', name: 'PROFILE', icon: User, path: 'Profile', color: '#FFFFFF', desc: 'Your page' },
-  { id: 'safety', name: 'CARE', icon: Shield, path: 'Care', color: '#FF0000', desc: 'You good?' },
-  { id: 'community', name: 'COMMUNITY', icon: Sparkles, path: 'Community', color: '#FFEB3B', desc: 'Posts' },
-  { id: 'tickets', name: 'TICKETS', icon: Ticket, path: 'TicketMarketplace', color: '#FF6B35', desc: 'Buy & sell' },
-  { id: 'directions', name: 'TRAVEL', icon: Navigation, path: 'Directions', color: '#00D9FF', desc: 'Get there' },
-  { id: 'stats', name: 'STATS', icon: BarChart3, path: 'Stats', color: '#FFEB3B', desc: 'Your data' },
-  { id: 'settings', name: 'SETTINGS', icon: Settings, path: 'Settings', color: '#FFFFFF', desc: 'Preferences' },
+  // THE AIRWAVES - Passive Discovery
+  { id: 'radio', name: 'RADIO', icon: Radio, path: 'Music', color: '#B026FF', desc: 'Live shows', pillar: 'airwaves' },
+  { id: 'schedule', name: 'SCHEDULE', icon: Ticket, path: 'Schedule', color: '#B026FF', desc: 'Show times', pillar: 'airwaves' },
+  
+  // THE STREETS - Active Exploration
+  { id: 'events', name: 'TONIGHT', icon: Zap, path: 'Events', color: '#00D9FF', desc: "What's on", pillar: 'streets' },
+  { id: 'pulse', name: 'GLOBE', icon: Globe, path: 'Pulse', color: '#39FF14', desc: 'Live map', pillar: 'streets' },
+  { id: 'directions', name: 'TRAVEL', icon: Navigation, path: 'Directions', color: '#00D9FF', desc: 'Get there', pillar: 'streets' },
+  
+  // THE CROWD - Social & Dating
+  { id: 'ghosted', name: 'GHOSTED', icon: Ghost, path: 'Social', color: '#FF1493', desc: 'Find people', pillar: 'crowd' },
+  { id: 'messages', name: 'DMs', icon: MessageCircle, path: 'Messages', color: '#FF1493', desc: 'Your chats', pillar: 'crowd' },
+  { id: 'community', name: 'COMMUNITY', icon: Sparkles, path: 'Community', color: '#FFEB3B', desc: 'Posts', pillar: 'crowd' },
+  
+  // THE VAULT - Personal & Utility
+  { id: 'profile', name: 'PROFILE', icon: User, path: 'Profile', color: '#FFFFFF', desc: 'Your page', pillar: 'vault' },
+  { id: 'shop', name: 'SHOP', icon: ShoppingBag, path: 'Marketplace', color: '#FFB800', desc: 'Merch', pillar: 'vault' },
+  { id: 'tickets', name: 'TICKETS', icon: Ticket, path: 'TicketMarketplace', color: '#FF6B35', desc: 'Buy & sell', pillar: 'vault' },
+  { id: 'stats', name: 'XP', icon: BarChart3, path: 'Stats', color: '#FFEB3B', desc: 'Your data', pillar: 'vault' },
+  { id: 'safety', name: 'CARE', icon: Shield, path: 'Care', color: '#FF0000', desc: 'You good?', pillar: 'vault' },
+  { id: 'settings', name: 'SETTINGS', icon: Settings, path: 'Settings', color: '#FFFFFF', desc: 'Preferences', pillar: 'vault' },
 ];
+
+// Pillar labels for grouping
+const PILLAR_LABELS = {
+  airwaves: { name: 'THE AIRWAVES', desc: 'Listen & discover' },
+  streets: { name: 'THE STREETS', desc: 'Events & places' },
+  crowd: { name: 'THE CROWD', desc: 'People & chat' },
+  vault: { name: 'THE VAULT', desc: 'Your stuff' },
+};
 
 // Nav item component with consistent sizing
 function NavItem({ to, icon: Icon, label, isActive, color, badge, onClick }) {
@@ -129,40 +146,53 @@ function AppsGridModal({ isOpen, onClose }) {
               </button>
             </div>
 
-            {/* Apps Grid */}
+            {/* Apps Grid - Organized by Pillar */}
             <div className="flex-1 overflow-y-auto overscroll-contain p-4">
-              <div className="grid grid-cols-4 gap-3">
-                {ALL_APPS.map((app, index) => {
-                  const Icon = app.icon;
-                  return (
-                    <motion.div
-                      key={app.id}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.03 }}
-                    >
-                      <Link
-                        to={createPageUrl(app.path)}
-                        onClick={onClose}
-                        className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all active:scale-95"
-                      >
-                        <div 
-                          className="w-12 h-12 rounded-xl flex items-center justify-center transition-transform"
-                          style={{ backgroundColor: `${app.color}15` }}
-                        >
-                          <Icon className="w-6 h-6" style={{ color: app.color }} />
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight">
-                          {app.name}
-                        </span>
-                      </Link>
-                    </motion.div>
-                  );
-                })}
-              </div>
+              {['airwaves', 'streets', 'crowd', 'vault'].map((pillarKey) => {
+                const pillar = PILLAR_LABELS[pillarKey];
+                const apps = ALL_APPS.filter(a => a.pillar === pillarKey);
+                
+                return (
+                  <div key={pillarKey} className="mb-6">
+                    <div className="mb-3 px-1">
+                      <p className="text-xs font-black uppercase tracking-widest text-white/70">{pillar.name}</p>
+                      <p className="text-[10px] text-white/40">{pillar.desc}</p>
+                    </div>
+                    <div className="grid grid-cols-4 gap-3">
+                      {apps.map((app, index) => {
+                        const Icon = app.icon;
+                        return (
+                          <motion.div
+                            key={app.id}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: index * 0.03 }}
+                          >
+                            <Link
+                              to={createPageUrl(app.path)}
+                              onClick={onClose}
+                              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all active:scale-95"
+                            >
+                              <div 
+                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform"
+                                style={{ backgroundColor: `${app.color}15` }}
+                              >
+                                <Icon className="w-5 h-5" style={{ color: app.color }} />
+                              </div>
+                              <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight">
+                                {app.name}
+                              </span>
+                            </Link>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
 
               {/* Quick Actions */}
-              <div className="mt-8">
+              <div className="mt-4">
                 <p className="text-xs text-white/40 uppercase tracking-widest mb-3 px-1">Quick Links</p>
                 <div className="grid grid-cols-2 gap-3">
                   <Link
