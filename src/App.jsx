@@ -23,6 +23,8 @@ import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { WorldPulseProvider } from '@/contexts/WorldPulseContext';
+import { AudioProvider } from '@/contexts/AudioContext';
+import MiniPlayer from '@/components/player/MiniPlayer';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const isProdBuild = import.meta.env.MODE === 'production';
@@ -568,12 +570,15 @@ function App() {
       <AuthProvider>
         <QueryClientProvider client={queryClientInstance}>
           <WorldPulseProvider>
-            <ShopCartProvider>
-              <Router>
-                <NavigationTracker />
-                <AuthenticatedApp />
-              </Router>
-            </ShopCartProvider>
+            <AudioProvider>
+              <ShopCartProvider>
+                <Router>
+                  <NavigationTracker />
+                  <AuthenticatedApp />
+                  <MiniPlayer />
+                </Router>
+              </ShopCartProvider>
+            </AudioProvider>
           </WorldPulseProvider>
           <Toaster />
         </QueryClientProvider>

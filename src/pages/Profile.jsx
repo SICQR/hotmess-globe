@@ -32,6 +32,7 @@ import { createPageUrl } from '../utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import ProfileTabs from '@/components/profile/ProfileTabs';
 
 // Profile type config
 const profileTypes = {
@@ -562,6 +563,15 @@ export default function Profile() {
             icon={Heart}
           />
         </div>
+
+        {/* Role-based tabs for non-standard profiles */}
+        {profileUser?.profile_type && profileUser.profile_type !== 'standard' && (
+          <ProfileTabs 
+            user={profileUser} 
+            photos={photos} 
+            isOwnProfile={isOwnProfile} 
+          />
+        )}
 
         {/* Recent Activity */}
         <div>
