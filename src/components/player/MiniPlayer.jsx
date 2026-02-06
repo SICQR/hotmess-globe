@@ -7,11 +7,13 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Radio, SkipForward, ChevronUp, ChevronDown, X, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Radio, SkipForward, ChevronUp, ChevronDown, X, Volume2, VolumeX, Globe, Calendar, User } from 'lucide-react';
 import { useAudio } from '@/contexts/AudioContext';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 export default function MiniPlayer() {
+  const navigate = useNavigate();
   const {
     isPlaying,
     currentTrack,
@@ -35,6 +37,24 @@ export default function MiniPlayer() {
   if (!isPlayerVisible || !currentTrack) return null;
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  // Navigation handlers
+  const goToGlobe = () => {
+    toggleExpanded();
+    navigate('/pulse');
+  };
+
+  const goToSchedule = () => {
+    toggleExpanded();
+    navigate('/music/schedule');
+  };
+
+  const goToArtist = () => {
+    if (currentTrack.creator_email) {
+      toggleExpanded();
+      navigate(`/Profile?email=${encodeURIComponent(currentTrack.creator_email)}`);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -260,6 +280,33 @@ export default function MiniPlayer() {
                 className="flex-1 h-1 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
               />
               <Volume2 className="w-4 h-4 text-white/30" />
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex items-center justify-center gap-4 mt-8 px-8">
+              <button
+                onClick={goToGlobe}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors"
+              >
+                <Globe className="w-4 h-4 text-[#00D9FF]" />
+                <span className="text-sm font-bold">View on Globe</span>
+              </button>
+              <button
+                onClick={goToSchedule}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors"
+              >
+                <Calendar className="w-4 h-4 text-[#B026FF]" />
+                <span className="text-sm font-bold">Schedule</span>
+              </button>
+              {currentTrack.creator_email && (
+                <button
+                  onClick={goToArtist}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors"
+                >
+                  <User className="w-4 h-4 text-[#FF1493]" />
+                  <span className="text-sm font-bold">Artist</span>
+                </button>
+              )}
             </div>
           </motion.div>
         )}

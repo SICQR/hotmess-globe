@@ -1,14 +1,14 @@
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Radio as RadioIcon, Calendar, Play, ArrowRight, Disc, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
+import { Radio as RadioIcon, Calendar, Play, Pause, ArrowRight, Disc, ChevronLeft, ChevronRight, ExternalLink, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { schedule, getNextEpisode } from '../components/radio/radioUtils';
-import { useRadio } from '../components/shell/RadioContext';
+import { useAudio } from '@/contexts/AudioContext';
 import { format } from 'date-fns';
 
 export default function Radio() {
-  const { openRadio, isRadioOpen } = useRadio();
+  const { playLive, isPlaying, isLive, showPlayer } = useAudio();
   const releasesRef = useRef(null);
 
   const shows = schedule?.shows || [];
@@ -101,11 +101,20 @@ export default function Radio() {
 
           <div className="flex flex-wrap gap-6 justify-center">
             <Button 
-              onClick={openRadio}
+              onClick={() => { playLive(); showPlayer(); }}
               variant="hot" size="lg" className="font-black uppercase px-12 text-xl"
             >
-              <Play className="w-7 h-7 mr-3" />
-              {isRadioOpen ? 'NOW PLAYING' : 'LISTEN LIVE'}
+              {isPlaying && isLive ? (
+                <>
+                  <Pause className="w-7 h-7 mr-3" />
+                  NOW PLAYING
+                </>
+              ) : (
+                <>
+                  <Play className="w-7 h-7 mr-3" />
+                  LISTEN LIVE
+                </>
+              )}
             </Button>
             <Link to="/music/schedule">
               <Button variant="outline" className="border-2 border-white/30 text-white hover:bg-white hover:text-black font-black uppercase px-10 py-7 text-xl">
