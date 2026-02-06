@@ -24,6 +24,7 @@ import PrivacyHub from '@/pages/legal/PrivacyHub';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { WorldPulseProvider } from '@/contexts/WorldPulseContext';
 import { AudioProvider } from '@/contexts/AudioContext';
+import { TonightProvider } from '@/contexts/TonightContext';
 import MiniPlayer from '@/components/player/MiniPlayer';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -570,15 +571,17 @@ function App() {
       <AuthProvider>
         <QueryClientProvider client={queryClientInstance}>
           <WorldPulseProvider>
-            <AudioProvider>
-              <ShopCartProvider>
-                <Router>
-                  <NavigationTracker />
-                  <AuthenticatedApp />
-                  <MiniPlayer />
-                </Router>
-              </ShopCartProvider>
-            </AudioProvider>
+            <TonightProvider>
+              <AudioProvider>
+                <ShopCartProvider>
+                  <Router>
+                    <NavigationTracker />
+                    <AuthenticatedApp />
+                    <MiniPlayer />
+                  </Router>
+                </ShopCartProvider>
+              </AudioProvider>
+            </TonightProvider>
           </WorldPulseProvider>
           <Toaster />
         </QueryClientProvider>

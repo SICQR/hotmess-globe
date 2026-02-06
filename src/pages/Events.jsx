@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { Calendar, Filter, Search, Map, Zap, MapPin, ArrowRight } from 'lucide-react';
+import { Calendar, Filter, Search, Map, Zap, MapPin, ArrowRight, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,6 +19,7 @@ import logger from '@/utils/logger';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { EventListSkeleton } from '@/components/skeletons/PageSkeletons';
 import EmptyState, { ErrorState } from '@/components/ui/EmptyState';
+import { useTonight } from '@/contexts/TonightContext';
 
 export default function Events() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -29,6 +30,9 @@ export default function Events() {
   const [sortBy, setSortBy] = useState('date');
   const [viewMode, setViewMode] = useState('grid');
   const [userLocation, setUserLocation] = useState(null);
+  
+  // Tonight mode - time-aware UI
+  const { isNightMode, greeting, cta, eventsLabel, colors, toggleMode, isAutoMode } = useTonight();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -227,14 +231,29 @@ export default function Events() {
           className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20"
         >
           <div className="max-w-3xl">
-            <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">
+            {/* Tonight mode indicator */}
+            <button
+              onClick={toggleMode}
+              className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-white/50 hover:text-white mb-4 transition-colors"
+            >
+              {isNightMode ? <Moon className="w-3 h-3" /> : <Sun className="w-3 h-3" />}
+              {isNightMode ? 'NIGHT MODE' : 'DAY MODE'}
+              {!isAutoMode && <span className="text-[10px] text-white/30">(manual)</span>}
+            </button>
+            
+            <p className="text-sm uppercase tracking-[0.4em] mb-4" style={{ color: colors.primary }}>
               {format(new Date(), 'EEEE, MMMM d')}
             </p>
             <h1 className="text-[12vw] md:text-[8vw] font-black italic leading-[0.85] tracking-tighter mb-6">
-              TONIGHT<span className="text-pink-500">.</span>
+              {isNightMode ? 'TONIGHT' : 'PLAN'}<span style={{ color: colors.primary }}>.</span>
             </h1>
-            <p className="text-xl md:text-2xl text-white/70 mb-10 max-w-xl">
-              What's happening in London. Find the energy. RSVP. Go.
+            <p className="text-xl md:text-2xl text-white/70 mb-4 max-w-xl">
+              {isNightMode 
+                ? "What's happening in London. Find the energy. RSVP. Go."
+                : "Plan your night. Discover what's coming up."}
+            </p>
+            <p className="text-lg font-black uppercase mb-10" style={{ color: colors.primary }}>
+              {greeting}
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -265,7 +284,7 @@ export default function Events() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-6">FEATURED</p>
+              <p className="text-sm uppercase tracking-[0.4em] mb-6" style={{ color: colors.primary }}>{eventsLabel}</p>
               
               <Link to={`/events/${encodeURIComponent(featuredEvent.id)}`}>
                 <div className="group grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white/5 border border-white/10 hover:border-pink-500 rounded-2xl overflow-hidden transition-all">
