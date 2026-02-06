@@ -9,7 +9,9 @@ import {
   MapPin,
   SlidersHorizontal,
   Undo2,
-  Menu
+  Menu,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
@@ -20,6 +22,7 @@ import { useCurrentUser } from '@/components/utils/queryConfig';
 import { useInfiniteProfiles } from '@/features/profilesGrid/useInfiniteProfiles';
 import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
 import { toast } from 'sonner';
+import { useTonight } from '@/contexts/TonightContext';
 
 // Ghosted components
 import { GhostedSwipeView, GhostedRadarView, StatusSelector, GrindrGrid, ProfileSheet, UberShareButton } from '@/features/ghosted';
@@ -533,6 +536,9 @@ export default function Social() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   
+  // Tonight mode - time-aware UI
+  const { isNightMode, colors, features, toggleMode, isAutoMode } = useTonight();
+  
   // Get view mode from URL or localStorage
   const initialView = searchParams.get('view') || localStorage.getItem('ghosted-view') || 'grid';
   
@@ -759,8 +765,9 @@ export default function Social() {
   }, [lastSwiped]);
 
   // Filter profiles (swipe view handles swipedIds internally)
+  // Night mode: boost "rightNow" profiles to top
   const filteredProfiles = useMemo(() => {
-    return profiles.filter((p) => {
+    const filtered = profiles.filter((p) => {
       // Distance filter (if location enabled)
       if (viewerLocation && p.geoLat && p.geoLng) {
         const dist = calculateDistance(viewerLocation.lat, viewerLocation.lng, p.geoLat, p.geoLng);
@@ -775,7 +782,22 @@ export default function Social() {
       
       return true;
     });
-  }, [profiles, viewerLocation, maxDistance, showOnlineOnly, showRightNowOnly]);
+    
+    // Night mode boost: sort "rightNow" profiles to top
+    if (isNightMode && features.ghostedBoost) {
+      return [...filtered].sort((a, b) => {
+        // rightNow profiles first
+        if (a.rightNow && !b.rightNow) return -1;
+        if (!a.rightNow && b.rightNow) return 1;
+        // then online profiles
+        if (a.onlineNow && !b.onlineNow) return -1;
+        if (!a.onlineNow && b.onlineNow) return 1;
+        return 0;
+      });
+    }
+    
+    return filtered;
+  }, [profiles, viewerLocation, maxDistance, showOnlineOnly, showRightNowOnly, isNightMode, features.ghostedBoost]);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -783,10 +805,19 @@ export default function Social() {
       <header className="sticky top-0 z-40 bg-black/90 backdrop-blur-lg border-b border-white/10">
         <div className="max-w-7xl mx-auto px-3 py-2">
           <div className="flex items-center gap-2">
-            {/* Logo - hidden on mobile to save space */}
-            <h1 className="hidden sm:block text-lg font-black italic shrink-0">
-              GHOSTED<span className="text-pink-500">.</span>
-            </h1>
+            {/* Logo + Tonight mode indicator */}
+            <div className="hidden sm:flex items-center gap-2 shrink-0">
+              <h1 className="text-lg font-black italic">
+                GHOSTED<span style={{ color: colors.primary }}>.</span>
+              </h1>
+              <button
+                onClick={toggleMode}
+                className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                title={isAutoMode ? 'Auto mode (click to override)' : 'Manual mode (click to cycle)'}
+              >
+                {isNightMode ? <Moon className="w-3 h-3" /> : <Sun className="w-3 h-3" />}
+              </button>
+            </div>
             
             {/* View Mode Toggle - Always visible */}
             <div className="flex items-center gap-0.5 bg-white/5 rounded-lg p-0.5 flex-1 sm:flex-none">
@@ -799,9 +830,10 @@ export default function Social() {
                     onClick={() => handleSetViewMode(mode.id)}
                     className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-md transition-all ${
                       viewMode === mode.id
-                        ? 'bg-pink-500 text-white'
+                        ? 'text-white'
                         : 'text-white/60 hover:text-white'
                     }`}
+                    style={viewMode === mode.id ? { backgroundColor: colors.primary } : {}}
                   >
                     <Icon className="w-4 h-4" />
                     <span className="text-xs font-bold hidden sm:inline">{mode.label}</span>

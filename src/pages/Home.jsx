@@ -3,17 +3,21 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Heart, Calendar, Zap, ArrowRight, Ghost, Play, Mic, Users, Sparkles, MapPin, Disc, ChevronLeft, ChevronRight, Radio as RadioIcon } from 'lucide-react';
+import { ShoppingBag, Heart, Calendar, Zap, ArrowRight, Ghost, Play, Mic, Users, Sparkles, MapPin, Disc, ChevronLeft, ChevronRight, Radio as RadioIcon, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useServerNow } from '@/hooks/use-server-now';
 import { schedule, getNextEpisode } from '../components/radio/radioUtils';
 import { useRadio } from '../components/shell/RadioContext';
+import { useTonight } from '@/contexts/TonightContext';
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
   const { serverNow } = useServerNow();
   const { openRadio } = useRadio();
   const releasesRef = useRef(null);
+  
+  // Tonight mode - time-aware UI
+  const { isNightMode, greeting, colors, toggleMode, isAutoMode } = useTonight();
 
   // Get next radio show
   const nextRadioUp = useMemo(() => {
@@ -119,12 +123,22 @@ export default function Home() {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="relative z-10 text-center px-6 max-w-5xl"
         >
-          <p className="text-sm md:text-base uppercase tracking-[0.5em] text-pink-500 mb-6">
-            London's Queer Culture Platform
+          {/* Tonight mode indicator */}
+          <button
+            onClick={toggleMode}
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-white/50 hover:text-white mb-4 transition-colors"
+          >
+            {isNightMode ? <Moon className="w-3 h-3" /> : <Sun className="w-3 h-3" />}
+            {isNightMode ? 'NIGHT MODE' : 'DAY MODE'}
+            {!isAutoMode && <span className="text-[10px] text-white/30">(manual)</span>}
+          </button>
+          
+          <p className="text-sm md:text-base uppercase tracking-[0.5em] mb-6" style={{ color: colors.primary }}>
+            {isNightMode ? "London's Queer Culture Platform" : "Plan Your Night Out"}
           </p>
           
           <h1 className="text-[20vw] md:text-[12vw] font-black italic leading-[0.85] tracking-tighter mb-8">
-            HOT<span className="text-[#FF1493]">MESS</span>
+            HOT<span style={{ color: colors.primary }}>MESS</span>
           </h1>
           
           <p className="text-xl md:text-2xl font-bold uppercase tracking-[0.15em] text-white/80 mb-8">
