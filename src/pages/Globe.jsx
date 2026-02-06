@@ -631,7 +631,6 @@ export default function GlobePage() {
               showHotmessFeed ? 'text-black' : 'bg-black/90 border border-white/10 text-white'
             }`}
             style={showHotmessFeed ? { backgroundColor: colors.primary } : {}}
-            }`}
             aria-label="Hotmess Feed"
           >
             <span className="text-[10px] font-black">FEED</span>
