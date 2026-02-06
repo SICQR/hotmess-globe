@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { useTonight } from '@/contexts/TonightContext';
 
 // Convert lat/lng to 3D position
 function latLngToVector3(lat, lng, radius) {
@@ -51,6 +52,9 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   const mountRef = useRef(null);
   const hoveredArcRef = useRef(null);
   const [arcTooltip, setArcTooltip] = React.useState(null);
+  
+  // Tonight mode for visual theming
+  const { isNightMode, colors, glowIntensity } = useTonight();
   
   const showPins = activeLayers.includes('pins');
   const showHeat = activeLayers.includes('heat');
@@ -1130,7 +1134,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       // Clear references
       scene.clear();
     };
-  }, [beacons, cities, activeLayers, highlightedIds, userActivities, onBeaconClick, onCityClick]);
+  }, [beacons, cities, activeLayers, highlightedIds, userActivities, onBeaconClick, onCityClick, isNightMode, colors, glowIntensity]);
 
   // Rotate to selected city
   useEffect(() => {
