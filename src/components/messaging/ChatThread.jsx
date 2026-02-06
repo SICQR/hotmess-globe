@@ -25,7 +25,7 @@ const THEMES = {
   brutalist: BrutalistRedux,
 };
 
-export default function ChatThread({ thread, currentUser, onBack, readOnly = false, theme = 'ghost' }) {
+export default function ChatThread({ thread, currentUser, onBack, readOnly = false, theme = 'ghost', allUsers: propAllUsers, hideHeader = false }) {
   const [messageText, setMessageText] = useState('');
   const [uploading, setUploading] = useState(false);
   const [isTyping, setIsTyping] = useState({});
@@ -47,9 +47,52 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
   const REACTIONS = ['❤️', '😂', '😮', '😢', '👍', '🔥', '💯', '🎉'];
 
-  const { data: messages = [], hasNextPage } = useQuery({
+  // Demo messages for fallback when viewing demo threads
+  const DEMO_MESSAGES = thread?._isDemo ? [
+    {
+      id: 'demo_msg_1',
+      thread_id: thread.id,
+      sender_email: thread.participant_emails[1],
+      content: 'Hey! Great vibes at the club last night 🔥',
+      message_type: 'text',
+      created_date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+      read_by: [currentUser?.email],
+    },
+    {
+      id: 'demo_msg_2',
+      thread_id: thread.id,
+      sender_email: currentUser?.email,
+      content: 'Totally! That DJ set was incredible',
+      message_type: 'text',
+      created_date: new Date(Date.now() - 1000 * 60 * 60 * 1.5).toISOString(),
+      read_by: [currentUser?.email, thread.participant_emails[1]],
+    },
+    {
+      id: 'demo_msg_3',
+      thread_id: thread.id,
+      sender_email: thread.participant_emails[1],
+      content: 'We should def link up again this weekend 👀',
+      message_type: 'text',
+      created_date: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+      read_by: [currentUser?.email],
+    },
+    {
+      id: 'demo_msg_4',
+      thread_id: thread.id,
+      sender_email: thread.participant_emails[1],
+      content: thread.last_message,
+      message_type: 'text',
+      created_date: new Date(thread.last_message_at).toISOString(),
+      read_by: [],
+    },
+  ] : [];
+
+  const { data: fetchedMessages = [], hasNextPage } = useQuery({
     queryKey: ['messages', thread.id, messagesPage],
     queryFn: async () => {
+      // Skip API call for demo threads
+      if (thread?._isDemo) return [];
+      
       const allMessages = await base44.entities.Message.filter(
         { thread_id: thread.id }, 
         'created_date', 
@@ -57,9 +100,13 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       );
       return allMessages;
     },
-    refetchInterval: 3000, // Poll every 3s (optimized)
+    refetchInterval: thread?._isDemo ? false : 3000,
     keepPreviousData: true,
+    enabled: !thread?._isDemo,
   });
+
+  // Use fetched messages or demo messages
+  const messages = thread?._isDemo ? DEMO_MESSAGES : fetchedMessages;
 
   const loadMoreMessages = () => {
     if (messages.length >= MESSAGES_PER_PAGE * messagesPage) {
@@ -70,6 +117,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
   const { data: typingIndicators = [] } = useQuery({
     queryKey: ['typing', thread.id],
     queryFn: async () => {
+      if (thread?._isDemo) return [];
       const activities = await base44.entities.UserActivity.filter(
         { activity_type: 'typing' },
         '-created_date',
@@ -80,13 +128,33 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
         new Date(a.created_date).getTime() > Date.now() - 5000 // Last 5 seconds
       );
     },
-    refetchInterval: 2000, // Poll every 2s (optimized)
+    refetchInterval: thread?._isDemo ? false : 2000,
+    enabled: !thread?._isDemo,
   });
 
-  const { data: allUsers = [] } = useAllUsers();
+  // Use passed users or fetch them
+  const { data: fetchedUsers = [] } = useAllUsers();
+  const allUsers = propAllUsers || fetchedUsers;
 
   const sendMutation = useMutation({
     mutationFn: async (data) => {
+      // For demo threads, show a toast and return fake message
+      if (thread?._isDemo) {
+        toast.info('Demo Mode', {
+          description: 'Sign up to start real conversations! 🚀',
+        });
+        return {
+          id: `demo_sent_${Date.now()}`,
+          thread_id: thread.id,
+          sender_email: currentUser.email,
+          content: data.content,
+          message_type: data.message_type || 'text',
+          created_date: new Date().toISOString(),
+          read_by: [currentUser.email],
+          _isDemo: true,
+        };
+      }
+
       const ok = await base44.auth.requireProfile(window.location.href);
       if (!ok) return null;
 
@@ -136,8 +204,10 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     },
     onSuccess: (message) => {
       if (!message) return;
-      queryClient.invalidateQueries(['messages', thread.id]);
-      queryClient.invalidateQueries(['chat-threads']);
+      if (!thread?._isDemo) {
+        queryClient.invalidateQueries(['messages', thread.id]);
+        queryClient.invalidateQueries(['chat-threads']);
+      }
       setMessageText('');
     },
   });

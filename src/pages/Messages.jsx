@@ -26,6 +26,86 @@ import { ConversationListSkeleton } from '@/components/skeletons/PageSkeletons';
 import EmptyState, { ErrorState } from '@/components/ui/EmptyState';
 import { cn } from '@/lib/utils';
 
+// Demo threads for fallback when no real threads exist
+const DEMO_THREADS = [
+  {
+    id: 'demo_thread_1',
+    participant_emails: ['demo@hotmess.app', 'roxy@hotmess.app'],
+    thread_type: 'dm',
+    last_message: 'Saw you at Fabric last night! That set was 🔥',
+    last_message_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    unread_count: { 'demo@hotmess.app': 2 },
+    active: true,
+    _isDemo: true,
+  },
+  {
+    id: 'demo_thread_2',
+    participant_emails: ['demo@hotmess.app', 'milo@hotmess.app'],
+    thread_type: 'connect',
+    last_message: 'down for afterhours at Phonox?',
+    last_message_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    unread_count: {},
+    active: true,
+    _isDemo: true,
+  },
+  {
+    id: 'demo_thread_3',
+    participant_emails: ['demo@hotmess.app', 'jade@hotmess.app'],
+    thread_type: 'event',
+    last_message: 'Guest list sorted for Saturday 🎟️',
+    last_message_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    unread_count: { 'demo@hotmess.app': 1 },
+    active: true,
+    _isDemo: true,
+  },
+  {
+    id: 'demo_thread_4',
+    participant_emails: ['demo@hotmess.app', 'luna@hotmess.app'],
+    thread_type: 'beacon',
+    last_message: 'Just dropped a beacon at XOYO 📍',
+    last_message_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    unread_count: {},
+    active: true,
+    _isDemo: true,
+  },
+];
+
+// Demo users to match demo threads
+const DEMO_USERS = [
+  {
+    email: 'roxy@hotmess.app',
+    full_name: 'Roxy Voltage',
+    display_name: 'Roxy',
+    username: 'roxyvoltage',
+    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+    _isDemo: true,
+  },
+  {
+    email: 'milo@hotmess.app',
+    full_name: 'Milo Afterhours',
+    display_name: 'Milo',
+    username: 'miloafterhours',
+    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200',
+    _isDemo: true,
+  },
+  {
+    email: 'jade@hotmess.app',
+    full_name: 'Jade Neon',
+    display_name: 'Jade',
+    username: 'jadeneon',
+    avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
+    _isDemo: true,
+  },
+  {
+    email: 'luna@hotmess.app',
+    full_name: 'Luna Echo',
+    display_name: 'Luna',
+    username: 'lunaecho',
+    avatar_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200',
+    _isDemo: true,
+  },
+];
+
 // Get other participant info
 function getOtherParticipant(thread, currentUser, allUsers) {
   const otherEmail = thread?.participant_emails?.find(e => e !== currentUser?.email);
@@ -74,16 +154,31 @@ export default function Messages() {
     retry: 2,
   });
 
+  // Use demo threads as fallback if no real threads exist
+  const displayThreads = useMemo(() => {
+    if (threads.length > 0) return threads;
+    // Return demo threads with current user email injected
+    return DEMO_THREADS.map(t => ({
+      ...t,
+      participant_emails: [currentUser?.email || 'demo@hotmess.app', t.participant_emails[1]],
+    }));
+  }, [threads, currentUser?.email]);
+
+  // Combine real users with demo users for lookup
+  const combinedUsers = useMemo(() => {
+    return [...(allUsers || []), ...DEMO_USERS];
+  }, [allUsers]);
+
   // Filter threads by search
   const filteredThreads = useMemo(() => {
-    if (!searchQuery.trim()) return threads;
+    if (!searchQuery.trim()) return displayThreads;
     const q = searchQuery.toLowerCase();
-    return threads.filter(t => {
-      const other = getOtherParticipant(t, currentUser, allUsers);
+    return displayThreads.filter(t => {
+      const other = getOtherParticipant(t, currentUser, combinedUsers);
       const name = other?.full_name || other?.display_name || other?.email || '';
       return name.toLowerCase().includes(q);
     });
-  }, [threads, searchQuery, currentUser, allUsers]);
+  }, [displayThreads, searchQuery, currentUser, combinedUsers]);
 
   // Deep-link handlers
   useEffect(() => {
@@ -122,8 +217,8 @@ export default function Messages() {
   // Get selected thread participant info
   const selectedParticipant = useMemo(() => {
     if (!selectedThread) return null;
-    return getOtherParticipant(selectedThread, currentUser, allUsers);
-  }, [selectedThread, currentUser, allUsers]);
+    return getOtherParticipant(selectedThread, currentUser, combinedUsers);
+  }, [selectedThread, currentUser, combinedUsers]);
 
   // Loading state
   if (!currentUser || isLoading || userLoading) {
@@ -229,7 +324,7 @@ export default function Messages() {
                   <ThreadList
                     threads={filteredThreads}
                     currentUser={currentUser}
-                    allUsers={allUsers}
+                    allUsers={combinedUsers}
                     onSelectThread={handleSelectThread}
                     onNewMessage={() => setShowNewMessage(true)}
                   />
@@ -291,12 +386,14 @@ export default function Messages() {
               </div>
 
               {/* Chat Content */}
-              <div className="flex-1 pb-20">
+              <div className="flex-1 pb-24">
                 <ChatThread
                   thread={selectedThread}
                   currentUser={currentUser}
                   onBack={backToInbox}
                   hideHeader
+                  theme="ghost"
+                  allUsers={combinedUsers}
                 />
               </div>
             </motion.div>
@@ -348,7 +445,7 @@ export default function Messages() {
               <ThreadList
                 threads={filteredThreads}
                 currentUser={currentUser}
-                allUsers={allUsers}
+                allUsers={combinedUsers}
                 onSelectThread={handleSelectThread}
                 selectedThreadId={selectedThread?.id}
                 onNewMessage={() => setShowNewMessage(true)}
@@ -402,6 +499,8 @@ export default function Messages() {
                   currentUser={currentUser}
                   onBack={backToInbox}
                   hideHeader
+                  theme="ghost"
+                  allUsers={combinedUsers}
                 />
               </div>
             </>
@@ -424,7 +523,7 @@ export default function Messages() {
         {showNewMessage && (
           <NewMessageModal
             currentUser={currentUser}
-            allUsers={allUsers}
+            allUsers={combinedUsers}
             prefillToEmail={prefillToEmail}
             onClose={() => {
               setShowNewMessage(false);
