@@ -318,6 +318,7 @@ export default function EditProfile() {
             }
           }
         } catch (tagSyncError) {
+          toast.warning('Profile saved, but some tags failed to sync');
           console.warn('Profile updated, but tags/tribes sync failed (non-fatal)', tagSyncError);
         }
       }

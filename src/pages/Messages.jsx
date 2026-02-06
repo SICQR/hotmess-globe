@@ -12,8 +12,8 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { base44, supabase } from '@/api/base44Client';
 import { MessageCircle, Plus, ArrowLeft, Search, MoreVertical, Phone, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -150,9 +150,36 @@ export default function Messages() {
       return allThreads.filter(t => t.participant_emails.includes(currentUser.email));
     },
     enabled: !!currentUser,
-    refetchInterval: 5000,
+    refetchInterval: 30000, // Reduced polling - real-time handles most updates
     retry: 2,
   });
+
+  const queryClient = useQueryClient();
+
+  // Real-time subscription for thread updates
+  useEffect(() => {
+    if (!currentUser?.email || !supabase) return;
+
+    const channel = supabase
+      .channel('chat-threads-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ChatThread' },
+        (payload) => {
+          // Check if this thread involves the current user
+          const thread = payload.new || payload.old;
+          if (thread?.participant_emails?.includes(currentUser.email)) {
+            // Invalidate to refetch
+            queryClient.invalidateQueries(['chat-threads', currentUser.email]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser?.email, queryClient]);
 
   // Use demo threads as fallback if no real threads exist
   const displayThreads = useMemo(() => {

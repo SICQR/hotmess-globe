@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { base44, supabase } from '@/api/base44Client';
 import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn, Search, X, Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -100,13 +100,45 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       );
       return allMessages;
     },
-    refetchInterval: thread?._isDemo ? false : 3000,
+    refetchInterval: thread?._isDemo ? false : 15000, // Fallback polling (real-time handles most updates)
     keepPreviousData: true,
     enabled: !thread?._isDemo,
   });
 
   // Use fetched messages or demo messages
   const messages = thread?._isDemo ? DEMO_MESSAGES : fetchedMessages;
+
+  // Real-time subscription for new messages
+  useEffect(() => {
+    if (thread?._isDemo || !thread?.id || !supabase) return;
+
+    const channel = supabase
+      .channel(`messages-${thread.id}`)
+      .on(
+        'postgres_changes',
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'Message',
+          filter: `thread_id=eq.${thread.id}`
+        },
+        (payload) => {
+          // Add new message to cache if not from current user (already optimistically added)
+          if (payload.new?.sender_email !== currentUser?.email) {
+            queryClient.setQueryData(['messages', thread.id], (old = []) => {
+              const exists = old.some(m => m.id === payload.new.id);
+              if (exists) return old;
+              return [...old, payload.new];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [thread?.id, thread?._isDemo, currentUser?.email, queryClient]);
 
   const loadMoreMessages = () => {
     if (messages.length >= MESSAGES_PER_PAGE * messagesPage) {
