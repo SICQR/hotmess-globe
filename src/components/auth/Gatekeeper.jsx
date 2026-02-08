@@ -4,6 +4,9 @@ import { Loader2 } from 'lucide-react';
 import AgeGate from './AgeGate';
 import ConsentForm from './ConsentForm';
 
+// TEMP: Bypass all gates for testing
+const BYPASS_GATES = true;
+
 function readCookie(name) {
   if (typeof document === 'undefined') return null;
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
@@ -17,6 +20,11 @@ function writeCookie(name, value) {
 }
 
 export default function Gatekeeper({ children }) {
+  // TEMP: Bypass for testing
+  if (BYPASS_GATES) {
+    return <>{children}</>;
+  }
+
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [ageVerified, setAgeVerified] = useState(() => {
