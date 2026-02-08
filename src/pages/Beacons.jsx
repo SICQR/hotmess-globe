@@ -8,6 +8,7 @@ import { MapPin, Zap, Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BEACON_COLOR } from '@/hooks/useP2PListingBeacon';
 
 export default function Beacons() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,14 +30,15 @@ export default function Beacons() {
 
   const cities = [...new Set(beacons.map(b => b.city))];
 
-  const BEACON_COLORS = {
-    event: '#FF1493',
+  // Use shared beacon colors with legacy fallbacks
+  const kindToColor = (kind) => ({
+    ...BEACON_COLOR,
     venue: '#FF1493',
     hookup: '#FF073A',
     drop: '#FF6B35',
     popup: '#B026FF',
-    private: '#00D9FF',
-  };
+    private: BEACON_COLOR.event,
+  })[kind] || '#FF1493';
 
   if (isLoading) {
     return (
@@ -126,7 +128,7 @@ export default function Beacons() {
                   <span
                     className="px-2 py-1 rounded text-xs font-bold uppercase tracking-wider"
                     style={{
-                      backgroundColor: BEACON_COLORS[beacon.kind] || '#FF1493',
+                      backgroundColor: kindToColor(beacon.kind),
                       color: '#000'
                     }}
                   >

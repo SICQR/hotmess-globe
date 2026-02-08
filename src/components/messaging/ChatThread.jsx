@@ -283,9 +283,27 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     setShowReactions(null);
   };
 
+  // Auto-scroll to bottom when new messages arrive
+  const prevMessagesLength = useRef(messages.length);
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    // Always scroll on initial load or when new messages arrive
+    if (messages.length > 0 && (prevMessagesLength.current === 0 || messages.length > prevMessagesLength.current)) {
+      // Use requestAnimationFrame for smoother scrolling
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
+    prevMessagesLength.current = messages.length;
+  }, [messages.length]);
+
+  // Also scroll after sending a message
+  useEffect(() => {
+    if (sendMutation.isSuccess) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
+  }, [sendMutation.isSuccess]);
 
   // Request notification permission on mount
   useEffect(() => {

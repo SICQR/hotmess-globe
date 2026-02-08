@@ -4,7 +4,7 @@ import { createPageUrl } from './utils';
 import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield } from 'lucide-react';
 import { base44 } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
-import PanicButton from '@/components/safety/PanicButton';
+import SafetyFAB from '@/components/safety/SafetyFAB';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
 import GlobalAssistant from '@/components/ai/GlobalAssistant';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
@@ -646,8 +646,8 @@ function LayoutInner({ children, currentPageName }) {
         </PageErrorBoundary>
       </main>
 
-      {/* Panic Button */}
-      {user && <PanicButton />}
+      {/* Safety FAB - replaces old Panic Button */}
+      {user && <SafetyFAB />}
 
       {/* Global AI Assistant */}
       {user && <GlobalAssistant />}

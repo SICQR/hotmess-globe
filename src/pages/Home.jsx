@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
@@ -11,9 +11,18 @@ import { toast } from 'sonner';
 import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { format } from 'date-fns';
 import { useWorldPulse } from '@/contexts/WorldPulseContext';
-import GlobeHero from '@/components/globe/GlobeHero';
 import CityPulseBar from '@/components/globe/CityPulseBar';
 import LiveFeed from '@/components/globe/LiveFeed';
+import ErrorBoundary from '@/components/error/ErrorBoundary';
+import { 
+  GlobeLoadingFallback, 
+  GlobeErrorFallback, 
+  GlobeMobileFallback,
+  shouldUseMobileFallback 
+} from '@/components/globe/GlobeFallback';
+
+// Lazy-load heavy Globe component
+const GlobeHero = lazy(() => import('@/components/globe/GlobeHero'));
 
 const HNHMESS_RELEASE_SLUG = 'hnhmess';
 // Shopify product handles are not the same as release slugs.
@@ -23,6 +32,8 @@ const HNHMESS_RELEASE_AT_FALLBACK = new Date('2026-01-10T00:00:00Z');
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
+  const [useMobileFallback, setUseMobileFallback] = useState(() => shouldUseMobileFallback());
+  const [forceFullGlobe, setForceFullGlobe] = useState(false);
   const queryClient = useQueryClient();
   const { serverNow } = useServerNow();
 
@@ -296,9 +307,21 @@ export default function Home() {
 
       {/* GLOBE HERO - Full viewport with live visualization */}
       <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
-        {/* Animated globe background */}
+        {/* Globe with lazy loading, error boundary, and mobile fallback */}
         <div className="absolute inset-0">
-          <GlobeHero />
+          {useMobileFallback && !forceFullGlobe ? (
+            <GlobeMobileFallback onRequestFullGlobe={() => setForceFullGlobe(true)} />
+          ) : (
+            <ErrorBoundary 
+              fallback={({ error, reset }) => (
+                <GlobeErrorFallback error={error} reset={reset} />
+              )}
+            >
+              <Suspense fallback={<GlobeLoadingFallback />}>
+                <GlobeHero />
+              </Suspense>
+            </ErrorBoundary>
+          )}
         </div>
 
         {/* Live Feed overlay */}

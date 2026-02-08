@@ -18,6 +18,7 @@ import ConvictPlayer from '../components/radio/ConvictPlayer';
 import { Music } from 'lucide-react';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
 import { toast } from 'sonner';
+import { BEACON_COLOR } from '@/hooks/useP2PListingBeacon';
 
 
 export default function BeaconDetail() {
@@ -80,14 +81,15 @@ export default function BeaconDetail() {
     );
   }
 
-  const BEACON_COLORS = {
-    event: '#FF1493',
+  // Use shared beacon colors with legacy fallbacks
+  const kindToColor = (kind) => ({
+    ...BEACON_COLOR,
     venue: '#FF1493',
     hookup: '#FF073A',
     drop: '#FF6B35',
     popup: '#B026FF',
-    private: '#00D9FF',
-  };
+    private: BEACON_COLOR.event,
+  })[kind] || '#FF1493';
 
   const handleScan = async () => {
     try {
@@ -153,7 +155,7 @@ export default function BeaconDetail() {
             <span
               className="inline-block px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider mb-3"
               style={{
-                backgroundColor: BEACON_COLORS[beacon.kind] || '#FF1493',
+                backgroundColor: kindToColor(beacon.kind),
                 color: '#000'
               }}
             >
