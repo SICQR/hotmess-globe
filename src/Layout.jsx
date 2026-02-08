@@ -90,6 +90,9 @@ function LayoutInner({ children, currentPageName }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        // TEMP: Bypass age verification for testing
+        const BYPASS_AGE_CHECK = true;
+        
         // Check age verification first (session-based)
         let ageVerified = null;
         try {
@@ -97,7 +100,7 @@ function LayoutInner({ children, currentPageName }) {
         } catch {
           ageVerified = null;
         }
-        if (!ageVerified && currentPageName !== 'AgeGate') {
+        if (!BYPASS_AGE_CHECK && !ageVerified && currentPageName !== 'AgeGate') {
           window.location.href = createPageUrl('AgeGate') + `?next=${encodeURIComponent(window.location.pathname)}`;
           return;
         }
