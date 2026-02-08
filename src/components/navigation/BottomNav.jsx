@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { createPageUrl } from '../../utils';
 import { base44 } from '@/components/utils/supabaseClient';
+import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { 
   Home, 
   Globe, 
@@ -19,12 +20,14 @@ import {
   Navigation,
   BarChart3,
   Settings,
-  X
+  X,
+  MessageCircle,
+  Package
 } from 'lucide-react';
 
 // The 11 apps within HOTMESS London OS
 const ALL_APPS = [
-  { id: 'social', name: 'SOCIAL', icon: Users, path: 'Social', color: '#FF1493', desc: 'Find people' },
+  { id: 'social', name: 'SOCIAL', icon: Users, path: 'Social', color: '#FF1493', desc: 'Find people', sheetType: SHEET_TYPES.GHOSTED },
   { id: 'events', name: 'EVENTS', icon: Calendar, path: 'Events', color: '#00D9FF', desc: "What's on" },
   { id: 'radio', name: 'RADIO', icon: Radio, path: 'Music', color: '#B026FF', desc: 'Live shows' },
   { id: 'tickets', name: 'TICKETS', icon: Ticket, path: 'TicketMarketplace', color: '#FF6B35', desc: 'Buy & sell' },
@@ -52,8 +55,14 @@ function LiveCounter({ count, label, color = '#FF1493' }) {
 }
 
 // Apps Grid Modal
-function AppsGridModal({ isOpen, onClose }) {
+function AppsGridModal({ isOpen, onClose, openSheet }) {
   if (!isOpen) return null;
+
+  // Handle sheet-based navigation
+  const handleSheetNav = (sheetType) => {
+    onClose();
+    setTimeout(() => openSheet(sheetType), 100);
+  };
 
   return (
     <AnimatePresence>
@@ -90,6 +99,28 @@ function AppsGridModal({ isOpen, onClose }) {
             <div className="grid grid-cols-4 gap-3">
               {ALL_APPS.map((app) => {
                 const Icon = app.icon;
+                
+                // Use sheets for these apps
+                if (app.sheetType) {
+                  return (
+                    <button
+                      key={app.id}
+                      onClick={() => handleSheetNav(app.sheetType)}
+                      className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 transition-all active:scale-95"
+                    >
+                      <div 
+                        className="w-12 h-12 rounded-xl flex items-center justify-center"
+                        style={{ backgroundColor: `${app.color}20` }}
+                      >
+                        <Icon className="w-6 h-6" style={{ color: app.color }} />
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-center">
+                        {app.name}
+                      </span>
+                    </button>
+                  );
+                }
+                
                 return (
                   <Link
                     key={app.id}
@@ -111,7 +142,7 @@ function AppsGridModal({ isOpen, onClose }) {
               })}
             </div>
 
-            {/* Quick Actions */}
+            {/* Quick Actions - Sheet-based */}
             <div className="mt-8">
               <p className="text-xs text-white/40 uppercase tracking-widest mb-3">QUICK LINKS</p>
               <div className="grid grid-cols-2 gap-3">
@@ -126,31 +157,31 @@ function AppsGridModal({ isOpen, onClose }) {
                     <p className="text-[10px] text-white/50">Care & support</p>
                   </div>
                 </Link>
-                <Link
-                  to={createPageUrl('MembershipUpgrade')}
-                  onClick={onClose}
-                  className="flex items-center gap-3 p-4 bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-lg"
+                <button
+                  onClick={() => handleSheetNav(SHEET_TYPES.VAULT)}
+                  className="flex items-center gap-3 p-4 bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-lg text-left"
                 >
-                  <Sparkles className="w-5 h-5 text-[#FFD700]" />
+                  <Package className="w-5 h-5 text-[#FFD700]" />
                   <div>
-                    <p className="text-sm font-black">Upgrade</p>
-                    <p className="text-[10px] text-white/50">PLUS / CHROME</p>
+                    <p className="text-sm font-black">Vault</p>
+                    <p className="text-[10px] text-white/50">Your stuff</p>
                   </div>
-                </Link>
+                </button>
               </div>
             </div>
 
-            {/* Features */}
-            <div className="mt-8">
-              <p className="text-xs text-white/40 uppercase tracking-widest mb-3">DISCOVER</p>
-              <Link
-                to="/features"
-                onClick={onClose}
-                className="block p-4 bg-gradient-to-r from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/30 rounded-lg"
+            {/* Messages */}
+            <div className="mt-4">
+              <button
+                onClick={() => handleSheetNav(SHEET_TYPES.CHAT)}
+                className="w-full flex items-center gap-3 p-4 bg-[#FF1493]/10 border border-[#FF1493]/30 rounded-lg text-left"
               >
-                <p className="text-sm font-black mb-1">All Features</p>
-                <p className="text-[10px] text-white/50">Explore everything HOTMESS offers</p>
-              </Link>
+                <MessageCircle className="w-5 h-5 text-[#FF1493]" />
+                <div>
+                  <p className="text-sm font-black">Messages</p>
+                  <p className="text-[10px] text-white/50">Your conversations</p>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -170,6 +201,16 @@ function AppsGridModal({ isOpen, onClose }) {
 export default function BottomNav({ currentPageName, user }) {
   const [showApps, setShowApps] = useState(false);
   const location = useLocation();
+  
+  // Get sheet context
+  let openSheet;
+  try {
+    const sheetContext = useSheet();
+    openSheet = sheetContext?.openSheet;
+  } catch {
+    // SheetContext not available, fallback to navigation
+    openSheet = null;
+  }
 
   // Fetch REAL live counts from Supabase
   const { data: rightNowCount = 0 } = useQuery({
@@ -225,6 +266,23 @@ export default function BottomNav({ currentPageName, user }) {
   const isPulseActive = currentPageName === 'Pulse' || currentPageName === 'Globe';
   const isShopActive = currentPageName === 'Marketplace' || location.pathname.startsWith('/market');
 
+  // Handle LIVE button click - opens Ghosted sheet
+  const handleLiveClick = (e) => {
+    if (openSheet) {
+      e.preventDefault();
+      openSheet(SHEET_TYPES.GHOSTED);
+    }
+    // If no openSheet, the Link will navigate normally
+  };
+
+  // Handle SHOP button click - opens Shop sheet
+  const handleShopClick = (e) => {
+    if (openSheet) {
+      e.preventDefault();
+      openSheet(SHEET_TYPES.SHOP);
+    }
+  };
+
   return (
     <>
       {/* Bottom Navigation Bar */}
@@ -253,9 +311,9 @@ export default function BottomNav({ currentPageName, user }) {
             <span className="text-[9px] font-black uppercase mt-1">Pulse</span>
           </Link>
 
-          {/* LIVE - Center Prominent Button */}
-          <Link
-            to={createPageUrl('Social')}
+          {/* LIVE - Center Prominent Button - NOW OPENS GHOSTED SHEET */}
+          <button
+            onClick={handleLiveClick}
             className="relative flex flex-col items-center -mt-4"
           >
             <motion.div
@@ -276,18 +334,18 @@ export default function BottomNav({ currentPageName, user }) {
               </div>
             </motion.div>
             <span className="text-[9px] font-black uppercase mt-1 text-[#FF1493]">LIVE</span>
-          </Link>
+          </button>
 
-          {/* SHOP - Touch Target 44px min */}
-          <Link
-            to="/market"
+          {/* SHOP - NOW OPENS SHOP SHEET */}
+          <button
+            onClick={handleShopClick}
             className={`flex flex-col items-center justify-center min-w-[52px] min-h-[48px] py-1.5 px-2 rounded-lg transition-all active:scale-95 ${
               isShopActive ? 'text-white bg-white/5' : 'text-white/50'
             }`}
           >
             <ShoppingBag className={`w-6 h-6 ${isShopActive ? 'text-[#B026FF]' : ''}`} />
             <span className="text-[9px] font-black uppercase mt-0.5">Shop</span>
-          </Link>
+          </button>
 
           {/* APPS - Touch Target 44px min */}
           <button
@@ -301,7 +359,7 @@ export default function BottomNav({ currentPageName, user }) {
       </nav>
 
       {/* Apps Grid Modal */}
-      <AppsGridModal isOpen={showApps} onClose={() => setShowApps(false)} />
+      <AppsGridModal isOpen={showApps} onClose={() => setShowApps(false)} openSheet={openSheet} />
     </>
   );
 }

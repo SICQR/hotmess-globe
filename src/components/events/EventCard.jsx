@@ -5,10 +5,20 @@ import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users, ExternalLink, Sparkles } from 'lucide-react';
 import { formatUTCDate } from '../utils/dateUtils';
 import OSCard, { OSCardImage, OSCardBadge } from '../ui/OSCard';
+import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 
 export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, recommendationScore, scoreBreakdown }) {
   const eventDate = event.event_date ? new Date(event.event_date) : null;
   const isPast = eventDate && eventDate < new Date();
+
+  // Use sheet context if available
+  let openSheet;
+  try {
+    const sheetContext = useSheet();
+    openSheet = sheetContext?.openSheet;
+  } catch {
+    openSheet = null;
+  }
 
   const MODE_COLORS = {
     crowd: '#FF1493',
@@ -19,6 +29,15 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
   };
 
   const color = MODE_COLORS[event.mode] || '#FF1493';
+
+  // Handle card click - open sheet if available, otherwise navigate
+  const handleClick = (e) => {
+    if (openSheet) {
+      e.preventDefault();
+      openSheet(SHEET_TYPES.EVENT, { id: event.id, event });
+    }
+    // If no openSheet, the Link will navigate normally
+  };
 
   return (
     <motion.div
@@ -33,7 +52,7 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
           <span className="text-[10px] font-black uppercase">Top Match</span>
         </div>
       )}
-      <Link to={`/events/${encodeURIComponent(event.id)}`}>
+      <Link to={`/events/${encodeURIComponent(event.id)}`} onClick={handleClick}>
         <OSCard className={isPast ? 'opacity-60' : ''}>
           {/* Editorial Image */}
           {event.image_url && (
