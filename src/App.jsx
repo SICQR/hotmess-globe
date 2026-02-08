@@ -446,6 +446,8 @@ const AuthenticatedApp = () => {
       <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
       <Route path="/more/beacons/:id/edit" element={<EditBeaconRedirect />} />
       <Route path="/more/stats" element={<PageRoute pageKey="Stats" />} />
+      <Route path="/more/vault" element={<PageRoute pageKey="Vault" />} />
+      <Route path="/vault" element={<PageRoute pageKey="Vault" />} />
       <Route path="/more/challenges" element={<PageRoute pageKey="Challenges" />} />
       <Route path="/more/settings" element={<PageRoute pageKey="Settings" />} />
       <Route path="/more/care" element={<PageRoute pageKey="Care" />} />
