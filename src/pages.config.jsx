@@ -61,6 +61,7 @@ import TicketMarketplace from './pages/TicketMarketplace';
 import { Tickets, TicketDetail, TicketChat } from './pages/tickets';
 import WakeTheMess from './pages/WakeTheMess';
 import Welcome from './pages/Welcome';
+import IntegrationDemo from './pages/IntegrationDemo';
 import __Layout from './Layout.jsx';
 
 // Lazy-loaded pages (heavy/admin/business - not loaded until needed)
@@ -167,6 +168,7 @@ export const PAGES = {
     "CityReadiness": withSuspense(CityReadiness),
     "CreatorDashboard": withSuspense(CreatorDashboard),
     "Welcome": Welcome,
+    "IntegrationDemo": IntegrationDemo,
 }
 
 export const pagesConfig = {

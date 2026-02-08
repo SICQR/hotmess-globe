@@ -57,7 +57,7 @@ export default function HotMessOSIntegration() {
   } = useGlobeBPMSync(globeRef);
 
   // 3. Presence Tracking
-  const { onlineUsers, myPresence, updateStatus } = usePresence({
+  const { onlineUsers, myPresence } = usePresence({
     enableLocationSharing: true,
   });
 
