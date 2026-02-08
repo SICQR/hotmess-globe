@@ -9,7 +9,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
+import { base44 } from '@/api/base44Client';
 
 /**
  * Hook to sync Globe with current radio BPM
