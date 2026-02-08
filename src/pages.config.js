@@ -80,6 +80,7 @@ import SocialFeatures from './pages/SocialFeatures';
 import SquadChat from './pages/SquadChat';
 import Stats from './pages/Stats';
 import TicketMarketplace from './pages/TicketMarketplace';
+import Vault from './pages/Vault';
 import WakeTheMess from './pages/WakeTheMess';
 import Pricing from './pages/Pricing';
 import LuxShowcase from './pages/LuxShowcase';
@@ -171,6 +172,7 @@ export const PAGES = {
     "Stats": Stats,
     "TermsOfService": TermsOfService,
     "TicketMarketplace": TicketMarketplace,
+    "Vault": Vault,
     "WakeTheMess": WakeTheMess,
 }
 

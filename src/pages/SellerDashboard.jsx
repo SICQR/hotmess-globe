@@ -18,6 +18,11 @@ import SellerRatingDisplay from '../components/seller/SellerRatingDisplay';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { 
+  insertBeaconForP2PListing, 
+  deleteBeaconForP2PListing, 
+  dispatchWorldPulse 
+} from '@/hooks/useP2PListingBeacon';
 
 export default function SellerDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -81,10 +86,17 @@ export default function SellerDashboard() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Product.create({ ...data, seller_email: currentUser.email }),
-    onSuccess: () => {
+    onSuccess: async (createdProduct) => {
       queryClient.invalidateQueries(['seller-products']);
       setShowForm(false);
       toast.success('Product created!');
+      
+      // Wire to Globe: Create Gold beacon for P2P listing
+      const promoterId = currentUser?.auth_user_id ?? currentUser?.id;
+      if (promoterId && createdProduct) {
+        await insertBeaconForP2PListing(createdProduct, promoterId);
+        dispatchWorldPulse('GOLD_DROP', '#FFD700');
+      }
     },
     onError: (error) => {
       toast.error(error?.message || 'Failed to create product');
@@ -106,9 +118,15 @@ export default function SellerDashboard() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Product.delete(id),
-    onSuccess: () => {
+    onSuccess: async (_, deletedId) => {
       queryClient.invalidateQueries(['seller-products']);
       toast.success('Product deleted');
+      
+      // Wire to Globe: Remove beacon for deleted P2P listing
+      if (deletedId) {
+        await deleteBeaconForP2PListing(deletedId);
+        dispatchWorldPulse('BEACON_REMOVED', '#FFD700');
+      }
     },
     onError: (error) => {
       toast.error(error?.message || 'Failed to delete product');
