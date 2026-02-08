@@ -28,3 +28,6 @@ export { PersonaProvider, usePersona, PERSONA_TYPES } from './PersonaContext';
 
 // Safety gates (consent enforcement)
 export { SafetyGateProvider, useSafetyGate, GATE_TYPES } from './SafetyGateContext';
+
+// HotMess OS Integration - Vault (Unified Inventory)
+export { VaultProvider, useVault } from './VaultContext';
