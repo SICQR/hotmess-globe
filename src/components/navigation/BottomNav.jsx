@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import { createPageUrl } from '../../utils';
+import { base44 } from '@/components/utils/supabaseClient';
 import { 
   Home, 
   Globe, 
@@ -167,24 +169,53 @@ function AppsGridModal({ isOpen, onClose }) {
 // Main Bottom Navigation
 export default function BottomNav({ currentPageName, user }) {
   const [showApps, setShowApps] = useState(false);
-  const [liveCounts, setLiveCounts] = useState({
-    rightNow: 34,
-    online: 127,
-    events: 8
-  });
   const location = useLocation();
 
-  // Simulate live counts (in production, fetch from API)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLiveCounts(prev => ({
-        rightNow: Math.max(10, prev.rightNow + Math.floor(Math.random() * 5) - 2),
-        online: Math.max(50, prev.online + Math.floor(Math.random() * 10) - 5),
-        events: Math.max(3, prev.events + (Math.random() > 0.8 ? 1 : 0) - (Math.random() > 0.8 ? 1 : 0))
-      }));
-    }, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  // Fetch REAL live counts from Supabase
+  const { data: rightNowCount = 0 } = useQuery({
+    queryKey: ['right-now-count'],
+    queryFn: async () => {
+      try {
+        const statuses = await base44.entities.RightNowStatus.filter({ active: true });
+        const valid = statuses.filter(s => new Date(s.expires_at) > new Date());
+        return valid.length;
+      } catch {
+        return 0;
+      }
+    },
+    refetchInterval: 15000, // Real-time feel
+    staleTime: 10000,
+  });
+
+  const { data: eventCount = 0 } = useQuery({
+    queryKey: ['active-events-count'],
+    queryFn: async () => {
+      try {
+        const events = await base44.entities.Beacon.filter({ 
+          kind: 'event', 
+          status: 'published', 
+          active: true 
+        });
+        // Filter to upcoming events (next 7 days)
+        const now = new Date();
+        const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const upcoming = events.filter(e => {
+          const eventDate = new Date(e.event_date || e.starts_at);
+          return eventDate >= now && eventDate <= weekFromNow;
+        });
+        return upcoming.length;
+      } catch {
+        return 0;
+      }
+    },
+    refetchInterval: 60000,
+    staleTime: 30000,
+  });
+
+  const liveCounts = {
+    rightNow: rightNowCount,
+    events: eventCount
+  };
 
   const isActive = (path) => {
     if (path === 'Home') return location.pathname === '/' || currentPageName === 'Home';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield } from 'lucide-react';
+import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield, Radio as RadioIcon } from 'lucide-react';
 import { base44 } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import SafetyFAB from '@/components/safety/SafetyFAB';
@@ -21,11 +21,12 @@ import { A11yAnnouncer } from '@/components/accessibility/KeyboardNav';
 import WelcomeTour from '@/components/onboarding/WelcomeTour';
 import RightNowNotifications from '@/components/discovery/RightNowNotifications';
 import PersistentRadioPlayer from '@/components/shell/PersistentRadioPlayer';
-import { Radio as RadioIcon } from 'lucide-react';
 import { useRadio } from '@/components/shell/RadioContext';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import CookieConsent from '@/components/legal/CookieConsent';
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
+import BottomNav from '@/components/navigation/BottomNav';
+import { TonightModeProvider } from '@/hooks/useTonightMode';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
@@ -664,18 +665,23 @@ function LayoutInner({ children, currentPageName }) {
       {/* Persistent Radio Player - Never Unmounts */}
       <PersistentRadioPlayer />
 
+      {/* Mobile Bottom Navigation */}
+      <BottomNav currentPageName={currentPageName} user={user} />
+
       {/* Cookie Consent Banner */}
       <CookieConsent />
-      </div>
+    </div>
         </TaxonomyProvider>
       </ErrorBoundary>
-      );
-      }
+  );
+}
 
-      export default function Layout(props) {
-      return (
-      <RadioProvider>
-      <LayoutInner {...props} />
-      </RadioProvider>
-      );
-      }
+export default function Layout(props) {
+  return (
+    <RadioProvider>
+      <TonightModeProvider>
+        <LayoutInner {...props} />
+      </TonightModeProvider>
+    </RadioProvider>
+  );
+}
