@@ -90,10 +90,11 @@ function LayoutInner({ children, currentPageName }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // Check age verification first (session-based)
+        // Check age verification first (localStorage-based, matches BootGuardContext)
+        const AGE_KEY = 'hm_age_confirmed_v1';
         let ageVerified = null;
         try {
-          ageVerified = sessionStorage.getItem('age_verified');
+          ageVerified = localStorage.getItem(AGE_KEY);
         } catch {
           ageVerified = null;
         }
@@ -117,11 +118,12 @@ function LayoutInner({ children, currentPageName }) {
           return;
         }
 
-        // If the user already completed the AgeGate (session-based) AND granted browser
+        // If the user already completed the AgeGate AND granted browser
         // location permission, auto-apply the equivalent profile consent flags once.
         // This prevents loops where the app keeps redirecting to AccountConsents/OnboardingGate.
         try {
-          const ageVerified = sessionStorage.getItem('age_verified') === 'true';
+          const AGE_KEY_CHECK = 'hm_age_confirmed_v1';
+          const ageVerifiedLocal = localStorage.getItem(AGE_KEY_CHECK) === 'true';
           const locationConsent = sessionStorage.getItem('location_consent') === 'true';
           const locationPermission = sessionStorage.getItem('location_permission');
           const hasGrantedLocation = locationPermission === 'granted';
@@ -135,7 +137,7 @@ function LayoutInner({ children, currentPageName }) {
             !currentUser?.has_consented_data ||
             !currentUser?.has_consented_gps;
 
-          if (!alreadyApplied && needsConsents && ageVerified && locationConsent && hasGrantedLocation) {
+          if (!alreadyApplied && needsConsents && ageVerifiedLocal && locationConsent && hasGrantedLocation) {
             await base44.auth.updateMe({
               consent_accepted: true,
               consent_age: true,
