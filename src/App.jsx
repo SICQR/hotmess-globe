@@ -297,7 +297,7 @@ const MarketCollectionRedirect = () => {
 };
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, authError, navigateToLogin, isAuthenticated } = useAuth();
+  const { isLoadingAuth, authError, navigateToLogin } = useAuth();
   const { bootState, isLoading: isLoadingBoot } = useBootGuard();
   const location = useLocation();
   const [isRedirectingToAuth, setIsRedirectingToAuth] = useState(false);
@@ -340,20 +340,23 @@ const AuthenticatedApp = () => {
     }
   }
 
-  // Boot guard enforcement for protected routes (only when authenticated)
-  // The existing auth flow handles unauthenticated users
+  // Boot guard enforcement for protected routes
+  // AGE_GATE and AUTH states are handled specially for unauthenticated users
   const publicPaths = ['/age', '/auth', '/legal', '/help', '/contact', '/terms', '/privacy', '/guidelines', '/AgeGate', '/Auth', '/onboarding', '/OnboardingGate'];
   const isPublicPath = publicPaths.some(p => location.pathname.toLowerCase().startsWith(p.toLowerCase()));
   
-  // Only enforce boot guard if user is authenticated and on a protected path
-  if (isAuthenticated && !isPublicPath && bootState !== 'OS' && bootState !== 'LOADING') {
+  // Only enforce redirects for non-public paths
+  if (!isPublicPath && bootState !== 'LOADING') {
     switch (bootState) {
       case 'AGE_GATE':
+        // Redirect to age gate (works for both auth and unauth users)
         return <Navigate to="/age" replace />;
       case 'AUTH':
+        // User passed age gate but needs to log in
         return <Navigate to="/auth" replace />;
       case 'USERNAME':
       case 'ONBOARDING':
+        // User is authenticated but needs to complete onboarding
         return <Navigate to="/onboarding" replace />;
     }
   }
