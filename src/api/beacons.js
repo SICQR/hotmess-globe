@@ -23,10 +23,6 @@ export const beaconAPI = {
    */
   getActiveBeacons: async ({ type, city, limit = 100 } = {}) => {
     try {
-      let query = base44.entities.Beacon.filter({ 
-        active: true, 
-        status: 'published' 
-      });
 
       // Add type filter if specified
       if (type) {
