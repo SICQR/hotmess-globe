@@ -36,6 +36,7 @@ export interface GoLiveOptions {
 /**
  * Go Live — Insert/upsert presence row with TTL
  * Uses rpc_go_live on server to enforce capabilities
+ * REQUIRES: onboarding_complete + is_verified + location_opt_in
  */
 export async function goLive(
   supabase: SupabaseClient,
@@ -43,15 +44,15 @@ export async function goLive(
 ): Promise<{ success: boolean; error?: string }> {
   const { mode, lat, lng, durationMinutes = 60 } = options;
 
-  // Build geography point if coords provided
-  let geo: string | null = null;
-  if (typeof lat === 'number' && typeof lng === 'number') {
-    geo = `POINT(${lng} ${lat})`;
+  // Require coordinates
+  if (typeof lat !== 'number' || typeof lng !== 'number') {
+    return { success: false, error: 'Location required to go live' };
   }
 
   const { error } = await supabase.rpc('rpc_go_live', {
     p_mode: mode,
-    p_geo: geo,
+    p_lat: lat,
+    p_lng: lng,
     p_minutes: durationMinutes,
   });
 
@@ -60,6 +61,12 @@ export async function goLive(
     if (error.message?.includes('ONBOARDING_REQUIRED')) {
       return { success: false, error: 'Complete onboarding to go live' };
     }
+    if (error.message?.includes('VERIFICATION_REQUIRED')) {
+      return { success: false, error: 'Verification required to go live' };
+    }
+    if (error.message?.includes('LOCATION_OPT_IN_REQUIRED')) {
+      return { success: false, error: 'Enable location sharing to go live' };
+    }
     return { success: false, error: error.message };
   }
 
@@ -67,18 +74,12 @@ export async function goLive(
 }
 
 /**
- * Stop Early — Delete own presence row
+ * Stop Early — Use RPC to expire own presence
  */
 export async function stopLive(
   supabase: SupabaseClient
 ): Promise<{ success: boolean; error?: string }> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: 'Not authenticated' };
-
-  const { error } = await supabase
-    .from('presence')
-    .delete()
-    .eq('user_id', user.id);
+  const { error } = await supabase.rpc('rpc_stop_live');
 
   if (error) {
     return { success: false, error: error.message };
