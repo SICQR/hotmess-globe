@@ -356,4 +356,4 @@ export function clusterBeacons(
   return result;
 }
 
-export default GlobeBeacons;
+export default BeaconManager;

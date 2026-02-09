@@ -17,7 +17,6 @@ import {
   Zap, 
   Trophy,
   Signal,
-  Trash2,
   ExternalLink,
   Loader2
 } from 'lucide-react';

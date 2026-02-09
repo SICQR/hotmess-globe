@@ -15,7 +15,6 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { 
   Calendar, 
   MapPin, 
@@ -39,7 +38,7 @@ import { cn } from '@/lib/utils';
 
 export default function L2EventSheet({ id }) {
   const queryClient = useQueryClient();
-  const { openSheet } = useSheet();
+  const { openSheet, closeSheet } = useSheet();
   const [isSharing, setIsSharing] = useState(false);
 
   // Fetch event details
@@ -196,7 +195,7 @@ export default function L2EventSheet({ id }) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center px-4">
         <p className="text-white/60 mb-4">Event not found</p>
-        <Button variant="outline" onClick={() => useSheet().closeSheet()}>
+        <Button variant="outline" onClick={closeSheet}>
           Close
         </Button>
       </div>

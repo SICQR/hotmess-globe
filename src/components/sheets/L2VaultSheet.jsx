@@ -10,11 +10,11 @@ import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { 
-  Package, ShoppingBag, Ticket, Lock, Unlock, 
-  ChevronRight, Loader2, Download, ExternalLink
+  Package, ShoppingBag, Ticket, Lock, 
+  ChevronRight, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SheetSection, SheetDivider } from './L2SheetContainer';
+import { SheetDivider } from './L2SheetContainer';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';

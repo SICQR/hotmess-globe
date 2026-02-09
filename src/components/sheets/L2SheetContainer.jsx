@@ -11,8 +11,8 @@
  */
 
 import React, { useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence, useAnimation, PanInfo } from 'framer-motion';
-import { X, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { X } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { cn } from '@/lib/utils';
 
