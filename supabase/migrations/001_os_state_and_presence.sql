@@ -460,7 +460,126 @@ CREATE POLICY "beacons_read_admin"
   );
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- PHASE 9: REALTIME
+-- PHASE 9: SAFETY INCIDENTS TABLE
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS public.safety_incidents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  lat DOUBLE PRECISION NOT NULL,
+  lng DOUBLE PRECISION NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('active', 'acknowledged', 'resolved')) DEFAULT 'active',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  resolved_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS safety_incidents_user_idx ON public.safety_incidents(user_id);
+CREATE INDEX IF NOT EXISTS safety_incidents_status_idx ON public.safety_incidents(status);
+
+-- Safety RLS
+ALTER TABLE public.safety_incidents ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "safety_read_own" ON public.safety_incidents;
+CREATE POLICY "safety_read_own"
+  ON public.safety_incidents FOR SELECT
+  USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "safety_read_admin" ON public.safety_incidents;
+CREATE POLICY "safety_read_admin"
+  ON public.safety_incidents FOR SELECT
+  USING (
+    COALESCE((SELECT (p.role_flags->>'admin')::boolean FROM public.profiles p WHERE p.id = auth.uid()), false) = true
+  );
+
+DROP POLICY IF EXISTS "safety_insert_own" ON public.safety_incidents;
+CREATE POLICY "safety_insert_own"
+  ON public.safety_incidents FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "safety_update_own" ON public.safety_incidents;
+CREATE POLICY "safety_update_own"
+  ON public.safety_incidents FOR UPDATE
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+-- Panic start RPC
+CREATE OR REPLACE FUNCTION public.panic_start(
+  p_lat DOUBLE PRECISION,
+  p_lng DOUBLE PRECISION
+)
+RETURNS UUID LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_uid UUID := auth.uid();
+  v_id UUID;
+BEGIN
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'NOT_AUTHENTICATED';
+  END IF;
+
+  -- Create safety incident
+  INSERT INTO public.safety_incidents (user_id, lat, lng, status)
+  VALUES (v_uid, p_lat, p_lng, 'active')
+  RETURNING id INTO v_id;
+
+  -- Create safety beacon (admin_only visibility)
+  INSERT INTO public.beacons (type, owner_id, lat, lng, starts_at, intensity, visibility, metadata)
+  VALUES (
+    'safety',
+    v_uid,
+    p_lat,
+    p_lng,
+    now(),
+    10,
+    'admin_only',
+    jsonb_build_object('incident_id', v_id)
+  );
+
+  RETURN v_id;
+END $$;
+
+-- Panic resolve RPC
+CREATE OR REPLACE FUNCTION public.panic_resolve()
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_uid UUID := auth.uid();
+BEGIN
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'NOT_AUTHENTICATED';
+  END IF;
+
+  -- Resolve incident
+  UPDATE public.safety_incidents
+  SET status = 'resolved', resolved_at = now()
+  WHERE user_id = v_uid AND status IN ('active', 'acknowledged');
+
+  -- Remove safety beacon
+  DELETE FROM public.beacons
+  WHERE type = 'safety' AND owner_id = v_uid;
+END $$;
+
+-- Admin acknowledge RPC
+CREATE OR REPLACE FUNCTION public.admin_ack_incident(p_incident_id UUID)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_uid UUID := auth.uid();
+  v_is_admin BOOLEAN;
+BEGIN
+  SELECT COALESCE((role_flags->>'admin')::boolean, false)
+  INTO v_is_admin
+  FROM public.profiles
+  WHERE id = v_uid;
+
+  IF NOT v_is_admin THEN
+    RAISE EXCEPTION 'ADMIN_REQUIRED';
+  END IF;
+
+  UPDATE public.safety_incidents
+  SET status = 'acknowledged'
+  WHERE id = p_incident_id AND status = 'active';
+END $$;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- PHASE 10: REALTIME
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Enable realtime for key tables
@@ -474,8 +593,13 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.safety_incidents;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 -- ═══════════════════════════════════════════════════════════════════════════════
--- PHASE 10: PUBLIC PROFILE VIEW (safe fields only)
+-- PHASE 11: PUBLIC PROFILE VIEW (safe fields only)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 CREATE OR REPLACE VIEW public.profiles_public AS
