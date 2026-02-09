@@ -21,7 +21,9 @@ export function BootGuardProvider({ children }) {
     
     if (!isAuthenticated || !user?.id) {
       setProfile(null);
-      setBootState('AGE_GATE');
+      // When not authenticated, don't block with AGE_GATE - let them access public routes
+      // The age gate is only enforced AFTER auth when profile.age_verified is false
+      setBootState('OS'); // Allow routing, auth routes will handle login
       setIsLoadingProfile(false);
       return;
     }
