@@ -38,9 +38,11 @@ export const presenceAPI = {
   /**
    * Go Right Now - Create/update presence with TTL
    * Automatically deactivates any existing presence for the user
+   * Also creates a social beacon for Globe rendering
    */
   goRightNow: async ({ intent, timeframe, location, preferences, ttlMinutes = 60 }) => {
     try {
+      // Step 1: Create Right Now status (presence row)
       const { data, error } = await supabase.rpc('upsert_right_now_presence', {
         p_intent: intent || 'explore',
         p_timeframe: timeframe || 'now',
@@ -57,6 +59,27 @@ export const presenceAPI = {
         ttlMinutes 
       });
 
+      // Step 2: Create social beacon for Globe (best-effort)
+      try {
+        const currentUser = await base44.auth.me();
+        if (currentUser?.email) {
+          // Import beaconAPI to avoid circular dependency
+          const { beaconAPI } = await import('./beacons.js');
+          await beaconAPI.createPresenceBeacon({
+            userId: currentUser.auth_user_id,
+            email: currentUser.email,
+            intent: intent || 'explore',
+            location,
+            ttlMinutes
+          });
+        }
+      } catch (beaconError) {
+        // Don't fail the whole operation if beacon creation fails
+        logger.warn('Presence: Failed to create beacon (non-fatal)', { 
+          error: beaconError.message 
+        });
+      }
+
       return { id: data, expiresIn: ttlMinutes * 60 };
     } catch (error) {
       logger.error('Presence: Failed to go Right Now', { error: error.message });
@@ -66,14 +89,29 @@ export const presenceAPI = {
 
   /**
    * Stop Right Now - Deactivate presence immediately
+   * Also deactivates social beacons
    */
   stopRightNow: async () => {
     try {
+      // Step 1: Deactivate Right Now status
       const { data, error } = await supabase.rpc('stop_right_now_presence');
 
       if (error) throw error;
 
       logger.info('Presence: User stopped Right Now', { deactivated: data });
+
+      // Step 2: Deactivate social beacons (best-effort)
+      try {
+        const currentUser = await base44.auth.me();
+        if (currentUser?.email) {
+          const { beaconAPI } = await import('./beacons.js');
+          await beaconAPI.deactivatePresenceBeacons(currentUser.email);
+        }
+      } catch (beaconError) {
+        logger.warn('Presence: Failed to deactivate beacons (non-fatal)', { 
+          error: beaconError.message 
+        });
+      }
 
       return { deactivated: data };
     } catch (error) {
