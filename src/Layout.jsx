@@ -90,18 +90,8 @@ function LayoutInner({ children, currentPageName }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // Check age verification first (localStorage-based, matches BootGuardContext)
-        const AGE_KEY = 'hm_age_confirmed_v1';
-        let ageVerified = null;
-        try {
-          ageVerified = localStorage.getItem(AGE_KEY);
-        } catch {
-          ageVerified = null;
-        }
-        if (!ageVerified && currentPageName !== 'AgeGate') {
-          window.location.href = createPageUrl('AgeGate') + `?next=${encodeURIComponent(window.location.pathname)}`;
-          return;
-        }
+        // NOTE: Age verification is now handled by BootRouter/BootGuardContext
+        // This Layout only runs when bootState is READY
 
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {

@@ -6,8 +6,9 @@ import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, Navigate, useParams, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
-import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import { BootGuardProvider, useBootGuard } from '@/contexts/BootGuardContext';
+import { AuthProvider } from '@/lib/AuthContext';
+import { BootGuardProvider, useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
+import BootRouter from '@/components/shell/BootRouter';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { createPageUrl } from './utils';
 import { ShopCartProvider } from '@/features/shop/cart/ShopCartContext';
@@ -296,71 +297,11 @@ const MarketCollectionRedirect = () => {
   return <Navigate to={target} replace />;
 };
 
+/**
+ * AuthenticatedApp - The main app routes (only renders when bootState is READY)
+ * BootRouter handles all the gating logic now.
+ */
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, authError, navigateToLogin } = useAuth();
-  const { bootState, isLoading: isLoadingBoot } = useBootGuard();
-  const location = useLocation();
-  const [isRedirectingToAuth, setIsRedirectingToAuth] = useState(false);
-
-  useEffect(() => {
-    if (!authError) return;
-    if (authError.type !== 'auth_required') return;
-
-    const isOnAuthRoute = (location?.pathname || '').toLowerCase().startsWith('/auth');
-    if (isOnAuthRoute) return;
-
-    setIsRedirectingToAuth(true);
-    navigateToLogin();
-  }, [authError, location?.pathname, navigateToLogin]);
-
-  // Show loading spinner while checking auth or boot state
-  if (isLoadingAuth || isLoadingBoot || isRedirectingToAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-[#050507]">
-        <div className="w-8 h-8 border-4 border-[#39FF14]/20 border-t-[#39FF14] rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Allow the Auth page (and recovery links) to render without forcing a redirect loop.
-      const isOnAuthRoute = (location?.pathname || '').toLowerCase().startsWith('/auth');
-      if (!isOnAuthRoute) {
-        // Redirect is handled in the effect above; render a spinner.
-        return (
-          <div className="fixed inset-0 flex items-center justify-center bg-[#050507]">
-            <div className="w-8 h-8 border-4 border-[#39FF14]/20 border-t-[#39FF14] rounded-full animate-spin"></div>
-          </div>
-        );
-      }
-    }
-  }
-
-  // Boot guard enforcement for protected routes
-  // AGE_GATE and AUTH states are handled specially for unauthenticated users
-  const publicPaths = ['/age', '/auth', '/legal', '/help', '/contact', '/terms', '/privacy', '/guidelines', '/AgeGate', '/Auth', '/onboarding', '/OnboardingGate'];
-  const isPublicPath = publicPaths.some(p => location.pathname.toLowerCase().startsWith(p.toLowerCase()));
-  
-  // Only enforce redirects for non-public paths
-  if (!isPublicPath && bootState !== 'LOADING') {
-    switch (bootState) {
-      case 'AGE_GATE':
-        // Redirect to age gate (works for both auth and unauth users)
-        return <Navigate to="/age" replace />;
-      case 'AUTH':
-        // User passed age gate but needs to log in
-        return <Navigate to="/auth" replace />;
-      case 'USERNAME':
-      case 'ONBOARDING':
-        // User is authenticated but needs to complete onboarding
-        return <Navigate to="/onboarding" replace />;
-    }
-  }
-
   // Render the main app with LED Brutalist page transitions
   return (
     <PageTransition>
@@ -589,7 +530,9 @@ function App() {
               <ShopCartProvider>
                 <Router>
                   <NavigationTracker />
-                  <AuthenticatedApp />
+                  <BootRouter>
+                    <AuthenticatedApp />
+                  </BootRouter>
                 </Router>
               </ShopCartProvider>
             </WorldPulseProvider>

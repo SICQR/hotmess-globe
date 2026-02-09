@@ -1,18 +1,29 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/components/utils/supabaseClient';
 
 /**
- * Boot Guard Context
- * Enforces: age_verified + username + onboarding_complete before OS mounts
+ * Boot Guard Context - Clean Implementation
  * 
- * KEY: Age gate is stored in sessionStorage for unauthenticated users,
- * then synced to profile on first auth.
+ * STATE MACHINE:
+ * - LOADING: Initial state, checking auth
+ * - UNAUTHENTICATED: No session (valid state, not error)
+ * - NEEDS_AGE: Authenticated but age_verified = false
+ * - NEEDS_ONBOARDING: Authenticated but onboarding_complete = false
+ * - READY: All gates passed, mount OS
+ * 
+ * KEY RULE: UNAUTHENTICATED users are allowed to access public routes.
+ * Boot guard only enforces profile flags AFTER authentication.
  */
 
-const BootGuardContext = createContext(null);
+export const BOOT_STATES = {
+  LOADING: 'LOADING',
+  UNAUTHENTICATED: 'UNAUTHENTICATED',
+  NEEDS_AGE: 'NEEDS_AGE',
+  NEEDS_ONBOARDING: 'NEEDS_ONBOARDING',
+  READY: 'READY',
+};
 
-// Check if age was verified in localStorage (pre-auth flow, persists across sessions)
+// Consistent localStorage key for age verification
 const AGE_KEY = 'hm_age_confirmed_v1';
 
 const getLocalAgeVerified = () => {
@@ -23,213 +34,211 @@ const getLocalAgeVerified = () => {
   }
 };
 
+const BootGuardContext = createContext(null);
+
 export function BootGuardProvider({ children }) {
-  const { user, isAuthenticated, isLoadingAuth } = useAuth();
+  const [bootState, setBootState] = useState(BOOT_STATES.LOADING);
   const [profile, setProfile] = useState(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [bootState, setBootState] = useState('LOADING'); // LOADING | AGE_GATE | AUTH | USERNAME | ONBOARDING | OS
+  const [session, setSession] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch profile when user changes
+  // Initialize and listen to auth changes
   useEffect(() => {
-    if (isLoadingAuth) return;
-    
-    if (!isAuthenticated || !user?.id) {
-      setProfile(null);
-      // Unauthenticated users: check localStorage for age verification
-      const localAgeVerified = getLocalAgeVerified();
-      if (!localAgeVerified) {
-        setBootState('AGE_GATE');
-      } else {
-        // Age verified locally, need to auth next
-        setBootState('AUTH');
+    let mounted = true;
+
+    const initAuth = async () => {
+      setIsLoading(true);
+      setBootState(BOOT_STATES.LOADING);
+
+      try {
+        // Get current session
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        if (error || !currentSession?.user?.id) {
+          // No session = UNAUTHENTICATED (this is valid, not an error)
+          setSession(null);
+          setProfile(null);
+          setBootState(BOOT_STATES.UNAUTHENTICATED);
+          setIsLoading(false);
+          return;
+        }
+
+        setSession(currentSession);
+        await loadProfile(currentSession.user.id);
+      } catch (err) {
+        console.error('Auth init error:', err);
+        if (mounted) {
+          setBootState(BOOT_STATES.UNAUTHENTICATED);
+          setIsLoading(false);
+        }
       }
-      setIsLoadingProfile(false);
-      return;
-    }
+    };
 
-    fetchProfile(user.id);
-  }, [user?.id, isAuthenticated, isLoadingAuth]);
+    initAuth();
 
-  const fetchProfile = async (userId) => {
-    setIsLoadingProfile(true);
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      if (!mounted) return;
+
+      console.log('[BootGuard] Auth event:', event);
+
+      if (event === 'SIGNED_OUT' || !newSession?.user?.id) {
+        setSession(null);
+        setProfile(null);
+        setBootState(BOOT_STATES.UNAUTHENTICATED);
+        return;
+      }
+
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setSession(newSession);
+        await loadProfile(newSession.user.id);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
+    };
+  }, []);
+
+  // Load profile and determine boot state
+  const loadProfile = async (userId) => {
+    setIsLoading(true);
+
     try {
-      const { data, error } = await supabase
+      // Fetch profile
+      let { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      // PGRST116 = no rows found (profile doesn't exist yet)
-      if (error && error.code !== 'PGRST116') {
-        console.error('Profile fetch error:', error);
-        // On error, check if we have localStorage age and allow through to onboarding
-        const localAgeVerified = getLocalAgeVerified();
-        if (localAgeVerified) {
-          setBootState('ONBOARDING');
-        } else {
-          setBootState('AGE_GATE');
-        }
-        setIsLoadingProfile(false);
-        return;
-      }
-
-      let profileData = data || null;
-      
-      // If no profile exists, create one
-      if (!profileData) {
-        const localAgeVerified = getLocalAgeVerified();
+      // PGRST116 = no rows found
+      if (error && error.code === 'PGRST116') {
+        // Profile doesn't exist - create it
+        const localAge = getLocalAgeVerified();
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
-          .insert({ 
+          .insert({
             id: userId,
-            age_verified: localAgeVerified,
-            onboarding_complete: false 
+            age_verified: localAge,
+            onboarding_complete: false,
           })
           .select()
           .single();
-        
+
         if (createError) {
           console.error('Profile create error:', createError);
-          // Still allow through to onboarding
-          setBootState(localAgeVerified ? 'ONBOARDING' : 'AGE_GATE');
-          setIsLoadingProfile(false);
+          // Fall through to onboarding
+          setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
+          setIsLoading(false);
           return;
         }
+
         profileData = newProfile;
+      } else if (error) {
+        console.error('Profile fetch error:', error);
+        // On error, use localStorage age to decide
+        const localAge = getLocalAgeVerified();
+        setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
+        setIsLoading(false);
+        return;
       }
-      
-      // Sync localStorage age_verified to profile if needed
-      const localAgeVerified = getLocalAgeVerified();
-      if (profileData && !profileData.age_verified && localAgeVerified) {
-        // User confirmed age before auth - sync to profile
+
+      // Sync localStorage age to profile if needed
+      const localAge = getLocalAgeVerified();
+      if (profileData && !profileData.age_verified && localAge) {
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ age_verified: true })
           .eq('id', userId);
-        
+
         if (!updateError) {
           profileData = { ...profileData, age_verified: true };
         }
       }
 
       setProfile(profileData);
-      
-      // Determine boot state
-      if (!profileData.age_verified) {
-        setBootState('AGE_GATE');
-      } else if (!profileData.username) {
-        setBootState('USERNAME');
-      } else if (!profileData.onboarding_complete) {
-        setBootState('ONBOARDING');
+
+      // Determine boot state from profile
+      if (!profileData?.age_verified) {
+        setBootState(BOOT_STATES.NEEDS_AGE);
+      } else if (!profileData?.onboarding_complete) {
+        setBootState(BOOT_STATES.NEEDS_ONBOARDING);
       } else {
-        setBootState('OS');
+        setBootState(BOOT_STATES.READY);
       }
     } catch (err) {
-      console.error('Profile fetch failed:', err);
-      // On any error, allow through to onboarding if age verified
-      const localAgeVerified = getLocalAgeVerified();
-      setBootState(localAgeVerified ? 'ONBOARDING' : 'AGE_GATE');
+      console.error('Profile load error:', err);
+      const localAge = getLocalAgeVerified();
+      setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
     } finally {
-      setIsLoadingProfile(false);
+      setIsLoading(false);
     }
   };
 
-  const refetchProfile = useCallback(() => {
-    if (user?.id) {
-      fetchProfile(user.id);
+  // Refresh profile
+  const refetchProfile = useCallback(async () => {
+    if (session?.user?.id) {
+      await loadProfile(session.user.id);
     }
-  }, [user?.id]);
+  }, [session?.user?.id]);
 
-  // Gate check helpers
-  const canMountOS = bootState === 'OS';
-  const canGoLive = profile?.can_go_live === true;
-  const canSell = profile?.can_sell === true;
-  const isAdmin = profile?.role_flags?.admin === true;
-  const isVerified = profile?.is_verified === true;
-
-  // Gate update functions
+  // Mark age verified (for authenticated users)
   const markAgeVerified = useCallback(async () => {
-    if (!user?.id) return false;
+    // Always store locally
     try {
+      localStorage.setItem(AGE_KEY, 'true');
+    } catch {}
+
+    // If authenticated, update profile
+    if (session?.user?.id) {
       const { error } = await supabase
         .from('profiles')
         .update({ age_verified: true })
-        .eq('id', user.id);
-      
+        .eq('id', session.user.id);
+
       if (!error) {
-        refetchProfile();
+        await refetchProfile();
         return true;
       }
-      return false;
-    } catch {
-      return false;
-    }
-  }, [user?.id, refetchProfile]);
-
-  const claimUsername = useCallback(async (username) => {
-    if (!user?.id) return { success: false, error: 'Not authenticated' };
-    
-    // Normalize username
-    const normalized = username.toLowerCase().replace(/[^a-z0-9_]/g, '');
-    if (normalized.length < 3 || normalized.length > 20) {
-      return { success: false, error: 'Username must be 3-20 characters' };
     }
 
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ username: normalized })
-        .eq('id', user.id);
-      
-      if (error) {
-        if (error.code === '23505') {
-          return { success: false, error: 'Username already taken' };
-        }
-        return { success: false, error: error.message };
-      }
-      
-      refetchProfile();
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  }, [user?.id, refetchProfile]);
+    return true;
+  }, [session?.user?.id, refetchProfile]);
 
+  // Complete onboarding
   const completeOnboarding = useCallback(async () => {
-    if (!user?.id) return false;
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ onboarding_complete: true })
-        .eq('id', user.id);
-      
-      if (!error) {
-        refetchProfile();
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
+    if (!session?.user?.id) return false;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ onboarding_complete: true })
+      .eq('id', session.user.id);
+
+    if (!error) {
+      await refetchProfile();
+      return true;
     }
-  }, [user?.id, refetchProfile]);
+    return false;
+  }, [session?.user?.id, refetchProfile]);
 
   const value = {
     // State
-    profile,
     bootState,
-    isLoading: isLoadingAuth || isLoadingProfile,
-    
-    // Gate checks
-    canMountOS,
-    canGoLive,
-    canSell,
-    isAdmin,
-    isVerified,
-    
+    profile,
+    session,
+    isLoading,
+
+    // Computed
+    isAuthenticated: !!session?.user?.id,
+    canMountOS: bootState === BOOT_STATES.READY,
+
     // Actions
     refetchProfile,
     markAgeVerified,
-    claimUsername,
     completeOnboarding,
   };
 
