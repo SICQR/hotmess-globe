@@ -3,24 +3,20 @@ import { createClient } from '@supabase/supabase-js';
 // Helper to create page URLs - matches Base44 pattern
 const createPageUrl = (pageName) => `/${pageName}`;
 
-// Vercel–Supabase integration sets NEXT_PUBLIC_SUPABASE_*; we also support VITE_*.
-const supabaseUrl =
-  import.meta.env.VITE_SUPABASE_URL ||
-  import.meta.env.NEXT_PUBLIC_SUPABASE_URL ||
-  import.meta.env.vite_publicSUPABASE_URL ||
-  '';
-const supabaseKey =
-  import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  import.meta.env.vite_publicSUPABASE_ANON_KEY ||
-  '';
+// ONLY use VITE_ vars to avoid Vercel integration conflicts
+// The correct project is klsywpvncqqglhnhrjbh (HOTMESS BASE44)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseKey) {
   console.error(
-    '[supabase] Missing Supabase env. Use VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY, ' +
-    'or connect via Vercel ↔ Supabase (NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY).'
+    '[supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. ' +
+    'Set these in Vercel Environment Variables.'
   );
 }
+
+// Debug log to verify correct project
+console.log('[supabase] URL:', supabaseUrl);
 
 // If env vars are missing, createClient still needs a URL/key.
 // Use a clearly-invalid URL so failures are obvious and debuggable.
