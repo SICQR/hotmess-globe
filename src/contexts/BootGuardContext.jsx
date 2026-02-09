@@ -46,6 +46,7 @@ export function BootGuardProvider({ children }) {
   useEffect(() => {
     let mounted = true;
     let timeoutId = null;
+    let timedOut = false; // Flag to track if timeout fired
 
     const initAuth = async () => {
       setIsLoading(true);
@@ -66,7 +67,8 @@ export function BootGuardProvider({ children }) {
       // Set a timeout to prevent infinite loading
       // If auth check takes more than 10 seconds, assume connection failed
       timeoutId = setTimeout(() => {
-        if (mounted && bootState === BOOT_STATES.LOADING) {
+        if (mounted) {
+          timedOut = true;
           console.warn('[BootGuard] Auth initialization timeout - falling back to UNAUTHENTICATED');
           setSession(null);
           setProfile(null);
@@ -79,7 +81,7 @@ export function BootGuardProvider({ children }) {
         // Get current session
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
 
-        if (!mounted) return;
+        if (!mounted || timedOut) return;
 
         // Clear timeout since we got a response
         if (timeoutId) {
@@ -100,7 +102,7 @@ export function BootGuardProvider({ children }) {
         await loadProfile(currentSession.user.id);
       } catch (err) {
         console.error('Auth init error:', err);
-        if (mounted) {
+        if (mounted && !timedOut) {
           // Clear timeout on error
           if (timeoutId) {
             clearTimeout(timeoutId);

@@ -30,24 +30,30 @@ The deployed app at https://hotmess-globe-bmrozkhmx-phils-projects-59e621aa.verc
 The app is now more resilient, but you still need to set environment variables in Vercel:
 
 ### Step 1: Get Supabase Credentials
-The correct credentials are in `.env.production`:
+The Supabase credentials are stored in `.env.production` in the project root.
+
+**IMPORTANT**: These are sensitive credentials. If this repository is public, the credentials should be rotated immediately and stored securely in Vercel's environment variables only.
+
+Example format:
 ```
-VITE_SUPABASE_URL=https://klsywpvncqqglhnhrjbh.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3l3cHZuY3FxZ2xobmhyamJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwOTEyMzIsImV4cCI6MjA4MjY2NzIzMn0.WhPthNardVU6yLmrBDy6poDmdt12MDV0h-QCuhSD5vQ
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key_here
 ```
 
 ### Step 2: Add to Vercel
 1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
 2. Select the `hotmess-globe` project
 3. Go to **Settings** → **Environment Variables**
-4. Add these variables:
+4. Add these variables (get values from `.env.production`):
    - **Name**: `VITE_SUPABASE_URL`
-     **Value**: `https://klsywpvncqqglhnhrjbh.supabase.co`
+     **Value**: Your Supabase project URL
      **Environments**: Production, Preview, Development
    
    - **Name**: `VITE_SUPABASE_ANON_KEY`
-     **Value**: (the full JWT token from above)
+     **Value**: Your Supabase anon key
      **Environments**: Production, Preview, Development
+
+**Security Note**: The anon key is safe to expose client-side, but should still be managed carefully. Never commit the service role key.
 
 ### Step 3: Redeploy
 1. Go to the **Deployments** tab
