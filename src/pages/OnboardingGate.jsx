@@ -65,11 +65,17 @@ export default function OnboardingGate() {
     }
     
     if (step === 3) {
-      // Save all consents to user
+      // Save all consents to user with new profile flags
       await base44.auth.updateMe({
+        // Old flags (backward compat)
         has_agreed_terms: termsAgreed,
         has_consented_data: dataConsent,
         has_consented_gps: gpsConsent,
+        // New profile flags (OS boot gates)
+        age_confirmed: ageConfirmed,
+        onboarding_complete: termsAgreed && dataConsent,
+        consent_location: gpsConsent,
+        consent_safety: dataConsent,
       });
       setStep(4);
     } else {
