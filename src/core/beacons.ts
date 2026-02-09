@@ -115,8 +115,8 @@ export function beaconId(type: BeaconType, row: Record<string, unknown>): string
     case 'RADIO':
       return `radio:live`;
     default: {
-      // Exhaustive check: this should never happen if all BeaconType values are handled
-      const _exhaustiveCheck: never = type;
+      // Exhaustive type check: ensures all BeaconType cases are handled
+      const exhaustiveCheck: never = type;
       return `unknown:${row.id ?? crypto.randomUUID()}`;
     }
   }

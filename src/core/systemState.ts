@@ -68,7 +68,7 @@ export function getBlockReason(): string | null {
 export function setSystemState(newState: SystemState, reason?: string): void {
   if (store.state === newState) return;
   
-  // Emergency can ALWAYS be set, regardless of current state
+  // Emergency can ALWAYS be set, regardless of current state (including BLOCKED)
   if (newState === 'EMERGENCY_ACTIVE') {
     store.previousState = store.state;
     store.emergencyTriggeredAt = Date.now();
@@ -77,7 +77,7 @@ export function setSystemState(newState: SystemState, reason?: string): void {
     return;
   }
   
-  // Can't transition out of BLOCKED
+  // Can't transition out of BLOCKED (except for EMERGENCY_ACTIVE handled above)
   if (store.state === 'BLOCKED') {
     console.warn('[SystemState] Cannot transition out of BLOCKED state');
     return;
