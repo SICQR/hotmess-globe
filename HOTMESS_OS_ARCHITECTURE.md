@@ -374,10 +374,15 @@ SELECT cleanup_expired_beacons();
 
 ## 🆘 Troubleshooting
 
+### Troubleshooting
+
 ### "Stuck in age gate loop"
-- ✅ **Fixed in Phase 1** - BootGuard now syncs local age confirmation after auth
+- ✅ **Fixed in Phase 1 + Hotfix** - BootGuard now syncs BOTH age AND location consent from sessionStorage
+- Age gate only requires age confirmation (18+), location is optional
+- Smart redirect: unauthenticated → /auth, authenticated → home
 - Check `sessionStorage.getItem('age_verified')` - should be `'true'`
-- Check `profiles.age_confirmed` in database
+- Check `sessionStorage.getItem('location_consent')` - will be `'true'` or `'false'`
+- Check `profiles.age_confirmed` and `profiles.consent_location` in database
 
 ### "Right Now not disappearing"
 - Check `expires_at` timestamp in `right_now_status` table
