@@ -288,12 +288,6 @@ const SocialThreadRedirect = () => {
   return <Navigate to={target} replace />;
 };
 
-const MarketCollectionRedirect = () => {
-  const { collection } = useParams();
-  const target = `/market?collection=${encodeURIComponent(collection ?? '')}`;
-  return <Navigate to={target} replace />;
-};
-
 export default function OSShell() {
   return (
     <PageTransition>
