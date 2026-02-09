@@ -27,6 +27,74 @@ export async function updatePresence({ lat, lng, accuracy, heading, speed }) {
 }
 
 /**
+ * Create social beacon for Right Now presence
+ * Separated to avoid circular dependency with beaconAPI
+ */
+async function createPresenceBeaconInternal({ userId, email, intent, location, ttlMinutes }) {
+  try {
+    const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
+
+    const { data, error } = await supabase
+      .from('Beacon')
+      .insert({
+        type: 'social',
+        status: 'published',
+        active: true,
+        title: `${email} is Right Now`,
+        description: `Looking to ${intent}`,
+        lat: location?.lat,
+        lng: location?.lng,
+        city: location?.city,
+        owner_email: email,
+        expires_at: expiresAt.toISOString(),
+        metadata: {
+          intent,
+          userId,
+          rightNow: true
+        }
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    logger.info('Beacons: Created presence beacon', { 
+      beaconId: data.id, 
+      ttlMinutes 
+    });
+
+    return data;
+  } catch (error) {
+    logger.error('Beacons: Failed to create presence beacon', { error: error.message });
+    throw error;
+  }
+}
+
+/**
+ * Deactivate user's presence beacons
+ * Separated to avoid circular dependency with beaconAPI
+ */
+async function deactivatePresenceBeaconsInternal(userEmail) {
+  try {
+    const { data, error } = await supabase
+      .from('Beacon')
+      .update({ active: false })
+      .eq('type', 'social')
+      .eq('owner_email', userEmail)
+      .eq('active', true);
+
+    if (error) throw error;
+
+    logger.info('Beacons: Deactivated presence beacons', { userEmail });
+
+    return data;
+  } catch (error) {
+    logger.error('Beacons: Failed to deactivate presence beacons', { error: error.message });
+    throw error;
+  }
+}
+
+/**
  * Presence API - TTL-based visibility system
  * 
  * LAW 2: "Right Now" is presence rows with TTL, not UI toggles.
@@ -63,9 +131,7 @@ export const presenceAPI = {
       try {
         const currentUser = await base44.auth.me();
         if (currentUser?.email) {
-          // Import beaconAPI to avoid circular dependency
-          const { beaconAPI } = await import('./beacons.js');
-          await beaconAPI.createPresenceBeacon({
+          await createPresenceBeaconInternal({
             userId: currentUser.auth_user_id,
             email: currentUser.email,
             intent: intent || 'explore',
@@ -104,8 +170,7 @@ export const presenceAPI = {
       try {
         const currentUser = await base44.auth.me();
         if (currentUser?.email) {
-          const { beaconAPI } = await import('./beacons.js');
-          await beaconAPI.deactivatePresenceBeacons(currentUser.email);
+          await deactivatePresenceBeaconsInternal(currentUser.email);
         }
       } catch (beaconError) {
         logger.warn('Presence: Failed to deactivate beacons (non-fatal)', { 

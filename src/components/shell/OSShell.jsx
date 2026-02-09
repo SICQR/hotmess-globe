@@ -465,6 +465,7 @@ export default function OSShell() {
 
         {/* Backward-compatible auto-generated /PageName routes */}
         {Object.entries(Pages).map(([path, Page]) => {
+          // In production, only allow specific legacy routes
           if (isProdBuild && !LEGACY_PAGE_ROUTE_ALLOWLIST.has(path)) {
             return null;
           }

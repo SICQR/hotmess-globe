@@ -93,6 +93,11 @@ DECLARE
   v_auth_user_id uuid;
   v_status_id uuid;
 BEGIN
+  -- Validate TTL is positive integer
+  IF p_ttl_minutes < 1 OR p_ttl_minutes > 1440 THEN
+    RAISE EXCEPTION 'TTL must be between 1 and 1440 minutes';
+  END IF;
+  
   -- Get current user
   SELECT auth.email() INTO v_user_email;
   SELECT auth.uid() INTO v_auth_user_id;
@@ -107,7 +112,7 @@ BEGIN
   WHERE auth_user_id = v_auth_user_id
   AND active = true;
   
-  -- Insert new status with TTL
+  -- Insert new status with TTL (use make_interval for safety)
   INSERT INTO public.right_now_status (
     user_email,
     auth_user_id,
@@ -129,7 +134,7 @@ BEGIN
     p_location,
     p_preferences,
     true,
-    NOW() + (p_ttl_minutes || ' minutes')::interval,
+    NOW() + make_interval(mins => p_ttl_minutes),
     v_user_email,
     NOW(),
     NOW()

@@ -7,7 +7,7 @@ import { AuthProvider } from '@/lib/AuthContext';
 import { ShopCartProvider } from '@/features/shop/cart/ShopCartContext';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { WorldPulseProvider } from '@/contexts/WorldPulseContext';
-import { BootGuardProvider, useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
+import { BootGuardProvider, useBootGuard } from '@/contexts/BootGuardContext';
 import PublicShell from '@/components/shell/PublicShell';
 import OSShell from '@/components/shell/OSShell';
 

@@ -132,7 +132,7 @@ export const BootGuardProvider = ({ children }) => {
       setError(err);
       setBootState(BOOT_STATES.UNAUTHENTICATED);
     }
-  }, []);
+  }, []); // Empty dependency array to stabilize function reference
 
   useEffect(() => {
     checkBootState();

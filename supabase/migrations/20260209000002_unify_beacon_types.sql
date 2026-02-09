@@ -84,7 +84,7 @@ $$;
 
 DROP TRIGGER IF EXISTS trg_beacon_check_expiry ON public."Beacon";
 CREATE TRIGGER trg_beacon_check_expiry
-  BEFORE UPDATE ON public."Beacon"
+  BEFORE INSERT OR UPDATE ON public."Beacon"
   FOR EACH ROW
   EXECUTE FUNCTION public.check_beacon_expiry();
 
