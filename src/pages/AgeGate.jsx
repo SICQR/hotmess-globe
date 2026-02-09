@@ -13,10 +13,23 @@ export default function AgeGate() {
   const [locationConsent, setLocationConsent] = useState(false);
   const [requestingLocation, setRequestingLocation] = useState(false);
   const [locationPermissionStatus, setLocationPermissionStatus] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [searchParams] = useSearchParams();
   const nextUrl = searchParams.get('next') || createPageUrl('Home');
 
   useEffect(() => {
+    // Check if user is already authenticated
+    const checkAuth = async () => {
+      try {
+        const { base44 } = await import('@/components/utils/supabaseClient');
+        const authenticated = await base44.auth.isAuthenticated();
+        setIsAuthenticated(authenticated);
+      } catch {
+        setIsAuthenticated(false);
+      }
+    };
+    checkAuth();
+
     // Read any cached status first.
     try {
       const cached = sessionStorage.getItem('location_permission');
@@ -118,7 +131,14 @@ export default function AgeGate() {
       }
     }
 
-    window.location.href = nextUrl;
+    // Redirect based on authentication status:
+    // - If not authenticated → go to /auth for sign-in/sign-up
+    // - If authenticated → go to home (BootGuard will handle subsequent routing)
+    if (isAuthenticated) {
+      window.location.href = '/';
+    } else {
+      window.location.href = '/auth';
+    }
   };
 
   const handleExit = () => {
@@ -236,7 +256,7 @@ export default function AgeGate() {
           <div className="space-y-3">
             <Button
               onClick={handleConfirm}
-              disabled={!confirmed || !locationConsent || requestingLocation}
+              disabled={!confirmed || requestingLocation}
               className="w-full bg-[#FF1493] hover:bg-white text-black font-black uppercase py-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               ENTER (18+)

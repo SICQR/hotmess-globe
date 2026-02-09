@@ -72,19 +72,37 @@ export const BootGuardProvider = ({ children }) => {
 
       setUser(currentUser);
 
-      // Step 3: Sync local age confirmation from sessionStorage (if exists)
-      // This prevents age-gate loops after the user confirmed age pre-auth
+      // Step 3: Sync local confirmations from sessionStorage (if exist)
+      // This prevents age-gate loops after the user confirmed age/location pre-auth
       let ageConfirmed = currentUser.age_confirmed ?? false;
-      if (!ageConfirmed) {
+      let consentLocation = currentUser.consent_location ?? currentUser.has_consented_gps ?? false;
+      
+      // Check if we need to sync from sessionStorage
+      const needsSync = !ageConfirmed || !consentLocation;
+      
+      if (needsSync) {
         try {
           const localAgeVerified = sessionStorage.getItem('age_verified') === 'true';
-          if (localAgeVerified) {
-            logger.info('BootGuard: Syncing local age confirmation to profile');
-            await base44.auth.updateMe({ age_confirmed: true });
+          const localLocationConsent = sessionStorage.getItem('location_consent') === 'true';
+          
+          // Build update object only if we have local confirmations
+          const updates = {};
+          if (!ageConfirmed && localAgeVerified) {
+            updates.age_confirmed = true;
             ageConfirmed = true;
           }
+          if (!consentLocation && localLocationConsent) {
+            updates.consent_location = true;
+            consentLocation = true;
+          }
+          
+          // Only update if we have changes
+          if (Object.keys(updates).length > 0) {
+            logger.info('BootGuard: Syncing local confirmations to profile', updates);
+            await base44.auth.updateMe(updates);
+          }
         } catch (err) {
-          logger.warn('BootGuard: Failed to sync age confirmation', { error: err.message });
+          logger.warn('BootGuard: Failed to sync confirmations', { error: err.message });
         }
       }
 
@@ -92,7 +110,7 @@ export const BootGuardProvider = ({ children }) => {
       const flags = {
         age_confirmed: ageConfirmed,
         onboarding_complete: currentUser.onboarding_complete ?? currentUser.has_agreed_terms ?? false,
-        consent_location: currentUser.consent_location ?? currentUser.has_consented_gps ?? false,
+        consent_location: consentLocation,
         consent_safety: currentUser.consent_safety ?? currentUser.has_consented_data ?? false,
         is_suspended: currentUser.is_suspended ?? false
       };
