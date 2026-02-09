@@ -59,11 +59,44 @@ export function BootGuardProvider({ children }) {
         .eq('id', userId)
         .single();
 
+      // PGRST116 = no rows found (profile doesn't exist yet)
       if (error && error.code !== 'PGRST116') {
         console.error('Profile fetch error:', error);
+        // On error, check if we have localStorage age and allow through to onboarding
+        const localAgeVerified = getLocalAgeVerified();
+        if (localAgeVerified) {
+          setBootState('ONBOARDING');
+        } else {
+          setBootState('AGE_GATE');
+        }
+        setIsLoadingProfile(false);
+        return;
       }
 
       let profileData = data || null;
+      
+      // If no profile exists, create one
+      if (!profileData) {
+        const localAgeVerified = getLocalAgeVerified();
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({ 
+            id: userId,
+            age_verified: localAgeVerified,
+            onboarding_complete: false 
+          })
+          .select()
+          .single();
+        
+        if (createError) {
+          console.error('Profile create error:', createError);
+          // Still allow through to onboarding
+          setBootState(localAgeVerified ? 'ONBOARDING' : 'AGE_GATE');
+          setIsLoadingProfile(false);
+          return;
+        }
+        profileData = newProfile;
+      }
       
       // Sync localStorage age_verified to profile if needed
       const localAgeVerified = getLocalAgeVerified();
@@ -82,9 +115,7 @@ export function BootGuardProvider({ children }) {
       setProfile(profileData);
       
       // Determine boot state
-      if (!profileData) {
-        setBootState('AUTH');
-      } else if (!profileData.age_verified) {
+      if (!profileData.age_verified) {
         setBootState('AGE_GATE');
       } else if (!profileData.username) {
         setBootState('USERNAME');
@@ -95,7 +126,9 @@ export function BootGuardProvider({ children }) {
       }
     } catch (err) {
       console.error('Profile fetch failed:', err);
-      setBootState('AUTH');
+      // On any error, allow through to onboarding if age verified
+      const localAgeVerified = getLocalAgeVerified();
+      setBootState(localAgeVerified ? 'ONBOARDING' : 'AGE_GATE');
     } finally {
       setIsLoadingProfile(false);
     }
