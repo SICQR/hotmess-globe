@@ -7,11 +7,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { 
-  MessageCircle, Send, ArrowLeft, User, 
-  Loader2, Plus, Search, ChevronRight
+  MessageCircle, Send, ArrowLeft, 
+  Loader2, Search, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

@@ -9,14 +9,13 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { 
-  ShoppingBag, ShoppingCart, Loader2, ExternalLink, 
-  ChevronRight, Star, Tag
+  ShoppingBag, ShoppingCart, Loader2, 
+  ChevronRight, Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SheetSection, SheetActions, SheetDivider } from './L2SheetContainer';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { openCartDrawer } from '@/utils/cartEvents';
-import { cn } from '@/lib/utils';
 
 export default function L2ShopSheet({ handle, product, seller }) {
   const { openSheet, updateSheetProps } = useSheet();

@@ -9,9 +9,8 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/components/utils/supabaseClient';
-import { 
-  Users, Zap, MapPin, Clock, MessageCircle, 
-  Loader2, ChevronRight, Filter, Sparkles
+import { Zap, MapPin, Clock, MessageCircle, 
+  Loader2, ChevronRight, Filter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
