@@ -6,7 +6,9 @@ import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, Navigate, useParams, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
-import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { AuthProvider } from '@/lib/AuthContext';
+import { BootGuardProvider, useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
+import BootRouter from '@/components/shell/BootRouter';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { createPageUrl } from './utils';
 import { ShopCartProvider } from '@/features/shop/cart/ShopCartContext';
@@ -295,49 +297,11 @@ const MarketCollectionRedirect = () => {
   return <Navigate to={target} replace />;
 };
 
+/**
+ * AuthenticatedApp - The main app routes (only renders when bootState is READY)
+ * BootRouter handles all the gating logic now.
+ */
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, authError, navigateToLogin } = useAuth();
-  const location = useLocation();
-  const [isRedirectingToAuth, setIsRedirectingToAuth] = useState(false);
-
-  useEffect(() => {
-    if (!authError) return;
-    if (authError.type !== 'auth_required') return;
-
-    const isOnAuthRoute = (location?.pathname || '').toLowerCase().startsWith('/auth');
-    if (isOnAuthRoute) return;
-
-    setIsRedirectingToAuth(true);
-    navigateToLogin();
-  }, [authError, location?.pathname, navigateToLogin]);
-
-  // Show loading spinner while checking app public settings or auth
-  if (isLoadingAuth || isRedirectingToAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Allow the Auth page (and recovery links) to render without forcing a redirect loop.
-      const isOnAuthRoute = (location?.pathname || '').toLowerCase().startsWith('/auth');
-      if (!isOnAuthRoute) {
-        // Redirect is handled in the effect above; render a spinner.
-        return (
-          <div className="fixed inset-0 flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-          </div>
-        );
-      }
-    }
-  }
-
   // Render the main app with LED Brutalist page transitions
   return (
     <PageTransition>
@@ -560,17 +524,21 @@ function App() {
   return (
     <I18nProvider>
       <AuthProvider>
-        <QueryClientProvider client={queryClientInstance}>
-          <WorldPulseProvider>
-            <ShopCartProvider>
-              <Router>
-                <NavigationTracker />
-                <AuthenticatedApp />
-              </Router>
-            </ShopCartProvider>
-          </WorldPulseProvider>
-          <Toaster />
-        </QueryClientProvider>
+        <BootGuardProvider>
+          <QueryClientProvider client={queryClientInstance}>
+            <WorldPulseProvider>
+              <ShopCartProvider>
+                <Router>
+                  <NavigationTracker />
+                  <BootRouter>
+                    <AuthenticatedApp />
+                  </BootRouter>
+                </Router>
+              </ShopCartProvider>
+            </WorldPulseProvider>
+            <Toaster />
+          </QueryClientProvider>
+        </BootGuardProvider>
       </AuthProvider>
     </I18nProvider>
   )
