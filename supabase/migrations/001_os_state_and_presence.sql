@@ -196,10 +196,11 @@ CREATE TABLE IF NOT EXISTS public.presence (
 );
 
 -- One active Right Now per user (prevents beacon spam)
+-- Note: We use (status = 'live') partial index. TTL cleanup handles expiry.
 DROP INDEX IF EXISTS presence_one_live_right_now;
 CREATE UNIQUE INDEX presence_one_live_right_now
   ON public.presence(user_id)
-  WHERE (status = 'live' AND expires_at > now());
+  WHERE (status = 'live');
 
 CREATE INDEX IF NOT EXISTS presence_expires_at_idx ON public.presence(expires_at);
 CREATE INDEX IF NOT EXISTS presence_user_id_idx ON public.presence(user_id);
@@ -229,10 +230,19 @@ CREATE TABLE IF NOT EXISTS public.beacons (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-DROP TRIGGER IF EXISTS trg_beacons_touch ON public.beacons;
-CREATE TRIGGER trg_beacons_touch
-  BEFORE UPDATE ON public.beacons
-  FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+-- Only create trigger if beacons is a table (not a view)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'beacons' AND table_type = 'BASE TABLE'
+  ) THEN
+    DROP TRIGGER IF EXISTS trg_beacons_touch ON public.beacons;
+    CREATE TRIGGER trg_beacons_touch
+      BEFORE UPDATE ON public.beacons
+      FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+  END IF;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- PHASE 6: PRESENCE → BEACON SYNC
@@ -382,7 +392,17 @@ END $$;
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.presence ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.beacons ENABLE ROW LEVEL SECURITY;
+
+-- Only enable RLS on beacons if it's a table (not a view)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'beacons' AND table_type = 'BASE TABLE'
+  ) THEN
+    ALTER TABLE public.beacons ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
 -- PROFILES POLICIES --
 
@@ -431,33 +451,40 @@ CREATE POLICY "presence_delete_own"
   ON public.presence FOR DELETE
   USING (user_id = auth.uid());
 
--- BEACONS POLICIES --
+-- BEACONS POLICIES (only if beacons is a table, not a view)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'beacons' AND table_type = 'BASE TABLE'
+  ) THEN
+    DROP POLICY IF EXISTS "beacons_read_public" ON public.beacons;
+    CREATE POLICY "beacons_read_public"
+      ON public.beacons FOR SELECT
+      USING (visibility = 'public');
 
-DROP POLICY IF EXISTS "beacons_read_public" ON public.beacons;
-CREATE POLICY "beacons_read_public"
-  ON public.beacons FOR SELECT
-  USING (visibility = 'public');
+    DROP POLICY IF EXISTS "beacons_read_nearby" ON public.beacons;
+    CREATE POLICY "beacons_read_nearby"
+      ON public.beacons FOR SELECT
+      USING (visibility IN ('public', 'nearby'));
 
-DROP POLICY IF EXISTS "beacons_read_nearby" ON public.beacons;
-CREATE POLICY "beacons_read_nearby"
-  ON public.beacons FOR SELECT
-  USING (visibility IN ('public', 'nearby'));
+    DROP POLICY IF EXISTS "beacons_read_verified" ON public.beacons;
+    CREATE POLICY "beacons_read_verified"
+      ON public.beacons FOR SELECT
+      USING (
+        visibility = 'verified_only'
+        AND (SELECT p.is_verified FROM public.profiles p WHERE p.id = auth.uid()) = true
+      );
 
-DROP POLICY IF EXISTS "beacons_read_verified" ON public.beacons;
-CREATE POLICY "beacons_read_verified"
-  ON public.beacons FOR SELECT
-  USING (
-    visibility = 'verified_only'
-    AND (SELECT p.is_verified FROM public.profiles p WHERE p.id = auth.uid()) = true
-  );
-
-DROP POLICY IF EXISTS "beacons_read_admin" ON public.beacons;
-CREATE POLICY "beacons_read_admin"
-  ON public.beacons FOR SELECT
-  USING (
-    visibility = 'admin_only'
-    AND COALESCE((SELECT (p.role_flags->>'admin')::boolean FROM public.profiles p WHERE p.id = auth.uid()), false) = true
-  );
+    DROP POLICY IF EXISTS "beacons_read_admin" ON public.beacons;
+    CREATE POLICY "beacons_read_admin"
+      ON public.beacons FOR SELECT
+      USING (
+        visibility = 'admin_only'
+        AND COALESCE((SELECT (p.role_flags->>'admin')::boolean FROM public.profiles p WHERE p.id = auth.uid()), false) = true
+      );
+  END IF;
+END $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- PHASE 9: SAFETY INCIDENTS TABLE
@@ -588,8 +615,14 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+-- Only add beacons to realtime if it's a table (not a view)
 DO $$ BEGIN
-  ALTER PUBLICATION supabase_realtime ADD TABLE public.beacons;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'beacons' AND table_type = 'BASE TABLE'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.beacons;
+  END IF;
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
