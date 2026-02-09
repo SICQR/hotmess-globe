@@ -12,10 +12,12 @@ import { supabase } from '@/components/utils/supabaseClient';
 
 const BootGuardContext = createContext(null);
 
-// Check if age was verified in sessionStorage (pre-auth flow)
-const getSessionAgeVerified = () => {
+// Check if age was verified in localStorage (pre-auth flow, persists across sessions)
+const AGE_KEY = 'hm_age_confirmed_v1';
+
+const getLocalAgeVerified = () => {
   try {
-    return sessionStorage.getItem('age_verified') === 'true';
+    return localStorage.getItem(AGE_KEY) === 'true';
   } catch {
     return false;
   }
@@ -33,12 +35,12 @@ export function BootGuardProvider({ children }) {
     
     if (!isAuthenticated || !user?.id) {
       setProfile(null);
-      // Unauthenticated users: check sessionStorage for age verification
-      const sessionAgeVerified = getSessionAgeVerified();
-      if (!sessionAgeVerified) {
+      // Unauthenticated users: check localStorage for age verification
+      const localAgeVerified = getLocalAgeVerified();
+      if (!localAgeVerified) {
         setBootState('AGE_GATE');
       } else {
-        // Age verified in session, need to auth next
+        // Age verified locally, need to auth next
         setBootState('AUTH');
       }
       setIsLoadingProfile(false);
@@ -63,9 +65,9 @@ export function BootGuardProvider({ children }) {
 
       let profileData = data || null;
       
-      // Sync sessionStorage age_verified to profile if needed
-      const sessionAgeVerified = getSessionAgeVerified();
-      if (profileData && !profileData.age_verified && sessionAgeVerified) {
+      // Sync localStorage age_verified to profile if needed
+      const localAgeVerified = getLocalAgeVerified();
+      if (profileData && !profileData.age_verified && localAgeVerified) {
         // User confirmed age before auth - sync to profile
         const { error: updateError } = await supabase
           .from('profiles')

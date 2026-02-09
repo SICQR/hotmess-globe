@@ -8,6 +8,9 @@ import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 
+// Must match BootGuardContext
+const AGE_KEY = 'hm_age_confirmed_v1';
+
 export default function AgeGate() {
   const [confirmed, setConfirmed] = useState(false);
   const [locationConsent, setLocationConsent] = useState(false);
@@ -101,9 +104,10 @@ export default function AgeGate() {
       return;
     }
 
-    // Store age + location consent in session (pre-auth). Profile-level consents are handled after login.
+    // Store age + location consent in localStorage (pre-auth). 
+    // Profile-level consents are synced after login by BootGuardContext.
     try {
-      sessionStorage.setItem('age_verified', 'true');
+      localStorage.setItem(AGE_KEY, 'true');
       sessionStorage.setItem('location_consent', locationConsent ? 'true' : 'false');
     } catch {
       // ignore
@@ -118,7 +122,8 @@ export default function AgeGate() {
       }
     }
 
-    window.location.href = nextUrl;
+    // Always go to /auth next - BootGuardContext will redirect to OS if already authed
+    window.location.href = '/auth';
   };
 
   const handleExit = () => {
