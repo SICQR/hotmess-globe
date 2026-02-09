@@ -1,187 +1,275 @@
 /**
- * HOTMESS OS — Globe Beacons Component
+ * HOTMESS OS — Globe Beacons (Vanilla Three.js)
  * 
- * R3F render loop: Instanced mesh + per-instance color/intensity + pulse shader.
+ * Creates and manages beacon instances for the existing Three.js globe.
  * The Globe never decides. It only subscribes and renders.
  */
 
 import * as THREE from 'three';
-import React, { useEffect, useMemo, useRef } from 'react';
-import { extend, useFrame } from '@react-three/fiber';
-import { shaderMaterial } from '@react-three/drei';
 import type { Beacon } from '../../core/beacons';
-import { SHADER_VERTEX, SHADER_FRAGMENT } from '../../core/intensityToShaders';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SHADER MATERIAL
+// COLOR POLICY (type → hex)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const BeaconPulseMaterial = shaderMaterial(
-  { uTime: 0 },
-  SHADER_VERTEX,
-  SHADER_FRAGMENT
-);
-
-extend({ BeaconPulseMaterial });
-
-// TypeScript declaration for JSX
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      beaconPulseMaterial: {
-        uTime?: number;
-        transparent?: boolean;
-        depthWrite?: boolean;
-        side?: THREE.Side;
-        ref?: React.Ref<THREE.ShaderMaterial>;
-      };
-    }
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// COLOR POLICY (type → color)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const BEACON_COLORS: Record<Beacon['type'], THREE.Color> = {
-  SAFETY: new THREE.Color('#ff2a2a'),
-  SOCIAL: new THREE.Color('#39FF14'),
-  EVENT: new THREE.Color('#00D9FF'),
-  MARKET: new THREE.Color('#FFD700'),
-  RADIO: new THREE.Color('#B026FF'),
+const BEACON_COLORS: Record<Beacon['type'], number> = {
+  SAFETY: 0xff2a2a,
+  SOCIAL: 0x39FF14,
+  EVENT: 0x00D9FF,
+  MARKET: 0xFFD700,
+  RADIO: 0xB026FF,
 };
 
-function colorForType(type: Beacon['type']): THREE.Color {
-  return BEACON_COLORS[type] || new THREE.Color('#ffffff');
+// ═══════════════════════════════════════════════════════════════════════════════
+// LAT/LNG TO 3D VECTOR (match existing globe's coordinate system)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function latLngToVector3(lat: number, lng: number, radius: number = 1.4): THREE.Vector3 {
+  const phi = (90 - lat) * (Math.PI / 180);
+  const theta = (lng + 180) * (Math.PI / 180);
+  const x = -(radius * Math.sin(phi) * Math.cos(theta));
+  const z = radius * Math.sin(phi) * Math.sin(theta);
+  const y = radius * Math.cos(phi);
+  return new THREE.Vector3(x, y, z);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// COMPONENT
+// BEACON MANAGER (for vanilla Three.js scenes)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface GlobeBeaconsProps {
-  beacons: Beacon[];
-  latLngToGlobeVec3: (lat: number, lng: number) => THREE.Vector3;
-  maxInstances?: number;
-  size?: number;
+export interface BeaconManagerOptions {
+  scene: THREE.Scene;
+  globeGroup?: THREE.Group;
+  globeRadius?: number;
+  maxBeacons?: number;
+  beaconSize?: number;
 }
 
-export function GlobeBeacons({
-  beacons,
-  latLngToGlobeVec3,
-  maxInstances = 2000,
-  size = 0.012,
-}: GlobeBeaconsProps) {
-  const meshRef = useRef<THREE.InstancedMesh>(null!);
-  const matRef = useRef<THREE.ShaderMaterial & { uTime: number }>(null!);
-
-  // Geometry (sphere for each beacon)
-  const geom = useMemo(() => new THREE.SphereGeometry(size, 8, 8), [size]);
+export class BeaconManager {
+  private scene: THREE.Scene;
+  private globeGroup: THREE.Group | null;
+  private globeRadius: number;
+  private maxBeacons: number;
+  private beaconSize: number;
   
-  // Dummy object for matrix transforms
-  const dummy = useMemo(() => new THREE.Object3D(), []);
+  private beaconGroup: THREE.Group;
+  private beaconMeshes: Map<string, THREE.Mesh>;
+  private glowMeshes: Map<string, THREE.Mesh>;
+  private animationId: number | null = null;
+  private clock: THREE.Clock;
 
-  // Instance attributes
-  const aIntensity = useMemo(() => new Float32Array(maxInstances), [maxInstances]);
-  const aColor = useMemo(() => new Float32Array(maxInstances * 3), [maxInstances]);
+  constructor(options: BeaconManagerOptions) {
+    this.scene = options.scene;
+    this.globeGroup = options.globeGroup || null;
+    this.globeRadius = options.globeRadius ?? 1.4;
+    this.maxBeacons = options.maxBeacons ?? 500;
+    this.beaconSize = options.beaconSize ?? 0.02;
+    
+    this.beaconGroup = new THREE.Group();
+    this.beaconGroup.name = 'beacons';
+    this.beaconMeshes = new Map();
+    this.glowMeshes = new Map();
+    this.clock = new THREE.Clock();
 
-  const intensityAttr = useMemo(
-    () => new THREE.InstancedBufferAttribute(aIntensity, 1),
-    [aIntensity]
-  );
-  const colorAttr = useMemo(
-    () => new THREE.InstancedBufferAttribute(aColor, 3),
-    [aColor]
-  );
+    // Add to scene or globe group
+    if (this.globeGroup) {
+      this.globeGroup.add(this.beaconGroup);
+    } else {
+      this.scene.add(this.beaconGroup);
+    }
 
-  // Attach attributes to geometry
-  useEffect(() => {
-    geom.setAttribute('aIntensity', intensityAttr);
-    geom.setAttribute('aColor', colorAttr);
-  }, [geom, intensityAttr, colorAttr]);
+    this.startAnimation();
+  }
 
-  // Update instances when beacons change
-  useEffect(() => {
-    if (!meshRef.current) return;
+  /**
+   * Update beacons from realtime data
+   */
+  updateBeacons(beacons: Beacon[]): void {
+    const currentIds = new Set(beacons.map(b => b.id));
 
-    const mesh = meshRef.current;
-    const count = Math.min(beacons.length, maxInstances);
+    // Remove beacons that no longer exist
+    for (const [id] of this.beaconMeshes) {
+      if (!currentIds.has(id)) {
+        this.removeBeacon(id);
+      }
+    }
 
-    // Sort by z-priority (SAFETY on top)
-    const sortedBeacons = [...beacons].sort((a, b) => {
-      const priorityOrder: Record<Beacon['type'], number> = {
-        RADIO: 1,
-        MARKET: 2,
-        EVENT: 3,
-        SOCIAL: 4,
-        SAFETY: 5,
-      };
-      return (priorityOrder[a.type] || 0) - (priorityOrder[b.type] || 0);
+    // Add or update beacons
+    for (const beacon of beacons.slice(0, this.maxBeacons)) {
+      if (this.beaconMeshes.has(beacon.id)) {
+        this.updateBeacon(beacon);
+      } else {
+        this.addBeacon(beacon);
+      }
+    }
+  }
+
+  private addBeacon(beacon: Beacon): void {
+    const color = BEACON_COLORS[beacon.type] || 0xffffff;
+    const position = latLngToVector3(beacon.lat, beacon.lng, this.globeRadius * 1.01);
+    const size = this.beaconSize * (1 + beacon.intensity * 0.5);
+
+    // Main beacon sphere
+    const geometry = new THREE.SphereGeometry(size, 12, 12);
+    const material = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.8 + beacon.intensity * 0.2,
     });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.copy(position);
+    mesh.userData = { beacon, startTime: this.clock.getElapsedTime() };
+    
+    this.beaconGroup.add(mesh);
+    this.beaconMeshes.set(beacon.id, mesh);
 
-    for (let i = 0; i < count; i++) {
-      const beacon = sortedBeacons[i];
-      
-      // Position
-      const pos = latLngToGlobeVec3(beacon.lat, beacon.lng);
-      dummy.position.copy(pos);
-      
-      // Scale based on intensity
-      const scale = 1 + beacon.intensity * 0.5;
-      dummy.scale.setScalar(scale);
-      
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
+    // Glow effect
+    const glowSize = size * 2.5;
+    const glowGeometry = new THREE.SphereGeometry(glowSize, 12, 12);
+    const glowMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      side: THREE.BackSide,
+      uniforms: {
+        uColor: { value: new THREE.Color(color) },
+        uIntensity: { value: beacon.intensity },
+        uTime: { value: 0 },
+      },
+      vertexShader: `
+        varying vec3 vNormal;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 uColor;
+        uniform float uIntensity;
+        uniform float uTime;
+        varying vec3 vNormal;
+        void main() {
+          float pulse = 0.5 + 0.5 * sin(uTime * 3.0 + uIntensity * 6.28);
+          float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+          float alpha = intensity * (0.3 + 0.4 * uIntensity) * pulse;
+          gl_FragColor = vec4(uColor, alpha);
+        }
+      `,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    
+    const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+    glowMesh.position.copy(position);
+    
+    this.beaconGroup.add(glowMesh);
+    this.glowMeshes.set(beacon.id, glowMesh);
+  }
 
-      // Intensity attribute
-      aIntensity[i] = beacon.intensity;
+  private updateBeacon(beacon: Beacon): void {
+    const mesh = this.beaconMeshes.get(beacon.id);
+    const glow = this.glowMeshes.get(beacon.id);
+    if (!mesh || !glow) return;
 
-      // Color attribute
-      const color = colorForType(beacon.type);
-      aColor[i * 3 + 0] = color.r;
-      aColor[i * 3 + 1] = color.g;
-      aColor[i * 3 + 2] = color.b;
+    const position = latLngToVector3(beacon.lat, beacon.lng, this.globeRadius * 1.01);
+    mesh.position.copy(position);
+    glow.position.copy(position);
+
+    // Update intensity
+    mesh.userData.beacon = beacon;
+    const material = mesh.material as THREE.MeshBasicMaterial;
+    material.opacity = 0.8 + beacon.intensity * 0.2;
+
+    const glowMaterial = glow.material as THREE.ShaderMaterial;
+    glowMaterial.uniforms.uIntensity.value = beacon.intensity;
+  }
+
+  private removeBeacon(id: string): void {
+    const mesh = this.beaconMeshes.get(id);
+    const glow = this.glowMeshes.get(id);
+
+    if (mesh) {
+      this.beaconGroup.remove(mesh);
+      mesh.geometry.dispose();
+      (mesh.material as THREE.Material).dispose();
+      this.beaconMeshes.delete(id);
     }
 
-    // Hide unused instances
-    for (let i = count; i < maxInstances; i++) {
-      dummy.position.set(0, 0, 0);
-      dummy.scale.setScalar(0);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
-      aIntensity[i] = 0;
-      aColor[i * 3 + 0] = 0;
-      aColor[i * 3 + 1] = 0;
-      aColor[i * 3 + 2] = 0;
+    if (glow) {
+      this.beaconGroup.remove(glow);
+      glow.geometry.dispose();
+      (glow.material as THREE.Material).dispose();
+      this.glowMeshes.delete(id);
+    }
+  }
+
+  private startAnimation(): void {
+    const animate = () => {
+      this.animationId = requestAnimationFrame(animate);
+      const time = this.clock.getElapsedTime();
+
+      // Update glow shaders with time
+      for (const glow of this.glowMeshes.values()) {
+        const material = glow.material as THREE.ShaderMaterial;
+        if (material.uniforms?.uTime) {
+          material.uniforms.uTime.value = time;
+        }
+      }
+
+      // Pulse beacon sizes based on intensity
+      for (const mesh of this.beaconMeshes.values()) {
+        const beacon = mesh.userData.beacon as Beacon;
+        if (!beacon) continue;
+
+        const baseScale = 1 + beacon.intensity * 0.5;
+        const pulse = 1 + 0.2 * Math.sin(time * 3 + beacon.intensity * 6.28);
+        mesh.scale.setScalar(baseScale * pulse);
+      }
+    };
+
+    animate();
+  }
+
+  /**
+   * Clean up all resources
+   */
+  dispose(): void {
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
     }
 
-    mesh.instanceMatrix.needsUpdate = true;
-    intensityAttr.needsUpdate = true;
-    colorAttr.needsUpdate = true;
-    mesh.count = count;
-  }, [beacons, latLngToGlobeVec3, maxInstances, aIntensity, aColor, intensityAttr, colorAttr, dummy]);
-
-  // Animate time uniform for pulse effect
-  useFrame((state) => {
-    if (matRef.current) {
-      matRef.current.uTime = state.clock.elapsedTime;
+    // Remove all beacons
+    for (const id of this.beaconMeshes.keys()) {
+      this.removeBeacon(id);
     }
-  });
 
-  return (
-    <instancedMesh
-      ref={meshRef}
-      args={[geom, undefined, maxInstances]}
-      frustumCulled={false}
-    >
-      <beaconPulseMaterial
-        ref={matRef}
-        transparent
-        depthWrite={false}
-        side={THREE.DoubleSide}
-      />
-    </instancedMesh>
-  );
+    // Remove group from scene
+    if (this.globeGroup) {
+      this.globeGroup.remove(this.beaconGroup);
+    } else {
+      this.scene.remove(this.beaconGroup);
+    }
+  }
+
+  /**
+   * Get beacon at screen position (for click handling)
+   */
+  getBeaconAtPosition(
+    mouse: THREE.Vector2,
+    camera: THREE.Camera
+  ): Beacon | null {
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObjects(
+      Array.from(this.beaconMeshes.values())
+    );
+
+    if (intersects.length > 0) {
+      const beacon = intersects[0].object.userData.beacon as Beacon;
+      return beacon || null;
+    }
+
+    return null;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
