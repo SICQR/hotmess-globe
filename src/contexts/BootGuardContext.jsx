@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/components/utils/supabaseClient';
+import { supabase, isSupabaseConfigured } from '@/components/utils/supabaseClient';
 
 /**
  * Boot Guard Context - Clean Implementation
@@ -45,16 +45,47 @@ export function BootGuardProvider({ children }) {
   // Initialize and listen to auth changes
   useEffect(() => {
     let mounted = true;
+    let timeoutId = null;
 
     const initAuth = async () => {
       setIsLoading(true);
       setBootState(BOOT_STATES.LOADING);
+
+      // If Supabase is not configured, immediately fall back to UNAUTHENTICATED
+      if (!isSupabaseConfigured) {
+        console.warn('[BootGuard] Supabase not configured - falling back to UNAUTHENTICATED state');
+        if (mounted) {
+          setSession(null);
+          setProfile(null);
+          setBootState(BOOT_STATES.UNAUTHENTICATED);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      // Set a timeout to prevent infinite loading
+      // If auth check takes more than 10 seconds, assume connection failed
+      timeoutId = setTimeout(() => {
+        if (mounted && bootState === BOOT_STATES.LOADING) {
+          console.warn('[BootGuard] Auth initialization timeout - falling back to UNAUTHENTICATED');
+          setSession(null);
+          setProfile(null);
+          setBootState(BOOT_STATES.UNAUTHENTICATED);
+          setIsLoading(false);
+        }
+      }, 10000);
 
       try {
         // Get current session
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
 
         if (!mounted) return;
+
+        // Clear timeout since we got a response
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
 
         if (error || !currentSession?.user?.id) {
           // No session = UNAUTHENTICATED (this is valid, not an error)
@@ -70,6 +101,11 @@ export function BootGuardProvider({ children }) {
       } catch (err) {
         console.error('Auth init error:', err);
         if (mounted) {
+          // Clear timeout on error
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
           setBootState(BOOT_STATES.UNAUTHENTICATED);
           setIsLoading(false);
         }
@@ -99,6 +135,9 @@ export function BootGuardProvider({ children }) {
 
     return () => {
       mounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       subscription?.unsubscribe();
     };
   }, []);

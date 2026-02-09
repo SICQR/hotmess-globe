@@ -8,15 +8,31 @@ const createPageUrl = (pageName) => `/${pageName}`;
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseKey) {
+// Check if environment variables are properly configured
+const hasValidConfig = supabaseUrl && supabaseKey && 
+  supabaseUrl !== 'http://invalid.localhost' && 
+  supabaseKey !== 'invalid-anon-key';
+
+if (!hasValidConfig) {
   console.error(
-    '[supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. ' +
-    'Set these in Vercel Environment Variables.'
+    '[supabase] Missing or invalid VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY.\n' +
+    'Current values:\n' +
+    `  VITE_SUPABASE_URL: ${supabaseUrl || '(empty)'}\n` +
+    `  VITE_SUPABASE_ANON_KEY: ${supabaseKey ? '(set but hidden)' : '(empty)'}\n` +
+    '\nThese must be set in Vercel Environment Variables:\n' +
+    '1. Go to Vercel Dashboard → Project Settings → Environment Variables\n' +
+    '2. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY\n' +
+    '3. Redeploy the application\n' +
+    '\nFor local development, create a .env.local file with these values.'
   );
 }
 
 // Debug log to verify correct project
-console.log('[supabase] URL:', supabaseUrl);
+console.log('[supabase] Configuration status:', {
+  url: supabaseUrl || '(missing)',
+  hasKey: !!supabaseKey,
+  isValid: hasValidConfig
+});
 
 // If env vars are missing, createClient still needs a URL/key.
 // Use a clearly-invalid URL so failures are obvious and debuggable.
@@ -24,6 +40,9 @@ export const supabase = createClient(
   supabaseUrl || 'http://invalid.localhost',
   supabaseKey || 'invalid-anon-key'
 );
+
+// Export flag so other parts of the app can check configuration status
+export const isSupabaseConfigured = hasValidConfig;
 
 const safeArray = (value) => (Array.isArray(value) ? value : []);
 

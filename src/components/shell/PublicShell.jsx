@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import ConfigurationError from '@/components/ConfigurationError';
 
 // Public pages (no auth required)
 import AgeGate from '@/pages/AgeGate';
@@ -22,6 +23,7 @@ import PrivacyHub from '@/pages/legal/PrivacyHub';
 export default function PublicShell() {
   return (
     <div className="min-h-screen bg-[#050507]">
+      <ConfigurationError />
       <Routes>
         {/* Age verification - entry point */}
         <Route path="/age" element={<AgeGate />} />
