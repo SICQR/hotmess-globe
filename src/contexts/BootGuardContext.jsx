@@ -5,9 +5,21 @@ import { supabase } from '@/components/utils/supabaseClient';
 /**
  * Boot Guard Context
  * Enforces: age_verified + username + onboarding_complete before OS mounts
+ * 
+ * KEY: Age gate is stored in sessionStorage for unauthenticated users,
+ * then synced to profile on first auth.
  */
 
 const BootGuardContext = createContext(null);
+
+// Check if age was verified in sessionStorage (pre-auth flow)
+const getSessionAgeVerified = () => {
+  try {
+    return sessionStorage.getItem('age_verified') === 'true';
+  } catch {
+    return false;
+  }
+};
 
 export function BootGuardProvider({ children }) {
   const { user, isAuthenticated, isLoadingAuth } = useAuth();
@@ -21,9 +33,14 @@ export function BootGuardProvider({ children }) {
     
     if (!isAuthenticated || !user?.id) {
       setProfile(null);
-      // When not authenticated, don't block with AGE_GATE - let them access public routes
-      // The age gate is only enforced AFTER auth when profile.age_verified is false
-      setBootState('OS'); // Allow routing, auth routes will handle login
+      // Unauthenticated users: check sessionStorage for age verification
+      const sessionAgeVerified = getSessionAgeVerified();
+      if (!sessionAgeVerified) {
+        setBootState('AGE_GATE');
+      } else {
+        // Age verified in session, need to auth next
+        setBootState('AUTH');
+      }
       setIsLoadingProfile(false);
       return;
     }
@@ -44,16 +61,32 @@ export function BootGuardProvider({ children }) {
         console.error('Profile fetch error:', error);
       }
 
-      setProfile(data || null);
+      let profileData = data || null;
+      
+      // Sync sessionStorage age_verified to profile if needed
+      const sessionAgeVerified = getSessionAgeVerified();
+      if (profileData && !profileData.age_verified && sessionAgeVerified) {
+        // User confirmed age before auth - sync to profile
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ age_verified: true })
+          .eq('id', userId);
+        
+        if (!updateError) {
+          profileData = { ...profileData, age_verified: true };
+        }
+      }
+
+      setProfile(profileData);
       
       // Determine boot state
-      if (!data) {
+      if (!profileData) {
         setBootState('AUTH');
-      } else if (!data.age_verified) {
+      } else if (!profileData.age_verified) {
         setBootState('AGE_GATE');
-      } else if (!data.username) {
+      } else if (!profileData.username) {
         setBootState('USERNAME');
-      } else if (!data.onboarding_complete) {
+      } else if (!profileData.onboarding_complete) {
         setBootState('ONBOARDING');
       } else {
         setBootState('OS');
