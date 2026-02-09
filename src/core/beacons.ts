@@ -114,8 +114,11 @@ export function beaconId(type: BeaconType, row: Record<string, unknown>): string
       return `safety:${row.user_id ?? row.id}`;
     case 'RADIO':
       return `radio:live`;
-    default:
-      return `${type.toLowerCase()}:${row.id ?? crypto.randomUUID()}`;
+    default: {
+      // Exhaustive check: this should never happen if all BeaconType values are handled
+      const _exhaustiveCheck: never = type;
+      return `unknown:${row.id ?? crypto.randomUUID()}`;
+    }
   }
 }
 

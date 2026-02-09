@@ -6,21 +6,18 @@
  */
 
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
 import { 
   User, MessageCircle, Calendar, MapPin, Shield, 
-  Instagram, Twitter, Music, Star, ChevronRight,
-  Loader2, UserPlus, UserCheck, ExternalLink
+  Instagram, Twitter, Music, ChevronRight,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SheetSection, SheetActions, SheetDivider } from './L2SheetContainer';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import RightNowIndicator from '@/components/discovery/RightNowIndicator';
 import MembershipBadge from '@/components/membership/MembershipBadge';
 
 export default function L2ProfileSheet({ email, uid }) {

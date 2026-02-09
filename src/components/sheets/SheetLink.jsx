@@ -10,7 +10,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
-import { cn } from '@/lib/utils';
 
 // Map old routes to sheet types
 const ROUTE_TO_SHEET = {

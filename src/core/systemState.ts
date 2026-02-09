@@ -78,7 +78,7 @@ export function setSystemState(newState: SystemState, reason?: string): void {
   }
   
   // Can't transition out of BLOCKED
-  if (store.state === 'BLOCKED' && newState !== 'EMERGENCY_ACTIVE') {
+  if (store.state === 'BLOCKED') {
     console.warn('[SystemState] Cannot transition out of BLOCKED state');
     return;
   }

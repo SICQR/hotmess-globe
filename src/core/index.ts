@@ -10,7 +10,6 @@ export {
   setSystemState,
   hydrateSystemState,
   useSystemState,
-  canTransitionTo,
 } from './systemState';
 
 // Viewer State (boot)
@@ -29,8 +28,6 @@ export {
   type SystemMode,
   type OverlayType,
   useNavigation,
-  SYSTEM_MODES,
-  OVERLAY_TYPES,
 } from './navigation';
 
 // Presence (TTL-based)
@@ -53,7 +50,7 @@ export {
   triggerPanic,
   resolveEmergency,
   scheduleFakeCall,
-  useEmergencyState,
+  useEmergency,
 } from './emergency';
 
 // Beacons
