@@ -20,10 +20,15 @@ import { debounce } from 'lodash';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
+import { useRealtimeBeacons, useRightNowCount } from '../components/globe/useRealtimeBeacons';
 
 export default function GlobePage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  // NEW: Realtime presence beacons from presence table (TTL-based)
+  const { beacons: presenceBeacons, presenceCount } = useRealtimeBeacons();
+  const rightNowCount = useRightNowCount();
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -330,7 +335,10 @@ export default function GlobePage() {
 
     const peopleList = showPeoplePins ? nearbyPeoplePins : [];
 
-    let filtered = [...beaconsList, ...rightNowList, ...peopleList].map(b => ({
+    // NEW: Include realtime presence beacons from presence table
+    const realtimePresence = Array.isArray(presenceBeacons) ? presenceBeacons : [];
+
+    let filtered = [...beaconsList, ...rightNowList, ...peopleList, ...realtimePresence].map(b => ({
       ...b,
       ts: new Date(b.created_date || Date.now()).getTime() // Convert created_date to timestamp
     }));
@@ -380,7 +388,7 @@ export default function GlobePage() {
     }
 
     return filtered;
-  }, [beacons, rightNowUsers, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, currentUser?.role]);
+  }, [beacons, rightNowUsers, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, currentUser?.role, presenceBeacons]);
 
   // Sort by most recent
   const recentActivity = useMemo(() => {
