@@ -102,6 +102,10 @@ export function intensityFromRow(type: BeaconType, row: Record<string, unknown>)
 // ID POLICY (stable + unique across tables)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+function assertNever(x: never): never {
+  throw new Error(`Unhandled BeaconType in beaconId: ${String(x)}`);
+}
+
 export function beaconId(type: BeaconType, row: Record<string, unknown>): string {
   switch (type) {
     case 'SOCIAL':
@@ -116,7 +120,7 @@ export function beaconId(type: BeaconType, row: Record<string, unknown>): string
       return `radio:live`;
     default: {
       // Exhaustive type check: ensures all BeaconType cases are handled
-      const exhaustiveCheck: never = type;
+      assertNever(type);
       return `unknown:${row.id ?? crypto.randomUUID()}`;
     }
   }
