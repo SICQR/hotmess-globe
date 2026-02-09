@@ -11,6 +11,28 @@ import { BootGuardProvider, useBootGuard, BOOT_STATES } from '@/contexts/BootGua
 import PublicShell from '@/components/shell/PublicShell';
 import OSShell from '@/components/shell/OSShell';
 
+/**
+ * 🚨 HOTMESS GLOBE OS ARCHITECTURE GUARDRAILS 🚨
+ * 
+ * This app is a STATE-DRIVEN SPATIAL OPERATING SYSTEM, not a page-based website.
+ * 
+ * RULES (DO NOT BREAK):
+ * 1. ❌ DO NOT add new pages to src/pages/ - Use modes + sheets instead
+ * 2. ❌ DO NOT mount Globe without BootGuard gates passing
+ * 3. ❌ DO NOT add UI-only state - Use Supabase as source of truth
+ * 4. ❌ DO NOT bypass profile gates (age_confirmed, onboarding_complete, etc.)
+ * 5. ❌ DO NOT create manual presence toggles - Use presenceAPI
+ * 
+ * ARCHITECTURE:
+ * - BootGuard enforces profile gates before OS mounts
+ * - PublicShell: Pre-auth routes (age, auth, legal)
+ * - OSShell: Full OS runtime (Globe, HUD, modes, sheets)
+ * - Presence: TTL-based, auto-expires via database
+ * - Beacons: Unified Globe rendering (type: social, event, market, radio, safety)
+ * 
+ * See: /HOTMESS_OS_ARCHITECTURE.md for full documentation
+ */
+
 
 /**
  * BootGuardedApp - Routes based on boot state
