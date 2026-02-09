@@ -7,6 +7,7 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, Navigate, useParams, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { BootGuardProvider, useBootGuard } from '@/contexts/BootGuardContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { createPageUrl } from './utils';
 import { ShopCartProvider } from '@/features/shop/cart/ShopCartContext';
@@ -297,6 +298,7 @@ const MarketCollectionRedirect = () => {
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, authError, navigateToLogin } = useAuth();
+  const { bootState, isLoading: isLoadingBoot } = useBootGuard();
   const location = useLocation();
   const [isRedirectingToAuth, setIsRedirectingToAuth] = useState(false);
 
@@ -311,11 +313,11 @@ const AuthenticatedApp = () => {
     navigateToLogin();
   }, [authError, location?.pathname, navigateToLogin]);
 
-  // Show loading spinner while checking app public settings or auth
-  if (isLoadingAuth || isRedirectingToAuth) {
+  // Show loading spinner while checking auth or boot state
+  if (isLoadingAuth || isLoadingBoot || isRedirectingToAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-[#050507]">
+        <div className="w-8 h-8 border-4 border-[#39FF14]/20 border-t-[#39FF14] rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -330,11 +332,30 @@ const AuthenticatedApp = () => {
       if (!isOnAuthRoute) {
         // Redirect is handled in the effect above; render a spinner.
         return (
-          <div className="fixed inset-0 flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+          <div className="fixed inset-0 flex items-center justify-center bg-[#050507]">
+            <div className="w-8 h-8 border-4 border-[#39FF14]/20 border-t-[#39FF14] rounded-full animate-spin"></div>
           </div>
         );
       }
+    }
+  }
+
+  // Boot guard enforcement for protected routes
+  const publicPaths = ['/age', '/auth', '/legal', '/help', '/contact', '/terms', '/privacy', '/guidelines', '/AgeGate', '/Auth'];
+  const isPublicPath = publicPaths.some(p => location.pathname.toLowerCase().startsWith(p.toLowerCase()));
+  
+  if (!isPublicPath) {
+    switch (bootState) {
+      case 'AGE_GATE':
+        return <Navigate to="/age" replace />;
+      case 'AUTH':
+        return <Navigate to="/auth" replace />;
+      case 'USERNAME':
+      case 'ONBOARDING':
+        if (!location.pathname.toLowerCase().startsWith('/onboarding')) {
+          return <Navigate to="/onboarding" replace />;
+        }
+        break;
     }
   }
 
@@ -560,17 +581,19 @@ function App() {
   return (
     <I18nProvider>
       <AuthProvider>
-        <QueryClientProvider client={queryClientInstance}>
-          <WorldPulseProvider>
-            <ShopCartProvider>
-              <Router>
-                <NavigationTracker />
-                <AuthenticatedApp />
-              </Router>
-            </ShopCartProvider>
-          </WorldPulseProvider>
-          <Toaster />
-        </QueryClientProvider>
+        <BootGuardProvider>
+          <QueryClientProvider client={queryClientInstance}>
+            <WorldPulseProvider>
+              <ShopCartProvider>
+                <Router>
+                  <NavigationTracker />
+                  <AuthenticatedApp />
+                </Router>
+              </ShopCartProvider>
+            </WorldPulseProvider>
+            <Toaster />
+          </QueryClientProvider>
+        </BootGuardProvider>
       </AuthProvider>
     </I18nProvider>
   )
