@@ -5,6 +5,11 @@ import App from '@/App.jsx'
 import '@/index.css'
 import { initAnalytics } from '@/components/utils/analytics'
 import ErrorBoundary from '@/components/error/ErrorBoundary'
+import { clearBadSupabaseSessions } from '@/lib/clearBadSessions'
+
+// FIRST: Clear any cached sessions from wrong Supabase projects
+// This MUST run before Supabase client initializes
+clearBadSupabaseSessions();
 
 // Initialize Sentry as early as possible
 if (import.meta.env.VITE_SENTRY_DSN) {
@@ -32,16 +37,11 @@ const showFatalOverlay = (err) => {
     const root = document.getElementById('root');
     if (!root) return;
     const message = err instanceof Error ? (err.stack || err.message) : String(err);
-    // Avoid mutating the React root DOM from a global error handler.
-    // It can conflict with React's commit/unmount and cause secondary errors.
-    // ErrorBoundary already renders a safe fallback UI.
     console.error('FATAL CLIENT ERROR', message);
   } catch {
     // ignore
   }
 };
-
-// In dev, rely on ErrorBoundary + console output.
 
 try {
   ReactDOM.createRoot(document.getElementById('root')).render(
