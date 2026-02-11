@@ -4,7 +4,12 @@
 
 **Live:** https://hotmess.london  
 **Status:** Production (Phase 2 Complete)  
-**Updated:** 2026-02-08
+**Updated:** 2026-02-11
+
+📖 **New to the project?** Start with:
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — System overview & tech stack
+- [AGENT_TASKS.md](docs/AGENT_TASKS.md) — Production deployment guide
+- [Getting Started](#-getting-started) — Quick setup instructions
 
 ---
 
@@ -214,34 +219,72 @@ docs/
 
 ## 🚀 Getting Started
 
+### Quick Start (Local Development)
+
 ```bash
 # Clone
 git clone https://github.com/SICQR/hotmess-globe.git
 cd hotmess-globe
 
-# Install
+# Install dependencies
 npm install
 
-# Environment (copy and fill)
+# Copy environment template
 cp .env.example .env.local
 
-# Dev server
-npm run dev
+# Fill in required variables (see ENV_VARS.md)
+# At minimum, set:
+# - VITE_SUPABASE_URL
+# - VITE_SUPABASE_ANON_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
 
-# Build
-npm run build
+# Run development server
+npm run dev
+# App will be available at http://localhost:5173
 ```
+
+### Production Deployment
+
+**Platform:** Vercel (recommended)
+
+1. **Database Setup** (see [AGENT_TASKS.md](docs/AGENT_TASKS.md))
+   - Create Supabase project
+   - Run migrations: `supabase db push`
+   - Enable realtime on required tables
+
+2. **Environment Variables** (see [ENV_VARS.md](docs/ENV_VARS.md))
+   - Set all required variables in Vercel Dashboard
+   - Minimum: Supabase URL, keys, Google Maps API key
+
+3. **Deploy to Vercel**
+   ```bash
+   # Connect GitHub repo to Vercel
+   # Framework preset: Vite
+   # Build command: npm run build
+   # Output directory: dist
+   ```
+
+4. **Verify Deployment**
+   - Check `/api/health` endpoint
+   - Test auth flow (sign up/sign in)
+   - Verify Globe renders
+   - Test real-time features
+
+For detailed deployment steps, see [AGENT_TASKS.md](docs/AGENT_TASKS.md).
 
 ### Required Environment Variables
 
 | Variable | Required | Purpose |
 |----------|----------|---------|
 | `VITE_SUPABASE_URL` | ✅ | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | ✅ | Supabase anon key |
-| `VITE_MAPBOX_TOKEN` | ✅ | Mapbox GL token |
-| `VITE_TELEGRAM_BOT` | ⚡ | Telegram Login Widget |
-| `SHOPIFY_STOREFRONT_TOKEN` | ⚡ | Shopify API (commerce) |
-| `SHOPIFY_STORE_DOMAIN` | ⚡ | Shopify store URL |
+| `VITE_SUPABASE_ANON_KEY` | ✅ | Supabase anon key (client) |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Supabase service role key (server) |
+| `GOOGLE_MAPS_API_KEY` | ⚡ | Google Maps Directions API |
+| `OPENAI_API_KEY` | ⚡ | AI chat features |
+| `SHOPIFY_STOREFRONT_ACCESS_TOKEN` | ⚡ | Commerce integration |
+| `STRIPE_SECRET_KEY` | ⚡ | Payment processing |
+
+See [ENV_VARS.md](docs/ENV_VARS.md) for complete list and setup instructions.
 
 ---
 
@@ -283,11 +326,20 @@ npm run build
 
 ## 📚 Documentation
 
+### Core Documentation
+| Doc | Purpose |
+|-----|---------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture & technical decisions |
+| [DATABASE.md](docs/DATABASE.md) | Database schema, tables, RLS policies |
+| [SERVER_ROUTES.md](docs/SERVER_ROUTES.md) | API endpoints & request/response formats |
+| [ENV_VARS.md](docs/ENV_VARS.md) | Environment variables reference |
+| [AGENT_TASKS.md](docs/AGENT_TASKS.md) | Production deployment checklist |
+
+### Legacy Documentation
 | Doc | Purpose |
 |-----|---------|
 | [REMAP-MASTER.md](docs/REMAP-MASTER.md) | Architecture & implementation spec |
-| [SOUL.md](docs/SOUL.md) | Product values & philosophy |
-| [PROJECT_BIBLE.md](docs/PROJECT_BIBLE.md) | Original vision & ideal user |
+| [HOTMESS-LONDON-OS-BIBLE-v1.5.md](docs/HOTMESS-LONDON-OS-BIBLE-v1.5.md) | Original vision & ideal user |
 
 ---
 
