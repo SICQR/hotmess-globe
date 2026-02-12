@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import MutualConnections from './MutualConnections';
 import { taxonomyConfig } from '../discovery/taxonomyConfig';
+import SwipeGesture from '../mobile/SwipeGesture';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const buildTagLabelMap = () => {
   const map = new Map();
@@ -89,6 +91,29 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
   const activeUrl = photoUrls[activePhotoIndex] || null;
   const activeIsPremium = isPremiumPhoto(activePhotoIndex);
 
+  // Photo navigation
+  const totalPhotos = photoUrls.length;
+  const goToPrevPhoto = useCallback(() => {
+    setSelectedPhotoIndex((i) => Math.max(0, i - 1));
+    setPreviewPhotoIndex(null);
+  }, []);
+  const goToNextPhoto = useCallback(() => {
+    setSelectedPhotoIndex((i) => Math.min(totalPhotos - 1, i + 1));
+    setPreviewPhotoIndex(null);
+  }, [totalPhotos]);
+
+  // Tap-to-navigate: tap left side = prev, tap right side = next
+  const handlePhotoTap = useCallback((e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width;
+    if (x < width / 3) {
+      goToPrevPhoto();
+    } else if (x > (width * 2) / 3) {
+      goToNextPhoto();
+    }
+  }, [goToPrevPhoto, goToNextPhoto]);
+
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(String(user?.full_name || 'User'))}&size=512&background=111111&color=ffffff`;
   const mainUrl = activeUrl || fallbackAvatar;
   const preferredVibes = Array.isArray(user?.preferred_vibes) ? user.preferred_vibes : [];
@@ -101,19 +126,80 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
       <div className="bg-white/5 border border-white/10 rounded-xl p-6">
         <h3 className="text-sm uppercase tracking-wider text-white/40 mb-4">Photos</h3>
 
-        {/* Main photo */}
-        <div className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black/30">
-          {activeIsPremium ? (
-            <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#FF1493]/15 border border-[#FFD700]/40 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-3xl mb-2">🔒</div>
-                <div className="text-xs text-[#FFD700] font-black uppercase">Premium</div>
+        {/* Main photo with swipe/tap navigation */}
+        <SwipeGesture
+          onSwipeLeft={goToNextPhoto}
+          onSwipeRight={goToPrevPhoto}
+          threshold={40}
+          className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black/30 cursor-pointer select-none"
+        >
+          <div onClick={handlePhotoTap} className="w-full h-full">
+            {activeIsPremium ? (
+              <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#FF1493]/15 border border-[#FFD700]/40 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-3xl mb-2">🔒</div>
+                  <div className="text-xs text-[#FFD700] font-black uppercase">Premium</div>
+                </div>
               </div>
-            </div>
-          ) : (
-            <img src={mainUrl} alt="Profile photo" className="w-full h-full object-cover" />
+            ) : (
+              <img src={mainUrl} alt="Profile photo" className="w-full h-full object-cover" draggable={false} />
+            )}
+          </div>
+
+          {/* Navigation arrows (visible on hover/desktop) */}
+          {totalPhotos > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); goToPrevPhoto(); }}
+                disabled={selectedPhotoIndex === 0}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 items-center justify-center text-white/80 hover:bg-black/70 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hidden md:flex"
+                aria-label="Previous photo"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); goToNextPhoto(); }}
+                disabled={selectedPhotoIndex === totalPhotos - 1}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/80 hover:bg-black/70 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hidden md:flex"
+                aria-label="Next photo"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
           )}
-        </div>
+
+          {/* Photo indicator dots */}
+          {totalPhotos > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+              {photoUrls.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPhotoIndex(idx);
+                    setPreviewPhotoIndex(null);
+                  }}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    idx === selectedPhotoIndex
+                      ? 'bg-pink-500 w-4'
+                      : 'bg-white/40 hover:bg-white/60'
+                  }`}
+                  aria-label={`Go to photo ${idx + 1}`}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Photo counter */}
+          {totalPhotos > 1 && (
+            <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-black/50 backdrop-blur-sm text-white/80 text-xs font-bold">
+              {selectedPhotoIndex + 1}/{totalPhotos}
+            </div>
+          )}
+        </SwipeGesture>
 
         {/* 4 other photos: hover to preview, click to select */}
         <div className="mt-3 grid grid-cols-4 gap-3">

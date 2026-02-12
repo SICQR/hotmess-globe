@@ -79,7 +79,7 @@ export default function Feed() {
         key={activity.id}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors"
+        className="glass border border-white/10 rounded-xl p-4 hover:border-[#FF1493]/30 hover:shadow-glow-hot/10 transition-all duration-300"
       >
         <div className="flex items-start gap-3">
           <Link to={createPageUrl(`Profile?email=${user.email}`)}>
@@ -163,15 +163,20 @@ export default function Feed() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-black text-white p-4 md:p-8 relative">
+      {/* Background effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/3 w-96 h-96 bg-[#FF1493]/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 right-1/3 w-96 h-96 bg-[#00D9FF]/5 rounded-full blur-[150px]" />
+      </div>
+      <div className="max-w-4xl mx-auto relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
           <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2">
-            <span className="text-[#FF1493]">ACTIVITY</span> FEED
+            <span className="text-gradient-hot">ACTIVITY</span> FEED
           </h1>
           <p className="text-white/60 uppercase text-sm tracking-wider">
             What's happening in the scene

@@ -444,6 +444,22 @@ export const base44 = {
       const { data: { session } } = await supabase.auth.getSession();
       return !!session;
     },
+
+    /**
+     * Ensures user is authenticated before proceeding.
+     * If not logged in, redirects to /auth with a `next` param.
+     * @param {string} redirectUrl - URL to return to after login
+     * @returns {Promise<boolean>} - true if authenticated, false if redirecting
+     */
+    requireProfile: async (redirectUrl) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) return true;
+      
+      // Not logged in - redirect to auth
+      const next = encodeURIComponent(redirectUrl || window.location.href);
+      window.location.href = `/auth?next=${next}`;
+      return false;
+    },
     
     updateMe: async (data) => {
       const { data: { user } } = await supabase.auth.getUser();

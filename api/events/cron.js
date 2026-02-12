@@ -25,12 +25,21 @@ const isAuthorizedCron = (req) => {
   const secret = getEnv('EVENT_SCRAPER_CRON_SECRET');
   const onVercel = isRunningOnVercel();
   const allowVercelCron = onVercel && isVercelCronRequest(req);
+  const isPreview = process.env.VERCEL_ENV === 'preview';
 
   // Best practice:
   // - scheduled runs: allow Vercel Cron header
   // - manual/admin runs: allow secret (header or query)
-  // If a secret is configured, require either (cron header) OR (valid secret).
-  if (secret && !allowVercelCron) {
+  // - preview deployments: allow for testing (no secret required)
+  
+  // Allow Vercel Cron header always
+  if (allowVercelCron) return true;
+  
+  // Allow preview deployments for testing
+  if (isPreview) return true;
+  
+  // If a secret is configured, allow with valid secret
+  if (secret) {
     const header = req.headers?.authorization || req.headers?.Authorization;
     const match = header && String(header).match(/^Bearer\s+(.+)$/i);
     const headerToken = match?.[1] || null;
@@ -38,11 +47,10 @@ const isAuthorizedCron = (req) => {
     return headerToken === secret || queryToken === secret;
   }
 
-  // If no secret is configured:
-  // - on Vercel: allow only Vercel Cron
-  // - local/dev: allow for convenience
-  if (onVercel) return allowVercelCron;
-  return true;
+  // Local/dev: allow for convenience
+  if (!onVercel) return true;
+  
+  return false;
 };
 
 const findExistingBeaconId = async ({ serviceClient, city, title, eventDateIso }) => {

@@ -422,7 +422,7 @@ export default function ProductDetail() {
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
                     <div>
-                      <p className="font-bold">{review.reviewer_email}</p>
+                      <p className="font-bold">{review.reviewer_name || review.reviewer_username || 'Anonymous'}</p>
                       <div className="flex gap-1 mt-1">
                         {[1, 2, 3, 4, 5].map(star => (
                           <Star

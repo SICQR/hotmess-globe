@@ -16,10 +16,15 @@ function writeCookie(name, value) {
   document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; SameSite=Lax`;
 }
 
+// Skip age gate in development for faster testing
+const DEV_SKIP_AGE_GATE = import.meta.env.DEV;
+
 export default function Gatekeeper({ children }) {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [ageVerified, setAgeVerified] = useState(() => {
+    // Auto-verify in dev mode
+    if (DEV_SKIP_AGE_GATE) return true;
     if (typeof window === 'undefined') return false;
     try {
       if (window.sessionStorage.getItem('hm_age_verified') === '1') return true;
@@ -81,6 +86,11 @@ export default function Gatekeeper({ children }) {
         </div>
       </div>
     );
+  }
+
+  // Skip all gates in dev mode
+  if (DEV_SKIP_AGE_GATE) {
+    return <>{children}</>;
   }
 
   // Age gate for non-verified users

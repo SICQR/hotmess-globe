@@ -1,13 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
+// Disable in dev mode to prevent demo profile spam
+const DISABLE_IN_DEV = import.meta.env.DEV;
+
 export default function RightNowNotifications({ currentUser }) {
+  // Track notified users to prevent duplicates
+  const notifiedRef = useRef(new Set());
+  
   const { data: rightNowUsers = [] } = useQuery({
     queryKey: ['right-now-active'],
     queryFn: () => base44.entities.RightNowStatus.filter({ active: true }),
-    enabled: !!currentUser,
+    enabled: !!currentUser && !DISABLE_IN_DEV,
     refetchInterval: 30000 // Check every 30 seconds
   });
 
@@ -30,6 +36,8 @@ export default function RightNowNotifications({ currentUser }) {
   });
 
   useEffect(() => {
+    // Skip in dev mode
+    if (DISABLE_IN_DEV) return;
     if (!currentUser || rightNowUsers.length === 0) return;
 
     // Find compatible matches who just went Right Now
@@ -38,6 +46,10 @@ export default function RightNowNotifications({ currentUser }) {
 
     rightNowUsers.forEach(status => {
       if (status.user_email === currentUser.email) return;
+      
+      // Skip if already notified this user in this session
+      const notifyKey = `${status.user_email}:${status.id}`;
+      if (notifiedRef.current.has(notifyKey)) return;
 
       // Check if this is a new Right Now status (created in last minute)
       const createdAt = new Date(status.created_date);
@@ -61,6 +73,9 @@ export default function RightNowNotifications({ currentUser }) {
         const commonTags = userTags.filter(t => theirTags.includes(t.tag_id)).length;
         const totalTags = Math.max(userTags.length, theirTags.length);
         const matchPercent = totalTags > 0 ? Math.round((commonTags / totalTags) * 100) : 0;
+
+        // Mark as notified before showing toast
+        notifiedRef.current.add(notifyKey);
 
         toast.success(`${userName} is Right Now! ${matchPercent}% match`, {
           description: 'Check Connect to view their profile',

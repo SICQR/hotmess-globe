@@ -16,19 +16,16 @@ import DisputeResolution from '../components/seller/DisputeResolution';
 import FeaturedListingsManager from '../components/seller/FeaturedListingsManager';
 import SellerRatingDisplay from '../components/seller/SellerRatingDisplay';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { 
-  insertBeaconForP2PListing, 
-  deleteBeaconForP2PListing, 
-  dispatchWorldPulse 
-} from '@/hooks/useP2PListingBeacon';
+import { User } from 'lucide-react';
 
 export default function SellerDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -86,17 +83,10 @@ export default function SellerDashboard() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Product.create({ ...data, seller_email: currentUser.email }),
-    onSuccess: async (createdProduct) => {
+    onSuccess: () => {
       queryClient.invalidateQueries(['seller-products']);
       setShowForm(false);
       toast.success('Product created!');
-      
-      // Wire to Globe: Create Gold beacon for P2P listing
-      const promoterId = currentUser?.auth_user_id ?? currentUser?.id;
-      if (promoterId && createdProduct) {
-        await insertBeaconForP2PListing(createdProduct, promoterId);
-        dispatchWorldPulse('GOLD_DROP', '#FFD700');
-      }
     },
     onError: (error) => {
       toast.error(error?.message || 'Failed to create product');
@@ -118,15 +108,9 @@ export default function SellerDashboard() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Product.delete(id),
-    onSuccess: async (_, deletedId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries(['seller-products']);
       toast.success('Product deleted');
-      
-      // Wire to Globe: Remove beacon for deleted P2P listing
-      if (deletedId) {
-        await deleteBeaconForP2PListing(deletedId);
-        dispatchWorldPulse('BEACON_REMOVED', '#FFD700');
-      }
     },
     onError: (error) => {
       toast.error(error?.message || 'Failed to delete product');
@@ -191,6 +175,15 @@ export default function SellerDashboard() {
               </h1>
               <p className="text-white/60">Manage your products and orders</p>
             </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/profile/${currentUser?.id || ''}`)}
+                className="border-white/20"
+              >
+                <User className="w-4 h-4 mr-2" />
+                View Public Profile
+              </Button>
             {!showForm && (
               <Button 
                 onClick={() => setShowForm(true)}
@@ -200,6 +193,7 @@ export default function SellerDashboard() {
                 New Product
               </Button>
             )}
+            </div>
           </div>
 
           {/* Stats */}
@@ -378,7 +372,7 @@ export default function SellerDashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-bold mb-1">Order #{order.id.slice(0, 8)}</h3>
-                        <p className="text-sm text-white/60">Buyer: {order.buyer_email}</p>
+                        <p className="text-sm text-white/60">Buyer: {order.buyer_name || order.buyer_username || 'Anonymous'}</p>
                       </div>
                       <div className="text-right">
                         <div className="text-xl font-black text-[#FFEB3B] mb-1">

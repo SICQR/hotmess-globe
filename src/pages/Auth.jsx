@@ -1,44 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth, base44 } from '@/components/utils/supabaseClient';
+import { auth } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 import TelegramLogin from '@/components/auth/TelegramLogin';
-
-const MEMBERSHIP_TIERS = [
-  {
-    id: 'basic',
-    name: 'FREE',
-    price: '£0',
-    color: '#FFFFFF',
-    features: ['Basic profile', 'Browse events & market', 'Social: limited threads/day', 'Beacons: 1/day', 'Calendar: basic'],
-    icon: Star
-  },
-  {
-    id: 'plus',
-    name: 'PLUS',
-    price: '£9.99/mo',
-    color: '#FF1493',
-    features: ['Everything in FREE', 'Social: more threads + sorting', 'Saved filter presets', 'More beacons + privacy controls', 'Extended calendar'],
-    icon: Zap,
-    popular: true
-  },
-  {
-    id: 'pro',
-    name: 'CHROME',
-    price: '£19.99/mo',
-    color: '#00D9FF',
-    features: ['Everything in PLUS', 'Visibility boost (non-spam)', 'Advanced Pulse layers', 'Music: early access', 'Full stats dashboard'],
-    icon: Crown
-  }
-];
+import UsernamePicker from '@/components/auth/UsernamePicker';
 
 export default function Auth() {
-  const [step, setStep] = useState('auth'); // auth, forgot, reset, membership, profile, welcome
+  const [step, setStep] = useState('auth'); // auth, forgot, reset, username, welcome
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,12 +19,6 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedTier, setSelectedTier] = useState('basic');
-  const [profileData, setProfileData] = useState({
-    bio: '',
-    city: 'London',
-    profile_type: 'standard'
-  });
   const [searchParams] = useSearchParams();
   const nextUrl = searchParams.get('next');
   const mode = searchParams.get('mode');
@@ -81,8 +48,8 @@ export default function Auth() {
         const { error: signInError } = await auth.signIn(email, password);
         if (signInError) throw signInError;
 
-        toast.success('Account created! Let\'s set you up...');
-        setStep('membership');
+        toast.success('Account created! Let\'s pick your username...');
+        setStep('username');
       } else {
         const { error } = await auth.signIn(email, password);
         if (error) throw error;
@@ -159,38 +126,6 @@ export default function Auth() {
     }
   };
 
-  const handleMembership = async () => {
-    setLoading(true);
-    try {
-      await base44.auth.updateMe({
-        membership_tier: selectedTier,
-        subscription_status: selectedTier === 'basic' ? 'active' : 'trial'
-      });
-      toast.success('Membership selected!');
-      setStep('profile');
-    } catch (error) {
-      toast.error('Failed to set membership');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleProfile = async () => {
-    setLoading(true);
-    try {
-      await base44.auth.updateMe({
-        ...profileData,
-        onboarding_completed: true
-      });
-      setStep('welcome');
-      setTimeout(() => {
-        window.location.href = nextUrl || createPageUrl('Home');
-      }, 3000);
-    } catch (error) {
-      toast.error('Failed to update profile');
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 relative overflow-hidden">
@@ -518,190 +453,24 @@ export default function Auth() {
           </motion.div>
         )}
 
-        {step === 'membership' && (
+        {step === 'username' && (
           <motion.div
-            key="membership"
+            key="username"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="w-full max-w-5xl relative z-10"
+            className="w-full relative z-10"
           >
-            <div className="text-center mb-12">
-              <motion.h2 
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="text-5xl md:text-6xl font-black uppercase mb-3"
-              >
-                CHOOSE YOUR <span className="text-gradient-hot">TIER</span>
-              </motion.h2>
-              <motion.p 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="text-white/60 text-lg uppercase tracking-wider"
-              >
-                Start free, upgrade anytime
-              </motion.p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              {MEMBERSHIP_TIERS.map((tier, idx) => {
-                const Icon = tier.icon;
-                const isSelected = selectedTier === tier.id;
-                const glowClass = tier.id === 'plus' ? 'shadow-glow-hot' : tier.id === 'pro' ? 'shadow-glow-cyan' : '';
-                
-                return (
-                  <motion.button
-                    key={tier.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 + idx * 0.1 }}
-                    onClick={() => setSelectedTier(tier.id)}
-                    whileHover={{ scale: 1.02, y: -5 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`relative p-6 rounded-2xl transition-all duration-300 ${
-                      isSelected
-                        ? `border-2 border-[${tier.color}] bg-white/10 ${glowClass}`
-                        : 'border-2 border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
-                    }`}
-                  >
-                    {tier.popular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white text-xs font-black uppercase rounded-full shadow-glow-hot">
-                        POPULAR
-                      </div>
-                    )}
-                    <div className="text-center mb-6">
-                      <div 
-                        className="w-16 h-16 mx-auto mb-4 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: `${tier.color}20` }}
-                      >
-                        <Icon className="w-8 h-8" style={{ color: tier.color }} />
-                      </div>
-                      <h3 className="text-3xl font-black uppercase mb-2">{tier.name}</h3>
-                      <p className="text-2xl font-bold" style={{ color: tier.color }}>{tier.price}</p>
-                    </div>
-                    <ul className="space-y-3 text-left">
-                      {tier.features.map((feature, fidx) => (
-                        <li key={fidx} className="flex items-start gap-2 text-sm">
-                          <Check className="w-4 h-4 mt-0.5 text-[#39FF14] flex-shrink-0" />
-                          <span className="text-white/80">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    {isSelected && (
-                      <motion.div
-                        layoutId="tier-selected"
-                        className="absolute inset-0 rounded-2xl border-2 pointer-events-none"
-                        style={{ borderColor: tier.color }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                      />
-                    )}
-                  </motion.button>
-                );
-              })}
-            </div>
-
-            <div className="text-center">
-              <Button
-                onClick={handleMembership}
-                disabled={loading}
-                size="xl"
-                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase px-12"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                  <>
-                    Continue
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </>
-                )}
-              </Button>
-            </div>
-          </motion.div>
-        )}
-
-        {step === 'profile' && (
-          <motion.div
-            key="profile"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className="w-full max-w-2xl"
-          >
-            <div className="text-center mb-8">
-              <h2 className="text-4xl font-black uppercase mb-3">COMPLETE YOUR PROFILE</h2>
-              <p className="text-white/60">Tell us a bit about yourself</p>
-            </div>
-
-            <div className="bg-white/5 border-2 border-white/10 p-8 space-y-6">
-              <div>
-                <label className="block text-sm uppercase tracking-wider text-white/60 mb-3">
-                  Profile Type
-                </label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    onClick={() => setProfileData({ ...profileData, profile_type: 'standard' })}
-                    className={`p-4 border-2 transition-all ${
-                      profileData.profile_type === 'standard'
-                        ? 'border-[#FF1493] bg-[#FF1493]/10'
-                        : 'border-white/20 hover:border-white/40'
-                    }`}
-                  >
-                    <p className="font-black uppercase mb-1">STANDARD</p>
-                    <p className="text-xs text-white/60">Regular profile</p>
-                  </button>
-                  <button
-                    onClick={() => setProfileData({ ...profileData, profile_type: 'seller' })}
-                    className={`p-4 border-2 transition-all ${
-                      profileData.profile_type === 'seller'
-                        ? 'border-[#FF1493] bg-[#FF1493]/10'
-                        : 'border-white/20 hover:border-white/40'
-                    }`}
-                  >
-                    <p className="font-black uppercase mb-1">SELLER</p>
-                    <p className="text-xs text-white/60">Sell products/services</p>
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm uppercase tracking-wider text-white/60 mb-3">
-                  City
-                </label>
-                <Input
-                  type="text"
-                  value={profileData.city}
-                  onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
-                  placeholder="London"
-                  className="bg-black/50 border-white/20"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm uppercase tracking-wider text-white/60 mb-3">
-                  Bio (Optional)
-                </label>
-                <textarea
-                  value={profileData.bio}
-                  onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                  placeholder="Tell us about yourself..."
-                  rows={4}
-                  className="w-full bg-black/50 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#FF1493] focus:outline-none"
-                />
-              </div>
-
-              <Button
-                onClick={handleProfile}
-                disabled={loading}
-                className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase py-6 text-lg"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                  <>
-                    Complete Setup
-                    <Check className="w-5 h-5 ml-2" />
-                  </>
-                )}
-              </Button>
-            </div>
+            <UsernamePicker 
+              suggestedFromEmail={email}
+              onComplete={(username) => {
+                toast.success(`Welcome, @${username}!`);
+                setStep('welcome');
+                setTimeout(() => {
+                  window.location.href = nextUrl || createPageUrl('Home');
+                }, 2000);
+              }}
+            />
           </motion.div>
         )}
 

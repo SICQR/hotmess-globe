@@ -29,6 +29,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import { User } from 'lucide-react';
 
 export default function CreatorDashboard() {
   const { user } = useAuth();
@@ -132,6 +133,14 @@ export default function CreatorDashboard() {
             <p className="text-white/60 text-sm">Manage your content & earnings</p>
           </div>
           <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/profile/${user?.id || ''}`)}
+              className="border-white/20"
+            >
+              <User className="w-4 h-4 mr-2" />
+              View Public Profile
+            </Button>
             <Button
               variant="outline"
               onClick={() => navigate('/creator/settings')}

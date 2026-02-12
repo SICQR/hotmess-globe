@@ -1,13 +1,15 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { GridSkeleton } from '@/components/ui/LoadingSkeleton';
+import { ShoppingBag, ShoppingCart, ArrowRight, Sparkles } from 'lucide-react';
+import { ProductGridSkeleton } from '@/components/skeletons/PageSkeletons';
 import { Button } from '@/components/ui/button';
-import PageShell from '@/components/shell/PageShell';
 import { openCartDrawer } from '@/utils/cartEvents';
+import EmptyState, { ErrorState } from '@/components/ui/EmptyState';
 
 export default function Shop() {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['shopify', 'featured-products'],
     queryFn: async () => {
       const resp = await fetch('/api/shopify/featured');
@@ -27,120 +29,253 @@ export default function Shop() {
       return payload;
     },
     refetchInterval: 10 * 60 * 1000,
+    retry: 2,
   });
 
   const products = data?.products || [];
   const notConfigured = !!data?.notConfigured;
+  const featuredProduct = products[0];
+  const otherProducts = products.slice(1);
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <PageShell
-        eyebrow="MARKET"
-        title="Market"
-        subtitle="Featured drops. Limited. Unapologetic. Gone fast."
-        maxWidth="6xl"
-        right={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="glass"
-              className="border-white/20"
-              onClick={() => openCartDrawer('shopify')}
-            >
-              Cart
-            </Button>
-            <Button asChild variant="glass" className="border-white/20">
-              <Link to="/market/creators">Creators</Link>
-            </Button>
+      
+      {/* 1. HERO */}
+      <section className="relative min-h-[70vh] flex items-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-950/40 via-black to-orange-950/40" />
+        
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+            className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] border border-pink-500/10 rounded-full"
+          />
+          <motion.div 
+            animate={{ rotate: -360 }}
+            transition={{ duration: 90, repeat: Infinity, ease: 'linear' }}
+            className="absolute -bottom-1/2 -left-1/4 w-[600px] h-[600px] border border-orange-500/10 rounded-full"
+          />
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="relative z-10 w-full max-w-7xl mx-auto px-6 py-20"
+        >
+          <div className="max-w-3xl">
+            <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-4">
+              MESSMARKET
+            </p>
+            <h1 className="text-[12vw] md:text-[8vw] font-black italic leading-[0.85] tracking-tighter mb-6">
+              SHOP<span className="text-pink-500">.</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-white/70 mb-10 max-w-xl">
+              Limited drops. Exclusive merch. Fund the culture without extraction.
+            </p>
+
+            <div className="flex flex-wrap gap-4">
+              <Button 
+                onClick={() => openCartDrawer('shopify')}
+                variant="hot" size="lg" className="font-black uppercase px-8"
+              >
+                <ShoppingCart className="w-5 h-5 mr-3" />
+                VIEW CART
+              </Button>
+              <Link to="/market/creators">
+                <Button variant="outline" className="border-2 border-white/30 text-white hover:bg-white hover:text-black font-black uppercase px-8 py-6 text-lg">
+                  <Sparkles className="w-5 h-5 mr-3" />
+                  CREATORS
+                </Button>
+              </Link>
+            </div>
           </div>
-        }
-      >
-        <div>
-          {isLoading ? (
-            <GridSkeleton count={2} />
-          ) : notConfigured ? (
-            <div className="border border-white/10 bg-white/5 p-4">
-              <p className="text-white font-bold">Shop temporarily unavailable</p>
-              <p className="text-white/60 text-sm mt-1">
-                Shopify Storefront isn’t configured for this deployment yet.
-              </p>
-              {data?.details ? (
-                <p className="text-white/50 text-xs mt-2">{data.details}</p>
-              ) : null}
-            </div>
-          ) : error ? (
-            <div className="border border-white/10 bg-white/5 p-4">
-              <p className="text-red-400 font-bold">Failed to load shop</p>
-              <p className="text-white/60 text-sm mt-1">{error?.message || 'Unknown error'}</p>
-            </div>
-          ) : products.length === 0 ? (
-            <div className="border border-white/10 bg-white/5 p-4">
-              <p className="text-white/70">No products available.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {products.map((p) => {
-                const href = `/market/p/${encodeURIComponent(p.handle)}`;
-                const primaryUrl = p?.featuredImage?.url || p?.images?.nodes?.[0]?.url || '';
-                const primaryAlt = p?.featuredImage?.altText || p?.images?.nodes?.[0]?.altText || p?.title;
-                const secondaryUrl = p?.images?.nodes?.[1]?.url || '';
-                const secondaryAlt = p?.images?.nodes?.[1]?.altText || primaryAlt;
-                return (
-                  <div
-                    key={p.id}
-                    className="border-2 border-white/10 bg-white/5 p-5"
-                  >
-                    <Link
-                      to={href}
-                      className="block hover:opacity-95 transition-opacity"
-                    >
-                      <div className="group aspect-square bg-black border border-white/10 overflow-hidden relative">
-                        {primaryUrl ? (
-                          <img
-                            src={primaryUrl}
-                            alt={primaryAlt || p.title}
-                            loading="lazy"
-                            decoding="async"
-                            className={
-                              "absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-300 " +
-                              (secondaryUrl ? "opacity-100 group-hover:opacity-0" : "opacity-100")
-                            }
-                          />
-                        ) : null}
+        </motion.div>
+      </section>
 
-                        {secondaryUrl ? (
-                          <img
-                            src={secondaryUrl}
-                            alt={secondaryAlt || p.title}
-                            loading="lazy"
-                            decoding="async"
-                            className="absolute inset-0 w-full h-full object-cover object-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                          />
-                        ) : null}
+      {/* 2. FEATURED PRODUCT */}
+      {!isLoading && !notConfigured && !error && featuredProduct && (
+        <section className="py-16 px-6 bg-gradient-to-b from-black to-yellow-950/10">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <p className="text-sm uppercase tracking-[0.4em] text-pink-500 mb-6">FEATURED DROP</p>
+              
+              <Link to={`/market/p/${encodeURIComponent(featuredProduct.handle)}`}>
+                <div className="group grid grid-cols-1 lg:grid-cols-2 gap-8 bg-white/5 border border-white/10 hover:border-pink-500/50 rounded-2xl overflow-hidden transition-all">
+                  {/* Image */}
+                  <div className="relative aspect-square">
+                    {featuredProduct.featuredImage?.url ? (
+                      <img 
+                        src={featuredProduct.featuredImage.url} 
+                        alt={featuredProduct.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
+                        <ShoppingBag className="w-24 h-24 text-pink-500/30" />
                       </div>
-                      <h2 className="mt-4 text-xl font-black uppercase tracking-tight">{p.title}</h2>
-                      {p?.variants?.nodes?.[0]?.price?.amount ? (
-                        <p className="text-sm text-white/60 mt-2">
-                          {Number(p.variants.nodes[0].price.amount).toFixed(2)} {p.variants.nodes[0].price.currencyCode}
-                        </p>
-                      ) : null}
-                    </Link>
-
-                    <div className="mt-4">
-                      <Button
-                        asChild
-                        variant="cyan"
-                        className="w-full font-black uppercase"
-                      >
-                        <Link to={href}>View product</Link>
-                      </Button>
+                    )}
+                    <div className="absolute top-4 left-4 px-4 py-2 bg-pink-500 text-white text-sm font-black uppercase rounded-full">
+                      NEW DROP
                     </div>
                   </div>
+                  
+                  {/* Content */}
+                  <div className="p-8 lg:p-12 flex flex-col justify-center">
+                    <h2 className="text-4xl md:text-5xl font-black uppercase mb-4 group-hover:text-pink-500 transition-colors">
+                      {featuredProduct.title}
+                    </h2>
+                    {featuredProduct.description && (
+                      <p className="text-white/60 mb-6 line-clamp-3">
+                        {featuredProduct.description}
+                      </p>
+                    )}
+                    {featuredProduct.variants?.nodes?.[0]?.price?.amount && (
+                      <p className="text-4xl font-black text-pink-500 mb-8">
+                        £{Number(featuredProduct.variants.nodes[0].price.amount).toFixed(0)}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 text-pink-500 font-black uppercase group-hover:text-white transition-colors">
+                      VIEW PRODUCT
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          </div>
+        </section>
+      )}
+
+      {/* 3. PRODUCT GRID */}
+      <section className="py-16 px-6 bg-black">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-10"
+          >
+            <h2 className="text-4xl font-black italic mb-2">ALL PRODUCTS</h2>
+            <p className="text-white/50">{products.length} items available</p>
+          </motion.div>
+
+          {isLoading ? (
+            <ProductGridSkeleton count={6} />
+          ) : notConfigured ? (
+            <EmptyState
+              preset="shop"
+              title="Shop Coming Soon"
+              description="Shopify Storefront isn't configured for this deployment yet."
+            />
+          ) : error ? (
+            <ErrorState
+              title="Couldn't load products"
+              description="We had trouble connecting to the shop."
+              type="network"
+              onRetry={() => refetch()}
+              error={error}
+            />
+          ) : otherProducts.length === 0 && !featuredProduct ? (
+            <EmptyState
+              preset="shop"
+              title="No Products Yet"
+              description="Check back soon for drops."
+            />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {(featuredProduct ? otherProducts : products).map((p, idx) => {
+                const href = `/market/p/${encodeURIComponent(p.handle)}`;
+                const primaryUrl = p?.featuredImage?.url || p?.images?.nodes?.[0]?.url || '';
+                const secondaryUrl = p?.images?.nodes?.[1]?.url || '';
+                
+                return (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.05 }}
+                  >
+                    <Link to={href}>
+                      <div className="group bg-white/5 border border-white/10 hover:border-pink-500/50 rounded-xl overflow-hidden transition-all">
+                        {/* Image */}
+                        <div className="relative aspect-square overflow-hidden">
+                          {primaryUrl ? (
+                            <>
+                              <img
+                                src={primaryUrl}
+                                alt={p.title}
+                                loading="lazy"
+                                className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${secondaryUrl ? 'group-hover:opacity-0' : ''}`}
+                              />
+                              {secondaryUrl && (
+                                <img
+                                  src={secondaryUrl}
+                                  alt={p.title}
+                                  loading="lazy"
+                                  className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                                />
+                              )}
+                            </>
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
+                              <ShoppingBag className="w-16 h-16 text-pink-500/30" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="p-5">
+                          <h3 className="text-lg font-black uppercase mb-2 group-hover:text-pink-500 transition-colors">
+                            {p.title}
+                          </h3>
+                          {p?.variants?.nodes?.[0]?.price?.amount && (
+                            <p className="text-2xl font-black text-pink-500">
+                              £{Number(p.variants.nodes[0].price.amount).toFixed(0)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
                 );
               })}
             </div>
           )}
         </div>
-      </PageShell>
+      </section>
+
+      {/* 4. CTA */}
+      <section className="py-20 px-6 bg-gradient-to-b from-black to-yellow-950/20 border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <ShoppingBag className="w-16 h-16 mx-auto mb-6 text-pink-500" />
+            <h2 className="text-3xl md:text-5xl font-black italic mb-6">
+              SUPPORT THE PLATFORM
+            </h2>
+            <p className="text-xl text-white/60 mb-10 max-w-2xl mx-auto">
+              Every purchase funds the culture. No extraction. Just community.
+            </p>
+            <Button
+              onClick={() => openCartDrawer('shopify')}
+              variant="hot" size="lg" className="font-black uppercase px-12 text-xl"
+            >
+              <ShoppingCart className="w-6 h-6 mr-3" />
+              VIEW CART
+            </Button>
+          </motion.div>
+        </div>
+      </section>
     </div>
   );
 }
