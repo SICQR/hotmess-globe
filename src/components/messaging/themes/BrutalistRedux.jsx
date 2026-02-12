@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Image, Video, ArrowLeft, Loader2, Check, CheckCheck, X, Bell, BellOff, Search } from 'lucide-react';
+import { Send, Image, ArrowLeft, Loader2, Check, CheckCheck, X, Bell, BellOff, Search } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function BrutalistRedux({

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth, base44 } from '@/components/utils/supabaseClient';
+import { auth } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LogIn, UserPlus, Loader2, ArrowRight, Check } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 import TelegramLogin from '@/components/auth/TelegramLogin';

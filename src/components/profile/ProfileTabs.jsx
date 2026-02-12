@@ -15,7 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { 
   User, Music, Calendar, Star, ShoppingBag, 
-  MapPin, Zap, Image, Clock, Ticket, Radio
+  MapPin, Image, Clock, Ticket, Radio
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ProductCard from '@/components/marketplace/ProductCard';

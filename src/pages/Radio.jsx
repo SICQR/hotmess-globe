@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Radio as RadioIcon, Calendar, Play, Pause, ArrowRight, Disc, ChevronLeft, ChevronRight, ExternalLink, Globe } from 'lucide-react';
+import { Radio as RadioIcon, Calendar, Play, Pause, ArrowRight, Disc, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { schedule, getNextEpisode } from '../components/radio/radioUtils';
 import { useAudio } from '@/contexts/AudioContext';

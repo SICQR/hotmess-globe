@@ -11,7 +11,7 @@
  */
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44, supabase } from '@/api/base44Client';
 import { MessageCircle, Plus, ArrowLeft, Search, MoreVertical, Phone, Video } from 'lucide-react';
@@ -24,7 +24,6 @@ import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ConversationListSkeleton } from '@/components/skeletons/PageSkeletons';
 import EmptyState, { ErrorState } from '@/components/ui/EmptyState';
-import { cn } from '@/lib/utils';
 
 // Demo threads for fallback when no real threads exist
 const DEMO_THREADS = [

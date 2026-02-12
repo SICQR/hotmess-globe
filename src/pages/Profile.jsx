@@ -17,7 +17,7 @@ import React, { useState, useMemo } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
+import { base44 } from '@/components/utils/supabaseClient';
 import { 
   Camera, MapPin, MessageCircle, Edit3, Settings, 
   ChevronLeft, ChevronRight, Plus, Music, Clock,
@@ -29,7 +29,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useCurrentUser, useAllUsers } from '@/components/utils/queryConfig';
 import { createPageUrl } from '../utils';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import ProfileTabs from '@/components/profile/ProfileTabs';

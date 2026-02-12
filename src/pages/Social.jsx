@@ -17,7 +17,6 @@ import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { createPageUrl } from '../utils';
 import { useCurrentUser } from '@/components/utils/queryConfig';
 import { useInfiniteProfiles } from '@/features/profilesGrid/useInfiniteProfiles';
 import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
@@ -25,7 +24,7 @@ import { toast } from 'sonner';
 import { useTonight } from '@/contexts/TonightContext';
 
 // Ghosted components
-import { GhostedSwipeView, GhostedRadarView, StatusSelector, GrindrGrid, ProfileSheet, UberShareButton } from '@/features/ghosted';
+import { GhostedSwipeView, GhostedRadarView, StatusSelector, GrindrGrid, ProfileSheet } from '@/features/ghosted';
 import { fetchRoutingEtas } from '@/api/connectProximity';
 
 // Fallback demo profiles for dev/testing when API is slow
