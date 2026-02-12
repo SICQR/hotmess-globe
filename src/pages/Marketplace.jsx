@@ -433,7 +433,7 @@ export default function Marketplace() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-black italic uppercase tracking-tight mb-2">
-                THE <span className="text-[#00D9FF]">SHOP</span>
+                THE <span className="text-pink-500">SHOP</span>
               </h1>
               <p className="text-white/60 uppercase text-sm tracking-wider">
                 Official Gear + P2P Mess Market (10% Platform Fee)
@@ -457,7 +457,7 @@ export default function Marketplace() {
               <Button 
                 onClick={() => openCartDrawer('creators')}
                 variant="outline"
-                className="border-[#39FF14] text-[#39FF14] w-full sm:w-auto"
+                className="border-white/20 text-white w-full sm:w-auto"
               >
                 <ShoppingBag className="w-4 h-4 mr-2" />
                 Cart
@@ -563,7 +563,7 @@ export default function Marketplace() {
             <TabsTrigger value="all" className="shrink-0 data-[state=active]:bg-[#FF1493] data-[state=active]:text-black">
               All ({uniqueProducts.length})
             </TabsTrigger>
-            <TabsTrigger value="official" className="shrink-0 data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
+            <TabsTrigger value="official" className="shrink-0 data-[state=active]:bg-pink-500 data-[state=active]:text-white">
               Official Shop
             </TabsTrigger>
             <TabsTrigger value="p2p" className="shrink-0 data-[state=active]:bg-[#B026FF] data-[state=active]:text-white">
@@ -572,7 +572,7 @@ export default function Marketplace() {
             <TabsTrigger value="physical" className="shrink-0 data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black">
               Physical
             </TabsTrigger>
-            <TabsTrigger value="digital" className="shrink-0 data-[state=active]:bg-[#39FF14] data-[state=active]:text-black">
+            <TabsTrigger value="digital" className="shrink-0 data-[state=active]:bg-pink-500 data-[state=active]:text-white">
               Digital
             </TabsTrigger>
           </TabsList>

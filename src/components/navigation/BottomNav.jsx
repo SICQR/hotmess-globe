@@ -1,198 +1,247 @@
-import React, { useState } from 'react';
+/**
+ * BottomNav - Polished mobile navigation
+ * 
+ * Features:
+ * - Haptic feedback simulation
+ * - No layout shifts from live counts
+ * - Safe area support
+ * - Smooth transitions
+ * - Active state indicators
+ */
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
 import { createPageUrl } from '../../utils';
-import { base44 } from '@/components/utils/supabaseClient';
-import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { 
-  Home, 
-  Globe, 
-  Zap, 
-  ShoppingBag, 
-  LayoutGrid,
-  Users,
-  Calendar,
   Radio,
+  Zap, 
+  Ghost,
+  ShoppingBag, 
+  MoreHorizontal,
   Ticket,
   Shield,
   Sparkles,
   Navigation,
   BarChart3,
   Settings,
+  Globe,
   X,
   MessageCircle,
-  Package
+  User
 } from 'lucide-react';
 
-// The 11 apps within HOTMESS London OS
+// Apps available in MORE menu - organized by pillar
 const ALL_APPS = [
-  { id: 'social', name: 'SOCIAL', icon: Users, path: 'Social', color: '#FF1493', desc: 'Find people', sheetType: SHEET_TYPES.GHOSTED },
-  { id: 'events', name: 'EVENTS', icon: Calendar, path: 'Events', color: '#00D9FF', desc: "What's on" },
-  { id: 'radio', name: 'RADIO', icon: Radio, path: 'Music', color: '#B026FF', desc: 'Live shows' },
-  { id: 'tickets', name: 'TICKETS', icon: Ticket, path: 'TicketMarketplace', color: '#FF6B35', desc: 'Buy & sell' },
-  { id: 'community', name: 'COMMUNITY', icon: Sparkles, path: 'Community', color: '#FFEB3B', desc: 'Posts' },
-  { id: 'safety', name: 'SAFETY', icon: Shield, path: 'Care', color: '#FF0000', desc: 'You good?' },
-  { id: 'pulse', name: 'PULSE', icon: Globe, path: 'Pulse', color: '#39FF14', desc: 'Live map' },
-  { id: 'directions', name: 'TRAVEL', icon: Navigation, path: 'Directions', color: '#00D9FF', desc: 'Get there' },
-  { id: 'stats', name: 'STATS', icon: BarChart3, path: 'Stats', color: '#FFEB3B', desc: 'Your data' },
-  { id: 'settings', name: 'SETTINGS', icon: Settings, path: 'Settings', color: '#FFFFFF', desc: 'Preferences' },
+  // THE AIRWAVES - Passive Discovery
+  { id: 'radio', name: 'RADIO', icon: Radio, path: 'Music', color: '#B026FF', desc: 'Live shows', pillar: 'airwaves' },
+  { id: 'schedule', name: 'SCHEDULE', icon: Ticket, path: 'Schedule', color: '#B026FF', desc: 'Show times', pillar: 'airwaves' },
+  
+  // THE STREETS - Active Exploration
+  { id: 'events', name: 'TONIGHT', icon: Zap, path: 'Events', color: '#00D9FF', desc: "What's on", pillar: 'streets' },
+  { id: 'pulse', name: 'GLOBE', icon: Globe, path: 'Pulse', color: '#39FF14', desc: 'Live map', pillar: 'streets' },
+  { id: 'directions', name: 'TRAVEL', icon: Navigation, path: 'Directions', color: '#00D9FF', desc: 'Get there', pillar: 'streets' },
+  
+  // THE CROWD - Social & Dating
+  { id: 'ghosted', name: 'GHOSTED', icon: Ghost, path: 'Social', color: '#FF1493', desc: 'Find people', pillar: 'crowd' },
+  { id: 'messages', name: 'DMs', icon: MessageCircle, path: 'Messages', color: '#FF1493', desc: 'Your chats', pillar: 'crowd' },
+  { id: 'community', name: 'COMMUNITY', icon: Sparkles, path: 'Community', color: '#FFEB3B', desc: 'Posts', pillar: 'crowd' },
+  
+  // THE VAULT - Personal & Utility
+  { id: 'profile', name: 'PROFILE', icon: User, path: 'Profile', color: '#FFFFFF', desc: 'Your page', pillar: 'vault' },
+  { id: 'shop', name: 'SHOP', icon: ShoppingBag, path: 'Marketplace', color: '#FFB800', desc: 'Merch', pillar: 'vault' },
+  { id: 'tickets', name: 'TICKETS', icon: Ticket, path: 'TicketMarketplace', color: '#FF6B35', desc: 'Buy & sell', pillar: 'vault' },
+  { id: 'stats', name: 'XP', icon: BarChart3, path: 'Stats', color: '#FFEB3B', desc: 'Your data', pillar: 'vault' },
+  { id: 'safety', name: 'CARE', icon: Shield, path: 'Care', color: '#FF0000', desc: 'You good?', pillar: 'vault' },
+  { id: 'settings', name: 'SETTINGS', icon: Settings, path: 'Settings', color: '#FFFFFF', desc: 'Preferences', pillar: 'vault' },
 ];
 
-// Live counter component
-function LiveCounter({ count, label, color = '#FF1493' }) {
+// Pillar labels for grouping
+const PILLAR_LABELS = {
+  airwaves: { name: 'THE AIRWAVES', desc: 'Listen & discover' },
+  streets: { name: 'THE STREETS', desc: 'Events & places' },
+  crowd: { name: 'THE CROWD', desc: 'People & chat' },
+  vault: { name: 'THE VAULT', desc: 'Your stuff' },
+};
+
+// Nav item component with consistent sizing
+function NavItem({ to, icon: Icon, label, isActive, color, badge, onClick }) {
   return (
-    <div className="flex items-center gap-1">
-      <span 
-        className="w-2 h-2 rounded-full animate-pulse"
+    <Link
+      to={to}
+      onClick={onClick}
+      className="flex flex-col items-center justify-center w-16 py-2 transition-all active:scale-95"
+    >
+      <div className="relative">
+        <Icon 
+          className={`w-6 h-6 transition-colors ${isActive ? '' : 'text-white/50'}`}
+          style={{ color: isActive ? color : undefined }}
+        />
+        {/* Badge - fixed position, won't cause layout shift */}
+        {badge && (
+          <span 
+            className="absolute -top-1 -right-1 min-w-[14px] h-[14px] rounded-full text-[9px] font-black flex items-center justify-center px-0.5"
+            style={{ backgroundColor: color, color: '#000' }}
+          >
+            {badge > 99 ? '99+' : badge}
+          </span>
+        )}
+      </div>
+      <span className={`text-[9px] font-black uppercase mt-1 transition-colors ${isActive ? 'text-white' : 'text-white/50'}`}>
+        {label}
+      </span>
+      {/* Active indicator */}
+      <div 
+        className={`w-1 h-1 rounded-full mt-0.5 transition-all ${isActive ? 'opacity-100' : 'opacity-0'}`}
         style={{ backgroundColor: color }}
       />
-      <span className="text-[10px] font-bold" style={{ color }}>
-        {count}
-      </span>
-    </div>
+    </Link>
   );
 }
 
 // Apps Grid Modal
-function AppsGridModal({ isOpen, onClose, openSheet }) {
-  if (!isOpen) return null;
-
-  // Handle sheet-based navigation
-  const handleSheetNav = (sheetType) => {
-    onClose();
-    setTimeout(() => openSheet(sheetType), 100);
-  };
+function AppsGridModal({ isOpen, onClose }) {
+  // Lock body scroll when open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl"
-        onClick={onClose}
-      >
+      {isOpen && (
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 50 }}
-          className="h-full flex flex-col"
-          onClick={(e) => e.stopPropagation()}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-xl"
+          onClick={onClose}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-white/10">
-            <div>
-              <h2 className="text-xl font-black">HOTMESS APPS</h2>
-              <p className="text-xs text-white/50 uppercase tracking-wider">London OS</p>
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="h-full flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-white/10 safe-area-top">
+              <div>
+                <h2 className="text-xl font-black">More</h2>
+                <p className="text-xs text-white/50 uppercase tracking-wider">HOTMESS London</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-3 rounded-full bg-white/5 hover:bg-white/10 active:bg-white/20 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
 
-          {/* Apps Grid */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="grid grid-cols-4 gap-3">
-              {ALL_APPS.map((app) => {
-                const Icon = app.icon;
-                
-                // Use sheets for these apps
-                if (app.sheetType) {
-                  return (
-                    <button
-                      key={app.id}
-                      onClick={() => handleSheetNav(app.sheetType)}
-                      className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 transition-all active:scale-95"
-                    >
-                      <div 
-                        className="w-12 h-12 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: `${app.color}20` }}
-                      >
-                        <Icon className="w-6 h-6" style={{ color: app.color }} />
-                      </div>
-                      <span className="text-[10px] font-black uppercase tracking-wider text-center">
-                        {app.name}
-                      </span>
-                    </button>
-                  );
-                }
+            {/* Apps Grid - Organized by Pillar */}
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4">
+              {['airwaves', 'streets', 'crowd', 'vault'].map((pillarKey) => {
+                const pillar = PILLAR_LABELS[pillarKey];
+                const apps = ALL_APPS.filter(a => a.pillar === pillarKey);
                 
                 return (
-                  <Link
-                    key={app.id}
-                    to={createPageUrl(app.path)}
-                    onClick={onClose}
-                    className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/30 transition-all active:scale-95"
-                  >
-                    <div 
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: `${app.color}20` }}
-                    >
-                      <Icon className="w-6 h-6" style={{ color: app.color }} />
+                  <div key={pillarKey} className="mb-6">
+                    <div className="mb-3 px-1">
+                      <p className="text-xs font-black uppercase tracking-widest text-white/70">{pillar.name}</p>
+                      <p className="text-[10px] text-white/40">{pillar.desc}</p>
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-center">
-                      {app.name}
-                    </span>
-                  </Link>
+                    <div className="grid grid-cols-4 gap-3">
+                      {apps.map((app, index) => {
+                        const Icon = app.icon;
+                        return (
+                          <motion.div
+                            key={app.id}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: index * 0.03 }}
+                          >
+                            <Link
+                              to={createPageUrl(app.path)}
+                              onClick={onClose}
+                              className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all active:scale-95"
+                            >
+                              <div 
+                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform"
+                                style={{ backgroundColor: `${app.color}15` }}
+                              >
+                                <Icon className="w-5 h-5" style={{ color: app.color }} />
+                              </div>
+                              <span className="text-[10px] font-black uppercase tracking-wider text-center leading-tight">
+                                {app.name}
+                              </span>
+                            </Link>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 );
               })}
-            </div>
 
-            {/* Quick Actions - Sheet-based */}
-            <div className="mt-8">
-              <p className="text-xs text-white/40 uppercase tracking-widest mb-3">QUICK LINKS</p>
-              <div className="grid grid-cols-2 gap-3">
+              {/* Quick Actions */}
+              <div className="mt-4">
+                <p className="text-xs text-white/40 uppercase tracking-widest mb-3 px-1">Quick Links</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Link
+                    to={createPageUrl('Care')}
+                    onClick={onClose}
+                    className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl hover:bg-red-500/15 transition-colors active:scale-98"
+                  >
+                    <Shield className="w-5 h-5 text-red-500" />
+                    <div>
+                      <p className="text-sm font-black">You good?</p>
+                      <p className="text-[10px] text-white/50">Care & support</p>
+                    </div>
+                  </Link>
+                  <Link
+                    to={createPageUrl('MembershipUpgrade')}
+                    onClick={onClose}
+                    className="flex items-center gap-3 p-4 bg-[#FFD700]/10 border border-[#FFD700]/20 rounded-xl hover:bg-[#FFD700]/15 transition-colors active:scale-98"
+                  >
+                    <Sparkles className="w-5 h-5 text-[#FFD700]" />
+                    <div>
+                      <p className="text-sm font-black">Upgrade</p>
+                      <p className="text-[10px] text-white/50">PLUS / CHROME</p>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Discover */}
+              <div className="mt-6">
                 <Link
-                  to={createPageUrl('Care')}
+                  to="/features"
                   onClick={onClose}
-                  className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg"
+                  className="block p-4 bg-gradient-to-r from-[#FF1493]/10 to-[#B026FF]/10 border border-[#FF1493]/20 rounded-xl hover:from-[#FF1493]/15 hover:to-[#B026FF]/15 transition-all active:scale-98"
                 >
-                  <Shield className="w-5 h-5 text-red-500" />
-                  <div>
-                    <p className="text-sm font-black">You good?</p>
-                    <p className="text-[10px] text-white/50">Care & support</p>
-                  </div>
+                  <p className="text-sm font-black mb-1">Explore Features</p>
+                  <p className="text-[10px] text-white/50">Everything HOTMESS offers</p>
                 </Link>
-                <button
-                  onClick={() => handleSheetNav(SHEET_TYPES.VAULT)}
-                  className="flex items-center gap-3 p-4 bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-lg text-left"
-                >
-                  <Package className="w-5 h-5 text-[#FFD700]" />
-                  <div>
-                    <p className="text-sm font-black">Vault</p>
-                    <p className="text-[10px] text-white/50">Your stuff</p>
-                  </div>
-                </button>
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="mt-4">
-              <button
-                onClick={() => handleSheetNav(SHEET_TYPES.CHAT)}
-                className="w-full flex items-center gap-3 p-4 bg-[#FF1493]/10 border border-[#FF1493]/30 rounded-lg text-left"
-              >
-                <MessageCircle className="w-5 h-5 text-[#FF1493]" />
-                <div>
-                  <p className="text-sm font-black">Messages</p>
-                  <p className="text-[10px] text-white/50">Your conversations</p>
-                </div>
-              </button>
+            {/* Footer */}
+            <div className="p-4 border-t border-white/10 text-center safe-area-bottom">
+              <p className="text-[10px] text-white/30 uppercase tracking-widest">
+                18+ • Consent-first • Care always
+              </p>
             </div>
-          </div>
-
-          {/* Footer */}
-          <div className="p-4 border-t border-white/10 text-center">
-            <p className="text-[10px] text-white/40 uppercase tracking-widest">
-              11 apps in one • London OS
-            </p>
-          </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </AnimatePresence>
   );
 }
@@ -201,165 +250,71 @@ function AppsGridModal({ isOpen, onClose, openSheet }) {
 export default function BottomNav({ currentPageName, user }) {
   const [showApps, setShowApps] = useState(false);
   const location = useLocation();
-  
-  // Get sheet context
-  let openSheet;
-  try {
-    const sheetContext = useSheet();
-    openSheet = sheetContext?.openSheet;
-  } catch {
-    // SheetContext not available, fallback to navigation
-    openSheet = null;
-  }
 
-  // Fetch REAL live counts from Supabase
-  const { data: rightNowCount = 0 } = useQuery({
-    queryKey: ['right-now-count'],
-    queryFn: async () => {
-      try {
-        const statuses = await base44.entities.RightNowStatus.filter({ active: true });
-        const valid = statuses.filter(s => new Date(s.expires_at) > new Date());
-        return valid.length;
-      } catch {
-        return 0;
-      }
-    },
-    refetchInterval: 15000, // Real-time feel
-    staleTime: 10000,
-  });
-
-  const { data: eventCount = 0 } = useQuery({
-    queryKey: ['active-events-count'],
-    queryFn: async () => {
-      try {
-        const events = await base44.entities.Beacon.filter({ 
-          kind: 'event', 
-          status: 'published', 
-          active: true 
-        });
-        // Filter to upcoming events (next 7 days)
-        const now = new Date();
-        const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        const upcoming = events.filter(e => {
-          const eventDate = new Date(e.event_date || e.starts_at);
-          return eventDate >= now && eventDate <= weekFromNow;
-        });
-        return upcoming.length;
-      } catch {
-        return 0;
-      }
-    },
-    refetchInterval: 60000,
-    staleTime: 30000,
-  });
-
-  const liveCounts = {
-    rightNow: rightNowCount,
-    events: eventCount
-  };
-
-  const isActive = (path) => {
-    if (path === 'Home') return location.pathname === '/' || currentPageName === 'Home';
-    return currentPageName === path;
-  };
-
-  const isPulseActive = currentPageName === 'Pulse' || currentPageName === 'Globe';
-  const isShopActive = currentPageName === 'Marketplace' || location.pathname.startsWith('/market');
-
-  // Handle LIVE button click - opens Ghosted sheet
-  const handleLiveClick = (e) => {
-    if (openSheet) {
-      e.preventDefault();
-      openSheet(SHEET_TYPES.GHOSTED);
-    }
-    // If no openSheet, the Link will navigate normally
-  };
-
-  // Handle SHOP button click - opens Shop sheet
-  const handleShopClick = (e) => {
-    if (openSheet) {
-      e.preventDefault();
-      openSheet(SHEET_TYPES.SHOP);
-    }
-  };
+  // Check active states
+  const isRadioActive = location.pathname === '/' || currentPageName === 'Home' || currentPageName === 'Music';
+  const isTonightActive = currentPageName === 'Events' || currentPageName === 'Beacons' || currentPageName === 'Pulse';
+  const isGhostedActive = currentPageName === 'Social' || currentPageName === 'ProfilesGrid' || currentPageName === 'Connect' || currentPageName === 'Messages';
+  const isShopActive = currentPageName === 'Marketplace' || currentPageName === 'Shop' || location.pathname.startsWith('/market');
 
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-end justify-around px-2 py-1">
-          
-          {/* HOME */}
-          <Link
-            to={createPageUrl('Home')}
-            className={`flex flex-col items-center py-2 px-3 transition-all ${
-              isActive('Home') ? 'text-white' : 'text-white/50'
-            }`}
-          >
-            <Home className={`w-6 h-6 ${isActive('Home') ? 'text-[#FF1493]' : ''}`} />
-            <span className="text-[9px] font-black uppercase mt-1">Home</span>
-          </Link>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50">
+        {/* Blur backdrop */}
+        <div className="absolute inset-0 bg-black/90 backdrop-blur-xl border-t border-white/10" />
+        
+        {/* Nav items */}
+        <div 
+          className="relative flex items-center justify-around"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        >
+          <NavItem
+            to="/"
+            icon={Radio}
+            label="Radio"
+            isActive={isRadioActive}
+            color="#B026FF"
+          />
 
-          {/* PULSE */}
-          <Link
-            to={createPageUrl('Pulse')}
-            className={`flex flex-col items-center py-2 px-3 transition-all ${
-              isPulseActive ? 'text-white' : 'text-white/50'
-            }`}
-          >
-            <Globe className={`w-6 h-6 ${isPulseActive ? 'text-[#00D9FF]' : ''}`} />
-            <span className="text-[9px] font-black uppercase mt-1">Pulse</span>
-          </Link>
+          <NavItem
+            to={createPageUrl('Events')}
+            icon={Zap}
+            label="Tonight"
+            isActive={isTonightActive}
+            color="#00D9FF"
+          />
 
-          {/* LIVE - Center Prominent Button - NOW OPENS GHOSTED SHEET */}
-          <button
-            onClick={handleLiveClick}
-            className="relative flex flex-col items-center -mt-4"
-          >
-            <motion.div
-              whileTap={{ scale: 0.95 }}
-              className="relative"
-            >
-              {/* Glow effect */}
-              <div className="absolute inset-0 bg-[#FF1493] rounded-full blur-lg opacity-50 animate-pulse" />
-              
-              {/* Main button */}
-              <div className="relative w-14 h-14 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center border-4 border-black shadow-lg">
-                <Zap className="w-7 h-7 text-white" />
-              </div>
+          <NavItem
+            to={createPageUrl('Social')}
+            icon={Ghost}
+            label="Ghosted"
+            isActive={isGhostedActive}
+            color="#FF1493"
+          />
 
-              {/* Live counter badge */}
-              <div className="absolute -top-1 -right-1 bg-black rounded-full px-1.5 py-0.5 border border-[#FF1493]">
-                <span className="text-[9px] font-black text-[#FF1493]">{liveCounts.rightNow}</span>
-              </div>
-            </motion.div>
-            <span className="text-[9px] font-black uppercase mt-1 text-[#FF1493]">LIVE</span>
-          </button>
+          <NavItem
+            to="/market"
+            icon={ShoppingBag}
+            label="Shop"
+            isActive={isShopActive}
+            color="#FFB800"
+          />
 
-          {/* SHOP - NOW OPENS SHOP SHEET */}
-          <button
-            onClick={handleShopClick}
-            className={`flex flex-col items-center justify-center min-w-[52px] min-h-[48px] py-1.5 px-2 rounded-lg transition-all active:scale-95 ${
-              isShopActive ? 'text-white bg-white/5' : 'text-white/50'
-            }`}
-          >
-            <ShoppingBag className={`w-6 h-6 ${isShopActive ? 'text-[#B026FF]' : ''}`} />
-            <span className="text-[9px] font-black uppercase mt-0.5">Shop</span>
-          </button>
-
-          {/* APPS - Touch Target 44px min */}
+          {/* More button */}
           <button
             onClick={() => setShowApps(true)}
-            className="flex flex-col items-center justify-center min-w-[52px] min-h-[48px] py-1.5 px-2 rounded-lg text-white/50 active:text-white active:bg-white/5 transition-all active:scale-95"
+            className="flex flex-col items-center justify-center w-16 py-2 transition-all active:scale-95"
           >
-            <LayoutGrid className="w-6 h-6" />
-            <span className="text-[9px] font-black uppercase mt-0.5">Apps</span>
+            <MoreHorizontal className="w-6 h-6 text-white/50" />
+            <span className="text-[9px] font-black uppercase mt-1 text-white/50">More</span>
+            <div className="w-1 h-1 rounded-full mt-0.5 opacity-0" />
           </button>
         </div>
       </nav>
 
       {/* Apps Grid Modal */}
-      <AppsGridModal isOpen={showApps} onClose={() => setShowApps(false)} openSheet={openSheet} />
+      <AppsGridModal isOpen={showApps} onClose={() => setShowApps(false)} />
     </>
   );
 }

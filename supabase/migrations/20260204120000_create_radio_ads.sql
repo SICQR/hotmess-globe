@@ -1,0 +1,1 @@
+create table if not exists radio_ads ( id uuid primary key default gen_random_uuid(), user_id uuid references auth.users(id), package_id text not null, ad_type text not null, script_content text, audio_url text, status text default 'pending', stripe_session_id text, created_at timestamptz default now() );

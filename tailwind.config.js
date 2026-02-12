@@ -10,6 +10,21 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			// HOTMESS brand colors
+  			hot: '#FF1493',
+  			pink: {
+  				50: '#FFF0F7',
+  				100: '#FFE0EF',
+  				200: '#FFC2DF',
+  				300: '#FF94C8',
+  				400: '#FF57A8',
+  				500: '#FF1493', // Foundation pink
+  				600: '#E6007F',
+  				700: '#BF006A',
+  				800: '#990055',
+  				900: '#730040',
+  				950: '#4D002B',
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -162,7 +177,12 @@ module.exports = {
 			'slide-up': 'slide-up 0.5s ease-out',
 			'scale-in': 'scale-in 0.3s ease-out',
 			'spin-slow': 'spin-slow 8s linear infinite'
-  		}
+  		},
+		// Safe area insets for notched devices (iPhone)
+		padding: {
+			'safe': 'env(safe-area-inset-bottom, 16px)',
+			'safe-top': 'env(safe-area-inset-top, 0px)',
+		}
   	}
   },
   plugins: [require("tailwindcss-animate")],

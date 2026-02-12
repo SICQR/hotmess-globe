@@ -13,22 +13,21 @@ import TelegramPanel from '@/features/profilesGrid/TelegramPanel';
 import LocalBeaconsView from '../components/globe/LocalBeaconsView';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
-import { Settings, BarChart3, Home, Grid3x3 } from 'lucide-react';
+import { Settings, BarChart3, Home, Grid3x3, Moon, Sun } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { debounce } from 'lodash';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
-import { useRealtimeBeacons, useRightNowCount } from '../components/globe/useRealtimeBeacons';
+import { useTonight } from '@/contexts/TonightContext';
 
 export default function GlobePage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-
-  // NEW: Realtime presence beacons from presence table (TTL-based)
-  const { beacons: presenceBeacons, presenceCount } = useRealtimeBeacons();
-  const rightNowCount = useRightNowCount();
+  
+  // Tonight mode - time-aware UI
+  const { isNightMode, colors, features, toggleMode, isAutoMode, pulseSpeed } = useTonight();
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -335,10 +334,7 @@ export default function GlobePage() {
 
     const peopleList = showPeoplePins ? nearbyPeoplePins : [];
 
-    // NEW: Include realtime presence beacons from presence table
-    const realtimePresence = Array.isArray(presenceBeacons) ? presenceBeacons : [];
-
-    let filtered = [...beaconsList, ...rightNowList, ...peopleList, ...realtimePresence].map(b => ({
+    let filtered = [...beaconsList, ...rightNowList, ...peopleList].map(b => ({
       ...b,
       ts: new Date(b.created_date || Date.now()).getTime() // Convert created_date to timestamp
     }));
@@ -388,7 +384,7 @@ export default function GlobePage() {
     }
 
     return filtered;
-  }, [beacons, rightNowUsers, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, currentUser?.role, presenceBeacons]);
+  }, [beacons, rightNowUsers, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, currentUser?.role]);
 
   // Sort by most recent
   const recentActivity = useMemo(() => {
@@ -525,8 +521,13 @@ export default function GlobePage() {
     return (
       <div className="relative w-full min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#FF1493]/30 border-t-[#FF1493] rounded-full animate-spin" />
-          <p className="text-white/60 text-sm tracking-wider uppercase">Loading Pulse...</p>
+          <div 
+            className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" 
+            style={{ borderColor: `${colors.primary}30`, borderTopColor: colors.primary }}
+          />
+          <p className="text-white/60 text-sm tracking-wider uppercase">
+            {isNightMode ? 'Loading Live Pulse...' : 'Loading Map...'}
+          </p>
         </div>
       </div>
     );
@@ -565,10 +566,22 @@ export default function GlobePage() {
             </button>
           </Link>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-black/90 border border-white/10 rounded-lg backdrop-blur-xl">
-            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-white/60">PULSE</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-white/60">
+              {isNightMode ? 'LIVE PULSE' : 'MAP'}
+            </span>
+            <button
+              onClick={toggleMode}
+              className="text-white/40 hover:text-white transition-colors"
+              title={isAutoMode ? 'Auto mode' : 'Manual mode'}
+            >
+              {isNightMode ? <Moon className="w-3 h-3" /> : <Sun className="w-3 h-3" />}
+            </button>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-black/90 border border-white/10 rounded-lg backdrop-blur-xl">
-            <div className="w-2 h-2 rounded-full bg-[#FF1493] animate-pulse" />
+            <div 
+              className={`w-2 h-2 rounded-full ${pulseSpeed === 'fast' ? 'animate-pulse' : 'animate-[pulse_3s_ease-in-out_infinite]'}`}
+              style={{ backgroundColor: colors.primary }}
+            />
             <span className="text-xs font-bold">{filteredBeacons.length}</span>
           </div>
         </div>
@@ -596,9 +609,8 @@ export default function GlobePage() {
                 setPreviewBeacon(null);
               }
             }}
-            className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
-              showNearbyGrid ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
-            }`}
+            className="p-2 rounded-lg backdrop-blur-xl transition-all"
+            style={showNearbyGrid ? { backgroundColor: colors.primary, color: '#000' } : {}}
           >
             <Grid3x3 className="w-4 h-4" />
           </button>
@@ -616,8 +628,9 @@ export default function GlobePage() {
               }
             }}
             className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
-              showHotmessFeed ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+              showHotmessFeed ? 'text-black' : 'bg-black/90 border border-white/10 text-white'
             }`}
+            style={showHotmessFeed ? { backgroundColor: colors.primary } : {}}
             aria-label="Hotmess Feed"
           >
             <span className="text-[10px] font-black">FEED</span>

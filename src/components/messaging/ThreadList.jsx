@@ -81,8 +81,8 @@ export default function ThreadList({ threads, currentUser, allUsers, onSelectThr
                 <div className="flex items-center justify-between mb-1">
                   <p className="font-black uppercase tracking-tight truncate text-sm">
                     {isGroupChat 
-                      ? `${otherUsers.slice(0, 2).map(u => u.full_name).join(', ')}${otherUsers.length > 2 ? ` +${otherUsers.length - 2}` : ''}`
-                      : otherUsers[0]?.full_name || 'Unknown'
+                      ? `${otherUsers.slice(0, 2).map(u => u.full_name || u.display_name || u.username || 'Unknown').join(', ')}${otherUsers.length > 2 ? ` +${otherUsers.length - 2}` : ''}`
+                      : otherUsers[0]?.full_name || otherUsers[0]?.display_name || otherUsers[0]?.username || 'Unknown'
                     }
                   </p>
                   {thread.last_message_at && (

@@ -255,9 +255,7 @@ export default function Leaderboard() {
                       {idx + 1}
                     </div>
                     <div className="flex-1">
-                      <Link to={createPageUrl(`SquadChat?id=${data.squad.id}`)}>
-                        <h3 className="font-black uppercase hover:text-[#B026FF] transition-colors">{data.squad.name}</h3>
-                      </Link>
+                      <h3 className="font-black uppercase text-[#B026FF]">{data.squad.name}</h3>
                       <p className="text-xs text-white/60">
                         {data.memberCount} members • {data.squad.interest}
                       </p>

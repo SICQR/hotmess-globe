@@ -40,6 +40,8 @@ const PROFILE_THEMES = [
 
 export default function EditProfile() {
   const [currentUser, setCurrentUser] = useState(null);
+  const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [gender, setGender] = useState('male');
@@ -106,6 +108,8 @@ export default function EditProfile() {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
+        setDisplayName(user.display_name || user.full_name || '');
+        setUsername(user.username || '');
         setBio(user.bio || '');
         setAvatarUrl(user.avatar_url || '');
         setPreferredVibes(user.preferred_vibes || []);
@@ -231,6 +235,8 @@ export default function EditProfile() {
       const safePhotos = normalizePhotosForSave(photos);
 
       await updateProfileMutation.mutateAsync({
+        display_name: displayName.trim() || undefined,
+        username: username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '') || undefined,
         bio: bioValidation.sanitized,
         avatar_url: avatarUrl,
         gender: 'male',
@@ -312,6 +318,7 @@ export default function EditProfile() {
             }
           }
         } catch (tagSyncError) {
+          toast.warning('Profile saved, but some tags failed to sync');
           console.warn('Profile updated, but tags/tribes sync failed (non-fatal)', tagSyncError);
         }
       }
@@ -568,7 +575,7 @@ export default function EditProfile() {
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-3xl font-bold">{currentUser?.full_name?.[0] || 'U'}</span>
+                    <span className="text-3xl font-bold">{displayName?.[0] || currentUser?.full_name?.[0] || 'U'}</span>
                   )}
                 </div>
                 <div>
@@ -590,6 +597,37 @@ export default function EditProfile() {
                   />
                 </div>
               </div>
+              
+              {/* Display Name & Username */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <Label className="text-xs uppercase tracking-widest text-white/40 mb-2 block">Display Name</Label>
+                  <Input
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="How you want to be called"
+                    maxLength={50}
+                    className="bg-white/5 border-2 border-white/20 text-white"
+                  />
+                  <p className="text-[10px] text-white/30 mt-1">This is shown instead of your email</p>
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-widest text-white/40 mb-2 block">Username</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">@</span>
+                    <Input
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                      placeholder="username"
+                      maxLength={20}
+                      className="bg-white/5 border-2 border-white/20 text-white pl-8"
+                    />
+                  </div>
+                  <p className="text-[10px] text-white/30 mt-1">Letters, numbers, underscores only</p>
+                </div>
+              </div>
+              
+              <Label className="text-xs uppercase tracking-widest text-white/40 mb-2 block">Bio</Label>
               <Textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}

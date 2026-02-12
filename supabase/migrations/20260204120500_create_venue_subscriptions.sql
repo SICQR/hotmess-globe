@@ -1,0 +1,1 @@
+create table if not exists venue_subscriptions ( id uuid primary key default gen_random_uuid(), venue_id uuid references venues(id), stripe_subscription_id text, status text default 'active', plan_id text, current_period_end timestamptz, created_at timestamptz default now() );

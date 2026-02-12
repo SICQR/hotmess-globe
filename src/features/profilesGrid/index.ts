@@ -10,6 +10,10 @@ export { useLongPress } from './useLongPress';
 export { useVisibility } from './useVisibility';
 export { fetchTravelTime } from './travelTime';
 
+// Smart Components
+export { SmartProfileCard, SmartProfileCardCompact } from './SmartProfileCard';
+export { BentoGrid, BentoGridSmart, BentoGridMasonry, BentoCell } from './BentoGrid';
+
 // Types
 export type {
   Photo,

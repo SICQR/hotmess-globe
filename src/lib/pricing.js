@@ -71,8 +71,8 @@ export const MEMBERSHIP_TIERS = {
     name: 'PLUS',
     tagline: 'Unlock the full experience',
     price: { 
-      monthly: 9.99, 
-      yearly: 79.99, // 33% savings
+      monthly: 4.99, 
+      yearly: 39.99, // 33% savings
       savings: '33%',
     },
     color: '#FF1493',
@@ -113,9 +113,9 @@ export const MEMBERSHIP_TIERS = {
     name: 'CHROME',
     tagline: 'The ultimate HOTMESS experience',
     price: { 
-      monthly: 19.99, 
-      yearly: 149.99, // 37% savings
-      savings: '37%',
+      monthly: 14.99, 
+      yearly: 119.99, // 33% savings
+      savings: '33%',
     },
     color: '#FFD700',
     premium: true,

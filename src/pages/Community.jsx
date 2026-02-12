@@ -82,15 +82,20 @@ export default function Community() {
   }, [posts]);
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-black text-white p-4 md:p-8 relative">
+      {/* Background effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-20 left-20 w-80 h-80 bg-[#FF1493]/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-20 right-20 w-80 h-80 bg-[#B026FF]/5 rounded-full blur-[150px]" />
+      </div>
+      <div className="max-w-4xl mx-auto relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2">
+          <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight mb-2 text-gradient-hot">
             Community
           </h1>
           <p className="text-white/60">Connect with the HOTMESS crew</p>
@@ -102,7 +107,7 @@ export default function Community() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/40 rounded-xl p-4 text-center"
+            className="glass border border-[#FF1493]/30 rounded-xl p-4 text-center hover:shadow-glow-hot/20 transition-all duration-300"
           >
             <Users className="w-6 h-6 text-[#FF1493] mx-auto mb-2" />
             <div className="text-2xl font-black">2.4K</div>
@@ -122,7 +127,7 @@ export default function Community() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-gradient-to-br from-[#FFEB3B]/20 to-[#FF6B35]/20 border border-[#FFEB3B]/40 rounded-xl p-4 text-center"
+            className="glass border border-[#FFEB3B]/30 rounded-xl p-4 text-center hover:shadow-glow-gold/20 transition-all duration-300"
           >
             <Users className="w-6 h-6 text-[#FFEB3B] mx-auto mb-2" />
             <div className="text-2xl font-black">{posts.filter(p => p.ai_sentiment === 'positive').length}</div>
@@ -138,7 +143,7 @@ export default function Community() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 bg-gradient-to-br from-[#FF1493]/20 to-[#FFEB3B]/20 border-2 border-[#FF1493] p-6"
+            className="mb-8 glass-glow-hot p-6 rounded-xl"
           >
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-5 h-5 text-[#FFEB3B]" />

@@ -68,18 +68,20 @@ export default function Pricing() {
   return (
     <div className="min-h-screen bg-black text-white pb-24">
       {/* Hero */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-hot-500/20 via-purple-500/10 to-transparent" />
-        <div className="relative max-w-6xl mx-auto px-4 pt-12 pb-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-black mb-4">
-            PRICING & <span className="text-transparent bg-clip-text bg-gradient-to-r from-hot-500 to-purple-500">PACKAGES</span>
+      <section className="relative py-20 md:py-28 px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-950/40 via-black to-purple-950/30" />
+        
+        <div className="relative z-10 max-w-6xl mx-auto text-center">
+          <p className="text-sm uppercase tracking-[0.4em] text-amber-400 mb-6">TRANSPARENT PRICING</p>
+          <h1 className="text-5xl md:text-7xl font-black italic mb-6">
+            PACKAGES<span className="text-amber-500">.</span>
           </h1>
-          <p className="text-white/60 text-lg max-w-2xl mx-auto">
-            Transparent pricing for users, sellers, venues, and advertisers. 
+          <p className="text-xl text-white/60 max-w-2xl mx-auto">
+            Users, sellers, venues, and advertisers. 
             No hidden fees. No surprises.
           </p>
         </div>
-      </div>
+      </section>
 
       {/* Tab Navigation */}
       <div className="sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/10">

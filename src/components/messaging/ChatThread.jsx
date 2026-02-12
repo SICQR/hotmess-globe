@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { base44, supabase } from '@/api/base44Client';
 import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn, Search, X, Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-export default function ChatThread({ thread, currentUser, onBack, readOnly = false }) {
+// Theme imports
+import { NeonMinimal, BrutalistRedux, GhostMode } from './themes';
+
+const THEMES = {
+  ghost: GhostMode,
+  neon: NeonMinimal,
+  brutalist: BrutalistRedux,
+};
+
+export default function ChatThread({ thread, currentUser, onBack, readOnly = false, theme = 'ghost', allUsers: propAllUsers, hideHeader = false }) {
   const [messageText, setMessageText] = useState('');
   const [uploading, setUploading] = useState(false);
   const [isTyping, setIsTyping] = useState({});
@@ -38,9 +47,52 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
   const REACTIONS = ['❤️', '😂', '😮', '😢', '👍', '🔥', '💯', '🎉'];
 
-  const { data: messages = [], hasNextPage } = useQuery({
+  // Demo messages for fallback when viewing demo threads
+  const DEMO_MESSAGES = thread?._isDemo ? [
+    {
+      id: 'demo_msg_1',
+      thread_id: thread.id,
+      sender_email: thread.participant_emails[1],
+      content: 'Hey! Great vibes at the club last night 🔥',
+      message_type: 'text',
+      created_date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+      read_by: [currentUser?.email],
+    },
+    {
+      id: 'demo_msg_2',
+      thread_id: thread.id,
+      sender_email: currentUser?.email,
+      content: 'Totally! That DJ set was incredible',
+      message_type: 'text',
+      created_date: new Date(Date.now() - 1000 * 60 * 60 * 1.5).toISOString(),
+      read_by: [currentUser?.email, thread.participant_emails[1]],
+    },
+    {
+      id: 'demo_msg_3',
+      thread_id: thread.id,
+      sender_email: thread.participant_emails[1],
+      content: 'We should def link up again this weekend 👀',
+      message_type: 'text',
+      created_date: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+      read_by: [currentUser?.email],
+    },
+    {
+      id: 'demo_msg_4',
+      thread_id: thread.id,
+      sender_email: thread.participant_emails[1],
+      content: thread.last_message,
+      message_type: 'text',
+      created_date: new Date(thread.last_message_at).toISOString(),
+      read_by: [],
+    },
+  ] : [];
+
+  const { data: fetchedMessages = [], hasNextPage } = useQuery({
     queryKey: ['messages', thread.id, messagesPage],
     queryFn: async () => {
+      // Skip API call for demo threads
+      if (thread?._isDemo) return [];
+      
       const allMessages = await base44.entities.Message.filter(
         { thread_id: thread.id }, 
         'created_date', 
@@ -48,9 +100,45 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       );
       return allMessages;
     },
-    refetchInterval: 3000, // Poll every 3s (optimized)
+    refetchInterval: thread?._isDemo ? false : 15000, // Fallback polling (real-time handles most updates)
     keepPreviousData: true,
+    enabled: !thread?._isDemo,
   });
+
+  // Use fetched messages or demo messages
+  const messages = thread?._isDemo ? DEMO_MESSAGES : fetchedMessages;
+
+  // Real-time subscription for new messages
+  useEffect(() => {
+    if (thread?._isDemo || !thread?.id || !supabase) return;
+
+    const channel = supabase
+      .channel(`messages-${thread.id}`)
+      .on(
+        'postgres_changes',
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'Message',
+          filter: `thread_id=eq.${thread.id}`
+        },
+        (payload) => {
+          // Add new message to cache if not from current user (already optimistically added)
+          if (payload.new?.sender_email !== currentUser?.email) {
+            queryClient.setQueryData(['messages', thread.id], (old = []) => {
+              const exists = old.some(m => m.id === payload.new.id);
+              if (exists) return old;
+              return [...old, payload.new];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [thread?.id, thread?._isDemo, currentUser?.email, queryClient]);
 
   const loadMoreMessages = () => {
     if (messages.length >= MESSAGES_PER_PAGE * messagesPage) {
@@ -61,6 +149,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
   const { data: typingIndicators = [] } = useQuery({
     queryKey: ['typing', thread.id],
     queryFn: async () => {
+      if (thread?._isDemo) return [];
       const activities = await base44.entities.UserActivity.filter(
         { activity_type: 'typing' },
         '-created_date',
@@ -71,13 +160,33 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
         new Date(a.created_date).getTime() > Date.now() - 5000 // Last 5 seconds
       );
     },
-    refetchInterval: 2000, // Poll every 2s (optimized)
+    refetchInterval: thread?._isDemo ? false : 2000,
+    enabled: !thread?._isDemo,
   });
 
-  const { data: allUsers = [] } = useAllUsers();
+  // Use passed users or fetch them
+  const { data: fetchedUsers = [] } = useAllUsers();
+  const allUsers = propAllUsers || fetchedUsers;
 
   const sendMutation = useMutation({
     mutationFn: async (data) => {
+      // For demo threads, show a toast and return fake message
+      if (thread?._isDemo) {
+        toast.info('Demo Mode', {
+          description: 'Sign up to start real conversations! 🚀',
+        });
+        return {
+          id: `demo_sent_${Date.now()}`,
+          thread_id: thread.id,
+          sender_email: currentUser.email,
+          content: data.content,
+          message_type: data.message_type || 'text',
+          created_date: new Date().toISOString(),
+          read_by: [currentUser.email],
+          _isDemo: true,
+        };
+      }
+
       const ok = await base44.auth.requireProfile(window.location.href);
       if (!ok) return null;
 
@@ -127,8 +236,10 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     },
     onSuccess: (message) => {
       if (!message) return;
-      queryClient.invalidateQueries(['messages', thread.id]);
-      queryClient.invalidateQueries(['chat-threads']);
+      if (!thread?._isDemo) {
+        queryClient.invalidateQueries(['messages', thread.id]);
+        queryClient.invalidateQueries(['chat-threads']);
+      }
       setMessageText('');
     },
   });
@@ -358,425 +469,47 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       )
     : messages;
 
+  // Get the themed component
+  const ThemeComponent = THEMES[theme] || THEMES.ghost;
+
+  // Common props for all themes
+  const themeProps = {
+    messages,
+    currentUser,
+    otherUsers,
+    isGroupChat,
+    thread,
+    messageText,
+    setMessageText,
+    handleSend,
+    handleImageUpload,
+    handleVideoUpload,
+    handleTyping,
+    handleReaction,
+    uploading,
+    sendMutation,
+    onBack,
+    readOnly,
+    isMuted,
+    toggleMute,
+    showReactions,
+    setShowReactions,
+    messagesEndRef,
+    filteredMessages,
+    allUsers,
+    searchQuery,
+    setSearchQuery,
+    showSearch,
+    setShowSearch,
+    REACTIONS,
+    isTyping,
+  };
+
   return (
-    <div className="flex flex-col h-full bg-black">
-      {/* Header */}
-      <div className="bg-black border-b-2 border-white/20 p-4 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden text-white hover:bg-white/10">
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        
-        <div className="flex items-center gap-3 flex-1">
-          {!isGroupChat ? (
-            <>
-              <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center border-2 border-white">
-                {otherUsers[0]?.avatar_url ? (
-                  <img src={otherUsers[0].avatar_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="font-bold text-sm">{otherUsers[0]?.full_name?.[0] || 'U'}</span>
-                )}
-              </div>
-              <div>
-                <p className="font-black uppercase tracking-tight">{otherUsers[0]?.full_name || 'Unknown'}</p>
-                <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono flex items-center gap-1">
-                  {thread.thread_type}
-                  {isTelegramEncrypted && (
-                    <>
-                      <span>•</span>
-                      <Lock className="w-3 h-3 text-[#00D9FF]" />
-                      <span className="text-[#00D9FF]">E2E</span>
-                    </>
-                  )}
-                </p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="w-10 h-10 bg-white/10 border-2 border-white flex items-center justify-center">
-                <UsersIcon className="w-5 h-5 text-white/60" />
-              </div>
-              <div>
-                <p className="font-black uppercase tracking-tight">{otherUsers.slice(0, 2).map(u => u.full_name).join(', ')}</p>
-                {otherUsers.length > 2 && (
-                  <p className="text-[10px] text-white/60">+{otherUsers.length - 2} more</p>
-                )}
-                <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono flex items-center gap-1">
-                  GROUP • {thread.thread_type}
-                  {isTelegramEncrypted && (
-                    <>
-                      <span>•</span>
-                      <Lock className="w-3 h-3 text-[#00D9FF]" />
-                      <span className="text-[#00D9FF]">E2E</span>
-                    </>
-                  )}
-                </p>
-              </div>
-            </>
-          )}
-        </div>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setShowSearch(!showSearch)}
-          className="text-white/60 hover:text-white hover:bg-white/10"
-        >
-          <Search className="w-5 h-5" />
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-white/60 hover:text-white hover:bg-white/10">
-              <MoreVertical className="w-5 h-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-black border-2 border-white text-white">
-            <DropdownMenuItem onClick={toggleMute} className="hover:bg-white/10 cursor-pointer">
-              {isMuted ? (
-                <>
-                  <Bell className="w-4 h-4 mr-2" />
-                  Unmute Conversation
-                </>
-              ) : (
-                <>
-                  <BellOff className="w-4 h-4 mr-2" />
-                  Mute Conversation
-                </>
-              )}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* Search Bar */}
-      {showSearch && (
-        <div className="bg-black border-b-2 border-white/20 p-3">
-          <div className="flex items-center gap-2">
-            <Search className="w-4 h-4 text-white/40" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="SEARCH IN CONVERSATION..."
-              className="flex-1 bg-black border-2 border-white/20 text-white placeholder:text-white/40 placeholder:uppercase placeholder:font-mono placeholder:text-xs"
-              autoFocus
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSearchQuery('')}
-                className="text-white/60 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                setShowSearch(false);
-                setSearchQuery('');
-              }}
-              className="text-white/60 hover:text-white"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-          {searchQuery && (
-            <p className="text-xs text-white/40 mt-2 font-mono">
-              {filteredMessages.length} {filteredMessages.length === 1 ? 'result' : 'results'} found
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#0a0a0a]">
-        {/* Load More Button */}
-        {messages.length >= MESSAGES_PER_PAGE && (
-          <div className="flex justify-center mb-4">
-            <button 
-              onClick={loadMoreMessages}
-              className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/20 text-white/60 text-xs uppercase font-bold transition-colors"
-            >
-              Load Earlier Messages
-            </button>
-          </div>
-        )}
-        
-        <AnimatePresence>
-          {filteredMessages.map((msg, idx) => {
-            const isOwn = msg.sender_email === currentUser.email;
-            const sender = allUsers.find(u => u.email === msg.sender_email);
-
-            return (
-              <motion.div
-                key={msg.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ delay: idx * 0.01 }}
-                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`flex gap-3 max-w-[70%] ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-                  {!isOwn && (
-                    <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
-                      {sender?.avatar_url ? (
-                        <img src={sender.avatar_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-xs font-bold">{sender?.full_name?.[0] || 'U'}</span>
-                      )}
-                    </div>
-                  )}
-                  
-                  <div>
-                    {isGroupChat && !isOwn && (
-                      <p className="text-[10px] text-white/40 uppercase font-bold mb-1 ml-1">{sender?.full_name}</p>
-                    )}
-                    
-                    {msg.message_type === 'image' && msg.metadata?.image_url && (
-                      <div className="relative border-2 border-white overflow-hidden mb-2 group cursor-pointer"
-                        onClick={() => {
-                          const allMedia = messages
-                            .filter(m => m.message_type === 'image' || m.message_type === 'video')
-                            .map(m => ({ 
-                              url: m.message_type === 'image' ? m.metadata?.image_url : m.metadata?.video_url,
-                              type: m.message_type
-                            }));
-                          const index = allMedia.findIndex(m => m.url === msg.metadata.image_url);
-                          setMediaGallery(allMedia);
-                          setMediaIndex(index);
-                          setViewingMedia(allMedia[index]);
-                        }}>
-                        <img 
-                          src={msg.metadata.image_url} 
-                          alt="Sent image" 
-                          className="max-w-full max-h-96 object-cover grayscale hover:grayscale-0 transition-all"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
-                          <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      </div>
-                    )}
-
-                    {msg.message_type === 'video' && msg.metadata?.video_url && (
-                      <div className="relative border-2 border-white overflow-hidden mb-2 group cursor-pointer"
-                        onClick={() => {
-                          const allMedia = messages
-                            .filter(m => m.message_type === 'image' || m.message_type === 'video')
-                            .map(m => ({ 
-                              url: m.message_type === 'image' ? m.metadata?.image_url : m.metadata?.video_url,
-                              type: m.message_type
-                            }));
-                          const index = allMedia.findIndex(m => m.url === msg.metadata.video_url);
-                          setMediaGallery(allMedia);
-                          setMediaIndex(index);
-                          setViewingMedia(allMedia[index]);
-                        }}>
-                        <video 
-                          src={msg.metadata.video_url} 
-                          controls
-                          className="max-w-full max-h-96 grayscale hover:grayscale-0 transition-all"
-                        />
-                      </div>
-                    )}
-                    
-                    {msg.message_type === 'text' && (
-                      <div
-                        className={`px-4 py-2.5 border-2 ${
-                          isOwn
-                            ? 'bg-[#FF1493] border-[#FF1493] text-black'
-                            : 'bg-black border-white text-white'
-                        }`}
-                      >
-                        <p className="text-sm font-medium leading-relaxed">{msg.content}</p>
-                      </div>
-                    )}
-                    
-                    {msg.message_type === 'system' && (
-                      <div className="text-center text-xs text-white/40 italic uppercase font-mono">
-                        {msg.content}
-                      </div>
-                    )}
-                    
-                    <div className={`flex items-center gap-2 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                      <p className="text-[10px] text-white/40 font-mono">
-                        {format(new Date(msg.created_date), 'HH:mm')}
-                      </p>
-                      {isOwn && (
-                        <>
-                          {msg.read_by.length === 1 ? (
-                            <Check className="w-3 h-3 text-white/40" title="Sent" />
-                          ) : msg.read_by.length === thread.participant_emails.length ? (
-                            <CheckCheck className="w-3 h-3 text-[#00D9FF]" title="Read by all" />
-                          ) : (
-                            <CheckCheck className="w-3 h-3 text-[#FFEB3B]" title={`Read by ${msg.read_by.length - 1}/${thread.participant_emails.length - 1}`} />
-                          )}
-                        </>
-                      )}
-                      
-                      {/* Reaction Button */}
-                      <button
-                        onClick={() => setShowReactions(showReactions === msg.id ? null : msg.id)}
-                        className="text-white/40 hover:text-white transition-colors"
-                      >
-                        <Smile className="w-3 h-3" />
-                      </button>
-                    </div>
-
-                    {/* Reactions Display */}
-                    {msg.metadata?.reactions && Object.keys(msg.metadata.reactions).length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {Object.entries(
-                          Object.values(msg.metadata.reactions)
-                            .flat()
-                            .reduce((acc, emoji) => {
-                              acc[emoji] = (acc[emoji] || 0) + 1;
-                              return acc;
-                            }, {})
-                        ).map(([emoji, count]) => (
-                          <button
-                            key={emoji}
-                            onClick={() => handleReaction(msg.id, emoji)}
-                            className="px-2 py-1 bg-white/10 border border-white/20 hover:border-white/40 rounded-full text-sm flex items-center gap-1 transition-colors hover:bg-white/20"
-                            title="Click to toggle reaction"
-                          >
-                            <span className="text-base">{emoji}</span>
-                            {count > 1 && <span className="text-xs text-white/60">{count}</span>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Reaction Picker */}
-                    {showReactions === msg.id && (
-                      <div className="absolute z-10 mt-1 p-2 bg-black border-2 border-white rounded-lg flex gap-2">
-                        {REACTIONS.map(emoji => (
-                          <button
-                            key={emoji}
-                            onClick={() => handleReaction(msg.id, emoji)}
-                            className="text-xl hover:scale-125 transition-transform"
-                          >
-                            {emoji}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-
-        {/* Typing Indicator */}
-        {Object.keys(isTyping).length > 0 && !searchQuery && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex justify-start"
-          >
-            <div className="flex gap-3 items-center">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
-                <span className="text-xs font-bold">...</span>
-              </div>
-              <div className="bg-black border-2 border-white px-4 py-2.5">
-                <div className="flex gap-1 items-center">
-                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  <span className="ml-2 text-xs text-white/60 font-mono uppercase">
-                    {Object.keys(isTyping).length === 1 
-                      ? allUsers.find(u => u.email === Object.keys(isTyping)[0])?.full_name?.split(' ')[0] || 'Someone'
-                      : `${Object.keys(isTyping).length} people`
-                    } typing
-                  </span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <form onSubmit={handleSend} className="bg-black border-t-2 border-white/20 p-4">
-        <div className="flex items-center gap-2">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="hidden"
-            id="image-upload"
-            disabled={uploading || readOnly}
-          />
-          <label htmlFor="image-upload">
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="icon" 
-              disabled={uploading || readOnly} 
-              asChild
-              className="text-white/60 hover:text-white hover:bg-white/10 border-2 border-white/20 hover:border-white"
-            >
-              <span>
-                {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Image className="w-5 h-5" />}
-              </span>
-            </Button>
-          </label>
-
-          <input
-            type="file"
-            accept="video/*"
-            onChange={handleVideoUpload}
-            className="hidden"
-            id="video-upload"
-            disabled={uploading || readOnly}
-          />
-          <label htmlFor="video-upload">
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="icon" 
-              disabled={uploading || readOnly} 
-              asChild
-              className="text-white/60 hover:text-white hover:bg-white/10 border-2 border-white/20 hover:border-white"
-            >
-              <span>
-                <Video className="w-5 h-5" />
-              </span>
-            </Button>
-          </label>
-
-          <Input
-            value={messageText}
-            onChange={(e) => {
-              setMessageText(e.target.value);
-              if (!readOnly) handleTyping();
-            }}
-            placeholder="TYPE MESSAGE..."
-            disabled={readOnly}
-            className="flex-1 bg-black border-2 border-white/20 text-white placeholder:text-white/40 placeholder:uppercase placeholder:font-mono placeholder:text-xs focus:border-white"
-          />
-
-          <Button 
-            type="submit" 
-            size="icon"
-            disabled={readOnly || !messageText.trim() || sendMutation.isPending}
-            className="bg-[#FF1493] hover:bg-white text-black border-2 border-white"
-          >
-            {sendMutation.isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Send className="w-5 h-5" />
-            )}
-          </Button>
-        </div>
-      </form>
-
-      {/* Media Viewer Modal */}
+    <>
+      <ThemeComponent {...themeProps} />
+      
+      {/* Media Viewer Modal - shared across all themes */}
       {viewingMedia && (
         <MediaViewer
           mediaUrl={viewingMedia.url}
@@ -794,6 +527,6 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
           }}
         />
       )}
-    </div>
+    </>
   );
 }

@@ -560,9 +560,17 @@ export function ProfileCard({
             </div>
           ) : null}
 
-          {viewerLocation ? (
-            <div className="rounded-full bg-black/40 border border-white/10 text-white/85 text-[10px] font-black uppercase tracking-wider px-2 py-1">
-              {isTravelTimeLoading ? 'Loading…' : primaryModeShort ? `Rec ${primaryModeShort}` : 'No ETA'}
+          {viewerLocation && primaryModeShort && !isTravelTimeLoading ? (
+            <div className="flex items-center gap-1.5 rounded-lg bg-black/70 backdrop-blur-sm border border-cyan/30 text-white px-2.5 py-1.5 shadow-lg">
+              {primaryMode === 'foot' && <span className="text-sm">🚶</span>}
+              {primaryMode === 'bike' && <span className="text-sm">🚲</span>}
+              {primaryMode === 'cab' && <span className="text-sm">🚕</span>}
+              {primaryMode === 'uber' && <span className="text-sm">🚗</span>}
+              <span className="text-xs font-black uppercase tracking-wider">{modeMins(primaryMode)}</span>
+            </div>
+          ) : viewerLocation && isTravelTimeLoading ? (
+            <div className="rounded-lg bg-black/50 border border-white/10 text-white/60 px-2.5 py-1.5 text-xs">
+              ⏳
             </div>
           ) : null}
         </div>
@@ -571,22 +579,52 @@ export function ProfileCard({
         <div className="absolute inset-x-0 bottom-0 p-3 pointer-events-auto">
           <div className="rounded-xl bg-black/40 backdrop-blur-md border border-white/10 p-3">
             <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="text-sm font-black text-white leading-tight truncate">
                   {profile.profileName}
                 </div>
                 <div className="text-xs text-white/80 truncate">{headline}</div>
                 <div className="mt-1 text-[11px] text-white/65 truncate">{locationLine}</div>
               </div>
-              <Button
-                type="button"
-                variant="glass"
-                size="sm"
-                onClick={onViewClick}
-                className="h-8 px-3 text-[10px] font-black uppercase tracking-wider"
-              >
-                View
-              </Button>
+              <div className="flex items-center gap-1.5">
+                {hasTravelTimes && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openMode('foot');
+                      }}
+                      className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center hover:bg-cyan/20 hover:border-cyan/50 transition-colors"
+                      title={`Walk: ${footMins}`}
+                    >
+                      <span className="text-sm">🚶</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openMode('uber');
+                      }}
+                      className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center hover:bg-pink-500/20 hover:border-pink-500/50 transition-colors"
+                      title={`Uber: ${uberMins}`}
+                    >
+                      <span className="text-sm">🚗</span>
+                    </button>
+                  </>
+                )}
+                <Button
+                  type="button"
+                  variant="glass"
+                  size="sm"
+                  onClick={onViewClick}
+                  className="h-8 px-3 text-[10px] font-black uppercase tracking-wider"
+                >
+                  View
+                </Button>
+              </div>
             </div>
 
             {isSeller && hasProducts && productPreviewUrls.length > 0 ? (
