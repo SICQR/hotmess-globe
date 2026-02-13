@@ -25,6 +25,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:ci": "npm run lint && npm run typecheck && npm run test:run && npm run test:e2e",
+    "test:integrations": "node ./scripts/test-integrations.js --prod",
+    "test:integrations:local": "node ./scripts/test-integrations.js",
     "preview": "vite preview"
   },
   "dependencies": {
