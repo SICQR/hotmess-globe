@@ -14,7 +14,13 @@ const supabase = createClient(
 );
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET;
 const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+
+// Validate required env vars at module load
+if (!TELEGRAM_BOT_TOKEN) {
+  console.warn('[telegram/bot] TELEGRAM_BOT_TOKEN not configured');
+}
 
 // Bot commands
 const COMMANDS = {
@@ -32,7 +38,21 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Verify webhook (optional: add secret token verification)
+  // Check bot token is configured
+  if (!TELEGRAM_BOT_TOKEN) {
+    console.error('[telegram/bot] Missing TELEGRAM_BOT_TOKEN');
+    return res.status(500).json({ error: 'Bot not configured' });
+  }
+
+  // Verify webhook secret if configured (recommended for production)
+  if (TELEGRAM_WEBHOOK_SECRET) {
+    const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
+    if (secretHeader !== TELEGRAM_WEBHOOK_SECRET) {
+      console.warn('[telegram/bot] Invalid webhook secret');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+
   const update = req.body;
 
   try {
