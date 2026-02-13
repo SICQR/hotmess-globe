@@ -4,8 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 const createPageUrl = (pageName) => `/${pageName}`;
 
 // Use environment variables - set in Vercel dashboard
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Trim to remove any accidental newlines from env vars
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const supabaseKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 if (!supabaseUrl || !supabaseKey) {
   console.error(
