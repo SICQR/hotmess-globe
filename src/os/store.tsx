@@ -200,6 +200,8 @@ export function OSProvider({ children }: { children: React.ReactNode }) {
   }, [state.mode, state.interrupt])
 
   // Auto-transition from boot to idle after initialization
+  // The 100ms delay ensures initial render completes and allows time for
+  // provider tree to stabilize before transitioning to idle
   useEffect(() => {
     if (state.mode === 'boot') {
       const timer = setTimeout(() => {

@@ -212,6 +212,12 @@ export function useTrustMeta() {
 
 /**
  * Calculate ranking score for profile discovery
+ * 
+ * @param trust - User trust metadata
+ * @param distance - Distance in kilometers (0-100km normalized)
+ * @param isOnline - Whether user is currently online
+ * @param weights - Weight configuration for scoring factors
+ * @returns Score between 0 and 1 for ranking
  */
 export function calculateRankScore(
   trust: TrustMeta,
@@ -231,7 +237,8 @@ export function calculateRankScore(
     randomDelta: 0.1,
   }
 ): number {
-  const distanceScore = 1 - Math.min(1, distance / 100) // Normalize distance to 0-1
+  // Normalize distance to 0-1 (100km max threshold)
+  const distanceScore = 1 - Math.min(1, distance / 100)
   const onlineScore = isOnline ? 1 : 0
   const verifiedBoost = trust.verified ? 1 : 0
   const trustScore = trust.reliabilityScore

@@ -5,7 +5,7 @@
  * Syncs OS state with URL search params bidirectionally.
  */
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { useOS } from './store'
 import type { SheetType } from './types'
 
@@ -100,7 +100,7 @@ export function useOSURLSync() {
 
   // URL → State sync (on mount and browser navigation)
   useEffect(() => {
-    const hydrateFromURL = () => {
+    const hydrateFromURL = useCallback(() => {
       isUpdatingFromURL.current = true
 
       const params = new URLSearchParams(window.location.search)
@@ -140,7 +140,7 @@ export function useOSURLSync() {
       }
 
       isUpdatingFromURL.current = false
-    }
+    }, [state.mode, state.sheet, state.threadId, openSheet, openThread, closeSheet, closeThread])
 
     // Hydrate on mount
     if (isInitialMount.current) {
@@ -149,9 +149,8 @@ export function useOSURLSync() {
     }
 
     // Listen for browser back/forward navigation
-    const handlePopState = () => {
-      hydrateFromURL()
-    }
+    // Memoized handlePopState to avoid recreating on every effect run
+    const handlePopState = hydrateFromURL
 
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
