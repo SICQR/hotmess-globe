@@ -54,6 +54,7 @@ import Onboarding from './pages/Onboarding';
 import OnboardingGate from './pages/OnboardingGate';
 import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
+import OSDemo from './pages/OSDemo';
 import PersonaFeatures from './pages/PersonaFeatures';
 import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
@@ -144,6 +145,7 @@ export const PAGES = {
     "OnboardingGate": OnboardingGate,
     "OrderHistory": OrderHistory,
     "OrganizerDashboard": OrganizerDashboard,
+    "OSDemo": OSDemo,
     "PersonaFeatures": PersonaFeatures,
     "PrivacyPolicy": PrivacyPolicy,
     "ProductDetail": ProductDetail,
