@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔥 Chat with Copilot</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --dim: #8b949e;
+      --accent: #ff3366;
+      --green: #3fb950;
+      --blue: #58a6ff;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      padding: 15px 20px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .logo {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--green);
+    }
+    
+    .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--green); }
+      50% { opacity: 0.5; box-shadow: none; }
+    }
+    
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    
+    .message {
+      max-width: 80%;
+      margin-bottom: 16px;
+    }
+    
+    .message.user {
+      margin-left: auto;
+    }
+    
+    .msg-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    
+    .message.assistant .avatar {
+      background: linear-gradient(135deg, var(--accent), #a371f7);
+    }
+    
+    .message.user .avatar {
+      background: var(--blue);
+    }
+    
+    .msg-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .msg-time {
+      font-size: 0.75rem;
+      color: var(--dim);
+    }
+    
+    .msg-content {
+      padding: 14px 18px;
+      border-radius: 16px;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+    
+    .message.assistant .msg-content {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px 16px 16px 4px;
+    }
+    
+    .message.user .msg-content {
+      background: #1f4068;
+      border-radius: 16px 16px 4px 16px;
+    }
+    
+    .msg-content code {
+      background: rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', monospace;
+      font-size: 0.85em;
+      color: var(--green);
+    }
+    
+    .msg-content pre {
+      background: var(--bg);
+      padding: 12px;
+      border-radius: 8px;
+      margin: 10px 0;
+      overflow-x: auto;
+      font-family: 'SF Mono', monospace;
+      font-size: 0.85rem;
+    }
+    
+    .typing {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: fit-content;
+    }
+    
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+    }
+    
+    .typing-dots span {
+      width: 8px;
+      height: 8px;
+      background: var(--dim);
+      border-radius: 50%;
+      animation: bounce 1.4s infinite;
+    }
+    
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
+    
+    .input-area {
+      padding: 20px;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+    }
+    
+    .input-row {
+      display: flex;
+      gap: 12px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    #input {
+      flex: 1;
+      padding: 14px 18px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+      resize: none;
+    }
+    
+    #input:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+    
+    #send {
+      padding: 14px 28px;
+      background: var(--accent);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+    
+    #send:hover {
+      opacity: 0.9;
+    }
+    
+    #send:active {
+      transform: scale(0.98);
+    }
+    
+    .welcome {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    
+    .welcome-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+    
+    .welcome h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+    
+    .welcome p {
+      color: var(--dim);
+      max-width: 400px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">🔥 HOTMESS Copilot</div>
+    <div class="status">
+      <span class="dot"></span>
+      Connected to CLI
+    </div>
+  </header>
+  
+  <div class="messages" id="messages">
+    <div class="welcome">
+      <div class="welcome-icon">💬</div>
+      <h1>Chat with Copilot</h1>
+      <p>Type a message below. Your messages go directly to the Copilot CLI agent running in your terminal.</p>
+    </div>
+  </div>
+  
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="input" placeholder="Ask Copilot anything..." rows="1" onkeydown="handleKey(event)"></textarea>
+      <button id="send" onclick="send()">Send</button>
+    </div>
+  </div>
+  
+  <script>
+    const API = 'http://localhost:3333';
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('input');
+    let lastCount = 0;
+    let welcomed = false;
+    
+    // Auto-resize input
+    inputEl.addEventListener('input', () => {
+      inputEl.style.height = 'auto';
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+    });
+    
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        send();
+      }
+    }
+    
+    async function send() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
+      
+      await fetch(API + '/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
+      });
+      
+      poll();
+    }
+    
+    async function poll() {
+      try {
+        const res = await fetch(API + '/messages');
+        const data = await res.json();
+        
+        if (data.messages.length !== lastCount) {
+          render(data.messages, data.pending);
+          lastCount = data.messages.length;
+        } else if (data.pending) {
+          showPending();
+        }
+      } catch (e) {
+        console.error('Poll error:', e);
+      }
+    }
+    
+    function render(messages, pending) {
+      if (!welcomed && messages.length === 0) return;
+      welcomed = true;
+      
+      let html = '';
+      messages.forEach(m => {
+        const time = new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const name = m.role === 'user' ? 'You' : 'Copilot';
+        const avatar = m.role === 'user' ? '👤' : '🔥';
+        const content = formatContent(m.content);
+        
+        html += `
+          <div class="message ${m.role}">
+            <div class="msg-header">
+              <div class="avatar">${avatar}</div>
+              <span class="msg-name">${name}</span>
+              <span class="msg-time">${time}</span>
+            </div>
+            <div class="msg-content">${content}</div>
+          </div>
+        `;
+      });
+      
+      if (pending) {
+        html += `
+          <div class="message assistant">
+            <div class="msg-header">
+              <div class="avatar">🔥</div>
+              <span class="msg-name">Copilot</span>
+            </div>
+            <div class="typing">
+              <div class="typing-dots"><span></span><span></span><span></span></div>
+              <span style="color:var(--dim);font-size:0.85rem">Thinking...</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      messagesEl.innerHTML = html;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+    
+    function showPending() {
+      if (!document.querySelector('.typing')) {
+        const html = `
+          <div class="message assistant pending-msg">
+            <div class="msg-header">
+              <div class="avatar">🔥</div>
+              <span class="msg-name">Copilot</span>
+            </div>
+            <div class="typing">
+              <div class="typing-dots"><span></span><span></span><span></span></div>
+              <span style="color:var(--dim);font-size:0.85rem">Thinking...</span>
+            </div>
+          </div>
+        `;
+        messagesEl.insertAdjacentHTML('beforeend', html);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+    }
+    
+    function formatContent(text) {
+      return text
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+    }
+    
+    // Poll every second
+    setInterval(poll, 1000);
+    poll();
+    inputEl.focus();
+  </script>
+</body>
+</html>
