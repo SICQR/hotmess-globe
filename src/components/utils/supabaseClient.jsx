@@ -1538,6 +1538,14 @@ export const auth = {
   
   onAuthStateChange: (callback) => 
     supabase.auth.onAuthStateChange(callback),
+
+  signInWithGoogle: (redirectTo) =>
+    supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectTo || `${window.location.origin}/auth/callback`,
+      },
+    }),
 };
 
 // Database helpers
