@@ -45,7 +45,6 @@ export default async function handler(req, res) {
   const priceCents = beacon.ticket_price_cents || 0;
 
   // 3. Handle Payment
-  let paymentIntentId = null;
   if (priceCents > 0) {
     if (!payment_method_id) {
         return json(res, 400, { error: 'Payment method required for paid tickets' });
@@ -73,7 +72,6 @@ export default async function handler(req, res) {
         if (paymentIntent.status !== 'succeeded') {
             return json(res, 402, { error: 'Payment failed', status: paymentIntent.status });
         }
-        paymentIntentId = paymentIntent.id;
     } catch (err) {
         return json(res, 402, { error: 'Payment error', details: err.message });
     }
