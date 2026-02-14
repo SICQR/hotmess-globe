@@ -8,10 +8,18 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+let _supabase = null;
+
+function getSupabase() {
+  if (!_supabase) {
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (url && key) {
+      _supabase = createClient(url, key);
+    }
+  }
+  return _supabase;
+}
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -133,7 +141,7 @@ export default async function handler(req, res) {
     }
 
     // Fetch user profile
-    const { data: profile, error: fetchError } = await supabase
+    const { data: profile, error: fetchError } = await getSupabase()
       .from('User')
       .select(`
         id,
