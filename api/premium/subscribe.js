@@ -117,7 +117,6 @@ export default async function handler(req, res) {
       .eq('email', subscriberEmail);
 
     if (deductError) {
-      // console.error('Failed to deduct XP:', deductError);
       return res.status(500).json({ error: 'Failed to process transaction' });
     }
 
@@ -149,7 +148,6 @@ export default async function handler(req, res) {
         .single();
 
       if (updateError) {
-        // console.error('Failed to update subscription:', updateError);
         // Refund XP
         await supabase
           .from('User')
@@ -175,7 +173,6 @@ export default async function handler(req, res) {
         .single();
 
       if (insertError) {
-        // console.error('Failed to create subscription:', insertError);
         // Refund XP
         await supabase
           .from('User')
@@ -205,7 +202,6 @@ export default async function handler(req, res) {
       },
     });
   } catch (error) {
-    // console.error('Subscription error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

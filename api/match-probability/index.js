@@ -474,7 +474,6 @@ export default async function handler(req, res) {
       scoringVersion: version,
     });
   } catch (error) {
-    // console.error('Match probability error:', error);
     return json(res, 500, { error: error?.message || 'Match probability calculation failed' });
   }
 }

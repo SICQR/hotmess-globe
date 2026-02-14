@@ -19,7 +19,6 @@ const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
 // Validate required env vars at module load
 if (!TELEGRAM_BOT_TOKEN) {
-  // console.warn('[telegram/bot] TELEGRAM_BOT_TOKEN not configured');
 }
 
 // Bot commands
@@ -40,7 +39,6 @@ export default async function handler(req, res) {
 
   // Check bot token is configured
   if (!TELEGRAM_BOT_TOKEN) {
-    // console.error('[telegram/bot] Missing TELEGRAM_BOT_TOKEN');
     return res.status(500).json({ error: 'Bot not configured' });
   }
 
@@ -48,7 +46,6 @@ export default async function handler(req, res) {
   if (TELEGRAM_WEBHOOK_SECRET) {
     const secretHeader = req.headers['x-telegram-bot-api-secret-token'];
     if (secretHeader !== TELEGRAM_WEBHOOK_SECRET) {
-      // console.warn('[telegram/bot] Invalid webhook secret');
       return res.status(401).json({ error: 'Unauthorized' });
     }
   }
@@ -65,7 +62,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok: true });
   } catch (error) {
-    // console.error('Telegram webhook error:', error);
     return res.status(200).json({ ok: true }); // Always return 200 to Telegram
   }
 }
@@ -409,7 +405,6 @@ async function sendMessage(chatId, text, options = {}) {
       })
     });
   } catch (error) {
-    // console.error('Failed to send Telegram message:', error);
   }
 }
 
@@ -425,6 +420,5 @@ async function answerCallback(callbackId, text) {
       })
     });
   } catch (error) {
-    // console.error('Failed to answer callback:', error);
   }
 }

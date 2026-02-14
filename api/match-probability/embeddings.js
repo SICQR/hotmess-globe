@@ -27,7 +27,6 @@ async function generateEmbedding(text) {
   }
 
   if (!OPENAI_API_KEY) {
-    // console.warn('OPENAI_API_KEY not configured, skipping embedding generation');
     return null;
   }
 
@@ -46,14 +45,12 @@ async function generateEmbedding(text) {
 
     if (!response.ok) {
       const error = await response.text();
-      // console.error('OpenAI embedding error:', error);
       return null;
     }
 
     const data = await response.json();
     return data?.data?.[0]?.embedding || null;
   } catch (error) {
-    // console.error('Embedding generation failed:', error);
     return null;
   }
 }
@@ -168,7 +165,6 @@ export default async function handler(req, res) {
     }
 
     // Generate embeddings
-    // console.log(`Generating embeddings for user ${userProfile.id}...`);
     
     const [bioEmbedding, turnOnsEmbedding, turnOffsEmbedding, combinedEmbedding] = await Promise.all([
       generateEmbedding(bio),
@@ -209,7 +205,6 @@ export default async function handler(req, res) {
       });
 
     if (upsertErr) {
-      // console.error('Failed to save embeddings:', upsertErr);
       return json(res, 500, { error: 'Failed to save embeddings' });
     }
 
@@ -225,7 +220,6 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    // console.error('Embeddings endpoint error:', error);
     return json(res, 500, { error: error?.message || 'Internal server error' });
   }
 }

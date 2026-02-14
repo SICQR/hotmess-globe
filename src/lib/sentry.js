@@ -8,9 +8,7 @@ export function initSentry() {
   const dsn = import.meta.env.VITE_SENTRY_DSN;
   
   if (!dsn) {
-    if (import.meta.env.DEV) {
-      console.log('[Sentry] No DSN configured - error monitoring disabled');
-    }
+    // Sentry not configured - error monitoring disabled
     return;
   }
 
@@ -59,8 +57,6 @@ export function initSentry() {
       return event;
     },
   });
-
-  console.log('[Sentry] Error monitoring initialized');
 }
 
 /**
