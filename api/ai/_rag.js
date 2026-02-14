@@ -6,10 +6,18 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+let _supabase = null;
+
+function getSupabase() {
+  if (!_supabase) {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (url && key) {
+      _supabase = createClient(url, key);
+    }
+  }
+  return _supabase;
+}
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const EMBEDDING_MODEL = 'text-embedding-3-small';
@@ -63,7 +71,7 @@ export async function searchPlatformKnowledge(query, options = {}) {
     return fallbackTextSearch('platform_knowledge', query, category, limit);
   }
 
-  const { data, error } = await supabase.rpc('search_platform_knowledge', {
+  const { data, error } = await getSupabase().rpc('search_platform_knowledge', {
     query_embedding: embedding,
     match_threshold: threshold,
     match_count: limit
@@ -94,7 +102,7 @@ export async function searchGayWorldKnowledge(query, options = {}) {
     return fallbackTextSearch('gay_world_knowledge', query, category, limit);
   }
 
-  const { data, error } = await supabase.rpc('search_gay_world_knowledge', {
+  const { data, error } = await getSupabase().rpc('search_gay_world_knowledge', {
     query_embedding: embedding,
     filter_category: category,
     filter_city: city,

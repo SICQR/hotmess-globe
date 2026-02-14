@@ -16,10 +16,18 @@ import { buildSystemPrompt, detectCrisis, getCrisisResponse, buildFunctionContex
 import { smartSearch, formatKnowledgeForPrompt } from './_rag.js';
 import { TOOL_DEFINITIONS, executeTool } from './_tools.js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+let _supabase = null;
+
+function getSupabase() {
+  if (!_supabase) {
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (url && key) {
+      _supabase = createClient(url, key);
+    }
+  }
+  return _supabase;
+}
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const MODEL = 'gpt-4-turbo-preview';
@@ -56,10 +64,10 @@ export default async function handler(req, res) {
     
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
-      const { data: { user } } = await supabase.auth.getUser(token);
+      const { data: { user } } = await getSupabase().auth.getUser(token);
       
       if (user?.email) {
-        const { data: userData } = await supabase
+        const { data: userData } = await getSupabase()
           .from('User')
           .select('id, email, display_name, username, subscription_tier, xp_balance, city, interests, music_taste, tribes, looking_for, profile_type')
           .eq('email', user.email)
@@ -91,7 +99,7 @@ export default async function handler(req, res) {
     let activeConversationId = conversationId;
     
     if (!activeConversationId) {
-      const { data: newConv, error } = await supabase
+      const { data: newConv, error } = await getSupabase()
         .from('ai_conversations')
         .insert({
           user_id: userContext?.id || null,
@@ -119,7 +127,7 @@ export default async function handler(req, res) {
     // 5. GET CONVERSATION HISTORY
     let conversationHistory = [];
     if (activeConversationId) {
-      const { data: conv } = await supabase
+      const { data: conv } = await getSupabase()
         .from('ai_conversations')
         .select('messages')
         .eq('id', activeConversationId)
@@ -277,7 +285,7 @@ async function saveConversation(conversationId, userId, userMessage, assistantRe
 
   if (conversationId) {
     // Update existing conversation
-    const { data: existing } = await supabase
+    const { data: existing } = await getSupabase()
       .from('ai_conversations')
       .select('messages')
       .eq('id', conversationId)
@@ -285,7 +293,7 @@ async function saveConversation(conversationId, userId, userMessage, assistantRe
 
     const updatedMessages = [...(existing?.messages || []), ...newMessages];
 
-    await supabase
+    await getSupabase()
       .from('ai_conversations')
       .update({
         messages: updatedMessages,
@@ -297,7 +305,7 @@ async function saveConversation(conversationId, userId, userMessage, assistantRe
   }
 
   // Create new conversation
-  const { data: newConv, error } = await supabase
+  const { data: newConv, error } = await getSupabase()
     .from('ai_conversations')
     .insert({
       user_id: userId,
@@ -318,7 +326,7 @@ async function saveConversation(conversationId, userId, userMessage, assistantRe
  */
 async function logUsage(userId, actionType, metadata = {}) {
   try {
-    await supabase
+    await getSupabase()
       .from('ai_usage_logs')
       .insert({
         user_id: userId,

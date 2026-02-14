@@ -8,10 +8,18 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+let _supabase = null;
+
+function getSupabase() {
+  if (!_supabase) {
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (url && key) {
+      _supabase = createClient(url, key);
+    }
+  }
+  return _supabase;
+}
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -49,7 +57,7 @@ export default async function handler(req, res) {
     const targetDate = date || new Date().toISOString().split('T')[0];
 
     // Get user preferences
-    const { data: user, error: userError } = await supabase
+    const { data: user, error: userError } = await getSupabase()
       .from('User')
       .select('music_taste, tribes, interests, city')
       .eq('email', userEmail)
@@ -66,7 +74,7 @@ export default async function handler(req, res) {
     dayEnd.setDate(dayEnd.getDate() + 1);
     dayEnd.setHours(8, 0, 0); // Until 8am next day
 
-    const { data: events, error: eventsError } = await supabase
+    const { data: events, error: eventsError } = await getSupabase()
       .from('Beacon')
       .select('*')
       .eq('beacon_type', 'event')
@@ -78,7 +86,7 @@ export default async function handler(req, res) {
     }
 
     // Get venues from knowledge base
-    const { data: venues, error: venuesError } = await supabase
+    const { data: venues, error: venuesError } = await getSupabase()
       .from('gay_world_knowledge')
       .select('*')
       .eq('category', 'venue')
@@ -88,7 +96,7 @@ export default async function handler(req, res) {
     }
 
     // Get HOTMESS activity (users with Right Now or RSVP'd)
-    const { data: hotmessActivity } = await supabase
+    const { data: hotmessActivity } = await getSupabase()
       .from('right_now_status')
       .select('destination, count')
       .eq('status', 'active')
