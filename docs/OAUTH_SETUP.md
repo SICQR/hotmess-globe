@@ -96,8 +96,8 @@ TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
 ```
 
 ⚠️ **Important**: 
-- `VITE_TELEGRAM_BOT_USERNAME` is exposed to the client (no `VITE_` prefix means server-only)
-- `TELEGRAM_BOT_TOKEN` is server-only and should NEVER be exposed to the client
+- `VITE_TELEGRAM_BOT_USERNAME` is exposed to the client (variables WITH the `VITE_` prefix are publicly accessible)
+- `TELEGRAM_BOT_TOKEN` is server-only (no `VITE_` prefix) and should NEVER be exposed to the client
 
 ### 3. Configure Supabase (Optional)
 

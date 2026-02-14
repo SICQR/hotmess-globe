@@ -37,6 +37,8 @@ const MEMBERSHIP_TIERS = [
   }
 ];
 
+const REDIRECT_DELAY_MS = 500; // Short delay for toast visibility before redirect
+
 export default function Auth() {
   const [step, setStep] = useState('auth'); // auth, forgot, reset, membership, profile, welcome
   const [isSignUp, setIsSignUp] = useState(false);
@@ -56,9 +58,17 @@ export default function Auth() {
   const nextUrl = searchParams.get('next');
   const mode = searchParams.get('mode');
 
+  // Helper function to handle post-auth redirects
+  const performRedirectAfterAuth = () => {
+    const redirect = nextUrl || searchParams.get('redirect_to') || createPageUrl('Home');
+    setTimeout(() => {
+      window.location.href = redirect;
+    }, REDIRECT_DELAY_MS);
+  };
+
   // Listen to Supabase auth state changes (for OAuth callbacks)
   useEffect(() => {
-    const { data: authListener } = auth.onAuthStateChange(async (event, session) => {
+    const { data: authSubscription } = auth.onAuthStateChange(async (event, session) => {
       console.log('[Auth] Auth state changed:', event);
       
       if (event === 'SIGNED_IN' && session) {
@@ -68,10 +78,7 @@ export default function Auth() {
         // Only redirect if we're not already showing the membership/profile steps
         if (step === 'auth') {
           toast.success('Welcome back!');
-          setTimeout(() => {
-            const redirect = nextUrl || searchParams.get('redirect_to') || createPageUrl('Home');
-            window.location.href = redirect;
-          }, 500);
+          performRedirectAfterAuth();
         }
       } else if (event === 'SIGNED_OUT') {
         console.log('[Auth] User signed out');
@@ -81,9 +88,9 @@ export default function Auth() {
     });
 
     return () => {
-      authListener?.subscription?.unsubscribe();
+      authSubscription?.subscription?.unsubscribe();
     };
-  }, [step, nextUrl, searchParams]);
+  }, [step, nextUrl, searchParams, performRedirectAfterAuth]);
 
   useEffect(() => {
     // Handle OAuth callbacks (Google, etc.)
@@ -164,9 +171,7 @@ export default function Auth() {
         if (error) throw error;
 
         toast.success('Welcome back!');
-        setTimeout(() => {
-          window.location.href = nextUrl || createPageUrl('Home');
-        }, 500);
+        performRedirectAfterAuth();
       }
     } catch (error) {
       toast.error(error.message || 'Authentication failed');
