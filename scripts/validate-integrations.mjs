@@ -98,7 +98,7 @@ async function testSupabase() {
     const supabase = createClient(url, key);
     
     // Test connection by querying a table
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('User')
       .select('count')
       .limit(1);
