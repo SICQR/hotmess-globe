@@ -106,7 +106,7 @@ export default function HotmessSplash({ onComplete }) {
   const handleEnter = () => {
     // Single action confirms: 18+, cookies, terms, GDPR
     try {
-      sessionStorage.setItem('age_verified', 'true');
+      localStorage.setItem('hm_age_confirmed_v1', 'true');
       sessionStorage.setItem('terms_accepted', 'true');
       sessionStorage.setItem('cookies_accepted', 'true');
     } catch (e) {
