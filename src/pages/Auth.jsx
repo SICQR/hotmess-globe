@@ -56,15 +56,91 @@ export default function Auth() {
   const nextUrl = searchParams.get('next');
   const mode = searchParams.get('mode');
 
+  // Listen to Supabase auth state changes (for OAuth callbacks)
   useEffect(() => {
-    // Supabase recovery links typically land with tokens in the URL hash.
-    // Example: /Auth?mode=reset#access_token=...&type=recovery
-    const hash = (typeof window !== 'undefined' ? window.location.hash : '') || '';
-    const looksLikeRecovery = hash.toLowerCase().includes('type=recovery');
-    if (mode === 'reset' || looksLikeRecovery) {
-      setStep('reset');
-    }
-  }, [mode]);
+    const { data: authListener } = auth.onAuthStateChange(async (event, session) => {
+      console.log('[Auth] Auth state changed:', event);
+      
+      if (event === 'SIGNED_IN' && session) {
+        // User successfully signed in (including OAuth)
+        console.log('[Auth] User signed in successfully');
+        
+        // Only redirect if we're not already showing the membership/profile steps
+        if (step === 'auth') {
+          toast.success('Welcome back!');
+          setTimeout(() => {
+            const redirect = nextUrl || searchParams.get('redirect_to') || createPageUrl('Home');
+            window.location.href = redirect;
+          }, 500);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        console.log('[Auth] User signed out');
+      } else if (event === 'USER_UPDATED') {
+        console.log('[Auth] User updated');
+      }
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, [step, nextUrl, searchParams]);
+
+  useEffect(() => {
+    // Handle OAuth callbacks (Google, etc.)
+    const handleOAuthCallback = async () => {
+      const hash = (typeof window !== 'undefined' ? window.location.hash : '') || '';
+      const looksLikeRecovery = hash.toLowerCase().includes('type=recovery');
+      
+      // Check if this is a recovery link
+      if (mode === 'reset' || looksLikeRecovery) {
+        setStep('reset');
+        return;
+      }
+
+      // Check if this is an OAuth callback (has access_token or code in hash)
+      const hasOAuthToken = hash.includes('access_token=') || hash.includes('code=');
+      
+      if (hasOAuthToken) {
+        setLoading(true);
+        try {
+          // Supabase automatically exchanges the token
+          const { data, error } = await auth.getSession();
+          
+          if (error) {
+            console.error('[Auth] OAuth callback error:', error);
+            toast.error('Authentication failed. Please try again.');
+            setLoading(false);
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+          }
+
+          if (data?.session) {
+            // Successfully authenticated
+            toast.success('Welcome back!');
+            
+            // Redirect to intended page or home
+            setTimeout(() => {
+              const redirect = nextUrl || searchParams.get('redirect_to') || createPageUrl('Home');
+              window.location.href = redirect;
+            }, 500);
+          } else {
+            setLoading(false);
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (error) {
+          console.error('[Auth] OAuth session error:', error);
+          toast.error('Authentication failed. Please try again.');
+          setLoading(false);
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+    };
+
+    handleOAuthCallback();
+  }, [mode, nextUrl, searchParams]);
 
   const handleAuth = async (e) => {
     e.preventDefault();
