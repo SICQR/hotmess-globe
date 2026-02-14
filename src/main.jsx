@@ -6,6 +6,7 @@ import '@/index.css'
 import { initAnalytics } from '@/components/utils/analytics'
 import ErrorBoundary from '@/components/error/ErrorBoundary'
 import { clearBadSupabaseSessions } from '@/lib/clearBadSessions'
+import { setupGlobalErrorHandlers } from '@/utils/errorHandler'
 import { OSProvider } from '@/os'
 
 // FIRST: Clear any cached sessions from wrong Supabase projects
@@ -28,6 +29,9 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     replaysOnErrorSampleRate: 1.0,
   })
 }
+
+// Setup global error handlers
+setupGlobalErrorHandlers();
 
 // Initialize analytics
 initAnalytics()

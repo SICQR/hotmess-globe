@@ -2,6 +2,9 @@ import React from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createPageUrl } from '@/utils';
+import logger from '@/utils/logger';
+import { trackError } from '@/components/utils/analytics';
+import { captureError } from '@/lib/sentry';
 
 class PageErrorBoundary extends React.Component {
   constructor(props) {
@@ -19,7 +22,11 @@ class PageErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Page Error Boundary caught:', error, errorInfo);
+    logger.error('PageErrorBoundary caught error', {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack
+    });
 
     try {
       const payload = {
@@ -47,8 +54,18 @@ class PageErrorBoundary extends React.Component {
       errorCount: prevState.errorCount + 1
     }));
 
-    // Log to error tracking service (add your service here)
-    // logErrorToService(error, errorInfo);
+    // Send to Sentry
+    captureError(error, {
+      componentStack: errorInfo.componentStack,
+      boundary: 'PageErrorBoundary',
+      errorCount: this.state.errorCount + 1,
+    });
+    
+    // Send to analytics
+    trackError(error, {
+      componentStack: errorInfo.componentStack,
+      boundary: 'PageErrorBoundary',
+    });
   }
 
   handleReset = () => {
