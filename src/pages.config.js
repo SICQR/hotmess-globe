@@ -85,6 +85,7 @@ import Vault from './pages/Vault';
 import WakeTheMess from './pages/WakeTheMess';
 import Pricing from './pages/Pricing';
 import LuxShowcase from './pages/LuxShowcase';
+import OSHome from './pages/OSHome';
 import __Layout from './Layout.jsx';
 
 
@@ -176,10 +177,11 @@ export const PAGES = {
     "TicketMarketplace": TicketMarketplace,
     "Vault": Vault,
     "WakeTheMess": WakeTheMess,
+    "OSHome": OSHome,
 }
 
 export const pagesConfig = {
-    mainPage: "Home",
+    mainPage: "OSHome",
     Pages: PAGES,
     Layout: __Layout,
 };
