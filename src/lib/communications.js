@@ -11,6 +11,7 @@
  */
 
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 // =============================================================================
 // EMAIL TEMPLATES
@@ -313,7 +314,7 @@ export async function sendEmail({ to, template, subject, data, html, text }) {
 
     return result;
   } catch (err) {
-    console.error('[Communications] Email send error:', err);
+    logger.error('[Communications] Email send error:', err);
     throw err;
   }
 }
@@ -511,7 +512,7 @@ export async function createNotification({
 
     return { success: true };
   } catch (err) {
-    console.error('[Communications] Create notification error:', err);
+    logger.error('[Communications] Create notification error:', err);
     return { success: false, error: err.message };
   }
 }
@@ -631,7 +632,7 @@ export async function sendPushNotification({ userId, title, message, link, metad
 
     return await response.json();
   } catch (err) {
-    console.error('[Communications] Push notification error:', err);
+    logger.error('[Communications] Push notification error:', err);
     return { success: false, error: err.message };
   }
 }

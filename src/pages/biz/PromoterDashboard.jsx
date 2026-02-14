@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import logger from '@/utils/logger';
 
 // Tier display info
 const TIER_COLORS = {
@@ -61,7 +62,7 @@ export default function PromoterDashboard() {
         .order('created_at', { ascending: false });
 
       if (beaconsError) {
-        console.error('Error fetching beacons:', beaconsError);
+        logger.error('Error fetching beacons:', beaconsError);
       }
 
       // Fetch tiers
@@ -71,7 +72,7 @@ export default function PromoterDashboard() {
         .order('price_cents', { ascending: true });
 
       if (tiersError) {
-        console.error('Error fetching tiers:', tiersError);
+        logger.error('Error fetching tiers:', tiersError);
       }
 
       // Process beacons to flattened structure

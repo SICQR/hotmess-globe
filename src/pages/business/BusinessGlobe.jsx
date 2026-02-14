@@ -7,6 +7,7 @@ import {
   ArrowLeft, Globe, Radio, TrendingUp, Users, Zap, 
   Activity, Target, Eye, RefreshCw 
 } from 'lucide-react';
+import logger from '@/utils/logger';
 
 const CITIES = [
   { id: 'london', name: 'London', flag: '🇬🇧', color: '#FF1493' },
@@ -57,7 +58,7 @@ const BusinessGlobe = () => {
         .limit(1);
       setReadiness(cri?.[0] || null);
     } catch (error) {
-      console.error('Failed to load city data:', error);
+      logger.error('Failed to load city data:', error);
     }
     setLoading(false);
   };

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import logger from '@/utils/logger';
 
 // =============================================================================
 // FACE DETECTION UTILITIES
@@ -158,7 +159,7 @@ export default function FaceVerification({
         };
       }
     } catch (err) {
-      console.error('Camera access failed:', err);
+      logger.error('Camera access failed:', err);
       setError(err.name === 'NotAllowedError' 
         ? 'Camera access denied. Please enable camera permissions.'
         : 'Failed to access camera. Please check your device.');

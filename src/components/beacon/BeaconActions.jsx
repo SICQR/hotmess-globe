@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 export default function BeaconActions({ beacon }) {
   const [user, setUser] = useState(null);
@@ -26,7 +27,7 @@ export default function BeaconActions({ beacon }) {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
         setUser(null);
       }
     };

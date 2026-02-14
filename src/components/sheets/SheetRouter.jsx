@@ -9,6 +9,7 @@ import React, { Suspense, lazy } from 'react';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import L2SheetContainer from './L2SheetContainer';
 import { Loader2 } from 'lucide-react';
+import logger from '@/utils/logger';
 
 // Lazy load sheet contents
 const L2EventSheet = lazy(() => import('./L2EventSheet'));
@@ -76,7 +77,7 @@ export default function SheetRouter() {
   const config = SHEET_CONFIG[activeSheet];
   
   if (!config) {
-    console.warn(`Unknown sheet type: ${activeSheet}`);
+    logger.warn(`Unknown sheet type: ${activeSheet}`);
     return null;
   }
 

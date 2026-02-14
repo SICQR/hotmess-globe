@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getBearerToken, getEnv, json, normalizeDetails, normalizeShopDomain } from './_utils.js';
 import { bestEffortRateLimit, minuteBucket } from '../_rateLimit.js';
 import { getRequestIp } from '../routing/_utils.js';
+import logger from '../_utils/logger.js';
 
 const isAdminUser = async ({ anonClient, serviceClient, accessToken, email }) => {
   const { data: userData, error: userErr } = await anonClient.auth.getUser(accessToken);
@@ -176,7 +177,7 @@ export default async function handler(req, res) {
         price_xp: (() => {
           const parsed = Number.parseFloat(variant.price);
           if (!Number.isFinite(parsed) || parsed < 0) {
-            console.warn(`[Shopify Sync] Invalid price for variant ${variant.id}: ${variant.price}`);
+            logger.warn(`Invalid price for variant ${variant.id}: ${variant.price}`);
             return 0;
           }
           return Math.round(parsed * 100);

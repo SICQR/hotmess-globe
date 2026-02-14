@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { trackEvent } from '@/components/utils/analytics';
+import logger from '@/utils/logger';
 
 /**
  * Generate share URL with tracking
@@ -75,7 +76,7 @@ export default function ShareButton({
         return true;
       } catch (error) {
         if (error.name !== 'AbortError') {
-          console.error('Share failed:', error);
+          logger.error('Share failed:', error);
         }
       }
     }

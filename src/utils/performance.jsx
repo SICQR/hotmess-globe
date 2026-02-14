@@ -4,6 +4,7 @@
  */
 
 import { trackPerformance } from '@/components/utils/analytics';
+import logger from '@/utils/logger';
 
 /**
  * Core Web Vitals thresholds
@@ -40,9 +41,8 @@ function reportWebVital(metric, value) {
   // Log in development
   if (import.meta.env.DEV) {
     const color = rating === 'good' ? 'green' : rating === 'needs-improvement' ? 'orange' : 'red';
-    console.log(
-      `%c[Web Vital] ${metric}: ${value.toFixed(2)}ms (${rating})`,
-      `color: ${color}`
+    logger.debug(
+      `[Web Vital] ${metric}: ${value.toFixed(2)}ms (${rating})`
     );
   }
   
@@ -214,7 +214,7 @@ export function measureRenderTime(componentName) {
     const duration = performance.now() - start;
     
     if (import.meta.env.DEV && duration > 16) { // Longer than one frame
-      console.warn(`[Render] ${componentName} took ${duration.toFixed(2)}ms`);
+      logger.warn(`[Render] ${componentName} took ${duration.toFixed(2)}ms`);
     }
     
     trackPerformance(`render_${componentName}`, duration);

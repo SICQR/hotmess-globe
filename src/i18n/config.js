@@ -4,6 +4,8 @@
  * Multi-language support for HOTMESS
  */
 
+import logger from '@/utils/logger';
+
 // Supported languages
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧' },
@@ -50,7 +52,7 @@ export function getPreferredLanguage() {
  */
 export function setLanguage(langCode) {
   if (!SUPPORTED_LANGUAGES.some(l => l.code === langCode)) {
-    console.warn(`Language ${langCode} is not supported`);
+    logger.warn(`Language ${langCode} is not supported`);
     return false;
   }
   
@@ -74,7 +76,7 @@ export async function loadTranslations(langCode) {
     translationCache.set(langCode, translations.default);
     return translations.default;
   } catch (error) {
-    console.warn(`Failed to load translations for ${langCode}:`, error);
+    logger.warn(`Failed to load translations for ${langCode}:`, error);
     
     // Fallback to English
     if (langCode !== DEFAULT_LANGUAGE) {
@@ -98,7 +100,7 @@ export function translate(key, translations, params = {}) {
       value = value[k];
     } else {
       // Key not found, return the key itself
-      console.warn(`Translation key not found: ${key}`);
+      logger.warn(`Translation key not found: ${key}`);
       return key;
     }
   }

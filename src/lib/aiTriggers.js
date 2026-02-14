@@ -5,6 +5,8 @@
  * Use with useAITriggers hook to monitor and fire triggers.
  */
 
+import logger from '@/utils/logger';
+
 // Trigger definitions
 export const AI_TRIGGERS = {
   // Empty results triggers
@@ -233,7 +235,7 @@ export function getActiveTriggers(state, user, firedTriggers = {}) {
         active.push(trigger);
       }
     } catch (e) {
-      console.warn(`Trigger ${key} condition check failed:`, e);
+      logger.warn(`Trigger ${key} condition check failed:`, e);
     }
   }
   

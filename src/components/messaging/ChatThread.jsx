@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useAllUsers } from '../utils/queryConfig';
 import MediaViewer from './MediaViewer';
+import logger from '@/utils/logger';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -118,7 +119,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
               metadata: { thread_id: thread.id, sender: currentUser.email }
             });
           } catch (err) {
-            console.error('Failed to send notification:', err);
+            logger.error('Failed to send notification:', err);
           }
         }
       });

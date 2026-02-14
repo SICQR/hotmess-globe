@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Sparkles } from 'lucide-react';
 import ProductCard from './ProductCard';
+import logger from '@/utils/logger';
 
 export default function AIRecommendations({ currentUser, onBuy, excludeProductId = null }) {
   const [recommendations, setRecommendations] = useState([]);
@@ -113,7 +114,7 @@ Return ONLY a JSON array of product IDs, like: ["id1", "id2", "id3", "id4", "id5
 
       setRecommendations(recommendedProducts);
     } catch (error) {
-      console.error('Failed to generate recommendations:', error);
+      logger.error('Failed to generate recommendations:', error);
       setRecommendations(allProducts.filter(p => p.id !== excludeProductId).slice(0, 6));
     } finally {
       setLoading(false);

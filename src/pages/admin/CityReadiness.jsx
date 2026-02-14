@@ -8,6 +8,7 @@ import {
   CheckCircle, Clock, AlertTriangle, MapPin
 } from 'lucide-react';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 const CITY_FLAGS = {
   london: '🇬🇧', berlin: '🇩🇪', paris: '🇫🇷', tokyo: '🇯🇵',
@@ -37,7 +38,7 @@ const CityReadiness = () => {
       }
       setCities(Object.values(latest).sort((a, b) => b.score - a.score));
     } catch (error) {
-      console.error('Failed to load readiness:', error);
+      logger.error('Failed to load readiness:', error);
     }
     setLoading(false);
   };

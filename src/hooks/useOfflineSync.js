@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useState } from 'react';
+import logger from '@/utils/logger';
 import {
   processQueue,
   hasPendingItems,
@@ -75,7 +76,7 @@ export function useOfflineSync() {
         break;
       
       default:
-        console.warn(`[OfflineSync] Unknown entity type: ${entity}`);
+        logger.warn(`[OfflineSync] Unknown entity type: ${entity}`);
         // Still mark as processed to avoid infinite retries
         break;
     }
@@ -95,7 +96,7 @@ export function useOfflineSync() {
       
       return result;
     } catch (error) {
-      console.error('[OfflineSync] Sync failed:', error);
+      logger.error('[OfflineSync] Sync failed:', error);
       throw error;
     } finally {
       setIsSyncing(false);
@@ -106,7 +107,7 @@ export function useOfflineSync() {
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data?.type === 'SYNC_OFFLINE_QUEUE') {
-        console.log('[OfflineSync] Received sync message from SW');
+        logger.info('[OfflineSync] Received sync message from SW');
         syncNow();
       }
     };
@@ -125,7 +126,7 @@ export function useOfflineSync() {
   // Setup automatic sync on online event
   useEffect(() => {
     const handleOnline = () => {
-      console.log('[OfflineSync] Online - triggering sync');
+      logger.info('[OfflineSync] Online - triggering sync');
       syncNow();
     };
 

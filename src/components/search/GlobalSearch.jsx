@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { addToSearchHistory, getPopularSearches, getTrendingSearches } from './SearchHistory';
 import { trackEvent } from '@/components/utils/analytics';
+import logger from '@/utils/logger';
 
 const RECENT_SEARCHES_KEY = 'hotmess_search_history';
 const SAVED_SEARCHES_KEY = 'hotmess_saved_searches';
@@ -109,7 +110,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
         limit_count: 10,
       });
       if (error) {
-        console.warn('[GlobalSearch] Backend user search failed, falling back to client-side:', error.message);
+        logger.warn('[GlobalSearch] Backend user search failed, falling back to client-side:', error.message);
         return null; // Signal to use fallback
       }
       return data || [];
@@ -128,7 +129,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
         limit_count: 10,
       });
       if (error) {
-        console.warn('[GlobalSearch] Backend beacon search failed, falling back to client-side:', error.message);
+        logger.warn('[GlobalSearch] Backend beacon search failed, falling back to client-side:', error.message);
         return null;
       }
       return data || [];

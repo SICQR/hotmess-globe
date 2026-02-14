@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 // Email template types
 export const EMAIL_TEMPLATES = {
@@ -32,13 +33,13 @@ export async function sendEmail({ to, template, data }) {
     });
 
     if (error) {
-      console.error('[EmailService] Failed to send email:', error);
+      logger.error('[EmailService] Failed to send email:', error);
       return { success: false, error: error.message };
     }
 
     return { success: true, id: result?.id };
   } catch (err) {
-    console.error('[EmailService] Error:', err);
+    logger.error('[EmailService] Error:', err);
     return { success: false, error: err.message };
   }
 }

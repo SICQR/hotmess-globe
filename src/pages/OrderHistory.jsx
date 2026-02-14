@@ -14,6 +14,7 @@ import MessageButton from '../components/social/MessageButton';
 import QRCodeGenerator from '../components/orders/QRCodeGenerator';
 import OrderQRScanner from '../components/orders/OrderQRScanner';
 import MarketplaceReviewModal from '../components/marketplace/MarketplaceReviewModal';
+import logger from '@/utils/logger';
 
 const STATUS_CONFIG = {
   pending: { color: '#FFEB3B', icon: Clock },
@@ -36,7 +37,7 @@ export default function OrderHistory() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
       }
     };
     fetchUser();

@@ -24,6 +24,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import logger from '@/utils/logger';
 
 // Action icons mapping
 const ACTION_ICONS = {
@@ -89,7 +90,7 @@ export default function ProfileOptimizer({
         const data = await response.json();
         setAnalysis(data);
       } catch (err) {
-        console.error('Profile analysis error:', err);
+        logger.error('Profile analysis error:', err);
         setError(err.message);
       } finally {
         setLoading(false);

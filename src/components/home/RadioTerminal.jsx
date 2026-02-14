@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Radio, Play, Pause, Volume2, VolumeX, Zap } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import logger from '@/utils/logger';
 
 export default function RadioTerminal() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -51,11 +52,11 @@ export default function RadioTerminal() {
             const user = await base44.auth.me();
             await base44.auth.updateMe({ xp: (user.xp || 0) + 10 });
           } catch (error) {
-            console.error('XP update failed:', error);
+            logger.error('XP update failed:', error);
           }
         }, 300000); // 5 minutes
       } catch (error) {
-        console.error('Playback failed:', error);
+        logger.error('Playback failed:', error);
       }
     }
     setIsPlaying(!isPlaying);

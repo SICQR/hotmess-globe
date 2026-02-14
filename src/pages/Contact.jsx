@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, MessageSquare, Shield, HelpCircle, Send, CheckCircle, Loader2 } from 'lucide-react';
 import { createPageUrl } from '../utils';
 import { supabase } from '../components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 const CATEGORIES = [
   { id: 'general', label: 'General Inquiry', icon: MessageSquare },
@@ -59,7 +60,7 @@ export default function Contact() {
 
       if (insertError) {
         // If table doesn't exist, show success anyway (for demo)
-        console.warn('Support ticket insertion failed:', insertError);
+        logger.warn('Support ticket insertion failed:', insertError);
       }
 
       setSuccess(true);
@@ -71,7 +72,7 @@ export default function Contact() {
         message: '',
       });
     } catch (err) {
-      console.error('Contact form error:', err);
+      logger.error('Contact form error:', err);
       setError('Failed to send message. Please try again or email us directly.');
     } finally {
       setLoading(false);

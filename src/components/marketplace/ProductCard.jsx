@@ -7,6 +7,7 @@ import OSCard, { OSCardBadge } from '../ui/OSCard';
 import LazyImage from '../ui/LazyImage';
 import { base44 } from '@/api/base44Client';
 import { isXpPurchasingEnabled } from '@/lib/featureFlags';
+import logger from '@/utils/logger';
 
 const TYPE_ICONS = {
   physical: Package,
@@ -54,7 +55,7 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
           void user;
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
       }
     };
     fetchUser();

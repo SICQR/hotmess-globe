@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Cookie, X, Settings, Check } from 'lucide-react';
 import { createPageUrl } from '../../utils';
+import logger from '@/utils/logger';
 
 const COOKIE_CONSENT_KEY = 'hotmess_cookie_consent';
 
@@ -47,7 +48,7 @@ export function CookieConsent() {
         const parsed = JSON.parse(stored);
         setPreferences(parsed);
       } catch (e) {
-        console.error('Failed to parse cookie consent:', e);
+        logger.error('Failed to parse cookie consent:', e);
       }
     }
   }, []);
@@ -242,7 +243,7 @@ export function useCookieConsent() {
       try {
         setConsent(JSON.parse(stored));
       } catch (e) {
-        console.error('Failed to parse cookie consent:', e);
+        logger.error('Failed to parse cookie consent:', e);
       }
     }
 

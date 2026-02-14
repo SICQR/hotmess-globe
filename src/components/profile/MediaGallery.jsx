@@ -6,6 +6,7 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import logger from '@/utils/logger';
 
 export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allowPremium = false }) {
   const [uploading, setUploading] = useState(false);
@@ -54,7 +55,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allow
       commitPhotos([...photos, ...newPhotos]);
       toast.success('Photos uploaded!');
     } catch (error) {
-      console.error('Upload failed:', error);
+      logger.error('Upload failed:', error);
       toast.error('Upload failed');
     } finally {
       setUploading(false);
@@ -242,7 +243,7 @@ export function VideoUploader({ videoUrl, onVideoChange }) {
       onVideoChange(file_url);
       toast.success('Video uploaded!');
     } catch (error) {
-      console.error('Upload failed:', error);
+      logger.error('Upload failed:', error);
       toast.error('Upload failed');
     } finally {
       setUploading(false);
@@ -317,7 +318,7 @@ export function PremiumVideoManager({ videos = [], onVideosChange }) {
       toast.success('Premium video uploaded!');
       setNewVideoTitle('');
     } catch (error) {
-      console.error('Upload failed:', error);
+      logger.error('Upload failed:', error);
       toast.error('Upload failed');
     } finally {
       setUploading(false);

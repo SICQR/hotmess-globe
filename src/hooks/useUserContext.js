@@ -8,6 +8,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 // Tier limits configuration
 const TIER_LIMITS = {
@@ -101,7 +102,7 @@ export function useUserContext() {
         setUserData(data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching user data:', err);
+        logger.error('Error fetching user data:', err);
         setError(err);
       } finally {
         setLoading(false);
@@ -184,7 +185,7 @@ export function useUserContext() {
       setUserData(data);
       return { data };
     } catch (err) {
-      console.error('Error updating user:', err);
+      logger.error('Error updating user:', err);
       return { error: err };
     }
   };
@@ -204,7 +205,7 @@ export function useUserContext() {
       if (fetchError) throw fetchError;
       setUserData(data);
     } catch (err) {
-      console.error('Error refreshing user:', err);
+      logger.error('Error refreshing user:', err);
     } finally {
       setLoading(false);
     }

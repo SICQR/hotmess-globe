@@ -14,6 +14,7 @@ import {
   LuxCountdownTimer,
 } from '@/components/lux';
 import { Zap, Heart, Users, TrendingUp } from 'lucide-react';
+import logger from '@/utils/logger';
 
 /**
  * LuxShowcase - Demo page showcasing all Lux design system components
@@ -253,7 +254,7 @@ export default function LuxShowcase() {
             title="NEARBY MATCHES"
             subtitle="RIGHT NOW"
             profiles={profiles}
-            onProfileClick={(profile) => console.log('Profile clicked:', profile)}
+            onProfileClick={(profile) => logger.debug('Profile clicked:', profile)}
           />
         </section>
 
@@ -263,7 +264,7 @@ export default function LuxShowcase() {
             title="TONIGHT'S EVENTS"
             subtitle="HAPPENING NOW"
             events={events}
-            onEventClick={(event) => console.log('Event clicked:', event)}
+            onEventClick={(event) => logger.debug('Event clicked:', event)}
           />
         </section>
 
@@ -273,7 +274,7 @@ export default function LuxShowcase() {
             title="FEATURED MERCH"
             subtitle="NEW DROPS"
             products={products}
-            onProductClick={(product) => console.log('Product clicked:', product)}
+            onProductClick={(product) => logger.debug('Product clicked:', product)}
           />
         </section>
 

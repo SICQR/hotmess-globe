@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import logger from '@/utils/logger';
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
@@ -113,7 +114,7 @@ Return JSON with:
       confidence: result.confidence || 0
     };
   } catch (error) {
-    console.error('Moderation failed:', error);
+    logger.error('Moderation failed:', error);
     // Default to approved on error, but log it
     return { approved: true, reason: 'Moderation service unavailable', confidence: 0 };
   }

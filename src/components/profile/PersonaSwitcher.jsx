@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import logger from '@/utils/logger';
 
 // Persona type configs
 const PERSONA_TYPES = {
@@ -114,7 +115,7 @@ export default function PersonaSwitcher({
         }
 
         if (error) {
-          console.error('Failed to fetch personas:', error);
+          logger.error('Failed to fetch personas:', error);
           setLoading(false);
           return;
         }
@@ -131,7 +132,7 @@ export default function PersonaSwitcher({
         setActivePersona(active);
 
       } catch (err) {
-        console.error('Error fetching personas:', err);
+        logger.error('Error fetching personas:', err);
       } finally {
         setLoading(false);
       }
@@ -166,7 +167,7 @@ export default function PersonaSwitcher({
       window.dispatchEvent(new CustomEvent('personaChanged', { detail: persona }));
 
     } catch (error) {
-      console.error('Failed to switch persona:', error);
+      logger.error('Failed to switch persona:', error);
     } finally {
       setSwitching(false);
     }

@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { snapToGrid } from '../components/utils/locationPrivacy';
 import { toUTC } from '../components/utils/dateUtils';
 import MediaUploader from '../components/media/MediaUploader';
+import logger from '@/utils/logger';
 
 export default function CreateBeacon() {
   const navigate = useNavigate();
@@ -90,7 +91,7 @@ export default function CreateBeacon() {
       navigate(createPageUrl(`BeaconDetail?id=${newBeacon.id}`));
     },
     onError: (error) => {
-      console.error('Failed to create beacon:', error);
+      logger.error('Failed to create beacon:', error);
       toast.error('Failed to create event');
     }
   });

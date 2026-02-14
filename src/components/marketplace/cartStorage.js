@@ -1,4 +1,5 @@
 import { base44 } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 const GUEST_CART_STORAGE_KEY = 'hotmess_guest_cart_v1';
 
@@ -120,7 +121,7 @@ const warnCartFallbackOnce = (() => {
     if (didWarn) return;
     didWarn = true;
     // Keep this as a quiet breadcrumb; many environments won’t have cart tables yet.
-    console.warn('[cart] Falling back to guest cart (cart_items table unavailable)', error);
+    logger.warn('[cart] Falling back to guest cart (cart_items table unavailable)', error);
   };
 })();
 

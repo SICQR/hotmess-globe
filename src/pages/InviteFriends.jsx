@@ -23,6 +23,7 @@ import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
 import { trackEvent } from '@/components/utils/analytics';
+import logger from '@/utils/logger';
 
 export default function InviteFriends() {
   const [user, setUser] = useState(null);
@@ -66,7 +67,7 @@ export default function InviteFriends() {
           });
         }
       } catch (error) {
-        console.error('Failed to fetch data:', error);
+        logger.error('Failed to fetch data:', error);
       } finally {
         setLoading(false);
       }
@@ -182,7 +183,7 @@ export default function InviteFriends() {
         toast.error('Failed to send some invitations');
       }
     } catch (error) {
-      console.error('Failed to send invites:', error);
+      logger.error('Failed to send invites:', error);
       toast.error('Failed to send invitations');
     } finally {
       setSendingInvites(false);

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import './ProfileCard.css';
+import logger from '@/utils/logger';
 
 const DEFAULT_INNER_GRADIENT = 'linear-gradient(145deg,#60496e8c 0%,#71C4FF44 100%)';
 
@@ -281,7 +282,7 @@ const ProfileCardComponent = ({
               window.addEventListener('deviceorientation', deviceOrientationHandler);
             }
           })
-          .catch(console.error);
+          .catch(logger.error);
       } else {
         window.addEventListener('deviceorientation', deviceOrientationHandler);
       }

@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Shield, Users, Lock, AlertCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 const CONSENT_VERSION = 'v1.0.0-2025';
 
@@ -30,7 +31,7 @@ export default function ConsentForm({ user, onAccepted }) {
       toast.success('Welcome to HOTMESS LONDON');
       onAccepted();
     } catch (error) {
-      console.error('Failed to accept consent:', error);
+      logger.error('Failed to accept consent:', error);
       toast.error('Failed to save consent');
     } finally {
       setLoading(false);

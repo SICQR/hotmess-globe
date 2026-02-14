@@ -4,6 +4,7 @@ import { createPageUrl } from './utils';
 import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield, Radio as RadioIcon } from 'lucide-react';
 import { base44 } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
+import logger from '@/utils/logger';
 import SafetyFAB from '@/components/safety/SafetyFAB';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
 import GlobalAssistant from '@/components/ai/GlobalAssistant';
@@ -208,7 +209,7 @@ function LayoutInner({ children, currentPageName }) {
           window.location.href = `${createPageUrl('Profile')}?next=${next}`;
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
         setUser(null);
       }
     };

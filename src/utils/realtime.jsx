@@ -9,6 +9,7 @@
  */
 
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 // Connection status
 export const ConnectionStatus = {
@@ -170,7 +171,7 @@ export function subscribeToBeacons(callback, cityFilter = null) {
  */
 function handleDisconnect(key) {
   setConnectionStatus(ConnectionStatus.DISCONNECTED);
-  console.log('[Realtime] Disconnected:', key);
+  logger.info('[Realtime] Disconnected:', key);
 }
 
 /**
@@ -178,7 +179,7 @@ function handleDisconnect(key) {
  */
 async function handleReconnect(key) {
   if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-    console.error('[Realtime] Max reconnection attempts reached');
+    logger.error('[Realtime] Max reconnection attempts reached');
     setConnectionStatus(ConnectionStatus.ERROR);
     return;
   }
@@ -187,7 +188,7 @@ async function handleReconnect(key) {
   setConnectionStatus(ConnectionStatus.RECONNECTING);
   
   const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-  console.log(`[Realtime] Reconnecting in ${delay}ms (attempt ${reconnectAttempts})`);
+  logger.info(`[Realtime] Reconnecting in ${delay}ms (attempt ${reconnectAttempts})`);
   
   await new Promise(resolve => setTimeout(resolve, delay));
   

@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import logger from '@/utils/logger';
 
 // Tier configs
 const TIERS = [
@@ -68,7 +69,7 @@ export default function CreateBeacon() {
         updateField('longitude', parseFloat(results[0].lon));
       }
     } catch (err) {
-      console.error('Geocoding failed:', err);
+      logger.error('Geocoding failed:', err);
     }
   };
 
@@ -123,7 +124,7 @@ export default function CreateBeacon() {
       navigate(`/biz/beacon/${beacon.id}/pay`);
 
     } catch (error) {
-      console.error('Create beacon error:', error);
+      logger.error('Create beacon error:', error);
       alert('Failed to create beacon. Please try again.');
     } finally {
       setLoading(false);

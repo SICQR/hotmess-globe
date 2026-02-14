@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import logger from '@/utils/logger';
 
 // =============================================================================
 // CONFIGURATION
@@ -51,7 +52,7 @@ const verifyTelegramAuth = async (authData) => {
     
     return response.json();
   } catch (error) {
-    console.error('[TelegramAuth] Verification error:', error);
+    logger.error('[TelegramAuth] Verification error:', error);
     // Never bypass verification - this is a security risk
     throw new Error('Failed to verify Telegram authentication. Please try again.');
   }
@@ -125,7 +126,7 @@ export default function TelegramLogin({
 
   // Handle Telegram auth callback
   const handleTelegramAuth = useCallback(async (user) => {
-    console.log('[TelegramAuth] Received user:', user);
+    logger.info('[TelegramAuth] Received user:', user);
     setLoading(true);
     setError('');
     
@@ -164,7 +165,7 @@ export default function TelegramLogin({
         onSuccess?.({ linked: true, telegramUser: user });
       }
     } catch (err) {
-      console.error('[TelegramAuth] Error:', err);
+      logger.error('[TelegramAuth] Error:', err);
       setError(err.message || 'Failed to authenticate with Telegram');
       onError?.(err);
     } finally {

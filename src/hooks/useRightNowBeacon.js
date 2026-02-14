@@ -9,6 +9,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 const RIGHT_NOW_EXPIRY_HOURS = 4;
 
@@ -81,7 +82,7 @@ export function useRightNowBeacon({ userId, userLat = null, userLng = null }) {
           return true;
         }
       } catch (e) {
-        console.warn('[useRightNowBeacon]', e);
+        logger.warn('[useRightNowBeacon]', e);
         setError(e.message || 'Failed to update Right Now');
         return false;
       } finally {

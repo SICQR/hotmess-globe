@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Smartphone, Zap, Bell, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import logger from '@/utils/logger';
 
 /**
  * PWA Install Prompt Component
@@ -47,7 +48,7 @@ export function InstallPrompt() {
       setIsInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
-      console.log('[PWA] App installed successfully');
+      logger.info('[PWA] App installed successfully');
     });
     
     return () => {
@@ -64,7 +65,7 @@ export function InstallPrompt() {
     // Wait for user response
     const { outcome } = await deferredPrompt.userChoice;
     
-    console.log('[PWA] User response:', outcome);
+    logger.info('[PWA] User response:', outcome);
     
     if (outcome === 'accepted') {
       setShowPrompt(false);

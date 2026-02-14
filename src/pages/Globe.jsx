@@ -21,6 +21,7 @@ import ErrorBoundary from '../components/error/ErrorBoundary';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { useRealtimeBeacons, useRightNowCount } from '../components/globe/useRealtimeBeacons';
+import logger from '@/utils/logger';
 
 export default function GlobePage() {
   const queryClient = useQueryClient();
@@ -154,7 +155,7 @@ export default function GlobePage() {
         );
         setUserActivities(activityTracker.pruneOldActivities(activities));
       } catch (error) {
-        console.error('Failed to fetch activities:', error);
+        logger.error('Failed to fetch activities:', error);
       }
     };
 

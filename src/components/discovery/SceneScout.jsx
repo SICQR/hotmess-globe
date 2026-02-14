@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import logger from '@/utils/logger';
 
 // Type colors
 const TYPE_STYLES = {
@@ -71,7 +72,7 @@ export default function SceneScout({
       const result = await response.json();
       setData(result);
     } catch (err) {
-      console.error('Scene scout error:', err);
+      logger.error('Scene scout error:', err);
       setError(err.message);
     } finally {
       setLoading(false);

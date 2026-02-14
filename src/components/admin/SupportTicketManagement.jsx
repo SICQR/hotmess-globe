@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 const CATEGORY_ICONS = {
   general: MessageSquare,
@@ -93,7 +94,7 @@ export default function SupportTicketManagement() {
       if (error) throw error;
       setTickets(data || []);
     } catch (error) {
-      console.error('Failed to fetch tickets:', error);
+      logger.error('Failed to fetch tickets:', error);
       toast.error('Failed to load support tickets');
     } finally {
       setLoading(false);
@@ -115,7 +116,7 @@ export default function SupportTicketManagement() {
         });
       }
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      logger.error('Failed to fetch stats:', error);
     }
   };
 
@@ -130,7 +131,7 @@ export default function SupportTicketManagement() {
       if (error) throw error;
       setResponses(data || []);
     } catch (error) {
-      console.error('Failed to fetch responses:', error);
+      logger.error('Failed to fetch responses:', error);
     }
   };
 
@@ -165,7 +166,7 @@ export default function SupportTicketManagement() {
         setSelectedTicket({ ...selectedTicket, status: newStatus });
       }
     } catch (error) {
-      console.error('Failed to update status:', error);
+      logger.error('Failed to update status:', error);
       toast.error('Failed to update ticket status');
     }
   };
@@ -186,7 +187,7 @@ export default function SupportTicketManagement() {
       fetchTickets();
       fetchStats();
     } catch (error) {
-      console.error('Failed to update priority:', error);
+      logger.error('Failed to update priority:', error);
       toast.error('Failed to update priority');
     }
   };
@@ -236,7 +237,7 @@ export default function SupportTicketManagement() {
       fetchResponses(selectedTicket.id);
       fetchTickets();
     } catch (error) {
-      console.error('Failed to send response:', error);
+      logger.error('Failed to send response:', error);
       toast.error('Failed to send response');
     } finally {
       setSendingResponse(false);

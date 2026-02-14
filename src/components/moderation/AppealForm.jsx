@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { supabase } from '@/components/utils/supabaseClient';
 import { base44 } from '@/api/base44Client';
+import logger from '@/utils/logger';
 
 const APPEAL_REASONS = [
   { value: 'false_positive', label: 'Content was flagged incorrectly' },
@@ -60,7 +61,7 @@ export default function AppealForm({
       toast.success('Appeal submitted successfully');
       onSuccess?.();
     } catch (error) {
-      console.error('Failed to submit appeal:', error);
+      logger.error('Failed to submit appeal:', error);
       toast.error('Failed to submit appeal');
     } finally {
       setSubmitting(false);

@@ -25,6 +25,7 @@ import WelcomeTour from '../components/onboarding/WelcomeTour';
 import VibeSynthesisCard from '../components/vibe/VibeSynthesisCard';
 import { fetchRoutingEtas } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
+import logger from '@/utils/logger';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -363,7 +364,7 @@ export default function Profile() {
           viewed_at: new Date().toISOString(),
         });
       } catch {
-        console.log('Failed to track profile view');
+        logger.debug('Failed to track profile view');
       }
     };
     
@@ -492,7 +493,7 @@ export default function Profile() {
           avatarUrl = file_url;
         } catch (uploadError) {
           // Non-fatal: still allow setup completion.
-          console.warn('Avatar upload failed; falling back to placeholder', uploadError);
+          logger.warn('Avatar upload failed; falling back to placeholder', uploadError);
           avatarUrl = avatarUrl || buildInitialsAvatarDataUrl(fullName);
           toast.message('Avatar upload failed; using a placeholder for now.');
         } finally {
@@ -518,7 +519,7 @@ export default function Profile() {
       const safeNext = next.startsWith('/') ? next : '';
       window.location.href = safeNext || createPageUrl('Home');
     } catch (error) {
-      console.error('Profile setup failed:', error);
+      logger.error('Profile setup failed:', error);
       const msg =
         (error && typeof error === 'object' && 'message' in error && error.message)
           ? String(error.message)

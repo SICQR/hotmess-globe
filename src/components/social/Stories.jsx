@@ -24,6 +24,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { getDisplayName, getProfileUrl } from '@/lib/userPrivacy';
 import { Link } from 'react-router-dom';
+import logger from '@/utils/logger';
 
 // =============================================================================
 // CONSTANTS
@@ -456,7 +457,7 @@ function CreateStoryModal({ currentUser, onClose, onCreated }) {
 
       onCreated();
     } catch (error) {
-      console.error('Failed to create story:', error);
+      logger.error('Failed to create story:', error);
       alert('Failed to create story');
     } finally {
       setUploading(false);

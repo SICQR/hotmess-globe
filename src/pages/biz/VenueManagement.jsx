@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../../utils';
+import logger from '@/utils/logger';
 
 export default function VenueManagement() {
   const [user, setUser] = useState(null);
@@ -74,7 +75,7 @@ export default function VenueManagement() {
           setVenues(venueData);
         }
       } catch (error) {
-        console.error('Failed to fetch data:', error);
+        logger.error('Failed to fetch data:', error);
       } finally {
         setLoading(false);
       }
@@ -179,7 +180,7 @@ export default function VenueManagement() {
       setShowAddModal(false);
       resetForm();
     } catch (error) {
-      console.error('Failed to save venue:', error);
+      logger.error('Failed to save venue:', error);
       toast.error('Failed to save venue');
     } finally {
       setSaving(false);
@@ -202,7 +203,7 @@ export default function VenueManagement() {
       setVenues(prev => prev.filter(v => v.id !== venue.id));
       toast.success('Venue deleted successfully');
     } catch (error) {
-      console.error('Failed to delete venue:', error);
+      logger.error('Failed to delete venue:', error);
       toast.error('Failed to delete venue');
     }
   };

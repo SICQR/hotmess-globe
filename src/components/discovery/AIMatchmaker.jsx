@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import logger from '@/utils/logger';
 
 /**
  * AI-powered matchmaking engine
@@ -66,7 +67,7 @@ For each match, write ONE SHORT SENTENCE (max 12 words) explaining why they're c
 
     return explanationMap;
   } catch (error) {
-    console.error('Failed to generate match explanations:', error);
+    logger.error('Failed to generate match explanations:', error);
     return {};
   }
 }

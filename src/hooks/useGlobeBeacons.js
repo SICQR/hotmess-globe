@@ -10,6 +10,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 const BEACON_COLOR = {
   social: '#39FF14',
@@ -92,7 +93,7 @@ export function useGlobeBeacons(options = {}) {
       setBeacons((data || []).filter(notExpired).map(mapBeaconToGlobe));
       setError(null);
     } catch (e) {
-      console.warn('[useGlobeBeacons] fetch failed:', e);
+      logger.warn('[useGlobeBeacons] fetch failed:', e);
       setError(e.message);
       setBeacons([]);
     }

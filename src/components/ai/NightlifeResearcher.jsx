@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, MapPin, Clock, Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 export default function NightlifeResearcher({ currentUser, onVenuesFound }) {
   const [query, setQuery] = useState('');
@@ -71,7 +72,7 @@ Focus exclusively on LGBT venues and events. Prioritise accuracy by cross-checki
       }
       toast.success(`Found ${response.venues?.length || 0} venues`);
     } catch (error) {
-      console.error('Failed to search:', error);
+      logger.error('Failed to search:', error);
       toast.error('Search failed');
     } finally {
       setLoading(false);

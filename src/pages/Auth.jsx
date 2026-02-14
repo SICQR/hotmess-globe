@@ -8,6 +8,7 @@ import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star } from 'l
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 import TelegramLogin from '@/components/auth/TelegramLogin';
+import logger from '@/utils/logger';
 
 const MEMBERSHIP_TIERS = [
   {
@@ -69,11 +70,11 @@ export default function Auth() {
   // Listen to Supabase auth state changes (for OAuth callbacks)
   useEffect(() => {
     const { data: authSubscription } = auth.onAuthStateChange(async (event, session) => {
-      console.log('[Auth] Auth state changed:', event);
+      logger.debug('[Auth] Auth state changed:', event);
       
       if (event === 'SIGNED_IN' && session) {
         // User successfully signed in (including OAuth)
-        console.log('[Auth] User signed in successfully');
+        logger.info('[Auth] User signed in successfully');
         
         // Only redirect if we're not already showing the membership/profile steps
         if (step === 'auth') {
@@ -81,9 +82,9 @@ export default function Auth() {
           performRedirectAfterAuth();
         }
       } else if (event === 'SIGNED_OUT') {
-        console.log('[Auth] User signed out');
+        logger.info('[Auth] User signed out');
       } else if (event === 'USER_UPDATED') {
-        console.log('[Auth] User updated');
+        logger.info('[Auth] User updated');
       }
     });
 
@@ -114,7 +115,7 @@ export default function Auth() {
           const { data, error } = await auth.getSession();
           
           if (error) {
-            console.error('[Auth] OAuth callback error:', error);
+            logger.error('[Auth] OAuth callback error:', error);
             toast.error('Authentication failed. Please try again.');
             setLoading(false);
             // Clean up URL
@@ -137,7 +138,7 @@ export default function Auth() {
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         } catch (error) {
-          console.error('[Auth] OAuth session error:', error);
+          logger.error('[Auth] OAuth session error:', error);
           toast.error('Authentication failed. Please try again.');
           setLoading(false);
           // Clean up URL
@@ -197,7 +198,7 @@ export default function Auth() {
     } catch (error) {
       const errorMessage = error.message || 'Authentication failed. Please try again.';
       toast.error(errorMessage);
-      console.error('[Auth] Error:', error);
+      logger.error('[Auth] Error:', error);
     } finally {
       setLoading(false);
     }
@@ -457,7 +458,7 @@ export default function Auth() {
                     } catch (error) {
                       const errorMessage = error.message || 'Google sign in failed. Please try again.';
                       toast.error(errorMessage);
-                      console.error('[Auth] Google OAuth error:', error);
+                      logger.error('[Auth] Google OAuth error:', error);
                       setLoading(false);
                     }
                   }}

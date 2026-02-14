@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 /**
  * Hook for managing push notification subscriptions
@@ -45,7 +46,7 @@ export function usePushNotifications() {
         setIsSubscribed(!!sub);
         setSubscription(sub);
       } catch (err) {
-        console.error('[PushNotifications] Error checking subscription:', err);
+        logger.error('[PushNotifications] Error checking subscription:', err);
       }
     };
 
@@ -80,7 +81,7 @@ export function usePushNotifications() {
       const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
       
       if (!vapidPublicKey) {
-        console.warn('[PushNotifications] No VAPID public key configured');
+        logger.warn('[PushNotifications] No VAPID public key configured');
         // Still mark as subscribed for browser notifications
         setIsSubscribed(true);
         return true;
@@ -101,10 +102,10 @@ export function usePushNotifications() {
       // Save subscription to database
       await saveSubscription(sub);
 
-      console.log('[PushNotifications] Subscribed successfully');
+      logger.info('[PushNotifications] Subscribed successfully');
       return true;
     } catch (err) {
-      console.error('[PushNotifications] Subscribe error:', err);
+      logger.error('[PushNotifications] Subscribe error:', err);
       setError(err.message);
       return false;
     }
@@ -130,10 +131,10 @@ export function usePushNotifications() {
       setSubscription(null);
       setIsSubscribed(false);
 
-      console.log('[PushNotifications] Unsubscribed successfully');
+      logger.info('[PushNotifications] Unsubscribed successfully');
       return true;
     } catch (err) {
-      console.error('[PushNotifications] Unsubscribe error:', err);
+      logger.error('[PushNotifications] Unsubscribe error:', err);
       setError(err.message);
       return false;
     }
@@ -158,7 +159,7 @@ export function usePushNotifications() {
       });
       return true;
     } catch (err) {
-      console.error('[PushNotifications] Test notification error:', err);
+      logger.error('[PushNotifications] Test notification error:', err);
       return false;
     }
   }, [isSupported, permission]);
@@ -197,10 +198,10 @@ async function saveSubscription(subscription) {
       });
 
     if (error) {
-      console.error('[PushNotifications] Error saving subscription:', error);
+      logger.error('[PushNotifications] Error saving subscription:', error);
     }
   } catch (err) {
-    console.error('[PushNotifications] Save subscription error:', err);
+    logger.error('[PushNotifications] Save subscription error:', err);
   }
 }
 
@@ -218,10 +219,10 @@ async function removeSubscription(subscription) {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('[PushNotifications] Error removing subscription:', error);
+      logger.error('[PushNotifications] Error removing subscription:', error);
     }
   } catch (err) {
-    console.error('[PushNotifications] Remove subscription error:', err);
+    logger.error('[PushNotifications] Remove subscription error:', err);
   }
 }
 

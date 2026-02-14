@@ -14,6 +14,7 @@ import { useWorldPulse } from '@/contexts/WorldPulseContext';
 import CityPulseBar from '@/components/globe/CityPulseBar';
 import LiveFeed from '@/components/globe/LiveFeed';
 import ErrorBoundary from '@/components/error/ErrorBoundary';
+import logger from '@/utils/logger';
 import { 
   GlobeLoadingFallback, 
   GlobeErrorFallback, 
@@ -280,7 +281,7 @@ export default function Home() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
         setCurrentUser(null);
       }
     };

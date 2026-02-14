@@ -10,6 +10,7 @@ import {
   CreditCard, FileText, Shield, Zap, Star, ChevronRight 
 } from 'lucide-react';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 const STEPS = [
   { id: 'welcome', title: 'Welcome', icon: Store },
@@ -52,7 +53,7 @@ export default function SellerOnboarding() {
           storeName: user?.full_name ? `${user.full_name}'s Store` : '',
         }));
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
       }
     };
     fetchUser();

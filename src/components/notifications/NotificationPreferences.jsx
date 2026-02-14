@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 const PREFS_KEY = 'hotmess_notification_preferences';
 
@@ -117,7 +118,7 @@ export default function NotificationPreferences() {
           }, { onConflict: 'user_id' });
       }
     } catch (error) {
-      console.error('Failed to save preferences:', error);
+      logger.error('Failed to save preferences:', error);
     }
   };
   

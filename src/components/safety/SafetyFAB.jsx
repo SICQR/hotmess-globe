@@ -26,6 +26,7 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { useTonightModeContext } from '@/hooks/useTonightMode';
+import logger from '@/utils/logger';
 
 /**
  * Emergency Mode Overlay - Full screen red theme safety UI
@@ -61,7 +62,7 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
           setContactCount(contacts?.length || 0);
         }
       } catch (e) {
-        console.error('Failed to get contacts:', e);
+        logger.error('Failed to get contacts:', e);
       }
     };
     getContacts();
@@ -98,7 +99,7 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
             body: `${emergencyMessage}\n\nTime: ${new Date().toLocaleString()}\nLocation: ${locationStr}${location ? `\nGoogle Maps: https://www.google.com/maps?q=${location.lat},${location.lng}` : ''}\n\nThis is an automated emergency alert.`
           });
         } catch (error) {
-          console.error('Failed to send to:', contact.contact_name);
+          logger.error('Failed to send to:', contact.contact_name);
         }
       }
 
@@ -115,7 +116,7 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
       setSent(true);
       toast.success(`Alerts sent to ${contacts.length} contact(s)`);
     } catch (error) {
-      console.error('Alert failed:', error);
+      logger.error('Alert failed:', error);
       toast.error('Failed to send alerts');
     } finally {
       setSending(false);

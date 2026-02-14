@@ -6,6 +6,7 @@ import { SmartProfileCard } from '@/features/profilesGrid/SmartProfileCard';
 import { BentoGrid } from '@/features/profilesGrid/BentoGrid';
 import { SmartBadge, MatchScoreBadge, ProximityBadge } from '@/features/profilesGrid/components/SmartBadge';
 import { Heart, Zap, Star } from 'lucide-react';
+import logger from '@/utils/logger';
 
 /**
  * SmartUIDemo - Showcase page for Smart Dynamic UI System components
@@ -175,8 +176,8 @@ export default function SmartUIDemo() {
                 location: { lat: 51.5074, lng: -0.1278 },
                 interests: ['Music', 'Art'],
               }}
-              onClick={(p) => console.log('Clicked profile:', p.full_name)}
-              onMessage={(p) => console.log('Message:', p.full_name)}
+              onClick={(p) => logger.debug('Clicked profile:', p.full_name)}
+              onMessage={(p) => logger.debug('Message:', p.full_name)}
             />
 
             <SmartProfileCard
@@ -187,7 +188,7 @@ export default function SmartUIDemo() {
                 location: { lat: 51.5074, lng: -0.1278 },
                 interests: ['Music'],
               }}
-              onClick={(p) => console.log('Clicked profile:', p.full_name)}
+              onClick={(p) => logger.debug('Clicked profile:', p.full_name)}
             />
 
             <div className="flex items-center justify-center p-8 border-2 border-dashed border-white/20 rounded-lg">
@@ -282,8 +283,8 @@ export default function SmartUIDemo() {
                 lng: -0.1278,
               }}
               onSelect={setSelectedTravel}
-              onLaunchDirections={(mode) => console.log('Launch directions:', mode)}
-              onRequestRide={() => console.log('Request Uber')}
+              onLaunchDirections={(mode) => logger.debug('Launch directions:', mode)}
+              onRequestRide={() => logger.debug('Request Uber')}
               timeOfDay="night"
               weather={{ isGood: true }}
             />

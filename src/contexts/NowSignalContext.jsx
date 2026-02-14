@@ -20,6 +20,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 // Signal categories
 const NOW_SIGNAL_TYPES = {
@@ -229,7 +230,7 @@ export function NowSignalProvider({ children }) {
   // Set user context (called by pages/components)
   const setContext = useCallback((context) => {
     if (!Object.values(USER_CONTEXTS).includes(context)) {
-      console.warn(`Unknown context: ${context}`);
+      logger.warn(`Unknown context: ${context}`);
       return;
     }
     dispatch({ type: 'SET_CONTEXT', payload: context });
@@ -243,7 +244,7 @@ export function NowSignalProvider({ children }) {
   // Emit a manual signal (for testing or specific triggers)
   const emitNowSignal = useCallback((type, options = {}) => {
     if (!Object.values(NOW_SIGNAL_TYPES).includes(type)) {
-      console.warn(`Unknown NOW signal type: ${type}`);
+      logger.warn(`Unknown NOW signal type: ${type}`);
       return;
     }
     dispatch({

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, X, Star, StarOff, Trash2 } from 'lucide-react';
+import logger from '@/utils/logger';
 
 const HISTORY_KEY = 'hotmess_search_history';
 const SAVED_KEY = 'hotmess_saved_searches';
@@ -72,7 +73,7 @@ export function SearchHistory({ onSelectSearch }) {
       if (historyData) setHistory(JSON.parse(historyData));
       if (savedData) setSavedSearches(JSON.parse(savedData));
     } catch (error) {
-      console.error('Failed to load search history:', error);
+      logger.error('Failed to load search history:', error);
     }
   }, []);
   
@@ -218,7 +219,7 @@ export function addToSearchHistory(query, filters = {}) {
     
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
   } catch (error) {
-    console.error('Failed to save search history:', error);
+    logger.error('Failed to save search history:', error);
   }
 }
 

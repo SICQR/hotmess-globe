@@ -14,6 +14,7 @@ import {
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
+import logger from '@/utils/logger';
 
 export default function PanicButton() {
   const [showConfirm, setShowConfirm] = useState(false);
@@ -61,7 +62,7 @@ export default function PanicButton() {
             body: `${emergencyMessage}\n\nTime: ${new Date().toLocaleString()}\nLocation: ${locationData.address}\nGoogle Maps: https://www.google.com/maps?q=${locationData.lat},${locationData.lng}\n\nThis is an automated emergency alert from HOTMESS.`
           });
         } catch (error) {
-          console.error('Failed to send alert to:', contact.contact_name);
+          logger.error('Failed to send alert to:', contact.contact_name);
         }
       }
 
@@ -86,7 +87,7 @@ export default function PanicButton() {
 
       toast.success(`Alert sent to ${contacts.length} trusted contact(s)`);
     } catch (error) {
-      console.error('SOS alert failed:', error);
+      logger.error('SOS alert failed:', error);
       toast.error('Failed to send alerts');
     } finally {
       setSendingAlerts(false);

@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 // Event emitter for local activity broadcasts
 const listeners = new Set();
@@ -33,7 +34,7 @@ export const globeActivity = {
       try {
         listener(event);
       } catch (e) {
-        console.error('[GlobeActivity] Listener error:', e);
+        logger.error('[GlobeActivity] Listener error:', e);
       }
     });
     

@@ -6,6 +6,7 @@ import { Check, Crown, Zap, Star, ArrowLeft, Loader2, CreditCard, X } from 'luci
 import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import logger from '@/utils/logger';
 
 // Stripe Price IDs - Replace with your actual Stripe price IDs
 const STRIPE_PRICES = {
@@ -80,7 +81,7 @@ export default function MembershipUpgrade() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
       }
     };
     fetchUser();
@@ -156,7 +157,7 @@ export default function MembershipUpgrade() {
       }
 
       // Fallback: Update tier directly (for development/demo)
-      console.warn('Stripe not configured, updating tier directly');
+      logger.warn('Stripe not configured, updating tier directly');
       await base44.auth.updateMe({
         membership_tier: tierId,
       });
@@ -164,7 +165,7 @@ export default function MembershipUpgrade() {
       toast.success(`Upgraded to ${tierId.toUpperCase()}!`);
       navigate(createPageUrl('Profile'));
     } catch (error) {
-      console.error('Upgrade error:', error);
+      logger.error('Upgrade error:', error);
       toast.error('Upgrade failed. Please try again.');
     } finally {
       setLoading(false);
@@ -211,7 +212,7 @@ export default function MembershipUpgrade() {
       const user = await base44.auth.me();
       setCurrentUser(user);
     } catch (error) {
-      console.error('Cancel error:', error);
+      logger.error('Cancel error:', error);
       toast.error('Failed to cancel subscription. Please contact support.');
     } finally {
       setLoading(false);

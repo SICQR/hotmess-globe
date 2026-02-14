@@ -17,6 +17,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import logger from '@/utils/logger';
 
 // Score level colors
 const LEVEL_COLORS = {
@@ -69,7 +70,7 @@ export default function MatchScoreBadge({
         const result = await response.json();
         setData(result);
       } catch (err) {
-        console.error('Match score error:', err);
+        logger.error('Match score error:', err);
       } finally {
         setLoading(false);
       }

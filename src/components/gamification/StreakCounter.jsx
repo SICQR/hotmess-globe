@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Flame, Zap } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 /**
  * Fetch user's current streak from user_streaks table
@@ -35,7 +36,7 @@ async function fetchUserStreak(userId) {
       isExpiring,
     };
   } catch (error) {
-    console.warn('Failed to fetch streak:', error);
+    logger.warn('Failed to fetch streak:', error);
     return null;
   }
 }

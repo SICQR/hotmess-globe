@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { getGuestCartItems, mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import { isXpPurchasingEnabled } from '@/lib/featureFlags';
+import logger from '@/utils/logger';
 
 // Promo code validation
 const PROMO_CODES = {
@@ -357,7 +358,7 @@ export default function Checkout() {
         }
       } catch (error) {
         // CRITICAL ROLLBACK: Restore inventory and XP on any failure
-        console.error('Checkout failed, initiating rollback:', error);
+        logger.error('Checkout failed, initiating rollback:', error);
         
         // Rollback inventory first (reverse order of operations)
         for (const update of inventoryUpdates) {
@@ -366,7 +367,7 @@ export default function Checkout() {
               inventory_count: update.oldCount
             });
           } catch (rollbackError) {
-            console.error('Rollback failed for product', update.id, rollbackError);
+            logger.error('Rollback failed for product', update.id, rollbackError);
           }
         }
         
@@ -374,7 +375,7 @@ export default function Checkout() {
         try {
           await base44.auth.updateMe({ xp: currentXP });
         } catch (rollbackError) {
-          console.error('XP rollback failed:', rollbackError);
+          logger.error('XP rollback failed:', rollbackError);
         }
         
         throw error;
@@ -441,8 +442,7 @@ export default function Checkout() {
     },
     onError: (error) => {
       toast.error(error?.message || 'Shopify checkout failed');
-      // Keep a breadcrumb in DevTools for debugging 500s in prod.
-      console.error('[Checkout] Shopify checkout failed', {
+      logger.error('[Checkout] Shopify checkout failed', {
         status: error?.status,
         message: error?.message,
         payload: error?.payload,

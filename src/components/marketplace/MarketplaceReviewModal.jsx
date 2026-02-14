@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 const REVIEW_TAGS = [
   { id: 'fast_shipping', label: 'Fast Shipping', type: 'buyer_to_seller' },
@@ -60,7 +61,7 @@ export default function MarketplaceReviewModal({ isOpen, onClose, order, current
       toast.success('Review submitted!');
       onClose();
     } catch (error) {
-      console.error('Failed to submit review:', error);
+      logger.error('Failed to submit review:', error);
       toast.error('Failed to submit review');
     } finally {
       setLoading(false);

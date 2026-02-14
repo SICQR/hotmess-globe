@@ -5,6 +5,8 @@
  * Uses localStorage for persistence and Background Sync API when available.
  */
 
+import logger from '@/utils/logger';
+
 const QUEUE_KEY = 'hotmess_offline_queue';
 const SYNC_TAG = 'hotmess-offline-sync';
 
@@ -41,7 +43,7 @@ function saveQueue(queue) {
   try {
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
   } catch (error) {
-    console.error('[OfflineQueue] Failed to save queue:', error);
+    logger.error('[OfflineQueue] Failed to save queue:', error);
   }
 }
 
@@ -79,7 +81,7 @@ export function enqueue(item) {
   // Request background sync if available
   requestBackgroundSync();
   
-  console.log('[OfflineQueue] Enqueued item:', queueItem.id);
+  logger.debug('[OfflineQueue] Enqueued item:', queueItem.id);
   return queueItem.id;
 }
 
@@ -90,7 +92,7 @@ export function enqueue(item) {
 export function dequeue(id) {
   const queue = getQueue().filter(item => item.id !== id);
   saveQueue(queue);
-  console.log('[OfflineQueue] Dequeued item:', id);
+  logger.debug('[OfflineQueue] Dequeued item:', id);
 }
 
 /**
@@ -110,7 +112,7 @@ export function updateQueueItem(id, updates) {
  */
 export function clearQueue() {
   localStorage.removeItem(QUEUE_KEY);
-  console.log('[OfflineQueue] Queue cleared');
+  logger.debug('[OfflineQueue] Queue cleared');
 }
 
 /**
@@ -144,9 +146,9 @@ async function requestBackgroundSync() {
     try {
       const registration = await navigator.serviceWorker.ready;
       await registration.sync.register(SYNC_TAG);
-      console.log('[OfflineQueue] Background sync registered');
+      logger.debug('[OfflineQueue] Background sync registered');
     } catch (error) {
-      console.log('[OfflineQueue] Background sync not available:', error);
+      logger.debug('[OfflineQueue] Background sync not available:', error);
     }
   }
 }
@@ -163,7 +165,7 @@ export async function processQueue(processor) {
     return { success: 0, failed: 0, remaining: 0 };
   }
   
-  console.log(`[OfflineQueue] Processing ${queue.length} items...`);
+  logger.info(`[OfflineQueue] Processing ${queue.length} items...`);
   
   let success = 0;
   let failed = 0;
@@ -173,7 +175,7 @@ export async function processQueue(processor) {
       await processor(item);
       dequeue(item.id);
       success++;
-      console.log(`[OfflineQueue] Successfully processed: ${item.id}`);
+      logger.debug(`[OfflineQueue] Successfully processed: ${item.id}`);
     } catch (error) {
       failed++;
       
@@ -185,7 +187,7 @@ export async function processQueue(processor) {
       
       // Remove if too many retries
       if (item.retries >= 5) {
-        console.error(`[OfflineQueue] Max retries reached for: ${item.id}`);
+        logger.error(`[OfflineQueue] Max retries reached for: ${item.id}`);
         dequeue(item.id);
       }
     }
@@ -193,7 +195,7 @@ export async function processQueue(processor) {
   
   const remaining = getQueue().length;
   
-  console.log(`[OfflineQueue] Processed: ${success} success, ${failed} failed, ${remaining} remaining`);
+  logger.info(`[OfflineQueue] Processed: ${success} success, ${failed} failed, ${remaining} remaining`);
   
   return { success, failed, remaining };
 }
@@ -204,7 +206,7 @@ export async function processQueue(processor) {
 export function setupOfflineSync(processor) {
   // Process when coming back online
   window.addEventListener('online', async () => {
-    console.log('[OfflineQueue] Online - processing queue...');
+    logger.info('[OfflineQueue] Online - processing queue...');
     await processQueue(processor);
   });
   

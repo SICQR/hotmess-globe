@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 // Verification methods
 const VERIFICATION_METHODS = [
@@ -118,7 +119,7 @@ export default function AgeVerificationGate({
       onVerified?.();
 
     } catch (err) {
-      console.error('Verification error:', err);
+      logger.error('Verification error:', err);
       setError(err.message || 'Verification failed. Please try again.');
     } finally {
       setVerifying(false);

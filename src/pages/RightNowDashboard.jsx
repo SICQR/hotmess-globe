@@ -6,6 +6,7 @@ import RightNowManager from '../components/discovery/RightNowManager';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import logger from '@/utils/logger';
 
 export default function RightNowDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -17,7 +18,7 @@ export default function RightNowDashboard() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
       }
     };
     fetchUser();

@@ -9,6 +9,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { createPageUrl } from '../../utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 const NOTIFICATION_ICONS = {
   order: Package,
@@ -59,7 +60,7 @@ export default function NotificationCenter({ currentUser }) {
           filter: `user_email=eq.${currentUser.email}`,
         },
         (payload) => {
-          console.log('[NotificationCenter] New notification:', payload);
+          logger.debug('[NotificationCenter] New notification:', payload);
           // Invalidate queries to refetch notifications
           queryClient.invalidateQueries(['notifications']);
           
@@ -86,7 +87,7 @@ export default function NotificationCenter({ currentUser }) {
         }
       )
       .subscribe((status) => {
-        console.log('[NotificationCenter] Subscription status:', status);
+        logger.debug('[NotificationCenter] Subscription status:', status);
       });
 
     // Also subscribe for admin notifications if user is admin
@@ -103,7 +104,7 @@ export default function NotificationCenter({ currentUser }) {
             filter: 'user_email=eq.admin',
           },
           (payload) => {
-            console.log('[NotificationCenter] New admin notification:', payload);
+            logger.debug('[NotificationCenter] New admin notification:', payload);
             queryClient.invalidateQueries(['notifications']);
           }
         )

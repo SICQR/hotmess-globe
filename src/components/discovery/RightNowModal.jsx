@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 const DURATIONS = [
   { value: 30, label: '30 min', icon: Clock },
@@ -46,7 +47,7 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
             lng: position.coords.longitude
           };
         } catch (error) {
-          console.log('Location access denied');
+          logger.debug('Location access denied');
         }
       }
       

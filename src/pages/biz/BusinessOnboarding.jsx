@@ -17,6 +17,7 @@ import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 import { createPageUrl } from '../../utils';
+import logger from '@/utils/logger';
 
 const BUSINESS_TYPES = [
   { id: 'venue', name: 'Venue / Club', icon: Building2, description: 'Bars, clubs, and event spaces' },
@@ -75,7 +76,7 @@ export default function BusinessOnboarding() {
       toast.success('Business account created!');
       navigate(createPageUrl('BusinessDashboard'));
     } catch (error) {
-      console.error('Failed to create business account:', error);
+      logger.error('Failed to create business account:', error);
       toast.error('Failed to create business account');
     } finally {
       setSubmitting(false);

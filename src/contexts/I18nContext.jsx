@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import logger from '@/utils/logger';
 import {
   getPreferredLanguage,
   setLanguage as setLanguagePref,
@@ -50,7 +51,7 @@ export function I18nProvider({ children, initialLanguage }) {
         }
       })
       .catch((error) => {
-        console.error('[I18nProvider] Failed to load translations:', error);
+        logger.error('[I18nProvider] Failed to load translations:', error);
         if (!cancelled) {
           setIsLoading(false);
         }
@@ -163,7 +164,7 @@ export function useI18n() {
   
   if (!context) {
     // Return a fallback for components outside provider
-    console.warn('[useI18n] Used outside I18nProvider, returning fallback');
+    logger.warn('[useI18n] Used outside I18nProvider, returning fallback');
     return {
       t: (key) => key,
       lang: DEFAULT_LANGUAGE,

@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '../../utils';
 import { Sparkles, MapPin, Loader2 } from 'lucide-react';
+import logger from '@/utils/logger';
 
 export default function AIRecommendations({ user, beacons, limit = 3 }) {
   const [recommendations, setRecommendations] = useState([]);
@@ -85,7 +86,7 @@ Return ONLY an array of beacon IDs in order of recommendation strength.`;
 
         setRecommendations(recommendedBeacons);
       } catch (error) {
-        console.error('Failed to generate recommendations:', error);
+        logger.error('Failed to generate recommendations:', error);
         // Fallback to simple recommendation
         const fallback = beacons
           .filter(b => !interactions.some(i => i.beacon_id === b.id))

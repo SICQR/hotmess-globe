@@ -6,6 +6,7 @@ import { Sparkles, MapPin, Zap, Heart, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
+import logger from '@/utils/logger';
 
 export default function AIMatchmaker({ currentUser }) {
   const [matches, setMatches] = useState([]);
@@ -174,7 +175,7 @@ export default function AIMatchmaker({ currentUser }) {
 
       setMatches(candidates);
     } catch (error) {
-      console.error('Failed to generate matches:', error);
+      logger.error('Failed to generate matches:', error);
     } finally {
       setLoading(false);
     }

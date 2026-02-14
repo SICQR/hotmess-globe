@@ -4,6 +4,8 @@
  * axxwdjmbwkvqhcpwters (wrong) instead of klsywpvncqqglhnhrjbh (correct).
  */
 
+import logger from '@/utils/logger';
+
 const CORRECT_PROJECT_REF = 'klsywpvncqqglhnhrjbh';
 
 export function clearBadSupabaseSessions() {
@@ -20,7 +22,7 @@ export function clearBadSupabaseSessions() {
       // Check if it's NOT the correct project
       if (!key.includes(CORRECT_PROJECT_REF)) {
         keysToRemove.push(key);
-        console.log('[clearBadSessions] Removing wrong project session:', key);
+        logger.debug('[clearBadSessions] Removing wrong project session:', key);
       }
     }
     
@@ -33,7 +35,7 @@ export function clearBadSupabaseSessions() {
         value.includes('klbmalzhmxnelyuabawk')
       )) {
         keysToRemove.push(key);
-        console.log('[clearBadSessions] Removing wrong project data:', key);
+        logger.debug('[clearBadSessions] Removing wrong project data:', key);
       }
     }
   }
@@ -41,13 +43,13 @@ export function clearBadSupabaseSessions() {
   // Remove all bad keys
   keysToRemove.forEach(key => {
     localStorage.removeItem(key);
-    console.log('[clearBadSessions] Removed:', key);
+    logger.debug('[clearBadSessions] Removed:', key);
   });
   
   if (keysToRemove.length > 0) {
-    console.log(`[clearBadSessions] Cleared ${keysToRemove.length} bad session(s)`);
+    logger.info(`[clearBadSessions] Cleared ${keysToRemove.length} bad session(s)`);
   } else {
-    console.log('[clearBadSessions] No bad sessions found');
+    logger.debug('[clearBadSessions] No bad sessions found');
   }
 }
 

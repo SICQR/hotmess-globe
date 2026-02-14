@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/components/utils/supabaseClient';
 import { RefreshCw, Loader2, CheckCircle, AlertCircle, Clock, History } from 'lucide-react';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 /**
  * Format relative time (e.g., "2 hours ago")
@@ -44,7 +45,7 @@ function ScrapeRunHistory({ onRefresh }) {
       if (error) throw error;
       setRuns(data || []);
     } catch (err) {
-      console.error('Failed to fetch scrape runs:', err);
+      logger.error('Failed to fetch scrape runs:', err);
     } finally {
       setLoading(false);
     }
@@ -169,7 +170,7 @@ export default function EventScraperControl() {
         toast.error('Scraping failed: ' + response.error);
       }
     } catch (error) {
-      console.error('Scraping error:', error);
+      logger.error('Scraping error:', error);
       toast.error(error?.message || 'Event scraper request failed');
       setResult({ 
         success: false, 

@@ -21,6 +21,7 @@ import { addToCart } from '@/components/marketplace/cartStorage';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 import { openCartDrawer } from '@/utils/cartEvents';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
+import logger from '@/utils/logger';
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState('all');
@@ -86,7 +87,7 @@ export default function Marketplace() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
       }
     };
     fetchUser();
@@ -254,7 +255,7 @@ export default function Marketplace() {
             expires_at: expiresAt,
           });
         } catch (error) {
-          console.log('Failed to create P2P beacon:', error);
+          logger.debug('Failed to create P2P beacon:', error);
         }
       }
 

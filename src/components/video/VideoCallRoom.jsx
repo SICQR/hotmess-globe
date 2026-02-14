@@ -28,6 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 // Call states
 const CALL_STATES = {
@@ -187,7 +188,7 @@ export default function VideoCallRoom({
       return () => subscription.unsubscribe();
 
     } catch (err) {
-      console.error('Call initialization error:', err);
+      logger.error('Call initialization error:', err);
       setError(err.message || 'Failed to start call');
       setCallState(CALL_STATES.FAILED);
     }

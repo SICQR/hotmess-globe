@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 /**
  * Persona Context
@@ -41,7 +42,7 @@ export function PersonaProvider({ children }) {
       const active = data?.find(p => p.is_active);
       setActivePersona(active || data?.[0] || null);
     } catch (err) {
-      console.error('Failed to load personas:', err);
+      logger.error('Failed to load personas:', err);
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +66,7 @@ export function PersonaProvider({ children }) {
       
       return true;
     } catch (err) {
-      console.error('Failed to switch persona:', err);
+      logger.error('Failed to switch persona:', err);
       return false;
     }
   }, [activePersona, personas]);

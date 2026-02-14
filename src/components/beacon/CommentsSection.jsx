@@ -6,6 +6,7 @@ import { MessageCircle, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
+import logger from '@/utils/logger';
 
 export default function CommentsSection({ beaconId }) {
   const [comment, setComment] = useState('');
@@ -25,7 +26,7 @@ export default function CommentsSection({ beaconId }) {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
         setUser(null);
       }
     };

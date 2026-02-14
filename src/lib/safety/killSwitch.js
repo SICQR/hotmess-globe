@@ -3,6 +3,8 @@
  * Emergency control to disable all signals from a city
  */
 
+import logger from '@/utils/logger';
+
 const safetyState = { cities: new Set(), categories: new Set(), global: false, lastSync: null };
 
 export function isCityDisabled(cityId) {
@@ -48,7 +50,7 @@ export async function loadSafetyState() {
     safetyState.categories = new Set(data.disabled_categories || []);
     safetyState.global = data.global_disabled || false;
     safetyState.lastSync = new Date().toISOString();
-  } catch (e) { console.error(e); }
+  } catch (e) { logger.error(e); }
 }
 
 export function filterBySafety(items, cityKey = 'city', categoryKey = 'category') {

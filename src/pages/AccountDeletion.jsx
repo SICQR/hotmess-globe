@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
+import logger from '@/utils/logger';
 
 const DELETION_CONSEQUENCES = [
   'Your profile and all personal information will be permanently deleted',
@@ -43,7 +44,7 @@ export default function AccountDeletion() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
         navigate(createPageUrl('Auth'));
       } finally {
         setLoading(false);
@@ -177,7 +178,7 @@ export default function AccountDeletion() {
       }, 2000);
 
     } catch (error) {
-      console.error('Deletion failed:', error);
+      logger.error('Deletion failed:', error);
       toast.error('Failed to delete account. Please contact support.');
       setDeleting(false);
     }

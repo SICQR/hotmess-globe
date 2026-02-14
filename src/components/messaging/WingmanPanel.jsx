@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
+import logger from '@/utils/logger';
 
 const OPENER_TYPES = {
   personal: { label: 'Personal', icon: Heart, color: '#FF1493' },
@@ -63,7 +64,7 @@ export default function WingmanPanel({
       setOpeners(data.openers || []);
       setCommonGround(data.commonGround);
     } catch (err) {
-      console.error('Wingman error:', err);
+      logger.error('Wingman error:', err);
       setError('Failed to generate openers');
       // Set fallback openers
       setOpeners([

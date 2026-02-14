@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import logger from '@/utils/logger';
 
 const RESPONSE_OPTIONS = [
   {
@@ -125,7 +126,7 @@ export default function SafetyCheckinModal({
         }
       }
     } catch (err) {
-      console.error('Check-in response error:', err);
+      logger.error('Check-in response error:', err);
     } finally {
       setLoading(false);
     }

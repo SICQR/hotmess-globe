@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Zap, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 // Generate 16-character token
 function generateToken() {
@@ -50,7 +51,7 @@ export default function HandshakeButton({ targetUser, currentUser, variant = 'de
       });
     },
     onError: (error) => {
-      console.error('Handshake failed:', error);
+      logger.error('Handshake failed:', error);
       toast.error('Failed to create handshake');
     }
   });

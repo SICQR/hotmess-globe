@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Play, Pause, Music, Download } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -37,7 +38,7 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
     };
 
     const handleError = (e) => {
-      console.error('Audio playback error:', e);
+      logger.error('Audio playback error:', e);
       setIsPlaying(false);
       toast.error('Failed to play audio track.');
     };
@@ -71,7 +72,7 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
       setHasAwarded(true);
       toast.success(`+${totalXP} XP for listening to RAW Convict track!`);
     } catch (error) {
-      console.error('Failed to award XP:', error);
+      logger.error('Failed to award XP:', error);
     }
   };
 

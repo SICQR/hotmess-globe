@@ -10,6 +10,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 /**
  * @param {Object} user - Current user from base44.auth.me()
@@ -78,7 +79,7 @@ export function useUnifiedVault(user) {
         .order('created_date', { ascending: false });
 
       if (error) {
-        console.error('[useUnifiedVault] Beacon fetch error:', error);
+        logger.error('[useUnifiedVault] Beacon fetch error:', error);
         return [];
       }
 

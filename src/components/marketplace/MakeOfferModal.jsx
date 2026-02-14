@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { addHours } from 'date-fns';
+import logger from '@/utils/logger';
 
 export default function MakeOfferModal({ isOpen, onClose, product, currentUser }) {
   const [offerXp, setOfferXp] = useState(Math.floor(product.price_xp * 0.8));
@@ -48,7 +49,7 @@ export default function MakeOfferModal({ isOpen, onClose, product, currentUser }
       toast.success('Offer submitted! Seller has 48 hours to respond.');
       onClose();
     } catch (error) {
-      console.error('Failed to submit offer:', error);
+      logger.error('Failed to submit offer:', error);
       toast.error('Failed to submit offer');
     } finally {
       setLoading(false);

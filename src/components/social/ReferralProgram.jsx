@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 /**
  * Referral Program Component
@@ -52,7 +53,7 @@ export default function ReferralProgram() {
           });
         }
       } catch (error) {
-        console.error('Failed to fetch referral data:', error);
+        logger.error('Failed to fetch referral data:', error);
       } finally {
         setLoading(false);
       }

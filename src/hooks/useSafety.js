@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useUserContext } from './useUserContext';
+import logger from '@/utils/logger';
 
 export function useSafety() {
   const { user, email } = useUserContext();
@@ -198,7 +199,7 @@ export function useSafety() {
 
       return { success: true };
     } catch (err) {
-      console.error('Panic trigger error:', err);
+      logger.error('Panic trigger error:', err);
       return { error: err };
     } finally {
       setLoading(false);

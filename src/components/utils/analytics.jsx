@@ -12,6 +12,8 @@
  * - VITE_SENTRY_DSN: Sentry DSN for error tracking
  */
 
+import logger from '@/utils/logger';
+
 // Analytics configuration
 const config = {
   gaId: import.meta.env.VITE_GA_MEASUREMENT_ID,
@@ -49,7 +51,7 @@ export function initAnalytics() {
   initialized = true;
   
   if (config.debug) {
-    console.log('[Analytics] Initialized with:', {
+    logger.debug('[Analytics] Initialized with:', {
       ga: !!config.gaId,
       mixpanel: !!config.mixpanelToken,
       sentry: !!config.sentryDsn,
@@ -112,7 +114,7 @@ function initSentry() {
     
     window.__SENTRY__ = Sentry;
   }).catch((err) => {
-    console.warn('[Analytics] Failed to load Sentry:', err);
+    logger.warn('[Analytics] Failed to load Sentry:', err);
   });
 }
 
@@ -175,7 +177,7 @@ export function identifyUser(user) {
   }
   
   if (config.debug) {
-    console.log('[Analytics] Identified user:', userId);
+    logger.debug('[Analytics] Identified user:', userId);
   }
 }
 
@@ -203,7 +205,7 @@ export function trackPageView(pageName, properties = {}) {
   }
   
   if (config.debug) {
-    console.log('[Analytics] Page View:', pageName, pageData);
+    logger.debug('[Analytics] Page View:', pageName, pageData);
   }
 }
 
@@ -229,7 +231,7 @@ export function trackEvent(eventName, properties = {}) {
   }
   
   if (config.debug) {
-    console.log('[Analytics] Event:', eventName, eventData);
+    logger.debug('[Analytics] Event:', eventName, eventData);
   }
 }
 
@@ -271,7 +273,7 @@ export function trackError(error, context = {}) {
     // Ignore localStorage errors
   }
   
-  console.error('[Error]', error, context);
+  logger.error('[Error]', error, context);
 }
 
 /**
@@ -290,7 +292,7 @@ export function trackPerformance(metricName, value, unit = 'ms') {
   }
   
   if (config.debug) {
-    console.log('[Performance]', metricName, `${value}${unit}`);
+    logger.debug('[Performance]', metricName, `${value}${unit}`);
   }
 }
 

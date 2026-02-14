@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { getEnv, json, readJsonBody } from './_utils.js';
+import logger from '../_utils/logger.js';
 
 const timingSafeEqual = (a, b) => {
   const aBuf = Buffer.from(a);
@@ -25,7 +26,7 @@ const handleInventoryUpdate = async (serviceClient, payload) => {
   // Validate inventory quantity (must be non-negative)
   const inventoryQty = Number.isFinite(Number(available)) ? Number(available) : 0;
   if (inventoryQty < 0) {
-    console.warn(`[Shopify Webhook] Invalid negative inventory for item ${inventory_item_id}: ${available}`);
+    logger.warn(`Invalid negative inventory for item ${inventory_item_id}: ${available}`);
     return { handled: false, error: 'Invalid inventory quantity' };
   }
 

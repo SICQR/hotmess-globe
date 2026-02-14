@@ -19,6 +19,7 @@ import { Music } from 'lucide-react';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
 import { toast } from 'sonner';
 import { BEACON_COLOR } from '@/hooks/useP2PListingBeacon';
+import logger from '@/utils/logger';
 
 
 export default function BeaconDetail() {
@@ -36,7 +37,7 @@ export default function BeaconDetail() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
       }
     };
     fetchUser();
@@ -124,7 +125,7 @@ export default function BeaconDetail() {
       queryClient.invalidateQueries({ queryKey: ['user'] });
       queryClient.invalidateQueries({ queryKey: ['beacon_checkins'] });
     } catch (error) {
-      console.error('Failed to scan:', error);
+      logger.error('Failed to scan:', error);
       toast.error(error?.message || 'Failed to scan');
     }
   };

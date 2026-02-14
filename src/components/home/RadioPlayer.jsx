@@ -3,6 +3,7 @@ import { Radio, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { base44 } from '@/api/base44Client';
+import logger from '@/utils/logger';
 
 export default function RadioPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -69,12 +70,12 @@ export default function RadioPlayer() {
               setXpEarned(prev => prev + 10);
               lastXpUpdateRef.current = now;
             } catch (error) {
-              console.error('Failed to award XP:', error);
+              logger.error('Failed to award XP:', error);
             }
           }
         }, 60000); // Check every minute
       } catch (error) {
-        console.error('Failed to play stream:', error);
+        logger.error('Failed to play stream:', error);
         setIsPlaying(false);
       }
     }

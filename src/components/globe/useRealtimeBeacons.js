@@ -7,6 +7,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 // Beacon types matching our core system
 const BEACON_TYPES = {
@@ -93,7 +94,7 @@ export function useRealtimeBeacons() {
         setPresenceBeacons(beacons);
       }
     } catch (e) {
-      console.warn('[RealtimeBeacons] Presence load failed:', e);
+      logger.warn('[RealtimeBeacons] Presence load failed:', e);
     }
 
     // Load active events
@@ -111,7 +112,7 @@ export function useRealtimeBeacons() {
         setEventBeacons(beacons);
       }
     } catch (e) {
-      console.warn('[RealtimeBeacons] Events load failed:', e);
+      logger.warn('[RealtimeBeacons] Events load failed:', e);
     }
 
     setLoading(false);

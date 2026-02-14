@@ -23,6 +23,7 @@ import {
   deleteBeaconForP2PListing, 
   dispatchWorldPulse 
 } from '@/hooks/useP2PListingBeacon';
+import logger from '@/utils/logger';
 
 export default function SellerDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -36,7 +37,7 @@ export default function SellerDashboard() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
       }
     };
     fetchUser();

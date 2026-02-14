@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import logger from '@/utils/logger';
 
 export default function Vault() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -35,7 +36,7 @@ export default function Vault() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('[Vault] Failed to fetch user:', error);
+        logger.error('[Vault] Failed to fetch user:', error);
       } finally {
         setLoadingUser(false);
       }

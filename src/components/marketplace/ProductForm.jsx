@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { X, Upload, Loader2, Sparkles } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 const PRODUCT_TYPES = [
   { value: 'physical', label: 'Physical Goods' },
@@ -60,7 +61,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
       
       toast.success(`${files.length} image(s) uploaded`);
     } catch (error) {
-      console.error('Upload failed:', error);
+      logger.error('Upload failed:', error);
       toast.error('Upload failed');
     } finally {
       setUploading(false);
@@ -109,7 +110,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
       setFormData(prev => ({ ...prev, description: response }));
       toast.success('Description generated!');
     } catch (error) {
-      console.error('Failed to generate description:', error);
+      logger.error('Failed to generate description:', error);
       toast.error('Failed to generate description');
     } finally {
       setGeneratingDescription(false);
@@ -138,7 +139,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
       }));
       toast.success(`${tags.length} tags suggested!`);
     } catch (error) {
-      console.error('Failed to generate tags:', error);
+      logger.error('Failed to generate tags:', error);
       toast.error('Failed to generate tags');
     } finally {
       setGeneratingTags(false);
@@ -163,7 +164,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
       setMarketingCopy(response);
       toast.success('Marketing copy generated!');
     } catch (error) {
-      console.error('Failed to generate marketing copy:', error);
+      logger.error('Failed to generate marketing copy:', error);
       toast.error('Failed to generate marketing copy');
     } finally {
       setGeneratingMarketing(false);

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import logger from '@/utils/logger';
 
 const ABTestContext = createContext();
 
@@ -73,7 +74,7 @@ async function trackEvent(testId, variant, event, userEmail) {
       }
     });
   } catch (error) {
-    console.error('Failed to track A/B test event:', error);
+    logger.error('Failed to track A/B test event:', error);
   }
 }
 
@@ -158,7 +159,7 @@ export function ABTestResults() {
 
         setResults(analysis);
       } catch (error) {
-        console.error('Failed to fetch A/B test results:', error);
+        logger.error('Failed to fetch A/B test results:', error);
       }
     };
 

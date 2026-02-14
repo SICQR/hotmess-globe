@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTicketListing, useTicketThread, useInitiatePurchase } from '@/hooks/useTickets';
 import { Button } from '@/components/ui/button';
+import logger from '@/utils/logger';
 
 export default function TicketDetail() {
   const { id } = useParams();
@@ -18,7 +19,7 @@ export default function TicketDetail() {
         navigate(`/tickets/chat/${result.threadId}`);
       }
     } catch (err) {
-      console.error('Failed to start chat:', err);
+      logger.error('Failed to start chat:', err);
     }
   };
 

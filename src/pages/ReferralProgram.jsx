@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Gift, Copy, Share2, Users, Zap, Trophy, Check, Star } from 'lucide-react';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 const REWARD_TIERS = [
   { referrals: 3, reward: '500 XP', icon: Zap, color: '#FFD700', unlocked: false },
@@ -26,7 +27,7 @@ export default function ReferralProgram() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
       }
     };
     fetchUser();

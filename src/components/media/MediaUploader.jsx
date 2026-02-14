@@ -5,6 +5,7 @@ import { processAndUploadMedia } from '../utils/mediaProcessing';
 import { validateAndOptimize } from '../utils/imageOptimization';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import logger from '@/utils/logger';
 
 export default function MediaUploader({ 
   onUploadComplete, 
@@ -39,9 +40,9 @@ export default function MediaUploader({
             format: 'webp'
           });
           file = result.optimized;
-          console.log(`Image optimized: ${result.savedPercent}% smaller`);
+          logger.info(`Image optimized: ${result.savedPercent}% smaller`);
         } catch (err) {
-          console.warn('Image optimization failed, using original:', err);
+          logger.warn('Image optimization failed, using original:', err);
         }
       }
 
@@ -96,7 +97,7 @@ export default function MediaUploader({
       }, 2000);
 
     } catch (error) {
-      console.error('Upload failed:', error);
+      logger.error('Upload failed:', error);
       setProgress({ stage: 'error', message: error.message });
       toast.error(error.message || 'Upload failed');
       setTimeout(() => {

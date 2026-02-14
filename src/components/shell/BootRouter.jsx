@@ -1,6 +1,7 @@
 import React from 'react';
 import { useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
 import PublicShell from '@/components/shell/PublicShell';
+import logger from '@/utils/logger';
 
 // Consistent localStorage key for age verification
 const AGE_KEY = 'hm_age_confirmed_v1';
@@ -36,7 +37,7 @@ export default function BootRouter({ children }) {
   const localAge = getLocalAgeVerified();
   
   // Debug logging
-  console.log('[BootRouter] State:', bootState, 'isLoading:', isLoading, 'localAge:', localAge);
+  logger.debug('[BootRouter] State:', bootState, 'isLoading:', isLoading, 'localAge:', localAge);
 
   // Show loading while checking auth
   if (isLoading || bootState === BOOT_STATES.LOADING) {
@@ -48,7 +49,7 @@ export default function BootRouter({ children }) {
     // CRITICAL FIX: If user has localStorage age verified, they might just have
     // a profile fetch issue. Check if we should let them through anyway.
     if (localAge) {
-      console.log('[BootRouter] UNAUTHENTICATED but localStorage has age - showing children');
+      logger.debug('[BootRouter] UNAUTHENTICATED but localStorage has age - showing children');
       return <>{children}</>;
     }
     return <PublicShell />;
@@ -59,7 +60,7 @@ export default function BootRouter({ children }) {
   if (bootState === BOOT_STATES.NEEDS_AGE) {
     if (localAge) {
       // User already verified age locally - don't block them
-      console.log('[BootRouter] Bypassing AgeGate - localStorage has age verified');
+      logger.debug('[BootRouter] Bypassing AgeGate - localStorage has age verified');
       return <>{children}</>;
     }
     
@@ -77,7 +78,7 @@ export default function BootRouter({ children }) {
   if (bootState === BOOT_STATES.NEEDS_ONBOARDING) {
     if (localAge) {
       // User verified age - onboarding can be done later
-      console.log('[BootRouter] Bypassing OnboardingGate - localStorage has age verified');
+      logger.debug('[BootRouter] Bypassing OnboardingGate - localStorage has age verified');
       return <>{children}</>;
     }
     

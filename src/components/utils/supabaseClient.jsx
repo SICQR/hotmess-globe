@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import logger from '@/utils/logger';
 
 // Helper to create page URLs - matches Base44 pattern
 const createPageUrl = (pageName) => `/${pageName}`;
@@ -9,14 +10,14 @@ const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
 const supabaseKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error(
+  logger.error(
     '[supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. ' +
     'Set these in Vercel Environment Variables.'
   );
 }
 
 // Debug log to verify correct project
-console.log('[supabase] URL:', supabaseUrl);
+logger.debug('[supabase] URL:', supabaseUrl);
 
 // If env vars are missing, createClient still needs a URL/key.
 // Use a clearly-invalid URL so failures are obvious and debuggable.
@@ -246,7 +247,7 @@ const warnOnce = (key, ...args) => {
   if (loggedOnce.has(key)) return;
   loggedOnce.add(key);
   // Keep this quiet: we only want one breadcrumb per missing table.
-  console.warn(...args);
+  logger.warn(...args);
 };
 
 const runWithTableFallback = async (tables, buildQuery) => {
@@ -411,7 +412,7 @@ export const base44 = {
         profile = result?.data ?? null;
       } catch (profileError) {
         // If RLS/policies are missing, don't hard-fail auth; fall back to auth user + metadata.
-        console.warn('[base44.auth.me] Profile table unavailable; using auth user metadata only', profileError);
+        logger.warn('[base44.auth.me] Profile table unavailable; using auth user metadata only', profileError);
       }
 
       // Ensure a profile row exists (best-effort). This prevents downstream lookups
@@ -483,7 +484,7 @@ export const base44 = {
           email: user.email,
         };
       } catch (profileError) {
-        console.warn('[base44.auth.updateMe] Profile table update failed; kept auth metadata update', profileError);
+        logger.warn('[base44.auth.updateMe] Profile table update failed; kept auth metadata update', profileError);
         return {
           ...(updatedAuth?.user || user),
           ...((updatedAuth?.user?.user_metadata || {}) ?? {}),
@@ -526,7 +527,7 @@ export const base44 = {
           const { data } = await runWithTableFallback(USER_TABLES, run);
           return safeArray(data);
         } catch (error) {
-          console.error('[base44.entities.User.list] Failed, returning []', error);
+          logger.error('[base44.entities.User.list] Failed, returning []', error);
           return [];
         }
       },
@@ -553,7 +554,7 @@ export const base44 = {
           const { data } = await runWithTableFallback(USER_TABLES, run);
           return safeArray(data);
         } catch (error) {
-          console.error('[base44.entities.User.filter] Failed, returning []', error);
+          logger.error('[base44.entities.User.filter] Failed, returning []', error);
           return [];
         }
       },
@@ -631,7 +632,7 @@ export const base44 = {
             throw error;
           }
         } catch (error) {
-          console.error('[base44.entities.Beacon.list] Failed, returning []', error);
+          logger.error('[base44.entities.Beacon.list] Failed, returning []', error);
           return [];
         }
       },
@@ -674,7 +675,7 @@ export const base44 = {
             throw error;
           }
         } catch (error) {
-          console.error('[base44.entities.Beacon.filter] Failed, returning []', error);
+          logger.error('[base44.entities.Beacon.filter] Failed, returning []', error);
           return [];
         }
       },
@@ -769,12 +770,12 @@ export const base44 = {
               );
               return safeArray(data);
             } catch (retryError) {
-              console.error('[base44.entities.AudioMetadata.list] Failed, returning []', retryError);
+              logger.error('[base44.entities.AudioMetadata.list] Failed, returning []', retryError);
               return [];
             }
           }
 
-          console.error('[base44.entities.AudioMetadata.list] Failed, returning []', error);
+          logger.error('[base44.entities.AudioMetadata.list] Failed, returning []', error);
           return [];
         }
       },
@@ -801,7 +802,7 @@ export const base44 = {
           const { data } = await runWithTableFallback(AUDIO_METADATA_TABLES, run);
           return safeArray(data);
         } catch (error) {
-          console.error('[base44.entities.AudioMetadata.filter] Failed, returning []', error);
+          logger.error('[base44.entities.AudioMetadata.filter] Failed, returning []', error);
           return [];
         }
       },
@@ -813,7 +814,7 @@ export const base44 = {
           );
           return created;
         } catch (error) {
-          console.error('[base44.entities.AudioMetadata.create] Failed', error);
+          logger.error('[base44.entities.AudioMetadata.create] Failed', error);
           throw error;
         }
       },
@@ -831,7 +832,7 @@ export const base44 = {
           );
           return updated;
         } catch (error) {
-          console.error('[base44.entities.AudioMetadata.update] Failed', error);
+          logger.error('[base44.entities.AudioMetadata.update] Failed', error);
           throw error;
         }
       },
@@ -854,7 +855,7 @@ export const base44 = {
           if (error) throw error;
           return dedupeProducts(data);
         } catch (error) {
-          console.error('[base44.entities.Product.list] Failed, returning []', error);
+          logger.error('[base44.entities.Product.list] Failed, returning []', error);
           return [];
         }
       },
@@ -879,7 +880,7 @@ export const base44 = {
           if (error) throw error;
           return dedupeProducts(data);
         } catch (error) {
-          console.error('[base44.entities.Product.filter] Failed, returning []', error);
+          logger.error('[base44.entities.Product.filter] Failed, returning []', error);
           return [];
         }
       },
@@ -929,7 +930,7 @@ export const base44 = {
           });
           return safeArray(data);
         } catch (error) {
-          console.error('[base44.entities.City.list] Failed, returning []', error);
+          logger.error('[base44.entities.City.list] Failed, returning []', error);
           return [];
         }
       },
@@ -962,12 +963,12 @@ export const base44 = {
               const { data } = await runWithTableFallback(CITY_TABLES, (table) => run(table, retryFilters));
               return safeArray(data);
             } catch (retryError) {
-              console.error('[base44.entities.City.filter] Failed after retry, returning []', retryError);
+              logger.error('[base44.entities.City.filter] Failed after retry, returning []', retryError);
               return [];
             }
           }
 
-          console.error('[base44.entities.City.filter] Failed, returning []', error);
+          logger.error('[base44.entities.City.filter] Failed, returning []', error);
           return [];
         }
       }
@@ -988,7 +989,7 @@ export const base44 = {
           });
           return safeArray(data);
         } catch (error) {
-          console.error('[base44.entities.UserIntent.list] Failed, returning []', error);
+          logger.error('[base44.entities.UserIntent.list] Failed, returning []', error);
           return [];
         }
       },
@@ -1009,7 +1010,7 @@ export const base44 = {
           });
           return safeArray(data);
         } catch (error) {
-          console.error('[base44.entities.UserIntent.filter] Failed, returning []', error);
+          logger.error('[base44.entities.UserIntent.filter] Failed, returning []', error);
           return [];
         }
       },
@@ -1037,7 +1038,7 @@ export const base44 = {
           });
           return safeArray(data);
         } catch (error) {
-          console.error('[base44.entities.UserActivity.list] Failed, returning []', error);
+          logger.error('[base44.entities.UserActivity.list] Failed, returning []', error);
           return [];
         }
       },
@@ -1058,7 +1059,7 @@ export const base44 = {
           });
           return safeArray(data);
         } catch (error) {
-          console.error('[base44.entities.UserActivity.filter] Failed, returning []', error);
+          logger.error('[base44.entities.UserActivity.filter] Failed, returning []', error);
           return [];
         }
       },
@@ -1111,13 +1112,13 @@ export const base44 = {
           const data = await response.json();
           
           if (!response.ok) {
-            console.error('[SendEmail] Failed:', data);
+            logger.error('[SendEmail] Failed:', data);
             throw new Error(data.error || 'Failed to send email');
           }
           
           return data;
         } catch (error) {
-          console.error('[SendEmail] Error:', error);
+          logger.error('[SendEmail] Error:', error);
           // Don't throw - let the caller handle failures gracefully
           return { success: false, error: error.message };
         }
@@ -1268,7 +1269,7 @@ entityTables.forEach(table => {
           return [];
         }
 
-        console.error(`[base44.entities.${entityName}.list] Failed, returning []`, error);
+        logger.error(`[base44.entities.${entityName}.list] Failed, returning []`, error);
         return [];
       }
     },
@@ -1299,7 +1300,7 @@ entityTables.forEach(table => {
           // Only use .in() for arrays of primitives, not arrays of objects
           const hasObjects = rawValue.some(v => v !== null && typeof v === 'object');
           if (hasObjects) {
-            console.warn(`[base44.entities.${entityName}.filter] Skipping complex array filter for key "${rawKey}"`);
+            logger.warn(`[base44.entities.${entityName}.filter] Skipping complex array filter for key "${rawKey}"`);
             return;
           }
           query = query.in(key, rawValue);
@@ -1308,7 +1309,7 @@ entityTables.forEach(table => {
 
         // Skip object values (can't use .eq() with objects)
         if (typeof rawValue === 'object') {
-          console.warn(`[base44.entities.${entityName}.filter] Skipping object filter for key "${rawKey}"`);
+          logger.warn(`[base44.entities.${entityName}.filter] Skipping object filter for key "${rawKey}"`);
           return;
         }
 
@@ -1336,7 +1337,7 @@ entityTables.forEach(table => {
           return [];
         }
 
-        console.error(`[base44.entities.${entityName}.filter] Failed, returning []`, error);
+        logger.error(`[base44.entities.${entityName}.filter] Failed, returning []`, error);
         return [];
       }
     },

@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import logger from '@/utils/logger';
 
 // =============================================================================
 // DURATION OPTIONS
@@ -177,7 +178,7 @@ export default function LiveLocationShare({
         broadcastLocation(location);
       },
       (error) => {
-        console.error('Location error:', error);
+        logger.error('Location error:', error);
         setLocationError('Unable to get location');
       },
       {
@@ -223,7 +224,7 @@ export default function LiveLocationShare({
         });
       }
     } catch (error) {
-      console.error('Failed to broadcast location:', error);
+      logger.error('Failed to broadcast location:', error);
     }
   };
 
@@ -281,7 +282,7 @@ export default function LiveLocationShare({
       onShareStart?.(data);
 
     } catch (error) {
-      console.error('Failed to start sharing:', error);
+      logger.error('Failed to start sharing:', error);
       setLocationError(error.message || 'Failed to start location sharing');
       toast.error('Failed to start location sharing');
     } finally {
@@ -324,7 +325,7 @@ export default function LiveLocationShare({
       onShareEnd?.();
 
     } catch (error) {
-      console.error('Failed to stop sharing:', error);
+      logger.error('Failed to stop sharing:', error);
       toast.error('Failed to stop sharing');
     } finally {
       setLoading(false);
@@ -334,7 +335,7 @@ export default function LiveLocationShare({
   // Notify contacts
   const notifyContacts = async (type) => {
     // In production, this would send push notifications/SMS to contacts
-    console.log(`Notifying contacts: ${type}`, selectedContacts);
+    logger.info(`Notifying contacts: ${type}`, selectedContacts);
   };
 
   // Toggle contact selection

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 /**
  * Boot Guard Context - Clean Implementation
@@ -70,7 +71,7 @@ export function BootGuardProvider({ children }) {
         setSession(currentSession);
         await loadProfile(currentSession.user.id);
       } catch (err) {
-        console.error('Auth init error:', err);
+        logger.error('Auth init error:', err);
         if (mounted) {
           setBootState(BOOT_STATES.UNAUTHENTICATED);
           setIsLoading(false);
@@ -84,7 +85,7 @@ export function BootGuardProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!mounted) return;
 
-      console.log('[BootGuard] Auth event:', event);
+      logger.debug('[BootGuard] Auth event:', event);
 
       if (event === 'SIGNED_OUT' || !newSession?.user?.id) {
         setSession(null);
@@ -132,7 +133,7 @@ export function BootGuardProvider({ children }) {
           .single();
 
         if (createError) {
-          console.error('Profile create error:', createError);
+          logger.error('Profile create error:', createError);
           // Fall through to onboarding
           setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
           setIsLoading(false);
@@ -141,17 +142,17 @@ export function BootGuardProvider({ children }) {
 
         profileData = newProfile;
       } else if (error) {
-        console.error('Profile fetch error:', error);
+        logger.error('Profile fetch error:', error);
         // On error, use localStorage to decide boot state
         // Trust localStorage age verification even if DB fetch fails
         const localAge = getLocalAgeVerified();
-        console.log('[BootGuard] Profile fetch failed, localStorage age:', localAge);
+        logger.debug('[BootGuard] Profile fetch failed, localStorage age:', localAge);
         if (localAge) {
           // User verified age locally, let them through
-          console.log('[BootGuard] Setting READY state due to localStorage');
+          logger.debug('[BootGuard] Setting READY state due to localStorage');
           setBootState(BOOT_STATES.READY);
         } else {
-          console.log('[BootGuard] No localStorage age, setting NEEDS_AGE');
+          logger.debug('[BootGuard] No localStorage age, setting NEEDS_AGE');
           setBootState(BOOT_STATES.NEEDS_AGE);
         }
         setIsLoading(false);
@@ -162,7 +163,7 @@ export function BootGuardProvider({ children }) {
       const localAge = getLocalAgeVerified();
       
       if (profileData && !profileData.age_verified && localAge) {
-        console.log('[BootGuard] Syncing localStorage age to profile...');
+        logger.debug('[BootGuard] Syncing localStorage age to profile...');
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ age_verified: true })
@@ -170,9 +171,9 @@ export function BootGuardProvider({ children }) {
 
         if (!updateError) {
           profileData = { ...profileData, age_verified: true };
-          console.log('[BootGuard] Age synced successfully');
+          logger.debug('[BootGuard] Age synced successfully');
         } else {
-          console.error('[BootGuard] Failed to sync age (RLS?):', updateError);
+          logger.error('[BootGuard] Failed to sync age (RLS?):', updateError);
           // IMPORTANT: Even if DB update fails, trust localStorage 
           // The user DID verify their age, RLS might just be blocking
           profileData = { ...profileData, age_verified: true };
@@ -181,7 +182,7 @@ export function BootGuardProvider({ children }) {
 
       // Final fallback: if localStorage says verified but profile doesn't, trust localStorage
       if (!profileData?.age_verified && localAge) {
-        console.log('[BootGuard] Fallback: trusting localStorage age verification');
+        logger.debug('[BootGuard] Fallback: trusting localStorage age verification');
         profileData = { ...profileData, age_verified: true };
       }
 
@@ -196,7 +197,7 @@ export function BootGuardProvider({ children }) {
         setBootState(BOOT_STATES.READY);
       }
     } catch (err) {
-      console.error('Profile load error:', err);
+      logger.error('Profile load error:', err);
       // On any error, trust localStorage - user experience over strictness
       const localAge = getLocalAgeVerified();
       if (localAge) {

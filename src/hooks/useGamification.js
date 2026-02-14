@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useUserContext } from './useUserContext';
+import logger from '@/utils/logger';
 
 // XP values for different actions
 const XP_REWARDS = {
@@ -140,7 +141,7 @@ export function useGamification() {
 
       return { success: true, amount: multipliedAmount, newXP, newLevel };
     } catch (err) {
-      console.error('Error awarding XP:', err);
+      logger.error('Error awarding XP:', err);
       return { error: err };
     }
   }, [user, xp, xpMultiplier, calculateLevel, refresh]);

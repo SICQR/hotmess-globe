@@ -15,6 +15,7 @@ import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
 import { schedule, getNextEpisode, generateICS, downloadICS } from '../components/radio/radioUtils';
 import { toast } from 'sonner';
 import { snapToGrid } from '../components/utils/locationPrivacy';
+import logger from '@/utils/logger';
 
 async function getWithAuth(url) {
   const { data } = await auth.getSession();
@@ -113,7 +114,7 @@ export default function Music() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
       }
     };
     fetchUser();
@@ -165,7 +166,7 @@ export default function Music() {
           .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
           .slice(0, 12);
       } catch (error) {
-        console.error('Failed to fetch music events:', error);
+        logger.error('Failed to fetch music events:', error);
         return [];
       }
     },
@@ -215,7 +216,7 @@ export default function Music() {
           beacon: beacons.find(b => b?.id === m.beacon_id) || null
         }));
       } catch (error) {
-        console.error('Failed to fetch releases:', error);
+        logger.error('Failed to fetch releases:', error);
         return [];
       }
     }

@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { categorizeError, ErrorCategory, calculateBackoff } from '@/utils/errorHandler';
+import logger from '@/utils/logger';
 
 /**
  * Custom retry function with exponential backoff
@@ -35,7 +36,7 @@ function onQueryError(error) {
   
   // Log errors in development
   if (import.meta.env.DEV) {
-    console.error('[Query Error]', {
+    logger.error('[Query Error]', {
       message: error.message,
       category,
       stack: error.stack,
@@ -52,7 +53,7 @@ function onMutationError(error) {
   const category = categorizeError(error);
   
   if (import.meta.env.DEV) {
-    console.error('[Mutation Error]', {
+    logger.error('[Mutation Error]', {
       message: error.message,
       category,
       stack: error.stack,

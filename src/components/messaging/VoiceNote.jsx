@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import logger from '@/utils/logger';
 
 // =============================================================================
 // AUDIO UTILITIES
@@ -179,7 +180,7 @@ export default function VoiceNote({
       animationRef.current = requestAnimationFrame(updateWaveform);
       
     } catch (err) {
-      console.error('Recording error:', err);
+      logger.error('Recording error:', err);
       setError(err.name === 'NotAllowedError' 
         ? 'Microphone access denied' 
         : 'Failed to start recording');

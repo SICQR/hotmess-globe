@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import logger from '@/utils/logger';
 import {
   getPreferredLanguage,
   setLanguage as setLanguagePref,
@@ -49,7 +50,7 @@ export function useTranslation() {
         }
       })
       .catch((error) => {
-        console.error('[useTranslation] Failed to load translations:', error);
+        logger.error('[useTranslation] Failed to load translations:', error);
         if (!cancelled) {
           setIsLoading(false);
         }

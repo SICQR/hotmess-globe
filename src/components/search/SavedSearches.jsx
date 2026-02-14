@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Star, Bell, BellOff, Trash2, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import logger from '@/utils/logger';
 
 const SAVED_KEY = 'hotmess_saved_searches';
 const ALERTS_KEY = 'hotmess_search_alerts';
@@ -22,7 +23,7 @@ export default function SavedSearches({ onSearch }) {
       if (savedData) setSavedSearches(JSON.parse(savedData));
       if (alertsData) setAlerts(JSON.parse(alertsData));
     } catch (error) {
-      console.error('Failed to load saved searches:', error);
+      logger.error('Failed to load saved searches:', error);
     }
   }, []);
   

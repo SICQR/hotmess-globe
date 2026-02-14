@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 const BEACON_COLOR = {
   social: '#39FF14',      // Lime — Right Now
@@ -22,7 +23,7 @@ const BEACON_COLOR = {
  */
 export async function insertBeaconForP2PListing(product, promoterId) {
   if (!product || !promoterId) {
-    console.warn('[useP2PListingBeacon] Missing product or promoterId');
+    logger.warn('[useP2PListingBeacon] Missing product or promoterId');
     return null;
   }
 
@@ -54,14 +55,14 @@ export async function insertBeaconForP2PListing(product, promoterId) {
       .single();
 
     if (error) {
-      console.error('[useP2PListingBeacon] Insert error:', error);
+      logger.error('[useP2PListingBeacon] Insert error:', error);
       return null;
     }
 
-    console.log('[useP2PListingBeacon] Created Gold beacon for product:', product.id);
+    logger.info('[useP2PListingBeacon] Created Gold beacon for product:', product.id);
     return data;
   } catch (err) {
-    console.error('[useP2PListingBeacon] Exception:', err);
+    logger.error('[useP2PListingBeacon] Exception:', err);
     return null;
   }
 }
@@ -73,7 +74,7 @@ export async function insertBeaconForP2PListing(product, promoterId) {
  */
 export async function deleteBeaconForP2PListing(productId) {
   if (!productId) {
-    console.warn('[useP2PListingBeacon] Missing productId for deletion');
+    logger.warn('[useP2PListingBeacon] Missing productId for deletion');
     return false;
   }
 
@@ -86,14 +87,14 @@ export async function deleteBeaconForP2PListing(productId) {
       .contains('metadata', { product_id: productId });
 
     if (error) {
-      console.error('[useP2PListingBeacon] Delete error:', error);
+      logger.error('[useP2PListingBeacon] Delete error:', error);
       return false;
     }
 
-    console.log('[useP2PListingBeacon] Deleted beacon for product:', productId);
+    logger.info('[useP2PListingBeacon] Deleted beacon for product:', productId);
     return true;
   } catch (err) {
-    console.error('[useP2PListingBeacon] Delete exception:', err);
+    logger.error('[useP2PListingBeacon] Delete exception:', err);
     return false;
   }
 }

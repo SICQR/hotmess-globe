@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { QUERY_CONFIG } from './constants';
+import logger from '@/utils/logger';
 
 /**
  * Global user cache - prevents redundant API calls
@@ -15,7 +16,7 @@ export function useAllUsers() {
         if (!isAuth) return [];
         return base44.entities.User.list();
       } catch (error) {
-        console.error('Failed to fetch users:', error);
+        logger.error('Failed to fetch users:', error);
         return [];
       }
     },
@@ -38,7 +39,7 @@ export function useCurrentUser() {
         if (!isAuth) return null;
         return base44.auth.me();
       } catch (error) {
-        console.error('Failed to fetch current user:', error);
+        logger.error('Failed to fetch current user:', error);
         return null;
       }
     },

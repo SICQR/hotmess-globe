@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { base44 } from '@/components/utils/supabaseClient';
 import ReactMarkdown from 'react-markdown';
+import logger from '@/utils/logger';
 
 export default function GlobalAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -54,7 +55,7 @@ export default function GlobalAssistant() {
         content: "Hello! I'm exploring events on HOTMESS."
       });
     } catch (error) {
-      console.error('Failed to initialize conversation:', error);
+      logger.error('Failed to initialize conversation:', error);
     }
   };
 
@@ -72,7 +73,7 @@ export default function GlobalAssistant() {
         content: userMessage
       });
     } catch (error) {
-      console.error('Failed to send message:', error);
+      logger.error('Failed to send message:', error);
     } finally {
       setSending(false);
     }

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 /**
  * User Roles System
@@ -63,7 +64,7 @@ async function fetchUserRoles(userId) {
     .rpc('get_user_roles', { p_user_id: userId });
   
   if (error) {
-    console.error('Error fetching user roles:', error);
+    logger.error('Error fetching user roles:', error);
     // Fallback: derive from profile data
     return [{ role: 'social', is_verified: false, source: 'fallback' }];
   }
@@ -81,7 +82,7 @@ async function checkUserHasRole(userId, role) {
     .rpc('user_has_role', { p_user_id: userId, p_role: role });
   
   if (error) {
-    console.error('Error checking role:', error);
+    logger.error('Error checking role:', error);
     return false;
   }
   

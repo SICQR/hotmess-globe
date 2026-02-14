@@ -15,6 +15,7 @@ import { createPageUrl } from '../utils';
 import MessageButton from '../components/social/MessageButton';
 import ComplementaryProducts from '../components/marketplace/ComplementaryProducts';
 import { isXpPurchasingEnabled } from '@/lib/featureFlags';
+import logger from '@/utils/logger';
 
 export default function ProductDetail() {
   const [searchParams] = useSearchParams();
@@ -36,7 +37,7 @@ export default function ProductDetail() {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
       }
     };
     fetchUser();
@@ -159,7 +160,7 @@ export default function ProductDetail() {
           product_tags: product.tags || [],
         });
       } catch (error) {
-        console.error('Failed to track view:', error);
+        logger.error('Failed to track view:', error);
       }
     };
 

@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useUserContext } from './useUserContext';
+import logger from '@/utils/logger';
 
 // Persona types
 const PERSONA_TYPES = {
@@ -115,7 +116,7 @@ export function useProfiles() {
       setPersonas(prev => [...prev, newPersona]);
       return { data: newPersona };
     } catch (err) {
-      console.error('Error creating persona:', err);
+      logger.error('Error creating persona:', err);
       return { error: err.message };
     } finally {
       setLoading(false);
@@ -139,7 +140,7 @@ export function useProfiles() {
       setPersonas(prev => prev.map(p => p.id === personaId ? data : p));
       return { data };
     } catch (err) {
-      console.error('Error updating persona:', err);
+      logger.error('Error updating persona:', err);
       return { error: err.message };
     } finally {
       setLoading(false);
@@ -173,7 +174,7 @@ export function useProfiles() {
 
       return { success: true };
     } catch (err) {
-      console.error('Error deleting persona:', err);
+      logger.error('Error deleting persona:', err);
       return { error: err.message };
     } finally {
       setLoading(false);

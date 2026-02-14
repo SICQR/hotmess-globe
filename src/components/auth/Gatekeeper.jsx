@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2 } from 'lucide-react';
 import AgeGate from './AgeGate';
 import ConsentForm from './ConsentForm';
+import logger from '@/utils/logger';
 
 function readCookie(name) {
   if (typeof document === 'undefined') return null;
@@ -64,7 +65,7 @@ export default function Gatekeeper({ children }) {
         }
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      logger.error('Auth check failed:', error);
       setUser(null);
       setNeedsConsent(false);
     } finally {

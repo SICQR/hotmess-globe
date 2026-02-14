@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Sparkles, TrendingUp, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import logger from '@/utils/logger';
 
 export default function TrendingSummary({ posts }) {
   const [summary, setSummary] = useState(null);
@@ -39,7 +40,7 @@ Use a fun, energetic tone that matches HOTMESS LONDON's nightlife culture.`;
 
       setSummary(response);
     } catch (error) {
-      console.error('Failed to generate summary:', error);
+      logger.error('Failed to generate summary:', error);
     } finally {
       setLoading(false);
     }

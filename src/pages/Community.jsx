@@ -10,6 +10,7 @@ import TrendingSummary from '../components/community/TrendingSummary';
 import PersonalizedFeed from '../components/community/PersonalizedFeed';
 import PostCreator from '../components/community/PostCreator';
 import { checkRateLimit } from '../components/utils/sanitize';
+import logger from '@/utils/logger';
 
 export default function Community() {
   const [user, setUser] = useState(null);
@@ -23,7 +24,7 @@ export default function Community() {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        logger.error('Failed to fetch user:', error);
       }
     };
     fetchUser();

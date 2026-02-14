@@ -17,6 +17,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import logger from '@/utils/logger';
 
 // Signal types for the globe (abstract, anonymised)
 const PULSE_TYPES = {
@@ -203,7 +204,7 @@ export function WorldPulseProvider({ children }) {
         })
         .subscribe();
     } catch (err) {
-      console.warn('[WorldPulse] Supabase subscription failed:', err);
+      logger.warn('[WorldPulse] Supabase subscription failed:', err);
     }
 
     return () => {
@@ -219,7 +220,7 @@ export function WorldPulseProvider({ children }) {
   // Emit pulse (for other components to trigger)
   const emitPulse = useCallback((type, cityId, options = {}) => {
     if (!Object.values(PULSE_TYPES).includes(type)) {
-      console.warn(`Unknown pulse type: ${type}`);
+      logger.warn(`Unknown pulse type: ${type}`);
       return;
     }
     dispatch({

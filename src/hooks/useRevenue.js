@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useUserContext } from './useUserContext';
+import logger from '@/utils/logger';
 
 // Upsell trigger thresholds
 const UPSELL_TRIGGERS = {
@@ -174,7 +175,7 @@ export function useRevenue() {
         });
     } catch (err) {
       // Analytics failures shouldn't break the app
-      console.warn('Analytics log failed:', err);
+      logger.warn('Analytics log failed:', err);
     }
   }, [email, tier]);
 

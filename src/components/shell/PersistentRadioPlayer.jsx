@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Play, Pause, SkipForward, Volume2, VolumeX, X, Radio } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useRadio } from './RadioContext';
+import logger from '@/utils/logger';
 
 export default function PersistentRadioPlayer() {
   const { isRadioOpen, shouldAutoPlay, closeRadio } = useRadio();
@@ -29,7 +30,7 @@ export default function PersistentRadioPlayer() {
         const beacons = await base44.entities.Beacon.filter({ mode: 'radio', active: true });
         return beacons.filter(b => b.audio_url);
       } catch (error) {
-        console.warn('Failed to fetch audio beacons:', error);
+        logger.warn('Failed to fetch audio beacons:', error);
         return [];
       }
     },
