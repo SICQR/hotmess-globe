@@ -42,10 +42,13 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Supabase Auth | ✅ Working | Email + magic link |
+| Google OAuth | ✅ Working | Sign in with Google |
 | Telegram Login | ✅ Working | Primary auth method |
 | Age Gate | ✅ Working | 18+ verification |
 | Profile System | ✅ Working | Bio, avatar, tags |
 | Onboarding Flow | ✅ Working | Multi-step setup |
+
+> 📖 **Setup Guide**: See [OAuth Setup Guide](./docs/OAUTH_SETUP.md) for detailed configuration instructions.
 
 ### 🎭 Social & Discovery
 | Feature | Status | Notes |
