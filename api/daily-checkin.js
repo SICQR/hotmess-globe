@@ -188,7 +188,7 @@ export default async function handler(req, res) {
 
       // Award badge if milestone reached
       if (badgeAwarded) {
-        const { error: badgeError } = await adminSupabase
+        const { error: badgeError } = await serviceClient
           .from('user_badges')
           .upsert({
             user_email: user.email,
