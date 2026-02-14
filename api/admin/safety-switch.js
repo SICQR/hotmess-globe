@@ -1,6 +1,7 @@
 /**
  * HOTMESS Safety Switch API
  * Emergency control for cities and categories
+ * ADMIN ONLY - requires verified admin token
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -9,6 +10,35 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
+
+// Verify admin from bearer token
+async function verifyAdmin(req) {
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return { error: 'Missing bearer token', admin: null };
+  }
+  
+  const token = authHeader.slice(7);
+  
+  // Verify the token with Supabase auth
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) {
+    return { error: 'Invalid token', admin: null };
+  }
+  
+  // Check if user has admin role
+  const { data: profile } = await supabase
+    .from('User')
+    .select('id, email, is_admin, roles')
+    .eq('auth_user_id', user.id)
+    .single();
+    
+  if (!profile?.is_admin && !profile?.roles?.includes('admin')) {
+    return { error: 'Admin access required', admin: null };
+  }
+  
+  return { error: null, admin: profile };
+}
 
 export default async function handler(req, res) {
   // GET: Return current safety state
@@ -36,13 +66,15 @@ export default async function handler(req, res) {
     }
   }
 
-  // POST: Apply safety switch action
+  // POST: Apply safety switch action - ADMIN ONLY
   if (req.method === 'POST') {
-    const { action, target, reason, admin_id, timestamp } = req.body;
-
-    if (!admin_id) {
-      return res.status(401).json({ error: 'Admin authentication required' });
+    // Verify admin authentication
+    const { error: authError, admin } = await verifyAdmin(req);
+    if (authError || !admin) {
+      return res.status(401).json({ error: authError || 'Admin authentication required' });
     }
+
+    const { action, target, reason, timestamp } = req.body;
 
     try {
       const { data: current } = await supabase
@@ -94,12 +126,14 @@ export default async function handler(req, res) {
 
       if (upsertError) throw upsertError;
 
+      // Audit log with verified admin ID
       await supabase.from('audit_log').insert({
         action_type: 'safety_switch',
         action,
         target,
         reason,
-        admin_id,
+        admin_id: admin.id,
+        admin_email: admin.email,
         timestamp: timestamp || new Date().toISOString(),
       });
 
