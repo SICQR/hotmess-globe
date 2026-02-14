@@ -141,7 +141,8 @@ const getProductPreviewUrls = (profile: Profile): string[] => {
   return urls.slice(0, 3);
 };
 
-export function ProfileCard({
+// Memoize ProfileCard to prevent re-renders when parent updates
+function ProfileCardInner({
   profile,
   viewerLocation,
   viewerProfile,
@@ -726,3 +727,6 @@ export function ProfileCard({
     </div>
   );
 }
+
+// Export memoized version for performance
+export const ProfileCard = React.memo(ProfileCardInner);
