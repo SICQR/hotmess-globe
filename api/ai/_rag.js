@@ -178,7 +178,7 @@ export function formatKnowledgeForPrompt(results) {
 async function fallbackTextSearch(table, query, category, limit) {
   const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
   
-  let queryBuilder = supabase
+  let queryBuilder = getSupabase()
     .from(table)
     .select('*')
     .limit(limit);
