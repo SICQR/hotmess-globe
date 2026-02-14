@@ -60,8 +60,33 @@ export default function Auth() {
   const nextUrl = searchParams.get('next');
   const mode = searchParams.get('mode');
 
+  // Helper function to check if user profile is complete
+  const checkProfileComplete = async (userId) => {
+    try {
+      const { data } = await base44.entities.User.filter({ auth_user_id: userId });
+      const user = data?.[0] || (Array.isArray(data) ? null : data);
+      if (!user) return false;
+      return !!(user.full_name && user.avatar_url && user.city && user.profile_type);
+    } catch {
+      return false;
+    }
+  };
+
   // Helper function to handle post-auth redirects
-  const performRedirectAfterAuth = () => {
+  const performRedirectAfterAuth = async (session) => {
+    // Check if profile is complete before redirecting
+    const userId = session?.user?.id;
+    if (userId) {
+      const isComplete = await checkProfileComplete(userId);
+      if (!isComplete) {
+        // Redirect to Profile for setup
+        setTimeout(() => {
+          window.location.href = createPageUrl('Profile');
+        }, REDIRECT_DELAY_MS);
+        return;
+      }
+    }
+    
     const redirect = nextUrl || searchParams.get('redirect_to') || createPageUrl('Home');
     setTimeout(() => {
       window.location.href = redirect;
@@ -80,7 +105,7 @@ export default function Auth() {
         // Only redirect if we're not already showing the membership/profile steps
         if (step === 'auth') {
           toast.success('Welcome back!');
-          performRedirectAfterAuth();
+          performRedirectAfterAuth(session);
         }
       } else if (event === 'SIGNED_OUT') {
         console.log('[Auth] User signed out');
@@ -92,7 +117,7 @@ export default function Auth() {
     return () => {
       authSubscription?.subscription?.unsubscribe();
     };
-  }, [step, nextUrl, searchParams, performRedirectAfterAuth]);
+  }, [step, nextUrl, searchParams]);
 
   useEffect(() => {
     // Handle OAuth callbacks (Google, etc.)
@@ -182,7 +207,7 @@ export default function Auth() {
         toast.success('Account created! Let\'s set you up...');
         setStep('membership');
       } else {
-        const { error } = await auth.signIn(email, password);
+        const { data, error } = await auth.signIn(email, password);
         if (error) {
           // Provide more specific error messages
           if (error.message?.includes('Invalid login credentials')) {
@@ -194,7 +219,9 @@ export default function Auth() {
         }
 
         toast.success('Welcome back!');
-        performRedirectAfterAuth();
+        // Check profile completeness before redirect
+        const session = data?.session;
+        performRedirectAfterAuth(session);
       }
     } catch (error) {
       const errorMessage = error.message || 'Authentication failed. Please try again.';
