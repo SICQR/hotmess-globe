@@ -10,7 +10,7 @@ test.use({
 test.beforeEach(async ({ page }) => {
   // Bypass session-based AgeGate
   await page.addInitScript(() => {
-    sessionStorage.setItem('age_verified', 'true');
+    localStorage.setItem('hm_age_confirmed_v1', 'true');
     sessionStorage.setItem('location_consent', 'false');
   });
 });

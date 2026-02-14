@@ -13,7 +13,7 @@ test('A: core routes render without page errors', async ({ page }) => {
 
   // Bypass session-based AgeGate.
   await page.addInitScript(() => {
-    sessionStorage.setItem('age_verified', 'true');
+    localStorage.setItem('hm_age_confirmed_v1', 'true');
     sessionStorage.setItem('location_consent', 'false');
   });
 
@@ -37,7 +37,7 @@ test('A: directions page loads (even if API rejects)', async ({ page }) => {
 
   // Bypass session-based AgeGate.
   await page.addInitScript(() => {
-    sessionStorage.setItem('age_verified', 'true');
+    localStorage.setItem('hm_age_confirmed_v1', 'true');
     sessionStorage.setItem('location_consent', 'false');
   });
 
