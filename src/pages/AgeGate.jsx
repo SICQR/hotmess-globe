@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
+import { useBootGuard } from '@/contexts/BootGuardContext';
 
 // Must match BootGuardContext
 const AGE_KEY = 'hm_age_confirmed_v1';
@@ -18,6 +19,7 @@ export default function AgeGate() {
   const [locationPermissionStatus, setLocationPermissionStatus] = useState(null);
   const [searchParams] = useSearchParams();
   const nextUrl = searchParams.get('next') || createPageUrl('Home');
+  const { markAgeVerified, session } = useBootGuard();
 
   useEffect(() => {
     // Read any cached status first.
@@ -122,8 +124,14 @@ export default function AgeGate() {
       }
     }
 
-    // Always go to /auth next - BootGuardContext will redirect to OS if already authed
-    window.location.href = '/auth';
+    // If already authenticated, mark age verified in profile and go to app
+    if (session) {
+      await markAgeVerified();
+      window.location.href = nextUrl;
+    } else {
+      // Not authenticated - go to auth page
+      window.location.href = '/auth';
+    }
   };
 
   const handleExit = () => {
