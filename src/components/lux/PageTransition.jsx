@@ -109,13 +109,14 @@ function getTransitionForRoute(pathname) {
  */
 export function PageTransition({ children, className }) {
   const location = useLocation();
-  const transitionType = getTransitionForRoute(location.pathname);
+  const pathname = location?.pathname || '/';
+  const transitionType = getTransitionForRoute(pathname);
   const variant = transitionVariants[transitionType] || transitionVariants.wipe;
 
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={location.pathname}
+        key={pathname}
         initial={variant.initial}
         animate={variant.animate}
         exit={variant.exit}
