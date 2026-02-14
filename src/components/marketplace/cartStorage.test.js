@@ -204,7 +204,7 @@ describe('cartStorage - Guest Cart Persistence', () => {
       expect(stored.length).toBe(1);
     });
 
-    it('should merge guest cart with variant support', async () => {
+    it('should merge guest cart with variant support and verify all data', async () => {
       // Pre-populate guest cart with items that have variants
       const guestItems = [
         {
@@ -258,6 +258,51 @@ describe('cartStorage - Guest Cart Persistence', () => {
       expect(remainingItems).toEqual([]);
       expect(localStorage.getItem(GUEST_CART_STORAGE_KEY)).toBe(null);
     });
+
+    it('should accumulate quantities when merging guest cart with existing user cart items', async () => {
+      // Pre-populate guest cart
+      const guestItems = [
+        {
+          product_id: 'shirt-456',
+          quantity: 2,
+          shopify_variant_id: 'variant-medium',
+          variant_title: 'Medium',
+          reserved_until: new Date(Date.now() + 1000000).toISOString(),
+        },
+      ];
+      setGuestCartItems(guestItems);
+
+      // Mock authenticated user with existing cart item for same product/variant
+      const mockUser = { email: 'existing@example.com', auth_user_id: 'user-456' };
+      const existingCartItem = {
+        id: 'cart-item-1',
+        product_id: 'shirt-456',
+        shopify_variant_id: 'variant-medium',
+        variant_title: 'Medium',
+        quantity: 3, // User already has 3
+        user_email: 'existing@example.com',
+        auth_user_id: 'user-456',
+      };
+
+      base44.auth.me.mockResolvedValue(mockUser);
+      base44.entities.CartItem.filter.mockResolvedValue([existingCartItem]);
+      base44.entities.CartItem.update.mockResolvedValue({});
+
+      await mergeGuestCartToUser({ currentUser: mockUser });
+
+      // Verify update was called (not create) since item already exists
+      expect(base44.entities.CartItem.update).toHaveBeenCalledTimes(1);
+      expect(base44.entities.CartItem.create).not.toHaveBeenCalled();
+
+      // Verify quantity was accumulated (3 + 2 = 5)
+      const updateCall = base44.entities.CartItem.update.mock.calls[0];
+      expect(updateCall[0]).toBe('cart-item-1');
+      expect(updateCall[1].quantity).toBe(5);
+
+      // Verify guest cart was cleared
+      const remainingItems = getGuestCartItems();
+      expect(remainingItems).toEqual([]);
+    });
   });
 
   describe('Cart Persistence Across Authentication States', () => {
@@ -303,6 +348,54 @@ describe('cartStorage - Guest Cart Persistence', () => {
       const itemsAfterLogin = getGuestCartItems();
       expect(itemsAfterLogin.length).toBe(1);
       expect(itemsAfterLogin[0].product_id).toBe('pre-login');
+    });
+
+    it('should complete full auth flow: guest cart → login → merge → verify DB and clear localStorage', async () => {
+      // Step 1: User adds items as guest
+      base44.auth.me.mockResolvedValue(null);
+      await addToCart({ productId: 'flow-test-1', quantity: 2, currentUser: null });
+      await addToCart({ productId: 'flow-test-2', quantity: 1, currentUser: null });
+
+      // Verify guest cart has items in localStorage
+      let guestItems = getGuestCartItems();
+      expect(guestItems.length).toBe(2);
+      expect(localStorage.getItem(GUEST_CART_STORAGE_KEY)).toBeTruthy();
+
+      // Step 2: User logs in
+      const mockUser = { email: 'flowtest@example.com', auth_user_id: 'user-flow-789' };
+      base44.auth.me.mockResolvedValue(mockUser);
+
+      // Guest cart should still exist before merge
+      guestItems = getGuestCartItems();
+      expect(guestItems.length).toBe(2);
+
+      // Step 3: Merge operation
+      base44.entities.CartItem.filter.mockResolvedValue([]);
+      base44.entities.CartItem.create.mockResolvedValue({});
+
+      await mergeGuestCartToUser({ currentUser: mockUser });
+
+      // Step 4: Verify merge results
+      // Both items should be created in DB
+      expect(base44.entities.CartItem.create).toHaveBeenCalledTimes(2);
+
+      // Verify first item
+      const firstCreate = base44.entities.CartItem.create.mock.calls[0][0];
+      expect(firstCreate.product_id).toBe('flow-test-1');
+      expect(firstCreate.quantity).toBe(2);
+      expect(firstCreate.user_email).toBe('flowtest@example.com');
+      expect(firstCreate.auth_user_id).toBe('user-flow-789');
+
+      // Verify second item
+      const secondCreate = base44.entities.CartItem.create.mock.calls[1][0];
+      expect(secondCreate.product_id).toBe('flow-test-2');
+      expect(secondCreate.quantity).toBe(1);
+      expect(secondCreate.user_email).toBe('flowtest@example.com');
+
+      // Guest cart should be cleared from localStorage
+      const finalGuestItems = getGuestCartItems();
+      expect(finalGuestItems).toEqual([]);
+      expect(localStorage.getItem(GUEST_CART_STORAGE_KEY)).toBe(null);
     });
   });
 
