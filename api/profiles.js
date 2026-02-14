@@ -364,11 +364,9 @@ export default async function handler(req, res) {
     return json(res, 405, { error: 'Method not allowed' });
   }
 
-  const requireAuth = isRunningOnVercel() || process.env.NODE_ENV === 'production';
+  // Allow public read access to profiles (discovery feature for unauthenticated users)
+  // Authentication is optional - when present, we validate it
   const accessToken = getBearerToken(req);
-  if (requireAuth && !accessToken) {
-    return json(res, 401, { error: 'Unauthorized' });
-  }
 
   const cursorRaw = getQueryParam(req, 'cursor');
   const offset = clampInt(cursorRaw ?? 0, 0, 100000, 0);
@@ -376,27 +374,33 @@ export default async function handler(req, res) {
 
   const { error: supaErr, serviceClient, anonClient: anonClientFromEnv } = getSupabaseServerClients();
 
+  // If token provided, validate it (but don't require it)
   if (accessToken && anonClientFromEnv) {
     const { data, error } = await anonClientFromEnv.auth.getUser(accessToken);
+    // Just log validation failures, don't block the request
     if (error || !data?.user) {
-      if (requireAuth) return json(res, 401, { error: 'Unauthorized' });
+      console.log('[profiles] Invalid auth token provided, continuing as anonymous');
     }
-  } else if (requireAuth && !anonClientFromEnv) {
-    return json(res, 500, { error: 'Supabase server env not configured' });
   }
 
-  // Prefer service role query when configured.
-  if (!supaErr && serviceClient) {
-    // Simple cursor pagination: cursor is an integer offset (opaque enough for demo).
-    const { data, error } = await queryUsersWithFallbackOrder({ serviceClient, offset, limit });
+  // If Supabase is not configured, return fallback profiles
+  if (supaErr || !serviceClient) {
+    const items = offset === 0 ? buildFallbackProfiles() : [];
+    const unique = dedupeItems(items);
+    return json(res, 200, { items: unique, nextCursor: offset === 0 ? String(items.length) : null });
+  }
 
-    if (error) {
-      const items = offset === 0 ? buildFallbackProfiles() : [];
-      const unique = dedupeItems(items);
-      return json(res, 200, { items: unique, nextCursor: offset === 0 ? String(items.length) : null });
-    }
+  // Query profiles from database
+  // Simple cursor pagination: cursor is an integer offset (opaque enough for demo).
+  const { data, error } = await queryUsersWithFallbackOrder({ serviceClient, offset, limit });
 
-    const rows = Array.isArray(data) ? data : [];
+  if (error) {
+    const items = offset === 0 ? buildFallbackProfiles() : [];
+    const unique = dedupeItems(items);
+    return json(res, 200, { items: unique, nextCursor: offset === 0 ? String(items.length) : null });
+  }
+
+  const rows = Array.isArray(data) ? data : [];
 
     // Attach auth user metadata (best-effort) so the grid can show multi-photo profiles,
     // even when those fields are stored in auth metadata (Base44-style).
@@ -497,132 +501,8 @@ export default async function handler(req, res) {
       })
       .filter(Boolean);
 
-    const items = dedupeItems(mapped);
-    const nextCursor = rows.length === limit ? String(offset + limit) : null;
-    return json(res, 200, { items, nextCursor });
-  }
-
-  // Fallback: if service role key isn't configured (common in local dev),
-  // use an authenticated Supabase RPC that does not require the service role key.
-  const supabaseUrl = getEnv('SUPABASE_URL', ['VITE_SUPABASE_URL']);
-  const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY', ['VITE_SUPABASE_ANON_KEY']);
-
-  if (!supabaseUrl || !supabaseAnonKey || !accessToken) {
-    const items = offset === 0 ? buildFallbackProfiles() : [];
-    const unique = dedupeItems(items);
-    return json(res, 200, { items: unique, nextCursor: offset === 0 ? String(items.length) : null });
-  }
-
-  const authedAnonClient = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    },
-  });
-
-  const { data, error } = await authedAnonClient.rpc('list_profiles_secure', {
-    p_offset: offset,
-    p_limit: limit,
-  });
-
-  if (error) {
-    const items = offset === 0 ? buildFallbackProfiles() : [];
-    const unique = dedupeItems(items);
-    return json(res, 200, { items: unique, nextCursor: offset === 0 ? String(items.length) : null });
-  }
-
-  const rows = Array.isArray(data) ? data : [];
-
-  const sellerEmails = rows
-    .filter((r) => String(r?.profile_type || '').trim().toLowerCase() === 'seller')
-    .map((r) => r?.email)
-    .filter(Boolean);
-  const hasProductsByEmail = await getHasProductsMap({ client: authedAnonClient, emails: sellerEmails });
-  const productPreviewsByEmail = await getProductPreviewsMap({ client: authedAnonClient, emails: sellerEmails, maxPerSeller: 3 });
-
-  let tagMap = new Map();
-  try {
-    const emails = rows
-      .map((r) => (r?.email ? String(r.email).trim().toLowerCase() : null))
-      .filter(Boolean);
-    if (emails.length) {
-      const { data: tagRows } = await authedAnonClient
-        .from('user_tags')
-        .select('user_email, tag_id')
-        .in('user_email', emails);
-      tagMap = buildTagMap(tagRows);
-    }
-  } catch {
-    // ignore
-  }
-
-  const mapped = rows
-    .map((row) => {
-      const lat = Number(row?.last_lat);
-      const lng = Number(row?.last_lng);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-
-      const fullName = String(row?.full_name || row?.email || 'Unknown').trim();
-      const dedupeKey = String(row?.auth_user_id || row?.email || fullName).trim();
-      const avatar = String(row?.avatar_url || '').trim();
-      const email = row?.email ? String(row.email).trim() : null;
-      const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : null;
-
-      const gender = row?.gender ?? row?.sex ?? null;
-      const photoPolicyAckRaw = row?.photo_policy_ack ?? row?.photoPolicyAck;
-      const photoPolicyAck = photoPolicyAckRaw === true ? true : photoPolicyAckRaw === false ? false : null;
-      if (isFemaleGender(gender)) return null;
-      if (photoPolicyAck === false) return null;
-
-      const photos = normalizePhotos(row?.photos, avatar);
-
-      const sellerTagline = row?.seller_tagline ? String(row.seller_tagline).trim() : undefined;
-      const sellerBio = row?.seller_bio ? String(row.seller_bio).trim() : undefined;
-      const shopBannerUrl = row?.shop_banner_url ? String(row.shop_banner_url).trim() : undefined;
-
-      const tier = String(row?.subscription_tier || '').toUpperCase();
-      const tierLabel = tier === 'PAID' ? 'Member (PAID)' : 'Member';
-
-      const city = row?.city ? String(row.city).trim() : null;
-      const profileType = row?.profile_type ? String(row.profile_type).trim() : null;
-      const isSellerProfile = profileType && String(profileType).trim().toLowerCase() === 'seller';
-      const hasProducts = isSellerProfile && email ? hasProductsByEmail.get(String(email).toLowerCase()) === true : undefined;
-      const productPreviews = isSellerProfile && email ? productPreviewsByEmail.get(String(email).toLowerCase()) : undefined;
-
-      const bio = row?.bio ? String(row.bio).trim() : null;
-      const title = toShortHeadline(bio, tierLabel);
-
-      const tags = email ? tagMap.get(String(email).toLowerCase()) : null;
-      const safeTags = Array.isArray(tags) ? tags.slice(0, 3) : [];
-
-      return {
-        id: `profile_${dedupeKey}`,
-        email: email || undefined,
-        authUserId: authUserId || undefined,
-        profileName: fullName,
-        title,
-        locationLabel: city || 'Nearby',
-        city: city || undefined,
-        profileType: profileType || undefined,
-        hasProducts,
-        productPreviews: Array.isArray(productPreviews) && productPreviews.length ? productPreviews : undefined,
-        bio: bio || undefined,
-        gender: normalizeGender(gender) || undefined,
-        photo_policy_ack: photoPolicyAck === true ? true : undefined,
-        sellerTagline,
-        sellerBio,
-        shopBannerUrl,
-        tags: safeTags,
-        geoLat: lat,
-        geoLng: lng,
-        photos,
-      };
-    })
-    .filter(Boolean);
-
   const items = dedupeItems(mapped);
   const nextCursor = rows.length === limit ? String(offset + limit) : null;
   return json(res, 200, { items, nextCursor });
 }
+
