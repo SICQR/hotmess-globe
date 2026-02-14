@@ -253,10 +253,6 @@ export default function L2GhostedSheet() {
                             src={user.avatar_url} 
                             alt="" 
                             className="w-full h-full object-cover grayscale contrast-125" 
-                            style={{ 
-                              filter: 'grayscale(100%) contrast(1.25)',
-                              mixBlendMode: 'luminosity',
-                            }}
                           />
                         ) : (
                           <span className="text-lg font-black text-white">

@@ -12,7 +12,7 @@
  * @param route - The route/sheet to navigate to (e.g., 'vault', 'social', 'events')
  * @param params - Optional parameters to pass to the destination
  */
-export type NavigationFunction = (route: string, params?: any) => void;
+export type NavigationFunction = (route: string, params?: Record<string, unknown>) => void;
 
 /**
  * Navigation props for components that need navigation
@@ -24,6 +24,6 @@ export interface NavigationProps {
 /**
  * Sheet navigation function - specifically for opening sheets
  */
-export type SheetNavigationFunction = (sheetType: string, props?: any) => void;
+export type SheetNavigationFunction = (sheetType: string, props?: Record<string, unknown>) => void;
 
 export default NavigationFunction;
