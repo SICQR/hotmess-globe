@@ -145,10 +145,13 @@ export function BootGuardProvider({ children }) {
         // On error, use localStorage to decide boot state
         // Trust localStorage age verification even if DB fetch fails
         const localAge = getLocalAgeVerified();
+        console.log('[BootGuard] Profile fetch failed, localStorage age:', localAge);
         if (localAge) {
           // User verified age locally, let them through
+          console.log('[BootGuard] Setting READY state due to localStorage');
           setBootState(BOOT_STATES.READY);
         } else {
+          console.log('[BootGuard] No localStorage age, setting NEEDS_AGE');
           setBootState(BOOT_STATES.NEEDS_AGE);
         }
         setIsLoading(false);
