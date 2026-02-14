@@ -42,7 +42,7 @@ const showFatalOverlay = (err) => {
     const root = document.getElementById('root');
     if (!root) return;
     const message = err instanceof Error ? (err.stack || err.message) : String(err);
-    console.error('FATAL CLIENT ERROR', message);
+    // Fatal error - logged by global error handlers
   } catch {
     // ignore
   }
