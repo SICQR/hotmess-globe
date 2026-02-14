@@ -151,8 +151,6 @@ export function BootGuardProvider({ children }) {
 
       // Sync localStorage age to profile if needed
       const localAge = getLocalAgeVerified();
-      console.log('[BootGuard] Profile age_verified:', profileData?.age_verified, 'localStorage age:', localAge, 'AGE_KEY:', AGE_KEY);
-      console.log('[BootGuard] Raw localStorage value:', localStorage.getItem(AGE_KEY));
       
       if (profileData && !profileData.age_verified && localAge) {
         console.log('[BootGuard] Syncing localStorage age to profile...');
@@ -181,15 +179,11 @@ export function BootGuardProvider({ children }) {
       setProfile(profileData);
 
       // Determine boot state from profile
-      console.log('[BootGuard] Final profileData.age_verified:', profileData?.age_verified, 'onboarding_complete:', profileData?.onboarding_complete);
       if (!profileData?.age_verified) {
-        console.log('[BootGuard] Setting NEEDS_AGE');
         setBootState(BOOT_STATES.NEEDS_AGE);
       } else if (!profileData?.onboarding_complete) {
-        console.log('[BootGuard] Setting NEEDS_ONBOARDING');
         setBootState(BOOT_STATES.NEEDS_ONBOARDING);
       } else {
-        console.log('[BootGuard] Setting READY');
         setBootState(BOOT_STATES.READY);
       }
     } catch (err) {
