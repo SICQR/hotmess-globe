@@ -110,11 +110,11 @@ export function BootGuardProvider({ children }) {
     setIsLoading(true);
 
     try {
-      // Fetch profile
+      // Fetch profile - profiles table uses account_id to link to auth.users
       let { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('account_id', userId)
         .single();
 
       // PGRST116 = no rows found
@@ -124,7 +124,7 @@ export function BootGuardProvider({ children }) {
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
           .insert({
-            id: userId,
+            account_id: userId,
             age_verified: localAge,
             onboarding_complete: false,
           })
