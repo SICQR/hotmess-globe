@@ -1,18 +1,27 @@
 import React from 'react';
 import { TopHUD } from './TopHUD';
 import { RadioBar } from './RadioBar';
-import { BottomDock } from './BottomDock';
+import { BottomDock, Mode } from './BottomDock';
 
 interface OSShellProps {
   children: React.ReactNode;
   globe?: React.ReactNode;
+  activeMode?: Mode;
+  onModeChange?: (mode: Mode) => void;
+  radioProps?: {
+    isPlaying?: boolean;
+    trackTitle?: string;
+    bpm?: number;
+    isLive?: boolean;
+    onToggle?: () => void;
+  };
 }
 
 /**
  * OS Shell - mounts ONCE after boot guard passes
  * Globe is absolute z-0, everything else z-10+
  */
-export function OSShell({ children, globe }: OSShellProps) {
+export function OSShell({ children, globe, activeMode = 'NOW', onModeChange, radioProps }: OSShellProps) {
   return (
     <div className="relative h-dvh w-full bg-[#050507] overflow-hidden">
       <TopHUD />
@@ -27,8 +36,8 @@ export function OSShell({ children, globe }: OSShellProps) {
         {children}
       </div>
       
-      <RadioBar />
-      <BottomDock />
+      <RadioBar {...radioProps} />
+      <BottomDock activeMode={activeMode} onModeChange={onModeChange} />
     </div>
   );
 }
