@@ -110,7 +110,6 @@ export default async function handler(req, res) {
 
     if (result.error) {
       // Non-fatal: embeddings are optional
-      // console.error('Embedding update failed:', result.error);
       return json(res, 200, { 
         success: true, 
         updated: false, 
@@ -129,7 +128,6 @@ export default async function handler(req, res) {
       }
     });
   } catch (error) {
-    // console.error('Update embeddings error:', error);
     return json(res, 500, { error: error?.message || 'Failed to update embeddings' });
   }
 }

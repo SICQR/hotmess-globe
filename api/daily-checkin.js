@@ -166,7 +166,6 @@ export default async function handler(req, res) {
         });
 
       if (streakErr) {
-        // console.error('Failed to update streak:', streakErr);
         return json(res, 500, { error: 'Failed to update streak' });
       }
 
@@ -200,7 +199,6 @@ export default async function handler(req, res) {
           }, { onConflict: 'user_email,badge_name' });
         
         if (badgeError) {
-          // console.error('Failed to award badge:', badgeError);
           // Non-blocking - continue even if badge fails
         }
       }
@@ -221,7 +219,6 @@ export default async function handler(req, res) {
     return json(res, 405, { error: 'Method not allowed' });
 
   } catch (error) {
-    // console.error('Daily check-in error:', error);
     return json(res, 500, { error: error?.message || 'Internal server error' });
   }
 }

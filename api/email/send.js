@@ -35,10 +35,6 @@ export default async function handler(req, res) {
   const resendApiKey = process.env.RESEND_API_KEY;
 
   if (!resendApiKey) {
-    // console.log('[Email] Would send email (no RESEND_API_KEY configured):');
-    // console.log(`  To: ${to}`);
-    // console.log(`  Subject: ${subject}`);
-    // console.log(`  Body: ${body?.substring(0, 100)}...`);
     send(res, 200, { success: true, id: `dev_${Date.now()}`, message: 'Email logged (development mode - no API key)' });
     return;
   }
@@ -62,15 +58,12 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      // console.error('[Email] Resend API error:', data);
       send(res, response.status, { error: 'Failed to send email', details: data.message || 'Unknown error' });
       return;
     }
 
-    // console.log(`[Email] Sent to ${to}: ${subject}`);
     send(res, 200, { success: true, id: data.id });
   } catch (error) {
-    // console.error('[Email] Error sending email:', error);
     send(res, 500, { error: 'Internal server error', message: error.message });
   }
 }

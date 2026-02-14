@@ -23,9 +23,7 @@ export const LogLevel = {
 export function log(message, data = null) {
   if (isDev || process.env.ENABLE_LOGGING === 'true') {
     if (data) {
-      // console.log(`[LOG] ${message}`, data);
     } else {
-      // console.log(`[LOG] ${message}`);
     }
   }
 }
@@ -59,9 +57,7 @@ export function info(message, data = null) {
  */
 export function warn(message, data = null) {
   if (data) {
-    // console.warn(`[WARN] ${message}`, data);
   } else {
-    // console.warn(`[WARN] ${message}`);
   }
 }
 
@@ -72,9 +68,7 @@ export function error(message, err = null) {
   const errorMessage = `[ERROR] ${message}`;
   
   if (err) {
-    // console.error(errorMessage, err);
   } else {
-    // console.error(errorMessage);
   }
   
   // In production, errors should be captured by Sentry middleware

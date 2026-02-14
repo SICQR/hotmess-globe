@@ -37,12 +37,10 @@ export default async function handler(req, res) {
   }
 
   if (!stripe || !webhookSecret) {
-    // console.error('[Stripe Webhook] Missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET');
     return res.status(500).json({ error: 'Stripe not configured' });
   }
 
   if (!supabaseServiceKey) {
-    // console.error('[Stripe Webhook] Missing SUPABASE_SERVICE_ROLE_KEY');
     return res.status(500).json({ error: 'Database not configured' });
   }
 
@@ -56,11 +54,9 @@ export default async function handler(req, res) {
 
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err) {
-    // console.error('[Stripe Webhook] Signature verification failed:', err.message);
     return res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
   }
 
-  // console.log(`[Stripe Webhook] Received event: ${event.type}`);
 
   try {
     switch (event.type) {
@@ -81,9 +77,7 @@ export default async function handler(req, res) {
             .eq('auth_user_id', userId);
 
           if (error) {
-            // console.error('[Stripe Webhook] Failed to update user tier:', error);
           } else {
-            // console.log(`[Stripe Webhook] User ${userId} upgraded to ${tierId}`);
           }
         }
         break;
@@ -107,9 +101,7 @@ export default async function handler(req, res) {
             .eq('auth_user_id', userId);
 
           if (error) {
-            // console.error('[Stripe Webhook] Failed to update subscription:', error);
           } else {
-            // console.log(`[Stripe Webhook] Subscription updated for user ${userId}: ${status}`);
           }
         }
         break;
@@ -131,9 +123,7 @@ export default async function handler(req, res) {
             .eq('auth_user_id', userId);
 
           if (error) {
-            // console.error('[Stripe Webhook] Failed to cancel subscription:', error);
           } else {
-            // console.log(`[Stripe Webhook] Subscription canceled for user ${userId}`);
           }
         }
         break;
@@ -152,7 +142,6 @@ export default async function handler(req, res) {
               .update({ subscription_status: 'past_due' })
               .eq('auth_user_id', userId);
 
-            // console.log(`[Stripe Webhook] Payment failed for user ${userId}`);
           }
         }
         break;
@@ -171,7 +160,6 @@ export default async function handler(req, res) {
               .update({ subscription_status: 'active' })
               .eq('auth_user_id', userId);
 
-            // console.log(`[Stripe Webhook] Invoice paid for user ${userId}`);
           }
         }
         break;
@@ -193,9 +181,7 @@ export default async function handler(req, res) {
             .eq('id', orderId);
 
           if (error) {
-            // console.error('[Stripe Webhook] Failed to update order:', error);
           } else {
-            // console.log(`[Stripe Webhook] Order ${orderId} marked as paid`);
           }
         }
         break;
@@ -214,18 +200,15 @@ export default async function handler(req, res) {
             })
             .eq('id', orderId);
 
-          // console.log(`[Stripe Webhook] Payment failed for order ${orderId}`);
         }
         break;
       }
 
       default:
-        // console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
     }
 
     return res.status(200).json({ received: true });
   } catch (error) {
-    // console.error('[Stripe Webhook] Handler error:', error);
     return res.status(500).json({ error: 'Webhook handler failed' });
   }
 }

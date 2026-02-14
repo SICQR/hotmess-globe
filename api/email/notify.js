@@ -11,9 +11,6 @@ async function sendEmail(to, subject, html) {
   const resendApiKey = process.env.RESEND_API_KEY;
   
   if (!resendApiKey) {
-    // console.log('[Support Email] Would send email (no RESEND_API_KEY):');
-    // console.log(`  To: ${to}`);
-    // console.log(`  Subject: ${subject}`);
     return { success: true, id: `dev_${Date.now()}`, dev: true };
   }
 
@@ -230,10 +227,8 @@ export default async function handler(req, res) {
         return;
     }
 
-    // console.log(`[Support Email] Sent ${type} email:`, emailResult);
     json(res, 200, emailResult);
   } catch (error) {
-    // console.error('[Support Email] Error:', error);
     json(res, 500, { error: 'Failed to send email', message: error.message });
   }
 }

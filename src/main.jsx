@@ -6,6 +6,7 @@ import '@/index.css'
 import { initAnalytics } from '@/components/utils/analytics'
 import ErrorBoundary from '@/components/error/ErrorBoundary'
 import { clearBadSupabaseSessions } from '@/lib/clearBadSessions'
+import { setupGlobalErrorHandlers } from '@/utils/errorHandler'
 import { OSProvider } from '@/os'
 
 // FIRST: Clear any cached sessions from wrong Supabase projects
@@ -29,6 +30,9 @@ if (import.meta.env.VITE_SENTRY_DSN) {
   })
 }
 
+// Setup global error handlers
+setupGlobalErrorHandlers();
+
 // Initialize analytics
 initAnalytics()
 
@@ -38,7 +42,7 @@ const showFatalOverlay = (err) => {
     const root = document.getElementById('root');
     if (!root) return;
     const message = err instanceof Error ? (err.stack || err.message) : String(err);
-    console.error('FATAL CLIENT ERROR', message);
+    // Fatal error - logged by global error handlers
   } catch {
     // ignore
   }

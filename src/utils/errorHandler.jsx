@@ -10,6 +10,8 @@
  */
 
 import { trackError } from '@/components/utils/analytics';
+import logger from '@/utils/logger';
+import { captureError } from '@/lib/sentry';
 
 // Error categories
 export const ErrorCategory = {
@@ -326,8 +328,13 @@ export function logError(error, context = {}) {
     }
   }
   
-  // Log and track
-  console.error('[Error]', error.message, context);
+  // Log using structured logger
+  logger.error(error.message, { ...context, stack: error.stack });
+  
+  // Send to Sentry
+  captureError(error, context);
+  
+  // Track in analytics
   trackError(error, context);
 }
 
@@ -354,8 +361,7 @@ export function setupGlobalErrorHandlers() {
   window.addEventListener('online', () => {
     // Process offline queue when back online
     processOfflineQueue(async (request) => {
-      // This would be implemented based on your API client
-      console.log('[Offline Queue] Processing:', request);
+      logger.info('Processing offline queue request', { request });
     });
   });
 }

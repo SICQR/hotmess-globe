@@ -3,6 +3,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logger from '@/utils/logger';
 import { trackError } from '@/components/utils/analytics';
+import { captureError } from '@/lib/sentry';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -22,7 +23,14 @@ export default class ErrorBoundary extends React.Component {
       componentStack: errorInfo.componentStack 
     });
     
-    // Send to error tracking service (Sentry, GA4, etc.)
+    // Send to Sentry
+    captureError(error, {
+      componentStack: errorInfo.componentStack,
+      fatal: true,
+      boundary: 'ErrorBoundary',
+    });
+    
+    // Send to analytics
     trackError(error, {
       componentStack: errorInfo.componentStack,
       fatal: true,

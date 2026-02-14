@@ -126,7 +126,6 @@ export default async function handler(req, res) {
       .limit(50);
 
     if (fetchError) {
-      // console.error('Failed to fetch queue:', fetchError);
       return res.status(500).json({ error: fetchError.message });
     }
 
@@ -155,7 +154,6 @@ export default async function handler(req, res) {
       // Get template
       const template = TEMPLATES[notification.notification_type];
       if (!template) {
-        // console.warn(`Unknown notification type: ${notification.notification_type}`);
         await markAsFailed(notification.id, 'Unknown notification type');
         failed++;
         continue;
@@ -212,7 +210,6 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    // console.error('Telegram send error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
@@ -245,7 +242,6 @@ async function sendTelegramMessage(chatId, text, options = {}) {
     const result = await response.json();
     return result.ok;
   } catch (error) {
-    // console.error('Telegram API error:', error);
     return false;
   }
 }

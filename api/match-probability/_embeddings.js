@@ -33,7 +33,6 @@ export const generateEmbedding = async (text, apiKey) => {
   }
 
   if (!apiKey) {
-    // console.warn('OpenAI API key not configured, skipping embedding generation');
     return null;
   }
 
@@ -55,7 +54,6 @@ export const generateEmbedding = async (text, apiKey) => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      // console.error('OpenAI embedding error:', errorData);
       return null;
     }
 
@@ -63,13 +61,11 @@ export const generateEmbedding = async (text, apiKey) => {
     const embedding = data?.data?.[0]?.embedding;
     
     if (!Array.isArray(embedding) || embedding.length !== EMBEDDING_DIMENSION) {
-      // console.error('Invalid embedding response:', data);
       return null;
     }
 
     return embedding;
   } catch (error) {
-    // console.error('Failed to generate embedding:', error);
     return null;
   }
 };
@@ -212,13 +208,11 @@ export const updateProfileEmbeddings = async ({
       );
 
     if (error) {
-      // console.error('Failed to update profile embeddings:', error);
       return { error: error.message, embeddings: null };
     }
 
     return { error: null, embeddings, data };
   } catch (error) {
-    // console.error('Failed to update profile embeddings:', error);
     return { error: error?.message || 'Unknown error', embeddings: null };
   }
 };
