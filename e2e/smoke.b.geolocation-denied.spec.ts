@@ -11,7 +11,7 @@ test('B: directions page renders and shows location guidance when geo denied', a
 
   // Bypass session-based AgeGate.
   await page.addInitScript(() => {
-    sessionStorage.setItem('age_verified', 'true');
+    localStorage.setItem('hm_age_confirmed_v1', 'true');
     sessionStorage.setItem('location_consent', 'false');
   });
 
@@ -37,7 +37,7 @@ test('B: profile route does not hard-crash', async ({ page }) => {
 
   // Bypass session-based AgeGate.
   await page.addInitScript(() => {
-    sessionStorage.setItem('age_verified', 'true');
+    localStorage.setItem('hm_age_confirmed_v1', 'true');
     sessionStorage.setItem('location_consent', 'false');
   });
 
