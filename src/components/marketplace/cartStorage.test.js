@@ -235,6 +235,24 @@ describe('cartStorage - Guest Cart Persistence', () => {
       // Verify both variants were merged (2 separate DB inserts)
       expect(base44.entities.CartItem.create).toHaveBeenCalledTimes(2);
 
+      // Verify first variant (Small) was created with correct data
+      const firstCall = base44.entities.CartItem.create.mock.calls[0][0];
+      expect(firstCall.product_id).toBe('shirt-123');
+      expect(firstCall.quantity).toBe(2);
+      expect(firstCall.shopify_variant_id).toBe('variant-small');
+      expect(firstCall.variant_title).toBe('Small');
+      expect(firstCall.user_email).toBe('test@example.com');
+      expect(firstCall.auth_user_id).toBe('user-123');
+
+      // Verify second variant (Large) was created with correct data
+      const secondCall = base44.entities.CartItem.create.mock.calls[1][0];
+      expect(secondCall.product_id).toBe('shirt-123');
+      expect(secondCall.quantity).toBe(1);
+      expect(secondCall.shopify_variant_id).toBe('variant-large');
+      expect(secondCall.variant_title).toBe('Large');
+      expect(secondCall.user_email).toBe('test@example.com');
+      expect(secondCall.auth_user_id).toBe('user-123');
+
       // Verify guest cart was cleared after merge
       const remainingItems = getGuestCartItems();
       expect(remainingItems).toEqual([]);

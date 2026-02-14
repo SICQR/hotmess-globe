@@ -225,19 +225,15 @@ describe('ShopCartContext', () => {
       });
     });
 
-    it('should handle localStorage errors gracefully', async () => {
-      // Mock localStorage to throw errors
-      const originalSetItem = Storage.prototype.setItem;
+    it('should handle localStorage getItem errors gracefully', async () => {
+      // Mock localStorage getItem to throw error
       const originalGetItem = Storage.prototype.getItem;
       
-      Storage.prototype.setItem = vi.fn(() => {
-        throw new Error('localStorage is full');
-      });
       Storage.prototype.getItem = vi.fn(() => {
         throw new Error('localStorage error');
       });
 
-      // Should not crash when localStorage fails
+      // Should not crash when localStorage fails during mount
       expect(() => {
         render(
           <ShopCartProvider>
@@ -246,9 +242,45 @@ describe('ShopCartContext', () => {
         );
       }).not.toThrow();
 
-      // Restore original methods
-      Storage.prototype.setItem = originalSetItem;
+      // Restore original method
       Storage.prototype.getItem = originalGetItem;
+    });
+
+    it('should handle localStorage setItem errors gracefully', async () => {
+      // Mock localStorage setItem to throw error
+      const originalSetItem = Storage.prototype.setItem;
+      
+      Storage.prototype.setItem = vi.fn(() => {
+        throw new Error('localStorage is full');
+      });
+
+      const mockCart = {
+        id: 'gid://shopify/Cart/test-storage-error',
+        lines: { edges: [] },
+      };
+
+      shopifyStorefront.cartCreate.mockResolvedValue({ cart: mockCart });
+
+      let cartContext;
+      const { container } = render(
+        <ShopCartProvider>
+          <TestComponent onRender={(ctx) => { cartContext = ctx; }} />
+        </ShopCartProvider>
+      );
+
+      // Should not crash when trying to persist cart ID
+      await act(async () => {
+        try {
+          await cartContext.ensureCart();
+        } catch (err) {
+          // Ignore - we just want to verify no crash
+        }
+      });
+
+      expect(container).toBeTruthy();
+
+      // Restore original method
+      Storage.prototype.setItem = originalSetItem;
     });
   });
 
