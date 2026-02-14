@@ -413,11 +413,11 @@ export default function FeaturesManifesto() {
                 Performance Metrics
               </h3>
               <ul className="space-y-2 text-sm text-white/70">
-                <li>• First Contentful Paint &lt; 1.8s</li>
-                <li>• Time to Interactive &lt; 3.9s</li>
-                <li>• Bundle size &lt; 200KB gzipped</li>
+                <li>• First Contentful Paint {'<'} 1.8s</li>
+                <li>• Time to Interactive {'<'} 3.9s</li>
+                <li>• Bundle size {'<'} 200KB gzipped</li>
                 <li>• 60fps animations</li>
-                <li>• Lighthouse score &gt; 90</li>
+                <li>• Lighthouse score {'>'} 90</li>
                 <li>• WCAG 2.1 AA compliant</li>
               </ul>
             </div>
