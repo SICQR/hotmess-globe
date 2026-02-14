@@ -325,8 +325,7 @@ function LayoutInner({ children, currentPageName }) {
     currentPageName === 'Auth' ||
     currentPageName === 'AgeGate' ||
     currentPageName === 'OnboardingGate' ||
-    currentPageName === 'AccountConsents' ||
-    currentPageName === 'OSHome';
+    currentPageName === 'AccountConsents';
 
   const shouldShowChrome = !isPulsePage && !isChromelessPage;
 
