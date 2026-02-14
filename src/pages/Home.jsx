@@ -14,6 +14,7 @@ import { useWorldPulse } from '@/contexts/WorldPulseContext';
 import CityPulseBar from '@/components/globe/CityPulseBar';
 import LiveFeed from '@/components/globe/LiveFeed';
 import ErrorBoundary from '@/components/error/ErrorBoundary';
+import { ProfilesGrid } from '@/features/profilesGrid';
 import { 
   GlobeLoadingFallback, 
   GlobeErrorFallback, 
@@ -299,7 +300,7 @@ export default function Home() {
   const recentPulses = pulses?.slice(0, 3) || [];
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white pb-24 md:pb-0">
       {/* CITY PULSE BAR - Sticky top */}
       <div className="sticky top-0 z-50">
         <CityPulseBar />
@@ -441,6 +442,32 @@ export default function Home() {
                 </Link>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PEOPLE NEAR YOU - Social Grid */}
+      <section className="py-16 px-4 md:px-6 bg-black">
+        <div className="max-w-7xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-8"
+          >
+            <p className="text-xs uppercase tracking-[0.4em] text-white/40 mb-2">SOCIAL</p>
+            <h2 className="text-3xl md:text-5xl font-black uppercase mb-2">
+              RIGHT <span className="text-[#FF1493]">NOW</span>
+            </h2>
+            <p className="text-white/50 text-sm">People active near you</p>
+          </motion.div>
+          <ProfilesGrid />
+          <div className="mt-8 text-center">
+            <Link to={createPageUrl('Social')}>
+              <Button className="bg-[#FF1493] hover:bg-white hover:text-black text-white font-black uppercase px-8 py-4 border-2 border-[#FF1493]">
+                VIEW ALL
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
