@@ -7,10 +7,18 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+let _supabase = null;
+
+function getSupabase() {
+  if (!_supabase) {
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (url && key) {
+      _supabase = createClient(url, key);
+    }
+  }
+  return _supabase;
+}
 
 /**
  * Tool definitions for OpenAI function calling
@@ -218,7 +226,7 @@ export async function executeTool(name, args, userContext = {}) {
 // ============================================
 
 async function searchProducts({ query, category, maxPrice, brand }, userContext) {
-  let queryBuilder = supabase
+  let queryBuilder = getSupabase()
     .from('products')
     .select('id, title, description, price, category, brand, image_url, slug')
     .eq('is_active', true)
@@ -282,7 +290,7 @@ async function findEvents({ query, city = 'London', dateRange, type }, userConte
       endDate.setDate(endDate.getDate() + 7);
   }
 
-  let queryBuilder = supabase
+  let queryBuilder = getSupabase()
     .from('Beacon')
     .select('id, title, description, start_date, end_date, location_name, location_area, beacon_type, metadata')
     .eq('beacon_type', 'event')
@@ -360,7 +368,7 @@ async function getUserStats(args, userContext) {
     };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('User')
     .select('xp_balance, subscription_tier, current_streak, achievements, level')
     .eq('email', userContext.email)
@@ -381,7 +389,7 @@ async function getUserStats(args, userContext) {
 }
 
 async function findNearbyVenues({ type, area }, userContext) {
-  let queryBuilder = supabase
+  let queryBuilder = getSupabase()
     .from('gay_world_knowledge')
     .select('title, content, location_area, metadata')
     .eq('category', 'venue')
@@ -416,7 +424,7 @@ async function findNearbyVenues({ type, area }, userContext) {
 }
 
 async function explainTerm({ term }, userContext) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('gay_world_knowledge')
     .select('title, content, metadata')
     .eq('category', 'terminology')
@@ -426,7 +434,7 @@ async function explainTerm({ term }, userContext) {
 
   if (error || !data) {
     // Try broader search
-    const { data: broadSearch } = await supabase
+    const { data: broadSearch } = await getSupabase()
       .from('gay_world_knowledge')
       .select('title, content, metadata')
       .eq('category', 'terminology')
