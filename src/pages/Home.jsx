@@ -365,20 +365,20 @@ export default function Home() {
             </Button>
           </Link>
         </div>
-        {featuredEvent ? (
-          <Link to={`/events/${featuredEvent.id}`}>
+        {tonightEvent ? (
+          <Link to={`/events/${tonightEvent.id}`}>
             <div className="relative h-48 overflow-hidden border-2 border-white/20 group">
               <img 
-                src={featuredEvent.image_url || 'https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=800'} 
-                alt={featuredEvent.title}
+                src={tonightEvent.image_url || 'https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=800'} 
+                alt={tonightEvent.title}
                 className="w-full h-full object-cover group-active:scale-105 transition-transform"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-4">
                 <p className="text-[10px] uppercase tracking-wider text-[#00D9FF] font-bold mb-1">
-                  {featuredEvent.venue || 'LONDON'}
+                  {tonightEvent.venue || 'LONDON'}
                 </p>
-                <h3 className="text-lg font-black uppercase leading-tight">{featuredEvent.title}</h3>
+                <h3 className="text-lg font-black uppercase leading-tight">{tonightEvent.title}</h3>
               </div>
             </div>
           </Link>
