@@ -35,6 +35,7 @@ import EditProfile from './pages/EditProfile';
 import Events from './pages/Events';
 import EventsFeatures from './pages/EventsFeatures';
 import Features from './pages/Features';
+import FeaturesManifesto from './pages/FeaturesManifesto';
 import Feed from './pages/Feed';
 import Globe from './pages/Globe';
 import HandNHand from './pages/HandNHand';
@@ -124,6 +125,7 @@ export const PAGES = {
     "Events": Events,
     "EventsFeatures": EventsFeatures,
     "Features": Features,
+    "FeaturesManifesto": FeaturesManifesto,
     "Feed": Feed,
     "Globe": Globe,
     "HandNHand": HandNHand,
