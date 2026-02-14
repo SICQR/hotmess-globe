@@ -3,10 +3,15 @@
  * 
  * Rule: Globe reads city pack only when zoom ≥ City (zoom >= 3)
  * Below that, only generic world heat is shown.
+ * 
+ * NOTE: City packs are optional. If files don't exist, we generate stub data.
  */
 
 // Cache loaded city packs
 const cityCache = new Map();
+
+// Track failed fetches to avoid retry spam
+const failedCities = new Set();
 
 // City pack paths - use actual file names
 const CITY_PACKS = {
@@ -33,8 +38,24 @@ const CITY_COORDS = {
 };
 
 /**
+ * Generate stub city data when JSON file is unavailable
+ */
+function generateStubCityPack(cityId, coords) {
+  return {
+    city: cityId,
+    zones: [
+      { id: `${cityId}-central`, category: 'nightlife', energy: 0.7, name: 'City Center' },
+      { id: `${cityId}-east`, category: 'dining', energy: 0.5, name: 'East Side' },
+      { id: `${cityId}-west`, category: 'culture', energy: 0.6, name: 'West End' },
+    ],
+    coords,
+    isStub: true,
+  };
+}
+
+/**
  * Load city pack - respects zoom rule
- * Returns null if zoom < CITY level
+ * Returns stub data if JSON file unavailable (no error spam)
  */
 export async function loadCityPack(cityId, currentZoom) {
   // Rule: Only load when zoom >= 3 (CITY level)
@@ -49,34 +70,55 @@ export async function loadCityPack(cityId, currentZoom) {
     return cityCache.get(normalizedId);
   }
 
+  // If we already know this city fails, return stub immediately
+  if (failedCities.has(normalizedId)) {
+    const stub = generateStubCityPack(normalizedId, CITY_COORDS[normalizedId]);
+    cityCache.set(normalizedId, stub);
+    return stub;
+  }
+
   const packPath = CITY_PACKS[normalizedId];
-  if (!packPath) {
-    console.warn(`No city pack found for: ${cityId}`);
+  const coords = CITY_COORDS[normalizedId];
+  
+  if (!packPath || !coords) {
     return null;
   }
 
   try {
     const response = await fetch(packPath);
-    if (!response.ok) throw new Error(`Failed to load ${packPath}`);
+    
+    // Check if we got HTML instead of JSON (SPA fallback)
+    const contentType = response.headers.get('content-type') || '';
+    if (!response.ok || !contentType.includes('application/json')) {
+      failedCities.add(normalizedId);
+      const stub = generateStubCityPack(normalizedId, coords);
+      cityCache.set(normalizedId, stub);
+      return stub;
+    }
     
     const pack = await response.json();
     
     // Validate pack schema
     if (!validateCityPack(pack)) {
-      console.error(`Invalid city pack schema: ${cityId}`);
-      return null;
+      failedCities.add(normalizedId);
+      const stub = generateStubCityPack(normalizedId, coords);
+      cityCache.set(normalizedId, stub);
+      return stub;
     }
 
     // Enrich with coordinates
-    pack.coords = CITY_COORDS[normalizedId];
+    pack.coords = coords;
     
     // Cache it
     cityCache.set(normalizedId, pack);
     
     return pack;
   } catch (err) {
-    console.error(`Error loading city pack ${cityId}:`, err);
-    return null;
+    // Silently fall back to stub data - no console spam
+    failedCities.add(normalizedId);
+    const stub = generateStubCityPack(normalizedId, coords);
+    cityCache.set(normalizedId, stub);
+    return stub;
   }
 }
 

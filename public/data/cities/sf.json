@@ -1,0 +1,18 @@
+{
+  "city": "san_francisco",
+  "timezone": "America/Los_Angeles",
+  "zones": [
+    { "id": "castro", "name": "Castro", "category": "nightlife", "energy": 0.88 },
+    { "id": "soma", "name": "SoMa", "category": "nightlife", "energy": 0.85 },
+    { "id": "mission", "name": "Mission", "category": "nightlife", "energy": 0.82 },
+    { "id": "haight", "name": "Haight-Ashbury", "category": "culture", "energy": 0.7 },
+    { "id": "north-beach", "name": "North Beach", "category": "dining", "energy": 0.68 },
+    { "id": "tenderloin", "name": "Tenderloin", "category": "nightlife", "energy": 0.75 }
+  ],
+  "behaviour": {
+    "peak_windows": {
+      "castro": ["friday 21:00–02:00", "saturday 21:00–02:00"],
+      "soma": ["saturday 22:00–04:00"]
+    }
+  }
+}

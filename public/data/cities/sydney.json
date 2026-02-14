@@ -1,0 +1,18 @@
+{
+  "city": "sydney",
+  "timezone": "Australia/Sydney",
+  "zones": [
+    { "id": "oxford-street", "name": "Oxford Street", "category": "nightlife", "energy": 0.88 },
+    { "id": "newtown", "name": "Newtown", "category": "nightlife", "energy": 0.82 },
+    { "id": "surry-hills", "name": "Surry Hills", "category": "dining", "energy": 0.75 },
+    { "id": "kings-cross", "name": "Kings Cross", "category": "nightlife", "energy": 0.7 },
+    { "id": "darlinghurst", "name": "Darlinghurst", "category": "nightlife", "energy": 0.78 },
+    { "id": "bondi", "name": "Bondi", "category": "culture", "energy": 0.65 }
+  ],
+  "behaviour": {
+    "peak_windows": {
+      "oxford-street": ["friday 22:00–03:00", "saturday 22:00–03:00"],
+      "newtown": ["friday 21:00–02:00", "saturday 21:00–03:00"]
+    }
+  }
+}
