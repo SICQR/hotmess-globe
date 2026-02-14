@@ -248,13 +248,13 @@ export function withRateLimit(handler, options = {}) {
       
       // Log abuse attempt
       // console.warn('[RateLimit] Request blocked:', {
-        clientId,
-        tier,
-        violationLevel: result.violationLevel,
-        endpoint: url.pathname,
-        method: req.method,
-        timestamp: new Date().toISOString(),
-      });
+      //   clientId,
+      //   tier,
+      //   violationLevel: result.violationLevel,
+      //   endpoint: url.pathname,
+      //   method: req.method,
+      //   timestamp: new Date().toISOString(),
+      // });
       
       res.setHeader('Retry-After', String(Math.ceil(result.resetIn / 1000)));
       
