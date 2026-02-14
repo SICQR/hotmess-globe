@@ -99,49 +99,49 @@ export function useOSURLSync() {
   }, [state.mode, state.sheet, state.threadId, state.sheetProps])
 
   // URL → State sync (on mount and browser navigation)
-  useEffect(() => {
-    const hydrateFromURL = useCallback(() => {
-      isUpdatingFromURL.current = true
+  const hydrateFromURL = useCallback(() => {
+    isUpdatingFromURL.current = true
 
-      const params = new URLSearchParams(window.location.search)
-      const sheetParam = params.get('sheet') as SheetType | null
-      const threadParam = params.get('thread')
+    const params = new URLSearchParams(window.location.search)
+    const sheetParam = params.get('sheet') as SheetType | null
+    const threadParam = params.get('thread')
 
-      // Don't hydrate if already in an interrupt
-      if (state.mode === 'interrupt') {
-        isUpdatingFromURL.current = false
-        return
-      }
-
-      // Hydrate thread
-      if (threadParam && state.threadId !== threadParam) {
-        openThread(threadParam)
-      }
-      // Hydrate sheet
-      else if (sheetParam && (state.mode !== 'sheet' || state.sheet !== sheetParam)) {
-        const props: Record<string, any> = {}
-        
-        // Extract common props from URL
-        if (params.get('id')) props.id = params.get('id')
-        if (params.get('email')) props.email = params.get('email')
-        if (params.get('handle')) props.handle = params.get('handle')
-        if (params.get('productId')) props.productId = params.get('productId')
-        if (params.get('eventId')) props.eventId = params.get('eventId')
-
-        openSheet(sheetParam, props)
-      }
-      // Clear state if no params
-      else if (!sheetParam && !threadParam && state.mode !== 'idle' && state.mode !== 'boot') {
-        if (state.mode === 'thread') {
-          closeThread()
-        } else if (state.mode === 'sheet') {
-          closeSheet()
-        }
-      }
-
+    // Don't hydrate if already in an interrupt
+    if (state.mode === 'interrupt') {
       isUpdatingFromURL.current = false
-    }, [state.mode, state.sheet, state.threadId, openSheet, openThread, closeSheet, closeThread])
+      return
+    }
 
+    // Hydrate thread
+    if (threadParam && state.threadId !== threadParam) {
+      openThread(threadParam)
+    }
+    // Hydrate sheet
+    else if (sheetParam && (state.mode !== 'sheet' || state.sheet !== sheetParam)) {
+      const props: Record<string, any> = {}
+      
+      // Extract common props from URL
+      if (params.get('id')) props.id = params.get('id')
+      if (params.get('email')) props.email = params.get('email')
+      if (params.get('handle')) props.handle = params.get('handle')
+      if (params.get('productId')) props.productId = params.get('productId')
+      if (params.get('eventId')) props.eventId = params.get('eventId')
+
+      openSheet(sheetParam, props)
+    }
+    // Clear state if no params
+    else if (!sheetParam && !threadParam && state.mode !== 'idle' && state.mode !== 'boot') {
+      if (state.mode === 'thread') {
+        closeThread()
+      } else if (state.mode === 'sheet') {
+        closeSheet()
+      }
+    }
+
+    isUpdatingFromURL.current = false
+  }, [state.mode, state.sheet, state.threadId, openSheet, openThread, closeSheet, closeThread])
+
+  useEffect(() => {
     // Hydrate on mount
     if (isInitialMount.current) {
       isInitialMount.current = false
@@ -149,12 +149,9 @@ export function useOSURLSync() {
     }
 
     // Listen for browser back/forward navigation
-    // Memoized handlePopState to avoid recreating on every effect run
-    const handlePopState = hydrateFromURL
-
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [state.mode, state.sheet, state.threadId, openSheet, openThread, closeSheet, closeThread])
+    window.addEventListener('popstate', hydrateFromURL)
+    return () => window.removeEventListener('popstate', hydrateFromURL)
+  }, [hydrateFromURL])
 }
 
 /**
