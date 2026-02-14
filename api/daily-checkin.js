@@ -166,7 +166,7 @@ export default async function handler(req, res) {
         });
 
       if (streakErr) {
-        console.error('Failed to update streak:', streakErr);
+        // console.error('Failed to update streak:', streakErr);
         return json(res, 500, { error: 'Failed to update streak' });
       }
 
@@ -180,14 +180,30 @@ export default async function handler(req, res) {
       // Check for badge milestones
       let badgeAwarded = null;
       if (newStreak === 7) {
-        badgeAwarded = { name: 'Week Warrior', icon: '🔥' };
+        badgeAwarded = { name: 'Week Warrior', icon: '🔥', streak_required: 7 };
       } else if (newStreak === 30) {
-        badgeAwarded = { name: 'Monthly Legend', icon: '👑' };
+        badgeAwarded = { name: 'Monthly Legend', icon: '👑', streak_required: 30 };
       } else if (newStreak === 100) {
-        badgeAwarded = { name: 'Century Club', icon: '💎' };
+        badgeAwarded = { name: 'Century Club', icon: '💎', streak_required: 100 };
       }
 
-      // TODO: Actually award badge in user_badges table
+      // Award badge if milestone reached
+      if (badgeAwarded) {
+        const { error: badgeError } = await adminSupabase
+          .from('user_badges')
+          .upsert({
+            user_email: user.email,
+            badge_name: badgeAwarded.name,
+            badge_icon: badgeAwarded.icon,
+            streak_achieved: newStreak,
+            awarded_at: new Date().toISOString(),
+          }, { onConflict: 'user_email,badge_name' });
+        
+        if (badgeError) {
+          // console.error('Failed to award badge:', badgeError);
+          // Non-blocking - continue even if badge fails
+        }
+      }
 
       return json(res, 200, {
         success: true,
@@ -205,7 +221,7 @@ export default async function handler(req, res) {
     return json(res, 405, { error: 'Method not allowed' });
 
   } catch (error) {
-    console.error('Daily check-in error:', error);
+    // console.error('Daily check-in error:', error);
     return json(res, 500, { error: error?.message || 'Internal server error' });
   }
 }

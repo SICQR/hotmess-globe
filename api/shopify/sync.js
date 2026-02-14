@@ -197,7 +197,7 @@ export default async function handler(req, res) {
       error_details: errors,
     });
   } catch (error) {
-    console.error('Inventory sync error:', error);
+    // console.error('Inventory sync error:', error);
     return json(res, 500, { error: error?.message || 'Inventory sync failed' });
   }
 }

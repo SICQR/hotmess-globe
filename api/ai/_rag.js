@@ -19,7 +19,7 @@ const EMBEDDING_MODEL = 'text-embedding-3-small';
  */
 async function getEmbedding(text) {
   if (!OPENAI_API_KEY) {
-    console.warn('OPENAI_API_KEY not configured, skipping embedding');
+    // console.warn('OPENAI_API_KEY not configured, skipping embedding');
     return null;
   }
 
@@ -38,13 +38,13 @@ async function getEmbedding(text) {
 
     const data = await response.json();
     if (data.error) {
-      console.error('OpenAI embedding error:', data.error);
+      // console.error('OpenAI embedding error:', data.error);
       return null;
     }
 
     return data?.data?.[0]?.embedding || null;
   } catch (error) {
-    console.error('Embedding generation failed:', error);
+    // console.error('Embedding generation failed:', error);
     return null;
   }
 }
@@ -73,7 +73,7 @@ export async function searchPlatformKnowledge(query, options = {}) {
   });
 
   if (error) {
-    console.error('Platform knowledge search error:', error);
+    // console.error('Platform knowledge search error:', error);
     return [];
   }
 
@@ -107,7 +107,7 @@ export async function searchGayWorldKnowledge(query, options = {}) {
   });
 
   if (error) {
-    console.error('Gay world knowledge search error:', error);
+    // console.error('Gay world knowledge search error:', error);
     return [];
   }
 
@@ -193,7 +193,7 @@ async function fallbackTextSearch(table, query, category, limit) {
   const { data, error } = await queryBuilder;
 
   if (error) {
-    console.error('Fallback search error:', error);
+    // console.error('Fallback search error:', error);
     return [];
   }
 

@@ -32,7 +32,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json(settings);
     } catch (err) {
-      console.error('Safety-switch GET error:', err);
+      // console.error('Safety-switch GET error:', err);
       return res.status(500).json({ error: 'Failed to get safety state' });
     }
   }
@@ -106,7 +106,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ success: true, state });
     } catch (err) {
-      console.error('Safety-switch POST error:', err);
+      // console.error('Safety-switch POST error:', err);
       return res.status(500).json({ error: 'Failed to apply safety switch' });
     }
   }

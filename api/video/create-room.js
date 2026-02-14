@@ -14,7 +14,7 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://hotmess-globe-fix.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -159,7 +159,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('Create room error:', error);
+    // console.error('Create room error:', error);
     return res.status(500).json({ error: error.message });
   }
 }

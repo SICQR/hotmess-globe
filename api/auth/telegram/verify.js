@@ -6,8 +6,7 @@
  */
 
 import crypto from 'crypto';
-
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.VITE_TELEGRAM_BOT_TOKEN;
+import { getEnv } from '../_utils/validateEnv.js';
 
 /**
  * Verify Telegram auth data using HMAC-SHA256
@@ -15,12 +14,7 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.VITE_TE
  * and joining them as key=value pairs with newlines.
  * The hash is HMAC-SHA256(data_check_string, SHA256(bot_token)).
  */
-function verifyTelegramAuth(authData) {
-  if (!TELEGRAM_BOT_TOKEN) {
-    console.warn('[Telegram Auth] Bot token not configured');
-    return { verified: false, error: 'Bot token not configured' };
-  }
-
+function verifyTelegramAuth(authData, botToken) {
   const { hash, ...data } = authData;
   
   if (!hash) {
@@ -43,7 +37,7 @@ function verifyTelegramAuth(authData) {
   // Create secret key from bot token
   const secretKey = crypto
     .createHash('sha256')
-    .update(TELEGRAM_BOT_TOKEN)
+    .update(botToken)
     .digest();
 
   // Calculate expected hash
@@ -75,6 +69,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Validate bot token early
+  const botToken = getEnv('TELEGRAM_BOT_TOKEN', ['VITE_TELEGRAM_BOT_TOKEN']);
+  if (!botToken) {
+    return res.status(500).json({ 
+      error: 'Telegram authentication not configured',
+      verified: false 
+    });
+  }
+
   try {
     const authData = req.body;
 
@@ -93,7 +96,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const result = verifyTelegramAuth(authData);
+    const result = verifyTelegramAuth(authData, botToken);
 
     if (!result.verified) {
       return res.status(401).json({ 
@@ -109,7 +112,6 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('[Telegram Auth] Verification error:', error);
     return res.status(500).json({ 
       error: 'Internal server error',
       verified: false 

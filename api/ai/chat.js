@@ -27,7 +27,7 @@ const MAX_TOKENS = 1000;
 
 export default async function handler(req, res) {
   // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://hotmess-globe-fix.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -157,7 +157,7 @@ export default async function handler(req, res) {
 
     if (!openaiResponse.ok) {
       const error = await openaiResponse.json();
-      console.error('OpenAI error:', error);
+      // console.error('OpenAI error:', error);
       return res.status(500).json({ error: 'AI service error' });
     }
 
@@ -263,7 +263,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('AI Chat error:', error);
+    // console.error('AI Chat error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -309,7 +309,7 @@ async function saveConversation(conversationId, userId, userMessage, assistantRe
     .single();
 
   if (error) {
-    console.error('Failed to save conversation:', error);
+    // console.error('Failed to save conversation:', error);
     return null;
   }
 
@@ -330,6 +330,6 @@ async function logUsage(userId, actionType, metadata = {}) {
         created_at: new Date().toISOString()
       });
   } catch (error) {
-    console.error('Failed to log AI usage:', error);
+    // console.error('Failed to log AI usage:', error);
   }
 }

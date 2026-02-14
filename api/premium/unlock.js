@@ -12,7 +12,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export default async function handler(req, res) {
   // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://hotmess-globe-fix.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -106,14 +106,16 @@ export default async function handler(req, res) {
     const platformFee = Math.floor(price_xp * (platformFeePercent / 100));
     const creatorEarnings = price_xp - platformFee;
 
+    // Store original balances for rollback
+    const originalBuyerXp = buyer.xp || 0;
+    
     // Start transaction: deduct XP from buyer
     const { error: deductError } = await supabase
       .from('User')
-      .update({ xp: (buyer.xp || 0) - price_xp })
+      .update({ xp: originalBuyerXp - price_xp })
       .eq('email', buyerEmail);
 
     if (deductError) {
-      console.error('Failed to deduct XP:', deductError);
       return res.status(500).json({ error: 'Failed to process transaction' });
     }
 
@@ -124,11 +126,18 @@ export default async function handler(req, res) {
       .eq('email', owner_email)
       .single();
 
+    const originalOwnerXp = owner?.xp || 0;
+    let ownerCredited = false;
+    
     if (!ownerError && owner) {
-      await supabase
+      const { error: creditError } = await supabase
         .from('User')
-        .update({ xp: (owner.xp || 0) + creatorEarnings })
+        .update({ xp: originalOwnerXp + creatorEarnings })
         .eq('email', owner_email);
+      
+      if (!creditError) {
+        ownerCredited = true;
+      }
     }
 
     // Create unlock record
@@ -146,14 +155,21 @@ export default async function handler(req, res) {
       .single();
 
     if (unlockError) {
-      // If unlock record fails, try to refund the XP (best effort)
-      console.error('Failed to create unlock record:', unlockError);
+      // ROLLBACK: Refund buyer XP
       await supabase
         .from('User')
-        .update({ xp: buyer.xp })
+        .update({ xp: originalBuyerXp })
         .eq('email', buyerEmail);
       
-      return res.status(500).json({ error: 'Failed to create unlock record' });
+      // ROLLBACK: Remove owner credit if applied
+      if (ownerCredited) {
+        await supabase
+          .from('User')
+          .update({ xp: originalOwnerXp })
+          .eq('email', owner_email);
+      }
+      
+      return res.status(500).json({ error: 'Failed to create unlock record, transaction rolled back' });
     }
 
     return res.status(200).json({
@@ -172,7 +188,7 @@ export default async function handler(req, res) {
       },
     });
   } catch (error) {
-    console.error('Premium unlock error:', error);
+    // console.error('Premium unlock error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

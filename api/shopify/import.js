@@ -330,7 +330,7 @@ export default async function handler(req, res) {
       drafted_ids: draftedIds,
     });
   } catch (error) {
-    console.error('Shopify import error:', error);
+    // console.error('Shopify import error:', error);
     return json(res, 500, { error: error?.message || 'Shopify import failed' });
   }
 }
