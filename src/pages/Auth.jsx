@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { auth, base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star, Upload, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 import TelegramLogin from '@/components/auth/TelegramLogin';
@@ -54,6 +54,8 @@ export default function Auth() {
     city: 'London',
     profile_type: 'standard'
   });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [photoPolicyAck, setPhotoPolicyAck] = useState(false);
   const [searchParams] = useSearchParams();
   const nextUrl = searchParams.get('next');
   const mode = searchParams.get('mode');
@@ -279,11 +281,49 @@ export default function Auth() {
     }
   };
 
+  // Build initials avatar as fallback
+  const buildInitialsAvatar = (name) => {
+    const raw = String(name || '').trim();
+    const parts = raw.split(/\s+/).filter(Boolean);
+    const first = parts[0]?.[0] || 'H';
+    const last = parts.length > 1 ? parts[parts.length - 1]?.[0] : 'M';
+    const initials = `${first}${last}`.toUpperCase();
+    const palette = [['#FF1493', '#B026FF'], ['#00D9FF', '#1E3A8A'], ['#22C55E', '#0F766E']];
+    const idx = (initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % palette.length;
+    const [c1, c2] = palette[idx];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="512" height="512" rx="64" fill="url(#g)"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-family="system-ui" font-size="190" font-weight="900" fill="rgba(255,255,255,0.92)">${initials}</text></svg>`;
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  };
+
   const handleProfile = async () => {
+    if (!photoPolicyAck) {
+      toast.error('Please confirm your photos are of men.');
+      return;
+    }
+    
     setLoading(true);
     try {
+      let avatarUrl = null;
+      
+      // Upload avatar if provided
+      if (avatarFile) {
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file: avatarFile });
+          avatarUrl = file_url;
+        } catch (uploadError) {
+          console.warn('Avatar upload failed, using placeholder', uploadError);
+          avatarUrl = buildInitialsAvatar(fullName);
+        }
+      } else {
+        avatarUrl = buildInitialsAvatar(fullName);
+      }
+      
       await base44.auth.updateMe({
         ...profileData,
+        full_name: fullName,
+        avatar_url: avatarUrl,
+        gender: 'male',
+        photo_policy_ack: true,
         onboarding_completed: true
       });
       setStep('welcome');
@@ -770,16 +810,51 @@ export default function Auth() {
           >
             <div className="text-center mb-8">
               <h2 className="text-4xl font-black uppercase mb-3">COMPLETE YOUR PROFILE</h2>
-              <p className="text-white/60">Tell us a bit about yourself</p>
+              <p className="text-white/60">Set up your card so others can find you</p>
             </div>
 
             <div className="bg-white/5 border-2 border-white/10 p-8 space-y-6">
+              {/* Avatar Upload */}
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-28 h-28 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border-2 border-white flex items-center justify-center overflow-hidden">
+                  {avatarFile ? (
+                    <img
+                      src={URL.createObjectURL(avatarFile)}
+                      alt="Avatar preview"
+                      className="w-full h-full object-cover"
+                      style={{ filter: 'grayscale(100%)' }}
+                    />
+                  ) : (
+                    <User className="w-12 h-12 text-white/40" />
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => document.getElementById('auth-avatar-upload').click()}
+                  variant="outline"
+                  className="font-black uppercase"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Photo
+                </Button>
+                <input
+                  id="auth-avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                />
+                <p className="text-xs text-white/40 uppercase">Grayscale • you can change it later</p>
+              </div>
+
+              {/* Profile Type */}
               <div>
                 <label className="block text-sm uppercase tracking-wider text-white/60 mb-3">
                   Profile Type
                 </label>
                 <div className="grid grid-cols-2 gap-4">
                   <button
+                    type="button"
                     onClick={() => setProfileData({ ...profileData, profile_type: 'standard' })}
                     className={`p-4 border-2 transition-all ${
                       profileData.profile_type === 'standard'
@@ -788,9 +863,10 @@ export default function Auth() {
                     }`}
                   >
                     <p className="font-black uppercase mb-1">STANDARD</p>
-                    <p className="text-xs text-white/60">Regular profile</p>
+                    <p className="text-xs text-white/60">Connect + social</p>
                   </button>
                   <button
+                    type="button"
                     onClick={() => setProfileData({ ...profileData, profile_type: 'seller' })}
                     className={`p-4 border-2 transition-all ${
                       profileData.profile_type === 'seller'
@@ -799,11 +875,12 @@ export default function Auth() {
                     }`}
                   >
                     <p className="font-black uppercase mb-1">SELLER</p>
-                    <p className="text-xs text-white/60">Sell products/services</p>
+                    <p className="text-xs text-white/60">MessMarket shop</p>
                   </button>
                 </div>
               </div>
 
+              {/* City */}
               <div>
                 <label className="block text-sm uppercase tracking-wider text-white/60 mb-3">
                   City
@@ -814,9 +891,11 @@ export default function Auth() {
                   onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
                   placeholder="London"
                   className="bg-black/50 border-white/20"
+                  required
                 />
               </div>
 
+              {/* Bio */}
               <div>
                 <label className="block text-sm uppercase tracking-wider text-white/60 mb-3">
                   Bio (Optional)
@@ -824,16 +903,31 @@ export default function Auth() {
                 <textarea
                   value={profileData.bio}
                   onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                  placeholder="Tell us about yourself..."
-                  rows={4}
+                  placeholder="What are you about? What are you here for?"
+                  rows={3}
                   className="w-full bg-black/50 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#FF1493] focus:outline-none"
                 />
               </div>
 
+              {/* Photo Policy */}
+              <div className="border border-white/10 bg-black/40 p-4">
+                <p className="text-xs uppercase tracking-widest text-white/50 font-black">Photo Policy</p>
+                <p className="mt-1 text-xs text-white/60">All profile photos must be of men.</p>
+                <label className="mt-3 flex items-start gap-3 text-sm text-white/80">
+                  <input
+                    type="checkbox"
+                    checked={photoPolicyAck}
+                    onChange={(e) => setPhotoPolicyAck(e.target.checked)}
+                    className="mt-1 h-4 w-4"
+                  />
+                  <span>I confirm my profile photos depict men.</span>
+                </label>
+              </div>
+
               <Button
                 onClick={handleProfile}
-                disabled={loading}
-                className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase py-6 text-lg"
+                disabled={loading || !profileData.city?.trim() || !photoPolicyAck}
+                className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase py-6 text-lg disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                   <>
