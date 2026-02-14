@@ -126,7 +126,10 @@ export default function AgeGate() {
 
     // If already authenticated, mark age verified in profile and go to app
     if (session) {
-      await markAgeVerified();
+      const success = await markAgeVerified();
+      console.log('[AgeGate] markAgeVerified result:', success);
+      // Small delay to ensure state is persisted
+      await new Promise(resolve => setTimeout(resolve, 100));
       window.location.href = nextUrl;
     } else {
       // Not authenticated - go to auth page
