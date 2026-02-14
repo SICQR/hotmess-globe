@@ -7,11 +7,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Shield, FileText, MapPin, User } from 'lucide-react';
 
+const AGE_KEY = 'hm_age_confirmed_v1';
+
 export default function OnboardingGate() {
   const [step, setStep] = useState(0);
   const [ageConfirmed, setAgeConfirmed] = useState(() => {
     try {
-      return sessionStorage.getItem('age_verified') === 'true';
+      // Check both localStorage (primary) and sessionStorage (legacy fallback)
+      return localStorage.getItem(AGE_KEY) === 'true' || sessionStorage.getItem('age_verified') === 'true';
     } catch {
       return false;
     }
@@ -109,7 +112,7 @@ export default function OnboardingGate() {
                   setAgeConfirmed(nextValue);
                   if (nextValue) {
                     try {
-                      sessionStorage.setItem('age_verified', 'true');
+                      localStorage.setItem(AGE_KEY, 'true');
                     } catch {
                       // ignore
                     }

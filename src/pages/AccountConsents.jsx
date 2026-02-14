@@ -8,18 +8,20 @@ import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 import { useCurrentUser } from '@/components/utils/queryConfig';
 
+const AGE_KEY = 'hm_age_confirmed_v1';
+
 export default function AccountConsents() {
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
 
-  const sessionAgeVerified = useMemo(() => {
+  const localAgeVerified = useMemo(() => {
     try {
-      return sessionStorage.getItem('age_verified') === 'true';
+      return localStorage.getItem(AGE_KEY) === 'true' || sessionStorage.getItem('age_verified') === 'true';
     } catch {
       return false;
     }
   }, []);
 
-  const initialAge = !!currentUser?.consent_age || sessionAgeVerified;
+  const initialAge = !!currentUser?.consent_age || localAgeVerified;
   const initialLocation = !!currentUser?.has_consented_gps;
 
   const [ageConsent, setAgeConsent] = useState(initialAge);
@@ -30,13 +32,13 @@ export default function AccountConsents() {
     // Once we know who the user is, prefill checkboxes so returning users
     // don't have to re-accept age/consent just to toggle location.
     if (!currentUser) return;
-    setAgeConsent((prev) => prev || !!currentUser?.consent_age || sessionAgeVerified);
+    setAgeConsent((prev) => prev || !!currentUser?.consent_age || localAgeVerified);
     setLocationConsent(!!currentUser?.has_consented_gps);
-  }, [currentUser, sessionAgeVerified]);
+  }, [currentUser, localAgeVerified]);
 
   const handleSubmit = async () => {
     const alreadyAccepted = !!currentUser?.consent_accepted;
-    const hasAgeAlready = !!currentUser?.consent_age || sessionAgeVerified;
+    const hasAgeAlready = !!currentUser?.consent_age || localAgeVerified;
 
     // Only require the explicit age checkbox for first-time consent.
     if (!alreadyAccepted && !ageConsent && !hasAgeAlready) {
@@ -48,7 +50,7 @@ export default function AccountConsents() {
     try {
       // Keep age verification consistent across gates.
       try {
-        if (ageConsent || hasAgeAlready) sessionStorage.setItem('age_verified', 'true');
+        if (ageConsent || hasAgeAlready) localStorage.setItem(AGE_KEY, 'true');
       } catch {
         // ignore
       }
