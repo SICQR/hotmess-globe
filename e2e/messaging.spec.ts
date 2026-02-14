@@ -33,7 +33,7 @@ test.describe('Social Features', () => {
     
     // Should show either social content or login prompt
     const hasContent = await page.locator('main, [role="main"]').first().isVisible().catch(() => false);
-    const hasAuthPrompt = await page.getByText(/sign in|log in|connect/i).first().isVisible().catch(() => false);
+    const hasAuthPrompt = await page.getByText(/sign in|log in|login|connect/i).first().isVisible().catch(() => false);
     
     expect(hasContent || hasAuthPrompt).toBe(true);
   });
