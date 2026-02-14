@@ -306,8 +306,93 @@ export default function Home() {
         <CityPulseBar />
       </div>
 
-      {/* GLOBE HERO - Full viewport with live visualization */}
-      <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
+      {/* ═══════════════════════════════════════════════════════════════════
+          MOBILE-FIRST: PEOPLE NEAR YOU - Shows immediately on mobile
+          On desktop: appears after globe hero
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="md:hidden py-6 px-4 bg-black">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-black uppercase">
+              RIGHT <span className="text-[#FF1493]">NOW</span>
+            </h2>
+            <p className="text-white/50 text-xs uppercase tracking-wider">People active near you</p>
+          </div>
+          <Link to={createPageUrl('Social')}>
+            <Button size="sm" className="bg-[#FF1493] text-white font-black uppercase text-xs px-4 py-2">
+              SEE ALL
+            </Button>
+          </Link>
+        </div>
+        <ProfilesGrid />
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          MOBILE-FIRST: QUICK ACTIONS BAR - Thumb-reachable on mobile
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="md:hidden py-4 px-4 bg-black border-t border-white/10">
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { to: '/social', icon: Users, label: 'Connect', color: 'text-pink-500' },
+            { to: '/events', icon: Zap, label: 'Events', color: 'text-yellow-500' },
+            { to: '/music/live', icon: Radio, label: 'Radio', color: 'text-green-500' },
+            { to: '/market', icon: ShoppingBag, label: 'Market', color: 'text-purple-500' },
+          ].map((action) => (
+            <Link key={action.to} to={action.to}>
+              <div className="flex flex-col items-center gap-1 p-3 bg-white/5 border border-white/10 active:bg-white/10 transition-colors">
+                <action.icon className={`w-6 h-6 ${action.color}`} />
+                <span className="text-[10px] font-bold uppercase text-white/70">{action.label}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          MOBILE-FIRST: TONIGHT'S EVENTS - What's happening
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="md:hidden py-6 px-4 bg-gradient-to-b from-black to-zinc-900">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-black uppercase">
+              TONIGHT<span className="text-[#00D9FF]">.</span>
+            </h2>
+            <p className="text-white/50 text-xs uppercase tracking-wider">Events near you</p>
+          </div>
+          <Link to="/events">
+            <Button size="sm" variant="outline" className="border-white/30 text-white font-black uppercase text-xs px-4 py-2">
+              ALL EVENTS
+            </Button>
+          </Link>
+        </div>
+        {featuredEvent ? (
+          <Link to={`/events/${featuredEvent.id}`}>
+            <div className="relative h-48 overflow-hidden border-2 border-white/20 group">
+              <img 
+                src={featuredEvent.image_url || 'https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=800'} 
+                alt={featuredEvent.title}
+                className="w-full h-full object-cover group-active:scale-105 transition-transform"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <p className="text-[10px] uppercase tracking-wider text-[#00D9FF] font-bold mb-1">
+                  {featuredEvent.venue || 'LONDON'}
+                </p>
+                <h3 className="text-lg font-black uppercase leading-tight">{featuredEvent.title}</h3>
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <div className="h-48 flex items-center justify-center border-2 border-dashed border-white/20 bg-white/5">
+            <p className="text-white/40 text-sm uppercase">No events tonight</p>
+          </div>
+        )}
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          GLOBE HERO - Full viewport on DESKTOP, compact on mobile
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="relative h-[50vh] md:min-h-[100svh] flex items-center justify-center overflow-hidden">
         {/* Globe with lazy loading, error boundary, and mobile fallback */}
         <div className="absolute inset-0">
           {useMobileFallback && !forceFullGlobe ? (
@@ -325,7 +410,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Live Feed overlay */}
+        {/* Live Feed overlay - desktop only */}
         <div className="absolute top-24 right-4 z-20 hidden md:block">
           <LiveFeed />
         </div>
@@ -338,7 +423,7 @@ export default function Home() {
           className="relative z-10 text-center px-6 max-w-6xl"
         >
           <motion.h1 
-            className="text-[20vw] md:text-[12vw] font-black italic leading-[0.8] tracking-tighter mb-4 drop-shadow-2xl"
+            className="text-[15vw] md:text-[12vw] font-black italic leading-[0.8] tracking-tighter mb-4 drop-shadow-2xl"
             animate={{ 
               textShadow: [
                 '0 0 20px rgba(255,20,147,0.5)',
@@ -355,7 +440,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
-            className="mb-8"
+            className="mb-8 hidden md:block"
           >
             <p className="text-lg md:text-2xl font-bold uppercase tracking-[0.3em] text-white/80 mb-2">
               The Living World
@@ -366,7 +451,7 @@ export default function Home() {
           </motion.div>
 
           <motion.div 
-            className="flex flex-wrap gap-4 justify-center"
+            className="flex flex-wrap gap-4 justify-center hidden md:flex"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2 }}
@@ -386,9 +471,9 @@ export default function Home() {
           </motion.div>
         </motion.div>
 
-        {/* Scroll indicator */}
+        {/* Scroll indicator - desktop only */}
         <motion.div 
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:block"
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
@@ -402,8 +487,36 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* MODES GRID - What you can do */}
-      <section className="py-16 px-6 bg-black">
+      {/* ═══════════════════════════════════════════════════════════════════
+          DESKTOP: PEOPLE NEAR YOU - Shows after globe on desktop
+          ═══════════════════════════════════════════════════════════════════ */}
+      <section className="hidden md:block py-16 px-6 bg-black">
+        <div className="max-w-7xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-8"
+          >
+            <p className="text-xs uppercase tracking-[0.4em] text-white/40 mb-2">SOCIAL</p>
+            <h2 className="text-3xl md:text-5xl font-black uppercase mb-2">
+              RIGHT <span className="text-[#FF1493]">NOW</span>
+            </h2>
+            <p className="text-white/50 text-sm">People active near you</p>
+          </motion.div>
+          <ProfilesGrid />
+          <div className="mt-8 text-center">
+            <Link to={createPageUrl('Social')}>
+              <Button className="bg-[#FF1493] hover:bg-white hover:text-black text-white font-black uppercase px-8 py-4 border-2 border-[#FF1493]">
+                VIEW ALL
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* MODES GRID - What you can do (DESKTOP ONLY - mobile has quick actions bar) */}
+      <section className="hidden md:block py-16 px-6 bg-black">
         <div className="max-w-7xl mx-auto">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -442,32 +555,6 @@ export default function Home() {
                 </Link>
               </motion.div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PEOPLE NEAR YOU - Social Grid */}
-      <section className="py-16 px-4 md:px-6 bg-black">
-        <div className="max-w-7xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-8"
-          >
-            <p className="text-xs uppercase tracking-[0.4em] text-white/40 mb-2">SOCIAL</p>
-            <h2 className="text-3xl md:text-5xl font-black uppercase mb-2">
-              RIGHT <span className="text-[#FF1493]">NOW</span>
-            </h2>
-            <p className="text-white/50 text-sm">People active near you</p>
-          </motion.div>
-          <ProfilesGrid />
-          <div className="mt-8 text-center">
-            <Link to={createPageUrl('Social')}>
-              <Button className="bg-[#FF1493] hover:bg-white hover:text-black text-white font-black uppercase px-8 py-4 border-2 border-[#FF1493]">
-                VIEW ALL
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
