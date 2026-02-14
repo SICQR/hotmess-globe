@@ -9,6 +9,7 @@ import { useBootGuard } from '@/contexts/BootGuardContext';
 export function BootGuardGate({ children }) {
   const { bootState, isLoading } = useBootGuard();
   const location = useLocation();
+  const pathname = location?.pathname || '/';
 
   // Show loading state
   if (isLoading) {
@@ -21,7 +22,7 @@ export function BootGuardGate({ children }) {
 
   // Allow these paths without full gates
   const publicPaths = ['/age', '/auth', '/legal', '/help', '/contact', '/terms', '/privacy', '/guidelines'];
-  const isPublicPath = publicPaths.some(p => location.pathname.startsWith(p));
+  const isPublicPath = publicPaths.some(p => pathname.startsWith(p));
   
   if (isPublicPath) {
     return <>{children}</>;
@@ -30,20 +31,20 @@ export function BootGuardGate({ children }) {
   // Redirect based on boot state
   switch (bootState) {
     case 'AGE_GATE':
-      if (location.pathname !== '/age' && location.pathname !== '/AgeGate') {
+      if (pathname !== '/age' && pathname !== '/AgeGate') {
         return <Navigate to="/age" replace />;
       }
       break;
       
     case 'AUTH':
-      if (!location.pathname.startsWith('/auth') && location.pathname !== '/Auth') {
+      if (!pathname.startsWith('/auth') && pathname !== '/Auth') {
         return <Navigate to="/auth" replace />;
       }
       break;
       
     case 'USERNAME':
     case 'ONBOARDING':
-      if (!location.pathname.startsWith('/onboarding') && location.pathname !== '/OnboardingGate') {
+      if (!pathname.startsWith('/onboarding') && pathname !== '/OnboardingGate') {
         return <Navigate to="/onboarding" replace />;
       }
       break;

@@ -201,6 +201,7 @@ function AppsGridModal({ isOpen, onClose, openSheet }) {
 export default function BottomNav({ currentPageName, user }) {
   const [showApps, setShowApps] = useState(false);
   const location = useLocation();
+  const pathname = location?.pathname || '/';
   
   // Get sheet context
   let openSheet;
@@ -259,12 +260,12 @@ export default function BottomNav({ currentPageName, user }) {
   };
 
   const isActive = (path) => {
-    if (path === 'Home') return location.pathname === '/' || currentPageName === 'Home';
+    if (path === 'Home') return pathname === '/' || currentPageName === 'Home';
     return currentPageName === path;
   };
 
   const isPulseActive = currentPageName === 'Pulse' || currentPageName === 'Globe';
-  const isShopActive = currentPageName === 'Marketplace' || location.pathname.startsWith('/market');
+  const isShopActive = currentPageName === 'Marketplace' || pathname.startsWith('/market');
 
   // Handle LIVE button click - opens Ghosted sheet
   const handleLiveClick = (e) => {

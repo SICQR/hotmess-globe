@@ -5,7 +5,7 @@ import { createPageUrl } from '../../utils';
 
 export default function OSHud({ user, onModuleChange }) {
   const location = useLocation();
-  const currentPath = location.pathname;
+  const currentPath = location?.pathname || '/';
 
   const level = user ? Math.floor((user.xp || 0) / 1000) + 1 : 1;
   const xpInLevel = user ? (user.xp || 0) % 1000 : 0;
