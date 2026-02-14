@@ -52,9 +52,8 @@ const verifyTelegramAuth = async (authData) => {
     return response.json();
   } catch (error) {
     console.error('[TelegramAuth] Verification error:', error);
-    // For demo purposes, return the data as verified
-    // In production, always verify server-side
-    return { verified: true, user: authData };
+    // Never bypass verification - this is a security risk
+    throw new Error('Failed to verify Telegram authentication. Please try again.');
   }
 };
 

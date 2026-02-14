@@ -168,8 +168,19 @@ export default async function handler(req, res) {
       const updates = {
         inventory_count: variant.inventory_quantity || 0,
         status: (variant.inventory_quantity || 0) > 0 ? 'active' : 'sold_out',
-        price_gbp: parseFloat(variant.price),
-        price_xp: Math.round(parseFloat(variant.price) * 100),
+        // Safely parse and validate price
+        price_gbp: (() => {
+          const parsed = Number.parseFloat(variant.price);
+          return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+        })(),
+        price_xp: (() => {
+          const parsed = Number.parseFloat(variant.price);
+          if (!Number.isFinite(parsed) || parsed < 0) {
+            console.warn(`[Shopify Sync] Invalid price for variant ${variant.id}: ${variant.price}`);
+            return 0;
+          }
+          return Math.round(parsed * 100);
+        })(),
         updated_at: new Date().toISOString(),
         updated_date: new Date().toISOString(),
       };

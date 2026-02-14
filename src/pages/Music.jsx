@@ -137,8 +137,9 @@ export default function Music() {
       id: 2243204375,
       title: 'HNHMESS',
       slug: 'hnhmess',
-      // Use the SoundCloud API URL with secret_token so the embed works even if unlisted.
-      urlOrUrn: 'https://api.soundcloud.com/tracks/2243204375?secret_token=s-jK7AWO2CQ6t',
+      // Use public SoundCloud URL instead of secret token to ensure embed always loads
+      // Secret tokens can expire and make the track inaccessible
+      urlOrUrn: 'https://soundcloud.com/convict-records/hnhmess',
     }),
     []
   );
