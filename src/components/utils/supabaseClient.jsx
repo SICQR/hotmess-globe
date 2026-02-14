@@ -1543,7 +1543,8 @@ export const auth = {
     supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: redirectTo || `${window.location.origin}/auth/callback`,
+        // Redirect back to the auth page (or custom URL) after OAuth
+        redirectTo: redirectTo || `${window.location.origin}/auth`,
       },
     }),
 };

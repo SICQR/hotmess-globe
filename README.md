@@ -48,7 +48,7 @@
 | Profile System | ✅ Working | Bio, avatar, tags |
 | Onboarding Flow | ✅ Working | Multi-step setup |
 
-> 📖 **Setup Guide**: See [OAuth Setup Guide](./docs/OAUTH_SETUP.md) for detailed configuration instructions.
+> 📖 **Setup Guide**: See [Supabase OAuth Setup Guide](./docs/SUPABASE_OAUTH_SETUP.md) for detailed Google OAuth configuration instructions.
 
 ### 🎭 Social & Discovery
 | Feature | Status | Notes |

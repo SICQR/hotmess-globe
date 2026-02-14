@@ -442,9 +442,9 @@ export default function Auth() {
                   onClick={async () => {
                     setLoading(true);
                     try {
-                      const { error } = await auth.signInWithGoogle(
-                        `${window.location.origin}/auth/callback`
-                      );
+                      // Redirect back to /auth with next parameter preserved
+                      const redirectUrl = `${window.location.origin}/auth${nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : ''}`;
+                      const { error } = await auth.signInWithGoogle(redirectUrl);
                       if (error) {
                         // Provide more specific error messages
                         if (error.message?.includes('not enabled')) {
