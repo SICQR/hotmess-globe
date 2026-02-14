@@ -145,6 +145,7 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails. In production, this should be your actual domain.
+# NOTE: This config.toml is for local development. Production uses Supabase Dashboard settings.
 site_url = "http://127.0.0.1:5173"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 # For local dev, include various localhost variations. In production, add your actual domain.
@@ -311,13 +312,19 @@ max_frequency = "5s"
 # 2. Enable the provider
 # 3. Add your Client ID and Secret from Google Cloud Console
 # 4. Add authorized redirect URIs: https://your-project.supabase.co/auth/v1/callback
+# 
+# For local development, set these environment variables in your shell:
+# export GOOGLE_OAUTH_CLIENT_ID="your_client_id"
+# export GOOGLE_OAUTH_CLIENT_SECRET="your_client_secret"
+# The env() syntax references shell environment variables when running `supabase start`
 [auth.external.google]
 enabled = true
 client_id = "env(GOOGLE_OAUTH_CLIENT_ID)"
 secret = "env(GOOGLE_OAUTH_CLIENT_SECRET)"
 # Local development: skip nonce check for localhost
 skip_nonce_check = true
-# Redirect back to the app after authentication
+# Redirect URI: Leave empty to use default Supabase callback URL
+# Default: http://127.0.0.1:54321/auth/v1/callback (local)
 redirect_uri = ""
 
 [auth.external.apple]

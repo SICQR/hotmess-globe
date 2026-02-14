@@ -15,7 +15,7 @@ Location: `/supabase/migrations/`
 #### Production (Supabase Dashboard)
 
 - [ ] Go to your [Supabase Dashboard](https://app.supabase.com/)
-- [ ] Select your project (klsywpvncqqglhnhrjbh)
+- [ ] Select your project (find project ID in Project Settings → API)
 - [ ] Navigate to **Database** → **Migrations**
 - [ ] Verify all 83 migrations are listed and applied
 - [ ] Check the latest migrations include:
@@ -44,8 +44,9 @@ supabase migration list
 
 - [ ] **Google Cloud Console**:
   - [ ] Created OAuth 2.0 Client ID
-  - [ ] Added authorized redirect URI: `https://klsywpvncqqglhnhrjbh.supabase.co/auth/v1/callback`
+  - [ ] Added authorized redirect URI: `https://your-project-id.supabase.co/auth/v1/callback`
   - [ ] Saved Client ID and Client Secret
+  - [ ] **Example:** For project `klsywpvncqqglhnhrjbh`: `https://klsywpvncqqglhnhrjbh.supabase.co/auth/v1/callback`
   
 - [ ] **Supabase Dashboard**:
   - [ ] Navigate to **Authentication** → **Providers**
@@ -57,10 +58,11 @@ supabase migration list
 #### Site URL & Redirect URLs
 
 - [ ] Navigate to **Authentication** → **URL Configuration**
-- [ ] Set **Site URL** to production domain: `https://hotmess.london`
+- [ ] Set **Site URL** to production domain: `https://your-domain.com`
+  - [ ] **Example:** `https://hotmess.london`
 - [ ] Add **Redirect URLs**:
-  - [ ] `https://hotmess.london`
-  - [ ] `https://hotmess.london/auth`
+  - [ ] `https://your-domain.com`
+  - [ ] `https://your-domain.com/auth`
   - [ ] Any staging/preview URLs if needed
 - [ ] Click **Save**
 
@@ -70,11 +72,15 @@ supabase migration list
 
 Verify these are set in **Vercel** → **Project Settings** → **Environment Variables**:
 
-- [ ] `VITE_SUPABASE_URL` = `https://klsywpvncqqglhnhrjbh.supabase.co`
+- [ ] `VITE_SUPABASE_URL` = `https://your-project-id.supabase.co`
 - [ ] `VITE_SUPABASE_ANON_KEY` = Your anon key
-- [ ] `SUPABASE_URL` = `https://klsywpvncqqglhnhrjbh.supabase.co` (for server functions)
+- [ ] `SUPABASE_URL` = `https://your-project-id.supabase.co` (for server functions)
 - [ ] `SUPABASE_ANON_KEY` = Your anon key (for server functions)
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` = Your service role key (for admin operations)
+
+**Example for this project:** 
+- URL: `https://klsywpvncqqglhnhrjbh.supabase.co`
+- Keys: Found in Supabase Dashboard → Project Settings → API
 
 **Note**: Google OAuth credentials are configured in Supabase Dashboard, NOT in Vercel env vars.
 

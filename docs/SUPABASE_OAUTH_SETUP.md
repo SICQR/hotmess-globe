@@ -12,7 +12,8 @@ The app uses Supabase Auth for authentication, including OAuth providers like Go
 
 - Access to [Google Cloud Console](https://console.cloud.google.com/)
 - Access to your [Supabase Dashboard](https://app.supabase.com/)
-- Your Supabase project URL (e.g., `https://klsywpvncqqglhnhrjbh.supabase.co`)
+- Your Supabase project URL (e.g., `https://your-project-id.supabase.co`)
+  - Find this in Supabase Dashboard → Project Settings → API
 
 ## Step 1: Create Google OAuth Credentials
 
@@ -30,9 +31,14 @@ The app uses Supabase Auth for authentication, including OAuth providers like Go
    - Name: **HOTMESS Production** (or similar)
    - Authorized redirect URIs:
      ```
+     https://your-project-id.supabase.co/auth/v1/callback
+     ```
+     Replace `your-project-id` with your actual Supabase project ID
+     
+     **Example for this project:**
+     ```
      https://klsywpvncqqglhnhrjbh.supabase.co/auth/v1/callback
      ```
-     Replace with your actual Supabase project URL
 7. Click **Create** and save the:
    - **Client ID** (e.g., `123456789-abc.apps.googleusercontent.com`)
    - **Client Secret** (e.g., `GOCSPX-abc123...`)
@@ -40,7 +46,7 @@ The app uses Supabase Auth for authentication, including OAuth providers like Go
 ## Step 2: Configure Supabase Dashboard
 
 1. Go to your [Supabase Dashboard](https://app.supabase.com/)
-2. Select your project (klsywpvncqqglhnhrjbh or your project)
+2. Select your project (find your project ID in Project Settings → API)
 3. Navigate to **Authentication** → **Providers**
 4. Find **Google** in the list and click to expand
 5. Enable the provider and fill in:
@@ -56,16 +62,18 @@ Still in the Supabase Dashboard:
 1. Navigate to **Authentication** → **URL Configuration**
 2. Set **Site URL** to your production domain:
    ```
-   https://hotmess.london
+   https://your-domain.com
    ```
-   Or for testing:
+   **Example for this project:** `https://hotmess.london`
+   
+   Or for local testing:
    ```
    http://localhost:5173
    ```
 3. Add **Redirect URLs** (one per line):
    ```
-   https://hotmess.london
-   https://hotmess.london/auth
+   https://your-domain.com
+   https://your-domain.com/auth
    http://localhost:5173
    http://localhost:5173/auth
    ```
@@ -77,7 +85,7 @@ Ensure these variables are set in **Vercel** (or your deployment platform):
 
 ```bash
 # Supabase (already set)
-VITE_SUPABASE_URL=https://klsywpvncqqglhnhrjbh.supabase.co
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key
 
 # Google OAuth (not needed in Vercel - configured in Supabase Dashboard)

@@ -1,6 +1,9 @@
 #!/bin/bash
 # Migration Verification Script
 # This script checks if all local migration files are applied to Supabase
+# 
+# Usage: ./scripts/verify-migrations.sh
+# Make executable: chmod +x scripts/verify-migrations.sh
 
 set -e
 
@@ -11,6 +14,13 @@ echo ""
 if ! command -v supabase &> /dev/null; then
     echo "❌ Supabase CLI not found. Install it with:"
     echo "   npm install -g supabase"
+    exit 1
+fi
+
+# Check if migrations directory exists
+if [ ! -d "supabase/migrations" ]; then
+    echo "❌ Migrations directory not found: supabase/migrations"
+    echo "   Make sure you're running this script from the project root"
     exit 1
 fi
 
@@ -39,7 +49,10 @@ else
     echo "⚠️  Could not connect to Supabase project"
     echo ""
     echo "To link your project:"
-    echo "   supabase link --project-ref klsywpvncqqglhnhrjbh"
+    echo "   supabase link --project-ref YOUR_PROJECT_ID"
+    echo ""
+    echo "   (Find your project ID in Supabase Dashboard → Project Settings → API)"
+    echo "   Example: supabase link --project-ref klsywpvncqqglhnhrjbh"
     echo ""
     echo "Or check migrations manually:"
     echo "   1. Open Supabase Dashboard: https://app.supabase.com/"
