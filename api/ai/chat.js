@@ -165,7 +165,8 @@ export default async function handler(req, res) {
 
     if (!openaiResponse.ok) {
       const error = await openaiResponse.json();
-      return res.status(500).json({ error: 'AI service error' });
+      console.error('OpenAI API Error:', error);
+      return res.status(500).json({ error: 'AI service error', details: error });
     }
 
     const completion = await openaiResponse.json();
