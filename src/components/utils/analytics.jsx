@@ -248,7 +248,7 @@ export function trackError(error, context = {}) {
   };
   
   // Sentry error capture
-  if (window.__SENTRY__) {
+  if (window.__SENTRY__ && typeof window.__SENTRY__.captureException === 'function') {
     window.__SENTRY__.captureException(error, {
       extra: context,
     });
