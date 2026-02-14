@@ -74,34 +74,8 @@ export default function Social() {
     );
   }
 
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-black text-white pb-20">
-        <PageShell
-          eyebrow="SOCIAL"
-          title="Social"
-          subtitle="Discover • Connect • Message"
-          maxWidth="4xl"
-        >
-          <div className="bg-white/5 border-2 border-white/10 p-6">
-            <h2 className="text-2xl font-black uppercase mb-2">SIGN IN TO CONTINUE</h2>
-            <p className="text-white/60 mb-6">
-              Social features require an account.
-            </p>
-            <Button
-              type="button"
-              variant="hot"
-              size="xl"
-              onClick={() => navigate(`/auth?next=${encodeURIComponent('/social')}`)}
-              className="w-full sm:w-auto font-black uppercase"
-            >
-              SIGN IN
-            </Button>
-          </div>
-        </PageShell>
-      </div>
-    );
-  }
+  // Show profiles to everyone (discovery), but prompt login for messaging
+  const showLoginPromptForInbox = !currentUser && activeTab === 'inbox';
 
 
   return (
@@ -156,7 +130,21 @@ export default function Social() {
           </TabsContent>
 
           <TabsContent value="inbox">
-            {threads.length === 0 ? (
+            {showLoginPromptForInbox ? (
+              <div className="text-center py-12">
+                <MessageCircle className="w-16 h-16 mx-auto mb-4 text-white/40" />
+                <h3 className="text-2xl font-black mb-2">SIGN IN TO MESSAGE</h3>
+                <p className="text-white/60 mb-6">Create an account to chat with people</p>
+                <Button
+                  type="button"
+                  variant="hot"
+                  onClick={() => navigate(`/auth?next=${encodeURIComponent('/social?tab=inbox')}`)}
+                  className="font-black uppercase"
+                >
+                  SIGN IN
+                </Button>
+              </div>
+            ) : threads.length === 0 ? (
               <div className="text-center py-12">
                 <MessageCircle className="w-16 h-16 mx-auto mb-4 text-white/40" />
                 <h3 className="text-2xl font-black mb-2">NO MESSAGES YET</h3>
@@ -210,6 +198,7 @@ export default function Social() {
                   );
                 })}
               </div>
+            )}
             )}
           </TabsContent>
         </Tabs>
