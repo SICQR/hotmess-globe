@@ -28,6 +28,7 @@
     "test:ci": "npm run lint && npm run typecheck && npm run test:run && npm run test:e2e",
     "test:integrations": "node ./scripts/test-integrations.js --prod",
     "test:integrations:local": "node ./scripts/test-integrations.js",
+    "validate": "node ./scripts/validate-integrations.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
