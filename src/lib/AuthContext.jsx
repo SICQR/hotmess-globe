@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import { base44 } from '@/components/utils/supabaseClient';
 import logger from '@/utils/logger';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
+import { validateConfigOnStartup } from '@/utils/envValidation';
 
 const AuthContext = createContext();
 
@@ -15,6 +16,16 @@ export const AuthProvider = ({ children }) => {
   const mergedGuestCartRef = React.useRef(false);
 
   useEffect(() => {
+    // Validate configuration on startup
+    const validation = validateConfigOnStartup();
+    if (!validation.valid) {
+      setAuthError({
+        type: 'config_error',
+        message: 'Authentication is not properly configured. Please check environment variables.',
+        details: validation.criticalErrors
+      });
+    }
+    
     checkAppState();
   }, []);
 
