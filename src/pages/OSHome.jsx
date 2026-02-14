@@ -8,7 +8,9 @@
 
 import React, { useState, Suspense, lazy } from 'react';
 import { OSShell } from '@/components/shell/OSShell';
-import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
+import { SheetProvider, useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
+import SheetRouter from '@/components/sheets/SheetRouter';
+import ErrorBoundary from '@/components/error/ErrorBoundary';
 
 // Lazy load the globe for performance
 const GlobeHero = lazy(() => import('@/components/globe/GlobeHero'));
@@ -30,7 +32,7 @@ const MODE_TO_SHEET = {
   PROFILE: SHEET_TYPES.PROFILE,
 };
 
-export default function OSHome() {
+function OSHomeContent() {
   const [activeMode, setActiveMode] = useState('NOW');
   const { openSheet, closeSheet } = useSheet();
 
@@ -63,8 +65,18 @@ export default function OSHome() {
         onToggle: () => {},
       }}
     >
-      {/* Sheet content renders here via SheetRouter */}
-      <div className="flex-1" />
+      {/* Sheet content renders via SheetRouter */}
+      <SheetRouter />
     </OSShell>
+  );
+}
+
+export default function OSHome() {
+  return (
+    <ErrorBoundary>
+      <SheetProvider>
+        <OSHomeContent />
+      </SheetProvider>
+    </ErrorBoundary>
   );
 }
