@@ -142,9 +142,15 @@ export function BootGuardProvider({ children }) {
         profileData = newProfile;
       } else if (error) {
         console.error('Profile fetch error:', error);
-        // On error, use localStorage age to decide
+        // On error, use localStorage to decide boot state
+        // Trust localStorage age verification even if DB fetch fails
         const localAge = getLocalAgeVerified();
-        setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
+        if (localAge) {
+          // User verified age locally, let them through
+          setBootState(BOOT_STATES.READY);
+        } else {
+          setBootState(BOOT_STATES.NEEDS_AGE);
+        }
         setIsLoading(false);
         return;
       }
@@ -188,8 +194,13 @@ export function BootGuardProvider({ children }) {
       }
     } catch (err) {
       console.error('Profile load error:', err);
+      // On any error, trust localStorage - user experience over strictness
       const localAge = getLocalAgeVerified();
-      setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
+      if (localAge) {
+        setBootState(BOOT_STATES.READY);
+      } else {
+        setBootState(BOOT_STATES.NEEDS_AGE);
+      }
     } finally {
       setIsLoading(false);
     }
