@@ -233,11 +233,21 @@ export default async function handler(req, res) {
   const normalizeLines = (linesInput) => {
     const raw = Array.isArray(linesInput) ? linesInput : [];
     const out = [];
+    // Set maximum quantity per item to prevent abuse
+    const MAX_QUANTITY_PER_ITEM = 100;
+    
     for (const line of raw) {
       const rawVariantId = String(line?.variantId ?? line?.merchandiseId ?? '').trim();
-      const qty = Number.isFinite(Number(line?.quantity)) ? Number(line.quantity) : 1;
+      let qty = Number.isFinite(Number(line?.quantity)) ? Number(line.quantity) : 1;
+      
       if (!rawVariantId) continue;
       if (qty <= 0) continue;
+      
+      // Enforce maximum quantity limit
+      if (qty > MAX_QUANTITY_PER_ITEM) {
+        qty = MAX_QUANTITY_PER_ITEM;
+      }
+      
       const gid = toStorefrontVariantGid(rawVariantId);
       if (!gid) continue;
       out.push({ merchandiseId: gid, quantity: qty });

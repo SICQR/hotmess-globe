@@ -154,7 +154,20 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      // Basic validation
+      if (!email || !email.includes('@')) {
+        throw new Error('Please enter a valid email address');
+      }
+      
+      if (!password || password.length < 6) {
+        throw new Error('Password must be at least 6 characters');
+      }
+
       if (isSignUp) {
+        if (!fullName || fullName.trim().length < 2) {
+          throw new Error('Please enter your full name');
+        }
+        
         const { error } = await auth.signUp(email, password, {
           full_name: fullName,
         });
@@ -168,13 +181,23 @@ export default function Auth() {
         setStep('membership');
       } else {
         const { error } = await auth.signIn(email, password);
-        if (error) throw error;
+        if (error) {
+          // Provide more specific error messages
+          if (error.message?.includes('Invalid login credentials')) {
+            throw new Error('Invalid email or password. Please try again.');
+          } else if (error.message?.includes('Email not confirmed')) {
+            throw new Error('Please check your email and confirm your account before signing in.');
+          }
+          throw error;
+        }
 
         toast.success('Welcome back!');
         performRedirectAfterAuth();
       }
     } catch (error) {
-      toast.error(error.message || 'Authentication failed');
+      const errorMessage = error.message || 'Authentication failed. Please try again.';
+      toast.error(errorMessage);
+      console.error('[Auth] Error:', error);
     } finally {
       setLoading(false);
     }
@@ -422,9 +445,19 @@ export default function Auth() {
                       const { error } = await auth.signInWithGoogle(
                         `${window.location.origin}/auth/callback`
                       );
-                      if (error) throw error;
+                      if (error) {
+                        // Provide more specific error messages
+                        if (error.message?.includes('not enabled')) {
+                          throw new Error('Google sign-in is not enabled. Please contact support.');
+                        } else if (error.message?.includes('popup')) {
+                          throw new Error('Pop-up was blocked. Please allow pop-ups for this site.');
+                        }
+                        throw error;
+                      }
                     } catch (error) {
-                      toast.error(error.message || 'Google sign in failed');
+                      const errorMessage = error.message || 'Google sign in failed. Please try again.';
+                      toast.error(errorMessage);
+                      console.error('[Auth] Google OAuth error:', error);
                       setLoading(false);
                     }
                   }}

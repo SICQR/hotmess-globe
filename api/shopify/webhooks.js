@@ -21,12 +21,19 @@ const verifyWebhook = ({ secret, rawBody, signature }) => {
 const handleInventoryUpdate = async (serviceClient, payload) => {
   const { inventory_item_id, available } = payload;
   if (!inventory_item_id) return { handled: false };
+  
+  // Validate inventory quantity (must be non-negative)
+  const inventoryQty = Number.isFinite(Number(available)) ? Number(available) : 0;
+  if (inventoryQty < 0) {
+    console.warn(`[Shopify Webhook] Invalid negative inventory for item ${inventory_item_id}: ${available}`);
+    return { handled: false, error: 'Invalid inventory quantity' };
+  }
 
   // Update local product inventory if we track it
   const { data, error } = await serviceClient
     .from('products')
     .update({ 
-      inventory_quantity: available,
+      inventory_quantity: inventoryQty,
       updated_at: new Date().toISOString()
     })
     .eq('shopify_inventory_item_id', String(inventory_item_id));
