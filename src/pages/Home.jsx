@@ -734,68 +734,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CONNECT */}
-      <section className="relative py-32 px-6 overflow-hidden">
-        <div className="absolute inset-0">
-          <img 
-            src="https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=1920&q=80" 
-            alt="Connect"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FF1493]/90 to-[#FF1493]/70" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <p className="text-xs uppercase tracking-[0.4em] text-white/80 mb-4">SOCIAL</p>
-              <h2 className="text-6xl md:text-8xl font-black italic mb-8 drop-shadow-2xl">RIGHT NOW</h2>
-              <p className="text-xl mb-8 leading-relaxed drop-shadow-lg">
-                Compatibility-first discovery. No swiping. No ghosts. Just good chemistry backed by real data.
-              </p>
-              <Link to="/social">
-                <Button className="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 text-lg shadow-2xl">
-                  DISCOVER
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="grid grid-cols-1 gap-6"
-            >
-              <div className="bg-black/40 backdrop-blur-md p-6 border-2 border-white/30 shadow-2xl">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-white/20 flex items-center justify-center">
-                    <Zap className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-2xl font-black uppercase">RIGHT NOW</h3>
-                </div>
-                <p className="text-white/90 text-sm uppercase tracking-wide">
-                  30min–Tonight. Can host / Travel / Hotel. Real time, real intent.
-                </p>
-              </div>
-              <div className="bg-black/40 backdrop-blur-md p-6 border-2 border-white/30 shadow-2xl">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-white/20 flex items-center justify-center">
-                    <Users className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-2xl font-black uppercase">BROWSE</h3>
-                </div>
-                <p className="text-white/90 text-sm uppercase tracking-wide">
-                  Explore profiles. Filter by vibes, tribes, boundaries. Your pace.
-                </p>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
       {/* BEACONS */}
       <section className="py-32 px-6 bg-black">
         <div className="max-w-7xl mx-auto">
@@ -873,30 +811,6 @@ export default function Home() {
                 <Link to="/pulse">
                   <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase w-full">
                     OPEN PULSE
-                  </Button>
-                </Link>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="bg-white/5 border-2 border-white/10 p-6 h-full">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-white/10 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-black uppercase">DISCOVER</h3>
-                </div>
-                <p className="text-white/70 text-sm mb-6">
-                  Right now guys near you.
-                </p>
-                <Link to="/social">
-                  <Button className="bg-white text-black hover:bg-black hover:text-white font-black uppercase w-full">
-                    GO RIGHT NOW
                   </Button>
                 </Link>
               </div>
@@ -994,41 +908,6 @@ export default function Home() {
                 </Link>
               </div>
             </motion.div>
-          </div>
-
-          <div className="mt-10 flex flex-wrap gap-3 justify-center">
-            <Link to="/pulse">
-              <Button
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm"
-              >
-                OPEN PULSE
-              </Button>
-            </Link>
-            <Link to="/calendar">
-              <Button
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm"
-              >
-                CALENDAR
-              </Button>
-            </Link>
-            <Link to="/events">
-              <Button
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm"
-              >
-                EVENTS
-              </Button>
-            </Link>
-            <Link to="/market">
-              <Button
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase shadow-2xl backdrop-blur-sm"
-              >
-                MARKET
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
