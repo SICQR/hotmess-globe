@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   }
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    console.warn('[NotificationProcessor] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    // console.warn('[NotificationProcessor] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     send(res, 200, { success: true, message: 'Notification processing skipped (missing Supabase env)', processed: 0 });
     return;
   }
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       .limit(100);
 
     if (fetchError) {
-      console.error('[NotificationProcessor] Fetch error:', fetchError);
+      // console.error('[NotificationProcessor] Fetch error:', fetchError);
       send(res, 500, { error: 'Failed to fetch notifications' });
       return;
     }
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    console.log(`[NotificationProcessor] Processing ${queuedNotifications.length} notifications`);
+    // console.log(`[NotificationProcessor] Processing ${queuedNotifications.length} notifications`);
 
     let processed = 0;
     let errors = 0;
@@ -83,7 +83,7 @@ export default async function handler(req, res) {
           });
 
         if (notifError) {
-          console.error(`[NotificationProcessor] Failed to create notification for ${notification.user_email}:`, notifError);
+          // console.error(`[NotificationProcessor] Failed to create notification for ${notification.user_email}:`, notifError);
           await supabase
             .from('notification_outbox')
             .update({ status: 'failed', updated_at: new Date().toISOString() })
@@ -112,14 +112,14 @@ export default async function handler(req, res) {
           .eq('id', notification.id);
 
         if (updateError) {
-          console.error(`[NotificationProcessor] Failed to update status for ${notification.id}:`, updateError);
+          // console.error(`[NotificationProcessor] Failed to update status for ${notification.id}:`, updateError);
           errors++;
         } else {
           processed++;
         }
 
       } catch (error) {
-        console.error(`[NotificationProcessor] Error processing notification ${notification.id}:`, error);
+        // console.error(`[NotificationProcessor] Error processing notification ${notification.id}:`, error);
         
         // Mark as failed
         await supabase
@@ -136,7 +136,7 @@ export default async function handler(req, res) {
 
     send(res, 200, { success: true, processed, errors, total: queuedNotifications.length });
   } catch (error) {
-    console.error('[NotificationProcessor] Error:', error);
+    // console.error('[NotificationProcessor] Error:', error);
     send(res, 500, { error: 'Internal server error', message: error.message });
   }
 }
@@ -163,7 +163,7 @@ async function sendPushNotifications(supabase, notification) {
     try {
       webPush.setVapidDetails('mailto:noreply@hotmess.london', vapidPublic, vapidPrivate);
     } catch (e) {
-      console.warn('[NotificationProcessor] Invalid VAPID keys, skip push:', e?.message);
+      // console.warn('[NotificationProcessor] Invalid VAPID keys, skip push:', e?.message);
       return;
     }
 
@@ -187,11 +187,11 @@ async function sendPushNotifications(supabase, notification) {
         if (err?.statusCode === 410 || err?.statusCode === 404) {
           await supabase.from('push_subscriptions').delete().eq('endpoint', row.endpoint);
         }
-        console.warn('[NotificationProcessor] Push failed for', row.endpoint, err?.message);
+        // console.warn('[NotificationProcessor] Push failed for', row.endpoint, err?.message);
       }
     }
   } catch (e) {
-    console.warn('[NotificationProcessor] Push lookup/send error:', e?.message);
+    // console.warn('[NotificationProcessor] Push lookup/send error:', e?.message);
   }
 }
 
@@ -202,7 +202,7 @@ async function sendEmailNotification(notification) {
   const resendApiKey = process.env.RESEND_API_KEY;
   
   if (!resendApiKey) {
-    console.log(`[NotificationProcessor] Would send email to ${notification.user_email} (no API key)`);
+    // console.log(`[NotificationProcessor] Would send email to ${notification.user_email} (no API key)`);
     return;
   }
 
@@ -239,12 +239,12 @@ async function sendEmailNotification(notification) {
 
     if (!response.ok) {
       const error = await response.json();
-      console.error(`[NotificationProcessor] Email failed for ${notification.user_email}:`, error);
+      // console.error(`[NotificationProcessor] Email failed for ${notification.user_email}:`, error);
     } else {
-      console.log(`[NotificationProcessor] Email sent to ${notification.user_email}`);
+      // console.log(`[NotificationProcessor] Email sent to ${notification.user_email}`);
     }
   } catch (error) {
-    console.error(`[NotificationProcessor] Email error:`, error);
+    // console.error(`[NotificationProcessor] Email error:`, error);
   }
 }
 

@@ -209,7 +209,7 @@ export async function executeTool(name, args, userContext = {}) {
   try {
     return await handler(args, userContext);
   } catch (error) {
-    console.error(`Tool ${name} error:`, error);
+    // console.error(`Tool ${name} error:`, error);
     return { error: error.message };
   }
 }

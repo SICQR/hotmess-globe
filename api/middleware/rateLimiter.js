@@ -247,7 +247,7 @@ export function withRateLimit(handler, options = {}) {
       recordViolation(clientId);
       
       // Log abuse attempt
-      console.warn('[RateLimit] Request blocked:', {
+      // console.warn('[RateLimit] Request blocked:', {
         clientId,
         tier,
         violationLevel: result.violationLevel,

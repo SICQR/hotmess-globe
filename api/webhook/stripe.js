@@ -46,7 +46,7 @@ export default async function handler(req, res) {
   try {
     event = stripe.webhooks.constructEvent(buf, sig, endpointSecret);
   } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
+    // console.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -59,11 +59,11 @@ export default async function handler(req, res) {
         await handlePaymentFailed(event.data.object);
         break;
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        // console.log(`Unhandled event type: ${event.type}`);
     }
     res.status(200).json({ received: true });
   } catch (err) {
-    console.error('Webhook handler error:', err);
+    // console.error('Webhook handler error:', err);
     res.status(500).json({ error: 'Webhook handler failed' });
   }
 }

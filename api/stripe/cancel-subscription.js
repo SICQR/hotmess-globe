@@ -20,7 +20,7 @@ export default async function handler(req, res) {
   }
 
   if (!stripe || !STRIPE_SECRET_KEY) {
-    console.error('[Stripe Cancel] Missing STRIPE_SECRET_KEY');
+    // console.error('[Stripe Cancel] Missing STRIPE_SECRET_KEY');
     return res.status(500).json({ error: 'Stripe not configured' });
   }
 
@@ -72,7 +72,7 @@ export default async function handler(req, res) {
       endsAt: new Date(subscription.current_period_end * 1000).toISOString(),
     });
   } catch (error) {
-    console.error('[Stripe Cancel] Error:', error);
+    // console.error('[Stripe Cancel] Error:', error);
     return res.status(500).json({ error: error.message });
   }
 }
