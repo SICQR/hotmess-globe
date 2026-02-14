@@ -43,6 +43,7 @@ export default async function handler(req, res) {
   }
 
   const priceCents = beacon.ticket_price_cents || 0;
+  let paymentIntentId = null;
 
   // 3. Handle Payment
   if (priceCents > 0) {
@@ -72,6 +73,9 @@ export default async function handler(req, res) {
         if (paymentIntent.status !== 'succeeded') {
             return json(res, 402, { error: 'Payment failed', status: paymentIntent.status });
         }
+
+        // Capture the payment intent ID for database storage
+        paymentIntentId = paymentIntent.id;
     } catch (err) {
         return json(res, 402, { error: 'Payment error', details: err.message });
     }
@@ -101,7 +105,8 @@ export default async function handler(req, res) {
         user_id: user.id,
         user_email: user.email, // Fallback for old schema
         status: 'going',
-        // metadata: { price_paid: priceCents, payment_intent: paymentIntentId } // If metadata column exists
+        payment_intent_id: paymentIntentId,
+        price_paid_cents: priceCents
     })
     .select()
     .single();
