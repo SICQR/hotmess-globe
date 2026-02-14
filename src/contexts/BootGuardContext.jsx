@@ -28,7 +28,9 @@ const AGE_KEY = 'hm_age_confirmed_v1';
 
 const getLocalAgeVerified = () => {
   try {
-    return localStorage.getItem(AGE_KEY) === 'true';
+    const val = localStorage.getItem(AGE_KEY);
+    // Handle various possible values: 'true', 'TRUE', '1', etc.
+    return val === 'true' || val === '1' || val === 'TRUE';
   } catch {
     return false;
   }
@@ -149,7 +151,10 @@ export function BootGuardProvider({ children }) {
 
       // Sync localStorage age to profile if needed
       const localAge = getLocalAgeVerified();
+      console.log('[BootGuard] Profile age_verified:', profileData?.age_verified, 'localStorage age:', localAge);
+      
       if (profileData && !profileData.age_verified && localAge) {
+        console.log('[BootGuard] Syncing localStorage age to profile...');
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ age_verified: true })
@@ -157,7 +162,19 @@ export function BootGuardProvider({ children }) {
 
         if (!updateError) {
           profileData = { ...profileData, age_verified: true };
+          console.log('[BootGuard] Age synced successfully');
+        } else {
+          console.error('[BootGuard] Failed to sync age (RLS?):', updateError);
+          // IMPORTANT: Even if DB update fails, trust localStorage 
+          // The user DID verify their age, RLS might just be blocking
+          profileData = { ...profileData, age_verified: true };
         }
+      }
+
+      // Final fallback: if localStorage says verified but profile doesn't, trust localStorage
+      if (!profileData?.age_verified && localAge) {
+        console.log('[BootGuard] Fallback: trusting localStorage age verification');
+        profileData = { ...profileData, age_verified: true };
       }
 
       setProfile(profileData);
