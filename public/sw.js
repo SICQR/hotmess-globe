@@ -3,16 +3,14 @@
  * Handles: Push notifications, caching, offline support, background sync
  */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = `hotmess-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `hotmess-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `hotmess-api-${CACHE_VERSION}`;
 const IMAGE_CACHE = `hotmess-images-${CACHE_VERSION}`;
 
-// Static assets to cache immediately
+// DON'T cache index.html - always fetch fresh to get latest JS bundles
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/favicon.svg',
 ];
@@ -82,6 +80,11 @@ self.addEventListener('activate', (event) => {
 // Determine caching strategy based on request
 function getCachingStrategy(request) {
   const url = new URL(request.url);
+  
+  // NEVER cache index.html or root - always fetch fresh for new JS bundles
+  if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.endsWith('.html')) {
+    return { strategy: 'network-only' };
+  }
   
   // Images - cache first, network fallback
   if (
