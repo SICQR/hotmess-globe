@@ -122,7 +122,7 @@ async function testSupabase() {
     }
     
     // Test auth
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { error: sessionError } = await supabase.auth.getSession();
     if (sessionError) {
       recordTest('Supabase Auth', false, false, sessionError.message);
     } else {
