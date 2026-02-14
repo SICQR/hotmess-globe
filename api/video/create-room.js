@@ -4,8 +4,10 @@
  * POST /api/video/create-room
  * 
  * Creates a new video call room and notifies the recipient.
+ * Requires authentication via Bearer token.
  */
 
+import { getBearerToken, getSupabaseServerClients, getAuthedUser } from '../routing/_utils.js';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -27,10 +29,31 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Authenticate the request
+    const { error: supaErr, anonClient } = getSupabaseServerClients();
+    if (supaErr || !anonClient) {
+      return res.status(500).json({ error: 'Supabase client unavailable' });
+    }
+
+    const accessToken = getBearerToken(req);
+    if (!accessToken) {
+      return res.status(401).json({ error: 'Missing Authorization bearer token' });
+    }
+
+    const { user: authUser, error: authErr } = await getAuthedUser({ anonClient, accessToken });
+    if (authErr || !authUser?.id) {
+      return res.status(401).json({ error: 'Invalid auth token' });
+    }
+
     const { callerId, recipientId, callType = 'video' } = req.body;
 
     if (!callerId || !recipientId) {
       return res.status(400).json({ error: 'Missing callerId or recipientId' });
+    }
+
+    // Verify that the authenticated user is the caller
+    if (callerId !== authUser.id) {
+      return res.status(403).json({ error: 'Unauthorized: callerId must match authenticated user' });
     }
 
     // Check if users have matched (security check)
