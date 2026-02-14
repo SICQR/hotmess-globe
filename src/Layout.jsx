@@ -29,6 +29,7 @@ import BottomNav from '@/components/navigation/BottomNav';
 import { TonightModeProvider } from '@/hooks/useTonightMode';
 import { SheetProvider } from '@/contexts/SheetContext';
 import SheetRouter from '@/components/sheets/SheetRouter';
+import { useOSURLSync } from '@/os';
 
       const PRIMARY_NAV = [
         { name: 'HOME', icon: Home, path: 'Home' },
@@ -48,6 +49,9 @@ function LayoutInner({ children, currentPageName }) {
   const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
   const { toggleRadio, isRadioOpen } = useRadio();
+
+  // Enable OS URL sync
+  useOSURLSync();
 
   const pathname = (location?.pathname || '').toLowerCase();
   const isMarketRoute =

@@ -6,6 +6,7 @@ import '@/index.css'
 import { initAnalytics } from '@/components/utils/analytics'
 import ErrorBoundary from '@/components/error/ErrorBoundary'
 import { clearBadSupabaseSessions } from '@/lib/clearBadSessions'
+import { OSProvider } from '@/os'
 
 // FIRST: Clear any cached sessions from wrong Supabase projects
 // This MUST run before Supabase client initializes
@@ -47,7 +48,9 @@ try {
   ReactDOM.createRoot(document.getElementById('root')).render(
     <Sentry.ErrorBoundary fallback={<ErrorBoundary />}>
       <ErrorBoundary>
-        <App />
+        <OSProvider>
+          <App />
+        </OSProvider>
       </ErrorBoundary>
     </Sentry.ErrorBoundary>
   )
