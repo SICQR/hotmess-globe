@@ -219,7 +219,6 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    // console.error('Safety check-ins cron error:', error);
     return res.status(500).json({ error: error.message });
   }
 }

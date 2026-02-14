@@ -173,7 +173,6 @@ export default async function handler(req, res) {
           });
         }
       } catch (e) {
-        // console.warn(`Rule ${rule.id} check failed:`, e);
       }
     }
 
@@ -226,7 +225,6 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    // console.error('Profile analysis error:', error);
     return res.status(500).json({ error: error.message });
   }
 }

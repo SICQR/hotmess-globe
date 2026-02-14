@@ -75,7 +75,6 @@ export default async function handler(req, res) {
       .order('start_date', { ascending: true });
 
     if (eventsError) {
-      // console.error('Events fetch error:', eventsError);
     }
 
     // Get venues from knowledge base
@@ -86,7 +85,6 @@ export default async function handler(req, res) {
       .eq('location_city', user?.city || 'London');
 
     if (venuesError) {
-      // console.error('Venues fetch error:', venuesError);
     }
 
     // Get HOTMESS activity (users with Right Now or RSVP'd)
@@ -178,7 +176,6 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    // console.error('Scene scout error:', error);
     return res.status(500).json({ error: error.message });
   }
 }

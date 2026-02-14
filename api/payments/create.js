@@ -116,7 +116,6 @@ export default async function handler(req, res) {
 
     res.status(200).json({ clientSecret: paymentIntent.client_secret, amount: amount / 100 });
   } catch (err) {
-    // console.error('Payment error:', err);
     res.status(500).json({ error: 'Failed to create payment' });
   }
 }

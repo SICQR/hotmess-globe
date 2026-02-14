@@ -157,7 +157,6 @@ export default async function handler(req, res) {
 
     if (!openaiResponse.ok) {
       const error = await openaiResponse.json();
-      // console.error('OpenAI error:', error);
       return res.status(500).json({ error: 'AI service error' });
     }
 
@@ -263,7 +262,6 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    // console.error('AI Chat error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -309,7 +307,6 @@ async function saveConversation(conversationId, userId, userMessage, assistantRe
     .single();
 
   if (error) {
-    // console.error('Failed to save conversation:', error);
     return null;
   }
 
@@ -330,6 +327,5 @@ async function logUsage(userId, actionType, metadata = {}) {
         created_at: new Date().toISOString()
       });
   } catch (error) {
-    // console.error('Failed to log AI usage:', error);
   }
 }
