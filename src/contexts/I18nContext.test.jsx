@@ -225,9 +225,10 @@ describe('I18nProvider', () => {
 });
 
 describe('useI18n outside provider', () => {
-  it('should return fallback values when used outside provider', () => {
+  it('should return fallback values when used outside provider', async () => {
     // Suppress console.warn for this test
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const loggerModule = await import('@/utils/logger');
+    const warnSpy = vi.spyOn(loggerModule.default, 'warn').mockImplementation(() => {});
 
     function TestOutsideProvider() {
       const { t, lang, isRTL } = useI18n();
