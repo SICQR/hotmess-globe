@@ -9,7 +9,7 @@
  */
 
 import React, { useState } from 'react';
-import { AlertTriangle, Phone, X } from 'lucide-react';
+import { AlertTriangle, Phone } from 'lucide-react';
 
 interface SOSOverlayProps {
   isActive: boolean;
