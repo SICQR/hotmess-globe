@@ -150,11 +150,9 @@ export default async function handler(req, res) {
     return json(res, 405, { error: 'Method not allowed' });
   }
 
-  const requireAuth = isRunningOnVercel() || process.env.NODE_ENV === 'production';
+  // Allow public profile viewing - auth is optional for GET requests
   const accessToken = getBearerToken(req);
-  if (requireAuth && !accessToken) {
-    return json(res, 401, { error: 'Unauthorized' });
-  }
+  // Auth is NOT required for viewing profiles - RLS handles visibility
 
   const emailRaw = getQueryParam(req, 'email');
   const uidRaw = getQueryParam(req, 'uid') || getQueryParam(req, 'auth_user_id');
@@ -170,11 +168,7 @@ export default async function handler(req, res) {
 
   if (accessToken && anonClient) {
     const { data, error } = await anonClient.auth.getUser(accessToken);
-    if (error || !data?.user) {
-      if (requireAuth) return json(res, 401, { error: 'Unauthorized' });
-    }
-  } else if (requireAuth && !anonClient) {
-    return json(res, 500, { error: 'Supabase server env not configured' });
+    // Token validation is optional - profile viewing works without auth via RLS
   }
 
   // If service role isn't configured (common in local dev), try an authenticated anon-client query
