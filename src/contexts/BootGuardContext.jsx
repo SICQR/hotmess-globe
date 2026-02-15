@@ -166,7 +166,7 @@ export function BootGuardProvider({ children }) {
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ age_verified: true })
-          .eq('id', userId);
+          .eq('account_id', userId);
 
         if (!updateError) {
           profileData = { ...profileData, age_verified: true };
@@ -228,7 +228,7 @@ export function BootGuardProvider({ children }) {
       const { error } = await supabase
         .from('profiles')
         .update({ age_verified: true })
-        .eq('id', session.user.id);
+        .eq('account_id', session.user.id);
 
       if (!error) {
         await refetchProfile();
@@ -246,7 +246,7 @@ export function BootGuardProvider({ children }) {
     const { error } = await supabase
       .from('profiles')
       .update({ onboarding_complete: true })
-      .eq('id', session.user.id);
+      .eq('account_id', session.user.id);
 
     if (!error) {
       await refetchProfile();

@@ -116,7 +116,7 @@ export function useGamification() {
           xp_balance: newXP,
           level: newLevel
         })
-        .eq('id', user.id);
+        .eq('account_id', user.id);
 
       if (error) throw error;
 

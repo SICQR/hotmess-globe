@@ -138,7 +138,7 @@ export default function TwoFactorSetup({ onComplete, onCancel }) {
       const { data, error } = await supabase
         .from('profiles')
         .select('mfa_enabled, mfa_setup_at')
-        .eq('id', user?.id)
+        .eq('account_id', user?.id)
         .single();
       
       if (error) throw error;
@@ -159,7 +159,7 @@ export default function TwoFactorSetup({ onComplete, onCancel }) {
           mfa_backup_codes: backupCodes, // Should be hashed in production
           mfa_setup_at: new Date().toISOString(),
         })
-        .eq('id', user?.id);
+        .eq('account_id', user?.id);
       
       if (error) throw error;
       return { success: true };
@@ -184,7 +184,7 @@ export default function TwoFactorSetup({ onComplete, onCancel }) {
           mfa_backup_codes: null,
           mfa_setup_at: null,
         })
-        .eq('id', user?.id);
+        .eq('account_id', user?.id);
       
       if (error) throw error;
       return { success: true };

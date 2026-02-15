@@ -78,7 +78,7 @@ async function getViewerStateFallback(
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('age_verified, consent_accepted, onboarding_complete')
-    .eq('id', user.id)
+    .eq('account_id', user.id)
     .single();
 
   if (error || !profile) {
@@ -197,7 +197,7 @@ export async function markAgeVerified(
   const { error } = await supabase
     .from('profiles')
     .update({ age_verified: true })
-    .eq('id', user.id);
+    .eq('account_id', user.id);
 
   if (error) return { success: false, error: error.message };
   return { success: true };
@@ -212,7 +212,7 @@ export async function markConsentAccepted(
   const { error } = await supabase
     .from('profiles')
     .update({ consent_accepted: true })
-    .eq('id', user.id);
+    .eq('account_id', user.id);
 
   if (error) return { success: false, error: error.message };
   return { success: true };
@@ -227,7 +227,7 @@ export async function markOnboardingComplete(
   const { error } = await supabase
     .from('profiles')
     .update({ onboarding_complete: true })
-    .eq('id', user.id);
+    .eq('account_id', user.id);
 
   if (error) return { success: false, error: error.message };
   return { success: true };

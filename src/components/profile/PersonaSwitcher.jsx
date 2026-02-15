@@ -94,7 +94,7 @@ export default function PersonaSwitcher({
           const { data: basicData } = await supabase
             .from('User')
             .select('id, display_name, avatar_url')
-            .eq('id', user.id)
+            .eq('account_id', user.id)
             .single();
           
           if (basicData) {
@@ -154,7 +154,7 @@ export default function PersonaSwitcher({
       await supabase
         .from('User')
         .update({ active_persona_id: persona.id })
-        .eq('id', user.id);
+        .eq('account_id', user.id);
 
       // Store locally
       localStorage.setItem('activePersonaId', persona.id);
