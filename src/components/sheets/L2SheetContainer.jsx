@@ -133,7 +133,7 @@ export default function L2SheetContainer({
             exit="exit"
             transition={{ duration: 0.2 }}
             onClick={handleBackdropClick}
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[79] bg-black/60 backdrop-blur-[20px]"
             aria-hidden="true"
           />
 
@@ -151,17 +151,15 @@ export default function L2SheetContainer({
             onDragEnd={handleDragEnd}
             style={{ height }}
             className={cn(
-              'fixed bottom-0 left-0 right-0 z-[101]',
+              'fixed bottom-0 left-0 right-0 z-[80]',
               'bg-black border-t-2 border-x-2 border-[#FF1493]',
-              'rounded-t-3xl overflow-hidden',
+              'rounded-none overflow-hidden',
               'flex flex-col',
-              // Scanner corner effect
+              // Scanner corner effect - brutalist 0px radius
               'before:absolute before:top-0 before:left-0 before:w-8 before:h-8',
               'before:border-t-2 before:border-l-2 before:border-[#00D9FF]',
-              'before:rounded-tl-3xl',
               'after:absolute after:top-0 after:right-0 after:w-8 after:h-8',
               'after:border-t-2 after:border-r-2 after:border-[#00D9FF]',
-              'after:rounded-tr-3xl',
               className
             )}
             role="dialog"

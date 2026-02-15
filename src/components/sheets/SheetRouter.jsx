@@ -17,6 +17,9 @@ const L2ChatSheet = lazy(() => import('./L2ChatSheet'));
 const L2VaultSheet = lazy(() => import('./L2VaultSheet'));
 const L2ShopSheet = lazy(() => import('./L2ShopSheet'));
 const L2GhostedSheet = lazy(() => import('./L2GhostedSheet'));
+const L2SocialSheet = lazy(() => import('./L2SocialSheet'));
+const L2EventsSheet = lazy(() => import('./L2EventsSheet'));
+const L2MarketplaceSheet = lazy(() => import('./L2MarketplaceSheet'));
 
 // Loading fallback
 function SheetLoading() {
@@ -62,6 +65,21 @@ const SHEET_CONFIG = {
   [SHEET_TYPES.PRODUCT]: {
     Component: L2ShopSheet, // Reuse shop sheet for products
     title: 'Product',
+    height: '90vh',
+  },
+  [SHEET_TYPES.SOCIAL]: {
+    Component: L2SocialSheet,
+    title: 'Social',
+    height: '90vh',
+  },
+  [SHEET_TYPES.EVENTS]: {
+    Component: L2EventsSheet,
+    title: 'Events',
+    height: '90vh',
+  },
+  [SHEET_TYPES.MARKETPLACE]: {
+    Component: L2MarketplaceSheet,
+    title: 'Market',
     height: '90vh',
   },
 };

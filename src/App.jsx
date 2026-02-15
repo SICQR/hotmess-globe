@@ -26,6 +26,7 @@ import PrivacyHub from '@/pages/legal/PrivacyHub';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { WorldPulseProvider } from '@/contexts/WorldPulseContext';
 import { PageTransition } from '@/components/lux/PageTransition';
+import UnifiedGlobe from '@/components/globe/UnifiedGlobe';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -532,7 +533,13 @@ function App() {
                 <Router>
                   <NavigationTracker />
                   <BootRouter>
-                    <AuthenticatedApp />
+                    {/* 
+                      L0-L3 Layered OS Architecture
+                      - UnifiedGlobe is persistent, never unmounts
+                      - All navigation happens via SheetContext
+                      - Router only handles URL sync, not page mounts
+                    */}
+                    <OSArchitecture />
                   </BootRouter>
                 </Router>
               </ShopCartProvider>
@@ -543,6 +550,25 @@ function App() {
       </AuthProvider>
     </I18nProvider>
   )
+}
+
+/**
+ * OSArchitecture - The layered OS structure
+ * L0: Globe (Z-0) - persistent background
+ * L1: HUD/Navigation (Z-50) - always visible
+ * L2: Sheets (Z-80) - slide-up content
+ * L3: Interrupts (Z-100) - blocking overlays
+ */
+function OSArchitecture() {
+  return (
+    <div className="hotmess-os relative h-dvh w-full overflow-hidden bg-[#050507]">
+      {/* L0: Persistent Globe Layer (Z-0) */}
+      <UnifiedGlobe />
+      
+      {/* L1-L3: Everything else */}
+      <AuthenticatedApp />
+    </div>
+  );
 }
 
 export default App

@@ -18,6 +18,9 @@ export const SHEET_TYPES = {
   SHOP: 'shop',
   GHOSTED: 'ghosted',
   PRODUCT: 'product',
+  SOCIAL: 'social',
+  EVENTS: 'events',
+  MARKETPLACE: 'marketplace',
 };
 
 const initialState = {
@@ -278,6 +281,36 @@ export function useVaultSheet() {
     open: (props) => openSheet(SHEET_TYPES.VAULT, props),
     close: closeSheet,
     isOpen: isSheetOpen(SHEET_TYPES.VAULT),
+    props: sheetProps,
+  };
+}
+
+export function useSocialSheet() {
+  const { openSheet, closeSheet, isSheetOpen, sheetProps } = useSheet();
+  return {
+    open: (props) => openSheet(SHEET_TYPES.SOCIAL, props),
+    close: closeSheet,
+    isOpen: isSheetOpen(SHEET_TYPES.SOCIAL),
+    props: sheetProps,
+  };
+}
+
+export function useEventsSheet() {
+  const { openSheet, closeSheet, isSheetOpen, sheetProps } = useSheet();
+  return {
+    open: (props) => openSheet(SHEET_TYPES.EVENTS, props),
+    close: closeSheet,
+    isOpen: isSheetOpen(SHEET_TYPES.EVENTS),
+    props: sheetProps,
+  };
+}
+
+export function useMarketplaceSheet() {
+  const { openSheet, closeSheet, isSheetOpen, sheetProps } = useSheet();
+  return {
+    open: (props) => openSheet(SHEET_TYPES.MARKETPLACE, props),
+    close: closeSheet,
+    isOpen: isSheetOpen(SHEET_TYPES.MARKETPLACE),
     props: sheetProps,
   };
 }

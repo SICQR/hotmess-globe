@@ -249,7 +249,11 @@ export default function L2GhostedSheet() {
                     >
                       <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden">
                         {user.avatar_url ? (
-                          <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                          <img 
+                            src={user.avatar_url} 
+                            alt="" 
+                            className="w-full h-full object-cover grayscale contrast-125" 
+                          />
                         ) : (
                           <span className="text-lg font-black text-white">
                             {user.full_name?.[0] || '?'}
