@@ -70,7 +70,7 @@ describe('ShopCartContext', () => {
       shopifyStorefront.cartCreate.mockResolvedValue({ cart: mockCart });
       shopifyStorefront.cartAddLines.mockResolvedValue({ cart: mockCart });
 
-      const { rerender } = render(
+      render(
         <ShopCartProvider>
           <TestComponent />
         </ShopCartProvider>
