@@ -174,7 +174,7 @@ export async function markAgeVerified(
   const { error } = await supabase
     .from('profiles')
     .update({ age_verified: true })
-    .eq('id', user.id);
+    .eq('account_id', user.id);
 
   if (error) return { success: false, error: error.message };
   return { success: true };
@@ -207,7 +207,7 @@ export async function claimUsername(
   const { error } = await supabase
     .from('profiles')
     .update({ username: normalized })
-    .eq('id', user.id);
+    .eq('account_id', user.id);
 
   if (error) {
     if (error.message.includes('unique') || error.message.includes('duplicate')) {
@@ -242,7 +242,7 @@ export async function completeOnboarding(
       location_opt_in: data.locationOptIn,
       onboarding_complete: true,
     })
-    .eq('id', user.id);
+    .eq('account_id', user.id);
 
   if (error) return { success: false, error: error.message };
   return { success: true };
