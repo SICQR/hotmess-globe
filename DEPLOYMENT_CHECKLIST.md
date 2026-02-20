@@ -78,12 +78,12 @@ Add these three variables:
 ```bash
 # Variable 1
 Name: SUPABASE_URL
-Value: https://klsywpvncqqglhnhrjbh.supabase.co
+Value: [Get from Supabase Dashboard → Settings → API → Project URL]
 Environment: Production
 
 # Variable 2
 Name: SUPABASE_ANON_KEY
-Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc3l3cHZuY3FxZ2xobmhyamJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwOTEyMzIsImV4cCI6MjA4MjY2NzIzMn0.WhPthNardVU6yLmrBDy6poDmdt12MDV0h-QCuhSD5vQ
+Value: [Get from Supabase Dashboard → Settings → API → anon public key]
 Environment: Production
 
 # Variable 3 (Get from Supabase Dashboard → Settings → API)
