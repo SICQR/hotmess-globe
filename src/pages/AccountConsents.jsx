@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { useCurrentUser } from '@/components/utils/queryConfig';
 const AGE_KEY = 'hm_age_confirmed_v1';
 
 export default function AccountConsents() {
+  const navigate = useNavigate();
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
 
   const localAgeVerified = useMemo(() => {
@@ -67,7 +69,7 @@ export default function AccountConsents() {
         has_consented_gps: !!locationConsent,
       });
 
-      window.location.href = createPageUrl('Profile');
+      navigate(createPageUrl('Profile'));
     } catch (error) {
       toast.error(error?.message || 'Failed to save consents');
       setLoading(false);

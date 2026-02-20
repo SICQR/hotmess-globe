@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTaxonomy } from "../taxonomy/useTaxonomy";
 import { createPageUrl } from "../../utils";
 
@@ -144,9 +145,10 @@ export default function FiltersDrawer({
   initialValues,
 }) {
   const { cfg, idx } = useTaxonomy();
+  const navigate = useNavigate();
 
   const go = (path) => {
-    window.location.href = createPageUrl(path);
+    navigate(createPageUrl(path));
   };
 
   const defaults = useMemo(() => {

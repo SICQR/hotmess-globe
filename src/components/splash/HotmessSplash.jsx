@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Play, ArrowRight, Check } from 'lucide-react';
 import { auth, base44 } from '@/components/utils/supabaseClient';
@@ -47,6 +48,7 @@ const TelegramIcon = () => (
 const SPLASH_TRACK_URL = '/audio/ghosted-intro.mp3';
 
 export default function HotmessSplash({ onComplete }) {
+  const navigate = useNavigate();
   const [stage, setStage] = useState('splash'); // splash, auth, complete
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -179,7 +181,7 @@ export default function HotmessSplash({ onComplete }) {
       if (onComplete) {
         onComplete();
       } else {
-        window.location.href = createPageUrl('Home');
+        navigate(createPageUrl('Home'));
       }
     }, 800);
   };

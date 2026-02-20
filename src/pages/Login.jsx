@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 
 function useReturnUrl() {
@@ -43,6 +43,7 @@ function useReturnUrl() {
 
 export default function Login() {
   const returnUrl = useReturnUrl();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,7 +59,7 @@ export default function Login() {
         password,
       });
       if (signInError) throw signInError;
-      window.location.href = returnUrl;
+      navigate(returnUrl);
     } catch (err) {
       setError(err?.message || 'Failed to sign in');
     } finally {

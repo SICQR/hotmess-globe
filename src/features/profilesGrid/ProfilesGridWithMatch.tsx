@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ProfileCard } from './ProfileCard';
 import { useMatchProfiles } from './useMatchProfiles';
 import { useVisibility } from './useVisibility';
@@ -72,6 +73,7 @@ export default function ProfilesGridWithMatch({
   onNavigateUrl,
   defaultSort = 'match',
 }: ProfilesGridWithMatchProps) {
+  const navigate = useNavigate();
   const [sort, setSort] = useState<SortOption>(defaultSort);
   const [viewerLocation, setViewerLocation] = useState<LatLng | null>(null);
   const [viewerEmail, setViewerEmail] = useState<string | null>(null);
@@ -209,7 +211,7 @@ export default function ProfilesGridWithMatch({
 
   const handleNavigateUrl = (url: string) => {
     if (onNavigateUrl) return onNavigateUrl(url);
-    window.location.href = url;
+    navigate(url);
   };
 
   const showEnableLocationCta = !!viewerEmail && !gpsEnabled;

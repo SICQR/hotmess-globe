@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, AlertTriangle, CheckCircle, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ export default function AgeGate() {
   const [requestingLocation, setRequestingLocation] = useState(false);
   const [locationPermissionStatus, setLocationPermissionStatus] = useState(null);
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const nextUrl = searchParams.get('next') || createPageUrl('Home');
   const { markAgeVerified, session } = useBootGuard();
 
@@ -127,14 +128,15 @@ export default function AgeGate() {
     // If already authenticated, mark age verified in profile and go to app
     if (session) {
       await markAgeVerified();
-      window.location.href = nextUrl;
+      navigate(nextUrl);
     } else {
       // Not authenticated - go to auth page
-      window.location.href = '/auth';
+      navigate('/auth');
     }
   };
 
   const handleExit = () => {
+    // External exit to google.com - intentional hard redirect
     window.location.href = 'https://www.google.com';
   };
 

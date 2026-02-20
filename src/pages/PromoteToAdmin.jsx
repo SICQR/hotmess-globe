@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Shield, Check } from 'lucide-react';
@@ -6,6 +7,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 
 export default function PromoteToAdmin() {
   const [promoted, setPromoted] = useState(false);
+  const navigate = useNavigate();
 
   const { data: currentUser, refetch } = useQuery({
     queryKey: ['current-user'],
@@ -20,7 +22,7 @@ export default function PromoteToAdmin() {
       setPromoted(true);
       refetch();
       setTimeout(() => {
-        window.location.href = '/';
+        navigate('/');
       }, 2000);
     }
   });
@@ -40,7 +42,7 @@ export default function PromoteToAdmin() {
           <Shield className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h1 className="text-2xl font-black mb-2">Already Admin</h1>
           <p className="text-white/60 mb-6">You already have admin privileges</p>
-          <Button onClick={() => window.location.href = '/'}>
+          <Button onClick={() => navigate('/')}>
             Go Home
           </Button>
         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Phone, PhoneOff, User, X, Clock, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ const DELAY_OPTIONS = [
 ];
 
 export default function FakeCallGenerator({ onClose, compact = false }) {
+  const navigate = useNavigate();
   const [callerName, setCallerName] = useState('Mum');
   const [selectedDelay, setSelectedDelay] = useState(5);
   const [isScheduled, setIsScheduled] = useState(false);
@@ -134,7 +136,7 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
     
     // Brief "answered" state, then redirect to safety
     setTimeout(() => {
-      window.location.href = '/safety';
+      navigate('/safety');
     }, 1500);
   };
 

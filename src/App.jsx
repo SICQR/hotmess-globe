@@ -361,8 +361,7 @@ const AuthenticatedApp = () => {
       <Route path="/auth/verify" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/reset" element={<PageRoute pageKey="Auth" />} />
       
-      {/* Onboarding sub-routes */}
-      <Route path="/onboarding" element={<PageRoute pageKey="Onboarding" />} />
+      {/* Onboarding sub-routes (main /onboarding declared above) */}
       <Route path="/onboarding/consent" element={<PageRoute pageKey="Onboarding" />} />
       <Route path="/onboarding/profile" element={<PageRoute pageKey="Onboarding" />} />
       <Route path="/onboarding/preferences" element={<PageRoute pageKey="Onboarding" />} />
@@ -476,9 +475,7 @@ const AuthenticatedApp = () => {
       <Route path="/connect/*" element={<Navigate to={createPageUrl('Social')} replace />} />
       <Route path="/marketplace" element={<Navigate to="/market" replace />} />
       <Route path="/marketplace/p/:handle" element={<ShopProductRoute />} />
-      <Route path="/more/beacons" element={<PageRoute pageKey="Beacons" />} />
-      <Route path="/more/beacons/new" element={<PageRoute pageKey="CreateBeacon" />} />
-      <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
+      {/* /more/beacons/* routes declared above at lines 410-413 */}
       <Route path="/age" element={<PageRoute pageKey="AgeGate" />} />
       <Route path="/safety" element={<PageRoute pageKey="Safety" />} />
       <Route path="/calendar" element={<PageRoute pageKey="Calendar" />} />

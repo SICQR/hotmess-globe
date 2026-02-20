@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ProfileCard } from './ProfileCard';
 import { useInfiniteProfiles } from './useInfiniteProfiles';
 import { useVisibility } from './useVisibility';
@@ -69,6 +70,7 @@ export default function ProfilesGrid({
   onOpenProfile,
   onNavigateUrl,
 }: ProfilesGridProps) {
+  const navigate = useNavigate();
   const { items, nextCursor, isLoadingInitial, isLoadingMore, error, loadMore } = useInfiniteProfiles();
   const { ref: sentinelRef, isVisible: sentinelVisible } = useVisibility({ rootMargin: '600px', threshold: 0.1 });
 
@@ -200,7 +202,7 @@ export default function ProfilesGrid({
 
   const handleNavigateUrl = (url: string) => {
     if (onNavigateUrl) return onNavigateUrl(url);
-    window.location.href = url;
+    navigate(url);
   };
 
   const showEnableLocationCta = !!viewerEmail && !gpsEnabled;

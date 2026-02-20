@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
@@ -28,6 +28,7 @@ import { safeGetViewerLatLng } from '@/utils/geolocation';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const emailParam = searchParams.get('email');
   const uidParam = searchParams.get('uid') || searchParams.get('auth_user_id');
   const nextParam = searchParams.get('next');
@@ -516,7 +517,7 @@ export default function Profile() {
 
       const next = typeof nextParam === 'string' ? nextParam.trim() : '';
       const safeNext = next.startsWith('/') ? next : '';
-      window.location.href = safeNext || createPageUrl('Home');
+      navigate(safeNext || createPageUrl('Home'));
     } catch (error) {
       console.error('Profile setup failed:', error);
       const msg =
@@ -545,7 +546,7 @@ export default function Profile() {
                 This profile may be private, deleted, or not accessible in your environment.
               </p>
               <div className="mt-6 flex items-center justify-center gap-3">
-                <Button onClick={() => (window.location.href = createPageUrl('Home'))}>
+                <Button onClick={() => navigate(createPageUrl('Home'))}>
                   Go Home
                 </Button>
                 <Button variant="outline" onClick={() => window.history.back()}>

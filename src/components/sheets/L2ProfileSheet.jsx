@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
 import { 
@@ -22,6 +23,7 @@ import MembershipBadge from '@/components/membership/MembershipBadge';
 
 export default function L2ProfileSheet({ email, uid }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { openSheet, closeSheet } = useSheet();
   const [activeTab, setActiveTab] = useState('about');
 
@@ -390,7 +392,7 @@ export default function L2ProfileSheet({ email, uid }) {
           <Button
             onClick={() => {
               closeSheet();
-              window.location.href = '/settings';
+              navigate('/settings');
             }}
             className="flex-1 h-12 bg-white/10 hover:bg-white/20"
           >
