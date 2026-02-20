@@ -1214,9 +1214,18 @@ entityTables.forEach(table => {
     i === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word.charAt(0).toUpperCase() + word.slice(1)
   ).join('');
 
+  // Normalize column names for compatibility (created_date -> created_at)
+  const normalizeColumnName = (col) => {
+    if (!col || typeof col !== 'string') return col;
+    // Map created_date to created_at for tables that don't have created_date
+    if (col === 'created_date') return 'created_at';
+    if (col === '-created_date') return '-created_at';
+    return col;
+  };
+
   const normalizeFilterKey = (rawKey) => {
     if (!rawKey || typeof rawKey !== 'string') return rawKey;
-    if (!rawKey.includes('.')) return rawKey;
+    if (!rawKey.includes('.')) return normalizeColumnName(rawKey);
     const parts = rawKey.split('.');
     if (parts.length === 2) return `${parts[0]}->>${parts[1]}`;
     return rawKey;
@@ -1252,8 +1261,9 @@ entityTables.forEach(table => {
       let query = supabase.from(table).select('*');
       
       if (orderBy) {
-        const desc = orderBy.startsWith('-');
-        const column = desc ? orderBy.slice(1) : orderBy;
+        const normalizedOrder = normalizeColumnName(orderBy);
+        const desc = normalizedOrder.startsWith('-');
+        const column = desc ? normalizedOrder.slice(1) : normalizedOrder;
         query = query.order(column, { ascending: !desc });
       }
       
@@ -1320,8 +1330,9 @@ entityTables.forEach(table => {
       });
       
       if (orderBy) {
-        const desc = orderBy.startsWith('-');
-        const column = desc ? orderBy.slice(1) : orderBy;
+        const normalizedOrder = normalizeColumnName(orderBy);
+        const desc = normalizedOrder.startsWith('-');
+        const column = desc ? normalizedOrder.slice(1) : normalizedOrder;
         query = query.order(column, { ascending: !desc });
       }
       
