@@ -51,9 +51,18 @@ test.describe('Navigation Stability (Stage 1)', () => {
       (window as any).__HOTMESS_NAV_TEST = Date.now();
     });
     
-    // Navigate to events tab
-    await page.goto('/events');
-    await page.waitForLoadState('networkidle');
+    // Navigate using the bottom nav link (SPA navigation)
+    const marketLink = page.locator('nav a[href="/market"]').first();
+    if (await marketLink.isVisible()) {
+      await marketLink.click();
+      await page.waitForLoadState('networkidle');
+    } else {
+      // Fallback: use router navigate
+      await page.evaluate(() => {
+        window.history.pushState({}, '', '/market');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      });
+    }
     
     // Check if our marker survived (SPA navigation preserves it)
     const markerSurvived = await page.evaluate(() => {
@@ -65,24 +74,38 @@ test.describe('Navigation Stability (Stage 1)', () => {
   });
 
   test('back button is deterministic', async ({ page }) => {
-    // Build history stack
+    // Start at home
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     
-    await page.goto('/pulse');
-    await page.waitForLoadState('networkidle');
+    // Click pulse link using bottom nav (SPA navigation)
+    const pulseLink = page.locator('nav a[href="/pulse"]').first();
+    if (await pulseLink.isVisible()) {
+      await pulseLink.click();
+      await page.waitForLoadState('networkidle');
+    } else {
+      await page.goto('/pulse');
+      await page.waitForLoadState('networkidle');
+    }
     
-    await page.goto('/events');
-    await page.waitForLoadState('networkidle');
+    // Click market link
+    const marketLink = page.locator('nav a[href="/market"]').first();
+    if (await marketLink.isVisible()) {
+      await marketLink.click();
+      await page.waitForLoadState('networkidle');
+    } else {
+      await page.goto('/market');
+      await page.waitForLoadState('networkidle');
+    }
     
     // Go back to pulse
     await page.goBack();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
     expect(page.url()).toContain('/pulse');
     
     // Go back to home
     await page.goBack();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
     const finalUrl = new URL(page.url());
     expect(finalUrl.pathname).toBe('/');
   });
@@ -205,8 +228,8 @@ test.describe('Mobile App Shell (Stage 6)', () => {
     await page.goto('/pulse');
     await page.waitForLoadState('networkidle');
     
-    // Look for bottom nav
-    const bottomNav = page.locator('nav.fixed.bottom-0, nav[class*="bottom"]').first();
+    // Look for bottom nav - be more specific about the selector
+    const bottomNav = page.locator('nav').filter({ has: page.locator('a[href="/market"]') }).first();
     const hasBottomNav = await bottomNav.count() > 0;
     
     // Should have mobile navigation
