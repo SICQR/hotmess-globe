@@ -11,6 +11,7 @@ import { createUserProfileUrl } from '@/utils';
 import { toast } from 'sonner';
 import TelegramPanel from './TelegramPanel';
 import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
+import { useProfileOpener } from '@/lib/profile';
 
 const SkeletonCard = () => {
   return (
@@ -71,6 +72,7 @@ export default function ProfilesGrid({
   onNavigateUrl,
 }: ProfilesGridProps) {
   const navigate = useNavigate();
+  const { openProfile } = useProfileOpener();
   const { items, nextCursor, isLoadingInitial, isLoadingMore, error, loadMore } = useInfiniteProfiles();
   const { ref: sentinelRef, isVisible: sentinelVisible } = useVisibility({ rootMargin: '600px', threshold: 0.1 });
 
@@ -242,9 +244,15 @@ export default function ProfilesGrid({
   };
 
   const handleOpenProfile = (profile: Profile) => {
+    // Allow external override
     if (onOpenProfile) return onOpenProfile(profile);
 
-    return handleNavigateUrl(createUserProfileUrl(profile));
+    // Use canonical profile opener (Stage 4)
+    openProfile({
+      userId: String(profile.id),
+      source: 'grid',
+      email: profile.email ? String(profile.email) : undefined,
+    });
   };
 
   return (

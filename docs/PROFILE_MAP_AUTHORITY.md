@@ -323,30 +323,30 @@ const goBack = () => {
 ## 9. Migration Checklist
 
 ### Phase 1: Create Contract
-- [ ] Create `src/lib/profile.ts` with `useProfileOpener`
-- [ ] Export from lib index
+- [x] Create `src/lib/profile.ts` with `useProfileOpener` ✅ Stage 4
+- [ ] Export from lib index (optional)
 
 ### Phase 2: Update Entry Points
-- [ ] ProfilesGrid.tsx → Use `useProfileOpener`
-- [ ] ProfilesGridWithMatch.tsx → Use `useProfileOpener`
-- [ ] Globe beacon click → Use `useProfileOpener`
-- [ ] Map marker click → Use `useProfileOpener`
+- [x] ProfilesGrid.tsx → Use `useProfileOpener` ✅ Stage 4
+- [ ] ProfilesGridWithMatch.tsx → Use `useProfileOpener` (deferred: merge later)
+- [x] Globe beacon click → Use `useProfileOpener` ✅ Stage 4
+- [ ] Map marker click → Use `useProfileOpener` (Mapbox)
 - [ ] Search results → Use `useProfileOpener`
 - [ ] Chat thread tap → Use `useProfileOpener`
 - [ ] Social feed taps → Use `useProfileOpener`
 
-### Phase 3: Consolidate Cards
+### Phase 3: Consolidate Cards (DEFERRED)
 - [ ] Merge SmartProfileCard into ProfileCard
 - [ ] Remove TacticalProfileCard (replace usages)
 - [ ] Remove react-bits ProfileCard (unused)
 
-### Phase 4: Consolidate Sheets
+### Phase 4: Consolidate Sheets (DEFERRED)
 - [ ] Add `compact` mode to L2ProfileSheet
 - [ ] Remove MiniProfileSheet
 
 ### Phase 5: Verify
-- [ ] Grid tap → Opens profile sheet
-- [ ] Globe tap → Opens profile sheet
+- [x] Grid tap → Opens profile sheet ✅ Stage 4
+- [x] Globe tap → Opens profile sheet ✅ Stage 4
 - [ ] Map tap → Opens profile sheet
 - [ ] Search tap → Opens profile sheet
 - [ ] Deep link → Works correctly
