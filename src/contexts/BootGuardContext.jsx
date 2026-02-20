@@ -84,7 +84,6 @@ export function BootGuardProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!mounted) return;
 
-      console.log('[BootGuard] Auth event:', event);
 
       if (event === 'SIGNED_OUT' || !newSession?.user?.id) {
         setSession(null);
@@ -145,13 +144,10 @@ export function BootGuardProvider({ children }) {
         // On error, use localStorage to decide boot state
         // Trust localStorage age verification even if DB fetch fails
         const localAge = getLocalAgeVerified();
-        console.log('[BootGuard] Profile fetch failed, localStorage age:', localAge);
         if (localAge) {
           // User verified age locally, let them through
-          console.log('[BootGuard] Setting READY state due to localStorage');
           setBootState(BOOT_STATES.READY);
         } else {
-          console.log('[BootGuard] No localStorage age, setting NEEDS_AGE');
           setBootState(BOOT_STATES.NEEDS_AGE);
         }
         setIsLoading(false);
@@ -162,7 +158,6 @@ export function BootGuardProvider({ children }) {
       const localAge = getLocalAgeVerified();
       
       if (profileData && !profileData.age_verified && localAge) {
-        console.log('[BootGuard] Syncing localStorage age to profile...');
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ age_verified: true })
@@ -170,7 +165,6 @@ export function BootGuardProvider({ children }) {
 
         if (!updateError) {
           profileData = { ...profileData, age_verified: true };
-          console.log('[BootGuard] Age synced successfully');
         } else {
           console.error('[BootGuard] Failed to sync age (RLS?):', updateError);
           // IMPORTANT: Even if DB update fails, trust localStorage 
@@ -181,7 +175,6 @@ export function BootGuardProvider({ children }) {
 
       // Final fallback: if localStorage says verified but profile doesn't, trust localStorage
       if (!profileData?.age_verified && localAge) {
-        console.log('[BootGuard] Fallback: trusting localStorage age verification');
         profileData = { ...profileData, age_verified: true };
       }
 

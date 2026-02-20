@@ -34,9 +34,6 @@ const LoadingSpinner = () => (
 export default function BootRouter({ children }) {
   const { bootState, isLoading } = useBootGuard();
   const localAge = getLocalAgeVerified();
-  
-  // Debug logging
-  console.log('[BootRouter] State:', bootState, 'isLoading:', isLoading, 'localAge:', localAge);
 
   // Show loading while checking auth
   if (isLoading || bootState === BOOT_STATES.LOADING) {
@@ -48,7 +45,6 @@ export default function BootRouter({ children }) {
     // CRITICAL FIX: If user has localStorage age verified, they might just have
     // a profile fetch issue. Check if we should let them through anyway.
     if (localAge) {
-      console.log('[BootRouter] UNAUTHENTICATED but localStorage has age - showing children');
       return <>{children}</>;
     }
     return <PublicShell />;
@@ -59,10 +55,9 @@ export default function BootRouter({ children }) {
   if (bootState === BOOT_STATES.NEEDS_AGE) {
     if (localAge) {
       // User already verified age locally - don't block them
-      console.log('[BootRouter] Bypassing AgeGate - localStorage has age verified');
       return <>{children}</>;
     }
-    
+
     // Import dynamically to avoid circular deps
     const AgeGate = React.lazy(() => import('@/pages/AgeGate'));
     return (
@@ -77,10 +72,9 @@ export default function BootRouter({ children }) {
   if (bootState === BOOT_STATES.NEEDS_ONBOARDING) {
     if (localAge) {
       // User verified age - onboarding can be done later
-      console.log('[BootRouter] Bypassing OnboardingGate - localStorage has age verified');
       return <>{children}</>;
     }
-    
+
     const OnboardingGate = React.lazy(() => import('@/pages/OnboardingGate'));
     return (
       <React.Suspense fallback={<LoadingSpinner />}>
