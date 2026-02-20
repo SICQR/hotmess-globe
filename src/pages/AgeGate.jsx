@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, AlertTriangle, CheckCircle, MapPin } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { useBootGuard } from '@/contexts/BootGuardContext';
+import BrandBackground from '@/components/ui/BrandBackground';
 
 // Must match BootGuardContext
 const AGE_KEY = 'hm_age_confirmed_v1';
@@ -141,134 +141,124 @@ export default function AgeGate() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 overflow-hidden">
+      <BrandBackground />
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-lg"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+        className="relative z-10 w-full max-w-sm"
       >
-        <div className="bg-white/5 border-2 border-white/20 p-8">
-          <div className="text-center mb-8">
-            <Shield className="w-20 h-20 mx-auto mb-4 text-[#FF1493]" />
-            <h1 className="text-5xl font-black uppercase mb-4">
-              HOT<span className="text-[#FF1493]">MESS</span>
-            </h1>
-            <p className="text-white/60 uppercase tracking-wider text-sm">18+ VERIFICATION REQUIRED</p>
-          </div>
+        {/* Wordmark */}
+        <div className="text-center mb-8">
+          <p className="text-5xl font-black tracking-tight text-white leading-none">
+            HOT<span className="text-[#FF1493]" style={{ textShadow: '0 0 24px rgba(255,20,147,0.6)' }}>MESS</span>
+          </p>
+          <p className="text-[10px] tracking-[0.45em] text-white/30 uppercase font-mono mt-2">LONDON · 18+ ONLY</p>
+        </div>
 
-          <div className="space-y-6 mb-8">
-            <div className="bg-red-600/20 border-2 border-red-600 p-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0 mt-1" />
-                <div>
-                  <p className="font-black uppercase text-sm mb-2 text-red-400">AGE RESTRICTED CONTENT</p>
-                  <p className="text-sm text-white/80">
-                    This platform contains adult content and is intended for users 18 years or older. 
-                    By proceeding, you confirm you meet the age requirement.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 text-sm text-white/80">
-                <CheckCircle className="w-5 h-5 text-[#39FF14] flex-shrink-0 mt-0.5" />
-                <span>Consent-first community with clear boundaries</span>
-              </div>
-              <div className="flex items-start gap-3 text-sm text-white/80">
-                <CheckCircle className="w-5 h-5 text-[#39FF14] flex-shrink-0 mt-0.5" />
-                <span>Safety resources and support always available</span>
-              </div>
-              <div className="flex items-start gap-3 text-sm text-white/80">
-                <CheckCircle className="w-5 h-5 text-[#39FF14] flex-shrink-0 mt-0.5" />
-                <span>Report, block, and moderation tools built-in</span>
-              </div>
+        {/* Card */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 space-y-5">
+          <div className="flex items-center gap-3">
+            <Shield className="w-7 h-7 shrink-0" style={{ color: '#FF1493', filter: 'drop-shadow(0 0 8px rgba(255,20,147,0.5))' }} />
+            <div>
+              <p className="text-sm font-black uppercase tracking-wide text-white">Age Verification</p>
+              <p className="text-xs text-white/40">18+ required by law</p>
             </div>
           </div>
 
-          <div className="bg-white/5 border border-white/20 p-4 mb-6">
-            <div className="flex items-start gap-3 group">
-              <Checkbox 
-                checked={confirmed}
-                onCheckedChange={(value) => setConfirmed(value === true)}
-                className="mt-1 border-white data-[state=checked]:bg-[#FF1493] data-[state=checked]:border-[#FF1493]"
-              />
-              <button
-                type="button"
-                onClick={() => setConfirmed((v) => !v)}
-                className="text-left text-sm group-hover:text-white transition-colors"
-              >
-                <span className="font-bold">I confirm that I am 18 years of age or older</span> and agree to view adult content.
-                I understand this platform contains explicit material.
-              </button>
-            </div>
+          {/* Red warning */}
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-red-300 leading-relaxed">
+              This platform contains adult content for users 18+. By continuing you confirm you meet the age requirement.
+            </p>
           </div>
 
-          <div className="bg-white/5 border border-white/20 p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <div className="flex items-start gap-3 group">
-                  <Checkbox
-                    checked={locationConsent}
-                    onCheckedChange={(value) => setLocationConsent(value === true)}
-                    className="mt-1 border-white data-[state=checked]:bg-[#00D9FF] data-[state=checked]:border-[#00D9FF]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setLocationConsent((v) => !v)}
-                    className="text-left text-sm group-hover:text-white transition-colors"
-                  >
-                    <span className="font-bold">I consent to location services</span> so HOTMESS can show nearby users, events, and beacons.
-                  </button>
-                </div>
-
-                {locationPermissionStatus === 'granted' ? (
-                  <p className="mt-2 text-xs text-white/60 uppercase tracking-wider">Location permission: granted</p>
-                ) : locationPermissionStatus === 'denied' ? (
-                  <p className="mt-2 text-xs text-white/60 uppercase tracking-wider">Location permission: blocked in browser settings</p>
-                ) : null}
-
-                <div className="mt-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={requestBrowserLocationPermission}
-                    disabled={requestingLocation || locationPermissionStatus === 'granted'}
-                    className="w-full border-2 border-white/20 text-white hover:bg-white hover:text-black font-black uppercase"
-                  >
-                    {locationPermissionStatus === 'granted'
-                      ? 'LOCATION ENABLED'
-                      : requestingLocation
-                        ? 'REQUESTING LOCATION…'
-                        : 'ENABLE LOCATION NOW'}
-                  </Button>
-                </div>
+          {/* Features */}
+          <div className="space-y-2">
+            {[
+              'Consent-first community with clear boundaries',
+              'Safety resources always available',
+              'Report, block, and moderation built-in',
+            ].map((txt) => (
+              <div key={txt} className="flex items-start gap-2 text-xs text-white/60">
+                <CheckCircle className="w-4 h-4 text-[#39FF14] shrink-0 mt-0.5" />
+                <span>{txt}</span>
               </div>
-            </div>
+            ))}
           </div>
 
-          <div className="space-y-3">
-            <Button
+          {/* Age checkbox */}
+          <label className="flex items-start gap-3 cursor-pointer bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-colors select-none">
+            <Checkbox
+              checked={confirmed}
+              onCheckedChange={(v) => setConfirmed(v === true)}
+              className="mt-0.5 border-white/30 data-[state=checked]:bg-[#FF1493] data-[state=checked]:border-[#FF1493]"
+            />
+            <span className="text-xs text-white/70 leading-relaxed">
+              <span className="font-bold text-white">I confirm I am 18+</span> and agree to view adult content on this platform.
+            </span>
+          </label>
+
+          {/* Location checkbox */}
+          <label className="flex items-start gap-3 cursor-pointer bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-colors select-none">
+            <Checkbox
+              checked={locationConsent}
+              onCheckedChange={(v) => setLocationConsent(v === true)}
+              className="mt-0.5 border-white/30 data-[state=checked]:bg-[#00D9FF] data-[state=checked]:border-[#00D9FF]"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs leading-relaxed text-white/70">
+                <span className="font-bold text-white flex items-center gap-1 mb-0.5">
+                  <MapPin className="w-3 h-3 text-[#00D9FF]" /> Location services
+                </span>
+                Required for beacons, nearby users, and Right Now features.
+              </p>
+              {locationPermissionStatus === 'granted' && (
+                <p className="text-[10px] text-[#39FF14] mt-1 font-mono uppercase">✓ Granted</p>
+              )}
+              {locationPermissionStatus === 'denied' && (
+                <p className="text-[10px] text-red-400 mt-1 font-mono uppercase">Blocked — enable in browser settings</p>
+              )}
+              {locationConsent && locationPermissionStatus !== 'granted' && (
+                <button
+                  type="button"
+                  onClick={requestBrowserLocationPermission}
+                  disabled={requestingLocation}
+                  className="mt-2 text-[10px] font-black uppercase tracking-widest text-[#00D9FF] hover:underline disabled:opacity-40"
+                >
+                  {requestingLocation ? 'Requesting…' : 'Enable Now →'}
+                </button>
+              )}
+            </div>
+          </label>
+
+          {/* CTA buttons */}
+          <div className="space-y-2 pt-1">
+            <button
               onClick={handleConfirm}
               disabled={!confirmed || !locationConsent || requestingLocation}
-              className="w-full bg-[#FF1493] hover:bg-white text-black font-black uppercase py-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-14 rounded-xl font-black text-black text-base uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all"
+              style={{
+                background: (confirmed && locationConsent) ? '#FF1493' : 'rgba(255,20,147,0.3)',
+                boxShadow: (confirmed && locationConsent) ? '0 0 28px rgba(255,20,147,0.45)' : 'none',
+              }}
             >
-              ENTER (18+)
-            </Button>
-            <Button
+              Enter HOTMESS
+            </button>
+            <button
               onClick={handleExit}
-              variant="outline"
-              className="w-full border-2 border-white/20 text-white hover:bg-white hover:text-black font-black uppercase py-6 text-lg"
+              className="w-full h-12 rounded-xl border border-white/10 text-white/40 text-sm font-semibold hover:bg-white/5 active:scale-95 transition-all"
             >
-              EXIT (UNDER 18)
-            </Button>
+              Exit (Under 18)
+            </button>
           </div>
-
-          <p className="text-center text-xs text-white/40 mt-6 uppercase tracking-wider">
-            By entering, you agree to our Terms of Service and Privacy Policy
-          </p>
         </div>
+
+        <p className="text-center text-xs text-white/20 mt-5">
+          By entering you agree to our Terms of Service and Privacy Policy.
+        </p>
       </motion.div>
     </div>
   );

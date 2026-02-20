@@ -20,17 +20,22 @@ import { debounce } from 'lodash';
 import ErrorBoundary from '../components/error/ErrorBoundary';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
-import { useRealtimeBeacons, useRightNowCount } from '../components/globe/useRealtimeBeacons';
+import { useRealtimeBeacons, useRightNowCount, useRealtimeLocations, useRealtimeRoutes } from '../components/globe/useRealtimeBeacons';
 import { useProfileOpener } from '@/lib/profile';
+import LocationShopPanel from '../components/globe/LocationShopPanel';
 
 export default function GlobePage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { openProfile } = useProfileOpener();
 
-  // NEW: Realtime presence beacons from presence table (TTL-based)
+  // Realtime presence beacons from presence table (TTL-based)
   const { beacons: presenceBeacons, presenceCount } = useRealtimeBeacons();
   const rightNowCount = useRightNowCount();
+
+  // Realtime locations (spikes) and routes (arcs) from dedicated tables
+  const { locations: realtimeLocations } = useRealtimeLocations();
+  const { routes: realtimeRoutes }       = useRealtimeRoutes();
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -218,6 +223,8 @@ export default function GlobePage() {
   const [localBeaconCenter, setLocalBeaconCenter] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [previewBeacon, setPreviewBeacon] = useState(null);
+  const [locationShopBeacon, setLocationShopBeacon] = useState(null);
+  const autoZoomedRef = React.useRef(false);
 
   const showPeoplePins = activeLayers.includes('people');
 
@@ -293,6 +300,15 @@ export default function GlobePage() {
     };
   }, []);
 
+  // Auto-zoom to user's location on first GPS fix
+  useEffect(() => {
+    if (!userLocation || autoZoomedRef.current) return;
+    if (globeRef.current?.rotateTo) {
+      globeRef.current.rotateTo(userLocation.lat, userLocation.lng, 3.2);
+      autoZoomedRef.current = true;
+    }
+  }, [userLocation]);
+
   // Filter beacons by mode, type, intensity, recency, and search (must be before conditional return)
   const filteredBeacons = useMemo(() => {
     const toNumberOrNull = (value) => {
@@ -337,12 +353,25 @@ export default function GlobePage() {
 
     const peopleList = showPeoplePins ? nearbyPeoplePins : [];
 
-    // NEW: Include realtime presence beacons from presence table
+    // Realtime presence beacons from presence table
     const realtimePresence = Array.isArray(presenceBeacons) ? presenceBeacons : [];
 
-    let filtered = [...beaconsList, ...rightNowList, ...peopleList, ...realtimePresence].map(b => ({
+    // Realtime location spikes from `locations` table — convert to beacon format
+    const locationSpikes = (Array.isArray(realtimeLocations) ? realtimeLocations : [])
+      .filter((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng))
+      .map((l) => ({
+        ...l,
+        kind:   l.kind || 'spike',
+        mode:   'location',
+        active: true,
+        ts:     new Date(l.created_at || Date.now()).getTime(),
+        // Preserve shopify_handles so LocationShopPanel can pick them up
+        shopify_handles: l.shopify_handles || [],
+      }));
+
+    let filtered = [...beaconsList, ...rightNowList, ...peopleList, ...realtimePresence, ...locationSpikes].map(b => ({
       ...b,
-      ts: new Date(b.created_date || Date.now()).getTime() // Convert created_date to timestamp
+      ts: b.ts ?? new Date(b.created_date || Date.now()).getTime(),
     }));
 
     // Apply search filter first
@@ -390,7 +419,7 @@ export default function GlobePage() {
     }
 
     return filtered;
-  }, [beacons, rightNowUsers, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, currentUser?.role, presenceBeacons]);
+  }, [beacons, rightNowUsers, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, currentUser?.role, presenceBeacons, realtimeLocations]);
 
   // Sort by most recent
   const recentActivity = useMemo(() => {
@@ -411,12 +440,24 @@ export default function GlobePage() {
       });
       return;
     }
+
+    // Location spikes with Shopify products → open shop panel
+    if (beacon?.mode === 'location' && Array.isArray(beacon.shopify_handles) && beacon.shopify_handles.length > 0) {
+      setShowControls(false);
+      setShowPanel(false);
+      setShowNearbyGrid(false);
+      setShowLocalBeacons(false);
+      setPreviewBeacon(null);
+      setLocationShopBeacon(beacon);
+      return;
+    }
     
     // Close all other panels first
     setShowControls(false);
     setShowPanel(false);
     setShowNearbyGrid(false);
     setShowLocalBeacons(false);
+    setLocationShopBeacon(null);
     
     // Show preview panel
     setPreviewBeacon(beacon);
@@ -557,6 +598,7 @@ export default function GlobePage() {
           activeLayers={debouncedLayers}
           userActivities={userActivities}
           userIntents={userIntents}
+          routesData={realtimeRoutes}
           onBeaconClick={handleBeaconClick}
           onCityClick={handleCityClick}
           selectedCity={selectedCity}
@@ -793,6 +835,14 @@ export default function GlobePage() {
           beacon={previewBeacon}
           onClose={() => setPreviewBeacon(null)}
           onViewFull={handleViewFullDetails}
+        />
+      )}
+
+      {/* Location Shop Panel — Shopify products pinned to a globe location */}
+      {locationShopBeacon && (
+        <LocationShopPanel
+          location={locationShopBeacon}
+          onClose={() => setLocationShopBeacon(null)}
         />
       )}
 

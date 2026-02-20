@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.locations (
   description text,
   kind        text             NOT NULL DEFAULT 'spike',
   intensity   double precision NOT NULL DEFAULT 1.0,
+  shopify_handles text[]       NOT NULL DEFAULT '{}',
   metadata    jsonb,
   created_by  uuid             REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at  timestamptz      NOT NULL DEFAULT now(),
@@ -51,7 +52,6 @@ CREATE POLICY IF NOT EXISTS "locations_insert_authenticated"
 -- Grant permissions
 GRANT SELECT         ON public.locations TO anon, authenticated;
 GRANT INSERT         ON public.locations TO authenticated;
-GRANT USAGE, SELECT  ON SEQUENCE         locations_id_seq TO authenticated;
 
 -- =====================================================
 -- TABLE: routes
@@ -109,4 +109,3 @@ CREATE POLICY IF NOT EXISTS "routes_insert_authenticated"
 -- Grant permissions
 GRANT SELECT        ON public.routes TO anon, authenticated;
 GRANT INSERT        ON public.routes TO authenticated;
-GRANT USAGE, SELECT ON SEQUENCE      routes_id_seq TO authenticated;
