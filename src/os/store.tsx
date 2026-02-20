@@ -3,6 +3,12 @@
  * 
  * Central state management for the HOTMESS OS.
  * Uses React Context + useReducer for strict FSM control.
+ * 
+ * AUTHORITY NOTE (Stage 2 Stabilization):
+ * - For L2 sheets (profile, event, chat, shop, etc.): use SheetContext
+ * - This OS Store handles system modes (idle, interrupt) only
+ * - The openSheet/closeSheet here are for demo/prototype purposes
+ * - Production sheet opening should use: import { useSheet } from '@/contexts/SheetContext'
  */
 
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react'

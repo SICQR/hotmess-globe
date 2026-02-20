@@ -82,6 +82,17 @@ function sheetReducer(state, action) {
         isAnimating: true,
       };
     
+    case 'DISMISS_ALL':
+      // Close all sheets including stack
+      return {
+        ...state,
+        activeSheet: null,
+        sheetProps: {},
+        sheetStack: [],
+        isAnimating: true,
+        direction: 'down',
+      };
+    
     case 'ANIMATION_COMPLETE':
       return { ...state, isAnimating: false };
     
@@ -119,6 +130,11 @@ export function SheetProvider({ children }) {
     dispatch({ type: 'POP_SHEET' });
   }, []);
 
+  // Dismiss all sheets (clears entire stack)
+  const dismissAll = useCallback(() => {
+    dispatch({ type: 'DISMISS_ALL' });
+  }, []);
+
   // Mark animation complete
   const onAnimationComplete = useCallback(() => {
     dispatch({ type: 'ANIMATION_COMPLETE' });
@@ -134,7 +150,7 @@ export function SheetProvider({ children }) {
     const currentSheet = searchParams.get('sheet');
     
     if (state.activeSheet && state.activeSheet !== currentSheet) {
-      // Sheet opened — update URL
+      // Sheet opened — push new URL entry (so back button can close it)
       const newParams = new URLSearchParams(searchParams);
       newParams.set('sheet', state.activeSheet);
       
@@ -144,9 +160,10 @@ export function SheetProvider({ children }) {
       if (state.sheetProps.thread) newParams.set('thread', state.sheetProps.thread);
       if (state.sheetProps.handle) newParams.set('handle', state.sheetProps.handle);
       
-      setSearchParams(newParams, { replace: true });
+      // Use push (not replace) so back button creates separate history entry
+      setSearchParams(newParams, { replace: false });
     } else if (!state.activeSheet && currentSheet) {
-      // Sheet closed — clear URL params
+      // Sheet closed — replace URL to clean up params (no new history entry)
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('sheet');
       newParams.delete('id');
@@ -197,11 +214,12 @@ export function SheetProvider({ children }) {
     isAnimating: state.isAnimating,
     isOpen: !!state.activeSheet,
     
-    // Actions
-    openSheet,
-    closeSheet,
-    pushSheet,
-    popSheet,
+    // Actions (LIFO stack API)
+    openSheet,      // push: open a sheet (alias for push single)
+    closeSheet,     // pop: close current sheet
+    pushSheet,      // push: open nested sheet, keep current in stack
+    popSheet,       // pop: return to previous sheet in stack
+    dismissAll,     // clear: close all sheets including stack
     onAnimationComplete,
     updateSheetProps,
     
