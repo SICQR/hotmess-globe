@@ -6,9 +6,7 @@ import { createPageUrl } from '../../utils';
 import { base44 } from '@/components/utils/supabaseClient';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { 
-  Home, 
   Globe, 
-  Zap, 
   ShoppingBag, 
   LayoutGrid,
   Users,
@@ -286,25 +284,25 @@ export default function BottomNav({ currentPageName, user }) {
 
   return (
     <>
-      {/* Bottom Navigation Bar */}
+      {/* Bottom Navigation Bar - 5 Mode OS */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-end justify-around px-2 py-1">
+        <div className="flex items-center justify-around px-2 h-16">
           
-          {/* HOME */}
+          {/* GHOSTED (Grid) - Default */}
           <Link
-            to={createPageUrl('Home')}
-            className={`flex flex-col items-center py-2 px-3 transition-all ${
-              isActive('Home') ? 'text-white' : 'text-white/50'
+            to="/"
+            className={`flex flex-col items-center justify-center flex-1 h-full transition-all ${
+              pathname === '/' || currentPageName === 'Social' || currentPageName === 'ProfilesGrid' ? 'text-white' : 'text-white/50'
             }`}
           >
-            <Home className={`w-6 h-6 ${isActive('Home') ? 'text-[#FF1493]' : ''}`} />
-            <span className="text-[9px] font-black uppercase mt-1">Home</span>
+            <LayoutGrid className={`w-6 h-6 ${pathname === '/' ? 'text-[#FF1493]' : ''}`} />
+            <span className="text-[9px] font-black uppercase mt-1">Ghosted</span>
           </Link>
 
-          {/* PULSE */}
+          {/* PULSE (Globe) */}
           <Link
-            to={createPageUrl('Pulse')}
-            className={`flex flex-col items-center py-2 px-3 transition-all ${
+            to="/pulse"
+            className={`flex flex-col items-center justify-center flex-1 h-full transition-all ${
               isPulseActive ? 'text-white' : 'text-white/50'
             }`}
           >
@@ -312,50 +310,40 @@ export default function BottomNav({ currentPageName, user }) {
             <span className="text-[9px] font-black uppercase mt-1">Pulse</span>
           </Link>
 
-          {/* LIVE - Center Prominent Button - NOW OPENS GHOSTED SHEET */}
-          <button
-            onClick={handleLiveClick}
-            className="relative flex flex-col items-center -mt-4"
-          >
-            <motion.div
-              whileTap={{ scale: 0.95 }}
-              className="relative"
-            >
-              {/* Glow effect */}
-              <div className="absolute inset-0 bg-[#FF1493] rounded-full blur-lg opacity-50 animate-pulse" />
-              
-              {/* Main button */}
-              <div className="relative w-14 h-14 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center border-4 border-black shadow-lg">
-                <Zap className="w-7 h-7 text-white" />
-              </div>
-
-              {/* Live counter badge */}
-              <div className="absolute -top-1 -right-1 bg-black rounded-full px-1.5 py-0.5 border border-[#FF1493]">
-                <span className="text-[9px] font-black text-[#FF1493]">{liveCounts.rightNow}</span>
-              </div>
-            </motion.div>
-            <span className="text-[9px] font-black uppercase mt-1 text-[#FF1493]">LIVE</span>
-          </button>
-
-          {/* SHOP - NOW OPENS SHOP SHEET */}
-          <button
-            onClick={handleShopClick}
-            className={`flex flex-col items-center justify-center min-w-[52px] min-h-[48px] py-1.5 px-2 rounded-lg transition-all active:scale-95 ${
-              isShopActive ? 'text-white bg-white/5' : 'text-white/50'
+          {/* MARKET (Unified Commerce) */}
+          <Link
+            to="/market"
+            className={`flex flex-col items-center justify-center flex-1 h-full transition-all ${
+              isShopActive ? 'text-white' : 'text-white/50'
             }`}
           >
             <ShoppingBag className={`w-6 h-6 ${isShopActive ? 'text-[#B026FF]' : ''}`} />
-            <span className="text-[9px] font-black uppercase mt-0.5">Shop</span>
-          </button>
+            <span className="text-[9px] font-black uppercase mt-1">Market</span>
+          </Link>
 
-          {/* APPS - Touch Target 44px min */}
-          <button
-            onClick={() => setShowApps(true)}
-            className="flex flex-col items-center justify-center min-w-[52px] min-h-[48px] py-1.5 px-2 rounded-lg text-white/50 active:text-white active:bg-white/5 transition-all active:scale-95"
+          {/* RADIO */}
+          <Link
+            to="/radio"
+            className={`relative flex flex-col items-center justify-center flex-1 h-full transition-all ${
+              currentPageName === 'Music' || currentPageName === 'Radio' ? 'text-white' : 'text-white/50'
+            }`}
           >
-            <LayoutGrid className="w-6 h-6" />
-            <span className="text-[9px] font-black uppercase mt-0.5">Apps</span>
-          </button>
+            <Radio className={`w-6 h-6 ${currentPageName === 'Music' || currentPageName === 'Radio' ? 'text-[#39FF14]' : ''}`} />
+            <span className="text-[9px] font-black uppercase mt-1">Radio</span>
+            {/* Live indicator */}
+            <span className="absolute top-2 right-1/2 translate-x-4 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+          </Link>
+
+          {/* PROFILE */}
+          <Link
+            to="/profile"
+            className={`flex flex-col items-center justify-center flex-1 h-full transition-all ${
+              currentPageName === 'Profile' || currentPageName === 'Settings' ? 'text-white' : 'text-white/50'
+            }`}
+          >
+            <Users className={`w-6 h-6 ${currentPageName === 'Profile' || currentPageName === 'Settings' ? 'text-white' : ''}`} />
+            <span className="text-[9px] font-black uppercase mt-1">Profile</span>
+          </Link>
         </div>
       </nav>
 
