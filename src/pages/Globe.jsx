@@ -21,10 +21,12 @@ import ErrorBoundary from '../components/error/ErrorBoundary';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { useRealtimeBeacons, useRightNowCount } from '../components/globe/useRealtimeBeacons';
+import { useProfileOpener } from '@/lib/profile';
 
 export default function GlobePage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { openProfile } = useProfileOpener();
 
   // NEW: Realtime presence beacons from presence table (TTL-based)
   const { beacons: presenceBeacons, presenceCount } = useRealtimeBeacons();
@@ -399,9 +401,14 @@ export default function GlobePage() {
     // Don't handle cluster clicks
     if (beacon.isCluster) return;
 
-    // People pins: go straight to profile.
+    // People pins: use Profile Authority contract (Stage 4)
     if (beacon?.kind === 'person' && beacon?.email) {
-      navigate(createPageUrl(`Profile?email=${encodeURIComponent(beacon.email)}`));
+      openProfile({
+        userId: beacon.user_id || beacon.id,
+        source: 'globe',
+        email: beacon.email,
+        preferSheet: true,
+      });
       return;
     }
     
@@ -422,13 +429,19 @@ export default function GlobePage() {
       lat: beacon.lat,
       lng: beacon.lng
     });
-  }, [navigate]);
+  }, [openProfile]);
 
   const handleViewFullDetails = useCallback(() => {
     if (!previewBeacon) return;
 
+    // People: use Profile Authority contract (Stage 4)
     if (previewBeacon?.kind === 'person' && previewBeacon?.email) {
-      navigate(createPageUrl(`Profile?email=${encodeURIComponent(previewBeacon.email)}`));
+      openProfile({
+        userId: previewBeacon.user_id || previewBeacon.id,
+        source: 'globe',
+        email: previewBeacon.email,
+        preferSheet: true,
+      });
       setPreviewBeacon(null);
       return;
     }
