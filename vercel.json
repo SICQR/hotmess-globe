@@ -49,6 +49,6 @@
     },
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "handle": "filesystem" },
-    { "src": "^/(?!assets/).*", "dest": "/index.html" }
+    { "src": "^/(?!assets/|data/).*", "dest": "/index.html" }
   ]
 }
