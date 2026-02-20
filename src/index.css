@@ -4,6 +4,23 @@
 
 @layer base {
   :root {
+    /* Dynamic viewport height (set by JS for mobile browser chrome) */
+    --vh: 1vh;
+    --vvh: 1vh;
+    --real-vh: 100vh;
+    --visual-vh: 100vh;
+    
+    /* Safe area insets (fallback values) */
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    
+    /* Mobile navigation heights */
+    --mobile-header-height: 56px;
+    --mobile-nav-height: 72px;
+    --mobile-content-height: calc(var(--real-vh) - var(--mobile-header-height) - var(--mobile-nav-height) - var(--sab));
+    
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
@@ -430,4 +447,139 @@
   .stagger-3 { animation-delay: 0.3s; }
   .stagger-4 { animation-delay: 0.4s; }
   .stagger-5 { animation-delay: 0.5s; }
+}
+
+/* ========================================
+   MOBILE DYNAMIC UTILITIES
+   ======================================== */
+
+@layer utilities {
+  /* Real viewport height (accounts for mobile browser chrome) */
+  .h-screen-dynamic {
+    height: 100vh;
+    height: var(--real-vh, 100vh);
+  }
+  
+  .min-h-screen-dynamic {
+    min-height: 100vh;
+    min-height: var(--real-vh, 100vh);
+  }
+  
+  .max-h-screen-dynamic {
+    max-height: 100vh;
+    max-height: var(--real-vh, 100vh);
+  }
+  
+  /* Visual viewport (excludes keyboard on mobile) */
+  .h-visual-viewport {
+    height: var(--visual-vh, 100vh);
+  }
+  
+  /* Mobile content area (between header and nav) */
+  .h-mobile-content {
+    height: var(--mobile-content-height);
+  }
+  
+  /* Safe area padding */
+  .pt-safe { padding-top: var(--sat); }
+  .pb-safe { padding-bottom: var(--sab); }
+  .pl-safe { padding-left: var(--sal); }
+  .pr-safe { padding-right: var(--sar); }
+  .p-safe {
+    padding-top: var(--sat);
+    padding-right: var(--sar);
+    padding-bottom: var(--sab);
+    padding-left: var(--sal);
+  }
+  
+  /* Touch-friendly tap targets (min 44x44 per Apple HIG) */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .touch-target-lg {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* Prevent text selection on touch */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Momentum scrolling on iOS */
+  .scroll-momentum {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* Hide scrollbar but keep scrollability */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Prevent pull-to-refresh on mobile */
+  .no-overscroll {
+    overscroll-behavior: none;
+  }
+  
+  /* Keyboard-aware positioning */
+  .keyboard-aware {
+    transition: transform 0.2s ease-out;
+  }
+  
+  /* Mobile-first responsive helpers */
+  @media (max-width: 767px) {
+    .mobile-full-width {
+      width: 100vw;
+      margin-left: calc(-50vw + 50%);
+    }
+    
+    .mobile-padding {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+    
+    .mobile-stack {
+      flex-direction: column;
+    }
+  }
+  
+  /* Tablet and up */
+  @media (min-width: 768px) {
+    .tablet-inline {
+      flex-direction: row;
+    }
+  }
+}
+
+/* PWA standalone mode adjustments */
+@media (display-mode: standalone) {
+  .pwa-adjust {
+    /* iOS status bar area */
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+  
+  .pwa-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
