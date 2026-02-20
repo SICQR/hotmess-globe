@@ -1,0 +1,414 @@
+/* src/styles/tokens.css
+   HOTMESS OS Tokens — single source of truth
+   Use ONLY these vars in app styles. No hardcoded hex. No random px.
+*/
+
+:root {
+  /* -------- Color (Core) -------- */
+  --c-bg: #0b0b10;
+  --c-surface-1: rgba(255, 255, 255, 0.06);
+  --c-surface-2: rgba(255, 255, 255, 0.10);
+  --c-surface-3: rgba(255, 255, 255, 0.14);
+
+  --c-text-1: rgba(255, 255, 255, 0.92);
+  --c-text-2: rgba(255, 255, 255, 0.72);
+  --c-text-3: rgba(255, 255, 255, 0.54);
+
+  --c-border-1: rgba(255, 255, 255, 0.10);
+  --c-border-2: rgba(255, 255, 255, 0.16);
+
+  /* Brand accents (use sparingly) */
+  --c-accent: #ff3bd4;       /* HOTMESS pink */
+  --c-accent-2: #7c5cff;     /* ultraviolet */
+  --c-good: #41d07a;
+  --c-warn: #ffcc33;
+  --c-bad: #ff4d4d;
+
+  /* -------- Typography -------- */
+  --ff-sans: ui-sans-serif, system-ui, -apple-system, "SF Pro Display", "Inter", Segoe UI, Roboto, Arial, sans-serif;
+  --ff-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Size scale (mobile-first) */
+  --fs-1: 12px;
+  --fs-2: 14px;
+  --fs-3: 16px;
+  --fs-4: 18px;
+  --fs-5: 22px;
+  --fs-6: 28px;
+
+  /* Line heights */
+  --lh-tight: 1.15;
+  --lh-base: 1.35;
+  --lh-loose: 1.55;
+
+  /* Weights */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* -------- Spacing (8px-ish but mobile friendly) -------- */
+  --sp-0: 0px;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+
+  /* -------- Radius -------- */
+  --r-1: 10px;
+  --r-2: 14px;
+  --r-3: 18px;
+  --r-pill: 999px;
+
+  /* -------- Shadows (keep subtle; globe is the drama) -------- */
+  --sh-1: 0 10px 30px rgba(0,0,0,0.35);
+  --sh-2: 0 14px 40px rgba(0,0,0,0.45);
+
+  /* -------- Blur / Glass -------- */
+  --blur-1: 10px;
+  --blur-2: 18px;
+
+  /* -------- Safe areas -------- */
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+
+  /* -------- Layout constants -------- */
+  --dock-h: 64px;         /* bottom nav */
+  --topbar-h: 52px;       /* optional compact top bar */
+  --sheet-grabber-h: 18px;
+
+  /* -------- Motion -------- */
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 260ms;
+
+  --ease-1: cubic-bezier(.2,.8,.2,1);
+  --ease-2: cubic-bezier(.4,0,.2,1);
+
+  /* -------- Z layers (NO RANDOM Z-INDEX) -------- */
+  --z-globe: 0;
+  --z-page: 10;
+  --z-dock: 20;
+  --z-sheet: 30;
+  --z-modal: 40;
+  --z-critical: 50;
+}
+
+/* ============================================
+   BASE SURFACE HELPERS
+   ============================================ */
+
+.hm-glass {
+  background: var(--c-surface-1);
+  border: 1px solid var(--c-border-1);
+  backdrop-filter: blur(var(--blur-1));
+  -webkit-backdrop-filter: blur(var(--blur-1));
+  box-shadow: var(--sh-1);
+  border-radius: var(--r-2);
+}
+
+.hm-glass-2 {
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border-2);
+  backdrop-filter: blur(var(--blur-2));
+  -webkit-backdrop-filter: blur(var(--blur-2));
+  box-shadow: var(--sh-2);
+  border-radius: var(--r-2);
+}
+
+/* ============================================
+   TEXT HELPERS
+   ============================================ */
+
+.hm-text-1 { color: var(--c-text-1); }
+.hm-text-2 { color: var(--c-text-2); }
+.hm-text-3 { color: var(--c-text-3); }
+
+.hm-text-accent { color: var(--c-accent); }
+.hm-text-good { color: var(--c-good); }
+.hm-text-warn { color: var(--c-warn); }
+.hm-text-bad { color: var(--c-bad); }
+
+/* ============================================
+   Z-LAYER HELPERS (use these, not raw z-index)
+   ============================================ */
+
+.z-globe { z-index: var(--z-globe); }
+.z-page { z-index: var(--z-page); }
+.z-dock { z-index: var(--z-dock); }
+.z-sheet { z-index: var(--z-sheet); }
+.z-modal { z-index: var(--z-modal); }
+.z-critical { z-index: var(--z-critical); }
+
+/* ============================================
+   SPACING UTILITIES
+   ============================================ */
+
+.sp-0 { padding: var(--sp-0); }
+.sp-1 { padding: var(--sp-1); }
+.sp-2 { padding: var(--sp-2); }
+.sp-3 { padding: var(--sp-3); }
+.sp-4 { padding: var(--sp-4); }
+.sp-5 { padding: var(--sp-5); }
+.sp-6 { padding: var(--sp-6); }
+
+.gap-1 { gap: var(--sp-1); }
+.gap-2 { gap: var(--sp-2); }
+.gap-3 { gap: var(--sp-3); }
+.gap-4 { gap: var(--sp-4); }
+
+/* ============================================
+   OS LAYOUT STRUCTURE
+   ============================================ */
+
+/* App root - fills viewport */
+.hm-app-root {
+  position: fixed;
+  inset: 0;
+  background: var(--c-bg);
+  overflow: hidden;
+}
+
+/* Globe backdrop - always at z-0 */
+.hm-globe-layer {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-globe);
+  pointer-events: auto;
+}
+
+/* Page content layer - above globe */
+.hm-page-layer {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-page);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  
+  /* Safe area padding */
+  padding-top: calc(var(--safe-top) + var(--sp-2));
+  padding-bottom: calc(var(--dock-h) + var(--safe-bottom) + var(--sp-4));
+}
+
+/* Page with top bar */
+.hm-page-layer--with-topbar {
+  padding-top: calc(var(--topbar-h) + var(--safe-top));
+}
+
+/* Bottom dock */
+.hm-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--dock-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  z-index: var(--z-dock);
+  background: var(--c-bg);
+  border-top: 1px solid var(--c-border-1);
+}
+
+/* Sheet overlay root */
+.hm-sheet-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  pointer-events: none;
+}
+
+.hm-sheet-root > * {
+  pointer-events: auto;
+}
+
+/* Modal overlay root */
+.hm-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  pointer-events: none;
+}
+
+.hm-modal-root > * {
+  pointer-events: auto;
+}
+
+/* Critical interrupt root */
+.hm-critical-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-critical);
+  pointer-events: none;
+}
+
+.hm-critical-root > * {
+  pointer-events: auto;
+}
+
+/* ============================================
+   SHEET STYLES
+   ============================================ */
+
+.hm-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 85vh;
+  background: var(--c-bg);
+  border-radius: var(--r-3) var(--r-3) 0 0;
+  border: 1px solid var(--c-border-1);
+  border-bottom: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.hm-sheet__grabber {
+  height: var(--sheet-grabber-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hm-sheet__grabber-bar {
+  width: 36px;
+  height: 4px;
+  background: var(--c-surface-3);
+  border-radius: var(--r-pill);
+}
+
+.hm-sheet__content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ============================================
+   BUTTON BASE
+   ============================================ */
+
+.hm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5);
+  font-family: var(--ff-sans);
+  font-size: var(--fs-2);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  color: var(--c-text-1);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border-1);
+  border-radius: var(--r-2);
+  cursor: pointer;
+  transition: all var(--dur-2) var(--ease-2);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  min-height: 44px;
+}
+
+.hm-btn:active {
+  transform: scale(0.98);
+}
+
+.hm-btn--primary {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: white;
+}
+
+.hm-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+/* ============================================
+   CARD BASE
+   ============================================ */
+
+.hm-card {
+  background: var(--c-surface-1);
+  border: 1px solid var(--c-border-1);
+  border-radius: var(--r-2);
+  overflow: hidden;
+}
+
+.hm-card--interactive {
+  cursor: pointer;
+  transition: all var(--dur-2) var(--ease-2);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hm-card--interactive:active {
+  transform: scale(0.98);
+  background: var(--c-surface-2);
+}
+
+/* ============================================
+   INPUT BASE
+   ============================================ */
+
+.hm-input {
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  font-family: var(--ff-sans);
+  font-size: var(--fs-3);
+  color: var(--c-text-1);
+  background: var(--c-surface-1);
+  border: 1px solid var(--c-border-1);
+  border-radius: var(--r-2);
+  outline: none;
+  transition: border-color var(--dur-2) var(--ease-2);
+  min-height: 44px;
+}
+
+.hm-input::placeholder {
+  color: var(--c-text-3);
+}
+
+.hm-input:focus {
+  border-color: var(--c-accent);
+}
+
+/* ============================================
+   SAFE AREA HELPERS
+   ============================================ */
+
+.pt-safe { padding-top: var(--safe-top); }
+.pb-safe { padding-bottom: var(--safe-bottom); }
+.mt-safe { margin-top: var(--safe-top); }
+.mb-safe { margin-bottom: var(--safe-bottom); }
+
+/* ============================================
+   TOUCH TARGET (44px minimum)
+   ============================================ */
+
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================
+   TRANSITIONS
+   ============================================ */
+
+.transition-fast {
+  transition: all var(--dur-1) var(--ease-1);
+}
+
+.transition-base {
+  transition: all var(--dur-2) var(--ease-2);
+}
+
+.transition-slow {
+  transition: all var(--dur-3) var(--ease-2);
+}

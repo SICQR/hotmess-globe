@@ -86,8 +86,8 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
               transition={{ duration: 0.3 }}
             >
               <ProfilesGrid 
-                onProfileClick={handleProfileTap}
-                className="p-0"
+                onOpenProfile={(profile) => handleProfileTap(profile.id)}
+                containerClassName="p-0"
               />
             </motion.div>
           )}
