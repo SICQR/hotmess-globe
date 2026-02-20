@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { auth, base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
@@ -57,6 +57,7 @@ export default function Auth() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [photoPolicyAck, setPhotoPolicyAck] = useState(false);
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const nextUrl = searchParams.get('next');
   const mode = searchParams.get('mode');
 
@@ -81,7 +82,7 @@ export default function Auth() {
       if (!isComplete) {
         // Redirect to Profile for setup
         setTimeout(() => {
-          window.location.href = createPageUrl('Profile');
+          navigate(createPageUrl('Profile'));
         }, REDIRECT_DELAY_MS);
         return;
       }
@@ -89,7 +90,7 @@ export default function Auth() {
     
     const redirect = nextUrl || searchParams.get('redirect_to') || createPageUrl('Home');
     setTimeout(() => {
-      window.location.href = redirect;
+      navigate(redirect);
     }, REDIRECT_DELAY_MS);
   };
 
@@ -156,7 +157,7 @@ export default function Auth() {
             // Redirect to intended page or home
             setTimeout(() => {
               const redirect = nextUrl || searchParams.get('redirect_to') || createPageUrl('Home');
-              window.location.href = redirect;
+              navigate(redirect);
             }, 500);
           } else {
             setLoading(false);
@@ -355,7 +356,7 @@ export default function Auth() {
       });
       setStep('welcome');
       setTimeout(() => {
-        window.location.href = nextUrl || createPageUrl('Home');
+        navigate(nextUrl || createPageUrl('Home'));
       }, 3000);
     } catch (error) {
       toast.error('Failed to update profile');
@@ -545,7 +546,7 @@ export default function Auth() {
                     if (result.linked) {
                       toast.success('Telegram connected! Redirecting...');
                       const next = searchParams.get('next') || '/social';
-                      window.location.href = next;
+                      navigate(next);
                     } else if (result.needsLogin) {
                       toast.info(result.message);
                     } else if (result.needsRegistration) {

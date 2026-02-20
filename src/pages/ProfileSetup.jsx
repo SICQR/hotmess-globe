@@ -1,11 +1,14 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 
 export default function ProfileSetup() {
+  const navigate = useNavigate();
+  
   useEffect(() => {
     // Redirect to consolidated Profile page
-    window.location.href = createPageUrl('Profile');
-  }, []);
+    navigate(createPageUrl('Profile'));
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center">

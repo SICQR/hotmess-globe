@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield, Radio as RadioIcon } from 'lucide-react';
 import { base44 } from '@/components/utils/supabaseClient';
@@ -48,6 +48,7 @@ function LayoutInner({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { toggleRadio, isRadioOpen } = useRadio();
 
   // Enable OS URL sync
@@ -180,7 +181,7 @@ function LayoutInner({ children, currentPageName }) {
 
         // GATEKEEPER: Block all access until consent_accepted is true
         if (currentPageName !== 'AccountConsents' && currentPageName !== 'AgeGate' && !currentUser?.consent_accepted) {
-          window.location.href = createPageUrl('AccountConsents');
+          navigate(createPageUrl('AccountConsents'));
           return;
         }
 
@@ -192,7 +193,7 @@ function LayoutInner({ children, currentPageName }) {
           currentPageName !== 'AgeGate' &&
           (!currentUser?.has_agreed_terms || !currentUser?.has_consented_data)
         ) {
-          window.location.href = createPageUrl('OnboardingGate');
+          navigate(createPageUrl('OnboardingGate'));
           return;
         }
 
@@ -205,7 +206,7 @@ function LayoutInner({ children, currentPageName }) {
           (!currentUser?.full_name || !currentUser?.avatar_url)
         ) {
           const next = encodeURIComponent(`${window.location.pathname}${window.location.search || ''}`);
-          window.location.href = `${createPageUrl('Profile')}?next=${next}`;
+          navigate(`${createPageUrl('Profile')}?next=${next}`);
         }
       } catch (error) {
         console.error('Failed to fetch user:', error);

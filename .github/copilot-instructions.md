@@ -1,45 +1,108 @@
 # Copilot instructions (hotmess-globe)
 
+> **Stability-first:** This is a live Supabase-backed SPA/PWA. Follow **Explore → Plan → Execute → Test**.
+
+## Critical Rules
+
+1. **Do not refactor blindly.** Understand the provider mount order before changes.
+2. **Do not log or expose secrets.** Never print env values. Audit usage safely.
+3. **Stabilization edits must be file-by-file.** After each change, verify no provider remount risk, no auth regression, no realtime listener multiplication.
+4. **Run validation:** `npm run lint && npm run typecheck && npm run build`
+5. **Safety features must not regress:** SOS, fake call, check-in, location share in `/src/components/safety/`
+
 ## Big picture
-- Vite + React SPA. Canonical navigation lives in [docs/HOTMESS-LONDON-OS-BIBLE-v1.5.md](../docs/HOTMESS-LONDON-OS-BIBLE-v1.5.md).
-- Routing is React Router in [src/App.jsx](../src/App.jsx): “Bible” routes (e.g. `/events`, `/market`) plus backward-compatible `/${PageName}` routes generated from `Pages`.
-- Pages are registered in [src/pages.config.js](../src/pages.config.js). Add a page by importing the component and adding it to `PAGES`.
-- Backend is Vercel Serverless Functions in `api/` (ESM `export default async function handler(req, res)`), with SPA rewrites in [vercel.json](../vercel.json).
-- `functions/` contains deprecated Base44 edge-function stubs; don’t add new logic there—use `api/*` instead.
+
+- Vite + React 18 SPA with Supabase backend. Canonical navigation in [docs/HOTMESS-LONDON-OS-BIBLE-v1.5.md](../docs/HOTMESS-LONDON-OS-BIBLE-v1.5.md).
+- Routing is React Router 6 in [src/App.jsx](../src/App.jsx): "Bible" routes (e.g. `/events`, `/market`) plus backward-compatible `/${PageName}` routes.
+- Pages registered in [src/pages.config.js](../src/pages.config.js).
+- Backend is Vercel Serverless Functions in `api/`.
+- `functions/` is deprecated; use `api/*` instead.
+
+## Provider Mount Order
+
+Understanding this is critical for stability:
+
+```
+main.jsx
+└─ Sentry.ErrorBoundary
+   └─ ErrorBoundary
+      └─ OSProvider
+         └─ App.jsx
+            └─ I18nProvider
+               └─ AuthProvider
+                  └─ BootGuardProvider (state machine: LOADING→READY)
+                     └─ QueryClientProvider
+                        └─ WorldPulseProvider
+                           └─ ShopCartProvider
+                              └─ Router (BrowserRouter)
+                                 └─ BootRouter (gates)
+                                    └─ Layout.jsx
+                                       └─ SheetProvider (L2 sheets)
+                                       └─ RadioProvider
+```
+
+**Key insight:** SheetProvider is inside Layout, so sheets may remount on route changes.
+
+## Overlay Architecture (L0-L3)
+
+| Layer | Z-Index | Purpose |
+|-------|---------|---------|
+| L0 | 0 | UnifiedGlobe (Three.js, persistent) |
+| L1 | 50 | HUD (TopHUD, BottomDock) |
+| L2 | 80 | Sheets (SheetRouter, URL-synced via `?sheet=`) |
+| L3 | 100 | Interrupts (SOS, modals) |
+
+## Boot State Machine
+
+```
+LOADING → UNAUTHENTICATED → PublicShell
+        → NEEDS_AGE → AgeGate (bypass: localStorage hm_age_confirmed_v1)
+        → NEEDS_ONBOARDING → OnboardingGate
+        → READY → Full app
+```
 
 ## Dev workflows
+
 - Dev server: `npm run dev` (Vite on :5173). Preview: `npm run preview`. Seed data: `npm run seed:mock-profiles`.
 - Tests: `npm test` / `npm run test:run` / `npm run test:ui` / `npm run test:coverage` (Vitest).
-- Lint: `npm run lint` (quiet). Typecheck: `npm run typecheck` (TypeScript checks JS via `tsconfig.json`).
-- Local `/api/*` in dev is implemented by the custom Vite middleware in [vite.config.js](../vite.config.js) (`localApiRoutes()`).
-  - If you add a new `api/...` endpoint and need it to work in `npm run dev`, also add a route case there (or you’ll get a 404 locally while it still works on Vercel).
-  - The middleware hydrates `req.query` (Connect doesn’t by default) and reloads env per request so `.env.local` edits apply without restart.
+- E2E: `npm run test:e2e` / `npm run test:e2e:headed` (Playwright).
+- Lint: `npm run lint` (quiet). Typecheck: `npm run typecheck`.
+- Single test: `npx vitest run src/path/to/file.test.ts`
 
 ## Env + secrets
-- Never commit secrets (`.env.local` is gitignored). Client-exposed env vars must be prefixed `VITE_`; server-only env vars (used by `api/*`) must NOT be `VITE_`.
-- Server routes commonly require `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and (for routing/ETAs) `GOOGLE_MAPS_API_KEY`.
+
+- Never commit secrets (`.env.local` is gitignored).
+- Client-exposed env vars must be prefixed `VITE_`; server-only must NOT be `VITE_`.
+- Server routes need: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## Supabase + auth conventions
-- Client Supabase + the “Base44 compatibility wrapper” live in [src/components/utils/supabaseClient.jsx](../src/components/utils/supabaseClient.jsx).
-  - Many components still import `base44` from there; prefer extending that wrapper rather than introducing a new SDK.
-  - Many newer modules import `base44` from [src/api/base44Client.js](../src/api/base44Client.js) (it re-exports the same wrapper).
-  - Table names are legacy/dual-cased in places (e.g. `User` vs `users`, `Beacon` vs `beacons`). Follow the existing `*_TABLES` + `runWithTableFallback()` pattern.
-- Prefer `base44.entities.*` helpers over raw `supabase.from(...)` when the table is already represented there (it also carries Base44-style conventions like `created_by`).
-- Frontend auth flow is centralized in [src/lib/AuthContext.jsx](../src/lib/AuthContext.jsx) using `base44.auth.isAuthenticated()` and `base44.auth.me()`.
-- When calling authenticated `/api/*` routes from the client, send the Supabase access token as a bearer token (example: [src/api/presence.js](../src/api/presence.js)).
-  - Many APIs use a small helper that reads the Supabase session and attaches `Authorization: Bearer ...` (see [src/api/connectProximity.js](../src/api/connectProximity.js)).
+
+- Client singleton: [src/components/utils/supabaseClient.jsx](../src/components/utils/supabaseClient.jsx)
+- **Auth listeners exist in 6 files** (potential multiplication risk):
+  - `BootGuardContext.jsx`, `NowSignalContext.jsx`, `viewerState.ts`, `bootGuard.ts`, `Auth.jsx`, `supabaseClient.jsx`
+- Frontend auth: [src/lib/AuthContext.jsx](../src/lib/AuthContext.jsx)
+- For authenticated API calls, send Supabase access token as Bearer token.
 
 ## Serverless handler patterns (`api/*`)
-- Prefer shared helpers:
-  - `json(res, status, body)`, `getEnv()`, `getBearerToken()`, `readJsonBody()` from [api/shopify/_utils.js](../api/shopify/_utils.js)
-  - Supabase server clients + auth helpers from [api/routing/_utils.js](../api/routing/_utils.js) (`getSupabaseServerClients()`, `getAuthedUser()`)
-- Server-side Supabase requires `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (never expose the service role key to the client).
-- Cron: Vercel hits `/api/events/cron` per [vercel.json](../vercel.json).
+
+- Shared helpers: `json()`, `getEnv()`, `getBearerToken()`, `readJsonBody()` from [api/shopify/_utils.js](../api/shopify/_utils.js)
+- Supabase server clients from [api/routing/_utils.js](../api/routing/_utils.js)
 
 ## Logging
-- In frontend code, prefer the structured logger in [src/utils/logger.js](../src/utils/logger.js) (it redacts sensitive keys and is quiet in prod).
-- Avoid adding noisy `console.*` in client code; if you must log, use `logger.{debug|info|warn|error}`.
+
+- Use structured logger: [src/utils/logger.js](../src/utils/logger.js)
+- Avoid noisy `console.*` in client code.
 
 ## Imports + UI
-- Path alias `@` maps to `src/` (configured in [vite.config.js](../vite.config.js)).
-- UI is Tailwind + shadcn/Radix; reuse existing components in `src/components/ui/*` rather than introducing new styling systems.
+
+- Path alias `@` maps to `src/`.
+- UI is Tailwind + shadcn/Radix; reuse `src/components/ui/*`.
+
+## Approval Required Before
+
+- Changing root provider mount order
+- Moving SheetProvider across trees
+- Consolidating/removing auth listeners
+- Modifying Supabase client instantiation
+- Major navigation architecture rewrites
+- Deleting files / renaming routes

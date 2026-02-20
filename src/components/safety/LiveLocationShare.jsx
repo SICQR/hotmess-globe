@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin,
@@ -79,6 +80,7 @@ export default function LiveLocationShare({
   onShareEnd,
   className
 }) {
+  const navigate = useNavigate();
   const [isSharing, setIsSharing] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(30);
   const [selectedContacts, setSelectedContacts] = useState([]);
@@ -500,7 +502,7 @@ export default function LiveLocationShare({
                   <Button
                     variant="link"
                     className="text-[#FF1493] text-sm mt-2"
-                    onClick={() => window.location.href = '/safety'}
+                    onClick={() => navigate('/safety')}
                   >
                     Add Trusted Contacts
                   </Button>

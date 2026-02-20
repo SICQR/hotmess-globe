@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { createPageUrl } from '../utils';
 import { base44 } from '@/components/utils/supabaseClient';
@@ -11,6 +12,7 @@ const AGE_KEY = 'hm_age_confirmed_v1';
 
 export default function OnboardingGate() {
   const [step, setStep] = useState(0);
+  const navigate = useNavigate();
   const [ageConfirmed, setAgeConfirmed] = useState(() => {
     try {
       // Check both localStorage (primary) and sessionStorage (legacy fallback)
@@ -39,10 +41,10 @@ export default function OnboardingGate() {
         // If all consents already given, redirect to Home (Pulse)
         if (user.has_agreed_terms && user.has_consented_data && user.has_consented_gps) {
           if (user.full_name && user.avatar_url) {
-            window.location.href = createPageUrl('Home');
+            navigate(createPageUrl('Home'));
           } else {
         // Profile setup is handled by the consolidated Profile page (setup mode)
-        window.location.href = createPageUrl('Profile');
+        navigate(createPageUrl('Profile'));
           }
         } else {
           // Avoid showing age verification twice: the global /age gate already stores sessionStorage.age_verified.
@@ -81,7 +83,7 @@ export default function OnboardingGate() {
   };
 
   const handleCreateProfile = () => {
-    window.location.href = createPageUrl('Profile');
+    navigate(createPageUrl('Profile'));
   };
 
   const renderStep = () => {
