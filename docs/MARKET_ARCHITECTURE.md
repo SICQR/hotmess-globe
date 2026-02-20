@@ -436,28 +436,28 @@ openSheet(SHEET_TYPES.MARKETPLACE, {
 ## 10. Migration Checklist
 
 ### Phase 1: Create Contracts
-- [ ] Create `src/lib/market.ts` with MarketItem interface
-- [ ] Create `src/lib/market/shopifyAdapter.ts`
-- [ ] Create `src/lib/market/prelovedAdapter.ts`
-- [ ] Create `src/lib/market/ticketsAdapter.ts`
+- [x] Create `src/lib/market.ts` with MarketItem interface ✅ Stage 5
+- [ ] Create `src/lib/market/shopifyAdapter.ts` (deferred)
+- [ ] Create `src/lib/market/prelovedAdapter.ts` (deferred)
+- [ ] Create `src/lib/market/ticketsAdapter.ts` (deferred)
 
 ### Phase 2: Create Hooks
 - [ ] Create `src/hooks/useMarket.ts`
 - [ ] Create unified cart context (or enhance ShopCartContext)
 
-### Phase 3: Unify UI
+### Phase 3: Unify UI (DEFERRED)
 - [ ] Create `MarketProductCard` component (renders any MarketItem)
 - [ ] Create `MarketProductGrid` component
 - [ ] Update `/market` route to use unified grid
 
-### Phase 4: Consolidate Sheets
+### Phase 4: Consolidate Sheets (DEFERRED)
 - [ ] Enhance L2MarketplaceSheet to handle all sources
 - [ ] Candidate: merge L2ShopSheet (verify no unique features first)
 
 ### Phase 5: Verify
-- [ ] Shopify products load in unified grid
-- [ ] Preloved listings load in unified grid
-- [ ] Ticket listings load in unified grid
+- [x] Existing Preloved flow functional ✅
+- [x] Existing Shopify flow functional ✅
+- [ ] Unified grid with adapters
 - [ ] Filters work across sources
 - [ ] Cart handles multiple sources
 - [ ] Shopify checkout redirects correctly
