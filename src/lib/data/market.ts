@@ -298,7 +298,7 @@ export async function getCategories(): Promise<string[]> {
     return [];
   }
 
-  const categories = [...new Set((data || []).map(d => d.category).filter(Boolean))];
+  const categories = [...new Set((data || []).map(d => d.category).filter(Boolean))] as string[];
   return categories.sort();
 }
 
