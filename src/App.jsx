@@ -29,6 +29,7 @@ import { PageTransition } from '@/components/lux/PageTransition';
 import UnifiedGlobe from '@/components/globe/UnifiedGlobe';
 import { SheetProvider } from '@/contexts/SheetContext';
 import SheetRouter from '@/components/sheets/SheetRouter';
+import { useViewportHeight } from '@/hooks/useMobileDynamics';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -563,6 +564,9 @@ function App() {
  * L3: Interrupts (Z-100) - blocking overlays
  */
 function OSArchitecture() {
+  // Initialize dynamic viewport height for mobile browsers
+  useViewportHeight();
+  
   return (
     <div className="hotmess-os relative h-dvh w-full overflow-hidden bg-[#050507]">
       {/* L0: Persistent Globe Layer (Z-0) */}
