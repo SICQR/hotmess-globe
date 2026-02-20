@@ -299,14 +299,35 @@ export const removeFromCart = async ({ itemId, productId, currentUser, variantId
   );
 };
 
+// Deduplication guard for cart merge (Stage 3 stabilization)
+let _cartMergeInProgress = false;
+let _lastCartMergeUserId = null;
+
 export const mergeGuestCartToUser = async ({ currentUser }) => {
   const resolvedUser = await resolveCurrentUser(currentUser);
   if (!resolvedUser?.email) return;
 
   const authUserId = resolvedUser?.auth_user_id || null;
+  
+  // Guard: prevent duplicate merges for same user within same session
+  if (_cartMergeInProgress && _lastCartMergeUserId === authUserId) {
+    return;
+  }
+  
+  // Guard: if we already merged for this user and guest cart is empty, skip
+  if (_lastCartMergeUserId === authUserId) {
+    const guestItems = getGuestCartItems();
+    if (!guestItems.length) return;
+  }
 
-  const guestItems = getGuestCartItems();
-  if (!guestItems.length) return;
+  _cartMergeInProgress = true;
+  _lastCartMergeUserId = authUserId;
+
+  try {
+    const guestItems = getGuestCartItems();
+    if (!guestItems.length) {
+      return;
+    }
 
   const now = new Date();
   const validGuestItems = guestItems.filter((item) => {
@@ -378,4 +399,7 @@ export const mergeGuestCartToUser = async ({ currentUser }) => {
   }
 
   clearGuestCart();
+  } finally {
+    _cartMergeInProgress = false;
+  }
 };

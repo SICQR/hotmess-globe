@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { cleanup as realtimeCleanup } from '@/utils/realtime';
 
 // Helper to create page URLs - matches Base44 pattern
 const createPageUrl = (pageName) => `/${pageName}`;
@@ -14,9 +15,6 @@ if (!supabaseUrl || !supabaseKey) {
     'Set these in Vercel Environment Variables.'
   );
 }
-
-// Debug log to verify correct project
-console.log('[supabase] URL:', supabaseUrl);
 
 // If env vars are missing, createClient still needs a URL/key.
 // Use a clearly-invalid URL so failures are obvious and debuggable.
@@ -493,6 +491,12 @@ export const base44 = {
     },
     
     logout: async (redirectUrl) => {
+      // Stage 3: Clean up realtime channels before signout
+      try {
+        realtimeCleanup();
+      } catch (e) {
+        console.warn('[supabase] Realtime cleanup warning:', e);
+      }
       await supabase.auth.signOut();
       if (redirectUrl) {
         window.location.href = redirectUrl;
@@ -1521,8 +1525,15 @@ export const auth = {
       options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
     }),
   
-  signOut: () => 
-    supabase.auth.signOut(),
+  signOut: () => {
+    // Stage 3: Clean up realtime channels before signout
+    try {
+      realtimeCleanup();
+    } catch (e) {
+      console.warn('[supabase] Realtime cleanup warning:', e);
+    }
+    return supabase.auth.signOut();
+  },
   
   getUser: () => 
     supabase.auth.getUser(),
