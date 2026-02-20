@@ -240,3 +240,117 @@ export function useRightNowCount() {
 }
 
 export default useRealtimeBeacons;
+
+// ---------------------------------------------------------------------------
+// useRealtimeLocations
+// Subscribes to INSERT/UPDATE/DELETE on the `locations` table and returns
+// the live array of spike records (each has lat, lng, kind, intensity, …).
+// ---------------------------------------------------------------------------
+export function useRealtimeLocations() {
+  const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Initial fetch
+    supabase
+      .from('locations')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(500)
+      .then(({ data }) => {
+        if (data) setLocations(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+
+    const channel = supabase
+      .channel('globe-locations')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'locations' },
+        (payload) => {
+          setLocations((prev) => [payload.new, ...prev]);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'locations' },
+        (payload) => {
+          setLocations((prev) =>
+            prev.map((r) => (r.id === payload.new.id ? payload.new : r))
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'locations' },
+        (payload) => {
+          setLocations((prev) => prev.filter((r) => r.id !== payload.old.id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return { locations, loading };
+}
+
+// ---------------------------------------------------------------------------
+// useRealtimeRoutes
+// Subscribes to INSERT/UPDATE/DELETE on the `routes` table and returns
+// the live array of arc records (each has from_lat, from_lng, to_lat, to_lng, …).
+// ---------------------------------------------------------------------------
+export function useRealtimeRoutes() {
+  const [routes, setRoutes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Initial fetch – only the most recent 200 arcs
+    supabase
+      .from('routes')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(200)
+      .then(({ data }) => {
+        if (data) setRoutes(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+
+    const channel = supabase
+      .channel('globe-routes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'routes' },
+        (payload) => {
+          setRoutes((prev) => [payload.new, ...prev]);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'routes' },
+        (payload) => {
+          setRoutes((prev) =>
+            prev.map((r) => (r.id === payload.new.id ? payload.new : r))
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'routes' },
+        (payload) => {
+          setRoutes((prev) => prev.filter((r) => r.id !== payload.old.id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return { routes, loading };
+}

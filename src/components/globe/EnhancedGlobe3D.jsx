@@ -42,6 +42,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   activeLayers = ['pins'],
   userActivities = [],
   userIntents = [],
+  routesData = [],
   onBeaconClick,
   onCityClick,
   selectedCity = null,
@@ -68,6 +69,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     if (!mountRef.current) return;
 
     const asArray = (value) => (Array.isArray(value) ? value : []);
+
+    const isMobile = window.innerWidth < 768;
 
     const mount = mountRef.current;
     const scene = new THREE.Scene();
@@ -115,7 +118,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     scene.add(globe);
 
     // Sphere with Earth texture - LOD optimization
-    const sphereGeo = new THREE.SphereGeometry(globeRadius, 48, 48); // Further reduced for mobile
+    const sphereGeo = new THREE.SphereGeometry(globeRadius, isMobile ? 24 : 48, isMobile ? 24 : 48);
 
     // Load Earth textures
     const textureLoader = new THREE.TextureLoader();
@@ -705,7 +708,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       });
 
       const sorted = [...beacons].sort((a, b) => (a.ts || 0) - (b.ts || 0));
-      const recent = sorted.slice(-12);
+      const maxArcs = isMobile ? 5 : 12;
+      const recent = sorted.slice(-maxArcs);
       
       for (let i = 0; i < recent.length - 1; i++) {
         const from = recent[i];
