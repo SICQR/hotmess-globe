@@ -27,6 +27,8 @@ import { I18nProvider } from '@/contexts/I18nContext';
 import { WorldPulseProvider } from '@/contexts/WorldPulseContext';
 import { PageTransition } from '@/components/lux/PageTransition';
 import UnifiedGlobe from '@/components/globe/UnifiedGlobe';
+import { SheetProvider } from '@/contexts/SheetContext';
+import SheetRouter from '@/components/sheets/SheetRouter';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -528,16 +530,20 @@ function App() {
             <WorldPulseProvider>
               <ShopCartProvider>
                 <Router>
-                  <NavigationTracker />
-                  <BootRouter>
-                    {/* 
-                      L0-L3 Layered OS Architecture
-                      - UnifiedGlobe is persistent, never unmounts
-                      - All navigation happens via SheetContext
-                      - Router only handles URL sync, not page mounts
-                    */}
-                    <OSArchitecture />
-                  </BootRouter>
+                  <SheetProvider>
+                    <NavigationTracker />
+                    <BootRouter>
+                      {/* 
+                        L0-L3 Layered OS Architecture
+                        - UnifiedGlobe is persistent, never unmounts
+                        - All navigation happens via SheetContext
+                        - Router only handles URL sync, not page mounts
+                      */}
+                      <OSArchitecture />
+                    </BootRouter>
+                    {/* L2 Sheet System - Renders over everything, outside route remount boundary */}
+                    <SheetRouter />
+                  </SheetProvider>
                 </Router>
               </ShopCartProvider>
             </WorldPulseProvider>

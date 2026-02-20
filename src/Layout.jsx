@@ -27,8 +27,6 @@ import CookieConsent from '@/components/legal/CookieConsent';
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
 import BottomNav from '@/components/navigation/BottomNav';
 import { TonightModeProvider } from '@/hooks/useTonightMode';
-import { SheetProvider } from '@/contexts/SheetContext';
-import SheetRouter from '@/components/sheets/SheetRouter';
 import { useOSURLSync } from '@/os';
 
       const PRIMARY_NAV = [
@@ -670,8 +668,6 @@ function LayoutInner({ children, currentPageName }) {
       {/* Cookie Consent Banner */}
       <CookieConsent />
     </div>
-        {/* L2 Sheet System - Renders over everything */}
-        <SheetRouter />
         </TaxonomyProvider>
       </ErrorBoundary>
   );
@@ -681,9 +677,7 @@ export default function Layout(props) {
   return (
     <RadioProvider>
       <TonightModeProvider>
-        <SheetProvider>
-          <LayoutInner {...props} />
-        </SheetProvider>
+        <LayoutInner {...props} />
       </TonightModeProvider>
     </RadioProvider>
   );
