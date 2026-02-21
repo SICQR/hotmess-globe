@@ -42,7 +42,7 @@ export function PageShell({
 
   return (
     <div className={cn('w-full', className)}>
-      <div className={cn('mx-auto px-4 md:px-8 py-6 md:py-10', MAX_WIDTH[maxWidth] || MAX_WIDTH['6xl'])}>
+      <div className={cn('mx-auto px-3 sm:px-4 md:px-8 py-4 sm:py-6 md:py-10', MAX_WIDTH[maxWidth] || MAX_WIDTH['6xl'])}>
         {showHeader ? (
           <div className={cn('mb-6 md:mb-8', headerClassName)}>
             <div className="flex items-start justify-between gap-3">

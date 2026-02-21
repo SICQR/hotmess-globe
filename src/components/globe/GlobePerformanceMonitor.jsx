@@ -44,7 +44,7 @@ export default function GlobePerformanceMonitor({ visible = false }) {
   };
   
   return (
-    <div className="fixed bottom-4 right-4 bg-black/90 border-2 border-white backdrop-blur-xl p-3 z-50">
+    <div className="fixed bottom-4 right-4 bg-black/90 border-2 border-white backdrop-blur-xl p-3 z-[999]">
       <div className="flex items-center gap-3">
         <Activity className="w-4 h-4" style={{ color: getPerformanceColor() }} />
         <div className="space-y-1">

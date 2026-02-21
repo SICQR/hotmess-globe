@@ -4,6 +4,27 @@ module.exports = {
     content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
   	extend: {
+      // ── Layer z-index scale (matches src/lib/layerSystem.ts) ──────────────
+      zIndex: {
+        base:        '0',
+        hud:         '50',
+        sheet:       '80',
+        modal:       '100',
+        toast:       '110',
+        interrupt:   '120',
+        emergency:   '200',
+        debug:       '999',
+      },
+      // ── Motion duration scale (ms) ─────────────────────────────────────────
+      transitionDuration: {
+        micro:  '80ms',
+        fast:   '150ms',
+        normal: '250ms',
+        sheet:  '320ms',
+        page:   '380ms',
+        modal:  '280ms',
+        camera: '600ms',
+      },
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',

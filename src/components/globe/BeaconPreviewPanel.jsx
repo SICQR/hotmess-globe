@@ -30,7 +30,7 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
       initial={{ opacity: 0, scale: 0.9, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: 20 }}
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md mx-4"
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] w-full max-w-md mx-4"
     >
       <div className="bg-black/95 border-2 border-white backdrop-blur-xl overflow-hidden">
         {/* Header */}

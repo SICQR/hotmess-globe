@@ -122,7 +122,7 @@ export default function GlobalAssistant() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed bottom-6 right-6 w-full md:w-[420px] h-[600px] bg-black border-2 border-[#FF1493] z-50 flex flex-col shadow-[0_0_40px_rgba(255,20,147,0.3)]"
+            className="fixed bottom-6 right-6 w-full md:w-[420px] h-[600px] bg-black border-2 border-[#FF1493] z-[80] flex flex-col shadow-[0_0_40px_rgba(255,20,147,0.3)]"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-[#FF1493] to-[#B026FF] border-b-2 border-white p-4">

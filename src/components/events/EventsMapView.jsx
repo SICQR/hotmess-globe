@@ -203,7 +203,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
       className="fixed inset-0 z-50 bg-black"
     >
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-[1000] bg-black/95 backdrop-blur-xl border-b-2 border-[#FF1493] p-4">
+      <div className="absolute top-0 left-0 right-0 z-[80] bg-black/95 backdrop-blur-xl border-b-2 border-[#FF1493] p-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -400,7 +400,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
-          className="fixed right-0 top-32 bottom-0 w-full md:w-80 bg-black border-l-2 border-[#00D9FF] p-6 overflow-y-auto z-[1000]"
+          className="fixed right-0 top-32 bottom-0 w-full md:w-80 bg-black border-l-2 border-[#00D9FF] p-6 overflow-y-auto z-[80]"
         >
           <button
             onClick={() => setSelectedUser(null)}
@@ -472,7 +472,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
-          className="fixed right-0 top-20 bottom-0 w-full md:w-96 bg-black border-l-2 border-[#FF1493] p-6 overflow-y-auto z-[1000]"
+          className="fixed right-0 top-20 bottom-0 w-full md:w-96 bg-black border-l-2 border-[#FF1493] p-6 overflow-y-auto z-[80]"
         >
           <button
             onClick={() => setSelectedEvent(null)}

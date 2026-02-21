@@ -20,6 +20,30 @@
     --mobile-header-height: 56px;
     --mobile-nav-height: 72px;
     --mobile-content-height: calc(var(--real-vh) - var(--mobile-header-height) - var(--mobile-nav-height) - var(--sab));
+
+    /* ── Layer Z-Index System (mirrors src/lib/layerSystem.ts) ────────────── */
+    /* Injected at runtime by injectLayerCSSVars(); these are the fallbacks.  */
+    --z-base:        0;
+    --z-hud:         50;
+    --z-sheet:       80;
+    --z-modal:       100;
+    --z-toast:       110;
+    --z-interrupt:   120;
+    --z-emergency:   200;
+    --z-debug:       999;
+
+    /* ── Motion Timing (mirrors DURATION tokens) ──────────────────────────── */
+    --duration-micro:   80ms;
+    --duration-fast:    150ms;
+    --duration-normal:  250ms;
+    --duration-sheet:   320ms;
+    --duration-page:    380ms;
+    --duration-modal:   280ms;
+    --duration-camera:  600ms;
+    --ease-ui:   cubic-bezier(0.25, 0.1, 0.25, 1);
+    --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+    --ease-exit:  cubic-bezier(0.4, 0, 1, 1);
+
     
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;

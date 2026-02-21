@@ -298,7 +298,7 @@ function StoryViewer({ storiesData, initialIndex, currentUserId, onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] bg-black"
+      className="fixed inset-0 z-[80] bg-black"
     >
       {/* Progress bars */}
       <div className="absolute top-0 left-0 right-0 z-10 flex gap-1 p-2 pt-safe">
@@ -468,7 +468,7 @@ function CreateStoryModal({ currentUser, onClose, onCreated }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] bg-black flex flex-col"
+      className="fixed inset-0 z-[80] bg-black flex flex-col"
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">

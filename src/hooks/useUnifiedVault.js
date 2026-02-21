@@ -45,15 +45,31 @@ export function useUnifiedVault(user) {
     staleTime: 30000,
   });
 
-  // Shopify Orders (stub - TODO: integrate Shopify customer orders API)
+  // Shopify Orders — from webhook-synced shopify_orders table
   const {
     data: shopifyOrders = [],
     isLoading: shopifyLoading,
   } = useQuery({
     queryKey: ['vault-shopify-orders', userEmail],
     queryFn: async () => {
-      // TODO: Fetch from Shopify customer orders API or webhook table
-      return [];
+      if (!userEmail) return [];
+      const { data, error } = await supabase
+        .from('shopify_orders')
+        .select('shopify_order_id, financial_status, fulfillment_status, total_price, line_items_count, created_at')
+        .eq('customer_email', userEmail)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) return []; // graceful: table may not exist yet
+      return (data || []).map((o) => ({
+        id: o.shopify_order_id,
+        title: `Shopify #${o.shopify_order_id}`,
+        status: o.financial_status || 'unknown',
+        fulfillment: o.fulfillment_status,
+        source: 'shopify',
+        created_date: o.created_at,
+        total: o.total_price,
+        itemCount: o.line_items_count,
+      }));
     },
     enabled: !!userEmail,
     staleTime: 60000,

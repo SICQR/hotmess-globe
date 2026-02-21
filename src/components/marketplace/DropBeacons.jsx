@@ -65,7 +65,7 @@ export default function DropBeacons() {
       {drops.map(drop => (
         <div
           key={drop.id}
-          className="fixed z-50"
+          className="fixed z-[100]"
           style={{
             // Position based on beacon coordinates (simplified)
             left: '50%',
@@ -97,7 +97,7 @@ export default function DropBeacons() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-lg p-6"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-lg p-6"
             onClick={() => setSelectedDrop(null)}
           >
             <motion.div

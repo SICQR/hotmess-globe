@@ -161,7 +161,7 @@ export function PageTransitionOverlay({ isTransitioning, type = 'wipe' }) {
       initial={variant.initial}
       animate={variant.animate}
       transition={variant.transition}
-      className="fixed inset-0 z-[9999] bg-[#FF1493] pointer-events-none"
+      className="fixed inset-0 z-[120] bg-[#FF1493] pointer-events-none"
     />
   );
 }

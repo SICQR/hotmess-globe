@@ -458,7 +458,7 @@ export function VoiceNoteButton({ onRecordingComplete, className }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed inset-x-0 bottom-0 z-50 p-4 bg-black border-t-2 border-[#FF1493]"
+            className="fixed inset-x-0 bottom-0 z-[80] p-4 bg-black border-t-2 border-[#FF1493]"
           >
             <VoiceNote
               onSend={async (blob, duration) => {

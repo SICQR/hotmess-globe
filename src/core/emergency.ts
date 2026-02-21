@@ -6,6 +6,7 @@
  */
 
 import { setSystemState, getSystemState, resolveEmergency as resolveSystemEmergency } from './systemState';
+import { supabase } from '@/components/utils/supabaseClient';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // EMERGENCY TYPES
@@ -267,7 +268,7 @@ export function scheduleFakeCall(options: FakeCallOptions): () => void {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SERVICE INTEGRATIONS (stubs - implement with real services)
+// SERVICE INTEGRATIONS — Supabase-backed implementations
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface TrustedContact {
@@ -277,31 +278,113 @@ interface TrustedContact {
   telegramId?: string;
 }
 
+/** Fetch the current user's trusted contacts from Supabase. */
 async function getTrustedContacts(): Promise<TrustedContact[]> {
-  // TODO: Fetch from Supabase
-  // const { data } = await supabase.from('trusted_contacts').select('*').eq('user_id', userId);
-  return [];
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+    const { data, error } = await supabase
+      .from('trusted_contacts')
+      .select('id, name, phone, telegram_id')
+      .eq('user_id', user.id);
+    if (error) {
+      console.error('[Emergency] Failed to fetch trusted contacts:', error);
+      return [];
+    }
+    return (data || []).map((c) => ({
+      id: c.id,
+      name: c.name,
+      phone: c.phone ?? undefined,
+      telegramId: c.telegram_id ?? undefined,
+    }));
+  } catch (err) {
+    console.error('[Emergency] getTrustedContacts error:', err);
+    return [];
+  }
 }
 
+/** Fire-and-forget alert — calls the /api/safety/alert serverless function. */
 async function sendEmergencyAlert(contact: TrustedContact, event: EmergencyEvent): Promise<void> {
-  // TODO: Send via Telegram bot, SMS, etc.
-  console.log(`[Emergency] Alerting ${contact.name}`, event);
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch('/api/safety/alert', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
+      body: JSON.stringify({
+        contactId: contact.id,
+        eventId: event.id,
+        location: event.location,
+        triggeredAt: event.triggeredAt,
+      }),
+    });
+  } catch (err) {
+    console.error(`[Emergency] sendEmergencyAlert to ${contact.id} failed:`, err);
+  }
 }
 
+/** Write the live location to the emergency_locations realtime channel. */
 async function broadcastLocation(event: EmergencyEvent, location: { lat: number; lng: number }): Promise<void> {
-  // TODO: Update Supabase realtime channel
-  console.log(`[Emergency] Broadcasting location`, location);
+  try {
+    await supabase
+      .from('emergency_locations')
+      .upsert(
+        {
+          emergency_id: event.id,
+          lat: location.lat,
+          lng: location.lng,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'emergency_id' }
+      );
+  } catch (err) {
+    console.error('[Emergency] broadcastLocation error:', err);
+  }
 }
 
+/** Insert a safety beacon into the beacons table, visible to admins. */
 async function insertSafetyBeacon(event: EmergencyEvent): Promise<string> {
-  // TODO: Insert into beacons table with type='safety'
-  console.log(`[Emergency] Creating admin beacon`, event);
-  return `beacon_${event.id}`;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .from('beacons')
+      .insert({
+        kind: 'safety',
+        title: 'SOS Alert',
+        lat: event.location?.lat ?? null,
+        lng: event.location?.lng ?? null,
+        promoter_id: user?.id ?? null,
+        metadata: { emergency_id: event.id, source: event.source },
+        active: true,
+      })
+      .select('id')
+      .single();
+    if (error) {
+      console.error('[Emergency] insertSafetyBeacon error:', error);
+      return `beacon_${event.id}`;
+    }
+    return data.id;
+  } catch (err) {
+    console.error('[Emergency] insertSafetyBeacon error:', err);
+    return `beacon_${event.id}`;
+  }
 }
 
+/** Mark the safety beacon as resolved once the emergency clears. */
 async function markBeaconResolved(beaconId: string): Promise<void> {
-  // TODO: Update beacon status
-  console.log(`[Emergency] Marking beacon resolved`, beaconId);
+  try {
+    const { error } = await supabase
+      .from('beacons')
+      .update({ active: false })
+      .eq('id', beaconId);
+    if (error) {
+      console.error('[Emergency] markBeaconResolved error:', error);
+    }
+  } catch (err) {
+    console.error('[Emergency] markBeaconResolved error:', err);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth, base44 } from '@/components/utils/supabaseClient';
+import { auth, base44, supabase } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LogIn, UserPlus, Loader2, ArrowRight, Check, Crown, Zap, Star, Upload, User } from 'lucide-react';
@@ -64,10 +64,13 @@ export default function Auth() {
   // Helper function to check if user profile is complete
   const checkProfileComplete = async (userId) => {
     try {
-      const { data } = await base44.entities.User.filter({ auth_user_id: userId });
-      const user = data?.[0] || (Array.isArray(data) ? null : data);
-      if (!user) return false;
-      return !!(user.full_name && user.avatar_url && user.city && user.profile_type);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_complete, display_name')
+        .eq('account_id', userId)
+        .maybeSingle();
+      // If profile row is missing or onboarding not done, send to Profile setup
+      return !!(profile?.onboarding_complete);
     } catch {
       return false;
     }
@@ -94,24 +97,22 @@ export default function Auth() {
     }, REDIRECT_DELAY_MS);
   };
 
-  // Listen to Supabase auth state changes (for OAuth callbacks)
+  // Listen to Supabase auth state changes (for OAuth callbacks and password recovery)
   useEffect(() => {
     const { data: authSubscription } = auth.onAuthStateChange(async (event, session) => {
-      console.log('[Auth] Auth state changed:', event);
-      
+      // Recovery link clicked → Supabase fires PASSWORD_RECOVERY (not SIGNED_IN).
+      // Show the reset-password form regardless of the current step.
+      if (event === 'PASSWORD_RECOVERY') {
+        setStep('reset');
+        return;
+      }
+
       if (event === 'SIGNED_IN' && session) {
-        // User successfully signed in (including OAuth)
-        console.log('[Auth] User signed in successfully');
-        
-        // Only redirect if we're not already showing the membership/profile steps
+        // Only redirect if we're not already showing the membership/profile/reset steps
         if (step === 'auth') {
           toast.success('Welcome back!');
           performRedirectAfterAuth(session);
         }
-      } else if (event === 'SIGNED_OUT') {
-        console.log('[Auth] User signed out');
-      } else if (event === 'USER_UPDATED') {
-        console.log('[Auth] User updated');
       }
     });
 
@@ -126,9 +127,20 @@ export default function Auth() {
       const hash = (typeof window !== 'undefined' ? window.location.hash : '') || '';
       const looksLikeRecovery = hash.toLowerCase().includes('type=recovery');
       
-      // Check if this is a recovery link
+      // Recovery link: confirm session exists (Supabase auto-exchanges the hash token)
+      // before showing the reset form so the updatePassword call won't fail.
       if (mode === 'reset' || looksLikeRecovery) {
-        setStep('reset');
+        try {
+          const { data } = await auth.getSession();
+          if (data?.session) {
+            setStep('reset');
+          } else {
+            // Token not yet exchanged — wait for PASSWORD_RECOVERY event from onAuthStateChange
+            setStep('reset');
+          }
+        } catch {
+          setStep('reset');
+        }
         return;
       }
 
@@ -283,6 +295,9 @@ export default function Auth() {
 
       toast.success('Password updated! Please sign in.');
       await auth.signOut();
+      // Clear the recovery token from the URL so the reset form doesn't
+      // reappear if the page is refreshed after a successful reset.
+      window.history.replaceState({}, document.title, window.location.pathname);
       setNewPassword('');
       setConfirmPassword('');
       setStep('auth');
@@ -296,14 +311,29 @@ export default function Auth() {
   const handleMembership = async () => {
     setLoading(true);
     try {
-      await base44.auth.updateMe({
-        membership_tier: selectedTier,
-        subscription_status: selectedTier === 'basic' ? 'active' : 'trial'
+      // Write to auth user metadata (legacy) + profiles table
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('profiles')
+          .update({
+            membership_tier: selectedTier,
+            subscription_status: selectedTier === 'basic' ? 'active' : 'trial',
+          })
+          .eq('account_id', user.id);
+      }
+      // Also persist to auth metadata as fallback
+      await supabase.auth.updateUser({
+        data: {
+          membership_tier: selectedTier,
+          subscription_status: selectedTier === 'basic' ? 'active' : 'trial',
+        },
       });
       toast.success('Membership selected!');
       setStep('profile');
     } catch (error) {
       toast.error('Failed to set membership');
+      console.error('[Auth] handleMembership error:', error);
     } finally {
       setLoading(false);
     }
@@ -346,20 +376,44 @@ export default function Auth() {
         avatarUrl = buildInitialsAvatar(fullName);
       }
       
+      // Update auth user metadata (for legacy base44 compatibility)
       await base44.auth.updateMe({
         ...profileData,
         full_name: fullName,
         avatar_url: avatarUrl,
         gender: 'male',
         photo_policy_ack: true,
-        onboarding_completed: true
+        onboarding_completed: true,
       });
+
+      // CRITICAL: also mark onboarding_complete in the profiles table so
+      // BootGuardContext exits NEEDS_ONBOARDING and renders the full app.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Derive a username slug — required by the DB constraint that guards
+        // onboarding_complete=true (must have username OR display_name set).
+        const usernameSlug = fullName.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 40);
+        await supabase
+          .from('profiles')
+          .update({
+            onboarding_complete: true,
+            display_name: fullName,
+            username: usernameSlug,
+            avatar_url: avatarUrl,
+            bio: profileData.bio || null,
+            city: profileData.city || 'London',
+            profile_type: profileData.profile_type || 'standard',
+          })
+          .eq('account_id', user.id);
+      }
+
       setStep('welcome');
       setTimeout(() => {
         navigate(nextUrl || createPageUrl('Home'));
       }, 3000);
     } catch (error) {
       toast.error('Failed to update profile');
+      console.error('[Auth] handleProfile error:', error);
       setLoading(false);
     }
   };

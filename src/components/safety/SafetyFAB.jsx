@@ -133,7 +133,7 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] bg-red-950 flex flex-col"
+      className="fixed inset-0 z-[200] bg-red-950 flex flex-col"
     >
       {/* Red gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-red-900/50 via-red-950 to-black" />
