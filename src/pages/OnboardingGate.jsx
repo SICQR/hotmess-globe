@@ -185,7 +185,6 @@ export default function OnboardingGate() {
   }, [displayName, pin, pinConfirm, session?.user?.id, completeOnboarding, navigate]);
 
   // ── Render helpers ─────────────────────────────────────────────────────────
-  const stepColor = STEPS[step - 1]?.color ?? '#FF1493';
 
   const renderStep = () => {
     switch (step) {
