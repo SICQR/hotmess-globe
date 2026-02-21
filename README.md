@@ -286,6 +286,14 @@ npm run build
 
 ---
 
+## 🚢 Shipping / Runbooks
+
+| Runbook | Purpose |
+|---------|---------|
+| [EXECUTION_TODAY_HOTMESS_OS.md](docs/EXECUTION_TODAY_HOTMESS_OS.md) | **Ship hotmessldn.com today** — blockers, timeboxed plan, E2E commands, Definition of Done |
+
+---
+
 ## 📚 Documentation
 
 | Doc | Purpose |
