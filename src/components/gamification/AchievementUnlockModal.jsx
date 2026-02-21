@@ -109,7 +109,7 @@ export default function AchievementUnlockModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/90 backdrop-blur-xl"
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-xl"
           onClick={onClose}
           role="dialog"
           aria-modal="true"

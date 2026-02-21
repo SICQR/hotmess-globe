@@ -61,7 +61,7 @@ export default function TutorialTooltip({ page }) {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-[9999] max-w-sm w-[calc(100vw-2rem)] md:w-auto"
+        className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-[110] max-w-sm w-[calc(100vw-2rem)] md:w-auto"
       >
         <div className="bg-black border-2 border-[#FF1493] rounded-xl p-6 shadow-2xl">
           <div className="flex items-start justify-between mb-4">

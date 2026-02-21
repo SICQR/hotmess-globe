@@ -188,7 +188,7 @@ export default function HotmessSplash({ onComplete }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black overflow-hidden">
+    <div className="fixed inset-0 z-[120] bg-black overflow-hidden">
       <BrandBackground />
 
       {/* Audio toggle */}

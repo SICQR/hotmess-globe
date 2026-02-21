@@ -1209,7 +1209,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
             position: 'fixed',
             left: arcTooltip.x + 15,
             top: arcTooltip.y - 40,
-            zIndex: 1000,
+            zIndex: 80, // Z.OVERLAY
             pointerEvents: 'none'
           }}
           className="px-4 py-3 bg-black/95 border border-[#FF1493]/40 rounded-xl backdrop-blur-xl"
