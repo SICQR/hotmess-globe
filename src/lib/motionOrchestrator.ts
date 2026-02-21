@@ -137,7 +137,7 @@ export const MotionOrchestrator = new _MotionOrchestrator();
 
 // ─── React hook ──────────────────────────────────────────────────────────────
 
-import { useCallback, useEffect, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 function getSnapshot() {
   return MotionOrchestrator.activeDomains().join(',');
