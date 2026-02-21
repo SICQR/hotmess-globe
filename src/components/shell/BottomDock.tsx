@@ -71,11 +71,14 @@ export function BottomDock({ activeMode = 'NOW', onModeChange, liveCount }: Bott
               flex flex-1 flex-col items-center justify-center gap-0.5
               min-h-[52px] py-2 relative
               font-black uppercase tracking-wider
-              transition-colors duration-[${DURATION.NORMAL}ms]
+              transition-colors
               ${isActive ? 'text-white' : 'text-[#6B7280] hover:text-white/60'}
               active:scale-95 active:opacity-70
             `}
-            style={{ transitionTimingFunction: `cubic-bezier(${EASE.UI.join(',')})` }}
+            style={{
+              transitionDuration: `${DURATION.NORMAL}ms`,
+              transitionTimingFunction: `cubic-bezier(${EASE.UI.join(',')})`,
+            }}
           >
             <span className="text-xl leading-none select-none">{MODE_ICONS[mode]}</span>
             <span className="text-[11px] leading-tight">{mode}</span>
