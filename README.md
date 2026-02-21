@@ -6,6 +6,8 @@
 **Status:** Production (Phase 2 Complete)  
 **Updated:** 2026-02-08
 
+📋 **Agent execution plan:** [`docs/AGENT_TASK_HOTMESS_OS.md`](docs/AGENT_TASK_HOTMESS_OS.md)
+
 ---
 
 ## 📊 Current Build
