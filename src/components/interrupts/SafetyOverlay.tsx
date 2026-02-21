@@ -27,7 +27,7 @@ export function SafetyOverlay({
   if (!isActive) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-[#FF2D2D] text-white p-6">
+    <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-6 bg-[#FF2D2D] text-white p-6">
       {!showPinEntry ? (
         <>
           <h1 className="text-2xl font-bold text-center">You are not alone</h1>

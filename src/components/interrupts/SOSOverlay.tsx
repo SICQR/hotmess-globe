@@ -36,7 +36,7 @@ export function SOSOverlay({ isActive, onDismiss }: SOSOverlayProps) {
 
   return (
     <div 
-      className="fixed inset-0 z-[100] bg-[#FF0000] flex flex-col items-center justify-center p-6"
+      className="fixed inset-0 z-[200] bg-[#FF0000] flex flex-col items-center justify-center p-6"
       style={{ 
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)' 

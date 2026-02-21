@@ -23,47 +23,35 @@ const LoadingSpinner = () => (
 
 /**
  * BootRouter - Routes based on boot state
- * 
+ *
  * State → Shell mapping:
- * - LOADING → Spinner
- * - UNAUTHENTICATED → PublicShell (Age, Auth, Legal)
- * - NEEDS_AGE → AgeGate only (unless localStorage says verified)
- * - NEEDS_ONBOARDING → Onboarding only (unless localStorage says verified)
- * - READY → Full app (passed as children)
+ * - LOADING          → Spinner
+ * - UNAUTHENTICATED  → PublicShell (Age gate → Auth → Legal)
+ *                      If the user already completed age verification locally,
+ *                      skip the age page and go straight to /auth.
+ * - NEEDS_AGE        → AgeGate  (BootGuardContext already syncs localStorage)
+ * - NEEDS_ONBOARDING → OnboardingGate (mandatory — never bypassed)
+ * - READY            → Full app (children)
  */
 export default function BootRouter({ children }) {
   const { bootState, isLoading } = useBootGuard();
   const localAge = getLocalAgeVerified();
-  
-  // Debug logging
-  console.log('[BootRouter] State:', bootState, 'isLoading:', isLoading, 'localAge:', localAge);
 
   // Show loading while checking auth
   if (isLoading || bootState === BOOT_STATES.LOADING) {
     return <LoadingSpinner />;
   }
 
-  // Unauthenticated users get public shell
+  // Unauthenticated users get the public shell.
+  // If they already confirmed their age locally, drop them on /auth instead of /age.
   if (bootState === BOOT_STATES.UNAUTHENTICATED) {
-    // CRITICAL FIX: If user has localStorage age verified, they might just have
-    // a profile fetch issue. Check if we should let them through anyway.
-    if (localAge) {
-      console.log('[BootRouter] UNAUTHENTICATED but localStorage has age - showing children');
-      return <>{children}</>;
-    }
-    return <PublicShell />;
+    return <PublicShell startAt={localAge ? '/auth' : '/age'} />;
   }
 
-  // Authenticated but needs age verification
-  // CRITICAL: If localStorage says verified, skip the gate entirely
+  // Authenticated but age not yet verified — show age gate.
+  // BootGuardContext already attempts to sync localStorage → profile, so this
+  // state only appears when the DB has age_verified = false AND localStorage is empty.
   if (bootState === BOOT_STATES.NEEDS_AGE) {
-    if (localAge) {
-      // User already verified age locally - don't block them
-      console.log('[BootRouter] Bypassing AgeGate - localStorage has age verified');
-      return <>{children}</>;
-    }
-    
-    // Import dynamically to avoid circular deps
     const AgeGate = React.lazy(() => import('@/pages/AgeGate'));
     return (
       <React.Suspense fallback={<LoadingSpinner />}>
@@ -72,15 +60,8 @@ export default function BootRouter({ children }) {
     );
   }
 
-  // Authenticated but needs onboarding
-  // CRITICAL: If localStorage says age verified, they can proceed (onboarding is optional)
+  // Authenticated, age verified, but onboarding not complete — mandatory.
   if (bootState === BOOT_STATES.NEEDS_ONBOARDING) {
-    if (localAge) {
-      // User verified age - onboarding can be done later
-      console.log('[BootRouter] Bypassing OnboardingGate - localStorage has age verified');
-      return <>{children}</>;
-    }
-    
     const OnboardingGate = React.lazy(() => import('@/pages/OnboardingGate'));
     return (
       <React.Suspense fallback={<LoadingSpinner />}>
@@ -89,6 +70,6 @@ export default function BootRouter({ children }) {
     );
   }
 
-  // READY - render full app
+  // READY — render full app
   return <>{children}</>;
 }

@@ -87,23 +87,23 @@ export default function Social() {
         maxWidth="7xl"
       >
         <Tabs value={activeTab} onValueChange={(v) => setTabAndUrl(v)} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-white/5 mb-8">
+          <TabsList className="grid w-full grid-cols-2 bg-white/5 mb-6 h-auto">
             <TabsTrigger
               value="discover"
-              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black"
+              className="min-h-[44px] data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black py-3"
             >
-              <Users className="w-4 h-4 mr-2" />
-              DISCOVER
+              <Users className="w-4 h-4 mr-2 shrink-0" />
+              <span className="text-sm">DISCOVER</span>
             </TabsTrigger>
             <TabsTrigger
               value="inbox"
-              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black relative"
+              className="min-h-[44px] data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black py-3 relative"
             >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              INBOX
+              <MessageCircle className="w-4 h-4 mr-2 shrink-0" />
+              <span className="text-sm">INBOX</span>
               {threads.length > 0 && (
-                <span className="ml-2 px-2 py-0.5 bg-[#FF1493] text-black text-xs font-black rounded-full">
-                  {threads.length}
+                <span className="ml-1.5 px-2 py-0.5 bg-[#FF1493] text-black text-xs font-black rounded-full shrink-0">
+                  {threads.length > 99 ? '99+' : threads.length}
                 </span>
               )}
             </TabsTrigger>
@@ -131,35 +131,35 @@ export default function Social() {
 
           <TabsContent value="inbox">
             {showLoginPromptForInbox ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12 px-4">
                 <MessageCircle className="w-16 h-16 mx-auto mb-4 text-white/40" />
-                <h3 className="text-2xl font-black mb-2">SIGN IN TO MESSAGE</h3>
-                <p className="text-white/60 mb-6">Create an account to chat with people</p>
+                <h3 className="text-xl font-black mb-2">SIGN IN TO MESSAGE</h3>
+                <p className="text-white/60 mb-6 text-sm">Create an account to chat with people</p>
                 <Button
                   type="button"
                   variant="hot"
                   onClick={() => navigate(`/auth?next=${encodeURIComponent('/social?tab=inbox')}`)}
-                  className="font-black uppercase"
+                  className="font-black uppercase w-full sm:w-auto min-h-[44px]"
                 >
                   SIGN IN
                 </Button>
               </div>
             ) : threads.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12 px-4">
                 <MessageCircle className="w-16 h-16 mx-auto mb-4 text-white/40" />
-                <h3 className="text-2xl font-black mb-2">NO MESSAGES YET</h3>
-                <p className="text-white/60 mb-6">Start a conversation from Discover</p>
+                <h3 className="text-xl font-black mb-2">NO MESSAGES YET</h3>
+                <p className="text-white/60 mb-6 text-sm">Start a conversation from Discover</p>
                 <Button
                   type="button"
                   variant="cyan"
                   onClick={() => setTabAndUrl('discover')}
-                  className="font-black uppercase"
+                  className="font-black uppercase w-full sm:w-auto min-h-[44px]"
                 >
                   GO TO DISCOVER
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {threads.map((thread) => {
                   const participants = Array.isArray(thread.participant_emails) ? thread.participant_emails : [];
                   const otherParticipant = participants.find((e) => e && e !== currentUser?.email) || currentUser?.email || 'Unknown';
@@ -174,21 +174,21 @@ export default function Social() {
                       to={`/social/t/${encodeURIComponent(String(thread.id))}`}
                       className="block"
                     >
-                      <div className="bg-white/5 hover:bg-white/10 border-2 border-white/10 p-4 transition-all">
+                      <div className="bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-xl p-3 sm:p-4 transition-all">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center shrink-0">
                             <span className="text-lg font-black">
                               {otherParticipant[0]?.toUpperCase()}
                             </span>
                           </div>
-                          <div className="flex-1">
-                            <p className="font-black uppercase">{otherParticipant}</p>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-black uppercase text-sm truncate">{otherParticipant}</p>
                             <p className="text-sm text-white/60 truncate">
                               {thread.last_message || 'Start a conversation...'}
                             </p>
                           </div>
                           {unreadCount > 0 && (
-                            <span className="px-3 py-1 bg-[#FF1493] text-black text-xs font-black rounded-full">
+                            <span className="px-2.5 py-1 bg-[#FF1493] text-black text-xs font-black rounded-full shrink-0">
                               {unreadCount}
                             </span>
                           )}

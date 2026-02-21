@@ -1,12 +1,32 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Shield, Users, Lock, AlertCircle } from 'lucide-react';
+import { Shield, Lock, Users, AlertCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import BrandBackground from '@/components/ui/BrandBackground';
 
 const CONSENT_VERSION = 'v1.0.0-2025';
+
+const SECTIONS = [
+  {
+    icon: Users,
+    color: '#FF1493',
+    title: 'Private Membership',
+    body: 'HOTMESS LONDON operates as a private members association under UK law (Equality Act 2010, §193). This is a men-focused platform for adult nightlife, culture, and community.',
+  },
+  {
+    icon: Lock,
+    color: '#00D9FF',
+    title: 'Privacy & Location',
+    body: 'Your location is grid-snapped to a 500m radius. Presence pulses auto-expire after 6 hours. DMs use Telegram E2E encryption. You control your privacy mode at all times.',
+  },
+  {
+    icon: Shield,
+    color: '#B026FF',
+    title: 'Safety & Responsibility',
+    body: 'Use Care Beacons for health resources. Report inappropriate behaviour immediately. Respect all members\' boundaries. Comply with local laws.',
+  },
+];
 
 export default function ConsentForm({ user, onAccepted }) {
   const [accepted, setAccepted] = useState(false);
@@ -17,7 +37,6 @@ export default function ConsentForm({ user, onAccepted }) {
       toast.error('Please read and accept the terms');
       return;
     }
-
     setLoading(true);
     try {
       await base44.auth.updateMe({
@@ -26,133 +45,99 @@ export default function ConsentForm({ user, onAccepted }) {
         consent_timestamp: new Date().toISOString(),
         is_18_plus: true,
       });
-
       toast.success('Welcome to HOTMESS LONDON');
       onAccepted();
     } catch (error) {
       console.error('Failed to accept consent:', error);
-      toast.error('Failed to save consent');
+      toast.error('Failed to save consent. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black p-4 overflow-hidden">
+      <BrandBackground />
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl w-full bg-white/5 border border-white/20 rounded-2xl p-8 backdrop-blur-xl"
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+        className="relative z-10 w-full max-w-lg"
       >
-        <div className="mb-6">
-          <p className="text-[10px] uppercase tracking-[0.35em] font-mono text-white/50 mb-3">
-            SYSTEM INITIALIZATION
+        {/* Wordmark */}
+        <div className="text-center mb-8">
+          <p className="text-4xl font-black tracking-tight text-white leading-none">
+            HOT<span className="text-[#FF1493]" style={{ textShadow: '0 0 24px rgba(255,20,147,0.6)' }}>MESS</span>
           </p>
-          <div className="flex items-center gap-3">
-          <Shield className="w-8 h-8 text-[#FF1493]" />
-            <h1 className="text-3xl font-black text-white uppercase">DECRYPTION CONSENT</h1>
-          </div>
-          <p className="text-white/60 text-sm mt-3 font-mono uppercase">
-            Scanning permissions… <span className="animate-pulse">READY</span>
-          </p>
+          <p className="text-[10px] tracking-[0.45em] text-white/30 uppercase font-mono mt-2">LONDON</p>
         </div>
 
-        <ScrollArea className="h-96 mb-6 pr-4">
-          <div className="space-y-6 text-white/80">
-            <div>
-              <h3 className="font-bold text-[#FF1493] mb-2 flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Private Association Membership
-              </h3>
-              <p className="text-sm leading-relaxed">
-                HOTMESS LONDON operates as a private members association under UK law (Equality Act 2010, Section 193). 
-                By accepting, you acknowledge this is a men-focused platform designed for adult nightlife, culture, and community.
-              </p>
-            </div>
+        {/* Card */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+          <p className="text-[10px] uppercase tracking-[0.35em] font-mono text-white/30 mb-1">
+            SYSTEM INITIALIZATION
+          </p>
+          <h1 className="text-2xl font-black text-white uppercase mb-6 flex items-center gap-2">
+            <Shield className="w-6 h-6 text-[#FF1493]" />
+            Membership Consent
+          </h1>
 
-            <div>
-              <h3 className="font-bold text-[#00D9FF] mb-2 flex items-center gap-2">
-                <Lock className="w-5 h-5" />
-                Privacy & Location Protection
-              </h3>
-              <p className="text-sm leading-relaxed mb-2">
-                Your privacy is paramount. We implement "fuzzy geolocation" - your location is automatically 
-                grid-snapped to a 500m radius to prevent precise tracking. Key protections:
-              </p>
-              <ul className="text-sm space-y-1 ml-4 list-disc">
-                <li>Real-time location pulses expire after 6 hours</li>
-                <li>Grid-snapping prevents stalking and precise location inference</li>
-                <li>Direct messages use Telegram E2E encryption</li>
-                <li>You control your location privacy mode at all times</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-[#FFEB3B] mb-2 flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                Safety & Responsibility
-              </h3>
-              <p className="text-sm leading-relaxed mb-2">
-                HOTMESS LONDON promotes responsible hedonism. You agree to:
-              </p>
-              <ul className="text-sm space-y-1 ml-4 list-disc">
-                <li>Use Care Beacons for health resources (56 Dean Street, Hand N Hand)</li>
-                <li>Report inappropriate behavior immediately</li>
-                <li>Respect other members' boundaries and privacy</li>
-                <li>Comply with all applicable local laws</li>
-              </ul>
-            </div>
-
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-red-400">
-                  <strong>Important:</strong> This platform contains adult content and is for users 18+ only. 
-                  All data processing complies with GDPR. Your sexual orientation data is treated as Special Category 
-                  data with enhanced protection.
+          {/* Scrollable sections */}
+          <div className="space-y-3 max-h-64 overflow-y-auto pr-1 mb-6">
+            {SECTIONS.map(({ icon: Icon, color, title, body }) => (
+              <div
+                key={title}
+                className="bg-white/5 border border-white/10 rounded-xl p-4 flex gap-3"
+              >
+                <Icon className="w-5 h-5 mt-0.5 shrink-0" style={{ color }} />
+                <div>
+                  <p className="text-sm font-black text-white mb-1">{title}</p>
+                  <p className="text-xs text-white/50 leading-relaxed">{body}</p>
                 </div>
               </div>
-            </div>
+            ))}
 
-            <div>
-              <h3 className="font-bold text-white mb-2">Data Minimization</h3>
-              <p className="text-sm leading-relaxed">
-                We minimize data retention. Ephemeral content (right now pulses) auto-deletes after 6 hours. 
-                Messages are encrypted via Telegram. You can exercise your right to be forgotten at any time 
-                via Settings → Delete Account.
+            {/* GDPR notice */}
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 shrink-0" />
+              <p className="text-xs text-red-300 leading-relaxed">
+                This platform contains adult content (18+ only). Sexual orientation data is treated as Special Category data under GDPR Article 9 with enhanced protection.
               </p>
             </div>
           </div>
-        </ScrollArea>
 
-        <div className="mb-6">
-          <label className="flex items-start gap-3 cursor-pointer p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+          {/* Checkbox */}
+          <label className="flex items-start gap-3 cursor-pointer p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors mb-5 select-none">
             <input
               type="checkbox"
               checked={accepted}
               onChange={(e) => setAccepted(e.target.checked)}
-              className="mt-1 w-5 h-5"
+              className="mt-0.5 w-5 h-5 accent-[#FF1493] shrink-0"
             />
-            <span className="text-sm text-white/90">
-              I confirm I am 18+ years old, I have read and understood the above terms, and I agree to join 
-              HOTMESS LONDON as a private member. I consent to the processing of my data as described, including 
-              Special Category data relating to sexual orientation under GDPR Article 9.
+            <span className="text-xs text-white/70 leading-relaxed">
+              I confirm I am 18+, have read the above, and agree to join HOTMESS LONDON as a private member — including consent to processing of Special Category data under GDPR Article 9.
             </span>
           </label>
+
+          <button
+            onClick={handleAccept}
+            disabled={!accepted || loading}
+            className="w-full h-14 rounded-xl font-black text-lg uppercase tracking-widest text-black transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              background: accepted ? '#FF1493' : 'rgba(255,20,147,0.3)',
+              boxShadow: accepted ? '0 0 28px rgba(255,20,147,0.45)' : 'none',
+            }}
+          >
+            {loading ? 'SAVING…' : 'ENTER HOTMESS'}
+          </button>
         </div>
 
-        <Button
-          onClick={handleAccept}
-          disabled={!accepted || loading}
-          className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black text-lg py-6"
-        >
-          {loading ? 'DECRYPTING...' : '[ DECRYPT CITY INTEL ]'}
-        </Button>
-
-        <p className="text-center text-xs text-white/40 mt-4 font-mono uppercase">
-          Version {CONSENT_VERSION} • Last Updated: December 2025
+        <p className="text-center text-xs text-white/20 mt-5 font-mono uppercase">
+          {CONSENT_VERSION} · GDPR Compliant
         </p>
       </motion.div>
     </div>
   );
 }
+

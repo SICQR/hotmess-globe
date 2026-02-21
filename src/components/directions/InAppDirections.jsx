@@ -264,7 +264,7 @@ export default function InAppDirections({
       animate={{ opacity: 1, scale: 1 }}
       className={cn(
         "bg-black border-2 border-[#FF1493]",
-        isExpanded ? "fixed inset-4 z-50" : "",
+        isExpanded ? "fixed inset-4 z-[80]" : "",
         className
       )}
     >
@@ -446,7 +446,7 @@ export function DirectionsButton({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[80] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => setShowDirections(false)}
           >
             <motion.div

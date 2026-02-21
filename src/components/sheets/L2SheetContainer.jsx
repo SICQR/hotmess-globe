@@ -166,13 +166,13 @@ export default function L2SheetContainer({
             aria-modal="true"
             aria-labelledby="sheet-title"
           >
-            {/* Drag handle */}
+            {/* Drag handle — 48px tall tap zone for easy grab */}
             {showHandle && (
               <div 
                 className="flex justify-center py-3 cursor-grab active:cursor-grabbing"
                 aria-hidden="true"
               >
-                <div className="w-12 h-1.5 bg-white/30 rounded-full" />
+                <div className="w-16 h-1.5 bg-white/30 rounded-full" />
               </div>
             )}
 
@@ -196,8 +196,8 @@ export default function L2SheetContainer({
                 <button
                   onClick={handleClose}
                   className={cn(
-                    'p-2 -mr-2 rounded-lg transition-colors',
-                    'text-white/60 hover:text-white hover:bg-white/10',
+                    'min-h-[44px] min-w-[44px] -mr-2 flex items-center justify-center rounded-xl transition-colors',
+                    'text-white/60 hover:text-white hover:bg-white/10 active:bg-white/20',
                     'focus:outline-none focus:ring-2 focus:ring-[#FF1493]'
                   )}
                   aria-label="Close sheet"

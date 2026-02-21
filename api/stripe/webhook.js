@@ -51,15 +51,14 @@ export default async function handler(req, res) {
   try {
     const rawBody = await getRawBody(req);
     const signature = req.headers['stripe-signature'];
-
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err) {
     return res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
   }
 
-
   try {
     switch (event.type) {
+
       case 'checkout.session.completed': {
         const session = event.data.object;
         const userId = session.metadata?.supabase_user_id;
@@ -77,7 +76,7 @@ export default async function handler(req, res) {
             .eq('auth_user_id', userId);
 
           if (error) {
-          } else {
+            console.error('[Stripe webhook] checkout.session.completed DB error:', error.message, { userId, tierId });
           }
         }
         break;
@@ -89,7 +88,7 @@ export default async function handler(req, res) {
 
         if (userId) {
           const status = subscription.cancel_at_period_end ? 'canceling' : subscription.status;
-          
+
           const { error } = await supabase
             .from('User')
             .update({
@@ -101,7 +100,7 @@ export default async function handler(req, res) {
             .eq('auth_user_id', userId);
 
           if (error) {
-          } else {
+            console.error('[Stripe webhook] customer.subscription.updated DB error:', error.message, { userId, status });
           }
         }
         break;
@@ -123,7 +122,7 @@ export default async function handler(req, res) {
             .eq('auth_user_id', userId);
 
           if (error) {
-          } else {
+            console.error('[Stripe webhook] customer.subscription.deleted DB error:', error.message, { userId });
           }
         }
         break;
@@ -131,17 +130,20 @@ export default async function handler(req, res) {
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object;
-        
+
         if (invoice.subscription) {
           const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
           const userId = subscription.metadata?.supabase_user_id;
 
           if (userId) {
-            await supabase
+            const { error } = await supabase
               .from('User')
               .update({ subscription_status: 'past_due' })
               .eq('auth_user_id', userId);
 
+            if (error) {
+              console.error('[Stripe webhook] invoice.payment_failed DB error:', error.message, { userId });
+            }
           }
         }
         break;
@@ -149,17 +151,20 @@ export default async function handler(req, res) {
 
       case 'invoice.paid': {
         const invoice = event.data.object;
-        
+
         if (invoice.subscription) {
           const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
           const userId = subscription.metadata?.supabase_user_id;
 
           if (userId) {
-            await supabase
+            const { error } = await supabase
               .from('User')
               .update({ subscription_status: 'active' })
               .eq('auth_user_id', userId);
 
+            if (error) {
+              console.error('[Stripe webhook] invoice.paid DB error:', error.message, { userId });
+            }
           }
         }
         break;
@@ -181,7 +186,7 @@ export default async function handler(req, res) {
             .eq('id', orderId);
 
           if (error) {
-          } else {
+            console.error('[Stripe webhook] payment_intent.succeeded DB error:', error.message, { orderId });
           }
         }
         break;
@@ -192,7 +197,7 @@ export default async function handler(req, res) {
         const orderId = paymentIntent.metadata?.order_id;
 
         if (orderId) {
-          await supabase
+          const { error } = await supabase
             .from('marketplace_orders')
             .update({
               status: 'payment_failed',
@@ -200,15 +205,21 @@ export default async function handler(req, res) {
             })
             .eq('id', orderId);
 
+          if (error) {
+            console.error('[Stripe webhook] payment_intent.payment_failed DB error:', error.message, { orderId });
+          }
         }
         break;
       }
 
       default:
+        // Unhandled event type — not an error, just not subscribed
+        break;
     }
 
     return res.status(200).json({ received: true });
   } catch (error) {
+    console.error('[Stripe webhook] Unhandled error in event handler:', error?.message || error, { eventType: event?.type });
     return res.status(500).json({ error: 'Webhook handler failed' });
   }
 }
