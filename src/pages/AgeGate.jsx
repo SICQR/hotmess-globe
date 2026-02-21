@@ -238,11 +238,11 @@ export default function AgeGate() {
           <div className="space-y-2 pt-1">
             <button
               onClick={handleConfirm}
-              disabled={!confirmed || !locationConsent || requestingLocation}
+              disabled={!confirmed || requestingLocation}
               className="w-full h-14 rounded-xl font-black text-black text-base uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all"
               style={{
-                background: (confirmed && locationConsent) ? '#FF1493' : 'rgba(255,20,147,0.3)',
-                boxShadow: (confirmed && locationConsent) ? '0 0 28px rgba(255,20,147,0.45)' : 'none',
+                background: confirmed ? '#FF1493' : 'rgba(255,20,147,0.3)',
+                boxShadow: confirmed ? '0 0 28px rgba(255,20,147,0.45)' : 'none',
               }}
             >
               Enter HOTMESS

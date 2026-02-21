@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPageUrl } from '../utils';
-import { base44, supabase } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -89,7 +89,7 @@ function PinInput({ value, onChange, label }) {
 export default function OnboardingGate() {
   const [step, setStep]                     = useState(0);
   const navigate                            = useNavigate();
-  const { completeOnboarding }              = useBootGuard();
+  const { session, profile, isLoading, completeOnboarding } = useBootGuard();
 
   const [ageConfirmed, setAgeConfirmed]     = useState(() => {
     try { return localStorage.getItem(AGE_KEY) === 'true'; } catch { return false; }
@@ -105,23 +105,26 @@ export default function OnboardingGate() {
   const [pinPhase, setPinPhase]             = useState('enter'); // 'enter' | 'confirm'
   const [saving, setSaving]                 = useState(false);
 
-  // Bootstrap: check auth status and skip already-completed steps.
-  // Only runs on mount — navigate is stable (React Router guarantee).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Wait for BootGuard to finish loading, then decide starting step.
+  // - No session → send to /auth (should not normally happen since BootRouter gates this)
+  // - Onboarding already complete → send straight to app
+  // - Otherwise → start at step 1 (age) or step 2 (terms) depending on localStorage
   useEffect(() => {
-    (async () => {
-      try {
-        const user = await base44.auth.me();
-        if (user.has_agreed_terms && user.has_consented_data && user.has_consented_gps) {
-          navigate(createPageUrl('Home'));
-        } else {
-          setStep(ageConfirmed ? 2 : 1);
-        }
-      } catch {
-        base44.auth.redirectToLogin(createPageUrl('OnboardingGate'));
-      }
-    })();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (isLoading) return;
+
+    if (!session) {
+      navigate('/auth', { replace: true });
+      return;
+    }
+
+    if (profile?.onboarding_complete) {
+      navigate(createPageUrl('Home'), { replace: true });
+      return;
+    }
+
+    // Age already confirmed in localStorage → skip age step
+    setStep(ageConfirmed ? 2 : 1);
+  }, [isLoading, session, profile?.onboarding_complete, ageConfirmed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Step advance ───────────────────────────────────────────────────────────
   const handleNext = useCallback(async () => {
@@ -129,15 +132,24 @@ export default function OnboardingGate() {
     if (step === 2 && !termsAgreed)  return;
     if (step === 3 && !dataConsent)  return;
 
-    if (step === 3) {
-      await base44.auth.updateMe({
-        has_agreed_terms:    termsAgreed,
-        has_consented_data:  dataConsent,
-        has_consented_gps:   gpsConsent,
-      });
+    // Step 3: persist consent flags to the profiles table
+    if (step === 3 && session?.user?.id) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          has_agreed_terms:   termsAgreed,
+          has_consented_data: dataConsent,
+          has_consented_gps:  gpsConsent,
+        })
+        .eq('account_id', session.user.id);
+      if (error) {
+        console.error('[Onboarding] Failed to save consent flags:', error);
+        toast.error('Could not save your consent settings. Please try again.');
+        return;
+      }
     }
     setStep((s) => s + 1);
-  }, [step, ageConfirmed, termsAgreed, dataConsent, gpsConsent]);
+  }, [step, ageConfirmed, termsAgreed, dataConsent, gpsConsent, session?.user?.id]);
 
   // ── Step 4 save ────────────────────────────────────────────────────────────
   const handleSaveProfile = useCallback(async () => {
@@ -149,16 +161,17 @@ export default function OnboardingGate() {
     try {
       const hash = await hashPin(pin);
 
-      // Save display name to User table
-      await base44.auth.updateMe({ full_name: displayName.trim() });
-
-      // Save PIN hash to profiles table
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
+      // Save display name + PIN hash to profiles table (single upsert)
+      if (session?.user?.id) {
+        const { error } = await supabase
           .from('profiles')
           .update({ pin_code_hash: hash, display_name: displayName.trim() })
-          .eq('account_id', user.id);
+          .eq('account_id', session.user.id);
+        if (error) {
+          console.error('[Onboarding] Failed to save profile:', error);
+          toast.error('Could not save your profile. Please try again.');
+          return;
+        }
       }
 
       await completeOnboarding();
@@ -169,7 +182,7 @@ export default function OnboardingGate() {
     } finally {
       setSaving(false);
     }
-  }, [displayName, pin, pinConfirm, completeOnboarding, navigate]);
+  }, [displayName, pin, pinConfirm, session?.user?.id, completeOnboarding, navigate]);
 
   // ── Render helpers ─────────────────────────────────────────────────────────
   const stepColor = STEPS[step - 1]?.color ?? '#FF1493';

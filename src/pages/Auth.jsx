@@ -97,21 +97,12 @@ export default function Auth() {
   // Listen to Supabase auth state changes (for OAuth callbacks)
   useEffect(() => {
     const { data: authSubscription } = auth.onAuthStateChange(async (event, session) => {
-      console.log('[Auth] Auth state changed:', event);
-      
       if (event === 'SIGNED_IN' && session) {
-        // User successfully signed in (including OAuth)
-        console.log('[Auth] User signed in successfully');
-        
         // Only redirect if we're not already showing the membership/profile steps
         if (step === 'auth') {
           toast.success('Welcome back!');
           performRedirectAfterAuth(session);
         }
-      } else if (event === 'SIGNED_OUT') {
-        console.log('[Auth] User signed out');
-      } else if (event === 'USER_UPDATED') {
-        console.log('[Auth] User updated');
       }
     });
 

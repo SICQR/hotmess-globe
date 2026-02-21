@@ -10,16 +10,17 @@ import PrivacyHub from '@/pages/legal/PrivacyHub';
 
 /**
  * PublicShell - Routes available without authentication
- * 
+ *
  * Contains:
  * - AgeGate (18+ verification)
  * - Auth (login/signup)
  * - Legal pages (privacy, terms)
- * 
- * This shell renders when bootState is UNAUTHENTICATED.
- * Users can freely navigate between these routes.
+ *
+ * `startAt` controls where unknown paths are redirected:
+ * - '/age'  (default) — user hasn't confirmed their age yet
+ * - '/auth' — user already confirmed age locally; send straight to sign-in
  */
-export default function PublicShell() {
+export default function PublicShell({ startAt = '/age' }) {
   return (
     <div className="min-h-screen bg-[#050507]">
       <Routes>
@@ -39,8 +40,8 @@ export default function PublicShell() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/PrivacyHub" element={<PrivacyHub />} />
         
-        {/* Default: go to age gate */}
-        <Route path="*" element={<Navigate to="/age" replace />} />
+        {/* Default: redirect to startAt (age gate or auth) */}
+        <Route path="*" element={<Navigate to={startAt} replace />} />
       </Routes>
     </div>
   );
