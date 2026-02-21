@@ -127,7 +127,7 @@ export function SOSButton({ className, onTrigger }) {
  */
 export function DistressModal({ onClose }) {
   return (
-    <div className="fixed inset-0 z-[200] bg-black/95 flex flex-col items-center justify-center p-6">
+    <div className="fixed inset-0 z-[9999] bg-black/95 flex flex-col items-center justify-center p-6">
       {/* Close */}
       <button
         onClick={onClose}

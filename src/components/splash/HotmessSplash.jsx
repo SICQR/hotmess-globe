@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Play, ArrowRight, Check } from 'lucide-react';
 import { auth, base44 } from '@/components/utils/supabaseClient';
@@ -7,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { createPageUrl } from '../../utils';
-import BrandBackground from '@/components/ui/BrandBackground';
 
 // Social provider icons
 const GoogleIcon = () => (
@@ -49,7 +47,6 @@ const TelegramIcon = () => (
 const SPLASH_TRACK_URL = '/audio/ghosted-intro.mp3';
 
 export default function HotmessSplash({ onComplete }) {
-  const navigate = useNavigate();
   const [stage, setStage] = useState('splash'); // splash, auth, complete
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -182,14 +179,44 @@ export default function HotmessSplash({ onComplete }) {
       if (onComplete) {
         onComplete();
       } else {
-        navigate(createPageUrl('Home'));
+        window.location.href = createPageUrl('Home');
       }
     }, 800);
   };
 
   return (
-    <div className="fixed inset-0 z-[120] bg-black overflow-hidden">
-      <BrandBackground />
+    <div className="fixed inset-0 z-[9999] bg-black overflow-hidden">
+      {/* Background - Brand gradient with blue accent */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a14] to-black" />
+        {/* Hot Pink glow */}
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#FF1493]/20 rounded-full blur-[100px]"
+        />
+        {/* Royal Blue glow - from hoodie */}
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.15, 0.3, 0.15],
+          }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#0047AB]/25 rounded-full blur-[100px]"
+        />
+        {/* Subtle golden warmth - from product photography */}
+        <motion.div
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.1, 0.2, 0.1],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/2 right-1/3 w-64 h-64 bg-[#FFB800]/10 rounded-full blur-[80px]"
+        />
+      </div>
 
       {/* Audio toggle */}
       <button

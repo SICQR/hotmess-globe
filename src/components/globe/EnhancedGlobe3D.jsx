@@ -42,7 +42,6 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   activeLayers = ['pins'],
   userActivities = [],
   userIntents = [],
-  routesData = [],
   onBeaconClick,
   onCityClick,
   selectedCity = null,
@@ -69,8 +68,6 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     if (!mountRef.current) return;
 
     const asArray = (value) => (Array.isArray(value) ? value : []);
-
-    const isMobile = window.innerWidth < 768;
 
     const mount = mountRef.current;
     const scene = new THREE.Scene();
@@ -118,7 +115,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     scene.add(globe);
 
     // Sphere with Earth texture - LOD optimization
-    const sphereGeo = new THREE.SphereGeometry(globeRadius, isMobile ? 24 : 48, isMobile ? 24 : 48);
+    const sphereGeo = new THREE.SphereGeometry(globeRadius, 48, 48); // Further reduced for mobile
 
     // Load Earth textures
     const textureLoader = new THREE.TextureLoader();
@@ -708,8 +705,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       });
 
       const sorted = [...beacons].sort((a, b) => (a.ts || 0) - (b.ts || 0));
-      const maxArcs = isMobile ? 5 : 12;
-      const recent = sorted.slice(-maxArcs);
+      const recent = sorted.slice(-12);
       
       for (let i = 0; i < recent.length - 1; i++) {
         const from = recent[i];
@@ -723,36 +719,6 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         globe.add(tube);
         arcs.push(tube);
       }
-    }
-
-    // Static arcs from `routesData` (dedicated routes table)
-    const routeArcs = [];
-    if (asArray(routesData).length > 0) {
-      const maxRoutes = isMobile ? 8 : 20;
-      const routeSlice = asArray(routesData).slice(0, maxRoutes);
-      const routeMat = new THREE.LineBasicMaterial({
-        color: 0x00d9ff,
-        transparent: true,
-        opacity: 0.55,
-        blending: THREE.AdditiveBlending,
-      });
-
-      routeSlice.forEach((route) => {
-        if (
-          !Number.isFinite(route.from_lat) || !Number.isFinite(route.from_lng) ||
-          !Number.isFinite(route.to_lat)   || !Number.isFinite(route.to_lng)
-        ) return;
-
-        const points = createArc(
-          { lat: route.from_lat, lng: route.from_lng },
-          { lat: route.to_lat,   lng: route.to_lng   },
-          globeRadius * 1.02
-        );
-        const geo = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geo, routeMat.clone());
-        globe.add(line);
-        routeArcs.push(line);
-      });
     }
 
     // Interaction
@@ -982,27 +948,9 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     let animationId;
     const clock = new THREE.Clock();
 
-    // Adaptive quality: drop pixel ratio when sustained FPS < 30
-    let fpsFrames = 0;
-    let fpsWindowStart = performance.now();
-    let qualityReduced = false;
-
     const animate = () => {
       animationId = requestAnimationFrame(animate);
       const time = clock.getElapsedTime();
-
-      // FPS watchdog — sample every 2 s, reduce pixel ratio once on low FPS
-      fpsFrames++;
-      const now = performance.now();
-      if (!qualityReduced && now - fpsWindowStart >= 2000) {
-        const fps = (fpsFrames * 1000) / (now - fpsWindowStart);
-        if (fps < 30) {
-          renderer.setPixelRatio(1);
-          qualityReduced = true;
-        }
-        fpsFrames = 0;
-        fpsWindowStart = now;
-      }
 
       // Smooth rotation
       if (!isDragging) {
@@ -1020,13 +968,13 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       camera.position.z += zoomDiff * 0.12;
 
       // Re-cluster beacons when zoom level changes significantly (throttled)
-      const clusterNow = Date.now();
-      if (clusterNow - lastClusterUpdate > 1000 && Math.abs(zoomDiff) < 0.01) {
+      const now = Date.now();
+      if (now - lastClusterUpdate > 1000 && Math.abs(zoomDiff) < 0.01) {
         const zoomThresholds = [3, 4, 5];
         const currentZoomLevel = Math.round(camera.position.z);
         if (zoomThresholds.includes(currentZoomLevel)) {
           updateBeaconClusters();
-          lastClusterUpdate = clusterNow;
+          lastClusterUpdate = now;
         }
       }
 
@@ -1148,18 +1096,13 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         if (arc.geometry) arc.geometry.dispose();
         if (arc.material) {
           if (arc.material.uniforms) {
+            // Dispose shader uniforms
             Object.values(arc.material.uniforms).forEach(uniform => {
               if (uniform.value?.dispose) uniform.value.dispose();
             });
           }
           arc.material.dispose();
         }
-      });
-
-      // Dispose route arcs
-      routeArcs.forEach(line => {
-        if (line.geometry) line.geometry.dispose();
-        if (line.material) line.material.dispose();
       });
       
       // Clear scene
@@ -1187,7 +1130,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       // Clear references
       scene.clear();
     };
-  }, [beacons, cities, activeLayers, highlightedIds, userActivities, routesData, onBeaconClick, onCityClick]);
+  }, [beacons, cities, activeLayers, highlightedIds, userActivities, onBeaconClick, onCityClick]);
 
   // Rotate to selected city
   useEffect(() => {
@@ -1209,7 +1152,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
             position: 'fixed',
             left: arcTooltip.x + 15,
             top: arcTooltip.y - 40,
-            zIndex: 80, // Z.OVERLAY
+            zIndex: 1000,
             pointerEvents: 'none'
           }}
           className="px-4 py-3 bg-black/95 border border-[#FF1493]/40 rounded-xl backdrop-blur-xl"

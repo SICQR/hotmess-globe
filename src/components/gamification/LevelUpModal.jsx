@@ -10,7 +10,7 @@ export default function LevelUpModal({ isOpen, onClose, level, rewards = [] }) {
       // Trigger confetti celebration
       const duration = 3000;
       const animationEnd = Date.now() + duration;
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 110 };
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
 
       function randomInRange(min, max) {
         return Math.random() * (max - min) + min;
@@ -48,7 +48,7 @@ export default function LevelUpModal({ isOpen, onClose, level, rewards = [] }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-xl"
+          className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/90 backdrop-blur-xl"
           onClick={onClose}
           role="dialog"
           aria-modal="true"

@@ -63,7 +63,7 @@ export default function AchievementUnlockModal({
         gravity: 1.2,
         drift: 0,
         ticks: 200,
-        zIndex: 110
+        zIndex: 9999
       });
 
       // Extra burst for legendary
@@ -76,7 +76,7 @@ export default function AchievementUnlockModal({
             spread: 55,
             origin: { x: 0 },
             colors,
-            zIndex: 110
+            zIndex: 9999
           });
           confetti({
             particleCount: 100,
@@ -84,7 +84,7 @@ export default function AchievementUnlockModal({
             spread: 55,
             origin: { x: 1 },
             colors,
-            zIndex: 110
+            zIndex: 9999
           });
         }, 250);
       }
@@ -109,7 +109,7 @@ export default function AchievementUnlockModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-xl"
+          className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/90 backdrop-blur-xl"
           onClick={onClose}
           role="dialog"
           aria-modal="true"

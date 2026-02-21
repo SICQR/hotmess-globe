@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Phone, PhoneOff, User, X, Clock, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,7 +35,6 @@ const DELAY_OPTIONS = [
 ];
 
 export default function FakeCallGenerator({ onClose, compact = false }) {
-  const navigate = useNavigate();
   const [callerName, setCallerName] = useState('Mum');
   const [selectedDelay, setSelectedDelay] = useState(5);
   const [isScheduled, setIsScheduled] = useState(false);
@@ -136,7 +134,7 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
     
     // Brief "answered" state, then redirect to safety
     setTimeout(() => {
-      navigate('/safety');
+      window.location.href = '/safety';
     }, 1500);
   };
 
@@ -178,7 +176,7 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="fixed inset-0 z-[200] bg-gradient-to-b from-[#1a1a2e] to-black flex flex-col items-center justify-between py-16 px-6"
+        className="fixed inset-0 z-[9999] bg-gradient-to-b from-[#1a1a2e] to-black flex flex-col items-center justify-between py-16 px-6"
       >
         {/* Caller Info */}
         <div className="flex-1 flex flex-col items-center justify-center">

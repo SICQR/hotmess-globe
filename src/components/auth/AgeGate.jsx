@@ -12,7 +12,7 @@ export default function AgeGate({ onVerified }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[120] bg-black overflow-y-auto flex flex-col items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[9999] bg-black overflow-y-auto flex flex-col items-center justify-center p-4 sm:p-6">
       {/* BACKGROUND IMAGE - HIGH CONTRAST EDITORIAL */}
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1920&q=95')] bg-cover bg-center opacity-50 grayscale contrast-125 scale-110" />
       
