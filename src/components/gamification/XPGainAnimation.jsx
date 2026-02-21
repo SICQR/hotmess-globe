@@ -47,7 +47,7 @@ export default function XPGainAnimation({ amount, targetSelector = '.xp-counter'
           }}
           exit={{ opacity: 0 }}
           transition={{ duration: 2, ease: 'easeOut' }}
-          className="fixed pointer-events-none z-[9999] flex items-center gap-2"
+          className="fixed pointer-events-none z-[100] flex items-center gap-2"
           style={{ left: 0, top: 0 }}
         >
           <motion.div

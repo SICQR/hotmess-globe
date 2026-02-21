@@ -105,10 +105,9 @@ export const VALID_TRANSITIONS: Record<Mode, Mode[]> = {
  */
 export const Z_LAYERS = {
   GLOBE: 0,
-  HUD: 10,
-  SHEET: 20,
-  THREAD: 30,
-  INTERRUPT: 50,
+  HUD: 50,
+  SHEET: 80,
+  INTERRUPT: 100,
 } as const
 
 /**

@@ -187,7 +187,7 @@ export default function HotmessSplash({ onComplete }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black overflow-hidden">
+    <div className="fixed inset-0 z-[100] bg-black overflow-hidden">
       {/* Background - Brand gradient with blue accent */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a14] to-black" />

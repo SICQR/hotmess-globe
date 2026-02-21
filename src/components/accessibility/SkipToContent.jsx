@@ -10,7 +10,7 @@ export function SkipToContent({ targetId = 'main-content' }) {
       href={`#${targetId}`}
       className="
         sr-only focus:not-sr-only
-        fixed top-0 left-0 z-[9999]
+        fixed top-0 left-0 z-[100]
         bg-[#FF1493] text-black
         px-4 py-2 font-bold
         focus:outline-none focus:ring-2 focus:ring-white

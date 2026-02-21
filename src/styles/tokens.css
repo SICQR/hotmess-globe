@@ -89,13 +89,13 @@
   --ease-1: cubic-bezier(.2,.8,.2,1);
   --ease-2: cubic-bezier(.4,0,.2,1);
 
-  /* -------- Z layers (NO RANDOM Z-INDEX) -------- */
+  /* -------- Z layers (OS BIBLE L0-L3 — NO RANDOM Z-INDEX) -------- */
   --z-globe: 0;
   --z-page: 10;
-  --z-dock: 20;
-  --z-sheet: 30;
-  --z-modal: 40;
-  --z-critical: 50;
+  --z-hud: 50;
+  --z-sheet: 80;
+  --z-modal: 90;
+  --z-interrupt: 100;
 }
 
 /* ============================================
@@ -139,10 +139,10 @@
 
 .z-globe { z-index: var(--z-globe); }
 .z-page { z-index: var(--z-page); }
-.z-dock { z-index: var(--z-dock); }
+.z-hud { z-index: var(--z-hud); }
 .z-sheet { z-index: var(--z-sheet); }
 .z-modal { z-index: var(--z-modal); }
-.z-critical { z-index: var(--z-critical); }
+.z-interrupt { z-index: var(--z-interrupt); }
 
 /* ============================================
    SPACING UTILITIES
@@ -209,7 +209,7 @@
   bottom: 0;
   height: calc(var(--dock-h) + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
-  z-index: var(--z-dock);
+  z-index: var(--z-hud);
   background: var(--c-bg);
   border-top: 1px solid var(--c-border-1);
 }
@@ -242,7 +242,7 @@
 .hm-critical-root {
   position: fixed;
   inset: 0;
-  z-index: var(--z-critical);
+  z-index: var(--z-interrupt);
   pointer-events: none;
 }
 

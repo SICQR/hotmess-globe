@@ -178,7 +178,7 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="fixed inset-0 z-[9999] bg-gradient-to-b from-[#1a1a2e] to-black flex flex-col items-center justify-between py-16 px-6"
+        className="fixed inset-0 z-[100] bg-gradient-to-b from-[#1a1a2e] to-black flex flex-col items-center justify-between py-16 px-6"
       >
         {/* Caller Info */}
         <div className="flex-1 flex flex-col items-center justify-center">

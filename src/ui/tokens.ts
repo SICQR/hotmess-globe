@@ -9,22 +9,23 @@
 
 // ============================================
 // Z-INDEX LAYERS (NO RANDOM VALUES)
+// Canonical layer stack matching OS BIBLE L0-L3
 // ============================================
 
 export const Z = {
-  globe: 0,
-  page: 10,
-  dock: 20,
-  sheet: 30,
-  modal: 40,
-  critical: 50,
+  globe: 0,      // L0 — Three.js globe (always behind)
+  page: 10,      // Page content (below HUD)
+  hud: 50,       // L1 — TopHUD, BottomDock
+  sheet: 80,     // L2 — Sheets (SheetRouter, URL-synced)
+  modal: 90,     // Non-emergency modals (between sheet and interrupt)
+  interrupt: 100, // L3 — SOS, emergency interrupts (highest authority)
 } as const;
 
 export type ZLayer = keyof typeof Z;
 
 /**
  * Get z-index value for a layer
- * @example zIndex('sheet') // 30
+ * @example zIndex('sheet') // 80
  */
 export const zIndex = (layer: ZLayer): number => Z[layer];
 
@@ -305,10 +306,10 @@ export const cssVars = {
   // Z-index
   '--z-globe': Z.globe,
   '--z-page': Z.page,
-  '--z-dock': Z.dock,
+  '--z-hud': Z.hud,
   '--z-sheet': Z.sheet,
   '--z-modal': Z.modal,
-  '--z-critical': Z.critical,
+  '--z-interrupt': Z.interrupt,
   
   // Layout
   '--dock-h': `${layout.dockHeight}px`,

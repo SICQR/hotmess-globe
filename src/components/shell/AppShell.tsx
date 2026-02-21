@@ -1,13 +1,13 @@
 /**
  * AppShell - OS Layout Structure
  * 
- * Enforces the z-layer hierarchy:
- * - Z-0: Globe (persistent backdrop)
- * - Z-10: Page content
- * - Z-20: Bottom dock
- * - Z-30: Sheets
- * - Z-40: Modals
- * - Z-50: Critical interrupts
+ * Enforces the z-layer hierarchy (OS BIBLE L0-L3):
+ * - Z-0: Globe (L0 - persistent backdrop)
+ * - Z-10: Page content (below HUD)
+ * - Z-50: HUD — TopHUD, BottomDock (L1)
+ * - Z-80: Sheets (L2)
+ * - Z-90: Modals (non-emergency)
+ * - Z-100: Interrupts — SOS, emergency (L3)
  * 
  * NO OVERLAP BUGS. Sheets MUST NOT mount inside route tree.
  */
@@ -74,17 +74,17 @@ export function AppShell({
         {children}
       </main>
 
-      {/* Z-20: Bottom dock */}
+      {/* Z-50: HUD (TopHUD, BottomDock) */}
       {dock && (
         <div 
           className="hm-dock"
-          style={{ zIndex: Z.dock }}
+          style={{ zIndex: Z.hud }}
         >
           {dock}
         </div>
       )}
 
-      {/* Z-30: Sheet overlay root (OUTSIDE route tree) */}
+      {/* Z-80: Sheet overlay root (OUTSIDE route tree) */}
       {sheets && (
         <div 
           className="hm-sheet-root"
@@ -94,7 +94,7 @@ export function AppShell({
         </div>
       )}
 
-      {/* Z-40: Modal overlay root */}
+      {/* Z-90: Modal overlay root */}
       {modals && (
         <div 
           className="hm-modal-root"
@@ -104,11 +104,11 @@ export function AppShell({
         </div>
       )}
 
-      {/* Z-50: Critical interrupts */}
+      {/* Z-100: L3 interrupts (SOS, emergency) */}
       {interrupts && (
         <div 
           className="hm-critical-root"
-          style={{ zIndex: Z.critical }}
+          style={{ zIndex: Z.interrupt }}
         >
           {interrupts}
         </div>

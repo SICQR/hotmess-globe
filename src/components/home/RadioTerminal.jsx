@@ -65,7 +65,7 @@ export default function RadioTerminal() {
     <motion.div 
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className={`fixed bottom-24 left-6 z-[500] transition-all duration-500 ${isExpanded ? 'w-[calc(100vw-3rem)] max-w-80' : 'w-12'}`}
+      className={`fixed bottom-24 left-6 z-[80] transition-all duration-500 ${isExpanded ? 'w-[calc(100vw-3rem)] max-w-80' : 'w-12'}`}
     >
       <div className="bg-black border-2 border-white p-2 flex flex-col gap-4 overflow-hidden shadow-[0_0_30px_rgba(255,20,147,0.3)]">
         
