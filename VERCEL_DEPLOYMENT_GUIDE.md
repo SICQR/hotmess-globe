@@ -30,11 +30,11 @@ This guide will help you deploy the HOTMESS Globe application to Vercel with Sup
 
 ### 1. Client-Side Variables (Build Time)
 
-These are already in `.env.production` (safe to commit):
+Set these in Vercel Dashboard → Project → Settings → Environment Variables (or `.env.local` for local dev only — never commit):
 
 ```bash
-VITE_SUPABASE_URL=https://klsywpvncqqglhnhrjbh.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 ```
 
 ### 2. Server-Side Variables (Vercel Dashboard Only)
@@ -43,8 +43,8 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 #### Required (Core Functionality)
 ```bash
-SUPABASE_URL=https://klsywpvncqqglhnhrjbh.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key_here
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 ```
 
