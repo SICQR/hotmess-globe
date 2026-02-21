@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { base44 } from '@/components/utils/supabaseClient';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import logger from '@/utils/logger';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import { validateConfigOnStartup } from '@/utils/envValidation';
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const checkUserAuth = async () => {
+  const checkUserAuth = useCallback(async () => {
     try {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
         });
       }
     }
-  };
+  }, []);
 
   const logout = useCallback((shouldRedirect = true) => {
     setUser(null);
@@ -100,6 +100,21 @@ export const AuthProvider = ({ children }) => {
       base44.auth.logout();
     }
   }, []);
+
+  // Keep user state in sync with Supabase auth events (token expiry, refresh, sign-out).
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        setUser(null);
+        setIsAuthenticated(false);
+        mergedGuestCartRef.current = false;
+      } else if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        // Re-fetch the user profile to keep state fresh after a token refresh or new sign-in.
+        checkUserAuth();
+      }
+    });
+    return () => subscription?.unsubscribe();
+  }, [checkUserAuth]);
 
   const navigateToLogin = useCallback(() => {
     // Redirect to the app's Auth page.
