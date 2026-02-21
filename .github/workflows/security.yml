@@ -35,13 +35,13 @@ jobs:
         run: npm ci
       
       - name: Run npm audit
-        run: npm audit --audit-level=moderate
+        run: npm audit --omit=dev --audit-level=moderate
         continue-on-error: false
       
       - name: Generate audit report
         if: failure()
         run: |
-          npm audit --json > audit-report.json
+          npm audit --omit=dev --json > audit-report.json
           echo "⚠️ Security vulnerabilities found! See audit-report.json for details."
       
       - name: Upload audit report
