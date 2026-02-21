@@ -13,7 +13,7 @@ interface AgeGateProps {
  */
 export function AgeGate({ onConfirm, onReject }: AgeGateProps) {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black p-6 overflow-hidden">
+    <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center bg-black p-6 overflow-hidden">
       <BrandBackground />
 
       <motion.div

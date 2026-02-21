@@ -9,6 +9,10 @@ import ErrorBoundary from '@/components/error/ErrorBoundary'
 import { clearBadSupabaseSessions } from '@/lib/clearBadSessions'
 import { setupGlobalErrorHandlers } from '@/utils/errorHandler'
 import { OSProvider } from '@/os'
+import { injectLayerCSSVars } from '@/lib/layerSystem'
+
+// Inject z-index CSS custom properties ASAP so animations never compete
+injectLayerCSSVars();
 
 // FIRST: Clear any cached sessions from wrong Supabase projects
 // This MUST run before Supabase client initializes

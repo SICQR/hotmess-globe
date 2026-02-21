@@ -56,7 +56,7 @@ export default function ConsentForm({ user, onAccepted }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black p-4 overflow-hidden">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black p-4 overflow-hidden">
       <BrandBackground />
 
       <motion.div

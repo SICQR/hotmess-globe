@@ -63,7 +63,7 @@ export default function AchievementUnlockModal({
         gravity: 1.2,
         drift: 0,
         ticks: 200,
-        zIndex: 9999
+        zIndex: 110
       });
 
       // Extra burst for legendary
@@ -76,7 +76,7 @@ export default function AchievementUnlockModal({
             spread: 55,
             origin: { x: 0 },
             colors,
-            zIndex: 9999
+            zIndex: 110
           });
           confetti({
             particleCount: 100,
@@ -84,7 +84,7 @@ export default function AchievementUnlockModal({
             spread: 55,
             origin: { x: 1 },
             colors,
-            zIndex: 9999
+            zIndex: 110
           });
         }, 250);
       }

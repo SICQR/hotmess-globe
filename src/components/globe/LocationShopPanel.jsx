@@ -56,7 +56,7 @@ export default function LocationShopPanel({ location, onClose }) {
         animate={{ y: 0,      opacity: 1 }}
         exit={{    y: '100%', opacity: 0 }}
         transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 z-40 max-h-[70vh] flex flex-col bg-black/95 backdrop-blur-xl border-t border-white/10 rounded-t-2xl overflow-hidden"
+        className="fixed bottom-0 left-0 right-0 z-[80] max-h-[70vh] flex flex-col bg-black/95 backdrop-blur-xl border-t border-white/10 rounded-t-2xl overflow-hidden"
       >
         {/* Handle */}
         <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-3 mb-1" />

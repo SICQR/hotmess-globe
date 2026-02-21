@@ -66,7 +66,7 @@ export default function Auth() {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('onboarding_complete, display_name, display_name')
+        .select('onboarding_complete, display_name')
         .eq('account_id', userId)
         .maybeSingle();
       // If profile row is missing or onboarding not done, send to Profile setup
