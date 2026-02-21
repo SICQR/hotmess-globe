@@ -66,7 +66,8 @@ export function BottomDock({ activeMode = 'NOW', onModeChange, liveCount }: Bott
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[50] flex h-16 items-center justify-around bg-[rgba(5,5,7,0.85)] backdrop-blur-[20px] border-t-2 border-white/10">
+    /* h-16 (64px) gives enough room; safe-area padding handles iPhone notch */
+    <nav className="fixed bottom-0 left-0 right-0 z-[50] flex items-center justify-around bg-[rgba(5,5,7,0.92)] backdrop-blur-[20px] border-t-2 border-white/10 pb-[env(safe-area-inset-bottom)]">
       {MODES.map(mode => {
         const isActive = mode === activeMode || activeSheet === MODE_TO_SHEET[mode];
         const showBadge = mode === 'NOW' && liveCount && liveCount > 0;
@@ -76,24 +77,29 @@ export function BottomDock({ activeMode = 'NOW', onModeChange, liveCount }: Bott
             key={mode}
             onClick={() => handleModeClick(mode)}
             data-active={isActive}
+            /* min-h-[44px] ensures iOS/Android 44dp touch target; flex-1 shares width equally */
             className={`
-              flex flex-col items-center gap-1 px-3 py-2 relative
-              text-xs transition-colors font-black uppercase tracking-wider
+              flex flex-1 flex-col items-center justify-center gap-0.5
+              min-h-[52px] py-2 relative
+              transition-colors font-black uppercase tracking-wider
               ${isActive ? 'text-white' : 'text-[#6B7280]'}
-              hover:text-white
+              active:opacity-70
             `}
+            aria-label={mode}
           >
-            <span className="text-lg">{MODE_ICONS[mode]}</span>
-            <span className="text-[10px]">{mode}</span>
+            {/* Icon — text-xl (20px) so finger can land reliably */}
+            <span className="text-xl leading-none">{MODE_ICONS[mode]}</span>
+            {/* Label — text-[11px] is readable but compact */}
+            <span className="text-[11px] leading-tight">{mode}</span>
             
             {showBadge && (
-              <span className="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-none bg-[#39FF14] text-black text-[10px] font-black flex items-center justify-center">
-                {liveCount}
+              <span className="absolute top-1.5 right-[18%] h-[18px] min-w-[18px] px-1 rounded-full bg-[#39FF14] text-black text-[10px] font-black flex items-center justify-center">
+                {liveCount > 99 ? '99+' : liveCount}
               </span>
             )}
             
             {isActive && (
-              <span className="absolute -bottom-0.5 w-2 h-0.5 bg-[#FF1493]" />
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-[#FF1493]" />
             )}
           </button>
         );

@@ -611,24 +611,112 @@ export default function GlobePage() {
         />
       </div>
 
-      {/* Compact Header */}
-      <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between gap-2 md:gap-4">
-        <div className="flex items-center gap-2">
-          <Link to={createPageUrl('Home')}>
-            <button className="p-2 rounded-lg bg-black/90 border border-white/10 backdrop-blur-xl hover:bg-white/10 transition-all">
-              <Home className="w-4 h-4" />
-            </button>
-          </Link>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-black/90 border border-white/10 rounded-lg backdrop-blur-xl">
-            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-white/60">PULSE</span>
+      {/* ── Compact Header ─────────────────────────────────────────── */}
+      {/* Row 1 on mobile: icon buttons + pill labels
+          Row 2 on mobile: search bar (full-width)
+          Single row on sm+ */}
+      <div className="absolute top-3 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-30 flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-2">
+
+        {/* Top row: left pills + right action buttons */}
+        <div className="flex items-center justify-between gap-1.5 sm:contents">
+          {/* Left pills */}
+          <div className="flex items-center gap-1.5">
+            <Link to={createPageUrl('Home')}>
+              <button className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-black/90 border border-white/10 backdrop-blur-xl hover:bg-white/10 active:scale-95 transition-all">
+                <Home className="w-5 h-5" />
+              </button>
+            </Link>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/90 border border-white/10 rounded-xl backdrop-blur-xl min-h-[44px]">
+              <span className="text-[11px] font-black uppercase tracking-[0.22em] text-white/60">PULSE</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/90 border border-white/10 rounded-xl backdrop-blur-xl min-h-[44px]">
+              <div className="w-2 h-2 rounded-full bg-[#FF1493] animate-pulse" />
+              <span className="text-sm font-bold">{filteredBeacons.length}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-black/90 border border-white/10 rounded-lg backdrop-blur-xl">
-            <div className="w-2 h-2 rounded-full bg-[#FF1493] animate-pulse" />
-            <span className="text-xs font-bold">{filteredBeacons.length}</span>
+
+          {/* Right action buttons */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => {
+                const newState = !showNearbyGrid;
+                setShowNearbyGrid(newState);
+                if (newState) {
+                  setShowHotmessFeed(false);
+                  setShowControls(false);
+                  setShowPanel(false);
+                  setShowLocalBeacons(false);
+                  setPreviewBeacon(null);
+                }
+              }}
+              className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
+                showNearbyGrid ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+              }`}
+            >
+              <Grid3x3 className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={() => {
+                const newState = !showHotmessFeed;
+                setShowHotmessFeed(newState);
+                if (newState) {
+                  setShowNearbyGrid(false);
+                  setShowControls(false);
+                  setShowPanel(false);
+                  setShowLocalBeacons(false);
+                  setPreviewBeacon(null);
+                }
+              }}
+              className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
+                showHotmessFeed ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+              }`}
+              aria-label="Hotmess Feed"
+            >
+              <span className="text-xs font-black">FEED</span>
+            </button>
+
+            <button
+              onClick={() => {
+                const newState = !showControls;
+                setShowControls(newState);
+                if (newState) {
+                  setShowHotmessFeed(false);
+                  setShowPanel(false);
+                  setShowNearbyGrid(false);
+                  setShowLocalBeacons(false);
+                  setPreviewBeacon(null);
+                }
+              }}
+              className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
+                showControls ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+              }`}
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => {
+                const newState = !showPanel;
+                setShowPanel(newState);
+                if (newState) {
+                  setShowHotmessFeed(false);
+                  setShowControls(false);
+                  setShowNearbyGrid(false);
+                  setShowLocalBeacons(false);
+                  setPreviewBeacon(null);
+                }
+              }}
+              className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
+                showPanel ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+              }`}
+            >
+              <BarChart3 className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
-        <div className="flex-1 max-w-md">
+        {/* Search — full width on mobile, constrained on sm+ */}
+        <div className="w-full sm:flex-1 sm:max-w-md sm:mx-auto">
           <GlobeSearch
             beacons={beacons}
             cities={cities}
@@ -636,84 +724,6 @@ export default function GlobePage() {
             onClearSearch={handleClearSearch}
             onRadiusSearch={handleRadiusSearch}
           />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              const newState = !showNearbyGrid;
-              setShowNearbyGrid(newState);
-              if (newState) {
-                setShowHotmessFeed(false);
-                setShowControls(false);
-                setShowPanel(false);
-                setShowLocalBeacons(false);
-                setPreviewBeacon(null);
-              }
-            }}
-            className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
-              showNearbyGrid ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
-            }`}
-          >
-            <Grid3x3 className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={() => {
-              const newState = !showHotmessFeed;
-              setShowHotmessFeed(newState);
-              if (newState) {
-                setShowNearbyGrid(false);
-                setShowControls(false);
-                setShowPanel(false);
-                setShowLocalBeacons(false);
-                setPreviewBeacon(null);
-              }
-            }}
-            className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
-              showHotmessFeed ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
-            }`}
-            aria-label="Hotmess Feed"
-          >
-            <span className="text-[10px] font-black">FEED</span>
-          </button>
-
-          <button
-            onClick={() => {
-              const newState = !showControls;
-              setShowControls(newState);
-              if (newState) {
-                setShowHotmessFeed(false);
-                setShowPanel(false);
-                setShowNearbyGrid(false);
-                setShowLocalBeacons(false);
-                setPreviewBeacon(null);
-              }
-            }}
-            className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
-              showControls ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => {
-              const newState = !showPanel;
-              setShowPanel(newState);
-              if (newState) {
-                setShowHotmessFeed(false);
-                setShowControls(false);
-                setShowNearbyGrid(false);
-                setShowLocalBeacons(false);
-                setPreviewBeacon(null);
-              }
-            }}
-            className={`p-2 rounded-lg backdrop-blur-xl transition-all ${
-              showPanel ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
