@@ -236,17 +236,35 @@ export function BootGuardProvider({ children }) {
   const completeOnboarding = useCallback(async () => {
     if (!session?.user?.id) return false;
 
+    // Build the update payload.
+    // The profiles_onboarding_requires_identity constraint demands that either
+    // username OR display_name is set when onboarding_complete becomes true.
+    // Coalesce username from display_name or email so the constraint is never
+    // violated even on first-run rows that have neither field yet.
+    const usernameSlug = (
+      profile?.username ||
+      profile?.display_name ||
+      session.user.email?.split('@')[0] ||
+      'user'
+    ).toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 40);
+
     const { error } = await supabase
       .from('profiles')
-      .update({ onboarding_complete: true })
+      .update({
+        onboarding_complete: true,
+        // Ensure username is set — required by DB constraint.
+        // Only overwrite if the field is currently empty.
+        ...(profile?.username ? {} : { username: usernameSlug }),
+      })
       .eq('account_id', session.user.id);
 
     if (!error) {
       await refetchProfile();
       return true;
     }
+    console.error('[BootGuard] completeOnboarding error:', error);
     return false;
-  }, [session?.user?.id, refetchProfile]);
+  }, [session?.user?.id, session?.user?.email, profile?.username, profile?.display_name, refetchProfile]);
 
   const value = {
     // State

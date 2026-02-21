@@ -64,10 +64,13 @@ export default function Auth() {
   // Helper function to check if user profile is complete
   const checkProfileComplete = async (userId) => {
     try {
-      const { data } = await base44.entities.User.filter({ auth_user_id: userId });
-      const user = data?.[0] || (Array.isArray(data) ? null : data);
-      if (!user) return false;
-      return !!(user.full_name && user.avatar_url && user.city && user.profile_type);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_complete, display_name, display_name')
+        .eq('account_id', userId)
+        .maybeSingle();
+      // If profile row is missing or onboarding not done, send to Profile setup
+      return !!(profile?.onboarding_complete);
     } catch {
       return false;
     }
@@ -292,6 +295,9 @@ export default function Auth() {
 
       toast.success('Password updated! Please sign in.');
       await auth.signOut();
+      // Clear the recovery token from the URL so the reset form doesn't
+      // reappear if the page is refreshed after a successful reset.
+      window.history.replaceState({}, document.title, window.location.pathname);
       setNewPassword('');
       setConfirmPassword('');
       setStep('auth');
@@ -384,11 +390,15 @@ export default function Auth() {
       // BootGuardContext exits NEEDS_ONBOARDING and renders the full app.
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Derive a username slug — required by the DB constraint that guards
+        // onboarding_complete=true (must have username OR display_name set).
+        const usernameSlug = fullName.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 40);
         await supabase
           .from('profiles')
           .update({
             onboarding_complete: true,
             display_name: fullName,
+            username: usernameSlug,
             avatar_url: avatarUrl,
             bio: profileData.bio || null,
             city: profileData.city || 'London',
