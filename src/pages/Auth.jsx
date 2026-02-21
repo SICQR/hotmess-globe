@@ -99,7 +99,11 @@ export default function Auth() {
     const { data: authSubscription } = auth.onAuthStateChange(async (event, session) => {
       console.log('[Auth] Auth state changed:', event);
       
-      if (event === 'SIGNED_IN' && session) {
+      if (event === 'PASSWORD_RECOVERY') {
+        // Supabase fires this when a valid recovery link is followed.
+        // Transition to the set-new-password step regardless of current URL state.
+        setStep('reset');
+      } else if (event === 'SIGNED_IN' && session) {
         // User successfully signed in (including OAuth)
         console.log('[Auth] User signed in successfully');
         
@@ -196,14 +200,19 @@ export default function Auth() {
           throw new Error('Please enter your full name');
         }
         
-        const { error } = await auth.signUp(email, password, {
+        const { data: signUpData, error } = await auth.signUp(email, password, {
           full_name: fullName,
         });
 
         if (error) throw error;
 
-        const { error: signInError } = await auth.signIn(email, password);
-        if (signInError) throw signInError;
+        // If email confirmation is required, session will be null.
+        // Show confirmation message and do not attempt immediate sign-in.
+        if (!signUpData?.session) {
+          toast.success('Account created! Check your email to confirm your address, then sign in.');
+          setIsSignUp(false);
+          return;
+        }
 
         toast.success('Account created! Let\'s set you up...');
         setStep('membership');
@@ -248,6 +257,9 @@ export default function Auth() {
         ? `${protocol}//localhost${port ? `:${port}` : ''}`
         : origin;
       const redirectTo = `${safeOrigin}${createPageUrl('Auth')}?mode=reset`;
+      if (import.meta.env.DEV) {
+        console.log('[Auth] Sending password reset email. redirectTo:', redirectTo);
+      }
       const { error } = await auth.resetPasswordForEmail(email, redirectTo);
       if (error) throw error;
 
