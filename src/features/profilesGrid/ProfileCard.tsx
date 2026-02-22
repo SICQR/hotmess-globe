@@ -7,6 +7,7 @@ import { buildUberDeepLink } from '@/utils/uberDeepLink';
 import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@/utils/travelRecommendations';
 import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
+import { SimpleProfileCard } from '@/components/profiles/SimpleProfileCard';
 
 type Props = {
   profile: Profile;
@@ -95,8 +96,8 @@ const getProfileCardStyle = () => {
 
   const normalized = String(style || '').trim().toLowerCase();
 
-  // Production default: use react-bits unless explicitly forced to legacy.
-  if (import.meta.env.MODE === 'production' && !normalized) return 'react-bits';
+  // Production default: use simple brutalist style
+  if (!normalized) return 'simple';
 
   return normalized;
 };
@@ -149,7 +150,9 @@ function ProfileCardInner({
   onOpenProfile,
   onNavigateUrl,
 }: Props) {
-  const useReactBits = getProfileCardStyle() === 'react-bits';
+  const cardStyle = getProfileCardStyle();
+  const useReactBits = cardStyle === 'react-bits';
+  const useSimple = cardStyle === 'simple';
 
   const photoUrls = useMemo(() => getPhotoUrls(profile), [profile]);
   const productPreviewUrls = useMemo(() => getProductPreviewUrls(profile), [profile]);
@@ -426,6 +429,37 @@ function ProfileCardInner({
     if (!mins || mins === '—') return null;
     return `${modeLabel(primaryMode)} ${mins}`;
   }, [primaryMode, modeLabel, modeMins]);
+
+  // Simple brutalist card (default)
+  if (useSimple) {
+    const matchPercent = typeof profile.matchProbability === 'number' 
+      ? Math.round(profile.matchProbability) 
+      : undefined;
+    
+    const status: 'online' | 'away' | 'offline' = 
+      (profile as any)?.onlineNow ? 'online' : 
+      (profile as any)?.rightNow ? 'away' : 'offline';
+
+    return (
+      <div ref={attachRef as unknown as React.Ref<HTMLDivElement>}>
+        <SimpleProfileCard
+          id={String(profile.id)}
+          name={String(profile.profileName || 'HOTMESS')}
+          photoUrl={primaryUrl || undefined}
+          status={status}
+          distance={primaryModeShort || undefined}
+          matchPercent={matchPercent}
+          isVerified={(profile as any)?.isVerified}
+          onClick={openProfile}
+          onMessage={
+            primaryAction.key === 'message' && profile?.email
+              ? () => onNavigateUrl(`/social/inbox?to=${encodeURIComponent(String(profile.email))}`)
+              : undefined
+          }
+        />
+      </div>
+    );
+  }
 
   if (useReactBits) {
     const handle =
