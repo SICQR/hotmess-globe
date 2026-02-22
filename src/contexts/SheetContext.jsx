@@ -1,27 +1,40 @@
 /**
  * SheetContext — L2 Sheet State Management
  * 
- * The nervous system for London OS sheets.
+ * The nervous system for HOTMESS sheets.
  * Manages which sheet is open, props, stack for nested sheets,
  * and syncs with URL params for deep linking.
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════
+ * SHEET LAWS (Immutable Rules)
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
+ * LAW 1: SINGLE AUTHORITY — SheetContext is the ONLY sheet state owner
+ * LAW 2: LIFO STACK — Back button pops top sheet before route
+ * LAW 3: URL SYNC — Active sheet syncs to ?sheet=<type> param
+ * LAW 4: NO REMOUNT — Opening/closing sheets never remounts globe
+ * LAW 5: DETERMINISTIC CLOSE — Swipe/tap/escape/back all close predictably
+ * 
+ * See /src/lib/sheetSystem.ts for full specification.
  */
 
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { 
+  SHEET_REGISTRY, 
+  SHEET_SPRING,
+  SWIPE,
+  getSheetHeight,
+  isValidSheetType,
+  requiresAuth,
+  buildSheetUrl,
+  parseSheetFromUrl,
+} from '@/lib/sheetSystem';
 
-// Sheet types — add new sheets here
-export const SHEET_TYPES = {
-  PROFILE: 'profile',
-  EVENT: 'event',
-  CHAT: 'chat',
-  VAULT: 'vault',
-  SHOP: 'shop',
-  GHOSTED: 'ghosted',
-  PRODUCT: 'product',
-  SOCIAL: 'social',
-  EVENTS: 'events',
-  MARKETPLACE: 'marketplace',
-};
+// Re-export sheet types as constants for convenience
+export const SHEET_TYPES = Object.fromEntries(
+  Object.keys(SHEET_REGISTRY).map(key => [key.toUpperCase().replace(/-/g, '_'), key])
+);
 
 const initialState = {
   // Currently active sheet (null = closed)

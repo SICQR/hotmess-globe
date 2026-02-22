@@ -70,7 +70,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   }, [products, searchQuery]);
 
   const handleProductTap = (product: Product) => {
-    openSheet('ProductSheet', { productId: product.id });
+    openSheet('product', { productId: product.id });
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -103,7 +103,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
           </div>
           <button
             type="button"
-            onClick={() => openSheet('FiltersSheet', {})}
+            onClick={() => openSheet('filters', {})}
             className="h-10 w-10 flex items-center justify-center bg-white/5 rounded-xl border border-white/10"
           >
             <Filter className="w-4 h-4 text-white/60" />
@@ -174,7 +174,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
 
       {/* Cart button */}
       <button
-        onClick={() => openSheet('CartSheet', {})}
+        onClick={() => openSheet('cart', {})}
         className="fixed bottom-24 right-4 z-40 w-14 h-14 bg-[#FF1493] rounded-full flex items-center justify-center shadow-lg shadow-[#FF1493]/30"
       >
         <ShoppingBag className="w-6 h-6 text-white" />

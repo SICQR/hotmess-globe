@@ -64,33 +64,33 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
     {
       title: 'Account',
       items: [
-        { icon: Edit3, label: 'Edit Profile', action: () => openSheet('EditProfileSheet', {}) },
-        { icon: Camera, label: 'Photos', action: () => openSheet('PhotosSheet', {}) },
-        { icon: MapPin, label: 'Location', action: () => openSheet('LocationSheet', {}) },
+        { icon: Edit3, label: 'Edit Profile', action: () => openSheet('edit-profile', {}) },
+        { icon: Camera, label: 'Photos', action: () => openSheet('photos', {}) },
+        { icon: MapPin, label: 'Location', action: () => openSheet('location', {}) },
       ],
     },
     {
       title: 'Safety',
       items: [
-        { icon: Shield, label: 'Safety Center', action: () => openSheet('SafetySheet', {}) },
-        { icon: Eye, label: 'Privacy Settings', action: () => openSheet('PrivacySheet', {}) },
-        { icon: Lock, label: 'Blocked Users', action: () => openSheet('BlockedSheet', {}) },
+        { icon: Shield, label: 'Safety Center', action: () => openSheet('safety', {}) },
+        { icon: Eye, label: 'Privacy Settings', action: () => openSheet('privacy', {}) },
+        { icon: Lock, label: 'Blocked Users', action: () => openSheet('blocked', {}) },
       ],
     },
     {
       title: 'Activity',
       items: [
-        { icon: Heart, label: 'Favorites', action: () => openSheet('FavoritesSheet', {}) },
-        { icon: ShoppingBag, label: `My Listings (${listings.length})`, action: () => openSheet('MyListingsSheet', {}) },
-        { icon: Star, label: 'Membership', action: () => openSheet('MembershipSheet', {}) },
+        { icon: Heart, label: 'Favorites', action: () => openSheet('favorites', {}) },
+        { icon: ShoppingBag, label: `My Listings (${listings.length})`, action: () => openSheet('my-listings', {}) },
+        { icon: Star, label: 'Membership', action: () => openSheet('membership', {}) },
       ],
     },
     {
       title: 'Settings',
       items: [
-        { icon: Bell, label: 'Notifications', action: () => openSheet('NotificationsSheet', {}) },
-        { icon: Settings, label: 'App Settings', action: () => openSheet('SettingsSheet', {}) },
-        { icon: HelpCircle, label: 'Help & Support', action: () => openSheet('HelpSheet', {}) },
+        { icon: Bell, label: 'Notifications', action: () => openSheet('notifications', {}) },
+        { icon: Settings, label: 'App Settings', action: () => openSheet('settings', {}) },
+        { icon: HelpCircle, label: 'Help & Support', action: () => openSheet('help', {}) },
       ],
     },
   ];

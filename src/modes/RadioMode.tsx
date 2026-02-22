@@ -163,7 +163,7 @@ export function RadioMode({ className = '' }: RadioModeProps) {
           </button>
 
           <button
-            onClick={() => openSheet('ScheduleSheet', {})}
+            onClick={() => openSheet('schedule', {})}
             className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center"
           >
             <Clock className="w-5 h-5 text-white/60" />
@@ -193,7 +193,7 @@ export function RadioMode({ className = '' }: RadioModeProps) {
             {schedule.map((show) => (
               <motion.button
                 key={show.id}
-                onClick={() => openSheet('ShowSheet', { showId: show.id })}
+                onClick={() => openSheet('show', { showId: show.id })}
                 className={`w-full p-4 rounded-xl text-left transition-all ${
                   show.isLive 
                     ? 'bg-[#FF1493]/20 border border-[#FF1493]/30' 
@@ -234,7 +234,7 @@ export function RadioMode({ className = '' }: RadioModeProps) {
       {nextShow && !radioState?.isLive && (
         <div className="fixed bottom-24 left-4 right-4 z-30">
           <button
-            onClick={() => openSheet('ShowSheet', { showId: nextShow.id })}
+            onClick={() => openSheet('show', { showId: nextShow.id })}
             className="w-full p-4 bg-white/5 backdrop-blur-xl rounded-xl border border-white/10"
           >
             <div className="flex items-center justify-between">
