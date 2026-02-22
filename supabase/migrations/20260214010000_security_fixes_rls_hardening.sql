@@ -73,13 +73,13 @@ END $$;
 -- Critical: Currently using(true) allows ANY user to modify ANY squad
 -- ============================================================================
 
-DROP POLICY IF EXISTS squads_select_authenticated ON public.squads;
-DROP POLICY IF EXISTS squads_write_authenticated ON public.squads;
-DROP POLICY IF EXISTS squads_update_authenticated ON public.squads;
-DROP POLICY IF EXISTS squads_delete_authenticated ON public.squads;
+DROP POLICY IF EXISTS IF EXISTS squads_select_authenticated ON public.squads;
+DROP POLICY IF EXISTS IF EXISTS squads_write_authenticated ON public.squads;
+DROP POLICY IF EXISTS IF EXISTS squads_update_authenticated ON public.squads;
+DROP POLICY IF EXISTS IF EXISTS squads_delete_authenticated ON public.squads;
 
 -- Users can view public squads or squads they're a member of
-CREATE POLICY squads_select_visible
+CREATE POLICY IF NOT EXISTS squads_select_visible
   ON public.squads
   FOR SELECT
   TO authenticated
@@ -94,14 +94,14 @@ CREATE POLICY squads_select_visible
   );
 
 -- Users can create squads where they're the owner
-CREATE POLICY squads_insert_owner
+CREATE POLICY IF NOT EXISTS squads_insert_owner
   ON public.squads
   FOR INSERT
   TO authenticated
   WITH CHECK (owner_email = (auth.jwt() ->> 'email'));
 
 -- Only owner can update squad
-CREATE POLICY squads_update_owner
+CREATE POLICY IF NOT EXISTS squads_update_owner
   ON public.squads
   FOR UPDATE
   TO authenticated
@@ -109,7 +109,7 @@ CREATE POLICY squads_update_owner
   WITH CHECK (owner_email = (auth.jwt() ->> 'email'));
 
 -- Only owner can delete squad
-CREATE POLICY squads_delete_owner
+CREATE POLICY IF NOT EXISTS squads_delete_owner
   ON public.squads
   FOR DELETE
   TO authenticated
@@ -120,13 +120,13 @@ CREATE POLICY squads_delete_owner
 -- Critical: Currently allows ANY user to add/remove members from ANY squad
 -- ============================================================================
 
-DROP POLICY IF EXISTS squad_members_select_authenticated ON public.squad_members;
-DROP POLICY IF EXISTS squad_members_write_authenticated ON public.squad_members;
-DROP POLICY IF EXISTS squad_members_update_authenticated ON public.squad_members;
-DROP POLICY IF EXISTS squad_members_delete_authenticated ON public.squad_members;
+DROP POLICY IF EXISTS IF EXISTS squad_members_select_authenticated ON public.squad_members;
+DROP POLICY IF EXISTS IF EXISTS squad_members_write_authenticated ON public.squad_members;
+DROP POLICY IF EXISTS IF EXISTS squad_members_update_authenticated ON public.squad_members;
+DROP POLICY IF EXISTS IF EXISTS squad_members_delete_authenticated ON public.squad_members;
 
 -- Users can view squad members if they can see the squad
-CREATE POLICY squad_members_select_visible
+CREATE POLICY IF NOT EXISTS squad_members_select_visible
   ON public.squad_members
   FOR SELECT
   TO authenticated
@@ -147,7 +147,7 @@ CREATE POLICY squad_members_select_visible
   );
 
 -- Squad owner or admins can add members
-CREATE POLICY squad_members_insert_owner_or_admin
+CREATE POLICY IF NOT EXISTS squad_members_insert_owner_or_admin
   ON public.squad_members
   FOR INSERT
   TO authenticated
@@ -160,7 +160,7 @@ CREATE POLICY squad_members_insert_owner_or_admin
   );
 
 -- Squad owner can update members
-CREATE POLICY squad_members_update_owner
+CREATE POLICY IF NOT EXISTS squad_members_update_owner
   ON public.squad_members
   FOR UPDATE
   TO authenticated
@@ -173,7 +173,7 @@ CREATE POLICY squad_members_update_owner
   );
 
 -- Squad owner or the member themselves can remove membership
-CREATE POLICY squad_members_delete_owner_or_self
+CREATE POLICY IF NOT EXISTS squad_members_delete_owner_or_self
   ON public.squad_members
   FOR DELETE
   TO authenticated
@@ -191,19 +191,19 @@ CREATE POLICY squad_members_delete_owner_or_self
 -- Critical: Currently allows ANY user to create/modify tags for ANY user
 -- ============================================================================
 
-DROP POLICY IF EXISTS user_tags_select_all ON public.user_tags;
-DROP POLICY IF EXISTS user_tags_insert_authenticated ON public.user_tags;
-DROP POLICY IF EXISTS write_authenticated ON public.user_tags;
+DROP POLICY IF EXISTS IF EXISTS user_tags_select_all ON public.user_tags;
+DROP POLICY IF EXISTS IF EXISTS user_tags_insert_authenticated ON public.user_tags;
+DROP POLICY IF EXISTS IF EXISTS write_authenticated ON public.user_tags;
 
 -- Everyone can view public tags
-CREATE POLICY user_tags_select_public
+CREATE POLICY IF NOT EXISTS user_tags_select_public
   ON public.user_tags
   FOR SELECT
   TO authenticated
   USING (visibility = 'public' OR user_email = (auth.jwt() ->> 'email'));
 
 -- Users can only create tags for themselves (unless they're admin)
-CREATE POLICY user_tags_insert_self_or_admin
+CREATE POLICY IF NOT EXISTS user_tags_insert_self_or_admin
   ON public.user_tags
   FOR INSERT
   TO authenticated
@@ -217,7 +217,7 @@ CREATE POLICY user_tags_insert_self_or_admin
   );
 
 -- Users can update their own tags
-CREATE POLICY user_tags_update_self
+CREATE POLICY IF NOT EXISTS user_tags_update_self
   ON public.user_tags
   FOR UPDATE
   TO authenticated
@@ -225,7 +225,7 @@ CREATE POLICY user_tags_update_self
   WITH CHECK (user_email = (auth.jwt() ->> 'email'));
 
 -- Users can delete their own tags
-CREATE POLICY user_tags_delete_self
+CREATE POLICY IF NOT EXISTS user_tags_delete_self
   ON public.user_tags
   FOR DELETE
   TO authenticated
@@ -236,18 +236,18 @@ CREATE POLICY user_tags_delete_self
 -- Critical: Currently allows ANY user to assign achievements to anyone
 -- ============================================================================
 
-DROP POLICY IF EXISTS user_achievements_select_all ON public.user_achievements;
-DROP POLICY IF EXISTS write_authenticated ON public.user_achievements;
+DROP POLICY IF EXISTS IF EXISTS user_achievements_select_all ON public.user_achievements;
+DROP POLICY IF EXISTS IF EXISTS write_authenticated ON public.user_achievements;
 
 -- Everyone can view achievements
-CREATE POLICY user_achievements_select_all
+CREATE POLICY IF NOT EXISTS user_achievements_select_all
   ON public.user_achievements
   FOR SELECT
   TO authenticated
   USING (true);
 
 -- Only system (service role) can insert achievements
-CREATE POLICY user_achievements_insert_system
+CREATE POLICY IF NOT EXISTS user_achievements_insert_system
   ON public.user_achievements
   FOR INSERT
   TO authenticated
@@ -270,26 +270,26 @@ ALTER TABLE IF EXISTS public.user_follows ENABLE ROW LEVEL SECURITY;
 DO $$
 BEGIN
   -- Drop and recreate user_follows policies
-  DROP POLICY IF EXISTS user_follows_select_all ON public.user_follows;
-  DROP POLICY IF EXISTS user_follows_insert_self ON public.user_follows;
-  DROP POLICY IF EXISTS user_follows_delete_self ON public.user_follows;
+  DROP POLICY IF EXISTS IF EXISTS user_follows_select_all ON public.user_follows;
+  DROP POLICY IF EXISTS IF EXISTS user_follows_insert_self ON public.user_follows;
+  DROP POLICY IF EXISTS IF EXISTS user_follows_delete_self ON public.user_follows;
   
   -- Everyone can see who follows whom (public social graph)
-  CREATE POLICY user_follows_select_all
+  CREATE POLICY IF NOT EXISTS user_follows_select_all
     ON public.user_follows
     FOR SELECT
     TO authenticated
     USING (true);
   
   -- Users can follow others
-  CREATE POLICY user_follows_insert_self
+  CREATE POLICY IF NOT EXISTS user_follows_insert_self
     ON public.user_follows
     FOR INSERT
     TO authenticated
     WITH CHECK (follower_id = auth.uid() OR follower_email = (auth.jwt() ->> 'email'));
   
   -- Users can unfollow
-  CREATE POLICY user_follows_delete_self
+  CREATE POLICY IF NOT EXISTS user_follows_delete_self
     ON public.user_follows
     FOR DELETE
     TO authenticated
@@ -306,27 +306,27 @@ ALTER TABLE IF EXISTS public.user_vibes ENABLE ROW LEVEL SECURITY;
 DO $$
 BEGIN
   -- Drop and recreate user_vibes policies
-  DROP POLICY IF EXISTS user_vibes_select_all ON public.user_vibes;
-  DROP POLICY IF EXISTS user_vibes_insert_self ON public.user_vibes;
-  DROP POLICY IF EXISTS user_vibes_update_self ON public.user_vibes;
-  DROP POLICY IF EXISTS user_vibes_delete_self ON public.user_vibes;
+  DROP POLICY IF EXISTS IF EXISTS user_vibes_select_all ON public.user_vibes;
+  DROP POLICY IF EXISTS IF EXISTS user_vibes_insert_self ON public.user_vibes;
+  DROP POLICY IF EXISTS IF EXISTS user_vibes_update_self ON public.user_vibes;
+  DROP POLICY IF EXISTS IF EXISTS user_vibes_delete_self ON public.user_vibes;
   
   -- Everyone can see vibes
-  CREATE POLICY user_vibes_select_all
+  CREATE POLICY IF NOT EXISTS user_vibes_select_all
     ON public.user_vibes
     FOR SELECT
     TO authenticated
     USING (true);
   
   -- Users can send vibes
-  CREATE POLICY user_vibes_insert_self
+  CREATE POLICY IF NOT EXISTS user_vibes_insert_self
     ON public.user_vibes
     FOR INSERT
     TO authenticated
     WITH CHECK (from_email = (auth.jwt() ->> 'email'));
   
   -- Users can update vibes they sent
-  CREATE POLICY user_vibes_update_self
+  CREATE POLICY IF NOT EXISTS user_vibes_update_self
     ON public.user_vibes
     FOR UPDATE
     TO authenticated
@@ -334,7 +334,7 @@ BEGIN
     WITH CHECK (from_email = (auth.jwt() ->> 'email'));
   
   -- Users can delete vibes they sent
-  CREATE POLICY user_vibes_delete_self
+  CREATE POLICY IF NOT EXISTS user_vibes_delete_self
     ON public.user_vibes
     FOR DELETE
     TO authenticated

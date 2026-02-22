@@ -59,7 +59,7 @@ $$;
 ALTER TABLE public.location_shares ENABLE ROW LEVEL SECURITY;
 
 -- Sharer can do everything with their own record
-CREATE POLICY "location_shares: owner full access"
+CREATE POLICY IF NOT EXISTS "location_shares: owner full access"
   ON public.location_shares
   FOR ALL
   TO authenticated
@@ -67,7 +67,7 @@ CREATE POLICY "location_shares: owner full access"
   WITH CHECK (user_id = auth.uid());
 
 -- Contacts can SELECT shares where they are listed and the share is active
-CREATE POLICY "location_shares: contacts can view active shares"
+CREATE POLICY IF NOT EXISTS "location_shares: contacts can view active shares"
   ON public.location_shares
   FOR SELECT
   TO authenticated

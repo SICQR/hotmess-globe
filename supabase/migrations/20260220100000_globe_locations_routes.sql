@@ -42,10 +42,10 @@ CREATE INDEX IF NOT EXISTS idx_locations_kind    ON public.locations (kind);
 -- Row-level security
 ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "locations_select_all"
+CREATE POLICY IF NOT EXISTS IF NOT EXISTS "locations_select_all"
   ON public.locations FOR SELECT USING (true);
 
-CREATE POLICY IF NOT EXISTS "locations_insert_authenticated"
+CREATE POLICY IF NOT EXISTS IF NOT EXISTS "locations_insert_authenticated"
   ON public.locations FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL AND (created_by IS NULL OR created_by = auth.uid()));
 
@@ -99,10 +99,10 @@ CREATE INDEX IF NOT EXISTS idx_routes_created  ON public.routes (created_at DESC
 -- Row-level security
 ALTER TABLE public.routes ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "routes_select_all"
+CREATE POLICY IF NOT EXISTS IF NOT EXISTS "routes_select_all"
   ON public.routes FOR SELECT USING (true);
 
-CREATE POLICY IF NOT EXISTS "routes_insert_authenticated"
+CREATE POLICY IF NOT EXISTS IF NOT EXISTS "routes_insert_authenticated"
   ON public.routes FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL AND (created_by IS NULL OR created_by = auth.uid()));
 

@@ -59,14 +59,14 @@ END $$;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
-  CREATE POLICY "profiles_select_own"
+  CREATE POLICY IF NOT EXISTS "profiles_select_own"
     ON public.profiles FOR SELECT
     USING (account_id = auth.uid() OR id = auth.uid());
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  CREATE POLICY "profiles_update_own"
+  CREATE POLICY IF NOT EXISTS "profiles_update_own"
     ON public.profiles FOR UPDATE
     USING (account_id = auth.uid() OR id = auth.uid())
     WITH CHECK (account_id = auth.uid() OR id = auth.uid());
@@ -74,7 +74,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  CREATE POLICY "profiles_insert_own"
+  CREATE POLICY IF NOT EXISTS "profiles_insert_own"
     ON public.profiles FOR INSERT
     WITH CHECK (account_id = auth.uid() OR id = auth.uid());
 EXCEPTION WHEN duplicate_object THEN NULL;
