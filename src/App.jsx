@@ -30,6 +30,8 @@ import UnifiedGlobe from '@/components/globe/UnifiedGlobe';
 import { SheetProvider } from '@/contexts/SheetContext';
 import SheetRouter from '@/components/sheets/SheetRouter';
 import { useViewportHeight } from '@/hooks/useMobileDynamics';
+import { PinLockProvider } from '@/contexts/PinLockContext';
+import PinLockOverlay from '@/components/auth/PinLockScreen';
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -541,31 +543,35 @@ function App() {
   return (
     <I18nProvider>
       <AuthProvider>
-        <BootGuardProvider>
-          <QueryClientProvider client={queryClientInstance}>
-            <WorldPulseProvider>
-              <ShopCartProvider>
-                <Router>
-                  <SheetProvider>
-                    <NavigationTracker />
-                    <BootRouter>
-                      {/* 
-                        L0-L3 Layered OS Architecture
-                        - UnifiedGlobe is persistent, never unmounts
-                        - All navigation happens via SheetContext
-                        - Router only handles URL sync, not page mounts
-                      */}
-                      <OSArchitecture />
-                    </BootRouter>
-                    {/* L2 Sheet System - Renders over everything, outside route remount boundary */}
-                    <SheetRouter />
-                  </SheetProvider>
-                </Router>
-              </ShopCartProvider>
-            </WorldPulseProvider>
-            <Toaster />
-          </QueryClientProvider>
-        </BootGuardProvider>
+        <PinLockProvider>
+          <BootGuardProvider>
+            <QueryClientProvider client={queryClientInstance}>
+              <WorldPulseProvider>
+                <ShopCartProvider>
+                  <Router>
+                    <SheetProvider>
+                      <NavigationTracker />
+                      <BootRouter>
+                        {/* 
+                          L0-L3 Layered OS Architecture
+                          - UnifiedGlobe is persistent, never unmounts
+                          - All navigation happens via SheetContext
+                          - Router only handles URL sync, not page mounts
+                        */}
+                        <OSArchitecture />
+                      </BootRouter>
+                      {/* L2 Sheet System - Renders over everything, outside route remount boundary */}
+                      <SheetRouter />
+                    </SheetProvider>
+                  </Router>
+                </ShopCartProvider>
+              </WorldPulseProvider>
+              <Toaster />
+              {/* PIN Lock Overlay - Z-200, above everything */}
+              <PinLockOverlay />
+            </QueryClientProvider>
+          </BootGuardProvider>
+        </PinLockProvider>
       </AuthProvider>
     </I18nProvider>
   )
