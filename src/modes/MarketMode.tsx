@@ -13,6 +13,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, Filter, ShoppingBag, Heart, Tag } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { getAllProducts, getCategories, type Product, type ProductFilters } from '@/lib/data';
+import { ProductCardSkeleton } from '@/components/ui/SkeletonLoaders';
 
 interface MarketModeProps {
   className?: string;
@@ -139,9 +140,11 @@ export function MarketMode({ className = '' }: MarketModeProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex items-center justify-center h-64"
+              className="grid grid-cols-2 gap-2 p-2"
             >
-              <div className="w-8 h-8 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
+              {[...Array(6)].map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
             </motion.div>
           ) : filteredProducts.length === 0 ? (
             <motion.div

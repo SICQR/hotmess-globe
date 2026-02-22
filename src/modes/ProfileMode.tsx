@@ -17,6 +17,7 @@ import {
 import { useSheet } from '@/contexts/SheetContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { getCurrentProfile, getMyListings, type Profile, type Product } from '@/lib/data';
+import { ListItemSkeleton } from '@/components/ui/SkeletonLoaders';
 
 interface ProfileModeProps {
   className?: string;
@@ -54,8 +55,10 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
 
   if (isLoading) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-black">
-        <div className="w-8 h-8 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
+      <div className="h-full w-full bg-black p-4 space-y-2">
+        {[...Array(8)].map((_, i) => (
+          <ListItemSkeleton key={i} />
+        ))}
       </div>
     );
   }
