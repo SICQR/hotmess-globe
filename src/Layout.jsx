@@ -634,7 +634,7 @@ function LayoutInner({ children, currentPageName }) {
           isPulsePage
             ? 'min-w-0'
             : shouldShowChrome
-              ? 'md:ml-56 pt-[calc(3.5rem+env(safe-area-inset-top))] md:pt-0 min-w-0'
+              ? 'md:ml-56 pt-[calc(3.5rem+env(safe-area-inset-top))] pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pt-0 md:pb-0 min-w-0'
               : 'min-w-0'
         }
         role="main"
