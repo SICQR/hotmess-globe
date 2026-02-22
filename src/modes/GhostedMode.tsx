@@ -55,12 +55,12 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
 
   // Handle profile tap - open as overlay
   const handleProfileTap = (profileId: string) => {
-    openSheet('L2ProfileSheet', { userId: profileId });
+    openSheet('profile', { userId: profileId });
   };
 
   // Handle chat tap - open as overlay
   const handleChatTap = (profileId: string) => {
-    openSheet('ChatSheet', { recipientId: profileId });
+    openSheet('chat', { recipientId: profileId });
   };
 
   return (

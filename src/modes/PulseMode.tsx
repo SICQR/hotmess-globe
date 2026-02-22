@@ -56,11 +56,11 @@ export function PulseMode({ className = '' }: PulseModeProps) {
 
   const handleBeaconTap = (beacon: Beacon) => {
     if (beacon.type === 'event') {
-      openSheet('EventSheet', { eventId: beacon.id });
+      openSheet('event', { eventId: beacon.id });
     } else if (beacon.type === 'safety') {
-      openSheet('SafetySheet', { alertId: beacon.id });
+      openSheet('safety', { alertId: beacon.id });
     } else {
-      openSheet('BeaconSheet', { beaconId: beacon.id });
+      openSheet('beacon', { beaconId: beacon.id });
     }
   };
 
@@ -126,7 +126,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
             className="fixed top-16 left-4 right-4 z-40"
           >
             <button
-              onClick={() => openSheet('SafetySheet', {})}
+              onClick={() => openSheet('safety', {})}
               className="w-full p-3 bg-red-500/20 backdrop-blur-xl rounded-xl border border-red-500/30 text-left"
             >
               <div className="flex items-center gap-2">
