@@ -78,6 +78,14 @@ ALTER TABLE public.profiles
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- Username must exist BEFORE onboarding_complete can become true
+-- First fix any violating rows
+UPDATE public.profiles
+SET username = COALESCE(
+  username,
+  'user_' || SUBSTRING(id::text, 1, 8)
+)
+WHERE onboarding_complete = true AND username IS NULL;
+
 DO $$ BEGIN
   ALTER TABLE public.profiles
     ADD CONSTRAINT profiles_onboarding_requires_username
@@ -86,6 +94,15 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 -- Verification level must match is_verified
+-- First fix any violating rows
+UPDATE public.profiles
+SET verification_level = 'none'
+WHERE is_verified = false AND verification_level IS NOT NULL AND verification_level NOT IN ('none');
+
+UPDATE public.profiles
+SET verification_level = 'basic'
+WHERE is_verified = true AND (verification_level IS NULL OR verification_level NOT IN ('basic', 'full'));
+
 DO $$ BEGIN
   ALTER TABLE public.profiles
     ADD CONSTRAINT profiles_verified_level_consistency

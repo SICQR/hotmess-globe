@@ -27,25 +27,25 @@ CREATE INDEX IF NOT EXISTS idx_stories_expires   ON public.stories(expires_at);
 
 ALTER TABLE public.stories ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Authenticated users can read non-expired stories"
+CREATE POLICY IF NOT EXISTS "Authenticated users can read non-expired stories"
   ON public.stories FOR SELECT TO authenticated
   USING (expires_at > now());
 
-CREATE POLICY "Users can create their own stories"
+CREATE POLICY IF NOT EXISTS "Users can create their own stories"
   ON public.stories FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own stories"
+CREATE POLICY IF NOT EXISTS "Users can update their own stories"
   ON public.stories FOR UPDATE TO authenticated
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete their own stories"
+CREATE POLICY IF NOT EXISTS "Users can delete their own stories"
   ON public.stories FOR DELETE TO authenticated
   USING (auth.uid() = user_id);
 
 -- Allow viewing viewed_by updates from any authenticated user
 -- (Stories.jsx calls .update({ viewed_by, view_count }) on any story)
-CREATE POLICY "Any authenticated user can mark story viewed"
+CREATE POLICY IF NOT EXISTS "Any authenticated user can mark story viewed"
   ON public.stories FOR UPDATE TO authenticated
   USING (expires_at > now())
   WITH CHECK (true);
@@ -78,15 +78,15 @@ CREATE INDEX IF NOT EXISTS idx_marketplace_order_buyer_id ON public.marketplace_
 
 ALTER TABLE public.marketplace_order ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Buyers can read own orders"
+CREATE POLICY IF NOT EXISTS "Buyers can read own orders"
   ON public.marketplace_order FOR SELECT TO authenticated
   USING (auth.uid() = buyer_id OR buyer_email = (auth.jwt() ->> 'email'));
 
-CREATE POLICY "Sellers can read orders for their products"
+CREATE POLICY IF NOT EXISTS "Sellers can read orders for their products"
   ON public.marketplace_order FOR SELECT TO authenticated
   USING (auth.uid() = seller_id);
 
-CREATE POLICY "Authenticated users can create orders"
+CREATE POLICY IF NOT EXISTS "Authenticated users can create orders"
   ON public.marketplace_order FOR INSERT TO authenticated
   WITH CHECK (auth.uid() = buyer_id);
 
@@ -116,7 +116,7 @@ CREATE INDEX IF NOT EXISTS idx_moderation_appeals_status ON public.moderation_ap
 
 ALTER TABLE public.moderation_appeals ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can submit and view own appeals"
+CREATE POLICY IF NOT EXISTS "Users can submit and view own appeals"
   ON public.moderation_appeals FOR ALL TO authenticated
   USING (auth.uid() = user_id OR user_email = (auth.jwt() ->> 'email'))
   WITH CHECK (auth.uid() = user_id OR user_email = (auth.jwt() ->> 'email'));
@@ -151,7 +151,7 @@ CREATE INDEX IF NOT EXISTS idx_biz_amps_city      ON public.business_amplificati
 
 ALTER TABLE public.business_amplifications ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Business owners can manage own amplifications"
+CREATE POLICY IF NOT EXISTS "Business owners can manage own amplifications"
   ON public.business_amplifications FOR ALL TO authenticated
   USING (
     business_id IN (
@@ -182,11 +182,11 @@ CREATE INDEX IF NOT EXISTS idx_user_activity_user_id    ON public.user_activity(
 
 ALTER TABLE public.user_activity ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view own activity"
+CREATE POLICY IF NOT EXISTS "Users can view own activity"
   ON public.user_activity FOR SELECT TO authenticated
   USING (auth.uid() = user_id OR user_email = (auth.jwt() ->> 'email'));
 
-CREATE POLICY "Users can delete own activity (GDPR)"
+CREATE POLICY IF NOT EXISTS "Users can delete own activity (GDPR)"
   ON public.user_activity FOR DELETE TO authenticated
   USING (auth.uid() = user_id OR user_email = (auth.jwt() ->> 'email'));
 
@@ -212,12 +212,12 @@ CREATE INDEX IF NOT EXISTS idx_search_analytics_time  ON public.search_analytics
 ALTER TABLE public.search_analytics ENABLE ROW LEVEL SECURITY;
 
 -- Insert-only for authenticated users (analytics write path)
-CREATE POLICY "Authenticated users can log searches"
+CREATE POLICY IF NOT EXISTS "Authenticated users can log searches"
   ON public.search_analytics FOR INSERT TO authenticated
   WITH CHECK (true);
 
 -- Users can read their own search history
-CREATE POLICY "Users can read own search history"
+CREATE POLICY IF NOT EXISTS "Users can read own search history"
   ON public.search_analytics FOR SELECT TO authenticated
   USING (auth.uid() = user_id OR user_email = (auth.jwt() ->> 'email'));
 
