@@ -12,7 +12,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePinLock } from '@/contexts/PinLockContext';
-import { Lock, Delete, Fingerprint, X, Check, Shield } from 'lucide-react';
+import { Lock, Delete, Fingerprint, X, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 const KEYPAD = [
