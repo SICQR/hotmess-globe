@@ -452,7 +452,7 @@ function ProfileCardInner({
           isVerified={(profile as any)?.isVerified}
           onClick={openProfile}
           onMessage={
-            primaryAction.key === 'message' && profile?.email
+            profile?.email
               ? () => onNavigateUrl(`/social/inbox?to=${encodeURIComponent(String(profile.email))}`)
               : undefined
           }

@@ -288,22 +288,19 @@ export function SmartProfileCard({
           </div>
         </div>
 
-        {/* Quick Actions (on hover) */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileHover={{ opacity: 1, y: 0 }}
-          className="absolute bottom-16 right-4 z-10 flex gap-2"
-        >
+        {/* Message Button - Always Visible */}
+        {onMessage && (
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onMessage?.(profile);
+              onMessage(profile);
             }}
-            className="w-10 h-10 bg-white/90 backdrop-blur-sm flex items-center justify-center rounded-full hover:bg-[#FF1493] hover:text-white transition-colors"
+            className="absolute bottom-4 right-4 z-20 w-12 h-12 bg-[#FF1493] flex items-center justify-center rounded-full shadow-lg hover:bg-white hover:text-black transition-colors"
+            aria-label="Message"
           >
-            <MessageCircle className="w-5 h-5" />
+            <MessageCircle className="w-6 h-6" />
           </button>
-        </motion.div>
+        )}
       </div>
 
       {/* Spotlight Card Extra Content */}
