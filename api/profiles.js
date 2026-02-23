@@ -38,85 +38,8 @@ const getGenderValue = ({ row, meta }) => {
   return row?.gender ?? meta?.gender ?? row?.sex ?? meta?.sex ?? null;
 };
 
-const buildFallbackProfiles = () => {
-  return [
-    {
-      id: 'profile_123',
-      authUserId: 'fallback_auth_123',
-      email: 'alex@example.com',
-      profileName: 'Alex',
-      title: 'Gym rat, beach lover',
-      locationLabel: 'London',
-      city: 'London',
-      profileType: 'creator',
-      bio: 'Gym rat, beach lover',
-      gender: 'male',
-      photo_policy_ack: true,
-      geoLat: 51.5074,
-      geoLng: -0.1278,
-      photos: [
-        {
-          url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
-          isPrimary: true,
-        },
-        {
-          url: 'https://images.unsplash.com/photo-1520975693411-6c5fe1e26f0a?auto=format&fit=crop&w=1200&q=80',
-          isPrimary: false,
-        },
-        {
-          url: 'https://images.unsplash.com/photo-1520975958221-0a3f65a2b9f5?auto=format&fit=crop&w=1200&q=80',
-          isPrimary: false,
-        },
-        {
-          url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80',
-          isPrimary: false,
-        },
-        {
-          url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1200&q=80',
-          isPrimary: false,
-        },
-      ],
-    },
-    {
-      id: 'profile_124',
-      authUserId: 'fallback_auth_124',
-      email: 'jay@example.com',
-      profileName: 'Jay',
-      title: 'Late-night walks, loud music, no drama',
-      locationLabel: 'London',
-      city: 'London',
-      profileType: 'seller',
-      sellerTagline: 'Clubwear drops + limited runs',
-      bio: 'Late-night walks, loud music, no drama',
-      gender: 'male',
-      photo_policy_ack: true,
-      geoLat: 51.5099,
-      geoLng: -0.1181,
-      photos: [
-        {
-          url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1200&q=80',
-          isPrimary: true,
-        },
-        {
-          url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80',
-          isPrimary: false,
-        },
-        {
-          url: 'https://images.unsplash.com/photo-1520962917960-20a70b7f212a?auto=format&fit=crop&w=1200&q=80',
-          isPrimary: false,
-        },
-        {
-          url: 'https://images.unsplash.com/photo-1520974735194-6a9a3a559b97?auto=format&fit=crop&w=1200&q=80',
-          isPrimary: false,
-        },
-        {
-          url: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-          isPrimary: false,
-        },
-      ],
-    },
-  ];
-};
+// No fallback demo profiles - return empty if DB unavailable
+const buildFallbackProfiles = () => [];
 
 const dedupeItems = (items) => {
   const list = Array.isArray(items) ? items : [];
