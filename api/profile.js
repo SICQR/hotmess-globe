@@ -118,11 +118,11 @@ const mergeAuthMeta = ({ row, meta }) => {
 };
 
 const fetchMaybeSingle = async (client, table, where) => {
-  const baseSelect = 'id,auth_user_id,email,full_name,avatar_url,subscription_tier,last_lat,last_lng,lat,lng,city,bio,profile_type,seller_tagline,seller_bio,shop_banner_url,instagram,twitter';
+  const baseSelect = 'id,auth_user_id,email,full_name,username,avatar_url,subscription_tier,last_lat,last_lng,lat,lng,city,bio,profile_type,seller_tagline,seller_bio,shop_banner_url,instagram,twitter';
   const extendedSelect = `${baseSelect},photos,preferred_vibes,skills,interests,looking_for,music_taste,availability_status,profile_theme,accent_color`;
   // Some Supabase projects backing this repo have a slimmer public.User schema.
   // If both extended + base selects fail, fall back to a minimal, widely-compatible select.
-  const minimalSelect = 'id,auth_user_id,email,full_name,avatar_url,last_lat,last_lng,lat,lng,city,bio,profile_type';
+  const minimalSelect = 'id,auth_user_id,email,full_name,username,avatar_url,last_lat,last_lng,lat,lng,city,bio,profile_type';
 
   const run = async (select) => {
     return client
