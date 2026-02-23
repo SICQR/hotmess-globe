@@ -548,8 +548,11 @@ export default function Auth() {
                 <div className="text-center mt-4">
                   <button
                     type="button"
-                    onClick={() => setStep('forgot')}
-                    className="text-sm text-white/60 hover:text-white transition-colors"
+                    onClick={() => {
+                      console.log('[Auth] Forgot password clicked');
+                      setStep('forgot');
+                    }}
+                    className="text-sm text-[#FF1493] hover:text-white transition-colors underline cursor-pointer"
                   >
                     Forgot password?
                   </button>
@@ -557,7 +560,6 @@ export default function Auth() {
               )}
 
               <div className="text-center pt-4 border-t border-white/10 mt-6">
-                <p className="text-xs text-white/40 uppercase tracking-wider mb-4">Or continue with</p>
                 
                 {/* Google Sign In - temporarily disabled
                 <button
