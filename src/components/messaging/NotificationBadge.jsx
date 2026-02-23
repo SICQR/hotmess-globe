@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { base44, supabase } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
-import { Bell } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 
 export default function NotificationBadge({ user }) {
   const [totalUnread, setTotalUnread] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
 
+  // Initial fetch of unread count
   const { data: threads = [] } = useQuery({
     queryKey: ['chat-threads-notifications', user?.email],
     queryFn: async () => {
@@ -17,44 +19,98 @@ export default function NotificationBadge({ user }) {
       );
     },
     enabled: !!user?.email,
-    refetchInterval: 30000, // Poll every 30s (reduced from 3s)
-    staleTime: 10000, // 10s
+    staleTime: 30000, // 30s
   });
 
+  // Calculate unread from fetched threads
   useEffect(() => {
     if (!user?.email || !Array.isArray(threads)) {
       setTotalUnread(0);
       return;
     }
     
-    // Calculate unread safely
     const unread = threads.reduce((total, thread) => {
-      // Safely access nested unread_count
       const threadUnread = thread?.unread_count?.[user.email];
       return total + (typeof threadUnread === 'number' ? threadUnread : 0);
     }, 0);
     
     setTotalUnread(unread);
-
-    // Show browser notification for new messages (debounced)
-    if (unread > 0 && 'Notification' in window && Notification.permission === 'granted') {
-      const lastNotified = parseInt(localStorage.getItem('last_notification_count') || '0', 10);
-      const lastNotifiedTime = parseInt(localStorage.getItem('last_notification_time') || '0', 10);
-      const now = Date.now();
-      
-      // Only notify if count increased AND at least 10s passed
-      if (unread > lastNotified && (now - lastNotifiedTime > 10000)) {
-        new Notification('HOTMESS', {
-          body: `You have ${unread} unread message${unread > 1 ? 's' : ''}`,
-          icon: '/icon.png',
-          badge: '/icon.png',
-          tag: 'unread-messages', // Replace previous notification
-        });
-        localStorage.setItem('last_notification_count', unread.toString());
-        localStorage.setItem('last_notification_time', now.toString());
-      }
-    }
   }, [threads, user]);
+
+  // Real-time subscription for instant notifications
+  useEffect(() => {
+    if (!user?.email) return;
+
+    const channel = supabase
+      .channel(`chat-badge-${user.email}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        async (payload) => {
+          const newMessage = payload.new;
+          
+          // Ignore own messages
+          if (newMessage?.sender_email === user.email) return;
+          
+          // Check if this message is in a thread we're in
+          const threadId = newMessage?.thread_id;
+          if (!threadId) return;
+          
+          const { data: thread } = await supabase
+            .from('chat_threads')
+            .select('participant_emails')
+            .eq('id', threadId)
+            .single();
+          
+          if (!thread?.participant_emails?.includes(user.email)) return;
+          
+          // Increment unread
+          setTotalUnread(prev => prev + 1);
+          
+          // Get sender info for notification
+          const { data: sender } = await supabase
+            .from('User')
+            .select('full_name')
+            .eq('email', newMessage.sender_email)
+            .single();
+          
+          const senderName = sender?.full_name || 'Someone';
+          
+          // Browser notification if permitted and not focused
+          if (
+            'Notification' in window && 
+            Notification.permission === 'granted' &&
+            document.visibilityState !== 'visible'
+          ) {
+            const notification = new Notification(senderName, {
+              body: String(newMessage.content || 'Sent you a message').slice(0, 100),
+              icon: '/icon.png',
+              badge: '/icon.png',
+              tag: `message-${newMessage.id}`,
+              vibrate: [200, 100, 200],
+            });
+            
+            notification.onclick = () => {
+              window.focus();
+              notification.close();
+            };
+            
+            setTimeout(() => notification.close(), 5000);
+          }
+        }
+      )
+      .subscribe((status) => {
+        setIsConnected(status === 'SUBSCRIBED');
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.email]);
 
   // Request notification permission on mount
   useEffect(() => {
@@ -67,9 +123,9 @@ export default function NotificationBadge({ user }) {
 
   return (
     <div className="relative">
-      <Bell className="w-5 h-5" />
-      <Badge className="absolute -top-2 -right-2 bg-[#FF1493] text-black text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0">
-        {totalUnread > 9 ? '9+' : totalUnread}
+      <MessageCircle className="w-5 h-5" />
+      <Badge className="absolute -top-2 -right-2 bg-[#FF1493] text-black text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 animate-pulse">
+        {totalUnread > 99 ? '99+' : totalUnread}
       </Badge>
     </div>
   );

@@ -406,7 +406,8 @@ export default async function handler(req, res) {
         return {
           id: `profile_${dedupeKey}`,
           oderId: uniqueId || undefined,
-          email: emailInternal || undefined,
+          // PRIVACY: Never expose email - use userId for routing
+          userId: authUserId || uniqueId || undefined,
           authUserId: authUserId || undefined,
           username: username || undefined,
           profileName: displayName,

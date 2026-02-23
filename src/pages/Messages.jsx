@@ -20,11 +20,14 @@ export default function Messages() {
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const { data: allUsers = [] } = useAllUsers();
 
-  const requestedTo = useMemo(() => {
+  // Support both old ?to=email and new ?user=userId formats
+  const requestedUserId = useMemo(() => {
     try {
       const params = new URLSearchParams(location.search || '');
-      const raw = params.get('to');
-      return raw ? String(raw).trim().toLowerCase() : null;
+      // Try new user param first, then legacy to param
+      const userId = params.get('user');
+      const legacyTo = params.get('to');
+      return userId ? String(userId).trim() : (legacyTo ? String(legacyTo).trim().toLowerCase() : null);
     } catch {
       return null;
     }
@@ -50,15 +53,25 @@ export default function Messages() {
     refetchInterval: 5000, // Poll every 5s (optimized)
   });
 
-  // Deep-link: /social/inbox?to=email → open compose with recipient prefilled.
+  // Deep-link: /social/inbox?user=userId → open compose with recipient prefilled
+  // Also supports legacy /social/inbox?to=email
   useEffect(() => {
     if (!currentUser) return;
-    if (!requestedTo) return;
-    if (requestedTo === String(currentUser.email || '').trim().toLowerCase()) return;
+    if (!requestedUserId) return;
+    
+    // Find user by ID or email (for backwards compatibility)
+    const targetUser = allUsers.find(u => 
+      u.id === requestedUserId || 
+      u.authUserId === requestedUserId ||
+      (u.email && u.email.toLowerCase() === requestedUserId.toLowerCase())
+    );
+    
+    if (!targetUser) return;
+    if (targetUser.email === currentUser.email) return;
 
-    setPrefillToEmail(requestedTo);
+    setPrefillToEmail(targetUser.email);
     setShowNewMessage(true);
-  }, [currentUser, requestedTo]);
+  }, [currentUser, requestedUserId, allUsers]);
 
   // Deep-link: /social/inbox?thread=<id> → open an existing thread.
   useEffect(() => {
