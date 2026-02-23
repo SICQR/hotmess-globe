@@ -507,6 +507,16 @@ export const base44 = {
     
     redirectToLogin: (nextUrl) => {
       window.location.href = createPageUrl('Auth') + (nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : '');
+    },
+    
+    // Check if user is authenticated and has a profile, redirect to login if not
+    requireProfile: async (nextUrl) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = createPageUrl('Auth') + (nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : '');
+        return false;
+      }
+      return true;
     }
   },
   
@@ -741,6 +751,99 @@ export const base44 = {
       
       delete: async (id) => {
         await runWithTableOrColumnFallback(BEACON_TABLES, (table) => supabase.from(table).delete().eq('id', id));
+      }
+    },
+
+    ChatMessage: {
+      filter: async (filters, orderBy, limit) => {
+        let query = supabase.from('messages').select('*');
+        
+        Object.entries(filters || {}).forEach(([key, value]) => {
+          query = query.eq(key, value);
+        });
+        
+        if (orderBy) {
+          const desc = orderBy.startsWith('-');
+          const column = desc ? orderBy.slice(1) : orderBy;
+          query = query.order(column, { ascending: !desc });
+        }
+        
+        if (limit) query = query.limit(limit);
+        
+        const { data, error } = await query;
+        if (error) console.error('[ChatMessage.filter]', error);
+        return safeArray(data);
+      },
+      
+      create: async (record) => {
+        const { data, error } = await supabase
+          .from('messages')
+          .insert(record)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      },
+      
+      list: async (orderBy = '-created_at', limit = 50) => {
+        let query = supabase.from('messages').select('*');
+        
+        if (orderBy) {
+          const desc = orderBy.startsWith('-');
+          const column = desc ? orderBy.slice(1) : orderBy;
+          query = query.order(column, { ascending: !desc });
+        }
+        
+        if (limit) query = query.limit(limit);
+        
+        const { data, error } = await query;
+        if (error) console.error('[ChatMessage.list]', error);
+        return safeArray(data);
+      }
+    },
+
+    ChatThread: {
+      filter: async (filters, orderBy) => {
+        let query = supabase.from('chat_threads').select('*');
+        
+        Object.entries(filters || {}).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            query = query.contains(key, value);
+          } else {
+            query = query.eq(key, value);
+          }
+        });
+        
+        if (orderBy) {
+          const desc = orderBy.startsWith('-');
+          const column = desc ? orderBy.slice(1) : orderBy;
+          query = query.order(column, { ascending: !desc });
+        }
+        
+        const { data, error } = await query;
+        if (error) console.error('[ChatThread.filter]', error);
+        return safeArray(data);
+      },
+      
+      create: async (record) => {
+        const { data, error } = await supabase
+          .from('chat_threads')
+          .insert(record)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      },
+      
+      update: async (id, updates) => {
+        const { data, error } = await supabase
+          .from('chat_threads')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
       }
     },
 
