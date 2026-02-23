@@ -359,6 +359,7 @@ export default function HotmessSplash({ onComplete }) {
 
               {/* Social Auth Buttons */}
               <div className="space-y-3 mb-6">
+                {/* Google Sign In - temporarily disabled
                 <Button
                   type="button"
                   onClick={async () => {
@@ -379,7 +380,9 @@ export default function HotmessSplash({ onComplete }) {
                   <GoogleIcon />
                   <span className="ml-3">Continue with Google</span>
                 </Button>
+                */}
 
+                {/* Apple Sign In - temporarily disabled
                 <Button
                   type="button"
                   onClick={async () => {
@@ -400,6 +403,7 @@ export default function HotmessSplash({ onComplete }) {
                   <AppleIcon />
                   <span className="ml-3">Continue with Apple</span>
                 </Button>
+                */}
 
                 <Button
                   type="button"

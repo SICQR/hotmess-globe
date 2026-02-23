@@ -559,7 +559,7 @@ export default function Auth() {
               <div className="text-center pt-4 border-t border-white/10 mt-6">
                 <p className="text-xs text-white/40 uppercase tracking-wider mb-4">Or continue with</p>
                 
-                {/* Google Sign In */}
+                {/* Google Sign In - temporarily disabled
                 <button
                   onClick={async () => {
                     setLoading(true);
@@ -568,7 +568,6 @@ export default function Auth() {
                         `${window.location.origin}/auth/callback`
                       );
                       if (error) {
-                        // Provide more specific error messages
                         if (error.message?.includes('not enabled')) {
                           throw new Error('Google sign-in is not enabled. Please contact support.');
                         } else if (error.message?.includes('popup')) {
@@ -594,6 +593,7 @@ export default function Auth() {
                   </svg>
                   Continue with Google
                 </button>
+                */}
 
                 <TelegramLogin 
                   onSuccess={(result) => {
