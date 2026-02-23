@@ -427,6 +427,10 @@ export default async function handler(req, res) {
           geoLat: lat,
           geoLng: lng,
           photos,
+          // New fields for Grindr-style UI
+          is_online: row?.is_online === true,
+          last_seen: row?.last_seen || row?.last_loc_ts || undefined,
+          looking_for: Array.isArray(row?.looking_for) ? row.looking_for : undefined,
         };
       })
       .filter(Boolean);
