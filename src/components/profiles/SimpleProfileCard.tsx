@@ -21,6 +21,8 @@ interface SimpleProfileCardProps {
   distance?: string;
   matchPercent?: number;
   isVerified?: boolean;
+  lookingFor?: string[];
+  lastSeen?: string;
   onClick?: () => void;
   onMessage?: () => void;
 }
@@ -40,6 +42,8 @@ export function SimpleProfileCard({
   distance,
   matchPercent,
   isVerified,
+  lookingFor,
+  lastSeen,
   onClick,
   onMessage,
 }: SimpleProfileCardProps) {
@@ -105,6 +109,27 @@ export function SimpleProfileCard({
           <div className="flex items-center gap-1 mt-1 text-white/60 text-xs">
             <MapPin className="w-3 h-3" />
             <span className="truncate">{distance || location}</span>
+          </div>
+        )}
+
+        {/* Looking for tags */}
+        {lookingFor && lookingFor.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {lookingFor.slice(0, 3).map((tag, i) => (
+              <span 
+                key={i}
+                className="px-1.5 py-0.5 bg-[#FF1493]/20 text-[#FF1493] text-[10px] font-medium uppercase tracking-wider"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Last seen (when not online) */}
+        {status === 'offline' && lastSeen && (
+          <div className="mt-1 text-white/40 text-[10px]">
+            {lastSeen}
           </div>
         )}
 

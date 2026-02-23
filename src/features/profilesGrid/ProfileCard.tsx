@@ -437,8 +437,33 @@ function ProfileCardInner({
       : undefined;
     
     const status: 'online' | 'away' | 'offline' = 
-      (profile as any)?.onlineNow ? 'online' : 
+      (profile as any)?.is_online || (profile as any)?.onlineNow ? 'online' : 
       (profile as any)?.rightNow ? 'away' : 'offline';
+
+    // Parse looking_for tags
+    const lookingFor = Array.isArray((profile as any)?.looking_for) 
+      ? (profile as any).looking_for.filter((t: unknown) => typeof t === 'string')
+      : [];
+
+    // Format last_seen
+    const formatLastSeen = (ts: string | null | undefined): string | undefined => {
+      if (!ts) return undefined;
+      try {
+        const date = new Date(ts);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        if (diffMins < 5) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `${diffHours}h ago`;
+        const diffDays = Math.floor(diffHours / 24);
+        return `${diffDays}d ago`;
+      } catch {
+        return undefined;
+      }
+    };
+    const lastSeen = formatLastSeen((profile as any)?.last_seen);
 
     return (
       <div ref={attachRef as unknown as React.Ref<HTMLDivElement>}>
@@ -450,6 +475,8 @@ function ProfileCardInner({
           distance={primaryModeShort || undefined}
           matchPercent={matchPercent}
           isVerified={(profile as any)?.isVerified}
+          lookingFor={lookingFor}
+          lastSeen={lastSeen}
           onClick={openProfile}
           onMessage={
             profile?.email
