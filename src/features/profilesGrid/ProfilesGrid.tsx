@@ -248,10 +248,10 @@ export default function ProfilesGrid({
     if (onOpenProfile) return onOpenProfile(profile);
 
     // Use canonical profile opener (Stage 4)
+    // Note: email removed from API for privacy - use userId only
     openProfile({
-      userId: String(profile.id),
+      userId: String((profile as any).userId || (profile as any).authUserId || profile.id),
       source: 'grid',
-      email: profile.email ? String(profile.email) : undefined,
     });
   };
 
