@@ -354,20 +354,20 @@ function ProfileCardInner({
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      const email = String(profile?.email || '').trim();
-      if (!email) return;
-      onNavigateUrl(`/market?created_by=${encodeURIComponent(email)}`);
+      const userId = String(profile?.userId || profile?.authUserId || '').trim();
+      if (!userId) return;
+      onNavigateUrl(`/market?seller_id=${encodeURIComponent(userId)}`);
     },
-    [onNavigateUrl, profile?.email]
+    [onNavigateUrl, profile?.userId, profile?.authUserId]
   );
 
   const primaryAction = useMemo(() => {
     if (isSeller && hasProducts) return { key: 'shop', label: 'Shop' } as const;
     if (isCreator) return { key: 'listen', label: 'Listen' } as const;
-    const email = String(profile?.email || '').trim();
-    if (email) return { key: 'message', label: 'Message' } as const;
+    const userId = String(profile?.userId || profile?.authUserId || '').trim();
+    if (userId) return { key: 'message', label: 'Message' } as const;
     return { key: 'view', label: 'View' } as const;
-  }, [hasProducts, isCreator, isSeller, profile?.email]);
+  }, [hasProducts, isCreator, isSeller, profile?.userId, profile?.authUserId]);
 
   const onPrimaryClick = useCallback(
     (e: React.MouseEvent) => {
@@ -380,16 +380,16 @@ function ProfileCardInner({
       }
 
       if (primaryAction.key === 'shop') {
-        const email = String(profile?.email || '').trim();
-        if (!email) return;
-        onNavigateUrl(`/market?created_by=${encodeURIComponent(email)}`);
+        const userId = String(profile?.userId || profile?.authUserId || '').trim();
+        if (!userId) return;
+        onNavigateUrl(`/market?seller_id=${encodeURIComponent(userId)}`);
         return;
       }
 
       if (primaryAction.key === 'message') {
-        const email = String(profile?.email || '').trim();
-        if (!email) return;
-        onNavigateUrl(`/social/inbox?to=${encodeURIComponent(email)}`);
+        const userId = String(profile?.userId || profile?.authUserId || '').trim();
+        if (!userId) return;
+        onNavigateUrl(`/social/inbox?user=${encodeURIComponent(userId)}`);
         return;
       }
 
@@ -479,8 +479,8 @@ function ProfileCardInner({
           lastSeen={lastSeen}
           onClick={openProfile}
           onMessage={
-            profile?.email
-              ? () => onNavigateUrl(`/social/inbox?to=${encodeURIComponent(String(profile.email))}`)
+            (profile as any)?.userId || (profile as any)?.authUserId
+              ? () => onNavigateUrl(`/social/inbox?user=${encodeURIComponent(String((profile as any).userId || (profile as any).authUserId))}`)
               : undefined
           }
         />
@@ -492,7 +492,6 @@ function ProfileCardInner({
     const handle =
       (profile as any)?.handle ||
       (profile as any)?.username ||
-      emailHandle((profile as any)?.email) ||
       initialsFromName((profile as any)?.profileName || (profile as any)?.full_name || 'HM');
 
     const matchLabel = typeof profile.matchProbability === 'number' 
@@ -547,16 +546,16 @@ function ProfileCardInner({
               }
 
               if (primaryAction.key === 'shop') {
-                const email = String(profile?.email || '').trim();
-                if (!email) return;
-                onNavigateUrl(`/market?created_by=${encodeURIComponent(email)}`);
+                const userId = String((profile as any)?.userId || (profile as any)?.authUserId || '').trim();
+                if (!userId) return;
+                onNavigateUrl(`/market?seller_id=${encodeURIComponent(userId)}`);
                 return;
               }
 
               if (primaryAction.key === 'message') {
-                const email = String(profile?.email || '').trim();
-                if (!email) return;
-                onNavigateUrl(`/social/inbox?to=${encodeURIComponent(email)}`);
+                const userId = String((profile as any)?.userId || (profile as any)?.authUserId || '').trim();
+                if (!userId) return;
+                onNavigateUrl(`/social/inbox?user=${encodeURIComponent(userId)}`);
                 return;
               }
 
@@ -744,7 +743,7 @@ function ProfileCardInner({
                     onClick={onPrimaryClick}
                     disabled={
                       (primaryAction.key === 'shop' || primaryAction.key === 'message') &&
-                      !String(profile?.email || '').trim()
+                      !String((profile as any)?.userId || (profile as any)?.authUserId || '').trim()
                     }
                     variant={primaryAction.key === 'message' ? 'hot' : 'cyan'}
                     className="flex-1"
@@ -773,7 +772,7 @@ function ProfileCardInner({
                   onClick={onPrimaryClick}
                   disabled={
                     (primaryAction.key === 'shop' || primaryAction.key === 'message') &&
-                    !String(profile?.email || '').trim()
+                    !String((profile as any)?.userId || (profile as any)?.authUserId || '').trim()
                   }
                   variant={primaryAction.key === 'message' ? 'hot' : 'cyan'}
                   className="w-full"
