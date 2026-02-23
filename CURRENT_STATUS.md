@@ -1,8 +1,58 @@
-# HOTMESS Current Status
+# HOTMESS — Master Status Document
 
 **Last Updated:** 2026-02-23  
 **Production URL:** https://hotmess-globe-git-main-phils-projects-59e621aa.vercel.app  
-**Repository:** SICQR/hotmess-globe
+**Repository:** SICQR/hotmess-globe  
+**Supabase Project:** `axxwdjmbwkvqhcpwters` (SYSTEM)
+
+---
+
+## 📋 Quick Links to Key Docs
+
+| Document | Purpose |
+|----------|---------|
+| `docs/HOTMESS-LONDON-OS-BIBLE++-v1.6.md` | **Canonical spec** - navigation, routes, architecture |
+| `docs/OS_REMAP_BLUEPRINT.md` | Ring model architecture (Runtime → Services → Window → Navigation → Features) |
+| `docs/EXECUTION_TODAY_HOTMESS_OS.md` | Ship checklist for production |
+| `DEPLOYMENT_CHECKLIST.md` | Vercel deployment steps |
+| `copilot-instructions.md` | Agent execution rules |
+| `INCOMPLETE_FEATURES.md` | What's missing/placeholder |
+| `docs/SUPABASE_LIVE_SCHEMA.md` | Database tables reference |
+
+---
+
+## 🏗️ Architecture Summary
+
+### The Ring Model (from OS_REMAP_BLUEPRINT.md)
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Ring 4: FEATURE MODULES                                      │
+│   Globe · Radio · Safety · Social · Market · Profiles        │
+├─────────────────────────────────────────────────────────────┤
+│ Ring 3: NAVIGATION                                           │
+│   React Router (SOLE URL authority)                          │
+├─────────────────────────────────────────────────────────────┤
+│ Ring 2: WINDOW MANAGER                                       │
+│   Unified Sheet/Overlay Stack (LIFO + back integration)      │
+├─────────────────────────────────────────────────────────────┤
+│ Ring 1: SERVICES                                             │
+│   Auth · Storage · Analytics · Feature Flags · Realtime      │
+├─────────────────────────────────────────────────────────────┤
+│ Ring 0: RUNTIME                                              │
+│   Boot FSM · Error Boundaries · Instrumentation (Sentry)     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Primary Navigation Tabs (Locked from v1.5)
+**HOME • PULSE • EVENTS • MARKET • SOCIAL • MUSIC • MORE**
+
+### Z-Index Layers
+| Layer | Z-Index | Purpose |
+|-------|---------|---------|
+| L0 | 0 | Globe (Three.js canvas) |
+| L1 | 50 | HUD (TopHUD, BottomDock, RadioBar) |
+| L2 | 80 | Sheets (slide-up content) |
+| L3 | 100+ | Interrupts (SOS, AgeGate, modals) |
 
 ---
 
@@ -15,6 +65,7 @@ HOTMESS is a mobile-first gay social/marketplace app featuring:
 - **MESSMARKET** — Unified marketplace (Shopify + Preloved listings)
 - **Safety Features** — Fake call generator, live location sharing, aftercare
 - **Events & Beacons** — Location-based discovery and nightlife
+- **Radio** — Persistent audio player with live streams
 
 ---
 
@@ -164,6 +215,64 @@ Returns single profile by `?uid=` or `?email=`.
 
 ---
 
+## 📚 Documentation Index
+
+### Core Architecture
+| Doc | What It Contains |
+|-----|------------------|
+| `docs/HOTMESS-LONDON-OS-BIBLE++-v1.6.md` | **THE SPEC** - Locked tabs, routes, API contracts, Supabase rules, CSP, cron auth |
+| `docs/OS_REMAP_BLUEPRINT.md` | Ring model, provider mount order, z-index layers, success criteria |
+| `docs/OVERLAY_AUTHORITY.md` | L0-L3 layer system, sheet stack, interrupts |
+| `docs/AUTH_AUTHORITY.md` | Auth listeners, BootGuard state machine, canonical owner |
+| `docs/SUPABASE_REALTIME_OWNERSHIP.md` | Channel ownership (Globe, WorldPulse, Notifications, Safety) |
+
+### Deployment
+| Doc | What It Contains |
+|-----|------------------|
+| `DEPLOYMENT_CHECKLIST.md` | Step-by-step Vercel deploy with env vars |
+| `docs/EXECUTION_TODAY_HOTMESS_OS.md` | Same-day ship checklist with blockers |
+| `VERCEL_DEPLOYMENT_GUIDE.md` | Detailed Vercel setup |
+| `docs/CI_CD_SETUP.md` | GitHub Actions workflows |
+
+### Database & API
+| Doc | What It Contains |
+|-----|------------------|
+| `docs/SUPABASE_LIVE_SCHEMA.md` | All tables with columns, missing tables/columns |
+| `docs/BACKEND_CONTRACT.md` | API endpoint contracts |
+| `docs/SUPABASE_EXPECTED_CONTRACT.md` | What code expects vs what exists |
+
+### Features
+| Doc | What It Contains |
+|-----|------------------|
+| `INCOMPLETE_FEATURES.md` | SoundCloud OAuth, QR scanner, mock data, premium content |
+| `docs/MARKET_ARCHITECTURE.md` | MESSMARKET: Shopify + Preloved unification |
+| `docs/PROFILE_MAP_AUTHORITY.md` | Profile opening contract |
+
+### Agent Instructions
+| Doc | What It Contains |
+|-----|------------------|
+| `copilot-instructions.md` | Critical rules for AI agents working on codebase |
+| `docs/AGENT_TASK_HOTMESS_OS.md` | Agent execution plan |
+
+---
+
+## 📦 Database Migrations
+
+**Location:** `supabase/migrations/` (93 migration files)
+
+Key migrations:
+| Migration | Purpose |
+|-----------|---------|
+| `20260103000000_create_user.sql` | Base User table |
+| `20260104103000_create_social_core_tables.sql` | Social features |
+| `20260104121500_create_messaging_notifications_storage.sql` | Chat system |
+| `20260131160000_messmarket_commerce.sql` | Marketplace |
+| `20260214010000_security_fixes_rls_hardening.sql` | Security RLS |
+| `20260220000000_schema_alignment.sql` | Schema fixes |
+| `20260222000000_ttl_cleanup_functions.sql` | TTL cleanup |
+
+---
+
 ## 🧪 Testing Checklist
 
 ### Core Flows (Must Work)
@@ -215,30 +324,41 @@ npm run dev
 
 # Deploy (auto via git push)
 git push origin main
+
+# Run tests
+npm run lint && npm run typecheck
+npm run test:run
+npm run test:e2e
 ```
 
 ---
 
-## 🏗️ Architecture Summary
+## 🔐 Environment Variables Required
 
+### Vercel (must set in dashboard)
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        HOTMESS                               │
-├─────────────────────────────────────────────────────────────┤
-│  Frontend (Vercel)          │  Backend (Supabase)           │
-│  ├─ React + Vite            │  ├─ Auth (auth.users)         │
-│  ├─ Three.js Globe          │  ├─ Database (User, profiles) │
-│  ├─ React Router            │  ├─ Realtime (channels)       │
-│  ├─ Framer Motion           │  ├─ Storage (uploads)         │
-│  └─ Tailwind CSS            │  └─ Edge Functions            │
-├─────────────────────────────────────────────────────────────┤
-│  APIs (/api/*)              │  External                     │
-│  ├─ /api/profiles           │  ├─ Shopify (checkout)        │
-│  ├─ /api/profile            │  ├─ Google OAuth              │
-│  ├─ /api/messages           │  ├─ Mapbox (maps)             │
-│  └─ /api/ai/*               │  └─ OpenAI (AI features)      │
-└─────────────────────────────────────────────────────────────┘
+SUPABASE_URL=https://axxwdjmbwkvqhcpwters.supabase.co
+SUPABASE_ANON_KEY=[from Supabase Dashboard → Settings → API]
+SUPABASE_SERVICE_ROLE_KEY=[from Supabase Dashboard → Settings → API]
+VITE_SUPABASE_URL=https://axxwdjmbwkvqhcpwters.supabase.co
+VITE_SUPABASE_ANON_KEY=[same as SUPABASE_ANON_KEY]
+GOOGLE_MAPS_API_KEY=[optional, for routing]
+VITE_MAPBOX_TOKEN=[optional, for maps]
+OPENAI_API_KEY=[for AI features]
 ```
+
+---
+
+## 📈 Build Stats
+
+| Metric | Count |
+|--------|-------|
+| Pages | 112 |
+| Components | 333 |
+| Hooks | 20 |
+| Contexts | 8 |
+| Migrations | 93 |
+| Docs | 65+ markdown files |
 
 ---
 
