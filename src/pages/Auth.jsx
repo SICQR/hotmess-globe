@@ -421,12 +421,12 @@ export default function Auth() {
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background gradient mesh */}
-      <div className="fixed inset-0 bg-gradient-mesh opacity-30" />
+      <div className="fixed inset-0 bg-gradient-mesh opacity-30 pointer-events-none" />
       
       {/* Animated glow orbs */}
-      <div className="fixed top-1/4 -left-32 w-64 h-64 bg-[#FF1493]/30 rounded-full blur-[100px] animate-float" />
-      <div className="fixed bottom-1/4 -right-32 w-64 h-64 bg-[#B026FF]/20 rounded-full blur-[100px] animate-float" style={{ animationDelay: '1s' }} />
-      <div className="fixed top-3/4 left-1/4 w-48 h-48 bg-[#00D9FF]/20 rounded-full blur-[80px] animate-float" style={{ animationDelay: '2s' }} />
+      <div className="fixed top-1/4 -left-32 w-64 h-64 bg-[#FF1493]/30 rounded-full blur-[100px] animate-float pointer-events-none" />
+      <div className="fixed bottom-1/4 -right-32 w-64 h-64 bg-[#B026FF]/20 rounded-full blur-[100px] animate-float pointer-events-none" style={{ animationDelay: '1s' }} />
+      <div className="fixed top-3/4 left-1/4 w-48 h-48 bg-[#00D9FF]/20 rounded-full blur-[80px] animate-float pointer-events-none" style={{ animationDelay: '2s' }} />
       
       <AnimatePresence mode="wait">
         {step === 'auth' && (
