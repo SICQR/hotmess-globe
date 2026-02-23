@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 
+// Debug logging for boot process
+const logBoot = (msg, data) => {
+  console.log(`[BootGuard] ${msg}`, data || '');
+};
+
 /**
  * Boot Guard Context - Clean Implementation
  * 
@@ -49,17 +54,21 @@ export function BootGuardProvider({ children }) {
     let mounted = true;
 
     const initAuth = async () => {
+      logBoot('initAuth started');
       setIsLoading(true);
       setBootState(BOOT_STATES.LOADING);
 
       try {
         // Get current session
+        logBoot('Getting session...');
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        logBoot('Session result:', { hasSession: !!currentSession, error: error?.message });
 
         if (!mounted) return;
 
         if (error || !currentSession?.user?.id) {
           // No session = UNAUTHENTICATED (this is valid, not an error)
+          logBoot('No session, setting UNAUTHENTICATED');
           setSession(null);
           setProfile(null);
           setBootState(BOOT_STATES.UNAUTHENTICATED);
@@ -71,6 +80,7 @@ export function BootGuardProvider({ children }) {
         await loadProfile(currentSession.user.id);
       } catch (err) {
         console.error('Auth init error:', err);
+        logBoot('Auth init error:', err);
         if (mounted) {
           setBootState(BOOT_STATES.UNAUTHENTICATED);
           setIsLoading(false);
