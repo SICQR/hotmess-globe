@@ -363,11 +363,16 @@ export default async function handler(req, res) {
         const lng = Number(row?.last_lng ?? row?.lng);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
 
-        const fullName = String(row?.full_name || row?.email || 'Unknown').trim();
-        const dedupeKey = String(row?.auth_user_id || row?.email || fullName).trim();
+        // Use display_name or username, never expose email to other users
+        const displayName = String(row?.display_name || row?.username || row?.full_name || 'Unknown').trim();
+        const fullName = String(row?.full_name || displayName).trim();
+        const uniqueId = row?.id ? String(row.id).trim() : null;
+        const dedupeKey = String(row?.auth_user_id || uniqueId || fullName).trim();
         const avatar = String(row?.avatar_url || '').trim();
-        const email = row?.email ? String(row.email).trim() : null;
         const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : null;
+        const username = row?.username ? String(row.username).trim() : null;
+        // Keep email internal for lookups but don't expose in response
+        const emailInternal = row?.email ? String(row.email).trim() : null;
 
         const meta = authUserId ? authMetaById.get(authUserId) : null;
 
@@ -391,18 +396,20 @@ export default async function handler(req, res) {
         const bio = row?.bio ? String(row.bio).trim() : (typeof meta?.bio === 'string' ? String(meta.bio).trim() : null);
         const title = toShortHeadline(bio, tierLabel);
 
-        const tags = email ? tagMap.get(String(email).toLowerCase()) : null;
+        const tags = emailInternal ? tagMap.get(String(emailInternal).toLowerCase()) : null;
         const safeTags = Array.isArray(tags) ? tags.slice(0, 5) : [];
 
         const isSellerProfile = profileType && String(profileType).trim().toLowerCase() === 'seller';
-        const hasProducts = isSellerProfile && email ? hasProductsByEmail.get(String(email).toLowerCase()) === true : undefined;
-        const productPreviews = isSellerProfile && email ? productPreviewsByEmail.get(String(email).toLowerCase()) : undefined;
+        const hasProducts = isSellerProfile && emailInternal ? hasProductsByEmail.get(String(emailInternal).toLowerCase()) === true : undefined;
+        const productPreviews = isSellerProfile && emailInternal ? productPreviewsByEmail.get(String(emailInternal).toLowerCase()) : undefined;
 
         return {
           id: `profile_${dedupeKey}`,
-          email: email || undefined,
+          oderId: uniqueId || undefined,
+          email: emailInternal || undefined,
           authUserId: authUserId || undefined,
-          profileName: fullName,
+          username: username || undefined,
+          profileName: displayName,
           title,
           locationLabel: city || 'Nearby',
           city: city || undefined,
