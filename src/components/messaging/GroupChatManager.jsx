@@ -131,7 +131,7 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
                 </div>
                 <div className="flex-1 text-left">
                   <p className="font-bold text-sm">{user.full_name}</p>
-                  <p className="text-xs text-white/40">{user.email}</p>
+                  {user.username && <p className="text-xs text-white/40">@{user.username}</p>}
                 </div>
               </button>
             ))}

@@ -219,7 +219,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
                         </div>
                         <div className="flex-1 text-left">
                           <p className="font-black text-sm uppercase">{user.full_name}</p>
-                          <p className="text-xs text-white/40 font-mono">{user.email}</p>
+                          {user.username && <p className="text-xs text-white/40 font-mono">@{user.username}</p>}
                         </div>
                       </button>
                     );
