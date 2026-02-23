@@ -629,6 +629,12 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, 'src'),
       },
+      // Ensure only one copy of React is used - prevents hydration issues
+      dedupe: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
+    },
+    // Pre-bundle dependencies for faster dev startup
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-router-dom', 'framer-motion', 'three', '@supabase/supabase-js'],
     },
     plugins: [
       // Serve /data folder in development
