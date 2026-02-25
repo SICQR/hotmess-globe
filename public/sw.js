@@ -177,7 +177,8 @@ async function networkFirst(request, cacheName, maxItems) {
   try {
     const networkResponse = await fetch(request);
     
-    if (networkResponse.ok) {
+    // Only cache complete responses (skip 206 partial content like audio/video streams)
+    if (networkResponse.ok && networkResponse.status !== 206) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
       
