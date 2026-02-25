@@ -313,8 +313,7 @@ Key migrations:
 ## 📞 Quick Commands
 
 ```bash
-# Connect to database
-PGPASSWORD="tsoRPqdYJ0JKkwOq" psql "postgres://postgres.axxwdjmbwkvqhcpwters:tsoRPqdYJ0JKkwOq@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
+# Connect to database - use Supabase dashboard or .env.local credentials
 
 # Build locally
 npm run build
