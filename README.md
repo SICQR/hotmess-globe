@@ -2,7 +2,7 @@
 
 > **"From Ear to Floor"** — A spatial OS for queer nightlife discovery, connection, and commerce.
 
-**Live:** https://hotmess.london
+**Live:** https://hotmessldn.com
 **Status:** Production (Phase 2 Complete)
 **Updated:** 2026-02-08
 
