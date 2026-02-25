@@ -319,11 +319,13 @@ npm run build
 
 | Color | Hex | Use |
 |-------|-----|-----|
-| Hot Pink | `#FF1493` | Primary brand |
+| Gold | `#C8962C` | Primary brand, CTAs, accents |
 | Cyan | `#00D9FF` | Events, info |
 | Lime | `#39FF14` | Success, online, Right Now |
-| Gold | `#FFD700` | Premium, P2P marketplace |
 | Purple | `#B026FF` | Music, radio |
+| Card BG | `#1C1C1E` | Card backgrounds |
+| Nav BG | `#0D0D0D` | Navigation background |
+| Muted | `#8E8E93` | Secondary text |
 
 ---
 
