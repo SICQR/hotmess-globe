@@ -1,9 +1,9 @@
 /**
  * Clear any cached Supabase sessions from stale/wrong projects.
- * Correct project: axxwdjmbwkvqhcpwters (active as of Jan 2026).
+ * Correct project: klsywpvncqqglhnhrjbh (active as of Feb 2026).
  */
 
-const CORRECT_PROJECT_REF = 'axxwdjmbwkvqhcpwters';
+const CORRECT_PROJECT_REF = 'klsywpvncqqglhnhrjbh';
 
 export function clearBadSupabaseSessions() {
   if (typeof window === 'undefined' || !window.localStorage) return;
@@ -28,7 +28,7 @@ export function clearBadSupabaseSessions() {
       const value = localStorage.getItem(key);
       // Check if the value contains a JWT from wrong project
       if (value && (
-        value.includes('klsywpvncqqglhnhrjbh') ||
+        value.includes('axxwdjmbwkvqhcpwters') ||
         value.includes('klbmalzhmxnelyuabawk')
       )) {
         keysToRemove.push(key);
