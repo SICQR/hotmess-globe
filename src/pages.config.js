@@ -43,7 +43,7 @@ import HelpCenter from './pages/HelpCenter';
 import Home from './pages/Home';
 import Hnhmess from './pages/Hnhmess';
 import Leaderboard from './pages/Leaderboard';
-import Login from './pages/Login';
+
 import Marketplace from './pages/Marketplace';
 import MembershipUpgrade from './pages/MembershipUpgrade';
 import Messages from './pages/Messages';
@@ -51,7 +51,7 @@ import More from './pages/More';
 import Music from './pages/Music';
 import MusicRelease from './pages/MusicRelease';
 import MyEvents from './pages/MyEvents';
-import Onboarding from './pages/Onboarding';
+
 import OnboardingGate from './pages/OnboardingGate';
 import OrderHistory from './pages/OrderHistory';
 import OrganizerDashboard from './pages/OrganizerDashboard';
@@ -60,7 +60,7 @@ import PersonaFeatures from './pages/PersonaFeatures';
 import ProductDetail from './pages/ProductDetail';
 import Profile from './pages/Profile';
 import ProfilesGrid from './pages/ProfilesGrid';
-import ProfileSetup from './pages/ProfileSetup';
+
 import PromoteToAdmin from './pages/PromoteToAdmin';
 import Pulse from './pages/Pulse';
 import Radio from './pages/Radio';
@@ -133,7 +133,6 @@ export const PAGES = {
     "Home": Home,
     "Hnhmess": Hnhmess,
     "Leaderboard": Leaderboard,
-    "Login": Login,
     "Marketplace": Marketplace,
     "MembershipUpgrade": MembershipUpgrade,
     "Messages": Messages,
@@ -143,7 +142,6 @@ export const PAGES = {
     "Music": Music,
     "MusicRelease": MusicRelease,
     "MyEvents": MyEvents,
-    "Onboarding": Onboarding,
     "OnboardingGate": OnboardingGate,
     "OrderHistory": OrderHistory,
     "OrganizerDashboard": OrganizerDashboard,
@@ -153,7 +151,6 @@ export const PAGES = {
     "ProductDetail": ProductDetail,
     "Profile": Profile,
     "ProfilesGrid": ProfilesGrid,
-    "ProfileSetup": ProfileSetup,
     "PromoteToAdmin": PromoteToAdmin,
     "Pulse": Pulse,
     "Radio": Radio,
