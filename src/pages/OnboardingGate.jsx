@@ -236,18 +236,23 @@ export default function OnboardingGate() {
   const handleCommunityConfirm = useCallback(async () => {
     setSaving(true);
     try {
-      if (session?.user?.id) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ community_attested_at: new Date().toISOString() })
-          .eq('id', session.user.id);
-        if (error) throw error;
+      if (!session?.user?.id) {
+        toast.error('Session expired. Please sign in again.');
+        navigate('/auth', { replace: true });
+        return;
       }
-      await completeOnboarding();
+      const { error } = await supabase
+        .from('profiles')
+        .update({ community_attested_at: new Date().toISOString() })
+        .eq('id', session.user.id);
+      if (error) throw error;
+
+      const ok = await completeOnboarding();
+      if (!ok) throw new Error('Failed to complete onboarding');
       navigate('/');
     } catch (err) {
       console.error('Community confirm error:', err);
-      toast.error('Could not confirm. Please try again.');
+      toast.error(err?.message || 'Could not confirm. Please try again.');
     } finally {
       setSaving(false);
     }
