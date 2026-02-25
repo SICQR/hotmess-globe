@@ -138,6 +138,11 @@
     scroll-behavior: smooth;
   }
   
+  /* Prevent native pull-to-refresh on mobile browsers */
+  html, body {
+    overscroll-behavior-y: none;
+  }
+  
   /* Better text rendering */
   body {
     -webkit-font-smoothing: antialiased;
