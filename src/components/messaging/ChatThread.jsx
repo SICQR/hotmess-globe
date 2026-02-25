@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn, Search, X, Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,9 +49,35 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       );
       return allMessages;
     },
-    refetchInterval: 3000, // Poll every 3s (optimized)
+    // No polling - we use realtime subscriptions below
     keepPreviousData: true,
   });
+
+  // Realtime subscription for new messages
+  useEffect(() => {
+    if (!thread?.id) return;
+
+    const channel = supabase
+      .channel(`messages:${thread.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'Message',
+          filter: `thread_id=eq.${thread.id}`,
+        },
+        (payload) => {
+          // Invalidate query to refetch with new message
+          queryClient.invalidateQueries(['messages', thread.id]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [thread?.id, queryClient]);
 
   const loadMoreMessages = () => {
     if (messages.length >= MESSAGES_PER_PAGE * messagesPage) {
@@ -71,7 +98,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
         new Date(a.created_date).getTime() > Date.now() - 5000 // Last 5 seconds
       );
     },
-    refetchInterval: 2000, // Poll every 2s (optimized)
+    refetchInterval: 5000, // Typing indicators can poll less frequently
   });
 
   const { data: allUsers = [] } = useAllUsers();
