@@ -12,7 +12,7 @@ import { base44, supabase } from '@/components/utils/supabaseClient';
 import { 
   User, MessageCircle, Calendar, MapPin, Shield, 
   Instagram, Twitter, Music, ChevronRight,
-  Loader2
+  Loader2, MoreVertical, Flag, Ban, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,6 +26,11 @@ export default function L2ProfileSheet({ email, uid }) {
   const navigate = useNavigate();
   const { openSheet, closeSheet } = useSheet();
   const [activeTab, setActiveTab] = useState('about');
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [isBlocking, setIsBlocking] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -122,6 +127,71 @@ export default function L2ProfileSheet({ email, uid }) {
     }
   };
 
+  // Block user
+  const handleBlock = async () => {
+    if (!currentUser || !profileUser) return;
+    setIsBlocking(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Get target user's auth ID
+      const { data: targetProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', profileUser.email)
+        .single();
+
+      if (!targetProfile) throw new Error('User not found');
+
+      const { error } = await supabase
+        .from('profile_blocklist_users')
+        .insert({
+          profile_id: user.id,
+          blocked_user_id: targetProfile.id,
+          reason: 'User blocked from profile',
+        });
+
+      if (error) throw error;
+
+      toast.success(`${profileUser.full_name || 'User'} blocked`);
+      setShowMoreMenu(false);
+      closeSheet();
+    } catch (err) {
+      toast.error('Failed to block user');
+    } finally {
+      setIsBlocking(false);
+    }
+  };
+
+  // Report user
+  const handleReport = async () => {
+    if (!currentUser || !profileUser || !reportReason.trim()) return;
+    setIsReporting(true);
+    try {
+      const { error } = await supabase
+        .from('reports')
+        .insert({
+          reporter_email: currentUser.email,
+          reported_item_type: 'user',
+          reported_item_id: profileUser.email,
+          reason: reportReason,
+          status: 'pending',
+        });
+
+      if (error) throw error;
+
+      toast.success('Report submitted. Our team will review it.');
+      setShowReportModal(false);
+      setReportReason('');
+      setShowMoreMenu(false);
+    } catch (err) {
+      toast.error('Failed to submit report');
+    } finally {
+      setIsReporting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -190,6 +260,53 @@ export default function L2ProfileSheet({ email, uid }) {
         {membershipTier !== 'free' && (
           <div className="absolute top-4 right-4">
             <MembershipBadge tier={membershipTier} size="sm" />
+          </div>
+        )}
+
+        {/* More menu (Block/Report) - only show for other users */}
+        {!isOwnProfile && (
+          <div className="absolute top-4 right-4">
+            <button
+              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              className="p-2 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 transition-colors"
+              aria-label="More options"
+            >
+              <MoreVertical className="w-5 h-5 text-white" />
+            </button>
+
+            {/* Dropdown menu */}
+            {showMoreMenu && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowMoreMenu(false)} 
+                />
+                <div className="absolute right-0 top-12 z-50 w-48 bg-[#1C1C1E] border border-white/10 rounded-xl overflow-hidden shadow-xl">
+                  <button
+                    onClick={() => {
+                      setShowMoreMenu(false);
+                      setShowReportModal(true);
+                    }}
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors text-left"
+                  >
+                    <Flag className="w-4 h-4 text-[#C8962C]" />
+                    <span className="text-white text-sm font-medium">Report User</span>
+                  </button>
+                  <button
+                    onClick={handleBlock}
+                    disabled={isBlocking}
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors text-left border-t border-white/5"
+                  >
+                    {isBlocking ? (
+                      <Loader2 className="w-4 h-4 text-red-500 animate-spin" />
+                    ) : (
+                      <Ban className="w-4 h-4 text-red-500" />
+                    )}
+                    <span className="text-red-500 text-sm font-medium">Block User</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -408,6 +525,66 @@ export default function L2ProfileSheet({ email, uid }) {
           </>
         )}
       </SheetActions>
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-[#1C1C1E] border border-white/10 rounded-2xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+              <h3 className="text-white font-bold">Report User</h3>
+              <button
+                onClick={() => {
+                  setShowReportModal(false);
+                  setReportReason('');
+                }}
+                className="p-1 rounded-full hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5 text-white/60" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <p className="text-white/60 text-sm">
+                Why are you reporting {profileUser?.full_name || 'this user'}?
+              </p>
+              
+              <div className="space-y-2">
+                {[
+                  'Harassment or bullying',
+                  'Spam or scam',
+                  'Inappropriate content',
+                  'Fake profile',
+                  'Other',
+                ].map((reason) => (
+                  <button
+                    key={reason}
+                    onClick={() => setReportReason(reason)}
+                    className={`w-full px-4 py-3 rounded-lg text-left text-sm font-medium transition-colors ${
+                      reportReason === reason
+                        ? 'bg-[#C8962C] text-black'
+                        : 'bg-white/5 text-white hover:bg-white/10'
+                    }`}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+
+              <Button
+                onClick={handleReport}
+                disabled={!reportReason || isReporting}
+                className="w-full h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 disabled:opacity-50"
+              >
+                {isReporting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Submit Report'
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
