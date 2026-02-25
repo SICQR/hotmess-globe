@@ -107,7 +107,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
           className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl"
         >
           {/* Header */}
-          <div className="border-b-2 border-[#FF1493] bg-black/80 backdrop-blur-xl">
+          <div className="border-b-2 border-[#C8962C] bg-black/80 backdrop-blur-xl">
             <div className="p-4 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-black uppercase text-white tracking-tight">RIGHT NOW</h2>
@@ -131,7 +131,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
                 onClick={() => setActiveTab('people')}
                 className={`px-4 py-2 text-xs font-black uppercase tracking-wider transition-all border-2 ${
                   activeTab === 'people'
-                    ? 'bg-[#FF1493] text-black border-[#FF1493]'
+                    ? 'bg-[#C8962C] text-black border-[#C8962C]'
                     : 'bg-transparent text-white/60 border-white/20 hover:border-white/40'
                 }`}
               >
@@ -142,7 +142,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
                 onClick={() => setActiveTab('events')}
                 className={`px-4 py-2 text-xs font-black uppercase tracking-wider transition-all border-2 ${
                   activeTab === 'events'
-                    ? 'bg-[#FF1493] text-black border-[#FF1493]'
+                    ? 'bg-[#C8962C] text-black border-[#C8962C]'
                     : 'bg-transparent text-white/60 border-white/20 hover:border-white/40'
                 }`}
               >
@@ -153,7 +153,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
                 onClick={() => setActiveTab('activity')}
                 className={`px-4 py-2 text-xs font-black uppercase tracking-wider transition-all border-2 ${
                   activeTab === 'activity'
-                    ? 'bg-[#FF1493] text-black border-[#FF1493]'
+                    ? 'bg-[#C8962C] text-black border-[#C8962C]'
                     : 'bg-transparent text-white/60 border-white/20 hover:border-white/40'
                 }`}
               >
@@ -231,7 +231,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
                       transition={{ delay: idx * 0.05 }}
                     >
                       <Link to={createPageUrl(`BeaconDetail?id=${event.id}`)}>
-                        <div className="bg-black border-2 border-white hover:border-[#FF1493] transition-all p-4 group">
+                        <div className="bg-black border-2 border-white hover:border-[#C8962C] transition-all p-4 group">
                           <div className="flex gap-4">
                             {event.image_url && (
                               <div className="w-24 h-24 flex-shrink-0 border-2 border-white/20">
@@ -244,10 +244,10 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
                             )}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2 mb-2">
-                                <h3 className="font-black uppercase text-white group-hover:text-[#FF1493] transition-colors">
+                                <h3 className="font-black uppercase text-white group-hover:text-[#C8962C] transition-colors">
                                   {event.title}
                                 </h3>
-                                <span className="px-2 py-1 bg-[#FF1493] text-black text-[10px] font-black uppercase whitespace-nowrap">
+                                <span className="px-2 py-1 bg-[#C8962C] text-black text-[10px] font-black uppercase whitespace-nowrap">
                                   LIVE
                                 </span>
                               </div>

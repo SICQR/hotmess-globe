@@ -150,7 +150,7 @@ export default function TicketChat() {
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-2 ${
                     isOwn
-                      ? 'bg-gradient-to-r from-[#FF1493] to-[#FF1493]/80 text-white'
+                      ? 'bg-gradient-to-r from-[#C8962C] to-[#C8962C]/80 text-white'
                       : 'bg-white/10 text-white'
                   }`}
                 >
@@ -171,7 +171,7 @@ export default function TicketChat() {
 
       {/* Purchase banner (when unlocked) */}
       {canPurchase && (
-        <div className="border-t border-white/10 bg-gradient-to-r from-[#FF1493]/10 to-[#00D9FF]/10 p-4">
+        <div className="border-t border-white/10 bg-gradient-to-r from-[#C8962C]/10 to-[#00D9FF]/10 p-4">
           <div className="mx-auto max-w-2xl flex items-center justify-between">
             <div>
               <div className="text-sm text-white/60">Ready to buy?</div>

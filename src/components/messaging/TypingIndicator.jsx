@@ -38,7 +38,7 @@ export function TypingIndicator({
           {[0, 1, 2].map((i) => (
             <motion.span
               key={i}
-              className="w-2 h-2 bg-[#FF1493] rounded-full"
+              className="w-2 h-2 bg-[#C8962C] rounded-full"
               animate={{
                 y: [0, -4, 0],
               }}
@@ -254,7 +254,7 @@ export function TypingAwareInput({
 // SIMPLE TYPING DOTS (standalone animation)
 // =============================================================================
 
-export function TypingDots({ className, color = '#FF1493' }) {
+export function TypingDots({ className, color = '#C8962C' }) {
   return (
     <div className={cn("flex gap-1 items-center", className)}>
       {[0, 1, 2].map((i) => (

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Activity, MapPin, ShoppingBag, Trophy, Users, Crown, Radio, TrendingUp, UserPlus, Zap } from 'lucide-react';
+import { Activity, MapPin, ShoppingBag, Trophy, Users, Crown, Radio, TrendingUp, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -56,7 +56,7 @@ export default function Feed() {
 
   const ACTIVITY_COLORS = {
     check_in: '#00D9FF',
-    purchase: '#FF1493',
+    purchase: '#C8962C',
     achievement: '#FFEB3B',
     squad_join: '#B026FF',
     beacon_create: '#39FF14',
@@ -83,7 +83,7 @@ export default function Feed() {
       >
         <div className="flex items-start gap-3">
           <Link to={createPageUrl(`Profile?email=${user.email}`)}>
-            <div className="w-12 h-12 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#C8962C] to-[#B026FF] border border-white flex items-center justify-center flex-shrink-0">
               {user.avatar_url ? (
                 <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
               ) : (
@@ -95,7 +95,7 @@ export default function Feed() {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <Link to={createPageUrl(`Profile?email=${user.email}`)}>
-                <span className="font-bold hover:text-[#FF1493] transition-colors">
+                <span className="font-bold hover:text-[#C8962C] transition-colors">
                   {user.full_name}
                 </span>
               </Link>
@@ -115,12 +115,6 @@ export default function Feed() {
               <ActivityText activity={activity} />
             </div>
 
-            {activity.xp_earned && (
-              <div className="flex items-center gap-1 text-xs text-[#FFEB3B] font-bold">
-                <Zap className="w-3 h-3" />
-                +{activity.xp_earned} XP
-              </div>
-            )}
 
             {activity.location?.city && (
               <div className="text-xs text-white/40 mt-2">
@@ -140,7 +134,7 @@ export default function Feed() {
       case 'check_in':
         return <span className="text-sm">checked in at <span className="text-[#00D9FF]">{data.beacon_title}</span></span>;
       case 'purchase':
-        return <span className="text-sm">bought <span className="text-[#FF1493]">{data.product_name}</span></span>;
+        return <span className="text-sm">bought <span className="text-[#C8962C]">{data.product_name}</span></span>;
       case 'achievement':
         return <span className="text-sm">unlocked <span className="text-[#FFEB3B]">{data.achievement_title}</span></span>;
       case 'squad_join':
@@ -171,7 +165,7 @@ export default function Feed() {
           className="mb-8"
         >
           <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2">
-            <span className="text-[#FF1493]">ACTIVITY</span> FEED
+            <span className="text-[#C8962C]">ACTIVITY</span> FEED
           </h1>
           <p className="text-white/60 uppercase text-sm tracking-wider">
             What's happening in the scene
@@ -194,7 +188,7 @@ export default function Feed() {
                 <Activity className="w-16 h-16 text-white/20 mx-auto mb-4" />
                 <p className="text-white/40 mb-2">No activity from people you follow</p>
                 <Link to={createPageUrl('Connect')}>
-                  <button className="text-[#FF1493] text-sm uppercase font-bold hover:underline">
+                  <button className="text-[#C8962C] text-sm uppercase font-bold hover:underline">
                     Find people to follow
                   </button>
                 </Link>

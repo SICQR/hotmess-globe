@@ -1,142 +1,175 @@
 /**
- * SOSOverlay — L3 System Interrupt (Z-100)
- * 
- * Red screen emergency overlay activated by long-press SOS button.
- * Blocks entire OS until resolved with PIN (994) or dismissed.
- * 
- * Phase 1: Basic red overlay
- * Phase 2: Add PIN logic for dismissal
+ * SOSOverlay — full-screen emergency interrupt
+ *
+ * Triggered by the SOS button in chat.
+ * Immediately stops active location sharing, shows EMERGENCY MODE takeover.
+ * Per spec rule "A": stop sharing instantly on SOS trigger.
  */
 
-import React, { useState } from 'react';
-import { AlertTriangle, Phone } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { AlertTriangle, Phone, MessageSquare, UserPlus } from 'lucide-react';
+import { supabase } from '@/components/utils/supabaseClient';
+import { useSheet } from '@/contexts/SheetContext';
 
-interface SOSOverlayProps {
-  isActive: boolean;
-  onDismiss?: () => void;
+interface EmergencyContact {
+  id: string;
+  name: string;
+  phone: string;
+  relation: string;
 }
 
-export function SOSOverlay({ isActive, onDismiss }: SOSOverlayProps) {
-  const [showPinEntry, setShowPinEntry] = useState(false);
-  const [pin, setPin] = useState('');
+interface SOSOverlayProps {
+  onClose: () => void;
+}
 
-  if (!isActive) return null;
+export default function SOSOverlay({ onClose }: SOSOverlayProps) {
+  const [firstContact, setFirstContact] = useState<EmergencyContact | null>(null);
+  const { openSheet } = useSheet();
 
-  const handlePinSubmit = () => {
-    // Phase 2: Check if PIN is 994
-    if (pin === '994') {
-      setPin('');
-      setShowPinEntry(false);
-      onDismiss?.();
-    } else {
-      // Wrong PIN - shake animation or error
-      setPin('');
-    }
+  // Rule A: stop all active shares the moment SOS mounts
+  useEffect(() => {
+    const stopShares = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Stop active location shares (table: location_shares, keyed by user_id UUID)
+      await supabase
+        .from('location_shares')
+        .update({ active: false })
+        .eq('user_id', user.id)
+        .eq('active', true);
+
+      // Deactivate right_now_status (canonical TABLE, keyed by user_email)
+      if (user.email) {
+        await supabase
+          .from('right_now_status')
+          .update({ active: false })
+          .eq('user_email', user.email)
+          .eq('active', true);
+      }
+
+      // Fetch emergency contacts — store the first one for the SMS button
+      const { data: contacts } = await supabase
+        .from('emergency_contacts')
+        .select('id, name, phone, relation')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1);
+
+      if (contacts && contacts.length > 0) {
+        setFirstContact(contacts[0] as EmergencyContact);
+      }
+    };
+
+    stopShares().catch(console.error);
+  }, []);
+
+  const handleGetHelp = () => {
+    window.open('https://www.victimsupport.org.uk', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleCallEmergency = () => {
+    window.location.href = 'tel:999';
+  };
+
+  const handleTextContact = () => {
+    if (!firstContact) return;
+    const body = encodeURIComponent('I need help. This is an emergency. HOTMESS SOS triggered.');
+    window.location.href = `sms:${firstContact.phone}?body=${body}`;
+  };
+
+  const handleAddContact = () => {
+    onClose();
+    openSheet('emergency-contact', {});
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-[200] bg-[#FF0000] flex flex-col items-center justify-center p-6"
-      style={{ 
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)' 
-      }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/95 backdrop-blur-md z-[200] flex flex-col items-center justify-center px-6"
     >
-      {/* Emergency indicator */}
-      <div className="absolute inset-0 bg-black/40" />
-      
-      <div className="relative z-10 text-center max-w-sm">
-        {!showPinEntry ? (
-          <>
-            {/* SOS Icon */}
-            <div className="w-24 h-24 mx-auto mb-8 rounded-none border-2 border-white bg-black/20 flex items-center justify-center animate-pulse">
-              <AlertTriangle size={48} className="text-white" />
-            </div>
+      {/* Icon */}
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.1, type: 'spring', stiffness: 300, damping: 20 }}
+        className="w-20 h-20 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center mb-6"
+      >
+        <AlertTriangle className="w-10 h-10 text-red-500" />
+      </motion.div>
 
-            <h1 className="text-4xl font-black text-white mb-4 uppercase tracking-wider">
-              SOS ACTIVE
-            </h1>
-            
-            <p className="text-white/80 mb-8 font-mono text-sm">
-              THE NIGHT IS HELD. YOU ARE NOT ALONE.
-            </p>
+      {/* Header */}
+      <motion.h1
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.15 }}
+        className="text-red-500 font-black text-2xl uppercase tracking-widest mb-2 text-center"
+      >
+        EMERGENCY MODE
+      </motion.h1>
 
-            {/* Emergency Actions */}
-            <div className="space-y-3 mb-8">
-              <a
-                href="tel:999"
-                className="flex items-center justify-center gap-3 w-full py-4 bg-white text-[#FF0000] font-black rounded-none border-2 border-white uppercase"
-              >
-                <Phone size={20} />
-                Call 999
-              </a>
+      {/* Status lines */}
+      <motion.div
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="text-center mb-10 space-y-1"
+      >
+        <p className="text-white/80 text-sm font-bold">Sharing stopped</p>
+        <p className="text-red-400 text-sm font-bold">SOS is live</p>
+        <p className="text-white/50 text-sm">Choose your next move</p>
+      </motion.div>
 
-              <a
-                href="tel:0800-689-5652"
-                className="flex items-center justify-center gap-3 w-full py-4 bg-transparent border-2 border-white text-white font-black rounded-none uppercase hover:bg-white/10"
-              >
-                Contact Hand N Hand
-              </a>
-            </div>
+      {/* CTAs */}
+      <motion.div
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.25 }}
+        className="w-full max-w-xs space-y-3"
+      >
+        <button
+          onClick={handleGetHelp}
+          className="w-full py-4 bg-red-500 text-white font-black rounded-2xl text-base uppercase tracking-wide"
+        >
+          Get help
+        </button>
 
-            {/* Dismiss option */}
-            <button
-              onClick={() => setShowPinEntry(true)}
-              className="text-white/60 text-sm uppercase tracking-wider hover:text-white underline"
-            >
-              I'm safe — enter PIN to dismiss
-            </button>
-          </>
+        {/* Emergency contact button — text if exists, add if not */}
+        {firstContact ? (
+          <button
+            onClick={handleTextContact}
+            className="w-full py-4 bg-[#1C1C1E] border border-[#C8962C]/40 text-white font-black rounded-2xl flex items-center justify-center gap-2"
+          >
+            <MessageSquare className="w-5 h-5 text-[#C8962C]" />
+            Text {firstContact.name}
+          </button>
         ) : (
-          <>
-            <h2 className="text-2xl font-black text-white mb-6 uppercase">
-              Enter PIN to Dismiss
-            </h2>
-            
-            <p className="text-white/60 text-sm mb-4 font-mono">
-              (Your safety PIN - 3 digits)
-            </p>
-            
-            <input
-              type="password"
-              inputMode="numeric"
-              maxLength={3}
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-              className="w-48 h-16 text-center text-3xl tracking-widest bg-black/20 border-2 border-white text-white placeholder-white/40 rounded-none font-mono"
-              placeholder="•••"
-              autoFocus
-            />
-            
-            <div className="flex gap-3 mt-6 justify-center">
-              <button 
-                onClick={() => { setShowPinEntry(false); setPin(''); }}
-                className="px-6 h-12 border-2 border-white text-white font-black rounded-none uppercase hover:bg-white/10"
-              >
-                Back
-              </button>
-              <button 
-                onClick={handlePinSubmit}
-                disabled={pin.length !== 3}
-                className="px-6 h-12 bg-white text-[#FF0000] font-black rounded-none uppercase disabled:opacity-40 hover:bg-white/90"
-              >
-                Confirm
-              </button>
-            </div>
-            
-            <p className="mt-6 text-xs text-white/40 font-mono">
-              Default PIN: 994
-            </p>
-          </>
+          <button
+            onClick={handleAddContact}
+            className="w-full py-4 bg-[#1C1C1E] border border-[#C8962C]/40 text-white font-black rounded-2xl flex items-center justify-center gap-2"
+          >
+            <UserPlus className="w-5 h-5 text-[#C8962C]" />
+            Add emergency contact
+          </button>
         )}
-        
-        {/* Privacy notice */}
-        <p className="mt-8 text-xs text-white/40 font-mono uppercase tracking-wider">
-          No location shared. Identity protected.
-        </p>
-      </div>
-    </div>
+
+        <button
+          onClick={handleCallEmergency}
+          className="w-full py-4 bg-[#1C1C1E] border border-red-500/40 text-white font-black rounded-2xl flex items-center justify-center gap-2"
+        >
+          <Phone className="w-5 h-5 text-red-400" />
+          Call emergency
+        </button>
+        <button
+          onClick={onClose}
+          className="w-full py-3 bg-transparent text-white/40 font-bold rounded-2xl text-sm"
+        >
+          Cancel
+        </button>
+      </motion.div>
+    </motion.div>
   );
 }
-
-export default SOSOverlay;

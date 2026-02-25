@@ -25,7 +25,7 @@ export function PageLoader() {
             repeat: Infinity,
             ease: 'linear',
           }}
-          className="w-12 h-12 border-4 border-white/10 border-t-[#FF1493] rounded-full mx-auto mb-4"
+          className="w-12 h-12 border-4 border-white/10 border-t-[#C8962C] rounded-full mx-auto mb-4"
         />
         <motion.p
           initial={{ opacity: 0 }}

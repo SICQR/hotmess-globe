@@ -38,7 +38,7 @@ export function TicketCard({
               {event.venue} • {event.date}
             </p>
           </div>
-          <Ticket className="text-[#FF1493] shrink-0" size={20} />
+          <Ticket className="text-[#C8962C] shrink-0" size={20} />
         </div>
       </div>
 
@@ -103,7 +103,7 @@ export function TicketDemandIndicator({ level = 'normal' }) {
     low: { label: 'Low demand', color: 'text-white/40', bg: 'bg-white/5' },
     normal: { label: 'Normal', color: 'text-white/60', bg: 'bg-white/10' },
     high: { label: 'High demand', color: 'text-orange-400', bg: 'bg-orange-500/20' },
-    hot: { label: 'Selling fast', color: 'text-[#FF1493]', bg: 'bg-[#FF1493]/20' },
+    hot: { label: 'Selling fast', color: 'text-[#C8962C]', bg: 'bg-[#C8962C]/20' },
   };
 
   const config = levels[level] || levels.normal;

@@ -104,12 +104,12 @@ export default function BusinessOnboarding() {
             <div key={s} className="flex items-center">
               <div className={`
                 w-10 h-10 rounded-full flex items-center justify-center font-bold
-                ${idx <= step ? 'bg-[#FF1493] text-black' : 'bg-white/10 text-white/40'}
+                ${idx <= step ? 'bg-[#C8962C] text-black' : 'bg-white/10 text-white/40'}
               `}>
                 {idx < step ? <Check className="w-5 h-5" /> : idx + 1}
               </div>
               {idx < STEPS.length - 1 && (
-                <div className={`w-16 h-1 mx-2 ${idx < step ? 'bg-[#FF1493]' : 'bg-white/10'}`} />
+                <div className={`w-16 h-1 mx-2 ${idx < step ? 'bg-[#C8962C]' : 'bg-white/10'}`} />
               )}
             </div>
           ))}
@@ -136,13 +136,13 @@ export default function BusinessOnboarding() {
                     className={`
                       p-6 rounded-xl border-2 text-left transition-all
                       ${businessType === type.id 
-                        ? 'bg-[#FF1493]/20 border-[#FF1493]' 
+                        ? 'bg-[#C8962C]/20 border-[#C8962C]' 
                         : 'bg-white/5 border-white/10 hover:border-white/30'
                       }
                     `}
                   >
                     <type.icon className={`w-8 h-8 mb-3 ${
-                      businessType === type.id ? 'text-[#FF1493]' : 'text-white/60'
+                      businessType === type.id ? 'text-[#C8962C]' : 'text-white/60'
                     }`} />
                     <div className="font-bold mb-1">{type.name}</div>
                     <div className="text-sm text-white/60">{type.description}</div>
@@ -302,7 +302,7 @@ export default function BusinessOnboarding() {
             <Button
               onClick={nextStep}
               disabled={!canProceed()}
-              className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+              className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black"
             >
               Continue
               <ArrowRight className="w-4 h-4 ml-2" />

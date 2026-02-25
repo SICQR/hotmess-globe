@@ -87,7 +87,7 @@ const SAFETY_FEATURES = [
     icon: Heart,
     title: 'AFTERCARE NUDGE',
     tagline: 'We check in on you',
-    color: '#FF1493',
+    color: '#C8962C',
     description: 'After meetups or when you end a safety check-in, we gently ask how you\'re doing. Quick responses connect you to resources if needed.',
     benefits: [
       'Post-meetup wellness checks',
@@ -249,15 +249,15 @@ export default function SafetyFeatures() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative overflow-hidden bg-gradient-to-br from-[#FF1493]/30 via-black to-[#B026FF]/20 border-2 border-[#FF1493] p-8 md:p-12 mb-12"
+          className="relative overflow-hidden bg-gradient-to-br from-[#C8962C]/30 via-black to-[#B026FF]/20 border-2 border-[#C8962C] p-8 md:p-12 mb-12"
         >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF1493]/10 blur-3xl rounded-full" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#C8962C]/10 blur-3xl rounded-full" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#B026FF]/10 blur-3xl rounded-full" />
           
           <div className="relative z-10 max-w-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <Shield className="w-8 h-8 text-[#FF1493]" />
-              <span className="text-[#FF1493] font-black uppercase tracking-wider">Safety First</span>
+              <Shield className="w-8 h-8 text-[#C8962C]" />
+              <span className="text-[#C8962C] font-black uppercase tracking-wider">Safety First</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-black uppercase mb-4">
               Going out should feel safe
@@ -351,7 +351,7 @@ export default function SafetyFeatures() {
           viewport={{ once: true }}
           className="text-center mt-16 pt-16 border-t border-white/10"
         >
-          <Shield className="w-16 h-16 text-[#FF1493] mx-auto mb-6" />
+          <Shield className="w-16 h-16 text-[#C8962C] mx-auto mb-6" />
           <h2 className="text-4xl font-black uppercase mb-4">Stay Safe Out There</h2>
           <p className="text-white/60 mb-8 max-w-md mx-auto">
             Set up your safety features now and enjoy peace of mind on every night out.

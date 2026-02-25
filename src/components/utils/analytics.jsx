@@ -17,7 +17,7 @@ const config = {
   gaId: import.meta.env.VITE_GA_MEASUREMENT_ID,
   mixpanelToken: import.meta.env.VITE_MIXPANEL_TOKEN,
   sentryDsn: import.meta.env.VITE_SENTRY_DSN,
-  debug: import.meta.env.DEV,
+  debug: import.meta.env.VITE_ANALYTICS_DEBUG === 'true',
 };
 
 let initialized = false;

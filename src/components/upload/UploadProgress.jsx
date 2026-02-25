@@ -36,7 +36,7 @@ export function UploadProgress({
       case 'completed': return 'bg-[#39FF14]';
       case 'error': return 'bg-red-500';
       case 'queued': return 'bg-yellow-500';
-      default: return 'bg-[#FF1493]';
+      default: return 'bg-[#C8962C]';
     }
   };
 

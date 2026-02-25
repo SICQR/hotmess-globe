@@ -62,7 +62,7 @@ export default function UserManagement() {
         </div>
         <div className="bg-black border-2 border-white p-6">
           <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">ADMINS</p>
-          <p className="text-4xl font-black text-[#FF1493]">{users.filter(u => u.role === 'admin').length}</p>
+          <p className="text-4xl font-black text-[#C8962C]">{users.filter(u => u.role === 'admin').length}</p>
         </div>
         <div className="bg-black border-2 border-red-600 p-6">
           <p className="text-[10px] text-red-400 uppercase tracking-widest mb-2">BANNED</p>
@@ -74,14 +74,6 @@ export default function UserManagement() {
             {users.filter(u => u.activity_status && u.activity_status !== 'offline').length}
           </p>
         </div>
-        <div className="bg-black border-2 border-white p-6">
-          <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">AVG XP</p>
-          <p className="text-4xl font-black text-[#FFEB3B]">
-            {users.length
-              ? Math.round(users.reduce((sum, u) => sum + (u.xp || 0), 0) / users.length)
-              : 0}
-          </p>
-        </div>
       </div>
 
       {/* User List */}
@@ -89,9 +81,8 @@ export default function UserManagement() {
         <div className="border-b-2 border-white/20 p-4 grid grid-cols-12 gap-4 text-[10px] text-white/40 uppercase tracking-widest font-bold">
           <div className="col-span-3">USER</div>
           <div className="col-span-2">ROLE</div>
-          <div className="col-span-2">XP</div>
-          <div className="col-span-2">JOINED</div>
-          <div className="col-span-2">STATUS</div>
+          <div className="col-span-3">JOINED</div>
+          <div className="col-span-3">STATUS</div>
           <div className="col-span-1">ACTIONS</div>
         </div>
         <div className="divide-y-2 divide-white/10">
@@ -104,7 +95,7 @@ export default function UserManagement() {
               className="p-4 grid grid-cols-12 gap-4 items-center hover:bg-white/5 transition-colors"
             >
               <div className="col-span-3 flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center border-2 border-white">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center border-2 border-white">
                   {user.avatar_url ? (
                     <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
@@ -125,15 +116,12 @@ export default function UserManagement() {
                   {user.role || 'user'}
                 </span>
               </div>
-              <div className="col-span-2">
-                <p className="font-bold text-[#FFEB3B]">{user.xp || 0} XP</p>
-              </div>
-              <div className="col-span-2">
+              <div className="col-span-3">
                 <p className="text-xs font-mono text-white/60">
                   {format(new Date(user.created_date), 'MMM d, yyyy')}
                 </p>
               </div>
-              <div className="col-span-2">
+              <div className="col-span-3">
                 {user.activity_status && user.activity_status !== 'offline' ? (
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse" />

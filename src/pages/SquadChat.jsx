@@ -137,7 +137,7 @@ export default function SquadChat() {
           <h2 className="text-2xl font-black uppercase mb-2">Members Only</h2>
           <p className="text-white/60 mb-6">Join this squad to access the chat</p>
           <Link to={createPageUrl('Connect')}>
-            <Button className="bg-[#FF1493] hover:bg-white text-black font-black">
+            <Button className="bg-[#C8962C] hover:bg-white text-black font-black">
               FIND SQUADS
             </Button>
           </Link>
@@ -203,7 +203,7 @@ export default function SquadChat() {
                         >
                           {/* Avatar for others */}
                           {!isOwn && showAvatar && (
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] mr-2 flex-shrink-0 overflow-hidden">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] mr-2 flex-shrink-0 overflow-hidden">
                               {msgUser?.avatar_url ? (
                                 <img src={msgUser.avatar_url} alt="" className="w-full h-full object-cover" />
                               ) : (
@@ -225,7 +225,7 @@ export default function SquadChat() {
                             
                             <div className={`${
                               isOwn 
-                                ? 'bg-[#FF1493] text-black' 
+                                ? 'bg-[#C8962C] text-black' 
                                 : 'bg-white/10 text-white'
                             } rounded-xl p-3 relative`}>
                               {!isOwn && showAvatar && (
@@ -347,7 +347,7 @@ export default function SquadChat() {
                   <Button
                     onClick={handleSend}
                     disabled={!message.trim() || sendMessageMutation.isPending || !chatThread}
-                    className="bg-[#FF1493] hover:bg-white text-black font-black"
+                    className="bg-[#C8962C] hover:bg-white text-black font-black"
                   >
                     <Send className="w-4 h-4" />
                   </Button>
@@ -368,7 +368,7 @@ export default function SquadChat() {
                 {memberUsers.slice(0, 10).map((user) => (
                   <Link key={user.email} to={createPageUrl(`Profile?email=${user.email}`)}>
                     <div className="flex items-center gap-3 p-2 hover:bg-white/5 transition-colors">
-                      <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center">
+                      <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] border border-white flex items-center justify-center">
                         {user.avatar_url ? (
                           <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
                         ) : (
@@ -381,9 +381,6 @@ export default function SquadChat() {
                           {user.email === squad.creator_email && (
                             <Crown className="w-4 h-4 text-[#FFEB3B]" />
                           )}
-                        </div>
-                        <div className="text-xs text-white/40">
-                          LVL {Math.floor((user.xp || 0) / 1000) + 1}
                         </div>
                       </div>
                     </div>

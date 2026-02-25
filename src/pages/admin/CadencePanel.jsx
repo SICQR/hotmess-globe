@@ -3,7 +3,7 @@ import { TrendingUp, TrendingDown, Check, X, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/components/utils/supabaseClient';
 
-const TIER_COLORS = { seed: 'text-white/50', grow: 'text-green-400', scale: 'text-cyan-400', live: 'text-[#FF1493]' };
+const TIER_COLORS = { seed: 'text-white/50', grow: 'text-green-400', scale: 'text-cyan-400', live: 'text-[#C8962C]' };
 const TIER_COSTS = { seed: 0, grow: 50, scale: 200, live: 500 };
 
 export default function CadencePanel() {

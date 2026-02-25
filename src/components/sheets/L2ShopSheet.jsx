@@ -108,7 +108,7 @@ export default function L2ShopSheet({ handle, product, seller }) {
           
           <div className="flex items-center gap-3 mb-4">
             {price && (
-              <span className="text-2xl font-black text-[#FF1493]">
+              <span className="text-2xl font-black text-[#C8962C]">
                 {price.currencyCode} {parseFloat(price.amount).toFixed(2)}
               </span>
             )}
@@ -162,7 +162,7 @@ export default function L2ShopSheet({ handle, product, seller }) {
               // Add to cart logic would go here
               openCartDrawer('shopify');
             }}
-            className="flex-1 h-12 bg-[#FF1493] hover:bg-[#FF1493]/90 font-black"
+            className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 font-black"
           >
             <ShoppingBag className="w-4 h-4 mr-2" />
             Add to Cart
@@ -193,7 +193,7 @@ export default function L2ShopSheet({ handle, product, seller }) {
       <SheetSection title="Featured">
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 text-[#FF1493] animate-spin" />
+            <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />
           </div>
         ) : notConfigured ? (
           <div className="text-center py-8 px-4">
@@ -238,7 +238,7 @@ export default function L2ShopSheet({ handle, product, seller }) {
                   <div className="p-3">
                     <p className="text-white font-bold text-sm truncate">{prod.title}</p>
                     {price && (
-                      <p className="text-[#FF1493] font-black text-sm mt-1">
+                      <p className="text-[#C8962C] font-black text-sm mt-1">
                         {price.currencyCode} {parseFloat(price.amount).toFixed(2)}
                       </p>
                     )}

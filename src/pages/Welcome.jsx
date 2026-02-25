@@ -31,7 +31,7 @@ const MODES = [
     name: 'RIGHT NOW', 
     desc: 'Connect tonight — 30min to 3hr windows, real intent',
     icon: Zap,
-    color: 'from-[#FF1493] to-[#B026FF]',
+    color: 'from-[#C8962C] to-[#B026FF]',
     glow: 'shadow-glow-hot'
   },
   { 
@@ -111,7 +111,7 @@ const Welcome = () => {
       {/* Progress bar */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-white/10 z-50">
         <motion.div 
-          className="h-full bg-gradient-to-r from-[#FF1493] to-[#00D9FF]"
+          className="h-full bg-gradient-to-r from-[#C8962C] to-[#00D9FF]"
           initial={{ width: '0%' }}
           animate={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -124,7 +124,7 @@ const Welcome = () => {
           <div 
             key={i}
             className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              i === step ? 'w-8 bg-[#FF1493]' : i < step ? 'bg-white' : 'bg-white/30'
+              i === step ? 'w-8 bg-[#C8962C]' : i < step ? 'bg-white' : 'bg-white/30'
             }`}
           />
         ))}
@@ -179,7 +179,7 @@ const Welcome = () => {
               >
                 <Button 
                   onClick={next}
-                  className="bg-[#FF1493] hover:bg-white text-white hover:text-black font-black uppercase px-12 py-6 text-lg shadow-glow-hot transition-all duration-300 group"
+                  className="bg-[#C8962C] hover:bg-white text-white hover:text-black font-black uppercase px-12 py-6 text-lg shadow-glow-hot transition-all duration-300 group"
                 >
                   <span>ENTER</span>
                   <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -455,7 +455,7 @@ const Welcome = () => {
                 transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
                 className="mb-8"
               >
-                <div className="w-32 h-32 mx-auto bg-gradient-to-br from-[#FF1493] via-[#B026FF] to-[#00D9FF] flex items-center justify-center animate-glow-pulse">
+                <div className="w-32 h-32 mx-auto bg-gradient-to-br from-[#C8962C] via-[#B026FF] to-[#00D9FF] flex items-center justify-center animate-glow-pulse">
                   <Heart className="w-16 h-16 text-white" />
                 </div>
               </motion.div>
@@ -494,7 +494,7 @@ const Welcome = () => {
               >
                 <Button 
                   onClick={next}
-                  className="bg-gradient-to-r from-[#FF1493] to-[#B026FF] hover:from-white hover:to-white text-white hover:text-black font-black uppercase px-16 py-8 text-xl shadow-glow-hot-lg transition-all duration-300 group"
+                  className="bg-gradient-to-r from-[#C8962C] to-[#B026FF] hover:from-white hover:to-white text-white hover:text-black font-black uppercase px-16 py-8 text-xl shadow-glow-hot-lg transition-all duration-300 group"
                 >
                   <span>LET'S GO</span>
                   <Sparkles className="w-6 h-6 ml-3 group-hover:animate-spin-slow" />

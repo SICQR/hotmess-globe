@@ -152,7 +152,7 @@ export default function L2SheetContainer({
             style={{ height }}
             className={cn(
               'fixed bottom-0 left-0 right-0 z-[80]',
-              'bg-black border-t-2 border-x-2 border-[#FF1493]',
+              'bg-black border-t-2 border-x-2 border-[#C8962C]',
               'rounded-none overflow-hidden',
               'flex flex-col',
               // Scanner corner effect - brutalist 0px radius
@@ -198,7 +198,7 @@ export default function L2SheetContainer({
                   className={cn(
                     'min-h-[44px] min-w-[44px] -mr-2 flex items-center justify-center rounded-xl transition-colors',
                     'text-white/60 hover:text-white hover:bg-white/10 active:bg-white/20',
-                    'focus:outline-none focus:ring-2 focus:ring-[#FF1493]'
+                    'focus:outline-none focus:ring-2 focus:ring-[#C8962C]'
                   )}
                   aria-label="Close sheet"
                 >

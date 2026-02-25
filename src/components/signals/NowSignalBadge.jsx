@@ -7,12 +7,12 @@ import React from 'react';
 
 const SIGNAL_STYLES = {
   now_nearby: { label: 'Now nearby', bg: 'bg-gradient-to-r from-[#00D9FF] to-[#00D9FF]/80', text: 'text-black', icon: '📍' },
-  active_tonight: { label: 'Active tonight', bg: 'bg-gradient-to-r from-[#FF1493] to-[#FF1493]/80', text: 'text-white', icon: '🌙' },
-  looking_right_now: { label: 'Looking now', bg: 'bg-gradient-to-r from-[#FF1493] to-[#00D9FF]', text: 'text-white', icon: '👀', pulse: true },
+  active_tonight: { label: 'Active tonight', bg: 'bg-gradient-to-r from-[#C8962C] to-[#C8962C]/80', text: 'text-white', icon: '🌙' },
+  looking_right_now: { label: 'Looking now', bg: 'bg-gradient-to-r from-[#C8962C] to-[#00D9FF]', text: 'text-white', icon: '👀', pulse: true },
   matched_before: { label: 'Matched', bg: 'bg-white/20 backdrop-blur-sm', text: 'text-white', icon: '✨' },
-  high_chemistry: { label: 'High chemistry', bg: 'bg-gradient-to-r from-[#FF1493] to-[#FF6B6B]', text: 'text-white', icon: '🔥', pulse: true },
+  high_chemistry: { label: 'High chemistry', bg: 'bg-gradient-to-r from-[#C8962C] to-[#FF6B6B]', text: 'text-white', icon: '🔥', pulse: true },
   followed_active: { label: 'Following • Active', bg: 'bg-[#00D9FF]/90', text: 'text-black', icon: '💫' },
-  chemistry_nearby: { label: 'Chemistry nearby', bg: 'bg-gradient-to-r from-[#FF1493]/90 to-[#FF1493]/70', text: 'text-white', icon: '⚡' },
+  chemistry_nearby: { label: 'Chemistry nearby', bg: 'bg-gradient-to-r from-[#C8962C]/90 to-[#C8962C]/70', text: 'text-white', icon: '⚡' },
 };
 
 export function NowSignalBadge({ signal, size = 'sm', className = '', onClick }) {

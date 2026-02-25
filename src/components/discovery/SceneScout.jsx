@@ -23,9 +23,9 @@ import { useNavigate } from 'react-router-dom';
 // Type colors
 const TYPE_STYLES = {
   event: {
-    bg: 'bg-[#FF1493]/20',
-    border: 'border-[#FF1493]',
-    text: 'text-[#FF1493]',
+    bg: 'bg-[#C8962C]/20',
+    border: 'border-[#C8962C]',
+    text: 'text-[#C8962C]',
     label: 'Event'
   },
   venue: {
@@ -95,8 +95,8 @@ export default function SceneScout({
   const getScoreColor = (score) => {
     if (score >= 80) return '#39FF14';
     if (score >= 60) return '#FFEB3B';
-    if (score >= 40) return '#FFB800';
-    return '#FF1493';
+    if (score >= 40) return '#C8962C';
+    return '#C8962C';
   };
 
   // Loading state
@@ -137,12 +137,12 @@ export default function SceneScout({
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#FF1493]" />
+              <Sparkles className="w-4 h-4 text-[#C8962C]" />
               <span className="font-bold text-sm text-white">Tonight's Picks</span>
             </div>
             <button 
               onClick={() => navigate('/events?view=scout')}
-              className="text-xs text-[#FF1493] hover:underline"
+              className="text-xs text-[#C8962C] hover:underline"
             >
               See all →
             </button>
@@ -185,7 +185,7 @@ export default function SceneScout({
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -216,7 +216,7 @@ export default function SceneScout({
                 className={`
                   px-3 py-1 text-xs font-medium border transition-colors
                   ${isSelected 
-                    ? 'bg-[#FF1493] border-[#FF1493] text-white' 
+                    ? 'bg-[#C8962C] border-[#C8962C] text-white' 
                     : 'bg-transparent border-white/20 text-white/60 hover:border-white/40'
                   }
                 `}
@@ -343,14 +343,14 @@ export default function SceneScout({
       {hotmessActivity?.length > 0 && (
         <div className="p-4 border-t border-white/10 bg-white/5">
           <div className="flex items-center gap-2 mb-2">
-            <Users className="w-4 h-4 text-[#FF1493]" />
+            <Users className="w-4 h-4 text-[#C8962C]" />
             <span className="text-xs font-bold text-white">HOTMESS Activity</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {hotmessActivity.map((activity, i) => (
               <span 
                 key={i}
-                className="px-2 py-1 bg-[#FF1493]/20 text-[10px] text-[#FF1493]"
+                className="px-2 py-1 bg-[#C8962C]/20 text-[10px] text-[#C8962C]"
               >
                 {activity.count} @ {activity.location}
               </span>

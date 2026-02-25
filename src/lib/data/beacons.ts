@@ -72,10 +72,10 @@ export async function getBeacons(filters: BeaconFilters = {}): Promise<Beacon[]>
     query = query.in('type', filters.types);
   }
   if (filters.startDate) {
-    query = query.gte('start_time', filters.startDate);
+    query = query.gte('starts_at', filters.startDate);
   }
   if (filters.endDate) {
-    query = query.lte('start_time', filters.endDate);
+    query = query.lte('starts_at', filters.endDate);
   }
   if (filters.limit) {
     query = query.limit(filters.limit);
@@ -129,8 +129,8 @@ export async function getUpcomingEvents(limit: number = 20): Promise<Event[]> {
     .from('beacons')
     .select('*')
     .eq('type', 'event')
-    .gte('start_time', new Date().toISOString())
-    .order('start_time', { ascending: true })
+    .gte('starts_at', new Date().toISOString())
+    .order('starts_at', { ascending: true })
     .limit(limit);
 
   if (error) {
@@ -149,8 +149,8 @@ export async function getEventsByOrganizer(organizerId: string): Promise<Event[]
     .from('beacons')
     .select('*')
     .eq('type', 'event')
-    .eq('user_id', organizerId)
-    .order('start_time', { ascending: false });
+    .eq('owner_id', organizerId)
+    .order('starts_at', { ascending: false });
 
   if (error) {
     console.error('[beacons] getEventsByOrganizer error:', error.message);
@@ -176,7 +176,6 @@ export async function getSafetyAlerts(
     .from('beacons')
     .select('*')
     .eq('type', 'safety')
-    .eq('resolved', false)
     .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
     .order('created_at', { ascending: false });
 
@@ -206,13 +205,15 @@ export async function reportSafetyConcern(
     .from('beacons')
     .insert({
       type: 'safety',
-      title,
-      description: options?.description,
-      latitude: lat,
-      longitude: lng,
-      user_id: user?.id,
-      metadata: { severity: options?.severity || 'warning' },
-      resolved: false,
+      lat,
+      lng,
+      owner_id: user?.id,
+      metadata: {
+        title,
+        description: options?.description,
+        severity: options?.severity || 'warning',
+        resolved: false,
+      },
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24h
     })
     .select()
@@ -254,18 +255,21 @@ export async function createBeacon(input: CreateBeaconInput): Promise<Beacon | n
   const { data, error } = await supabase
     .from('beacons')
     .insert({
-      user_id: user.id,
+      owner_id: user.id,
       type: input.type,
-      title: input.title,
-      description: input.description,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      address: input.address,
-      image_url: input.imageUrl,
-      start_time: input.startTime,
-      end_time: input.endTime,
+      lat: input.latitude,
+      lng: input.longitude,
+      starts_at: input.startTime,
+      ends_at: input.endTime,
       expires_at: input.expiresAt,
-      metadata: input.metadata,
+      // Store rich fields in metadata (beacons view doesn't have text columns)
+      metadata: {
+        ...(input.metadata || {}),
+        title: input.title,
+        description: input.description,
+        address: input.address,
+        image_url: input.imageUrl,
+      },
     })
     .select()
     .single();
@@ -289,16 +293,20 @@ export async function updateBeacon(
     updated_at: new Date().toISOString(),
   };
 
-  if (updates.title !== undefined) updateData.title = updates.title;
-  if (updates.description !== undefined) updateData.description = updates.description;
-  if (updates.latitude !== undefined) updateData.latitude = updates.latitude;
-  if (updates.longitude !== undefined) updateData.longitude = updates.longitude;
-  if (updates.address !== undefined) updateData.address = updates.address;
-  if (updates.imageUrl !== undefined) updateData.image_url = updates.imageUrl;
-  if (updates.startTime !== undefined) updateData.start_time = updates.startTime;
-  if (updates.endTime !== undefined) updateData.end_time = updates.endTime;
+  // Columns that exist on the beacons view
+  if (updates.latitude !== undefined) updateData.lat = updates.latitude;
+  if (updates.longitude !== undefined) updateData.lng = updates.longitude;
+  if (updates.startTime !== undefined) updateData.starts_at = updates.startTime;
+  if (updates.endTime !== undefined) updateData.ends_at = updates.endTime;
   if (updates.expiresAt !== undefined) updateData.expires_at = updates.expiresAt;
-  if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
+
+  // Text fields live in metadata (beacons view has no text columns)
+  const metaUpdates: Record<string, unknown> = { ...(updates.metadata || {}) };
+  if (updates.title !== undefined) metaUpdates.title = updates.title;
+  if (updates.description !== undefined) metaUpdates.description = updates.description;
+  if (updates.address !== undefined) metaUpdates.address = updates.address;
+  if (updates.imageUrl !== undefined) metaUpdates.image_url = updates.imageUrl;
+  if (Object.keys(metaUpdates).length > 0) updateData.metadata = metaUpdates;
 
   const { data, error } = await supabase
     .from('beacons')
@@ -368,14 +376,17 @@ interface RawBeacon {
   id: string;
   type: string;
   user_id?: string;
-  title: string;
+  owner_id?: string;
+  title?: string;
   description?: string;
-  latitude: number;
-  longitude: number;
+  lat?: number;
+  lng?: number;
+  latitude?: number;  // fallback if column alias exists
+  longitude?: number; // fallback if column alias exists
   address?: string;
   image_url?: string;
-  start_time?: string;
-  end_time?: string;
+  starts_at?: string;
+  ends_at?: string;
   expires_at?: string;
   metadata?: Record<string, unknown>;
   resolved?: boolean;
@@ -387,15 +398,15 @@ function normalizeBeacon(raw: RawBeacon): Beacon {
   const base: Beacon = {
     id: raw.id,
     type: raw.type as BeaconType,
-    userId: raw.user_id,
-    title: raw.title,
-    description: raw.description,
-    latitude: raw.latitude,
-    longitude: raw.longitude,
-    address: raw.address,
-    imageUrl: raw.image_url,
-    startTime: raw.start_time,
-    endTime: raw.end_time,
+    userId: raw.user_id || raw.owner_id,
+    title: raw.title || (raw.metadata?.title as string) || 'Untitled',
+    description: raw.description || (raw.metadata?.description as string),
+    latitude: raw.lat ?? raw.latitude ?? 0,
+    longitude: raw.lng ?? raw.longitude ?? 0,
+    address: raw.address || (raw.metadata?.address as string),
+    imageUrl: raw.image_url || (raw.metadata?.image_url as string),
+    startTime: raw.starts_at,
+    endTime: raw.ends_at,
     expiresAt: raw.expires_at,
     metadata: raw.metadata,
     createdAt: raw.created_at,
@@ -407,7 +418,7 @@ function normalizeBeacon(raw: RawBeacon): Beacon {
     return {
       ...base,
       severity: (raw.metadata?.severity as SafetyAlert['severity']) || 'warning',
-      resolved: raw.resolved || false,
+      resolved: raw.resolved ?? (raw.metadata?.resolved as boolean) ?? false,
     } as SafetyAlert;
   }
 

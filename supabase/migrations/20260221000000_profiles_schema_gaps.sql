@@ -10,10 +10,12 @@
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
 
--- Backfill: where account_id is NULL, copy from id (original PK = auth UID)
-UPDATE public.profiles
-  SET account_id = id
-  WHERE account_id IS NULL AND id IS NOT NULL;
+-- Backfill: where account_id is NULL, copy from id only where id exists in auth.users
+UPDATE public.profiles p
+  SET account_id = p.id
+  WHERE p.account_id IS NULL 
+    AND p.id IS NOT NULL
+    AND EXISTS (SELECT 1 FROM auth.users u WHERE u.id = p.id);
 
 -- Index for the FK
 CREATE INDEX IF NOT EXISTS idx_profiles_account_id ON public.profiles (account_id);
@@ -59,14 +61,14 @@ END $$;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
-  CREATE POLICY IF NOT EXISTS "profiles_select_own"
+  CREATE POLICY "profiles_select_own"
     ON public.profiles FOR SELECT
     USING (account_id = auth.uid() OR id = auth.uid());
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  CREATE POLICY IF NOT EXISTS "profiles_update_own"
+  CREATE POLICY "profiles_update_own"
     ON public.profiles FOR UPDATE
     USING (account_id = auth.uid() OR id = auth.uid())
     WITH CHECK (account_id = auth.uid() OR id = auth.uid());
@@ -74,7 +76,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  CREATE POLICY IF NOT EXISTS "profiles_insert_own"
+  CREATE POLICY "profiles_insert_own"
     ON public.profiles FOR INSERT
     WITH CHECK (account_id = auth.uid() OR id = auth.uid());
 EXCEPTION WHEN duplicate_object THEN NULL;

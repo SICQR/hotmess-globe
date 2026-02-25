@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Music, Download } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) {
@@ -59,20 +58,7 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
   const awardXP = async () => {
     if (!currentUser) return;
     
-    try {
-      const xpEarned = beacon.xp_scan || 200; // 2x base XP
-      const multiplier = currentUser.xp_multiplier || 1;
-      const totalXP = xpEarned * multiplier;
-      
-      await base44.auth.updateMe({
-        xp: (currentUser.xp || 0) + totalXP,
-      });
-      
-      setHasAwarded(true);
-      toast.success(`+${totalXP} XP for listening to RAW Convict track!`);
-    } catch (error) {
-      console.error('Failed to award XP:', error);
-    }
+    setHasAwarded(true);
   };
 
   const togglePlay = () => {
@@ -96,17 +82,17 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-2 border-[#FF1493] text-white max-w-md">
+      <DialogContent className="bg-black border-2 border-[#C8962C] text-white max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black uppercase flex items-center gap-2">
-            <Music className="w-6 h-6 text-[#FF1493]" />
+            <Music className="w-6 h-6 text-[#C8962C]" />
             RAW Convict Records
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
           {/* Album Art */}
-          <div className="w-full aspect-square bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center border-2 border-white">
+          <div className="w-full aspect-square bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center border-2 border-white">
             <Music className="w-24 h-24 text-white" />
           </div>
 
@@ -116,9 +102,6 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
             {beacon.description && (
               <p className="text-sm text-white/60">{beacon.description}</p>
             )}
-            <p className="text-xs text-[#FFEB3B] font-bold mt-2 uppercase">
-              +{beacon.xp_scan || 200} XP • 2x Multiplier
-            </p>
           </div>
 
           {/* Audio Element */}
@@ -142,7 +125,7 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
           <div className="space-y-2">
             <div className="relative h-2 bg-white/10 overflow-hidden">
               <div 
-                className="absolute inset-y-0 left-0 bg-[#FF1493]"
+                className="absolute inset-y-0 left-0 bg-[#C8962C]"
                 style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
               />
             </div>
@@ -156,7 +139,7 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
           <div className="flex items-center justify-center gap-4">
             <Button
               onClick={togglePlay}
-              className="bg-[#FF1493] hover:bg-white text-black font-black w-16 h-16 rounded-full border-2 border-white"
+              className="bg-[#C8962C] hover:bg-white text-black font-black w-16 h-16 rounded-full border-2 border-white"
             >
               {isPlaying ? (
                 <Pause className="w-8 h-8" />

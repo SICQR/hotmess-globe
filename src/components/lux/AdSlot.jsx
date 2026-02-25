@@ -205,7 +205,7 @@ export function LuxAdSlot({
     <div
       ref={containerRef}
       className={cn(
-        'lux-ad-slot relative overflow-hidden bg-white/5 border border-white/10 hover:border-[#FF1493]/30 transition-colors group',
+        'lux-ad-slot relative overflow-hidden bg-white/5 border border-white/10 hover:border-[#C8962C]/30 transition-colors group',
         sizeConfig.className,
         className
       )}
@@ -256,7 +256,7 @@ export function LuxAdSlot({
       )}
 
       {/* Gradient border on hover */}
-      <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#FF1493]/20 transition-colors pointer-events-none" />
+      <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#C8962C]/20 transition-colors pointer-events-none" />
     </div>
   );
 }

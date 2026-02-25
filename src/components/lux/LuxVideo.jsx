@@ -261,7 +261,7 @@ export function LuxVideo({
             className="absolute inset-0 flex items-center justify-center bg-black/50"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-12 border-4 border-[#FF1493] border-t-transparent rounded-full animate-spin" />
+            <div className="w-12 h-12 border-4 border-[#C8962C] border-t-transparent rounded-full animate-spin" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -296,7 +296,7 @@ export function LuxVideo({
             exit={{ opacity: 0, scale: 0.8 }}
             className="absolute inset-0 flex items-center justify-center pointer-events-none"
           >
-            <div className="w-20 h-20 bg-[#FF1493] flex items-center justify-center shadow-[0_0_30px_rgba(255,20,147,0.5)]">
+            <div className="w-20 h-20 bg-[#C8962C] flex items-center justify-center shadow-[0_0_30px_rgba(255,20,147,0.5)]">
               <Play className="w-10 h-10 text-white ml-1" fill="white" />
             </div>
           </motion.div>
@@ -325,13 +325,13 @@ export function LuxVideo({
                 
                 {/* Progress */}
                 <div
-                  className="absolute inset-y-0 left-0 bg-[#FF1493]"
+                  className="absolute inset-y-0 left-0 bg-[#C8962C]"
                   style={{ width: `${progress}%` }}
                 />
                 
                 {/* Scrubber */}
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-[#FF1493] opacity-0 group-hover/progress:opacity-100 transition-opacity"
+                  className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-[#C8962C] opacity-0 group-hover/progress:opacity-100 transition-opacity"
                   style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
                 />
               </div>
@@ -342,7 +342,7 @@ export function LuxVideo({
                   {/* Play/Pause */}
                   <button
                     onClick={togglePlay}
-                    className="w-10 h-10 bg-[#FF1493] hover:bg-[#FF1493]/80 flex items-center justify-center transition-colors"
+                    className="w-10 h-10 bg-[#C8962C] hover:bg-[#C8962C]/80 flex items-center justify-center transition-colors"
                   >
                     {isPlaying ? (
                       <Pause className="w-5 h-5 text-white" />
@@ -399,7 +399,7 @@ export function LuxVideo({
                             step="0.1"
                             value={isMuted ? 0 : volume}
                             onChange={handleVolumeChange}
-                            className="w-full h-1 bg-white/20 appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-[#FF1493] [&::-webkit-slider-thumb]:cursor-pointer"
+                            className="w-full h-1 bg-white/20 appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-[#C8962C] [&::-webkit-slider-thumb]:cursor-pointer"
                           />
                         </motion.div>
                       )}

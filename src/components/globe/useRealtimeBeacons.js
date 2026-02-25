@@ -251,17 +251,9 @@ export function useRealtimeLocations() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initial fetch
-    supabase
-      .from('locations')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(500)
-      .then(({ data }) => {
-        if (data) setLocations(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    // Table not yet provisioned — skip initial fetch to avoid 404 console errors.
+    // When the `locations` table is created, remove this line and uncomment the fetch below.
+    setLoading(false);
 
     const channel = supabase
       .channel('globe-locations')
@@ -308,17 +300,9 @@ export function useRealtimeRoutes() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initial fetch – only the most recent 200 arcs
-    supabase
-      .from('routes')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(200)
-      .then(({ data }) => {
-        if (data) setRoutes(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    // Table not yet provisioned — skip initial fetch to avoid 404 console errors.
+    // When the `routes` table is created, remove this line and uncomment the fetch below.
+    setLoading(false);
 
     const channel = supabase
       .channel('globe-routes')

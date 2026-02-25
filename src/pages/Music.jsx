@@ -1066,7 +1066,7 @@ export default function Music() {
                               href={release.soundcloud_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 bg-[#FF1493] text-black hover:bg-white transition-colors"
+                              className="p-1.5 bg-[#C8962C] text-black hover:bg-white transition-colors"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <ExternalLink className="w-4 h-4" />

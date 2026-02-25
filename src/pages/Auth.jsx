@@ -22,7 +22,7 @@ const MEMBERSHIP_TIERS = [
     id: 'plus',
     name: 'PLUS',
     price: '£9.99/mo',
-    color: '#FF1493',
+    color: '#C8962C',
     features: ['Everything in FREE', 'Social: more threads + sorting', 'Saved filter presets', 'More beacons + privacy controls', 'Extended calendar'],
     icon: Zap,
     popular: true
@@ -346,7 +346,7 @@ export default function Auth() {
     const first = parts[0]?.[0] || 'H';
     const last = parts.length > 1 ? parts[parts.length - 1]?.[0] : 'M';
     const initials = `${first}${last}`.toUpperCase();
-    const palette = [['#FF1493', '#B026FF'], ['#00D9FF', '#1E3A8A'], ['#22C55E', '#0F766E']];
+    const palette = [['#C8962C', '#B026FF'], ['#00D9FF', '#1E3A8A'], ['#22C55E', '#0F766E']];
     const idx = (initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % palette.length;
     const [c1, c2] = palette[idx];
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="512" height="512" rx="64" fill="url(#g)"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-family="system-ui" font-size="190" font-weight="900" fill="rgba(255,255,255,0.92)">${initials}</text></svg>`;
@@ -420,13 +420,8 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background gradient mesh */}
-      <div className="fixed inset-0 bg-gradient-mesh opacity-30 pointer-events-none" />
-      
-      {/* Animated glow orbs */}
-      <div className="fixed top-1/4 -left-32 w-64 h-64 bg-[#FF1493]/30 rounded-full blur-[100px] animate-float pointer-events-none" />
-      <div className="fixed bottom-1/4 -right-32 w-64 h-64 bg-[#B026FF]/20 rounded-full blur-[100px] animate-float pointer-events-none" style={{ animationDelay: '1s' }} />
-      <div className="fixed top-3/4 left-1/4 w-48 h-48 bg-[#00D9FF]/20 rounded-full blur-[80px] animate-float pointer-events-none" style={{ animationDelay: '2s' }} />
+      {/* Subtle amber ambient glow — top left only */}
+      <div className="fixed top-1/4 -left-32 w-64 h-64 rounded-full blur-[120px] pointer-events-none" style={{ background: 'rgba(200,150,44,0.15)' }} />
       
       <AnimatePresence mode="wait">
         {step === 'auth' && (
@@ -451,7 +446,7 @@ export default function Auth() {
               <p className="text-white/40 uppercase text-sm tracking-[0.3em]">LONDON OS</p>
             </motion.div>
 
-            <div className="glass-glow-hot rounded-2xl p-8">
+            <div className="bg-[#1C1C1E] border border-white/8 rounded-2xl p-8">
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-black uppercase mb-2">
                   {isSignUp ? 'Create Account' : 'Welcome Back'}
@@ -525,8 +520,7 @@ export default function Auth() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  variant="hotGlow"
-                  className="w-full font-black uppercase py-6 text-lg"
+                  className="w-full font-black uppercase py-6 text-lg bg-[#C8962C] hover:bg-[#D4A84B] text-black border-0"
                 >
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -552,7 +546,7 @@ export default function Auth() {
                       console.log('[Auth] Forgot password clicked');
                       setStep('forgot');
                     }}
-                    className="text-sm text-[#FF1493] hover:text-white transition-colors underline cursor-pointer"
+                    className="text-sm text-[#C8962C] hover:text-white transition-colors underline cursor-pointer"
                   >
                     Forgot password?
                   </button>
@@ -629,12 +623,12 @@ export default function Auth() {
                   {isSignUp ? (
                     <>
                       Already have an account?{' '}
-                      <span className="text-[#00D9FF] font-bold">Sign In</span>
+                      <span className="text-[#C8962C] font-bold">Sign In</span>
                     </>
                   ) : (
                     <>
                       Don't have an account?{' '}
-                      <span className="text-[#00D9FF] font-bold">Sign Up</span>
+                      <span className="text-[#C8962C] font-bold">Sign Up</span>
                     </>
                   )}
                 </button>
@@ -657,12 +651,12 @@ export default function Auth() {
           >
             <div className="text-center mb-8">
               <h1 className="text-5xl font-black uppercase tracking-tighter mb-2">
-                HOT<span className="text-[#FF1493]">MESS</span>
+                HOT<span className="text-[#C8962C]">MESS</span>
               </h1>
               <p className="text-white/40 uppercase text-sm tracking-wider">LONDON OS</p>
             </div>
 
-            <div className="bg-white/5 border-2 border-white/10 p-8">
+            <div className="bg-[#1C1C1E] border border-white/10 rounded-3xl p-8">
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-black uppercase mb-2">Reset Password</h2>
                 <p className="text-white/60 text-sm">We’ll email you a reset link</p>
@@ -686,7 +680,7 @@ export default function Auth() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase py-6 text-lg"
+                  className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-black uppercase py-6 text-lg"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Reset Link'}
                 </Button>
@@ -715,12 +709,12 @@ export default function Auth() {
           >
             <div className="text-center mb-8">
               <h1 className="text-5xl font-black uppercase tracking-tighter mb-2">
-                HOT<span className="text-[#FF1493]">MESS</span>
+                HOT<span className="text-[#C8962C]">MESS</span>
               </h1>
               <p className="text-white/40 uppercase text-sm tracking-wider">LONDON OS</p>
             </div>
 
-            <div className="bg-white/5 border-2 border-white/10 p-8">
+            <div className="bg-[#1C1C1E] border border-white/10 rounded-3xl p-8">
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-black uppercase mb-2">Set New Password</h2>
                 <p className="text-white/60 text-sm">Choose a new password to continue</p>
@@ -760,7 +754,7 @@ export default function Auth() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase py-6 text-lg"
+                  className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-black uppercase py-6 text-lg"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Update Password'}
                 </Button>
@@ -831,7 +825,7 @@ export default function Auth() {
                     }`}
                   >
                     {tier.popular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white text-xs font-black uppercase rounded-full shadow-glow-hot">
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-[#C8962C] to-[#B026FF] text-white text-xs font-black uppercase rounded-full shadow-glow-hot">
                         POPULAR
                       </div>
                     )}
@@ -871,7 +865,7 @@ export default function Auth() {
                 onClick={handleMembership}
                 disabled={loading}
                 size="xl"
-                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase px-12"
+                className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-black uppercase px-12"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                   <>
@@ -897,10 +891,10 @@ export default function Auth() {
               <p className="text-white/60">Set up your card so others can find you</p>
             </div>
 
-            <div className="bg-white/5 border-2 border-white/10 p-8 space-y-6">
+            <div className="bg-[#1C1C1E] border border-white/10 rounded-3xl p-8 space-y-6">
               {/* Avatar Upload */}
               <div className="flex flex-col items-center gap-4">
-                <div className="w-28 h-28 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border-2 border-white flex items-center justify-center overflow-hidden">
+                <div className="w-28 h-28 bg-gradient-to-br from-[#C8962C] to-[#B026FF] border-2 border-white flex items-center justify-center overflow-hidden">
                   {avatarFile ? (
                     <img
                       src={URL.createObjectURL(avatarFile)}
@@ -942,7 +936,7 @@ export default function Auth() {
                     onClick={() => setProfileData({ ...profileData, profile_type: 'standard' })}
                     className={`p-4 border-2 transition-all ${
                       profileData.profile_type === 'standard'
-                        ? 'border-[#FF1493] bg-[#FF1493]/10'
+                        ? 'border-[#C8962C] bg-[#C8962C]/10'
                         : 'border-white/20 hover:border-white/40'
                     }`}
                   >
@@ -954,7 +948,7 @@ export default function Auth() {
                     onClick={() => setProfileData({ ...profileData, profile_type: 'seller' })}
                     className={`p-4 border-2 transition-all ${
                       profileData.profile_type === 'seller'
-                        ? 'border-[#FF1493] bg-[#FF1493]/10'
+                        ? 'border-[#C8962C] bg-[#C8962C]/10'
                         : 'border-white/20 hover:border-white/40'
                     }`}
                   >
@@ -989,7 +983,7 @@ export default function Auth() {
                   onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
                   placeholder="What are you about? What are you here for?"
                   rows={3}
-                  className="w-full bg-black/50 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#FF1493] focus:outline-none"
+                  className="w-full bg-black/50 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#C8962C] focus:outline-none"
                 />
               </div>
 
@@ -1011,7 +1005,7 @@ export default function Auth() {
               <Button
                 onClick={handleProfile}
                 disabled={loading || !profileData.city?.trim() || !photoPolicyAck}
-                className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase py-6 text-lg disabled:opacity-50"
+                className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-black uppercase py-6 text-lg disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                   <>
@@ -1035,7 +1029,7 @@ export default function Auth() {
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="w-32 h-32 bg-gradient-to-br from-[#FF1493] via-[#B026FF] to-[#00D9FF] flex items-center justify-center mx-auto mb-8 rounded-2xl shadow-glow-hot animate-glow-pulse"
+              className="w-32 h-32 bg-gradient-to-br from-[#C8962C] via-[#B026FF] to-[#00D9FF] flex items-center justify-center mx-auto mb-8 rounded-2xl shadow-glow-hot animate-glow-pulse"
             >
               <Check className="w-16 h-16 text-white" />
             </motion.div>
@@ -1071,7 +1065,7 @@ export default function Auth() {
               transition={{ delay: 0.7 }}
               className="flex justify-center gap-3"
             >
-              <div className="w-3 h-3 rounded-full bg-[#FF1493] animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-3 h-3 rounded-full bg-[#C8962C] animate-bounce" style={{ animationDelay: '0ms' }} />
               <div className="w-3 h-3 rounded-full bg-[#B026FF] animate-bounce" style={{ animationDelay: '150ms' }} />
               <div className="w-3 h-3 rounded-full bg-[#00D9FF] animate-bounce" style={{ animationDelay: '300ms' }} />
             </motion.div>

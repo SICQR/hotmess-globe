@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp, Package, Users, DollarSign } from 'lucide-react';
 import { format, subDays, startOfDay } from 'date-fns';
 
-const COLORS = ['#FF1493', '#B026FF', '#00D9FF', '#FFEB3B', '#FF6B35'];
+const COLORS = ['#C8962C', '#B026FF', '#00D9FF', '#FFEB3B', '#FF6B35'];
 
 export default function SalesAnalytics({ orders, products, allUsers }) {
   const analytics = useMemo(() => {
@@ -47,21 +47,7 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5);
 
-    // Customer demographics
     const buyerEmails = [...new Set(orders.map(o => o.buyer_email))];
-    const buyers = allUsers.filter(u => buyerEmails.includes(u.email));
-    
-    const levelDistribution = buyers.reduce((acc, buyer) => {
-      const level = Math.floor((buyer.xp || 0) / 1000) + 1;
-      const bracket = level <= 5 ? '1-5' : level <= 10 ? '6-10' : level <= 20 ? '11-20' : '20+';
-      acc[bracket] = (acc[bracket] || 0) + 1;
-      return acc;
-    }, {});
-
-    const demographics = Object.entries(levelDistribution).map(([level, count]) => ({
-      level,
-      count
-    }));
 
     // Payment method distribution
     const paymentMethods = orders.reduce((acc, order) => {
@@ -70,16 +56,14 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
     }, {});
 
     const paymentData = Object.entries(paymentMethods).map(([method, count]) => ({
-      name: method === 'xp' ? 'XP' : 'Stripe',
+      name: method === 'xp' ? 'Credits' : 'Stripe',
       value: count
     }));
 
     return {
       revenueData,
       topProducts,
-      demographics,
       paymentData,
-      totalRevenue: orders.reduce((sum, o) => sum + (o.total_xp || 0), 0),
       totalRevenueGBP: orders.reduce((sum, o) => sum + (o.total_gbp || 0), 0),
       totalOrders: orders.length,
       uniqueCustomers: buyerEmails.length
@@ -87,9 +71,8 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
   }, [orders, products, allUsers]);
 
   const stats = [
-    { label: 'Total Revenue', value: `${analytics.totalRevenue.toLocaleString()} XP`, icon: DollarSign, color: '#FFEB3B' },
-    { label: 'GBP Revenue', value: `£${analytics.totalRevenueGBP.toFixed(2)}`, icon: DollarSign, color: '#00D9FF' },
-    { label: 'Total Orders', value: analytics.totalOrders, icon: Package, color: '#FF1493' },
+    { label: 'Revenue', value: `£${analytics.totalRevenueGBP.toFixed(2)}`, icon: DollarSign, color: '#C8962C' },
+    { label: 'Total Orders', value: analytics.totalOrders, icon: Package, color: '#00D9FF' },
     { label: 'Customers', value: analytics.uniqueCustomers, icon: Users, color: '#B026FF' },
   ];
 
@@ -117,7 +100,7 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
       {/* Revenue Over Time */}
       <div className="bg-white/5 border border-white/10 rounded-xl p-6">
         <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-[#FFEB3B]" />
+          <TrendingUp className="w-5 h-5 text-[#C8962C]" />
           Revenue Over Time (Last 30 Days)
         </h3>
         <ResponsiveContainer width="100%" height={300}>
@@ -125,13 +108,12 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
             <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
             <XAxis dataKey="date" stroke="#ffffff60" fontSize={12} />
             <YAxis stroke="#ffffff60" fontSize={12} />
-            <Tooltip 
+            <Tooltip
               contentStyle={{ backgroundColor: '#000', border: '1px solid #ffffff20', borderRadius: '8px' }}
               labelStyle={{ color: '#fff' }}
             />
             <Legend />
-            <Line type="monotone" dataKey="xp" stroke="#FFEB3B" strokeWidth={2} name="XP Revenue" />
-            <Line type="monotone" dataKey="gbp" stroke="#00D9FF" strokeWidth={2} name="GBP Revenue" />
+            <Line type="monotone" dataKey="gbp" stroke="#C8962C" strokeWidth={2} name="GBP Revenue" />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -140,7 +122,7 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
         {/* Top Products */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
           <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
-            <Package className="w-5 h-5 text-[#FF1493]" />
+            <Package className="w-5 h-5 text-[#C8962C]" />
             Top Selling Products
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -152,38 +134,18 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
                 contentStyle={{ backgroundColor: '#000', border: '1px solid #ffffff20', borderRadius: '8px' }}
                 labelStyle={{ color: '#fff' }}
               />
-              <Bar dataKey="sales" fill="#FF1493" name="Sales" />
+              <Bar dataKey="sales" fill="#C8962C" name="Sales" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Customer Demographics */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#B026FF]" />
-            Customer Levels
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={analytics.demographics}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ level, percent }) => `Level ${level}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="count"
-              >
-                {analytics.demographics.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#000', border: '1px solid #ffffff20', borderRadius: '8px' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+        {/* Unique Customers */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6 flex items-center justify-center">
+          <div className="text-center">
+            <Users className="w-8 h-8 text-[#B026FF] mx-auto mb-2" />
+            <p className="text-3xl font-black text-[#B026FF]">{analytics.uniqueCustomers}</p>
+            <p className="text-xs uppercase tracking-wider text-white/40 mt-1">Unique Customers</p>
+          </div>
         </div>
       </div>
     </div>

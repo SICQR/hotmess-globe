@@ -210,7 +210,7 @@ export default function VenueManagement() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-white/20 border-t-[#FF1493] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />
       </div>
     );
   }
@@ -247,7 +247,7 @@ export default function VenueManagement() {
 
             <Button 
               onClick={openAddModal}
-              className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+              className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Venue
@@ -288,7 +288,7 @@ export default function VenueManagement() {
             </p>
             <Button 
               onClick={openAddModal}
-              className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+              className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Your First Venue
@@ -555,7 +555,7 @@ export default function VenueManagement() {
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+                className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black"
               >
                 {saving ? (
                   <>

@@ -1,241 +1,209 @@
 /**
- * Video Call Room Component
- * 
- * WebRTC-based video calling with:
- * - Camera/mic controls
- * - Screen sharing (Premium)
- * - Blur background option
- * - End call / safety exit
+ * VideoCallRoom — WebRTC video call UI
+ *
+ * Props:
+ *   callId        TEXT  — video_calls.id (already created by caller)
+ *   remoteUserId  UUID  — the other person's auth user id
+ *   remoteUserName string
+ *   remoteUserPhoto string | null
+ *   isCaller      bool  — true if we initiated the call
+ *   onEnd         fn    — called when call ends
  */
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Video, 
-  VideoOff, 
-  Mic, 
-  MicOff, 
-  PhoneOff,
-  Maximize,
-  Minimize,
-  Shield,
-  User,
-  Clock,
-  Loader2,
-  AlertTriangle,
-  Camera
+import {
+  Video, VideoOff, Mic, MicOff, PhoneOff,
+  Maximize, Minimize, Shield, User, Clock,
+  Loader2, AlertTriangle,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/components/utils/supabaseClient';
 
-// Call states
 const CALL_STATES = {
   CONNECTING: 'connecting',
   RINGING: 'ringing',
   CONNECTED: 'connected',
   ENDED: 'ended',
-  FAILED: 'failed'
+  FAILED: 'failed',
 };
+
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+];
 
 export default function VideoCallRoom({
   callId,
   remoteUserId,
-  remoteUserName,
-  remoteUserPhoto,
+  remoteUserName = 'Unknown',
+  remoteUserPhoto = null,
+  isCaller = true,
   onEnd,
-  className = ''
 }) {
-  const { user } = useAuth();
-  const [callState, setCallState] = useState(CALL_STATES.CONNECTING);
-  const [localStream, setLocalStream] = useState(null);
-  const [remoteStream, setRemoteStream] = useState(null);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
+  const [userId, setUserId]           = useState(null);
+  const [callState, setCallState]     = useState(CALL_STATES.CONNECTING);
+  const [isMuted, setIsMuted]         = useState(false);
+  const [isVideoOff, setIsVideoOff]   = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
-  const [error, setError] = useState(null);
+  const [error, setError]             = useState(null);
+  const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
 
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const peerConnectionRef = useRef(null);
-  const durationIntervalRef = useRef(null);
-  const containerRef = useRef(null);
+  const localVideoRef   = useRef(null);
+  const remoteVideoRef  = useRef(null);
+  const peerRef         = useRef(null);
+  const localStreamRef  = useRef(null);
+  const durationRef     = useRef(null);
+  const containerRef    = useRef(null);
+  const channelRef      = useRef(null);
 
-  // Initialize call
+  // Get current user ID
   useEffect(() => {
-    initializeCall();
-    
-    return () => {
-      cleanupCall();
-    };
-  }, [callId]);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id);
+    });
+  }, []);
 
-  // Initialize WebRTC connection
+  // Start call once we have userId
+  useEffect(() => {
+    if (!userId) return;
+    initializeCall();
+    return () => cleanupCall();
+  }, [userId]);
+
+  const sendSignal = async (type, payload) => {
+    await supabase.from('rtc_signals').insert({
+      call_id: callId,
+      from_user_id: userId,
+      to_user_id: remoteUserId,
+      type,
+      payload,
+    });
+  };
+
   const initializeCall = async () => {
     try {
       setCallState(CALL_STATES.CONNECTING);
 
       // Get local media
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user'
-        },
-        audio: true
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+        audio: true,
       });
-
-      setLocalStream(stream);
-      
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
+      localStreamRef.current = stream;
+      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
       // Create peer connection
-      const configuration = {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' }
-        ]
-      };
-
-      const peerConnection = new RTCPeerConnection(configuration);
-      peerConnectionRef.current = peerConnection;
+      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+      peerRef.current = pc;
 
       // Add local tracks
-      stream.getTracks().forEach(track => {
-        peerConnection.addTrack(track, stream);
-      });
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
-      // Handle remote stream
-      peerConnection.ontrack = (event) => {
-        setRemoteStream(event.streams[0]);
+      // Remote stream
+      pc.ontrack = (event) => {
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = event.streams[0];
         }
+        setHasRemoteVideo(true);
         setCallState(CALL_STATES.CONNECTED);
-        startDurationTimer();
+        startTimer();
       };
 
-      // ICE candidate handling
-      peerConnection.onicecandidate = async (event) => {
+      // ICE candidates
+      pc.onicecandidate = (event) => {
         if (event.candidate) {
-          await supabase
-            .from('rtc_signals')
-            .insert({
-              call_id: callId,
-              sender_id: user.id,
-              signal_type: 'ice-candidate',
-              signal_data: event.candidate
-            });
+          sendSignal('ice-candidate', event.candidate);
         }
       };
 
-      // Connection state changes
-      peerConnection.onconnectionstatechange = () => {
-        const state = peerConnection.connectionState;
-        
-        if (state === 'connected') {
-          setCallState(CALL_STATES.CONNECTED);
-        } else if (state === 'disconnected' || state === 'failed') {
+      pc.onconnectionstatechange = () => {
+        const s = pc.connectionState;
+        if (s === 'connected') { setCallState(CALL_STATES.CONNECTED); }
+        else if (s === 'disconnected' || s === 'failed') {
           setCallState(CALL_STATES.FAILED);
-          setError('Connection lost');
+          setError('Connection lost. The other person may have disconnected.');
         }
       };
 
-      // Create and send offer
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-
-      await supabase
-        .from('rtc_signals')
-        .insert({
-          call_id: callId,
-          sender_id: user.id,
-          signal_type: 'offer',
-          signal_data: offer
-        });
-
-      setCallState(CALL_STATES.RINGING);
-
-      // Listen for answer and ICE candidates
-      const subscription = supabase
-        .channel(`call-${callId}`)
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'rtc_signals',
-          filter: `call_id=eq.${callId}`
-        }, async (payload) => {
-          const signal = payload.new;
-          
-          if (signal.sender_id === user.id) return;
-
-          if (signal.signal_type === 'answer') {
-            await peerConnection.setRemoteDescription(
-              new RTCSessionDescription(signal.signal_data)
-            );
-          } else if (signal.signal_type === 'ice-candidate') {
-            await peerConnection.addIceCandidate(
-              new RTCIceCandidate(signal.signal_data)
-            );
+      // Subscribe to incoming signals
+      channelRef.current = supabase
+        .channel(`call-${callId}-${userId}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'rtc_signals', filter: `call_id=eq.${callId}` },
+          async ({ new: signal }) => {
+            if (signal.from_user_id === userId) return; // ignore own signals
+            await handleSignal(signal.type, signal.payload, pc);
           }
-        })
+        )
         .subscribe();
 
-      return () => subscription.unsubscribe();
+      // Caller creates offer; callee waits for it
+      if (isCaller) {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        await sendSignal('offer', offer);
+        setCallState(CALL_STATES.RINGING);
+      } else {
+        setCallState(CALL_STATES.RINGING);
+      }
 
     } catch (err) {
-      console.error('Call initialization error:', err);
-      setError(err.message || 'Failed to start call');
+      console.error('[VideoCall] init error:', err);
+      setError(err.message || 'Could not access camera/microphone');
       setCallState(CALL_STATES.FAILED);
     }
   };
 
-  // Cleanup call
-  const cleanupCall = () => {
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-    }
-    
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-    }
-
-    if (durationIntervalRef.current) {
-      clearInterval(durationIntervalRef.current);
+  const handleSignal = async (type, payload, pc) => {
+    try {
+      if (type === 'offer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(payload));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await sendSignal('answer', answer);
+      } else if (type === 'answer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(payload));
+      } else if (type === 'ice-candidate') {
+        await pc.addIceCandidate(new RTCIceCandidate(payload));
+      } else if (type === 'end') {
+        handleRemoteEnd();
+      }
+    } catch (err) {
+      console.error('[VideoCall] signal error:', type, err);
     }
   };
 
-  // Start duration timer
-  const startDurationTimer = () => {
-    durationIntervalRef.current = setInterval(() => {
+  const handleRemoteEnd = () => {
+    cleanupCall();
+    setCallState(CALL_STATES.ENDED);
+    setTimeout(() => onEnd?.(), 1500);
+  };
+
+  const cleanupCall = () => {
+    localStreamRef.current?.getTracks().forEach(t => t.stop());
+    peerRef.current?.close();
+    if (durationRef.current) clearInterval(durationRef.current);
+    if (channelRef.current) supabase.removeChannel(channelRef.current);
+  };
+
+  const startTimer = () => {
+    durationRef.current = setInterval(() => {
       setCallDuration(prev => prev + 1);
     }, 1000);
   };
 
-  // Toggle mute
   const toggleMute = () => {
-    if (localStream) {
-      localStream.getAudioTracks().forEach(track => {
-        track.enabled = !track.enabled;
-      });
-      setIsMuted(!isMuted);
-    }
+    localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = !t.enabled; });
+    setIsMuted(prev => !prev);
   };
 
-  // Toggle video
   const toggleVideo = () => {
-    if (localStream) {
-      localStream.getVideoTracks().forEach(track => {
-        track.enabled = !track.enabled;
-      });
-      setIsVideoOff(!isVideoOff);
-    }
+    localStreamRef.current?.getVideoTracks().forEach(t => { t.enabled = !t.enabled; });
+    setIsVideoOff(prev => !prev);
   };
 
-  // Toggle fullscreen
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen();
@@ -246,214 +214,154 @@ export default function VideoCallRoom({
     }
   };
 
-  // End call
   const endCall = async () => {
-    cleanupCall();
-    
-    // Update call status in DB
+    await sendSignal('end', {});
     await supabase
       .from('video_calls')
-      .update({ 
-        status: 'ended',
-        ended_at: new Date().toISOString(),
-        duration_seconds: callDuration
-      })
+      .update({ status: 'ended', ended_at: new Date().toISOString() })
       .eq('id', callId);
-
+    cleanupCall();
     setCallState(CALL_STATES.ENDED);
     onEnd?.();
   };
 
-  // Format duration
-  const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  const formatDuration = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   return (
-    <div 
-      ref={containerRef}
-      className={`relative bg-black overflow-hidden ${className}`}
-    >
-      {/* Remote video (full screen) */}
+    <div ref={containerRef} className="fixed inset-0 bg-black z-[200] flex flex-col overflow-hidden">
+      {/* Remote video */}
       <div className="absolute inset-0">
-        {remoteStream ? (
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-black">
-            {/* Placeholder with user photo/icon */}
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          className={`w-full h-full object-cover transition-opacity duration-500 ${hasRemoteVideo ? 'opacity-100' : 'opacity-0'}`}
+        />
+        {!hasRemoteVideo && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[#0D0D0D]">
             <div className="text-center">
               {remoteUserPhoto ? (
-                <img 
-                  src={remoteUserPhoto} 
-                  alt={remoteUserName}
-                  className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
-                />
+                <img src={remoteUserPhoto} alt="" className="w-28 h-28 rounded-full mx-auto mb-4 object-cover border-2 border-[#C8962C]/40" />
               ) : (
-                <div className="w-32 h-32 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
-                  <User className="w-16 h-16 text-white/40" />
+                <div className="w-28 h-28 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+                  <User className="w-14 h-14 text-white/30" />
                 </div>
               )}
-              <p className="text-xl font-bold text-white">{remoteUserName}</p>
-              
-              {/* Call state message */}
-              {callState === CALL_STATES.CONNECTING && (
-                <p className="text-white/60 mt-2 flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Connecting...
-                </p>
-              )}
-              {callState === CALL_STATES.RINGING && (
-                <p className="text-white/60 mt-2">Ringing...</p>
-              )}
+              <p className="text-xl font-black text-white">{remoteUserName}</p>
+              <p className="text-white/40 mt-2 text-sm flex items-center justify-center gap-2">
+                {callState === CALL_STATES.CONNECTING && <><Loader2 className="w-4 h-4 animate-spin" /> Connecting...</>}
+                {callState === CALL_STATES.RINGING && 'Ringing...'}
+                {callState === CALL_STATES.ENDED && 'Call ended'}
+              </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Local video (picture-in-picture) */}
+      {/* PiP local video */}
       <motion.div
         drag
         dragConstraints={containerRef}
-        className="absolute bottom-24 right-4 w-32 h-44 md:w-40 md:h-56 border-2 border-white/20 bg-black overflow-hidden cursor-move z-10"
+        className="absolute top-20 right-4 w-28 h-40 rounded-2xl overflow-hidden border border-white/20 bg-black cursor-move z-10 shadow-xl"
       >
         {!isVideoOff ? (
-          <video
-            ref={localVideoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover transform scale-x-[-1]"
-          />
+          <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-white/5">
-            <VideoOff className="w-8 h-8 text-white/40" />
+            <VideoOff className="w-6 h-6 text-white/30" />
           </div>
         )}
       </motion.div>
 
       {/* Top bar */}
-      <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent">
+      <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent z-10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1 bg-black/50 border border-white/20">
-              <Clock className="w-4 h-4 text-white/60" />
-              <span className="font-mono text-white">{formatDuration(callDuration)}</span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-black/60 rounded-full border border-white/10">
+              <Clock className="w-3.5 h-3.5 text-[#C8962C]" />
+              <span className="font-mono text-white text-sm">{formatDuration(callDuration)}</span>
             </div>
             {callState === CALL_STATES.CONNECTED && (
-              <span className="px-2 py-1 bg-[#39FF14]/20 text-[#39FF14] text-xs font-bold">
-                CONNECTED
+              <span className="px-2 py-1 bg-green-500/20 text-green-400 text-[10px] font-black rounded-full border border-green-500/30">
+                LIVE
               </span>
             )}
           </div>
-
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={toggleFullscreen}
-            className="text-white"
-          >
-            {isFullscreen ? (
-              <Minimize className="w-5 h-5" />
-            ) : (
-              <Maximize className="w-5 h-5" />
-            )}
-          </Button>
+          <button onClick={toggleFullscreen} className="w-8 h-8 flex items-center justify-center rounded-full bg-black/50 text-white/60">
+            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
-      {/* Control bar */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-        <div className="flex items-center justify-center gap-4">
-          {/* Mute */}
+      {/* Controls */}
+      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent z-10">
+        <div className="flex items-center justify-center gap-5 mb-4">
           <button
             onClick={toggleMute}
-            className={`
-              w-14 h-14 rounded-full flex items-center justify-center transition-colors
-              ${isMuted 
-                ? 'bg-red-500 hover:bg-red-600' 
-                : 'bg-white/20 hover:bg-white/30'
-              }
-            `}
+            className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${isMuted ? 'bg-red-500' : 'bg-white/20'}`}
           >
-            {isMuted ? (
-              <MicOff className="w-6 h-6 text-white" />
-            ) : (
-              <Mic className="w-6 h-6 text-white" />
-            )}
+            {isMuted ? <MicOff className="w-6 h-6 text-white" /> : <Mic className="w-6 h-6 text-white" />}
           </button>
 
-          {/* End call */}
           <button
             onClick={endCall}
-            className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
+            className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-lg"
           >
             <PhoneOff className="w-7 h-7 text-white" />
           </button>
 
-          {/* Toggle video */}
           <button
             onClick={toggleVideo}
-            className={`
-              w-14 h-14 rounded-full flex items-center justify-center transition-colors
-              ${isVideoOff 
-                ? 'bg-red-500 hover:bg-red-600' 
-                : 'bg-white/20 hover:bg-white/30'
-              }
-            `}
+            className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${isVideoOff ? 'bg-red-500' : 'bg-white/20'}`}
           >
-            {isVideoOff ? (
-              <VideoOff className="w-6 h-6 text-white" />
-            ) : (
-              <Video className="w-6 h-6 text-white" />
-            )}
-          </button>
-
-          {/* Camera flip (mobile) */}
-          <button
-            onClick={() => {/* TODO: Flip camera */}}
-            className="w-14 h-14 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors md:hidden"
-          >
-            <Camera className="w-6 h-6 text-white" />
+            {isVideoOff ? <VideoOff className="w-6 h-6 text-white" /> : <Video className="w-6 h-6 text-white" />}
           </button>
         </div>
 
-        {/* Safety button */}
-        <div className="flex justify-center mt-4">
+        {/* SOS / Safety exit */}
+        <div className="flex justify-center">
           <button
-            onClick={() => {
-              endCall();
-              // Could also trigger safety features
-            }}
-            className="px-4 py-2 bg-black/50 border border-white/20 text-white/60 text-xs 
-                       hover:border-red-500 hover:text-red-500 transition-colors flex items-center gap-2"
+            onClick={() => { endCall(); }}
+            className="px-4 py-2 rounded-full bg-black/60 border border-red-500/30 text-red-400 text-xs font-bold flex items-center gap-2"
           >
-            <Shield className="w-4 h-4" />
+            <Shield className="w-3.5 h-3.5" />
             Safety Exit
           </button>
         </div>
       </div>
 
-      {/* Error overlay */}
+      {/* Error */}
       <AnimatePresence>
         {error && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 p-6"
+          >
+            <div className="text-center max-w-xs">
+              <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+              <h3 className="text-lg font-black text-white mb-2">Call Error</h3>
+              <p className="text-white/50 text-sm mb-6">{error}</p>
+              <button
+                onClick={onEnd}
+                className="px-6 py-3 bg-[#C8962C] text-black font-black rounded-2xl"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Call ended overlay */}
+      <AnimatePresence>
+        {callState === CALL_STATES.ENDED && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="absolute inset-0 bg-black/90 flex items-center justify-center z-50"
           >
-            <div className="text-center p-6">
-              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Call Error</h3>
-              <p className="text-white/60 mb-4">{error}</p>
-              <Button onClick={onEnd}>Close</Button>
+            <div className="text-center">
+              <p className="text-2xl font-black text-white mb-2">Call Ended</p>
+              <p className="text-white/40 text-sm">{formatDuration(callDuration)}</p>
             </div>
           </motion.div>
         )}

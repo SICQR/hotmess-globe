@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import TelegramPanel from './TelegramPanel';
 import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
 import { useProfileOpener } from '@/lib/profile';
+import { useTaps } from '@/hooks/useTaps';
 
 const SkeletonCard = () => {
   return (
@@ -29,6 +30,10 @@ export type ProfilesGridProps = {
   containerClassName?: string;
   onOpenProfile?: (profile: Profile) => void;
   onNavigateUrl?: (url: string) => void;
+  /** Number of columns. 3 = compact ghosted layout (gap-0.5, square cards). */
+  cols?: 2 | 3;
+  /** Caller-provided viewer email (used for taps/woofs). Falls back to base44.auth.me(). */
+  viewerEmail?: string | null;
 };
 
 const normalizeEmail = (value: unknown) => String(value || '').trim().toLowerCase();
@@ -70,6 +75,8 @@ export default function ProfilesGrid({
   containerClassName = 'mx-auto max-w-6xl p-4',
   onOpenProfile,
   onNavigateUrl,
+  cols,
+  viewerEmail: viewerEmailProp,
 }: ProfilesGridProps) {
   const navigate = useNavigate();
   const { openProfile } = useProfileOpener();
@@ -79,9 +86,11 @@ export default function ProfilesGrid({
   const prevSentinelVisibleRef = useRef(false);
 
   const [viewerLocation, setViewerLocation] = useState<LatLng | null>(null);
-  const [viewerEmail, setViewerEmail] = useState<string | null>(null);
+  const [viewerEmail, setViewerEmail] = useState<string | null>(viewerEmailProp ?? null);
   const [viewerProfile, setViewerProfile] = useState<any>(null);
   const [isTelegramOpen, setIsTelegramOpen] = useState(false);
+
+  const { isTapped, sendTap } = useTaps(viewerEmail);
 
   const [gpsEnabled, setGpsEnabled] = useState(false);
 
@@ -98,6 +107,13 @@ export default function ProfilesGrid({
     setViewerLocation(liveLocation);
   }, [liveLocation]);
 
+  // Keep viewerEmail in sync when the prop changes
+  useEffect(() => {
+    if (viewerEmailProp != null) {
+      setViewerEmail(viewerEmailProp);
+    }
+  }, [viewerEmailProp]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -106,7 +122,8 @@ export default function ProfilesGrid({
       .then(async (me) => {
         if (cancelled) return;
         const email = normalizeEmail(me?.email);
-        setViewerEmail(email || null);
+        // Only set from auth if the caller didn't supply a viewerEmail prop
+        if (viewerEmailProp == null) setViewerEmail(email || null);
         setViewerProfile(me || null);
 
         // Prefer device GPS when the viewer has explicitly consented.
@@ -305,16 +322,35 @@ export default function ProfilesGrid({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+        <div className={cols === 3
+          ? 'grid grid-cols-3 gap-0.5'
+          : 'grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4'
+        }>
           {displayItems.map((profile) => (
-            <ProfileCard
-              key={profile.id}
-              profile={profile}
-              viewerLocation={viewerLocation}
-              viewerProfile={viewerProfile}
-              onOpenProfile={handleOpenProfile}
-              onNavigateUrl={handleNavigateUrl}
-            />
+            cols === 3 ? (
+              <div key={profile.id} className="aspect-square overflow-hidden">
+                <ProfileCard
+                  profile={profile}
+                  viewerLocation={viewerLocation}
+                  viewerProfile={viewerProfile}
+                  onOpenProfile={handleOpenProfile}
+                  onNavigateUrl={handleNavigateUrl}
+                  isTapped={isTapped}
+                  onSendTap={sendTap}
+                />
+              </div>
+            ) : (
+              <ProfileCard
+                key={profile.id}
+                profile={profile}
+                viewerLocation={viewerLocation}
+                viewerProfile={viewerProfile}
+                onOpenProfile={handleOpenProfile}
+                onNavigateUrl={handleNavigateUrl}
+                isTapped={isTapped}
+                onSendTap={sendTap}
+              />
+            )
           ))}
 
           {Array.from({ length: skeletonCount }).map((_, idx) => (

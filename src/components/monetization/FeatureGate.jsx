@@ -102,8 +102,8 @@ export default function FeatureGate({
           `}
         >
           {showLockIcon && (
-            <div className="w-12 h-12 bg-[#FF1493]/20 border border-[#FF1493] flex items-center justify-center mb-4">
-              <Lock className="w-6 h-6 text-[#FF1493]" />
+            <div className="w-12 h-12 bg-[#C8962C]/20 border border-[#C8962C] flex items-center justify-center mb-4">
+              <Lock className="w-6 h-6 text-[#C8962C]" />
             </div>
           )}
 
@@ -117,7 +117,7 @@ export default function FeatureGate({
 
           <Button
             onClick={() => setShowUpsell(true)}
-            className="bg-[#FF1493] hover:bg-[#FF1493]/80"
+            className="bg-[#C8962C] hover:bg-[#C8962C]/80"
           >
             <Crown className="w-4 h-4 mr-2" />
             Upgrade
@@ -161,7 +161,7 @@ export function PremiumBadge({ tier = 'PREMIUM', size = 'sm', className = '' }) 
   };
 
   const colors = {
-    PREMIUM: { bg: 'bg-[#FF1493]/20', text: 'text-[#FF1493]', border: 'border-[#FF1493]' },
+    PREMIUM: { bg: 'bg-[#C8962C]/20', text: 'text-[#C8962C]', border: 'border-[#C8962C]' },
     ELITE: { bg: 'bg-[#B026FF]/20', text: 'text-[#B026FF]', border: 'border-[#B026FF]' }
   };
 

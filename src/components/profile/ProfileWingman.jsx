@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, MessageCircle, Lightbulb, Heart, RefreshCw, Copy, Check, ChevronDown, ChevronUp, Zap, MapPin, Music, Star } from 'lucide-react';
+import { Sparkles, MessageCircle, Lightbulb, Heart, RefreshCw, Copy, Check, ChevronDown, ChevronUp, Zap, MapPin, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -126,7 +126,7 @@ const calculateMatchInsights = (profile, currentUser) => {
     insights.push({
       icon: Heart,
       text: `You both listed "${sharedInterests[0]}"${sharedInterests.length > 1 ? ` and ${sharedInterests.length - 1} more` : ''}`,
-      color: '#FF1493',
+      color: '#C8962C',
     });
   }
   
@@ -157,17 +157,6 @@ const calculateMatchInsights = (profile, currentUser) => {
       icon: Zap,
       text: 'Active at similar times',
       color: '#39FF14',
-    });
-  }
-  
-  // XP/Level proximity
-  const myLevel = Math.floor((currentUser?.xp || 0) / 1000) + 1;
-  const theirLevel = Math.floor((profile.xp || 0) / 1000) + 1;
-  if (Math.abs(myLevel - theirLevel) <= 3) {
-    insights.push({
-      icon: Star,
-      text: `Similar experience level (LVL ${theirLevel})`,
-      color: '#FFD700',
     });
   }
   
@@ -219,7 +208,7 @@ export default function ProfileWingman({
   if (!profile) return null;
   
   return (
-    <div className={cn("bg-black border-2 border-[#FF1493]/50", className)}>
+    <div className={cn("bg-black border-2 border-[#C8962C]/50", className)}>
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -229,7 +218,7 @@ export default function ProfileWingman({
           <Sparkles className="w-5 h-5 text-[#FFD700]" />
           <span className="font-black text-sm uppercase tracking-wider text-white">AI Wingman</span>
           {matchScore && (
-            <span className="ml-2 px-2 py-0.5 bg-[#FF1493]/20 text-[#FF1493] text-xs font-bold rounded-full">
+            <span className="ml-2 px-2 py-0.5 bg-[#C8962C]/20 text-[#C8962C] text-xs font-bold rounded-full">
               {matchScore}% Match
             </span>
           )}

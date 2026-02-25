@@ -20,8 +20,8 @@ const STEPS = [
 ];
 
 const SELLER_BENEFITS = [
-  { icon: Zap, text: '0% fees on XP sales', color: '#FFD700' },
-  { icon: Star, text: 'Featured in marketplace', color: '#FF1493' },
+  { icon: Zap, text: 'Low platform fees', color: '#C8962C' },
+  { icon: Star, text: 'Featured in marketplace', color: '#C8962C' },
   { icon: Shield, text: 'Secure escrow payments', color: '#00D9FF' },
   { icon: Store, text: 'Your own storefront', color: '#39FF14' },
 ];
@@ -81,9 +81,9 @@ export default function SellerOnboarding() {
             exit={{ opacity: 0, x: -20 }}
             className="text-center"
           >
-            <Store className="w-20 h-20 text-[#FF1493] mx-auto mb-6" />
+            <Store className="w-20 h-20 text-[#C8962C] mx-auto mb-6" />
             <h2 className="text-3xl font-black uppercase mb-4">
-              Start Selling on <span className="text-[#FF1493]">HOTMESS</span>
+              Start Selling on <span className="text-[#C8962C]">HOTMESS</span>
             </h2>
             <p className="text-white/60 mb-8 max-w-md mx-auto">
               Join our community marketplace. Sell merch, art, tickets, services, 
@@ -99,7 +99,7 @@ export default function SellerOnboarding() {
               ))}
             </div>
 
-            <Button onClick={nextStep} className="bg-[#FF1493] text-black font-black px-8 py-6">
+            <Button onClick={nextStep} className="bg-[#C8962C] text-black font-black px-8 py-6">
               Get Started <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </motion.div>
@@ -148,7 +148,7 @@ export default function SellerOnboarding() {
                       onClick={() => setFormData({ ...formData, category: cat })}
                       className={`py-3 rounded-lg font-bold text-sm transition-all ${
                         formData.category === cat
-                          ? 'bg-[#FF1493] text-black'
+                          ? 'bg-[#C8962C] text-black'
                           : 'bg-white/5 border border-white/20 hover:bg-white/10'
                       }`}
                     >
@@ -195,14 +195,14 @@ export default function SellerOnboarding() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <Zap className={`w-8 h-8 ${formData.acceptsXP ? 'text-[#FFD700]' : 'text-white/40'}`} />
+                    <Zap className={`w-8 h-8 ${formData.acceptsXP ? 'text-[#C8962C]' : 'text-white/40'}`} />
                     <div>
-                      <p className="font-black text-lg">Accept XP</p>
+                      <p className="font-black text-lg">Accept Credits</p>
                       <p className="text-white/60 text-sm">0% platform fees • Instant transfer</p>
                     </div>
                   </div>
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                    formData.acceptsXP ? 'border-[#FFD700] bg-[#FFD700]' : 'border-white/40'
+                    formData.acceptsXP ? 'border-[#C8962C] bg-[#C8962C]' : 'border-white/40'
                   }`}>
                     {formData.acceptsXP && <Check className="w-4 h-4 text-black" />}
                   </div>
@@ -235,7 +235,7 @@ export default function SellerOnboarding() {
             </div>
 
             <div className="p-4 bg-white/5 rounded-lg text-sm text-white/60">
-              <p><strong>Tip:</strong> Accepting XP helps you reach more buyers in the HOTMESS community!</p>
+              <p><strong>Tip:</strong> Accepting multiple payment methods helps you reach more buyers in the HOTMESS community!</p>
             </div>
           </motion.div>
         );
@@ -293,10 +293,10 @@ export default function SellerOnboarding() {
               </div>
             ) : (
               <div className="text-center py-12 bg-white/5 rounded-xl">
-                <Zap className="w-12 h-12 text-[#FFD700] mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">XP-Only Seller</h3>
+                <Zap className="w-12 h-12 text-[#C8962C] mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">Credit Seller</h3>
                 <p className="text-white/60 max-w-sm mx-auto">
-                  You're set up to accept XP payments only. XP is transferred instantly to your account when a sale is made.
+                  You're set up to accept credit payments. Payments are transferred instantly to your account when a sale is made.
                 </p>
               </div>
             )}
@@ -332,7 +332,7 @@ export default function SellerOnboarding() {
                 <div className="flex justify-between">
                   <span className="text-white/60">Accepts</span>
                   <span className="font-bold">
-                    {[formData.acceptsXP && 'XP', formData.acceptsGBP && 'GBP'].filter(Boolean).join(' + ')}
+                    {[formData.acceptsXP && 'Credits', formData.acceptsGBP && 'GBP'].filter(Boolean).join(' + ')}
                   </span>
                 </div>
               </div>
@@ -366,12 +366,12 @@ export default function SellerOnboarding() {
           {STEPS.map((s, idx) => (
             <div key={s.id} className="flex-1 flex items-center">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                idx <= step ? 'bg-[#FF1493]' : 'bg-white/10'
+                idx <= step ? 'bg-[#C8962C]' : 'bg-white/10'
               }`}>
                 <s.icon className={`w-5 h-5 ${idx <= step ? 'text-black' : 'text-white/40'}`} />
               </div>
               {idx < STEPS.length - 1 && (
-                <div className={`flex-1 h-1 mx-2 ${idx < step ? 'bg-[#FF1493]' : 'bg-white/10'}`} />
+                <div className={`flex-1 h-1 mx-2 ${idx < step ? 'bg-[#C8962C]' : 'bg-white/10'}`} />
               )}
             </div>
           ))}
@@ -388,7 +388,7 @@ export default function SellerOnboarding() {
             <Button onClick={prevStep} variant="outline" className="border-white/20">
               <ArrowLeft className="w-4 h-4 mr-2" /> Back
             </Button>
-            <Button onClick={nextStep} className="bg-[#FF1493] text-black font-bold">
+            <Button onClick={nextStep} className="bg-[#C8962C] text-black font-bold">
               Continue <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>

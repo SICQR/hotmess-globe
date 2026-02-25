@@ -8,7 +8,7 @@ export default function BrandBackground() {
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
       <div
         className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full blur-3xl opacity-25 animate-pulse"
-        style={{ background: '#FF1493' }}
+        style={{ background: '#C8962C' }}
       />
       <div
         className="absolute -bottom-32 -right-32 w-[400px] h-[400px] rounded-full blur-3xl opacity-20 animate-pulse"

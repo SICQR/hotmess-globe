@@ -116,7 +116,7 @@ export default function GlobeSearch({
             if (e.key === 'Escape') handleClear();
           }}
           placeholder="Search cities, beacons..."
-          className="pl-10 pr-24 bg-black/90 border-white/20 text-white placeholder:text-white/40 focus:border-[#FF1493]/40"
+          className="pl-10 pr-24 bg-black/90 border-white/20 text-white placeholder:text-white/40 focus:border-[#C8962C]/40"
         />
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {query && (
@@ -133,7 +133,7 @@ export default function GlobeSearch({
             variant="ghost"
             size="icon"
             onClick={() => setRadiusMode(!radiusMode)}
-            className={`h-7 w-7 ${radiusMode ? 'text-[#FF1493] bg-[#FF1493]/20' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
+            className={`h-7 w-7 ${radiusMode ? 'text-[#C8962C] bg-[#C8962C]/20' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
           >
             <Circle className="w-4 h-4" />
           </Button>
@@ -166,7 +166,7 @@ export default function GlobeSearch({
             </div>
             {selectedCenter && (
               <div className="text-xs text-white/60 mb-3 flex items-center gap-2">
-                <MapPin className="w-3 h-3 text-[#FF1493]" />
+                <MapPin className="w-3 h-3 text-[#C8962C]" />
                 Center: {selectedCenter.name}
               </div>
             )}
@@ -205,13 +205,13 @@ export default function GlobeSearch({
                     <div 
                       className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                       style={{ 
-                        backgroundColor: city.active ? '#FF149320' : '#ffffff10',
-                        border: city.active ? '1px solid #FF149340' : '1px solid #ffffff10'
+                        backgroundColor: city.active ? '#C8962C20' : '#ffffff10',
+                        border: city.active ? '1px solid #C8962C40' : '1px solid #ffffff10'
                       }}
                     >
                       <MapPin 
                         className="w-4 h-4" 
-                        style={{ color: city.active ? '#FF1493' : '#ffffff60' }}
+                        style={{ color: city.active ? '#C8962C' : '#ffffff60' }}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -223,7 +223,7 @@ export default function GlobeSearch({
                       </div>
                     </div>
                     {radiusMode && (
-                      <Circle className="w-4 h-4 text-[#FF1493]" />
+                      <Circle className="w-4 h-4 text-[#C8962C]" />
                     )}
                   </button>
                 ))}
@@ -252,11 +252,11 @@ export default function GlobeSearch({
                     <div 
                       className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                       style={{ 
-                        backgroundColor: '#FF149320',
-                        border: '1px solid #FF149340'
+                        backgroundColor: '#C8962C20',
+                        border: '1px solid #C8962C40'
                       }}
                     >
-                      <MapPin className="w-4 h-4 text-[#FF1493]" />
+                      <MapPin className="w-4 h-4 text-[#C8962C]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-white text-sm font-semibold truncate">
@@ -267,7 +267,7 @@ export default function GlobeSearch({
                       </div>
                     </div>
                     {radiusMode && (
-                      <Circle className="w-4 h-4 text-[#FF1493]" />
+                      <Circle className="w-4 h-4 text-[#C8962C]" />
                     )}
                   </button>
                 ))}

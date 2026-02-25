@@ -49,7 +49,7 @@ export function GrindrCard({ name, photo, distance, isOnline, lastSeen, lookingF
             {lookingFor && lookingFor.length > 0 && (
               <div className="flex gap-1 mt-1 flex-wrap">
                 {lookingFor.slice(0, 2).map((tag, i) => (
-                  <span key={i} className="px-1.5 py-0.5 bg-fuchsia-600/80 rounded text-[10px] text-white">
+                  <span key={i} className="px-1.5 py-0.5 bg-[#C8962C]/80 rounded text-[10px] text-white">
                     {tag}
                   </span>
                 ))}
@@ -60,7 +60,7 @@ export function GrindrCard({ name, photo, distance, isOnline, lastSeen, lookingF
           {/* Message button */}
           <button
             onClick={(e) => { e.stopPropagation(); onMessage(); }}
-            className="w-9 h-9 flex items-center justify-center bg-fuchsia-600 rounded-full hover:bg-fuchsia-500 transition-colors ml-2 shrink-0"
+            className="w-9 h-9 flex items-center justify-center bg-[#C8962C] rounded-full hover:bg-[#B5851D] transition-colors ml-2 shrink-0"
           >
             <MessageCircle className="w-4 h-4 text-white" />
           </button>

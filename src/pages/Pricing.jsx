@@ -10,15 +10,14 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Crown, 
-  Check, 
-  X, 
-  Zap, 
-  Store, 
-  Ticket, 
-  MapPin, 
-  Globe, 
+import {
+  Crown,
+  Check,
+  X,
+  Store,
+  Ticket,
+  MapPin,
+  Globe,
   Sparkles,
   Calculator,
   Users,
@@ -29,7 +28,8 @@ import {
   Info,
   Radio,
   Mic,
-  Volume2
+  Volume2,
+  Zap
 } from 'lucide-react';
 import {
   MEMBERSHIP_TIERS,
@@ -37,7 +37,6 @@ import {
   VENUE_PACKAGES,
   GLOBE_ADVERTISING,
   RADIO_ADVERTISING,
-  XP_PACKAGES,
   formatPrice,
   calculateSellerEarnings,
   calculateTicketFees,
@@ -237,36 +236,6 @@ function MembershipSection({ billingPeriod, setBillingPeriod }) {
         ))}
       </div>
 
-      {/* XP Packages */}
-      <div className="mt-12">
-        <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-amber-400" />
-          XP Packages
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {XP_PACKAGES.map((pkg) => (
-            <div
-              key={pkg.id}
-              className={cn(
-                'p-4 rounded-xl border text-center',
-                pkg.popular
-                  ? 'border-hot-500 bg-hot-500/10'
-                  : 'border-white/10 bg-white/5'
-              )}
-            >
-              {pkg.popular && (
-                <span className="text-xs bg-hot-500 text-white px-2 py-0.5 rounded-full">Popular</span>
-              )}
-              <p className="text-2xl font-bold mt-2">{pkg.xp.toLocaleString()}</p>
-              <p className="text-white/40 text-xs">XP</p>
-              {pkg.bonus > 0 && (
-                <p className="text-emerald-400 text-xs mt-1">+{pkg.bonus * 100}% bonus</p>
-              )}
-              <p className="text-lg font-bold mt-2">{formatPrice(pkg.price)}</p>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

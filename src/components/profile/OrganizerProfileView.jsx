@@ -147,7 +147,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
 
         <div className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black/30">
           {activeIsPremium ? (
-            <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#FF1493]/15 border border-[#FFD700]/40 flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#C8962C]/15 border border-[#FFD700]/40 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-3xl mb-2">🔒</div>
                 <div className="text-xs text-[#FFD700] font-black uppercase">Premium</div>
@@ -192,7 +192,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
                 disabled={!url}
               >
                 {premium ? (
-                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#FF1493]/15 flex items-center justify-center">
+                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#C8962C]/15 flex items-center justify-center">
                     <div className="text-xs text-[#FFD700] font-black">🔒</div>
                   </div>
                 ) : url ? (
@@ -227,7 +227,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
           <div className="text-xs text-white/40 uppercase">Events</div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-          <Users className="w-6 h-6 mx-auto mb-2 text-[#FF1493]" />
+          <Users className="w-6 h-6 mx-auto mb-2 text-[#C8962C]" />
           <div className="text-2xl font-black">{stats.totalRsvps}</div>
           <div className="text-xs text-white/40 uppercase">Total RSVPs</div>
         </div>
@@ -247,15 +247,15 @@ export default function OrganizerProfileView({ user, currentUser }) {
 
       {/* Upcoming Events */}
       {upcomingEvents.length > 0 && (
-        <div className="bg-gradient-to-br from-[#FF1493]/10 to-[#B026FF]/10 border border-[#FF1493]/30 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#C8962C]/10 to-[#B026FF]/10 border border-[#C8962C]/30 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-black uppercase flex items-center gap-2">
-              <Clock className="w-5 h-5 text-[#FF1493]" />
+              <Clock className="w-5 h-5 text-[#C8962C]" />
               Upcoming Events
             </h3>
             <Link 
               to="/events"
-              className="text-xs text-[#FF1493] hover:text-white uppercase font-bold"
+              className="text-xs text-[#C8962C] hover:text-white uppercase font-bold"
             >
               View All →
             </Link>
@@ -266,7 +266,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
               <Link
                 key={event.id}
                 to={`/events/${event.id}`}
-                className="block p-4 bg-black/30 border border-white/10 hover:border-[#FF1493]/50 transition-colors group"
+                className="block p-4 bg-black/30 border border-white/10 hover:border-[#C8962C]/50 transition-colors group"
               >
                 <div className="flex items-start gap-4">
                   {event.image_url ? (
@@ -276,13 +276,13 @@ export default function OrganizerProfileView({ user, currentUser }) {
                       className="w-20 h-20 object-cover flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-20 h-20 bg-gradient-to-br from-[#FF1493]/30 to-[#B026FF]/30 flex items-center justify-center flex-shrink-0">
-                      <PartyPopper className="w-8 h-8 text-[#FF1493]" />
+                    <div className="w-20 h-20 bg-gradient-to-br from-[#C8962C]/30 to-[#B026FF]/30 flex items-center justify-center flex-shrink-0">
+                      <PartyPopper className="w-8 h-8 text-[#C8962C]" />
                     </div>
                   )}
                   
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-black text-white group-hover:text-[#FF1493] transition-colors">
+                    <h4 className="font-black text-white group-hover:text-[#C8962C] transition-colors">
                       {event.title}
                     </h4>
                     <div className="flex items-center gap-2 text-sm text-white/60 mt-1">
@@ -298,7 +298,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
                     )}
                   </div>
 
-                  <Button size="sm" className="bg-[#FF1493] text-white font-bold uppercase text-xs flex-shrink-0">
+                  <Button size="sm" className="bg-[#C8962C] text-white font-bold uppercase text-xs flex-shrink-0">
                     <Ticket className="w-3 h-3 mr-1" />
                     RSVP
                   </Button>
@@ -382,7 +382,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
 
       {/* Contact for Booking */}
       {user?.email !== currentUser?.email && (
-        <div className="bg-gradient-to-r from-[#00D9FF]/20 to-[#FF1493]/20 border border-[#00D9FF]/40 rounded-xl p-6">
+        <div className="bg-gradient-to-r from-[#00D9FF]/20 to-[#C8962C]/20 border border-[#00D9FF]/40 rounded-xl p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h3 className="text-lg font-black uppercase mb-1">Book an Event</h3>

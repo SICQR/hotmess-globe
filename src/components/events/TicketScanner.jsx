@@ -165,7 +165,7 @@ export default function TicketScanner({ event, onClose }) {
             <div className="space-y-4">
               <Button
                 onClick={startScanning}
-                className="w-full bg-[#FF1493] hover:bg-white text-black font-black py-6"
+                className="w-full bg-[#C8962C] hover:bg-white text-black font-black py-6"
               >
                 <Camera className="w-5 h-5 mr-2" />
                 START SCANNING

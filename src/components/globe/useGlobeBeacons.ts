@@ -32,7 +32,8 @@ export function useGlobeBeacons({
   const managerRef = useRef<BeaconManager | null>(null);
   
   // Get beacons from Supabase
-  const beacons = useBeacons(supabase);
+  // Use 'beacons' table as the canonical source for events (the 'events' table may not exist)
+  const beacons = useBeacons(supabase, { eventsTable: 'beacons' });
 
   // Initialize BeaconManager when scene is ready
   useEffect(() => {

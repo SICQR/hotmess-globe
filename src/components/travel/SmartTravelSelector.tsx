@@ -142,8 +142,8 @@ const modeConfig: Record<TravelMode, {
   drive: {
     icon: Car,
     label: 'Drive',
-    color: 'text-[#FF1493]',
-    bgColor: 'bg-[#FF1493]',
+    color: 'text-[#C8962C]',
+    bgColor: 'bg-[#C8962C]',
   },
   uber: {
     icon: Car,
@@ -248,7 +248,7 @@ export function SmartTravelSelector({
             className={cn(
               'w-full p-4 rounded-lg border-2 transition-all',
               selectedMode === recommendedOption.mode
-                ? 'border-[#FF1493] bg-[#FF1493]/10'
+                ? 'border-[#C8962C] bg-[#C8962C]/10'
                 : 'border-white/20 bg-white/5 hover:border-white/40'
             )}
           >
@@ -286,7 +286,7 @@ export function SmartTravelSelector({
                 {recommendedOption.mode === 'uber' ? (
                   <Button
                     size="sm"
-                    className="text-xs bg-gradient-to-r from-[#FF1493] to-[#FFD700] hover:from-[#FF0080] hover:to-[#FFC700] border-none text-black font-bold"
+                    className="text-xs bg-gradient-to-r from-[#C8962C] to-[#FFD700] hover:from-[#FF0080] hover:to-[#FFC700] border-none text-black font-bold"
                     onClick={(e) => {
                       e.stopPropagation();
                       onRequestRide?.();
@@ -354,7 +354,7 @@ export function SmartTravelSelector({
                         className={cn(
                           'p-3 rounded-lg border transition-all text-center',
                           isSelected
-                            ? 'border-[#FF1493] bg-[#FF1493]/10'
+                            ? 'border-[#C8962C] bg-[#C8962C]/10'
                             : 'border-white/10 bg-white/5 hover:border-white/30'
                         )}
                       >
@@ -433,7 +433,7 @@ export function TravelModeQuickSelect({
             className={cn(
               'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all',
               isSelected
-                ? 'border-[#FF1493] bg-[#FF1493]/10 text-white'
+                ? 'border-[#C8962C] bg-[#C8962C]/10 text-white'
                 : 'border-white/10 bg-white/5 text-white/60 hover:border-white/30 hover:text-white'
             )}
           >

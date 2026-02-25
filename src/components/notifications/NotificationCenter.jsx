@@ -85,9 +85,7 @@ export default function NotificationCenter({ currentUser }) {
           }
         }
       )
-      .subscribe((status) => {
-        console.log('[NotificationCenter] Subscription status:', status);
-      });
+      .subscribe();
 
     // Also subscribe for admin notifications if user is admin
     let adminChannel;
@@ -103,7 +101,6 @@ export default function NotificationCenter({ currentUser }) {
             filter: 'user_email=eq.admin',
           },
           (payload) => {
-            console.log('[NotificationCenter] New admin notification:', payload);
             queryClient.invalidateQueries(['notifications']);
           }
         )
@@ -158,11 +155,11 @@ export default function NotificationCenter({ currentUser }) {
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-white hover:text-[#FF1493] transition-colors"
+          className="relative text-white hover:text-[#C8962C] transition-colors"
         >
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF1493] text-black text-[10px] font-black flex items-center justify-center rounded-full">
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#C8962C] text-black text-[10px] font-black flex items-center justify-center rounded-full">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -204,7 +201,7 @@ export default function NotificationCenter({ currentUser }) {
                   >
                     <div className="flex gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        notification.read ? 'bg-white/10' : 'bg-[#FF1493]'
+                        notification.read ? 'bg-white/10' : 'bg-[#C8962C]'
                       }`}>
                         <Icon className={`w-4 h-4 ${notification.read ? 'text-white/40' : 'text-black'}`} />
                       </div>

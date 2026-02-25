@@ -159,7 +159,7 @@ export default function EditBeacon() {
               <button
                 onClick={() => setStep(s)}
                 className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold transition-all ${
-                  s === step ? 'border-[#FF1493] bg-[#FF1493] text-black' :
+                  s === step ? 'border-[#C8962C] bg-[#C8962C] text-black' :
                   'border-white/20 text-white/40 hover:border-white/40'
                 }`}
               >
@@ -179,7 +179,7 @@ export default function EditBeacon() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
+                className="bg-white/5 border-2 border-[#C8962C] rounded-none p-6 space-y-6"
               >
                 <h2 className="text-2xl font-black uppercase mb-4">Basic Info</h2>
                 
@@ -262,7 +262,7 @@ export default function EditBeacon() {
                 </div>
 
                 <div className="pt-4 flex justify-end">
-                  <Button type="button" onClick={() => setStep(2)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
+                  <Button type="button" onClick={() => setStep(2)} className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-black rounded-none">
                     Next <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -275,7 +275,7 @@ export default function EditBeacon() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
+                className="bg-white/5 border-2 border-[#C8962C] rounded-none p-6 space-y-6"
               >
                 <h2 className="text-2xl font-black uppercase mb-4">Location & Time</h2>
 
@@ -347,7 +347,7 @@ export default function EditBeacon() {
                   <Button type="button" onClick={() => setStep(1)} variant="outline" className="border-white/20 text-white rounded-none">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
-                  <Button type="button" onClick={() => setStep(3)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
+                  <Button type="button" onClick={() => setStep(3)} className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-black rounded-none">
                     Next <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -360,7 +360,7 @@ export default function EditBeacon() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
+                className="bg-white/5 border-2 border-[#C8962C] rounded-none p-6 space-y-6"
               >
                 <h2 className="text-2xl font-black uppercase mb-4">Media & Promo</h2>
 
@@ -388,7 +388,7 @@ export default function EditBeacon() {
                       className="hidden"
                     />
                     {formData.image_url && (
-                      <img src={formData.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg border-2 border-[#FF1493]" />
+                      <img src={formData.image_url} alt="Preview" className="w-full h-48 object-cover rounded-lg border-2 border-[#C8962C]" />
                     )}
                   </div>
                 </div>
@@ -417,7 +417,7 @@ export default function EditBeacon() {
                       className="hidden"
                     />
                     {formData.video_url && (
-                      <video src={formData.video_url} controls className="w-full h-48 rounded-lg border-2 border-[#FF1493]" />
+                      <video src={formData.video_url} controls className="w-full h-48 rounded-lg border-2 border-[#C8962C]" />
                     )}
                   </div>
                 </div>
@@ -426,7 +426,7 @@ export default function EditBeacon() {
                   <Button type="button" onClick={() => setStep(2)} variant="outline" className="border-white/20 text-white rounded-none">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </Button>
-                  <Button type="button" onClick={() => setStep(4)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black rounded-none">
+                  <Button type="button" onClick={() => setStep(4)} className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-black rounded-none">
                     Next <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -439,7 +439,7 @@ export default function EditBeacon() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="bg-white/5 border-2 border-[#FF1493] rounded-none p-6 space-y-6"
+                className="bg-white/5 border-2 border-[#C8962C] rounded-none p-6 space-y-6"
               >
                 <h2 className="text-2xl font-black uppercase mb-4">Engagement</h2>
 
@@ -459,7 +459,7 @@ export default function EditBeacon() {
 
                 <div>
                   <label className="text-sm text-white/60 uppercase tracking-wider mb-2 block">
-                    XP Reward
+                    Scan Reward
                   </label>
                   <Input
                     type="number"

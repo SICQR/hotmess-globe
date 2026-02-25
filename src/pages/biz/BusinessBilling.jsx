@@ -22,7 +22,7 @@ const PLANS = [
     id: 'pro',
     name: 'Venue Pro',
     price: 149,
-    color: '#FF1493',
+    color: '#C8962C',
     icon: Sparkles,
     popular: true,
     features: ['Unlimited listings', 'QR check-in', 'Priority support', 'Featured placement']
@@ -86,7 +86,7 @@ export default function BusinessBilling() {
             Back to Dashboard
           </Button>
           <h1 className="text-3xl font-black uppercase">
-            Billing & <span className="text-[#FF1493]">Payments</span>
+            Billing & <span className="text-[#C8962C]">Payments</span>
           </h1>
           <p className="text-white/60 mt-2">Manage your subscription and payment methods</p>
         </div>
@@ -97,7 +97,7 @@ export default function BusinessBilling() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/5 border-2 border-[#FF1493] p-6 mb-8"
+          className="bg-white/5 border-2 border-[#C8962C] p-6 mb-8"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -115,7 +115,7 @@ export default function BusinessBilling() {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-black text-[#FF1493]">£{selectedPlan?.price || 49}</p>
+              <p className="text-3xl font-black text-[#C8962C]">£{selectedPlan?.price || 49}</p>
               <p className="text-xs text-white/60">per month</p>
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function BusinessBilling() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`relative p-6 border-2 transition-all ${
-                  isActive ? 'border-[#FF1493] bg-[#FF1493]/10' : 'border-white/10 hover:border-white/30'
+                  isActive ? 'border-[#C8962C] bg-[#C8962C]/10' : 'border-white/10 hover:border-white/30'
                 }`}
               >
                 {plan.popular && (

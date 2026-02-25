@@ -31,7 +31,7 @@ const FEATURE_CATEGORIES = [
     id: 'safety',
     title: 'SAFETY FIRST',
     subtitle: 'Your wellbeing is our priority',
-    color: '#FF1493',
+    color: '#C8962C',
     icon: Shield,
     href: '/features/safety',
     features: [
@@ -191,7 +191,7 @@ export default function Features() {
               transition={{ delay: i * 0.1 }}
               className="bg-white/5 border border-white/10 p-6 text-center"
             >
-              <div className="text-3xl font-black text-[#FF1493]">{stat.value}</div>
+              <div className="text-3xl font-black text-[#C8962C]">{stat.value}</div>
               <div className="text-xs text-white/60 uppercase tracking-wider mt-1">{stat.label}</div>
             </motion.div>
           ))}
@@ -201,11 +201,11 @@ export default function Features() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-[#FF1493]/20 to-[#B026FF]/20 border-2 border-[#FF1493] p-6 md:p-8 mb-16"
+          className="bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border-2 border-[#C8962C] p-6 md:p-8 mb-16"
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-[#FF1493] flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-[#C8962C] flex items-center justify-center flex-shrink-0">
                 <Shield className="w-6 h-6 text-black" />
               </div>
               <div>

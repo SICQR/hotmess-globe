@@ -1,10 +1,15 @@
 /**
  * SimpleProfileCard — Clean, brutalist profile card
- * 
+ *
+ * @deprecated Legacy variant. Canonical profile card is SmartProfileCard
+ * at src/features/profilesGrid/SmartProfileCard.tsx (Ring 4 OS Remap).
+ * Used only by ProfileCard.tsx in profilesGrid. Migrate to SmartProfileCard
+ * when refactoring that component.
+ *
  * Design principles:
  * - Minimal: photo, name, status, one action
  * - Brutalist: sharp edges, high contrast
- * - HOTMESS colors: hot pink (#FF1493), cyan (#00D9FF)
+ * - HOTMESS colors: hot pink (#C8962C), cyan (#00D9FF)
  * - Mobile-first: 44px touch targets
  */
 
@@ -71,7 +76,7 @@ export function SimpleProfileCard({
           loading="lazy"
         />
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FF1493]/20 to-[#00D9FF]/20 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#C8962C]/20 to-[#00D9FF]/20 flex items-center justify-center">
           <span className="text-3xl font-black text-white/60">{initials}</span>
         </div>
       )}
@@ -89,7 +94,7 @@ export function SimpleProfileCard({
 
       {/* Match badge */}
       {matchPercent && matchPercent > 0 && (
-        <div className="absolute top-3 left-3 px-2 py-1 bg-gradient-to-r from-[#FF1493] to-[#00D9FF] text-black text-[10px] font-black uppercase">
+        <div className="absolute top-3 left-3 px-2 py-1 bg-gradient-to-r from-[#C8962C] to-[#00D9FF] text-black text-[10px] font-black uppercase">
           {matchPercent}% MATCH
         </div>
       )}
@@ -118,7 +123,7 @@ export function SimpleProfileCard({
             {lookingFor.slice(0, 3).map((tag, i) => (
               <span 
                 key={i}
-                className="px-1.5 py-0.5 bg-[#FF1493]/20 text-[#FF1493] text-[10px] font-medium uppercase tracking-wider"
+                className="px-1.5 py-0.5 bg-[#C8962C]/20 text-[#C8962C] text-[10px] font-medium uppercase tracking-wider"
               >
                 {tag}
               </span>
@@ -140,7 +145,7 @@ export function SimpleProfileCard({
               e.stopPropagation();
               onMessage();
             }}
-            className="mt-3 w-full h-10 flex items-center justify-center gap-2 bg-[#FF1493] text-white text-xs font-black uppercase tracking-wider hover:bg-[#FF1493]/80 active:scale-98 transition-all"
+            className="mt-3 w-full h-10 flex items-center justify-center gap-2 bg-[#C8962C] text-white text-xs font-black uppercase tracking-wider hover:bg-[#C8962C]/80 active:scale-98 transition-all"
           >
             <MessageCircle className="w-4 h-4" />
             MESSAGE
@@ -149,7 +154,7 @@ export function SimpleProfileCard({
       </div>
 
       {/* Hover border effect */}
-      <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#FF1493] transition-colors pointer-events-none" />
+      <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#C8962C] transition-colors pointer-events-none" />
     </motion.div>
   );
 }

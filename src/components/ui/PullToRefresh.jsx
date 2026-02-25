@@ -66,7 +66,7 @@ export default function PullToRefresh({ onRefresh, children }) {
           style={{ rotate: rotation }}
           className={`${isRefreshing ? 'animate-spin' : ''}`}
         >
-          <RefreshCw className="w-6 h-6 text-[#FF1493]" />
+          <RefreshCw className="w-6 h-6 text-[#C8962C]" />
         </motion.div>
       </motion.div>
 

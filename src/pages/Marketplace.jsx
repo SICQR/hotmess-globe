@@ -211,9 +211,6 @@ export default function Marketplace() {
         price_xp: product.price_xp,
       });
 
-      const newXp = (currentUser.xp || 0) - product.price_xp;
-      await base44.auth.updateMe({ xp: newXp });
-
       await base44.entities.Product.update(product.id, {
         sales_count: (product.sales_count || 0) + 1,
         inventory_count: Math.max(0, (product.inventory_count || 0) - 1),
@@ -325,16 +322,6 @@ export default function Marketplace() {
           openCartDrawer('creators');
         })
         .catch((error) => toast.error(error?.message || 'Failed to add to cart'));
-      return;
-    }
-
-    if ((currentUser.xp || 0) < product.price_xp) {
-      toast.error('Insufficient XP');
-      return;
-    }
-
-    if (product.min_xp_level && (currentUser.xp || 0) < product.min_xp_level) {
-      toast.error(`Requires Level ${Math.floor(product.min_xp_level / 1000) + 1}+`);
       return;
     }
 
@@ -464,7 +451,7 @@ export default function Marketplace() {
               </Button>
               <Button 
                 onClick={() => navigate(createPageUrl('SellerDashboard'))}
-                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black w-full sm:w-auto"
+                className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black w-full sm:w-auto"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Sell Item
@@ -485,7 +472,7 @@ export default function Marketplace() {
               <span className="text-sm text-white/60">Filtered by:</span>
               <button
                 onClick={() => setSelectedCollection(null)}
-                className="px-3 py-1 bg-[#FF1493] text-black text-xs font-black uppercase hover:opacity-90"
+                className="px-3 py-1 bg-[#C8962C] text-black text-xs font-black uppercase hover:opacity-90"
               >
                 {selectedCollection} ✕
               </button>
@@ -531,7 +518,7 @@ export default function Marketplace() {
             {/* Price Range Filter */}
             <div className="bg-white/5 border border-white/10 rounded-lg p-4">
               <label className="text-xs uppercase tracking-wider text-white/60 mb-3 block">
-                Price Range: {priceRange.min} - {priceRange.max >= 50000 ? '50000+' : priceRange.max} XP
+                Price Range
               </label>
               <Slider
                 value={[priceRange.min, priceRange.max]}
@@ -560,7 +547,7 @@ export default function Marketplace() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList className="bg-white/5 border border-white/10 w-full justify-start overflow-x-auto">
-            <TabsTrigger value="all" className="shrink-0 data-[state=active]:bg-[#FF1493] data-[state=active]:text-black">
+            <TabsTrigger value="all" className="shrink-0 data-[state=active]:bg-[#C8962C] data-[state=active]:text-black">
               All ({uniqueProducts.length})
             </TabsTrigger>
             <TabsTrigger value="official" className="shrink-0 data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
@@ -602,7 +589,6 @@ export default function Marketplace() {
                       product={product}
                       index={idx}
                       onBuy={handleBuy}
-                      currentUserXP={currentUser?.xp || 0}
                     />
                   ))}
                 </div>

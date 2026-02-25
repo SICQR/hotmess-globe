@@ -72,7 +72,7 @@ export const StatusBadges = {
         <Check className="w-3 h-3 mr-1" />
         Active
       </Badge>
-      <Badge className="bg-[#FF1493] text-black hover:bg-[#FF1493]/80">
+      <Badge className="bg-[#C8962C] text-black hover:bg-[#C8962C]/80">
         <Zap className="w-3 h-3 mr-1" />
         Hot
       </Badge>
@@ -92,7 +92,7 @@ export const StatusBadges = {
 export const ProfileBadges = {
   render: () => (
     <div className="flex flex-wrap gap-4">
-      <Badge className="bg-[#FF1493]/20 text-[#FF1493] border border-[#FF1493]/40">
+      <Badge className="bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C]/40">
         <Star className="w-3 h-3 mr-1" />
         Verified
       </Badge>
@@ -132,8 +132,8 @@ export const PriceBadges = {
     <div className="flex flex-wrap gap-4">
       <Badge className="bg-[#39FF14] text-black font-black">FREE</Badge>
       <Badge className="bg-white text-black font-bold">£10</Badge>
-      <Badge className="bg-[#FF1493] text-black font-bold">£25 VIP</Badge>
-      <Badge className="bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white font-bold">SOLD OUT</Badge>
+      <Badge className="bg-[#C8962C] text-black font-bold">£25 VIP</Badge>
+      <Badge className="bg-gradient-to-r from-[#C8962C] to-[#B026FF] text-white font-bold">SOLD OUT</Badge>
     </div>
   ),
 };
@@ -146,7 +146,7 @@ export const NotificationBadges = {
         <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
           <Music className="w-5 h-5 text-white" />
         </div>
-        <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center rounded-full bg-[#FF1493] text-xs text-black font-bold">
+        <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center rounded-full bg-[#C8962C] text-xs text-black font-bold">
           3
         </Badge>
       </div>
@@ -175,14 +175,14 @@ export const BrandColors = {
   render: () => (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-4">
-        <Badge className="bg-[#FF1493] text-black">Hot Pink</Badge>
+        <Badge className="bg-[#C8962C] text-black">Hot Pink</Badge>
         <Badge className="bg-[#00D9FF] text-black">Cyan</Badge>
         <Badge className="bg-[#39FF14] text-black">Neon Green</Badge>
         <Badge className="bg-[#B026FF] text-white">Purple</Badge>
         <Badge className="bg-[#FFEB3B] text-black">Yellow</Badge>
       </div>
       <div className="flex flex-wrap gap-4">
-        <Badge className="bg-[#FF1493]/20 text-[#FF1493] border border-[#FF1493]/40">Hot Pink Light</Badge>
+        <Badge className="bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C]/40">Hot Pink Light</Badge>
         <Badge className="bg-[#00D9FF]/20 text-[#00D9FF] border border-[#00D9FF]/40">Cyan Light</Badge>
         <Badge className="bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/40">Neon Green Light</Badge>
         <Badge className="bg-[#B026FF]/20 text-[#B026FF] border border-[#B026FF]/40">Purple Light</Badge>
@@ -198,7 +198,7 @@ export const InteractiveBadges = {
       <Badge className="bg-white/5 text-white border border-white/20 cursor-pointer hover:bg-white/10 hover:border-white/40 transition-colors">
         Techno
       </Badge>
-      <Badge className="bg-[#FF1493]/20 text-[#FF1493] border border-[#FF1493] cursor-pointer">
+      <Badge className="bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C] cursor-pointer">
         House ✓
       </Badge>
       <Badge className="bg-white/5 text-white border border-white/20 cursor-pointer hover:bg-white/10 hover:border-white/40 transition-colors">

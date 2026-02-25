@@ -103,10 +103,10 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-2 border-[#FF1493] text-white max-w-md">
+      <DialogContent className="bg-black border-2 border-[#C8962C] text-white max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black uppercase flex items-center gap-2">
-            <Zap className="w-6 h-6 text-[#FF1493]" />
+            <Zap className="w-6 h-6 text-[#C8962C]" />
             Go Right Now
           </DialogTitle>
         </DialogHeader>
@@ -122,7 +122,7 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
                   onClick={() => setDuration(value)}
                   className={`flex items-center justify-center gap-2 px-4 py-3 border-2 transition-all ${
                     duration === value
-                      ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                      ? 'bg-[#C8962C] border-[#C8962C] text-black'
                       : 'border-white/20 text-white hover:border-white/40'
                   }`}
                 >
@@ -168,7 +168,7 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
                   <span className="font-black uppercase text-sm text-[#50C878]">Cold Vibe Mode</span>
                 </div>
                 <p className="text-xs text-white/60">
-                  Cali Sober intent. +15 XP bonus on radio. Emerald glow on globe.
+                  Cali Sober intent. Emerald glow on globe.
                 </p>
               </div>
             </label>
@@ -183,7 +183,7 @@ export default function RightNowModal({ isOpen, onClose, currentUser }) {
           <Button
             onClick={() => goLiveMutation.mutate()}
             disabled={goLiveMutation.isPending}
-            className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black uppercase py-6"
+            className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-black uppercase py-6"
           >
             {goLiveMutation.isPending ? 'Going live...' : 'Go live'}
           </Button>

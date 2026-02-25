@@ -34,7 +34,7 @@ export const BRAND = {
     RAW: {
       name: 'RAW',
       tagline: 'Unfiltered. Unapologetic.',
-      color: '#FF1493',
+      color: '#C8962C',
       description: 'Bold basics for the bold man.',
     },
     HUNG: {
@@ -161,7 +161,7 @@ export const BRAND = {
 
   // Colors
   colors: {
-    hot: '#FF1493',
+    hot: '#C8962C',
     cyan: '#00D9FF',
     purple: '#B026FF',
     gold: '#FFD700',

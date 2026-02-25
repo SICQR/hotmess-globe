@@ -23,12 +23,12 @@ ALTER TABLE public.gay_world_knowledge ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
-  CREATE POLICY IF NOT EXISTS "Public read gay_world_knowledge" ON public.gay_world_knowledge FOR SELECT USING (true);
+  CREATE POLICY "Public read gay_world_knowledge" ON public.gay_world_knowledge FOR SELECT USING (true);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  CREATE POLICY IF NOT EXISTS "Public read events" ON public.events FOR SELECT USING (true);
+  CREATE POLICY "Public read events" ON public.events FOR SELECT USING (true);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 

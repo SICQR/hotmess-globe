@@ -13,7 +13,7 @@ export const ACTIVITY_TYPES = {
   // Social Actions
   message_sent: {
     label: 'Message',
-    color: '#FF1493',
+    color: '#C8962C',
     glowColor: 'rgba(255, 20, 147, 0.6)',
     icon: '💬',
     pulseSize: 1.2,
@@ -105,16 +105,6 @@ export const ACTIVITY_TYPES = {
     arcEnabled: false,
     sound: false,
   },
-  xp_earned: {
-    label: 'XP Earned',
-    color: '#FFEB3B',
-    glowColor: 'rgba(255, 235, 59, 0.7)',
-    icon: '⚡',
-    pulseSize: 1.0,
-    arcEnabled: false,
-    sound: false,
-  },
-  
   // Presence Actions
   right_now: {
     label: 'Going Live',
@@ -147,7 +137,7 @@ export const ACTIVITY_TYPES = {
   },
   radio_tune_in: {
     label: 'Radio Tune-in',
-    color: '#FF1493',
+    color: '#C8962C',
     glowColor: 'rgba(255, 20, 147, 0.6)',
     icon: '📻',
     pulseSize: 1.1,
@@ -433,7 +423,7 @@ export function useActivityStream(enabled = true) {
       }, (payload) => {
         addActivity({
           type: 'purchase',
-          metadata: { amount: payload.new?.total_xp },
+          metadata: { amount: payload.new?.total_gbp },
         });
       })
       .subscribe();

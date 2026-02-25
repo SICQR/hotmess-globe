@@ -23,8 +23,6 @@ const TIERS = [
     color: '#FFFFFF',
     features: [
       'Standard access to all features',
-      'Level 1-4 progression',
-      'Basic XP earning rate',
       'Public profile visibility',
       'Standard beacon scanning',
     ],
@@ -35,11 +33,10 @@ const TIERS = [
     price: '£9.99/mo',
     priceAmount: 999,
     icon: Zap,
-    color: '#FF1493',
+    color: '#C8962C',
     stripePriceId: STRIPE_PRICES.plus,
     features: [
       'Everything in BASIC',
-      '2x XP Multiplier on all actions',
       'Stealth Mode (browse anonymously)',
       'Blurred profile viewers',
       'Priority in Right Now feed',
@@ -240,7 +237,7 @@ export default function MembershipUpgrade() {
           className="text-center mb-12"
         >
           <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-2">
-            UPGRADE YOUR <span className="text-[#FF1493]">NIGHT</span>
+            UPGRADE YOUR <span className="text-[#C8962C]">NIGHT</span>
           </h1>
           <p className="text-white/60 uppercase text-sm tracking-wider">
             Choose your tier. Level up your experience.

@@ -80,7 +80,7 @@ export default function BusinessDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-white/20 border-t-[#FF1493] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />
       </div>
     );
   }
@@ -103,7 +103,7 @@ export default function BusinessDashboard() {
 
           <div className="flex gap-3">
             <Link to={createPageUrl('CreateBeacon')}>
-              <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+              <Button className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Event
               </Button>
@@ -126,8 +126,8 @@ export default function BusinessDashboard() {
             <Card className="bg-white/5 border-white/10">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-[#FF1493]/20 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-[#FF1493]" />
+                  <div className="w-10 h-10 bg-[#C8962C]/20 rounded-lg flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-[#C8962C]" />
                   </div>
                   <span className="text-white/60 text-sm">Total Events</span>
                 </div>
@@ -208,7 +208,7 @@ export default function BusinessDashboard() {
                 <Link to={createPageUrl('CreateBeacon')}>
                   <div className="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
                     <div className="flex items-center gap-3">
-                      <Plus className="w-5 h-5 text-[#FF1493]" />
+                      <Plus className="w-5 h-5 text-[#C8962C]" />
                       <span>Create Event</span>
                     </div>
                     <ChevronRight className="w-4 h-4 text-white/40" />
@@ -258,7 +258,7 @@ export default function BusinessDashboard() {
             <Card className="bg-white/5 border-white/10">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg uppercase tracking-wider">Recent Events</CardTitle>
-                <Link to={createPageUrl('Beacons')} className="text-sm text-[#FF1493] hover:underline">
+                <Link to={createPageUrl('Beacons')} className="text-sm text-[#C8962C] hover:underline">
                   View All
                 </Link>
               </CardHeader>
@@ -268,7 +268,7 @@ export default function BusinessDashboard() {
                     <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>No events yet</p>
                     <Link to={createPageUrl('CreateBeacon')}>
-                      <Button className="mt-4 bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+                      <Button className="mt-4 bg-[#C8962C] hover:bg-[#C8962C]/90 text-black">
                         Create Your First Event
                       </Button>
                     </Link>
@@ -282,7 +282,7 @@ export default function BusinessDashboard() {
                       >
                         <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-lg flex items-center justify-center">
+                            <div className="w-12 h-12 bg-gradient-to-br from-[#C8962C] to-[#B026FF] rounded-lg flex items-center justify-center">
                               {event.image_url ? (
                                 <img src={event.image_url} alt="" className="w-full h-full object-cover rounded-lg" />
                               ) : (

@@ -12,11 +12,11 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
   const navigate = useNavigate();
   const profileType = user?.profile_type || 'standard';
   const themeGradient = {
-    'default': 'from-[#FF1493] to-[#B026FF]',
+    'default': 'from-[#C8962C] to-[#B026FF]',
     'cyber': 'from-[#00D9FF] to-[#39FF14]',
     'sunset': 'from-[#FF6B35] to-[#FFEB3B]',
     'midnight': 'from-[#1a1a2e] to-[#16213e]',
-    'neon': 'from-[#FF1493] to-[#00D9FF]'
+    'neon': 'from-[#C8962C] to-[#00D9FF]'
   }[user?.profile_theme || 'default'];
 
   const profileTypeConfig = {
@@ -29,7 +29,7 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
     'premium': { 
       icon: <Crown className="w-5 h-5" />, 
       badge: '💎 PREMIUM',
-      gradient: 'from-[#FFD700] to-[#FF1493]'
+      gradient: 'from-[#FFD700] to-[#C8962C]'
     },
     'creator': { 
       icon: <Palette className="w-5 h-5" />, 
@@ -226,21 +226,14 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
                   </span>
                   <span className="text-white/60">{user?.total_sales || 0} sales</span>
                 </>
-              ) : (
-                <>
-                  <span className="text-[#FFEB3B] font-mono">
-                    LVL {Math.floor((user?.xp || 0) / 1000) + 1}
-                  </span>
-                  <span className="text-[#39FF14] font-mono">{user?.xp || 0} XP</span>
-                </>
-              )}
+              ) : null}
 
               {user?.availability_status && user.availability_status !== 'offline' && (
                 <span className={`px-2 py-1 text-xs font-bold uppercase ${
                   user.availability_status === 'available' ? 'bg-[#39FF14] text-black' :
                   user.availability_status === 'busy' ? 'bg-[#FF6B35] text-black' :
                   user.availability_status === 'away' ? 'bg-[#FFEB3B] text-black' :
-                  'bg-[#FF1493] text-black'
+                  'bg-[#C8962C] text-black'
                 }`}>
                   {user.availability_status.replace('_', ' ')}
                 </span>

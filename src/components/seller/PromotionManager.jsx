@@ -75,7 +75,7 @@ export default function PromotionManager({ promotions, products, sellerEmail }) 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-black uppercase">Promotions & Coupons</h3>
-        <Button onClick={() => setShowForm(!showForm)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+        <Button onClick={() => setShowForm(!showForm)} className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black">
           <Plus className="w-4 h-4 mr-2" />
           Create Promo
         </Button>
@@ -107,7 +107,6 @@ export default function PromotionManager({ promotions, products, sellerEmail }) 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="percentage">Percentage Off</SelectItem>
-                  <SelectItem value="fixed_xp">Fixed XP Off</SelectItem>
                   <SelectItem value="fixed_gbp">Fixed £ Off</SelectItem>
                 </SelectContent>
               </Select>
@@ -167,7 +166,7 @@ export default function PromotionManager({ promotions, products, sellerEmail }) 
             <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+            <Button type="submit" className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black">
               Create
             </Button>
           </div>
@@ -193,7 +192,7 @@ export default function PromotionManager({ promotions, products, sellerEmail }) 
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <Tag className="w-5 h-5 text-[#FFEB3B]" />
+                    <Tag className="w-5 h-5 text-[#C8962C]" />
                     <code className="text-xl font-black">{promo.code}</code>
                     <Button variant="ghost" size="icon" onClick={() => copyCode(promo.code)}>
                       <Copy className="w-4 h-4" />
@@ -206,8 +205,6 @@ export default function PromotionManager({ promotions, products, sellerEmail }) 
                       <p className="font-bold">
                         {promo.discount_type === 'percentage'
                           ? `${promo.discount_value}%`
-                          : promo.discount_type === 'fixed_xp'
-                          ? `${promo.discount_value} XP`
                           : `£${promo.discount_value}`}
                       </p>
                     </div>

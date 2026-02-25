@@ -26,6 +26,7 @@ export type Profile = {
   // Optional rich fields used by host pages + smart CTAs.
   email?: string;
   authUserId?: string;
+  userId?: string;
   profileType?: string;
   city?: string;
   bio?: string;

@@ -101,7 +101,7 @@ export default function BusinessVenue() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FF1493]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#C8962C]" />
       </div>
     );
   }
@@ -122,7 +122,7 @@ export default function BusinessVenue() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-black uppercase">
-                Venue <span className="text-[#FF1493]">Management</span>
+                Venue <span className="text-[#C8962C]">Management</span>
               </h1>
               <p className="text-white/60 mt-2">Configure your venue details</p>
             </div>
@@ -142,7 +142,7 @@ export default function BusinessVenue() {
           className="bg-white/5 border border-white/10 p-6"
         >
           <h2 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-[#FF1493]" />
+            <Building2 className="w-5 h-5 text-[#C8962C]" />
             Basic Information
           </h2>
           
@@ -233,7 +233,7 @@ export default function BusinessVenue() {
                     type="checkbox"
                     checked={!venue.hours[day]?.closed}
                     onChange={(e) => updateHours(day, 'closed', !e.target.checked)}
-                    className="w-4 h-4 accent-[#FF1493]"
+                    className="w-4 h-4 accent-[#C8962C]"
                   />
                   <span className="text-sm">Open</span>
                 </label>
@@ -318,7 +318,7 @@ export default function BusinessVenue() {
                 </button>
               </div>
             ))}
-            <button className="aspect-square border-2 border-dashed border-white/20 hover:border-[#FF1493] transition-colors flex flex-col items-center justify-center">
+            <button className="aspect-square border-2 border-dashed border-white/20 hover:border-[#C8962C] transition-colors flex flex-col items-center justify-center">
               <Plus className="w-8 h-8 text-white/40" />
               <span className="text-xs text-white/60 mt-2">Add Photo</span>
             </button>

@@ -33,12 +33,12 @@ export default function Beacons() {
   // Use shared beacon colors with legacy fallbacks
   const kindToColor = (kind) => ({
     ...BEACON_COLOR,
-    venue: '#FF1493',
+    venue: '#C8962C',
     hookup: '#FF073A',
     drop: '#FF6B35',
     popup: '#B026FF',
     private: BEACON_COLOR.event,
-  })[kind] || '#FF1493';
+  })[kind] || '#C8962C';
 
   if (isLoading) {
     return (
@@ -66,7 +66,7 @@ export default function Beacons() {
               if (!ok) e.preventDefault();
             }}
           >
-            <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+            <Button className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black">
               <Plus className="w-4 h-4 mr-2" />
               Create
             </Button>
@@ -134,9 +134,6 @@ export default function Beacons() {
                   >
                     {beacon.kind}
                   </span>
-                  {beacon.xp_scan && (
-                    <span className="text-xs text-[#FFEB3B] font-bold">+{beacon.xp_scan} XP</span>
-                  )}
                 </div>
                 
                 <h3 className="text-lg font-bold mb-2">{beacon.title}</h3>
@@ -154,7 +151,7 @@ export default function Beacons() {
                   </div>
                   {beacon.intensity && (
                     <div className="flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-[#FF1493]" />
+                      <Zap className="w-3 h-3 text-[#C8962C]" />
                       <span className="text-xs font-bold">{Math.round(beacon.intensity * 100)}%</span>
                     </div>
                   )}

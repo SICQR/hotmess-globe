@@ -83,19 +83,19 @@ export function LuxCountdownTimer({
         animate={{ y: 0, opacity: 1 }}
         className={cn(
           'relative min-w-[3rem] md:min-w-[4rem] px-2 py-3 md:px-3 md:py-4 bg-black/50 backdrop-blur-sm border-2 transition-colors',
-          isUrgent ? 'border-[#FF1493] animate-pulse' : 'border-white/20'
+          isUrgent ? 'border-[#C8962C] animate-pulse' : 'border-white/20'
         )}
       >
         <div
           className={cn(
             'text-2xl md:text-4xl font-black font-mono text-center',
-            isUrgent ? 'text-[#FF1493]' : 'text-white'
+            isUrgent ? 'text-[#C8962C]' : 'text-white'
           )}
         >
           {String(value).padStart(2, '0')}
         </div>
         {isUrgent && (
-          <div className="absolute inset-0 bg-[#FF1493] opacity-10 animate-ping" />
+          <div className="absolute inset-0 bg-[#C8962C] opacity-10 animate-ping" />
         )}
       </motion.div>
       <div className="text-[10px] md:text-xs text-white/60 uppercase tracking-wider font-bold mt-2">
@@ -117,8 +117,8 @@ export function LuxCountdownTimer({
           <div className="mb-6 text-center">
             {isUrgent && (
               <div className="flex items-center justify-center gap-2 mb-2">
-                <AlertCircle className="w-5 h-5 text-[#FF1493] animate-pulse" />
-                <span className="text-sm font-black text-[#FF1493] uppercase tracking-wider">
+                <AlertCircle className="w-5 h-5 text-[#C8962C] animate-pulse" />
+                <span className="text-sm font-black text-[#C8962C] uppercase tracking-wider">
                   ENDING SOON
                 </span>
               </div>
@@ -162,32 +162,32 @@ export function LuxCountdownTimer({
         className={cn(
           'inline-flex items-center gap-3 px-4 py-2 bg-white/5 border-2 transition-colors',
           isUrgent
-            ? 'border-[#FF1493] animate-pulse'
+            ? 'border-[#C8962C] animate-pulse'
             : 'border-white/10',
           className
         )}
       >
-        <Clock className={cn('w-5 h-5', isUrgent ? 'text-[#FF1493]' : 'text-white')} />
+        <Clock className={cn('w-5 h-5', isUrgent ? 'text-[#C8962C]' : 'text-white')} />
         <div className="flex gap-1 font-mono text-lg md:text-xl font-black">
           {showDays && timeLeft.days > 0 && (
             <>
-              <span className={isUrgent ? 'text-[#FF1493]' : 'text-white'}>
+              <span className={isUrgent ? 'text-[#C8962C]' : 'text-white'}>
                 {String(timeLeft.days).padStart(2, '0')}
               </span>
               <span className="text-white/40">:</span>
             </>
           )}
-          <span className={isUrgent ? 'text-[#FF1493]' : 'text-white'}>
+          <span className={isUrgent ? 'text-[#C8962C]' : 'text-white'}>
             {String(timeLeft.hours).padStart(2, '0')}
           </span>
           <span className="text-white/40">:</span>
-          <span className={isUrgent ? 'text-[#FF1493]' : 'text-white'}>
+          <span className={isUrgent ? 'text-[#C8962C]' : 'text-white'}>
             {String(timeLeft.minutes).padStart(2, '0')}
           </span>
           {showSeconds && (
             <>
               <span className="text-white/40">:</span>
-              <span className={isUrgent ? 'text-[#FF1493]' : 'text-white'}>
+              <span className={isUrgent ? 'text-[#C8962C]' : 'text-white'}>
                 {String(timeLeft.seconds).padStart(2, '0')}
               </span>
             </>
@@ -198,8 +198,8 @@ export function LuxCountdownTimer({
 
     minimal: (
       <div className={cn('inline-flex items-center gap-2 text-sm font-bold', className)}>
-        {isUrgent && <Zap className="w-4 h-4 text-[#FF1493] animate-pulse" />}
-        <span className={isUrgent ? 'text-[#FF1493]' : 'text-white'}>
+        {isUrgent && <Zap className="w-4 h-4 text-[#C8962C] animate-pulse" />}
+        <span className={isUrgent ? 'text-[#C8962C]' : 'text-white'}>
           {timeLeft.days > 0 && `${timeLeft.days}d `}
           {String(timeLeft.hours).padStart(2, '0')}:
           {String(timeLeft.minutes).padStart(2, '0')}
@@ -213,8 +213,8 @@ export function LuxCountdownTimer({
         className={cn(
           'flex items-center justify-center gap-4 px-6 py-4 bg-gradient-to-r transition-all',
           isUrgent
-            ? 'from-[#FF1493] to-[#B026FF] animate-pulse'
-            : 'from-[#B026FF] to-[#FF1493]',
+            ? 'from-[#C8962C] to-[#B026FF] animate-pulse'
+            : 'from-[#B026FF] to-[#C8962C]',
           className
         )}
       >

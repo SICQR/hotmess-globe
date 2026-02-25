@@ -43,7 +43,7 @@ export function MatchFilterDropdown({
           flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-semibold
           transition-all
           ${value.minMatch > 0 
-            ? 'border-[#FF1493]/50 bg-[#FF1493]/10 text-white' 
+            ? 'border-[#C8962C]/50 bg-[#C8962C]/10 text-white' 
             : 'border-white/20 bg-black/40 text-white/80 hover:border-white/40'
           }
           disabled:opacity-50 disabled:cursor-not-allowed
@@ -76,7 +76,7 @@ export function MatchFilterDropdown({
                       onChange({ minMatch: 0 });
                       setIsOpen(false);
                     }}
-                    className="text-[10px] text-[#FF1493] hover:underline"
+                    className="text-[10px] text-[#C8962C] hover:underline"
                   >
                     Clear
                   </button>
@@ -120,7 +120,7 @@ export function MatchFilterDropdown({
                     {isActive && (
                       <div 
                         className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: presetTier?.color || '#FF1493' }}
+                        style={{ backgroundColor: presetTier?.color || '#C8962C' }}
                       />
                     )}
                   </button>
@@ -219,7 +219,7 @@ export function MatchFilterSlider({
           [&::-webkit-slider-thumb]:w-4
           [&::-webkit-slider-thumb]:h-4
           [&::-webkit-slider-thumb]:rounded-full
-          [&::-webkit-slider-thumb]:bg-[#FF1493]
+          [&::-webkit-slider-thumb]:bg-[#C8962C]
           [&::-webkit-slider-thumb]:cursor-pointer
           [&::-webkit-slider-thumb]:shadow-lg
           disabled:opacity-50 disabled:cursor-not-allowed

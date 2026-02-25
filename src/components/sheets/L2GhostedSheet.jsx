@@ -221,7 +221,7 @@ export default function L2GhostedSheet() {
       <SheetSection title="Right Now">
         {usersLoading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 text-[#FF1493] animate-spin" />
+            <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />
           </div>
         ) : usersWithStatus.length === 0 ? (
           <div className="text-center py-12">
@@ -247,7 +247,7 @@ export default function L2GhostedSheet() {
                       onClick={() => handleViewProfile(user.email)}
                       className="relative flex-shrink-0"
                     >
-                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden">
                         {user.avatar_url ? (
                           <img 
                             src={user.avatar_url} 
@@ -301,7 +301,7 @@ export default function L2GhostedSheet() {
                       <Button
                         size="sm"
                         onClick={() => handleStartChat(user.email, user.full_name || user.username)}
-                        className="bg-[#FF1493] hover:bg-[#FF1493]/90"
+                        className="bg-[#C8962C] hover:bg-[#C8962C]/90"
                       >
                         <MessageCircle className="w-4 h-4" />
                       </Button>

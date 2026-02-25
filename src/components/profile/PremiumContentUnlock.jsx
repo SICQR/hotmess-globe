@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Crown, Lock, Zap, Eye } from 'lucide-react';
+import { Crown, Lock, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -29,39 +29,17 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
 
   const unlockMutation = useMutation({
     mutationFn: async () => {
-      const cost = profileUser.premium_unlock_xp || 1000;
-
-      if (currentUser.xp < cost) {
-        throw new Error('Not enough XP');
-      }
-
-      // Deduct XP from current user
-      await base44.auth.updateMe({
-        xp: currentUser.xp - cost
-      });
-
-      // Add XP to profile owner
-      const ownerUsers = await base44.entities.User.filter({ email: profileUser.email });
-      if (ownerUsers.length > 0) {
-        const owner = ownerUsers[0];
-        await base44.entities.User.update(owner.id, {
-          xp: (owner.xp || 0) + cost
-        });
-      }
-
       // Create unlock record
       await base44.entities.ContentUnlock.create({
         unlocker_email: currentUser.email,
         owner_email: profileUser.email,
-        xp_spent: cost
+        xp_spent: 0
       });
-
-      return cost;
     },
-    onSuccess: (cost) => {
+    onSuccess: () => {
       setUnlocked(true);
       queryClient.invalidateQueries(['users']);
-      toast.success(`Unlocked! ${cost} XP transferred`);
+      toast.success('Unlocked!');
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to unlock');
@@ -73,14 +51,13 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
 
   if (!profileUser.has_premium_content) return null;
 
-  const cost = profileUser.premium_unlock_xp || 1000;
   const isChromeMemeber = currentUser.membership_tier === 'pro';
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-[#FFD700]/20 to-[#FF1493]/20 border-2 border-[#FFD700] p-6"
+      className="bg-gradient-to-br from-[#FFD700]/20 to-[#C8962C]/20 border-2 border-[#FFD700] p-6"
     >
       <div className="flex items-center gap-3 mb-4">
         <Crown className="w-6 h-6 text-[#FFD700]" />
@@ -147,28 +124,19 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
 
           <Button
             onClick={() => unlockMutation.mutate()}
-            disabled={unlockMutation.isPending || currentUser.xp < cost}
-            className="w-full bg-[#FFD700] text-black hover:bg-[#FFD700]/90 font-black text-lg py-6"
+            disabled={unlockMutation.isPending}
+            className="w-full bg-[#C8962C] text-black hover:bg-[#C8962C]/90 font-black text-lg py-6"
           >
-            {unlockMutation.isPending ? (
-              'Processing...'
-            ) : (
+            {unlockMutation.isPending ? 'Processing...' : (
               <>
                 <Crown className="w-5 h-5 mr-2" />
-                Unlock for {cost} XP
-                <Zap className="w-5 h-5 ml-2" />
+                Unlock
               </>
             )}
           </Button>
 
-          {currentUser.xp < cost && (
-            <p className="text-xs text-red-400 text-center">
-              Not enough XP. You have {currentUser.xp}, need {cost}.
-            </p>
-          )}
-
           <p className="text-xs text-white/40 text-center">
-            One-time unlock • XP goes to profile owner
+            One-time unlock
           </p>
           
           <div className="mt-4 p-3 bg-[#00D9FF]/10 border border-[#00D9FF]/30">

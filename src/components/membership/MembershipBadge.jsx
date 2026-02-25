@@ -20,9 +20,9 @@ const TIER_CONFIG = {
   plus: {
     name: 'PLUS',
     icon: Zap,
-    color: 'text-[#FF1493]',
-    bgColor: 'bg-[#FF1493]/20',
-    borderColor: 'border-[#FF1493]',
+    color: 'text-[#C8962C]',
+    bgColor: 'bg-[#C8962C]/20',
+    borderColor: 'border-[#C8962C]',
   },
   pro: {
     name: 'CHROME',

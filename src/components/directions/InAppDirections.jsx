@@ -43,7 +43,7 @@ L.Icon.Default.mergeOptions({
 const TRAVEL_MODES = [
   { id: 'foot', label: 'Walk', icon: Footprints, apiMode: 'WALK', color: '#39FF14' },
   { id: 'bike', label: 'Bike', icon: Bike, apiMode: 'BICYCLE', color: '#00D9FF' },
-  { id: 'drive', label: 'Drive', icon: Car, apiMode: 'DRIVE', color: '#FF1493' },
+  { id: 'drive', label: 'Drive', icon: Car, apiMode: 'DRIVE', color: '#C8962C' },
 ];
 
 const makePinIcon = ({ label, color, glow }) => {
@@ -187,7 +187,7 @@ export default function InAppDirections({
     []
   );
   const destinationIcon = useMemo(
-    () => makePinIcon({ label: 'GO', color: '#FF1493', glow: 'rgba(255,20,147,0.6)' }),
+    () => makePinIcon({ label: 'GO', color: '#C8962C', glow: 'rgba(255,20,147,0.6)' }),
     []
   );
   
@@ -222,7 +222,7 @@ export default function InAppDirections({
       <div className={cn("bg-black border-2 border-white/10", className)}>
         <div className="p-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-xs text-white/60">
-            <MapPin className="w-4 h-4 text-[#FF1493]" />
+            <MapPin className="w-4 h-4 text-[#C8962C]" />
             <span className="truncate max-w-[120px]">{destinationName || 'Destination'}</span>
           </div>
           
@@ -263,7 +263,7 @@ export default function InAppDirections({
       initial={compact ? { opacity: 0, scale: 0.95 } : false}
       animate={{ opacity: 1, scale: 1 }}
       className={cn(
-        "bg-black border-2 border-[#FF1493]",
+        "bg-black border-2 border-[#C8962C]",
         isExpanded ? "fixed inset-4 z-[80]" : "",
         className
       )}
@@ -271,7 +271,7 @@ export default function InAppDirections({
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-white/10">
         <div className="flex items-center gap-2">
-          <Navigation className="w-5 h-5 text-[#FF1493]" />
+          <Navigation className="w-5 h-5 text-[#C8962C]" />
           <div>
             <h3 className="font-black text-sm uppercase text-white">
               {destinationName || 'Directions'}
@@ -362,11 +362,11 @@ export default function InAppDirections({
               <>
                 <Polyline
                   positions={polylinePoints}
-                  pathOptions={{ color: modeConfig?.color || '#FF1493', weight: 8, opacity: 0.3 }}
+                  pathOptions={{ color: modeConfig?.color || '#C8962C', weight: 8, opacity: 0.3 }}
                 />
                 <Polyline
                   positions={polylinePoints}
-                  pathOptions={{ color: modeConfig?.color || '#FF1493', weight: 5, opacity: 0.9 }}
+                  pathOptions={{ color: modeConfig?.color || '#C8962C', weight: 5, opacity: 0.9 }}
                 />
               </>
             )}

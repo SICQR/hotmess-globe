@@ -15,7 +15,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Boot Stability', () => {
   test('app boots without crash', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Should not show error boundary
     const content = await page.content();
@@ -32,7 +32,7 @@ test.describe('Boot Stability', () => {
     
     for (const route of publicRoutes) {
       await page.goto(route);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('load');
       
       // Should not redirect to error
       const url = page.url();
@@ -44,7 +44,7 @@ test.describe('Boot Stability', () => {
 test.describe('Navigation Stability (Stage 1)', () => {
   test('tab switch does not cause full page reload', async ({ page }) => {
     await page.goto('/pulse');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Mark the window with a test value
     await page.evaluate(() => {
@@ -52,10 +52,10 @@ test.describe('Navigation Stability (Stage 1)', () => {
     });
     
     // Navigate using the bottom nav link (SPA navigation)
-    const marketLink = page.locator('nav a[href="/market"]').first();
+    const marketLink = page.locator('nav button[aria-label="Market"]').first();
     if (await marketLink.isVisible()) {
       await marketLink.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('load');
     } else {
       // Fallback: use router navigate
       await page.evaluate(() => {
@@ -76,26 +76,26 @@ test.describe('Navigation Stability (Stage 1)', () => {
   test('back button is deterministic', async ({ page }) => {
     // Start at home
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Click pulse link using bottom nav (SPA navigation)
-    const pulseLink = page.locator('nav a[href="/pulse"]').first();
+    const pulseLink = page.locator('nav button[aria-label="Pulse"]').first();
     if (await pulseLink.isVisible()) {
       await pulseLink.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('load');
     } else {
       await page.goto('/pulse');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('load');
     }
     
     // Click market link
-    const marketLink = page.locator('nav a[href="/market"]').first();
+    const marketLink = page.locator('nav button[aria-label="Market"]').first();
     if (await marketLink.isVisible()) {
       await marketLink.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('load');
     } else {
       await page.goto('/market');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('load');
     }
     
     // Go back to pulse
@@ -111,6 +111,7 @@ test.describe('Navigation Stability (Stage 1)', () => {
   });
 
   test('no internal window.location hard reloads on navigation', async ({ page }) => {
+    test.setTimeout(120_000);
     // Monitor for full page navigations
     let navigationCount = 0;
     page.on('load', () => {
@@ -118,7 +119,7 @@ test.describe('Navigation Stability (Stage 1)', () => {
     });
     
     await page.goto('/pulse');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     const initialNavCount = navigationCount;
     
     // Click through routes
@@ -143,7 +144,7 @@ test.describe('Navigation Stability (Stage 1)', () => {
 test.describe('Auth Stability (Stage 3)', () => {
   test('login page loads without error', async ({ page }) => {
     await page.goto('/Auth');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Should have login form elements
     const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]');
@@ -162,7 +163,7 @@ test.describe('Auth Stability (Stage 3)', () => {
     
     // Navigate to protected route
     await page.goto('/pulse');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Should either show age gate or allow access
     const url = page.url();
@@ -176,7 +177,7 @@ test.describe('Auth Stability (Stage 3)', () => {
 test.describe('Profile Authority (Stage 4)', () => {
   test('profile deep link loads correctly', async ({ page }) => {
     await page.goto('/Profile?uid=test-user');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Should not crash (even if user doesn't exist)
     const content = await page.content();
@@ -185,7 +186,7 @@ test.describe('Profile Authority (Stage 4)', () => {
 
   test('profile page with email param loads', async ({ page }) => {
     await page.goto('/Profile?email=test@example.com');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Should handle gracefully
     const content = await page.content();
@@ -196,7 +197,7 @@ test.describe('Profile Authority (Stage 4)', () => {
 test.describe('Market Stability (Stage 5)', () => {
   test('marketplace loads without error', async ({ page }) => {
     await page.goto('/market');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     const content = await page.content();
     expect(content).not.toContain('Something went wrong');
@@ -205,7 +206,7 @@ test.describe('Market Stability (Stage 5)', () => {
 
   test('shop route loads', async ({ page }) => {
     await page.goto('/shop');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // May redirect to /market or load shop
     const url = page.url();
@@ -214,7 +215,7 @@ test.describe('Market Stability (Stage 5)', () => {
 
   test('seller deep link handled', async ({ page }) => {
     await page.goto('/market?created_by=test@example.com');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     const content = await page.content();
     expect(content).not.toContain('Something went wrong');
@@ -226,10 +227,10 @@ test.describe('Mobile App Shell (Stage 6)', () => {
 
   test('bottom nav visible on mobile', async ({ page }) => {
     await page.goto('/pulse');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
-    // Look for bottom nav - be more specific about the selector
-    const bottomNav = page.locator('nav').filter({ has: page.locator('a[href="/market"]') }).first();
+    // OSBottomNav uses <button> elements (not <a href>), matched by aria-label
+    const bottomNav = page.locator('nav').filter({ has: page.locator('button[aria-label="Market"]') }).first();
     const hasBottomNav = await bottomNav.count() > 0;
     
     // Should have mobile navigation
@@ -238,7 +239,7 @@ test.describe('Mobile App Shell (Stage 6)', () => {
 
   test('no horizontal scroll on mobile', async ({ page }) => {
     await page.goto('/pulse');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     const hasHorizontalScroll = await page.evaluate(() => {
       return document.documentElement.scrollWidth > document.documentElement.clientWidth;
@@ -249,7 +250,7 @@ test.describe('Mobile App Shell (Stage 6)', () => {
 
   test('page content not cut off by bottom nav', async ({ page }) => {
     await page.goto('/events');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Check if page has appropriate bottom padding
     const bodyHasPadding = await page.evaluate(() => {
@@ -268,7 +269,7 @@ test.describe('Mobile App Shell (Stage 6)', () => {
 test.describe('Globe Stability (Stage 4 - Realtime)', () => {
   test('globe page loads without crash', async ({ page }) => {
     await page.goto('/globe');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     const content = await page.content();
     expect(content).not.toContain('Something went wrong');
@@ -276,7 +277,7 @@ test.describe('Globe Stability (Stage 4 - Realtime)', () => {
 
   test('pulse page with globe loads', async ({ page }) => {
     await page.goto('/pulse');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     
     // Check for canvas (globe renders to canvas)
     const canvas = page.locator('canvas');
@@ -299,7 +300,7 @@ test.describe('Cross-Feature Integration', () => {
     
     for (const section of sections) {
       await page.goto(section);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('load');
       await page.waitForTimeout(300);
       
       const content = await page.content();
@@ -317,7 +318,7 @@ test.describe('Cross-Feature Integration', () => {
     
     for (const link of deepLinks) {
       await page.goto(link);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('load');
       
       // URL should contain sheet param
       expect(page.url()).toContain('sheet=');

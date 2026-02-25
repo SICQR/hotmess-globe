@@ -490,7 +490,7 @@ export const base44 = {
       }
     },
     
-    logout: async (redirectUrl) => {
+    logout: async (redirectUrl, navigate) => {
       // Stage 3: Clean up realtime channels before signout
       try {
         realtimeCleanup();
@@ -499,21 +499,26 @@ export const base44 = {
       }
       await supabase.auth.signOut();
       if (redirectUrl) {
-        window.location.href = redirectUrl;
+        if (navigate) navigate(redirectUrl);
+        else window.location.href = redirectUrl;
       } else {
         window.location.reload();
       }
     },
-    
-    redirectToLogin: (nextUrl) => {
-      window.location.href = createPageUrl('Auth') + (nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : '');
+
+    redirectToLogin: (nextUrl, navigate) => {
+      const url = createPageUrl('Auth') + (nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : '');
+      if (navigate) navigate(url);
+      else window.location.href = url;
     },
-    
+
     // Check if user is authenticated and has a profile, redirect to login if not
-    requireProfile: async (nextUrl) => {
+    requireProfile: async (nextUrl, navigate) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        window.location.href = createPageUrl('Auth') + (nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : '');
+        const url = createPageUrl('Auth') + (nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : '');
+        if (navigate) navigate(url);
+        else window.location.href = url;
         return false;
       }
       return true;
@@ -836,13 +841,20 @@ export const base44 = {
       },
       
       update: async (id, updates) => {
-        const { data, error } = await supabase
-          .from('chat_threads')
-          .update(updates)
-          .eq('id', id)
-          .select()
-          .single();
-        if (error) throw error;
+        const attempt = async (payload) => {
+          const { data, error } = await supabase
+            .from('chat_threads')
+            .update(payload)
+            .eq('id', id)
+            .select()
+            .single();
+          return { data, error };
+        };
+        const { data } = await stripUnknownColumnsAndRetry({
+          payload: updates,
+          requiredKeys: [],
+          attempt,
+        });
         return data;
       }
     },

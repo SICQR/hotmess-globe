@@ -41,7 +41,7 @@ export function PageHeader({
     if (!accentWord) {
       return (
         <>
-          {title}<span className="text-[#FF1493]">.</span>
+          {title}<span className="text-[#C8962C]">.</span>
         </>
       );
     }
@@ -51,12 +51,12 @@ export function PageHeader({
       <>
         {parts.map((part, i) => 
           part.toLowerCase() === accentWord.toLowerCase() ? (
-            <span key={i} className="text-[#FF1493]">{part}</span>
+            <span key={i} className="text-[#C8962C]">{part}</span>
           ) : (
             <React.Fragment key={i}>{part}</React.Fragment>
           )
         )}
-        <span className="text-[#FF1493]">.</span>
+        <span className="text-[#C8962C]">.</span>
       </>
     );
   };

@@ -40,7 +40,7 @@ export const SafetyFeaturesOverview = {
   render: () => (
     <div className="w-[500px] p-6 bg-black border border-white/10 rounded-lg space-y-6">
       <div className="flex items-center gap-3">
-        <Shield className="w-8 h-8 text-[#FF1493]" />
+        <Shield className="w-8 h-8 text-[#C8962C]" />
         <div>
           <h2 className="text-xl font-black text-white uppercase tracking-wider">Safety Features</h2>
           <p className="text-white/60 text-sm">HOTMESS prioritizes your safety</p>

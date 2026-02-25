@@ -138,12 +138,12 @@ export default function Tickets() {
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
-              className={`border-white/20 ${showFilters || activeFiltersCount > 0 ? 'bg-[#FF1493]/20 border-[#FF1493]' : ''}`}
+              className={`border-white/20 ${showFilters || activeFiltersCount > 0 ? 'bg-[#C8962C]/20 border-[#C8962C]' : ''}`}
             >
               <Filter className="w-4 h-4 mr-2" />
               Filters
               {activeFiltersCount > 0 && (
-                <span className="ml-2 bg-[#FF1493] text-black text-xs px-1.5 py-0.5 rounded-full font-bold">
+                <span className="ml-2 bg-[#C8962C] text-black text-xs px-1.5 py-0.5 rounded-full font-bold">
                   {activeFiltersCount}
                 </span>
               )}
@@ -179,7 +179,7 @@ export default function Tickets() {
                           setShowSortMenu(false);
                         }}
                         className={`w-full px-4 py-2 text-left flex items-center gap-2 hover:bg-white/10 ${
-                          sortBy === option.value ? 'bg-[#FF1493]/20 text-[#FF1493]' : 'text-white'
+                          sortBy === option.value ? 'bg-[#C8962C]/20 text-[#C8962C]' : 'text-white'
                         }`}
                       >
                         <option.icon className="w-4 h-4" />
@@ -231,7 +231,7 @@ export default function Tickets() {
                       </span>
                       <button
                         onClick={clearFilters}
-                        className="text-sm text-[#FF1493] hover:underline"
+                        className="text-sm text-[#C8962C] hover:underline"
                       >
                         Clear all filters
                       </button>

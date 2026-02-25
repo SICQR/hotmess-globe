@@ -23,8 +23,8 @@ import { useNavigate } from 'react-router-dom';
 const TIERS = [
   { id: 'basic_3h', name: 'Basic', hours: 3, price: 9.99, reach: '25km', color: '#FFFFFF' },
   { id: 'standard_6h', name: 'Standard', hours: 6, price: 19.99, reach: '50km', color: '#00D9FF', popular: false },
-  { id: 'premium_9h', name: 'Premium', hours: 9, price: 39.99, reach: '100km', color: '#FFB800', popular: true },
-  { id: 'featured_12h', name: 'Featured', hours: 12, price: 79.99, reach: '200km', color: '#FF1493' },
+  { id: 'premium_9h', name: 'Premium', hours: 9, price: 39.99, reach: '100km', color: '#C8962C', popular: true },
+  { id: 'featured_12h', name: 'Featured', hours: 12, price: 79.99, reach: '200km', color: '#C8962C' },
   { id: 'spotlight_24h', name: 'Spotlight', hours: 24, price: 149.99, reach: '500km', color: '#B026FF' }
 ];
 
@@ -155,7 +155,7 @@ export default function CreateBeacon() {
           {[1, 2, 3].map((s) => (
             <div 
               key={s}
-              className={`h-1 flex-1 transition-colors ${s <= step ? 'bg-[#FF1493]' : 'bg-white/20'}`}
+              className={`h-1 flex-1 transition-colors ${s <= step ? 'bg-[#C8962C]' : 'bg-white/20'}`}
             />
           ))}
         </div>
@@ -226,7 +226,7 @@ export default function CreateBeacon() {
             <Button
               onClick={() => setStep(2)}
               disabled={!formData.title || !formData.eventDate || !formData.eventTime}
-              className="w-full bg-[#FF1493] hover:bg-[#FF1493]/80"
+              className="w-full bg-[#C8962C] hover:bg-[#C8962C]/80"
             >
               Continue
               <ArrowRight className="w-4 h-4 ml-2" />
@@ -295,7 +295,7 @@ export default function CreateBeacon() {
             <Button
               onClick={() => setStep(3)}
               disabled={!formData.venueName || !formData.venueAddress}
-              className="w-full bg-[#FF1493] hover:bg-[#FF1493]/80"
+              className="w-full bg-[#C8962C] hover:bg-[#C8962C]/80"
             >
               Continue
               <ArrowRight className="w-4 h-4 ml-2" />
@@ -329,7 +329,7 @@ export default function CreateBeacon() {
                   }}
                 >
                   {tier.popular && (
-                    <span className="absolute -top-2 right-4 px-2 py-0.5 bg-[#FF1493] text-[10px] text-white font-bold">
+                    <span className="absolute -top-2 right-4 px-2 py-0.5 bg-[#C8962C] text-[10px] text-white font-bold">
                       POPULAR
                     </span>
                   )}
@@ -381,7 +381,7 @@ export default function CreateBeacon() {
             <Button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full bg-[#FF1493] hover:bg-[#FF1493]/80 h-14 text-lg font-bold"
+              className="w-full bg-[#C8962C] hover:bg-[#C8962C]/80 h-14 text-lg font-bold"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

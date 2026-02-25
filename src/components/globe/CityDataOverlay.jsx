@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Cloud, CloudRain, Sun, Wind, Zap, Bus, Flame } from 'lucide-react';
@@ -41,8 +41,6 @@ const WeatherIcon = ({ type }) => {
 };
 
 export default function CityDataOverlay({ selectedCity, onCitySelect }) {
-  const [cityData, setCityData] = useState([]);
-
   const { data: cities = [] } = useQuery({
     queryKey: ['cities'],
     queryFn: () => base44.entities.City.list(),
@@ -58,19 +56,9 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
     queryFn: () => base44.entities.BeaconCheckIn.list(),
   });
 
-  useEffect(() => {
-    if (cities.length > 0 && beacons.length > 0) {
-      const data = cities.map(city => generateCityData(city, beacons, checkIns));
-      setCityData(data);
-
-      // Refresh data every 30 seconds
-      const interval = setInterval(() => {
-        const newData = cities.map(city => generateCityData(city, beacons, checkIns));
-        setCityData(newData);
-      }, 30000);
-
-      return () => clearInterval(interval);
-    }
+  const cityData = useMemo(() => {
+    if (!cities.length || !beacons.length) return [];
+    return cities.map(city => generateCityData(city, beacons, checkIns));
   }, [cities, beacons, checkIns]);
 
   if (cityData.length === 0) return null;
@@ -87,7 +75,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           >
-            <Zap className="w-4 h-4 text-[#FF1493]" />
+            <Zap className="w-4 h-4 text-[#C8962C]" />
           </motion.div>
           <h3 className="text-xs font-black uppercase tracking-wider">LIVE CITY DATA</h3>
           <motion.div
@@ -113,7 +101,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
                 className={`
                   w-full text-left p-3 rounded-lg border-2 transition-all cursor-pointer
                   ${selectedCity === city.name
-                    ? 'bg-[#FF1493]/20 border-[#FF1493] shadow-lg shadow-[#FF1493]/20'
+                    ? 'bg-[#C8962C]/20 border-[#C8962C] shadow-lg shadow-[#C8962C]/20'
                     : 'bg-white/5 border-white/10 hover:border-white/30 hover:bg-white/10'
                   }
                 `}
@@ -125,7 +113,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
                       <motion.div
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ repeat: Infinity, duration: 2 }}
-                        className="text-[#FF1493]"
+                        className="text-[#C8962C]"
                       >
                         <Flame className="w-3 h-3" />
                       </motion.div>
@@ -146,7 +134,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
                 {/* Heat Bar */}
                 <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden relative">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-[#FF1493] via-[#FF6B35] to-[#FFEB3B]"
+                    className="h-full bg-gradient-to-r from-[#C8962C] via-[#FF6B35] to-[#FFEB3B]"
                     initial={{ width: 0 }}
                     animate={{ width: `${city.heat * 10}%` }}
                     transition={{ duration: 0.5, delay: idx * 0.05 }}
@@ -182,10 +170,10 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="bg-black/90 backdrop-blur-xl border-2 border-[#FF1493] rounded-lg p-4"
+                className="bg-black/90 backdrop-blur-xl border-2 border-[#C8962C] rounded-lg p-4"
               >
                 <h3 className="font-black uppercase mb-3 flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-[#FF1493]" />
+                  <Flame className="w-4 h-4 text-[#C8962C]" />
                   {selected.name} • LIVE
                 </h3>
 
@@ -208,7 +196,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
 
                   <div className="flex items-center justify-between">
                     <span className="text-white/60">Active Venues</span>
-                    <span className="font-black text-[#FF1493]">{selected.activeVenues}</span>
+                    <span className="font-black text-[#C8962C]">{selected.activeVenues}</span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -220,7 +208,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
                     <span className="text-white/60 block mb-2">Nightlife Heat</span>
                     <div className="relative h-8 bg-white/10 rounded-lg overflow-hidden">
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-[#FF1493] via-[#FF6B35] to-[#FFEB3B]"
+                        className="absolute inset-0 bg-gradient-to-r from-[#C8962C] via-[#FF6B35] to-[#FFEB3B]"
                         initial={{ width: 0 }}
                         animate={{ width: `${selected.heat * 10}%` }}
                         transition={{ duration: 0.8 }}
@@ -239,7 +227,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
         </AnimatePresence>
       )}
 
-      <style jsx>{`
+      <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 4px;
         }

@@ -87,9 +87,7 @@ export default function GlobalAssistant() {
 
   const quickQuestions = [
     "What events are happening tonight?",
-    "Show me products under 1000 XP",
     "Help me find people into techno",
-    "Explain the XP system",
     "How do I use Right Now?",
     "What's my next challenge?",
     "Show me top-rated sellers",
@@ -106,7 +104,7 @@ export default function GlobalAssistant() {
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_20px_rgba(255,20,147,0.5)] hover:shadow-[0_0_30px_rgba(255,20,147,0.8)] transition-all"
+            className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-[#C8962C] to-[#B026FF] rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_20px_rgba(255,20,147,0.5)] hover:shadow-[0_0_30px_rgba(255,20,147,0.8)] transition-all"
           >
             <Bot className="w-6 h-6 text-white" />
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#39FF14] rounded-full border-2 border-black animate-pulse" />
@@ -122,10 +120,10 @@ export default function GlobalAssistant() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed bottom-6 right-6 w-full md:w-[420px] h-[600px] bg-black border-2 border-[#FF1493] z-[80] flex flex-col shadow-[0_0_40px_rgba(255,20,147,0.3)]"
+            className="fixed bottom-6 right-6 w-full md:w-[420px] h-[600px] bg-black border-2 border-[#C8962C] z-[80] flex flex-col shadow-[0_0_40px_rgba(255,20,147,0.3)]"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#FF1493] to-[#B026FF] border-b-2 border-white p-4">
+            <div className="bg-gradient-to-r from-[#C8962C] to-[#B026FF] border-b-2 border-white p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-black flex items-center justify-center border-2 border-white">
@@ -154,12 +152,12 @@ export default function GlobalAssistant() {
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black">
               {messages.length === 0 ? (
                 <div className="text-center py-8">
-                  <Sparkles className="w-12 h-12 mx-auto mb-4 text-[#FF1493]" />
+                  <Sparkles className="w-12 h-12 mx-auto mb-4 text-[#C8962C]" />
                   <p className="text-sm text-white/80 mb-2 font-bold">
                     Hey! I'm your HOTMESS AI assistant
                   </p>
                   <p className="text-xs text-white/60 mb-6">
-                    Ask me about events, marketplace, connections, safety, XP, challenges, or any app feature
+                    Ask me about events, marketplace, connections, safety, challenges, or any app feature
                   </p>
                   <div className="space-y-2">
                     <p className="text-xs text-white/40 uppercase tracking-wider mb-3">Try asking:</p>
@@ -167,7 +165,7 @@ export default function GlobalAssistant() {
                       <button
                         key={idx}
                         onClick={() => setInput(q)}
-                        className="block w-full text-left px-3 py-2 bg-white/5 border border-white/10 hover:border-[#FF1493] text-xs text-white/80 transition-all"
+                        className="block w-full text-left px-3 py-2 bg-white/5 border border-white/10 hover:border-[#C8962C] text-xs text-white/80 transition-all"
                       >
                         {q}
                       </button>
@@ -181,7 +179,7 @@ export default function GlobalAssistant() {
                     className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     {msg.role === 'assistant' && (
-                      <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
+                      <div className="w-8 h-8 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
                         <Bot className="w-4 h-4" />
                       </div>
                     )}
@@ -189,7 +187,7 @@ export default function GlobalAssistant() {
                       <div
                         className={`px-4 py-2.5 text-sm ${
                           msg.role === 'user'
-                            ? 'bg-[#FF1493] text-white border-2 border-white'
+                            ? 'bg-[#C8962C] text-white border-2 border-white'
                             : 'bg-white/5 border border-white/10 text-white'
                         }`}
                       >
@@ -236,7 +234,7 @@ export default function GlobalAssistant() {
             </div>
 
             {/* Input */}
-            <div className="border-t-2 border-[#FF1493] p-4 bg-black">
+            <div className="border-t-2 border-[#C8962C] p-4 bg-black">
               <div className="flex gap-2">
                 <Input
                   value={input}
@@ -249,7 +247,7 @@ export default function GlobalAssistant() {
                 <Button
                   onClick={handleSend}
                   disabled={sending || !input.trim() || !conversationId}
-                  className="bg-[#FF1493] hover:bg-white text-white hover:text-black font-black border-2 border-white"
+                  className="bg-[#C8962C] hover:bg-white text-white hover:text-black font-black border-2 border-white"
                 >
                   {sending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

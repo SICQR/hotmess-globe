@@ -125,7 +125,7 @@ export default function L2ProfileSheet({ email, uid }) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-[#FF1493] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#C8962C] animate-spin" />
       </div>
     );
   }
@@ -142,20 +142,18 @@ export default function L2ProfileSheet({ email, uid }) {
 
   const membershipTier = profileUser.membership_tier || 'free';
   const isVerified = profileUser.is_verified;
-  const xp = profileUser.xp || 0;
-  const level = Math.floor(xp / 1000) + 1;
 
   return (
     <div className="pb-24">
       {/* Header with Avatar */}
       <div className="relative">
         {/* Cover gradient */}
-        <div className="h-24 bg-gradient-to-br from-[#FF1493]/30 via-[#B026FF]/20 to-black" />
+        <div className="h-24 bg-gradient-to-br from-[#C8962C]/30 via-[#B026FF]/20 to-black" />
         
         {/* Avatar */}
         <div className="absolute -bottom-12 left-4">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full border-4 border-black bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden">
+            <div className="w-24 h-24 rounded-full border-4 border-black bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden">
               {profileUser.avatar_url ? (
                 <img 
                   src={profileUser.avatar_url} 
@@ -219,7 +217,7 @@ export default function L2ProfileSheet({ email, uid }) {
             <Button
               onClick={handleMessage}
               size="sm"
-              className="bg-[#FF1493] hover:bg-[#FF1493]/90"
+              className="bg-[#C8962C] hover:bg-[#C8962C]/90"
             >
               <MessageCircle className="w-4 h-4 mr-1" />
               Message
@@ -247,21 +245,13 @@ export default function L2ProfileSheet({ email, uid }) {
 
       {/* Stats Bar */}
       <SheetSection>
-        <div className="grid grid-cols-4 gap-2 text-center">
-          <div className="p-2 bg-white/5 rounded-lg">
-            <p className="text-xl font-black text-[#FFEB3B]">{xp}</p>
-            <p className="text-[10px] text-white/40 uppercase">XP</p>
-          </div>
-          <div className="p-2 bg-white/5 rounded-lg">
-            <p className="text-xl font-black text-[#00D9FF]">{level}</p>
-            <p className="text-[10px] text-white/40 uppercase">Level</p>
-          </div>
+        <div className="grid grid-cols-2 gap-2 text-center">
           <div className="p-2 bg-white/5 rounded-lg">
             <p className="text-xl font-black text-[#39FF14]">{profileUser.events_attended || 0}</p>
             <p className="text-[10px] text-white/40 uppercase">Events</p>
           </div>
           <div className="p-2 bg-white/5 rounded-lg">
-            <p className="text-xl font-black text-[#FF1493]">{profileUser.connections_count || 0}</p>
+            <p className="text-xl font-black text-[#C8962C]">{profileUser.connections_count || 0}</p>
             <p className="text-[10px] text-white/40 uppercase">Links</p>
           </div>
         </div>
@@ -274,20 +264,20 @@ export default function L2ProfileSheet({ email, uid }) {
         <TabsList className="w-full bg-white/5 border-b border-white/10 rounded-none p-0">
           <TabsTrigger 
             value="about" 
-            className="flex-1 rounded-none data-[state=active]:bg-white/10 data-[state=active]:text-[#FF1493]"
+            className="flex-1 rounded-none data-[state=active]:bg-white/10 data-[state=active]:text-[#C8962C]"
           >
             About
           </TabsTrigger>
           <TabsTrigger 
             value="events" 
-            className="flex-1 rounded-none data-[state=active]:bg-white/10 data-[state=active]:text-[#FF1493]"
+            className="flex-1 rounded-none data-[state=active]:bg-white/10 data-[state=active]:text-[#C8962C]"
           >
             Events
           </TabsTrigger>
           {(profileUser.is_seller || profileUser.is_creator) && (
             <TabsTrigger 
               value="shop" 
-              className="flex-1 rounded-none data-[state=active]:bg-white/10 data-[state=active]:text-[#FF1493]"
+              className="flex-1 rounded-none data-[state=active]:bg-white/10 data-[state=active]:text-[#C8962C]"
             >
               Shop
             </TabsTrigger>
@@ -410,7 +400,7 @@ export default function L2ProfileSheet({ email, uid }) {
             </Button>
             <Button
               onClick={handleMessage}
-              className="flex-1 h-12 bg-[#FF1493] hover:bg-[#FF1493]/90"
+              className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90"
             >
               <MessageCircle className="w-4 h-4 mr-2" />
               Message

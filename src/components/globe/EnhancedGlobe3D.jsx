@@ -297,7 +297,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
                 ? 0x50C878
                 : isRightNow
                   ? 0x39ff14
-                  : 0xff1493;
+                  : 0xC8962C;
         const emissiveIntensity = isCareBeacon ? 1.5 : isPerson ? 1.2 : isHighlighted ? 1.2 : 0.8;
         
         // Scale up clusters
@@ -335,7 +335,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           const ctx = canvas.getContext('2d');
           canvas.width = 64;
           canvas.height = 64;
-          ctx.fillStyle = '#FF1493';
+          ctx.fillStyle = '#C8962C';
           ctx.font = 'bold 32px Arial';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
@@ -454,7 +454,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         const heatSize = Math.min(0.1 + (density * 0.02), 0.4);
         const heatGeo = new THREE.SphereGeometry(heatSize, 16, 16);
         const heatMat = new THREE.MeshBasicMaterial({
-          color: density > 5 ? 0xff073a : density > 2 ? 0xff6b35 : 0xff1493,
+          color: density > 5 ? 0xff073a : density > 2 ? 0xff6b35 : 0xC8962C,
           transparent: true,
           opacity: 0.3 + (avgIntensity * 0.3),
           blending: THREE.AdditiveBlending
@@ -466,7 +466,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         // Outer glow
         const glowGeo = new THREE.SphereGeometry(heatSize * 1.5, 16, 16);
         const glowMat = new THREE.MeshBasicMaterial({
-          color: density > 5 ? 0xff073a : density > 2 ? 0xff6b35 : 0xff1493,
+          color: density > 5 ? 0xff073a : density > 2 ? 0xff6b35 : 0xC8962C,
           transparent: true,
           opacity: 0.15,
           blending: THREE.AdditiveBlending,
@@ -565,7 +565,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         // Calculate dominant mood color
         const coldVibeCount = intents.filter(i => i.cold_vibe).length;
         const isColdVibeDominant = coldVibeCount > intents.length / 2;
-        const color = isColdVibeDominant ? 0x50C878 : 0xFF1493;
+        const color = isColdVibeDominant ? 0x50C878 : 0xC8962C;
 
         // Blob size based on user count
         const blobSize = Math.min(0.05 + (intents.length * 0.01), 0.15);
@@ -619,7 +619,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         const colors = {
           search: 0x00d9ff,
           filter: 0xb026ff,
-          beacon_click: 0xff1493,
+          beacon_click: 0xC8962C,
           city_click: 0xffeb3b,
           layer_toggle: 0x39ff14
         };
@@ -676,7 +676,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       const arcMaterial = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
-          uColor: { value: new THREE.Color(0xff1493) },
+          uColor: { value: new THREE.Color(0xC8962C) },
           uHover: { value: 0.0 }
         },
         vertexShader: `
@@ -1212,14 +1212,14 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
             zIndex: 80, // Z.OVERLAY
             pointerEvents: 'none'
           }}
-          className="px-4 py-3 bg-black/95 border border-[#FF1493]/40 rounded-xl backdrop-blur-xl"
+          className="px-4 py-3 bg-black/95 border border-[#C8962C]/40 rounded-xl backdrop-blur-xl"
         >
           <div className="flex items-center gap-3 text-sm">
             <div className="flex flex-col items-end">
               <span className="text-white/50 text-xs tracking-wider uppercase">FROM</span>
               <span className="text-white font-bold tracking-wide">{arcTooltip.from.city || arcTooltip.from.title}</span>
             </div>
-            <div className="text-[#FF1493] text-lg">→</div>
+            <div className="text-[#C8962C] text-lg">→</div>
             <div className="flex flex-col items-start">
               <span className="text-white/50 text-xs tracking-wider uppercase">TO</span>
               <span className="text-white font-bold tracking-wide">{arcTooltip.to.city || arcTooltip.to.title}</span>
@@ -1227,7 +1227,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           </div>
           <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between gap-4 text-xs">
             <span className="text-white/40 tracking-wide uppercase">Connection</span>
-            <span className="text-[#FF1493] font-semibold">{arcTooltip.to.kind || 'EVENT'}</span>
+            <span className="text-[#C8962C] font-semibold">{arcTooltip.to.kind || 'EVENT'}</span>
           </div>
         </div>
       )}

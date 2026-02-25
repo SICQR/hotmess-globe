@@ -1,17 +1,19 @@
 /**
- * L2ChatSheet — Messages as a sheet overlay
- * 
- * Replaces: /social/inbox page navigation
- * Extracted from Messages.jsx + ChatThread.jsx
+ * L2ChatSheet — Supabase-native messaging
+ *
+ * Tables:
+ *   chat_threads  (id, participant_emails[], last_message, last_message_at)
+ *   messages      (id, thread_id, sender_email, sender_name, content, message_type, metadata, created_date)
+ *   profiles      (id, email, display_name, avatar_url)
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
-import { 
-  MessageCircle, Send, ArrowLeft, 
-  Loader2, Search, ChevronRight
+import { supabase } from '@/components/utils/supabaseClient';
+import {
+  MessageCircle, Send, ArrowLeft,
+  Loader2, Search, ChevronRight,
+  Camera, Mic, Video, Navigation,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,235 +22,457 @@ import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import MeetpointCard from '@/components/messaging/MeetpointCard';
+import VideoCallModal from '@/components/video/VideoCallModal';
+import TravelModal from '@/components/messaging/TravelModal';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 
-export default function L2ChatSheet({ thread: initialThreadId, to: initialTo, title }) {
-  const queryClient = useQueryClient();
+// ── localStorage unread tracking ─────────────────────────────────────────────
+const getLastRead = (threadId) => {
+  try { return parseInt(localStorage.getItem(`chat_read_${threadId}`) || '0', 10); } catch { return 0; }
+};
+const markRead = (threadId) => {
+  try { localStorage.setItem(`chat_read_${threadId}`, String(Date.now())); } catch {}
+};
+
+export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, title }) {
   const { openSheet, updateSheetProps } = useSheet();
+
+  const [currentUser, setCurrentUser]   = useState(null); // { id, email }
+  const [threads, setThreads]           = useState([]);
+  const [profiles, setProfiles]         = useState({}); // email → profile
+  const [threadsLoading, setThreadsLoading] = useState(true);
+
   const [selectedThread, setSelectedThread] = useState(null);
-  const [newMessage, setNewMessage] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const messagesEndRef = useRef(null);
+  const [messages, setMessages]         = useState([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
 
-  // Current user
-  const { data: currentUser } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: () => base44.auth.me(),
-  });
+  const [newMessage, setNewMessage]     = useState('');
+  const [sending, setSending]           = useState(false);
+  const [searchQuery, setSearchQuery]   = useState('');
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showTravelModal, setShowTravelModal] = useState(false);
 
-  // All users for lookups
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
-  });
+  // ── Typing indicator ───────────────────────────────────────────────────────
+  const { typingUsers, sendTyping } = useTypingIndicator(
+    selectedThread && !selectedThread._new ? selectedThread.id : null,
+    currentUser?.email
+  );
 
-  // Chat threads
-  const { data: threads = [], isLoading: threadsLoading } = useQuery({
-    queryKey: ['chat-threads', currentUser?.email],
-    queryFn: async () => {
-      if (!currentUser?.email) return [];
-      const allThreads = await base44.entities.ChatThread.filter({ active: true }, '-last_message_at');
-      return allThreads.filter(t => t.participant_emails?.includes(currentUser.email));
-    },
-    enabled: !!currentUser?.email,
-    refetchInterval: 5000,
-  });
+  const messagesEndRef  = useRef(null);
+  const cameraRef       = useRef(null);
+  const photoInputRef   = useRef(null);
+  const inputRef        = useRef(null);
+  const realtimeRef     = useRef(null);
 
-  // Messages for selected thread
-  const { data: messages = [], isLoading: messagesLoading } = useQuery({
-    queryKey: ['chat-messages', selectedThread?.id],
-    queryFn: async () => {
-      if (!selectedThread?.id) return [];
-      return await base44.entities.ChatMessage.filter({ thread_id: selectedThread.id }, 'created_date');
-    },
-    enabled: !!selectedThread?.id,
-    refetchInterval: 3000,
-  });
-
-  // Auto-select thread from props
+  // ── Boot: get current user ─────────────────────────────────────────────────
   useEffect(() => {
-    if (initialThreadId && threads.length > 0) {
-      const thread = threads.find(t => t.id === initialThreadId);
-      if (thread) setSelectedThread(thread);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setCurrentUser({ id: user.id, email: user.email });
+    });
+  }, []);
+
+  // ── Load threads when user is ready ───────────────────────────────────────
+  useEffect(() => {
+    if (!currentUser?.email) return;
+    loadThreads();
+  }, [currentUser?.email]);
+
+  const loadThreads = async () => {
+    setThreadsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('chat_threads')
+        .select('*')
+        .contains('participant_emails', [currentUser.email])
+        .eq('active', true)
+        .order('last_message_at', { ascending: false, nullsFirst: false });
+
+      if (error) throw error;
+      const threadList = data || [];
+      setThreads(threadList);
+
+      // Load profiles for all other participants
+      const otherEmails = [
+        ...new Set(
+          threadList.flatMap(t => t.participant_emails || [])
+            .filter(e => e !== currentUser.email)
+        ),
+      ];
+      if (otherEmails.length > 0) {
+        await loadProfilesByEmail(otherEmails);
+      }
+    } catch (err) {
+      console.error('[Chat] loadThreads error:', err);
+    } finally {
+      setThreadsLoading(false);
     }
-  }, [initialThreadId, threads]);
+  };
 
-  // Create new thread if "to" email provided
+  const loadProfilesByEmail = async (emails) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, email, display_name, avatar_url')
+      .in('email', emails);
+
+    if (data) {
+      setProfiles(prev => {
+        const next = { ...prev };
+        data.forEach(p => { if (p.email) next[p.email] = p; });
+        return next;
+      });
+    }
+  };
+
+  // ── Open thread from props ─────────────────────────────────────────────────
   useEffect(() => {
-    if (initialTo && currentUser?.email && !selectedThread) {
-      // Check if thread already exists
-      const existing = threads.find(t => 
-        t.participant_emails?.includes(initialTo) && 
+    if (!currentUser?.email || threadsLoading) return;
+
+    if (initialThreadId) {
+      const t = threads.find(th => th.id === initialThreadId);
+      if (t) openThread(t);
+    } else if (initialToEmail && !selectedThread) {
+      const existing = threads.find(t =>
+        t.participant_emails?.includes(initialToEmail) &&
         t.participant_emails?.includes(currentUser.email)
       );
-      
       if (existing) {
-        setSelectedThread(existing);
+        openThread(existing);
+      } else {
+        // Pre-select the "to" email so first send creates the thread
+        setSelectedThread({ _new: true, participant_emails: [currentUser.email, initialToEmail] });
       }
-      // If not, we'll create one on first message
     }
-  }, [initialTo, currentUser, threads, selectedThread]);
+  }, [currentUser?.email, threadsLoading, initialThreadId, initialToEmail]);
 
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  // ── Open thread → load messages + subscribe ───────────────────────────────
+  const openThread = useCallback(async (thread) => {
+    setSelectedThread(thread);
+    if (thread._new) return;
+
+    setMessagesLoading(true);
+    markRead(thread.id);
+
+    // Reset unread_count for current user in this thread
+    if (currentUser?.email) {
+      supabase
+        .from('chat_threads')
+        .select('unread_count')
+        .eq('id', thread.id)
+        .single()
+        .then(({ data: threadRow }) => {
+          if (threadRow) {
+            const updated = { ...(threadRow.unread_count || {}), [currentUser.email]: 0 };
+            supabase
+              .from('chat_threads')
+              .update({ unread_count: updated })
+              .eq('id', thread.id)
+              .then(() => {});
+          }
+        });
     }
+
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('thread_id', thread.id)
+        .order('created_date', { ascending: true });
+      if (!error) setMessages(data || []);
+    } catch (err) {
+      console.error('[Chat] loadMessages error:', err);
+    } finally {
+      setMessagesLoading(false);
+    }
+
+    // Realtime subscription for new messages
+    if (realtimeRef.current) supabase.removeChannel(realtimeRef.current);
+    realtimeRef.current = supabase
+      .channel(`messages:thread:${thread.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `thread_id=eq.${thread.id}` },
+        (payload) => {
+          setMessages(prev => {
+            if (prev.find(m => m.id === payload.new.id)) return prev;
+            return [...prev, payload.new];
+          });
+          markRead(thread.id);
+        }
+      )
+      .subscribe();
+  }, []);
+
+  // Cleanup realtime on unmount
+  useEffect(() => () => {
+    if (realtimeRef.current) supabase.removeChannel(realtimeRef.current);
+  }, []);
+
+  // ── Scroll to bottom ───────────────────────────────────────────────────────
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
-  // Send message mutation
-  const sendMutation = useMutation({
-    mutationFn: async (text) => {
-      if (!currentUser?.email) throw new Error('Please log in');
-      if (!text.trim()) throw new Error('Message cannot be empty');
+  // ── Send message ───────────────────────────────────────────────────────────
+  const handleSend = async () => {
+    const text = newMessage.trim();
+    if (!text || !currentUser?.email || sending) return;
 
-      let threadId = selectedThread?.id;
+    setSending(true);
+    setNewMessage('');
+    try {
+      let thread = selectedThread;
 
-      // Create thread if needed
-      if (!threadId && initialTo) {
-        const newThread = await base44.entities.ChatThread.create({
-          participant_emails: [currentUser.email, initialTo],
-          active: true,
-          created_date: new Date().toISOString(),
-          last_message_at: new Date().toISOString(),
-        });
-        threadId = newThread.id;
+      // Create thread if it's a new conversation
+      if (thread?._new) {
+        const { data: newThread, error } = await supabase
+          .from('chat_threads')
+          .insert({
+            participant_emails: thread.participant_emails,
+            active: true,
+            created_by: currentUser.email,
+            last_message_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        thread = newThread;
         setSelectedThread(newThread);
+        setThreads(prev => [newThread, ...prev]);
+
+        // Load profile for the other participant
+        const other = newThread.participant_emails.find(e => e !== currentUser.email);
+        if (other) await loadProfilesByEmail([other]);
       }
 
-      if (!threadId) throw new Error('No thread selected');
+      const senderProfile = profiles[currentUser.email];
 
-      // Create message
-      await base44.entities.ChatMessage.create({
-        thread_id: threadId,
+      // Insert message
+      const { error: msgError } = await supabase
+        .from('messages')
+        .insert({
+          thread_id: thread.id,
+          sender_email: currentUser.email,
+          sender_name: senderProfile?.display_name || currentUser.email,
+          content: text,
+          message_type: 'text',
+          created_date: new Date().toISOString(),
+        });
+      if (msgError) throw msgError;
+
+      // Record last-read timestamp locally for this thread
+      localStorage.setItem(`chat_read_${thread.id}`, String(Date.now()));
+
+      // Update thread last_message
+      await supabase
+        .from('chat_threads')
+        .update({
+          last_message: text.slice(0, 80),
+          last_message_at: new Date().toISOString(),
+        })
+        .eq('id', thread.id);
+
+      // Refresh messages if no realtime (new thread)
+      if (!realtimeRef.current || thread?._new) {
+        const { data } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('thread_id', thread.id)
+          .order('created_date', { ascending: true });
+        if (data) setMessages(data);
+
+        // Subscribe now that thread exists
+        if (!realtimeRef.current) openThread(thread);
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to send message');
+      setNewMessage(text);
+    } finally {
+      setSending(false);
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  };
+
+  // Send a special message (meetpoint, travel card, etc.)
+  const handleSendSpecial = async ({ message_type, metadata, content }) => {
+    if (!currentUser?.email || sending) return;
+    setSending(true);
+    try {
+      let thread = selectedThread;
+      if (thread?._new) {
+        const { data: newThread, error } = await supabase
+          .from('chat_threads')
+          .insert({
+            participant_emails: thread.participant_emails,
+            active: true,
+            created_by: currentUser.email,
+            last_message_at: new Date().toISOString(),
+          })
+          .select().single();
+        if (error) throw error;
+        thread = newThread;
+        setSelectedThread(newThread);
+        setThreads(prev => [newThread, ...prev]);
+      }
+
+      const { error: msgError } = await supabase.from('messages').insert({
+        thread_id: thread.id,
         sender_email: currentUser.email,
-        content: text.trim(),
+        sender_name: profiles[currentUser.email]?.display_name || currentUser.email,
+        content,
+        message_type,
+        metadata,
         created_date: new Date().toISOString(),
       });
+      if (msgError) throw msgError;
 
-      // Update thread last_message_at
-      await base44.entities.ChatThread.update(threadId, {
+      await supabase.from('chat_threads').update({
+        last_message: content.slice(0, 80),
         last_message_at: new Date().toISOString(),
-      });
+      }).eq('id', thread.id);
 
-      return { threadId };
-    },
-    onSuccess: () => {
-      setNewMessage('');
-      queryClient.invalidateQueries(['chat-messages']);
-      queryClient.invalidateQueries(['chat-threads']);
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to send message');
-    },
-  });
-
-  // Get other participant
-  const getOtherParticipant = (thread) => {
-    const otherEmail = thread.participant_emails?.find(e => e !== currentUser?.email);
-    return allUsers.find(u => u.email === otherEmail);
-  };
-
-  // Handle send
-  const handleSend = () => {
-    if (newMessage.trim()) {
-      sendMutation.mutate(newMessage);
+      const { data: msgs } = await supabase
+        .from('messages').select('*').eq('thread_id', thread.id)
+        .order('created_date', { ascending: true });
+      if (msgs) setMessages(msgs);
+    } catch (err) {
+      toast.error(err.message || 'Failed to send');
+    } finally {
+      setSending(false);
     }
   };
 
-  // Handle key press
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  // View profile
-  const handleViewProfile = (email) => {
-    openSheet(SHEET_TYPES.PROFILE, { email });
-  };
-
-  // Back to thread list
   const handleBack = () => {
     setSelectedThread(null);
-    updateSheetProps({ thread: null, to: null, title: 'Messages' });
+    setMessages([]);
+    if (realtimeRef.current) { supabase.removeChannel(realtimeRef.current); realtimeRef.current = null; }
+    updateSheetProps?.({ thread: null, to: null, title: 'Messages' });
+    loadThreads();
   };
 
-  // Filter threads by search
-  const filteredThreads = threads.filter(thread => {
+  // ── Photo upload ───────────────────────────────────────────────────────────
+  const handlePhotoUpload = async (file) => {
+    if (!file || !currentUser?.email) return;
+
+    const ext = file.name.split('.').pop() || 'jpg';
+    const path = `chat-photos/${currentUser.id || currentUser.email}/${Date.now()}.${ext}`;
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('uploads')
+        .upload(path, file, { upsert: false });
+
+      if (uploadError) {
+        toast.error('Could not upload photo');
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('uploads')
+        .getPublicUrl(path);
+
+      const publicUrl = urlData?.publicUrl;
+      if (!publicUrl) {
+        toast.error('Could not get photo URL');
+        return;
+      }
+
+      await handleSendSpecial({
+        content: publicUrl,
+        message_type: 'photo',
+        metadata: { url: publicUrl },
+      });
+    } catch (err) {
+      toast.error(err.message || 'Failed to send photo');
+    }
+  };
+
+  const getOtherEmail = (thread) =>
+    thread.participant_emails?.find(e => e !== currentUser?.email) || '';
+
+  const getProfile = (email) => profiles[email] || null;
+
+  const isUnread = (thread) => {
+    if (!thread.last_message_at) return false;
+    return new Date(thread.last_message_at).getTime() > getLastRead(thread.id);
+  };
+
+  const filteredThreads = threads.filter(t => {
     if (!searchQuery) return true;
-    const other = getOtherParticipant(thread);
-    return (other?.full_name || other?.username || '')
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+    const email = getOtherEmail(t);
+    const p = getProfile(email);
+    return (p?.display_name || email).toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  // Thread List View
-  if (!selectedThread && !initialTo) {
+  // ── Thread list ────────────────────────────────────────────────────────────
+  if (!selectedThread) {
     return (
       <div className="h-full flex flex-col">
-        {/* Search */}
         <SheetSection>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
             <Input
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search conversations..."
-              className="pl-10 bg-white/5 border-white/10"
+              className="pl-10 bg-white/5 border-white/10 text-white"
             />
           </div>
         </SheetSection>
 
         <SheetDivider />
 
-        {/* Thread list */}
         <div className="flex-1 overflow-y-auto">
           {threadsLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 text-[#FF1493] animate-spin" />
+              <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />
             </div>
           ) : filteredThreads.length === 0 ? (
             <div className="text-center py-12 px-4">
               <MessageCircle className="w-12 h-12 text-white/20 mx-auto mb-4" />
               <p className="text-white/40 font-bold">No conversations yet</p>
-              <p className="text-white/20 text-sm mt-1">
-                Start chatting by tapping someone's profile
-              </p>
+              <p className="text-white/20 text-sm mt-1">Tap someone's profile to start chatting</p>
             </div>
           ) : (
             <div className="divide-y divide-white/10">
-              {filteredThreads.map((thread) => {
-                const other = getOtherParticipant(thread);
-                if (!other) return null;
+              {filteredThreads.map(thread => {
+                const email = getOtherEmail(thread);
+                const p = getProfile(email);
+                const unread = isUnread(thread);
+                const name = p?.display_name || email || 'Anonymous';
 
                 return (
                   <button
                     key={thread.id}
-                    onClick={() => setSelectedThread(thread)}
-                    className="w-full p-4 hover:bg-white/5 transition-colors text-left flex items-center gap-3"
+                    onClick={() => openThread(thread)}
+                    className="w-full p-4 hover:bg-white/5 transition-colors text-left flex items-center gap-3 active:bg-white/10"
                   >
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {other.avatar_url ? (
-                        <img src={other.avatar_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-lg font-black text-white">
-                          {other.full_name?.[0] || '?'}
-                        </span>
+                    <div className="relative flex-shrink-0">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                        {p?.avatar_url ? (
+                          <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-lg font-black text-white">{name[0]?.toUpperCase() || '?'}</span>
+                        )}
+                      </div>
+                      {unread && (
+                        <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#C8962C] rounded-full border-2 border-black" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-bold truncate">
-                        {other.full_name || other.username || 'Anonymous'}
-                      </p>
-                      <p className="text-white/40 text-xs truncate">
-                        {thread.last_message_preview || 'Start chatting...'}
-                      </p>
+                      <p className={cn('text-white truncate', unread ? 'font-black' : 'font-semibold')}>{name}</p>
+                      <p className="text-white/40 text-xs truncate">{thread.last_message || 'Start chatting...'}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-white/30 text-xs">
-                        {thread.last_message_at && formatDistanceToNow(new Date(thread.last_message_at), { addSuffix: true })}
-                      </p>
+                      {thread.last_message_at && (
+                        <p className="text-white/30 text-xs">
+                          {formatDistanceToNow(new Date(thread.last_message_at), { addSuffix: true })}
+                        </p>
+                      )}
                       <ChevronRight className="w-4 h-4 text-white/20 ml-auto mt-1" />
                     </div>
                   </button>
@@ -261,42 +485,33 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialTo, ti
     );
   }
 
-  // Chat View
-  const otherUser = selectedThread 
-    ? getOtherParticipant(selectedThread)
-    : allUsers.find(u => u.email === initialTo);
+  // ── Chat view ──────────────────────────────────────────────────────────────
+  const otherEmail = getOtherEmail(selectedThread);
+  const otherProfile = getProfile(otherEmail);
+  const otherName = otherProfile?.display_name || otherEmail || title || 'Chat';
 
   return (
     <div className="h-full flex flex-col">
-      {/* Chat Header */}
-      <div className="flex items-center gap-3 p-4 border-b border-white/10">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBack}
-          className="text-white/60"
-        >
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-black/80 backdrop-blur-sm flex-shrink-0">
+        <button onClick={handleBack} className="text-white/60 p-1">
           <ArrowLeft className="w-5 h-5" />
-        </Button>
-        
+        </button>
+
         <button
-          onClick={() => otherUser && handleViewProfile(otherUser.email)}
+          onClick={() => otherEmail && openSheet(SHEET_TYPES.PROFILE, { email: otherEmail })}
           className="flex items-center gap-3 flex-1 min-w-0"
         >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden flex-shrink-0">
-            {otherUser?.avatar_url ? (
-              <img src={otherUser.avatar_url} alt="" className="w-full h-full object-cover" />
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden flex-shrink-0">
+            {otherProfile?.avatar_url ? (
+              <img src={otherProfile.avatar_url} alt="" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-sm font-black text-white">
-                {otherUser?.full_name?.[0] || '?'}
-              </span>
+              <span className="text-sm font-black text-white">{otherName[0]?.toUpperCase() || '?'}</span>
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-white font-bold truncate">
-              {otherUser?.full_name || otherUser?.username || title || 'Chat'}
-            </p>
-            <p className="text-white/40 text-xs">Tap to view profile</p>
+            <p className="text-white font-bold truncate">{otherName}</p>
+            <p className="text-white/30 text-xs">Tap to view profile</p>
           </div>
         </button>
       </div>
@@ -305,40 +520,66 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialTo, ti
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messagesLoading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 text-[#FF1493] animate-spin" />
+            <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-white/40 text-sm">
-              No messages yet. Say hi! 👋
-            </p>
+            <p className="text-white/40 text-sm">No messages yet. Say hi! 👋</p>
           </div>
         ) : (
           messages.map((msg, i) => {
             const isMe = msg.sender_email === currentUser?.email;
+            const isMeetpoint = msg.message_type === 'meetpoint';
+            const isPhoto =
+              msg.message_type === 'photo' ||
+              /\.(jpe?g|png|gif|webp|avif|heic)(\?.*)?$/i.test(msg.content || '');
+
+            // Read receipt: show ✓✓ on my sent messages if recipient has 0 unread
+            const recipientUnread = selectedThread?.unread_count?.[otherEmail];
+            const isReadByRecipient = isMe && recipientUnread === 0;
+
             return (
               <motion.div
                 key={msg.id || i}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
               >
-                <div
-                  className={cn(
-                    'max-w-[80%] px-4 py-2 rounded-2xl',
-                    isMe
-                      ? 'bg-[#FF1493] text-white rounded-br-sm'
-                      : 'bg-white/10 text-white rounded-bl-sm'
-                  )}
-                >
-                  <p className="text-sm">{msg.content}</p>
-                  <p className={cn(
-                    'text-[10px] mt-1',
-                    isMe ? 'text-white/60' : 'text-white/40'
-                  )}>
-                    {msg.created_date && formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                  </p>
-                </div>
+                {isMeetpoint && msg.metadata ? (
+                  <MeetpointCard {...msg.metadata} />
+                ) : isPhoto ? (
+                  <div className={cn('max-w-[80%]', isMe ? 'items-end flex flex-col' : 'items-start flex flex-col')}>
+                    <img
+                      src={msg.content}
+                      alt="Photo"
+                      className="max-w-[200px] rounded-xl cursor-pointer border border-white/10"
+                      onClick={() => window.open(msg.content, '_blank')}
+                    />
+                    {msg.created_date && (
+                      <p className="text-[10px] mt-1 opacity-40 text-white flex items-center gap-0.5">
+                        {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
+                        {isReadByRecipient && <span className="text-[10px] text-white/50 ml-1">✓✓</span>}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    className={cn(
+                      'max-w-[80%] px-4 py-2.5 rounded-2xl',
+                      isMe
+                        ? 'bg-[#C8962C] text-white rounded-br-sm'
+                        : 'bg-[#1C1C1E] text-white rounded-bl-sm'
+                    )}
+                  >
+                    <p className="text-sm leading-relaxed">{msg.content}</p>
+                    {msg.created_date && (
+                      <p className="text-[10px] mt-1 opacity-50 flex items-center gap-0.5">
+                        {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
+                        {isReadByRecipient && <span className="text-[10px] text-white/50 ml-1">✓✓</span>}
+                      </p>
+                    )}
+                  </div>
+                )}
               </motion.div>
             );
           })
@@ -346,30 +587,123 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialTo, ti
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="p-4 border-t border-white/10 bg-black/50 backdrop-blur-sm">
-        <div className="flex gap-2">
+      {/* Typing indicator */}
+      {typingUsers.length > 0 && (
+        <div className="px-4 py-1 flex items-center gap-2 flex-shrink-0">
+          <div className="flex gap-0.5">
+            {[0, 1, 2].map(i => (
+              <span
+                key={i}
+                className="w-1.5 h-1.5 rounded-full bg-white/40 animate-bounce"
+                style={{ animationDelay: `${i * 150}ms` }}
+              />
+            ))}
+          </div>
+          <span className="text-white/40 text-xs">{typingUsers[0]} is typing…</span>
+        </div>
+      )}
+
+      {/* Composer */}
+      <div className="border-t border-white/10 bg-black/80 backdrop-blur-sm flex-shrink-0">
+        {/* Action bar */}
+        <div className="flex items-center gap-3 px-4 pt-3 pb-1">
+          {/* Camera / Attach */}
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handlePhotoUpload(file);
+              // Reset so same file can be re-selected
+              e.target.value = '';
+            }}
+          />
+          <button
+            onClick={() => photoInputRef.current?.click()}
+            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white/5 border border-white/10"
+            title="Photo"
+          >
+            <Camera className="w-4 h-4 text-white/50" />
+          </button>
+
+          {/* Video call */}
+          <button
+            onClick={() => {
+              if (!otherProfile?.id) {
+                toast.error('Cannot start call: profile not loaded');
+                return;
+              }
+              setShowVideoModal(true);
+            }}
+            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white/5 border border-white/10"
+            title="Video call"
+          >
+            <Video className="w-4 h-4 text-[#C8962C]" />
+          </button>
+
+          {/* Travel / meetpoint */}
+          <button
+            onClick={() => setShowTravelModal(true)}
+            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-white/5 border border-white/10"
+            title="Share location"
+          >
+            <Navigation className="w-4 h-4 text-[#C8962C]" />
+          </button>
+
+        </div>
+
+        {/* Text input row */}
+        <div className="flex items-center gap-2 px-3 pb-3">
           <Input
+            ref={inputRef}
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type a message..."
-            className="flex-1 bg-white/5 border-white/10"
-            disabled={sendMutation.isPending}
+            onChange={e => { setNewMessage(e.target.value); sendTyping(true); }}
+            onKeyDown={handleKeyDown}
+            placeholder="Message..."
+            className="flex-1 bg-[#1C1C1E] border-0 rounded-full text-sm text-white placeholder-white/30"
+            disabled={sending}
           />
           <Button
             onClick={handleSend}
-            disabled={!newMessage.trim() || sendMutation.isPending}
-            className="bg-[#FF1493] hover:bg-[#FF1493]/90"
+            disabled={sending || !newMessage.trim()}
+            className={cn(
+              'flex-shrink-0 w-9 h-9 p-0 rounded-full transition-colors',
+              newMessage.trim()
+                ? 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-black'
+                : 'bg-[#1C1C1E] border border-white/10 text-white/50'
+            )}
           >
-            {sendMutation.isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+            {sending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : newMessage.trim() ? (
+              <Send className="w-4 h-4" />
             ) : (
-              <Send className="w-5 h-5" />
+              <Mic className="w-4 h-4" />
             )}
           </Button>
         </div>
       </div>
+
+      {/* Video call modal */}
+      {showVideoModal && otherProfile?.id && (
+        <VideoCallModal
+          remoteUserId={otherProfile.id}
+          remoteUserName={otherName}
+          remoteUserPhoto={otherProfile?.avatar_url}
+          onClose={() => setShowVideoModal(false)}
+        />
+      )}
+
+      {/* Travel / meetpoint modal */}
+      {showTravelModal && (
+        <TravelModal
+          onSend={handleSendSpecial}
+          onClose={() => setShowTravelModal(false)}
+        />
+      )}
+
     </div>
   );
 }

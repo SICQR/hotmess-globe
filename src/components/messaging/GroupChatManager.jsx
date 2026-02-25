@@ -103,7 +103,7 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
                 return (
                   <div
                     key={email}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-[#FF1493]/20 border border-[#FF1493] rounded-lg"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-[#C8962C]/20 border border-[#C8962C] rounded-lg"
                   >
                     <span className="text-sm">{user?.full_name || email}</span>
                     <button onClick={() => toggleUser(email)}>
@@ -122,11 +122,11 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
                 onClick={() => toggleUser(user.email)}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
                   selectedUsers.includes(user.email)
-                    ? 'bg-[#FF1493]/20 border border-[#FF1493]'
+                    ? 'bg-[#C8962C]/20 border border-[#C8962C]'
                     : 'bg-white/5 hover:bg-white/10'
                 }`}
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center">
                   <span className="font-bold text-sm">{user.full_name?.[0] || 'U'}</span>
                 </div>
                 <div className="flex-1 text-left">
@@ -140,7 +140,7 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
           <Button
             onClick={() => createGroupMutation.mutate()}
             disabled={selectedUsers.length === 0 || createGroupMutation.isPending}
-            className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+            className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black"
           >
             <Plus className="w-4 h-4 mr-2" />
             Create Group ({selectedUsers.length} selected)

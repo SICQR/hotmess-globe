@@ -64,9 +64,16 @@ export function PulseProvider({ children }) {
   );
 }
 
+const NOOP = () => {};
+const NOOP_UNSUB = () => NOOP;
+
 export function usePulse() {
   const ctx = useContext(PulseContext);
-  if (!ctx) throw new Error('usePulse must be used within PulseProvider');
+  if (!ctx) {
+    // SOSButton and other global components call usePulse but PulseProvider
+    // only mounts inside /pulse. Return a safe no-op so safety features never crash.
+    return { subscribe: NOOP_UNSUB, emit: NOOP, softPulse: NOOP, ripple: NOOP, spark: NOOP, arc: NOOP, bloom: NOOP, tremor: NOOP };
+  }
   return ctx;
 }
 

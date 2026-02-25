@@ -118,7 +118,7 @@ export default function Profile() {
 
     // Simple deterministic colors so avatars feel consistent.
     const palette = [
-      ['#FF1493', '#B026FF'],
+      ['#C8962C', '#B026FF'],
       ['#00D9FF', '#1E3A8A'],
       ['#22C55E', '#0F766E'],
       ['#F97316', '#7C2D12'],
@@ -381,9 +381,8 @@ export default function Profile() {
   const viewCount = profileViews.length;
   const tierRaw = currentUser?.membership_tier;
   const _tier = tierRaw === 'free' ? 'basic' : tierRaw || 'basic';
-  const level = Math.floor(((profileUser?.xp ?? 0) || 0) / 1000) + 1;
-  // Chrome tier: Level 5+ can see WHO viewed their profile
-  const canSeeViewers = level >= 5;
+  // Chrome tier can see WHO viewed their profile
+  const canSeeViewers = _tier === 'chrome';
 
   const _followMutation = useMutation({
     mutationFn: () => base44.entities.UserFollow.create({
@@ -580,14 +579,14 @@ export default function Profile() {
         >
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black uppercase mb-2">
-              <span className="text-[#FF1493]">HOT</span>MESS
+              <span className="text-[#C8962C]">HOT</span>MESS
             </h1>
             <p className="text-sm text-white/60 uppercase tracking-wider">Complete Your Profile</p>
           </div>
 
           <form onSubmit={handleSetupSubmit} className="bg-white/5 border-2 border-white p-8 space-y-6">
             <div className="flex flex-col items-center gap-4">
-              <div className="w-32 h-32 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border-2 border-white flex items-center justify-center overflow-hidden">
+              <div className="w-32 h-32 bg-gradient-to-br from-[#C8962C] to-[#B026FF] border-2 border-white flex items-center justify-center overflow-hidden">
                 {avatarFile ? (
                   <img
                     src={URL.createObjectURL(avatarFile)}
@@ -602,7 +601,7 @@ export default function Profile() {
               <Button
                 type="button"
                 onClick={() => document.getElementById('avatar-upload').click()}
-                className="bg-white text-black hover:bg-[#FF1493] hover:text-white font-black"
+                className="bg-white text-black hover:bg-[#C8962C] hover:text-white font-black"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Avatar
@@ -653,7 +652,7 @@ export default function Profile() {
                     onClick={() => setProfileType(t.value)}
                     className={`p-4 text-left border-2 transition-all ${
                       profileType === t.value
-                        ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                        ? 'bg-[#C8962C] border-[#C8962C] text-black'
                         : 'bg-white/5 border-white/20 text-white hover:border-white/40'
                     }`}
                   >
@@ -687,7 +686,7 @@ export default function Profile() {
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="What are you about? What are you here for?"
                 rows={4}
-                className="w-full bg-white/5 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#FF1493] focus:outline-none"
+                className="w-full bg-white/5 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#C8962C] focus:outline-none"
               />
             </div>
 
@@ -765,7 +764,7 @@ export default function Profile() {
             <Button
               type="submit"
               disabled={saving || !fullName.trim() || !String(profileType || '').trim() || !String(city || '').trim() || !photoPolicyAck}
-              className="w-full bg-[#FF1493] hover:bg-white text-white hover:text-black font-black text-lg py-6 border-2 border-white"
+              className="w-full bg-[#C8962C] hover:bg-white text-white hover:text-black font-black text-lg py-6 border-2 border-white"
             >
               {saving ? (
                 <>
@@ -923,8 +922,6 @@ export default function Profile() {
             className="mb-6"
           >
             <ProfileStats
-              xp={profileUser.xp}
-              level={level}
               followersCount={followers.length}
               followingCount={following.length}
               checkInsCount={checkIns.length}
@@ -959,7 +956,7 @@ export default function Profile() {
                     return (
                       <Link key={idx} to={createPageUrl(`Profile?email=${viewer.email}`)}>
                         <div className="flex items-center gap-3 p-2 hover:bg-white/5 transition-colors">
-                          <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center">
+                          <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] border border-white flex items-center justify-center">
                             {viewer.avatar_url ? (
                               <img src={viewer.avatar_url} alt={viewer.full_name} className="w-full h-full object-cover" />
                             ) : (
@@ -978,10 +975,7 @@ export default function Profile() {
               ) : (
                 <div className="text-center py-4">
                   <p className="text-sm text-white/60 mb-2">
-                    Reach Level 5 to unlock Chrome tier and see who viewed your profile
-                  </p>
-                  <p className="text-xs text-white/40">
-                    Currently Level {level} • Need {(5 - level) * 1000} more XP
+                    Upgrade to Chrome tier to see who viewed your profile
                   </p>
                 </div>
               )}
@@ -1014,7 +1008,7 @@ export default function Profile() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="bg-gradient-to-br from-[#FFEB3B]/10 to-[#FF1493]/10 border-2 border-[#FFEB3B] rounded-none p-4"
+                    className="bg-gradient-to-br from-[#FFEB3B]/10 to-[#C8962C]/10 border-2 border-[#FFEB3B] rounded-none p-4"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <Star className="w-5 h-5 text-[#FFEB3B]" />
@@ -1056,7 +1050,7 @@ export default function Profile() {
             className="mb-6"
           >
             <div className="flex items-center gap-2 mb-4">
-              <Shield className="w-5 h-5 text-[#FF1493]" />
+              <Shield className="w-5 h-5 text-[#C8962C]" />
               <h2 className="text-xl font-black uppercase">Badges</h2>
               <span className="text-sm text-white/60">({achievementDetails.length})</span>
             </div>
@@ -1123,7 +1117,7 @@ export default function Profile() {
                       <img src={checkIn.photo_url} alt="Check-in" className="w-full h-48 object-cover rounded-lg mb-3" />
                     )}
                     <Link to={createPageUrl(`BeaconDetail?id=${checkIn.beacon_id}`)}>
-                      <h3 className="font-bold mb-1 hover:text-[#FF1493] transition-colors">{sanitizeText(checkIn.beacon_title)}</h3>
+                      <h3 className="font-bold mb-1 hover:text-[#C8962C] transition-colors">{sanitizeText(checkIn.beacon_title)}</h3>
                     </Link>
                     {checkIn.note && <p className="text-sm text-white/60 mb-2">{sanitizeText(checkIn.note)}</p>}
                     <div className="flex items-center gap-2 text-xs text-white/40">
@@ -1170,11 +1164,6 @@ export default function Profile() {
                   </div>
                   {ach.description && (
                     <p className="text-xs text-white/60">{ach.description}</p>
-                  )}
-                  {ach.xp_required && (
-                    <div className="mt-2 text-xs text-[#FFEB3B] font-bold">
-                      {ach.xp_required} XP
-                    </div>
                   )}
                 </motion.div>
               ))}

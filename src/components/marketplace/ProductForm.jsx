@@ -153,7 +153,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
 
     setGeneratingMarketing(true);
     try {
-      const prompt = `Create compelling marketing copy for a featured product listing: "${formData.name}" - ${formData.description}. Price: ${formData.price_xp} XP. Write a short, punchy promotional message (1-2 sentences) that creates urgency and excitement. Use emojis and caps lock strategically for emphasis. Think Instagram/social media style.`;
+      const prompt = `Create compelling marketing copy for a featured product listing: "${formData.name}" - ${formData.description}. Price: £${formData.price_gbp || formData.price_xp}. Write a short, punchy promotional message (1-2 sentences) that creates urgency and excitement. Use emojis and caps lock strategically for emphasis. Think Instagram/social media style.`;
       
       const response = await base44.integrations.Core.InvokeLLM({
         prompt,
@@ -217,7 +217,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
             size="sm"
             onClick={generateDescription}
             disabled={generatingDescription || !formData.name}
-            className="text-[#FF1493] hover:text-[#FF1493]/90"
+            className="text-[#C8962C] hover:text-[#C8962C]/90"
           >
             {generatingDescription ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -237,7 +237,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="space-y-2">
-          <Label>Price (XP)</Label>
+          <Label>Price (Credits)</Label>
           <Input
             type="number"
             value={Number.isFinite(formData.price_xp) ? formData.price_xp : ''}
@@ -315,9 +315,9 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
         {formData.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
             {formData.tags.map(tag => (
-              <span key={tag} className="px-3 py-1 bg-[#FF1493]/20 border border-[#FF1493] rounded-lg text-sm flex items-center gap-2">
+              <span key={tag} className="px-3 py-1 bg-[#C8962C]/20 border border-[#C8962C] rounded-lg text-sm flex items-center gap-2">
                 {tag}
-                <button type="button" onClick={() => removeTag(tag)} className="hover:text-[#FF1493]">
+                <button type="button" onClick={() => removeTag(tag)} className="hover:text-[#C8962C]">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -367,9 +367,9 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
       </div>
 
       {marketingCopy && (
-        <div className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/40 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/40 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-5 h-5 text-[#FF1493]" />
+            <Sparkles className="w-5 h-5 text-[#C8962C]" />
             <h3 className="font-bold">AI Marketing Copy</h3>
           </div>
           <p className="text-white/90 mb-3">{marketingCopy}</p>
@@ -404,7 +404,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" className="bg-[#FF1493] hover:bg-[#FF1493]/90">
+          <Button type="submit" className="bg-[#C8962C] hover:bg-[#C8962C]/90">
             {product ? 'Update Product' : 'Create Product'}
           </Button>
         </div>

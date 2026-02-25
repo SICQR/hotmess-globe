@@ -38,7 +38,7 @@ export const EventCard = {
     <Card className="w-[350px] bg-black text-white border-white/10">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-[#FF1493] font-black uppercase tracking-wider">Tonight</span>
+          <span className="text-xs text-[#C8962C] font-black uppercase tracking-wider">Tonight</span>
           <span className="text-xs text-white/60">9:00 PM</span>
         </div>
         <CardTitle className="text-white">Underground Rave</CardTitle>
@@ -63,7 +63,7 @@ export const EventCard = {
 export const ProfileCard = {
   render: () => (
     <Card className="w-[300px] bg-black text-white border-white/10 overflow-hidden">
-      <div className="aspect-square bg-gradient-to-br from-[#FF1493] to-[#B026FF]" />
+      <div className="aspect-square bg-gradient-to-br from-[#C8962C] to-[#B026FF]" />
       <CardHeader>
         <CardTitle className="text-white">Alex Thompson</CardTitle>
         <CardDescription className="text-white/60">DJ / Producer</CardDescription>
@@ -142,7 +142,7 @@ export const CardGrid = {
           <CardTitle className="text-white text-sm">Events</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-black text-[#FF1493]">24</div>
+          <div className="text-2xl font-black text-[#C8962C]">24</div>
         </CardContent>
       </Card>
       <Card className="bg-black text-white border-white/10">

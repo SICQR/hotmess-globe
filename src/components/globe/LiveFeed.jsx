@@ -22,7 +22,7 @@ const ICONS = {
 
 // Color mapping (visual language)
 const COLORS = {
-  CITY_HEAT: 'text-pink-500',    // heat = presence
+  CITY_HEAT: 'text-[#C8962C]',    // heat = presence
   RADIO_START: 'text-green-400', // wave = radio
   RADIO_SPIKE: 'text-green-500',
   EVENT_LIVE: 'text-yellow-500', // pulse = time-bound
@@ -151,7 +151,7 @@ export default function LiveFeed({ viewerContext = DEFAULT_VIEWER_CONTEXT }) {
                   <p className="text-[10px] text-white/40 uppercase">
                     {item.data?.city || 'Global'}
                     {item.clickTarget && (
-                      <span className="ml-2 text-pink-500/60">→ {item.clickTarget}</span>
+                      <span className="ml-2 text-[#C8962C]/60">→ {item.clickTarget}</span>
                     )}
                   </p>
                 </div>

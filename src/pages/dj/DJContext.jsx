@@ -72,7 +72,7 @@ export default function DJContext() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#C8962C] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -88,7 +88,7 @@ export default function DJContext() {
         </p>
         <button
           onClick={() => navigate(-1)}
-          className="px-6 py-3 bg-pink-500 text-black font-bold rounded-full hover:bg-pink-400 transition-colors"
+          className="px-6 py-3 bg-[#C8962C] text-black font-bold rounded-full hover:bg-[#B5851D] transition-colors"
         >
           Go Back
         </button>
@@ -110,7 +110,7 @@ export default function DJContext() {
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
           <div>
-            <p className="text-[10px] text-pink-500 uppercase tracking-widest">
+            <p className="text-[10px] text-[#C8962C] uppercase tracking-widest">
               {archetype?.name || 'DJ'}
             </p>
             <h1 className="text-xl font-bold text-white">{dj?.name}</h1>
@@ -123,7 +123,7 @@ export default function DJContext() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 p-6 border border-pink-500/20 rounded-lg bg-pink-500/5"
+          className="mb-8 p-6 border border-[#C8962C]/20 rounded-lg bg-[#C8962C]/5"
         >
           <p className="text-white/70 italic text-lg leading-relaxed">
             "{dj?.bio}"
@@ -140,11 +140,11 @@ export default function DJContext() {
                 key={city}
                 className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-full"
               >
-                <MapPin className="w-4 h-4 text-pink-500" />
+                <MapPin className="w-4 h-4 text-[#C8962C]" />
                 <span className="text-white capitalize">{city}</span>
                 <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-pink-500"
+                    className="h-full bg-[#C8962C]"
                     style={{ width: `${affinity * 100}%` }}
                   />
                 </div>
@@ -179,7 +179,7 @@ export default function DJContext() {
                     <p className="text-white font-medium">{moment.title}</p>
                     <p className="text-white/40 text-sm">{moment.date} • {moment.city}</p>
                   </div>
-                  <span className="text-xs text-pink-500 uppercase">{moment.type}</span>
+                  <span className="text-xs text-[#C8962C] uppercase">{moment.type}</span>
                 </motion.div>
               ))}
             </div>

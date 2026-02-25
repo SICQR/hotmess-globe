@@ -34,11 +34,11 @@ export function EditorialImage({
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '20%']);
   const scale = useTransform(scrollYProgress, [0, 0.5, 1], [1.1, 1, 0.95]);
 
-  // LED Brutalist overlays - hot pink #FF1493, cyan #00D9FF
+  // LED Brutalist overlays - hot pink #C8962C, cyan #00D9FF
   const overlayColors = {
-    hot: 'bg-gradient-to-br from-[#FF1493]/40 via-[#FF1493]/20 to-transparent',
+    hot: 'bg-gradient-to-br from-[#C8962C]/40 via-[#C8962C]/20 to-transparent',
     cyan: 'bg-gradient-to-br from-[#00D9FF]/30 via-[#00D9FF]/15 to-transparent',
-    dual: 'bg-gradient-to-br from-[#FF1493]/30 via-[#00D9FF]/20 to-[#FF1493]/10',
+    dual: 'bg-gradient-to-br from-[#C8962C]/30 via-[#00D9FF]/20 to-[#C8962C]/10',
     none: '',
   };
 

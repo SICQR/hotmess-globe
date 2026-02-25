@@ -45,11 +45,11 @@ export default function EventInsights({ event, scoreBreakdown }) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs uppercase tracking-wider text-white/60">Match Score</span>
-              <span className="text-2xl font-black text-[#FF1493]">{total}/100</span>
+              <span className="text-2xl font-black text-[#C8962C]">{total}/100</span>
             </div>
             <div className="h-2 bg-white/10 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-[#FF1493] to-[#B026FF]"
+                className="h-full bg-gradient-to-r from-[#C8962C] to-[#B026FF]"
                 style={{ width: `${Math.min(total, 100)}%` }}
               />
             </div>

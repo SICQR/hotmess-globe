@@ -7,35 +7,43 @@
 -- PART 1: Add missing columns to existing tables
 -- =====================================================
 
--- Add kind and mode columns to beacons (fallback to type)
-ALTER TABLE beacons ADD COLUMN IF NOT EXISTS kind text;
-ALTER TABLE beacons ADD COLUMN IF NOT EXISTS mode text;
-
--- Backfill kind from type where null
-UPDATE beacons SET kind = type WHERE kind IS NULL AND type IS NOT NULL;
-
--- Add index for kind queries
-CREATE INDEX IF NOT EXISTS idx_beacons_kind ON beacons(kind);
-CREATE INDEX IF NOT EXISTS idx_beacons_mode ON beacons(mode);
+-- Add kind and mode columns to beacons (skip if beacons is a view)
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema = 'public' AND table_name = 'beacons') THEN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'beacons' AND column_name = 'kind') THEN
+      ALTER TABLE beacons ADD COLUMN kind text;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'beacons' AND column_name = 'mode') THEN
+      ALTER TABLE beacons ADD COLUMN mode text;
+    END IF;
+    UPDATE beacons SET kind = type WHERE kind IS NULL AND type IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS idx_beacons_kind ON beacons(kind);
+    CREATE INDEX IF NOT EXISTS idx_beacons_mode ON beacons(mode);
+  END IF;
+END $$;
 
 -- =====================================================
 -- PART 2: Create compatibility views for case mismatches
 -- =====================================================
 
--- View: Beacon (PascalCase) -> beacons
-CREATE OR REPLACE VIEW "Beacon" AS SELECT * FROM beacons;
+-- View: Beacon (PascalCase) -> beacons (skip - "Beacon" is a table, not a view)
+-- -- [Skipped - already a table]
+-- CREATE OR REPLACE VIEW "Beacon" AS SELECT * FROM beacons;
 
 -- View: User (PascalCase) -> users  
-CREATE OR REPLACE VIEW "User" AS SELECT * FROM users;
+-- [Skipped - already a table]
+-- CREATE OR REPLACE VIEW "User" AS SELECT * FROM users;
 
 -- View: City (PascalCase) -> cities
-CREATE OR REPLACE VIEW "City" AS SELECT * FROM cities;
+-- [Skipped - already a table]
+-- CREATE OR REPLACE VIEW "City" AS SELECT * FROM cities;
 
 -- View: EventRSVP -> event_rsvps (if exists, otherwise stub)
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'event_rsvps') THEN
-    EXECUTE 'CREATE OR REPLACE VIEW "EventRSVP" AS SELECT * FROM event_rsvps';
+    EXECUTE '-- [Skipped - already a table]
+-- CREATE OR REPLACE VIEW "EventRSVP" AS SELECT * FROM event_rsvps';
   END IF;
 END $$;
 
@@ -107,11 +115,11 @@ CREATE INDEX IF NOT EXISTS idx_beacon_checkins_created ON beacon_checkins(create
 ALTER TABLE beacon_checkins ENABLE ROW LEVEL SECURITY;
 
 -- RLS: Users can read all check-ins, write own
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Anyone can read beacon_checkins" ON beacon_checkins
+CREATE POLICY IF NOT EXISTS "Anyone can read beacon_checkins" ON beacon_checkins
   FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Users can insert own check-ins" ON beacon_checkins
+CREATE POLICY IF NOT EXISTS "Users can insert own check-ins" ON beacon_checkins
   FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Users can update own check-ins" ON beacon_checkins
+CREATE POLICY IF NOT EXISTS "Users can update own check-ins" ON beacon_checkins
   FOR UPDATE USING (auth.uid() = user_id);
 
 -- user_activities: Track user activity feed
@@ -133,9 +141,9 @@ CREATE INDEX IF NOT EXISTS idx_user_activities_created ON user_activities(create
 
 ALTER TABLE user_activities ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Anyone can read visible activities" ON user_activities
+CREATE POLICY IF NOT EXISTS "Anyone can read visible activities" ON user_activities
   FOR SELECT USING (visible = true);
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Users can insert own activities" ON user_activities
+CREATE POLICY IF NOT EXISTS "Users can insert own activities" ON user_activities
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- user_intents: Track user intent signals (discovery)
@@ -158,9 +166,9 @@ CREATE INDEX IF NOT EXISTS idx_user_intents_created ON user_intents(created_at D
 
 ALTER TABLE user_intents ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Anyone can read visible intents" ON user_intents
+CREATE POLICY IF NOT EXISTS "Anyone can read visible intents" ON user_intents
   FOR SELECT USING (visible = true);
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Users can manage own intents" ON user_intents
+CREATE POLICY IF NOT EXISTS "Users can manage own intents" ON user_intents
   FOR ALL USING (auth.uid() = user_id);
 
 -- =====================================================
@@ -181,9 +189,9 @@ CREATE INDEX IF NOT EXISTS idx_user_follows_following ON user_follows(following_
 
 ALTER TABLE user_follows ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Anyone can read follows" ON user_follows
+CREATE POLICY IF NOT EXISTS "Anyone can read follows" ON user_follows
   FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Users can follow/unfollow" ON user_follows
+CREATE POLICY IF NOT EXISTS "Users can follow/unfollow" ON user_follows
   FOR ALL USING (auth.uid() = follower_id);
 
 -- cart_items: Shopping cart
@@ -204,7 +212,7 @@ CREATE INDEX IF NOT EXISTS idx_cart_items_user ON cart_items(user_id);
 
 ALTER TABLE cart_items ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Users can manage own cart" ON cart_items
+CREATE POLICY IF NOT EXISTS "Users can manage own cart" ON cart_items
   FOR ALL USING (auth.uid() = user_id);
 
 -- preloved_listings: User marketplace listings
@@ -237,9 +245,9 @@ CREATE INDEX IF NOT EXISTS idx_preloved_created ON preloved_listings(created_at 
 
 ALTER TABLE preloved_listings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Anyone can read active listings" ON preloved_listings
+CREATE POLICY IF NOT EXISTS "Anyone can read active listings" ON preloved_listings
   FOR SELECT USING (status = 'active' OR auth.uid() = seller_id);
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Sellers can manage own listings" ON preloved_listings
+CREATE POLICY IF NOT EXISTS "Sellers can manage own listings" ON preloved_listings
   FOR ALL USING (auth.uid() = seller_id);
 
 -- trusted_contacts: Safety contacts
@@ -259,7 +267,7 @@ CREATE INDEX IF NOT EXISTS idx_trusted_contacts_user ON trusted_contacts(user_id
 
 ALTER TABLE trusted_contacts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Users can manage own contacts" ON trusted_contacts
+CREATE POLICY IF NOT EXISTS "Users can manage own contacts" ON trusted_contacts
   FOR ALL USING (auth.uid() = user_id);
 
 -- safety_checkins: Safety check-in history
@@ -278,9 +286,9 @@ CREATE INDEX IF NOT EXISTS idx_safety_checkins_created ON safety_checkins(create
 
 ALTER TABLE safety_checkins ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Users can read own checkins" ON safety_checkins
+CREATE POLICY IF NOT EXISTS "Users can read own checkins" ON safety_checkins
   FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Users can insert own checkins" ON safety_checkins
+CREATE POLICY IF NOT EXISTS "Users can insert own checkins" ON safety_checkins
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- notification_outbox: Pending notifications queue
@@ -303,7 +311,7 @@ CREATE INDEX IF NOT EXISTS idx_notification_outbox_pending ON notification_outbo
 ALTER TABLE notification_outbox ENABLE ROW LEVEL SECURITY;
 
 -- Only service role can access outbox
-CREATE POLICY IF NOT EXISTS IF NOT EXISTS "Service role only" ON notification_outbox
+CREATE POLICY IF NOT EXISTS "Service role only" ON notification_outbox
   FOR ALL USING (false);
 
 -- =====================================================

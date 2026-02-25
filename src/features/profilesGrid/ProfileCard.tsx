@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { buildProfileRecText, recommendTravelModes, type TravelModeKey } from '@/utils/travelRecommendations';
 import ReactBitsProfileCard from '@/components/react-bits/ProfileCard/ProfileCard';
 import { SimpleProfileCard } from '@/components/profiles/SimpleProfileCard';
+import type { TapType } from '@/hooks/useTaps';
 
 type Props = {
   profile: Profile;
@@ -15,6 +16,10 @@ type Props = {
   viewerProfile?: unknown;
   onOpenProfile: (profile: Profile) => void;
   onNavigateUrl: (url: string) => void;
+  /** Check if current user has already tapped a profile email with a given tap type */
+  isTapped?: (email: string, tapType: TapType) => boolean;
+  /** Send or toggle a tap/woof */
+  onSendTap?: (email: string, name: string, tapType: TapType) => Promise<boolean>;
 };
 
 const getPhotoUrls = (profile: Profile): string[] => {
@@ -149,6 +154,8 @@ function ProfileCardInner({
   viewerProfile,
   onOpenProfile,
   onNavigateUrl,
+  isTapped,
+  onSendTap,
 }: Props) {
   const cardStyle = getProfileCardStyle();
   const useReactBits = cardStyle === 'react-bits';
@@ -189,6 +196,10 @@ function ProfileCardInner({
 
   const [travelTime, setTravelTime] = useState<TravelTimeResponse | null>(null);
   const [isTravelTimeLoading, setIsTravelTimeLoading] = useState(false);
+
+  // Tap / Woof animation state (hoisted to avoid hook-in-conditional violation)
+  const [tapAnim, setTapAnim] = useState(false);
+  const [woofAnim, setWoofAnim] = useState(false);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -432,16 +443,16 @@ function ProfileCardInner({
 
   // Simple brutalist card (default)
   if (useSimple) {
-    const matchPercent = typeof profile.matchProbability === 'number' 
-      ? Math.round(profile.matchProbability) 
+    const matchPercent = typeof profile.matchProbability === 'number'
+      ? Math.round(profile.matchProbability)
       : undefined;
-    
-    const status: 'online' | 'away' | 'offline' = 
-      (profile as any)?.is_online || (profile as any)?.onlineNow ? 'online' : 
+
+    const status: 'online' | 'away' | 'offline' =
+      (profile as any)?.is_online || (profile as any)?.onlineNow ? 'online' :
       (profile as any)?.rightNow ? 'away' : 'offline';
 
     // Parse looking_for tags
-    const lookingFor = Array.isArray((profile as any)?.looking_for) 
+    const lookingFor = Array.isArray((profile as any)?.looking_for)
       ? (profile as any).looking_for.filter((t: unknown) => typeof t === 'string')
       : [];
 
@@ -465,11 +476,34 @@ function ProfileCardInner({
     };
     const lastSeen = formatLastSeen((profile as any)?.last_seen);
 
+    const profileEmail = String((profile as any)?.email || '');
+    const profileName = String(profile.profileName || 'HOTMESS');
+    const hasTapSupport = !!onSendTap && !!profileEmail && !!isTapped;
+
+    const tappedTap = hasTapSupport ? isTapped!(profileEmail, 'tap') : false;
+    const tappedWoof = hasTapSupport ? isTapped!(profileEmail, 'woof') : false;
+
+    const handleTapClick = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!hasTapSupport) return;
+      setTapAnim(true);
+      setTimeout(() => setTapAnim(false), 400);
+      await onSendTap!(profileEmail, profileName, 'tap');
+    };
+
+    const handleWoofClick = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!hasTapSupport) return;
+      setWoofAnim(true);
+      setTimeout(() => setWoofAnim(false), 400);
+      await onSendTap!(profileEmail, profileName, 'woof');
+    };
+
     return (
-      <div ref={attachRef as unknown as React.Ref<HTMLDivElement>}>
+      <div ref={attachRef as unknown as React.Ref<HTMLDivElement>} className="relative">
         <SimpleProfileCard
           id={String(profile.id)}
-          name={String(profile.profileName || 'HOTMESS')}
+          name={profileName}
           photoUrl={primaryUrl || undefined}
           status={status}
           distance={primaryModeShort || undefined}
@@ -484,6 +518,48 @@ function ProfileCardInner({
               : undefined
           }
         />
+        {/* Tap / Woof overlay buttons */}
+        {hasTapSupport && (
+          <div className="absolute top-2 left-2 flex flex-col gap-1.5 pointer-events-auto z-10">
+            {/* Tap button */}
+            <button
+              type="button"
+              aria-label="Tap"
+              onClick={handleTapClick}
+              className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-200 active:scale-90 ${
+                tappedTap || tapAnim
+                  ? 'bg-[#C8962C] border-[#C8962C] text-black'
+                  : 'bg-[#1C1C1E]/80 border-white/20 text-white/60'
+              }`}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                {/* Hand / wave icon */}
+                <path d="M18 11V6a2 2 0 0 0-4 0v5" />
+                <path d="M14 10V4a2 2 0 0 0-4 0v6" />
+                <path d="M10 10.5V6a2 2 0 0 0-4 0v8a6 6 0 0 0 6 6h1a6 6 0 0 0 6-6v-3a2 2 0 0 0-4 0" />
+              </svg>
+            </button>
+            {/* Woof button */}
+            <button
+              type="button"
+              aria-label="Woof"
+              onClick={handleWoofClick}
+              className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-200 active:scale-90 ${
+                tappedWoof || woofAnim
+                  ? 'bg-[#C8962C] border-[#C8962C] text-black'
+                  : 'bg-[#1C1C1E]/80 border-white/20 text-white/60'
+              }`}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                {/* Paw / dog icon */}
+                <circle cx="11" cy="4" r="2" />
+                <circle cx="18" cy="8" r="2" />
+                <circle cx="20" cy="16" r="2" />
+                <path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
     );
   }

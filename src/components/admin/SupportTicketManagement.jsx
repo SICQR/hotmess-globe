@@ -408,7 +408,7 @@ export default function SupportTicketManagement() {
                     onClick={() => handleTicketSelect(ticket)}
                     className={`p-4 border-2 cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-[#FF1493] bg-[#FF1493]/10'
+                        ? 'border-[#C8962C] bg-[#C8962C]/10'
                         : 'border-white/10 hover:border-white/30'
                     }`}
                   >
@@ -492,7 +492,7 @@ export default function SupportTicketManagement() {
                     key={response.id}
                     className={`p-3 border-l-4 ${
                       response.responder_type === 'admin'
-                        ? 'border-[#FF1493] bg-[#FF1493]/5'
+                        ? 'border-[#C8962C] bg-[#C8962C]/5'
                         : 'border-[#00D9FF] bg-[#00D9FF]/5'
                     }`}
                   >
@@ -516,12 +516,12 @@ export default function SupportTicketManagement() {
                   value={newResponse}
                   onChange={(e) => setNewResponse(e.target.value)}
                   placeholder="Type your response..."
-                  className="w-full bg-black border-2 border-white/20 p-3 text-white resize-none h-24 focus:border-[#FF1493] outline-none"
+                  className="w-full bg-black border-2 border-white/20 p-3 text-white resize-none h-24 focus:border-[#C8962C] outline-none"
                 />
                 <Button
                   onClick={handleSendResponse}
                   disabled={!newResponse.trim() || sendingResponse}
-                  className="mt-2 bg-[#FF1493] hover:bg-[#FF1493]/80 text-black font-bold"
+                  className="mt-2 bg-[#C8962C] hover:bg-[#C8962C]/80 text-black font-bold"
                 >
                   <Send className="w-4 h-4 mr-2" />
                   {sendingResponse ? 'Sending...' : 'Send Response'}

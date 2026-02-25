@@ -184,8 +184,8 @@ function CreatorsCartPanel({ currentUser, enabled }) {
                       {item.variant_title ? (
                         <p className="text-xs text-white/60 uppercase tracking-wider">{item.variant_title}</p>
                       ) : null}
-                      {Number.isFinite(Number(product?.price_xp)) ? (
-                        <p className="text-xs text-white/60 mt-1">{product.price_xp} XP</p>
+                      {Number.isFinite(Number(product?.price_gbp)) ? (
+                        <p className="text-xs text-white/60 mt-1">£{product.price_gbp}</p>
                       ) : null}
                     </div>
                     <Button
@@ -253,7 +253,7 @@ function CreatorsCartPanel({ currentUser, enabled }) {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-white/60">Subtotal</span>
-              <span className="font-black">{totalXp} XP</span>
+              <span className="font-black">{totalQty} item{totalQty !== 1 ? 's' : ''}</span>
             </div>
             <div className="flex items-center justify-between">
               <Button
@@ -388,7 +388,7 @@ export default function UnifiedCartDrawer({ currentUser }) {
       >
         <ShoppingCart className="w-5 h-5" />
         {totalCount > 0 ? (
-          <span className="absolute -top-1 -right-1 bg-[#FF1493] text-black text-[10px] font-black rounded-full px-1.5 py-0.5">
+          <span className="absolute -top-1 -right-1 bg-[#C8962C] text-black text-[10px] font-black rounded-full px-1.5 py-0.5">
             {totalCount}
           </span>
         ) : null}

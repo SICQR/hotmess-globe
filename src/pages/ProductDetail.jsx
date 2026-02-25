@@ -181,12 +181,7 @@ export default function ProductDetail() {
       return;
     }
 
-    if (!xpPurchasingEnabled) {
-      toast.message('XP purchasing is coming soon.');
-      return;
-    }
-
-    toast.message('XP purchasing is not available yet.');
+    toast.message('Purchase coming soon.');
   };
 
   const handleReview = () => {
@@ -279,14 +274,9 @@ export default function ProductDetail() {
                   )}
                 </div>
                 <div className="text-left sm:text-right">
-                  <div className="text-4xl font-black text-[#FFEB3B]">
-                    {product.price_xp.toLocaleString()} XP
+                  <div className="text-4xl font-black text-[#C8962C]">
+                    £{(product.price_gbp || 0).toLocaleString()}
                   </div>
-                  {!isShopifyProduct && product.min_xp_level && (
-                    <p className="text-xs text-white/40 mt-1">
-                      Requires Level {Math.floor(product.min_xp_level / 1000) + 1}+
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -331,23 +321,18 @@ export default function ProductDetail() {
               <Button
                 onClick={handlePurchase}
                 disabled={isShopifyProduct ? false : !xpPurchasingEnabled}
-                className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold text-lg py-6"
+                className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold text-lg py-6"
               >
-                {isShopifyProduct ? 'View product' : 'XP purchasing coming soon'}
+                {isShopifyProduct ? 'View product' : 'Coming soon'}
               </Button>
 
-              {!isShopifyProduct ? (
-                <p className="text-xs text-white/50 uppercase tracking-wider">
-                  You can browse drops now. Buying with XP is next.
-                </p>
-              ) : null}
 
               {seller && (
                 <div className="space-y-2">
                   <Link to={createPageUrl(`Profile?email=${seller.email}`)}>
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center">
                           <span className="font-bold">{seller.full_name?.[0] || 'S'}</span>
                         </div>
                         <div>

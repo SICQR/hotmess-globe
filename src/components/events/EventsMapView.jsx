@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { Calendar, MapPin, X, Zap } from 'lucide-react';
+import { Calendar, MapPin, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
@@ -98,7 +98,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
   // Create custom icon based on event type
   const getMarkerColor = (mode) => {
     const colors = {
-      crowd: '#FF1493',
+      crowd: '#C8962C',
       hookup: '#FF073A',
       drop: '#FF6B35',
       ticket: '#B026FF',
@@ -133,7 +133,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
       online: '#00D9FF',
       busy: '#FF6B35',
       looking_for_collabs: '#39FF14',
-      at_event: '#FF1493'
+      at_event: '#C8962C'
     };
     const color = statusColors[user.activity_status] || '#00D9FF';
     
@@ -149,7 +149,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
           height: 40px;
           border-radius: 50%;
           border: 3px solid ${color};
-          background: linear-gradient(135deg, #FF1493, #B026FF);
+          background: linear-gradient(135deg, #C8962C, #B026FF);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -188,7 +188,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
         <div className="text-center">
           <MapPin className="w-16 h-16 mx-auto mb-4 text-white/20" />
           <p className="text-white/60 mb-4">No events with location data available</p>
-          <Button onClick={onClose} className="bg-[#FF1493] text-black font-black">
+          <Button onClick={onClose} className="bg-[#C8962C] text-black font-black">
             Back to List
           </Button>
         </div>
@@ -203,7 +203,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
       className="fixed inset-0 z-50 bg-black"
     >
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-[80] bg-black/95 backdrop-blur-xl border-b-2 border-[#FF1493] p-4">
+      <div className="absolute top-0 left-0 right-0 z-[80] bg-black/95 backdrop-blur-xl border-b-2 border-[#C8962C] p-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -228,7 +228,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
               onClick={() => setShowLayer('both')}
               className={`px-3 py-1.5 text-xs font-black uppercase border-2 transition-all ${
                 showLayer === 'both'
-                  ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                  ? 'bg-[#C8962C] border-[#C8962C] text-black'
                   : 'bg-transparent border-white/20 text-white/60 hover:border-white/40'
               }`}
             >
@@ -238,7 +238,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
               onClick={() => setShowLayer('events')}
               className={`px-3 py-1.5 text-xs font-black uppercase border-2 transition-all ${
                 showLayer === 'events'
-                  ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                  ? 'bg-[#C8962C] border-[#C8962C] text-black'
                   : 'bg-transparent border-white/20 text-white/60 hover:border-white/40'
               }`}
             >
@@ -248,7 +248,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
               onClick={() => setShowLayer('people')}
               className={`px-3 py-1.5 text-xs font-black uppercase border-2 transition-all ${
                 showLayer === 'people'
-                  ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                  ? 'bg-[#C8962C] border-[#C8962C] text-black'
                   : 'bg-transparent border-white/20 text-white/60 hover:border-white/40'
               }`}
             >
@@ -338,7 +338,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
                     )}
                   </div>
                   <Link to={`/events/${encodeURIComponent(event.id)}`}>
-                    <button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-white font-black text-xs py-2 px-3 uppercase">
+                    <button className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-white font-black text-xs py-2 px-3 uppercase">
                       View Event
                     </button>
                   </Link>
@@ -363,7 +363,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
               <Popup>
                 <div className="min-w-[180px]">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden">
                       {user.avatar_url ? (
                         <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
                       ) : (
@@ -379,8 +379,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
                     <p className="text-xs text-gray-600 mb-2 line-clamp-2">{user.bio}</p>
                   )}
                   <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                    <Zap className="w-3 h-3" />
-                    <span>Level {Math.floor((user.xp || 0) / 1000) + 1}</span>
+                    <span>{user.city || ''}</span>
                   </div>
                   <Link to={createPageUrl(`Profile?email=${user.email}`)}>
                     <button className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black text-xs py-2 px-3 uppercase">
@@ -410,7 +409,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
           </button>
 
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden border-2 border-white">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden border-2 border-white">
               {selectedUser.avatar_url ? (
                 <img src={selectedUser.avatar_url} alt={selectedUser.full_name} className="w-full h-full object-cover" />
               ) : (
@@ -432,25 +431,19 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
             <p className="text-sm text-white/80 mb-4">{selectedUser.bio}</p>
           )}
 
-          <div className="space-y-2 mb-4">
-            <div className="flex items-center gap-2 text-sm">
-              <Zap className="w-4 h-4 text-[#FFEB3B]" />
-              <span>Level {Math.floor((selectedUser.xp || 0) / 1000) + 1} • {selectedUser.xp || 0} XP</span>
+          {selectedUser.city && (
+            <div className="flex items-center gap-2 text-sm mb-4">
+              <MapPin className="w-4 h-4 text-[#C8962C]" />
+              <span>{selectedUser.city}</span>
             </div>
-            {selectedUser.city && (
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin className="w-4 h-4 text-[#FF1493]" />
-                <span>{selectedUser.city}</span>
-              </div>
-            )}
-          </div>
+          )}
 
           {selectedUser.preferred_vibes && selectedUser.preferred_vibes.length > 0 && (
             <div className="mb-4">
               <p className="text-xs text-white/40 uppercase mb-2">Vibes</p>
               <div className="flex flex-wrap gap-2">
                 {selectedUser.preferred_vibes.map(vibe => (
-                  <span key={vibe} className="px-2 py-1 bg-[#FFEB3B]/20 border border-[#FFEB3B]/40 text-[#FFEB3B] text-xs font-bold uppercase">
+                  <span key={vibe} className="px-2 py-1 bg-[#C8962C]/20 border border-[#C8962C]/40 text-[#C8962C] text-xs font-bold uppercase">
                     {vibe}
                   </span>
                 ))}
@@ -472,7 +465,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
-          className="fixed right-0 top-20 bottom-0 w-full md:w-96 bg-black border-l-2 border-[#FF1493] p-6 overflow-y-auto z-[80]"
+          className="fixed right-0 top-20 bottom-0 w-full md:w-96 bg-black border-l-2 border-[#C8962C] p-6 overflow-y-auto z-[80]"
         >
           <button
             onClick={() => setSelectedEvent(null)}
@@ -498,20 +491,20 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
           <div className="space-y-2 mb-4">
             {selectedEvent.event_date && (
               <div className="flex items-center gap-2 text-sm">
-                <Calendar className="w-4 h-4 text-[#FF1493]" />
+                <Calendar className="w-4 h-4 text-[#C8962C]" />
                 <span>{format(new Date(selectedEvent.event_date), 'EEEE, MMMM d, yyyy - HH:mm')}</span>
               </div>
             )}
             {selectedEvent.venue_name && (
               <div className="flex items-center gap-2 text-sm">
-                <MapPin className="w-4 h-4 text-[#FF1493]" />
+                <MapPin className="w-4 h-4 text-[#C8962C]" />
                 <span>{selectedEvent.venue_name}, {selectedEvent.city}</span>
               </div>
             )}
           </div>
 
           <Link to={`/events/${encodeURIComponent(selectedEvent.id)}`}>
-            <Button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black">
+            <Button className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-black">
               View Full Details
             </Button>
           </Link>

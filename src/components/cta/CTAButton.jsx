@@ -25,8 +25,8 @@ const ICONS = {
 
 // Variant styles
 const VARIANT_STYLES = {
-  'hot': 'bg-[#FF1493] hover:bg-[#FF1493]/90 text-white',
-  'hot-gradient': 'bg-gradient-to-r from-[#FF1493] to-[#B026FF] hover:opacity-90 text-white',
+  'hot': 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-white',
+  'hot-gradient': 'bg-gradient-to-r from-[#C8962C] to-[#B026FF] hover:opacity-90 text-white',
   'cyan': 'bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black',
   'cyan-gradient': 'bg-gradient-to-r from-[#00D9FF] to-[#0066FF] hover:opacity-90 text-white',
   'purple': 'bg-[#B026FF] hover:bg-[#B026FF]/90 text-white',
@@ -34,7 +34,7 @@ const VARIANT_STYLES = {
   'lime': 'bg-[#39FF14] hover:bg-[#39FF14]/90 text-black',
   'black': 'bg-black hover:bg-black/90 text-white border border-white/20',
   'outline': 'bg-transparent hover:bg-white/10 text-white border-2 border-white/30',
-  'outline-hot': 'bg-transparent hover:bg-[#FF1493]/10 text-[#FF1493] border-2 border-[#FF1493]',
+  'outline-hot': 'bg-transparent hover:bg-[#C8962C]/10 text-[#C8962C] border-2 border-[#C8962C]',
   'outline-cyan': 'bg-transparent hover:bg-[#00D9FF]/10 text-[#00D9FF] border-2 border-[#00D9FF]',
   'destructive': 'bg-red-600 hover:bg-red-700 text-white',
   'ghost': 'bg-transparent hover:bg-white/10 text-white',

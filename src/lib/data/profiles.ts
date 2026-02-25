@@ -78,12 +78,12 @@ export async function getProfileById(id: string): Promise<Profile | null> {
 export async function getProfiles(filters: ProfileFilters = {}): Promise<Profile[]> {
   let query = supabase
     .from('profiles')
-    .select('*')
-    .eq('is_visible', true);
-    
-  if (filters.isOnline !== undefined) {
-    query = query.eq('is_online', filters.isOnline);
-  }
+    .select('*');
+
+  // is_visible and is_online columns are added via migration 20260224000010
+  // Once confirmed live, uncomment these filters:
+  // if (filters.isVisible !== undefined) query = query.eq('is_visible', filters.isVisible);
+  // if (filters.isOnline !== undefined) query = query.eq('is_online', filters.isOnline);
   
   if (filters.limit) {
     query = query.limit(filters.limit);

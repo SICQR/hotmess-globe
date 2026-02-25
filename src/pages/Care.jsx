@@ -69,7 +69,7 @@ export default function Care() {
           className="mb-20"
         >
           <div className="flex items-center gap-4 mb-8">
-            <Phone className="w-8 h-8 text-[#FF1493]" />
+            <Phone className="w-8 h-8 text-[#C8962C]" />
             <h2 className="text-4xl font-black italic">EMERGENCY CONTACTS</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -81,9 +81,9 @@ export default function Care() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="bg-white/5 border-2 border-white/10 hover:border-[#FF1493] p-6 rounded-xl transition-all group"
+                className="bg-white/5 border-2 border-white/10 hover:border-[#C8962C] p-6 rounded-xl transition-all group"
               >
-                <h3 className="font-black text-xl mb-2 group-hover:text-[#FF1493] transition-colors">
+                <h3 className="font-black text-xl mb-2 group-hover:text-[#C8962C] transition-colors">
                   {contact.name}
                 </h3>
                 <p className="text-[#00D9FF] font-mono text-2xl mb-2">{contact.number}</p>

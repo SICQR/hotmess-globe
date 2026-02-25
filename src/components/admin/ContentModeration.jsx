@@ -90,16 +90,16 @@ Be concise and actionable.`,
     <div className="space-y-6">
       {/* AI Moderation Summary */}
       {flaggedPosts.length > 0 && (
-        <div className="bg-black border-2 border-[#FF1493] p-6">
+        <div className="bg-black border-2 border-[#C8962C] p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[#FF1493]" />
+              <Sparkles className="w-5 h-5 text-[#C8962C]" />
               <h3 className="font-black uppercase">AI Moderation Insights</h3>
             </div>
             <Button
               onClick={generateAISummary}
               disabled={loadingSummary}
-              className="bg-[#FF1493] hover:bg-white text-black font-black"
+              className="bg-[#C8962C] hover:bg-white text-black font-black"
             >
               {loadingSummary ? 'Analyzing...' : 'Generate Summary'}
             </Button>
@@ -167,7 +167,7 @@ Be concise and actionable.`,
             <AlertTriangle className="w-3 h-3 mr-2" />
             Pending ({pendingPosts.length})
           </TabsTrigger>
-          <TabsTrigger value="all-posts" className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black font-black uppercase text-xs">
+          <TabsTrigger value="all-posts" className="data-[state=active]:bg-[#C8962C] data-[state=active]:text-black font-black uppercase text-xs">
             All Posts ({posts.length})
           </TabsTrigger>
           <TabsTrigger value="messages" className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black font-black uppercase text-xs">

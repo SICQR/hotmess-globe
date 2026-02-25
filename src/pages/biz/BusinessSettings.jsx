@@ -104,7 +104,7 @@ export default function BusinessSettings() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FF1493]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#C8962C]" />
       </div>
     );
   }
@@ -125,7 +125,7 @@ export default function BusinessSettings() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-black uppercase">
-                Business <span className="text-[#FF1493]">Settings</span>
+                Business <span className="text-[#C8962C]">Settings</span>
               </h1>
               <p className="text-white/60 mt-2">Manage your business account</p>
             </div>
@@ -149,7 +149,7 @@ export default function BusinessSettings() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 p-3 text-left transition-all ${
                     activeTab === tab.id 
-                      ? 'bg-[#FF1493]/20 border-l-4 border-[#FF1493] text-white' 
+                      ? 'bg-[#C8962C]/20 border-l-4 border-[#C8962C] text-white' 
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
                 >
@@ -169,7 +169,7 @@ export default function BusinessSettings() {
                 className="bg-white/5 border border-white/10 p-6"
               >
                 <h2 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-[#FF1493]" />
+                  <Building2 className="w-5 h-5 text-[#C8962C]" />
                   Business Profile
                 </h2>
                 
@@ -295,7 +295,7 @@ export default function BusinessSettings() {
                         type="checkbox"
                         checked={form[item.key]}
                         onChange={(e) => setForm(f => ({ ...f, [item.key]: e.target.checked }))}
-                        className="w-5 h-5 mt-0.5 accent-[#FF1493]"
+                        className="w-5 h-5 mt-0.5 accent-[#C8962C]"
                       />
                       <div>
                         <p className="font-bold">{item.label}</p>
@@ -324,7 +324,7 @@ export default function BusinessSettings() {
                       type="checkbox"
                       checked={form.public_profile}
                       onChange={(e) => setForm(f => ({ ...f, public_profile: e.target.checked }))}
-                      className="w-5 h-5 mt-0.5 accent-[#FF1493]"
+                      className="w-5 h-5 mt-0.5 accent-[#C8962C]"
                     />
                     <div>
                       <p className="font-bold">Public business profile</p>
@@ -337,7 +337,7 @@ export default function BusinessSettings() {
                       type="checkbox"
                       checked={form.show_analytics}
                       onChange={(e) => setForm(f => ({ ...f, show_analytics: e.target.checked }))}
-                      className="w-5 h-5 mt-0.5 accent-[#FF1493]"
+                      className="w-5 h-5 mt-0.5 accent-[#C8962C]"
                     />
                     <div>
                       <p className="font-bold">Share analytics with partners</p>

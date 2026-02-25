@@ -124,7 +124,7 @@ export default function NotificationBadge({ user }) {
   return (
     <div className="relative">
       <MessageCircle className="w-5 h-5" />
-      <Badge className="absolute -top-2 -right-2 bg-[#FF1493] text-black text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 animate-pulse">
+      <Badge className="absolute -top-2 -right-2 bg-[#C8962C] text-black text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 animate-pulse">
         {totalUnread > 99 ? '99+' : totalUnread}
       </Badge>
     </div>

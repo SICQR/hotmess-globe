@@ -35,7 +35,7 @@ const EVENT_FEATURES = [
     icon: Zap,
     title: 'RIGHT NOW',
     tagline: 'Live activity feed',
-    color: '#FF1493',
+    color: '#C8962C',
     description: 'See who\'s out right now and what\'s happening live. Real-time updates show you the hottest spots and who\'s heading where.',
     benefits: [
       'Live activity feed',
@@ -175,7 +175,7 @@ export default function EventsFeatures() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-[#B026FF]/30 via-black to-[#FF1493]/20 border-2 border-[#B026FF] p-8 md:p-12 mb-12"
+          className="bg-gradient-to-br from-[#B026FF]/30 via-black to-[#C8962C]/20 border-2 border-[#B026FF] p-8 md:p-12 mb-12"
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>

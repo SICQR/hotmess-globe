@@ -61,14 +61,14 @@ export default function PromoteToAdmin() {
           </div>
         ) : (
           <div>
-            <Shield className="w-16 h-16 text-[#FF1493] mx-auto mb-4" />
+            <Shield className="w-16 h-16 text-[#C8962C] mx-auto mb-4" />
             <h1 className="text-3xl font-black mb-2">Promote to Admin</h1>
             <p className="text-white/60 mb-2">Current role: {currentUser.role}</p>
             <p className="text-white/60 mb-6">Email: {currentUser.email}</p>
             <Button
               onClick={() => promoteMutation.mutate()}
               disabled={promoteMutation.isPending}
-              className="bg-[#FF1493] text-black font-black w-full"
+              className="bg-[#C8962C] text-black font-black w-full"
             >
               {promoteMutation.isPending ? 'Promoting...' : 'Make Me Admin'}
             </Button>

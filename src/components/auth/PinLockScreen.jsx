@@ -34,7 +34,7 @@ function PinDots({ length, filled, shake }) {
           key={i}
           className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
             i < filled 
-              ? 'bg-[#FF1493] border-[#FF1493]' 
+              ? 'bg-[#C8962C] border-[#C8962C]' 
               : 'bg-transparent border-white/30'
           }`}
           animate={i < filled ? { scale: [1, 1.2, 1] } : {}}
@@ -82,7 +82,7 @@ function Keypad({ onPress, onDelete, onBiometric, biometricAvailable }) {
           <button
             key={key}
             onClick={() => onPress(key)}
-            className="w-20 h-20 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 active:bg-[#FF1493]/50 transition-all text-white text-2xl font-bold"
+            className="w-20 h-20 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 active:bg-[#C8962C]/50 transition-all text-white text-2xl font-bold"
           >
             {key}
           </button>
@@ -158,7 +158,7 @@ export function PinEntryScreen() {
     >
       {/* Logo */}
       <div className="mb-8">
-        <Lock className="w-12 h-12 text-[#FF1493] mx-auto mb-4" />
+        <Lock className="w-12 h-12 text-[#C8962C] mx-auto mb-4" />
         <h1 className="text-2xl font-black text-white text-center">HOTMESS</h1>
         <p className="text-white/50 text-sm text-center mt-1">Enter your PIN</p>
       </div>
@@ -306,8 +306,8 @@ export function PinSetupScreen() {
 
       {/* Step indicator */}
       <div className="flex gap-2 mb-6">
-        <div className={`w-2 h-2 rounded-full ${step === 'enter' ? 'bg-[#FF1493]' : 'bg-white/30'}`} />
-        <div className={`w-2 h-2 rounded-full ${step === 'confirm' ? 'bg-[#FF1493]' : 'bg-white/30'}`} />
+        <div className={`w-2 h-2 rounded-full ${step === 'enter' ? 'bg-[#C8962C]' : 'bg-white/30'}`} />
+        <div className={`w-2 h-2 rounded-full ${step === 'confirm' ? 'bg-[#C8962C]' : 'bg-white/30'}`} />
       </div>
 
       {/* Keypad */}

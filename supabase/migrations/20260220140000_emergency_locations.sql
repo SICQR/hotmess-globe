@@ -38,7 +38,7 @@ $$;
 ALTER TABLE public.emergency_locations ENABLE ROW LEVEL SECURITY;
 
 -- Any authenticated user may upsert (the owner writes their own row)
-CREATE POLICY IF NOT EXISTS "emergency_locations: authenticated upsert"
+CREATE POLICY "emergency_locations: authenticated upsert"
   ON public.emergency_locations
   FOR ALL
   TO authenticated

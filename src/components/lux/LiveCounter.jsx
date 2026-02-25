@@ -89,7 +89,7 @@ export function LuxLiveCounter({
               <span
                 className={cn(
                   'text-xs font-bold flex items-center gap-0.5',
-                  trend > 0 ? 'text-[#39FF14]' : 'text-[#FF1493]'
+                  trend > 0 ? 'text-[#39FF14]' : 'text-[#C8962C]'
                 )}
               >
                 <TrendingUp className={cn('w-3 h-3', trend < 0 && 'rotate-180')} />
@@ -231,9 +231,9 @@ export function LuxStatsCounter({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: index * 0.1 }}
-          className="text-center p-4 bg-white/5 border border-white/10 hover:border-[#FF1493]/50 transition-colors"
+          className="text-center p-4 bg-white/5 border border-white/10 hover:border-[#C8962C]/50 transition-colors"
         >
-          <div className="text-4xl md:text-5xl font-black text-[#FF1493] mb-2">
+          <div className="text-4xl md:text-5xl font-black text-[#C8962C] mb-2">
             {stat.value}
           </div>
           <div className="text-xs text-white/60 uppercase tracking-wider font-bold">

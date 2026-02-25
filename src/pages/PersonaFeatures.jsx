@@ -54,7 +54,7 @@ const PERSONA_TYPES = [
     icon: ShoppingBag,
     title: 'SELLER',
     tagline: 'Turn your passion into profit',
-    color: '#FF1493',
+    color: '#C8962C',
     description: 'Transform your profile into a storefront. List products, track sales, and build your brand within the HOTMESS community.',
     features: [
       'Product listings',
@@ -179,14 +179,14 @@ export default function PersonaFeatures() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative overflow-hidden bg-gradient-to-br from-[#FF1493]/20 via-black to-[#B026FF]/20 border-2 border-[#FF1493] p-8 md:p-12 mb-12"
+          className="relative overflow-hidden bg-gradient-to-br from-[#C8962C]/20 via-black to-[#B026FF]/20 border-2 border-[#C8962C] p-8 md:p-12 mb-12"
         >
-          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#FF1493]/10 to-[#B026FF]/10 blur-3xl rounded-full" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#C8962C]/10 to-[#B026FF]/10 blur-3xl rounded-full" />
           
           <div className="relative z-10 max-w-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <Layers className="w-8 h-8 text-[#FF1493]" />
-              <span className="text-[#FF1493] font-black uppercase tracking-wider">Persona System</span>
+              <Layers className="w-8 h-8 text-[#C8962C]" />
+              <span className="text-[#C8962C] font-black uppercase tracking-wider">Persona System</span>
             </div>
             <h2 className="text-2xl md:text-4xl font-black uppercase mb-4">
               Be whoever you need to be
@@ -228,7 +228,7 @@ export default function PersonaFeatures() {
                 step: '01', 
                 title: 'One Profile', 
                 desc: 'Create your core identity with photos, bio, and interests. This is the foundation all personas build from.',
-                color: '#FF1493'
+                color: '#C8962C'
               },
               { 
                 step: '02', 
@@ -341,7 +341,7 @@ export default function PersonaFeatures() {
               </ul>
             </div>
             
-            <div className="bg-gradient-to-br from-[#FFD700]/10 to-[#FF1493]/10 border-2 border-[#FFD700] p-6">
+            <div className="bg-gradient-to-br from-[#FFD700]/10 to-[#C8962C]/10 border-2 border-[#FFD700] p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Crown className="w-6 h-6 text-[#FFD700]" />
                 <h3 className="font-black uppercase">Premium</h3>
@@ -380,7 +380,7 @@ export default function PersonaFeatures() {
           viewport={{ once: true }}
           className="text-center mt-16 pt-16 border-t border-white/10"
         >
-          <Layers className="w-16 h-16 text-[#FF1493] mx-auto mb-6" />
+          <Layers className="w-16 h-16 text-[#C8962C] mx-auto mb-6" />
           <h2 className="text-3xl font-black uppercase mb-4">Build Your Persona</h2>
           <p className="text-white/60 mb-8 max-w-md mx-auto">
             Start with the basics and grow into whatever you want to be.

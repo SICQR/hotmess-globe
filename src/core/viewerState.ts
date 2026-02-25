@@ -155,15 +155,8 @@ export function useViewerState(supabase: SupabaseClient) {
 
   useEffect(() => {
     refresh();
-
-    // Re-check on auth state change
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      refresh();
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    // Auth state changes are managed by BootGuardContext (canonical session owner).
+    // Callers should re-invoke refresh() when auth changes via useAuth() events.
   }, [supabase, refresh]);
 
   const isReady = state === 'OS_READY';

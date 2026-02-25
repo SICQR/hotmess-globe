@@ -203,7 +203,7 @@ export default function LabelContext() {
                   className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-full cursor-pointer transition-colors"
                   onClick={() => navigate(`/dj/${dj.id}`, { state: { from: 'dj_context' } })}
                 >
-                  <Users className="w-4 h-4 text-pink-500" />
+                  <Users className="w-4 h-4 text-[#C8962C]" />
                   <span className="text-white">{dj.name}</span>
                 </div>
               ))}

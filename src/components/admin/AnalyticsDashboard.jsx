@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
-import { TrendingUp, Users, ShoppingBag, Zap, MapPin, MessageCircle, Crown, UserMinus, DollarSign } from 'lucide-react';
+import { TrendingUp, Users, ShoppingBag, MapPin, MessageCircle, Crown, UserMinus, DollarSign } from 'lucide-react';
 
 export default function AnalyticsDashboard() {
   const { data: users = [] } = useQuery({
@@ -52,9 +52,6 @@ export default function AnalyticsDashboard() {
     .filter(o => o.status === 'delivered')
     .reduce((sum, o) => sum + (o.total_gbp || 0), 0);
 
-  const totalXP = users.reduce((sum, u) => sum + (u.xp || 0), 0);
-  const avgXP = users.length > 0 ? Math.round(totalXP / users.length) : 0;
-
   const activeUsers = users.filter(u => u.activity_status && u.activity_status !== 'offline').length;
   const activeBeacons = beacons.filter(b => b.active).length;
 
@@ -102,15 +99,15 @@ export default function AnalyticsDashboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-black border-2 border-[#FF1493] p-8"
+          className="bg-black border-2 border-[#C8962C] p-8"
         >
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-[#FF1493] border-2 border-white flex items-center justify-center">
+            <div className="w-16 h-16 bg-[#C8962C] border-2 border-white flex items-center justify-center">
               <TrendingUp className="w-8 h-8 text-white" />
             </div>
             <div>
               <p className="text-[10px] text-white/40 uppercase tracking-widest">TOTAL REVENUE</p>
-              <p className="text-4xl font-black text-[#FF1493]">£{totalRevenue.toFixed(2)}</p>
+              <p className="text-4xl font-black text-[#C8962C]">£{totalRevenue.toFixed(2)}</p>
             </div>
           </div>
           <p className="text-xs text-white/60 uppercase font-mono">{orders.length} ORDERS TOTAL</p>
@@ -138,18 +135,18 @@ export default function AnalyticsDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-black border-2 border-[#FFEB3B] p-8"
+          className="bg-black border-2 border-[#39FF14] p-8"
         >
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-[#FFEB3B] border-2 border-white flex items-center justify-center">
-              <Zap className="w-8 h-8 text-black" />
+            <div className="w-16 h-16 bg-[#39FF14] border-2 border-white flex items-center justify-center">
+              <ShoppingBag className="w-8 h-8 text-black" />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest">AVERAGE XP</p>
-              <p className="text-4xl font-black text-[#FFEB3B]">{avgXP}</p>
+              <p className="text-[10px] text-white/40 uppercase tracking-widest">TOTAL ORDERS</p>
+              <p className="text-4xl font-black text-[#39FF14]">{orders.length}</p>
             </div>
           </div>
-          <p className="text-xs text-white/60 uppercase font-mono">{totalXP.toLocaleString()} TOTAL XP</p>
+          <p className="text-xs text-white/60 uppercase font-mono">{orders.filter(o => o.status === 'delivered').length} DELIVERED</p>
         </motion.div>
       </div>
 
@@ -245,7 +242,7 @@ export default function AnalyticsDashboard() {
 
         <div className="bg-black border-2 border-white p-6">
           <div className="flex items-center gap-3 mb-2">
-            <Users className="w-5 h-5 text-[#FF1493]" />
+            <Users className="w-5 h-5 text-[#C8962C]" />
             <p className="text-[10px] text-white/40 uppercase tracking-widest">CHECK-INS</p>
           </div>
           <p className="text-3xl font-black">{checkIns.length}</p>
@@ -295,12 +292,12 @@ export default function AnalyticsDashboard() {
             <p className="text-3xl font-black">{users.filter(u => !u.membership_tier || u.membership_tier === 'basic' || u.membership_tier === 'free').length}</p>
             <p className="text-xs text-white/40 mt-1">Free tier users</p>
           </div>
-          <div className="bg-[#FF1493]/10 border-2 border-[#FF1493]/40 p-4">
+          <div className="bg-[#C8962C]/10 border-2 border-[#C8962C]/40 p-4">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-4 h-4 bg-[#FF1493] rounded-full" />
-              <span className="text-sm font-bold uppercase text-[#FF1493]">PLUS</span>
+              <div className="w-4 h-4 bg-[#C8962C] rounded-full" />
+              <span className="text-sm font-bold uppercase text-[#C8962C]">PLUS</span>
             </div>
-            <p className="text-3xl font-black text-[#FF1493]">{plusSubscribers}</p>
+            <p className="text-3xl font-black text-[#C8962C]">{plusSubscribers}</p>
             <p className="text-xs text-white/40 mt-1">£9.99/month • £{(plusSubscribers * PLUS_PRICE).toFixed(2)}/mo</p>
           </div>
           <div className="bg-[#00D9FF]/10 border-2 border-[#00D9FF]/40 p-4">
@@ -333,7 +330,7 @@ export default function AnalyticsDashboard() {
             </div>
             <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
               <span className="text-white/60 uppercase text-xs font-mono">At Event</span>
-              <span className="font-black text-[#FF1493]">
+              <span className="font-black text-[#C8962C]">
                 {users.filter(u => u.activity_status === 'at_event').length}
               </span>
             </div>

@@ -18,8 +18,10 @@
  * See /src/lib/sheetSystem.ts for full specification.
  */
 
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react';
+import { useSearchParams, useLocation } from 'react-router-dom';
+import { canOpenSheet } from '@/lib/sheetPolicy';
+import { toast } from 'sonner';
 import { 
   SHEET_REGISTRY, 
   SHEET_SPRING,
@@ -122,11 +124,18 @@ const SheetContext = createContext(null);
 export function SheetProvider({ children }) {
   const [state, dispatch] = useReducer(sheetReducer, initialState);
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  // Prevent State→URL from clearing deep-link params before URL→State hydrates
+  const hasHydrated = useRef(false);
 
-  // Open a sheet
+  // Open a sheet — enforces UI policy (chat/video/travel gated to Ghosted context)
   const openSheet = useCallback((type, props = {}) => {
+    if (!canOpenSheet(type, location.pathname, state.stack)) {
+      toast('Go to Ghosted to start a conversation', { duration: 2500 });
+      return;
+    }
     dispatch({ type: 'OPEN_SHEET', payload: { type, props } });
-  }, []);
+  }, [location.pathname, state.stack]);
 
   // Close the active sheet
   const closeSheet = useCallback(() => {
@@ -160,6 +169,7 @@ export function SheetProvider({ children }) {
 
   // Sync state → URL
   useEffect(() => {
+    if (!hasHydrated.current) return;
     const currentSheet = searchParams.get('sheet');
     
     if (state.activeSheet && state.activeSheet !== currentSheet) {
@@ -189,6 +199,7 @@ export function SheetProvider({ children }) {
 
   // Sync URL → state (for deep links / back button)
   useEffect(() => {
+    hasHydrated.current = true;
     const sheetFromUrl = searchParams.get('sheet');
     
     if (sheetFromUrl && sheetFromUrl !== state.activeSheet) {

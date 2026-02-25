@@ -62,7 +62,7 @@ export function ProductCard({
         {/* Worn item indicator */}
         {product.is_worn && (
           <div className="absolute top-2 right-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-[#FF1493]/80 text-white px-2 py-1 rounded">
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-[#C8962C]/80 text-white px-2 py-1 rounded">
               Worn
             </span>
           </div>

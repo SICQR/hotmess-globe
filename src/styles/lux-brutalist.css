@@ -2,7 +2,7 @@
  * HOTMESS Lux Brutalist Design System
  * 
  * Color Palette:
- * - Chrome Red: #FF1493 (primary)
+ * - Antique Gold: #C8962C (primary)
  * - Gold: #FFD700 (premium)
  * - Cyan: #00D9FF (interactive)
  * - Purple: #B026FF (creator)
@@ -14,7 +14,7 @@
    CSS Variables
    ============================================ */
 :root {
-  --lux-chrome-red: #FF1493;
+  --lux-chrome-red: #C8962C;  /* Updated: antique gold */
   --lux-gold: #FFD700;
   --lux-cyan: #00D9FF;
   --lux-purple: #B026FF;

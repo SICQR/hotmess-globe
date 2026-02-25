@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
-import { Star, TrendingUp, Eye, MousePointer, Zap } from 'lucide-react';
+import { Star, TrendingUp, Eye, MousePointer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -13,12 +13,6 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
   const [duration, setDuration] = useState('24');
   const queryClient = useQueryClient();
 
-  const { data: currentUser } = useQuery({
-    queryKey: ['current-user-featured'],
-    queryFn: () => base44.auth.me(),
-    enabled: !!sellerEmail,
-  });
-
   const { data: featuredListings = [] } = useQuery({
     queryKey: ['featured-listings', sellerEmail],
     queryFn: () => base44.entities.FeaturedListing.filter({ seller_email: sellerEmail }, '-created_date'),
@@ -28,9 +22,9 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
   const activeProducts = products.filter(p => p.status === 'active');
   
   const pricingTiers = {
-    '24': { hours: 24, cost: 500, label: '24 hours' },
-    '72': { hours: 72, cost: 1200, label: '3 days' },
-    '168': { hours: 168, cost: 2000, label: '1 week' }
+    '24': { hours: 24, label: '24 hours' },
+    '72': { hours: 72, label: '3 days' },
+    '168': { hours: 168, label: '1 week' }
   };
 
   const selectedTier = pricingTiers[duration];
@@ -41,13 +35,6 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
         throw new Error('Select a product');
       }
 
-      if (currentUser.xp < selectedTier.cost) {
-        throw new Error('Insufficient XP');
-      }
-
-      // Deduct XP
-      await base44.auth.updateMe({ xp: currentUser.xp - selectedTier.cost });
-
       // Create featured listing
       const startsAt = new Date();
       const expiresAt = new Date(Date.now() + selectedTier.hours * 60 * 60 * 1000);
@@ -56,26 +43,14 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
         product_id: selectedProduct,
         seller_email: sellerEmail,
         duration_hours: selectedTier.hours,
-        cost_xp: selectedTier.cost,
         starts_at: startsAt.toISOString(),
         expires_at: expiresAt.toISOString(),
         placement: 'top_row',
         active: true
       });
-
-      // Log XP transaction
-      await base44.entities.XPLedger.create({
-        user_email: sellerEmail,
-        amount: -selectedTier.cost,
-        transaction_type: 'feature_listing',
-        reference_id: selectedProduct,
-        reference_type: 'product',
-        balance_after: currentUser.xp - selectedTier.cost
-      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['featured-listings']);
-      queryClient.invalidateQueries(['current-user-featured']);
       toast.success('Product featured!');
       setSelectedProduct('');
     },
@@ -94,9 +69,9 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-br from-[#FFEB3B]/10 to-[#FF1493]/10 border-2 border-[#FFEB3B] p-6">
+      <div className="bg-white/5 border-2 border-[#C8962C] p-6">
         <h2 className="text-2xl font-black uppercase flex items-center gap-2 mb-4">
-          <Star className="w-6 h-6 text-[#FFEB3B]" />
+          <Star className="w-6 h-6 text-[#C8962C]" />
           Feature Your Listing
         </h2>
 
@@ -126,35 +101,19 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="24">24 hours - 500 XP</SelectItem>
-                <SelectItem value="72">3 days - 1,200 XP</SelectItem>
-                <SelectItem value="168">1 week - 2,000 XP</SelectItem>
+                <SelectItem value="24">24 hours</SelectItem>
+                <SelectItem value="72">3 days</SelectItem>
+                <SelectItem value="168">1 week</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        <div className="flex items-center justify-between bg-white/5 p-4 border border-white/10 mb-4">
-          <div>
-            <p className="text-sm text-white/60">Total Cost</p>
-            <p className="text-2xl font-black text-[#FFEB3B]">
-              {selectedTier.cost.toLocaleString()} XP
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-white/60">Your Balance</p>
-            <p className="text-2xl font-black">
-              {currentUser?.xp?.toLocaleString() || 0} XP
-            </p>
-          </div>
-        </div>
-
         <Button
           onClick={() => featureMutation.mutate()}
-          disabled={!selectedProduct || featureMutation.isPending || (currentUser?.xp || 0) < selectedTier.cost}
-          className="w-full bg-[#FFEB3B] hover:bg-white text-black font-black text-lg py-6"
+          disabled={!selectedProduct || featureMutation.isPending}
+          className="w-full bg-[#C8962C] hover:bg-white text-black font-black text-lg py-6"
         >
-          <Zap className="w-5 h-5 mr-2" />
           {featureMutation.isPending ? 'Processing...' : `Feature for ${selectedTier.label}`}
         </Button>
       </div>
@@ -170,7 +129,7 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
               const ctr = listing.impressions > 0 ? ((listing.clicks / listing.impressions) * 100).toFixed(1) : 0;
 
               return (
-                <div key={listing.id} className="bg-white/5 border border-[#FFEB3B]/30 p-4">
+                <div key={listing.id} className="bg-white/5 border border-[#C8962C]/30 p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h4 className="font-bold">{product?.name || 'Unknown Product'}</h4>
@@ -178,7 +137,7 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
                         Expires in {hoursLeft} hour{hoursLeft !== 1 ? 's' : ''}
                       </p>
                     </div>
-                    <Badge className="bg-[#FFEB3B]/20 text-[#FFEB3B]">
+                    <Badge className="bg-[#C8962C]/20 text-[#C8962C]">
                       <Star className="w-3 h-3 mr-1" />
                       Featured
                     </Badge>
@@ -193,7 +152,7 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
                       <div className="text-xs text-white/40">Views</div>
                     </div>
                     <div>
-                      <div className="flex items-center justify-center gap-1 text-[#FF1493] mb-1">
+                      <div className="flex items-center justify-center gap-1 text-[#C8962C] mb-1">
                         <MousePointer className="w-4 h-4" />
                       </div>
                       <div className="text-xl font-black">{listing.clicks}</div>

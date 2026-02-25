@@ -9,7 +9,7 @@
  * 5. Profile - User settings + safety + listings
  */
 
-export type OSMode = 'ghosted' | 'pulse' | 'market' | 'radio' | 'profile';
+export type OSMode = 'home' | 'ghosted' | 'pulse' | 'market' | 'radio' | 'profile';
 
 export interface ModeConfig {
   id: OSMode;
@@ -20,11 +20,18 @@ export interface ModeConfig {
 }
 
 export const MODES: Record<OSMode, ModeConfig> = {
+  home: {
+    id: 'home',
+    path: '/',
+    label: 'Home',
+    icon: 'home',
+    description: 'Dashboard + feed',
+  },
   ghosted: {
     id: 'ghosted',
-    path: '/',
+    path: '/ghosted',
     label: 'Ghosted',
-    icon: 'grid',
+    icon: 'ghost',
     description: 'Proximity grid + messaging',
   },
   pulse: {
@@ -57,16 +64,17 @@ export const MODES: Record<OSMode, ModeConfig> = {
   },
 };
 
-export const MODE_ORDER: OSMode[] = ['ghosted', 'pulse', 'market', 'radio', 'profile'];
+export const MODE_ORDER: OSMode[] = ['home', 'pulse', 'ghosted', 'market', 'profile'];
 
 export function getModeFromPath(pathname: string): OSMode {
   // Check exact matches first
-  if (pathname === '/' || pathname === '/ghosted') return 'ghosted';
+  if (pathname === '/') return 'home';
+  if (pathname === '/ghosted' || pathname.startsWith('/ghosted/')) return 'ghosted';
   if (pathname.startsWith('/pulse') || pathname.startsWith('/globe') || pathname.startsWith('/events')) return 'pulse';
   if (pathname.startsWith('/market') || pathname.startsWith('/shop') || pathname.startsWith('/preloved')) return 'market';
   if (pathname.startsWith('/radio') || pathname.startsWith('/music')) return 'radio';
   if (pathname.startsWith('/profile') || pathname.startsWith('/settings') || pathname.startsWith('/account')) return 'profile';
-  
-  // Default to ghosted for unknown paths
-  return 'ghosted';
+
+  // Default to home for unknown paths
+  return 'home';
 }

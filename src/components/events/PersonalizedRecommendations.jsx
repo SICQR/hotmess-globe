@@ -44,7 +44,7 @@ export default function PersonalizedRecommendations({ currentUser, allEvents, al
         className="mb-4"
       >
         <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-5 h-5 text-[#FF1493]" />
+          <Sparkles className="w-5 h-5 text-[#C8962C]" />
           <h2 className="text-2xl font-black uppercase">Recommended For You</h2>
         </div>
         <p className="text-xs text-white/40 uppercase tracking-wider">

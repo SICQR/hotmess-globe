@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Users, Zap, MapPin, Sparkles } from 'lucide-react';
+import { Users, MapPin, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { motion } from 'framer-motion';
@@ -107,13 +107,7 @@ export default function PeopleYouMayKnow({ currentUser, limit = 6 }) {
           }
         }
 
-        // Similar XP level
-        const xpDiff = Math.abs((user.xp || 0) - (currentUser.xp || 0));
-        if (xpDiff < 500) {
-          score += 5;
-        }
-
-        return { 
+        return {
           user, 
           score, 
           reasons: reasons.slice(0, 2), // Top 2 reasons
@@ -188,10 +182,6 @@ export default function PeopleYouMayKnow({ currentUser, limit = 6 }) {
                         <span>{suggestion.user.city}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-1 text-[#FFEB3B]">
-                      <Zap className="w-3 h-3" />
-                      <span className="font-mono">{suggestion.user.xp || 0}</span>
-                    </div>
                   </div>
 
                   {/* Preview Vibe */}

@@ -91,13 +91,11 @@ export default function Chat() {
 
 User Profile:
 - Name: ${user?.full_name || 'User'}
-- Level: ${Math.floor((user?.xp || 0) / 1000) + 1}
-- XP: ${user?.xp || 0}
 - Top interests: ${topInterests.join(', ') || 'exploring new experiences'}
 - Past interactions: ${interactions.length}
 
 Available Events/Beacons:
-${beacons.slice(0, 30).map(b => `- ID: ${b.id}, Title: ${b.title}, Type: ${b.kind}, Mode: ${b.mode}, City: ${b.city}, Intensity: ${Math.round((b.intensity || 0.5) * 100)}%, XP: ${b.xp_scan || 100}, Description: ${b.description || 'N/A'}`).join('\n')}
+${beacons.slice(0, 30).map(b => `- ID: ${b.id}, Title: ${b.title}, Type: ${b.kind}, Mode: ${b.mode}, City: ${b.city}, Intensity: ${Math.round((b.intensity || 0.5) * 100)}%, Description: ${b.description || 'N/A'}`).join('\n')}
 
 User Query: "${queryText}"
 
@@ -161,7 +159,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
       {/* Header */}
       <div className="bg-black/95 backdrop-blur-xl border-b border-white/10 p-4 md:p-6">
         <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#B026FF] to-[#FF1493] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#B026FF] to-[#C8962C] flex items-center justify-center">
             <Sparkles className="w-6 h-6" />
           </div>
           <div>
@@ -186,7 +184,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
                 <div className={`max-w-[80%] ${message.role === 'user' ? 'order-2' : 'order-1'}`}>
                   <div className={`rounded-2xl p-4 ${
                     message.role === 'user'
-                      ? 'bg-gradient-to-br from-[#FF1493] to-[#B026FF] text-white'
+                      ? 'bg-gradient-to-br from-[#C8962C] to-[#B026FF] text-white'
                       : 'bg-white/5 border border-white/10'
                   }`}>
                     {message.role === 'assistant' ? (
@@ -200,7 +198,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
                                 <div className="bg-black/30 border border-white/20 rounded-lg p-3 hover:bg-black/50 transition-colors mt-2">
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1">
-                                      <span className="inline-block px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-[#FF1493] text-black mb-1">
+                                      <span className="inline-block px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-[#C8962C] text-black mb-1">
                                         {part.beacon.kind}
                                       </span>
                                       <h4 className="font-bold text-sm mb-1">{part.beacon.title}</h4>
@@ -209,9 +207,6 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
                                         <span>{part.beacon.city}</span>
                                       </div>
                                     </div>
-                                    {part.beacon.xp_scan && (
-                                      <span className="text-xs text-[#FFEB3B] font-bold">+{part.beacon.xp_scan} XP</span>
-                                    )}
                                   </div>
                                 </div>
                               </Link>
@@ -283,7 +278,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
           <Button
             onClick={() => handleSend()}
             disabled={!input.trim() || isTyping}
-            className="bg-gradient-to-r from-[#B026FF] to-[#FF1493] hover:opacity-90 text-white"
+            className="bg-gradient-to-r from-[#B026FF] to-[#C8962C] hover:opacity-90 text-white"
           >
             <Send className="w-4 h-4" />
           </Button>

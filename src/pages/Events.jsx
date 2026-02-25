@@ -199,7 +199,7 @@ export default function Events() {
         {/* Filters */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8">
           <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-4 h-4 text-[#FF1493]" />
+            <Filter className="w-4 h-4 text-[#C8962C]" />
             <span className="text-xs uppercase tracking-wider font-bold">Filters</span>
           </div>
           
@@ -269,7 +269,7 @@ export default function Events() {
           <div className="flex items-center gap-4 mt-4 text-xs text-white/60">
             <span>{filteredEvents.length} events found</span>
             {myRsvpIds.size > 0 && (
-              <span className="text-[#FF1493]">• {myRsvpIds.size} you're attending</span>
+              <span className="text-[#C8962C]">• {myRsvpIds.size} you're attending</span>
             )}
           </div>
         </div>

@@ -39,7 +39,7 @@ function SearchHistoryItem({ search, isSaved, onSelect, onSave, onRemove }) {
           title={isSaved ? 'Remove from saved' : 'Save search'}
         >
           {isSaved ? (
-            <Star className="w-4 h-4 text-[#FF1493] fill-[#FF1493]" />
+            <Star className="w-4 h-4 text-[#C8962C] fill-[#C8962C]" />
           ) : (
             <StarOff className="w-4 h-4 text-white/40" />
           )}
@@ -131,7 +131,7 @@ export function SearchHistory({ onSelectSearch }) {
         <div>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Star className="w-4 h-4 text-[#FF1493]" />
+              <Star className="w-4 h-4 text-[#C8962C]" />
               <h3 className="text-xs uppercase tracking-wider text-white/60">Saved Searches</h3>
             </div>
             <button

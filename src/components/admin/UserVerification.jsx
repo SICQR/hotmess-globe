@@ -78,7 +78,7 @@ export default function UserVerification() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden">
                       {user.avatar_url ? (
                         <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
                       ) : (
@@ -94,7 +94,7 @@ export default function UserVerification() {
                       </div>
                       <p className="text-xs text-white/40">{user.email}</p>
                       <p className="text-xs text-white/60 mt-1">
-                        XP: {user.xp || 0} • Level {Math.floor((user.xp || 0) / 1000) + 1}
+                        {user.membership_tier || 'free'}
                       </p>
                     </div>
                   </div>

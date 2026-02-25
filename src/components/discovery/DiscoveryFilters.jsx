@@ -58,7 +58,7 @@ export default function DiscoveryFilters({ isOpen, onClose, filters, onFiltersCh
             </Button>
             <Button
               onClick={onClose}
-              className="flex-1 bg-[#FF1493] text-black font-black"
+              className="flex-1 bg-[#C8962C] text-black font-black"
             >
               Apply
             </Button>

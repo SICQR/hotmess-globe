@@ -51,7 +51,7 @@ export default function VibeSynthesisCard({ userEmail, compact = false }) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-[#B026FF]/20 to-[#FF1493]/20 border-2 border-[#B026FF] rounded-xl p-6"
+        className="bg-gradient-to-br from-[#B026FF]/20 to-[#C8962C]/20 border-2 border-[#B026FF] rounded-xl p-6"
       >
         <div className="flex items-center gap-3 mb-4">
           <Sparkles className="w-6 h-6 text-[#B026FF]" />

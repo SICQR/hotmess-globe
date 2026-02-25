@@ -293,7 +293,7 @@ export function SocialProof({ type, friends = [], total = 0 }) {
           {displayFriends.map((friend, idx) => (
             <div
               key={idx}
-              className="w-6 h-6 rounded-full border-2 border-black bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-xs font-bold overflow-hidden"
+              className="w-6 h-6 rounded-full border-2 border-black bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center text-xs font-bold overflow-hidden"
             >
               {friend.avatar_url ? (
                 <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" />

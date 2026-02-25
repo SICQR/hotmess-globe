@@ -100,7 +100,7 @@ export default function BusinessAnalytics() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-white/20 border-t-[#FF1493] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />
       </div>
     );
   }
@@ -162,7 +162,7 @@ export default function BusinessAnalytics() {
             className="bg-white/5 border border-white/10 rounded-xl p-4"
           >
             <div className="flex items-center gap-2 mb-2">
-              <Calendar className="w-4 h-4 text-[#FF1493]" />
+              <Calendar className="w-4 h-4 text-[#C8962C]" />
               <span className="text-xs text-white/60">Events</span>
             </div>
             <div className="text-2xl font-black">{analytics?.totalEvents || 0}</div>
@@ -236,7 +236,7 @@ export default function BusinessAnalytics() {
                 analytics.rsvpsByDay.slice(-14).map((day, idx) => (
                   <div
                     key={idx}
-                    className="flex-1 bg-[#FF1493] rounded-t"
+                    className="flex-1 bg-[#C8962C] rounded-t"
                     style={{
                       height: `${Math.max(10, (day.count / Math.max(...analytics.rsvpsByDay.map(d => d.count))) * 100)}%`
                     }}

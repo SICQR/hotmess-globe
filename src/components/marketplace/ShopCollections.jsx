@@ -13,7 +13,7 @@ const COLLECTIONS = [
     id: 'hung',
     name: 'HUNG',
     tagline: "Fit that doesn't ask permission.",
-    color: '#FF1493',
+    color: '#C8962C',
     textColor: '#FFFFFF',
   },
   {

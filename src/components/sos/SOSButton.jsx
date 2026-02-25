@@ -65,7 +65,9 @@ export function SOSButton({ className, onTrigger }) {
     };
   }, []);
 
-  if (isTriggered) {
+  // When an external onTrigger is provided, defer the emergency UI to the caller.
+  // Only show internal DistressModal when used standalone (no external handler).
+  if (isTriggered && !onTrigger) {
     return <DistressModal onClose={() => setIsTriggered(false)} />;
   }
 

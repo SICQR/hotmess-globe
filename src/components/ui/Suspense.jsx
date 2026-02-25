@@ -10,7 +10,7 @@ export function LoadingFallback({ text = 'Loading...' }) {
         animate={{ opacity: 1 }}
         className="text-center"
       >
-        <div className="w-16 h-16 border-4 border-[#FF1493] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <div className="w-16 h-16 border-4 border-[#C8962C] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         <p className="text-white/60 text-sm uppercase tracking-wider">{text}</p>
       </motion.div>
     </div>

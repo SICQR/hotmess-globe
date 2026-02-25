@@ -219,7 +219,7 @@ export default function Checkout() {
     }
     
     if (promo.minXP && totalXP < promo.minXP) {
-      toast.error(`Minimum ${promo.minXP} XP required for this code`);
+      toast.error('This promo code has a minimum purchase requirement');
       return;
     }
     
@@ -244,7 +244,7 @@ export default function Checkout() {
   const checkoutMutation = useMutation({
     mutationFn: async () => {
       if (!xpPurchasingEnabled) {
-        throw new Error('XP purchasing is coming soon.');
+        throw new Error('Credit purchasing is coming soon.');
       }
 
       if (!currentUser) {
@@ -252,7 +252,7 @@ export default function Checkout() {
       }
 
       if (!xpCartItems.length) {
-        throw new Error('No XP items to checkout');
+        throw new Error('No items to checkout');
       }
 
       // CRITICAL: Fetch fresh data and validate atomically
@@ -261,7 +261,7 @@ export default function Checkout() {
       
       // Check user has enough XP with fresh data
       if (currentXP < totalXP) {
-        throw new Error(`Insufficient XP. You have ${currentXP} XP but need ${totalXP} XP.`);
+        throw new Error('Insufficient balance to complete this purchase.');
       }
 
       // Fetch fresh product data to check inventory in real-time
@@ -505,22 +505,12 @@ export default function Checkout() {
             Complete your order
           </p>
 
-          {!xpPurchasingEnabled ? (
-            <div className="mb-8 bg-white/5 border-2 border-white/10 p-6">
-              <h2 className="text-xl font-black uppercase mb-2">XP PURCHASING</h2>
-              <p className="text-white/60 text-sm uppercase tracking-wider">
-                Coming soon.
-              </p>
-            </div>
-          ) : null}
 
           {shopifyCartItems.length > 0 && (
             <div className="mb-8 bg-white/5 border-2 border-white/10 p-6">
               <h2 className="text-xl font-black uppercase mb-2">SHOPIFY CHECKOUT</h2>
               <p className="text-white/60 text-sm uppercase tracking-wider mb-4">
-                {xpCartItems.length > 0
-                  ? 'You have Shopify items + XP items. These checkout separately.'
-                  : 'These items checkout on Shopify (card, Apple Pay, etc.).'}
+                These items checkout on Shopify (card, Apple Pay, etc.).
               </p>
 
               {unresolvedCartItems.length > 0 && (
@@ -592,7 +582,7 @@ export default function Checkout() {
             {/* Order Summary */}
             <div className="bg-white/5 border-2 border-white/10 p-6">
               <h2 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-[#FF1493]" />
+                <ShoppingCart className="w-5 h-5 text-[#C8962C]" />
                 Order Summary
               </h2>
               <div className="space-y-3 mb-6">
@@ -605,7 +595,7 @@ export default function Checkout() {
                       {item?.product ? (
                         <>
                           <div className="text-xs text-white/40 uppercase">
-                            Qty: {item.quantity} × {item.product.price_xp} XP
+                            Qty: {item.quantity}
                           </div>
                           {String(item?.product?.seller_email || '').toLowerCase() === 'shopify@hotmess.london' && (
                             <div className="text-xs text-white/50 uppercase mt-1">
@@ -619,8 +609,8 @@ export default function Checkout() {
                         </div>
                       )}
                     </div>
-                    <div className="text-[#FFEB3B] font-black text-lg">
-                      {item?.product ? (item.product.price_xp * item.quantity) : '—'}
+                    <div className="font-black text-lg text-white/60">
+                      {item?.product?.price_gbp ? `£${item.product.price_gbp * item.quantity}` : '—'}
                     </div>
                   </div>
                 ))}
@@ -635,7 +625,7 @@ export default function Checkout() {
                         <Tag className="w-4 h-4 text-[#39FF14]" />
                         <span className="font-bold text-[#39FF14]">{appliedPromo.code}</span>
                         <span className="text-white/60 text-sm">
-                          {appliedPromo.type === 'percent' ? `-${appliedPromo.value}%` : `-${appliedPromo.value} XP`}
+                          {appliedPromo.type === 'percent' ? `-${appliedPromo.value}%` : `-${appliedPromo.value}`}
                         </span>
                       </div>
                       <button onClick={removePromo} className="text-white/40 hover:text-white">
@@ -668,41 +658,9 @@ export default function Checkout() {
                   )}
                 </div>
 
-                {currentUser ? (
-                  <>
-                    <div className="flex justify-between items-center mb-3 text-sm">
-                      <span className="text-white/60 uppercase tracking-wider">Your Balance</span>
-                      <span className="font-black text-[#39FF14]">{userXP.toLocaleString()} XP</span>
-                    </div>
-                    <div className="flex justify-between items-center mb-3 text-sm">
-                      <span className="text-white/60 uppercase tracking-wider">Subtotal</span>
-                      <span className="font-black text-[#FFEB3B]">{totalXP.toLocaleString()} XP</span>
-                    </div>
-                    {discount > 0 && (
-                      <div className="flex justify-between items-center mb-3 text-sm">
-                        <span className="text-white/60 uppercase tracking-wider">Discount</span>
-                        <span className="font-black text-[#39FF14]">-{discount.toLocaleString()} XP</span>
-                      </div>
-                    )}
-                    <div className="border-t border-white/20 pt-3 flex justify-between items-center text-xl font-black">
-                      <span className="uppercase">Order Total</span>
-                      <span className="text-[#FFEB3B]">{finalTotal.toLocaleString()} XP</span>
-                    </div>
-                    <div className="flex justify-between items-center mt-2 text-sm">
-                      <span className="text-white/60 uppercase tracking-wider">After Order</span>
-                      <span className={(userXP - finalTotal) >= 0 ? 'text-[#39FF14]' : 'text-red-500'}>
-                        {(userXP - finalTotal).toLocaleString()} XP
-                      </span>
-                    </div>
-                    {userXP < finalTotal && (
-                      <div className="mt-4 bg-red-600/20 border-2 border-red-600 p-4 text-sm font-bold uppercase tracking-wider">
-                        ⚠️ Need {(finalTotal - userXP).toLocaleString()} more XP
-                      </div>
-                    )}
-                  </>
-                ) : (
+                {!currentUser && (
                   <div className="text-sm text-white/60 uppercase tracking-wider">
-                    Sign in at checkout to confirm XP balance.
+                    Sign in to complete checkout.
                   </div>
                 )}
               </div>
@@ -718,19 +676,19 @@ export default function Checkout() {
                   onClick={() => setIsGift(!isGift)}
                   className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition-all ${
                     isGift 
-                      ? 'border-[#FF1493] bg-[#FF1493]/10' 
+                      ? 'border-[#C8962C] bg-[#C8962C]/10' 
                       : 'border-white/20 hover:border-white/40'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Gift className={`w-5 h-5 ${isGift ? 'text-[#FF1493]' : 'text-white/60'}`} />
+                    <Gift className={`w-5 h-5 ${isGift ? 'text-[#C8962C]' : 'text-white/60'}`} />
                     <div className="text-left">
                       <p className="font-bold">Send as Gift</p>
                       <p className="text-xs text-white/40">Add a personal message</p>
                     </div>
                   </div>
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    isGift ? 'border-[#FF1493] bg-[#FF1493]' : 'border-white/40'
+                    isGift ? 'border-[#C8962C] bg-[#C8962C]' : 'border-white/40'
                   }`}>
                     {isGift && <Check className="w-3 h-3 text-black" />}
                   </div>
@@ -808,19 +766,17 @@ export default function Checkout() {
                   disabled={
                     xpCartItems.length === 0 ||
                     !xpPurchasingEnabled ||
-                    (!currentUser ? false : (!hasEnoughXP || checkoutMutation.isPending)) ||
+                    (checkoutMutation.isPending) ||
                     !isShippingComplete
                   }
                   className="w-full bg-[#39FF14] hover:bg-[#39FF14]/90 text-black font-black text-lg py-7 uppercase tracking-wider shadow-[0_0_20px_rgba(57,255,20,0.3)] border-2 border-[#39FF14]"
                 >
-                  {!xpPurchasingEnabled ? (
-                    'XP PURCHASING COMING SOON'
-                  ) : checkoutMutation.isPending ? (
+                  {checkoutMutation.isPending ? (
                     'PROCESSING ORDER...'
                   ) : (
                     <>
                       <Check className="w-5 h-5 mr-2" />
-                      {currentUser ? 'COMPLETE XP ORDER' : 'SIGN IN TO COMPLETE'} • {totalXP.toLocaleString()} XP
+                      {currentUser ? 'COMPLETE ORDER' : 'SIGN IN TO COMPLETE'}
                     </>
                   )}
                 </Button>
@@ -835,7 +791,7 @@ export default function Checkout() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-[#39FF14]" />
-                      <span>Instant XP deduction</span>
+                      <span>Secure checkout</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-[#00D9FF]" />
@@ -846,7 +802,7 @@ export default function Checkout() {
                       <span>Secure checkout</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Truck className="w-4 h-4 text-[#FF1493]" />
+                      <Truck className="w-4 h-4 text-[#C8962C]" />
                       <span>Seller notified</span>
                     </div>
                   </div>

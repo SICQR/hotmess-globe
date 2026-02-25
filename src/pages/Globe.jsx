@@ -579,7 +579,7 @@ export default function GlobePage() {
     return (
       <div className="relative w-full min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#FF1493]/30 border-t-[#FF1493] rounded-full animate-spin" />
+          <div className="w-12 h-12 border-4 border-[#C8962C]/30 border-t-[#C8962C] rounded-full animate-spin" />
           <p className="text-white/60 text-sm tracking-wider uppercase">Loading Pulse...</p>
         </div>
       </div>
@@ -630,7 +630,7 @@ export default function GlobePage() {
               <span className="text-[11px] font-black uppercase tracking-[0.22em] text-white/60">PULSE</span>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/90 border border-white/10 rounded-xl backdrop-blur-xl min-h-[44px]">
-              <div className="w-2 h-2 rounded-full bg-[#FF1493] animate-pulse" />
+              <div className="w-2 h-2 rounded-full bg-[#C8962C] animate-pulse" />
               <span className="text-sm font-bold">{filteredBeacons.length}</span>
             </div>
           </div>
@@ -650,7 +650,7 @@ export default function GlobePage() {
                 }
               }}
               className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
-                showNearbyGrid ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+                showNearbyGrid ? 'bg-[#C8962C] text-black' : 'bg-black/90 border border-white/10 text-white'
               }`}
             >
               <Grid3x3 className="w-5 h-5" />
@@ -669,7 +669,7 @@ export default function GlobePage() {
                 }
               }}
               className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
-                showHotmessFeed ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+                showHotmessFeed ? 'bg-[#C8962C] text-black' : 'bg-black/90 border border-white/10 text-white'
               }`}
               aria-label="Hotmess Feed"
             >
@@ -689,7 +689,7 @@ export default function GlobePage() {
                 }
               }}
               className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
-                showControls ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+                showControls ? 'bg-[#C8962C] text-black' : 'bg-black/90 border border-white/10 text-white'
               }`}
             >
               <Settings className="w-5 h-5" />
@@ -707,7 +707,7 @@ export default function GlobePage() {
                 }
               }}
               className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
-                showPanel ? 'bg-[#FF1493] text-black' : 'bg-black/90 border border-white/10 text-white'
+                showPanel ? 'bg-[#C8962C] text-black' : 'bg-black/90 border border-white/10 text-white'
               }`}
             >
               <BarChart3 className="w-5 h-5" />
@@ -734,8 +734,8 @@ export default function GlobePage() {
           animate={{ opacity: 1, y: 0 }}
           className="absolute top-16 left-4 right-4 z-30 flex items-center justify-center"
         >
-          <div className="flex items-center gap-2 px-4 py-2 bg-[#FF1493]/20 border border-[#FF1493]/40 rounded-lg backdrop-blur-xl">
-            <span className="text-[#FF1493] text-xs font-semibold">
+          <div className="flex items-center gap-2 px-4 py-2 bg-[#C8962C]/20 border border-[#C8962C]/40 rounded-lg backdrop-blur-xl">
+            <span className="text-[#C8962C] text-xs font-semibold">
               {radiusSearch 
                 ? `${radiusSearch.beacons.length} within ${radiusSearch.radiusKm}km`
                 : `${(searchResults?.beacons.length || 0) + (searchResults?.cities.length || 0)} results`

@@ -88,7 +88,7 @@ export default function Scan() {
     onSuccess: (payload) => {
       if (scanMode === 'batch') {
         setBatchScans(prev => [...prev, { ...payload, timestamp: new Date() }]);
-        toast.success(`Added ${payload?.beacon?.title || 'beacon'} (+${payload?.earned_xp || 0} XP)`);
+        toast.success(`Scanned ${payload?.beacon?.title || 'beacon'}`);
       } else {
         setScannedBeacon(payload);
         toast.success(`Scanned ${payload?.beacon?.title || 'beacon'}`);
@@ -224,7 +224,7 @@ export default function Scan() {
   return (
     <PageShell
       title="Scan"
-      subtitle="Scan a beacon QR code or paste a beacon ID to check in and earn XP."
+      subtitle="Scan a beacon QR code or paste a beacon ID to check in."
       maxWidth="2xl"
       back
     >
@@ -234,7 +234,7 @@ export default function Scan() {
           onClick={() => setScanMode('single')}
           className={`flex-1 py-3 px-4 rounded-xl font-bold uppercase text-sm flex items-center justify-center gap-2 transition-all ${
             scanMode === 'single'
-              ? 'bg-[#FF1493] text-black'
+              ? 'bg-[#C8962C] text-black'
               : 'bg-white/5 border border-white/20 text-white/60 hover:bg-white/10'
           }`}
         >
@@ -266,7 +266,6 @@ export default function Scan() {
                 <span className="text-[#00D9FF] font-black text-xl">{batchScans.length}</span>
                 <span className="text-white/60 ml-2">scans collected</span>
               </div>
-              <div className="text-[#FFD700] font-black text-xl">+{totalBatchXP} XP</div>
             </div>
             <div className="flex flex-wrap gap-2 mb-3">
               {batchScans.map((scan, idx) => (
@@ -293,9 +292,6 @@ export default function Scan() {
           <p className="text-lg text-white/80 mb-4">
             Scanned <span className="font-bold">{scannedBeacon?.beacon?.title || 'beacon'}</span>
           </p>
-          <div className="text-4xl font-black text-[#FFEB3B]">
-            +{scannedBeacon?.earned_xp ?? 0} XP
-          </div>
         </motion.div>
       )}
 
@@ -397,7 +393,6 @@ export default function Scan() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[#FFEB3B] font-bold">+{beacon.xp_scan || 100} XP</div>
                 </div>
               </div>
             </motion.button>
@@ -431,9 +426,6 @@ export default function Scan() {
                     <span>•</span>
                     <span>{checkin.beacon?.city || ''}</span>
                   </div>
-                </div>
-                <div className="text-[#39FF14] font-bold text-sm">
-                  +{checkin.earned_xp || 0} XP
                 </div>
               </div>
             ))}

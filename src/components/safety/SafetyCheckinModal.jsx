@@ -7,13 +7,12 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Check, 
-  Heart, 
-  Phone, 
+import {
+  Check,
+  Heart,
+  Phone,
   ExternalLink,
-  Shield,
-  Sparkles
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -32,18 +31,18 @@ const RESPONSE_OPTIONS = [
     id: 'need_minute',
     label: "Need a minute",
     icon: Heart,
-    color: '#FFB800',
-    bgColor: 'bg-[#FFB800]/20',
-    borderColor: 'border-[#FFB800]',
+    color: '#C8962C',
+    bgColor: 'bg-[#C8962C]/20',
+    borderColor: 'border-[#C8962C]',
     description: "Check back in 30 minutes"
   },
   {
     id: 'help',
     label: "Need help",
     icon: Phone,
-    color: '#FF1493',
-    bgColor: 'bg-[#FF1493]/20',
-    borderColor: 'border-[#FF1493]',
+    color: '#C8962C',
+    bgColor: 'bg-[#C8962C]/20',
+    borderColor: 'border-[#C8962C]',
     description: "Show me support resources"
   }
 ];
@@ -90,7 +89,6 @@ export default function SafetyCheckinModal({
   const [selectedResponse, setSelectedResponse] = useState(null);
   const [showResources, setShowResources] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [xpAwarded, setXpAwarded] = useState(0);
   const [completed, setCompleted] = useState(false);
 
   const handleRespond = async (responseId) => {
@@ -110,10 +108,6 @@ export default function SafetyCheckinModal({
       const data = await response.json();
 
       if (data.success) {
-        if (data.xpAwarded) {
-          setXpAwarded(data.xpAwarded);
-        }
-
         if (responseId === 'help' || data.followUp === 'crisis_resources') {
           setShowResources(true);
         } else {
@@ -146,12 +140,12 @@ export default function SafetyCheckinModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-2 border-[#FF1493] p-0 max-w-md">
+      <DialogContent className="bg-black border-2 border-[#C8962C] p-0 max-w-md">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-[#FF1493]/20 rounded-full flex items-center justify-center border-2 border-[#FF1493]">
-              <Shield className="w-6 h-6 text-[#FF1493]" />
+            <div className="w-12 h-12 bg-[#C8962C]/20 rounded-full flex items-center justify-center border-2 border-[#C8962C]">
+              <Shield className="w-6 h-6 text-[#C8962C]" />
             </div>
             <div>
               <DialogTitle className="text-lg font-black text-white">Safety Check-in</DialogTitle>
@@ -262,7 +256,7 @@ export default function SafetyCheckinModal({
                   setShowResources(false);
                   onClose?.();
                 }}
-                className="w-full mt-6 bg-[#FF1493] hover:bg-[#FF1493]/80 text-white"
+                className="w-full mt-6 bg-[#C8962C] hover:bg-[#C8962C]/80 text-white"
               >
                 Close
               </Button>
@@ -278,17 +272,6 @@ export default function SafetyCheckinModal({
                 <Check className="w-8 h-8 text-[#39FF14]" />
               </div>
               <p className="text-xl font-bold text-white mb-2">Thanks for checking in!</p>
-              {xpAwarded > 0 && (
-                <motion.div
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="flex items-center justify-center gap-2 text-[#FFEB3B]"
-                >
-                  <Sparkles className="w-5 h-5" />
-                  <span className="font-bold">+{xpAwarded} XP</span>
-                </motion.div>
-              )}
             </motion.div>
           )}
         </div>

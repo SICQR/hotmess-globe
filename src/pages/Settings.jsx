@@ -28,7 +28,7 @@ function PinLockSettings() {
   return (
     <>
       <div className="flex items-center gap-3 mb-6">
-        <Lock className="w-5 h-5 text-[#FF1493]" />
+        <Lock className="w-5 h-5 text-[#C8962C]" />
         <h2 className="text-xl font-bold uppercase tracking-wider">App Security</h2>
       </div>
 
@@ -50,7 +50,7 @@ function PinLockSettings() {
             <Button 
               onClick={openPinSetup}
               variant="outline"
-              className="border-[#FF1493] text-[#FF1493] hover:bg-[#FF1493]/10"
+              className="border-[#C8962C] text-[#C8962C] hover:bg-[#C8962C]/10"
             >
               Set PIN
             </Button>
@@ -220,7 +220,7 @@ export default function Settings() {
         >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-[#FF1493]" />
+              <User className="w-5 h-5 text-[#C8962C]" />
               <h2 className="text-xl font-bold uppercase tracking-wider">Profile</h2>
             </div>
             <Link to={createPageUrl('EditProfile')}>
@@ -238,7 +238,7 @@ export default function Settings() {
                 Profile Picture
               </label>
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
@@ -289,7 +289,7 @@ export default function Settings() {
             </div>
 
             <div className="pt-4 flex gap-3">
-              <Button onClick={handleSave} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+              <Button onClick={handleSave} className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black">
                 <Save className="w-4 h-4 mr-2" />
                 Save Changes
               </Button>
@@ -403,7 +403,7 @@ export default function Settings() {
             <Link to={createPageUrl('DataExport')}>
               <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
                 <div className="flex items-center gap-3">
-                  <Download className="w-5 h-5 text-[#FF1493]" />
+                  <Download className="w-5 h-5 text-[#C8962C]" />
                   <div>
                     <p className="font-semibold">Export My Data</p>
                     <p className="text-sm text-white/60">Download a copy of all your data (GDPR)</p>
@@ -457,7 +457,7 @@ export default function Settings() {
             <Link to={createPageUrl('Contact')}>
               <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
                 <div className="flex items-center gap-3">
-                  <MessageSquare className="w-5 h-5 text-[#FF1493]" />
+                  <MessageSquare className="w-5 h-5 text-[#C8962C]" />
                   <div>
                     <p className="font-semibold">Contact Support</p>
                     <p className="text-sm text-white/60">Submit a support ticket</p>

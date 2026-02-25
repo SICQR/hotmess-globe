@@ -176,7 +176,7 @@ export function useRealtimeChat({
                 badge: '/icon.png',
                 tag: `message-${newMessage.id}`,
                 vibrate: [200, 100, 200],
-              });
+              } as NotificationOptions & { vibrate?: number[] });
 
               notification.onclick = () => {
                 window.focus();

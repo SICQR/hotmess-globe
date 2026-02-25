@@ -332,14 +332,14 @@ export default function FaceVerification({
           "w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4",
           state === VERIFICATION_STATES.SUCCESS ? "bg-emerald-500/20" :
           state === VERIFICATION_STATES.FAILED || state === VERIFICATION_STATES.ERROR ? "bg-red-500/20" :
-          "bg-[#FF1493]/20"
+          "bg-[#C8962C]/20"
         )}>
           {state === VERIFICATION_STATES.SUCCESS ? (
             <CheckCircle className="w-8 h-8 text-emerald-400" />
           ) : state === VERIFICATION_STATES.FAILED || state === VERIFICATION_STATES.ERROR ? (
             <XCircle className="w-8 h-8 text-red-400" />
           ) : (
-            <Scan className="w-8 h-8 text-[#FF1493]" />
+            <Scan className="w-8 h-8 text-[#C8962C]" />
           )}
         </div>
         <h3 className="text-xl font-bold uppercase">Face Verification</h3>
@@ -385,14 +385,14 @@ export default function FaceVerification({
                 rx="22"
                 ry="30"
                 fill="none"
-                stroke={faceDetected ? "#39FF14" : "#FF1493"}
+                stroke={faceDetected ? "#39FF14" : "#C8962C"}
                 strokeWidth="0.5"
                 strokeDasharray="2 2"
                 className="transition-colors duration-300"
               />
               
               {/* Corner markers */}
-              <g stroke={faceDetected ? "#39FF14" : "#FF1493"} strokeWidth="0.8">
+              <g stroke={faceDetected ? "#39FF14" : "#C8962C"} strokeWidth="0.8">
                 {/* Top left */}
                 <path d="M 20 15 L 20 25 M 20 15 L 30 15" fill="none" />
                 {/* Top right */}
@@ -450,13 +450,13 @@ export default function FaceVerification({
         {/* Analyzing Overlay */}
         {state === VERIFICATION_STATES.ANALYZING && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70">
-            <Loader2 className="w-12 h-12 text-[#FF1493] animate-spin mb-4" />
+            <Loader2 className="w-12 h-12 text-[#C8962C] animate-spin mb-4" />
             <p className="text-white/80 text-sm uppercase tracking-wider mb-2">
               Verifying...
             </p>
             <div className="w-48 h-2 bg-white/10 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-[#FF1493]"
+                className="h-full bg-[#C8962C]"
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
               />
@@ -524,7 +524,7 @@ export default function FaceVerification({
           <>
             <Button
               onClick={startCamera}
-              className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold uppercase py-6"
+              className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold uppercase py-6"
             >
               <Camera className="w-5 h-5 mr-2" />
               Start Camera
@@ -551,7 +551,7 @@ export default function FaceVerification({
           <Button
             onClick={capturePhoto}
             disabled={!faceDetected}
-            className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold uppercase py-6 disabled:opacity-50"
+            className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold uppercase py-6 disabled:opacity-50"
           >
             <Camera className="w-5 h-5 mr-2" />
             {faceDetected ? 'Capture Photo' : 'Position Your Face First'}
@@ -633,10 +633,10 @@ export function FaceVerifiedBadge({ verified = false, className }) {
 
 export function FaceVerificationPrompt({ onStart, onSkip }) {
   return (
-    <div className="p-6 bg-gradient-to-br from-[#FF1493]/10 to-purple-500/10 rounded-xl border border-[#FF1493]/20">
+    <div className="p-6 bg-gradient-to-br from-[#C8962C]/10 to-purple-500/10 rounded-xl border border-[#C8962C]/20">
       <div className="flex items-start gap-4">
-        <div className="w-12 h-12 rounded-full bg-[#FF1493]/20 flex items-center justify-center flex-shrink-0">
-          <Scan className="w-6 h-6 text-[#FF1493]" />
+        <div className="w-12 h-12 rounded-full bg-[#C8962C]/20 flex items-center justify-center flex-shrink-0">
+          <Scan className="w-6 h-6 text-[#C8962C]" />
         </div>
         <div className="flex-1">
           <h4 className="font-bold text-white mb-1">Verify Your Identity</h4>
@@ -648,7 +648,7 @@ export function FaceVerificationPrompt({ onStart, onSkip }) {
             <Button
               onClick={onStart}
               size="sm"
-              className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold"
+              className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold"
             >
               <Camera className="w-4 h-4 mr-1" />
               Verify Now

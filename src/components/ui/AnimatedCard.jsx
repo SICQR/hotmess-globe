@@ -23,7 +23,7 @@ export function AnimatedCard({
       } : undefined}
     >
       <Card 
-        className={`transition-all duration-200 ${hover ? 'hover:shadow-[0_10px_40px_rgba(255,20,147,0.2)] hover:border-[#FF1493]' : ''} ${className}`}
+        className={`transition-all duration-200 ${hover ? 'hover:shadow-[0_10px_40px_rgba(255,20,147,0.2)] hover:border-[#C8962C]' : ''} ${className}`}
         {...props}
       >
         {children}
@@ -37,7 +37,7 @@ export function AnimatedCard({
  */
 export function GlowCard({ 
   children, 
-  glowColor = '#FF1493',
+  glowColor = '#C8962C',
   className = '',
   ...props 
 }) {

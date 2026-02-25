@@ -10,7 +10,7 @@ const CONSENT_VERSION = 'v1.0.0-2025';
 const SECTIONS = [
   {
     icon: Users,
-    color: '#FF1493',
+    color: '#C8962C',
     title: 'Private Membership',
     body: 'HOTMESS LONDON operates as a private members association under UK law (Equality Act 2010, §193). This is a men-focused platform for adult nightlife, culture, and community.',
   },
@@ -68,7 +68,7 @@ export default function ConsentForm({ user, onAccepted }) {
         {/* Wordmark */}
         <div className="text-center mb-8">
           <p className="text-4xl font-black tracking-tight text-white leading-none">
-            HOT<span className="text-[#FF1493]" style={{ textShadow: '0 0 24px rgba(255,20,147,0.6)' }}>MESS</span>
+            HOT<span className="text-[#C8962C]" style={{ textShadow: '0 0 24px rgba(255,20,147,0.6)' }}>MESS</span>
           </p>
           <p className="text-[10px] tracking-[0.45em] text-white/30 uppercase font-mono mt-2">LONDON</p>
         </div>
@@ -79,7 +79,7 @@ export default function ConsentForm({ user, onAccepted }) {
             SYSTEM INITIALIZATION
           </p>
           <h1 className="text-2xl font-black text-white uppercase mb-6 flex items-center gap-2">
-            <Shield className="w-6 h-6 text-[#FF1493]" />
+            <Shield className="w-6 h-6 text-[#C8962C]" />
             Membership Consent
           </h1>
 
@@ -113,7 +113,7 @@ export default function ConsentForm({ user, onAccepted }) {
               type="checkbox"
               checked={accepted}
               onChange={(e) => setAccepted(e.target.checked)}
-              className="mt-0.5 w-5 h-5 accent-[#FF1493] shrink-0"
+              className="mt-0.5 w-5 h-5 accent-[#C8962C] shrink-0"
             />
             <span className="text-xs text-white/70 leading-relaxed">
               I confirm I am 18+, have read the above, and agree to join HOTMESS LONDON as a private member — including consent to processing of Special Category data under GDPR Article 9.
@@ -125,7 +125,7 @@ export default function ConsentForm({ user, onAccepted }) {
             disabled={!accepted || loading}
             className="w-full h-14 rounded-xl font-black text-lg uppercase tracking-widest text-black transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
-              background: accepted ? '#FF1493' : 'rgba(255,20,147,0.3)',
+              background: accepted ? '#C8962C' : 'rgba(255,20,147,0.3)',
               boxShadow: accepted ? '0 0 28px rgba(255,20,147,0.45)' : 'none',
             }}
           >

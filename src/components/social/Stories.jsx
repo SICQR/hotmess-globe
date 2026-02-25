@@ -117,7 +117,7 @@ export function StoriesBar({ currentUser, className }) {
         >
           <div className={cn(
             "w-16 h-16 rounded-full flex items-center justify-center border-2 border-dashed transition-colors",
-            myStories ? "border-[#FF1493] bg-[#FF1493]/10" : "border-white/30 hover:border-white/50"
+            myStories ? "border-[#C8962C] bg-[#C8962C]/10" : "border-white/30 hover:border-white/50"
           )}>
             {myStories ? (
               <div className="w-14 h-14 rounded-full overflow-hidden">
@@ -148,7 +148,7 @@ export function StoriesBar({ currentUser, className }) {
               <div className={cn(
                 "w-16 h-16 rounded-full p-0.5",
                 userStories.hasUnviewed
-                  ? "bg-gradient-to-br from-[#FF1493] via-[#B026FF] to-[#00D9FF]"
+                  ? "bg-gradient-to-br from-[#C8962C] via-[#B026FF] to-[#00D9FF]"
                   : "bg-white/20"
               )}>
                 <div className="w-full h-full rounded-full overflow-hidden bg-black">
@@ -480,7 +480,7 @@ function CreateStoryModal({ currentUser, onClose, onCreated }) {
           onClick={handleCreate}
           disabled={!mediaFile || uploading}
           size="sm"
-          className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+          className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black"
         >
           {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Share'}
         </Button>
@@ -516,7 +516,7 @@ function CreateStoryModal({ currentUser, onClose, onCreated }) {
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-32 h-32 rounded-full bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center hover:border-[#FF1493] transition-colors"
+              className="w-32 h-32 rounded-full bg-white/5 border-2 border-dashed border-white/20 flex items-center justify-center hover:border-[#C8962C] transition-colors"
             >
               <div className="text-center">
                 <Camera className="w-8 h-8 text-white/40 mx-auto mb-2" />

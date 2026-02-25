@@ -194,7 +194,7 @@ export default function SellerDashboard() {
             {!showForm && (
               <Button 
                 onClick={() => setShowForm(true)}
-                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+                className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 New Product
@@ -222,10 +222,10 @@ export default function SellerDashboard() {
 
             <div className="bg-white/5 border border-white/10 rounded-xl p-6">
               <div className="flex items-center justify-between mb-2">
-                <DollarSign className="w-5 h-5 text-[#FFEB3B]" />
+                <DollarSign className="w-5 h-5 text-[#C8962C]" />
                 <span className="text-xs text-white/40 uppercase">Revenue</span>
               </div>
-              <div className="text-3xl font-black text-[#FFEB3B]">{totalRevenue.toLocaleString()} XP</div>
+              <div className="text-3xl font-black text-[#C8962C]">£{totalRevenue.toLocaleString()}</div>
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-xl p-6">
@@ -274,7 +274,7 @@ export default function SellerDashboard() {
               <div className="text-center py-20">
                 <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
                 <p className="text-white/40 text-lg mb-4">No products yet</p>
-                <Button onClick={() => setShowForm(true)} className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+                <Button onClick={() => setShowForm(true)} className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black">
                   <Plus className="w-4 h-4 mr-2" />
                   Create First Product
                 </Button>
@@ -306,7 +306,7 @@ export default function SellerDashboard() {
                         <div className="flex items-center gap-6 mt-4 text-sm">
                           <div>
                             <span className="text-white/40">Price:</span>
-                            <span className="ml-2 font-bold text-[#FFEB3B]">{product.price_xp.toLocaleString()} XP</span>
+                            <span className="ml-2 font-bold text-[#C8962C]">£{(product.price_gbp || product.price_xp || 0).toLocaleString()}</span>
                           </div>
                           <div>
                             <span className="text-white/40">Stock:</span>
@@ -381,8 +381,8 @@ export default function SellerDashboard() {
                         <p className="text-sm text-white/60">Buyer: {order.buyer_email}</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-xl font-black text-[#FFEB3B] mb-1">
-                          {order.total_xp.toLocaleString()} XP
+                        <div className="text-xl font-black text-[#C8962C] mb-1">
+                          £{(order.total_gbp || order.total_xp || 0).toLocaleString()}
                         </div>
                         <Badge>{order.status}</Badge>
                       </div>

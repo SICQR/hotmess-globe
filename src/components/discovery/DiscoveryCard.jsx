@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { MapPin, Zap, Crown } from 'lucide-react';
+import { MapPin, Crown } from 'lucide-react';
 import CompatibilityBadge, { calculateCompatibility } from './CompatibilityBadge';
 import ReportButton from '../moderation/ReportButton';
 import LazyImage from '../ui/LazyImage';
@@ -86,12 +86,12 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
     >
       <Link to={createPageUrl(`Profile?email=${user.email}`)}>
         <div 
-          className="group relative overflow-hidden border-2 border-white/10 hover:border-[#FF1493] transition-all"
+          className="group relative overflow-hidden border-2 border-white/10 hover:border-[#C8962C] transition-all"
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
         >
           {/* Avatar/Photo */}
-          <div className="aspect-square bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-6xl font-black overflow-hidden relative">
+          <div className="aspect-square bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center text-6xl font-black overflow-hidden relative">
             {primaryPhotoUrl ? (
               <LazyImage
                 src={primaryPhotoUrl}
@@ -105,8 +105,8 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
             {(user.video_intro_url || user.has_premium_content) && (
               <div className="absolute top-2 left-2 flex flex-col gap-1">
                 {user.video_intro_url && (
-                  <div className="px-2 py-1 bg-black/80 border border-[#FF1493] flex items-center gap-1">
-                    <div className="w-2 h-2 bg-[#FF1493] rounded-full animate-pulse" />
+                  <div className="px-2 py-1 bg-black/80 border border-[#C8962C] flex items-center gap-1">
+                    <div className="w-2 h-2 bg-[#C8962C] rounded-full animate-pulse" />
                     <span className="text-[9px] font-bold text-white uppercase">Video</span>
                   </div>
                 )}
@@ -190,7 +190,7 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
                 {lookingFor.slice(0, 3).map((item, idx) => (
                   <span
                     key={`${item}-${idx}`}
-                    className="px-2 py-0.5 bg-[#FF1493]/20 text-[#FF1493] text-[9px] font-bold uppercase border border-[#FF1493]/40"
+                    className="px-2 py-0.5 bg-[#C8962C]/20 text-[#C8962C] text-[9px] font-bold uppercase border border-[#C8962C]/40"
                   >
                     {item}
                   </span>
@@ -256,12 +256,8 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
               </div>
             )}
 
-            {/* XP & Report */}
+            {/* Report */}
             <div className="absolute top-4 right-4 flex flex-col gap-2">
-              <div className="flex items-center gap-1 px-2 py-1 bg-black/80 border border-[#FFEB3B]">
-                <Zap className="w-3 h-3 text-[#FFEB3B]" />
-                <span className="text-[10px] font-bold text-[#FFEB3B]">{user.xp || 0}</span>
-              </div>
               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                 <ReportButton itemType="user" itemId={user.email} variant="ghost" />
               </div>

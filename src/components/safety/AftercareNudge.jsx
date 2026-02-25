@@ -36,7 +36,7 @@ const RESPONSES = [
     id: 'help', 
     label: 'GET HELP', 
     icon: Phone, 
-    color: '#FF1493',
+    color: '#C8962C',
     message: "Help is available. You're not alone.",
     showResources: true,
     urgent: true,
@@ -117,14 +117,14 @@ export default function AftercareNudge({
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="w-full max-w-md bg-black border-2 border-[#FF1493] overflow-hidden"
+            className="w-full max-w-md bg-black border-2 border-[#C8962C] overflow-hidden"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#FF1493]/20 to-[#B026FF]/20 p-6 border-b border-white/10">
+            <div className="bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 p-6 border-b border-white/10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-[#FF1493]/20 rounded-full flex items-center justify-center">
-                    <Heart className="w-6 h-6 text-[#FF1493]" />
+                  <div className="w-12 h-12 bg-[#C8962C]/20 rounded-full flex items-center justify-center">
+                    <Heart className="w-6 h-6 text-[#C8962C]" />
                   </div>
                   <div>
                     <h2 className="text-xl font-black text-white uppercase">
@@ -219,7 +219,7 @@ export default function AftercareNudge({
 
                         <Button
                           onClick={handleGoToCare}
-                          className="w-full bg-[#FF1493] hover:bg-white text-black font-black uppercase"
+                          className="w-full bg-[#C8962C] hover:bg-white text-black font-black uppercase"
                         >
                           <Heart className="w-4 h-4 mr-2" />
                           Care Resources

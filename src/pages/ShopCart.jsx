@@ -112,7 +112,7 @@ export default function ShopCart() {
                       disabled={isLoading}
                     />
                     {!variant?.availableForSale ? (
-                      <span className="text-xs text-[#FF1493] font-bold uppercase tracking-wider">Sold out</span>
+                      <span className="text-xs text-[#C8962C] font-bold uppercase tracking-wider">Sold out</span>
                     ) : null}
                   </div>
                 </div>

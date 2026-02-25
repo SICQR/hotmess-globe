@@ -363,7 +363,7 @@ export default function RecordManager() {
                   <Music className="w-5 h-5 text-[#B026FF]" />
                   <div>
                     <p className="font-bold">{beacon.title}</p>
-                    <p className="text-xs text-white/60">{beacon.city} • {beacon.xp_scan} XP</p>
+                    <p className="text-xs text-white/60">{beacon.city}</p>
                   </div>
                 </div>
                 <CheckCircle2 className="w-5 h-5 text-[#39FF14]" />

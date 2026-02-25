@@ -133,8 +133,8 @@ export default function DisputeResolution({ sellerEmail, isBuyer = false }) {
                 </div>
                 {order && (
                   <div className="text-right">
-                    <div className="text-xl font-black text-[#FFEB3B]">
-                      {order.total_xp.toLocaleString()} XP
+                    <div className="text-xl font-black text-[#C8962C]">
+                      £{(order.total_gbp || 0).toLocaleString()}
                     </div>
                   </div>
                 )}
@@ -197,9 +197,9 @@ export default function DisputeResolution({ sellerEmail, isBuyer = false }) {
                 <div className="bg-green-500/10 border border-green-500/30 p-4 mt-4">
                   <h4 className="font-bold text-green-400 mb-2">Resolution</h4>
                   <p className="text-sm text-white/80">{dispute.resolution}</p>
-                  {dispute.refund_amount_xp > 0 && (
+                  {dispute.refund_amount_gbp > 0 && (
                     <p className="text-sm text-green-400 mt-2">
-                      Refund: {dispute.refund_amount_xp.toLocaleString()} XP
+                      Refund: £{(dispute.refund_amount_gbp || 0).toLocaleString()}
                     </p>
                   )}
                 </div>

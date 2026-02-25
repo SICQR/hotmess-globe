@@ -84,7 +84,7 @@ User Profile:
 - Favorited: ${favoritedProductIds.length} products
 
 Available Products:
-${availableProducts.slice(0, 30).map(p => `ID: ${p.id}, Name: ${p.name}, Type: ${p.product_type}, Category: ${p.category || 'N/A'}, Tags: ${(p.tags || []).join(', ')}, Price: ${p.price_xp} XP`).join('\n')}
+${availableProducts.slice(0, 30).map(p => `ID: ${p.id}, Name: ${p.name}, Type: ${p.product_type}, Category: ${p.category || 'N/A'}, Tags: ${(p.tags || []).join(', ')}, Price: £${p.price_gbp || 0}`).join('\n')}
 
 Recommend 6 product IDs that best match this user's interests. Consider:
 1. Similar categories/types to viewed items
@@ -124,7 +124,7 @@ Return ONLY a JSON array of product IDs, like: ["id1", "id2", "id3", "id4", "id5
     return (
       <div className="py-8">
         <div className="flex items-center gap-2 mb-6">
-          <Sparkles className="w-5 h-5 text-[#FF1493] animate-pulse" />
+          <Sparkles className="w-5 h-5 text-[#C8962C] animate-pulse" />
           <h2 className="text-2xl font-black uppercase">AI Recommendations</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -145,7 +145,7 @@ Return ONLY a JSON array of product IDs, like: ["id1", "id2", "id3", "id4", "id5
       className="py-8"
     >
       <div className="flex items-center gap-2 mb-6">
-        <Sparkles className="w-5 h-5 text-[#FF1493]" />
+        <Sparkles className="w-5 h-5 text-[#C8962C]" />
         <h2 className="text-2xl font-black uppercase">Recommended For You</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

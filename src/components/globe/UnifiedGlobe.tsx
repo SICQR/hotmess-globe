@@ -1,22 +1,31 @@
 /**
  * UnifiedGlobe — L0 Persistent Background Layer
- * 
- * This is THE globe that mounts once and never unmounts.
- * It sits at Z-0, behind all sheets and navigation.
- * 
- * Key architectural principle:
- * - Mounts at app root, OUTSIDE of Router
- * - Never remounts during navigation
- * - Provides spatial context for all OS operations
+ *
+ * On /pulse or /globe: renders full GlobePage (canvas + all UI)
+ * On all other routes: null — each mode provides its own background.
+ * WebGL canvas is NOT rendered outside Pulse (no GPU waste).
  */
 
-import React from 'react';
-import GlobePage from '@/pages/Globe';
+import React, { Suspense, lazy } from 'react';
+import { useLocation } from 'react-router-dom';
+
+const GlobePage = lazy(() => import('@/pages/Globe'));
 
 export function UnifiedGlobe() {
+  const location = useLocation();
+  const isPulse = location.pathname === '/pulse' || location.pathname === '/globe';
+
+  if (!isPulse) return null;
+
   return (
-    <div className="absolute inset-0 z-0" style={{ pointerEvents: 'auto' }}>
-      <GlobePage />
+    <div className="absolute inset-0 z-0">
+      <Suspense fallback={
+        <div className="w-full h-full bg-black flex items-center justify-center">
+          <div className="w-10 h-10 border-2 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />
+        </div>
+      }>
+        <GlobePage />
+      </Suspense>
     </div>
   );
 }
