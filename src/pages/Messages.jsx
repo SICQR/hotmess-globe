@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { MessageCircle, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ChatThread from '../components/messaging/ChatThread';
@@ -16,6 +17,7 @@ export default function Messages() {
   const [prefillToEmail, setPrefillToEmail] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const { data: allUsers = [] } = useAllUsers();
@@ -50,8 +52,36 @@ export default function Messages() {
       return allThreads.filter(t => t.participant_emails.includes(currentUser.email));
     },
     enabled: !!currentUser,
-    refetchInterval: 5000, // Poll every 5s (optimized)
+    // No polling - we use realtime subscriptions below
   });
+
+  // Realtime subscription for thread updates (new messages update last_message_at)
+  useEffect(() => {
+    if (!currentUser?.email) return;
+
+    const channel = supabase
+      .channel('chat-threads-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ChatThread',
+        },
+        (payload) => {
+          // Check if this thread involves the current user
+          const thread = payload.new;
+          if (thread?.participant_emails?.includes(currentUser.email)) {
+            queryClient.invalidateQueries(['chat-threads', currentUser.email]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser?.email, queryClient]);
 
   // Deep-link: /social/inbox?user=userId → open compose with recipient prefilled
   // Also supports legacy /social/inbox?to=email
