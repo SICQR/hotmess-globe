@@ -186,7 +186,7 @@ export default function L2EventSheet({ id }) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-[#FF1493] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#C8962C] animate-spin" />
       </div>
     );
   }
@@ -225,7 +225,7 @@ export default function L2EventSheet({ id }) {
             </div>
           )}
           {isEventSoon && !isEventPast && (
-            <div className="absolute top-4 right-4 px-3 py-1 bg-[#FF1493] rounded-full text-xs font-bold text-white animate-pulse">
+            <div className="absolute top-4 right-4 px-3 py-1 bg-[#C8962C] rounded-full text-xs font-bold text-white animate-pulse">
               HAPPENING SOON
             </div>
           )}
@@ -249,7 +249,7 @@ export default function L2EventSheet({ id }) {
 
         {/* Time until event */}
         {isFuture(eventDate) && (
-          <p className="text-[#FF1493] text-sm font-bold mt-2">
+          <p className="text-[#C8962C] text-sm font-bold mt-2">
             {formatDistanceToNow(eventDate, { addSuffix: true })}
           </p>
         )}
@@ -291,7 +291,7 @@ export default function L2EventSheet({ id }) {
       <SheetSection title="Going">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#FF1493]" />
+            <Users className="w-5 h-5 text-[#C8962C]" />
             <span className="text-white font-bold text-lg">{rsvpCount}</span>
             <span className="text-white/60 text-sm">attending</span>
           </div>
@@ -327,7 +327,7 @@ export default function L2EventSheet({ id }) {
               className="flex items-center justify-between w-full p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-sm">
                     {event.organizer_name?.[0] || 'O'}
                   </span>
@@ -376,7 +376,7 @@ export default function L2EventSheet({ id }) {
               'flex-1 h-14 text-lg font-black',
               rsvp 
                 ? 'bg-white/10 hover:bg-white/20 text-white' 
-                : 'bg-[#FF1493] hover:bg-[#FF1493]/90 text-white'
+                : 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-white'
             )}
           >
             {rsvpMutation.isPending ? (

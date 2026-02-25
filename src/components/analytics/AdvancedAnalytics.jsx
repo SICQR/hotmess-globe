@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Users, ShoppingBag, MapPin, Zap } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const COLORS = ['#FF1493', '#00D9FF', '#B026FF', '#FFEB3B', '#39FF14', '#FF6B35'];
+const COLORS = ['#C8962C', '#00D9FF', '#B026FF', '#FFEB3B', '#39FF14', '#FF6B35'];
 
 export default function AdvancedAnalytics() {
   const [timeRange, setTimeRange] = useState('7d'); // 7d, 30d, 90d
@@ -65,22 +65,6 @@ export default function AdvancedAnalytics() {
 
   const activityData = Object.entries(activityByType).map(([name, value]) => ({ name, value }));
 
-  // Revenue Over Time (XP-based)
-  const revenueData = orders
-    .filter(o => o.total_xp)
-    .sort((a, b) => new Date(a.created_date) - new Date(b.created_date))
-    .reduce((acc, order) => {
-      const date = new Date(order.created_date).toLocaleDateString();
-      const existing = acc.find(d => d.date === date);
-      if (existing) {
-        existing.xp += order.total_xp;
-      } else {
-        acc.push({ date, xp: order.total_xp });
-      }
-      return acc;
-    }, [])
-    .slice(-30);
-
   // Beacon Activity by City
   const beaconsByCity = beacons.reduce((acc, beacon) => {
     const city = beacon.city || 'Unknown';
@@ -97,7 +81,7 @@ export default function AdvancedAnalytics() {
   const totalCheckIns = activities.filter(a => a.activity_type === 'check_in').length;
   const totalScans = activities.filter(a => a.activity_type === 'scan').length;
   const totalMessages = activities.filter(a => a.activity_type === 'message').length;
-  const activeUsers = users.filter(u => u.xp && u.xp > 0).length;
+  const activeUsers = users.filter(u => u.activity_status && u.activity_status !== 'offline').length;
 
   // Content Moderation Stats
   const pendingPosts = posts.filter(p => p.moderation_status === 'pending').length;
@@ -107,8 +91,8 @@ export default function AdvancedAnalytics() {
     <div className="space-y-8">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-2 border-[#FF1493] p-6">
-          <Users className="w-6 h-6 text-[#FF1493] mb-2" />
+        <div className="bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border-2 border-[#C8962C] p-6">
+          <Users className="w-6 h-6 text-[#C8962C] mb-2" />
           <div className="text-3xl font-black">{users.length}</div>
           <div className="text-xs text-white/60 uppercase">Total Users</div>
         </div>
@@ -117,8 +101,8 @@ export default function AdvancedAnalytics() {
           <div className="text-3xl font-black">{activeUsers}</div>
           <div className="text-xs text-white/60 uppercase">Active Users</div>
         </div>
-        <div className="bg-gradient-to-br from-[#FFEB3B]/20 to-[#FF6B35]/20 border-2 border-[#FFEB3B] p-6">
-          <MapPin className="w-6 h-6 text-[#FFEB3B] mb-2" />
+        <div className="bg-gradient-to-br from-[#C8962C]/20 to-[#FF6B35]/20 border-2 border-[#C8962C] p-6">
+          <MapPin className="w-6 h-6 text-[#C8962C] mb-2" />
           <div className="text-3xl font-black">{beacons.length}</div>
           <div className="text-xs text-white/60 uppercase">Beacons</div>
         </div>
@@ -142,7 +126,7 @@ export default function AdvancedAnalytics() {
               labelStyle={{ color: '#fff' }}
             />
             <Legend />
-            <Line type="monotone" dataKey="total" stroke="#FF1493" strokeWidth={3} name="Total Users" />
+            <Line type="monotone" dataKey="total" stroke="#C8962C" strokeWidth={3} name="Total Users" />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -173,24 +157,6 @@ export default function AdvancedAnalytics() {
         </ResponsiveContainer>
       </div>
 
-      {/* Revenue (XP) Over Time */}
-      {revenueData.length > 0 && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-black uppercase mb-4">XP Transaction Volume</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#fff2" />
-              <XAxis dataKey="date" stroke="#fff6" />
-              <YAxis stroke="#fff6" />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#000', border: '1px solid #fff3' }}
-              />
-              <Legend />
-              <Bar dataKey="xp" fill="#FFEB3B" name="XP Spent" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
 
       {/* Top Cities */}
       <div className="bg-white/5 border border-white/10 rounded-xl p-6">

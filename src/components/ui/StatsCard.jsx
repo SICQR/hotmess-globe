@@ -23,10 +23,10 @@ const variants = {
     valueColor: "text-white",
   },
   neon: {
-    border: "border-[#FF1493]/30",
-    iconBg: "bg-[#FF1493]/20",
-    iconColor: "text-[#FF1493]",
-    valueColor: "text-[#FF1493]",
+    border: "border-[#C8962C]/30",
+    iconBg: "bg-[#C8962C]/20",
+    iconColor: "text-[#C8962C]",
+    valueColor: "text-[#C8962C]",
   },
   cyan: {
     border: "border-[#00D9FF]/30",

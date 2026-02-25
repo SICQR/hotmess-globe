@@ -2,9 +2,20 @@
 
 > **"From Ear to Floor"** — A spatial OS for queer nightlife discovery, connection, and commerce.
 
-**Live:** https://hotmess.london  
-**Status:** Production (Phase 2 Complete)  
+**Live:** https://hotmess.london
+**Status:** Production (Phase 2 Complete)
 **Updated:** 2026-02-08
+
+## Quick Commands
+
+```bash
+npm run verify        # lint + typecheck + unit tests + build (CI-safe, no browser required)
+npm run test:e2e      # Playwright E2E (requires running dev server + installed browsers)
+```
+
+> Note: Playwright E2E tests are intentionally excluded from `npm run verify` because
+> they require browser binaries (`npx playwright install`) and a running dev server.
+> Run them separately with `npm run test:e2e`. See TESTING.md for the full guide.
 
 📋 **Agent execution plan:** [`docs/AGENT_TASK_HOTMESS_OS.md`](docs/AGENT_TASK_HOTMESS_OS.md)
 

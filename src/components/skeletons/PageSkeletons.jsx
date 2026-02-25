@@ -267,7 +267,7 @@ export function PageLoadingSkeleton({ type = 'default' }) {
 export function InlineLoader({ text = 'Loading...' }) {
   return (
     <div className="flex items-center justify-center gap-3 p-8">
-      <div className="w-5 h-5 border-2 border-white/20 border-t-[#FF1493] rounded-full animate-spin" />
+      <div className="w-5 h-5 border-2 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />
       <span className="text-white/60 text-sm">{text}</span>
     </div>
   );

@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
-import { MapPin, Zap, ArrowLeft, Users, Calendar } from 'lucide-react';
+import { MapPin, ArrowLeft, Users, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import CommentsSection from '../components/beacon/CommentsSection';
@@ -84,12 +84,12 @@ export default function BeaconDetail() {
   // Use shared beacon colors with legacy fallbacks
   const kindToColor = (kind) => ({
     ...BEACON_COLOR,
-    venue: '#FF1493',
+    venue: '#C8962C',
     hookup: '#FF073A',
     drop: '#FF6B35',
     popup: '#B026FF',
     private: BEACON_COLOR.event,
-  })[kind] || '#FF1493';
+  })[kind] || '#C8962C';
 
   const handleScan = async () => {
     try {
@@ -120,7 +120,7 @@ export default function BeaconDetail() {
         throw new Error(payload?.error || 'Scan failed');
       }
 
-      toast.success(`Scanned (+${payload?.earned_xp ?? 0} XP)`);
+      toast.success('Scanned successfully!');
       queryClient.invalidateQueries({ queryKey: ['user'] });
       queryClient.invalidateQueries({ queryKey: ['beacon_checkins'] });
     } catch (error) {
@@ -132,7 +132,7 @@ export default function BeaconDetail() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Hero */}
-      <div className="relative h-64 bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-b border-white/10">
+      <div className="relative h-64 bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border-b border-white/10">
         <div className="absolute inset-0 flex items-end">
           <div className="w-full p-6 md:p-8">
             <div className="flex items-center gap-2 mb-4">
@@ -183,7 +183,7 @@ export default function BeaconDetail() {
               <h2 className="text-sm uppercase tracking-wider text-white/40 mb-4">Details</h2>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-[#FF1493]" />
+                  <MapPin className="w-5 h-5 text-[#C8962C]" />
                   <div>
                     <div className="text-xs text-white/40">Location</div>
                     <div className="font-semibold">{beacon.city}</div>
@@ -191,7 +191,7 @@ export default function BeaconDetail() {
                 </div>
                 {beacon.created_date && (
                   <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-[#FF1493]" />
+                    <Calendar className="w-5 h-5 text-[#C8962C]" />
                     <div>
                       <div className="text-xs text-white/40">Created</div>
                       <div className="font-semibold">
@@ -202,7 +202,7 @@ export default function BeaconDetail() {
                 )}
                 {beacon.mode && (
                   <div className="flex items-center gap-3">
-                    <Users className="w-5 h-5 text-[#FF1493]" />
+                    <Users className="w-5 h-5 text-[#C8962C]" />
                     <div>
                       <div className="text-xs text-white/40">Mode</div>
                       <div className="font-semibold uppercase">{beacon.mode}</div>
@@ -274,18 +274,10 @@ export default function BeaconDetail() {
 
             {beacon.xp_scan && (
               <div className="bg-gradient-to-br from-[#FFEB3B]/20 to-[#FF6B35]/20 border border-[#FFEB3B]/40 rounded-xl p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Zap className="w-5 h-5 text-[#FFEB3B]" />
-                  <span className="text-sm uppercase tracking-wider text-white/60">XP Reward</span>
-                </div>
-                <div className="text-3xl font-black text-[#FFEB3B] mb-4">
-                  +{beacon.xp_scan} XP
-                </div>
                 <Button
                   onClick={handleScan}
-                  className="w-full bg-[#FFEB3B] hover:bg-[#FFEB3B]/90 text-black font-bold"
+                  className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold"
                 >
-                  <Zap className="w-4 h-4 mr-2" />
                   Scan Beacon
                 </Button>
               </div>
@@ -299,7 +291,7 @@ export default function BeaconDetail() {
                 </div>
                 <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#FF1493]"
+                    className="h-full bg-[#C8962C]"
                     style={{ width: `${beacon.intensity * 100}%` }}
                   />
                 </div>

@@ -26,6 +26,31 @@ const L2GhostedSheet = lazy(() => import('./L2GhostedSheet'));
 const L2SocialSheet = lazy(() => import('./L2SocialSheet'));
 const L2EventsSheet = lazy(() => import('./L2EventsSheet'));
 const L2MarketplaceSheet = lazy(() => import('./L2MarketplaceSheet'));
+const L2SellSheet = lazy(() => import('./L2SellSheet'));
+const L2PayoutsSheet = lazy(() => import('./L2PayoutsSheet'));
+const L2MyOrdersSheet = lazy(() => import('./L2MyOrdersSheet'));
+const L2EditProfileSheet = lazy(() => import('./L2EditProfileSheet'));
+const L2SearchSheet = lazy(() => import('./L2SearchSheet'));
+const L2DirectionsSheet = lazy(() => import('./L2DirectionsSheet'));
+const L2FiltersSheet = lazy(() => import('./L2FiltersSheet'));
+const L2CartSheet = lazy(() => import('./L2CartSheet'));
+const L2CheckoutSheet = lazy(() => import('./L2CheckoutSheet'));
+const L2SafetySheet = lazy(() => import('./L2SafetySheet'));
+const L2PrivacySheet = lazy(() => import('./L2PrivacySheet'));
+const L2BlockedSheet = lazy(() => import('./L2BlockedSheet'));
+const L2NotificationsSheet = lazy(() => import('./L2NotificationsSheet'));
+const L2SettingsSheet = lazy(() => import('./L2SettingsSheet'));
+const L2PhotosSheet = lazy(() => import('./L2PhotosSheet'));
+const L2LocationSheet = lazy(() => import('./L2LocationSheet'));
+const L2HelpSheet = lazy(() => import('./L2HelpSheet'));
+const L2MembershipSheet = lazy(() => import('./L2MembershipSheet'));
+const L2QRSheet = lazy(() => import('./L2QRSheet'));
+const L2CreateEventSheet = lazy(() => import('./L2CreateEventSheet'));
+const L2FavoritesSheet = lazy(() => import('./L2FavoritesSheet'));
+const L2BeaconSheet = lazy(() => import('./L2BeaconSheet'));
+const L2ScheduleSheet = lazy(() => import('./L2ScheduleSheet'));
+const L2OrderSheet = lazy(() => import('./L2OrderSheet'));
+const L2EmergencyContactSheet = lazy(() => import('./L2EmergencyContactSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -35,7 +60,7 @@ function PlaceholderSheet({ sheetType }) {
   const config = SHEET_REGISTRY[sheetType];
   return (
     <div className="flex flex-col items-center justify-center h-64 px-6 text-center">
-      <Construction className="w-12 h-12 text-[#FF1493] mb-4" />
+      <Construction className="w-12 h-12 text-[#C8962C] mb-4" />
       <h3 className="text-lg font-bold text-white mb-2">{config?.title || 'Coming Soon'}</h3>
       <p className="text-sm text-white/60 mb-4">This feature is under construction.</p>
       <code className="text-xs text-white/30 bg-white/5 px-2 py-1 rounded">sheet={sheetType}</code>
@@ -50,7 +75,7 @@ function PlaceholderSheet({ sheetType }) {
 function SheetLoading() {
   return (
     <div className="flex items-center justify-center h-64">
-      <Loader2 className="w-8 h-8 text-[#FF1493] animate-spin" />
+      <Loader2 className="w-8 h-8 text-[#C8962C] animate-spin" />
     </div>
   );
 }
@@ -72,6 +97,39 @@ const SHEET_COMPONENTS = {
   'events': L2EventsSheet,
   'marketplace': L2MarketplaceSheet,
   'product': L2ShopSheet, // Reuses shop sheet
+  // Seller flows
+  'sell': L2SellSheet,
+  'seller-onboarding': L2SellSheet,
+  'payouts': L2PayoutsSheet,
+  'my-orders': L2MyOrdersSheet,
+  'my-listings': L2MyOrdersSheet,
+  // Profile management
+  'edit-profile': L2EditProfileSheet,
+  'photos': L2PhotosSheet,
+  'location': L2LocationSheet,
+  'privacy': L2PrivacySheet,
+  'blocked': L2BlockedSheet,
+  'notifications': L2NotificationsSheet,
+  'settings': L2SettingsSheet,
+  'membership': L2MembershipSheet,
+  'help': L2HelpSheet,
+  'safety': L2SafetySheet,
+  // Search / discovery
+  'search': L2SearchSheet,
+  'directions': L2DirectionsSheet,
+  // Cart & checkout
+  'cart': L2CartSheet,
+  'checkout': L2CheckoutSheet,
+  'filters': L2FiltersSheet,
+  // QR & events
+  'qr': L2QRSheet,
+  'create-event': L2CreateEventSheet,
+  'favorites': L2FavoritesSheet,
+  'beacon': L2BeaconSheet,
+  'schedule': L2ScheduleSheet,
+  'show': L2ScheduleSheet,
+  'order': L2OrderSheet,
+  'emergency-contact': L2EmergencyContactSheet,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════

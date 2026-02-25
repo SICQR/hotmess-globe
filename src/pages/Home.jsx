@@ -314,12 +314,12 @@ export default function Home() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-2xl font-black uppercase">
-              RIGHT <span className="text-[#FF1493]">NOW</span>
+              RIGHT <span className="text-[#C8962C]">NOW</span>
             </h2>
             <p className="text-white/50 text-xs uppercase tracking-wider">People active near you</p>
           </div>
           <Link to={createPageUrl('Social')}>
-            <Button size="sm" className="bg-[#FF1493] text-white font-black uppercase text-xs px-4 py-2">
+            <Button size="sm" className="bg-[#C8962C] text-white font-black uppercase text-xs px-4 py-2">
               SEE ALL
             </Button>
           </Link>
@@ -333,7 +333,7 @@ export default function Home() {
       <section className="md:hidden py-4 px-4 bg-black border-t border-white/10">
         <div className="grid grid-cols-4 gap-2">
           {[
-            { to: '/social', icon: Users, label: 'Connect', color: 'text-pink-500' },
+            { to: '/social', icon: Users, label: 'Connect', color: 'text-[#C8962C]' },
             { to: '/events', icon: Zap, label: 'Events', color: 'text-yellow-500' },
             { to: '/music/live', icon: Radio, label: 'Radio', color: 'text-green-500' },
             { to: '/market', icon: ShoppingBag, label: 'Market', color: 'text-purple-500' },
@@ -433,7 +433,7 @@ export default function Home() {
             }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            HOT<span className="text-[#FF1493]">MESS</span>
+            HOT<span className="text-[#C8962C]">MESS</span>
           </motion.h1>
           
           <motion.div
@@ -457,13 +457,13 @@ export default function Home() {
             transition={{ delay: 1.2 }}
           >
             <Link to="/welcome">
-              <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg shadow-2xl group">
+              <Button className="bg-[#C8962C] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg shadow-2xl group">
                 <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
                 ENTER THE MESS
               </Button>
             </Link>
             <Link to="/music/live">
-              <Button variant="outline" className="border-2 border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-black font-black uppercase px-8 py-6 text-lg shadow-2xl backdrop-blur-sm">
+              <Button variant="outline" className="border-2 border-[#C8962C] text-[#C8962C] hover:bg-[#C8962C] hover:text-black font-black uppercase px-8 py-6 text-lg shadow-2xl backdrop-blur-sm">
                 <Radio className="w-5 h-5 mr-2" />
                 LIVE RADIO
               </Button>
@@ -479,7 +479,7 @@ export default function Home() {
         >
           <div className="w-6 h-10 border-2 border-white/30 rounded-full flex items-start justify-center p-2">
             <motion.div 
-              className="w-1.5 h-1.5 bg-pink-500 rounded-full"
+              className="w-1.5 h-1.5 bg-[#C8962C] rounded-full"
               animate={{ y: [0, 16, 0] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             />
@@ -500,14 +500,14 @@ export default function Home() {
           >
             <p className="text-xs uppercase tracking-[0.4em] text-white/40 mb-2">SOCIAL</p>
             <h2 className="text-3xl md:text-5xl font-black uppercase mb-2">
-              RIGHT <span className="text-[#FF1493]">NOW</span>
+              RIGHT <span className="text-[#C8962C]">NOW</span>
             </h2>
             <p className="text-white/50 text-sm">People active near you</p>
           </motion.div>
           <ProfilesGrid />
           <div className="mt-8 text-center">
             <Link to={createPageUrl('Social')}>
-              <Button className="bg-[#FF1493] hover:bg-white hover:text-black text-white font-black uppercase px-8 py-4 border-2 border-[#FF1493]">
+              <Button className="bg-[#C8962C] hover:bg-white hover:text-black text-white font-black uppercase px-8 py-4 border-2 border-[#C8962C]">
                 VIEW ALL
               </Button>
             </Link>
@@ -525,7 +525,7 @@ export default function Home() {
             className="text-center mb-12"
           >
             <h2 className="text-4xl md:text-6xl font-black italic mb-4">
-              WHAT'S <span className="text-pink-500">YOURS</span>
+              WHAT'S <span className="text-[#C8962C]">YOURS</span>
             </h2>
             <p className="text-white/50 uppercase tracking-widest">Choose your mode</p>
           </motion.div>
@@ -545,12 +545,12 @@ export default function Home() {
                 transition={{ delay: i * 0.1 }}
               >
                 <Link to={mode.to}>
-                  <div className="group relative overflow-hidden rounded-xl bg-white/5 border border-white/10 hover:border-pink-500/50 p-6 h-48 transition-all hover:scale-[1.02]">
+                  <div className="group relative overflow-hidden rounded-xl bg-white/5 border border-white/10 hover:border-[#C8962C]/50 p-6 h-48 transition-all hover:scale-[1.02]">
                     <div className={`absolute inset-0 bg-gradient-to-br ${mode.color} opacity-0 group-hover:opacity-20 transition-opacity`} />
                     <mode.icon className="w-10 h-10 text-white mb-4 group-hover:scale-110 transition-transform" />
                     <h3 className="text-2xl font-black uppercase mb-2">{mode.title}</h3>
                     <p className="text-sm text-white/50">{mode.desc}</p>
-                    <ArrowRight className="absolute bottom-6 right-6 w-5 h-5 text-white/30 group-hover:text-pink-500 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="absolute bottom-6 right-6 w-5 h-5 text-white/30 group-hover:text-[#C8962C] group-hover:translate-x-1 transition-all" />
                   </div>
                 </Link>
               </motion.div>
@@ -564,22 +564,22 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Link to="/creator" className="group">
-              <div className="bg-black/50 border border-white/10 hover:border-pink-500/50 rounded-xl p-8 transition-all">
+              <div className="bg-black/50 border border-white/10 hover:border-[#C8962C]/50 rounded-xl p-8 transition-all">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-pink-500/20 flex items-center justify-center">
-                    <Mic className="w-6 h-6 text-pink-500" />
+                  <div className="w-12 h-12 rounded-full bg-[#C8962C]/20 flex items-center justify-center">
+                    <Mic className="w-6 h-6 text-[#C8962C]" />
                   </div>
                   <div>
-                    <p className="text-xs text-pink-500 uppercase tracking-widest">For Creators</p>
+                    <p className="text-xs text-[#C8962C] uppercase tracking-widest">For Creators</p>
                     <h3 className="text-xl font-black">Monetize Your Art</h3>
                   </div>
                 </div>
                 <p className="text-white/50 text-sm mb-4">Radio shows, drops, tickets — earn from what you create.</p>
-                <span className="text-pink-500 text-sm group-hover:underline">Start creating →</span>
+                <span className="text-[#C8962C] text-sm group-hover:underline">Start creating →</span>
               </div>
             </Link>
             <Link to="/business/globe" className="group">
-              <div className="bg-black/50 border border-white/10 hover:border-pink-500/50 rounded-xl p-8 transition-all">
+              <div className="bg-black/50 border border-white/10 hover:border-[#C8962C]/50 rounded-xl p-8 transition-all">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
                     <Globe className="w-6 h-6 text-purple-500" />
@@ -1008,7 +1008,7 @@ export default function Home() {
           className="max-w-4xl mx-auto"
         >
           <h2 className="text-6xl md:text-9xl font-black italic mb-8">
-            JOIN<span className="text-[#FF1493]">.</span>
+            JOIN<span className="text-[#C8962C]">.</span>
           </h2>
           <p className="text-2xl uppercase tracking-wider text-white/60 mb-12">
             London OS. No ghost status. Right now ends automatically.
@@ -1018,7 +1018,7 @@ export default function Home() {
               <p className="text-xl text-[#39FF14]">Welcome back, {currentUser.full_name}</p>
               <div className="flex flex-wrap gap-4 justify-center">
                 <Link to="/social">
-                  <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg">
+                  <Button className="bg-[#C8962C] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg">
                     GO RIGHT NOW
                   </Button>
                 </Link>
@@ -1038,7 +1038,7 @@ export default function Home() {
             </div>
           ) : (
             <Link to="/auth">
-              <Button className="bg-[#FF1493] hover:bg-white text-black font-black uppercase px-12 py-8 text-2xl">
+              <Button className="bg-[#C8962C] hover:bg-white text-black font-black uppercase px-12 py-8 text-2xl">
                 GET STARTED
               </Button>
             </Link>

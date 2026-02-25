@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 
 const OPENER_TYPES = {
-  personal: { label: 'Personal', icon: Heart, color: '#FF1493' },
+  personal: { label: 'Personal', icon: Heart, color: '#C8962C' },
   flirty: { label: 'Flirty', icon: Sparkles, color: '#B026FF' },
   question: { label: 'Question', icon: MessageSquare, color: '#00D9FF' }
 };
@@ -130,7 +130,7 @@ export default function WingmanPanel({
           <p className="text-[10px] uppercase tracking-wider text-white/40 mb-2">Common Ground</p>
           <div className="flex flex-wrap gap-1">
             {commonGround.interests?.map((interest, i) => (
-              <span key={`int-${i}`} className="px-2 py-0.5 bg-[#FF1493]/20 text-[#FF1493] text-[10px] rounded-full">
+              <span key={`int-${i}`} className="px-2 py-0.5 bg-[#C8962C]/20 text-[#C8962C] text-[10px] rounded-full">
                 {interest}
               </span>
             ))}
@@ -217,7 +217,7 @@ export default function WingmanPanel({
                       <Button
                         size="sm"
                         onClick={() => handleUse(opener.text)}
-                        className="flex-1 h-7 text-xs bg-[#FF1493] hover:bg-[#FF1493]/80"
+                        className="flex-1 h-7 text-xs bg-[#C8962C] hover:bg-[#C8962C]/80"
                       >
                         Use this
                       </Button>

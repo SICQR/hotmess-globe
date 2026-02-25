@@ -1,14 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { 
-  Zap, 
-  MapPin, 
-  Clock, 
-  Star, 
-  Crown, 
-  ShoppingBag, 
-  Music, 
+import {
+  MapPin,
+  Clock,
+  Star,
+  Crown,
+  ShoppingBag,
+  Music,
   Calendar,
   Verified,
   Flame,
@@ -45,10 +44,10 @@ const PERSONA_CONFIGS = {
   },
   creator: {
     label: 'Creator',
-    color: '#FF1493',
-    gradient: 'from-[#FF1493]/30 to-[#FF1493]/5',
+    color: '#C8962C',
+    gradient: 'from-[#C8962C]/30 to-[#C8962C]/5',
     icon: Star,
-    borderColor: 'border-[#FF1493]/50',
+    borderColor: 'border-[#C8962C]/50',
   },
   organizer: {
     label: 'Organizer',
@@ -100,9 +99,6 @@ export default function PersonaCard({
   const statusConfig = STATUS_BADGES[status] || STATUS_BADGES.offline;
   
   const isRightNow = user?.right_now_active || status === 'rightnow';
-  
-  const level = Math.floor((user?.xp || 0) / 1000) + 1;
-  const xpProgress = ((user?.xp || 0) % 1000) / 10; // percentage to next level
   
   const profileUrl = getProfileUrl(user);
 
@@ -168,8 +164,8 @@ export default function PersonaCard({
             <div 
               className="px-2 py-1 text-xs font-black"
               style={{ 
-                backgroundColor: matchScore >= 80 ? '#FF149320' : '#ffffff10',
-                color: matchScore >= 80 ? '#FF1493' : '#ffffff60'
+                backgroundColor: matchScore >= 80 ? '#C8962C20' : '#ffffff10',
+                color: matchScore >= 80 ? '#C8962C' : '#ffffff60'
               }}
             >
               {matchScore}%
@@ -232,7 +228,7 @@ export default function PersonaCard({
 
           {/* Match score - if high */}
           {matchScore && matchScore >= 70 && (
-            <div className="absolute top-14 right-3 px-2 py-1 bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white text-xs font-black">
+            <div className="absolute top-14 right-3 px-2 py-1 bg-gradient-to-r from-[#C8962C] to-[#B026FF] text-white text-xs font-black">
               {matchScore}% MATCH
             </div>
           )}
@@ -256,17 +252,6 @@ export default function PersonaCard({
                   </p>
                 )}
 
-                {/* Level indicator */}
-                <div className="flex items-center gap-2 mt-2">
-                  <Zap className="w-4 h-4 text-[#FFEB3B]" />
-                  <span className="text-sm font-bold text-white">LVL {level}</span>
-                  <div className="w-16 h-1 bg-white/20 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-[#FFEB3B]"
-                      style={{ width: `${xpProgress}%` }}
-                    />
-                  </div>
-                </div>
 
                 {/* Vibes/tags */}
                 {user?.preferred_vibes?.length > 0 && (
@@ -304,7 +289,7 @@ export default function PersonaCard({
             {onMessage && (
               <button 
                 onClick={onMessage}
-                className="flex-1 py-2 bg-[#FF1493] text-black text-sm font-bold uppercase hover:bg-white transition-colors"
+                className="flex-1 py-2 bg-[#C8962C] text-black text-sm font-bold uppercase hover:bg-white transition-colors"
               >
                 Message
               </button>
@@ -382,7 +367,7 @@ export default function PersonaCard({
               <div 
                 className="text-xs font-black px-1.5 py-0.5"
                 style={{ 
-                  backgroundColor: matchScore >= 80 ? '#FF1493' : matchScore >= 60 ? '#00D9FF20' : '#ffffff10',
+                  backgroundColor: matchScore >= 80 ? '#C8962C' : matchScore >= 60 ? '#00D9FF20' : '#ffffff10',
                   color: matchScore >= 80 ? '#000' : matchScore >= 60 ? '#00D9FF' : '#ffffff60'
                 }}
               >

@@ -101,7 +101,7 @@ export default function ReferralProgram() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="w-8 h-8 border-4 border-white/20 border-t-[#FF1493] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />
       </div>
     );
   }
@@ -112,10 +112,10 @@ export default function ReferralProgram() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-2 border-[#FF1493] rounded-xl p-6"
+        className="bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border-2 border-[#C8962C] rounded-xl p-6"
       >
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 bg-[#FF1493] rounded-xl flex items-center justify-center flex-shrink-0">
+          <div className="w-14 h-14 bg-[#C8962C] rounded-xl flex items-center justify-center flex-shrink-0">
             <Gift className="w-8 h-8 text-black" />
           </div>
           <div>
@@ -124,17 +124,6 @@ export default function ReferralProgram() {
               Earn rewards when your friends join HOTMESS. Get exclusive perks for each successful referral!
             </p>
             
-            {/* Rewards Info */}
-            <div className="flex flex-wrap gap-4">
-              <div className="bg-black/30 px-4 py-2 rounded-lg">
-                <div className="text-xs text-white/60">You get</div>
-                <div className="font-bold text-[#39FF14]">500 XP</div>
-              </div>
-              <div className="bg-black/30 px-4 py-2 rounded-lg">
-                <div className="text-xs text-white/60">They get</div>
-                <div className="font-bold text-[#00D9FF]">250 XP</div>
-              </div>
-            </div>
           </div>
         </div>
       </motion.div>
@@ -166,7 +155,7 @@ export default function ReferralProgram() {
         <div className="flex gap-3">
           <Button
             onClick={shareReferral}
-            className="flex-1 bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+            className="flex-1 bg-[#C8962C] hover:bg-[#C8962C]/90 text-black"
           >
             <Share2 className="w-4 h-4 mr-2" />
             Share Link
@@ -197,9 +186,9 @@ export default function ReferralProgram() {
           <div className="text-xs text-white/60">Joined</div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-          <Trophy className="w-6 h-6 mx-auto mb-2 text-[#FF1493]" />
-          <div className="text-2xl font-black">{stats.successful * 500}</div>
-          <div className="text-xs text-white/60">XP Earned</div>
+          <Trophy className="w-6 h-6 mx-auto mb-2 text-[#C8962C]" />
+          <div className="text-2xl font-black">{stats.pending}</div>
+          <div className="text-xs text-white/60">Pending</div>
         </div>
       </motion.div>
 
@@ -220,7 +209,7 @@ export default function ReferralProgram() {
                 className="flex items-center justify-between p-3 bg-black/30 rounded-lg"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center text-sm font-bold">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center text-sm font-bold">
                     {referral.referred_email?.[0]?.toUpperCase() || '?'}
                   </div>
                   <div>
@@ -254,16 +243,16 @@ export default function ReferralProgram() {
         
         <div className="space-y-3">
           {[
-            { count: 5, reward: 'Bronze Badge', xp: 1000 },
-            { count: 10, reward: 'Silver Badge', xp: 2500 },
-            { count: 25, reward: 'Gold Badge', xp: 5000 },
-            { count: 50, reward: 'Platinum Badge', xp: 10000 },
+            { count: 5, reward: 'Bronze Badge' },
+            { count: 10, reward: 'Silver Badge' },
+            { count: 25, reward: 'Gold Badge' },
+            { count: 50, reward: 'Platinum Badge' },
           ].map((milestone, idx) => (
-            <div 
+            <div
               key={idx}
               className={`flex items-center justify-between p-3 rounded-lg ${
-                stats.successful >= milestone.count 
-                  ? 'bg-[#39FF14]/10 border border-[#39FF14]/40' 
+                stats.successful >= milestone.count
+                  ? 'bg-[#39FF14]/10 border border-[#39FF14]/40'
                   : 'bg-black/30'
               }`}
             >
@@ -281,9 +270,6 @@ export default function ReferralProgram() {
                   <div className="font-semibold">{milestone.count} Referrals</div>
                   <div className="text-xs text-white/60">{milestone.reward}</div>
                 </div>
-              </div>
-              <div className="text-right">
-                <div className="font-bold text-[#FF1493]">+{milestone.xp} XP</div>
               </div>
             </div>
           ))}

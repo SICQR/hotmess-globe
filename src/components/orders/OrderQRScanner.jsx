@@ -63,7 +63,7 @@ export default function OrderQRScanner({ order, currentUser }) {
           Scan Item QR Code
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-black text-white border-2 border-[#FF1493]">
+      <DialogContent className="bg-black text-white border-2 border-[#C8962C]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black uppercase">Confirm Receipt</DialogTitle>
         </DialogHeader>

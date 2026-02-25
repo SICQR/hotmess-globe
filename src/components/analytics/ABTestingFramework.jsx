@@ -191,7 +191,7 @@ export function ABTestResults() {
                     </div>
                     <div>
                       <span className="text-xs text-white/40">Rate:</span>
-                      <span className="ml-2 font-bold text-[#FF1493]">{conversionRate}%</span>
+                      <span className="ml-2 font-bold text-[#C8962C]">{conversionRate}%</span>
                     </div>
                   </div>
                 </div>

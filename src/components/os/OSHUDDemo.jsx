@@ -52,13 +52,6 @@ export function OSHUDDemo() {
         >
           {MICROCOPY.hudLabels.market}
         </button>
-        <button
-          onClick={() => openSheet('chat')}
-          className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-xs transition-colors"
-        >
-          {MICROCOPY.hudLabels.chat}
-        </button>
-
         {/* SOS Interrupt */}
         <button
           onClick={() => openInterrupt('sos')}

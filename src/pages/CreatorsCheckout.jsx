@@ -172,7 +172,7 @@ export default function CreatorsCheckout() {
             <div className="border border-white/10 bg-white/5 p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-white/60 uppercase">Subtotal</span>
-                <span className="text-xl font-black text-[#FFEB3B]">{totalXP} XP</span>
+                <span className="text-xl font-black text-[#C8962C]">£{totalXP}</span>
               </div>
               <p className="text-[11px] text-white/50 mt-2">
                 This is a local-only checkout flow right now. No payment is processed.

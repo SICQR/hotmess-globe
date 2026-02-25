@@ -22,7 +22,7 @@ const WorldPulse = () => {
         <div className="space-y-2">
           {recentPulses.map(p => (
             <div key={p.id} className="flex items-center gap-2 text-sm animate-fade-in">
-              <span className="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-[#C8962C] animate-pulse"></span>
               <span className="text-white">{p.city || 'World'}</span>
               <span className="text-gray-400">{PULSE_DESCRIPTIONS[p.type] || p.type}</span>
             </div>

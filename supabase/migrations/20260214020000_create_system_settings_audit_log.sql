@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS system_settings (
 
 ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Anyone can read settings" ON system_settings FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Service role can manage" ON system_settings FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Anyone can read settings" ON system_settings FOR SELECT USING (true);
+CREATE POLICY "Service role can manage" ON system_settings FOR ALL USING (auth.role() = 'service_role');
 
 GRANT SELECT ON system_settings TO authenticated;
 GRANT ALL ON system_settings TO service_role;
@@ -33,9 +33,9 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log(timestamp);
 
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Admins can read audit log" ON audit_log FOR SELECT 
-  USING (EXISTS (SELECT 1 FROM "User" WHERE auth_user_id = auth.uid() AND is_admin = true));
-CREATE POLICY IF NOT EXISTS "Service role can manage audit log" ON audit_log FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Admins can read audit log" ON audit_log FOR SELECT 
+  USING (auth.jwt() ->> 'role' = 'service_role');
+CREATE POLICY "Service role can manage audit log" ON audit_log FOR ALL USING (auth.role() = 'service_role');
 
 GRANT SELECT ON audit_log TO authenticated;
 GRANT ALL ON audit_log TO service_role;

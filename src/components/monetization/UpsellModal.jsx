@@ -82,7 +82,7 @@ const TIERS = [
     name: 'Premium',
     price: '£9.99',
     period: '/month',
-    color: '#FF1493',
+    color: '#C8962C',
     features: [
       'Unlimited messages',
       'See who viewed you',
@@ -140,7 +140,7 @@ export default function UpsellModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-black border-2 border-white/20 text-white max-w-lg p-0 overflow-hidden">
         {/* Header with gradient */}
-        <div className="relative p-6 bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20">
+        <div className="relative p-6 bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-1 hover:bg-white/10 transition-colors"
@@ -149,8 +149,8 @@ export default function UpsellModal({
           </button>
 
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-[#FF1493]/30 flex items-center justify-center border border-[#FF1493]">
-              <TriggerIcon className="w-7 h-7 text-[#FF1493]" />
+            <div className="w-14 h-14 bg-[#C8962C]/30 flex items-center justify-center border border-[#C8962C]">
+              <TriggerIcon className="w-7 h-7 text-[#C8962C]" />
             </div>
             <div>
               <h2 className="text-xl font-black uppercase">{triggerData.headline}</h2>
@@ -229,7 +229,7 @@ export default function UpsellModal({
           {/* CTA */}
           <Button
             onClick={handleUpgrade}
-            className="w-full mt-6 h-14 bg-gradient-to-r from-[#FF1493] to-[#B026FF] hover:opacity-90 text-lg font-black"
+            className="w-full mt-6 h-14 bg-gradient-to-r from-[#C8962C] to-[#B026FF] hover:opacity-90 text-lg font-black"
           >
             {triggerData.cta}
             <ArrowRight className="w-5 h-5 ml-2" />

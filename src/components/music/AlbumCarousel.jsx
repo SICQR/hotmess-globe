@@ -14,7 +14,7 @@ const RELEASES = [
   {
     id: 'hotmess-pink',
     src: '/images/Hotmess Pink.JPEG',
-    color: '#FF1493',
+    color: '#C8962C',
     title: 'HOTMESS',
     artist: 'Paul King ft Stewart Who',
     label: 'PINK EDITION',

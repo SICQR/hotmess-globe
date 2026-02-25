@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Zap, Clock, MapPin } from 'lucide-react';
+import { Clock, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
@@ -80,8 +80,8 @@ export default function DropBeacons() {
             whileHover={{ scale: 1.1 }}
             className="relative"
           >
-            <div className="w-16 h-16 bg-[#FFEB3B] rounded-full flex items-center justify-center shadow-2xl">
-              <Zap className="w-8 h-8 text-black" />
+            <div className="w-16 h-16 bg-[#C8962C] rounded-full flex items-center justify-center shadow-2xl">
+              <Clock className="w-8 h-8 text-black" />
             </div>
             <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center">
               <span className="text-xs font-bold text-white">{drop.products.length}</span>
@@ -105,12 +105,12 @@ export default function DropBeacons() {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-black border-2 border-[#FFEB3B] rounded-2xl max-w-2xl w-full overflow-hidden"
+              className="bg-black border-2 border-[#C8962C] rounded-2xl max-w-2xl w-full overflow-hidden"
             >
               {/* Header */}
-              <div className="bg-gradient-to-r from-[#FFEB3B] to-[#FF1493] p-6">
+              <div className="bg-gradient-to-r from-[#C8962C] to-[#B026FF] p-6">
                 <div className="flex items-center gap-3 mb-2">
-                  <Zap className="w-8 h-8 text-black" />
+                  <Clock className="w-8 h-8 text-black" />
                   <h2 className="text-3xl font-black italic text-black uppercase">LIVE DROP</h2>
                 </div>
                 <p className="text-black/80 font-bold uppercase tracking-wider">{selectedDrop.title}</p>
@@ -133,14 +133,14 @@ export default function DropBeacons() {
                       to={createPageUrl(`ProductDetail?id=${product.id}`)}
                       onClick={() => setSelectedDrop(null)}
                     >
-                      <div className="bg-white/5 border-2 border-white/10 rounded-xl overflow-hidden hover:border-[#FFEB3B] transition-all">
+                      <div className="bg-white/5 border-2 border-white/10 rounded-xl overflow-hidden hover:border-[#C8962C] transition-all">
                         {product.image_urls?.[0] && (
                           <img src={product.image_urls[0]} alt={product.name} className="w-full h-32 object-cover" />
                         )}
                         <div className="p-4">
                           <h3 className="font-black text-lg mb-2 text-white">{product.name}</h3>
                           <div className="flex items-center justify-between">
-                            <span className="text-[#FFEB3B] font-bold">{product.price_xp} XP</span>
+                            <span className="text-[#C8962C] font-bold">£{product.price_gbp || 0}</span>
                             <span className="text-xs text-white/60">{product.inventory_count} left</span>
                           </div>
                         </div>

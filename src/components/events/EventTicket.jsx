@@ -59,7 +59,7 @@ export default function EventTicket({ rsvp, event }) {
     ctx.fillRect(0, 0, 800, 1200);
 
     // Title
-    ctx.fillStyle = '#FF1493';
+    ctx.fillStyle = '#C8962C';
     ctx.font = 'bold 48px Arial';
     ctx.fillText('HOTMESS', 50, 100);
 
@@ -148,10 +148,10 @@ export default function EventTicket({ rsvp, event }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-[#FF1493]/10 to-[#00D9FF]/10 border-2 border-[#FF1493] p-6 space-y-4"
+      className="bg-gradient-to-br from-[#C8962C]/10 to-[#00D9FF]/10 border-2 border-[#C8962C] p-6 space-y-4"
     >
       <div className="flex items-center gap-2 mb-4">
-        <Ticket className="w-6 h-6 text-[#FF1493]" />
+        <Ticket className="w-6 h-6 text-[#C8962C]" />
         <h3 className="text-xl font-black uppercase">Your Ticket</h3>
       </div>
 
@@ -179,7 +179,7 @@ export default function EventTicket({ rsvp, event }) {
             setShowQR(next);
             if (next) await fetchSignedTicket();
           }}
-          className="w-full bg-[#FF1493] hover:bg-white text-black font-black mb-2"
+          className="w-full bg-[#C8962C] hover:bg-white text-black font-black mb-2"
         >
           {showQR ? 'HIDE QR CODE' : 'SHOW QR CODE'}
         </Button>

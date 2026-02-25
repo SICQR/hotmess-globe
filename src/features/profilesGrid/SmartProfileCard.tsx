@@ -32,7 +32,6 @@ export interface Profile {
   is_online?: boolean;
   is_right_now?: boolean;
   tags?: string[];
-  xp?: number;
   last_seen?: string;
   created_date?: string;
 }
@@ -112,6 +111,10 @@ function getCardSize(relevance: number, forceSize?: CardSize): CardSize {
 
 /**
  * SmartProfileCard - Context-aware profile card with dynamic styling
+ *
+ * CANONICAL PROFILE CARD — Ring 4 OS Remap.
+ * All new profile card usage should reference this component.
+ * SimpleProfileCard and TacticalProfileCard are legacy; migrate to this.
  */
 export function SmartProfileCard({
   profile,
@@ -195,7 +198,7 @@ export function SmartProfileCard({
         sizeClasses[cardSize],
         // Border styling based on context
         'border-2',
-        isHighMatch && 'border-[#FF1493] shadow-glow-hot',
+        isHighMatch && 'border-[#C8962C] shadow-glow-hot',
         isNearby && !isHighMatch && 'border-[#00D9FF] shadow-glow-cyan',
         isLive && !isHighMatch && !isNearby && 'border-[#39FF14] shadow-glow-green animate-glow-pulse',
         isPremium && !isHighMatch && !isNearby && !isLive && 'border-[#FFD700] shadow-glow-gold',
@@ -219,7 +222,7 @@ export function SmartProfileCard({
         {/* High Match Animated Gradient Border */}
         {isHighMatch && (
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#FF1493]/20 via-transparent to-[#B026FF]/20 animate-gradient-shift" 
+            <div className="absolute inset-0 bg-gradient-to-r from-[#C8962C]/20 via-transparent to-[#B026FF]/20 animate-gradient-shift" 
                  style={{ backgroundSize: '200% 100%' }} />
           </div>
         )}
@@ -295,7 +298,7 @@ export function SmartProfileCard({
               e.stopPropagation();
               onMessage(profile);
             }}
-            className="absolute bottom-4 right-4 z-20 w-12 h-12 bg-[#FF1493] flex items-center justify-center rounded-full shadow-lg hover:bg-white hover:text-black transition-colors"
+            className="absolute bottom-4 right-4 z-20 w-12 h-12 bg-[#C8962C] flex items-center justify-center rounded-full shadow-lg hover:bg-white hover:text-black transition-colors"
             aria-label="Message"
           >
             <MessageCircle className="w-6 h-6" />
@@ -314,7 +317,7 @@ export function SmartProfileCard({
           
           <Link
             to={`/profile?email=${encodeURIComponent(profile.email || '')}`}
-            className="inline-flex items-center gap-1 text-[#FF1493] text-sm font-bold hover:text-white transition-colors"
+            className="inline-flex items-center gap-1 text-[#C8962C] text-sm font-bold hover:text-white transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             View Profile
@@ -391,7 +394,7 @@ export function SmartProfileCardCompact({
 
       {/* Match Score */}
       {matchScore && matchScore >= 70 && (
-        <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white text-xs font-bold rounded">
+        <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-[#C8962C] to-[#B026FF] text-white text-xs font-bold rounded">
           <Heart className="w-3 h-3" />
           {matchScore}%
         </div>

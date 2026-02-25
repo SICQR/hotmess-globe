@@ -50,13 +50,13 @@ export default function RightNowHistory({ userEmail }) {
             transition={{ delay: idx * 0.05 }}
             className={`border-2 p-4 ${
               !isExpired && status.active
-                ? 'bg-[#FF1493]/10 border-[#FF1493]'
+                ? 'bg-[#C8962C]/10 border-[#C8962C]'
                 : 'bg-white/5 border-white/10'
             }`}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Zap className={`w-4 h-4 ${!isExpired && status.active ? 'text-[#FF1493]' : 'text-white/40'}`} />
+                <Zap className={`w-4 h-4 ${!isExpired && status.active ? 'text-[#C8962C]' : 'text-white/40'}`} />
                 <span className="text-xs font-black uppercase">
                   {status.duration_minutes === 480 ? 'TONIGHT' : `${status.duration_minutes} MIN`}
                 </span>

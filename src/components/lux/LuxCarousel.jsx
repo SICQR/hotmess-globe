@@ -221,12 +221,12 @@ export function LuxCarousel({
                 className={cn(
                   'lux-led-dot w-3 h-3 rounded-full transition-all duration-300',
                   index === currentIndex
-                    ? 'bg-[#FF1493] shadow-[0_0_10px_#FF1493,0_0_20px_#FF1493] scale-125'
+                    ? 'bg-[#C8962C] shadow-[0_0_10px_#C8962C,0_0_20px_#C8962C] scale-125'
                     : 'bg-white/40 hover:bg-white/60 group-hover:scale-110'
                 )}
               >
                 {index === currentIndex && (
-                  <div className="absolute inset-0 rounded-full bg-[#FF1493] animate-ping opacity-75" />
+                  <div className="absolute inset-0 rounded-full bg-[#C8962C] animate-ping opacity-75" />
                 )}
               </div>
             </button>
@@ -386,7 +386,7 @@ function LuxCarouselCTA({ label, href, variant = 'primary', onClick }) {
   const baseClasses = 'inline-flex items-center gap-2 px-8 py-4 font-black uppercase tracking-wider text-lg transition-all duration-300 shadow-2xl';
   
   const variants = {
-    primary: 'bg-[#FF1493] text-white hover:bg-white hover:text-black border-2 border-[#FF1493] hover:border-white',
+    primary: 'bg-[#C8962C] text-white hover:bg-white hover:text-black border-2 border-[#C8962C] hover:border-white',
     secondary: 'bg-transparent text-white border-2 border-white hover:bg-white hover:text-black',
     outline: 'bg-black/30 backdrop-blur-sm text-white border-2 border-white/50 hover:border-white hover:bg-white/10',
     ghost: 'bg-transparent text-white hover:bg-white/10 border-2 border-transparent hover:border-white/30',
@@ -470,7 +470,7 @@ export function LuxProfileCarousel({
               onClick={() => onProfileClick?.(profile)}
               className="flex-shrink-0 w-[280px] snap-start cursor-pointer group/card"
             >
-              <div className="relative aspect-[4/5] overflow-hidden bg-white/5 border-2 border-white/10 hover:border-[#FF1493] transition-all duration-300">
+              <div className="relative aspect-[4/5] overflow-hidden bg-white/5 border-2 border-white/10 hover:border-[#C8962C] transition-all duration-300">
                 {profile.image && (
                   <img
                     src={profile.image}
@@ -489,7 +489,7 @@ export function LuxProfileCarousel({
                     <p className="text-sm text-white/70 uppercase tracking-wider">{profile.subtitle}</p>
                   )}
                   {profile.badge && (
-                    <div className="mt-2 inline-block px-2 py-1 bg-[#FF1493]/20 border border-[#FF1493]/50 text-[#FF1493] text-xs font-bold uppercase">
+                    <div className="mt-2 inline-block px-2 py-1 bg-[#C8962C]/20 border border-[#C8962C]/50 text-[#C8962C] text-xs font-bold uppercase">
                       {profile.badge}
                     </div>
                   )}
@@ -598,7 +598,7 @@ export function LuxEventCarousel({
 
                 {/* Live Badge */}
                 {event.isLive && (
-                  <div className="absolute top-3 left-3 px-2 py-1 bg-[#FF1493] text-white text-xs font-black uppercase flex items-center gap-1">
+                  <div className="absolute top-3 left-3 px-2 py-1 bg-[#C8962C] text-white text-xs font-black uppercase flex items-center gap-1">
                     <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                     LIVE
                   </div>
@@ -699,7 +699,7 @@ export function LuxProductCarousel({
 
                 {/* Sale Badge */}
                 {product.onSale && (
-                  <div className="absolute top-2 left-2 px-2 py-1 bg-[#FF1493] text-white text-xs font-black uppercase">
+                  <div className="absolute top-2 left-2 px-2 py-1 bg-[#C8962C] text-white text-xs font-black uppercase">
                     SALE
                   </div>
                 )}

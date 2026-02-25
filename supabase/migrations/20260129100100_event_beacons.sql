@@ -82,14 +82,18 @@ CREATE INDEX IF NOT EXISTS idx_beacon_tier ON "Beacon"(tier_id);
 CREATE INDEX IF NOT EXISTS idx_beacon_expires ON "Beacon"(beacon_expires_at);
 CREATE INDEX IF NOT EXISTS idx_beacon_featured ON "Beacon"(is_featured) WHERE is_featured = true;
 CREATE INDEX IF NOT EXISTS idx_beacon_purchases_user ON beacon_purchases(user_id);
-CREATE INDEX IF NOT EXISTS idx_event_rsvps_beacon ON event_rsvps(beacon_id);
-CREATE INDEX IF NOT EXISTS idx_event_rsvps_user ON event_rsvps(user_id);
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema = 'public' AND table_name = 'event_rsvps') THEN CREATE INDEX IF NOT EXISTS idx_event_rsvps_beacon ON event_rsvps(beacon_id); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema = 'public' AND table_name = 'event_rsvps') THEN CREATE INDEX IF NOT EXISTS idx_event_rsvps_user ON event_rsvps(user_id); END IF; END $$;
 CREATE INDEX IF NOT EXISTS idx_promoter_analytics_beacon ON promoter_analytics(beacon_id);
 
 -- RLS
 ALTER TABLE beacon_tiers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE beacon_purchases ENABLE ROW LEVEL SECURITY;
-ALTER TABLE event_rsvps ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema = 'public' AND table_name = 'event_rsvps') THEN
+    ALTER TABLE event_rsvps ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 ALTER TABLE promoter_analytics ENABLE ROW LEVEL SECURITY;
 
 -- Everyone can see tiers
@@ -102,10 +106,14 @@ CREATE POLICY "Users view own purchases"
   ON beacon_purchases FOR SELECT
   USING (auth.uid() = user_id);
 
--- Users can RSVP
-CREATE POLICY "Users manage RSVPs"
-  ON event_rsvps FOR ALL
-  USING (auth.uid() = user_id);
+-- Users can RSVP (skip if event_rsvps is a view)
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.views WHERE table_schema = 'public' AND table_name = 'event_rsvps') THEN
+    CREATE POLICY "Users manage RSVPs"
+      ON event_rsvps FOR ALL
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
 -- Promoters see own analytics
 CREATE POLICY "Promoters view own analytics"

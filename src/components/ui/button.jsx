@@ -35,7 +35,7 @@ const buttonVariants = cva(
           "bg-primary text-primary-foreground shadow hover:bg-primary/90",
         // Solid brand colors
         hot:
-          "bg-[#FF1493] text-black shadow hover:bg-white hover:shadow-lg",
+          "bg-[#C8962C] text-black shadow hover:bg-white hover:shadow-lg",
         cyan:
           "bg-[#00D9FF] text-black shadow hover:bg-white hover:shadow-lg",
         purple:
@@ -46,20 +46,20 @@ const buttonVariants = cva(
           "bg-[#39FF14] text-black shadow hover:bg-white hover:shadow-lg",
         // Gradient variants
         hotGradient:
-          "bg-gradient-to-r from-[#FF1493] via-[#FF69B4] to-[#FF1493] text-white shadow-lg hover:brightness-110 hover:shadow-glow-hot border-0",
+          "bg-gradient-to-r from-[#C8962C] via-[#FF69B4] to-[#C8962C] text-white shadow-lg hover:brightness-110 hover:shadow-glow-hot border-0",
         cyanGradient:
           "bg-gradient-to-r from-[#00D9FF] to-[#0891B2] text-white shadow-lg hover:brightness-110 hover:shadow-glow-cyan border-0",
         purpleGradient:
-          "bg-gradient-to-r from-[#B026FF] to-[#FF1493] text-white shadow-lg hover:brightness-110 hover:shadow-glow-purple border-0",
+          "bg-gradient-to-r from-[#B026FF] to-[#C8962C] text-white shadow-lg hover:brightness-110 hover:shadow-glow-purple border-0",
         goldGradient:
           "bg-gradient-to-r from-[#FFD700] to-[#FF6B35] text-black shadow-lg hover:brightness-110 hover:shadow-glow-gold border-0",
         premium:
           "bg-gradient-to-r from-[#FFD700] via-[#FF6B35] to-[#FFD700] text-black shadow-lg hover:brightness-110 hover:shadow-glow-gold border-0 font-black",
         fire:
-          "bg-gradient-to-r from-[#FF1493] via-[#FF6B35] to-[#FFD700] text-white shadow-lg hover:brightness-110 border-0",
+          "bg-gradient-to-r from-[#C8962C] via-[#FF6B35] to-[#FFD700] text-white shadow-lg hover:brightness-110 border-0",
         // Glow variants
         hotGlow:
-          "bg-[#FF1493] text-white shadow-glow-hot hover:shadow-glow-hot-lg hover:brightness-110",
+          "bg-[#C8962C] text-white shadow-glow-hot hover:shadow-glow-hot-lg hover:brightness-110",
         cyanGlow:
           "bg-[#00D9FF] text-black shadow-glow-cyan hover:shadow-glow-cyan-lg hover:brightness-110",
         purpleGlow:
@@ -68,7 +68,7 @@ const buttonVariants = cva(
         glass:
           "bg-white/5 backdrop-blur-sm text-white border border-white/10 hover:bg-white/10 hover:border-white/20",
         glassHot:
-          "bg-[#FF1493]/10 backdrop-blur-sm text-[#FF1493] border border-[#FF1493]/30 hover:bg-[#FF1493]/20 hover:border-[#FF1493]/50",
+          "bg-[#C8962C]/10 backdrop-blur-sm text-[#C8962C] border border-[#C8962C]/30 hover:bg-[#C8962C]/20 hover:border-[#C8962C]/50",
         glassCyan:
           "bg-[#00D9FF]/10 backdrop-blur-sm text-[#00D9FF] border border-[#00D9FF]/30 hover:bg-[#00D9FF]/20 hover:border-[#00D9FF]/50",
         glassPurple:
@@ -77,7 +77,7 @@ const buttonVariants = cva(
         outline:
           "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
         outlineHot:
-          "border-2 border-[#FF1493] text-[#FF1493] bg-transparent hover:bg-[#FF1493] hover:text-white",
+          "border-2 border-[#C8962C] text-[#C8962C] bg-transparent hover:bg-[#C8962C] hover:text-white",
         outlineCyan:
           "border-2 border-[#00D9FF] text-[#00D9FF] bg-transparent hover:bg-[#00D9FF] hover:text-black",
         outlinePurple:
@@ -94,13 +94,13 @@ const buttonVariants = cva(
         ghost: 
           "hover:bg-accent hover:text-accent-foreground",
         ghostHot:
-          "hover:bg-[#FF1493]/10 hover:text-[#FF1493]",
+          "hover:bg-[#C8962C]/10 hover:text-[#C8962C]",
         ghostCyan:
           "hover:bg-[#00D9FF]/10 hover:text-[#00D9FF]",
         link: 
           "text-primary underline-offset-4 hover:underline",
         linkHot:
-          "text-[#FF1493] underline-offset-4 hover:underline",
+          "text-[#C8962C] underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2",

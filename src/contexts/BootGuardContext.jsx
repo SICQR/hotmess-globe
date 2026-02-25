@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 
-// Debug logging for boot process
-const logBoot = (msg, data) => {
-  console.log(`[BootGuard] ${msg}`, data || '');
-};
+// Debug logging for boot process — only when VITE_BOOT_DEBUG=true
+const logBoot = import.meta.env.VITE_BOOT_DEBUG === 'true'
+  ? (msg, data) => console.log(`[BootGuard] ${msg}`, data || '')
+  : () => {};
 
 /**
  * Boot Guard Context - Clean Implementation
@@ -25,6 +25,7 @@ export const BOOT_STATES = {
   UNAUTHENTICATED: 'UNAUTHENTICATED',
   NEEDS_AGE: 'NEEDS_AGE',
   NEEDS_ONBOARDING: 'NEEDS_ONBOARDING',
+  NEEDS_COMMUNITY_GATE: 'NEEDS_COMMUNITY_GATE',
   READY: 'READY',
 };
 
@@ -123,7 +124,7 @@ export function BootGuardProvider({ children }) {
       let { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('account_id', userId)
+        .eq('id', userId)
         .single();
 
       // PGRST116 = no rows found
@@ -133,7 +134,7 @@ export function BootGuardProvider({ children }) {
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
           .insert({
-            account_id: userId,
+            id: userId,
             age_verified: localAge,
             onboarding_complete: false,
           })
@@ -171,7 +172,7 @@ export function BootGuardProvider({ children }) {
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ age_verified: true })
-          .eq('account_id', userId);
+          .eq('id', userId);
 
         if (!updateError) {
           profileData = { ...profileData, age_verified: true };
@@ -195,6 +196,8 @@ export function BootGuardProvider({ children }) {
         setBootState(BOOT_STATES.NEEDS_AGE);
       } else if (!profileData?.onboarding_complete) {
         setBootState(BOOT_STATES.NEEDS_ONBOARDING);
+      } else if (!profileData?.community_attested_at) {
+        setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
       } else {
         setBootState(BOOT_STATES.READY);
       }
@@ -231,7 +234,7 @@ export function BootGuardProvider({ children }) {
       const { error } = await supabase
         .from('profiles')
         .update({ age_verified: true })
-        .eq('account_id', session.user.id);
+        .eq('id', session.user.id);
 
       if (!error) {
         await refetchProfile();
@@ -266,7 +269,7 @@ export function BootGuardProvider({ children }) {
         // Only overwrite if the field is currently empty.
         ...(profile?.username ? {} : { username: usernameSlug }),
       })
-      .eq('account_id', session.user.id);
+      .eq('id', session.user.id);
 
     if (!error) {
       await refetchProfile();

@@ -30,14 +30,7 @@ alter table public.shopify_orders enable row level security;
 -- Only admins can view orders
 create policy "Admins can view shopify orders"
 on public.shopify_orders for select
-to authenticated
-using (
-  exists (
-    select 1 from public."User" u
-    where u.id = auth.uid()
-    and (u.role = 'admin' or u.is_superadmin = true)
-  )
-);
+using (auth.jwt() ->> 'role' = 'service_role');
 
 -- Service role can insert/update (for webhooks)
 create policy "Service role can manage shopify orders"

@@ -62,7 +62,6 @@ export default function TicketMarketplace() {
         price_xp: ticket.price_xp
       });
 
-      await base44.auth.updateMe({ xp: (currentUser.xp || 0) - ticket.price_xp });
 
       return order;
     },
@@ -177,10 +176,9 @@ export default function TicketMarketplace() {
 
                 <div className="border-t border-white/10 pt-3 mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-2xl font-black text-[#FFEB3B]">{ticket.price_xp} XP</span>
-                    {ticket.price_gbp && (
-                      <span className="text-white/60">or £{ticket.price_gbp}</span>
-                    )}
+                    {ticket.price_gbp ? (
+                      <span className="text-2xl font-black text-[#C8962C]">£{ticket.price_gbp}</span>
+                    ) : null}
                   </div>
                   <div className="text-xs text-white/40">
                     {ticket.inventory_count} available
@@ -189,8 +187,8 @@ export default function TicketMarketplace() {
 
                 <Button
                   onClick={() => purchaseMutation.mutate(ticket)}
-                  disabled={purchaseMutation.isPending || ticket.inventory_count === 0 || (currentUser.xp || 0) < ticket.price_xp}
-                  className="w-full bg-[#FFEB3B] hover:bg-white text-black font-black uppercase"
+                  disabled={purchaseMutation.isPending || ticket.inventory_count === 0}
+                  className="w-full bg-[#C8962C] hover:bg-white text-black font-black uppercase"
                 >
                   {ticket.inventory_count === 0 ? 'Sold Out' : 'Buy Now'}
                 </Button>

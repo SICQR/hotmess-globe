@@ -50,8 +50,8 @@ export function LuxPageBanner({
     info: 'bg-[#00D9FF] text-black',
     warning: 'bg-[#FFEB3B] text-black',
     success: 'bg-[#39FF14] text-black',
-    promo: 'bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white',
-    urgent: 'bg-[#FF1493] text-white animate-pulse',
+    promo: 'bg-gradient-to-r from-[#C8962C] to-[#B026FF] text-white',
+    urgent: 'bg-[#C8962C] text-white animate-pulse',
   };
 
   const typeIcons = {
@@ -156,8 +156,8 @@ export function LuxHeroBanner({
   };
 
   const ctaVariants = {
-    primary: 'bg-[#FF1493] text-white hover:bg-white hover:text-black border-2 border-[#FF1493] hover:border-white',
-    secondary: 'bg-white text-black hover:bg-[#FF1493] hover:text-white border-2 border-white hover:border-[#FF1493]',
+    primary: 'bg-[#C8962C] text-white hover:bg-white hover:text-black border-2 border-[#C8962C] hover:border-white',
+    secondary: 'bg-white text-black hover:bg-[#C8962C] hover:text-white border-2 border-white hover:border-[#C8962C]',
     outline: 'bg-transparent text-white border-2 border-white hover:bg-white hover:text-black',
     ghost: 'bg-white/10 text-white hover:bg-white/20 border-2 border-white/30 hover:border-white/50',
   };
@@ -341,7 +341,7 @@ export function LuxPromoBanner({
   return (
     <div
       className={cn(
-        'lux-promo-banner relative overflow-hidden bg-gradient-to-r from-[#FF1493] via-[#B026FF] to-[#FF1493] bg-[length:200%_100%] animate-gradient',
+        'lux-promo-banner relative overflow-hidden bg-gradient-to-r from-[#C8962C] via-[#B026FF] to-[#C8962C] bg-[length:200%_100%] animate-gradient',
         className
       )}
     >
@@ -446,7 +446,7 @@ export function LuxAdBanner({
   return (
     <div
       className={cn(
-        'lux-ad-banner relative overflow-hidden bg-white/5 border border-white/10 hover:border-[#FF1493]/50 transition-colors group',
+        'lux-ad-banner relative overflow-hidden bg-white/5 border border-white/10 hover:border-[#C8962C]/50 transition-colors group',
         config.className,
         className
       )}
@@ -478,7 +478,7 @@ export function LuxAdBanner({
       )}
 
       {/* Gradient border on hover */}
-      <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#FF1493]/30 transition-colors pointer-events-none" />
+      <div className="absolute inset-0 border-2 border-transparent group-hover:border-[#C8962C]/30 transition-colors pointer-events-none" />
     </div>
   );
 }
@@ -498,14 +498,14 @@ export function LuxFeatureBanner({
 }) {
   const variantStyles = {
     default: 'bg-white/5 border-white/10',
-    gradient: 'bg-gradient-to-r from-[#FF1493]/20 to-[#B026FF]/20 border-[#FF1493]/30',
+    gradient: 'bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border-[#C8962C]/30',
     dark: 'bg-black border-white/20',
   };
 
   return (
     <div
       className={cn(
-        'lux-feature-banner p-6 md:p-8 border-2 transition-all hover:border-[#FF1493]/50',
+        'lux-feature-banner p-6 md:p-8 border-2 transition-all hover:border-[#C8962C]/50',
         variantStyles[variant],
         className
       )}
@@ -513,7 +513,7 @@ export function LuxFeatureBanner({
       <div className="flex flex-col md:flex-row md:items-center gap-6">
         {/* Icon */}
         {Icon && (
-          <div className="w-16 h-16 bg-[#FF1493] flex items-center justify-center flex-shrink-0">
+          <div className="w-16 h-16 bg-[#C8962C] flex items-center justify-center flex-shrink-0">
             <Icon className="w-8 h-8 text-white" />
           </div>
         )}
@@ -533,7 +533,7 @@ export function LuxFeatureBanner({
           <div className="flex gap-6">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="text-3xl font-black text-[#FF1493]">{stat.value}</div>
+                <div className="text-3xl font-black text-[#C8962C]">{stat.value}</div>
                 <div className="text-xs text-white/50 uppercase tracking-wider">{stat.label}</div>
               </div>
             ))}
@@ -544,7 +544,7 @@ export function LuxFeatureBanner({
         {cta && ctaHref && (
           <Link
             to={ctaHref}
-            className="px-6 py-3 bg-[#FF1493] text-white font-black uppercase tracking-wider hover:bg-white hover:text-black transition-colors flex-shrink-0"
+            className="px-6 py-3 bg-[#C8962C] text-white font-black uppercase tracking-wider hover:bg-white hover:text-black transition-colors flex-shrink-0"
           >
             {cta}
           </Link>

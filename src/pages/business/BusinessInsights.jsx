@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const StatCard = ({ icon: Icon, value, label, change, color = '#FF1493' }) => (
+const StatCard = ({ icon: Icon, value, label, change, color = '#C8962C' }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -123,7 +123,7 @@ const BusinessInsights = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard icon={Eye} value={metrics.impressions.toLocaleString()} label="Impressions" change={12} color="#00D9FF" />
           <StatCard icon={Users} value={metrics.reach.toLocaleString()} label="Unique Reach" change={8} color="#B026FF" />
-          <StatCard icon={MousePointer} value={metrics.taps.toLocaleString()} label="Taps" change={15} color="#FF1493" />
+          <StatCard icon={MousePointer} value={metrics.taps.toLocaleString()} label="Taps" change={15} color="#C8962C" />
           <StatCard icon={Target} value={metrics.conversions.toLocaleString()} label="Conversions" change={23} color="#39FF14" />
         </div>
 
@@ -156,7 +156,7 @@ const BusinessInsights = () => {
         <div className="bg-white/5 border border-white/10 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-black uppercase flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-[#FF1493]" />
+              <BarChart3 className="w-5 h-5 text-[#C8962C]" />
               Recent Amplifications
             </h2>
             <Link to="/business/amplify">
@@ -185,11 +185,11 @@ const BusinessInsights = () => {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="flex items-center justify-between p-4 bg-white/5 border border-white/10 hover:border-[#FF1493]/50 transition-colors"
+                  className="flex items-center justify-between p-4 bg-white/5 border border-white/10 hover:border-[#C8962C]/50 transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-[#FF1493]/20 border border-[#FF1493] flex items-center justify-center">
-                      <Zap className="w-5 h-5 text-[#FF1493]" />
+                    <div className="w-10 h-10 bg-[#C8962C]/20 border border-[#C8962C] flex items-center justify-center">
+                      <Zap className="w-5 h-5 text-[#C8962C]" />
                     </div>
                     <div>
                       <p className="font-bold capitalize">{amp.signal_type?.replace('_', ' ')}</p>

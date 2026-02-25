@@ -40,15 +40,15 @@ const ACTION_ICONS = {
 // Impact colors following 60-30-10 rule
 const IMPACT_STYLES = {
   high: {
-    bg: 'bg-[#FF1493]/20',
-    border: 'border-[#FF1493]',
-    text: 'text-[#FF1493]',
+    bg: 'bg-[#C8962C]/20',
+    border: 'border-[#C8962C]',
+    text: 'text-[#C8962C]',
     icon: AlertCircle
   },
   medium: {
-    bg: 'bg-[#FFB800]/20',
-    border: 'border-[#FFB800]',
-    text: 'text-[#FFB800]',
+    bg: 'bg-[#C8962C]/20',
+    border: 'border-[#C8962C]',
+    text: 'text-[#C8962C]',
     icon: AlertCircle
   },
   low: {
@@ -148,16 +148,16 @@ export default function ProfileOptimizer({
       <div className={`bg-black border border-white/10 p-4 ${className}`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#FF1493]" />
+            <Sparkles className="w-4 h-4 text-[#C8962C]" />
             <span className="font-bold text-sm text-white">Profile Strength</span>
           </div>
-          <span className="text-sm font-bold text-[#FF1493]">{completeness}%</span>
+          <span className="text-sm font-bold text-[#C8962C]">{completeness}%</span>
         </div>
         <Progress value={completeness} className="h-2" />
         {highPriorityCount > 0 && (
           <button 
             onClick={() => navigate('/profile/optimize')}
-            className="mt-3 text-xs text-[#FF1493] hover:underline"
+            className="mt-3 text-xs text-[#C8962C] hover:underline"
           >
             {highPriorityCount} quick win{highPriorityCount > 1 ? 's' : ''} available →
           </button>
@@ -173,8 +173,8 @@ export default function ProfileOptimizer({
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#FF1493]/20 flex items-center justify-center border border-[#FF1493]">
-              <Sparkles className="w-5 h-5 text-[#FF1493]" />
+            <div className="w-10 h-10 bg-[#C8962C]/20 flex items-center justify-center border border-[#C8962C]">
+              <Sparkles className="w-5 h-5 text-[#C8962C]" />
             </div>
             <div>
               <h3 className="font-bold text-white">Profile Optimizer</h3>
@@ -187,7 +187,7 @@ export default function ProfileOptimizer({
             </div>
           </div>
           <div className="text-right">
-            <span className="text-2xl font-black text-[#FF1493]">{completeness}%</span>
+            <span className="text-2xl font-black text-[#C8962C]">{completeness}%</span>
           </div>
         </div>
 

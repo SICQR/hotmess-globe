@@ -1,15 +1,9 @@
 import { CheckCircle, AlertCircle, Info, Zap } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
 
-// Enhanced toast with XP animations
+// Enhanced toast (XP display removed)
 export function toastWithXP(message, xpAmount) {
-  return sonnerToast.success(
-    <div className="flex items-center gap-2">
-      <Zap className="w-4 h-4 text-[#FFEB3B]" />
-      <span>{message}</span>
-      <span className="ml-auto font-black text-[#FFEB3B]">+{xpAmount} XP</span>
-    </div>
-  );
+  return sonnerToast.success(message);
 }
 
 // Achievement unlock toast
@@ -28,27 +22,16 @@ export function toastAchievement(achievementName) {
   );
 }
 
-// Level up toast
+// Level up toast (level display removed)
 export function toastLevelUp(newLevel) {
-  return sonnerToast.success(
-    <div className="flex items-center gap-2">
-      <Zap className="w-4 h-4 text-[#FFEB3B]" />
-      <div>
-        <p className="font-black">LEVEL UP!</p>
-        <p className="text-sm">You're now level {newLevel}</p>
-      </div>
-    </div>,
-    {
-      duration: 5000,
-    }
-  );
+  return sonnerToast.success('Keep going!', { duration: 3000 });
 }
 
 // Match toast
 export function toastNewMatch(userName) {
   return sonnerToast.success(
     <div className="flex items-center gap-2">
-      <CheckCircle className="w-4 h-4 text-[#FF1493]" />
+      <CheckCircle className="w-4 h-4 text-[#C8962C]" />
       <div>
         <p className="font-bold">New Match!</p>
         <p className="text-sm text-white/60">You matched with {userName}</p>

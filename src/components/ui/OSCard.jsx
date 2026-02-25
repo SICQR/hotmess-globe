@@ -8,7 +8,6 @@ export default function OSCard({
   imageSrc,
   imageAlt = '',
   locked = false,
-  xpRequired,
   grayscaleImage = true,
   hoverGlow = true,
   onClick,
@@ -20,8 +19,8 @@ export default function OSCard({
       onClick={onClick}
       className={cn(
         'relative bg-black border-2 border-white rounded-none overflow-hidden transition-all duration-300',
-        'hover:border-[#FF1493]',
-        hoverGlow && 'hover:shadow-[0_0_10px_#FF1493]',
+        'hover:border-[#C8962C]',
+        hoverGlow && 'hover:shadow-[0_0_10px_#C8962C]',
         onClick && 'cursor-pointer',
         className
       )}
@@ -43,11 +42,6 @@ export default function OSCard({
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-white font-black text-2xl uppercase mb-2">LOCKED</div>
-                {xpRequired && (
-                  <div className="text-[#FFEB3B] text-sm font-bold">
-                    {xpRequired} XP Required
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -82,7 +76,7 @@ export function OSCardImage({ src, alt, locked, grayscale = true, className }) {
   );
 }
 
-export function OSCardBadge({ children, color = '#FF1493', className }) {
+export function OSCardBadge({ children, color = '#C8962C', className }) {
   return (
     <div 
       className={cn('px-2 py-1 text-[10px] font-black uppercase tracking-wider', className)}

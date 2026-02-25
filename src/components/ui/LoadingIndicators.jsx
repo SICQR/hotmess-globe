@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 /**
  * Spinner - Simple animated spinner
  */
-export function Spinner({ size = 40, color = '#FF1493', className = '' }) {
+export function Spinner({ size = 40, color = '#C8962C', className = '' }) {
   return (
     <motion.div
       className={`inline-block ${className}`}
@@ -40,7 +40,7 @@ export function Spinner({ size = 40, color = '#FF1493', className = '' }) {
 /**
  * PulseLoader - Three dots that pulse in sequence
  */
-export function PulseLoader({ color = '#FF1493', size = 12, className = '' }) {
+export function PulseLoader({ color = '#C8962C', size = 12, className = '' }) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       {[0, 1, 2].map((index) => (
@@ -71,7 +71,7 @@ export function PulseLoader({ color = '#FF1493', size = 12, className = '' }) {
 /**
  * BarLoader - Animated horizontal bars
  */
-export function BarLoader({ color = '#FF1493', className = '' }) {
+export function BarLoader({ color = '#C8962C', className = '' }) {
   return (
     <div className={`flex items-center gap-1 ${className}`}>
       {[0, 1, 2, 3, 4].map((index) => (
@@ -97,7 +97,7 @@ export function BarLoader({ color = '#FF1493', className = '' }) {
 /**
  * RingLoader - Circular loading ring
  */
-export function RingLoader({ size = 40, color = '#FF1493', thickness = 4, className = '' }) {
+export function RingLoader({ size = 40, color = '#C8962C', thickness = 4, className = '' }) {
   return (
     <motion.div
       className={`inline-block ${className}`}
@@ -171,7 +171,7 @@ export function FullPageLoader({ message = 'Loading...', show = true }) {
       className="fixed inset-0 z-[120] flex items-center justify-center bg-black/90 backdrop-blur-xl"
     >
       <div className="text-center">
-        <Spinner size={60} color="#FF1493" />
+        <Spinner size={60} color="#C8962C" />
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -188,7 +188,7 @@ export function FullPageLoader({ message = 'Loading...', show = true }) {
 /**
  * InlineLoader - Compact inline loader
  */
-export function InlineLoader({ text = 'Loading', color = '#FF1493' }) {
+export function InlineLoader({ text = 'Loading', color = '#C8962C' }) {
   return (
     <div className="inline-flex items-center gap-2">
       <Spinner size={16} color={color} />

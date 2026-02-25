@@ -41,6 +41,11 @@ import { useOSURLSync } from '@/os';
 
       const SECONDARY_NAV = [];
 
+// OS mode paths — Layout is a pass-through on these (OSBottomNav + mode components handle the chrome)
+const OS_MODE_PATHS = ['/', '/ghosted', '/pulse', '/radio', '/profile', '/market'];
+const isOSModePath = (p) =>
+  OS_MODE_PATHS.some((m) => p === m || p.startsWith(m + '/'));
+
 function LayoutInner({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -64,7 +69,7 @@ function LayoutInner({ children, currentPageName }) {
     lat: null,
     lng: null,
   });
-  
+
   // Enable keyboard navigation
   useKeyboardNav();
 
@@ -317,6 +322,12 @@ function LayoutInner({ children, currentPageName }) {
     };
   }, [user?.has_consented_gps]);
 
+  // On OS mode routes, render children only — no old header/nav/chrome
+  // (placed after all hooks to satisfy Rules of Hooks)
+  if (isOSModePath(pathname)) {
+    return <>{children}</>;
+  }
+
   const isActive = (pageName) => currentPageName === pageName;
 
   const isPulsePage = currentPageName === 'Pulse';
@@ -426,7 +437,7 @@ function LayoutInner({ children, currentPageName }) {
                       className={`
                         flex items-center gap-3 px-3 py-2.5 mb-1 transition-all
                         ${isActive(path)
-                          ? 'bg-[#FF1493] text-black border-2 border-[#FF1493]'
+                          ? 'bg-[#C8962C] text-black border-2 border-[#C8962C]'
                           : 'text-white/60 hover:text-white hover:bg-white/5 border-2 border-white/10'
                         }
                       `}
@@ -450,7 +461,7 @@ function LayoutInner({ children, currentPageName }) {
                       className={`
                         flex items-center gap-3 px-3 py-2 mb-1 transition-all
                         ${isActive(path)
-                          ? 'text-[#FF1493] border-l-2 border-[#FF1493]'
+                          ? 'text-[#C8962C] border-l-2 border-[#C8962C]'
                           : 'text-white/40 hover:text-white/60 border-l-2 border-white/5'
                         }
                       `}
@@ -498,7 +509,7 @@ function LayoutInner({ children, currentPageName }) {
             <div className="p-4 border-b-2 border-white/20">
               <div className="flex items-center justify-between mb-1">
                 <Link to={createPageUrl('Home')} className="text-xl font-black tracking-tight">
-                  HOT<span className="text-[#FF1493]">MESS</span>
+                  HOT<span className="text-[#C8962C]">MESS</span>
                 </Link>
                 <div className="flex items-center gap-2">
                   <Link
@@ -561,7 +572,7 @@ function LayoutInner({ children, currentPageName }) {
                     className={`
                       flex items-center gap-2 px-3 py-2.5 mb-1 transition-all border-2
                       ${isActive(path)
-                        ? 'bg-[#FF1493] text-black border-[#FF1493] shadow-[0_0_10px_#FF1493]'
+                        ? 'bg-[#C8962C] text-black border-[#C8962C] shadow-[0_0_10px_#C8962C]'
                         : 'text-white/60 hover:text-white hover:bg-white/5 border-white/10 hover:border-white/30'
                       }
                     `}
@@ -598,12 +609,11 @@ function LayoutInner({ children, currentPageName }) {
               {user ? (
                 <>
                   <Link to={createPageUrl('Settings')} className="flex items-center gap-2 hover:opacity-80 transition-opacity mb-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
+                    <div className="w-8 h-8 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
                       <span className="text-xs font-bold">{user.full_name?.[0] || 'U'}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-black truncate">{user.full_name}</p>
-                      <p className="text-[9px] text-[#FFEB3B] font-mono">LVL {Math.floor((user.xp || 0) / 1000) + 1} • {user.xp || 0} XP</p>
                     </div>
                     <Settings className="w-3 h-3 text-white/40" />
                   </Link>
@@ -662,8 +672,10 @@ function LayoutInner({ children, currentPageName }) {
       {/* Persistent Radio Player - Never Unmounts */}
       <PersistentRadioPlayer />
 
-      {/* Mobile Bottom Navigation */}
-      <BottomNav currentPageName={currentPageName} user={user} />
+      {/* Mobile Bottom Navigation — hidden on OS mode routes (OSBottomNav handles those) */}
+      {!['/','','/ghosted','/pulse','/radio','/profile'].includes(pathname.replace(/\/$/, '') || '/') && (
+        <BottomNav currentPageName={currentPageName} user={user} />
+      )}
 
       {/* Cookie Consent Banner */}
       <CookieConsent />

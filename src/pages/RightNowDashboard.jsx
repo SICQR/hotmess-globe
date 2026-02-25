@@ -48,7 +48,7 @@ export default function RightNowDashboard() {
 
           <div className="mb-8">
             <h1 className="text-4xl md:text-6xl font-black uppercase mb-2">
-              RIGHT <span className="text-[#FF1493]">NOW</span>
+              RIGHT <span className="text-[#C8962C]">NOW</span>
             </h1>
             <p className="text-white/60 text-sm uppercase tracking-wider">
               Real-time availability • Auto-expires • No ghost status
@@ -58,7 +58,7 @@ export default function RightNowDashboard() {
           {/* Info Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className="bg-white/5 border-2 border-white/10 p-6">
-              <Zap className="w-8 h-8 text-[#FF1493] mb-3" />
+              <Zap className="w-8 h-8 text-[#C8962C] mb-3" />
               <h3 className="text-xs uppercase tracking-widest text-white/40 mb-2">Quick Connect</h3>
               <p className="text-xs text-white/60">
                 Show you're available right now for immediate connections
@@ -86,9 +86,9 @@ export default function RightNowDashboard() {
           <RightNowManager currentUser={currentUser} />
 
           {/* Tips */}
-          <div className="mt-8 bg-[#FF1493]/10 border-2 border-[#FF1493]/40 p-6">
+          <div className="mt-8 bg-[#C8962C]/10 border-2 border-[#C8962C]/40 p-6">
             <div className="flex items-start gap-3">
-              <TrendingUp className="w-5 h-5 text-[#FF1493] flex-shrink-0 mt-1" />
+              <TrendingUp className="w-5 h-5 text-[#C8962C] flex-shrink-0 mt-1" />
               <div>
                 <h3 className="text-sm font-black uppercase mb-2">Pro Tips</h3>
                 <ul className="text-xs text-white/60 space-y-2">

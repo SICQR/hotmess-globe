@@ -106,7 +106,7 @@ export default function CreatorDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FF1493]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#C8962C]" />
       </div>
     );
   }
@@ -141,7 +141,7 @@ export default function CreatorDashboard() {
             </Button>
             <Button
               onClick={() => navigate('/creator/upload')}
-              className="bg-[#FF1493] hover:bg-[#FF1493]/80 font-bold"
+              className="bg-[#C8962C] hover:bg-[#C8962C]/80 font-bold"
             >
               <Plus className="w-4 h-4 mr-2" />
               New Post
@@ -163,7 +163,7 @@ export default function CreatorDashboard() {
             icon={Users} 
             label="Subscribers" 
             value={earnings.subscribers}
-            color="#FF1493"
+            color="#C8962C"
           />
           <StatCard 
             icon={Eye} 
@@ -175,7 +175,7 @@ export default function CreatorDashboard() {
             icon={MessageSquare} 
             label="Pending Requests" 
             value={requests.filter(r => r.status === 'pending').length}
-            color="#FFB800"
+            color="#C8962C"
           />
         </div>
 
@@ -197,7 +197,7 @@ export default function CreatorDashboard() {
                   <h3 className="font-bold text-white">Recent Content</h3>
                   <button 
                     onClick={() => setActiveTab('content')}
-                    className="text-xs text-[#FF1493] hover:underline"
+                    className="text-xs text-[#C8962C] hover:underline"
                   >
                     View all
                   </button>
@@ -224,12 +224,12 @@ export default function CreatorDashboard() {
               <div className="border border-white/10 p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-white flex items-center gap-2">
-                    <Gift className="w-4 h-4 text-[#FFB800]" />
+                    <Gift className="w-4 h-4 text-[#C8962C]" />
                     Custom Requests
                   </h3>
                   <button 
                     onClick={() => setActiveTab('requests')}
-                    className="text-xs text-[#FF1493] hover:underline"
+                    className="text-xs text-[#C8962C] hover:underline"
                   >
                     View all
                   </button>
@@ -415,7 +415,7 @@ function ContentRow({ content, expanded = false }) {
             {content.like_count || 0}
           </span>
           {content.is_ppv && (
-            <span className="text-[#FFB800]">PPV</span>
+            <span className="text-[#C8962C]">PPV</span>
           )}
         </div>
       </div>
@@ -427,7 +427,7 @@ function ContentRow({ content, expanded = false }) {
 // Request Row Component
 function RequestRow({ request, expanded = false }) {
   const statusColors = {
-    pending: '#FFB800',
+    pending: '#C8962C',
     accepted: '#00D9FF',
     in_progress: '#B026FF',
     delivered: '#39FF14'
@@ -435,8 +435,8 @@ function RequestRow({ request, expanded = false }) {
 
   return (
     <div className="p-3 flex items-center gap-3">
-      <div className="w-10 h-10 bg-[#FFB800]/20 flex items-center justify-center flex-shrink-0">
-        <Gift className="w-5 h-5 text-[#FFB800]" />
+      <div className="w-10 h-10 bg-[#C8962C]/20 flex items-center justify-center flex-shrink-0">
+        <Gift className="w-5 h-5 text-[#C8962C]" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-white truncate">
@@ -464,9 +464,9 @@ function QuickAction({ icon: Icon, label, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="p-4 border border-white/10 hover:border-[#FF1493] transition-colors flex flex-col items-center gap-2"
+      className="p-4 border border-white/10 hover:border-[#C8962C] transition-colors flex flex-col items-center gap-2"
     >
-      <Icon className="w-6 h-6 text-[#FF1493]" />
+      <Icon className="w-6 h-6 text-[#C8962C]" />
       <span className="text-sm text-white/80">{label}</span>
     </button>
   );

@@ -55,7 +55,7 @@ export default function EventManagement() {
         </div>
         <div className="bg-black border-2 border-white p-6">
           <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">EVENTS</p>
-          <p className="text-4xl font-black text-[#FF1493]">{events.length}</p>
+          <p className="text-4xl font-black text-[#C8962C]">{events.length}</p>
         </div>
         <div className="bg-black border-2 border-white p-6">
           <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">ACTIVE</p>
@@ -70,7 +70,7 @@ export default function EventManagement() {
       {/* Actions */}
       <div className="flex gap-4">
         <Link to={createPageUrl('CreateBeacon')}>
-          <Button className="bg-[#FF1493] hover:bg-white text-black border-2 border-white font-black">
+          <Button className="bg-[#C8962C] hover:bg-white text-black border-2 border-white font-black">
             <Plus className="w-4 h-4 mr-2" />
             CREATE BEACON
           </Button>

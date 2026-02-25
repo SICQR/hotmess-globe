@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 const SIGNAL_TYPES = [
   { id: 'event', label: 'Event', icon: PartyPopper, color: '#00D9FF', description: 'Boost visibility for your upcoming event' },
   { id: 'radio_premiere', label: 'Radio Premiere', icon: Radio, color: '#B026FF', description: 'Announce a new show or track premiere' },
-  { id: 'drop', label: 'Product Drop', icon: ShoppingBag, color: '#FF1493', description: 'Amplify a new product or merch release' },
+  { id: 'drop', label: 'Product Drop', icon: ShoppingBag, color: '#C8962C', description: 'Amplify a new product or merch release' },
   { id: 'special', label: 'Special Offer', icon: Sparkles, color: '#FFD700', description: 'Promote a limited-time deal or offer' },
 ];
 
@@ -102,7 +102,7 @@ const BusinessAmplify = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#FF1493]/30 border-t-[#FF1493] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#C8962C]/30 border-t-[#C8962C] rounded-full animate-spin" />
       </div>
     );
   }
@@ -128,7 +128,7 @@ const BusinessAmplify = () => {
       <div className="border-b border-white/10 p-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-black uppercase flex items-center gap-3">
-            <Zap className="w-8 h-8 text-[#FF1493]" />
+            <Zap className="w-8 h-8 text-[#C8962C]" />
             Schedule Amplification
           </h1>
           <p className="text-white/60 mt-2">Boost your signal across the HOTMESS network</p>
@@ -141,11 +141,11 @@ const BusinessAmplify = () => {
           {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center">
               <div className={`w-8 h-8 flex items-center justify-center border-2 font-bold ${
-                step >= s ? 'bg-[#FF1493] border-[#FF1493] text-black' : 'border-white/20 text-white/40'
+                step >= s ? 'bg-[#C8962C] border-[#C8962C] text-black' : 'border-white/20 text-white/40'
               }`}>
                 {step > s ? <CheckCircle className="w-4 h-4" /> : s}
               </div>
-              {s < 3 && <div className={`w-12 h-0.5 ${step > s ? 'bg-[#FF1493]' : 'bg-white/20'}`} />}
+              {s < 3 && <div className={`w-12 h-0.5 ${step > s ? 'bg-[#C8962C]' : 'bg-white/20'}`} />}
             </div>
           ))}
         </div>
@@ -164,7 +164,7 @@ const BusinessAmplify = () => {
                     onClick={() => setForm(f => ({ ...f, signal_type: type.id }))}
                     className={`p-6 border-2 text-left transition-all ${
                       selected 
-                        ? 'border-[#FF1493] bg-[#FF1493]/10' 
+                        ? 'border-[#C8962C] bg-[#C8962C]/10' 
                         : 'border-white/10 hover:border-white/30'
                     }`}
                   >
@@ -204,7 +204,7 @@ const BusinessAmplify = () => {
                       onClick={() => setForm(f => ({ ...f, city: city.id }))}
                       className={`p-3 border text-center transition-all ${
                         form.city === city.id
-                          ? 'border-[#FF1493] bg-[#FF1493]/10'
+                          ? 'border-[#C8962C] bg-[#C8962C]/10'
                           : 'border-white/10 hover:border-white/30'
                       }`}
                     >

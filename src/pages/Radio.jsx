@@ -11,15 +11,15 @@ import BrandBackground from '@/components/ui/BrandBackground';
 const LIVE_STREAM_URL = 'https://listen.radioking.com/radio/736103/stream/802454';
 
 const SHOWS = [
-  { ...schedule.shows[0], accent: '#FF1493', shadow: 'rgba(255,20,147,0.4)',  icon: Mic2  },
+  { ...schedule.shows[0], accent: '#C8962C', shadow: 'rgba(255,20,147,0.4)',  icon: Mic2  },
   { ...schedule.shows[1], accent: '#00D9FF', shadow: 'rgba(0,217,255,0.4)',   icon: RadioIcon },
   { ...schedule.shows[2], accent: '#B026FF', shadow: 'rgba(176,38,255,0.4)', icon: Rss   },
 ];
 
 function LiveBadge() {
   return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#FF1493]/20 border border-[#FF1493]/40 text-[#FF1493] text-[10px] font-black uppercase tracking-widest">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#FF1493] animate-pulse" />
+    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#C8962C]/20 border border-[#C8962C]/40 text-[#C8962C] text-[10px] font-black uppercase tracking-widest">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#C8962C] animate-pulse" />
       LIVE
     </span>
   );
@@ -41,7 +41,7 @@ function StreamPlayer() {
       <button
         onClick={toggle}
         className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 transition-all active:scale-95"
-        style={{ background: '#FF1493', boxShadow: '0 0 24px rgba(255,20,147,0.5)' }}
+        style={{ background: '#C8962C', boxShadow: '0 0 24px rgba(255,20,147,0.5)' }}
       >
         {playing
           ? <Pause className="w-6 h-6 text-black" />
@@ -85,7 +85,7 @@ function ShowCard({ show, index }) {
             />
           </div>
           <div className="p-5">
-            <p className="text-base font-black uppercase tracking-wide text-white mb-1 group-hover:text-[#FF1493] transition-colors">
+            <p className="text-base font-black uppercase tracking-wide text-white mb-1 group-hover:text-[#C8962C] transition-colors">
               {show.title}
             </p>
             <p className="text-xs text-white/40 leading-relaxed mb-4">{show.tagline}</p>
@@ -118,7 +118,7 @@ function ReleaseCard({ beacon }) {
         {released ? (
           <Link
             to={`${createPageUrl('MusicRelease')}?slug=${beacon.release_slug || beacon.id}`}
-            className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#FF1493] hover:underline"
+            className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#C8962C] hover:underline"
           >
             <Play className="w-3 h-3" /> Listen Now
           </Link>
@@ -158,10 +158,10 @@ export default function Radio() {
             <div className="flex items-center justify-center gap-3 mb-4">
               <RadioIcon
                 className="w-10 h-10"
-                style={{ color: '#FF1493', filter: 'drop-shadow(0 0 16px rgba(255,20,147,0.6))' }}
+                style={{ color: '#C8962C', filter: 'drop-shadow(0 0 16px rgba(255,20,147,0.6))' }}
               />
               <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tight leading-none">
-                HOT<span className="text-[#FF1493]">MESS</span> RADIO
+                HOT<span className="text-[#C8962C]">MESS</span> RADIO
               </h1>
             </div>
             <p className="text-white/50 text-base md:text-lg mb-8">
@@ -206,7 +206,7 @@ export default function Radio() {
           <p className="text-[10px] uppercase tracking-[0.35em] font-mono text-white/30">Record Releases</p>
           <Link
             to={createPageUrl('MusicRelease')}
-            className="text-[10px] uppercase tracking-widest font-mono text-[#FF1493] hover:underline"
+            className="text-[10px] uppercase tracking-widest font-mono text-[#C8962C] hover:underline"
           >
             See All →
           </Link>
@@ -234,7 +234,7 @@ export default function Radio() {
             scrolling="no"
             frameBorder="no"
             allow="autoplay"
-            src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%3Atracks%3A2243204375%3Fsecret_token%3Ds-jK7AWO2CQ6t&color=%23FF1493&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false"
+            src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%3Atracks%3A2243204375%3Fsecret_token%3Ds-jK7AWO2CQ6t&color=%23C8962C&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false"
             title="HNHMESS SoundCloud"
           />
         </div>

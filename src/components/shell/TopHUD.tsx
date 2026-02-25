@@ -34,8 +34,6 @@ export function TopHUD({ safetyStatus = 'safe', weatherText }: TopHUDProps) {
     staleTime: 30000,
   });
 
-  const level = currentUser?.level || 1;
-  const xp    = currentUser?.xp   || 0;
   const city  = currentUser?.city  || 'London';
 
   const defaultWeatherText = `${city} • ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
@@ -49,17 +47,6 @@ export function TopHUD({ safetyStatus = 'safe', weatherText }: TopHUDProps) {
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <span className="text-xs font-black uppercase text-white tracking-wider truncate">
           {displayWeatherText}
-        </span>
-      </div>
-
-      {/* Center: Level — XP hidden on xs */}
-      <div className="flex items-center gap-1.5 shrink-0 px-2">
-        <span className="text-xs font-black text-[#FFD700] tracking-wider whitespace-nowrap">
-          LVL {level}
-        </span>
-        <span className="hidden sm:inline text-xs text-white/40">•</span>
-        <span className="hidden sm:inline text-xs text-white/60 whitespace-nowrap">
-          {xp} XP
         </span>
       </div>
 

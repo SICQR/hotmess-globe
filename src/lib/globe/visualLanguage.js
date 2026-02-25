@@ -12,7 +12,7 @@ export const VISUAL_TYPES = {
   HEAT: {
     id: 'heat',
     description: 'Presence aggregated at city/zone level',
-    color: { base: '#FF1493', glow: 'rgba(255,20,147,0.4)' },
+    color: { base: '#C8962C', glow: 'rgba(255,20,147,0.4)' },
     animation: 'breathe', // Slow in/out
     minK: 20, // k-anonymity threshold
     neverShows: ['individuals', 'exact_locations', 'movement_trails'],

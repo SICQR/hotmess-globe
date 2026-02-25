@@ -120,7 +120,7 @@ export function ReplacementGrid({ className = '' }) {
             <span className="text-white/40 line-through text-sm w-24 shrink-0">
               {item.app}
             </span>
-            <span className="text-[#FF1493] text-xl">→</span>
+            <span className="text-[#C8962C] text-xl">→</span>
             <span className="text-white font-bold text-sm flex-1">
               {item.replacement}
             </span>
@@ -129,10 +129,10 @@ export function ReplacementGrid({ className = '' }) {
       </motion.div>
       
       {/* Summary */}
-      <div className="mt-8 p-6 bg-gradient-to-r from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/30 rounded-2xl text-center">
+      <div className="mt-8 p-6 bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/30 rounded-2xl text-center">
         <p className="text-xl md:text-2xl font-black uppercase">
           <span className="text-[#39FF14]">✓</span> ONE PLATFORM.{' '}
-          <span className="text-[#FF1493]">EVERYTHING.</span>
+          <span className="text-[#C8962C]">EVERYTHING.</span>
         </p>
         <p className="text-white/60 mt-2">
           No clunky app switching. Ever.
@@ -147,7 +147,7 @@ export function ReplacementGrid({ className = '' }) {
  */
 export function MembershipUSPs({ tier = 'plus', className = '' }) {
   const usps = USPS.membership[tier] || [];
-  const color = tier === 'chrome' ? '#00D9FF' : '#FF1493';
+  const color = tier === 'chrome' ? '#00D9FF' : '#C8962C';
   
   return (
     <div className={`space-y-3 ${className}`}>
@@ -207,7 +207,7 @@ export function SafetyUSPs({ className = '' }) {
 /**
  * Single USP Badge (for inline use)
  */
-export function USPBadge({ icon, text, color = '#FF1493' }) {
+export function USPBadge({ icon, text, color = '#C8962C' }) {
   const IconComponent = ICONS[icon] || Sparkles;
   
   return (
@@ -231,7 +231,7 @@ export function USPBadge({ icon, text, color = '#FF1493' }) {
 export function StatsRow({ className = '' }) {
   const stats = [
     { value: '87%', label: 'Match Rate', color: '#39FF14' },
-    { value: '24/7', label: 'Live Radio', color: '#FF1493' },
+    { value: '24/7', label: 'Live Radio', color: '#C8962C' },
     { value: '0', label: 'Ghosting', color: '#00D9FF' },
   ];
   
@@ -260,13 +260,12 @@ export function StatsRow({ className = '' }) {
 export function FeatureComparison({ className = '' }) {
   const features = [
     { name: 'AI Matching', free: '60%', plus: '80%', chrome: '100%' },
-    { name: 'XP Multiplier', free: '1x', plus: '2x', chrome: '3x' },
     { name: 'Go Live', free: '1/day', plus: 'Unlimited', chrome: 'Unlimited' },
     { name: 'Profile Viewers', free: '❌', plus: 'Blurred', chrome: 'Full Access' },
     { name: 'Stealth Mode', free: '❌', plus: '✓', chrome: '✓' },
     { name: 'Night King', free: '❌', plus: '❌', chrome: '✓' },
     { name: 'Early Drops', free: '❌', plus: '❌', chrome: '24hr Head Start' },
-    { name: 'Premium Content', free: 'Pay XP', plus: 'Pay XP', chrome: 'Free Access' },
+    { name: 'Premium Content', free: 'Standard', plus: 'Standard', chrome: 'Free Access' },
     { name: 'Ads', free: 'Yes', plus: 'None', chrome: 'None' },
   ];
   
@@ -280,7 +279,7 @@ export function FeatureComparison({ className = '' }) {
               <span className="text-white font-black">FREE</span>
             </th>
             <th className="text-center py-3 px-4">
-              <span className="text-[#FF1493] font-black">PLUS</span>
+              <span className="text-[#C8962C] font-black">PLUS</span>
             </th>
             <th className="text-center py-3 px-4">
               <span className="text-[#00D9FF] font-black">CHROME</span>

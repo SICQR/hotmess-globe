@@ -83,10 +83,16 @@ module.exports = {
 			},
 			// Brand colors - HOTMESS design system
 			hot: {
-				DEFAULT: '#FF1493',
-				light: '#FF69B4',
-				dark: '#C71585',
-				glow: 'rgba(255, 20, 147, 0.55)'
+				DEFAULT: '#C8962C',
+				light: '#D4A84B',
+				dark: '#9A7020',
+				glow: 'rgba(200, 150, 44, 0.45)'
+			},
+			gold: {
+				DEFAULT: '#C8962C',
+				light: '#D4A84B',
+				dark: '#9A7020',
+				glow: 'rgba(200, 150, 44, 0.45)'
 			},
 			cyan: {
 				DEFAULT: '#00D9FF',
@@ -108,8 +114,8 @@ module.exports = {
 			}
   		},
 		boxShadow: {
-			'glow-hot': '0 0 20px rgba(255, 20, 147, 0.5), 0 0 40px rgba(255, 20, 147, 0.3)',
-			'glow-hot-lg': '0 0 30px rgba(255, 20, 147, 0.6), 0 0 60px rgba(255, 20, 147, 0.4)',
+			'glow-hot': '0 0 20px rgba(200, 150, 44, 0.5), 0 0 40px rgba(200, 150, 44, 0.3)',
+			'glow-hot-lg': '0 0 30px rgba(200, 150, 44, 0.6), 0 0 60px rgba(200, 150, 44, 0.4)',
 			'glow-cyan': '0 0 20px rgba(0, 217, 255, 0.5), 0 0 40px rgba(0, 217, 255, 0.3)',
 			'glow-cyan-lg': '0 0 30px rgba(0, 217, 255, 0.6), 0 0 60px rgba(0, 217, 255, 0.4)',
 			'glow-purple': '0 0 20px rgba(176, 38, 255, 0.5), 0 0 40px rgba(176, 38, 255, 0.3)',
@@ -121,13 +127,13 @@ module.exports = {
 			'premium': '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)',
 		},
 		backgroundImage: {
-			'gradient-hot': 'linear-gradient(135deg, #FF1493 0%, #B026FF 100%)',
+			'gradient-hot': 'linear-gradient(135deg, #C8962C 0%, #9A7020 100%)',
 			'gradient-cyan': 'linear-gradient(135deg, #00D9FF 0%, #0891B2 100%)',
-			'gradient-purple': 'linear-gradient(135deg, #B026FF 0%, #FF1493 100%)',
-			'gradient-gold': 'linear-gradient(135deg, #FFD700 0%, #FF6B35 100%)',
-			'gradient-fire': 'linear-gradient(135deg, #FF1493 0%, #FF6B35 50%, #FFD700 100%)',
+			'gradient-purple': 'linear-gradient(135deg, #B026FF 0%, #7B2FBE 100%)',
+			'gradient-gold': 'linear-gradient(135deg, #C8962C 0%, #D4A84B 100%)',
+			'gradient-fire': 'linear-gradient(135deg, #C8962C 0%, #D4A84B 50%, #FFD700 100%)',
 			'gradient-night': 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
-			'gradient-mesh': 'radial-gradient(at 40% 20%, rgba(255, 20, 147, 0.3) 0px, transparent 50%), radial-gradient(at 80% 0%, rgba(176, 38, 255, 0.2) 0px, transparent 50%), radial-gradient(at 0% 50%, rgba(0, 217, 255, 0.2) 0px, transparent 50%)',
+			'gradient-mesh': 'radial-gradient(at 40% 20%, rgba(200, 150, 44, 0.3) 0px, transparent 50%), radial-gradient(at 80% 0%, rgba(176, 38, 255, 0.2) 0px, transparent 50%), radial-gradient(at 0% 50%, rgba(0, 217, 255, 0.2) 0px, transparent 50%)',
 		},
   		keyframes: {
   			'accordion-down': {
@@ -139,8 +145,8 @@ module.exports = {
   				to: { height: '0' }
   			},
 			'glow-pulse': {
-				'0%, 100%': { opacity: '1', boxShadow: '0 0 20px rgba(255, 20, 147, 0.5)' },
-				'50%': { opacity: '0.7', boxShadow: '0 0 40px rgba(255, 20, 147, 0.8)' }
+				'0%, 100%': { opacity: '1', boxShadow: '0 0 20px rgba(200, 150, 44, 0.5)' },
+				'50%': { opacity: '0.7', boxShadow: '0 0 40px rgba(200, 150, 44, 0.8)' }
 			},
 			'float': {
 				'0%, 100%': { transform: 'translateY(0)' },

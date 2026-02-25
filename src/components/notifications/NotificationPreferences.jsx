@@ -27,7 +27,7 @@ const NOTIFICATION_CATEGORIES = [
     name: 'Messages',
     description: 'New messages and conversation updates',
     icon: MessageSquare,
-    color: '#FF1493',
+    color: '#C8962C',
     defaultEnabled: true,
   },
   {
@@ -249,7 +249,7 @@ export default function NotificationPreferences() {
             <Button
               onClick={handleEnableNotifications}
               disabled={saving}
-              className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+              className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black"
             >
               Enable
             </Button>

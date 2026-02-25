@@ -148,7 +148,7 @@ export function ShopCartPanel({ showTitle = true } = {}) {
           <Button
             onClick={onApply}
             disabled={isLoading || !String(code || '').trim()}
-            className="bg-[#FF1493] text-black hover:bg-white font-black uppercase"
+            className="bg-[#C8962C] text-black hover:bg-white font-black uppercase"
           >
             Apply
           </Button>
@@ -182,7 +182,7 @@ export default function ShopCartDrawer() {
         >
           <ShoppingCart className="w-5 h-5" />
           {(cart?.totalQuantity || 0) > 0 ? (
-            <span className="absolute -top-1 -right-1 bg-[#FF1493] text-black text-[10px] font-black rounded-full px-1.5 py-0.5">
+            <span className="absolute -top-1 -right-1 bg-[#C8962C] text-black text-[10px] font-black rounded-full px-1.5 py-0.5">
               {cart.totalQuantity}
             </span>
           ) : null}

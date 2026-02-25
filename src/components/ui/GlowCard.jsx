@@ -20,8 +20,8 @@ const glowVariants = {
     glowColor: "hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]",
   },
   neon: {
-    borderColor: "border-[#FF1493]/30",
-    hoverBorder: "hover:border-[#FF1493]",
+    borderColor: "border-[#C8962C]/30",
+    hoverBorder: "hover:border-[#C8962C]",
     glowColor: "hover:shadow-[0_0_30px_rgba(255,20,147,0.4)]",
   },
   cyber: {

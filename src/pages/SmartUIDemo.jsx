@@ -18,7 +18,7 @@ export default function SmartUIDemo() {
     id: '1',
     email: 'demo@example.com',
     full_name: 'Alex Thompson',
-    avatar_url: 'https://ui-avatars.com/api/?name=Alex+Thompson&size=400&background=FF1493&color=ffffff',
+    avatar_url: 'https://ui-avatars.com/api/?name=Alex+Thompson&size=400&background=C8962C&color=ffffff',
     profile_type: 'premium',
     bio: 'Music lover, night owl, and adventure seeker. Always up for spontaneous plans!',
     city: 'London',
@@ -55,7 +55,7 @@ export default function SmartUIDemo() {
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-[#FF1493] via-[#00D9FF] to-[#FFD700] bg-clip-text text-transparent">
+          <h1 className="text-5xl font-black bg-gradient-to-r from-[#C8962C] via-[#00D9FF] to-[#FFD700] bg-clip-text text-transparent">
             Smart Dynamic UI System
           </h1>
           <p className="text-white/60 text-lg">
@@ -112,7 +112,7 @@ export default function SmartUIDemo() {
           </div>
 
           <div className="flex flex-wrap gap-4">
-            <MagneticButton className="bg-[#FF1493] text-white px-6 py-3 rounded-lg font-bold">
+            <MagneticButton className="bg-[#C8962C] text-white px-6 py-3 rounded-lg font-bold">
               Hover Me!
             </MagneticButton>
             <MagneticButton className="bg-gradient-to-r from-[#00D9FF] to-[#3B82F6] text-white px-6 py-3 rounded-lg font-bold">
@@ -213,7 +213,7 @@ export default function SmartUIDemo() {
                 id: '1',
                 size: '2x2',
                 content: (
-                  <div className="h-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-lg p-6 flex flex-col justify-end">
+                  <div className="h-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] rounded-lg p-6 flex flex-col justify-end">
                     <div className="flex items-center gap-2 mb-2">
                       <Star className="w-5 h-5 text-white" />
                       <span className="text-sm font-bold text-white uppercase">Featured</span>
@@ -255,7 +255,7 @@ export default function SmartUIDemo() {
                 id: '4',
                 size: '1x2',
                 content: (
-                  <div className="h-full bg-gradient-to-br from-[#B026FF] to-[#FF1493] rounded-lg p-4 flex flex-col justify-center">
+                  <div className="h-full bg-gradient-to-br from-[#B026FF] to-[#C8962C] rounded-lg p-4 flex flex-col justify-center">
                     <h4 className="text-white font-bold mb-2">Tall Card</h4>
                     <p className="text-white/60 text-sm">Featured items get 1x2 space</p>
                   </div>

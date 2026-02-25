@@ -18,7 +18,7 @@ export default function RightNowIndicator({ status, compact = false }) {
 
   if (compact) {
     return (
-      <div className="inline-flex items-center gap-1 px-2 py-1 bg-[#FF1493] text-black text-xs font-black uppercase border-2 border-white animate-pulse">
+      <div className="inline-flex items-center gap-1 px-2 py-1 bg-[#C8962C] text-black text-xs font-black uppercase border-2 border-white animate-pulse">
         <Zap className="w-3 h-3" />
         LIVE
       </div>
@@ -26,12 +26,12 @@ export default function RightNowIndicator({ status, compact = false }) {
   }
 
   return (
-    <div className="bg-gradient-to-r from-[#FF1493]/20 to-[#FF1493]/10 border-2 border-[#FF1493] p-4 space-y-3">
+    <div className="bg-gradient-to-r from-[#C8962C]/20 to-[#C8962C]/10 border-2 border-[#C8962C] p-4 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-[#FF1493] rounded-full animate-pulse" />
-          <span className="text-xs font-black uppercase text-[#FF1493]">RIGHT NOW</span>
+          <div className="w-3 h-3 bg-[#C8962C] rounded-full animate-pulse" />
+          <span className="text-xs font-black uppercase text-[#C8962C]">RIGHT NOW</span>
         </div>
         <div className="flex items-center gap-1 text-xs text-white/60">
           <Clock className="w-3 h-3" />
@@ -47,7 +47,7 @@ export default function RightNowIndicator({ status, compact = false }) {
             return (
               <div
                 key={log}
-                className="flex items-center gap-1 px-2 py-1 bg-black/40 border border-[#FF1493]/40 text-[#FF1493] text-xs font-bold uppercase"
+                className="flex items-center gap-1 px-2 py-1 bg-black/40 border border-[#C8962C]/40 text-[#C8962C] text-xs font-bold uppercase"
               >
                 <Icon className="w-3 h-3" />
                 {log.replace('_', ' ')}

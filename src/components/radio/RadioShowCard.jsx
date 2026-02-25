@@ -123,7 +123,7 @@ export default function RadioShowCard({
     <motion.div
       className={`
         relative overflow-hidden border-2 border-white/10 
-        hover:border-[#FF1493] transition-colors cursor-pointer
+        hover:border-[#C8962C] transition-colors cursor-pointer
         ${variants[variant]} ${className}
       `}
       onMouseEnter={handleMouseEnter}
@@ -141,7 +141,7 @@ export default function RadioShowCard({
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${show.color || 'from-[#FF1493] to-[#B026FF]'}`} />
+          <div className={`w-full h-full bg-gradient-to-br ${show.color || 'from-[#C8962C] to-[#B026FF]'}`} />
         )}
         
         {/* Gradient overlay */}
@@ -185,8 +185,8 @@ export default function RadioShowCard({
                 w-10 h-10 flex items-center justify-center
                 border-2 transition-all
                 ${stingerPlaying 
-                  ? 'bg-[#FF1493] border-[#FF1493]' 
-                  : 'bg-black/60 border-white/30 hover:border-[#FF1493]'
+                  ? 'bg-[#C8962C] border-[#C8962C]' 
+                  : 'bg-black/60 border-white/30 hover:border-[#C8962C]'
                 }
               `}
             >
@@ -243,7 +243,7 @@ export default function RadioShowCard({
           <div className="flex gap-2">
             <Button
               size="sm"
-              className="bg-[#FF1493] hover:bg-[#FF1493]/80 text-white font-bold"
+              className="bg-[#C8962C] hover:bg-[#C8962C]/80 text-white font-bold"
               onClick={(e) => {
                 e.stopPropagation();
                 // Navigate to live stream with this show

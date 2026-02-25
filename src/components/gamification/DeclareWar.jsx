@@ -2,7 +2,7 @@ import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Swords, Zap, AlertTriangle } from 'lucide-react';
+import { Swords, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -21,14 +21,6 @@ export default function DeclareWar({ venueId, kingData, currentUser }) {
 
   const warMutation = useMutation({
     mutationFn: async () => {
-      // Deduct 500 XP
-      const newXp = (currentUser.xp || 0) - 500;
-      if (newXp < 0) {
-        throw new Error('Insufficient XP');
-      }
-
-      await base44.auth.updateMe({ xp: newXp });
-
       // Update king data to trigger war
       await base44.entities.VenueKing.update(kingData.id, {
         war_active: true,
@@ -40,14 +32,14 @@ export default function DeclareWar({ venueId, kingData, currentUser }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['venue-king']);
-      toast.success('WAR DECLARED! 2x XP for 24 hours!');
+      toast.success('WAR DECLARED! 24 hours of war mode!');
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to declare war');
     },
   });
 
-  const canDeclareWar = (currentUser?.xp || 0) >= 500;
+  const canDeclareWar = !!currentUser;
   const isWarActive = kingData?.war_active && kingData?.war_started_at && 
     (Date.now() - new Date(kingData.war_started_at).getTime() < 24 * 60 * 60 * 1000);
 
@@ -61,7 +53,7 @@ export default function DeclareWar({ venueId, kingData, currentUser }) {
           className="w-full bg-red-500 hover:bg-red-600 text-black font-black border-2 border-red-600"
         >
           <Swords className="w-4 h-4 mr-2" />
-          DECLARE WAR (500 XP)
+          DECLARE WAR
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="bg-black border-2 border-red-500 text-white">
@@ -71,20 +63,19 @@ export default function DeclareWar({ venueId, kingData, currentUser }) {
             DECLARE WAR?
           </AlertDialogTitle>
           <AlertDialogDescription className="text-white/80">
-            Spend 500 XP to trigger a 24-hour WAR state at this venue.
+            Trigger a 24-hour WAR state at this venue.
           </AlertDialogDescription>
         </AlertDialogHeader>
         
         <div className="bg-red-500/20 border border-red-500 p-4 my-4">
           <div className="flex items-center gap-2 mb-3">
-            <Zap className="w-5 h-5 text-red-500" />
+            <Swords className="w-5 h-5 text-red-500" />
             <p className="font-black uppercase text-sm">WAR EFFECTS</p>
           </div>
           <ul className="space-y-2 text-sm text-white/80">
-            <li>• 2x XP multiplier for all scans at this venue</li>
+            <li>• War mode active for all scans at this venue</li>
             <li>• Lasts for 24 hours</li>
-            <li>• King still collects 1 XP tax per scan</li>
-            <li>• Challenge the crown with double rewards</li>
+            <li>• Challenge the crown</li>
           </ul>
         </div>
 

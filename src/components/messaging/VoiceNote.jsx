@@ -51,7 +51,7 @@ const generateWaveformBars = (analyserNode, dataArray, barCount = 32) => {
 // WAVEFORM VISUALIZER
 // =============================================================================
 
-function WaveformVisualizer({ bars, isPlaying, color = '#FF1493' }) {
+function WaveformVisualizer({ bars, isPlaying, color = '#C8962C' }) {
   return (
     <div className="flex items-center gap-[2px] h-10">
       {bars.map((height, i) => (
@@ -307,7 +307,7 @@ export default function VoiceNote({
           >
             <Button
               onClick={startRecording}
-              className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold"
+              className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold"
             >
               <Mic className="w-5 h-5 mr-2" />
               Record Voice Note
@@ -326,12 +326,12 @@ export default function VoiceNote({
           >
             {/* Waveform */}
             <div className="flex items-center justify-center">
-              <WaveformVisualizer bars={waveformBars} isPlaying={true} color="#FF1493" />
+              <WaveformVisualizer bars={waveformBars} isPlaying={true} color="#C8962C" />
             </div>
 
             {/* Timer */}
             <div className="text-center">
-              <span className="text-2xl font-mono text-[#FF1493]">
+              <span className="text-2xl font-mono text-[#C8962C]">
                 {formatDuration(duration)}
               </span>
               <span className="text-white/40 text-sm ml-2">
@@ -379,7 +379,7 @@ export default function VoiceNote({
               <Button
                 onClick={togglePlayback}
                 size="icon"
-                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black w-12 h-12 rounded-full"
+                className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black w-12 h-12 rounded-full"
               >
                 {playing ? (
                   <Pause className="w-6 h-6" />
@@ -392,7 +392,7 @@ export default function VoiceNote({
                 {/* Progress bar */}
                 <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                   <motion.div
-                    className="h-full bg-[#FF1493]"
+                    className="h-full bg-[#C8962C]"
                     style={{ width: `${(playbackTime / duration) * 100}%` }}
                   />
                 </div>
@@ -416,7 +416,7 @@ export default function VoiceNote({
               <Button
                 onClick={handleSend}
                 disabled={sending}
-                className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold"
+                className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold"
               >
                 {sending ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -447,7 +447,7 @@ export function VoiceNoteButton({ onRecordingComplete, className }) {
         onClick={() => setShowRecorder(true)}
         variant="ghost"
         size="icon"
-        className={cn("text-white/60 hover:text-[#FF1493]", className)}
+        className={cn("text-white/60 hover:text-[#C8962C]", className)}
       >
         <Mic className="w-5 h-5" />
       </Button>
@@ -458,7 +458,7 @@ export function VoiceNoteButton({ onRecordingComplete, className }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed inset-x-0 bottom-0 z-[80] p-4 bg-black border-t-2 border-[#FF1493]"
+            className="fixed inset-x-0 bottom-0 z-[80] p-4 bg-black border-t-2 border-[#C8962C]"
           >
             <VoiceNote
               onSend={async (blob, duration) => {
@@ -508,7 +508,7 @@ export function VoiceNotePlayer({ audioUrl, duration, className }) {
       <Button
         onClick={togglePlay}
         size="icon"
-        className="w-10 h-10 rounded-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black"
+        className="w-10 h-10 rounded-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black"
       >
         {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
       </Button>
@@ -516,7 +516,7 @@ export function VoiceNotePlayer({ audioUrl, duration, className }) {
       <div className="flex-1">
         <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
           <div
-            className="h-full bg-[#FF1493] transition-all"
+            className="h-full bg-[#C8962C] transition-all"
             style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
           />
         </div>

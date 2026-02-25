@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Trophy, Zap, Users, MapPin, Target, Clock } from 'lucide-react';
+import { Trophy, Users, MapPin, Target, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
@@ -23,25 +23,22 @@ export default function SquadChallenges({ squadId, currentUser }) {
         status: 'completed',
         completed_at: new Date().toISOString(),
       });
-      
-      const newXp = (currentUser.xp || 0) + challenge.reward_xp;
-      await base44.auth.updateMe({ xp: newXp });
     },
-    onSuccess: (_, challenge) => {
+    onSuccess: () => {
       queryClient.invalidateQueries(['squad-challenges']);
-      toast.success(`Squad earned ${challenge.reward_xp} XP!`);
+      toast.success('Challenge complete!');
     },
   });
 
   const CHALLENGE_ICONS = {
-    xp_race: Zap,
+    xp_race: Trophy,
     venue_conquest: MapPin,
     scan_marathon: Target,
     recruitment: Users,
   };
 
   const CHALLENGE_LABELS = {
-    xp_race: 'XP Race',
+    xp_race: 'Race',
     venue_conquest: 'Venue Conquest',
     scan_marathon: 'Scan Marathon',
     recruitment: 'Recruitment Drive',
@@ -50,7 +47,7 @@ export default function SquadChallenges({ squadId, currentUser }) {
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-black uppercase flex items-center gap-2">
-        <Trophy className="w-5 h-5 text-[#FFEB3B]" />
+        <Trophy className="w-5 h-5 text-[#C8962C]" />
         Squad Challenges ({challenges.length})
       </h3>
 
@@ -83,7 +80,7 @@ export default function SquadChallenges({ squadId, currentUser }) {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 flex items-center justify-center border-2 ${
-                      isComplete ? 'bg-green-500 border-green-600' : 'bg-[#FF1493] border-[#FF1493]'
+                      isComplete ? 'bg-green-500 border-green-600' : 'bg-[#C8962C] border-[#C8962C]'
                     }`}>
                       <Icon className="w-5 h-5 text-black" />
                     </div>
@@ -97,9 +94,6 @@ export default function SquadChallenges({ squadId, currentUser }) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[#FFEB3B] font-black text-sm">
-                      +{challenge.reward_xp} XP
-                    </div>
                     {!isExpired && (
                       <div className="text-xs text-white/40 flex items-center gap-1">
                         <Clock className="w-3 h-3" />

@@ -159,8 +159,8 @@ export default function AgeVerificationGate({
         
         {/* Gate content */}
         <div className="relative z-10 flex flex-col items-center justify-center p-8 text-center min-h-[300px]">
-          <div className="w-16 h-16 bg-[#FF1493]/20 border-2 border-[#FF1493] flex items-center justify-center mb-6">
-            <Lock className="w-8 h-8 text-[#FF1493]" />
+          <div className="w-16 h-16 bg-[#C8962C]/20 border-2 border-[#C8962C] flex items-center justify-center mb-6">
+            <Lock className="w-8 h-8 text-[#C8962C]" />
           </div>
 
           <h3 className="text-2xl font-black text-white uppercase mb-2">
@@ -173,7 +173,7 @@ export default function AgeVerificationGate({
 
           <Button
             onClick={() => setShowModal(true)}
-            className="bg-[#FF1493] hover:bg-[#FF1493]/80 text-white font-bold"
+            className="bg-[#C8962C] hover:bg-[#C8962C]/80 text-white font-bold"
           >
             <ShieldCheck className="w-4 h-4 mr-2" />
             Verify Age (18+)
@@ -191,8 +191,8 @@ export default function AgeVerificationGate({
           <div className="p-6">
             {/* Header */}
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-12 bg-[#FF1493]/20 border border-[#FF1493] flex items-center justify-center">
-                <ShieldCheck className="w-6 h-6 text-[#FF1493]" />
+              <div className="w-12 h-12 bg-[#C8962C]/20 border border-[#C8962C] flex items-center justify-center">
+                <ShieldCheck className="w-6 h-6 text-[#C8962C]" />
               </div>
               <div>
                 <h2 className="text-xl font-black uppercase">Age Verification</h2>
@@ -201,8 +201,8 @@ export default function AgeVerificationGate({
             </div>
 
             {/* Warning */}
-            <div className="flex items-start gap-3 p-4 bg-[#FFB800]/10 border border-[#FFB800]/30 mb-6">
-              <AlertTriangle className="w-5 h-5 text-[#FFB800] flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-4 bg-[#C8962C]/10 border border-[#C8962C]/30 mb-6">
+              <AlertTriangle className="w-5 h-5 text-[#C8962C] flex-shrink-0 mt-0.5" />
               <p className="text-sm text-white/80">
                 By continuing, you confirm you are at least 18 years old and legally permitted to view adult content in your jurisdiction.
               </p>
@@ -222,12 +222,12 @@ export default function AgeVerificationGate({
                     <button
                       key={method.id}
                       onClick={() => handleSelectMethod(method.id)}
-                      className="w-full p-4 border border-white/20 hover:border-[#FF1493] 
+                      className="w-full p-4 border border-white/20 hover:border-[#C8962C] 
                                  bg-white/5 hover:bg-white/10 transition-all text-left group"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <Icon className="w-5 h-5 text-[#FF1493]" />
+                          <Icon className="w-5 h-5 text-[#C8962C]" />
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-white">{method.title}</span>
@@ -240,7 +240,7 @@ export default function AgeVerificationGate({
                             <p className="text-xs text-white/50">{method.description}</p>
                           </div>
                         </div>
-                        <ArrowRight className="w-4 h-4 text-white/30 group-hover:text-[#FF1493] transition-colors" />
+                        <ArrowRight className="w-4 h-4 text-white/30 group-hover:text-[#C8962C] transition-colors" />
                       </div>
                       {method.note && (
                         <p className="mt-2 text-[10px] text-white/40 ml-9">{method.note}</p>
@@ -254,7 +254,7 @@ export default function AgeVerificationGate({
             {/* Verifying state */}
             {verifying && (
               <div className="text-center py-8">
-                <Loader2 className="w-10 h-10 animate-spin text-[#FF1493] mx-auto mb-4" />
+                <Loader2 className="w-10 h-10 animate-spin text-[#C8962C] mx-auto mb-4" />
                 <p className="text-white/80 mb-2">Verifying your age...</p>
                 <p className="text-xs text-white/40">This usually takes a few seconds</p>
               </div>

@@ -4,8 +4,8 @@ import { X, MapPin, Clock, Zap, Users, ExternalLink, TrendingUp } from 'lucide-r
 import { format } from 'date-fns';
 
 const BEACON_KIND_CONFIG = {
-  event: { label: 'EVENT', color: '#FF1493', icon: Zap },
-  venue: { label: 'VENUE', color: '#FF1493', icon: MapPin },
+  event: { label: 'EVENT', color: '#C8962C', icon: Zap },
+  venue: { label: 'VENUE', color: '#C8962C', icon: MapPin },
   hookup: { label: 'HOOKUP', color: '#FF073A', icon: Users },
   drop: { label: 'DROP', color: '#FF6B35', icon: TrendingUp },
   popup: { label: 'POPUP', color: '#B026FF', icon: MapPin },
@@ -76,7 +76,7 @@ function BeaconDetail({ beacon, onClose }) {
       <div className="p-5 space-y-4">
         {beacon.venue_name && (
           <div className="flex items-center gap-3 mb-2">
-            <MapPin className="w-4 h-4 text-[#FF1493]" />
+            <MapPin className="w-4 h-4 text-[#C8962C]" />
             <span className="text-white text-sm font-bold">
               {beacon.venue_name}
             </span>
@@ -135,16 +135,6 @@ function BeaconDetail({ beacon, onClose }) {
           </div>
         )}
 
-        {beacon.xp_scan && (
-          <div className="flex items-center justify-between p-3 rounded-xl bg-[#FF1493]/10 border border-[#FF1493]/20">
-            <span className="text-[10px] tracking-[0.25em] text-white/60 uppercase font-medium">
-              SCAN XP
-            </span>
-            <span className="text-lg text-[#FF1493] font-bold">
-              +{beacon.xp_scan} XP
-            </span>
-          </div>
-        )}
       </div>
     </motion.div>
   );
@@ -162,8 +152,8 @@ function ActivityFeed({ activities, onBeaconSelect }) {
           <motion.div
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="w-2 h-2 rounded-full bg-[#FF1493]"
-            style={{ boxShadow: '0 0 8px #FF1493' }}
+            className="w-2 h-2 rounded-full bg-[#C8962C]"
+            style={{ boxShadow: '0 0 8px #C8962C' }}
           />
         </div>
       </div>

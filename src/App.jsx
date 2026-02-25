@@ -1,5 +1,5 @@
 import { Toaster } from "@/components/ui/sonner"
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense, lazy } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
@@ -29,9 +29,26 @@ import { PageTransition } from '@/components/lux/PageTransition';
 import UnifiedGlobe from '@/components/globe/UnifiedGlobe';
 import { SheetProvider } from '@/contexts/SheetContext';
 import SheetRouter from '@/components/sheets/SheetRouter';
+import { SOSProvider, useSOSContext } from '@/contexts/SOSContext';
+import { SOSButton } from '@/components/sos/SOSButton';
+import SOSOverlay from '@/components/interrupts/SOSOverlay';
+import IncomingCallBanner from '@/components/calls/IncomingCallBanner';
 import { useViewportHeight } from '@/hooks/useMobileDynamics';
 import { PinLockProvider } from '@/contexts/PinLockContext';
 import PinLockOverlay from '@/components/auth/PinLockScreen';
+import { OSBottomNav } from '@/modes/OSBottomNav';
+import { RadioProvider } from '@/contexts/RadioContext';
+import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+
+const HomeMode = lazy(() => import('@/modes/HomeMode'));
+const GhostedMode = lazy(() => import('@/modes/GhostedMode'));
+const PulseMode = lazy(() => import('@/modes/PulseMode'));
+const RadioMode = lazy(() => import('@/modes/RadioMode'));
+const ProfileMode = lazy(() => import('@/modes/ProfileMode'));
+const MarketMode = lazy(() => import('@/modes/MarketMode').then(m => ({ default: m.MarketMode })));
+const EventsMode  = lazy(() => import('@/modes/EventsMode'));
+const VaultMode   = lazy(() => import('@/modes/VaultMode'));
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -314,9 +331,10 @@ const AuthenticatedApp = () => {
       <Routes>
       {/* V1.5 canonical routes (Bible) - OS 5-Mode Structure */}
       
-      {/* GHOSTED (default) - Proximity Grid */}
-      <Route path="/" element={<PageRoute pageKey="ProfilesGrid" />} />
-      <Route path="/ghosted" element={<Navigate to="/" replace />} />
+      {/* HOME - Dashboard */}
+      <Route path="/" element={<Suspense fallback={null}><HomeMode /></Suspense>} />
+      {/* GHOSTED - Proximity Grid */}
+      <Route path="/ghosted" element={<Suspense fallback={null}><GhostedMode /></Suspense>} />
       
       {/* Auth & Onboarding (unchanged) */}
       <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
@@ -324,30 +342,25 @@ const AuthenticatedApp = () => {
       <Route path="/onboarding" element={<PageRoute pageKey="OnboardingGate" />} />
       <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
       
-      {/* PULSE - Globe + Events */}
-      <Route path="/pulse" element={<PageRoute pageKey="Pulse" />} />
+      {/* PULSE - Mode (no Layout) */}
+      <Route path="/pulse" element={<Suspense fallback={null}><PulseMode /></Suspense>} />
       <Route path="/globe" element={<Navigate to="/pulse" replace />} />
-      <Route path="/events" element={<PageRoute pageKey="Events" />} />
+      <Route path="/events" element={<Suspense fallback={null}><EventsMode /></Suspense>} />
+      <Route path="/events/*" element={<Suspense fallback={null}><EventsMode /></Suspense>} />
       <Route path="/events/:id" element={<EventDetailRedirect />} />
-      {/* Market (canonical) -> headless Shopify shop */}
-      <Route path="/market" element={<ShopHomeRoute />} />
-      <Route path="/market/creators" element={<CreatorsMarketRoute />} />
-      <Route path="/market/creators/p/:id" element={<CreatorsProductRoute />} />
-      <Route path="/market/creators/cart" element={<CreatorsCartRoute />} />
-      <Route path="/market/creators/checkout" element={<CreatorsCheckoutRoute />} />
-      <Route path="/market/creators/checkout-success" element={<CreatorsCheckoutSuccessRoute />} />
-      <Route path="/market/:collection" element={<ShopCollectionRoute />} />
-      <Route path="/market/p/:handle" element={<ShopProductRoute />} />
+      {/* Market (canonical) -> MarketMode (no Layout) */}
+      <Route path="/market" element={<Suspense fallback={null}><MarketMode /></Suspense>} />
+      <Route path="/market/*" element={<Suspense fallback={null}><MarketMode /></Suspense>} />
       <Route path="/social" element={<Navigate to="/" replace />} />
       <Route path="/social/discover" element={<Navigate to="/" replace />} />
       <Route path="/social/inbox" element={<PageRoute pageKey="Messages" />} />
       <Route path="/social/u/:id" element={<SocialUserRedirect />} />
       <Route path="/social/t/:threadId" element={<SocialThreadRedirect />} />
       
-      {/* RADIO - Music & Live Shows */}
-      <Route path="/radio" element={<PageRoute pageKey="Radio" />} />
-      <Route path="/radio/schedule" element={<PageRoute pageKey="RadioSchedule" />} />
-      <Route path="/radio/live" element={<PageRoute pageKey="Radio" />} />
+      {/* RADIO - Mode (no Layout) */}
+      <Route path="/radio" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
+      <Route path="/radio/schedule" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
+      <Route path="/radio/live" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
       <Route path="/music" element={<Navigate to="/radio" replace />} />
       <Route path="/music/live" element={<Navigate to="/radio" replace />} />
       <Route path="/music/shows" element={<Navigate to="/radio/schedule" replace />} />
@@ -365,10 +378,10 @@ const AuthenticatedApp = () => {
       <Route path="/music/artists/:id" element={<Navigate to="/radio" replace />} />
       <Route path="/music/clips/:id" element={<Navigate to="/radio" replace />} />
       
-      {/* PROFILE - User Authority */}
-      <Route path="/profile" element={<PageRoute pageKey="Profile" />} />
-      <Route path="/profile/edit" element={<PageRoute pageKey="EditProfile" />} />
-      <Route path="/profile/:id" element={<PageRoute pageKey="Profile" />} />
+      {/* PROFILE - Mode (no Layout) */}
+      <Route path="/profile" element={<Suspense fallback={null}><ProfileMode /></Suspense>} />
+      <Route path="/profile/edit" element={<Suspense fallback={null}><ProfileMode /></Suspense>} />
+      <Route path="/profile/:id" element={<Suspense fallback={null}><ProfileMode /></Suspense>} />
       
       <Route path="/hnhmess" element={<PageRoute pageKey="Hnhmess" />} />
       <Route path="/more" element={<PageRoute pageKey="More" />} />
@@ -431,8 +444,9 @@ const AuthenticatedApp = () => {
       <Route path="/more/beacons/:id" element={<EventDetailRedirect />} />
       <Route path="/more/beacons/:id/edit" element={<EditBeaconRedirect />} />
       <Route path="/more/stats" element={<PageRoute pageKey="Stats" />} />
-      <Route path="/more/vault" element={<PageRoute pageKey="Vault" />} />
-      <Route path="/vault" element={<PageRoute pageKey="Vault" />} />
+      <Route path="/more/vault" element={<Suspense fallback={null}><VaultMode /></Suspense>} />
+      <Route path="/vault" element={<Suspense fallback={null}><VaultMode /></Suspense>} />
+      <Route path="/vault/*" element={<Suspense fallback={null}><VaultMode /></Suspense>} />
       <Route path="/more/challenges" element={<PageRoute pageKey="Challenges" />} />
       <Route path="/more/settings" element={<PageRoute pageKey="Settings" />} />
       <Route path="/more/care" element={<PageRoute pageKey="Care" />} />
@@ -489,8 +503,7 @@ const AuthenticatedApp = () => {
       <Route path="/biz/onboarding" element={<PageRoute pageKey="BusinessOnboarding" />} />
 
       {/* Legacy lowercase routes -> canonical V1.5 routes */}
-      <Route path="/radio" element={<Navigate to={createPageUrl('Radio')} replace />} />
-      <Route path="/radio/schedule" element={<Navigate to={createPageUrl('RadioSchedule')} replace />} />
+      {/* /radio and /radio/schedule already declared above as PageRoutes (no duplicate needed) */}
       <Route path="/connect" element={<Navigate to={createPageUrl('Social')} replace />} />
       <Route path="/connect/*" element={<Navigate to={createPageUrl('Social')} replace />} />
       <Route path="/marketplace" element={<Navigate to="/market" replace />} />
@@ -548,21 +561,25 @@ function App() {
             <QueryClientProvider client={queryClientInstance}>
               <WorldPulseProvider>
                 <ShopCartProvider>
-                  <Router>
-                    <SheetProvider>
-                      <NavigationTracker />
-                      <BootRouter>
-                        {/* 
-                          L0-L3 Layered OS Architecture
-                          - UnifiedGlobe is persistent, never unmounts
-                          - All navigation happens via SheetContext
-                          - Router only handles URL sync, not page mounts
-                        */}
-                        <OSArchitecture />
-                      </BootRouter>
-                      {/* L2 Sheet System - Renders over everything, outside route remount boundary */}
-                      <SheetRouter />
-                    </SheetProvider>
+                  <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                    <SOSProvider>
+                      <SheetProvider>
+                        <NavigationTracker />
+                        <BootRouter>
+                          {/*
+                            L0-L3 Layered OS Architecture
+                            - UnifiedGlobe is persistent, never unmounts
+                            - All navigation happens via SheetContext
+                            - Router only handles URL sync, not page mounts
+                          */}
+                          <RadioProvider>
+                            <OSArchitecture />
+                          </RadioProvider>
+                        </BootRouter>
+                        {/* L2 Sheet System - Renders over everything, outside route remount boundary */}
+                        <SheetRouter />
+                      </SheetProvider>
+                    </SOSProvider>
                   </Router>
                 </ShopCartProvider>
               </WorldPulseProvider>
@@ -587,14 +604,41 @@ function App() {
 function OSArchitecture() {
   // Initialize dynamic viewport height for mobile browsers
   useViewportHeight();
-  
+  // Register service worker + request push permission on first load
+  usePushNotifications();
+  const { sosActive, triggerSOS, clearSOS } = useSOSContext();
+  const location = useLocation();
+
+  // Hide mini player when on /radio — full player is visible there
+  const onRadioRoute = location.pathname === '/radio' || location.pathname.startsWith('/radio/');
+
   return (
     <div className="hotmess-os relative h-dvh w-full overflow-hidden bg-[#050507]">
       {/* L0: Persistent Globe Layer (Z-0) */}
       <UnifiedGlobe />
-      
-      {/* L1-L3: Everything else */}
-      <AuthenticatedApp />
+
+      {/* L1-L3: Everything else — absolute, covers globe, full-height */}
+      <div className="absolute inset-0 z-10 h-full w-full">
+        <AuthenticatedApp />
+      </div>
+
+      {/* Radio Mini Player — sits just above OSBottomNav (Z-40) */}
+      <RadioMiniPlayer hidden={onRadioRoute} />
+
+      {/* L1: OS Bottom Nav — amber-circle 5-tab nav */}
+      <OSBottomNav />
+
+      {/* L3: SOS long-press trigger — above nav, below overlays (Z-190) */}
+      <SOSButton
+        className="fixed bottom-24 right-4 z-[190]"
+        onTrigger={triggerSOS}
+      />
+
+      {/* L3: SOS Overlay — blocks entire OS, stops all sharing (Z-200) */}
+      {sosActive && <SOSOverlay onClose={clearSOS} />}
+
+      {/* Incoming call banner — fixed top, z-[180], below SOS z-200 */}
+      <IncomingCallBanner />
     </div>
   );
 }

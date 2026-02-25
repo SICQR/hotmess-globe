@@ -93,7 +93,7 @@ export function BeaconComposer({
       {/* Location indicator */}
       {defaultLocation && (
         <div className="flex items-center gap-2 text-sm text-white/60">
-          <MapPin size={14} className="text-[#FF1493]" />
+          <MapPin size={14} className="text-[#C8962C]" />
           <span>Beacon will drop at your current location</span>
         </div>
       )}

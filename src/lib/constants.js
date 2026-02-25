@@ -88,15 +88,15 @@ export const ACHIEVEMENTS = {
 export const PERSONA_TYPES = {
   MAIN: { label: 'Main', color: '#FFFFFF', icon: 'User' },
   TRAVEL: { label: 'Travel', color: '#00D9FF', icon: 'Plane' },
-  WEEKEND: { label: 'Weekend', color: '#FF1493', icon: 'PartyPopper' },
+  WEEKEND: { label: 'Weekend', color: '#C8962C', icon: 'PartyPopper' },
   CUSTOM: { label: 'Custom', color: '#B026FF', icon: 'Sparkles' }
 };
 
 // Content ratings
 export const CONTENT_RATINGS = {
   sfw: { label: 'Safe for Work', color: '#39FF14', restricted: false },
-  suggestive: { label: 'Suggestive', color: '#FFB800', restricted: false },
-  nsfw: { label: 'NSFW', color: '#FF1493', restricted: true },
+  suggestive: { label: 'Suggestive', color: '#C8962C', restricted: false },
+  nsfw: { label: 'NSFW', color: '#C8962C', restricted: true },
   xxx: { label: 'Explicit', color: '#B026FF', restricted: true, requires2257: true }
 };
 
@@ -104,8 +104,8 @@ export const CONTENT_RATINGS = {
 export const BEACON_TIERS = {
   basic_3h: { name: 'Basic', hours: 3, price: 999, reach: 25, color: '#FFFFFF' },
   standard_6h: { name: 'Standard', hours: 6, price: 1999, reach: 50, color: '#00D9FF' },
-  premium_9h: { name: 'Premium', hours: 9, price: 3999, reach: 100, color: '#FFB800' },
-  featured_12h: { name: 'Featured', hours: 12, price: 7999, reach: 200, color: '#FF1493' },
+  premium_9h: { name: 'Premium', hours: 9, price: 3999, reach: 100, color: '#C8962C' },
+  featured_12h: { name: 'Featured', hours: 12, price: 7999, reach: 200, color: '#C8962C' },
   spotlight_24h: { name: 'Spotlight', hours: 24, price: 14999, reach: 500, color: '#B026FF' }
 };
 
@@ -116,17 +116,17 @@ export const PLATFORM_FEE_PERCENT = 20;
 export const MATCH_LEVELS = {
   exceptional: { min: 85, color: '#39FF14', label: 'Exceptional' },
   great: { min: 70, color: '#00D9FF', label: 'Great' },
-  good: { min: 55, color: '#FFB800', label: 'Good' },
-  moderate: { min: 40, color: '#FF1493', label: 'Moderate' },
+  good: { min: 55, color: '#C8962C', label: 'Good' },
+  moderate: { min: 40, color: '#C8962C', label: 'Moderate' },
   low: { min: 0, color: '#FFFFFF', label: 'Low' }
 };
 
 // Colors (brand)
 export const COLORS = {
-  primary: '#FF1493',
+  primary: '#C8962C',
   secondary: '#B026FF',
   success: '#39FF14',
-  warning: '#FFB800',
+  warning: '#C8962C',
   info: '#00D9FF',
   danger: '#FF0000',
   background: '#000000',

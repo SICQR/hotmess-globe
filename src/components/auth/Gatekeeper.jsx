@@ -76,7 +76,7 @@ export default function Gatekeeper({ children }) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-[#FF1493] mx-auto mb-4 animate-spin" />
+          <Loader2 className="w-12 h-12 text-[#C8962C] mx-auto mb-4 animate-spin" />
           <p className="text-white/60">Loading HOTMESS OS...</p>
         </div>
       </div>

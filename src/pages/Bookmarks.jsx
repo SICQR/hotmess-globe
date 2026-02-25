@@ -109,7 +109,7 @@ export default function Bookmarks() {
             onClick={() => setActiveTab('beacons')}
             className={`flex items-center gap-2 px-6 py-3 rounded-lg font-black uppercase text-sm transition-all ${
               activeTab === 'beacons'
-                ? 'bg-[#FF1493] text-black'
+                ? 'bg-[#C8962C] text-black'
                 : 'bg-white/5 text-white hover:bg-white/10'
             }`}
           >
@@ -120,7 +120,7 @@ export default function Bookmarks() {
             onClick={() => setActiveTab('products')}
             className={`flex items-center gap-2 px-6 py-3 rounded-lg font-black uppercase text-sm transition-all ${
               activeTab === 'products'
-                ? 'bg-[#FF1493] text-black'
+                ? 'bg-[#C8962C] text-black'
                 : 'bg-white/5 text-white hover:bg-white/10'
             }`}
           >
@@ -138,7 +138,7 @@ export default function Bookmarks() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-white/5 border-2 border-white/10 rounded-xl p-5 hover:border-[#FF1493] hover:bg-white/10 transition-all"
+                  className="bg-white/5 border-2 border-white/10 rounded-xl p-5 hover:border-[#C8962C] hover:bg-white/10 transition-all"
                 >
                   {beacon.image_url && (
                     <img src={beacon.image_url} alt={beacon.title} className="w-full h-32 object-cover rounded-lg mb-3" />
@@ -177,12 +177,8 @@ export default function Bookmarks() {
                   <div className="p-4">
                     <h3 className="font-black text-lg mb-2">{product.name}</h3>
                     <div className="flex items-center gap-2">
-                      <span className="text-[#39FF14] font-bold">{product.price_xp} XP</span>
                       {product.price_gbp && (
-                        <>
-                          <span className="text-white/40">•</span>
-                          <span className="text-white/60">£{product.price_gbp}</span>
-                        </>
+                        <span className="text-[#C8962C] font-bold">£{product.price_gbp}</span>
                       )}
                     </div>
                   </div>

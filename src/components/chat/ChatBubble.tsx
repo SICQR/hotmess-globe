@@ -41,21 +41,21 @@ export function ChatBubble({ content, timestamp, isMe, isRead, senderName, sende
           <p className="text-xs text-white/50 mb-0.5 ml-1">{senderName}</p>
         )}
         
-        <div 
-          className={`px-3 py-2 rounded-2xl ${
-            isMe 
-              ? 'bg-fuchsia-600 text-white rounded-br-sm' 
-              : 'bg-zinc-800 text-white rounded-bl-sm'
+        <div
+          className={`px-4 py-2.5 rounded-2xl ${
+            isMe
+              ? 'bg-[#C8962C] text-white rounded-br-sm'
+              : 'bg-[#1C1C1E] text-white rounded-bl-sm'
           }`}
         >
           <p className="text-sm whitespace-pre-wrap break-words">{content}</p>
         </div>
-        
+
         <div className={`flex items-center gap-1 mt-0.5 ${isMe ? 'justify-end' : 'justify-start'}`}>
           <span className="text-[10px] text-white/40">{formatTime(timestamp)}</span>
           {isMe && (
-            isRead 
-              ? <CheckCheck className="w-3 h-3 text-fuchsia-400" />
+            isRead
+              ? <CheckCheck className="w-3 h-3 text-white/70" />
               : <Check className="w-3 h-3 text-white/40" />
           )}
         </div>

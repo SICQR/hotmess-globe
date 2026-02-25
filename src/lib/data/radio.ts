@@ -35,8 +35,10 @@ export interface RadioScheduleDay {
   shows: RadioShow[];
 }
 
-// Default stream URL (can be overridden by env)
-const DEFAULT_STREAM_URL = 'https://stream.hotmess.app/live';
+// Default stream URL — RadioKing live stream
+const DEFAULT_STREAM_URL =
+  import.meta.env.NEXT_PUBLIC_RADIOKING_STREAM_URL ||
+  'https://listen.radioking.com/radio/736103/stream/802454';
 
 /**
  * Get current radio state

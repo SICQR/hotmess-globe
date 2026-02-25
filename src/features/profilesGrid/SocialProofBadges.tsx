@@ -28,7 +28,7 @@ const BADGE_CONFIG: Record<SocialProofType, Omit<SocialProofBadge, 'type'>> = {
   hot: {
     label: 'Hot',
     icon: Zap,
-    color: '#FF1493',
+    color: '#C8962C',
     bgColor: 'rgba(255, 20, 147, 0.2)',
   },
   online: {

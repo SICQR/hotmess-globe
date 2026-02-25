@@ -137,7 +137,7 @@ export default function CreatorProfileView({ user, currentUser }) {
 
         <div className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black/30">
           {activeIsPremium ? (
-            <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#FF1493]/15 border border-[#FFD700]/40 flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#C8962C]/15 border border-[#FFD700]/40 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-3xl mb-2">🔒</div>
                 <div className="text-xs text-[#FFD700] font-black uppercase">Premium</div>
@@ -175,7 +175,7 @@ export default function CreatorProfileView({ user, currentUser }) {
                 disabled={!url}
               >
                 {premium ? (
-                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#FF1493]/15 flex items-center justify-center">
+                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#C8962C]/15 flex items-center justify-center">
                     <div className="text-xs text-[#FFD700] font-black">🔒</div>
                   </div>
                 ) : url ? (
@@ -191,7 +191,7 @@ export default function CreatorProfileView({ user, currentUser }) {
 
       {/* Creator Bio */}
       {(user?.creator_bio || user?.bio) && (
-        <div className="bg-gradient-to-br from-[#B026FF]/10 to-[#FF1493]/10 border border-[#B026FF]/30 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#B026FF]/10 to-[#C8962C]/10 border border-[#B026FF]/30 rounded-xl p-6">
           <h3 className="text-sm uppercase tracking-wider text-[#B026FF] mb-3 flex items-center gap-2">
             <Mic2 className="w-4 h-4" />
             About the Artist
@@ -244,7 +244,7 @@ export default function CreatorProfileView({ user, currentUser }) {
                 to={`/music/releases/${release.release_slug || release.id}`}
                 className="flex items-center gap-4 p-3 bg-black/30 border border-white/10 hover:border-[#B026FF]/50 transition-colors group"
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-[#B026FF]/30 to-[#FF1493]/30 flex items-center justify-center flex-shrink-0">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#B026FF]/30 to-[#C8962C]/30 flex items-center justify-center flex-shrink-0">
                   {release.cover_image || release.image_url ? (
                     <img 
                       src={release.cover_image || release.image_url} 
@@ -432,7 +432,7 @@ export default function CreatorProfileView({ user, currentUser }) {
 
       {/* Collaboration CTA */}
       {user?.email !== currentUser?.email && (
-        <div className="bg-gradient-to-r from-[#B026FF]/20 to-[#FF1493]/20 border border-[#B026FF]/40 rounded-xl p-6 text-center">
+        <div className="bg-gradient-to-r from-[#B026FF]/20 to-[#C8962C]/20 border border-[#B026FF]/40 rounded-xl p-6 text-center">
           <h3 className="text-lg font-black uppercase mb-2">Want to Collaborate?</h3>
           <p className="text-white/60 text-sm mb-4">
             Reach out to discuss bookings, features, or collaborations

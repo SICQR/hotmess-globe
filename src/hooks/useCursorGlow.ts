@@ -117,7 +117,7 @@ export function useBorderGlow(
     disabled?: boolean;
   } = {}
 ) {
-  const { color = '#FF1493', width = 2, disabled = false } = options;
+  const { color = '#C8962C', width = 2, disabled = false } = options;
 
   useEffect(() => {
     const el = ref.current;
@@ -214,7 +214,7 @@ export const cursorGlowCSS = `
   background: linear-gradient(
     calc(var(--border-x, 50%) * 3.6deg),
     transparent,
-    #FF1493,
+    #C8962C,
     transparent
   );
   -webkit-mask: 

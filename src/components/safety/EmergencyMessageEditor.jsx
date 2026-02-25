@@ -41,7 +41,7 @@ export default function EmergencyMessageEditor() {
     <div className="bg-white/5 border border-white/10 p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-black uppercase flex items-center gap-2">
-          <MessageSquare className="w-5 h-5 text-[#FF1493]" />
+          <MessageSquare className="w-5 h-5 text-[#C8962C]" />
           Emergency Message
         </h3>
         {!editing && (
@@ -82,7 +82,7 @@ export default function EmergencyMessageEditor() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 bg-[#FF1493] hover:bg-white text-white hover:text-black font-black"
+              className="flex-1 bg-[#C8962C] hover:bg-white text-white hover:text-black font-black"
             >
               <Save className="w-4 h-4 mr-2" />
               {saving ? 'Saving...' : 'Save Message'}

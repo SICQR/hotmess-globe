@@ -45,30 +45,30 @@ export default function Leaderboard() {
     queryFn: () => base44.entities.VenueKing.list(),
   });
 
-  // Filter users by city
-  let filteredUsers = allUsers.filter(u => u.xp > 0);
-  
+  // Filter users by city — rank by scan_count (or fallback to created_date recency)
+  let filteredUsers = allUsers.filter(u => u.scan_count > 0 || u.membership_tier);
+
   if (selectedCity !== 'all') {
     filteredUsers = filteredUsers.filter(u => u.city === selectedCity);
   }
 
   const rankedUsers = filteredUsers
-    .sort((a, b) => (b.xp || 0) - (a.xp || 0))
+    .sort((a, b) => (b.scan_count || 0) - (a.scan_count || 0))
     .slice(0, 100);
 
-  // Squad rankings
-  const squadXP = new Map();
+  // Squad rankings by member count
+  const squadData = new Map();
   allSquads.forEach(squad => {
     const members = squadMembers.filter(sm => sm.squad_id === squad.id);
-    const totalXP = members.reduce((sum, sm) => {
+    const totalScans = members.reduce((sum, sm) => {
       const user = allUsers.find(u => u.email === sm.user_email);
-      return sum + (user?.xp || 0);
+      return sum + (user?.scan_count || 0);
     }, 0);
-    squadXP.set(squad.id, { squad, totalXP, memberCount: members.length });
+    squadData.set(squad.id, { squad, totalScans, memberCount: members.length });
   });
 
-  const rankedSquads = Array.from(squadXP.values())
-    .sort((a, b) => b.totalXP - a.totalXP)
+  const rankedSquads = Array.from(squadData.values())
+    .sort((a, b) => b.totalScans - a.totalScans)
     .slice(0, 20);
 
   // Active venue kings
@@ -85,10 +85,10 @@ export default function Leaderboard() {
           className="mb-8"
         >
           <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2">
-            <span className="text-[#FFEB3B]">LEADERBOARD</span>
+            <span className="text-[#C8962C]">LEADERBOARD</span>
           </h1>
           <p className="text-white/60 uppercase text-sm tracking-wider">
-            Top performers. XP rankings. Global competition.
+            Top performers. Global competition.
           </p>
         </motion.div>
 
@@ -109,7 +109,7 @@ export default function Leaderboard() {
 
         <Tabs defaultValue="global" className="mb-8">
           <TabsList className="bg-white/5 border border-white/10">
-            <TabsTrigger value="global">Global XP</TabsTrigger>
+            <TabsTrigger value="global">Global</TabsTrigger>
             <TabsTrigger value="squads">Squad Rankings</TabsTrigger>
             <TabsTrigger value="kings">Venue Kings</TabsTrigger>
           </TabsList>
@@ -128,18 +128,18 @@ export default function Leaderboard() {
                   <Medal className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <div className="text-6xl font-black mb-2">2</div>
                   <p className="font-bold text-sm uppercase truncate mb-2">{rankedUsers[1].full_name}</p>
-                  <p className="text-xl font-black text-[#FFEB3B]">{(rankedUsers[1].xp || 0).toLocaleString()}</p>
+                  <p className="text-xl font-black text-[#C8962C]">{(rankedUsers[1].scan_count || 0).toLocaleString()} scans</p>
                 </div>
               </Link>
             </div>
 
             <div>
               <Link to={createPageUrl(`Profile?email=${rankedUsers[0].email}`)}>
-                <div className="bg-gradient-to-br from-[#FFEB3B]/30 to-[#FF6B35]/30 border-4 border-[#FFEB3B] p-8 text-center hover:border-white transition-colors cursor-pointer">
-                  <Crown className="w-20 h-20 text-[#FFEB3B] mx-auto mb-3" />
+                <div className="bg-gradient-to-br from-[#C8962C]/30 to-[#FF6B35]/30 border-4 border-[#C8962C] p-8 text-center hover:border-white transition-colors cursor-pointer">
+                  <Crown className="w-20 h-20 text-[#C8962C] mx-auto mb-3" />
                   <div className="text-7xl font-black mb-2">1</div>
                   <p className="font-bold uppercase truncate mb-2">{rankedUsers[0].full_name}</p>
-                  <p className="text-3xl font-black text-[#FFEB3B]">{(rankedUsers[0].xp || 0).toLocaleString()}</p>
+                  <p className="text-3xl font-black text-[#C8962C]">{(rankedUsers[0].scan_count || 0).toLocaleString()} scans</p>
                 </div>
               </Link>
             </div>
@@ -150,7 +150,7 @@ export default function Leaderboard() {
                   <Trophy className="w-12 h-12 text-[#CD7F32] mx-auto mb-3" />
                   <div className="text-6xl font-black mb-2">3</div>
                   <p className="font-bold text-sm uppercase truncate mb-2">{rankedUsers[2].full_name}</p>
-                  <p className="text-xl font-black text-[#FFEB3B]">{(rankedUsers[2].xp || 0).toLocaleString()}</p>
+                  <p className="text-xl font-black text-[#C8962C]">{(rankedUsers[2].scan_count || 0).toLocaleString()} scans</p>
                 </div>
               </Link>
             </div>
@@ -162,10 +162,10 @@ export default function Leaderboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#FF1493]/20 border-2 border-[#FF1493] p-4 mb-6"
+            className="bg-[#C8962C]/20 border-2 border-[#C8962C] p-4 mb-6"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#FF1493] flex items-center justify-center font-black text-lg">
+              <div className="w-12 h-12 bg-[#C8962C] flex items-center justify-center font-black text-lg">
                 #{userRank + 1}
               </div>
               <div className="flex-1">
@@ -173,10 +173,10 @@ export default function Leaderboard() {
                 <p className="text-xs text-white/60">{currentUser.full_name}</p>
               </div>
               <div className="text-right">
-                <div className="text-[#FFEB3B] font-black text-xl">
-                  {(currentUser.xp || 0).toLocaleString()}
+                <div className="text-[#C8962C] font-black text-xl">
+                  {(currentUser.scan_count || 0).toLocaleString()}
                 </div>
-                <div className="text-xs text-white/40">XP</div>
+                <div className="text-xs text-white/40">SCANS</div>
               </div>
             </div>
           </motion.div>
@@ -194,14 +194,14 @@ export default function Leaderboard() {
                 transition={{ delay: idx * 0.02 }}
                 className={`flex items-center gap-4 p-4 border ${
                   isCurrentUser 
-                    ? 'bg-[#FF1493]/20 border-[#FF1493]' 
+                    ? 'bg-[#C8962C]/20 border-[#C8962C]' 
                     : idx < 3 
                     ? 'bg-white/10 border-white/20' 
                     : 'bg-white/5 border-white/10'
                 } hover:border-white/40 transition-colors`}
               >
                 <div className={`w-12 h-12 flex items-center justify-center font-black text-lg ${
-                  idx === 0 ? 'bg-[#FFEB3B] text-black' :
+                  idx === 0 ? 'bg-[#C8962C] text-black' :
                   idx === 1 ? 'bg-gray-300 text-black' :
                   idx === 2 ? 'bg-[#CD7F32] text-black' :
                   'bg-white/10 text-white/60'
@@ -209,7 +209,7 @@ export default function Leaderboard() {
                   {idx + 1}
                 </div>
                 <Link to={createPageUrl(`Profile?email=${user.email}`)} className="flex-1 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] border border-white flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] border border-white flex items-center justify-center">
                     {user.avatar_url ? (
                       <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
                     ) : (
@@ -219,15 +219,15 @@ export default function Leaderboard() {
                   <div>
                     <p className="font-bold text-sm uppercase">{user.full_name}</p>
                     <p className="text-xs text-white/40">
-                      LVL {Math.floor((user.xp || 0) / 1000) + 1} • {user.city || 'Unknown'}
+                      {user.membership_tier || 'free'} • {user.city || 'Unknown'}
                     </p>
                   </div>
                 </Link>
                 <div className="text-right">
-                  <div className="text-[#FFEB3B] font-black text-lg">
-                    {(user.xp || 0).toLocaleString()}
+                  <div className="text-[#C8962C] font-black text-lg">
+                    {(user.scan_count || 0).toLocaleString()}
                   </div>
-                  <div className="text-xs text-white/40">XP</div>
+                  <div className="text-xs text-white/40">SCANS</div>
                 </div>
               </motion.div>
             );
@@ -247,7 +247,7 @@ export default function Leaderboard() {
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-12 h-12 flex items-center justify-center font-black text-lg ${
-                      idx === 0 ? 'bg-[#FFEB3B] text-black' :
+                      idx === 0 ? 'bg-[#C8962C] text-black' :
                       idx === 1 ? 'bg-gray-300 text-black' :
                       idx === 2 ? 'bg-[#CD7F32] text-black' :
                       'bg-white/10 text-white/60'
@@ -263,10 +263,10 @@ export default function Leaderboard() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-[#FFEB3B] font-black text-xl">
-                        {data.totalXP.toLocaleString()}
+                      <div className="text-[#C8962C] font-black text-xl">
+                        {data.totalScans.toLocaleString()}
                       </div>
-                      <div className="text-xs text-white/40">SQUAD XP</div>
+                      <div className="text-xs text-white/40">SQUAD SCANS</div>
                     </div>
                   </div>
                 </motion.div>
@@ -289,15 +289,15 @@ export default function Leaderboard() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     className={`border-2 p-6 ${
-                      king.war_active 
-                        ? 'bg-gradient-to-br from-red-500/20 to-orange-500/20 border-red-500' 
-                        : 'bg-gradient-to-br from-[#FFEB3B]/10 to-[#FF6B35]/10 border-[#FFEB3B]'
+                      king.war_active
+                        ? 'bg-gradient-to-br from-red-500/20 to-orange-500/20 border-red-500'
+                        : 'bg-gradient-to-br from-[#C8962C]/10 to-[#FF6B35]/10 border-[#C8962C]'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-16 h-16 flex items-center justify-center border-2 ${
-                          king.war_active ? 'bg-red-500 border-red-600' : 'bg-[#FFEB3B] border-[#FFEB3B]'
+                          king.war_active ? 'bg-red-500 border-red-600' : 'bg-[#C8962C] border-[#C8962C]'
                         }`}>
                           <Crown className="w-8 h-8 text-black" />
                         </div>
@@ -321,7 +321,7 @@ export default function Leaderboard() {
                       </div>
                       <div>
                         <div className="text-white/40 text-xs uppercase mb-1">Tax Collected</div>
-                        <div className="font-bold text-[#FFEB3B]">{king.total_tax_collected} XP</div>
+                        <div className="font-bold text-[#C8962C]">{king.total_tax_collected || 0}</div>
                       </div>
                     </div>
                   </motion.div>

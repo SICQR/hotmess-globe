@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
 import PublicShell from '@/components/shell/PublicShell';
 
@@ -14,10 +15,15 @@ const getLocalAgeVerified = () => {
   }
 };
 
-// Loading spinner component
+// Branded splash screen shown during boot auth check
 const LoadingSpinner = () => (
-  <div className="fixed inset-0 flex items-center justify-center bg-[#050507]">
-    <div className="w-8 h-8 border-4 border-[#39FF14]/20 border-t-[#39FF14] rounded-full animate-spin" />
+  <div className="fixed inset-0 bg-black flex flex-col items-center justify-center">
+    <div className="flex flex-col items-center gap-4">
+      <p className="text-4xl font-black tracking-tight select-none">
+        <span className="text-white">HOT</span><span className="text-[#C8962C]">MESS</span>
+      </p>
+      <div className="w-5 h-5 border-2 border-[#C8962C]/30 border-t-[#C8962C] rounded-full animate-spin" />
+    </div>
   </div>
 );
 
@@ -34,8 +40,19 @@ const LoadingSpinner = () => (
  * - READY            → Full app (children)
  */
 export default function BootRouter({ children }) {
+  // Hooks must be called unconditionally (Rules of Hooks)
   const { bootState, isLoading } = useBootGuard();
   const localAge = getLocalAgeVerified();
+  const location = useLocation();
+
+  // Always allow the password reset page — the link from email must work
+  // regardless of auth state or onboarding status
+  if (location.pathname === '/reset-password') {
+    return <PublicShell />;
+  }
+
+  // DEV BYPASS: uncomment to skip all auth gates for local testing
+  // if (import.meta.env.DEV) return <>{children}</>;
 
   // Show loading while checking auth
   if (isLoading || bootState === BOOT_STATES.LOADING) {
@@ -45,7 +62,8 @@ export default function BootRouter({ children }) {
   // Unauthenticated users get the public shell.
   // If they already confirmed their age locally, drop them on /auth instead of /age.
   if (bootState === BOOT_STATES.UNAUTHENTICATED) {
-    return <PublicShell startAt={localAge ? '/auth' : '/age'} />;
+    // Always start at splash — it handles both 18+ and auth in one screen
+    return <PublicShell startAt="/" />;
   }
 
   // Authenticated but age not yet verified — show age gate.
@@ -61,7 +79,7 @@ export default function BootRouter({ children }) {
   }
 
   // Authenticated, age verified, but onboarding not complete — mandatory.
-  if (bootState === BOOT_STATES.NEEDS_ONBOARDING) {
+  if (bootState === BOOT_STATES.NEEDS_ONBOARDING || bootState === BOOT_STATES.NEEDS_COMMUNITY_GATE) {
     const OnboardingGate = React.lazy(() => import('@/pages/OnboardingGate'));
     return (
       <React.Suspense fallback={<LoadingSpinner />}>

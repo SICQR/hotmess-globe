@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, Eye, Zap, Plus } from 'lucide-react';
+import { TrendingUp, Users, Eye, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Button } from '@/components/ui/button';
@@ -66,7 +66,7 @@ export default function OrganizerDashboard() {
             <p className="text-white/60">Track your event performance</p>
           </div>
           <Link to={createPageUrl('CreateBeacon')}>
-            <Button className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black">
+            <Button className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black">
               <Plus className="w-4 h-4 mr-2" />
               Create Event
             </Button>
@@ -78,9 +78,9 @@ export default function OrganizerDashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/40 rounded-xl p-6"
+            className="bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/40 rounded-xl p-6"
           >
-            <TrendingUp className="w-8 h-8 text-[#FF1493] mb-2" />
+            <TrendingUp className="w-8 h-8 text-[#C8962C] mb-2" />
             <div className="text-3xl font-black mb-1">{myBeacons.length}</div>
             <div className="text-sm text-white/60">Active Events</div>
           </motion.div>
@@ -107,16 +107,6 @@ export default function OrganizerDashboard() {
             <div className="text-sm text-white/60">Check-ins</div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-gradient-to-br from-[#B026FF]/20 to-[#FF1493]/20 border border-[#B026FF]/40 rounded-xl p-6"
-          >
-            <Zap className="w-8 h-8 text-[#B026FF] mb-2" />
-            <div className="text-3xl font-black mb-1">{totalXpGiven}</div>
-            <div className="text-sm text-white/60">XP Distributed</div>
-          </motion.div>
         </div>
 
         {/* Chart */}
@@ -136,7 +126,7 @@ export default function OrganizerDashboard() {
                 contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px' }}
                 labelStyle={{ color: '#fff' }}
               />
-              <Bar dataKey="scans" fill="#FF1493" />
+              <Bar dataKey="scans" fill="#C8962C" />
               <Bar dataKey="visits" fill="#00D9FF" />
               <Bar dataKey="likes" fill="#FFEB3B" />
             </BarChart>
@@ -193,7 +183,7 @@ export default function OrganizerDashboard() {
                       </Button>
                     </Link>
                     <Link to={createPageUrl(`EditBeacon?id=${beacon.id}`)} className="flex-1">
-                      <Button className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black rounded-none text-xs font-bold">
+                      <Button className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black rounded-none text-xs font-bold">
                         EDIT
                       </Button>
                     </Link>

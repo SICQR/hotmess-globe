@@ -12,7 +12,6 @@ import {
   MessageCircle,
   QrCode,
   Smartphone,
-  Trophy,
   Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -100,7 +99,7 @@ export default function InviteFriends() {
       try {
         await navigator.share({
           title: 'Join HOTMESS',
-          text: `${user?.full_name || 'Your friend'} invited you to HOTMESS! Use my referral link to get bonus XP when you sign up.`,
+          text: `${user?.full_name || 'Your friend'} invited you to HOTMESS! Join using my referral link.`,
           url: referralUrl,
         });
         trackEvent('invite_share', { method: 'native' });
@@ -116,7 +115,7 @@ export default function InviteFriends() {
 
   const shareToWhatsApp = () => {
     const text = encodeURIComponent(
-      `Hey! Join me on HOTMESS - the ultimate nightlife discovery app 🎉\n\nUse my referral link to get 250 XP when you sign up:\n${referralUrl}`
+      `Hey! Join me on HOTMESS - the ultimate nightlife discovery app 🎉\n\nJoin using my referral link:\n${referralUrl}`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
     trackEvent('invite_share', { method: 'whatsapp' });
@@ -124,7 +123,7 @@ export default function InviteFriends() {
 
   const shareViaSMS = () => {
     const text = encodeURIComponent(
-      `Join me on HOTMESS! Use my referral link to get 250 XP: ${referralUrl}`
+      `Join me on HOTMESS! Use my referral link: ${referralUrl}`
     );
     window.location.href = `sms:?body=${text}`;
     trackEvent('invite_share', { method: 'sms' });
@@ -192,7 +191,7 @@ export default function InviteFriends() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-white/20 border-t-[#FF1493] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />
       </div>
     );
   }
@@ -215,7 +214,7 @@ export default function InviteFriends() {
           </Link>
           
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-xl flex items-center justify-center">
+            <div className="w-14 h-14 bg-gradient-to-br from-[#C8962C] to-[#B026FF] rounded-xl flex items-center justify-center">
               <Gift className="w-8 h-8 text-white" />
             </div>
             <div>
@@ -244,11 +243,6 @@ export default function InviteFriends() {
             <div className="text-2xl font-black">{stats.joined}</div>
             <div className="text-xs text-white/60">Joined</div>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <Trophy className="w-6 h-6 mx-auto mb-2 text-[#FF1493]" />
-            <div className="text-2xl font-black">{stats.xpEarned}</div>
-            <div className="text-xs text-white/60">XP Earned</div>
-          </div>
         </motion.div>
 
         {/* Rewards Banner */}
@@ -256,15 +250,14 @@ export default function InviteFriends() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-2 border-[#FF1493] rounded-xl p-6 mb-6"
+          className="bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border-2 border-[#C8962C] rounded-xl p-6 mb-6"
         >
           <div className="flex items-center gap-4">
-            <Zap className="w-10 h-10 text-[#FF1493]" />
+            <Zap className="w-10 h-10 text-[#C8962C]" />
             <div className="flex-1">
-              <h3 className="font-bold text-lg mb-1">Earn Rewards Together!</h3>
+              <h3 className="font-bold text-lg mb-1">Invite Your People!</h3>
               <p className="text-sm text-white/80">
-                You get <span className="text-[#39FF14] font-bold">500 XP</span> for each friend who joins.
-                They get <span className="text-[#00D9FF] font-bold">250 XP</span> bonus just for signing up!
+                Help grow the HOTMESS community — every friend you bring makes it better.
               </p>
             </div>
           </div>
@@ -296,7 +289,7 @@ export default function InviteFriends() {
 
           <Button
             onClick={shareReferral}
-            className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold"
+            className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold"
           >
             <Share2 className="w-4 h-4 mr-2" />
             Share Link
@@ -402,7 +395,7 @@ export default function InviteFriends() {
         >
           <Link 
             to={createPageUrl('ReferralProgram')} 
-            className="text-[#FF1493] hover:underline text-sm"
+            className="text-[#C8962C] hover:underline text-sm"
           >
             View full referral program details & milestones →
           </Link>

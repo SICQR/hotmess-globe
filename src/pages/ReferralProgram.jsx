@@ -5,13 +5,12 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Gift, Copy, Share2, Users, Zap, Trophy, Check, Star } from 'lucide-react';
+import { ArrowLeft, Gift, Copy, Share2, Users, Trophy, Check, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 const REWARD_TIERS = [
-  { referrals: 3, reward: '500 XP', icon: Zap, color: '#FFD700', unlocked: false },
-  { referrals: 5, reward: 'FREE PLUS Month', icon: Star, color: '#FF1493', unlocked: false },
-  { referrals: 10, reward: '2,000 XP + Badge', icon: Trophy, color: '#B026FF', unlocked: false },
+  { referrals: 3, reward: 'FREE PLUS Month', icon: Star, color: '#C8962C', unlocked: false },
+  { referrals: 10, reward: 'Badge', icon: Trophy, color: '#B026FF', unlocked: false },
   { referrals: 25, reward: 'Lifetime VIP Status', icon: Gift, color: '#00D9FF', unlocked: false },
 ];
 
@@ -82,7 +81,7 @@ export default function ReferralProgram() {
             Back
           </Button>
           <h1 className="text-4xl font-black uppercase mb-2">
-            Referral <span className="text-[#FF1493]">Program</span>
+            Referral <span className="text-[#C8962C]">Program</span>
           </h1>
           <p className="text-white/60">Invite friends, earn rewards</p>
         </motion.div>
@@ -92,16 +91,12 @@ export default function ReferralProgram() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-r from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/30 rounded-xl p-6 mb-8"
+          className="bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/30 rounded-xl p-6 mb-8"
         >
           <div className="grid grid-cols-3 gap-6 text-center">
             <div>
-              <div className="text-3xl font-black text-[#FF1493]">{completedReferrals}</div>
+              <div className="text-3xl font-black text-[#C8962C]">{completedReferrals}</div>
               <div className="text-xs text-white/60 uppercase">Referrals</div>
-            </div>
-            <div>
-              <div className="text-3xl font-black text-[#FFD700]">{completedReferrals * 100}</div>
-              <div className="text-xs text-white/60 uppercase">XP Earned</div>
             </div>
             <div>
               <div className="text-3xl font-black text-[#00D9FF]">{Math.floor(completedReferrals / 3)}</div>
@@ -136,7 +131,7 @@ export default function ReferralProgram() {
           </div>
 
           <div className="flex gap-3">
-            <Button onClick={shareLink} className="flex-1 bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold">
+            <Button onClick={shareLink} className="flex-1 bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold">
               <Share2 className="w-4 h-4 mr-2" /> Share Link
             </Button>
             <Button variant="outline" className="flex-1 border-white/20">
@@ -235,7 +230,7 @@ export default function ReferralProgram() {
               {referrals.map((ref, idx) => (
                 <div key={idx} className="flex items-center justify-between p-3 bg-black/40 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF]" />
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF]" />
                     <div>
                       <div className="font-bold text-sm">{ref.name || 'Anonymous'}</div>
                       <div className="text-xs text-white/40">{new Date(ref.created_at).toLocaleDateString()}</div>
@@ -244,7 +239,7 @@ export default function ReferralProgram() {
                   <div className={`px-2 py-1 text-xs font-bold rounded ${
                     ref.status === 'completed' ? 'bg-[#39FF14]/20 text-[#39FF14]' : 'bg-white/10 text-white/60'
                   }`}>
-                    {ref.status === 'completed' ? '+100 XP' : 'Pending'}
+                    {ref.status === 'completed' ? 'Joined' : 'Pending'}
                   </div>
                 </div>
               ))}

@@ -5,7 +5,7 @@ import { base44, supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, ArrowLeft, Camera, User, MapPin, Check, Loader2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Camera, MapPin, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Onboarding() {
@@ -129,18 +129,18 @@ export default function Onboarding() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={loading}
-                  className="relative w-32 h-32 mx-auto rounded-full border-4 border-dashed border-white/30 hover:border-[#FF1493] transition-colors overflow-hidden group"
+                  className="relative w-32 h-32 mx-auto rounded-full border-4 border-dashed border-white/30 hover:border-[#C8962C] transition-colors overflow-hidden group"
                 >
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                      <Camera className="w-10 h-10 text-white/40 group-hover:text-[#FF1493]" />
+                      <Camera className="w-10 h-10 text-white/40 group-hover:text-[#C8962C]" />
                     </div>
                   )}
                   {loading && (
                     <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                      <Loader2 className="w-8 h-8 animate-spin text-[#FF1493]" />
+                      <Loader2 className="w-8 h-8 animate-spin text-[#C8962C]" />
                     </div>
                   )}
                 </button>
@@ -182,7 +182,7 @@ export default function Onboarding() {
               <Button
                 onClick={() => setStep(2)}
                 disabled={!displayName.trim()}
-                className="w-full bg-[#FF1493] text-black font-black text-lg py-6"
+                className="w-full bg-[#C8962C] text-black font-black text-lg py-6"
               >
                 Next <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
@@ -208,7 +208,7 @@ export default function Onboarding() {
                   placeholder="A few words about yourself..."
                   maxLength={150}
                   rows={3}
-                  className="w-full bg-white/5 border border-white/20 rounded-lg p-4 text-white placeholder:text-white/40 resize-none focus:outline-none focus:border-[#FF1493]"
+                  className="w-full bg-white/5 border border-white/20 rounded-lg p-4 text-white placeholder:text-white/40 resize-none focus:outline-none focus:border-[#C8962C]"
                 />
                 <p className="text-xs text-white/40 text-right mt-1">{bio.length}/150</p>
               </div>
@@ -229,7 +229,7 @@ export default function Onboarding() {
                     }}
                     className={`px-4 py-2 text-sm font-bold uppercase border-2 transition-all ${
                       lookingFor.includes(option)
-                        ? 'bg-[#FF1493] border-[#FF1493] text-black'
+                        ? 'bg-[#C8962C] border-[#C8962C] text-black'
                         : 'bg-white/5 border-white/20 text-white/60 hover:border-white/40'
                     }`}
                   >
@@ -245,7 +245,7 @@ export default function Onboarding() {
                 <Button 
                   onClick={handleComplete}
                   disabled={loading}
-                  className="flex-1 bg-[#FF1493] text-black font-black"
+                  className="flex-1 bg-[#C8962C] text-black font-black"
                 >
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -265,7 +265,7 @@ export default function Onboarding() {
           {[1, 2].map(s => (
             <div
               key={s}
-              className={`w-3 h-3 rounded-full transition-colors ${s <= step ? 'bg-[#FF1493]' : 'bg-white/20'}`}
+              className={`w-3 h-3 rounded-full transition-colors ${s <= step ? 'bg-[#C8962C]' : 'bg-white/20'}`}
             />
           ))}
         </div>

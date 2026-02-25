@@ -200,10 +200,10 @@ function UpsellModal({ trigger, onDismiss, onUpgrade }) {
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-md bg-black border-2 border-[#FF1493] overflow-hidden"
+        className="w-full max-w-md bg-black border-2 border-[#C8962C] overflow-hidden"
       >
         {/* Gradient header */}
-        <div className="bg-gradient-to-br from-[#FF1493]/30 via-[#B026FF]/20 to-black p-8 text-center relative">
+        <div className="bg-gradient-to-br from-[#C8962C]/30 via-[#B026FF]/20 to-black p-8 text-center relative">
           <button
             onClick={onDismiss}
             className="absolute top-4 right-4 text-white/40 hover:text-white"
@@ -215,7 +215,7 @@ function UpsellModal({ trigger, onDismiss, onUpgrade }) {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring' }}
-            className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-[#FF1493] to-[#B026FF] rounded-full flex items-center justify-center"
+            className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-[#C8962C] to-[#B026FF] rounded-full flex items-center justify-center"
           >
             <Icon className="w-10 h-10 text-white" />
           </motion.div>
@@ -232,7 +232,7 @@ function UpsellModal({ trigger, onDismiss, onUpgrade }) {
               "px-4 py-1 rounded-full text-sm font-black uppercase",
               trigger.tier === 'CHROME' 
                 ? "bg-[#00D9FF]/20 text-[#00D9FF]" 
-                : "bg-[#FF1493]/20 text-[#FF1493]"
+                : "bg-[#C8962C]/20 text-[#C8962C]"
             )}>
               {trigger.tier}
             </span>
@@ -255,7 +255,7 @@ function UpsellModal({ trigger, onDismiss, onUpgrade }) {
           {/* CTA */}
           <Button
             onClick={onUpgrade}
-            className="w-full bg-gradient-to-r from-[#FF1493] to-[#B026FF] hover:opacity-90 text-white font-black uppercase py-6 text-lg"
+            className="w-full bg-gradient-to-r from-[#C8962C] to-[#B026FF] hover:opacity-90 text-white font-black uppercase py-6 text-lg"
           >
             {trigger.cta}
             <ChevronRight className="w-5 h-5 ml-2" />
@@ -295,25 +295,25 @@ export function UpsellBanner({
       <button
         onClick={() => navigate('/membership')}
         className={cn(
-          "flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/30 rounded-lg text-sm hover:border-[#FF1493]/50 transition-colors",
+          "flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/30 rounded-lg text-sm hover:border-[#C8962C]/50 transition-colors",
           className
         )}
       >
-        <Icon className="w-4 h-4 text-[#FF1493]" />
+        <Icon className="w-4 h-4 text-[#C8962C]" />
         <span className="text-white/80">{trigger.feature}</span>
-        <Crown className="w-4 h-4 text-[#FF1493]" />
+        <Crown className="w-4 h-4 text-[#C8962C]" />
       </button>
     );
   }
 
   return (
     <div className={cn(
-      "p-4 bg-gradient-to-r from-[#FF1493]/10 to-[#B026FF]/10 border border-[#FF1493]/30 rounded-lg",
+      "p-4 bg-gradient-to-r from-[#C8962C]/10 to-[#B026FF]/10 border border-[#C8962C]/30 rounded-lg",
       className
     )}>
       <div className="flex items-start gap-4">
-        <div className="w-12 h-12 rounded-full bg-[#FF1493]/20 flex items-center justify-center flex-shrink-0">
-          <Icon className="w-6 h-6 text-[#FF1493]" />
+        <div className="w-12 h-12 rounded-full bg-[#C8962C]/20 flex items-center justify-center flex-shrink-0">
+          <Icon className="w-6 h-6 text-[#C8962C]" />
         </div>
         <div className="flex-1">
           <h4 className="font-bold text-white mb-1">{trigger.headline}</h4>
@@ -321,7 +321,7 @@ export function UpsellBanner({
           <Button
             onClick={() => navigate('/membership')}
             size="sm"
-            className="bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold"
+            className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold"
           >
             {trigger.cta}
           </Button>

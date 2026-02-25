@@ -30,8 +30,8 @@ import { useNavigate } from 'react-router-dom';
 const TIER_COLORS = {
   'basic_3h': '#FFFFFF',
   'standard_6h': '#00D9FF',
-  'premium_9h': '#FFB800',
-  'featured_12h': '#FF1493',
+  'premium_9h': '#C8962C',
+  'featured_12h': '#C8962C',
   'spotlight_24h': '#B026FF'
 };
 
@@ -126,7 +126,7 @@ export default function PromoterDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FF1493]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#C8962C]" />
       </div>
     );
   }
@@ -142,7 +142,7 @@ export default function PromoterDashboard() {
           </div>
           <Button
             onClick={() => navigate('/biz/create-beacon')}
-            className="bg-[#FF1493] hover:bg-[#FF1493]/80 font-bold"
+            className="bg-[#C8962C] hover:bg-[#C8962C]/80 font-bold"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Beacon
@@ -157,7 +157,7 @@ export default function PromoterDashboard() {
             icon={MapPin} 
             label="Active Beacons" 
             value={stats?.activeBeacons || 0}
-            color="#FF1493"
+            color="#C8962C"
           />
           <StatCard 
             icon={Eye} 
@@ -175,14 +175,14 @@ export default function PromoterDashboard() {
             icon={Users} 
             label="RSVPs" 
             value={stats?.totalRsvps || 0}
-            color="#FFB800"
+            color="#C8962C"
           />
         </div>
 
         {/* Active Beacons */}
         <section className="mb-8">
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#FF1493]" />
+            <Sparkles className="w-5 h-5 text-[#C8962C]" />
             Your Beacons
           </h2>
 
@@ -282,7 +282,7 @@ export default function PromoterDashboard() {
         {/* Tier Selection Preview */}
         <section>
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-[#FFB800]" />
+            <TrendingUp className="w-5 h-5 text-[#C8962C]" />
             Beacon Tiers
           </h2>
 

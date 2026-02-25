@@ -23,14 +23,14 @@ export default function WakeTheMess() {
     <div className="min-h-screen bg-black text-white">
       {/* Hero */}
       <div className="relative overflow-hidden border-b-2 border-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20" />
         <div className="relative max-w-4xl mx-auto px-6 py-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center gap-3 mb-4">
-              <RadioIcon className="w-8 h-8 text-[#FF1493]" />
+              <RadioIcon className="w-8 h-8 text-[#C8962C]" />
               <Link
                 to={createPageUrl('RadioSchedule')}
                 className="text-xs uppercase tracking-widest text-white/60 font-bold hover:text-white"
@@ -47,7 +47,7 @@ export default function WakeTheMess() {
             <div className="flex flex-wrap gap-4">
               <Button
                 onClick={openRadio}
-                className="bg-[#FF1493] hover:bg-white text-white hover:text-black font-black px-8 py-6 border-2 border-white uppercase"
+                className="bg-[#C8962C] hover:bg-white text-white hover:text-black font-black px-8 py-6 border-2 border-white uppercase"
               >
                 <ExternalLink className="w-5 h-5 mr-2" />
                 Listen Live
@@ -75,7 +75,7 @@ export default function WakeTheMess() {
             className="bg-white/5 border-2 border-white p-6"
           >
             <div className="flex items-center gap-2 mb-3">
-              <Clock className="w-5 h-5 text-[#FF1493]" />
+              <Clock className="w-5 h-5 text-[#C8962C]" />
               <h2 className="text-lg font-black uppercase">Next Episode</h2>
             </div>
             <p className="text-2xl font-bold">
@@ -146,13 +146,13 @@ export default function WakeTheMess() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-black border-2 border-[#FF1493] p-6 space-y-4"
+          className="bg-black border-2 border-[#C8962C] p-6 space-y-4"
         >
-          <h2 className="text-xl font-black uppercase text-[#FF1493]">Stingers & VO</h2>
+          <h2 className="text-xl font-black uppercase text-[#C8962C]">Stingers & VO</h2>
           
           <div className="space-y-2">
             {show.stingers.map((stinger, idx) => (
-              <p key={idx} className="text-white/90 pl-4 border-l-2 border-[#FF1493]">
+              <p key={idx} className="text-white/90 pl-4 border-l-2 border-[#C8962C]">
                 {stinger}
               </p>
             ))}

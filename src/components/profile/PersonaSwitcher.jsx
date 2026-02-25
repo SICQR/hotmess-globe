@@ -42,7 +42,7 @@ const PERSONA_TYPES = {
   WEEKEND: {
     icon: PartyPopper,
     label: 'Weekend',
-    color: '#FF1493',
+    color: '#C8962C',
     description: 'Party mode'
   },
   CUSTOM: {
@@ -283,7 +283,7 @@ export default function PersonaSwitcher({
             <button
               onClick={() => navigate('/profile/personas/new')}
               className="p-3 flex flex-col items-center gap-1 border border-dashed border-white/20 
-                         hover:border-[#FF1493] transition-colors"
+                         hover:border-[#C8962C] transition-colors"
             >
               <Plus className="w-5 h-5 text-white/40" />
               <span className="text-[10px] text-white/40">Add</span>

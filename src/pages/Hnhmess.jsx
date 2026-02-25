@@ -344,7 +344,7 @@ export default function Hnhmess() {
                   </Button>
 
                   <Button
-                    className="bg-[#FF1493] hover:bg-white text-black font-black uppercase"
+                    className="bg-[#C8962C] hover:bg-white text-black font-black uppercase"
                     onClick={() => navigate(createPageUrl('Checkout'))}
                   >
                     Checkout

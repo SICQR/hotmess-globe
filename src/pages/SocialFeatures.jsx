@@ -36,7 +36,7 @@ const SOCIAL_FEATURES = [
     icon: MessageCircle,
     title: 'REAL-TIME MESSAGING',
     tagline: 'More than just text',
-    color: '#FF1493',
+    color: '#C8962C',
     description: 'Rich messaging with voice notes, photos, videos, and real-time typing indicators. Know when your message is read and when someone\'s responding.',
     benefits: [
       'Voice notes',
@@ -176,7 +176,7 @@ export default function SocialFeatures() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-[#00D9FF]/30 via-black to-[#FF1493]/20 border-2 border-[#00D9FF] p-8 md:p-12 mb-12"
+          className="bg-gradient-to-br from-[#00D9FF]/30 via-black to-[#C8962C]/20 border-2 border-[#00D9FF] p-8 md:p-12 mb-12"
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>

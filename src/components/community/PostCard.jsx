@@ -207,7 +207,7 @@ function EventDisplay({ post, currentUser }) {
 }
 
 const CATEGORY_COLORS = {
-  general: '#FF1493',
+  general: '#C8962C',
   events: '#00D9FF',
   marketplace: '#FFEB3B',
   beacons: '#B026FF',
@@ -241,7 +241,7 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
       )}
 
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center flex-shrink-0">
           <span className="font-bold">{post.user_name?.[0] || 'U'}</span>
         </div>
         <div className="flex-1 min-w-0">
@@ -285,7 +285,7 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
               {post.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-xs px-2 py-1 rounded-full bg-[#FF1493]/20 border border-[#FF1493]/40 text-[#FF1493]"
+                  className="text-xs px-2 py-1 rounded-full bg-[#C8962C]/20 border border-[#C8962C]/40 text-[#C8962C]"
                 >
                   #{tag}
                 </span>
@@ -322,8 +322,8 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
             }}
             className={`flex items-center gap-2 text-sm font-bold transition-colors ${
               userHasLiked
-                ? 'text-[#FF1493]'
-                : 'text-white/60 hover:text-[#FF1493]'
+                ? 'text-[#C8962C]'
+                : 'text-white/60 hover:text-[#C8962C]'
             }`}
           >
             <Heart className={`w-5 h-5 ${userHasLiked ? 'fill-current' : ''}`} />

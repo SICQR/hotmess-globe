@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allowPremium = false }) {
   const [uploading, setUploading] = useState(false);
@@ -97,7 +96,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allow
             type="button"
             onClick={() => setUploadType('premium')}
             variant={uploadType === 'premium' ? 'default' : 'outline'}
-            className={uploadType === 'premium' ? 'bg-[#FF1493] text-black' : ''}
+            className={uploadType === 'premium' ? 'bg-[#C8962C] text-black' : ''}
           >
             <Crown className="w-4 h-4 mr-2" />
             Premium (Coming Soon)
@@ -120,7 +119,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allow
             />
             <div className="absolute top-2 left-2 flex flex-col gap-1">
               {photo.is_primary && (
-                <div className="px-2 py-1 bg-[#FF1493] text-black text-[10px] font-black uppercase">
+                <div className="px-2 py-1 bg-[#C8962C] text-black text-[10px] font-black uppercase">
                   PRIMARY
                 </div>
               )}
@@ -139,7 +138,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allow
                     e.stopPropagation();
                     handleSetPrimary(idx);
                   }}
-                  className="bg-white text-black hover:bg-[#FF1493] text-xs"
+                  className="bg-white text-black hover:bg-[#C8962C] text-xs"
                 >
                   Primary
                 </Button>
@@ -171,7 +170,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allow
         ))}
 
         {photos.length < maxPhotos && (
-          <label className="aspect-square border-2 border-dashed border-white/20 hover:border-[#FF1493] cursor-pointer flex flex-col items-center justify-center gap-2 transition-colors">
+          <label className="aspect-square border-2 border-dashed border-white/20 hover:border-[#C8962C] cursor-pointer flex flex-col items-center justify-center gap-2 transition-colors">
             <input
               type="file"
               accept="image/*"
@@ -207,7 +206,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allow
           >
             <button
               onClick={() => setSelectedIndex(null)}
-              className="absolute top-4 right-4 p-2 text-white hover:text-[#FF1493]"
+              className="absolute top-4 right-4 p-2 text-white hover:text-[#C8962C]"
             >
               <X className="w-8 h-8" />
             </button>
@@ -269,7 +268,7 @@ export function VideoUploader({ videoUrl, onVideoChange }) {
           </Button>
         </div>
       ) : (
-        <label className="aspect-video border-2 border-dashed border-white/20 hover:border-[#FF1493] cursor-pointer flex flex-col items-center justify-center gap-3 transition-colors">
+        <label className="aspect-video border-2 border-dashed border-white/20 hover:border-[#C8962C] cursor-pointer flex flex-col items-center justify-center gap-3 transition-colors">
           <input
             type="file"
             accept="video/*"
@@ -336,7 +335,6 @@ export function PremiumVideoManager({ videos = [], onVideosChange }) {
             <div className="flex items-center gap-2">
               <Crown className="w-4 h-4 text-[#FFD700]" />
               <span className="text-sm font-bold text-white">{video.title}</span>
-              <span className="text-xs text-[#FFD700]">{video.unlock_xp} XP</span>
             </div>
             <Button
               onClick={() => handleDelete(idx)}
@@ -364,18 +362,6 @@ export function PremiumVideoManager({ videos = [], onVideosChange }) {
           className="bg-white/5 border-white/20 text-white"
         />
         
-        <div>
-          <Label className="text-xs text-white/60 mb-2 block">Unlock cost (XP)</Label>
-          <Input
-            type="number"
-            value={newVideoXp}
-            onChange={(e) => setNewVideoXp(Number(e.target.value))}
-            min={100}
-            max={5000}
-            className="bg-white/5 border-white/20 text-white"
-          />
-        </div>
-
         <label className="block">
           <input
             type="file"
@@ -401,7 +387,7 @@ export function PremiumVideoManager({ videos = [], onVideosChange }) {
       </div>
 
       <p className="text-xs text-white/40">
-        Premium videos are locked behind XP payment. Users must pay to unlock.
+        Premium videos are locked for non-subscribers.
       </p>
     </div>
   );

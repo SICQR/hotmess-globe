@@ -370,7 +370,7 @@ export default function Directions() {
     []
   );
   const destinationIcon = useMemo(
-    () => makePinIcon({ label: 'GO', color: '#FF1493', glow: 'rgba(255,20,147,0.75)' }),
+    () => makePinIcon({ label: 'GO', color: '#C8962C', glow: 'rgba(255,20,147,0.75)' }),
     []
   );
 
@@ -475,7 +475,7 @@ export default function Directions() {
                         />
                         <Polyline
                           positions={polylinePoints}
-                          pathOptions={{ color: '#FF1493', weight: 7, opacity: 0.95 }}
+                          pathOptions={{ color: '#C8962C', weight: 7, opacity: 0.95 }}
                         />
                       </>
                     )}

@@ -47,12 +47,7 @@ CREATE POLICY "Admins can view errors"
 ON public.client_errors
 FOR SELECT 
 TO authenticated 
-USING (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
-    )
-);
+USING (auth.jwt() ->> 'role' = 'service_role');
 
 -- Allow anon to insert (for pre-auth errors)
 CREATE POLICY "Anon can log errors" 

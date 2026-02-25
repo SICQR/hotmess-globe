@@ -1,10 +1,9 @@
 /**
- * Clear any cached Supabase sessions from wrong projects.
- * This fixes the issue where localStorage contains sessions from
- * axxwdjmbwkvqhcpwters (wrong) instead of klsywpvncqqglhnhrjbh (correct).
+ * Clear any cached Supabase sessions from stale/wrong projects.
+ * Correct project: axxwdjmbwkvqhcpwters (active as of Jan 2026).
  */
 
-const CORRECT_PROJECT_REF = 'klsywpvncqqglhnhrjbh';
+const CORRECT_PROJECT_REF = 'axxwdjmbwkvqhcpwters';
 
 export function clearBadSupabaseSessions() {
   if (typeof window === 'undefined' || !window.localStorage) return;
@@ -29,7 +28,7 @@ export function clearBadSupabaseSessions() {
       const value = localStorage.getItem(key);
       // Check if the value contains a JWT from wrong project
       if (value && (
-        value.includes('axxwdjmbwkvqhcpwters') ||
+        value.includes('klsywpvncqqglhnhrjbh') ||
         value.includes('klbmalzhmxnelyuabawk')
       )) {
         keysToRemove.push(key);
@@ -45,9 +44,7 @@ export function clearBadSupabaseSessions() {
   });
   
   if (keysToRemove.length > 0) {
-    console.log(`[clearBadSessions] Cleared ${keysToRemove.length} bad session(s)`);
-  } else {
-    console.log('[clearBadSessions] No bad sessions found');
+    console.warn(`[clearBadSessions] Cleared ${keysToRemove.length} bad session(s)`);
   }
 }
 

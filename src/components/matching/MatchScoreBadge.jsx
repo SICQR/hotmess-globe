@@ -22,8 +22,8 @@ import { useAuth } from '@/lib/AuthContext';
 const LEVEL_COLORS = {
   exceptional: '#39FF14',
   great: '#00D9FF',
-  good: '#FFB800',
-  moderate: '#FF1493',
+  good: '#C8962C',
+  moderate: '#C8962C',
   low: '#FFFFFF'
 };
 
@@ -189,7 +189,7 @@ export default function MatchScoreBadge({
                           className="h-full rounded-full"
                           style={{ 
                             width: `${percentage}%`,
-                            backgroundColor: percentage > 70 ? '#39FF14' : percentage > 40 ? '#FFB800' : '#FF1493'
+                            backgroundColor: percentage > 70 ? '#39FF14' : percentage > 40 ? '#C8962C' : '#C8962C'
                           }}
                         />
                       </div>

@@ -2,7 +2,7 @@
  * HOTMESS Lux Design System Components
  * 
  * A brutalist-meets-luxury component library with:
- * - Chrome Red (#FF1493) as primary accent
+ * - Chrome Red (#C8962C) as primary accent
  * - Gold (#FFD700) for premium elements
  * - Cyan (#00D9FF) for interactive elements
  * - Purple (#B026FF) for creator/music elements

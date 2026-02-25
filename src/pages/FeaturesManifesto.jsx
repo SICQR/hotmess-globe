@@ -22,7 +22,7 @@ const FEATURE_PAGES = [
     title: 'FEATURES OVERVIEW',
     route: '/features',
     icon: Sparkles,
-    color: '#FF1493',
+    color: '#C8962C',
     description: 'Comprehensive overview of all HOTMESS platform features, showcasing our unique value proposition across safety, social, events, marketplace, and music.',
     highlights: [
       '50K+ active users',
@@ -268,7 +268,7 @@ const ManifestoSection = ({ section, index }) => (
     className="bg-white/5 border border-white/10 p-6"
   >
     <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
-      <Zap className="w-5 h-5 text-[#FF1493]" />
+      <Zap className="w-5 h-5 text-[#C8962C]" />
       {section.title}
     </h3>
     <ul className="space-y-3">
@@ -296,15 +296,15 @@ export default function FeaturesManifesto() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative overflow-hidden bg-gradient-to-br from-[#FF1493]/20 via-black to-[#B026FF]/20 border-2 border-[#FF1493] p-8 md:p-12 mb-12"
+          className="relative overflow-hidden bg-gradient-to-br from-[#C8962C]/20 via-black to-[#B026FF]/20 border-2 border-[#C8962C] p-8 md:p-12 mb-12"
         >
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[#FF1493]/10 blur-3xl rounded-full" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#C8962C]/10 blur-3xl rounded-full" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#B026FF]/10 blur-3xl rounded-full" />
           
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-4">
-              <FileText className="w-8 h-8 text-[#FF1493]" />
-              <span className="text-[#FF1493] font-black uppercase tracking-wider">
+              <FileText className="w-8 h-8 text-[#C8962C]" />
+              <span className="text-[#C8962C] font-black uppercase tracking-wider">
                 Features Documentation
               </span>
             </div>
@@ -347,7 +347,7 @@ export default function FeaturesManifesto() {
               transition={{ delay: i * 0.1 }}
               className="bg-white/5 border border-white/10 p-6 text-center"
             >
-              <div className="text-3xl font-black text-[#FF1493]">{stat.value}</div>
+              <div className="text-3xl font-black text-[#C8962C]">{stat.value}</div>
               <div className="text-xs text-white/60 uppercase tracking-wider mt-1">
                 {stat.label}
               </div>
@@ -436,7 +436,7 @@ export default function FeaturesManifesto() {
           </h2>
           <div className="bg-black/50 border border-white/10 p-6 font-mono text-xs">
             <div className="space-y-1 text-white/60">
-              <div><span className="text-[#FF1493]">/features</span> — Overview of all features</div>
+              <div><span className="text-[#C8962C]">/features</span> — Overview of all features</div>
               <div><span className="text-[#FF0000]">/features/safety</span> — Safety features detail</div>
               <div><span className="text-[#B026FF]">/features/events</span> — Events features detail</div>
               <div><span className="text-[#00D9FF]">/features/social</span> — Social features detail</div>
@@ -456,7 +456,7 @@ export default function FeaturesManifesto() {
           viewport={{ once: true }}
           className="text-center mt-16 pt-16 border-t border-white/10"
         >
-          <FileText className="w-16 h-16 text-[#FF1493] mx-auto mb-6" />
+          <FileText className="w-16 h-16 text-[#C8962C] mx-auto mb-6" />
           <h2 className="text-3xl font-black uppercase mb-4">
             Start Exploring
           </h2>

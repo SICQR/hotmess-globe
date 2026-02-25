@@ -172,7 +172,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
           <div className="p-6">
             <Tabs value={messageType} onValueChange={setMessageType} className="w-full">
               <TabsList className="grid w-full grid-cols-4 bg-black border-2 border-white/20 mb-6">
-                <TabsTrigger value="dm" className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black font-black uppercase text-xs">
+                <TabsTrigger value="dm" className="data-[state=active]:bg-[#C8962C] data-[state=active]:text-black font-black uppercase text-xs">
                   <MessageCircle className="w-3 h-3 mr-1" />
                   DM
                 </TabsTrigger>
@@ -206,11 +206,11 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
                         onClick={() => toggleUser(user.email)}
                         className={`w-full flex items-center gap-3 p-3 border-2 transition-all ${
                           selectedUsers.includes(user.email)
-                            ? 'bg-[#FF1493]/20 border-[#FF1493]'
+                            ? 'bg-[#C8962C]/20 border-[#C8962C]'
                             : 'bg-black border-white/20 hover:border-white/40'
                         }`}
                       >
-                        <div className="w-10 h-10 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center border-2 border-white">
+                        <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center border-2 border-white">
                           {user.avatar_url ? (
                             <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
                           ) : (
@@ -325,7 +325,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
                 (messageType === 'event' && !selectedEvent) ||
                 (messageType === 'squad' && !selectedSquad)
               }
-              className="w-full mt-6 bg-[#FF1493] hover:bg-white text-black font-black py-6 text-lg border-2 border-white"
+              className="w-full mt-6 bg-[#C8962C] hover:bg-white text-black font-black py-6 text-lg border-2 border-white"
             >
               {createThreadMutation.isPending ? 'CREATING...' : 'START CONVERSATION'}
             </Button>

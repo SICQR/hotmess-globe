@@ -26,7 +26,7 @@ const latLngToXY = (lat, lng, width, height) => {
 
 // Visual language colors
 const COLORS = {
-  heat: { base: '#FF1493', glow: 'rgba(255,20,147,0.4)' },
+  heat: { base: '#C8962C', glow: 'rgba(255,20,147,0.4)' },
   pulse: { base: '#FFD700', glow: 'rgba(255,215,0,0.4)' },
   wave: { base: '#00FF88', glow: 'rgba(0,255,136,0.3)' },
   sparkle: { base: '#FFFFFF', glow: 'rgba(255,255,255,0.2)' },
@@ -339,7 +339,7 @@ export default function GlobeHero() {
                 onMouseEnter={() => setHoveredCity(city.name)}
                 onMouseLeave={() => setHoveredCity(null)}
               >
-                <div className="text-[10px] uppercase tracking-widest text-pink-500 whitespace-nowrap">
+                <div className="text-[10px] uppercase tracking-widest text-[#C8962C] whitespace-nowrap">
                   {city.name}
                 </div>
               </motion.div>
@@ -355,7 +355,7 @@ export default function GlobeHero() {
             initial={{ opacity: 0, y: 20, x: '-50%' }}
             animate={{ opacity: 1, y: 0, x: '-50%' }}
             exit={{ opacity: 0, y: -20, x: '-50%' }}
-            className="absolute bottom-8 left-1/2 bg-black/80 backdrop-blur-md border border-pink-500/50 rounded-full px-6 py-3 cursor-pointer"
+            className="absolute bottom-8 left-1/2 bg-black/80 backdrop-blur-md border border-[#C8962C]/50 rounded-full px-6 py-3 cursor-pointer"
             onClick={() => handleTap(CITIES.find(c => c.name === activePulse.city))}
           >
             <div className="flex items-center gap-3">
@@ -364,7 +364,7 @@ export default function GlobeHero() {
                 style={{ backgroundColor: COLORS[activePulse.type]?.base || COLORS.heat.base }}
               />
               <span className="text-sm font-medium">
-                <span className="text-pink-500">{activePulse.city}</span>
+                <span className="text-[#C8962C]">{activePulse.city}</span>
                 <span className="text-white/60 ml-2">{activePulse.type}</span>
               </span>
             </div>
@@ -379,7 +379,7 @@ export default function GlobeHero() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/90 backdrop-blur-xl border border-pink-500/30 rounded-2xl p-6 min-w-[250px]"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/90 backdrop-blur-xl border border-[#C8962C]/30 rounded-2xl p-6 min-w-[250px]"
             onClick={() => setShowContextCard(null)}
           >
             <div className="text-xs text-white/40 uppercase tracking-wider mb-2">
@@ -391,7 +391,7 @@ export default function GlobeHero() {
             <div className="flex gap-4 text-sm">
               <div>
                 <div className="text-white/40">Energy</div>
-                <div className="text-pink-500">{Math.round((showContextCard.data?.energy || 0) * 100)}%</div>
+                <div className="text-[#C8962C]">{Math.round((showContextCard.data?.energy || 0) * 100)}%</div>
               </div>
             </div>
           </motion.div>
@@ -405,7 +405,7 @@ export default function GlobeHero() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/95 backdrop-blur-xl border border-pink-500/30 rounded-2xl p-4"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/95 backdrop-blur-xl border border-[#C8962C]/30 rounded-2xl p-4"
             onClick={() => setModeMenu(false)}
           >
             <div className="text-xs text-white/40 uppercase tracking-wider mb-3">Switch Mode</div>
@@ -413,7 +413,7 @@ export default function GlobeHero() {
               {['Explore', 'Now', 'Radio'].map(mode => (
                 <button
                   key={mode}
-                  className="px-4 py-2 bg-pink-500/20 hover:bg-pink-500/40 rounded-full text-sm text-white transition-colors"
+                  className="px-4 py-2 bg-[#C8962C]/20 hover:bg-[#C8962C]/40 rounded-full text-sm text-white transition-colors"
                   onClick={() => {
                     setModeMenu(false);
                     // Emit mode change

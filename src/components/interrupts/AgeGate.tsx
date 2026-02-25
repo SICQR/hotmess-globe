@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import BrandBackground from '@/components/ui/BrandBackground';
 
 interface AgeGateProps {
   onConfirm?: () => void;
@@ -13,51 +12,45 @@ interface AgeGateProps {
  */
 export function AgeGate({ onConfirm, onReject }: AgeGateProps) {
   return (
-    <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center bg-black p-6 overflow-hidden">
-      <BrandBackground />
-
+    <div className="fixed inset-0 z-[120] bg-black flex items-end justify-center pb-20">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: 'easeOut' }}
-        className="relative z-10 w-full max-w-sm"
+        className="bg-[#1C1C1E] rounded-3xl p-8 mx-4 max-w-sm w-full"
       >
         {/* Wordmark */}
-        <div className="text-center mb-10">
-          <p className="text-5xl font-black tracking-tight text-white leading-none">
-            HOT<span className="text-[#FF1493]" style={{ textShadow: '0 0 24px rgba(255,20,147,0.6)' }}>MESS</span>
-          </p>
-          <p className="text-[10px] tracking-[0.45em] text-white/30 uppercase font-mono mt-2">LONDON</p>
-        </div>
+        <p className="font-black text-2xl text-white leading-none">
+          HOT<span className="text-[#C8962C]">MESS</span>
+        </p>
 
-        {/* Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
-          <h1 className="text-2xl font-black uppercase text-center text-white mb-3 tracking-wide">
-            Are you 18+?
-          </h1>
-          <p className="text-sm text-white/50 text-center mb-8 leading-relaxed">
-            HOTMESS is an 18+ platform for London's queer nightlife community.
-          </p>
+        {/* Title + subtitle */}
+        <h1 className="font-black text-xl text-white mt-4">
+          You&apos;re in grown territory.
+        </h1>
+        <p className="text-white/60 text-sm mt-1">
+          This is an 18+ space for gay and bisexual men.
+        </p>
 
-          <div className="space-y-3">
-            <button
-              onClick={onConfirm}
-              className="w-full h-14 rounded-xl bg-[#FF1493] text-black font-black text-lg uppercase tracking-widest transition-all active:scale-95 hover:opacity-90"
-              style={{ boxShadow: '0 0 28px rgba(255,20,147,0.45)' }}
-            >
-              Yes, I'm 18+
-            </button>
-            <button
-              onClick={onReject}
-              className="w-full h-14 rounded-xl border border-white/10 text-white/40 font-semibold hover:bg-white/5 active:scale-95 transition-all"
-            >
-              No, take me out
-            </button>
-          </div>
-        </div>
+        {/* Primary CTA */}
+        <button
+          onClick={onConfirm}
+          className="bg-[#C8962C] text-black font-black rounded-2xl w-full py-4 text-base mt-6 active:scale-95 transition-all"
+        >
+          I&apos;m 18+
+        </button>
 
-        <p className="text-xs text-white/20 text-center mt-6 leading-relaxed">
-          By continuing you agree to our Terms of Service and Privacy Policy.
+        {/* Secondary CTA */}
+        <button
+          onClick={onReject}
+          className="bg-[#2A2A2A] text-white font-bold rounded-2xl w-full py-3 text-sm mt-3 active:scale-95 transition-all"
+        >
+          Leave
+        </button>
+
+        {/* Fine print */}
+        <p className="text-white/30 text-xs text-center mt-4 leading-relaxed">
+          By entering you confirm you are 18 or older.
         </p>
       </motion.div>
     </div>

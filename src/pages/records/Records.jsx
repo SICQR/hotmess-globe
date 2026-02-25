@@ -111,7 +111,7 @@ export default function Records() {
               onClick={() => setActiveCity(city.id)}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 activeCity === city.id
-                  ? 'bg-pink-500 text-black'
+                  ? 'bg-[#C8962C] text-black'
                   : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
               }`}
             >
@@ -123,7 +123,7 @@ export default function Records() {
         {/* Editorial intro */}
         <div className="mb-8 p-6 border border-white/10 rounded-lg">
           <p className="text-white/70 text-lg leading-relaxed">
-            Records on HOTMESS are not uploads. They are <span className="text-pink-500">moments</span>—
+            Records on HOTMESS are not uploads. They are <span className="text-[#C8962C]">moments</span>—
             discovered through radio, experienced at events, resonating across cities.
             Every release appears because something is happening.
           </p>
@@ -163,7 +163,7 @@ export default function Records() {
                         {moment.type.replace('_', ' ')}
                       </span>
                       {moment.featured && (
-                        <span className="px-2 py-0.5 bg-pink-500 text-black text-[10px] font-bold uppercase rounded-full">
+                        <span className="px-2 py-0.5 bg-[#C8962C] text-black text-[10px] font-bold uppercase rounded-full">
                           Featured
                         </span>
                       )}
@@ -202,7 +202,7 @@ export default function Records() {
                     {(moment.linkedDJs?.length > 0 || moment.linkedEvents?.length > 0 || moment.show) && (
                       <div className="mt-4 pt-4 border-t border-white/5 flex flex-wrap gap-2">
                         {moment.linkedDJs?.map(dj => (
-                          <span key={dj} className="px-3 py-1 bg-pink-500/10 text-pink-400 text-xs rounded-full">
+                          <span key={dj} className="px-3 py-1 bg-[#C8962C]/10 text-[#C8962C] text-xs rounded-full">
                             DJ: {dj}
                           </span>
                         ))}

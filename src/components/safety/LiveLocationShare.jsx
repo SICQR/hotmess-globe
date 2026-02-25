@@ -361,12 +361,12 @@ export default function LiveLocationShare({
       <div className="flex items-center gap-3">
         <div className={cn(
           "w-12 h-12 rounded-full flex items-center justify-center",
-          isSharing ? "bg-[#39FF14]/20" : "bg-[#FF1493]/20"
+          isSharing ? "bg-[#39FF14]/20" : "bg-[#C8962C]/20"
         )}>
           {isSharing ? (
             <Radio className="w-6 h-6 text-[#39FF14] animate-pulse" />
           ) : (
-            <MapPin className="w-6 h-6 text-[#FF1493]" />
+            <MapPin className="w-6 h-6 text-[#C8962C]" />
           )}
         </div>
         <div>
@@ -479,7 +479,7 @@ export default function LiveLocationShare({
                     className={cn(
                       "p-3 rounded-lg border-2 transition-all text-center",
                       selectedDuration === option.value
-                        ? "border-[#FF1493] bg-[#FF1493]/20"
+                        ? "border-[#C8962C] bg-[#C8962C]/20"
                         : "border-white/10 hover:border-white/30"
                     )}
                   >
@@ -501,7 +501,7 @@ export default function LiveLocationShare({
                   <p className="text-sm text-white/40">No trusted contacts yet</p>
                   <Button
                     variant="link"
-                    className="text-[#FF1493] text-sm mt-2"
+                    className="text-[#C8962C] text-sm mt-2"
                     onClick={() => navigate('/safety')}
                   >
                     Add Trusted Contacts
@@ -516,7 +516,7 @@ export default function LiveLocationShare({
                       className={cn(
                         "w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all",
                         selectedContacts.includes(contact.id)
-                          ? "border-[#FF1493] bg-[#FF1493]/10"
+                          ? "border-[#C8962C] bg-[#C8962C]/10"
                           : "border-white/10 hover:border-white/30"
                       )}
                     >
@@ -528,7 +528,7 @@ export default function LiveLocationShare({
                         <div className="text-xs text-white/40">{contact.phone || contact.email}</div>
                       </div>
                       {selectedContacts.includes(contact.id) && (
-                        <Check className="w-5 h-5 text-[#FF1493]" />
+                        <Check className="w-5 h-5 text-[#C8962C]" />
                       )}
                     </button>
                   ))}
@@ -540,7 +540,7 @@ export default function LiveLocationShare({
             <Button
               onClick={() => setShowConfirm(true)}
               disabled={selectedContacts.length === 0 || trustedContacts.length === 0}
-              className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold py-6"
+              className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold py-6"
             >
               <Share2 className="w-5 h-5 mr-2" />
               Start Sharing Location
@@ -581,7 +581,7 @@ export default function LiveLocationShare({
               <Button
                 onClick={startSharing}
                 disabled={loading}
-                className="flex-1 bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-bold"
+                className="flex-1 bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold"
               >
                 {loading ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -618,7 +618,7 @@ export function LocationShareButton({ currentUser, trustedContacts, className })
     <>
       <Button
         onClick={() => setShowModal(true)}
-        className={cn("bg-[#FF1493]/20 hover:bg-[#FF1493]/30 text-[#FF1493]", className)}
+        className={cn("bg-[#C8962C]/20 hover:bg-[#C8962C]/30 text-[#C8962C]", className)}
       >
         <MapPin className="w-4 h-4 mr-2" />
         Share Location
@@ -637,7 +637,7 @@ export function LocationShareButton({ currentUser, trustedContacts, className })
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-md bg-black border-2 border-[#FF1493] p-6"
+              className="w-full max-w-md bg-black border-2 border-[#C8962C] p-6"
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-black uppercase">Live Location</h2>

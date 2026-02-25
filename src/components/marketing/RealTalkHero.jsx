@@ -40,7 +40,7 @@ const HONEST_TAGS = [
 const CATEGORY_COLORS = {
   lifestyle: '#00D9FF',
   health: '#39FF14',
-  values: '#FF1493',
+  values: '#C8962C',
   dynamic: '#B026FF',
   relationship: '#FFEB3B'
 };
@@ -66,9 +66,9 @@ export default function RealTalkHero({ className = '' }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#FF1493]/20 border border-[#FF1493] mb-6">
-            <Eye className="w-4 h-4 text-[#FF1493]" />
-            <span className="text-sm font-bold text-[#FF1493] uppercase">No judgment zone</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#C8962C]/20 border border-[#C8962C] mb-6">
+            <Eye className="w-4 h-4 text-[#C8962C]" />
+            <span className="text-sm font-bold text-[#C8962C] uppercase">No judgment zone</span>
           </div>
 
           <h2 className="text-4xl md:text-5xl font-black uppercase text-white mb-4 leading-tight">
@@ -76,7 +76,7 @@ export default function RealTalkHero({ className = '' }) {
           </h2>
           
           <p className="text-xl md:text-2xl text-white/80 mb-2">
-            We're not being shy. We're being <span className="text-[#FF1493]">real</span>.
+            We're not being shy. We're being <span className="text-[#C8962C]">real</span>.
           </p>
         </motion.div>
 
@@ -135,7 +135,7 @@ export default function RealTalkHero({ className = '' }) {
           </div>
           
           <div className="p-6 border border-white/10 bg-white/5 text-center">
-            <Heart className="w-8 h-8 mx-auto mb-3 text-[#FF1493]" />
+            <Heart className="w-8 h-8 mx-auto mb-3 text-[#C8962C]" />
             <h4 className="font-bold text-white mb-2">Your Terms</h4>
             <p className="text-sm text-white/60">
               Define your boundaries. We'll help you find people who respect them
@@ -162,7 +162,7 @@ export default function RealTalkHero({ className = '' }) {
           <Button
             size="lg"
             onClick={() => navigate('/profile/edit#tags')}
-            className="bg-[#FF1493] hover:bg-white text-white hover:text-black font-black text-lg px-8 border-2 border-white"
+            className="bg-[#C8962C] hover:bg-white text-white hover:text-black font-black text-lg px-8 border-2 border-white"
           >
             Set Your Tags
             <ArrowRight className="w-5 h-5 ml-2" />

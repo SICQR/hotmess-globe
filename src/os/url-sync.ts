@@ -19,13 +19,15 @@ export function useOSURLSync() {
   const { state, openSheet, openThread, closeSheet, closeThread } = useOS()
   const isInitialMount = useRef(true)
   const isUpdatingFromURL = useRef(false)
+  // Guard: don't clear URL params until we've had a chance to hydrate state from them
+  const hasHydrated = useRef(false)
 
   // State → URL sync
   useEffect(() => {
     // Skip if we're currently updating from URL to avoid loops
-    if (isUpdatingFromURL.current) {
-      return
-    }
+    if (isUpdatingFromURL.current) return
+    // Don't clear URL params on initial render — let hydrateFromURL read them first
+    if (!hasHydrated.current) return
 
     const params = new URLSearchParams(window.location.search)
     let changed = false
@@ -101,6 +103,7 @@ export function useOSURLSync() {
   // URL → State sync (on mount and browser navigation)
   const hydrateFromURL = useCallback(() => {
     isUpdatingFromURL.current = true
+    hasHydrated.current = true // Allow State→URL sync to run after this
 
     const params = new URLSearchParams(window.location.search)
     const sheetParam = params.get('sheet') as SheetType | null

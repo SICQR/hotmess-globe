@@ -185,7 +185,7 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
           <motion.div
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="w-32 h-32 rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center mb-6 border-4 border-white/20"
+            className="w-32 h-32 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center mb-6 border-4 border-white/20"
           >
             <User className="w-16 h-16 text-white" />
           </motion.div>
@@ -282,13 +282,13 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
   return (
     <div className={cn(
       "bg-black",
-      compact ? "" : "border-2 border-[#FF1493] p-6"
+      compact ? "" : "border-2 border-[#C8962C] p-6"
     )}>
       {!compact && (
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-[#FF1493]/20 flex items-center justify-center">
-              <Shield className="w-6 h-6 text-[#FF1493]" />
+            <div className="w-12 h-12 rounded-full bg-[#C8962C]/20 flex items-center justify-center">
+              <Shield className="w-6 h-6 text-[#C8962C]" />
             </div>
             <div>
               <h3 className="font-black text-white uppercase">Fake Call</h3>
@@ -324,7 +324,7 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
               className={cn(
                 "px-3 py-1.5 text-xs font-bold border-2 transition-all",
                 callerName === preset.name
-                  ? "bg-[#FF1493] border-[#FF1493] text-black"
+                  ? "bg-[#C8962C] border-[#C8962C] text-black"
                   : "bg-transparent border-white/20 text-white/60 hover:border-white/40"
               )}
             >
@@ -347,7 +347,7 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
               className={cn(
                 "py-2 text-xs font-bold border-2 transition-all",
                 selectedDelay === option.seconds
-                  ? "bg-[#FF1493] border-[#FF1493] text-black"
+                  ? "bg-[#C8962C] border-[#C8962C] text-black"
                   : "bg-transparent border-white/20 text-white/60 hover:border-white/40"
               )}
             >
@@ -369,7 +369,7 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
       {/* Schedule Button */}
       <Button
         onClick={scheduleCall}
-        className="w-full bg-[#FF1493] hover:bg-[#FF1493]/90 text-black font-black py-6"
+        className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-black py-6"
       >
         <Phone className="w-5 h-5 mr-2" />
         {selectedDelay === 0 ? 'CALL NOW' : `CALL IN ${formatTime(selectedDelay)}`}
@@ -388,11 +388,11 @@ export function FakeCallButton({ onClick, className }) {
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 px-4 py-3 bg-white/5 border-2 border-[#FF1493]/50 hover:border-[#FF1493] transition-all",
+        "flex items-center gap-2 px-4 py-3 bg-white/5 border-2 border-[#C8962C]/50 hover:border-[#C8962C] transition-all",
         className
       )}
     >
-      <Phone className="w-5 h-5 text-[#FF1493]" />
+      <Phone className="w-5 h-5 text-[#C8962C]" />
       <div className="text-left">
         <p className="text-sm font-black text-white">FAKE CALL</p>
         <p className="text-[10px] text-white/60">Escape safely</p>

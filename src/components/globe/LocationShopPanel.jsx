@@ -64,7 +64,7 @@ export default function LocationShopPanel({ location, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-[#FF1493]" />
+            <ShoppingBag className="w-5 h-5 text-[#C8962C]" />
             <div>
               <p className="text-sm font-black text-white uppercase tracking-wide">
                 {location?.title || 'Shop This Location'}
@@ -86,7 +86,7 @@ export default function LocationShopPanel({ location, onClose }) {
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-2 border-[#FF1493]/30 border-t-[#FF1493] rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-[#C8962C]/30 border-t-[#C8962C] rounded-full animate-spin" />
             </div>
           )}
 
@@ -119,7 +119,7 @@ export default function LocationShopPanel({ location, onClose }) {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-white truncate">{product.title}</p>
                   {price && (
-                    <p className="text-xs text-[#FF1493] font-black mt-0.5">
+                    <p className="text-xs text-[#C8962C] font-black mt-0.5">
                       {new Intl.NumberFormat('en-GB', { style: 'currency', currency }).format(Number(price))}
                     </p>
                   )}
@@ -128,7 +128,7 @@ export default function LocationShopPanel({ location, onClose }) {
                       onClick={() => handleAddToCart(product)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all active:scale-95"
                       style={{
-                        background: isAdded ? '#39FF14' : '#FF1493',
+                        background: isAdded ? '#39FF14' : '#C8962C',
                         color: '#000',
                         boxShadow: isAdded ? '0 0 12px rgba(57,255,20,0.4)' : '0 0 12px rgba(255,20,147,0.4)',
                       }}

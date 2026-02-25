@@ -169,7 +169,7 @@ export default function AdminDashboard() {
           <TabsList className="grid w-full grid-cols-9 bg-black border-2 border-white mb-8 h-auto">
             <TabsTrigger 
               value="analytics" 
-              className="data-[state=active]:bg-[#FF1493] data-[state=active]:text-black font-black uppercase text-xs py-3"
+              className="data-[state=active]:bg-[#C8962C] data-[state=active]:text-black font-black uppercase text-xs py-3"
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               Analytics

@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createPageUrl } from '../utils';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Shield, FileText, MapPin, KeyRound, Check } from 'lucide-react';
-import BrandBackground from '@/components/ui/BrandBackground';
+import { Shield, FileText, MapPin, KeyRound, Camera, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AGE_KEY = 'hm_age_confirmed_v1';
@@ -22,10 +20,12 @@ async function hashPin(pin) {
 }
 
 const STEPS = [
-  { id: 1, icon: Shield,   color: '#FF1493', label: 'Age'         },
+  { id: 1, icon: Shield,   color: '#C8962C', label: 'Age'         },
   { id: 2, icon: FileText, color: '#00D9FF', label: 'Terms'       },
   { id: 3, icon: MapPin,   color: '#B026FF', label: 'Permissions' },
   { id: 4, icon: KeyRound, color: '#39FF14', label: 'Profile'     },
+  { id: 5, icon: Camera,   color: '#C8962C', label: 'Photo'       },
+  { id: 6, icon: Shield,   color: '#C8962C', label: 'Community'   },
 ];
 
 const fadeSlide = {
@@ -105,10 +105,12 @@ export default function OnboardingGate() {
   const [pinPhase, setPinPhase]             = useState('enter'); // 'enter' | 'confirm'
   const [saving, setSaving]                 = useState(false);
 
+  // Step 5 — photo
+  const [photoUrl, setPhotoUrl]             = useState('');
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoInputRef                       = useRef(null);
+
   // Wait for BootGuard to finish loading, then decide starting step.
-  // - No session → send to /auth (should not normally happen since BootRouter gates this)
-  // - Onboarding already complete → send straight to app
-  // - Otherwise → start at step 1 (age) or step 2 (terms) depending on localStorage
   useEffect(() => {
     if (isLoading) return;
 
@@ -117,8 +119,14 @@ export default function OnboardingGate() {
       return;
     }
 
-    if (profile?.onboarding_complete) {
-      navigate(createPageUrl('Home'), { replace: true });
+    if (profile?.onboarding_complete && profile?.community_attested_at) {
+      navigate('/', { replace: true });
+      return;
+    }
+
+    // Onboarding done but community gate pending — jump straight to step 6
+    if (profile?.onboarding_complete && !profile?.community_attested_at) {
+      setStep(6);
       return;
     }
 
@@ -141,7 +149,7 @@ export default function OnboardingGate() {
           has_consented_data: dataConsent,
           has_consented_gps:  gpsConsent,
         })
-        .eq('account_id', session.user.id);
+        .eq('id', session.user.id);
       if (error) {
         console.error('[Onboarding] Failed to save consent flags:', error);
         toast.error('Could not save your consent settings. Please try again.');
@@ -151,22 +159,21 @@ export default function OnboardingGate() {
     setStep((s) => s + 1);
   }, [step, ageConfirmed, termsAgreed, dataConsent, gpsConsent, session?.user?.id]);
 
-  // ── Step 4 save ────────────────────────────────────────────────────────────
+  // ── Step 4 save — saves name + PIN, advances to photo step ────────────────
   const handleSaveProfile = useCallback(async () => {
     if (!displayName.trim()) { toast.error('Please enter your name'); return; }
     if (pin.length !== 4)    { toast.error('PIN must be 4 digits');   return; }
-    if (pin !== pinConfirm)  { toast.error('PINs don\'t match');      return; }
+    if (pin !== pinConfirm)  { toast.error("PINs don't match");       return; }
 
     setSaving(true);
     try {
       const hash = await hashPin(pin);
 
-      // Save display name + PIN hash to profiles table (single upsert)
       if (session?.user?.id) {
         const { error } = await supabase
           .from('profiles')
           .update({ pin_code_hash: hash, display_name: displayName.trim() })
-          .eq('account_id', session.user.id);
+          .eq('id', session.user.id);
         if (error) {
           console.error('[Onboarding] Failed to save profile:', error);
           toast.error('Could not save your profile. Please try again.');
@@ -174,15 +181,77 @@ export default function OnboardingGate() {
         }
       }
 
-      await completeOnboarding();
-      navigate(createPageUrl('Home'));
+      // Advance to photo step
+      setStep(5);
     } catch (err) {
       console.error('Profile save error:', err);
       toast.error('Could not save profile. Please try again.');
     } finally {
       setSaving(false);
     }
-  }, [displayName, pin, pinConfirm, session?.user?.id, completeOnboarding, navigate]);
+  }, [displayName, pin, pinConfirm, session?.user?.id]);
+
+  // ── Step 5 photo upload ────────────────────────────────────────────────────
+  const handlePhotoUpload = async (file) => {
+    setPhotoUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not logged in');
+
+      const ext = file.name.split('.').pop();
+      const path = `profile-photos/${user.id}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('uploads')
+        .upload(path, file, { upsert: false });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(path);
+
+      // Insert into profile_photos table
+      await supabase.from('profile_photos').insert({
+        profile_id: user.id,
+        url: publicUrl,
+        position: 0,
+        is_primary: true,
+      });
+
+      // Also set avatar_url on the profile for quick access
+      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
+
+      setPhotoUrl(publicUrl);
+      toast.success('Photo uploaded!');
+    } catch (err) {
+      toast.error(err.message || 'Upload failed');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  // ── Step 5 finish — advance to community attestation step ─────────────────
+  const handleFinish = useCallback(() => {
+    setStep(6);
+  }, []);
+
+  // ── Step 6 community attestation — confirm identity + complete onboarding ──
+  const handleCommunityConfirm = useCallback(async () => {
+    setSaving(true);
+    try {
+      if (session?.user?.id) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ community_attested_at: new Date().toISOString() })
+          .eq('id', session.user.id);
+        if (error) throw error;
+      }
+      await completeOnboarding();
+      navigate('/');
+    } catch (err) {
+      console.error('Community confirm error:', err);
+      toast.error('Could not confirm. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [session?.user?.id, completeOnboarding, navigate]);
 
   // ── Render helpers ─────────────────────────────────────────────────────────
 
@@ -192,7 +261,7 @@ export default function OnboardingGate() {
       case 0:
         return (
           <div className="flex flex-col items-center gap-4 py-8">
-            <div className="w-10 h-10 border-4 border-[#FF1493]/30 border-t-[#FF1493] rounded-full animate-spin" />
+            <div className="w-10 h-10 border-4 border-[#C8962C]/30 border-t-[#C8962C] rounded-full animate-spin" />
             <p className="text-white/40 text-sm font-mono uppercase tracking-widest">Loading…</p>
           </div>
         );
@@ -201,7 +270,7 @@ export default function OnboardingGate() {
       case 1:
         return (
           <motion.div key="step-1" {...fadeSlide} className="text-center">
-            <Shield className="w-14 h-14 mx-auto mb-6" style={{ color: '#FF1493', filter: 'drop-shadow(0 0 12px rgba(255,20,147,0.6))' }} />
+            <Shield className="w-14 h-14 mx-auto mb-6" style={{ color: '#C8962C', filter: 'drop-shadow(0 0 12px rgba(200,150,44,0.5))' }} />
             <h2 className="text-3xl font-black uppercase mb-3 tracking-wide">Age Verification</h2>
             <p className="text-white/50 mb-8 text-sm">You must be 18+ to use HOTMESS.</p>
             <label className="flex items-center justify-center gap-3 cursor-pointer mb-8 select-none">
@@ -218,7 +287,7 @@ export default function OnboardingGate() {
                 I am 18 years or older
               </Label>
             </label>
-            <button onClick={handleNext} disabled={!ageConfirmed} className="w-full h-14 rounded-xl font-black text-black text-lg uppercase tracking-widest disabled:opacity-40 active:scale-95 transition-all" style={{ background: ageConfirmed ? '#FF1493' : 'rgba(255,20,147,0.3)', boxShadow: ageConfirmed ? '0 0 24px rgba(255,20,147,0.4)' : 'none' }}>
+            <button onClick={handleNext} disabled={!ageConfirmed} className="w-full h-14 rounded-xl font-black text-black text-lg uppercase tracking-widest disabled:opacity-40 active:scale-95 transition-all" style={{ background: ageConfirmed ? '#C8962C' : 'rgba(200,150,44,0.3)', boxShadow: ageConfirmed ? '0 0 24px rgba(200,150,44,0.4)' : 'none' }}>
               Continue
             </button>
           </motion.div>
@@ -233,7 +302,7 @@ export default function OnboardingGate() {
             <div className="max-h-56 overflow-y-auto bg-white/5 border border-white/10 rounded-xl p-4 mb-6 text-left space-y-3">
               {[['Eligibility','Must be 18+. No exceptions.'],['Conduct','No harassment, no illegal activity, no fake profiles. Be real. Be respectful.'],['Privacy','Location data is used for beacons and Right Now features. Encrypted. Never sold.'],['Content','You own your content. We moderate violations.'],['Liability','HOTMESS is a platform. Use common sense. Stay safe.']].map(([h,b]) => (
                 <div key={h}>
-                  <p className="text-xs font-black text-[#FF1493] uppercase mb-1">{h}</p>
+                  <p className="text-xs font-black text-[#C8962C] uppercase mb-1">{h}</p>
                   <p className="text-xs text-white/50 leading-relaxed">{b}</p>
                 </div>
               ))}
@@ -263,7 +332,7 @@ export default function OnboardingGate() {
                 <label key={id} className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-xl p-4 cursor-pointer hover:bg-white/10 transition-colors select-none">
                   <Checkbox id={id} checked={checked} onCheckedChange={onChange} className="w-5 h-5 border-2 border-white/30 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm font-bold">{title}{required && <span className="text-[#FF1493] ml-1">*</span>}</p>
+                    <p className="text-sm font-bold">{title}{required && <span className="text-[#C8962C] ml-1">*</span>}</p>
                     <p className="text-xs text-white/40 mt-0.5">{desc}</p>
                   </div>
                 </label>
@@ -314,7 +383,7 @@ export default function OnboardingGate() {
                 <motion.div key="pin-confirm" {...fadeSlide}>
                   <PinInput value={pinConfirm} onChange={setPinConfirm} label="Confirm your PIN" />
                   {pinConfirm.length === 4 && pinConfirm !== pin && (
-                    <p className="text-xs text-[#FF1493] mt-2">PINs don't match</p>
+                    <p className="text-xs text-[#C8962C] mt-2">PINs don't match</p>
                   )}
                   <button
                     onClick={handleSaveProfile}
@@ -325,7 +394,7 @@ export default function OnboardingGate() {
                     {saving ? (
                       <div className="w-5 h-5 border-2 border-black/40 border-t-black rounded-full animate-spin" />
                     ) : (
-                      <><Check className="w-5 h-5" /> Enter HOTMESS</>
+                      <>Next &rarr;</>
                     )}
                   </button>
                   <button onClick={() => { setPinConfirm(''); setPinPhase('enter'); }} className="text-xs text-white/30 mt-3 hover:text-white/60 transition-colors">
@@ -337,6 +406,106 @@ export default function OnboardingGate() {
           </motion.div>
         );
 
+      // ── Step 5: Photo ─────────────────────────────────────────────────────
+      case 5:
+        return (
+          <motion.div key="step-5" {...fadeSlide} className="text-center">
+            <Camera className="w-14 h-14 mx-auto mb-6" style={{ color: '#C8962C', filter: 'drop-shadow(0 0 12px rgba(200,150,44,0.5))' }} />
+            <h2 className="text-3xl font-black uppercase mb-1 tracking-wide">Add a Photo</h2>
+            <p className="text-white/50 mb-6 text-sm">Show the real you. You can add more later.</p>
+
+            {/* Photo upload */}
+            <div className="flex justify-center mb-6">
+              <button
+                onClick={() => photoInputRef.current?.click()}
+                disabled={photoUploading}
+                className="relative w-32 h-32 rounded-2xl overflow-hidden border-2 border-dashed border-white/20 hover:border-[#C8962C]/50 transition-all flex items-center justify-center bg-[#1C1C1E] active:scale-95"
+              >
+                {photoUrl ? (
+                  <>
+                    <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <Camera className="w-6 h-6 text-white" />
+                    </div>
+                  </>
+                ) : photoUploading ? (
+                  <Loader2 className="w-8 h-8 text-[#C8962C] animate-spin" />
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Camera className="w-8 h-8 text-white/30" />
+                    <span className="text-white/30 text-xs">Tap to add</span>
+                  </div>
+                )}
+              </button>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                capture="user"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) handlePhotoUpload(file);
+                  e.target.value = '';
+                }}
+              />
+            </div>
+
+            <button
+              onClick={handleFinish}
+              disabled={photoUploading}
+              className="w-full h-14 rounded-xl font-black text-black text-lg uppercase tracking-widest disabled:opacity-40 active:scale-95 transition-all flex items-center justify-center gap-2"
+              style={{ background: '#C8962C', boxShadow: '0 0 24px rgba(200,150,44,0.4)' }}
+            >
+              Continue →
+            </button>
+
+            {!photoUrl && (
+              <button
+                onClick={handleFinish}
+                className="text-white/30 text-xs mt-3 hover:text-white/60 transition-colors"
+              >
+                Skip for now
+              </button>
+            )}
+          </motion.div>
+        );
+
+      // ── Step 6: Community attestation ────────────────────────────────────
+      case 6:
+        return (
+          <motion.div key="step-6" {...fadeSlide} className="text-center">
+            <Shield className="w-14 h-14 mx-auto mb-6" style={{ color: '#C8962C', filter: 'drop-shadow(0 0 12px rgba(200,150,44,0.5))' }} />
+            <h2 className="text-3xl font-black uppercase mb-3 tracking-wide">Your Community</h2>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-5 mb-8 text-left">
+              <p className="text-sm text-white/80 leading-relaxed">
+                HOTMESS is built for gay and bisexual men, 18+.
+              </p>
+              <p className="text-sm text-white/60 leading-relaxed mt-3">
+                By continuing, you confirm you're entering this space as such.
+              </p>
+            </div>
+            <button
+              onClick={handleCommunityConfirm}
+              disabled={saving}
+              className="w-full h-14 rounded-xl font-black text-black text-lg uppercase tracking-widest disabled:opacity-40 active:scale-95 transition-all flex items-center justify-center gap-2"
+              style={{ background: '#C8962C', boxShadow: '0 0 24px rgba(200,150,44,0.4)' }}
+            >
+              {saving ? (
+                <div className="w-5 h-5 border-2 border-black/40 border-t-black rounded-full animate-spin" />
+              ) : (
+                <><Check className="w-5 h-5" /> I'm in</>
+              )}
+            </button>
+            <button
+              onClick={() => { window.location.href = 'about:blank'; }}
+              className="text-white/30 text-xs mt-3 hover:text-white/60 transition-colors"
+            >
+              This isn't for me
+            </button>
+          </motion.div>
+        );
+
       default:
         return null;
     }
@@ -345,8 +514,6 @@ export default function OnboardingGate() {
   // ── Layout ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 overflow-hidden">
-      <BrandBackground />
-
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -356,13 +523,13 @@ export default function OnboardingGate() {
         {/* Wordmark */}
         <div className="text-center mb-8">
           <p className="text-4xl font-black tracking-tight text-white leading-none">
-            HOT<span className="text-[#FF1493]" style={{ textShadow: '0 0 24px rgba(255,20,147,0.6)' }}>MESS</span>
+            HOT<span className="text-[#C8962C]">MESS</span>
           </p>
           <p className="text-[10px] tracking-[0.45em] text-white/30 uppercase font-mono mt-2">LONDON</p>
         </div>
 
         {/* Progress dots */}
-        {step >= 1 && step <= 4 && (
+        {step >= 1 && step <= 6 && (
           <div className="flex justify-center gap-2 mb-6">
             {STEPS.map((s) => (
               <div
@@ -379,14 +546,14 @@ export default function OnboardingGate() {
         )}
 
         {/* Step card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+        <div className="bg-[#1C1C1E] border border-white/10 rounded-2xl p-6">
           <AnimatePresence mode="wait">
             {renderStep()}
           </AnimatePresence>
         </div>
 
         {/* Step label */}
-        {step >= 1 && step <= 4 && (
+        {step >= 1 && step <= 6 && (
           <p className="text-center text-[10px] text-white/20 font-mono uppercase tracking-widest mt-4">
             Step {step} of {STEPS.length} — {STEPS[step - 1]?.label}
           </p>

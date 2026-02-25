@@ -16,7 +16,7 @@ const THREAD_TYPE_ICONS = {
 const THREAD_TYPE_COLORS = {
   dm: '#00D9FF',
   order: '#FFEB3B',
-  connect: '#FF1493',
+  connect: '#C8962C',
   squad: '#B026FF',
   event: '#FF6B35',
   beacon: '#39FF14',
@@ -29,7 +29,7 @@ export default function ThreadList({ threads, currentUser, allUsers, onSelectThr
         <button
           onClick={onNewMessage}
           disabled={!canStartNew}
-          className={`w-full bg-[#FF1493] hover:bg-white text-black hover:text-black font-black uppercase text-sm py-3 border-2 border-white transition-all ${
+          className={`w-full bg-[#C8962C] hover:bg-white text-black hover:text-black font-black uppercase text-sm py-3 border-2 border-white transition-all ${
             !canStartNew ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
           }`}
         >
@@ -41,7 +41,7 @@ export default function ThreadList({ threads, currentUser, allUsers, onSelectThr
       <div className="flex-1 overflow-y-auto space-y-2 p-2">
         {threads.map((thread, idx) => {
         const Icon = THREAD_TYPE_ICONS[thread.thread_type] || MessageCircle;
-        const color = THREAD_TYPE_COLORS[thread.thread_type] || '#FF1493';
+        const color = THREAD_TYPE_COLORS[thread.thread_type] || '#C8962C';
         
         const currentEmail = currentUser?.email || '';
         const participantEmails = Array.isArray(thread.participant_emails) ? thread.participant_emails : [];
@@ -59,12 +59,12 @@ export default function ThreadList({ threads, currentUser, allUsers, onSelectThr
             transition={{ delay: idx * 0.03 }}
             onClick={() => onSelectThread(thread)}
             className={`w-full bg-black hover:bg-white/5 border-2 p-4 transition-all text-left ${
-              unreadCount > 0 ? 'border-[#FF1493]' : 'border-white/20 hover:border-white/40'
+              unreadCount > 0 ? 'border-[#C8962C]' : 'border-white/20 hover:border-white/40'
             }`}
           >
             <div className="flex items-start gap-3">
               {!isGroupChat && otherUsers[0] ? (
-                <div className="w-12 h-12 bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
                   {otherUsers[0].avatar_url ? (
                     <img src={otherUsers[0].avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
@@ -106,7 +106,7 @@ export default function ThreadList({ threads, currentUser, allUsers, onSelectThr
               </div>
 
               {unreadCount > 0 && (
-                <Badge className="bg-[#FF1493] text-black flex-shrink-0 font-black border-2 border-white">
+                <Badge className="bg-[#C8962C] text-black flex-shrink-0 font-black border-2 border-white">
                   {unreadCount}
                 </Badge>
               )}

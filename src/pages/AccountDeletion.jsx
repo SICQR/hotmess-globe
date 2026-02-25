@@ -186,7 +186,7 @@ export default function AccountDeletion() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#FF1493]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#C8962C]" />
       </div>
     );
   }

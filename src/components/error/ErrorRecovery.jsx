@@ -207,7 +207,7 @@ export function GracefulDegradation({
   if (isLoading) {
     return loadingComponent || (
       <div className="flex items-center justify-center p-8">
-        <div className="w-8 h-8 border-4 border-white/20 border-t-[#FF1493] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />
       </div>
     );
   }

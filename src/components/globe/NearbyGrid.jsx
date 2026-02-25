@@ -127,12 +127,12 @@ export default function NearbyGrid({ userLocation }) {
       <div className="p-4 border-b-2 border-white/10">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Grid3x3 className="w-5 h-5 text-[#FF1493]" />
+            <Grid3x3 className="w-5 h-5 text-[#C8962C]" />
             <h2 className="text-lg font-black uppercase">NEARBY</h2>
           </div>
           <button
             onClick={() => setShowGrid(!showGrid)}
-            className="px-3 py-1 bg-[#FF1493] text-black text-xs font-black uppercase border-2 border-white"
+            className="px-3 py-1 bg-[#C8962C] text-black text-xs font-black uppercase border-2 border-white"
           >
             {showGrid ? 'LIST' : 'GRID'}
           </button>
@@ -145,7 +145,7 @@ export default function NearbyGrid({ userLocation }) {
               <Filter className="w-3 h-3" />
               <span className="font-mono uppercase">Within {distanceFilter}km</span>
             </div>
-            <span className="text-[#FF1493] font-bold">
+            <span className="text-[#C8962C] font-bold">
               {activeUsers.length} online
               {activeUsers.length >= MAX_DISPLAYED_USERS && '+'}
             </span>
@@ -156,7 +156,7 @@ export default function NearbyGrid({ userLocation }) {
             max="50"
             value={distanceFilter}
             onChange={(e) => setDistanceFilter(parseInt(e.target.value))}
-            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#FF1493]"
+            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#C8962C]"
           />
         </div>
       </div>
@@ -192,11 +192,11 @@ export default function NearbyGrid({ userLocation }) {
                 transition={{ delay: idx * 0.02 }}
               >
                 <Link to={createPageUrl(`Profile?email=${user.email}`)}>
-                  <div className="bg-black border-2 border-white hover:border-[#FF1493] transition-all group overflow-hidden">
+                  <div className="bg-black border-2 border-white hover:border-[#C8962C] transition-all group overflow-hidden">
                     {/* Profile Image */}
                     <div className="aspect-square relative overflow-hidden">
                       <img
-                        src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&size=400&background=FF1493&color=000`}
+                        src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&size=400&background=C8962C&color=000`}
                         alt={user.full_name || user.email}
                         className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
                       />
@@ -204,13 +204,13 @@ export default function NearbyGrid({ userLocation }) {
                       {/* Online Indicator */}
                       <div className="absolute top-2 right-2">
                         <div className={`w-3 h-3 rounded-full border-2 border-white animate-pulse ${
-                          user.rightNowStatus ? 'bg-[#FF1493]' : 'bg-[#00D9FF]'
+                          user.rightNowStatus ? 'bg-[#C8962C]' : 'bg-[#00D9FF]'
                         }`} />
                       </div>
                       
                       {/* Right Now Badge */}
                       {user.rightNowStatus && (
-                        <div className="absolute top-2 left-2 px-2 py-1 bg-[#FF1493] text-black text-[9px] font-black uppercase flex items-center gap-1 border-2 border-white">
+                        <div className="absolute top-2 left-2 px-2 py-1 bg-[#C8962C] text-black text-[9px] font-black uppercase flex items-center gap-1 border-2 border-white">
                           <Zap className="w-2.5 h-2.5" />
                           RIGHT NOW
                         </div>
@@ -231,7 +231,7 @@ export default function NearbyGrid({ userLocation }) {
                     {/* User Info */}
                     <div className="p-3 space-y-1">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-black text-sm truncate group-hover:text-[#FF1493] transition-colors">
+                        <h3 className="font-black text-sm truncate group-hover:text-[#C8962C] transition-colors">
                           {user.full_name || user.email}
                         </h3>
                         <span className="text-[10px] text-white/40 font-mono whitespace-nowrap">
@@ -247,12 +247,8 @@ export default function NearbyGrid({ userLocation }) {
 
                       {/* Stats */}
                       <div className="flex items-center gap-2 text-[10px]">
-                        <div className="flex items-center gap-1">
-                          <Zap className="w-3 h-3 text-[#FFEB3B]" />
-                          <span className="text-white/80 font-mono">{user.xp || 0}</span>
-                        </div>
                         {user.preferred_vibes && user.preferred_vibes[0] && (
-                          <span className="px-1.5 py-0.5 bg-[#FF1493]/20 border border-[#FF1493] text-[#FF1493] uppercase font-bold">
+                          <span className="px-1.5 py-0.5 bg-[#C8962C]/20 border border-[#C8962C] text-[#C8962C] uppercase font-bold">
                             {user.preferred_vibes[0]}
                           </span>
                         )}
@@ -262,7 +258,7 @@ export default function NearbyGrid({ userLocation }) {
                       {user.rightNowStatus?.logistics && user.rightNowStatus.logistics.length > 0 && (
                         <div className="flex gap-1 flex-wrap">
                           {user.rightNowStatus.logistics.map(log => (
-                            <span key={log} className="text-[9px] px-1.5 py-0.5 bg-[#FF1493]/20 border border-[#FF1493]/40 text-[#FF1493] uppercase font-mono">
+                            <span key={log} className="text-[9px] px-1.5 py-0.5 bg-[#C8962C]/20 border border-[#C8962C]/40 text-[#C8962C] uppercase font-mono">
                               {log.replace('_', ' ')}
                             </span>
                           ))}

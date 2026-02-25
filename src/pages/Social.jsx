@@ -102,7 +102,7 @@ export default function Social() {
               <MessageCircle className="w-4 h-4 mr-2 shrink-0" />
               <span className="text-sm">INBOX</span>
               {threads.length > 0 && (
-                <span className="ml-1.5 px-2 py-0.5 bg-[#FF1493] text-black text-xs font-black rounded-full shrink-0">
+                <span className="ml-1.5 px-2 py-0.5 bg-[#C8962C] text-black text-xs font-black rounded-full shrink-0">
                   {threads.length > 99 ? '99+' : threads.length}
                 </span>
               )}
@@ -176,7 +176,7 @@ export default function Social() {
                     >
                       <div className="bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-xl p-3 sm:p-4 transition-all">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center shrink-0">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center shrink-0">
                             <span className="text-lg font-black">
                               {otherParticipant[0]?.toUpperCase()}
                             </span>
@@ -188,7 +188,7 @@ export default function Social() {
                             </p>
                           </div>
                           {unreadCount > 0 && (
-                            <span className="px-2.5 py-1 bg-[#FF1493] text-black text-xs font-black rounded-full shrink-0">
+                            <span className="px-2.5 py-1 bg-[#C8962C] text-black text-xs font-black rounded-full shrink-0">
                               {unreadCount}
                             </span>
                           )}

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 const CITIES = [
-  { id: 'london', name: 'London', flag: '🇬🇧', color: '#FF1493' },
+  { id: 'london', name: 'London', flag: '🇬🇧', color: '#C8962C' },
   { id: 'berlin', name: 'Berlin', flag: '🇩🇪', color: '#00D9FF' },
   { id: 'paris', name: 'Paris', flag: '🇫🇷', color: '#B026FF' },
   { id: 'tokyo', name: 'Tokyo', flag: '🇯🇵', color: '#FF6B35' },
@@ -81,8 +81,8 @@ const BusinessGlobe = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-black uppercase flex items-center gap-3">
-                <Globe className="w-10 h-10 text-[#FF1493]" />
-                Business <span className="text-[#FF1493]">Globe</span>
+                <Globe className="w-10 h-10 text-[#C8962C]" />
+                Business <span className="text-[#C8962C]">Globe</span>
               </h1>
               <p className="text-white/60">Real-time city activity and signal analytics</p>
             </div>
@@ -171,7 +171,7 @@ const BusinessGlobe = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { icon: Activity, label: 'Heat Tiles', value: cityHeat.length, color: '#FF1493' },
+            { icon: Activity, label: 'Heat Tiles', value: cityHeat.length, color: '#C8962C' },
             { icon: Radio, label: 'Active Signals', value: radioSignals.length, color: '#00D9FF' },
             { icon: Users, label: 'Active Users', value: Math.floor(readinessScore * 12), color: '#39FF14' },
             { icon: Target, label: 'Hotspots', value: cityHeat.filter(t => t.intensity > 0.7).length, color: '#FFD700' },
@@ -200,7 +200,7 @@ const BusinessGlobe = () => {
             className="bg-white/5 border border-white/10 rounded-xl p-6"
           >
             <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-[#FF1493]" />
+              <Activity className="w-5 h-5 text-[#C8962C]" />
               Heat Tiles
             </h3>
             {loading ? (
@@ -226,7 +226,7 @@ const BusinessGlobe = () => {
                       <span className="font-mono text-sm">{tile.tile_id || `Tile ${idx + 1}`}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[#FF1493] font-bold">{(tile.intensity * 100).toFixed(0)}%</span>
+                      <span className="text-[#C8962C] font-bold">{(tile.intensity * 100).toFixed(0)}%</span>
                       <Zap className="w-4 h-4 text-[#FFD700]" />
                     </div>
                   </div>
@@ -289,7 +289,7 @@ const BusinessGlobe = () => {
         >
           <Button 
             onClick={() => navigate('/business/amplify')}
-            className="flex-1 bg-[#FF1493] text-black font-bold py-6"
+            className="flex-1 bg-[#C8962C] text-black font-bold py-6"
           >
             <Target className="w-5 h-5 mr-2" />
             Launch Amplification

@@ -6,7 +6,7 @@ export default function CircularProgress({
   max = 100, 
   size = 60,
   strokeWidth = 4,
-  color = '#FF1493',
+  color = '#C8962C',
   backgroundColor = 'rgba(255, 255, 255, 0.1)',
   showLabel = false,
   label,

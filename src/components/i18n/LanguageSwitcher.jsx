@@ -97,7 +97,7 @@ export default function LanguageSwitcher({
             onClick={() => handleLanguageChange(lang.code)}
             className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
               lang.code === currentLanguage
-                ? 'bg-[#FF1493]/20 border border-[#FF1493]/40'
+                ? 'bg-[#C8962C]/20 border border-[#C8962C]/40'
                 : 'bg-white/5 border border-white/10 hover:bg-white/10'
             }`}
           >

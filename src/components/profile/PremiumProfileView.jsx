@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/components/utils/supabaseClient';
 import { 
-  Crown, 
-  Lock, 
+  Crown,
+  Lock,
   Unlock,
   Users,
   Sparkles,
   Eye,
   Check,
-  Zap,
   Image as ImageIcon,
   Gift
 } from 'lucide-react';
@@ -216,10 +215,10 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
   return (
     <div className="space-y-6">
       {/* Premium Badge Header */}
-      <div className="bg-gradient-to-r from-[#FFD700]/20 via-[#FF1493]/20 to-[#FFD700]/20 border-2 border-[#FFD700]/50 rounded-xl p-4">
+      <div className="bg-gradient-to-r from-[#FFD700]/20 via-[#C8962C]/20 to-[#FFD700]/20 border-2 border-[#FFD700]/50 rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#FFD700] to-[#FF1493] flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#FFD700] to-[#C8962C] flex items-center justify-center">
               <Crown className="w-6 h-6 text-black" />
             </div>
             <div>
@@ -231,10 +230,10 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
             <Button
               onClick={() => subscribeMutation.mutate()}
               disabled={subscribeMutation.isPending}
-              className="bg-gradient-to-r from-[#FFD700] to-[#FF1493] text-black font-black uppercase hover:opacity-90"
+              className="bg-gradient-to-r from-[#FFD700] to-[#C8962C] text-black font-black uppercase hover:opacity-90"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              Subscribe • {subscriptionPrice} XP/mo
+              Subscribe
             </Button>
           )}
           {isSubscribed && !isOwnProfile && (
@@ -264,16 +263,16 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
                 className="w-full h-full object-cover blur-xl scale-110"
               />
               {/* Lock overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/30 to-[#FF1493]/30 backdrop-blur-sm flex items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/30 to-[#C8962C]/30 backdrop-blur-sm flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-[#FFD700] to-[#FF1493] flex items-center justify-center">
+                  <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-[#FFD700] to-[#C8962C] flex items-center justify-center">
                     <Lock className="w-8 h-8 text-black" />
                   </div>
                   <p className="text-[#FFD700] font-black uppercase mb-2">Premium Content</p>
-                  <p className="text-white/60 text-sm mb-4">{activePhotoMeta.price} XP to unlock</p>
+                  <p className="text-white/60 text-sm mb-4">Premium content</p>
                   <Button
                     onClick={() => handleUnlockClick(activePhotoMeta)}
-                    className="bg-gradient-to-r from-[#FFD700] to-[#FF1493] text-black font-black uppercase"
+                    className="bg-gradient-to-r from-[#FFD700] to-[#C8962C] text-black font-black uppercase"
                   >
                     <Unlock className="w-4 h-4 mr-2" />
                     Unlock Now
@@ -323,7 +322,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
                 disabled={!url}
               >
                 {meta.isPremium && !isUnlocked ? (
-                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/20 to-[#FF1493]/20 flex items-center justify-center">
+                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/20 to-[#C8962C]/20 flex items-center justify-center">
                     <Lock className="w-4 h-4 text-[#FFD700]" />
                   </div>
                 ) : url ? (
@@ -352,7 +351,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
           <div className="text-xs text-white/40 uppercase">Premium</div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-          <Users className="w-6 h-6 mx-auto mb-2 text-[#FF1493]" />
+          <Users className="w-6 h-6 mx-auto mb-2 text-[#C8962C]" />
           <div className="text-2xl font-black">{subscriberCount}</div>
           <div className="text-xs text-white/40 uppercase">Subscribers</div>
         </div>
@@ -365,7 +364,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
 
       {/* Subscription Tiers */}
       {!isOwnProfile && !isSubscribed && (
-        <div className="bg-gradient-to-br from-[#FFD700]/10 to-[#FF1493]/10 border border-[#FFD700]/30 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#FFD700]/10 to-[#C8962C]/10 border border-[#FFD700]/30 rounded-xl p-6">
           <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-[#FFD700]" />
             Subscription Benefits
@@ -401,10 +400,10 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
           <Button
             onClick={() => subscribeMutation.mutate()}
             disabled={subscribeMutation.isPending}
-            className="w-full bg-gradient-to-r from-[#FFD700] to-[#FF1493] text-black font-black uppercase text-lg py-6 hover:opacity-90"
+            className="w-full bg-gradient-to-r from-[#FFD700] to-[#C8962C] text-black font-black uppercase text-lg py-6 hover:opacity-90"
           >
             <Crown className="w-5 h-5 mr-2" />
-            Subscribe for {subscriptionPrice} XP/month
+            Subscribe
           </Button>
         </div>
       )}
@@ -431,7 +430,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
               <p className="text-xs font-bold uppercase">All Content Unlocked</p>
             </div>
             <div className="p-3 bg-black/30 border border-white/10 text-center">
-              <Zap className="w-6 h-6 mx-auto mb-2 text-[#FFD700]" />
+              <Sparkles className="w-6 h-6 mx-auto mb-2 text-[#C8962C]" />
               <p className="text-xs font-bold uppercase">Priority Messages</p>
             </div>
           </div>
@@ -459,30 +458,11 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-center mb-6">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-[#FFD700] to-[#FF1493] flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-[#FFD700] to-[#C8962C] flex items-center justify-center">
                   <Unlock className="w-8 h-8 text-black" />
                 </div>
                 <h3 className="text-xl font-black uppercase mb-2">Unlock Premium Content</h3>
-                <p className="text-white/60">
-                  Spend {unlockingPhoto.price} XP to unlock this content permanently
-                </p>
-              </div>
-
-              <div className="p-4 bg-white/5 border border-white/10 rounded-lg mb-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-white/60">Your XP Balance</span>
-                  <span className="font-black text-[#FFD700]">{currentUser?.xp || 0} XP</span>
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-white/60">Content Price</span>
-                  <span className="font-black text-white">-{unlockingPhoto.price} XP</span>
-                </div>
-                <div className="border-t border-white/10 mt-3 pt-3 flex items-center justify-between">
-                  <span className="text-white/60">After Purchase</span>
-                  <span className="font-black text-[#39FF14]">
-                    {Math.max(0, (currentUser?.xp || 0) - unlockingPhoto.price)} XP
-                  </span>
-                </div>
+                <p className="text-white/60">Unlock this content permanently.</p>
               </div>
 
               <div className="flex gap-3">
@@ -494,22 +474,16 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
                   Cancel
                 </Button>
                 <Button
-                  className="flex-1 bg-gradient-to-r from-[#FFD700] to-[#FF1493] text-black font-black"
+                  className="flex-1 bg-gradient-to-r from-[#FFD700] to-[#C8962C] text-black font-black"
                   onClick={() => unlockMutation.mutate({
                     photoId: unlockingPhoto.id,
                     priceXp: unlockingPhoto.price,
                   })}
-                  disabled={unlockMutation.isPending || (currentUser?.xp || 0) < unlockingPhoto.price}
+                  disabled={unlockMutation.isPending}
                 >
                   {unlockMutation.isPending ? 'Unlocking...' : 'Unlock Now'}
                 </Button>
               </div>
-
-              {(currentUser?.xp || 0) < unlockingPhoto.price && (
-                <p className="text-center text-xs text-red-400 mt-4">
-                  Not enough XP. Earn more by being active on the platform!
-                </p>
-              )}
             </motion.div>
           </motion.div>
         )}

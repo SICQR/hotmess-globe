@@ -12,14 +12,14 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
   const kindColors = {
     event: '#00D9FF',
     venue: '#B026FF',
-    hookup: '#FF1493',
+    hookup: '#C8962C',
     drop: '#FFEB3B',
     popup: '#39FF14',
     private: '#FF6B35',
     person: '#00D9FF',
   };
 
-  const color = kindColors[beacon.kind] || '#FF1493';
+  const color = kindColors[beacon.kind] || '#C8962C';
   const isPerson = beacon.kind === 'person';
   const detailsUrl = isPerson && beacon.email
     ? createPageUrl(`Profile?email=${encodeURIComponent(beacon.email)}`)
@@ -106,26 +106,13 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
               </div>
             )}
 
-            {beacon.xp_scan && (
-              <div 
-                className="flex items-center gap-1.5 px-2 py-1 border"
-                style={{ 
-                  backgroundColor: `${color}20`, 
-                  borderColor: `${color}60`,
-                  color 
-                }}
-              >
-                <Zap className="w-3 h-3" />
-                <span className="font-bold">{beacon.xp_scan} XP</span>
-              </div>
-            )}
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
             <Button
               onClick={onViewFull}
-              className="flex-1 bg-[#FF1493] hover:bg-white text-black font-black border-2 border-white"
+              className="flex-1 bg-[#C8962C] hover:bg-white text-black font-black border-2 border-white"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               {isPerson ? 'VIEW PROFILE' : 'VIEW DETAILS'}

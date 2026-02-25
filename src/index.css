@@ -174,10 +174,14 @@
   
   .glass-glow-hot {
     @apply glass;
-    box-shadow: 
-      0 0 0 1px rgba(255, 20, 147, 0.2),
-      0 4px 24px -4px rgba(255, 20, 147, 0.3),
+    box-shadow:
+      0 0 0 1px rgba(200, 150, 44, 0.2),
+      0 4px 24px -4px rgba(200, 150, 44, 0.3),
       inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .glow-gold-warm {
+    box-shadow: 0 0 20px rgba(200, 150, 44, 0.5), 0 0 40px rgba(200, 150, 44, 0.3);
   }
   
   .glass-glow-cyan {
@@ -190,7 +194,7 @@
 
   /* Gradient text */
   .text-gradient-hot {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#FF1493] to-[#FF69B4];
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#C8962C] to-[#FF69B4];
   }
   
   .text-gradient-cyan {
@@ -206,12 +210,12 @@
   }
   
   .text-gradient-fire {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#FF1493] via-[#FF6B35] to-[#FFD700];
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#C8962C] via-[#FF6B35] to-[#FFD700];
   }
 
   /* Animated gradient backgrounds */
   .bg-gradient-animated {
-    background: linear-gradient(-45deg, #FF1493, #B026FF, #00D9FF, #39FF14);
+    background: linear-gradient(-45deg, #C8962C, #B026FF, #00D9FF, #39FF14);
     background-size: 400% 400%;
     animation: gradient-shift 8s ease infinite;
   }
@@ -290,7 +294,7 @@
   /* Border gradient */
   .border-gradient {
     position: relative;
-    background: linear-gradient(135deg, #FF1493, #B026FF, #00D9FF);
+    background: linear-gradient(135deg, #C8962C, #B026FF, #00D9FF);
     padding: 2px;
     border-radius: 1rem;
   }

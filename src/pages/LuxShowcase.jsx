@@ -197,9 +197,9 @@ export default function LuxShowcase() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="text-center p-6 bg-white/5 border-2 border-white/10 hover:border-[#FF1493]/50 transition-colors"
+                className="text-center p-6 bg-white/5 border-2 border-white/10 hover:border-[#C8962C]/50 transition-colors"
               >
-                <div className="text-5xl font-black text-[#FF1493] mb-2">
+                <div className="text-5xl font-black text-[#C8962C] mb-2">
                   {stat.value}
                 </div>
                 <div className="text-sm text-white/80 uppercase tracking-wider font-bold mb-1">
@@ -316,7 +316,7 @@ export default function LuxShowcase() {
             <LuxAdSlot
               slotId="demo-leaderboard"
               size="leaderboard"
-              fallbackImage="https://via.placeholder.com/728x90/FF1493/FFFFFF?text=AD+SPACE"
+              fallbackImage="https://via.placeholder.com/728x90/C8962C/FFFFFF?text=AD+SPACE"
               fallbackHref="#"
             />
             <LuxAdSlot
@@ -335,22 +335,22 @@ export default function LuxShowcase() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-6 bg-white/5 border-2 border-white/10">
-              <Zap className="w-8 h-8 text-[#FF1493] mb-3" />
+              <Zap className="w-8 h-8 text-[#C8962C] mb-3" />
               <h4 className="text-lg font-black text-white mb-2">LuxCarousel</h4>
               <p className="text-sm text-white/70">Hero, Profile, Event, and Product carousels</p>
             </div>
             <div className="p-6 bg-white/5 border-2 border-white/10">
-              <Heart className="w-8 h-8 text-[#FF1493] mb-3" />
+              <Heart className="w-8 h-8 text-[#C8962C] mb-3" />
               <h4 className="text-lg font-black text-white mb-2">LuxVideo</h4>
               <p className="text-sm text-white/70">Brutalist video player with Chrome Red controls</p>
             </div>
             <div className="p-6 bg-white/5 border-2 border-white/10">
-              <Users className="w-8 h-8 text-[#FF1493] mb-3" />
+              <Users className="w-8 h-8 text-[#C8962C] mb-3" />
               <h4 className="text-lg font-black text-white mb-2">LuxBanner</h4>
               <p className="text-sm text-white/70">Page, Hero, Promo, and Ad banners</p>
             </div>
             <div className="p-6 bg-white/5 border-2 border-white/10">
-              <TrendingUp className="w-8 h-8 text-[#FF1493] mb-3" />
+              <TrendingUp className="w-8 h-8 text-[#C8962C] mb-3" />
               <h4 className="text-lg font-black text-white mb-2">Engagement</h4>
               <p className="text-sm text-white/70">Live counters, timers, and activity feeds</p>
             </div>

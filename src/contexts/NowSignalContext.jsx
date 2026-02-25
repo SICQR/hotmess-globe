@@ -20,6 +20,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { useAuth } from '@/lib/AuthContext';
 
 // Signal categories
 const NOW_SIGNAL_TYPES = {
@@ -129,19 +130,13 @@ const NowSignalContext = createContext(null);
 export function NowSignalProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const cleanupRef = useRef(null);
+  // Derive user from AuthContext — single source of truth, no duplicate listener
+  const { user } = useAuth();
 
-  // Get current user
+  // Sync user ID from AuthContext
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      dispatch({ type: 'SET_USER', payload: { userId: data?.user?.id || null } });
-    });
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      dispatch({ type: 'SET_USER', payload: { userId: session?.user?.id || null } });
-    });
-    
-    return () => subscription?.unsubscribe();
-  }, []);
+    dispatch({ type: 'SET_USER', payload: { userId: user?.id || null } });
+  }, [user?.id]);
 
   // Clean up expired signals
   useEffect(() => {

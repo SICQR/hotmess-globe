@@ -215,7 +215,7 @@ export function getMatchTier(matchProbability: number): {
     return { label: 'Excellent Match', color: '#22c55e', bgColor: 'rgba(34, 197, 94, 0.2)' };
   }
   if (matchProbability >= 70) {
-    return { label: 'Great Match', color: '#FF1493', bgColor: 'rgba(255, 20, 147, 0.2)' };
+    return { label: 'Great Match', color: '#C8962C', bgColor: 'rgba(255, 20, 147, 0.2)' };
   }
   if (matchProbability >= 55) {
     return { label: 'Good Match', color: '#B026FF', bgColor: 'rgba(176, 38, 255, 0.2)' };
@@ -242,7 +242,7 @@ export function getBreakdownPercentages(breakdown: MatchBreakdown): {
       label: 'Location',
       percentage: (breakdown.travelTime / 20) * 100,
       maxPoints: 20,
-      color: '#FF1493',
+      color: '#C8962C',
     },
     {
       category: 'roleCompat',

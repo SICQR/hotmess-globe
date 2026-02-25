@@ -114,14 +114,14 @@ export function PageTransition({ children, className }) {
   const variant = transitionVariants[transitionType] || transitionVariants.wipe;
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={pathname}
         initial={variant.initial}
         animate={variant.animate}
         exit={variant.exit}
         transition={variant.transition}
-        className={cn('page-transition-wrapper', className)}
+        className={cn('page-transition-wrapper h-full w-full', className)}
       >
         {children}
       </motion.div>
@@ -161,7 +161,7 @@ export function PageTransitionOverlay({ isTransitioning, type = 'wipe' }) {
       initial={variant.initial}
       animate={variant.animate}
       transition={variant.transition}
-      className="fixed inset-0 z-[120] bg-[#FF1493] pointer-events-none"
+      className="fixed inset-0 z-[120] bg-[#C8962C] pointer-events-none"
     />
   );
 }

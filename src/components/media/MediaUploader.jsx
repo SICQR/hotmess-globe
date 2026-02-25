@@ -170,7 +170,7 @@ export default function MediaUploader({
           <img 
             src={preview} 
             alt="Preview" 
-            className="w-full h-48 object-cover rounded-lg border-2 border-[#FF1493]"
+            className="w-full h-48 object-cover rounded-lg border-2 border-[#C8962C]"
           />
           {progress?.stage === 'complete' && (
             <div className="absolute top-2 right-2 bg-[#39FF14] text-black px-2 py-1 rounded text-[10px] font-black uppercase">

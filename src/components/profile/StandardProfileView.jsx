@@ -104,7 +104,7 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
         {/* Main photo */}
         <div className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black/30">
           {activeIsPremium ? (
-            <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#FF1493]/15 border border-[#FFD700]/40 flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#C8962C]/15 border border-[#FFD700]/40 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-3xl mb-2">🔒</div>
                 <div className="text-xs text-[#FFD700] font-black uppercase">Premium</div>
@@ -140,7 +140,7 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
                 aria-label={url ? `View photo ${photoIdx + 1}` : `Empty photo slot ${photoIdx + 1}`}
               >
                 {premium ? (
-                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#FF1493]/15 border border-[#FFD700]/40 flex items-center justify-center">
+                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#C8962C]/15 border border-[#FFD700]/40 flex items-center justify-center">
                     <div className="text-xs text-[#FFD700] font-black uppercase">🔒</div>
                   </div>
                 ) : url ? (
@@ -170,7 +170,7 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
                 key={tag.id}
                 className={
                   tag.isSensitive
-                    ? 'px-3 py-1 bg-[#FF1493]/15 border border-[#FF1493]/40 text-[#FF1493] text-xs font-bold uppercase'
+                    ? 'px-3 py-1 bg-[#C8962C]/15 border border-[#C8962C]/40 text-[#C8962C] text-xs font-bold uppercase'
                     : 'px-3 py-1 bg-[#00D9FF]/15 border border-[#00D9FF]/35 text-[#00D9FF] text-xs font-bold uppercase'
                 }
               >
@@ -247,7 +247,7 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
           <h3 className="text-sm uppercase tracking-wider text-white/40 mb-3">Looking For</h3>
           <div className="flex flex-wrap gap-2">
             {user.looking_for.map((item, idx) => (
-              <span key={idx} className="px-3 py-1 bg-[#FF1493]/20 border border-[#FF1493]/40 text-[#FF1493] text-xs font-bold uppercase">
+              <span key={idx} className="px-3 py-1 bg-[#C8962C]/20 border border-[#C8962C]/40 text-[#C8962C] text-xs font-bold uppercase">
                 {item}
               </span>
             ))}

@@ -301,9 +301,98 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
   'beacon': {
     id: 'beacon',
     title: 'Beacon',
+    height: 'large',
+    auth: true,
+    deepLinkParams: ['beaconId'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SELLING / ONBOARDING / PAYOUTS
+  // ─────────────────────────────────────────────────────────────────────────
+  'sell': {
+    id: 'sell',
+    title: 'List an Item',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'seller-onboarding': {
+    id: 'seller-onboarding',
+    title: 'Start Selling',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'payouts': {
+    id: 'payouts',
+    title: 'Payouts',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'order': {
+    id: 'order',
+    title: 'Order',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: ['orderId'],
+  },
+  'my-orders': {
+    id: 'my-orders',
+    title: 'My Orders',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // UTILITY / HOME FEED
+  // ─────────────────────────────────────────────────────────────────────────
+  'search': {
+    id: 'search',
+    title: 'Search',
+    height: 'large',
+    auth: false,
+    deepLinkParams: ['q'],
+  },
+  'directions': {
+    id: 'directions',
+    title: 'Directions',
     height: 'small',
     auth: false,
-    deepLinkParams: ['beaconId'],
+    deepLinkParams: ['lat', 'lng'],
+  },
+  'checkout': {
+    id: 'checkout',
+    title: 'Checkout',
+    height: 'large',
+    auth: true,
+    deepLinkParams: ['id'],
+  },
+  'qr': {
+    id: 'qr',
+    title: 'QR Code',
+    height: 'small',
+    auth: true,
+    deepLinkParams: ['orderId', 'ticketId'],
+  },
+  'create-event': {
+    id: 'create-event',
+    title: 'Create Event',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SAFETY — EMERGENCY CONTACT
+  // ─────────────────────────────────────────────────────────────────────────
+  'emergency-contact': {
+    id: 'emergency-contact',
+    title: 'Emergency Contact',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: [],
   },
 } as const;
 

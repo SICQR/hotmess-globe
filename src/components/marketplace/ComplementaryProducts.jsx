@@ -55,10 +55,10 @@ Current Product:
 - Category: ${product.category || 'N/A'}
 - Description: ${product.description || 'N/A'}
 - Tags: ${(product.tags || []).join(', ')}
-- Price: ${product.price_xp} XP
+- Price: £${product.price_gbp || 0}
 
 Available Products to recommend:
-${availableProducts.slice(0, 30).map(p => `ID: ${p.id}, Name: ${p.name}, Type: ${p.product_type}, Category: ${p.category || 'N/A'}, Tags: ${(p.tags || []).join(', ')}, Price: ${p.price_xp} XP`).join('\n')}
+${availableProducts.slice(0, 30).map(p => `ID: ${p.id}, Name: ${p.name}, Type: ${p.product_type}, Category: ${p.category || 'N/A'}, Tags: ${(p.tags || []).join(', ')}, Price: £${p.price_gbp || 0}`).join('\n')}
 
 Recommend 4 complementary product IDs that would pair well with the current product. Consider:
 1. Items that complete an outfit/experience

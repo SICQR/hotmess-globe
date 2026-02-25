@@ -315,7 +315,7 @@ export default function Safety() {
               
               <div className="bg-white/5 border border-white/10 p-6">
                 <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-[#FF1493]" />
+                  <Shield className="w-5 h-5 text-[#C8962C]" />
                   Safety Features
                 </h3>
                 <ul className="space-y-3 text-sm text-white/60">
@@ -341,7 +341,7 @@ export default function Safety() {
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
-                    <MessageSquare className="w-4 h-4 text-[#FF1493] mt-0.5 flex-shrink-0" />
+                    <MessageSquare className="w-4 h-4 text-[#C8962C] mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-white font-bold">Custom Messages</p>
                       <p className="text-xs">Pre-define emergency messages for instant alerts.</p>

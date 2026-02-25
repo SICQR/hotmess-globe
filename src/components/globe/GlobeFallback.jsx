@@ -129,7 +129,7 @@ export function GlobeMobileFallback({ onRequestFullGlobe }) {
       icon: MapPin, 
       label: 'Nearby', 
       href: createPageUrl('Beacons'),
-      color: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
+      color: 'bg-[#C8962C]/20 text-[#C8962C] border-[#C8962C]/30',
     },
   ];
 

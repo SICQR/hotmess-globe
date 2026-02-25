@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Target, Flame, Trophy, Zap, Calendar } from 'lucide-react';
+import { Target, Flame, Trophy, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
@@ -52,9 +52,6 @@ export default function Challenges() {
         xp_earned: challenge.reward_xp,
       });
 
-      const newXp = (currentUser.xp || 0) + challenge.reward_xp;
-      await base44.auth.updateMe({ xp: newXp });
-
       // Update streak
       const streak = streaks.find(s => s.streak_type === 'challenge_completion');
       if (streak) {
@@ -81,7 +78,7 @@ export default function Challenges() {
     onSuccess: (_, challenge) => {
       queryClient.invalidateQueries(['challenge-completions']);
       queryClient.invalidateQueries(['streaks']);
-      toast.success(`+${challenge.reward_xp} XP earned!`);
+      toast.success('Challenge complete!');
       confetti({
         particleCount: 100,
         spread: 70,
@@ -97,7 +94,7 @@ export default function Challenges() {
   const DIFFICULTY_COLORS = {
     easy: '#39FF14',
     medium: '#FFEB3B',
-    hard: '#FF1493',
+    hard: '#C8962C',
   };
 
   return (
@@ -109,10 +106,10 @@ export default function Challenges() {
           className="mb-8"
         >
           <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2">
-            DAILY <span className="text-[#FFEB3B]">CHALLENGES</span>
+            DAILY <span className="text-[#C8962C]">CHALLENGES</span>
           </h1>
           <p className="text-white/60 uppercase text-sm tracking-wider">
-            Complete challenges. Earn XP. Build streaks.
+            Complete challenges. Build streaks.
           </p>
         </motion.div>
 
@@ -133,10 +130,6 @@ export default function Challenges() {
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-[#FFEB3B] font-black text-lg">+50% XP</div>
-                <div className="text-xs text-white/40">STREAK BONUS</div>
-              </div>
             </div>
           </motion.div>
         )}
@@ -145,7 +138,7 @@ export default function Challenges() {
         <div className="bg-white/5 border border-white/10 p-6 mb-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-black uppercase">TODAY'S PROGRESS</h3>
-            <span className="text-[#FFEB3B] font-black">{completedToday}/{totalToday}</span>
+            <span className="text-[#C8962C] font-black">{completedToday}/{totalToday}</span>
           </div>
           <Progress value={(completedToday / totalToday) * 100} className="h-3" />
         </div>
@@ -192,10 +185,6 @@ export default function Challenges() {
                         >
                           {challenge.difficulty}
                         </span>
-                        <span className="text-[#FFEB3B] text-xs font-bold flex items-center gap-1">
-                          <Zap className="w-3 h-3" />
-                          +{challenge.reward_xp} XP
-                        </span>
                       </div>
                     </div>
                   </div>
@@ -210,7 +199,7 @@ export default function Challenges() {
                   <Button
                     onClick={() => completionMutation.mutate(challenge)}
                     disabled={completionMutation.isPending}
-                    className="w-full bg-[#FFEB3B] hover:bg-white text-black font-black"
+                    className="w-full bg-[#C8962C] hover:bg-white text-black font-black"
                   >
                     MARK AS COMPLETE
                   </Button>

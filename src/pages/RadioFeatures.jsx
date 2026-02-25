@@ -57,7 +57,7 @@ const RADIO_FEATURES = [
     icon: Sparkles,
     title: 'EXCLUSIVE RELEASES',
     tagline: 'Hear it here first',
-    color: '#FF1493',
+    color: '#C8962C',
     description: 'Get early access to new tracks, exclusive remixes, and limited releases from our label RAW CONVICT RECORDS and partner artists.',
     benefits: [
       'Early access to new music',

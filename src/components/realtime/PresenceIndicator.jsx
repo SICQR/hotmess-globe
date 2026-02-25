@@ -60,7 +60,7 @@ export function UserPresenceBadge({
   return (
     <div className="flex items-center gap-3">
       <div className="relative">
-        <div className={`${sizes[size].avatar} rounded-full bg-gradient-to-br from-[#FF1493] to-[#B026FF] flex items-center justify-center overflow-hidden`}>
+        <div className={`${sizes[size].avatar} rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden`}>
           {user.avatar_url ? (
             <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -119,7 +119,7 @@ export function TypingIndicator({ users = [] }) {
         {[0, 1, 2].map((i) => (
           <motion.span
             key={i}
-            className="w-1.5 h-1.5 bg-[#FF1493] rounded-full"
+            className="w-1.5 h-1.5 bg-[#C8962C] rounded-full"
             animate={{ y: [0, -4, 0] }}
             transition={{
               duration: 0.6,

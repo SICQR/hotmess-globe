@@ -58,25 +58,13 @@ ALTER TABLE public.event_scraper_sources ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins can manage scraper sources" 
 ON public.event_scraper_sources
 FOR ALL 
-TO authenticated 
-USING (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
-    )
-);
+USING (auth.jwt() ->> 'role' = 'service_role');
 
 -- Allow admins to view runs
 CREATE POLICY "Admins can view scraper runs" 
 ON public.event_scraper_runs
 FOR SELECT 
-TO authenticated 
-USING (
-    EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE id = auth.uid() AND role IN ('admin', 'superadmin')
-    )
-);
+USING (auth.jwt() ->> 'role' = 'service_role');
 
 -- Service role bypasses RLS (for the actual scraper function)
 -- (Implicit in Supabase, but good to note)

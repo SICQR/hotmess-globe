@@ -483,7 +483,7 @@ export default function Connect() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#FF1493] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[#C8962C] border-t-transparent rounded-full animate-spin" />
           <div className="text-white/60 text-sm uppercase">Loading...</div>
         </div>
       </div>
@@ -518,7 +518,7 @@ export default function Connect() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <Users className="w-10 h-10 text-[#FF1493]" />
+              <Users className="w-10 h-10 text-[#C8962C]" />
               <div>
                 <h1 className="text-4xl font-black uppercase">CONNECT</h1>
                 <p className="text-xs text-white/40 uppercase tracking-wider">Discovery</p>
@@ -542,7 +542,7 @@ export default function Connect() {
                 className={`font-black border-2 border-white ${
                   rightNowStatuses.some(s => s.user_email === currentUser.email && s.active && new Date(s.expires_at) > new Date())
                     ? 'bg-[#39FF14] text-black animate-pulse'
-                    : 'bg-[#FF1493] text-black'
+                    : 'bg-[#C8962C] text-black'
                 }`}
               >
                 <Zap className="w-4 h-4 mr-2" />
@@ -557,7 +557,7 @@ export default function Connect() {
           {/* Lanes */}
           <Tabs value={lane} onValueChange={setLane}>
             <TabsList className="bg-white/5 border-2 border-white/10 w-full">
-              <TabsTrigger value="right_now" className="flex-1 data-[state=active]:bg-[#FF1493] data-[state=active]:text-black">
+              <TabsTrigger value="right_now" className="flex-1 data-[state=active]:bg-[#C8962C] data-[state=active]:text-black">
                 <div className="flex flex-col items-center py-2">
                   <Zap className="w-5 h-5 mb-1" />
                   <span className="font-black uppercase text-xs">Right Now</span>

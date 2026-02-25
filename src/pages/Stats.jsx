@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
-import { TrendingUp, MapPin, ShoppingBag, Trophy, Zap, Eye, Download, Share2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, MapPin, ShoppingBag, Trophy, Eye, Download, Share2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -49,13 +49,12 @@ export default function Stats() {
     enabled: !!currentUser,
   });
 
-  // XP over time
-  const xpOverTime = activities
-    .filter(a => a.xp_earned)
+  // Activity over time
+  const activityOverTime = activities
     .slice(-30)
     .map(a => ({
       date: new Date(a.created_date).toLocaleDateString(),
-      xp: a.xp_earned,
+      count: 1,
     }));
 
   // Check-ins by venue
@@ -78,25 +77,7 @@ export default function Stats() {
     value: count,
   }));
 
-  const COLORS = ['#FF1493', '#B026FF', '#00D9FF', '#FFEB3B', '#39FF14'];
-
-  // Weekly comparison data
-  const thisWeekXP = activities.filter(a => {
-    const date = new Date(a.created_date);
-    const now = new Date();
-    const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
-    return date >= weekAgo && a.xp_earned;
-  }).reduce((sum, a) => sum + (a.xp_earned || 0), 0);
-
-  const lastWeekXP = activities.filter(a => {
-    const date = new Date(a.created_date);
-    const now = new Date();
-    const twoWeeksAgo = new Date(now - 14 * 24 * 60 * 60 * 1000);
-    const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
-    return date >= twoWeeksAgo && date < weekAgo && a.xp_earned;
-  }).reduce((sum, a) => sum + (a.xp_earned || 0), 0);
-
-  const xpChange = lastWeekXP > 0 ? ((thisWeekXP - lastWeekXP) / lastWeekXP * 100).toFixed(0) : 100;
+  const COLORS = ['#C8962C', '#B026FF', '#00D9FF', '#FFEB3B', '#39FF14'];
 
   // Profile engagement radar
   const engagementData = [
@@ -124,7 +105,6 @@ export default function Stats() {
 
   const handleExport = () => {
     const data = {
-      totalXP: currentUser?.xp || 0,
       checkIns: checkIns.length,
       purchases: purchases.length,
       achievements: achievements.length,
@@ -143,20 +123,19 @@ export default function Stats() {
     if (navigator.share) {
       navigator.share({
         title: 'My HOTMESS Stats',
-        text: `I have ${currentUser?.xp || 0} XP and ${achievements.length} achievements on HOTMESS!`,
+        text: `I have ${achievements.length} achievements on HOTMESS!`,
         url: window.location.href,
       });
     } else {
-      navigator.clipboard.writeText(`Check out my HOTMESS stats: ${currentUser?.xp || 0} XP, ${achievements.length} achievements!`);
+      navigator.clipboard.writeText(`Check out my HOTMESS stats: ${achievements.length} achievements!`);
       toast.success('Copied to clipboard!');
     }
   };
 
   const stats = [
-    { label: 'Total XP', value: currentUser?.xp || 0, icon: Zap, color: '#FFEB3B' },
     { label: 'Check-ins', value: checkIns.length, icon: MapPin, color: '#00D9FF' },
-    { label: 'Purchases', value: purchases.length, icon: ShoppingBag, color: '#FF1493' },
-    { label: 'Achievements', value: achievements.length, icon: Trophy, color: '#FFEB3B' },
+    { label: 'Purchases', value: purchases.length, icon: ShoppingBag, color: '#C8962C' },
+    { label: 'Achievements', value: achievements.length, icon: Trophy, color: '#C8962C' },
     { label: 'Profile Views', value: profileViews.length, icon: Eye, color: '#B026FF' },
     { label: 'Activities', value: activities.length, icon: TrendingUp, color: '#39FF14' },
   ];
@@ -192,17 +171,13 @@ export default function Stats() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-r from-[#FF1493]/20 to-[#B026FF]/20 border border-[#FF1493]/30 rounded-xl p-6 mb-8"
+          className="bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/30 rounded-xl p-6 mb-8"
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
               <h3 className="text-white/60 uppercase text-sm mb-1">This Week</h3>
               <div className="flex items-center gap-3">
-                <span className="text-4xl font-black text-[#FFD700]">{thisWeekXP.toLocaleString()} XP</span>
-                <span className={`flex items-center text-sm ${Number(xpChange) >= 0 ? 'text-[#39FF14]' : 'text-red-500'}`}>
-                  {Number(xpChange) >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                  {Math.abs(Number(xpChange))}% vs last week
-                </span>
+                <span className="text-4xl font-black text-[#C8962C]">{dailyActivity.reduce((sum, d) => sum + d.count, 0)} Activities</span>
               </div>
             </div>
             <div className="mt-4 md:mt-0 flex gap-6">
@@ -211,7 +186,7 @@ export default function Stats() {
                 <div className="text-xs text-white/40">Activities</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-black text-[#FF1493]">{checkIns.filter(c => new Date(c.created_date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}</div>
+                <div className="text-2xl font-black text-[#C8962C]">{checkIns.filter(c => new Date(c.created_date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}</div>
                 <div className="text-xs text-white/40">Check-ins</div>
               </div>
             </div>
@@ -247,25 +222,25 @@ export default function Stats() {
 
           <TabsContent value="overview">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* XP Over Time */}
+              {/* Activity Over Time */}
               <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-                <h3 className="text-xl font-black uppercase mb-4">XP Growth</h3>
+                <h3 className="text-xl font-black uppercase mb-4">Activity</h3>
                 <ResponsiveContainer width="100%" height={250}>
-                  <AreaChart data={xpOverTime}>
+                  <AreaChart data={activityOverTime}>
                     <defs>
-                      <linearGradient id="xpGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#FFEB3B" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#FFEB3B" stopOpacity={0}/>
+                      <linearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#C8962C" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="#C8962C" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#fff1" />
                     <XAxis dataKey="date" stroke="#fff4" style={{ fontSize: 10 }} />
                     <YAxis stroke="#fff4" style={{ fontSize: 10 }} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }}
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#000', border: '1px solid #C8962C' }}
                       labelStyle={{ color: '#fff' }}
                     />
-                    <Area type="monotone" dataKey="xp" stroke="#FFEB3B" fill="url(#xpGradient)" strokeWidth={2} />
+                    <Area type="monotone" dataKey="count" stroke="#C8962C" fill="url(#activityGradient)" strokeWidth={2} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -290,7 +265,7 @@ export default function Stats() {
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }}
+                      contentStyle={{ backgroundColor: '#000', border: '1px solid #C8962C' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -305,10 +280,9 @@ export default function Stats() {
                     <XAxis dataKey="day" stroke="#fff4" style={{ fontSize: 10 }} />
                     <YAxis stroke="#fff4" style={{ fontSize: 10 }} />
                     <Tooltip 
-                      contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }}
+                      contentStyle={{ backgroundColor: '#000', border: '1px solid #C8962C' }}
                     />
                     <Bar dataKey="count" fill="#00D9FF" name="Activities" />
-                    <Bar dataKey="xp" fill="#FFD700" name="XP Earned" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -318,12 +292,11 @@ export default function Stats() {
                 <h3 className="text-xl font-black uppercase mb-4">Next Milestones</h3>
                 <div className="space-y-4">
                   {[
-                    { label: '1K XP', target: 1000, icon: Zap, color: '#FFD700' },
                     { label: '10 Check-ins', target: 10, current: checkIns.length, icon: MapPin, color: '#00D9FF' },
-                    { label: '5 Achievements', target: 5, current: achievements.length, icon: Trophy, color: '#FF1493' },
+                    { label: '5 Achievements', target: 5, current: achievements.length, icon: Trophy, color: '#C8962C' },
                     { label: '100 Profile Views', target: 100, current: profileViews.length, icon: Eye, color: '#B026FF' },
                   ].map((milestone) => {
-                    const current = milestone.current ?? currentUser?.xp ?? 0;
+                    const current = milestone.current ?? 0;
                     const progress = Math.min((current / milestone.target) * 100, 100);
                     return (
                       <div key={milestone.label} className="space-y-1">
@@ -358,7 +331,7 @@ export default function Stats() {
                     <XAxis type="number" stroke="#fff4" style={{ fontSize: 10 }} />
                     <YAxis type="category" dataKey="venue" stroke="#fff4" style={{ fontSize: 10 }} width={100} />
                     <Tooltip 
-                      contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }}
+                      contentStyle={{ backgroundColor: '#000', border: '1px solid #C8962C' }}
                       labelStyle={{ color: '#fff' }}
                     />
                     <Bar dataKey="count" fill="#00D9FF" />
@@ -376,9 +349,6 @@ export default function Stats() {
                         <p className="font-bold text-sm">{ci.beacon_title || 'Unknown Venue'}</p>
                         <p className="text-xs text-white/40">{new Date(ci.created_date).toLocaleString()}</p>
                       </div>
-                      {ci.xp_earned && (
-                        <span className="text-[#FFD700] font-bold text-sm">+{ci.xp_earned} XP</span>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -395,8 +365,8 @@ export default function Stats() {
                   <RadarChart cx="50%" cy="50%" outerRadius="80%" data={engagementData}>
                     <PolarGrid stroke="#fff2" />
                     <PolarAngleAxis dataKey="subject" stroke="#fff6" style={{ fontSize: 11 }} />
-                    <Radar name="You" dataKey="A" stroke="#FF1493" fill="#FF1493" fillOpacity={0.4} />
-                    <Tooltip contentStyle={{ backgroundColor: '#000', border: '1px solid #FF1493' }} />
+                    <Radar name="You" dataKey="A" stroke="#C8962C" fill="#C8962C" fillOpacity={0.4} />
+                    <Tooltip contentStyle={{ backgroundColor: '#000', border: '1px solid #C8962C' }} />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
@@ -420,7 +390,7 @@ export default function Stats() {
                       <p className="text-xs text-white/40">This Week</p>
                     </div>
                     <div className="p-3 bg-white/5 rounded-lg text-center">
-                      <p className="text-xl font-black text-[#FF1493]">
+                      <p className="text-xl font-black text-[#C8962C]">
                         {profileViews.filter(v => new Date(v.created_date) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length}
                       </p>
                       <p className="text-xs text-white/40">This Month</p>
@@ -448,9 +418,6 @@ export default function Stats() {
                         {new Date(activity.created_date).toLocaleString()}
                       </p>
                     </div>
-                    {activity.xp_earned && (
-                      <div className="text-[#FFEB3B] font-black">+{activity.xp_earned} XP</div>
-                    )}
                   </div>
                 </motion.div>
               ))}

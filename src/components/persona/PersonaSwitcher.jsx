@@ -80,7 +80,7 @@ export function PersonaSwitcher({ className }) {
               className={cn(
                 'flex items-center gap-3 p-3 rounded-xl border transition-all',
                 isActive
-                  ? 'bg-gradient-to-r from-[#FF1493]/20 to-[#00D9FF]/20 border-white/30'
+                  ? 'bg-gradient-to-r from-[#C8962C]/20 to-[#00D9FF]/20 border-white/30'
                   : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10',
                 isSwitching && 'opacity-50'
               )}

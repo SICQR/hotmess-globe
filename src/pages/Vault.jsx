@@ -4,7 +4,7 @@
  * THE VAULT - Brutalist Bento layout showing:
  * - INVENTORY_LOG: P2P + Shopify orders
  * - ACTIVE_SIGNALS: User's beacons on the Globe
- * - Stats: XP, rank, level
+ * - Stats: rank, signals
  */
 
 import React, { useState, useEffect } from 'react';
@@ -12,9 +12,8 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/components/utils/supabaseClient';
 import { useUnifiedVault } from '@/hooks/useUnifiedVault';
 import { 
-  Package, 
-  Radio, 
-  Zap, 
+  Package,
+  Radio,
   Trophy,
   Signal,
   ExternalLink,
@@ -93,13 +92,6 @@ export default function Vault() {
             <span className="font-mono text-sm">
               <span className="text-white/40">RANK:</span>{' '}
               <span className="text-white font-bold">{stats.rank}</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-[#39FF14]" />
-            <span className="font-mono text-sm">
-              <span className="text-white/40">XP:</span>{' '}
-              <span className="text-white font-bold">{stats.xp}</span>
             </span>
           </div>
           <div className="flex items-center gap-2">

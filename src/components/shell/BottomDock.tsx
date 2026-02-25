@@ -95,7 +95,7 @@ export function BottomDock({ activeMode = 'NOW', onModeChange, liveCount }: Bott
               {isActive && (
                 <motion.span
                   layoutId="dock-indicator"
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-[#FF1493]"
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-[#C8962C]"
                   initial={{ opacity: 0, scaleX: 0 }}
                   animate={{ opacity: 1, scaleX: 1 }}
                   exit={{ opacity: 0, scaleX: 0 }}

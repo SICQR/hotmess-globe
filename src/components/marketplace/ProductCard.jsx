@@ -6,7 +6,6 @@ import { ShoppingBag, Star, Package, Award, Ticket, Shirt } from 'lucide-react';
 import OSCard, { OSCardBadge } from '../ui/OSCard';
 import LazyImage from '../ui/LazyImage';
 import { base44 } from '@/api/base44Client';
-import { isXpPurchasingEnabled } from '@/lib/featureFlags';
 
 const TYPE_ICONS = {
   physical: Package,
@@ -23,11 +22,10 @@ const TYPE_COLORS = {
   service: '#39FF14',
   ticket: '#FFEB3B',
   badge: '#FF6B35',
-  merch: '#FF1493',
+  merch: '#C8962C',
 };
 
-export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
-  const xpPurchasingEnabled = isXpPurchasingEnabled();
+export default function ProductCard({ product, index = 0 }) {
 
   const normalizedDetails = useMemo(() => {
     const raw = product?.details;
@@ -61,7 +59,7 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
   }, []);
 
   const Icon = TYPE_ICONS[product.product_type] || ShoppingBag;
-  const color = TYPE_COLORS[product.product_type] || '#FF1493';
+  const color = TYPE_COLORS[product.product_type] || '#C8962C';
   const isShopifyProduct = useMemo(() => {
     const sellerEmail = String(product?.seller_email || '').trim().toLowerCase();
     const tags = Array.isArray(product?.tags) ? product.tags : [];
@@ -79,10 +77,7 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
     product.status === 'sold_out' || (product.inventory_count !== undefined && product.inventory_count <= 0),
     [product.status, product.inventory_count]
   );
-  const isLocked = useMemo(() => 
-    !isShopifyProduct && product.min_xp_level && currentUserXP < product.min_xp_level,
-    [isShopifyProduct, product.min_xp_level, currentUserXP]
-  );
+  const isLocked = false;
   const isOfficial = useMemo(() => 
     product.seller_email === 'shopify@hotmess.london' || product.category === 'official' || product.tags?.includes('official'),
     [product.seller_email, product.category, product.tags]
@@ -96,10 +91,7 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
       whileHover={{ scale: 1.02 }}
     >
       <Link to={createPageUrl(`ProductDetail?id=${product.id}`)}>
-        <OSCard 
-          locked={isLocked}
-          xpRequired={isLocked ? product.min_xp_level : null}
-        >
+        <OSCard>
           {/* Editorial Product Photography */}
           <div 
             className="h-48 flex items-center justify-center relative"
@@ -132,7 +124,7 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
 
           <div className="p-6">
             <div className="flex items-start justify-between mb-2">
-              <h3 className="text-xl font-bold hover:text-[#FF1493] transition-colors">{product.name}</h3>
+              <h3 className="text-xl font-bold hover:text-[#C8962C] transition-colors">{product.name}</h3>
               <OSCardBadge color={color}>
                 {product.product_type}
               </OSCardBadge>
@@ -152,10 +144,7 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
 
             <div className="space-y-2">
               <div className="text-2xl font-black" style={{ color }}>
-                {product.price_xp.toLocaleString()} XP
-                {product.price_gbp && (
-                  <span className="text-sm text-white/40 ml-2">+ £{product.price_gbp}</span>
-                )}
+                {product.price_gbp ? `£${product.price_gbp}` : 'View'}
               </div>
               <div className="flex gap-2">
                 <div
@@ -165,11 +154,6 @@ export default function ProductCard({ product, index = 0, currentUserXP = 0 }) {
                   View product
                 </div>
               </div>
-              {!xpPurchasingEnabled ? (
-                <p className="text-xs text-white/50 uppercase tracking-wider">
-                  XP purchasing coming soon
-                </p>
-              ) : null}
             </div>
           </div>
         </OSCard>

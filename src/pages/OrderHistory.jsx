@@ -188,8 +188,8 @@ export default function OrderHistory() {
             </p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-black text-[#FFEB3B] mb-1">
-              {order.total_xp.toLocaleString()} XP
+            <div className="text-2xl font-black text-[#C8962C] mb-1">
+              £{(order.total_gbp || 0).toLocaleString()}
             </div>
             <p className="text-xs text-white/40">
               {format(new Date(order.created_date), 'MMM d, yyyy')}
@@ -228,16 +228,16 @@ export default function OrderHistory() {
                   <div className="flex-1">
                     <Link 
                       to={createPageUrl(`ProductDetail?id=${item.product_id}`)}
-                      className="text-white hover:text-[#FF1493] transition-colors font-semibold block"
+                      className="text-white hover:text-[#C8962C] transition-colors font-semibold block"
                     >
                       {item.product_name}
                     </Link>
                     <p className="text-xs text-white/40">
-                      Qty: {item.quantity} × {item.price_xp.toLocaleString()} XP
+                      Qty: {item.quantity}
                     </p>
                   </div>
-                  <span className="text-sm font-bold text-[#FFEB3B]">
-                    {(item.price_xp * item.quantity).toLocaleString()} XP
+                  <span className="text-sm font-bold text-[#C8962C]">
+                    £{(item.price_gbp || 0).toLocaleString()}
                   </span>
                 </div>
               );
@@ -373,7 +373,7 @@ export default function OrderHistory() {
                 <p className="text-white/40 text-lg mb-4">No purchases yet</p>
                 <Link 
                   to="/market"
-                  className="text-[#FF1493] hover:underline"
+                  className="text-[#C8962C] hover:underline"
                 >
                   Browse Market
                 </Link>
@@ -392,7 +392,7 @@ export default function OrderHistory() {
                 <p className="text-white/40 text-lg mb-4">No sales yet</p>
                 <Link 
                   to={createPageUrl('SellerDashboard')}
-                  className="text-[#FF1493] hover:underline"
+                  className="text-[#C8962C] hover:underline"
                 >
                   Start Selling
                 </Link>

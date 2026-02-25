@@ -59,21 +59,21 @@ ALTER TABLE telegram_link_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE telegram_notification_queue ENABLE ROW LEVEL SECURITY;
 
 -- Users can only see their own Telegram connection
-CREATE POLICY IF NOT EXISTS "Users can view own telegram connection"
+CREATE POLICY "Users can view own telegram connection"
   ON telegram_users FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Users can delete own telegram connection"
+CREATE POLICY "Users can delete own telegram connection"
   ON telegram_users FOR DELETE
   USING (auth.uid() = user_id);
 
 -- Link tokens are only accessible to the owner
-CREATE POLICY IF NOT EXISTS "Users can view own link tokens"
+CREATE POLICY "Users can view own link tokens"
   ON telegram_link_tokens FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Notification queue is internal only (service role)
-CREATE POLICY IF NOT EXISTS "Service role can manage queue"
+CREATE POLICY "Service role can manage queue"
   ON telegram_notification_queue FOR ALL
   USING (true)
   WITH CHECK (true);

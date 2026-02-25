@@ -1,19 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Award, Users, MapPin, Trophy } from 'lucide-react';
+import { Users, MapPin, Trophy } from 'lucide-react';
 
-export default function ProfileStats({ 
-  xp, 
-  level, 
-  followersCount, 
-  followingCount, 
+export default function ProfileStats({
+  followersCount,
+  followingCount,
   checkInsCount,
   achievementsCount,
-  city 
+  city
 }) {
   const stats = [
-    { icon: Zap, label: 'XP', value: xp || 0, color: '#FFEB3B' },
-    { icon: Award, label: 'Level', value: level || 1, color: '#FF1493' },
     { icon: Users, label: 'Followers', value: followersCount, color: '#00D9FF' },
     { icon: Users, label: 'Following', value: followingCount, color: '#00D9FF' },
     { icon: MapPin, label: 'Check-ins', value: checkInsCount, color: '#39FF14' },
@@ -28,7 +24,7 @@ export default function ProfileStats({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: idx * 0.05 }}
-          className="bg-black border-2 border-white p-4 hover:border-[#FF1493] transition-all group"
+          className="bg-black border-2 border-white p-4 hover:border-[#C8962C] transition-all group"
         >
           <div className="flex items-center gap-3">
             <stat.icon 

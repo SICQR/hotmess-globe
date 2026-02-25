@@ -106,7 +106,7 @@ export default function GPSSmartCard({
     
     if (diffMinutes < 5) return { text: 'Online now', color: '#39FF14' };
     if (diffMinutes < 30) return { text: `${diffMinutes}m ago`, color: '#FFEB3B' };
-    if (diffMinutes < 60) return { text: `${diffMinutes}m ago`, color: '#FFB800' };
+    if (diffMinutes < 60) return { text: `${diffMinutes}m ago`, color: '#C8962C' };
     return null;
   };
 
@@ -131,7 +131,7 @@ export default function GPSSmartCard({
       >
         {/* Distance badge */}
         <div className="flex flex-col items-center justify-center min-w-[60px]">
-          <MapPin className="w-4 h-4 text-[#FF1493] mb-1" />
+          <MapPin className="w-4 h-4 text-[#C8962C] mb-1" />
           <span className="text-lg font-black text-white">
             {formatDistance(distance)}
           </span>
@@ -209,7 +209,7 @@ export default function GPSSmartCard({
               {/* Driving */}
               {drivingTime && (
                 <div className="flex items-center gap-2 p-2 bg-white/5 border border-white/10">
-                  <Car className="w-4 h-4 text-[#FFB800]" />
+                  <Car className="w-4 h-4 text-[#C8962C]" />
                   <div>
                     <p className="text-xs text-white/60">Drive</p>
                     <p className="font-bold text-white">{drivingTime} min</p>
@@ -250,8 +250,8 @@ export default function GPSSmartCard({
             {/* Venue info if applicable */}
             {profile.venue_name && (
               <div className="p-3 pt-0">
-                <div className="p-3 bg-[#FF1493]/10 border border-[#FF1493]/30">
-                  <p className="text-xs text-[#FF1493] uppercase font-bold mb-1">At a venue</p>
+                <div className="p-3 bg-[#C8962C]/10 border border-[#C8962C]/30">
+                  <p className="text-xs text-[#C8962C] uppercase font-bold mb-1">At a venue</p>
                   <p className="text-sm text-white">{profile.venue_name}</p>
                 </div>
               </div>

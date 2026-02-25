@@ -42,7 +42,7 @@ export const MEMBERSHIP_TIERS = {
     price: 999, // pence
     priceDisplay: '£9.99/mo',
     stripePriceId: 'price_plus_monthly',
-    color: '#FF1493',
+    color: '#C8962C',
     icon: 'Zap',
     badge: 'PLUS',
     popular: true,
@@ -544,7 +544,7 @@ export const USPS = {
       headline: 'One Platform. Everything.',
       subline: 'No more app switching. Social, events, shopping, music, safety - all in one.',
       icon: 'Globe',
-      color: '#FF1493',
+      color: '#C8962C',
     },
     {
       id: 'ai_matching',

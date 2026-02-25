@@ -71,13 +71,13 @@ export default function AIEventRecommendations({ currentUser }) {
               transition={{ delay: idx * 0.1 }}
               className={`bg-gradient-to-br ${
                 isHighMatch 
-                  ? 'from-[#B026FF]/20 to-[#FF1493]/20 border-2 border-[#B026FF]' 
+                  ? 'from-[#B026FF]/20 to-[#C8962C]/20 border-2 border-[#B026FF]' 
                   : 'from-white/5 to-white/5 border border-white/10'
               } rounded-xl p-4 relative overflow-hidden`}
             >
               {isHighMatch && (
                 <motion.div
-                  className="absolute top-2 right-2 bg-gradient-to-r from-[#FF1493] to-[#B026FF] px-3 py-1 rounded-full text-xs font-black flex items-center gap-1"
+                  className="absolute top-2 right-2 bg-gradient-to-r from-[#C8962C] to-[#B026FF] px-3 py-1 rounded-full text-xs font-black flex items-center gap-1"
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
@@ -116,7 +116,7 @@ export default function AIEventRecommendations({ currentUser }) {
                   <span 
                     className="text-sm font-black"
                     style={{ 
-                      color: rec.score >= 80 ? '#B026FF' : rec.score >= 60 ? '#FF1493' : '#00D9FF' 
+                      color: rec.score >= 80 ? '#B026FF' : rec.score >= 60 ? '#C8962C' : '#00D9FF' 
                     }}
                   >
                     {rec.score}%
@@ -124,7 +124,7 @@ export default function AIEventRecommendations({ currentUser }) {
                 </div>
                 <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-[#B026FF] to-[#FF1493]"
+                    className="h-full bg-gradient-to-r from-[#B026FF] to-[#C8962C]"
                     initial={{ width: 0 }}
                     animate={{ width: `${rec.score}%` }}
                     transition={{ duration: 1, delay: idx * 0.1 }}
@@ -157,7 +157,7 @@ export default function AIEventRecommendations({ currentUser }) {
                 <Button 
                   className={`w-full ${
                     isHighMatch 
-                      ? 'bg-gradient-to-r from-[#B026FF] to-[#FF1493] hover:opacity-90' 
+                      ? 'bg-gradient-to-r from-[#B026FF] to-[#C8962C] hover:opacity-90' 
                       : 'bg-white/10 hover:bg-white/20'
                   } text-white font-black`}
                 >

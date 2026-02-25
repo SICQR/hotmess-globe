@@ -146,7 +146,7 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
                       {item.variant_title && (
                         <p className="text-xs text-white/50 uppercase tracking-wider mt-1">{item.variant_title}</p>
                       )}
-                      <p className="text-sm text-[#FFEB3B] font-mono">{item.product.price_xp} XP each</p>
+                      {item.product.price_gbp && <p className="text-sm text-[#C8962C] font-mono">£{item.product.price_gbp} each</p>}
                       
                       <div className="flex items-center gap-2 mt-2">
                         <Button
@@ -205,7 +205,7 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
                 </div>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-lg font-black uppercase">Subtotal</span>
-                  <span className="text-2xl font-black text-[#FFEB3B]">{totalXP} XP</span>
+                  <span className="text-2xl font-black text-[#C8962C]">£{totalXP}</span>
                 </div>
                 <Link to={createPageUrl('Checkout')} onClick={onClose}>
                   <Button className="w-full bg-[#39FF14] text-black font-black text-lg py-6">

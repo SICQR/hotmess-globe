@@ -347,9 +347,9 @@ function generateEmailHtml(template, data = {}) {
     .container { max-width: 600px; margin: 0 auto; background: #111; border: 2px solid #333; padding: 30px; }
     .header { text-align: center; margin-bottom: 30px; }
     .logo { font-size: 32px; font-weight: 900; }
-    .logo span { color: #FF1493; }
+    .logo span { color: #C8962C; }
     .content { line-height: 1.6; }
-    .button { display: inline-block; background: #FF1493; color: #000; padding: 12px 24px; text-decoration: none; font-weight: bold; margin: 20px 0; }
+    .button { display: inline-block; background: #C8962C; color: #000; padding: 12px 24px; text-decoration: none; font-weight: bold; margin: 20px 0; }
     .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #333; font-size: 12px; color: #666; text-align: center; }
   `;
 
@@ -363,7 +363,7 @@ function generateEmailHtml(template, data = {}) {
   const footer = `
     <div class="footer">
       <p>© ${new Date().getFullYear()} HOTMESS London Ltd. All rights reserved.</p>
-      <p><a href="https://hotmess.london/settings/notifications" style="color: #FF1493;">Manage notification preferences</a></p>
+      <p><a href="https://hotmess.london/settings/notifications" style="color: #C8962C;">Manage notification preferences</a></p>
     </div>
   `;
 
