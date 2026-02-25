@@ -664,6 +664,7 @@ function ProfileCardInner({
             className="h-full w-full object-cover transition-transform duration-500 will-change-transform"
             style={supportsHover() ? { transform: isActive ? 'scale(1.04)' : 'scale(1)' } : undefined}
             draggable={false}
+            loading="lazy"
           />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-white/10 to-black/40 flex items-center justify-center">
