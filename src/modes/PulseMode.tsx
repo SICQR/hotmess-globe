@@ -1,149 +1,969 @@
 /**
- * PulseMode - Immersive Globe + Events + Safety
- * 
- * Full immersive globe.
- * No stacked dashboard blocks under globe.
- * Globe persists and does not unmount on tab switch.
- * Data from Supabase domain layer.
+ * PulseMode -- Globe HUD Overlay (route: /pulse)
+ *
+ * The immersive globe mode. The Three.js globe renders at L0 (in App.jsx
+ * via UnifiedGlobe). This component renders ONLY the HUD overlay that
+ * floats above the globe -- all backgrounds are transparent/glassmorphic
+ * so the globe shows through.
+ *
+ * Layout:
+ *   1. Top HUD -- city + beacon count | PULSE wordmark | safety indicator
+ *   2. Filter chip strip -- All | Events | Hotspots | Safety
+ *   3. Bottom drawer -- peek at 80px, swipe up to 50vh
+ *      - Upcoming Events (h-scroll cards)
+ *      - Active Beacons (compact list)
+ *      - Safety Alerts (red-tinted cards)
+ *   4. Beacon FAB -- amber +, tap or long-press to create
+ *   5. Legend card -- bottom-left, dismissible
+ *
+ * Data: TanStack Query (useQuery) with 30s refetch + Supabase realtime.
+ * Animations: Framer Motion spring physics on drawer.
  */
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useCallback, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { motion, useMotionValue, useAnimation, PanInfo } from 'framer-motion';
+import {
+  MapPin,
+  ChevronDown,
+  ChevronUp,
+  Shield,
+  Plus,
+  X,
+  Calendar,
+  Flame,
+  AlertTriangle,
+  Radio as RadioIcon,
+} from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
-import { getBeacons, getUpcomingEvents, getSafetyAlerts, subscribeToBeacons, type Beacon, type Event } from '@/lib/data';
+import { supabase } from '@/components/utils/supabaseClient';
+import { format, isToday, isTomorrow } from 'date-fns';
+import { useLongPress } from '@/hooks/useLongPress';
 
-// The globe is rendered in App.jsx (OSArchitecture) and persists
-// This mode controls the HUD overlay and beacon interactions
+// ---- Brand constants --------------------------------------------------------
+const AMBER = '#C8962C';
+const MUTED = '#8E8E93';
+const GLASS = 'bg-black/50 backdrop-blur-xl';
+const GLASS_BORDER = 'border border-white/10';
+
+// ---- Types ------------------------------------------------------------------
+type FilterType = 'all' | 'events' | 'hotspots' | 'safety';
+
+interface BeaconItem {
+  id: string;
+  title: string;
+  kind?: string;
+  type?: string;
+  address?: string;
+  imageUrl?: string;
+  startsAt?: string;
+  endsAt?: string;
+  intensity?: number;
+  lat?: number;
+  lng?: number;
+  severity?: string;
+}
 
 interface PulseModeProps {
   className?: string;
 }
 
+// ---- Date helpers -----------------------------------------------------------
+function formatShortDate(dateStr: string | undefined): string {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    if (isToday(d)) return 'Tonight';
+    if (isTomorrow(d)) return 'Tomorrow';
+    return format(d, 'EEE d MMM');
+  } catch {
+    return '';
+  }
+}
+
+function formatTimeAgo(dateStr: string | undefined): string {
+  if (!dateStr) return '';
+  try {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  } catch {
+    return '';
+  }
+}
+
+// ---- Beacon type icon -------------------------------------------------------
+function BeaconIcon({ kind, className = '', color }: { kind?: string; className?: string; color?: string }) {
+  const style = color ? { color } : undefined;
+  switch (kind) {
+    case 'event':
+      return <Calendar className={className} style={style} />;
+    case 'safety':
+      return <AlertTriangle className={className} style={style} />;
+    default:
+      return <Flame className={className} style={style} />;
+  }
+}
+
+// ---- Beacon type color (for legend + rows) ----------------------------------
+function getBeaconDotColor(kind?: string): string {
+  switch (kind) {
+    case 'event': return AMBER;
+    case 'safety': return '#FF3B30';
+    default: return '#FFFFFF';
+  }
+}
+
+// =============================================================================
+// TopHUD
+// =============================================================================
+function TopHUD({
+  city,
+  beaconCount,
+  safetyCount,
+  onSafetyTap,
+  onCityTap,
+}: {
+  city: string;
+  beaconCount: number;
+  safetyCount: number;
+  onSafetyTap: () => void;
+  onCityTap: () => void;
+}) {
+  return (
+    <div
+      className="mx-4 rounded-2xl px-4 h-14 flex items-center justify-between"
+      style={{
+        background: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255,255,255,0.08)',
+      }}
+    >
+      {/* Left: city + beacon count */}
+      <button
+        onClick={onCityTap}
+        className="flex items-center gap-2 active:scale-95 transition-transform min-w-0"
+        aria-label={`City: ${city}. ${beaconCount} active beacons.`}
+      >
+        <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: AMBER }} />
+        <span className="text-white font-bold text-sm truncate">{city}</span>
+        <span className="text-white/40 text-xs flex-shrink-0">{beaconCount} active</span>
+        <ChevronDown className="w-3 h-3 text-white/30 flex-shrink-0" />
+      </button>
+
+      {/* Center: PULSE wordmark */}
+      <h1
+        className="text-xs font-black tracking-[0.3em] uppercase select-none flex-shrink-0"
+        style={{ color: AMBER }}
+      >
+        PULSE
+      </h1>
+
+      {/* Right: safety indicator */}
+      <button
+        onClick={onSafetyTap}
+        className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition-transform"
+        aria-label={safetyCount > 0 ? `${safetyCount} safety alerts` : 'No safety alerts'}
+      >
+        <div className="relative">
+          <Shield className="w-5 h-5 text-white/50" />
+          {safetyCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#FF3B30] rounded-full animate-pulse" />
+          )}
+        </div>
+      </button>
+    </div>
+  );
+}
+
+// =============================================================================
+// FilterChipStrip
+// =============================================================================
+const FILTERS: { key: FilterType; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'events', label: 'Events' },
+  { key: 'hotspots', label: 'Hotspots' },
+  { key: 'safety', label: 'Safety' },
+];
+
+function FilterChipStrip({
+  activeFilter,
+  onFilterChange,
+  counts,
+}: {
+  activeFilter: FilterType;
+  onFilterChange: (f: FilterType) => void;
+  counts: Record<FilterType, number>;
+}) {
+  return (
+    <div className="mx-4 flex gap-2 overflow-x-auto scrollbar-hide py-1">
+      {FILTERS.map(({ key, label }) => {
+        const isActive = activeFilter === key;
+        const count = counts[key];
+        return (
+          <button
+            key={key}
+            onClick={() => onFilterChange(key)}
+            className={`flex-shrink-0 h-10 px-4 rounded-full text-sm font-medium transition-all active:scale-95 ${
+              isActive
+                ? 'text-white shadow-lg'
+                : `${GLASS} ${GLASS_BORDER} text-white/70`
+            }`}
+            style={isActive ? { background: AMBER } : undefined}
+            aria-label={`Filter: ${label}${count > 0 ? ` (${count})` : ''}`}
+            aria-pressed={isActive}
+          >
+            {label}
+            {key !== 'all' && count > 0 && (
+              <span className={`ml-1.5 ${isActive ? 'text-white/80' : 'text-white/40'}`}>
+                {count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// =============================================================================
+// LegendCard
+// =============================================================================
+function LegendCard({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 10 }}
+      transition={{ duration: 0.25 }}
+      className="rounded-xl px-3 py-2.5 flex items-center gap-3"
+      style={{
+        background: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.08)',
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full" style={{ background: AMBER }} />
+          <span className="text-[10px] text-white/60">Event</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-white" />
+          <span className="text-[10px] text-white/60">Hotspot</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-[#FF3B30]" />
+          <span className="text-[10px] text-white/60">Safety</span>
+        </div>
+      </div>
+      <button
+        onClick={onDismiss}
+        className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 transition-colors ml-1"
+        aria-label="Dismiss legend"
+      >
+        <X className="w-3 h-3 text-white/50" />
+      </button>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// EventCard (horizontal scroll)
+// =============================================================================
+function EventCard({
+  title,
+  imageUrl,
+  venue,
+  startsAt,
+  onTap,
+}: {
+  title: string;
+  imageUrl?: string;
+  venue?: string;
+  startsAt?: string;
+  onTap: () => void;
+}) {
+  const datePill = formatShortDate(startsAt);
+  return (
+    <button
+      onClick={onTap}
+      className="w-[220px] flex-shrink-0 snap-start text-left active:scale-[0.97] transition-transform rounded-2xl overflow-hidden"
+      style={{
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.08)',
+      }}
+      aria-label={`View event: ${title}`}
+    >
+      {imageUrl ? (
+        <img src={imageUrl} alt="" className="w-full h-28 object-cover" loading="lazy" />
+      ) : (
+        <div className="w-full h-28 flex items-center justify-center" style={{ background: `${AMBER}12` }}>
+          <Calendar className="w-8 h-8" style={{ color: `${AMBER}50` }} />
+        </div>
+      )}
+      <div className="p-3">
+        <p className="text-white font-bold text-sm leading-tight line-clamp-1 mb-0.5">{title}</p>
+        {venue && (
+          <p className="text-xs leading-tight mb-1.5 line-clamp-1" style={{ color: MUTED }}>
+            {venue}
+          </p>
+        )}
+        {datePill && (
+          <span
+            className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full"
+            style={{ background: `${AMBER}20`, color: AMBER }}
+          >
+            {datePill}
+          </span>
+        )}
+      </div>
+    </button>
+  );
+}
+
+// =============================================================================
+// BeaconRow (compact list)
+// =============================================================================
+function BeaconRow({
+  beacon,
+  isLast,
+  onTap,
+}: {
+  beacon: BeaconItem;
+  isLast: boolean;
+  onTap: () => void;
+}) {
+  const dotColor = getBeaconDotColor(beacon.kind);
+  return (
+    <button
+      onClick={onTap}
+      className={`w-full flex items-center gap-3 px-3 py-3 text-left active:bg-white/5 transition-colors ${
+        !isLast ? 'border-b border-white/5' : ''
+      }`}
+      aria-label={`View beacon: ${beacon.title}`}
+    >
+      <div
+        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+        style={{ background: `${dotColor}15` }}
+      >
+        <BeaconIcon kind={beacon.kind} className="w-4 h-4" color={dotColor} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-white text-sm font-semibold truncate">{beacon.title}</p>
+        {beacon.address && (
+          <p className="text-xs truncate" style={{ color: MUTED }}>{beacon.address}</p>
+        )}
+      </div>
+      <span className="text-xs font-medium flex-shrink-0" style={{ color: MUTED }}>
+        {formatTimeAgo(beacon.startsAt)}
+      </span>
+    </button>
+  );
+}
+
+// =============================================================================
+// SafetyAlertCard
+// =============================================================================
+function SafetyAlertCard({
+  beacon,
+  onTap,
+}: {
+  beacon: BeaconItem;
+  onTap: () => void;
+}) {
+  return (
+    <button
+      onClick={onTap}
+      className="w-full p-3 rounded-xl text-left active:scale-[0.98] transition-transform"
+      style={{
+        background: 'rgba(255, 59, 48, 0.1)',
+        border: '1px solid rgba(255, 59, 48, 0.2)',
+      }}
+      aria-label={`Safety alert: ${beacon.title}`}
+    >
+      <div className="flex items-center gap-2">
+        <span className="w-2 h-2 bg-[#FF3B30] rounded-full animate-pulse flex-shrink-0" />
+        <span className="text-[#FF6961] text-sm font-semibold truncate">{beacon.title}</span>
+      </div>
+      {beacon.address && (
+        <p className="text-red-400/60 text-xs mt-1 truncate ml-4">{beacon.address}</p>
+      )}
+    </button>
+  );
+}
+
+// =============================================================================
+// BeaconFAB
+// =============================================================================
+function BeaconFAB({ onTap, onLongPress }: { onTap: () => void; onLongPress: () => void }) {
+  const [showLabel, setShowLabel] = useState(false);
+
+  const longPressHandlers = useLongPress(() => {
+    setShowLabel(true);
+    onLongPress();
+    setTimeout(() => setShowLabel(false), 2000);
+  }, 600);
+
+  return (
+    <div className="relative">
+      {/* Tooltip label */}
+      {showLabel && (
+        <motion.div
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          className="absolute -top-10 right-0 px-3 py-1.5 rounded-lg whitespace-nowrap"
+          style={{
+            background: 'rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+          }}
+        >
+          <span className="text-xs font-medium text-white">Create beacon</span>
+        </motion.div>
+      )}
+      <button
+        onClick={onTap}
+        {...longPressHandlers}
+        className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform focus:ring-2 focus:ring-offset-2 focus:ring-offset-black"
+        style={{
+          background: AMBER,
+          boxShadow: `0 4px 24px ${AMBER}40`,
+        }}
+        aria-label="Create a beacon"
+      >
+        <Plus className="w-6 h-6 text-black" strokeWidth={2.5} />
+      </button>
+    </div>
+  );
+}
+
+// =============================================================================
+// BottomDrawer
+// =============================================================================
+const PEEK_HEIGHT = 140; // px visible when collapsed
+const EXPANDED_HEIGHT_VH = 50; // vh when expanded
+
+function BottomDrawer({
+  events,
+  beacons,
+  safetyAlerts,
+  eventsLoading,
+  beaconsLoading,
+  onEventTap,
+  onBeaconTap,
+  onSafetyTap,
+  onSeeAllEvents,
+}: {
+  events: BeaconItem[];
+  beacons: BeaconItem[];
+  safetyAlerts: BeaconItem[];
+  eventsLoading: boolean;
+  beaconsLoading: boolean;
+  onEventTap: (id: string) => void;
+  onBeaconTap: (id: string) => void;
+  onSafetyTap: (id: string) => void;
+  onSeeAllEvents: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const controls = useAnimation();
+  const dragY = useMotionValue(0);
+
+  // Calculate maximum drawer height for the expanded state
+  const getExpandedOffset = useCallback(() => {
+    if (typeof window === 'undefined') return 400;
+    return window.innerHeight * (EXPANDED_HEIGHT_VH / 100);
+  }, []);
+
+  const handleDragEnd = useCallback((_: unknown, info: PanInfo) => {
+    const velocity = info.velocity.y;
+    const offset = info.offset.y;
+
+    if (expanded) {
+      // Currently expanded: swipe down to collapse
+      if (velocity > 300 || offset > 80) {
+        setExpanded(false);
+        controls.start({ y: 0, transition: { type: 'spring', damping: 30, stiffness: 300 } });
+      } else {
+        controls.start({ y: -getExpandedOffset() + PEEK_HEIGHT, transition: { type: 'spring', damping: 30, stiffness: 300 } });
+      }
+    } else {
+      // Currently collapsed: swipe up to expand
+      if (velocity < -300 || offset < -60) {
+        setExpanded(true);
+        controls.start({ y: -getExpandedOffset() + PEEK_HEIGHT, transition: { type: 'spring', damping: 30, stiffness: 300 } });
+      } else {
+        controls.start({ y: 0, transition: { type: 'spring', damping: 30, stiffness: 300 } });
+      }
+    }
+  }, [expanded, controls, getExpandedOffset]);
+
+  const toggleExpanded = useCallback(() => {
+    const next = !expanded;
+    setExpanded(next);
+    if (next) {
+      controls.start({ y: -getExpandedOffset() + PEEK_HEIGHT, transition: { type: 'spring', damping: 30, stiffness: 300 } });
+    } else {
+      controls.start({ y: 0, transition: { type: 'spring', damping: 30, stiffness: 300 } });
+    }
+  }, [expanded, controls, getExpandedOffset]);
+
+  const hasContent = events.length > 0 || beacons.length > 0 || safetyAlerts.length > 0 || eventsLoading || beaconsLoading;
+
+  if (!hasContent && !eventsLoading && !beaconsLoading) return null;
+
+  return (
+    <motion.div
+      animate={controls}
+      drag="y"
+      dragConstraints={{ top: -getExpandedOffset() + PEEK_HEIGHT, bottom: 0 }}
+      dragElastic={0.1}
+      onDragEnd={handleDragEnd}
+      style={{ y: dragY }}
+      className="rounded-t-3xl overflow-hidden touch-pan-y"
+      role="region"
+      aria-label="Nearby activity drawer"
+      {...{
+        style: {
+          background: 'rgba(0,0,0,0.65)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: 'none',
+          height: `${EXPANDED_HEIGHT_VH}vh`,
+          y: dragY,
+        }
+      }}
+    >
+      {/* Drag handle */}
+      <div
+        className="flex items-center justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+        onClick={toggleExpanded}
+        role="button"
+        aria-label={expanded ? 'Collapse drawer' : 'Expand drawer'}
+        tabIndex={0}
+      >
+        <div className="w-10 h-1 rounded-full bg-white/30" />
+      </div>
+
+      {/* Drawer header */}
+      <div className="flex items-center justify-between px-4 pb-3">
+        <h2 className="text-white font-bold text-base">Nearby now</h2>
+        <button
+          onClick={toggleExpanded}
+          className="flex items-center gap-1 active:opacity-70 transition-opacity"
+          aria-label={expanded ? 'Collapse' : 'Expand'}
+        >
+          {expanded ? (
+            <ChevronDown className="w-4 h-4 text-white/40" />
+          ) : (
+            <ChevronUp className="w-4 h-4 text-white/40" />
+          )}
+        </button>
+      </div>
+
+      {/* Scrollable content */}
+      <div
+        className="overflow-y-auto overscroll-contain px-4 pb-8"
+        style={{
+          maxHeight: `calc(${EXPANDED_HEIGHT_VH}vh - 64px)`,
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        {/* Events section */}
+        {(eventsLoading || events.length > 0) && (
+          <section className="mb-5">
+            <div className="flex items-center justify-between mb-2.5">
+              <h3 className="text-white/70 text-xs font-semibold uppercase tracking-wider">
+                Upcoming Events
+              </h3>
+              {events.length > 0 && (
+                <button
+                  onClick={onSeeAllEvents}
+                  className="text-xs font-semibold active:opacity-70 transition-opacity"
+                  style={{ color: AMBER }}
+                >
+                  See all
+                </button>
+              )}
+            </div>
+            {eventsLoading ? (
+              <div className="flex gap-3 overflow-hidden">
+                {[0, 1].map((i) => (
+                  <div key={i} className="w-[220px] flex-shrink-0 rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                    <div className="w-full h-28 animate-pulse bg-white/[0.04]" />
+                    <div className="p-3 space-y-2">
+                      <div className="h-4 w-3/4 animate-pulse bg-white/[0.04] rounded" />
+                      <div className="h-3 w-1/2 animate-pulse bg-white/[0.04] rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1 -mx-4 px-4">
+                {events.map((ev) => (
+                  <EventCard
+                    key={ev.id}
+                    title={ev.title}
+                    imageUrl={ev.imageUrl}
+                    venue={ev.address}
+                    startsAt={ev.startsAt}
+                    onTap={() => onEventTap(ev.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Beacons section */}
+        {(beaconsLoading || beacons.length > 0) && (
+          <section className="mb-5">
+            <h3 className="text-white/70 text-xs font-semibold uppercase tracking-wider mb-2.5">
+              Active Beacons
+            </h3>
+            {beaconsLoading ? (
+              <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-3 border-b border-white/5 last:border-0">
+                    <div className="w-9 h-9 rounded-xl animate-pulse bg-white/[0.04]" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-4 w-2/3 animate-pulse bg-white/[0.04] rounded" />
+                      <div className="h-3 w-1/3 animate-pulse bg-white/[0.04] rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
+              >
+                {beacons.map((b, i) => (
+                  <BeaconRow
+                    key={b.id}
+                    beacon={b}
+                    isLast={i === beacons.length - 1}
+                    onTap={() => onBeaconTap(b.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Safety alerts section */}
+        {safetyAlerts.length > 0 && (
+          <section className="mb-5">
+            <h3 className="text-[#FF6961] text-xs font-semibold uppercase tracking-wider mb-2.5">
+              Safety Alerts
+            </h3>
+            <div className="space-y-2">
+              {safetyAlerts.map((alert) => (
+                <SafetyAlertCard
+                  key={alert.id}
+                  beacon={alert}
+                  onTap={() => onSafetyTap(alert.id)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Empty state (all sections empty after load) */}
+        {!eventsLoading && !beaconsLoading && events.length === 0 && beacons.length === 0 && safetyAlerts.length === 0 && (
+          <div className="flex flex-col items-center py-8">
+            <RadioIcon className="w-10 h-10 mb-3" style={{ color: MUTED }} />
+            <p className="text-white text-sm font-semibold mb-1">Nothing nearby right now</p>
+            <p className="text-xs text-center" style={{ color: MUTED }}>
+              Drop a beacon to let people know what is happening
+            </p>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// Main PulseMode
+// =============================================================================
 export function PulseMode({ className = '' }: PulseModeProps) {
-  const [beacons, setBeacons] = useState<Beacon[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [safetyAlerts, setSafetyAlerts] = useState<Beacon[]>([]);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'events' | 'safety' | 'hotspots'>('all');
   const { openSheet } = useSheet();
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [city, setCity] = useState(() => localStorage.getItem('hm_city') || 'London');
+  const [legendDismissed, setLegendDismissed] = useState(
+    () => localStorage.getItem('hm_legend_dismissed') === 'true'
+  );
 
-  // Load data from domain layer
-  useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
+  // City cycling
+  const handleCityTap = useCallback(() => {
+    const CITIES = ['London', 'Berlin', 'New York', 'Barcelona', 'Amsterdam'];
+    const idx = CITIES.indexOf(city);
+    const next = CITIES[(idx + 1) % CITIES.length];
+    setCity(next);
+    localStorage.setItem('hm_city', next);
+  }, [city]);
 
-    const loadData = async () => {
-      const [beaconsData, eventsData, alertsData] = await Promise.all([
-        getBeacons({ limit: 100 }),
-        getUpcomingEvents(20),
-        getSafetyAlerts(),
-      ]);
-      
-      setBeacons(beaconsData);
-      setEvents(eventsData);
-      setSafetyAlerts(alertsData);
+  // Dismiss legend
+  const handleDismissLegend = useCallback(() => {
+    setLegendDismissed(true);
+    localStorage.setItem('hm_legend_dismissed', 'true');
+  }, []);
 
-      // Subscribe to realtime updates
-      unsubscribe = subscribeToBeacons((updated) => {
-        setBeacons(updated);
+  // ---- Data: Upcoming events ------------------------------------------------
+  const {
+    data: events = [],
+    isLoading: eventsLoading,
+  } = useQuery({
+    queryKey: ['pulse-events'],
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('beacons')
+        .select('id, metadata, starts_at, end_at, lat, lng, kind, type')
+        .or(`type.eq.event,kind.eq.event`)
+        .gte('end_at', now)
+        .order('starts_at', { ascending: true })
+        .limit(12);
+      if (error) {
+        console.error('[pulse] events query error:', error.message);
+        return [];
+      }
+      return (data ?? []).map((b: Record<string, unknown>) => {
+        const meta = (b.metadata ?? {}) as Record<string, string>;
+        return {
+          id: b.id as string,
+          title: meta.title || meta.name || 'Event',
+          imageUrl: meta.image_url || undefined,
+          address: meta.address || undefined,
+          startsAt: b.starts_at as string,
+          endsAt: b.end_at as string,
+          kind: 'event',
+          type: 'event',
+          lat: b.lat as number,
+          lng: b.lng as number,
+        } as BeaconItem;
       });
-    };
+    },
+    refetchInterval: 30_000,
+  });
 
-    loadData();
+  // ---- Data: All beacons (non-event) ----------------------------------------
+  const {
+    data: allBeacons = [],
+    isLoading: beaconsLoading,
+  } = useQuery({
+    queryKey: ['pulse-beacons'],
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('beacons')
+        .select('id, metadata, starts_at, end_at, lat, lng, kind, type, intensity')
+        .or('end_at.is.null,end_at.gte.' + now)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) {
+        console.error('[pulse] beacons query error:', error.message);
+        return [];
+      }
+      return (data ?? []).map((b: Record<string, unknown>) => {
+        const meta = (b.metadata ?? {}) as Record<string, string>;
+        const kind = (b.kind as string) || (b.type as string) || 'hotspot';
+        return {
+          id: b.id as string,
+          title: meta.title || meta.name || 'Beacon',
+          address: meta.address || undefined,
+          imageUrl: meta.image_url || undefined,
+          startsAt: b.starts_at as string,
+          endsAt: b.end_at as string,
+          kind,
+          type: b.type as string,
+          intensity: b.intensity as number,
+          lat: b.lat as number,
+          lng: b.lng as number,
+          severity: meta.severity || undefined,
+        } as BeaconItem;
+      });
+    },
+    refetchInterval: 30_000,
+  });
+
+  // ---- Data: Safety alerts --------------------------------------------------
+  const {
+    data: safetyAlerts = [],
+  } = useQuery({
+    queryKey: ['pulse-safety'],
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('beacons')
+        .select('id, metadata, starts_at, end_at, lat, lng, kind, type')
+        .or(`type.eq.safety,kind.eq.safety`)
+        .or('end_at.is.null,end_at.gte.' + now)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (error) {
+        console.error('[pulse] safety query error:', error.message);
+        return [];
+      }
+      return (data ?? []).map((b: Record<string, unknown>) => {
+        const meta = (b.metadata ?? {}) as Record<string, string>;
+        return {
+          id: b.id as string,
+          title: meta.title || 'Safety Alert',
+          address: meta.address || undefined,
+          startsAt: b.starts_at as string,
+          kind: 'safety',
+          type: 'safety',
+          severity: meta.severity || 'warning',
+          lat: b.lat as number,
+          lng: b.lng as number,
+        } as BeaconItem;
+      });
+    },
+    refetchInterval: 30_000,
+  });
+
+  // ---- Realtime beacon subscription -----------------------------------------
+  useEffect(() => {
+    const channel = supabase
+      .channel('pulse-beacons-live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'beacons' },
+        () => {
+          // TanStack Query will handle refetch automatically via invalidation
+          // We just want to trigger it sooner on realtime changes
+        }
+      )
+      .subscribe();
 
     return () => {
-      unsubscribe?.();
+      supabase.removeChannel(channel);
     };
   }, []);
 
-  const handleBeaconTap = (beacon: Beacon) => {
-    if (beacon.type === 'event') {
-      openSheet('event', { eventId: beacon.id });
-    } else if (beacon.type === 'safety') {
-      openSheet('safety', { alertId: beacon.id });
-    } else {
-      openSheet('beacon', { beaconId: beacon.id });
+  // ---- Filtered beacons for drawer list -------------------------------------
+  const nonEventBeacons = allBeacons.filter(
+    (b) => b.kind !== 'event' && b.type !== 'event' && b.kind !== 'safety' && b.type !== 'safety'
+  );
+
+  const filteredBeacons = (() => {
+    switch (activeFilter) {
+      case 'events':
+        return { events, beacons: [], safety: [] };
+      case 'hotspots':
+        return { events: [], beacons: nonEventBeacons, safety: [] };
+      case 'safety':
+        return { events: [], beacons: [], safety: safetyAlerts };
+      default:
+        return { events, beacons: nonEventBeacons, safety: safetyAlerts };
     }
+  })();
+
+  // ---- Counts for chips -----------------------------------------------------
+  const filterCounts: Record<FilterType, number> = {
+    all: events.length + nonEventBeacons.length + safetyAlerts.length,
+    events: events.length,
+    hotspots: nonEventBeacons.length,
+    safety: safetyAlerts.length,
   };
 
-  const filteredBeacons = beacons.filter(b => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'events') return b.type === 'event';
-    if (activeFilter === 'safety') return b.type === 'safety';
-    if (activeFilter === 'hotspots') return b.type === 'hotspot' || b.type === 'presence';
-    return true;
-  });
+  // ---- Sheet navigation handlers --------------------------------------------
+  const handleEventTap = useCallback((id: string) => {
+    openSheet('event', { id });
+  }, [openSheet]);
 
+  const handleBeaconTap = useCallback((id: string) => {
+    openSheet('beacon', { beaconId: id });
+  }, [openSheet]);
+
+  const handleSafetyTap = useCallback((id: string) => {
+    openSheet('beacon', { beaconId: id });
+  }, [openSheet]);
+
+  const handleCreateBeacon = useCallback(() => {
+    openSheet('beacon', { mode: 'create' });
+  }, [openSheet]);
+
+  const handleSeeAllEvents = useCallback(() => {
+    openSheet('events', {});
+  }, [openSheet]);
+
+  const handleSafetyIndicatorTap = useCallback(() => {
+    if (safetyAlerts.length > 0) {
+      setActiveFilter('safety');
+    }
+  }, [safetyAlerts.length]);
+
+  // ---- Render ---------------------------------------------------------------
   return (
-    <div className={`h-full w-full relative ${className}`}>
-      {/* Filter bar - floating over globe */}
-      <div className="fixed top-4 left-4 right-4 z-40 flex items-center gap-2 overflow-x-auto scrollbar-hide">
-        {(['all', 'events', 'safety', 'hotspots'] as const).map((filter) => (
-          <button
-            key={filter}
-            onClick={() => setActiveFilter(filter)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-              activeFilter === filter
-                ? 'bg-white text-black'
-                : 'bg-black/50 text-white/70 backdrop-blur-sm border border-white/10'
-            }`}
-          >
-            {filter === 'all' && 'All'}
-            {filter === 'events' && `Events (${events.length})`}
-            {filter === 'safety' && `Safety (${safetyAlerts.length})`}
-            {filter === 'hotspots' && 'Hotspots'}
-          </button>
-        ))}
+    <div className={`h-full w-full relative pointer-events-none ${className}`}>
+      {/* All interactive children get pointer-events-auto so the globe
+          remains clickable through the transparent regions of this overlay */}
+
+      {/* Top HUD */}
+      <div
+        className="fixed top-0 left-0 right-0 z-40 pointer-events-auto"
+        style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}
+      >
+        <div className="space-y-3 pt-1">
+          <TopHUD
+            city={city}
+            beaconCount={allBeacons.length}
+            safetyCount={safetyAlerts.length}
+            onSafetyTap={handleSafetyIndicatorTap}
+            onCityTap={handleCityTap}
+          />
+          <FilterChipStrip
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            counts={filterCounts}
+          />
+        </div>
       </div>
 
-      {/* Event carousel at bottom */}
-      {events.length > 0 && activeFilter !== 'safety' && (
-        <div className="fixed bottom-24 left-0 right-0 z-30 px-4">
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-            {events.slice(0, 5).map((event) => (
-              <motion.button
-                key={event.id}
-                onClick={() => handleBeaconTap(event)}
-                className="flex-shrink-0 w-64 p-3 bg-black/70 backdrop-blur-xl rounded-xl border border-white/10 text-left"
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="text-xs text-[#FF1493] font-medium mb-1">
-                  {event.startTime ? new Date(event.startTime).toLocaleDateString() : 'Upcoming'}
-                </div>
-                <div className="text-white font-medium truncate">{event.title}</div>
-                <div className="text-white/50 text-sm truncate">{event.address || 'Location TBA'}</div>
-              </motion.button>
-            ))}
-          </div>
+      {/* Legend card (bottom-left, above drawer) */}
+      {!legendDismissed && (
+        <div className="fixed left-4 z-30 pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
+          <LegendCard onDismiss={handleDismissLegend} />
         </div>
       )}
 
-      {/* Safety alerts banner */}
-      <AnimatePresence>
-        {safetyAlerts.length > 0 && activeFilter !== 'events' && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-16 left-4 right-4 z-40"
-          >
-            <button
-              onClick={() => openSheet('safety', {})}
-              className="w-full p-3 bg-red-500/20 backdrop-blur-xl rounded-xl border border-red-500/30 text-left"
-            >
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                <span className="text-red-400 text-sm font-medium">
-                  {safetyAlerts.length} active safety alert{safetyAlerts.length > 1 ? 's' : ''} nearby
-                </span>
-              </div>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Beacon FAB (bottom-right, above drawer) */}
+      <div className="fixed right-4 z-50 pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
+        <BeaconFAB
+          onTap={handleCreateBeacon}
+          onLongPress={handleCreateBeacon}
+        />
+      </div>
 
-      {/* Stats overlay */}
-      <div className="fixed bottom-24 right-4 z-30 px-3 py-2 bg-black/60 backdrop-blur-sm rounded-xl border border-white/10">
-        <div className="text-xs text-white/50">Active Beacons</div>
-        <div className="text-xl font-bold text-white">{filteredBeacons.length}</div>
+      {/* Bottom Drawer */}
+      <div
+        className="fixed left-0 right-0 z-40 pointer-events-auto"
+        style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
+      >
+        <BottomDrawer
+          events={filteredBeacons.events}
+          beacons={filteredBeacons.beacons}
+          safetyAlerts={filteredBeacons.safety}
+          eventsLoading={eventsLoading}
+          beaconsLoading={beaconsLoading}
+          onEventTap={handleEventTap}
+          onBeaconTap={handleBeaconTap}
+          onSafetyTap={handleSafetyTap}
+          onSeeAllEvents={handleSeeAllEvents}
+        />
       </div>
     </div>
   );
