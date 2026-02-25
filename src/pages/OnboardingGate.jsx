@@ -236,23 +236,33 @@ export default function OnboardingGate() {
   const handleCommunityConfirm = useCallback(async () => {
     setSaving(true);
     try {
-      if (!session?.user?.id) {
-        toast.error('Session expired. Please sign in again.');
-        navigate('/auth', { replace: true });
-        return;
-      }
-      const { error } = await supabase
-        .from('profiles')
-        .update({ community_attested_at: new Date().toISOString() })
-        .eq('id', session.user.id);
-      if (error) throw error;
+      // Store community attestation in localStorage as fallback
+      try {
+        localStorage.setItem('hm_community_attested_v1', 'true');
+      } catch {}
 
-      const ok = await completeOnboarding();
-      if (!ok) throw new Error('Failed to complete onboarding');
+      if (session?.user?.id) {
+        // Try to update DB, but don't block on failure
+        const { error } = await supabase
+          .from('profiles')
+          .update({ community_attested_at: new Date().toISOString() })
+          .eq('id', session.user.id);
+        if (error) {
+          console.warn('Community attestation DB update failed (continuing):', error);
+        }
+
+        // Try to complete onboarding
+        await completeOnboarding().catch(e => {
+          console.warn('completeOnboarding failed (continuing):', e);
+        });
+      }
+      
+      // Always navigate home - localStorage attestation allows entry
       navigate('/');
     } catch (err) {
       console.error('Community confirm error:', err);
-      toast.error(err?.message || 'Could not confirm. Please try again.');
+      // Even on error, let user through if localStorage is set
+      navigate('/');
     } finally {
       setSaving(false);
     }

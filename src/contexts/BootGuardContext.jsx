@@ -31,11 +31,21 @@ export const BOOT_STATES = {
 
 // Consistent localStorage key for age verification
 const AGE_KEY = 'hm_age_confirmed_v1';
+const COMMUNITY_KEY = 'hm_community_attested_v1';
 
 const getLocalAgeVerified = () => {
   try {
     const val = localStorage.getItem(AGE_KEY);
     // Handle various possible values: 'true', 'TRUE', '1', etc.
+    return val === 'true' || val === '1' || val === 'TRUE';
+  } catch {
+    return false;
+  }
+};
+
+const getLocalCommunityAttested = () => {
+  try {
+    const val = localStorage.getItem(COMMUNITY_KEY);
     return val === 'true' || val === '1' || val === 'TRUE';
   } catch {
     return false;
@@ -191,12 +201,13 @@ export function BootGuardProvider({ children }) {
 
       setProfile(profileData);
 
-      // Determine boot state from profile
+      // Determine boot state from profile (trust localStorage as fallback)
+      const localCommunity = getLocalCommunityAttested();
       if (!profileData?.age_verified) {
         setBootState(BOOT_STATES.NEEDS_AGE);
       } else if (!profileData?.onboarding_complete) {
         setBootState(BOOT_STATES.NEEDS_ONBOARDING);
-      } else if (!profileData?.community_attested_at) {
+      } else if (!profileData?.community_attested_at && !localCommunity) {
         setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
       } else {
         setBootState(BOOT_STATES.READY);
@@ -205,8 +216,11 @@ export function BootGuardProvider({ children }) {
       console.error('Profile load error:', err);
       // On any error, trust localStorage - user experience over strictness
       const localAge = getLocalAgeVerified();
-      if (localAge) {
+      const localCommunity = getLocalCommunityAttested();
+      if (localAge && localCommunity) {
         setBootState(BOOT_STATES.READY);
+      } else if (localAge) {
+        setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
       } else {
         setBootState(BOOT_STATES.NEEDS_AGE);
       }
