@@ -23,6 +23,8 @@ import CreatorsCheckoutSuccess from '@/pages/CreatorsCheckoutSuccess';
 import Privacy from '@/pages/legal/Privacy';
 import Terms from '@/pages/legal/Terms';
 import PrivacyHub from '@/pages/legal/PrivacyHub';
+import { AboutPage, LegalPage, AccessibilityPage, PrivacyPolicyPage } from '@/pages/legal/LegalPages';
+import { CookieBanner } from '@/components/legal/CookieBanner';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { WorldPulseProvider } from '@/contexts/WorldPulseContext';
 import { PageTransition } from '@/components/lux/PageTransition';
@@ -425,6 +427,10 @@ const AuthenticatedApp = () => {
       <Route path="/legal/privacy" element={<LegalPrivacyRoute />} />
       <Route path="/legal/terms" element={<LegalTermsRoute />} />
       <Route path="/legal/privacy-hub" element={<LegalPrivacyHubRoute />} />
+      <Route path="/legal/about" element={<AboutPage />} />
+      <Route path="/legal/accessibility" element={<AccessibilityPage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/accessibility" element={<AccessibilityPage />} />
       <Route path="/legal" element={<Navigate to="/legal/privacy" replace />} />
       <Route path="/terms" element={<PageRoute pageKey="TermsOfService" />} />
       <Route path="/privacy" element={<PageRoute pageKey="PrivacyPolicy" />} />
@@ -641,6 +647,9 @@ function OSArchitecture() {
 
       {/* Incoming call banner — fixed top, z-[180], below SOS z-200 */}
       <IncomingCallBanner />
+
+      {/* GDPR Cookie Banner — shows once, persists choice */}
+      <CookieBanner />
     </div>
   );
 }

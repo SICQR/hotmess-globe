@@ -4,6 +4,8 @@
  * Lifted to app-level so the mini player bar can show across all routes
  * even when RadioMode is not mounted. Audio element lives here so playback
  * never stops during route transitions.
+ * 
+ * Integrates sound consent for browser autoplay policy compliance.
  */
 
 import React, {
@@ -14,6 +16,7 @@ import React, {
   useCallback,
   useEffect,
 } from 'react';
+import { SoundConsentModal, useSoundConsent } from '@/components/radio/SoundConsentModal';
 
 const STREAM_URL = 'https://listen.radioking.com/radio/736103/stream/802454';
 
@@ -31,6 +34,9 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentShowName, setCurrentShowName] = useState('');
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const pendingPlayRef = useRef(false);
+  
+  const { hasConsent, showModal, requestConsent, grantConsent, declineConsent } = useSoundConsent();
 
   // Create audio element once on mount
   useEffect(() => {
@@ -47,6 +53,29 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
       audio.src = '';
     };
   }, []);
+  
+  const startPlayback = useCallback(async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    try {
+      audio.src = STREAM_URL;
+      audio.load();
+      await audio.play();
+      setIsPlaying(true);
+    } catch (err) {
+      console.error('[radio] play failed:', err);
+      setIsPlaying(false);
+    }
+  }, []);
+  
+  // After consent granted, start playback if pending
+  useEffect(() => {
+    if (hasConsent && pendingPlayRef.current) {
+      pendingPlayRef.current = false;
+      startPlayback();
+    }
+  }, [hasConsent, startPlayback]);
 
   const togglePlay = useCallback(async () => {
     const audio = audioRef.current;
@@ -56,24 +85,30 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
       audio.pause();
       setIsPlaying(false);
     } else {
-      try {
-        // Force reload stream on each play to avoid stale buffer
-        audio.src = STREAM_URL;
-        audio.load();
-        await audio.play();
-        setIsPlaying(true);
-      } catch (err) {
-        console.error('[radio] play failed:', err);
-        setIsPlaying(false);
+      // Check sound consent first
+      if (!hasConsent) {
+        pendingPlayRef.current = true;
+        requestConsent();
+        return;
       }
+      await startPlayback();
     }
-  }, [isPlaying]);
+  }, [isPlaying, hasConsent, requestConsent, startPlayback]);
+  
+  const handleConsent = useCallback(() => {
+    grantConsent();
+  }, [grantConsent]);
 
   return (
     <RadioContext.Provider
       value={{ isPlaying, currentShowName, togglePlay, setCurrentShowName, audioRef }}
     >
       {children}
+      <SoundConsentModal 
+        isOpen={showModal} 
+        onConsent={handleConsent} 
+        onDecline={declineConsent} 
+      />
     </RadioContext.Provider>
   );
 }
