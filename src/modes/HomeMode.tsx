@@ -35,6 +35,8 @@ import {
   Sparkles,
   TrendingUp,
   Clock,
+  MessageSquare,
+  Heart,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
@@ -660,6 +662,25 @@ export function HomeMode({ className = '' }: HomeModeProps) {
     refetchInterval: 120_000,
   });
 
+  // 5. Community posts preview (3 most recent)
+  const {
+    data: communityPosts = [],
+    isLoading: communityLoading,
+  } = useQuery({
+    queryKey: ['home-community'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('community_posts')
+        .select('id, user_name, content, category, like_count, created_at')
+        .eq('moderation_status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(3);
+      if (error) throw error;
+      return data ?? [];
+    },
+    refetchInterval: 60_000,
+  });
+
   // ---- Render ---------------------------------------------------------------
   return (
     <div className={`h-full w-full flex flex-col overflow-hidden ${className}`} style={{ background: ROOT_BG }}>
@@ -748,9 +769,68 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             )}
           </AnimatedSection>
 
-          {/* ── Section 2: Nearby Events ── */}
+          {/* ── Section 2: Community ── */}
+          <AnimatedSection index={1}>
+            <SectionHeader
+              title="Community"
+              linkLabel="See all"
+              onLink={() => openSheet('community', {})}
+            />
+            {communityLoading ? (
+              <div className="space-y-2">
+                {[0, 1, 2].map(i => <ShimmerBox key={i} className="w-full h-16" />)}
+              </div>
+            ) : communityPosts.length === 0 ? (
+              <button
+                onClick={() => openSheet('community', {})}
+                className="w-full rounded-2xl border border-dashed border-white/10 p-5 flex flex-col items-center gap-2 text-center active:bg-white/5"
+                style={{ background: `${CARD_BG}80` }}
+              >
+                <MessageSquare className="w-8 h-8" style={{ color: MUTED }} />
+                <p className="text-white text-sm font-semibold">Nothing posted yet — be first</p>
+              </button>
+            ) : (
+              <div className="rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5" style={{ background: CARD_BG }}>
+                {communityPosts.map((post: Record<string, unknown>) => (
+                  <button
+                    key={post.id as string}
+                    onClick={() => openSheet('community', {})}
+                    className="w-full flex items-start gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{ background: `${AMBER}20` }}>
+                      <span className="text-[11px] font-black" style={{ color: AMBER }}>
+                        {((post.user_name as string) || 'A')[0].toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white/90 text-sm leading-snug line-clamp-2">{post.content as string}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs" style={{ color: MUTED }}>{post.user_name as string || 'Anonymous'}</span>
+                        {(post.like_count as number) > 0 && (
+                          <span className="flex items-center gap-0.5 text-xs" style={{ color: MUTED }}>
+                            <Heart className="w-3 h-3" />{post.like_count as number}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+                <button
+                  onClick={() => openSheet('community', {})}
+                  className="w-full px-4 py-3 text-left text-xs font-semibold active:bg-white/5 transition-colors flex items-center justify-between"
+                  style={{ color: AMBER }}
+                >
+                  View all posts
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </AnimatedSection>
+
+          {/* ── Section 4: Nearby Events ── */}
           {(eventsLoading || nearbyEvents.length > 0) && (
-            <AnimatedSection index={1}>
+            <AnimatedSection index={2}>
               <SectionHeader
                 title="Happening near you"
                 linkLabel="See all"
@@ -778,9 +858,9 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             </AnimatedSection>
           )}
 
-          {/* ── Section 3: Active Beacons ── */}
+          {/* ── Section 5: Active Beacons ── */}
           {(beaconsLoading || activeBeacons.length > 0) && (
-            <AnimatedSection index={2}>
+            <AnimatedSection index={3}>
               <SectionHeader title="Active Beacons" />
               <div className="rounded-2xl overflow-hidden border border-white/5" style={{ background: CARD_BG }}>
                 {beaconsLoading ? (
@@ -804,9 +884,9 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             </AnimatedSection>
           )}
 
-          {/* ── Section 4: From the Market ── */}
+          {/* ── Section 6: From the Market ── */}
           {(marketLoading || marketListings.length > 0) && (
-            <AnimatedSection index={3}>
+            <AnimatedSection index={4}>
               <SectionHeader
                 title="Fresh drops"
                 linkLabel="Browse market"
@@ -835,9 +915,9 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             </AnimatedSection>
           )}
 
-          {/* ── Section 5: Scene Scout (Tonight's Picks) ── */}
+          {/* ── Section 7: Scene Scout (Tonight's Picks) ── */}
           {nearbyEvents.length > 0 && (
-            <AnimatedSection index={4}>
+            <AnimatedSection index={5}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4" style={{ color: '#B026FF' }} />
@@ -885,8 +965,8 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             </AnimatedSection>
           )}
 
-          {/* ── Section 6: Radio Banner ── */}
-          <AnimatedSection index={5}>
+          {/* ── Section 8: Radio Banner ── */}
+          <AnimatedSection index={6}>
             <RadioBanner onNavigate={() => navigate('/radio')} />
           </AnimatedSection>
 
