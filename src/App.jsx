@@ -40,6 +40,7 @@ import { OSBottomNav } from '@/modes/OSBottomNav';
 import { RadioProvider } from '@/contexts/RadioContext';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import AuthCallback from '@/pages/auth/callback';
 
 const HomeMode = lazy(() => import('@/modes/HomeMode'));
 const GhostedMode = lazy(() => import('@/modes/GhostedMode'));
@@ -388,6 +389,7 @@ const AuthenticatedApp = () => {
       <Route path="/directions" element={<PageRoute pageKey="Directions" />} />
       
       {/* Auth sub-routes */}
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/auth/sign-in" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/sign-up" element={<PageRoute pageKey="Auth" />} />
       <Route path="/auth/magic-link" element={<PageRoute pageKey="Auth" />} />

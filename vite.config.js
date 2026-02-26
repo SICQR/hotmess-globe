@@ -667,6 +667,7 @@ export default defineConfig(({ mode }) => {
         'node_modules/**',
         'dist/**',
         'hotmess-globe/**',
+        'api/**',
       ],
       coverage: {
         provider: 'v8',

@@ -51,6 +51,11 @@ const L2BeaconSheet = lazy(() => import('./L2BeaconSheet'));
 const L2ScheduleSheet = lazy(() => import('./L2ScheduleSheet'));
 const L2OrderSheet = lazy(() => import('./L2OrderSheet'));
 const L2EmergencyContactSheet = lazy(() => import('./L2EmergencyContactSheet'));
+const L2VideoCallSheet = lazy(() => import('./L2VideoCallSheet'));
+const L2AdminSheet = lazy(() => import('./L2AdminSheet'));
+const L2AmplifySheet = lazy(() => import('./L2AmplifySheet'));
+const L2BrandSheet = lazy(() => import('./L2BrandSheet'));
+const L2TicketSheet = lazy(() => import('./L2TicketSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -130,6 +135,16 @@ const SHEET_COMPONENTS = {
   'show': L2ScheduleSheet,
   'order': L2OrderSheet,
   'emergency-contact': L2EmergencyContactSheet,
+  // Video call
+  'video-call': L2VideoCallSheet,
+  // Admin — City Ops
+  'admin': L2AdminSheet,
+  // B2B — City Amplification
+  'amplify': L2AmplifySheet,
+  // Brand landing pages — RAW / HUNG / HIGH / HUNGMESS
+  'brand': L2BrandSheet,
+  // Ticket resale market
+  'ticket-market': L2TicketSheet,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════

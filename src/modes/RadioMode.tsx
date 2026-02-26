@@ -303,10 +303,10 @@ export function RadioMode({ className = '' }: RadioModeProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="relative z-10 text-center mb-1"
+            className="relative z-10 text-center mb-2"
           >
             <h1
-              className="font-black text-3xl text-white tracking-[0.25em] uppercase leading-tight"
+              className="font-black text-4xl text-white tracking-[0.3em] uppercase leading-none"
               style={
                 isPlaying
                   ? { textShadow: '0 0 40px rgba(200,150,44,0.5), 0 0 80px rgba(200,150,44,0.15)' }
@@ -316,23 +316,24 @@ export function RadioMode({ className = '' }: RadioModeProps) {
               HOTMESS
             </h1>
             <h1
-              className="font-black text-3xl text-white tracking-[0.25em] uppercase leading-tight"
-              style={
-                isPlaying
-                  ? { textShadow: '0 0 40px rgba(200,150,44,0.5), 0 0 80px rgba(200,150,44,0.15)' }
-                  : undefined
-              }
+              className="font-black text-lg tracking-[0.5em] uppercase leading-tight mt-1"
+              style={{
+                color: '#C8962C',
+                ...(isPlaying
+                  ? { textShadow: '0 0 30px rgba(200,150,44,0.6), 0 0 60px rgba(200,150,44,0.2)' }
+                  : {}),
+              }}
             >
               RADIO
             </h1>
           </motion.div>
 
-          {/* Live / Off Air badge */}
+          {/* Live / Off Air badge + listener count */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.15, duration: 0.4 }}
-            className="relative z-10 mb-5"
+            className="relative z-10 mb-5 flex items-center gap-3"
           >
             {isPlaying ? (
               <span className="inline-flex items-center gap-1.5 bg-[#C8962C] text-white text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
@@ -345,6 +346,12 @@ export function RadioMode({ className = '' }: RadioModeProps) {
                 OFF AIR
               </span>
             )}
+            {isPlaying && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white/30">
+                <span className="w-1.5 h-1.5 bg-[#34C759] rounded-full" />
+                Streaming
+              </span>
+            )}
           </motion.div>
 
           {/* Waveform or radio icon */}
@@ -352,10 +359,14 @@ export function RadioMode({ className = '' }: RadioModeProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.25, duration: 0.4 }}
-            className="relative z-10 mb-2 h-10 flex items-end justify-center"
+            className="relative z-10 mb-2 h-12 flex items-end justify-center"
           >
             {isPlaying ? (
-              <div className="waveform" aria-hidden="true">
+              <div className="waveform waveform-wide" aria-hidden="true">
+                <span className="waveform-bar" />
+                <span className="waveform-bar" />
+                <span className="waveform-bar" />
+                <span className="waveform-bar" />
                 <span className="waveform-bar" />
                 <span className="waveform-bar" />
                 <span className="waveform-bar" />
@@ -480,7 +491,7 @@ export function RadioMode({ className = '' }: RadioModeProps) {
           <h2 className="text-[11px] font-black text-[#8E8E93] uppercase tracking-widest mb-3">
             Up Next
           </h2>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
             {shows.map((show, idx) => {
               const isActive = idx === activeShowIndex;
               return (
@@ -488,21 +499,40 @@ export function RadioMode({ className = '' }: RadioModeProps) {
                   key={show.id}
                   onClick={() => handleShowTap(show)}
                   whileTap={{ scale: 0.95 }}
-                  className={`flex-shrink-0 w-[120px] rounded-xl p-3 text-left transition-colors ${
+                  className={`flex-shrink-0 w-[140px] rounded-2xl overflow-hidden text-left transition-all ${
                     isActive
-                      ? 'bg-[#C8962C]/10 border border-[#C8962C]/60'
-                      : 'bg-[#1C1C1E] border border-white/10'
+                      ? 'ring-2 ring-[#C8962C]/60 ring-offset-2 ring-offset-black'
+                      : ''
                   }`}
                   aria-label={`Show: ${show.name}, ${show.time}`}
                 >
-                  <div className="text-2xl mb-1.5">{show.emoji}</div>
-                  <p className="font-bold text-xs text-white leading-tight truncate">
-                    {show.name}
-                  </p>
-                  <p className="text-[10px] text-[#8E8E93] mt-0.5 leading-tight">{show.time}</p>
-                  <p className="text-[10px] text-white/25 mt-0.5 leading-tight truncate">
-                    {show.host}
-                  </p>
+                  {/* Artwork placeholder with gradient */}
+                  <div
+                    className="h-20 flex items-center justify-center relative"
+                    style={{
+                      background: isActive
+                        ? 'linear-gradient(135deg, rgba(200,150,44,0.3) 0%, rgba(200,150,44,0.05) 100%)'
+                        : 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
+                    }}
+                  >
+                    <span className="text-3xl">{show.emoji}</span>
+                    {isActive && isPlaying && (
+                      <div className="absolute top-2 right-2">
+                        <span className="inline-flex items-center gap-1 bg-[#C8962C] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase">
+                          LIVE
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-[#1C1C1E] p-3 border-t border-white/5">
+                    <p className="font-bold text-xs text-white leading-tight truncate">
+                      {show.name}
+                    </p>
+                    <p className="text-[10px] text-[#C8962C] mt-0.5 leading-tight font-semibold">{show.time}</p>
+                    <p className="text-[10px] text-white/30 mt-0.5 leading-tight truncate">
+                      {show.host}
+                    </p>
+                  </div>
                 </motion.button>
               );
             })}
@@ -580,12 +610,18 @@ export function RadioMode({ className = '' }: RadioModeProps) {
         {/* == ABOUT STRIP == */}
         <section className="px-4 pb-8">
           <div className="bg-[#1C1C1E] rounded-xl p-4 border border-white/5">
+            <p className="text-[#C8962C] text-[10px] font-black uppercase tracking-widest mb-2">
+              Community Radio
+            </p>
             <p className="text-white/40 text-xs leading-relaxed">
               HOTMESS RADIO -- London's queer community station. Music, shows, and voices from
               the mess. Streaming live 24/7 via RadioKing.
             </p>
           </div>
         </section>
+
+        {/* Bottom spacer for nav clearance */}
+        <div className="h-24" />
       </div>
 
       {/* ---- Volume slider custom styles ---- */}

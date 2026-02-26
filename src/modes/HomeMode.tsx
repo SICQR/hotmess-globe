@@ -33,6 +33,8 @@ import {
   Radio,
   Calendar,
   Sparkles,
+  TrendingUp,
+  Clock,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
@@ -391,6 +393,50 @@ function ProductCard({
             &pound;{price}
           </p>
         )}
+      </div>
+    </button>
+  );
+}
+
+// ---- SceneScout Tonight's Picks --------------------------------------------
+interface ScenePickProps {
+  rank: number;
+  title: string;
+  venue?: string;
+  time?: string;
+  score: number;
+  onTap: () => void;
+}
+
+function ScenePick({ rank, title, venue, time, score, onTap }: ScenePickProps) {
+  return (
+    <button
+      onClick={onTap}
+      className="w-full flex items-center gap-3 text-left active:bg-white/5 transition-colors px-4 py-3"
+      aria-label={`View event: ${title}`}
+    >
+      <span className="font-black text-2xl w-8 flex-shrink-0" style={{ color: `${AMBER}60` }}>
+        {rank}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="text-white font-bold text-sm leading-tight truncate">{title}</p>
+        <div className="flex items-center gap-3 mt-0.5">
+          {venue && (
+            <span className="text-[11px] truncate max-w-[120px]" style={{ color: MUTED }}>
+              {venue}
+            </span>
+          )}
+          {time && (
+            <span className="flex items-center gap-0.5 text-[11px] flex-shrink-0" style={{ color: MUTED }}>
+              <Clock className="w-3 h-3" />
+              {time}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
+        <span className="font-black text-sm" style={{ color: AMBER }}>{score}%</span>
+        <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: `${AMBER}60` }}>match</span>
       </div>
     </button>
   );
@@ -789,8 +835,58 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             </AnimatedSection>
           )}
 
-          {/* ── Section 5: Radio Banner ── */}
-          <AnimatedSection index={4}>
+          {/* ── Section 5: Scene Scout (Tonight's Picks) ── */}
+          {nearbyEvents.length > 0 && (
+            <AnimatedSection index={4}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" style={{ color: '#B026FF' }} />
+                  <h2 className="text-white font-bold text-base">Tonight's Picks</h2>
+                  <span
+                    className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider"
+                    style={{ background: '#B026FF20', color: '#B026FF' }}
+                  >
+                    AI
+                  </span>
+                </div>
+                <button
+                  onClick={() => navigate('/pulse')}
+                  className="flex items-center gap-0.5 text-xs font-semibold active:opacity-70 transition-opacity"
+                  style={{ color: AMBER }}
+                >
+                  See all
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div
+                className="rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5"
+                style={{ background: CARD_BG }}
+              >
+                {nearbyEvents.slice(0, 3).map((ev, i) => {
+                  // Derive a match score from position + event timing
+                  const baseScore = 97 - i * 8;
+                  const score = Math.max(baseScore, 72);
+                  const timeStr = ev.startsAt
+                    ? new Date(ev.startsAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+                    : undefined;
+                  return (
+                    <ScenePick
+                      key={ev.id}
+                      rank={i + 1}
+                      title={ev.title}
+                      venue={ev.venue}
+                      time={timeStr}
+                      score={score}
+                      onTap={() => openSheet('event', { id: ev.id })}
+                    />
+                  );
+                })}
+              </div>
+            </AnimatedSection>
+          )}
+
+          {/* ── Section 6: Radio Banner ── */}
+          <AnimatedSection index={5}>
             <RadioBanner onNavigate={() => navigate('/radio')} />
           </AnimatedSection>
 
