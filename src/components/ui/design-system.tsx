@@ -401,6 +401,87 @@ export function Header({ title, showBrand = false, onBack, onOptions, children }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// USER CARD (For grid displays - Ghosted, Friends)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface UserCardProps {
+  avatarSrc: string;
+  username: string;
+  distance?: string;
+  status?: 'online' | 'offline' | 'away' | 'busy';
+  onTap?: () => void;
+  className?: string;
+}
+
+export function UserCard({ avatarSrc, username, distance, status, onTap, className }: UserCardProps) {
+  const statusColors = {
+    online: 'bg-online',
+    offline: 'bg-gray-500',
+    away: 'bg-yellow-500',
+    busy: 'bg-red-500',
+  };
+
+  return (
+    <motion.div
+      className={cn(
+        'flex flex-col items-center p-3 rounded-[1.5em] bg-chatGray shadow-gold cursor-pointer',
+        'hover:shadow-[0_0_20px_#FFC94088] transition-shadow',
+        className
+      )}
+      onClick={onTap}
+      whileTap={{ scale: 0.97 }}
+      whileHover={{ boxShadow: '0 0 24px #FFC94088' }}
+    >
+      {/* Avatar with status */}
+      <div className="relative mb-2">
+        <img
+          src={avatarSrc}
+          alt={username}
+          className="w-[70px] h-[85px] rounded-xl object-cover border-2 border-gold shadow-gold"
+        />
+        {status && (
+          <span
+            className={cn(
+              'absolute bottom-1 right-1 w-3 h-3 rounded-full border-2 border-darkest',
+              statusColors[status]
+            )}
+          />
+        )}
+      </div>
+      
+      {/* Username */}
+      <span className="font-bold text-light text-sm truncate max-w-full font-mono">
+        {username}
+      </span>
+      
+      {/* Distance */}
+      {distance && (
+        <span className="text-muted text-xs mt-0.5">
+          {distance}
+        </span>
+      )}
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USER GRID (Container for UserCards)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface UserGridProps {
+  children: ReactNode;
+  className?: string;
+}
+
+export function UserGrid({ children, className }: UserGridProps) {
+  return (
+    <div className={cn('grid grid-cols-2 gap-3 p-4', className)}>
+      {children}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -415,4 +496,6 @@ export default {
   TextInput,
   Badge,
   Header,
+  UserCard,
+  UserGrid,
 };
