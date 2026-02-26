@@ -23,7 +23,7 @@ vi.mock('@supabase/supabase-js', () => ({
 describe('AI Tools Module', () => {
   let mockSupabase;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     const { createClient } = await import('@supabase/supabase-js');
     mockSupabase = createClient();
