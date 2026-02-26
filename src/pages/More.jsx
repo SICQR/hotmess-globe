@@ -1,21 +1,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { isGamificationEnabled } from '@/lib/featureFlags';
 import { 
   MapPin, TrendingUp, Target, Shield, Calendar, 
   Scan, Users, Trophy, Settings, FileText, HelpCircle 
 } from 'lucide-react';
 import PageShell from '@/components/shell/PageShell';
 
-const TOOLS = [
-  { name: 'Beacons', icon: MapPin, path: 'Beacons', desc: 'Create location drops' },
-  { name: 'Stats', icon: TrendingUp, path: 'Stats', desc: 'Your activity dashboard' },
-  { name: 'Challenges', icon: Target, path: 'Challenges', desc: 'Daily and weekly goals' },
-  { name: 'Safety', icon: Shield, path: 'Safety', desc: 'Reports, blocks, resources' },
-  { name: 'Calendar', icon: Calendar, path: 'Calendar', desc: 'Events and subscriptions' },
-  { name: 'Scan', icon: Scan, path: 'Scan', desc: 'QR check-in and redeem' },
-  { name: 'Community', icon: Users, path: 'Community', desc: 'Posts and discussions' },
-  { name: 'Leaderboard', icon: Trophy, path: 'Leaderboard', desc: 'Top users and scores' },
+// Filter out gamification tools when feature is disabled
+const ALL_TOOLS = [
+  { name: 'Beacons', icon: MapPin, path: 'Beacons', desc: 'Create location drops', gamification: false },
+  { name: 'Stats', icon: TrendingUp, path: 'Stats', desc: 'Your activity dashboard', gamification: false },
+  { name: 'Challenges', icon: Target, path: 'Challenges', desc: 'Daily and weekly goals', gamification: true },
+  { name: 'Safety', icon: Shield, path: 'Safety', desc: 'Reports, blocks, resources', gamification: false },
+  { name: 'Calendar', icon: Calendar, path: 'Calendar', desc: 'Events and subscriptions', gamification: false },
+  { name: 'Scan', icon: Scan, path: 'Scan', desc: 'QR check-in and redeem', gamification: false },
+  { name: 'Community', icon: Users, path: 'Community', desc: 'Posts and discussions', gamification: false },
+  { name: 'Leaderboard', icon: Trophy, path: 'Leaderboard', desc: 'Top users and scores', gamification: true },
 ];
 
 const ACCOUNT = [
@@ -25,6 +27,11 @@ const ACCOUNT = [
 ];
 
 export default function More() {
+  // Filter tools based on gamification feature flag
+  const TOOLS = isGamificationEnabled() 
+    ? ALL_TOOLS 
+    : ALL_TOOLS.filter(t => !t.gamification);
+
   return (
     <div className="min-h-screen bg-black text-white pb-20">
       <PageShell

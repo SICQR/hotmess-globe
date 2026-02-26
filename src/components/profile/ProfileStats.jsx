@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Users, MapPin, Trophy } from 'lucide-react';
+import { isGamificationEnabled } from '@/lib/featureFlags';
 
 export default function ProfileStats({
   followersCount,
@@ -13,7 +14,8 @@ export default function ProfileStats({
     { icon: Users, label: 'Followers', value: followersCount, color: '#00D9FF' },
     { icon: Users, label: 'Following', value: followingCount, color: '#00D9FF' },
     { icon: MapPin, label: 'Check-ins', value: checkInsCount, color: '#39FF14' },
-    { icon: Trophy, label: 'Badges', value: achievementsCount, color: '#B026FF' },
+    // Only show badges/achievements when gamification is enabled
+    ...(isGamificationEnabled() ? [{ icon: Trophy, label: 'Badges', value: achievementsCount, color: '#B026FF' }] : []),
   ];
 
   return (

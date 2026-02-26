@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HOTMESS - Chat & Meetup</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css?family=Space+Mono:700|Inter:400,700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      background: #181820;
+      color: #ECECEC;
+      font-family: 'Inter', 'Space Mono', Menlo, monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.2rem;
+      background: #181820;
+      font-family: 'Space Mono', monospace;
+      font-weight: bold;
+      font-size: 1.5rem;
+      color: #FFB800;
+      letter-spacing: 0.2em;
+      box-shadow: 0 2px 16px #FFB80044;
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      color: #FFB800;
+      font-size: 1.6rem;
+      cursor: pointer;
+    }
+    .user-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.5rem 1.2rem;
+    }
+    .avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 2px solid #FFB800;
+      box-shadow: 0 0 12px #FFC94077;
+      background: #23232F;
+      object-fit: cover;
+    }
+    .online-dot {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      width: 12px;
+      height: 12px;
+      background: #38E38D;
+      border-radius: 50%;
+      border: 2px solid #101017;
+    }
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1em;
+    }
+    .user-name {
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: #ECECEC;
+    }
+    .user-location {
+      font-size: 0.95rem;
+      color: #8F8FA1;
+    }
+    .chat-main {
+      flex: 1;
+      padding: 0.8rem 1.2rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+    .chat-bubble {
+      max-width: 75%;
+      padding: 0.8rem 1.3rem;
+      border-radius: 1em;
+      box-shadow: 0 0 10px #FFB80033;
+      font-size: 1rem;
+      line-height: 1.4;
+      margin-bottom: 0.2rem;
+      word-break: break-word;
+    }
+    .bubble-out {
+      align-self: flex-end;
+      background: #FFB800;
+      color: #181820;
+      margin-left: 20%;
+    }
+    .bubble-in {
+      align-self: flex-start;
+      background: #2D2D39;
+      color: #ECECEC;
+      margin-right: 20%;
+    }
+    .bubble-time {
+      display: block;
+      font-size: 0.85rem;
+      color: #8F8FA1;
+      margin-top: 0.25em;
+    }
+    .map-card {
+      align-self: flex-end;
+      background: #23232F;
+      border-radius: 1em;
+      padding: 1rem;
+      box-shadow: 0 0 12px #FFB80055;
+      margin-left: 10%;
+      max-width: 85%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7em;
+    }
+    .map-wrap {
+      width: 100%;
+      height: 110px;
+      border-radius: 0.7em;
+      background: #101017 url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80') no-repeat center/cover;
+      position: relative;
+    }
+    .map-marker {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%,-50%);
+      font-size: 2.2rem;
+      color: #FFC940;
+      filter: drop-shadow(0 0 14px #FFB80088);
+    }
+    .map-title { color: #ECECEC; font-weight: bold; font-size: 1.15rem; }
+    .map-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.4em;
+      font-size: 0.92rem;
+      color: #8F8FA1;
+    }
+    .map-actions {
+      display: flex;
+      gap: 0.8em;
+      margin-top: 0.7em;
+    }
+    .gold-btn {
+      background: #FFB800;
+      color: #181820;
+      border: none;
+      border-radius: 0.5em;
+      font-weight: bold;
+      box-shadow: 0 0 8px #FFB80055;
+      padding: 0.8em 1.6em;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: box-shadow 0.2s, transform 0.15s;
+    }
+    .gold-btn:active { box-shadow: 0 0 20px #FFC940AA; transform: scale(0.98);}
+    .outline-btn {
+      background: #181820;
+      color: #FFB800;
+      border: 1px solid #FFB800;
+      border-radius: 0.5em;
+      font-weight: bold;
+      padding: 0.8em 1.3em;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: border 0.2s, color 0.15s;
+    }
+    /* Input bar */
+    .input-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.7em;
+      padding: 1em 1.2em;
+      background: #101017;
+      border-top: 1px solid #ffaa3b;
+      position: relative;
+    }
+    .input-msg {
+      flex: 1;
+      background: #2D2D39;
+      color: #ECECEC;
+      border-radius: 2em;
+      border: 1px solid #ffaa3b;
+      padding: 0.8em 1.2em;
+      font-size: 1em;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .input-msg:focus { border-color: #FFB800;}
+    .input-btn {
+      background: none;
+      border: none;
+      color: #FFB800;
+      font-size: 1.6em;
+      cursor: pointer;
+    }
+    /* Bottom nav bar */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: #101017;
+      border-top: 1px solid #ffaa3b;
+      box-shadow: 0 -2px 18px #000000e0;
+      padding: 0.6em 1.2em;
+      z-index: 10;
+    }
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #ECECEC;
+      font-size: 1.25em;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.18s;
+    }
+    .nav-btn.active { color: #FFB800;}
+    .nav-label {
+      font-size: 0.75em;
+      margin-top: 0.15em;
+    }
+    /* Notification badge */
+    .nav-btn .notif {
+      position: absolute;
+      top: -6px; right: -8px;
+      background: #FFB800;
+      color: #181820;
+      font-size: 0.8em;
+      padding: 2px 7px;
+      font-weight: bold;
+      border-radius: 2em;
+      border: 1px solid #ffaa3b;
+      pointer-events: none;
+    }
+  </style>
+  <!-- Use font-awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <button class="icon-btn"><i class="fa fa-chevron-left"></i></button>
+    HOTMESS
+    <button class="icon-btn"><i class="fa fa-ellipsis-v"></i></button>
+  </div>
+  <!-- User meta row -->
+  <div class="user-meta">
+    <div style="position: relative;">
+      <img class="avatar" src="https://randomuser.me/api/portraits/men/75.jpg" alt="avatar">
+      <span class="online-dot"></span>
+    </div>
+    <div class="user-info">
+      <span class="user-name">AlexTravels</span>
+      <span class="user-location">Visiting Berlin · 1.2 km away</span>
+    </div>
+  </div>
+  <!-- Main chat area -->
+  <div class="chat-main">
+    <div class="chat-bubble bubble-in">
+      Just got into Berlin! ✈️<br>
+      Trying to find a bar now 😊
+      <span class="bubble-time">20:41</span>
+    </div>
+    <div class="chat-bubble bubble-out">
+      Right now? I'm in <span style="font-weight:600;color:#FF1493">Schöneberg</span> 🔥
+      <span class="bubble-time">20:43</span>
+    </div>
+    <div class="chat-bubble bubble-in">
+      Perfect! Let's meet there!
+      <span class="bubble-time">20:44</span>
+    </div>
+    <!-- Map card -->
+    <div class="map-card">
+      <div class="map-wrap">
+        <i class="fas fa-map-marker-alt map-marker"></i>
+      </div>
+      <div class="map-title">Soho Cluster</div>
+      <div class="map-meta">
+        <i class="fas fa-map-marker-alt"></i>
+        720 m &middot; 4 min
+      </div>
+      <div class="map-actions">
+        <button class="gold-btn"><i class="fa fa-location-arrow"></i> Start</button>
+        <button class="outline-btn"><i class="fa fa-car"></i> Uber</button>
+        <button class="outline-btn"><i class="fa fa-share-alt"></i> Share</button>
+      </div>
+    </div>
+  </div>
+  <!-- Input bar -->
+  <form class="input-bar">
+    <input class="input-msg" placeholder="Type a message…" />
+    <button class="input-btn" type="button"><i class="fa fa-comments"></i></button>
+    <button class="input-btn" type="button"><i class="fa fa-user"></i></button>
+  </form>
+  <!-- Bottom nav bar -->
+  <nav class="nav-bar">
+    <button class="nav-btn active"><i class="fa fa-home"></i><span class="nav-label">Home</span></button>
+    <button class="nav-btn"><i class="fa fa-compass"></i><span class="nav-label">Map</span></button>
+    <button class="nav-btn"><i class="fa fa-location-arrow"></i><span class="nav-label">Explore</span></button>
+    <button class="nav-btn" style="position:relative;">
+      <i class="fa fa-comments"></i>
+      <span class="notif">3</span>
+      <span class="nav-label">Chats</span>
+    </button>
+    <button class="nav-btn"><i class="fa fa-user"></i><span class="nav-label">Profile</span></button>
+  </nav>
+</body>
+</html>

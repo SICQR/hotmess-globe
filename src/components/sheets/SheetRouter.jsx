@@ -10,8 +10,9 @@
 import React, { Suspense, lazy } from 'react';
 import { useSheet } from '@/contexts/SheetContext';
 import { SHEET_REGISTRY, getSheetHeight } from '@/lib/sheetSystem';
+import { isGamificationEnabled } from '@/lib/featureFlags';
 import L2SheetContainer from './L2SheetContainer';
-import { Loader2, Construction } from 'lucide-react';
+import { Loader2, Construction, Sparkles } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LAZY-LOADED SHEET COMPONENTS
@@ -74,6 +75,19 @@ function PlaceholderSheet({ sheetType }) {
       <h3 className="text-lg font-bold text-white mb-2">{config?.title || 'Coming Soon'}</h3>
       <p className="text-sm text-white/60 mb-4">This feature is under construction.</p>
       <code className="text-xs text-white/30 bg-white/5 px-2 py-1 rounded">sheet={sheetType}</code>
+    </div>
+  );
+}
+
+// Gamification "Coming Soon" placeholder
+function GamificationComingSoonSheet({ sheetType }) {
+  const config = SHEET_REGISTRY[sheetType];
+  return (
+    <div className="flex flex-col items-center justify-center h-64 px-6 text-center">
+      <Sparkles className="w-12 h-12 text-[#C8962C] mb-4 animate-pulse" />
+      <h3 className="text-lg font-bold text-white mb-2">{config?.title || 'Coming Soon'}</h3>
+      <p className="text-sm text-white/60 mb-4">XP, achievements, and rewards are launching soon.</p>
+      <span className="text-xs text-[#C8962C] bg-[#C8962C]/10 px-3 py-1 rounded-full">COMING SOON</span>
     </div>
   );
 }
@@ -152,11 +166,20 @@ const SHEET_COMPONENTS = {
   'ticket-market': L2TicketSheet,
   // Community features (DB live, UI added)
   'community': L2CommunityPostSheet,
+  // Gamification — gated by feature flag (returns placeholder when disabled)
   'achievements': L2AchievementsSheet,
   'squads': L2SquadsSheet,
   'sweat-coins': L2SweatCoinsSheet,
   'creator-subscription': L2CreatorSubscriptionSheet,
 };
+
+// Sheets gated by gamification feature flag
+const GAMIFICATION_SHEETS = new Set([
+  'achievements',
+  'squads', 
+  'sweat-coins',
+  'creator-subscription',
+]);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SHEET ROUTER COMPONENT
@@ -178,8 +201,14 @@ export default function SheetRouter() {
   }
 
   // Get component (or placeholder if not implemented)
-  const Component = SHEET_COMPONENTS[activeSheet] || 
-    (() => <PlaceholderSheet sheetType={activeSheet} />);
+  // Gamification sheets show "Coming Soon" when feature flag is off
+  let Component;
+  if (GAMIFICATION_SHEETS.has(activeSheet) && !isGamificationEnabled()) {
+    Component = () => <GamificationComingSoonSheet sheetType={activeSheet} />;
+  } else {
+    Component = SHEET_COMPONENTS[activeSheet] || 
+      (() => <PlaceholderSheet sheetType={activeSheet} />);
+  }
 
   // Dynamic title based on props
   const dynamicTitle = sheetProps?.title || config.title;

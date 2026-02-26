@@ -19,6 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLongPress } from '@/hooks/useLongPress';
 import PersonaSwitcherSheet from '@/components/sheets/PersonaSwitcherSheet';
+import { isGamificationEnabled } from '@/lib/featureFlags';
 import {
   User,
   Settings,
@@ -337,10 +338,13 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
       title: 'ACTIVITY',
       items: [
         { icon: MessageSquare, label: 'Community', action: () => openSheet('community', {}) },
-        { icon: Trophy, label: 'Achievements', action: () => openSheet('achievements', {}) },
-        { icon: Users, label: 'Squads', action: () => openSheet('squads', {}) },
-        { icon: Zap, label: 'Sweat Coins', action: () => openSheet('sweat-coins', {}) },
-        { icon: Crown, label: 'Creator Subscriptions', action: () => openSheet('creator-subscription', {}) },
+        // Gamification items — only show when feature is enabled
+        ...(isGamificationEnabled() ? [
+          { icon: Trophy, label: 'Achievements', action: () => openSheet('achievements', {}) },
+          { icon: Users, label: 'Squads', action: () => openSheet('squads', {}) },
+          { icon: Zap, label: 'Sweat Coins', action: () => openSheet('sweat-coins', {}) },
+          { icon: Crown, label: 'Creator Subscriptions', action: () => openSheet('creator-subscription', {}) },
+        ] : []),
         { icon: Package, label: 'My Listings', action: () => openSheet('my-listings', {}) },
         { icon: ShoppingBag, label: 'My Orders', action: () => openSheet('my-orders', {}) },
         { icon: Ticket, label: 'Vault (Tickets & Passes)', action: () => openSheet('vault', {}) },

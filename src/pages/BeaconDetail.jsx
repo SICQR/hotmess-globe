@@ -6,6 +6,7 @@ import { createPageUrl } from '../utils';
 import { MapPin, ArrowLeft, Users, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { isGamificationEnabled } from '@/lib/featureFlags';
 import CommentsSection from '../components/beacon/CommentsSection';
 import BeaconActions from '../components/beacon/BeaconActions';
 import EventRSVP from '../components/events/EventRSVP';
@@ -215,8 +216,8 @@ export default function BeaconDetail() {
 
           {/* Sidebar */}
           <div className="space-y-4">
-            {/* Night King for Venues */}
-            {beacon.kind === 'venue' && (
+            {/* Night King for Venues — only when gamification enabled */}
+            {isGamificationEnabled() && beacon.kind === 'venue' && (
               <NightKingDisplay venueId={beaconId} />
             )}
 
