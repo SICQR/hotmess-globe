@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AuthContainer, BrandHeader, AuthInput, Button, TextLink } from '@/components/ui/design-system';
+import { supabase } from '@/components/utils/supabaseClient';
+import { toast } from 'sonner';
 
 interface ForgotPasswordScreenProps {
-  onSubmit: (email: string) => void;
-  onBack: () => void;
+  onSubmit?: (email: string) => void;
+  onBack?: () => void;
 }
 
 export function ForgotPasswordScreen({ onSubmit, onBack }: ForgotPasswordScreenProps) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,14 +27,35 @@ export function ForgotPasswordScreen({ onSubmit, onBack }: ForgotPasswordScreenP
     }
 
     setLoading(true);
-    await onSubmit(email);
-    setLoading(false);
-    setSent(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+      });
+
+      if (error) {
+        toast.error(error.message || 'Failed to send reset email');
+        setError(error.message);
+      } else {
+        toast.success('Reset link sent! Check your inbox.');
+        onSubmit?.(email);
+        setSent(true);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBack = () => {
+    onBack?.();
+    navigate('/examples/auth/login');
   };
 
   if (sent) {
     return (
-      <AuthContainer onBack={onBack}>
+      <AuthContainer onBack={handleBack}>
         <div className="flex-1 flex flex-col items-center justify-center text-center">
           <motion.div
             initial={{ scale: 0 }}
@@ -46,14 +71,14 @@ export function ForgotPasswordScreen({ onSubmit, onBack }: ForgotPasswordScreenP
             We've sent a password reset link to <span className="text-gold">{email}</span>
           </p>
 
-          <TextLink onClick={onBack}>Back to Login</TextLink>
+          <TextLink onClick={handleBack}>Back to Login</TextLink>
         </div>
       </AuthContainer>
     );
   }
 
   return (
-    <AuthContainer onBack={onBack}>
+    <AuthContainer onBack={handleBack}>
       <BrandHeader title="Forgot Password" subtitle="Enter your email to reset" showLogo={false} />
 
       <motion.form
@@ -79,7 +104,7 @@ export function ForgotPasswordScreen({ onSubmit, onBack }: ForgotPasswordScreenP
         </Button>
 
         <div className="text-center">
-          <TextLink onClick={onBack}>Back to Login</TextLink>
+          <TextLink onClick={handleBack}>Back to Login</TextLink>
         </div>
       </motion.form>
     </AuthContainer>

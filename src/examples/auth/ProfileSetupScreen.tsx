@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AuthContainer, BrandHeader, AvatarUpload, AuthInput, Button } from '@/components/ui/design-system';
+import { supabase } from '@/components/utils/supabaseClient';
+import { toast } from 'sonner';
 
 interface ProfileSetupScreenProps {
-  onSave: (data: { avatar?: string; username: string; displayName: string; bio: string }) => void;
+  onSave?: (data: { avatar?: string; username: string; displayName: string; bio: string }) => void;
   onSkip?: () => void;
   initialData?: { username?: string; displayName?: string };
 }
 
 export function ProfileSetupScreen({ onSave, onSkip, initialData }: ProfileSetupScreenProps) {
+  const navigate = useNavigate();
   const [avatar, setAvatar] = useState<string>();
   const [username, setUsername] = useState(initialData?.username || '');
   const [displayName, setDisplayName] = useState(initialData?.displayName || '');
@@ -36,8 +40,47 @@ export function ProfileSetupScreen({ onSave, onSkip, initialData }: ProfileSetup
     }
 
     setLoading(true);
-    await onSave({ avatar, username, displayName, bio });
-    setLoading(false);
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Update profile in profiles table
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({
+            account_id: user.id,
+            username,
+            display_name: displayName,
+            bio,
+            avatar_url: avatar,
+            onboarding_complete: true,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'account_id' });
+
+        if (error) {
+          toast.error(error.message || 'Failed to save profile');
+          setErrors({ username: error.message });
+        } else {
+          toast.success('Profile saved! Welcome to HOTMESS 🔥');
+          onSave?.({ avatar, username, displayName, bio });
+          navigate('/');
+        }
+      } else {
+        toast.error('Please log in first');
+        navigate('/examples/auth/login');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSkip = () => {
+    onSkip?.();
+    navigate('/');
   };
 
   return (
@@ -92,15 +135,13 @@ export function ProfileSetupScreen({ onSave, onSkip, initialData }: ProfileSetup
           {loading ? 'Saving...' : 'Save Profile'}
         </Button>
 
-        {onSkip && (
-          <button
-            type="button"
-            onClick={onSkip}
-            className="text-muted text-sm text-center hover:text-light transition-colors"
-          >
-            Skip for now
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="text-muted text-sm text-center hover:text-light transition-colors"
+        >
+          Skip for now
+        </button>
       </motion.form>
     </AuthContainer>
   );

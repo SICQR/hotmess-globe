@@ -389,13 +389,13 @@ const AuthenticatedApp = () => {
       <Route path="/examples/ghosted" element={<Suspense fallback={null}><GhostedGridExample /></Suspense>} />
       <Route path="/examples/market" element={<Suspense fallback={null}><MarketExample /></Suspense>} />
       
-      {/* Auth example screens */}
-      <Route path="/examples/auth/welcome" element={<Suspense fallback={null}><WelcomeScreen onGetStarted={() => {}} onLogin={() => {}} /></Suspense>} />
-      <Route path="/examples/auth/login" element={<Suspense fallback={null}><LoginScreen onLogin={() => {}} onForgotPassword={() => {}} onBack={() => {}} onSignUp={() => {}} /></Suspense>} />
-      <Route path="/examples/auth/signup" element={<Suspense fallback={null}><SignUpScreen onSignUp={() => {}} onBack={() => {}} onLogin={() => {}} /></Suspense>} />
-      <Route path="/examples/auth/forgot" element={<Suspense fallback={null}><ForgotPasswordScreen onSubmit={() => {}} onBack={() => {}} /></Suspense>} />
-      <Route path="/examples/auth/join-code" element={<Suspense fallback={null}><JoinCodeScreen onJoin={() => {}} onResend={() => {}} onBack={() => {}} /></Suspense>} />
-      <Route path="/examples/auth/profile-setup" element={<Suspense fallback={null}><ProfileSetupScreen onSave={() => {}} onSkip={() => {}} /></Suspense>} />
+      {/* Auth screens - fully wired to Supabase */}
+      <Route path="/examples/auth/welcome" element={<Suspense fallback={null}><WelcomeScreen /></Suspense>} />
+      <Route path="/examples/auth/login" element={<Suspense fallback={null}><LoginScreen /></Suspense>} />
+      <Route path="/examples/auth/signup" element={<Suspense fallback={null}><SignUpScreen /></Suspense>} />
+      <Route path="/examples/auth/forgot" element={<Suspense fallback={null}><ForgotPasswordScreen /></Suspense>} />
+      <Route path="/examples/auth/join-code" element={<Suspense fallback={null}><JoinCodeScreen /></Suspense>} />
+      <Route path="/examples/auth/profile-setup" element={<Suspense fallback={null}><ProfileSetupScreen /></Suspense>} />
       
       {/* Unified design pages (alternate views) */}
       <Route path="/v2/home" element={<Suspense fallback={null}><HomePage /></Suspense>} />

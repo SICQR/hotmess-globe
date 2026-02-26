@@ -1,13 +1,26 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AuthContainer, BrandHeader, Button, TextLink } from '@/components/ui/design-system';
 
 interface WelcomeScreenProps {
-  onGetStarted: () => void;
-  onLogin: () => void;
+  onGetStarted?: () => void;
+  onLogin?: () => void;
 }
 
 export function WelcomeScreen({ onGetStarted, onLogin }: WelcomeScreenProps) {
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    onGetStarted?.();
+    navigate('/examples/auth/signup');
+  };
+
+  const handleLogin = () => {
+    onLogin?.();
+    navigate('/examples/auth/login');
+  };
+
   return (
     <AuthContainer>
       {/* Centered branding */}
@@ -42,13 +55,13 @@ export function WelcomeScreen({ onGetStarted, onLogin }: WelcomeScreenProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.5 }}
       >
-        <Button variant="primary" size="lg" fullWidth onClick={onGetStarted}>
+        <Button variant="primary" size="lg" fullWidth onClick={handleGetStarted}>
           Get Started
         </Button>
 
         <div className="text-center">
           <span className="text-muted text-sm">Already have an account? </span>
-          <TextLink onClick={onLogin}>Login</TextLink>
+          <TextLink onClick={handleLogin}>Login</TextLink>
         </div>
       </motion.div>
     </AuthContainer>

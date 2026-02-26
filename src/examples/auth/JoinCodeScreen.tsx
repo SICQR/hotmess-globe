@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AuthContainer, BrandHeader, CodeInput, Button, TextLink } from '@/components/ui/design-system';
+import { supabase } from '@/components/utils/supabaseClient';
+import { toast } from 'sonner';
 
 interface JoinCodeScreenProps {
-  onJoin: (code: string) => void;
-  onResend: () => void;
-  onBack: () => void;
+  onJoin?: (code: string) => void;
+  onResend?: () => void;
+  onBack?: () => void;
   type?: 'invite' | 'squad' | 'event';
 }
 
 export function JoinCodeScreen({ onJoin, onResend, onBack, type = 'invite' }: JoinCodeScreenProps) {
+  const navigate = useNavigate();
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,12 +34,53 @@ export function JoinCodeScreen({ onJoin, onResend, onBack, type = 'invite' }: Jo
     }
 
     setLoading(true);
-    await onJoin(code);
-    setLoading(false);
+
+    try {
+      // Look up the code in the database
+      const { data, error: lookupError } = await supabase
+        .from('invite_codes')
+        .select('*')
+        .eq('code', code.toUpperCase())
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (lookupError || !data) {
+        toast.error('Invalid or expired code');
+        setError('Invalid or expired code');
+      } else {
+        // Get current user and process the join
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user && data.squad_id) {
+          // Add user to squad
+          await supabase
+            .from('squad_members')
+            .insert({ squad_id: data.squad_id, user_id: user.id });
+        }
+
+        toast.success('Welcome to the squad! 🔥');
+        onJoin?.(code);
+        navigate('/');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = () => {
+    onResend?.();
+    toast.info('Code request sent');
+  };
+
+  const handleBack = () => {
+    onBack?.();
+    navigate(-1);
   };
 
   return (
-    <AuthContainer onBack={onBack}>
+    <AuthContainer onBack={handleBack}>
       <BrandHeader title={titles[type]} subtitle="Enter your 6-digit code" showLogo={false} />
 
       <motion.form
@@ -48,7 +93,7 @@ export function JoinCodeScreen({ onJoin, onResend, onBack, type = 'invite' }: Jo
           <CodeInput length={6} value={code} onChange={setCode} error={error} />
         </div>
 
-        <TextLink onClick={onResend}>Resend Code</TextLink>
+        <TextLink onClick={handleResend}>Resend Code</TextLink>
 
         <div className="flex-1" />
 

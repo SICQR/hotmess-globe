@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AuthContainer, BrandHeader, AuthInput, PasswordInput, Button, Checkbox, TextLink } from '@/components/ui/design-system';
+import { supabase } from '@/components/utils/supabaseClient';
 import { FaEnvelope, FaUser, FaLock } from 'react-icons/fa';
+import { toast } from 'sonner';
 
 interface SignUpScreenProps {
-  onSignUp: (data: { email: string; username: string; password: string }) => void;
-  onBack: () => void;
-  onLogin: () => void;
+  onSignUp?: (data: { email: string; username: string; password: string }) => void;
+  onBack?: () => void;
+  onLogin?: () => void;
 }
 
 export function SignUpScreen({ onSignUp, onBack, onLogin }: SignUpScreenProps) {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     email: '',
     username: '',
@@ -44,12 +48,46 @@ export function SignUpScreen({ onSignUp, onBack, onLogin }: SignUpScreenProps) {
     }
 
     setLoading(true);
-    await onSignUp({ email: form.email, username: form.username, password: form.password });
-    setLoading(false);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+        options: {
+          data: {
+            username: form.username,
+            display_name: form.username,
+          },
+        },
+      });
+
+      if (error) {
+        toast.error(error.message || 'Signup failed');
+        setErrors({ email: error.message });
+      } else if (data.user) {
+        toast.success('Account created! Check your email to confirm. 🔥');
+        onSignUp?.({ email: form.email, username: form.username, password: form.password });
+        navigate('/examples/auth/profile-setup');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBack = () => {
+    onBack?.();
+    navigate(-1);
+  };
+
+  const handleLogin = () => {
+    onLogin?.();
+    navigate('/examples/auth/login');
   };
 
   return (
-    <AuthContainer onBack={onBack}>
+    <AuthContainer onBack={handleBack}>
       <BrandHeader title="Create Account" showLogo={false} />
 
       <motion.form
@@ -122,7 +160,7 @@ export function SignUpScreen({ onSignUp, onBack, onLogin }: SignUpScreenProps) {
 
         <div className="text-center">
           <span className="text-muted text-sm">Already have an account? </span>
-          <TextLink onClick={onLogin}>Login</TextLink>
+          <TextLink onClick={handleLogin}>Login</TextLink>
         </div>
       </motion.form>
     </AuthContainer>
