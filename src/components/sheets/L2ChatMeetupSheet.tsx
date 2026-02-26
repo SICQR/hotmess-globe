@@ -18,7 +18,7 @@ import {
   Button,
   motionPresets,
 } from '@/components/ui/design-system';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/components/utils/supabaseClient';
 import { useAuth } from '@/lib/AuthContext';
 import { Smile, Mic, MapPin } from 'lucide-react';
 
