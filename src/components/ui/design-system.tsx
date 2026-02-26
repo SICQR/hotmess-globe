@@ -1,13 +1,32 @@
 /**
  * HOTMESS Design System — Unified Component Library
  * 
- * All UI primitives follow the dark/gold glow theme.
- * Import these instead of creating one-off styles.
+ * MOBILE-FIRST: All components designed for touch devices.
+ * - Min touch targets: 44px
+ * - Safe area handling for notches
+ * - Viewport-aware sizing (dvh)
+ * - Large readable fonts
+ * - Thumb-friendly bottom actions
  */
 
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { forwardRef, ReactNode, useState } from 'react';
 import { cn } from '@/lib/utils';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOBILE-FIRST CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const MOBILE = {
+  minTouch: 44,        // Minimum touch target (px)
+  safeBottom: 34,      // iPhone safe area bottom
+  navHeight: 72,       // Bottom nav height
+  headerHeight: 56,    // Top header height
+  inputHeight: 52,     // Input field height
+  buttonHeight: 52,    // Button height
+  gap: 16,             // Standard spacing
+  radius: 16,          // Standard border radius
+} as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MOTION PRESETS
@@ -59,7 +78,7 @@ export const motionPresets = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PRIMARY CTA BUTTON
+// PRIMARY CTA BUTTON (Mobile-first: 52px height, large touch target)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ButtonProps extends HTMLMotionProps<'button'> {
@@ -71,19 +90,20 @@ interface ButtonProps extends HTMLMotionProps<'button'> {
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = 'primary', size = 'md', fullWidth = false, className, children, ...props }, ref) => {
-    const baseStyles = 'font-bold rounded-full transition-all duration-150 active:scale-[0.97]';
+    const baseStyles = 'font-bold rounded-full transition-all duration-150 active:scale-[0.97] select-none';
     
     const variants = {
-      primary: 'bg-gold text-dark shadow-gold hover:shadow-[0_0_24px_#FFC94088]',
-      secondary: 'bg-dark border border-gold text-gold hover:bg-gold/10',
+      primary: 'bg-gold text-dark shadow-[0_0_16px_#FFB80055] hover:shadow-[0_0_24px_#FFC94088]',
+      secondary: 'bg-dark border-2 border-gold text-gold hover:bg-gold/10',
       ghost: 'bg-transparent text-gold hover:bg-gold/10',
       danger: 'bg-red-600 text-white hover:bg-red-500',
     };
     
+    // Mobile-first: all buttons meet 44px minimum touch target
     const sizes = {
-      sm: 'px-4 py-2 text-sm',
-      md: 'px-6 py-3 text-base',
-      lg: 'px-8 py-4 text-lg min-h-[48px]',
+      sm: 'px-5 py-2.5 text-sm min-h-[44px]',
+      md: 'px-6 py-3 text-base min-h-[48px]',
+      lg: 'px-8 py-4 text-lg min-h-[52px]',
     };
 
     return (
@@ -1124,7 +1144,7 @@ export function LoadingOverlay({ isVisible, message = 'Loading...' }: LoadingOve
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AUTH INPUT FIELD (Login/Signup forms)
+// AUTH INPUT FIELD (Mobile-first: 52px height, 16px font to prevent zoom)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -1139,16 +1159,17 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-muted text-sm mb-1.5 font-medium">{label}</label>
+          <label className="block text-muted text-sm mb-2 font-medium">{label}</label>
         )}
         <div className="relative">
           {icon && (
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gold">{icon}</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gold text-lg">{icon}</span>
           )}
           <input
             ref={ref}
             className={cn(
-              'w-full bg-chatGray text-light rounded-full px-5 py-3 border-2 transition-colors',
+              // Mobile-first: 52px height, 16px font prevents iOS zoom
+              'w-full h-[52px] bg-chatGray text-light text-base rounded-full px-5 border-2 transition-colors',
               'placeholder-muted outline-none focus:ring-2 focus:ring-gold/30',
               error ? 'border-red-500 focus:border-red-400' : 'border-borderGlow focus:border-gold',
               icon && 'pl-12',
@@ -1161,7 +1182,7 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gold">{iconRight}</span>
           )}
         </div>
-        {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+        {error && <p className="text-red-500 text-sm mt-1.5">{error}</p>}
       </div>
     );
   }
@@ -1169,7 +1190,7 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
 AuthInput.displayName = 'AuthInput';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PASSWORD INPUT (with visibility toggle)
+// PASSWORD INPUT (Mobile-first: 52px height, 44px toggle touch target)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
@@ -1184,16 +1205,17 @@ export function PasswordInput({ label, error, icon, className, ...props }: Passw
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-muted text-sm mb-1.5 font-medium">{label}</label>
+        <label className="block text-muted text-sm mb-2 font-medium">{label}</label>
       )}
       <div className="relative">
         {icon && (
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gold">{icon}</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gold text-lg">{icon}</span>
         )}
         <input
           type={visible ? 'text' : 'password'}
           className={cn(
-            'w-full bg-chatGray text-light rounded-full px-5 py-3 pr-12 border-2 transition-colors',
+            // Mobile-first: 52px height, 16px font prevents iOS zoom
+            'w-full h-[52px] bg-chatGray text-light text-base rounded-full px-5 pr-14 border-2 transition-colors',
             'placeholder-muted outline-none focus:ring-2 focus:ring-gold/30',
             error ? 'border-red-500 focus:border-red-400' : 'border-borderGlow focus:border-gold',
             icon && 'pl-12',
@@ -1201,11 +1223,13 @@ export function PasswordInput({ label, error, icon, className, ...props }: Passw
           )}
           {...props}
         />
+        {/* 44px touch target for visibility toggle */}
         <button
           type="button"
           onClick={() => setVisible(!visible)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-gold hover:text-goldGlow transition-colors"
+          className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-gold hover:text-goldGlow transition-colors rounded-full active:bg-gold/10"
           tabIndex={-1}
+          aria-label={visible ? 'Hide password' : 'Show password'}
         >
           {visible ? (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1219,7 +1243,7 @@ export function PasswordInput({ label, error, icon, className, ...props }: Passw
           )}
         </button>
       </div>
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      {error && <p className="text-red-500 text-sm mt-1.5">{error}</p>}
     </div>
   );
 }
@@ -1235,29 +1259,30 @@ interface CheckboxProps {
   className?: string;
 }
 
+// Mobile-first: 44px touch target for checkbox
 export function Checkbox({ checked, onChange, label, className }: CheckboxProps) {
   return (
-    <label className={cn('flex items-start gap-3 cursor-pointer', className)}>
+    <label className={cn('flex items-start gap-3 cursor-pointer min-h-[44px] py-2', className)}>
       <div
         className={cn(
-          'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors',
+          'w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors',
           checked ? 'bg-gold border-gold' : 'bg-transparent border-borderGlow'
         )}
-        onClick={() => onChange(!checked)}
+        onClick={(e) => { e.preventDefault(); onChange(!checked); }}
       >
         {checked && (
-          <svg className="w-3 h-3 text-dark" fill="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-dark" fill="currentColor" viewBox="0 0 24 24">
             <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
           </svg>
         )}
       </div>
-      <span className="text-muted text-sm leading-tight">{label}</span>
+      <span className="text-muted text-sm leading-relaxed select-none">{label}</span>
     </label>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TEXT LINK (Forgot password, etc.)
+// TEXT LINK (Mobile-first: 44px touch target)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface TextLinkProps {
@@ -1268,7 +1293,7 @@ interface TextLinkProps {
 }
 
 export function TextLink({ children, onClick, href, className }: TextLinkProps) {
-  const baseStyles = 'text-gold hover:text-goldGlow transition-colors text-sm font-medium cursor-pointer';
+  const baseStyles = 'text-gold hover:text-goldGlow transition-colors text-sm font-medium cursor-pointer inline-flex items-center min-h-[44px] px-1';
   
   if (href) {
     return <a href={href} className={cn(baseStyles, className)}>{children}</a>;
@@ -1421,17 +1446,20 @@ interface AuthContainerProps {
 export function AuthContainer({ children, onBack, className }: AuthContainerProps) {
   return (
     <div className={cn(
-      'min-h-screen flex flex-col',
+      // Mobile-first: use dvh for proper viewport on mobile browsers
+      'min-h-[100dvh] flex flex-col',
       'bg-gradient-to-br from-[#181820] via-[#23232F] to-[#101017]',
       'text-light font-sans',
+      // Safe area padding for notches
+      'pb-safe',
       className
     )}>
-      {/* Back button */}
+      {/* Back button - 44px touch target */}
       {onBack && (
-        <div className="p-4">
+        <div className="p-4 pt-safe">
           <motion.button 
             onClick={onBack} 
-            className="text-gold hover:text-goldGlow transition-colors"
+            className="w-11 h-11 flex items-center justify-center text-gold hover:text-goldGlow transition-colors -ml-2"
             whileTap={{ scale: 0.95 }}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1441,8 +1469,8 @@ export function AuthContainer({ children, onBack, className }: AuthContainerProp
         </div>
       )}
       
-      {/* Content */}
-      <div className="flex-1 flex flex-col px-6 pb-8">
+      {/* Content - mobile padding */}
+      <div className="flex-1 flex flex-col px-5 pb-8">
         {children}
       </div>
     </div>
