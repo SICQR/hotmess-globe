@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AuthContainer, BrandHeader, AuthInput, PasswordInput, Button, TextLink } from '@/components/ui/design-system';
+import { supabase } from '@/components/utils/supabaseClient';
 import { FaUser, FaLock } from 'react-icons/fa';
+import { toast } from 'sonner';
 
 interface LoginScreenProps {
-  onLogin: (email: string, password: string) => void;
-  onForgotPassword: () => void;
-  onBack: () => void;
-  onSignUp: () => void;
+  onLogin?: (email: string, password: string) => void;
+  onForgotPassword?: () => void;
+  onBack?: () => void;
+  onSignUp?: () => void;
 }
 
 export function LoginScreen({ onLogin, onForgotPassword, onBack, onSignUp }: LoginScreenProps) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -30,12 +34,45 @@ export function LoginScreen({ onLogin, onForgotPassword, onBack, onSignUp }: Log
     }
 
     setLoading(true);
-    await onLogin(email, password);
-    setLoading(false);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      if (error) {
+        toast.error(error.message || 'Login failed');
+        setErrors({ password: error.message });
+      } else if (data.user) {
+        toast.success('Welcome back! 🔥');
+        onLogin?.(email, password);
+        navigate('/');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = () => {
+    onForgotPassword?.();
+    navigate('/examples/auth/forgot');
+  };
+
+  const handleSignUp = () => {
+    onSignUp?.();
+    navigate('/examples/auth/signup');
+  };
+
+  const handleBack = () => {
+    onBack?.();
+    navigate(-1);
   };
 
   return (
-    <AuthContainer onBack={onBack}>
+    <AuthContainer onBack={handleBack}>
       <BrandHeader title="Login to HOTMESS" showLogo={false} />
 
       <motion.form
@@ -66,7 +103,7 @@ export function LoginScreen({ onLogin, onForgotPassword, onBack, onSignUp }: Log
         />
 
         <div className="text-right">
-          <TextLink onClick={onForgotPassword}>Forgot Password?</TextLink>
+          <TextLink onClick={handleForgotPassword}>Forgot Password?</TextLink>
         </div>
 
         <div className="flex-1" />
@@ -77,7 +114,7 @@ export function LoginScreen({ onLogin, onForgotPassword, onBack, onSignUp }: Log
 
         <div className="text-center">
           <span className="text-muted text-sm">Don't have an account? </span>
-          <TextLink onClick={onSignUp}>Sign Up</TextLink>
+          <TextLink onClick={handleSignUp}>Sign Up</TextLink>
         </div>
       </motion.form>
     </AuthContainer>
