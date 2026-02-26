@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Crown, Swords, Clock } from 'lucide-react';
+import { Crown, Swords, Zap, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
@@ -57,7 +57,8 @@ export default function NightKingDisplay({ venueId }) {
         </div>
         {isWarActive && (
           <Badge className="bg-red-500 text-black border-red-600 font-black animate-pulse">
-            WAR
+            <Zap className="w-3 h-3 mr-1" />
+            2X XP
           </Badge>
         )}
       </div>
@@ -68,7 +69,7 @@ export default function NightKingDisplay({ venueId }) {
             <div>
               <p className="font-bold uppercase text-sm mb-1">{kingData.king_name}</p>
               <p className="text-xs text-white/60">
-                {kingData.scan_count} scans
+                {kingData.scan_count} scans • 1 XP tax per scan
               </p>
             </div>
             <Crown className={`w-8 h-8 ${
@@ -85,7 +86,7 @@ export default function NightKingDisplay({ venueId }) {
             <p className="text-xs font-black uppercase text-red-500">ACTIVE WAR</p>
           </div>
           <p className="text-xs text-white/80">
-            War mode active at this venue. Started by {kingData.war_started_by}.
+            2x XP for all scans at this venue. Started by {kingData.war_started_by}.
           </p>
           <p className="text-xs text-white/40 mt-2">
             <Clock className="w-3 h-3 inline mr-1" />
@@ -95,6 +96,7 @@ export default function NightKingDisplay({ venueId }) {
       ) : (
         <div className="text-xs text-white/60">
           <p>Crown expires {formatDistanceToNow(new Date(kingData.expires_at), { addSuffix: true })}</p>
+          <p className="mt-1">Tax collected: {kingData.total_tax_collected} XP</p>
         </div>
       )}
     </motion.div>

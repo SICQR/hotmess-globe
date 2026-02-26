@@ -31,13 +31,11 @@ test.describe('Profile Pages', () => {
     const pageErrors: string[] = [];
     page.on('pageerror', (err) => pageErrors.push(String(err)));
 
-    // /settings does not exist as a route; use /profile instead
-    await page.goto('/profile');
-
+    await page.goto('/settings');
+    
     await expect(page.locator('body')).toBeVisible();
-    // Accept /profile, /auth (redirect when unauthenticated), or any other app route
-    await expect(page).toHaveURL(/\/(profile|auth)/);
-
+    await expect(page).toHaveURL(/settings/);
+    
     expect(pageErrors, `Unexpected page errors:\n${pageErrors.join('\n\n')}`).toEqual([]);
   });
 

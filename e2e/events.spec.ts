@@ -30,14 +30,13 @@ test.describe('Events Discovery', () => {
 
   test('events page displays event cards or empty state', async ({ page }) => {
     await page.goto('/events');
-
+    
     // Should show either events or an empty state
     const hasEvents = await page.locator('[data-testid="event-card"], .event-card').first().isVisible().catch(() => false);
     const hasEmptyState = await page.getByText(/no events|discover|coming soon/i).first().isVisible().catch(() => false);
     const hasContent = await page.locator('main, [role="main"]').first().isVisible().catch(() => false);
-    const hasBody = await page.locator('body').isVisible().catch(() => false);
-
-    expect(hasEvents || hasEmptyState || hasContent || hasBody).toBe(true);
+    
+    expect(hasEvents || hasEmptyState || hasContent).toBe(true);
   });
 
   test('events page has filter or category options', async ({ page }) => {

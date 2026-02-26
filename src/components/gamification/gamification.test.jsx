@@ -12,19 +12,16 @@ vi.mock('canvas-confetti', () => ({
 
 describe('Gamification Components', () => {
   describe('XPGainAnimation', () => {
-    // XP display was removed from UI — component returns null to preserve
-    // the data layer without showing gamification to users.
-    it('renders without crashing (XP UI removed — component returns null)', () => {
+    it('renders with amount', () => {
       const { container } = render(<XPGainAnimation amount={50} />);
-      // XP text intentionally not rendered (gamification UI removed)
-      expect(container.textContent).not.toContain('50 XP');
+      expect(container.textContent).toContain('50 XP');
     });
 
     it('calls onComplete after animation', () => {
       vi.useFakeTimers();
       const onComplete = vi.fn();
       render(<XPGainAnimation amount={50} onComplete={onComplete} />);
-
+      
       vi.advanceTimersByTime(2000);
       expect(onComplete).toHaveBeenCalled();
       vi.useRealTimers();
@@ -68,17 +65,17 @@ describe('Gamification Components', () => {
 
     it('renders achievement details', () => {
       render(
-        <AchievementUnlockModal
-          isOpen={true}
-          onClose={() => {}}
+        <AchievementUnlockModal 
+          isOpen={true} 
+          onClose={() => {}} 
           achievement={mockAchievement}
           rarity="rare"
         />
       );
-
+      
       expect(screen.getByText('First Check-in')).toBeInTheDocument();
       expect(screen.getByText(/Check in to your first venue/i)).toBeInTheDocument();
-      // XP reward value is not shown in UI (gamification UI removed — DB columns kept)
+      expect(screen.getByText(/100 XP/i)).toBeInTheDocument();
     });
 
     it('shows correct rarity label', () => {

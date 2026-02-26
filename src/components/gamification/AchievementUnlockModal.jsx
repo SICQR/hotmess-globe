@@ -51,7 +51,7 @@ export default function AchievementUnlockModal({
         common: ['#9CA3AF', '#D1D5DB'],
         rare: ['#00D9FF', '#0EA5E9'],
         epic: ['#B026FF', '#A855F7'],
-        legendary: ['#FFEB3B', '#FCD34D', '#C8962C']
+        legendary: ['#FFEB3B', '#FCD34D', '#FF1493']
       }[rarity] || ['#9CA3AF'];
 
       confetti({
@@ -63,7 +63,7 @@ export default function AchievementUnlockModal({
         gravity: 1.2,
         drift: 0,
         ticks: 200,
-        zIndex: 110
+        zIndex: 9999
       });
 
       // Extra burst for legendary
@@ -76,7 +76,7 @@ export default function AchievementUnlockModal({
             spread: 55,
             origin: { x: 0 },
             colors,
-            zIndex: 110
+            zIndex: 9999
           });
           confetti({
             particleCount: 100,
@@ -84,7 +84,7 @@ export default function AchievementUnlockModal({
             spread: 55,
             origin: { x: 1 },
             colors,
-            zIndex: 110
+            zIndex: 9999
           });
         }, 250);
       }
@@ -109,7 +109,7 @@ export default function AchievementUnlockModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-xl"
+          className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/90 backdrop-blur-xl"
           onClick={onClose}
           role="dialog"
           aria-modal="true"
@@ -222,6 +222,16 @@ export default function AchievementUnlockModal({
               {achievement.description}
             </motion.p>
 
+            {achievement.reward_xp && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.9, type: 'spring' }}
+                className="inline-flex items-center gap-2 bg-[#FFEB3B] text-black px-4 py-2 font-black mb-6"
+              >
+                +{achievement.reward_xp} XP
+              </motion.div>
+            )}
 
             <motion.div
               initial={{ y: 20, opacity: 0 }}

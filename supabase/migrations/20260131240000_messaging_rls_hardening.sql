@@ -12,7 +12,6 @@ drop policy if exists chat_threads_update_authenticated on public.chat_threads;
 drop policy if exists chat_threads_delete_authenticated on public.chat_threads;
 
 -- Users can only see threads they're a participant of
-drop policy if exists chat_threads_select_participant on public.chat_threads;
 create policy chat_threads_select_participant
   on public.chat_threads
   for select
@@ -20,7 +19,6 @@ create policy chat_threads_select_participant
   using ((auth.jwt() ->> 'email') = any(participant_emails));
 
 -- Users can create threads where they're a participant
-drop policy if exists chat_threads_insert_participant on public.chat_threads;
 create policy chat_threads_insert_participant
   on public.chat_threads
   for insert
@@ -28,7 +26,6 @@ create policy chat_threads_insert_participant
   with check ((auth.jwt() ->> 'email') = any(participant_emails));
 
 -- Participants can update their threads (for muting, metadata, etc.)
-drop policy if exists chat_threads_update_participant on public.chat_threads;
 create policy chat_threads_update_participant
   on public.chat_threads
   for update
@@ -49,7 +46,6 @@ drop policy if exists messages_update_authenticated on public.messages;
 drop policy if exists messages_delete_authenticated on public.messages;
 
 -- Users can only see messages in threads they're a participant of
-drop policy if exists messages_select_thread_participant on public.messages;
 create policy messages_select_thread_participant
   on public.messages
   for select
@@ -63,7 +59,6 @@ create policy messages_select_thread_participant
   );
 
 -- Users can insert messages in threads they're a participant of
-drop policy if exists messages_insert_thread_participant on public.messages;
 create policy messages_insert_thread_participant
   on public.messages
   for insert
@@ -78,7 +73,6 @@ create policy messages_insert_thread_participant
   );
 
 -- Users can update messages (mark as read) in their threads
-drop policy if exists messages_update_thread_participant on public.messages;
 create policy messages_update_thread_participant
   on public.messages
   for update
@@ -99,7 +93,6 @@ create policy messages_update_thread_participant
   );
 
 -- Only sender can delete their own messages
-drop policy if exists messages_delete_sender on public.messages;
 create policy messages_delete_sender
   on public.messages
   for delete
@@ -228,7 +221,6 @@ drop policy if exists bot_sessions_select_authenticated on public.bot_sessions;
 drop policy if exists bot_sessions_write_authenticated on public.bot_sessions;
 
 -- Users can only see sessions they're involved in
-drop policy if exists bot_sessions_select_participant on public.bot_sessions;
 create policy bot_sessions_select_participant
   on public.bot_sessions
   for select
@@ -239,7 +231,6 @@ create policy bot_sessions_select_participant
   );
 
 -- Users can create sessions where they're the initiator
-drop policy if exists bot_sessions_insert_initiator on public.bot_sessions;
 create policy bot_sessions_insert_initiator
   on public.bot_sessions
   for insert
@@ -247,7 +238,6 @@ create policy bot_sessions_insert_initiator
   with check (initiator_email = (auth.jwt() ->> 'email'));
 
 -- Participants can update session status
-drop policy if exists bot_sessions_update_participant on public.bot_sessions;
 create policy bot_sessions_update_participant
   on public.bot_sessions
   for update
