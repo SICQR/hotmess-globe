@@ -482,6 +482,294 @@ export function UserGrid({ children, className }: UserGridProps) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SEARCH BAR
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface SearchBarProps {
+  placeholder?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  onSearch?: () => void;
+  className?: string;
+}
+
+export function SearchBar({ placeholder = 'Search...', value, onChange, onSearch, className }: SearchBarProps) {
+  return (
+    <div className={cn('flex items-center gap-2 px-4', className)}>
+      <div className="flex-1 flex items-center gap-3 bg-chatGray rounded-full px-4 py-3 border border-borderGlow focus-within:border-gold transition-colors">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          placeholder={placeholder}
+          className="flex-1 bg-transparent text-light placeholder-muted outline-none text-sm"
+        />
+        <button onClick={onSearch} className="text-gold hover:text-goldGlow transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CATEGORY TABS (Market filters)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface CategoryTabsProps {
+  tabs: string[];
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+  className?: string;
+}
+
+export function CategoryTabs({ tabs, activeTab, onTabChange, className }: CategoryTabsProps) {
+  return (
+    <div className={cn('flex gap-3 px-4 overflow-x-auto', className)}>
+      {tabs.map((tab) => (
+        <motion.button
+          key={tab}
+          onClick={() => onTabChange(tab)}
+          className={cn(
+            'px-4 py-2 rounded-full font-bold text-sm whitespace-nowrap transition-all',
+            activeTab === tab
+              ? 'bg-gold text-dark shadow-gold'
+              : 'bg-dark text-gold border border-gold hover:bg-gold/10'
+          )}
+          whileTap={{ scale: 0.95 }}
+        >
+          {tab}
+        </motion.button>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRODUCT CARD (Market items)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ProductCardProps {
+  image: string;
+  brand: string;
+  title: string;
+  price: string;
+  stock?: string;
+  onBuy?: () => void;
+  onDetails?: () => void;
+  className?: string;
+}
+
+export function ProductCard({ image, brand, title, price, stock, onBuy, onDetails, className }: ProductCardProps) {
+  return (
+    <motion.div
+      className={cn('bg-gray rounded-lg shadow-gold p-4', className)}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <div className="flex items-start gap-4 mb-3">
+        <img
+          src={image}
+          alt={title}
+          className="w-20 h-20 object-cover rounded-lg border-2 border-gold"
+        />
+        <div className="flex-1 min-w-0">
+          <div className="text-gold font-bold">{brand}</div>
+          <div className="text-light font-semibold truncate">{title}</div>
+          <div className="text-muted text-sm mt-1">
+            {stock && <span>{stock} · </span>}{price}
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-3">
+        <Button variant="primary" size="sm" className="flex-1" onClick={onBuy}>
+          Buy Now
+        </Button>
+        <Button variant="secondary" size="sm" className="flex-1" onClick={onDetails}>
+          Details
+        </Button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CLUSTER CARD (Map clusters)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ClusterCardProps {
+  name: string;
+  distance: string;
+  userCount?: number;
+  onView?: () => void;
+  className?: string;
+}
+
+export function ClusterCard({ name, distance, userCount, onView, className }: ClusterCardProps) {
+  return (
+    <motion.div
+      className={cn(
+        'bg-gray py-3 px-4 rounded-lg flex justify-between items-center shadow-gold',
+        className
+      )}
+      whileTap={{ scale: 0.98 }}
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
+          <svg className="w-5 h-5 text-gold" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+          </svg>
+        </div>
+        <div>
+          <div className="text-light font-semibold">{name}</div>
+          <div className="text-muted text-xs">
+            {distance}
+            {userCount && <span> · {userCount} nearby</span>}
+          </div>
+        </div>
+      </div>
+      <Button variant="primary" size="sm" onClick={onView}>
+        View
+      </Button>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EVENT CARD (Trending/Home)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface EventCardProps {
+  image?: string;
+  title: string;
+  subtitle: string;
+  onTap?: () => void;
+  className?: string;
+}
+
+export function EventCard({ image, title, subtitle, onTap, className }: EventCardProps) {
+  return (
+    <motion.div
+      className={cn(
+        'bg-gray rounded-lg shadow-gold p-4 flex flex-col items-center cursor-pointer',
+        'hover:shadow-[0_0_20px_#FFC94088] transition-shadow',
+        className
+      )}
+      onClick={onTap}
+      whileTap={{ scale: 0.97 }}
+    >
+      {image && (
+        <img src={image} alt={title} className="w-full h-24 object-cover rounded-md mb-2" />
+      )}
+      <span className="font-semibold text-light text-center">{title}</span>
+      <span className="text-accent text-sm mt-1">{subtitle}</span>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MESSAGE INPUT BAR
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface MessageInputBarProps {
+  value?: string;
+  onChange?: (value: string) => void;
+  onSend?: () => void;
+  onAttach?: () => void;
+  placeholder?: string;
+  className?: string;
+}
+
+export function MessageInputBar({ value, onChange, onSend, onAttach, placeholder = 'Type a message...', className }: MessageInputBarProps) {
+  return (
+    <div className={cn('flex items-center gap-3 px-4 py-3 bg-darkest border-t border-borderGlow', className)}>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+        placeholder={placeholder}
+        className="flex-1 bg-chatGray text-light rounded-full px-4 py-2.5 border border-borderGlow placeholder-muted outline-none focus:border-gold transition-colors"
+      />
+      {onAttach && (
+        <button onClick={onAttach} className="text-gold hover:text-goldGlow transition-colors">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+          </svg>
+        </button>
+      )}
+      {onSend && (
+        <button onClick={onSend} className="text-gold hover:text-goldGlow transition-colors">
+          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BOTTOM SHEET (Modal drawer)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface BottomSheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  children: ReactNode;
+  className?: string;
+}
+
+export function BottomSheet({ isOpen, onClose, title, children, className }: BottomSheetProps) {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <motion.div
+        className="fixed inset-0 bg-black/60 z-40"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      />
+      {/* Sheet */}
+      <motion.div
+        className={cn(
+          'fixed inset-x-0 bottom-0 z-50 bg-darkest rounded-t-[1.5em] shadow-gold p-6',
+          className
+        )}
+        initial={{ y: '100%', opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '100%', opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      >
+        {/* Handle */}
+        <div className="w-10 h-1 bg-gold/40 rounded-full mx-auto mb-4" />
+        
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-6 text-gold hover:text-goldGlow transition-colors"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {title && (
+          <h3 className="text-lg font-bold text-light mb-4 text-center">{title}</h3>
+        )}
+        
+        {children}
+      </motion.div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -498,4 +786,11 @@ export default {
   Header,
   UserCard,
   UserGrid,
+  SearchBar,
+  CategoryTabs,
+  ProductCard,
+  ClusterCard,
+  EventCard,
+  MessageInputBar,
+  BottomSheet,
 };
