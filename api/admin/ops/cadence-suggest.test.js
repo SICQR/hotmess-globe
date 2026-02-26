@@ -13,7 +13,7 @@ describe('cadence-suggest API', () => {
   let mockRes;
   let mockSupabase;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     mockReq = {
