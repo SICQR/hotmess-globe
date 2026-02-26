@@ -4,16 +4,17 @@ interface BaseSheetProps {
   children: React.ReactNode;
   onClose?: () => void;
   showHandle?: boolean;
+  fullHeight?: boolean;
 }
 
 /**
  * Base Sheet - bottom drawer, max 85dvh, rounds top corners
  * Sheets stack, never navigate
  */
-export function BaseSheet({ children, onClose, showHandle = true }: BaseSheetProps) {
+export function BaseSheet({ children, onClose, showHandle = true, fullHeight = false }: BaseSheetProps) {
   return (
     <div 
-      className="fixed bottom-[120px] left-0 right-0 z-30 max-h-[85dvh] rounded-t-2xl bg-[#0E0E12] border border-[rgba(255,255,255,0.08)] flex flex-col overflow-hidden"
+      className={`fixed bottom-[120px] left-0 right-0 z-30 ${fullHeight ? 'h-[85dvh]' : 'max-h-[85dvh]'} rounded-t-2xl bg-[#0E0E12] border border-[rgba(255,255,255,0.08)] flex flex-col overflow-hidden`}
       role="dialog"
       aria-modal="true"
     >

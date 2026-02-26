@@ -65,12 +65,13 @@ export const motionPresets = {
 interface ButtonProps extends HTMLMotionProps<'button'> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
+  fullWidth?: boolean;
   children: ReactNode;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', className, children, ...props }, ref) => {
-    const baseStyles = 'font-bold rounded-md transition-all duration-150 active:scale-[0.97]';
+  ({ variant = 'primary', size = 'md', fullWidth = false, className, children, ...props }, ref) => {
+    const baseStyles = 'font-bold rounded-full transition-all duration-150 active:scale-[0.97]';
     
     const variants = {
       primary: 'bg-gold text-dark shadow-gold hover:shadow-[0_0_24px_#FFC94088]',
@@ -80,15 +81,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     };
     
     const sizes = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-5 py-2 text-base',
-      lg: 'px-6 py-3 text-lg',
+      sm: 'px-4 py-2 text-sm',
+      md: 'px-6 py-3 text-base',
+      lg: 'px-8 py-4 text-lg min-h-[48px]',
     };
 
     return (
       <motion.button
         ref={ref}
-        className={cn(baseStyles, variants[variant], sizes[size], className)}
+        className={cn(baseStyles, variants[variant], sizes[size], fullWidth && 'w-full', className)}
         whileTap={{ scale: 0.97 }}
         {...props}
       >
@@ -1293,15 +1294,20 @@ interface BrandHeaderProps {
 
 export function BrandHeader({ title, subtitle, showLogo = true, className }: BrandHeaderProps) {
   return (
-    <div className={cn('text-center py-8', className)}>
+    <motion.div 
+      className={cn('text-center py-8', className)}
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       {showLogo && (
-        <h1 className="text-gold text-4xl font-bold font-mono tracking-wider mb-2 drop-shadow-[0_0_20px_#FFB80066]">
+        <h1 className="text-gold text-4xl font-bold font-mono tracking-widest mb-4 drop-shadow-[0_0_24px_#FFB80077] select-none">
           HOTMESS
         </h1>
       )}
-      {title && <h2 className="text-light text-xl font-bold mb-1">{title}</h2>}
+      {title && <h2 className="text-light text-2xl font-bold mb-2">{title}</h2>}
       {subtitle && <p className="text-muted text-sm">{subtitle}</p>}
-    </div>
+    </motion.div>
   );
 }
 
@@ -1414,15 +1420,24 @@ interface AuthContainerProps {
 
 export function AuthContainer({ children, onBack, className }: AuthContainerProps) {
   return (
-    <div className={cn('min-h-screen bg-dark flex flex-col', className)}>
+    <div className={cn(
+      'min-h-screen flex flex-col',
+      'bg-gradient-to-br from-[#181820] via-[#23232F] to-[#101017]',
+      'text-light font-sans',
+      className
+    )}>
       {/* Back button */}
       {onBack && (
         <div className="p-4">
-          <button onClick={onBack} className="text-gold hover:text-goldGlow transition-colors">
+          <motion.button 
+            onClick={onBack} 
+            className="text-gold hover:text-goldGlow transition-colors"
+            whileTap={{ scale: 0.95 }}
+          >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-          </button>
+          </motion.button>
         </div>
       )}
       
