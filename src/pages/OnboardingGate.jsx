@@ -486,38 +486,96 @@ export default function OnboardingGate() {
           </motion.div>
         );
 
-      // ── Step 6: Community attestation ────────────────────────────────────
+      // ── Step 6: Community attestation — "YOU'RE IN THE MESS NOW" ────────
       case 6:
         return (
-          <motion.div key="step-6" {...fadeSlide} className="text-center">
-            <Shield className="w-14 h-14 mx-auto mb-6" style={{ color: '#C8962C', filter: 'drop-shadow(0 0 12px rgba(200,150,44,0.5))' }} />
-            <h2 className="text-3xl font-black uppercase mb-3 tracking-wide">Your Community</h2>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-5 mb-8 text-left">
+          <motion.div key="step-6" {...fadeSlide} className="text-center relative overflow-hidden">
+            {/* Ambient glow */}
+            <div
+              className="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle, rgba(200,150,44,0.2) 0%, transparent 70%)',
+                filter: 'blur(40px)',
+              }}
+            />
+
+            {/* Wordmark */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 15 }}
+              className="relative z-10 mb-2"
+            >
+              <p className="text-5xl font-black tracking-tight text-white leading-none">
+                HOT<span className="text-[#C8962C]">MESS</span>
+              </p>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+              className="text-[10px] tracking-[0.5em] text-[#C8962C]/60 uppercase font-mono mb-6 relative z-10"
+            >
+              LONDON
+            </motion.p>
+
+            {/* Main headline */}
+            <motion.h2
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.4 }}
+              className="text-2xl font-black uppercase mb-2 tracking-wide relative z-10"
+            >
+              Your Community
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
+              className="text-white/40 text-xs mb-6 relative z-10"
+            >
+              One last thing before you're in.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55, duration: 0.4 }}
+              className="bg-white/5 border border-[#C8962C]/20 rounded-xl p-5 mb-6 text-left relative z-10"
+            >
               <p className="text-sm text-white/80 leading-relaxed">
                 HOTMESS is built for gay and bisexual men, 18+.
               </p>
-              <p className="text-sm text-white/60 leading-relaxed mt-3">
+              <p className="text-sm text-white/50 leading-relaxed mt-3">
                 By continuing, you confirm you're entering this space as such.
               </p>
-            </div>
-            <button
+            </motion.div>
+
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.65, duration: 0.4 }}
               onClick={handleCommunityConfirm}
               disabled={saving}
-              className="w-full h-14 rounded-xl font-black text-black text-lg uppercase tracking-widest disabled:opacity-40 active:scale-95 transition-all flex items-center justify-center gap-2"
-              style={{ background: '#C8962C', boxShadow: '0 0 24px rgba(200,150,44,0.4)' }}
+              className="w-full h-14 rounded-xl font-black text-black text-lg uppercase tracking-widest disabled:opacity-40 active:scale-95 transition-all flex items-center justify-center gap-2 relative z-10"
+              style={{ background: '#C8962C', boxShadow: '0 0 30px rgba(200,150,44,0.5)' }}
             >
               {saving ? (
                 <div className="w-5 h-5 border-2 border-black/40 border-t-black rounded-full animate-spin" />
               ) : (
-                <><Check className="w-5 h-5" /> I'm in</>
+                <><Check className="w-5 h-5" /> I'M IN THE MESS</>
               )}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8, duration: 0.3 }}
               onClick={() => { window.location.href = 'about:blank'; }}
-              className="text-white/30 text-xs mt-3 hover:text-white/60 transition-colors"
+              className="text-white/20 text-xs mt-3 hover:text-white/40 transition-colors relative z-10"
             >
               This isn't for me
-            </button>
+            </motion.button>
           </motion.div>
         );
 

@@ -2,6 +2,29 @@
 
 > **Stability-first:** This is a live Supabase-backed SPA/PWA. Follow **Explore → Plan → Execute → Test**.
 
+## Commands
+
+```bash
+# Development
+npm run dev              # Vite dev server (:5173)
+npm run dev:lan          # Dev server on LAN (0.0.0.0:5173)
+
+# Quality — run all three before any PR
+npm run lint             # ESLint (quiet mode)
+npm run typecheck        # TypeScript check (no emit)
+npm run build            # Production build
+
+# Testing
+npm run test             # Vitest watch mode
+npm run test:run         # Single run (no watch)
+npm run test:e2e         # Playwright E2E
+npm run test:e2e:headed  # E2E with visible browser
+
+# Single file tests
+npx vitest run src/path/to/file.test.ts
+npx playwright test e2e/specific.spec.ts
+```
+
 ## Critical Rules
 
 1. **Do not refactor blindly.** Understand the provider mount order before changes.
@@ -47,10 +70,22 @@ main.jsx
 
 | Layer | Z-Index | Purpose |
 |-------|---------|---------|
-| L0 | 0 | UnifiedGlobe (Three.js, persistent) |
-| L1 | 50 | HUD (TopHUD, BottomDock) |
-| L2 | 80 | Sheets (SheetRouter, URL-synced via `?sheet=`) |
-| L3 | 100 | Interrupts (SOS, modals) |
+| L0 | 0 | UnifiedGlobe (Three.js — **only renders on `/pulse`**, null elsewhere) |
+| L1 | 50 | OSBottomNav, RadioMiniPlayer |
+| L2 | 80-100 | Sheets (SheetRouter, URL-synced via `?sheet=`) |
+| L3 | 140-150 | Higher sheets: persona switcher, filters |
+| Interrupts | 180-200 | SOS, modals, PinLockOverlay (above all) |
+
+## 5-Mode OS Structure
+
+| Route | Mode |
+|-------|------|
+| `/` | Home — globe hero + feed |
+| `/pulse` | Pulse — globe + events + beacon FAB |
+| `/ghosted` | Ghosted — 3-col proximity grid |
+| `/market` | Market — Shopify headless + preloved |
+| `/profile` | Profile — persona switcher, settings |
+| `/radio` | Radio (no nav tab; mini player persists above nav) |
 
 ## Boot State Machine
 
@@ -60,14 +95,6 @@ LOADING → UNAUTHENTICATED → PublicShell
         → NEEDS_ONBOARDING → OnboardingGate
         → READY → Full app
 ```
-
-## Dev workflows
-
-- Dev server: `npm run dev` (Vite on :5173). Preview: `npm run preview`. Seed data: `npm run seed:mock-profiles`.
-- Tests: `npm test` / `npm run test:run` / `npm run test:ui` / `npm run test:coverage` (Vitest).
-- E2E: `npm run test:e2e` / `npm run test:e2e:headed` (Playwright).
-- Lint: `npm run lint` (quiet). Typecheck: `npm run typecheck`.
-- Single test: `npx vitest run src/path/to/file.test.ts`
 
 ## Env + secrets
 
@@ -98,6 +125,14 @@ LOADING → UNAUTHENTICATED → PublicShell
 - Path alias `@` maps to `src/`.
 - UI is Tailwind + shadcn/Radix; reuse `src/components/ui/*`.
 
+## Sheet System
+
+Open sheets with `openSheet(type, props)` from `useSheet()`. Stack is LIFO — back button pops top sheet before navigating. Active sheet syncs to `?sheet=<type>` URL param for deep-linking.
+
+**Gated sheets** (`chat`, `video`, `travel`) only open from `/ghosted` or when a `profile` sheet is already in the stack. See `src/lib/sheetPolicy.ts`.
+
+New sheets: register in `src/lib/sheetSystem.ts` → add `L2[Name]Sheet.jsx` → wire into `SheetRouter.jsx`.
+
 ## Approval Required Before
 
 - Changing root provider mount order
@@ -106,3 +141,27 @@ LOADING → UNAUTHENTICATED → PublicShell
 - Modifying Supabase client instantiation
 - Major navigation architecture rewrites
 - Deleting files / renaming routes
+
+## DO / DON'T
+
+| DO | DON'T |
+|----|-------|
+| Use `#C8962C` gold for all CTAs and accents | Use pink (`#FF1493`) anywhere |
+| Gate chat/video/travel sheets with `canOpenSheet()` | Open chat/video/travel without policy check |
+| Write to `right_now_status` **TABLE** | Write to `profiles.right_now_status` JSONB (doesn't exist) |
+| Return `null` from `UnifiedGlobe` on non-`/pulse` routes | Render the globe outside `/pulse` |
+| Use `SOSContext.triggerSOS()` for SOS activation | Bypass the SOS context |
+| Use `owner_id` and `starts_at`/`ends_at` on beacons | Use `user_id`, `start_time`, `end_time` (don't exist) |
+
+## Key Constants
+
+- Brand primary: `#C8962C` (antique gold)
+- Card bg: `#1C1C1E`, nav bg: `#0D0D0D`, OS root bg: `#050507`
+- Text muted: `#8E8E93` — dark theme only, no light mode
+
+## Known Gotchas
+
+- `beacons` is a **VIEW** — `ALTER TABLE` will fail; use `metadata` JSONB for title/description/address/image_url
+- Auth listeners exist in 6 files — do not add more without auditing for listener multiplication
+- XP system: DB columns kept, **UI display fully removed**
+- `right_now_status` split-brain: fix any code writing to `profiles.right_now_status` — use the TABLE instead

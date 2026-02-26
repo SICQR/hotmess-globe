@@ -394,6 +394,61 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: true,
     deepLinkParams: [],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // VIDEO CALL
+  // ─────────────────────────────────────────────────────────────────────────
+  'video-call': {
+    id: 'video-call',
+    title: 'Video Call',
+    height: 'full',
+    auth: true,
+    deepLinkParams: ['callId', 'calleeId'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ADMIN — CITY OPS
+  // ─────────────────────────────────────────────────────────────────────────
+  'admin': {
+    id: 'admin',
+    title: 'City Ops',
+    height: 'full',
+    auth: true,
+    deepLinkParams: [],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // B2B — CITY AMPLIFICATION
+  // ─────────────────────────────────────────────────────────────────────────
+  'amplify': {
+    id: 'amplify',
+    title: 'Amplify',
+    height: 'large',
+    auth: true,
+    deepLinkParams: ['venueId'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // BRAND LANDING PAGES — RAW / HUNG / HIGH / HUNGMESS
+  // ─────────────────────────────────────────────────────────────────────────
+  'brand': {
+    id: 'brand',
+    title: 'Brand',
+    height: 'full',
+    auth: false,
+    deepLinkParams: ['brand'],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TICKET RESALE MARKET
+  // ─────────────────────────────────────────────────────────────────────────
+  'ticket-market': {
+    id: 'ticket-market',
+    title: 'Ticket Market',
+    height: 'large',
+    auth: false,
+    deepLinkParams: ['mode'],
+  },
 } as const;
 
 /**

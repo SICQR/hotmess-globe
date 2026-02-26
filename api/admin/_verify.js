@@ -14,7 +14,7 @@ const getServiceClient = () =>
  */
 export async function verifyAdmin(req) {
   const supabase = getServiceClient();
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers?.authorization;
   if (!authHeader?.startsWith('Bearer ')) return { error: 'Unauthorized', user: null };
 
   const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.slice(7));

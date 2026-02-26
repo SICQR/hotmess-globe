@@ -115,15 +115,17 @@ export default function EventsMode() {
       {/* Hero header */}
       <div className="relative flex-shrink-0">
         <div
-          className="h-32 w-full bg-cover bg-center"
+          className="h-36 w-full bg-cover bg-center"
           style={{ backgroundImage: 'url(/assets/hero-city.jpg)' }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/60 to-black" />
         </div>
-        <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
           <div>
-            <p className="text-[#C8962C] text-[10px] font-black uppercase tracking-widest">HOTMESS</p>
-            <h1 className="font-black text-xl text-white leading-tight">Events</h1>
+            <p className="text-[#C8962C] text-[10px] font-black uppercase tracking-[0.3em]">HOTMESS</p>
+            <h1 className="font-black text-2xl text-white leading-tight tracking-tight">
+              {filter === 'Tonight' ? 'Happening Tonight' : filter === 'This Week' ? 'This Week' : 'All Events'}
+            </h1>
           </div>
           <div className="flex items-center gap-1 bg-[#C8962C]/20 border border-[#C8962C]/30 rounded-full px-2.5 py-1">
             <Clock className="w-2.5 h-2.5 text-[#C8962C]" />
@@ -166,7 +168,7 @@ export default function EventsMode() {
           </div>
         ) : (
           <AnimatePresence mode="popLayout">
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-white/5 pb-24">
               {events.map((event: Record<string, unknown>, i: number) => {
                 const id = event.id as string;
                 const isGoing = rsvps.includes(id);
@@ -181,7 +183,7 @@ export default function EventsMode() {
                   >
                     <div className="flex gap-3">
                       {/* Thumbnail */}
-                      <div className="w-[72px] h-[72px] rounded-xl flex-shrink-0 overflow-hidden bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20">
+                      <div className="w-[72px] h-[72px] rounded-xl flex-shrink-0 overflow-hidden bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/5">
                         {event.image_url ? (
                           <img
                             src={event.image_url as string}

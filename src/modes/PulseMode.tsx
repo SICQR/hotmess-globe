@@ -34,6 +34,7 @@ import {
   Flame,
   AlertTriangle,
   Radio as RadioIcon,
+  Zap,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -158,8 +159,8 @@ function TopHUD({
 
       {/* Center: PULSE wordmark */}
       <h1
-        className="text-xs font-black tracking-[0.3em] uppercase select-none flex-shrink-0"
-        style={{ color: AMBER }}
+        className="text-sm font-black tracking-[0.35em] uppercase select-none flex-shrink-0"
+        style={{ color: AMBER, textShadow: `0 0 20px ${AMBER}40` }}
       >
         PULSE
       </h1>
@@ -404,7 +405,7 @@ function SafetyAlertCard({
 // =============================================================================
 // BeaconFAB
 // =============================================================================
-function BeaconFAB({ onTap, onLongPress }: { onTap: () => void; onLongPress: () => void }) {
+function BeaconFAB({ onTap, onLongPress, showPulse = false }: { onTap: () => void; onLongPress: () => void; showPulse?: boolean }) {
   const [showLabel, setShowLabel] = useState(false);
 
   const longPressHandlers = useLongPress(() => {
@@ -430,6 +431,15 @@ function BeaconFAB({ onTap, onLongPress }: { onTap: () => void; onLongPress: () 
         >
           <span className="text-xs font-medium text-white">Create beacon</span>
         </motion.div>
+      )}
+      {/* Ambient pulse ring when empty */}
+      {showPulse && (
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          style={{ border: `2px solid ${AMBER}` }}
+          animate={{ scale: [1, 1.6], opacity: [0.5, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+        />
       )}
       <button
         onClick={onTap}
@@ -896,6 +906,10 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     openSheet('beacon', { mode: 'create' });
   }, [openSheet]);
 
+  const handleAmplify = useCallback(() => {
+    openSheet('amplify', {});
+  }, [openSheet]);
+
   const handleSeeAllEvents = useCallback(() => {
     openSheet('events', {});
   }, [openSheet]);
@@ -940,11 +954,31 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         </div>
       )}
 
+      {/* Amplify pill (bottom-right, above FAB) */}
+      <div className="fixed right-4 z-50 pointer-events-auto" style={{ bottom: 'calc(250px + env(safe-area-inset-bottom, 0px))' }}>
+        <button
+          onClick={handleAmplify}
+          className="flex items-center gap-1.5 px-3.5 h-10 rounded-full text-xs font-bold transition-all active:scale-95"
+          style={{
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: `1px solid ${AMBER}40`,
+            color: AMBER,
+          }}
+          aria-label="Amplify your venue"
+        >
+          <Zap className="w-3.5 h-3.5" />
+          Amplify
+        </button>
+      </div>
+
       {/* Beacon FAB (bottom-right, above drawer) */}
       <div className="fixed right-4 z-50 pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
         <BeaconFAB
           onTap={handleCreateBeacon}
           onLongPress={handleCreateBeacon}
+          showPulse={allBeacons.length === 0 && !beaconsLoading}
         />
       </div>
 

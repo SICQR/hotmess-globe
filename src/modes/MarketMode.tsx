@@ -815,6 +815,31 @@ export function MarketMode({ className = '' }: MarketModeProps) {
                 />
               )}
 
+              {/* Brand pills */}
+              {sourceFilter === 'all' && !debouncedSearch && !categoryFilter && (
+                <div className="px-4 pt-4 pb-1">
+                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                    {(
+                      [
+                        { key: 'raw', label: 'RAW' },
+                        { key: 'hung', label: 'HUNG' },
+                        { key: 'high', label: 'HIGH' },
+                        { key: 'hungmess', label: 'HUNGMESS' },
+                      ] as const
+                    ).map((b) => (
+                      <button
+                        key={b.key}
+                        onClick={() => openSheet('brand', { brand: b.key })}
+                        className="h-9 px-4 rounded-full text-xs font-black uppercase tracking-wider bg-[#1C1C1E] border border-white/10 text-white whitespace-nowrap active:scale-95 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C]"
+                        aria-label={`${b.label} brand page`}
+                      >
+                        {b.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Section header */}
               {sourceFilter === 'all' && !debouncedSearch && !categoryFilter && (
                 <div className="px-4 pt-4 pb-1">
