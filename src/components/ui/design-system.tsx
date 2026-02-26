@@ -901,6 +901,228 @@ export function Divider({ className }: DividerProps) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// LEVEL GATE OVERLAY (Content gating)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface LevelGateOverlayProps {
+  requiredLevel: number;
+  userLevel: number;
+  onUpgrade?: () => void;
+  children: ReactNode;
+  className?: string;
+}
+
+export function LevelGateOverlay({ requiredLevel, userLevel, onUpgrade, children, className }: LevelGateOverlayProps) {
+  const locked = userLevel < requiredLevel;
+
+  return (
+    <div className={cn('relative', className)}>
+      {/* Content - blurred when locked */}
+      <div className={locked ? 'filter blur-sm grayscale opacity-60 pointer-events-none select-none' : ''}>
+        {children}
+      </div>
+
+      {/* Lock overlay */}
+      {locked && (
+        <motion.div
+          className="absolute inset-0 flex flex-col items-center justify-center bg-darkest/80 rounded-lg"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <div className="w-14 h-14 rounded-full bg-gold/20 flex items-center justify-center mb-3">
+            <svg className="w-7 h-7 text-gold" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+            </svg>
+          </div>
+          <span className="text-gold font-bold text-sm mb-1">Level {requiredLevel} Required</span>
+          <span className="text-muted text-xs mb-3">You're Level {userLevel}</span>
+          {onUpgrade && (
+            <Button variant="primary" size="sm" onClick={onUpgrade}>
+              Upgrade
+            </Button>
+          )}
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSENT DIALOG
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ConsentDialogProps {
+  isOpen: boolean;
+  title: string;
+  description: string;
+  acceptLabel?: string;
+  declineLabel?: string;
+  onAccept: () => void;
+  onDecline: () => void;
+  icon?: ReactNode;
+}
+
+export function ConsentDialog({
+  isOpen,
+  title,
+  description,
+  acceptLabel = 'Accept',
+  declineLabel = 'Decline',
+  onAccept,
+  onDecline,
+  icon,
+}: ConsentDialogProps) {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <motion.div
+        className="fixed inset-0 bg-black/70 z-40"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      />
+      {/* Dialog */}
+      <motion.div
+        className="fixed inset-x-4 bottom-8 z-50 bg-darkest rounded-2xl shadow-gold p-6 max-w-md mx-auto"
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 100, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      >
+        {/* Icon */}
+        {icon && (
+          <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center mx-auto mb-4">
+            {icon}
+          </div>
+        )}
+
+        <h2 className="font-bold text-gold text-xl mb-2 text-center">{title}</h2>
+        <p className="text-muted text-sm mb-6 text-center leading-relaxed">{description}</p>
+
+        <div className="flex gap-3">
+          <Button variant="secondary" className="flex-1" onClick={onDecline}>
+            {declineLabel}
+          </Button>
+          <Button variant="primary" className="flex-1" onClick={onAccept}>
+            {acceptLabel}
+          </Button>
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIRMATION MODAL (Success/Error states)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ConfirmationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  variant?: 'success' | 'error' | 'warning';
+  title: string;
+  description?: string;
+  actionLabel?: string;
+}
+
+export function ConfirmationModal({
+  isOpen,
+  onClose,
+  variant = 'success',
+  title,
+  description,
+  actionLabel = 'Done',
+}: ConfirmationModalProps) {
+  if (!isOpen) return null;
+
+  const icons = {
+    success: (
+      <svg className="w-8 h-8 text-gold" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+      </svg>
+    ),
+    error: (
+      <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+      </svg>
+    ),
+    warning: (
+      <svg className="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+      </svg>
+    ),
+  };
+
+  const bgColors = {
+    success: 'bg-gold/20',
+    error: 'bg-red-500/20',
+    warning: 'bg-yellow-500/20',
+  };
+
+  return (
+    <>
+      {/* Backdrop */}
+      <motion.div
+        className="fixed inset-0 bg-black/70 z-40"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      />
+      {/* Modal */}
+      <motion.div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+      >
+        <div className="bg-darkest rounded-2xl shadow-gold p-8 max-w-sm w-full text-center">
+          <div className={cn('w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4', bgColors[variant])}>
+            {icons[variant]}
+          </div>
+          <h2 className="font-bold text-light text-xl mb-2">{title}</h2>
+          {description && <p className="text-muted text-sm mb-6">{description}</p>}
+          <Button variant="primary" onClick={onClose} className="w-full">
+            {actionLabel}
+          </Button>
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOADING OVERLAY
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface LoadingOverlayProps {
+  isVisible: boolean;
+  message?: string;
+}
+
+export function LoadingOverlay({ isVisible, message = 'Loading...' }: LoadingOverlayProps) {
+  if (!isVisible) return null;
+
+  return (
+    <motion.div
+      className="fixed inset-0 bg-darkest/90 z-50 flex flex-col items-center justify-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        className="w-12 h-12 border-4 border-gold/30 border-t-gold rounded-full"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+      />
+      <span className="text-gold font-bold mt-4">{message}</span>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -929,4 +1151,8 @@ export default {
   SquadMemberCard,
   SquadActionBar,
   Divider,
+  LevelGateOverlay,
+  ConsentDialog,
+  ConfirmationModal,
+  LoadingOverlay,
 };
