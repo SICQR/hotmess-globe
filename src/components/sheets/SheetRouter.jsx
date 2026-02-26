@@ -56,6 +56,11 @@ const L2AdminSheet = lazy(() => import('./L2AdminSheet'));
 const L2AmplifySheet = lazy(() => import('./L2AmplifySheet'));
 const L2BrandSheet = lazy(() => import('./L2BrandSheet'));
 const L2TicketSheet = lazy(() => import('./L2TicketSheet'));
+const L2CommunityPostSheet = lazy(() => import('./L2CommunityPostSheet'));
+const L2AchievementsSheet = lazy(() => import('./L2AchievementsSheet'));
+const L2SquadsSheet = lazy(() => import('./L2SquadsSheet'));
+const L2SweatCoinsSheet = lazy(() => import('./L2SweatCoinsSheet'));
+const L2CreatorSubscriptionSheet = lazy(() => import('./L2CreatorSubscriptionSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -145,6 +150,12 @@ const SHEET_COMPONENTS = {
   'brand': L2BrandSheet,
   // Ticket resale market
   'ticket-market': L2TicketSheet,
+  // Community features (DB live, UI added)
+  'community': L2CommunityPostSheet,
+  'achievements': L2AchievementsSheet,
+  'squads': L2SquadsSheet,
+  'sweat-coins': L2SweatCoinsSheet,
+  'creator-subscription': L2CreatorSubscriptionSheet,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
