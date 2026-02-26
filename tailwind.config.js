@@ -3,6 +3,10 @@ module.exports = {
     darkMode: ["class"],
     content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
+    fontFamily: {
+      sans: ['Space Mono', 'Inter', 'Menlo', 'monospace'],
+      mono: ['Space Mono', 'Menlo', 'monospace'],
+    },
   	extend: {
       // ── Layer z-index scale (matches src/lib/layerSystem.ts) ──────────────
       zIndex: {
@@ -25,10 +29,16 @@ module.exports = {
         modal:  '280ms',
         camera: '600ms',
       },
+      spacing: {
+        'gap': '1.25rem',
+        'gappy': '2.5rem'
+      },
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			sm: 'calc(var(--radius) - 4px)',
+  			bubble: '1em',
+  			sheet: '1.5em'
   		},
   		colors: {
   			background: 'hsl(var(--background))',
@@ -82,6 +92,13 @@ module.exports = {
 				ring: 'hsl(var(--sidebar-ring))'
 			},
 			// Brand colors - HOTMESS design system
+			dark:    '#181820',
+			darkest: '#101017',
+			light:   '#ECECEC',
+			goldGlow:'#FFC940',
+			chatGray:'#2D2D39',
+			online:  '#38E38D',
+			borderGlow: '#ffaa3b',
 			hot: {
 				DEFAULT: '#C8962C',
 				light: '#D4A84B',
@@ -114,6 +131,8 @@ module.exports = {
 			}
   		},
 		boxShadow: {
+			gold: "0 0 12px 2px #FFB80055",
+			navbar: "0 2px 18px 0 #000000e0",
 			'glow-hot': '0 0 20px rgba(200, 150, 44, 0.5), 0 0 40px rgba(200, 150, 44, 0.3)',
 			'glow-hot-lg': '0 0 30px rgba(200, 150, 44, 0.6), 0 0 60px rgba(200, 150, 44, 0.4)',
 			'glow-cyan': '0 0 20px rgba(0, 217, 255, 0.5), 0 0 40px rgba(0, 217, 255, 0.3)',
