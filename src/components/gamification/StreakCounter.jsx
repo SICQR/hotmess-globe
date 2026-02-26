@@ -45,7 +45,7 @@ async function fetchUserStreak(userId) {
  */
 function getStreakTier(streak) {
   if (streak >= 100) return { label: 'Legend', color: '#FFD700', icon: '👑' };
-  if (streak >= 30) return { label: 'Fire', color: '#C8962C', icon: '🔥' };
+  if (streak >= 30) return { label: 'Fire', color: '#FF1493', icon: '🔥' };
   if (streak >= 7) return { label: 'Hot', color: '#f97316', icon: '⚡' };
   if (streak >= 3) return { label: 'Warming', color: '#00D9FF', icon: '✨' };
   return { label: 'Start', color: '#64748b', icon: '💫' };

@@ -7,16 +7,12 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN null;
 END $$;
 
--- Add content rating to products (only if "Product" table exists)
-DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'Product') THEN
-    ALTER TABLE "Product" 
-    ADD COLUMN IF NOT EXISTS content_rating content_rating DEFAULT 'sfw',
-    ADD COLUMN IF NOT EXISTS age_verified_only boolean DEFAULT false,
-    ADD COLUMN IF NOT EXISTS requires_2257 boolean DEFAULT false,
-    ADD COLUMN IF NOT EXISTS compliance_docs jsonb DEFAULT '{}';
-  END IF;
-END $$;
+-- Add content rating to products
+ALTER TABLE "Product" 
+ADD COLUMN IF NOT EXISTS content_rating content_rating DEFAULT 'sfw',
+ADD COLUMN IF NOT EXISTS age_verified_only boolean DEFAULT false,
+ADD COLUMN IF NOT EXISTS requires_2257 boolean DEFAULT false,
+ADD COLUMN IF NOT EXISTS compliance_docs jsonb DEFAULT '{}';
 
 -- Age verification records
 CREATE TABLE IF NOT EXISTS age_verifications (
@@ -80,13 +76,7 @@ CREATE INDEX IF NOT EXISTS idx_age_verifications_status ON age_verifications(sta
 CREATE INDEX IF NOT EXISTS idx_compliance_2257_seller ON compliance_2257(seller_id);
 CREATE INDEX IF NOT EXISTS idx_content_flags_status ON content_flags(status);
 CREATE INDEX IF NOT EXISTS idx_adult_access_log_user ON adult_content_access_log(user_id);
-
--- Conditional index on "Product" if it exists
-DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'Product') THEN
-    CREATE INDEX IF NOT EXISTS idx_product_rating ON "Product"(content_rating);
-  END IF;
-END $$;
+CREATE INDEX IF NOT EXISTS idx_product_rating ON "Product"(content_rating);
 
 -- RLS Policies
 ALTER TABLE age_verifications ENABLE ROW LEVEL SECURITY;

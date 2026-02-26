@@ -20,7 +20,7 @@ export default function AchievementProgress({
       className={`
         relative p-4 border-2 transition-all
         ${isCompleted ? 'border-[#39FF14] bg-[#39FF14]/10' : 'border-white/20 bg-black/40'}
-        ${isLocked ? 'opacity-50' : 'hover:border-[#C8962C]'}
+        ${isLocked ? 'opacity-50' : 'hover:border-[#FF1493]'}
       `}
     >
       {isLocked && (
@@ -81,6 +81,11 @@ export default function AchievementProgress({
             </div>
           )}
 
+          {achievement.reward_xp && (
+            <div className="mt-2 text-xs text-[#FFEB3B] font-bold">
+              +{achievement.reward_xp} XP
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

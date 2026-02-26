@@ -30,17 +30,13 @@ test.describe('Marketplace', () => {
 
   test('marketplace displays product grid or empty state', async ({ page }) => {
     await page.goto('/market');
-    // Wait for lazy MarketMode to render (Suspense boundary resolves)
-    await page.waitForTimeout(2000);
-
+    
     // Should show either products or an empty state
     const hasProducts = await page.locator('[data-testid="product-card"]').first().isVisible().catch(() => false);
     const hasEmptyState = await page.getByText(/no products|browse|coming soon/i).first().isVisible().catch(() => false);
     const hasGrid = await page.locator('.grid').first().isVisible().catch(() => false);
-    const hasInput = await page.locator('input').first().isVisible().catch(() => false);
-    const hasBody = await page.locator('body').isVisible().catch(() => false);
-
-    expect(hasProducts || hasEmptyState || hasGrid || hasInput || hasBody).toBe(true);
+    
+    expect(hasProducts || hasEmptyState || hasGrid).toBe(true);
   });
 
   test('can navigate to product detail page', async ({ page }) => {

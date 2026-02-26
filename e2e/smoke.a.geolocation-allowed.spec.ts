@@ -8,7 +8,6 @@ test.use({
 });
 
 test('A: core routes render without page errors', async ({ page }) => {
-  test.setTimeout(120_000);
   const pageErrors: string[] = [];
   page.on('pageerror', (err) => pageErrors.push(String(err)));
 
@@ -22,10 +21,9 @@ test('A: core routes render without page errors', async ({ page }) => {
   await expect(page).not.toHaveURL(/\/age(\?|$)/);
   await expect(page.locator('body')).toBeVisible();
 
-  // Canonical V1.5 routes — use domcontentloaded (not load) to avoid
-  // Shopify/Supabase resource hangs blocking the load event
+  // Canonical V1.5 routes (smoke)
   for (const path of ['/pulse', '/events', '/market', '/social', '/music', '/more']) {
-    await page.goto(path, { waitUntil: 'domcontentloaded' });
+    await page.goto(path);
     await expect(page).not.toHaveURL(/\/age(\?|$)/);
     await expect(page.locator('body')).toBeVisible();
   }
@@ -33,8 +31,7 @@ test('A: core routes render without page errors', async ({ page }) => {
   expect(pageErrors, `Unexpected page errors:\n${pageErrors.join('\n\n')}`).toEqual([]);
 });
 
-test.skip('A: directions page loads (even if API rejects)', async ({ page }) => {
-  // /directions route has been removed from the app routing — skip until re-added
+test('A: directions page loads (even if API rejects)', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (err) => pageErrors.push(String(err)));
 
