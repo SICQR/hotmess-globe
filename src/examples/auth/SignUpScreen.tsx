@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { AuthContainer, BrandHeader, AuthInput, Button, Checkbox, TextLink } from '@/components/ui/design-system';
+import { AuthContainer, BrandHeader, AuthInput, PasswordInput, Button, Checkbox, TextLink } from '@/components/ui/design-system';
+import { FaEnvelope, FaUser, FaLock } from 'react-icons/fa';
 
 interface SignUpScreenProps {
   onSignUp: (data: { email: string; username: string; password: string }) => void;
@@ -65,6 +66,7 @@ export function SignUpScreen({ onSignUp, onBack, onLogin }: SignUpScreenProps) {
           onChange={handleChange('email')}
           error={errors.email}
           autoComplete="email"
+          icon={<FaEnvelope />}
         />
 
         <AuthInput
@@ -75,26 +77,27 @@ export function SignUpScreen({ onSignUp, onBack, onLogin }: SignUpScreenProps) {
           onChange={handleChange('username')}
           error={errors.username}
           autoComplete="username"
+          icon={<FaUser />}
         />
 
-        <AuthInput
+        <PasswordInput
           label="Password"
-          type="password"
           placeholder="••••••••"
           value={form.password}
           onChange={handleChange('password')}
           error={errors.password}
           autoComplete="new-password"
+          icon={<FaLock />}
         />
 
-        <AuthInput
+        <PasswordInput
           label="Confirm Password"
-          type="password"
           placeholder="••••••••"
           value={form.confirmPassword}
           onChange={handleChange('confirmPassword')}
           error={errors.confirmPassword}
           autoComplete="new-password"
+          icon={<FaLock />}
         />
 
         <div className="mt-2">

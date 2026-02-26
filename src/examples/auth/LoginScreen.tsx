@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { AuthContainer, BrandHeader, AuthInput, Button, TextLink } from '@/components/ui/design-system';
+import { AuthContainer, BrandHeader, AuthInput, PasswordInput, Button, TextLink } from '@/components/ui/design-system';
+import { FaUser, FaLock } from 'react-icons/fa';
 
 interface LoginScreenProps {
   onLogin: (email: string, password: string) => void;
@@ -51,16 +52,17 @@ export function LoginScreen({ onLogin, onForgotPassword, onBack, onSignUp }: Log
           onChange={(e) => setEmail(e.target.value)}
           error={errors.email}
           autoComplete="email"
+          icon={<FaUser />}
         />
 
-        <AuthInput
+        <PasswordInput
           label="Password"
-          type="password"
           placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           error={errors.password}
           autoComplete="current-password"
+          icon={<FaLock />}
         />
 
         <div className="text-right">
