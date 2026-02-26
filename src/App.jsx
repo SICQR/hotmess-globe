@@ -52,6 +52,7 @@ const ProfileMode = lazy(() => import('@/modes/ProfileMode'));
 const MarketMode = lazy(() => import('@/modes/MarketMode').then(m => ({ default: m.MarketMode })));
 const EventsMode  = lazy(() => import('@/modes/EventsMode'));
 const VaultMode   = lazy(() => import('@/modes/VaultMode'));
+const ChatMeetupPage = lazy(() => import('@/pages/ChatMeetupPage'));
 
 const isProdBuild = import.meta.env.MODE === 'production';
 
@@ -359,6 +360,8 @@ const AuthenticatedApp = () => {
       <Route path="/social/inbox" element={<PageRoute pageKey="Messages" />} />
       <Route path="/social/u/:id" element={<SocialUserRedirect />} />
       <Route path="/social/t/:threadId" element={<SocialThreadRedirect />} />
+      <Route path="/chat/meetup" element={<Suspense fallback={null}><ChatMeetupPage /></Suspense>} />
+      <Route path="/chat/:threadId" element={<Suspense fallback={null}><ChatMeetupPage /></Suspense>} />
       
       {/* RADIO - Mode (no Layout) */}
       <Route path="/radio" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
