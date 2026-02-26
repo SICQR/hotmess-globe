@@ -770,6 +770,137 @@ export function BottomSheet({ isOpen, onClose, title, children, className }: Bot
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// LIVE RADIO BAR
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface LiveRadioBarProps {
+  show: string;
+  isLive?: boolean;
+  onListen?: () => void;
+  onFollow?: () => void;
+  className?: string;
+}
+
+export function LiveRadioBar({ show, isLive = true, onListen, onFollow, className }: LiveRadioBarProps) {
+  return (
+    <div className={cn('bg-darkest border-t border-borderGlow shadow-gold flex items-center px-4 py-3 gap-4', className)}>
+      {isLive && <Badge variant="pink" pulse>LIVE</Badge>}
+      <span className="font-bold text-gold flex-1 truncate">{show}</span>
+      <Button variant="primary" size="sm" onClick={onListen}>Listen</Button>
+      {onFollow && (
+        <Button variant="secondary" size="sm" onClick={onFollow}>Follow</Button>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EVENT COUNTDOWN CARD
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface EventCountdownCardProps {
+  title: string;
+  timeLeft: string;
+  image?: string;
+  onNotify?: () => void;
+  className?: string;
+}
+
+export function EventCountdownCard({ title, timeLeft, image, onNotify, className }: EventCountdownCardProps) {
+  return (
+    <motion.div
+      className={cn('bg-gold rounded-lg shadow-gold p-4 flex flex-col items-center gap-2', className)}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+    >
+      {image && (
+        <img src={image} alt={title} className="w-16 h-16 rounded-lg object-cover" />
+      )}
+      <div className="font-bold text-dark text-lg text-center">{title}</div>
+      <div className="text-dark/80 text-sm">Starts in {timeLeft}</div>
+      {onNotify && (
+        <Button variant="secondary" size="sm" onClick={onNotify} className="mt-2">
+          Get Notified
+        </Button>
+      )}
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SQUAD MEMBER CARD
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface SquadMemberCardProps {
+  name: string;
+  avatar: string;
+  role?: string;
+  status?: 'online' | 'offline' | 'away';
+  onPromote?: () => void;
+  onKick?: () => void;
+  className?: string;
+}
+
+export function SquadMemberCard({ name, avatar, role, status, onPromote, onKick, className }: SquadMemberCardProps) {
+  return (
+    <div className={cn('flex items-center gap-4 py-2', className)}>
+      <Avatar src={avatar} size="md" status={status} />
+      <div className="flex-1 min-w-0">
+        <span className="font-bold text-light block truncate">{name}</span>
+        {role && <span className="text-muted text-xs">{role}</span>}
+      </div>
+      {onPromote && (
+        <button onClick={onPromote} className="text-gold hover:text-goldGlow transition-colors p-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
+      )}
+      {onKick && (
+        <button onClick={onKick} className="text-accent hover:text-red-400 transition-colors p-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SQUAD ACTION BAR
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface SquadActionBarProps {
+  onInvite?: () => void;
+  onChat?: () => void;
+  onSettings?: () => void;
+  className?: string;
+}
+
+export function SquadActionBar({ onInvite, onChat, onSettings, className }: SquadActionBarProps) {
+  return (
+    <div className={cn('flex gap-3', className)}>
+      {onInvite && <Button variant="secondary" size="sm" onClick={onInvite}>Invite</Button>}
+      {onChat && <Button variant="secondary" size="sm" onClick={onChat}>Chat</Button>}
+      {onSettings && <Button variant="ghost" size="sm" onClick={onSettings}>Settings</Button>}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DIVIDER
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface DividerProps {
+  className?: string;
+}
+
+export function Divider({ className }: DividerProps) {
+  return <hr className={cn('border-t border-gold/30 my-4', className)} />;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -793,4 +924,9 @@ export default {
   EventCard,
   MessageInputBar,
   BottomSheet,
+  LiveRadioBar,
+  EventCountdownCard,
+  SquadMemberCard,
+  SquadActionBar,
+  Divider,
 };
