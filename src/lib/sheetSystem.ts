@@ -449,6 +449,45 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: ['mode'],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // COMMUNITY FEATURES (DB live, UI added)
+  // ─────────────────────────────────────────────────────────────────────────
+  'community': {
+    id: 'community',
+    title: 'Community',
+    height: 'full',
+    auth: true,
+    deepLinkParams: ['category'],
+  },
+  'achievements': {
+    id: 'achievements',
+    title: 'Achievements',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'squads': {
+    id: 'squads',
+    title: 'Squads',
+    height: 'large',
+    auth: true,
+    deepLinkParams: ['squadId'],
+  },
+  'sweat-coins': {
+    id: 'sweat-coins',
+    title: 'Sweat Coins',
+    height: 'medium',
+    auth: true,
+    deepLinkParams: [],
+  },
+  'creator-subscription': {
+    id: 'creator-subscription',
+    title: 'Subscribe',
+    height: 'large',
+    auth: true,
+    deepLinkParams: ['creatorId'],
+  },
 } as const;
 
 /**
