@@ -1123,6 +1123,250 @@ export function LoadingOverlay({ isVisible, message = 'Loading...' }: LoadingOve
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// AUTH INPUT FIELD (Login/Signup forms)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+}
+
+export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
+  ({ label, error, className, ...props }, ref) => {
+    return (
+      <div className="w-full">
+        {label && (
+          <label className="block text-muted text-sm mb-1.5 font-medium">{label}</label>
+        )}
+        <input
+          ref={ref}
+          className={cn(
+            'w-full bg-chatGray text-light rounded-lg px-4 py-3 border-2 transition-colors',
+            'placeholder-muted outline-none',
+            error ? 'border-red-500 focus:border-red-400' : 'border-borderGlow focus:border-gold',
+            className
+          )}
+          {...props}
+        />
+        {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      </div>
+    );
+  }
+);
+AuthInput.displayName = 'AuthInput';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHECKBOX (Terms/Consent)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface CheckboxProps {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: ReactNode;
+  className?: string;
+}
+
+export function Checkbox({ checked, onChange, label, className }: CheckboxProps) {
+  return (
+    <label className={cn('flex items-start gap-3 cursor-pointer', className)}>
+      <div
+        className={cn(
+          'w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors',
+          checked ? 'bg-gold border-gold' : 'bg-transparent border-borderGlow'
+        )}
+        onClick={() => onChange(!checked)}
+      >
+        {checked && (
+          <svg className="w-3 h-3 text-dark" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+          </svg>
+        )}
+      </div>
+      <span className="text-muted text-sm leading-tight">{label}</span>
+    </label>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEXT LINK (Forgot password, etc.)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface TextLinkProps {
+  children: ReactNode;
+  onClick?: () => void;
+  href?: string;
+  className?: string;
+}
+
+export function TextLink({ children, onClick, href, className }: TextLinkProps) {
+  const baseStyles = 'text-gold hover:text-goldGlow transition-colors text-sm font-medium cursor-pointer';
+  
+  if (href) {
+    return <a href={href} className={cn(baseStyles, className)}>{children}</a>;
+  }
+  
+  return (
+    <button type="button" onClick={onClick} className={cn(baseStyles, className)}>
+      {children}
+    </button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BRAND HEADER (Welcome/Auth screens)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface BrandHeaderProps {
+  title?: string;
+  subtitle?: string;
+  showLogo?: boolean;
+  className?: string;
+}
+
+export function BrandHeader({ title, subtitle, showLogo = true, className }: BrandHeaderProps) {
+  return (
+    <div className={cn('text-center py-8', className)}>
+      {showLogo && (
+        <h1 className="text-gold text-4xl font-bold font-mono tracking-wider mb-2 drop-shadow-[0_0_20px_#FFB80066]">
+          HOTMESS
+        </h1>
+      )}
+      {title && <h2 className="text-light text-xl font-bold mb-1">{title}</h2>}
+      {subtitle && <p className="text-muted text-sm">{subtitle}</p>}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AVATAR UPLOAD (Profile setup)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AvatarUploadProps {
+  src?: string;
+  onUpload: () => void;
+  size?: 'md' | 'lg' | 'xl';
+  className?: string;
+}
+
+export function AvatarUpload({ src, onUpload, size = 'xl', className }: AvatarUploadProps) {
+  const sizes = {
+    md: 'w-20 h-20',
+    lg: 'w-28 h-28',
+    xl: 'w-36 h-36',
+  };
+
+  return (
+    <div className={cn('relative inline-block', className)}>
+      <div
+        className={cn(
+          sizes[size],
+          'rounded-full border-4 border-gold bg-chatGray flex items-center justify-center overflow-hidden shadow-gold'
+        )}
+      >
+        {src ? (
+          <img src={src} alt="Avatar" className="w-full h-full object-cover" />
+        ) : (
+          <svg className="w-1/2 h-1/2 text-muted" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+          </svg>
+        )}
+      </div>
+      <motion.button
+        onClick={onUpload}
+        className="absolute bottom-1 right-1 w-10 h-10 rounded-full bg-gold text-dark flex items-center justify-center shadow-gold"
+        whileTap={{ scale: 0.95 }}
+      >
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+          <path d="M9.5 12c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" opacity="0" />
+        </svg>
+      </motion.button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CODE INPUT (Join codes, OTP, verification)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface CodeInputProps {
+  length?: number;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  className?: string;
+}
+
+export function CodeInput({ length = 6, value, onChange, error, className }: CodeInputProps) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const char = e.target.value.slice(-1).toUpperCase();
+    const newValue = value.split('');
+    newValue[index] = char;
+    onChange(newValue.join(''));
+    
+    // Auto-focus next input
+    if (char && index < length - 1) {
+      const next = e.target.nextElementSibling as HTMLInputElement;
+      next?.focus();
+    }
+  };
+
+  return (
+    <div className={cn('flex flex-col items-center gap-2', className)}>
+      <div className="flex gap-2">
+        {Array.from({ length }).map((_, i) => (
+          <input
+            key={i}
+            type="text"
+            maxLength={1}
+            value={value[i] || ''}
+            onChange={(e) => handleChange(e, i)}
+            className={cn(
+              'w-12 h-14 text-center text-2xl font-bold font-mono rounded-lg border-2 transition-colors',
+              'bg-chatGray text-gold outline-none',
+              error ? 'border-red-500' : 'border-borderGlow focus:border-gold'
+            )}
+          />
+        ))}
+      </div>
+      {error && <p className="text-red-500 text-xs">{error}</p>}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTH CONTAINER (Full-screen auth layout)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AuthContainerProps {
+  children: ReactNode;
+  onBack?: () => void;
+  className?: string;
+}
+
+export function AuthContainer({ children, onBack, className }: AuthContainerProps) {
+  return (
+    <div className={cn('min-h-screen bg-dark flex flex-col', className)}>
+      {/* Back button */}
+      {onBack && (
+        <div className="p-4">
+          <button onClick={onBack} className="text-gold hover:text-goldGlow transition-colors">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+      )}
+      
+      {/* Content */}
+      <div className="flex-1 flex flex-col px-6 pb-8">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1155,4 +1399,12 @@ export default {
   ConsentDialog,
   ConfirmationModal,
   LoadingOverlay,
+  // Auth & Onboarding
+  AuthInput,
+  Checkbox,
+  TextLink,
+  BrandHeader,
+  AvatarUpload,
+  CodeInput,
+  AuthContainer,
 };

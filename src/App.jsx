@@ -59,6 +59,14 @@ const ChatWithMapExample = lazy(() => import('@/examples/ChatWithMapExample'));
 const GhostedGridExample = lazy(() => import('@/examples/GhostedGridExample'));
 const MarketExample = lazy(() => import('@/examples/MarketExample'));
 
+// Auth example screens
+const WelcomeScreen = lazy(() => import('@/examples/auth/WelcomeScreen'));
+const LoginScreen = lazy(() => import('@/examples/auth/LoginScreen'));
+const SignUpScreen = lazy(() => import('@/examples/auth/SignUpScreen'));
+const ForgotPasswordScreen = lazy(() => import('@/examples/auth/ForgotPasswordScreen'));
+const JoinCodeScreen = lazy(() => import('@/examples/auth/JoinCodeScreen'));
+const ProfileSetupScreen = lazy(() => import('@/examples/auth/ProfileSetupScreen'));
+
 // New unified design pages
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
@@ -380,6 +388,14 @@ const AuthenticatedApp = () => {
       <Route path="/examples/chat" element={<Suspense fallback={null}><ChatWithMapExample /></Suspense>} />
       <Route path="/examples/ghosted" element={<Suspense fallback={null}><GhostedGridExample /></Suspense>} />
       <Route path="/examples/market" element={<Suspense fallback={null}><MarketExample /></Suspense>} />
+      
+      {/* Auth example screens */}
+      <Route path="/examples/auth/welcome" element={<Suspense fallback={null}><WelcomeScreen onGetStarted={() => {}} onLogin={() => {}} /></Suspense>} />
+      <Route path="/examples/auth/login" element={<Suspense fallback={null}><LoginScreen onLogin={() => {}} onForgotPassword={() => {}} onBack={() => {}} onSignUp={() => {}} /></Suspense>} />
+      <Route path="/examples/auth/signup" element={<Suspense fallback={null}><SignUpScreen onSignUp={() => {}} onBack={() => {}} onLogin={() => {}} /></Suspense>} />
+      <Route path="/examples/auth/forgot" element={<Suspense fallback={null}><ForgotPasswordScreen onSubmit={() => {}} onBack={() => {}} /></Suspense>} />
+      <Route path="/examples/auth/join-code" element={<Suspense fallback={null}><JoinCodeScreen onJoin={() => {}} onResend={() => {}} onBack={() => {}} /></Suspense>} />
+      <Route path="/examples/auth/profile-setup" element={<Suspense fallback={null}><ProfileSetupScreen onSave={() => {}} onSkip={() => {}} /></Suspense>} />
       
       {/* Unified design pages (alternate views) */}
       <Route path="/v2/home" element={<Suspense fallback={null}><HomePage /></Suspense>} />
