@@ -54,6 +54,18 @@ const EventsMode  = lazy(() => import('@/modes/EventsMode'));
 const VaultMode   = lazy(() => import('@/modes/VaultMode'));
 const ChatMeetupPage = lazy(() => import('@/pages/ChatMeetupPage'));
 
+// Example screens (design system demos)
+const ChatWithMapExample = lazy(() => import('@/examples/ChatWithMapExample'));
+const GhostedGridExample = lazy(() => import('@/examples/GhostedGridExample'));
+const MarketExample = lazy(() => import('@/examples/MarketExample'));
+
+// New unified design pages
+const HomePage = lazy(() => import('@/pages/HomePage'));
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
+const MarketPage = lazy(() => import('@/pages/MarketPage'));
+const MapPage = lazy(() => import('@/pages/MapPage'));
+const ChatHistoryPage = lazy(() => import('@/pages/ChatHistoryPage'));
+
 const isProdBuild = import.meta.env.MODE === 'production';
 
 // In production, do not expose every Base44 page as a public /PageName route.
@@ -362,6 +374,18 @@ const AuthenticatedApp = () => {
       <Route path="/social/t/:threadId" element={<SocialThreadRedirect />} />
       <Route path="/chat/meetup" element={<Suspense fallback={null}><ChatMeetupPage /></Suspense>} />
       <Route path="/chat/:threadId" element={<Suspense fallback={null}><ChatMeetupPage /></Suspense>} />
+      <Route path="/chats" element={<Suspense fallback={null}><ChatHistoryPage /></Suspense>} />
+      
+      {/* Example screens (design system demos) */}
+      <Route path="/examples/chat" element={<Suspense fallback={null}><ChatWithMapExample /></Suspense>} />
+      <Route path="/examples/ghosted" element={<Suspense fallback={null}><GhostedGridExample /></Suspense>} />
+      <Route path="/examples/market" element={<Suspense fallback={null}><MarketExample /></Suspense>} />
+      
+      {/* Unified design pages (alternate views) */}
+      <Route path="/v2/home" element={<Suspense fallback={null}><HomePage /></Suspense>} />
+      <Route path="/v2/profile" element={<Suspense fallback={null}><ProfilePage /></Suspense>} />
+      <Route path="/v2/market" element={<Suspense fallback={null}><MarketPage /></Suspense>} />
+      <Route path="/v2/map" element={<Suspense fallback={null}><MapPage /></Suspense>} />
       
       {/* RADIO - Mode (no Layout) */}
       <Route path="/radio" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
