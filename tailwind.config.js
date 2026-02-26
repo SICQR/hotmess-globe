@@ -31,7 +31,15 @@ module.exports = {
       },
       spacing: {
         'gap': '1.25rem',
-        'gappy': '2.5rem'
+        'gappy': '2.5rem',
+        // Safe area insets for iOS notch/home indicator
+        'safe-t': 'env(safe-area-inset-top)',
+        'safe-b': 'env(safe-area-inset-bottom)',
+        'safe-l': 'env(safe-area-inset-left)',
+        'safe-r': 'env(safe-area-inset-right)',
+      },
+      padding: {
+        'safe': 'env(safe-area-inset-bottom)',
       },
   		borderRadius: {
   			lg: 'var(--radius)',
