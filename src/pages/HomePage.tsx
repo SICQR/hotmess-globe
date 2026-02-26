@@ -6,7 +6,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { FaBell, FaPlus, FaSearch, FaFire, FaUsers, FaCalendarAlt, FaRadio } from 'react-icons/fa';
+import { FaBell, FaPlus, FaSearch, FaFire, FaUsers, FaCalendarAlt, FaBroadcastTower } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { AppNavBar } from '@/components/nav/AppNavBar';
 
@@ -143,7 +143,7 @@ export default function HomePage() {
           transition={{ delay: 0.4 }}
         >
           <h2 className="font-bold text-light tracking-wide mb-3 flex items-center gap-2">
-            <FaRadio className="text-accent" />
+            <FaBroadcastTower className="text-accent" />
             HOTMESS Radio
           </h2>
           <button
@@ -151,7 +151,7 @@ export default function HomePage() {
             className="w-full bg-gray rounded-lg shadow-gold border border-borderGlow p-4 flex items-center gap-4 hover:bg-chatGray transition-colors"
           >
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent to-gold flex items-center justify-center">
-              <FaRadio className="text-dark text-xl" />
+              <FaBroadcastTower className="text-dark text-xl" />
             </div>
             <div className="flex-1 text-left">
               <div className="font-semibold text-light">Live Now</div>
