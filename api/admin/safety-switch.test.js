@@ -20,7 +20,7 @@ describe('safety-switch API', () => {
   let mockSupabase;
   let mockFromChain;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     mockReq = {
