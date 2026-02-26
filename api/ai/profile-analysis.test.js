@@ -154,7 +154,7 @@ describe('Profile Analysis API', () => {
             })
           ])
         })
-      });
+      );
     });
 
     it('should detect missing looking_for', async () => {
