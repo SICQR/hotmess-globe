@@ -16,7 +16,7 @@ describe('cadence-apply API', () => {
   let mockRes;
   let mockSupabase;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Reset mocks
     vi.clearAllMocks();
 
