@@ -424,13 +424,18 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
               </span>
             </div>
 
-            {/* Center: GHOSTED wordmark */}
-            <h1
-              className="absolute left-1/2 -translate-x-1/2 font-black text-base tracking-[0.2em] uppercase"
-              style={{ color: AMBER }}
-            >
-              GHOSTED
-            </h1>
+            {/* Center: GHOSTED wordmark + subtitle */}
+            <div className="absolute left-1/2 -translate-x-1/2 text-center">
+              <h1
+                className="font-black text-base tracking-[0.2em] uppercase leading-tight"
+                style={{ color: AMBER }}
+              >
+                GHOSTED
+              </h1>
+              <p className="text-[10px] text-white/30 font-medium">
+                {city} - Right Now
+              </p>
+            </div>
 
             {/* Right: filter icon with badge */}
             <button

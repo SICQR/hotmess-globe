@@ -37,6 +37,8 @@ import {
   Clock,
   MessageSquare,
   Heart,
+  Ghost,
+  Wifi,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
@@ -768,6 +770,26 @@ export function HomeMode({ className = '' }: HomeModeProps) {
               </div>
             )}
           </AnimatedSection>
+
+          {/* ── Ghosted Online Bar ── */}
+          <button
+            onClick={() => navigate('/ghosted')}
+            className="flex items-center gap-2.5 w-full rounded-2xl px-4 py-3 active:scale-[0.98] transition-transform"
+            style={{ background: CARD_BG, border: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: `${AMBER}20` }}
+            >
+              <Ghost className="w-4 h-4" style={{ color: AMBER }} />
+            </div>
+            <span className="text-white font-bold text-sm">Ghosted</span>
+            <span className="text-white/40 text-xs flex items-center gap-1">
+              <Wifi className="w-3 h-3" />
+              {rightNowUsers.length > 0 ? `${rightNowUsers.length} Online` : 'Browse'}
+            </span>
+            <ChevronRight className="w-4 h-4 text-white/20 ml-auto" />
+          </button>
 
           {/* ── Section 2: Community ── */}
           <AnimatedSection index={1}>
