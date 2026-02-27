@@ -35,16 +35,34 @@ export default function RightNowModal({ isOpen, onClose }) {
 
       const expires_at = new Date(Date.now() + duration * 60 * 1000).toISOString();
 
+      // Try to capture GPS so the beacon appears at the real location on the globe
+      let location = null;
+      if (navigator.geolocation) {
+        try {
+          const pos = await new Promise((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              timeout: 5000,
+              maximumAge: 60000,
+              enableHighAccuracy: false,
+            })
+          );
+          location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        } catch {
+          // GPS denied or unavailable — beacon won't appear on globe without location
+        }
+      }
+
       // Write to right_now_status TABLE (not profiles.right_now_status JSONB)
       const { error } = await supabase
         .from('right_now_status')
         .upsert({
           user_email: user.email,
-          intent: 'explore', // valid intent value
+          intent: 'explore',
           timeframe: duration < 60 ? `${duration}m` : `${duration/60}h`,
           active: true,
           updated_at: new Date().toISOString(),
           expires_at,
+          location,
           preferences: {
             logistics,
             cold_vibe: coldVibe,
@@ -52,7 +70,11 @@ export default function RightNowModal({ isOpen, onClose }) {
         }, { onConflict: 'user_email' });
 
       if (error) throw error;
-      toast.success("You're live! Auto-expires in " + (duration < 60 ? `${duration}m` : `${duration/60}h`));
+      toast.success(
+        location
+          ? "You're live! Beacon placed on the globe."
+          : "You're live! Allow location access to appear on the globe."
+      );
       onClose?.();
     } catch (err) {
       toast.error(err.message || 'Failed to go live');
