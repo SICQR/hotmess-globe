@@ -16,6 +16,14 @@ const SHOWS = [
   { id: '4', title: 'Raw Sessions', host: 'The Collective', time: '18:00', days: 'Wed', genre: 'Experimental' },
 ];
 
+/**
+ * Presents a two-tab sheet with radio shows and upcoming events loaded from the beacons table.
+ *
+ * Renders a "Radio Shows" tab with predefined shows and an "Events" tab that fetches upcoming events from Supabase,
+ * showing a loading spinner, an empty state when no events exist, or a list of events that open an event sheet when tapped.
+ *
+ * @returns {JSX.Element} The schedule sheet UI containing tabs for radio shows and upcoming events.
+ */
 export default function L2ScheduleSheet() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);

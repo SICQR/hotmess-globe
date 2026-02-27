@@ -17,6 +17,14 @@ import { cn } from '@/lib/utils';
 
 const FILTERS = ['Tonight', 'This Week', 'All'];
 
+/**
+ * Renders a native "Events" sheet with filter tabs and inline RSVP controls.
+ *
+ * Displays upcoming events filtered by "Tonight", "This Week", or "All", shows event details (image, title, date, venue, RSVP count),
+ * and lets the current user toggle their RSVP for each event.
+ *
+ * @returns {JSX.Element} The Events sheet component.
+ */
 export default function L2EventsSheet() {
   const [filter, setFilter] = useState('Tonight');
   const queryClient = useQueryClient();

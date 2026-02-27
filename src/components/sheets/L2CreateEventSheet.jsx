@@ -10,6 +10,15 @@ import { useSheet } from '@/contexts/SheetContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+/**
+ * Render a sheet UI for creating a new event and saving it to the `beacons` table with `kind: 'event'`.
+ *
+ * Validates required fields, gathers form data (title, description, venue, start/end times, capacity, price, image),
+ * associates the record with the current user (promoter and owner email), writes the new beacon/event, shows success or error toasts,
+ * invalidates the events query cache, and closes the sheet on success.
+ *
+ * @returns {JSX.Element} The component's rendered JSX element.
+ */
 export default function L2CreateEventSheet() {
   const { closeSheet } = useSheet();
   const queryClient = useQueryClient();

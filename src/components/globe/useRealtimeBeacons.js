@@ -67,8 +67,15 @@ function eventToBeacon(event) {
 }
 
 /**
- * Hook to get realtime beacons from presence + events tables
- * Returns beacons in format compatible with existing EnhancedGlobe3D
+ * Provide realtime Globe-compatible beacons derived from presence and event records.
+ *
+ * @returns {{beacons: Array<Object>, presenceCount: number, eventCount: number, loading: boolean, refresh: function}}
+ * An object containing:
+ * - beacons: Array of beacon objects formatted for EnhancedGlobe3D.
+ * - presenceCount: Number of presence-based beacons.
+ * - eventCount: Number of event-based beacons.
+ * - loading: `true` while the initial data load is in progress, `false` afterwards.
+ * - refresh: Function to re-fetch the initial presence and event data.
  */
 export function useRealtimeBeacons() {
   const [presenceBeacons, setPresenceBeacons] = useState([]);
