@@ -23,7 +23,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import RightNowModal from '@/components/globe/RightNowModal';
-import { motion, useMotionValue, useAnimation, PanInfo } from 'framer-motion';
+import { motion, useMotionValue, useAnimation } from 'framer-motion';
+import type { PanInfo } from 'framer-motion';
 import {
   MapPin,
   ChevronDown,
