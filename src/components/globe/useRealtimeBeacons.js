@@ -99,10 +99,11 @@ export function useRealtimeBeacons() {
     // Load active events
     try {
       const { data: events } = await supabase
-        .from('events')
+        .from('beacons')
         .select('*')
+        .eq('kind', 'event')
         .lte('starts_at', now)
-        .gte('ends_at', now);
+        .gte('end_at', now);
       
       if (events) {
         const beacons = events
@@ -155,7 +156,7 @@ export function useRealtimeBeacons() {
       .channel('events-beacons')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'events' },
+        { event: '*', schema: 'public', table: 'beacons' },
         (payload) => {
           if (payload.eventType === 'DELETE') {
             setEventBeacons(prev => 
