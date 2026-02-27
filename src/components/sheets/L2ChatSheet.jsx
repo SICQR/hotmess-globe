@@ -361,6 +361,11 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   };
 
   // ── Wingman AI handler ─────────────────────────────────────────────────────
+  // ── Derive other-party info (needed by Wingman + chat view) ───────────────
+  const otherEmail = selectedThread ? getOtherEmail(selectedThread) : '';
+  const otherProfile = otherEmail ? getProfile(otherEmail) : null;
+  const otherName = otherProfile?.display_name || otherEmail || title || 'Chat';
+
   const handleWingmanTap = useCallback(async () => {
     if (wingmanLoading) return;
 
@@ -488,11 +493,6 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     const p = getProfile(email);
     return (p?.display_name || email).toLowerCase().includes(searchQuery.toLowerCase());
   });
-
-  // ── Derive other-party info (needed by Wingman + chat view) ───────────────
-  const otherEmail = selectedThread ? getOtherEmail(selectedThread) : '';
-  const otherProfile = otherEmail ? getProfile(otherEmail) : null;
-  const otherName = otherProfile?.display_name || otherEmail || title || 'Chat';
 
   // ── Thread list ────────────────────────────────────────────────────────────
   if (!selectedThread) {
