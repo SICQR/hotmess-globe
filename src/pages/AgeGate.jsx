@@ -10,7 +10,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, MapPin } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { createPageUrl } from '../utils';
+import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { useBootGuard } from '@/contexts/BootGuardContext';
@@ -142,6 +142,21 @@ export default function AgeGate() {
         transition={springSmooth}
         className="relative z-10 bg-[#1C1C1E] border border-white/8 rounded-3xl p-7 w-full max-w-sm"
       >
+        {/* Wordmark */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1, ...springSmooth }}
+          className="text-center mb-5"
+        >
+          <p className="text-3xl font-black italic tracking-tight text-white leading-none">
+            HOT<span className="text-[#C8962C]">MESS</span>
+          </p>
+          <p className="text-[10px] tracking-[0.3em] text-white/20 uppercase font-black mt-2">
+            Private Members Club
+          </p>
+        </motion.div>
+
         {/* Shield icon with glow ring */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -178,6 +193,9 @@ export default function AgeGate() {
           <p className="text-sm text-white/40">
             HOTMESS is an 18+ private members club for gay and bisexual men.
           </p>
+          <p className="text-[10px] text-white/25 mt-2 leading-relaxed">
+            This is a private members club operating under Equality Act 2010 {'\u00A7'}193.
+          </p>
         </motion.div>
 
         {/* Age checkbox */}
@@ -194,9 +212,9 @@ export default function AgeGate() {
           />
           <span className="text-xs text-white/60 leading-relaxed">
             <span className="font-bold text-white/80 group-hover:text-white transition-colors">
-              I confirm I am 18+
+              I confirm I am 18 years or older
             </span>{' '}
-            and agree to view adult content on this platform.
+            and understand this is a private members club for men.
           </span>
         </motion.label>
 
@@ -217,7 +235,7 @@ export default function AgeGate() {
               <span className="font-bold text-white/80 flex items-center gap-1.5 mb-0.5 group-hover:text-white transition-colors">
                 <MapPin className="w-3 h-3 text-[#C8962C]" /> Location services
               </span>
-              Required for beacons, nearby users, and safety features.
+              Location access is required for beacons, nearby users, and safety features.
             </p>
             {locationPermissionStatus === 'granted' && (
               <p className="text-[10px] text-[#C8962C] mt-1.5 font-black uppercase tracking-[0.15em]">
@@ -277,7 +295,7 @@ export default function AgeGate() {
           transition={{ delay: 0.6, duration: 0.3 }}
           className="text-white/15 text-[10px] text-center mt-4 leading-relaxed"
         >
-          By entering you confirm you are 18 or older.
+          By entering you confirm you are 18 or older and consent to joining a private members club.
         </motion.p>
       </motion.div>
     </div>

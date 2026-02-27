@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '@/components/utils/supabaseClient';
+import { BRAND_CONFIG } from '@/config/brands';
 
 // Unified Product Model
 export interface Product {
@@ -302,6 +303,51 @@ export async function getCategories(): Promise<string[]> {
 
   const categories = [...new Set((data || []).map(d => d.category).filter(Boolean))] as string[];
   return categories.sort();
+}
+
+// ============================================
+// BRAND-FILTERED PRODUCTS
+// ============================================
+
+/**
+ * Get products for a specific brand.
+ * Fetches from Shopify (via collection handle) and preloved (via category tag),
+ * then merges into a unified Product[] array.
+ * Each brand's collection handle is isolated per BRAND CHANNEL RULES.
+ */
+export async function getProductsByBrand(brandKey: string): Promise<Product[]> {
+  try {
+    const brand = BRAND_CONFIG[brandKey];
+    if (!brand) {
+      console.warn(`[market] getProductsByBrand: unknown brand key "${brandKey}"`);
+      return [];
+    }
+
+    const collectionHandle = brand.shopifyCollection;
+
+    // Fetch from both sources in parallel
+    const [shopifyProducts, prelovedProducts] = await Promise.all([
+      // Shopify: fetch by collection handle (if brand has one)
+      collectionHandle
+        ? getShopifyProducts({ category: collectionHandle })
+        : Promise.resolve([]),
+      // Preloved: fetch listings tagged with this brand's category
+      getPrelovedProducts({ category: brandKey }),
+    ]);
+
+    // Merge and sort by creation date (newest first)
+    const all = [...shopifyProducts, ...prelovedProducts];
+    all.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    return all;
+  } catch (error) {
+    console.warn('[market] getProductsByBrand error:', error);
+    return [];
+  }
 }
 
 // ============================================
