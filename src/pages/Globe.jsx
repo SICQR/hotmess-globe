@@ -21,6 +21,7 @@ import ErrorBoundary from '../components/error/ErrorBoundary';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { useRealtimeBeacons, useRightNowCount, useRealtimeLocations, useRealtimeRoutes } from '../components/globe/useRealtimeBeacons';
+import { useGlobeActivity } from '@/hooks/useGlobeActivity';
 import { useProfileOpener } from '@/lib/profile';
 import LocationShopPanel from '../components/globe/LocationShopPanel';
 
@@ -229,6 +230,10 @@ export default function GlobePage() {
   const [previewBeacon, setPreviewBeacon] = useState(null);
   const [locationShopBeacon, setLocationShopBeacon] = useState(null);
   const autoZoomedRef = React.useRef(false);
+
+  // Living Globe: activity reactor (seed heat + venue glow)
+  const liveBeaconCount = (rightNowUsers?.length ?? 0) + (beacons?.length ?? 0);
+  const globeActivity = useGlobeActivity(liveBeaconCount);
 
   const showPeoplePins = activeLayers.includes('people');
 
@@ -603,6 +608,7 @@ export default function GlobePage() {
           userActivities={userActivities}
           userIntents={userIntents}
           routesData={realtimeRoutes}
+          globeActivity={globeActivity}
           onBeaconClick={handleBeaconClick}
           onCityClick={handleCityClick}
           selectedCity={selectedCity}

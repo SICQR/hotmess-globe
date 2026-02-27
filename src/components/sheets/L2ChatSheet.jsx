@@ -8,12 +8,13 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
 import {
   MessageCircle, Send, ArrowLeft,
   Loader2, Search, ChevronRight,
   Camera, Mic, Video, Navigation,
+  Sparkles, X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +53,11 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const [searchQuery, setSearchQuery]   = useState('');
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showTravelModal, setShowTravelModal] = useState(false);
+
+  // ── Wingman AI state ─────────────────────────────────────────────────────
+  const [wingmanLoading, setWingmanLoading] = useState(false);
+  const [wingmanSuggestions, setWingmanSuggestions] = useState(null); // { openers: [{text, type}], targetName }
+  const [wingmanError, setWingmanError] = useState(false);
 
   // ── Typing indicator ───────────────────────────────────────────────────────
   const { typingUsers, sendTyping } = useTypingIndicator(
@@ -354,6 +360,81 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     loadThreads();
   };
 
+  // ── Wingman AI handler ─────────────────────────────────────────────────────
+  const handleWingmanTap = useCallback(async () => {
+    if (wingmanLoading) return;
+
+    // CHROME tier gating
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser?.email) {
+        const { data: profile } = await supabase
+          .from('User')
+          .select('subscription_tier')
+          .eq('email', authUser.email)
+          .single();
+        const tier = (profile?.subscription_tier || 'FREE').toUpperCase();
+        if (tier !== 'CHROME' && tier !== 'ELITE') {
+          toast('Upgrade to CHROME for Wingman suggestions', {
+            style: { background: '#1C1C1E', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
+          });
+          return;
+        }
+      }
+    } catch {
+      // If tier check fails, proceed anyway (fail-open for MVP)
+    }
+
+    // Need the other profile's ID for the API call
+    if (!otherProfile?.id) {
+      toast.error('Profile not loaded yet');
+      return;
+    }
+
+    setWingmanLoading(true);
+    setWingmanError(false);
+    setWingmanSuggestions(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/ai/wingman', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({
+          viewerEmail: currentUser.email,
+          targetProfileId: otherProfile.id,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Wingman API error');
+
+      const data = await res.json();
+      setWingmanSuggestions({
+        openers: data.openers || [],
+        targetName: data.targetName || otherName,
+      });
+    } catch {
+      setWingmanError(true);
+      toast.error('Wingman is resting. Try again later.');
+    } finally {
+      setWingmanLoading(false);
+    }
+  }, [wingmanLoading, currentUser?.email, otherProfile?.id, otherName]);
+
+  const handleWingmanSelect = useCallback((text) => {
+    setNewMessage(text);
+    setWingmanSuggestions(null);
+    inputRef.current?.focus();
+  }, []);
+
+  const handleWingmanDismiss = useCallback(() => {
+    setWingmanSuggestions(null);
+    setWingmanError(false);
+  }, []);
+
   // ── Photo upload ───────────────────────────────────────────────────────────
   const handlePhotoUpload = async (file) => {
     if (!file || !currentUser?.email) return;
@@ -407,6 +488,11 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     const p = getProfile(email);
     return (p?.display_name || email).toLowerCase().includes(searchQuery.toLowerCase());
   });
+
+  // ── Derive other-party info (needed by Wingman + chat view) ───────────────
+  const otherEmail = selectedThread ? getOtherEmail(selectedThread) : '';
+  const otherProfile = otherEmail ? getProfile(otherEmail) : null;
+  const otherName = otherProfile?.display_name || otherEmail || title || 'Chat';
 
   // ── Thread list ────────────────────────────────────────────────────────────
   if (!selectedThread) {
@@ -486,10 +572,6 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   }
 
   // ── Chat view ──────────────────────────────────────────────────────────────
-  const otherEmail = getOtherEmail(selectedThread);
-  const otherProfile = getProfile(otherEmail);
-  const otherName = otherProfile?.display_name || otherEmail || title || 'Chat';
-
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -603,6 +685,56 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         </div>
       )}
 
+      {/* Wingman suggestions panel */}
+      <AnimatePresence>
+        {(wingmanSuggestions || wingmanLoading) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: 20, height: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="border-t border-[#C8962C]/30 bg-black/90 backdrop-blur-sm flex-shrink-0 overflow-hidden"
+          >
+            <div className="px-4 pt-3 pb-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#C8962C]" />
+                  <span className="text-xs font-bold text-[#C8962C] uppercase tracking-wider">Wingman</span>
+                </div>
+                <button
+                  onClick={handleWingmanDismiss}
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20"
+                  aria-label="Dismiss suggestions"
+                >
+                  <X className="w-3 h-3 text-white/50" />
+                </button>
+              </div>
+
+              {wingmanLoading ? (
+                <div className="space-y-2 pb-1">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="h-10 rounded-xl animate-pulse bg-white/[0.06] border border-[#C8962C]/20" />
+                  ))}
+                </div>
+              ) : wingmanSuggestions?.openers?.length > 0 ? (
+                <div className="space-y-2 pb-1">
+                  {wingmanSuggestions.openers.map((opener, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleWingmanSelect(opener.text)}
+                      className="w-full text-left px-3 py-2.5 rounded-xl border border-[#C8962C]/30 bg-[#1C1C1E] text-white text-sm leading-snug active:bg-[#C8962C]/20 active:scale-[0.98] transition-all"
+                      aria-label={`Use suggestion: ${opener.text}`}
+                    >
+                      {opener.text}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Composer */}
       <div className="border-t border-white/10 bg-black/80 backdrop-blur-sm flex-shrink-0">
         {/* Action bar */}
@@ -650,6 +782,26 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             title="Share location"
           >
             <Navigation className="w-4 h-4 text-[#C8962C]" />
+          </button>
+
+          {/* Wingman AI */}
+          <button
+            onClick={handleWingmanTap}
+            disabled={wingmanLoading}
+            className={cn(
+              'flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border transition-all active:scale-95',
+              wingmanLoading
+                ? 'bg-[#C8962C]/20 border-[#C8962C]/40'
+                : 'bg-white/5 border-[#C8962C]/50 hover:bg-[#C8962C]/10'
+            )}
+            title="Wingman - AI conversation starters"
+            aria-label="Get Wingman conversation suggestions"
+          >
+            {wingmanLoading ? (
+              <Loader2 className="w-4 h-4 text-[#C8962C] animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-[#C8962C]" />
+            )}
           </button>
 
         </div>
