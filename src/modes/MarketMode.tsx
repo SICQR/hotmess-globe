@@ -835,6 +835,12 @@ export function MarketMode({ className = '' }: MarketModeProps) {
                         { key: 'hung', label: 'HUNG' },
                         { key: 'high', label: 'HIGH' },
                         { key: 'hungmess', label: 'HUNGMESS' },
+                        { key: 'superhung', label: 'SUPERHUNG' },
+                        { key: 'superraw', label: 'SUPERRAW' },
+                        { key: 'hotmessRadio', label: 'HOTMESS RADIO' },
+                        { key: 'rawConvictRecords', label: 'RAW CONVICT' },
+                        { key: 'smashDaddys', label: 'SMASH DADDYS' },
+                        { key: 'hnhMess', label: 'HNH MESS' },
                       ] as const
                     ).filter((b) => isBrandVisible(b.key)).map((b) => (
                       <button
