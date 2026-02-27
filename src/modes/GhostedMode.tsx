@@ -382,6 +382,13 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
     position: { x: number; y: number };
   } | null>(null);
 
+  const handleLongPress = useCallback(
+    (profile: Profile, position: { x: number; y: number }) => {
+      setQuickMenu({ profile, position });
+    },
+    [],
+  );
+
   // ---- FAB scroll-hide logic ----
   const scrollRef = useRef<HTMLDivElement>(null);
   const [fabVisible, setFabVisible] = useState(true);
@@ -496,6 +503,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
           showHeader={false}
           filterProfiles={filterProfiles}
           viewerEmail={myEmail}
+          onLongPress={handleLongPress}
         />
       </div>
 
