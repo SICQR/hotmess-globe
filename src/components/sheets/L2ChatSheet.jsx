@@ -57,8 +57,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // ── Wingman AI state ─────────────────────────────────────────────────────
   const [wingmanLoading, setWingmanLoading] = useState(false);
   const [wingmanSuggestions, setWingmanSuggestions] = useState(null); // { openers: [{text, type}], targetName }
-  const [wingmanError, setWingmanError] = useState(false);
-
+  const [, setWingmanError] = useState(false);
   // ── Typing indicator ───────────────────────────────────────────────────────
   const { typingUsers, sendTyping } = useTypingIndicator(
     selectedThread && !selectedThread._new ? selectedThread.id : null,
@@ -66,7 +65,6 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   );
 
   const messagesEndRef  = useRef(null);
-  const cameraRef       = useRef(null);
   const photoInputRef   = useRef(null);
   const inputRef        = useRef(null);
   const realtimeRef     = useRef(null);
@@ -360,6 +358,11 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     loadThreads();
   };
 
+  // ── Helper: extract other party's email from thread ────────────────────────
+  const getOtherEmail = (thread) =>
+    thread.participant_emails?.find(e => e !== currentUser?.email) || '';
+  const getProfile = (email) => profiles[email] || null;
+
   // ── Wingman AI handler ─────────────────────────────────────────────────────
   // ── Derive other-party info (needed by Wingman + chat view) ───────────────
   const otherEmail = selectedThread ? getOtherEmail(selectedThread) : '';
@@ -476,11 +479,6 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       toast.error(err.message || 'Failed to send photo');
     }
   };
-
-  const getOtherEmail = (thread) =>
-    thread.participant_emails?.find(e => e !== currentUser?.email) || '';
-
-  const getProfile = (email) => profiles[email] || null;
 
   const isUnread = (thread) => {
     if (!thread.last_message_at) return false;

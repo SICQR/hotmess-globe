@@ -38,8 +38,6 @@ import {
   Radio as RadioIcon,
   Zap,
   Sparkles,
-  ExternalLink,
-  Loader2,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
