@@ -59,16 +59,23 @@ import {
   type ProductFilters,
 } from '@/lib/data';
 
-// Safe cart item count hook (ShopCartProvider is always mounted via App.jsx)
+// Safe cart item count hook — counts BOTH Shopify + preloved items
 function useCartItemCount(): number {
   const { cart } = useShopCart();
   // Shopify cart lines are edges in a connection
   const lines = cart?.lines;
-  if (!lines) return 0;
-  // Handle both array and edges/node connection shapes
-  if (Array.isArray(lines)) return lines.length;
-  if (lines.edges && Array.isArray(lines.edges)) return lines.edges.length;
-  return 0;
+  let shopifyCount = 0;
+  if (lines) {
+    if (Array.isArray(lines)) shopifyCount = lines.length;
+    else if (lines.edges && Array.isArray(lines.edges)) shopifyCount = lines.edges.length;
+  }
+  // Preloved items from localStorage
+  let prelovedCount = 0;
+  try {
+    const preloved = JSON.parse(localStorage.getItem('hm_cart') || '[]');
+    prelovedCount = Array.isArray(preloved) ? preloved.length : 0;
+  } catch { /* ignore */ }
+  return shopifyCount + prelovedCount;
 }
 
 // ---- Brand constants --------------------------------------------------------

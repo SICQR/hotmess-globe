@@ -31,6 +31,7 @@ export default function L2SellSheet() {
   const photoInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const [form, setForm] = useState({
     title: '',
@@ -56,6 +57,7 @@ export default function L2SellSheet() {
     if (!form.title.trim()) return toast.error('Add a title');
     if (!form.price || isNaN(parseFloat(form.price))) return toast.error('Add a price');
     if (!form.category) return toast.error('Choose a category');
+    if (!termsAccepted) return toast.error('Please accept the Seller Terms');
 
     setLoading(true);
     try {
@@ -257,16 +259,37 @@ export default function L2SellSheet() {
 
       {/* Sticky CTA */}
       <div className="px-4 py-4 border-t border-white/10 bg-black/80">
+        {/* Prohibited items warning */}
+        <div className="mb-3 p-3 bg-red-500/5 border border-red-500/15 rounded-xl">
+          <p className="text-red-400/80 text-[10px] font-bold uppercase tracking-wider mb-1">Prohibited Items</p>
+          <p className="text-white/30 text-[10px] leading-relaxed">
+            Weapons, drugs, counterfeit goods, stolen property, and unverified adult content are prohibited and will be removed.
+          </p>
+        </div>
+
+        {/* Terms checkbox */}
+        <label className="flex items-start gap-3 mb-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={e => setTermsAccepted(e.target.checked)}
+            className="mt-0.5 w-4 h-4 rounded border-white/20 bg-[#1C1C1E] accent-[#C8962C]"
+          />
+          <span className="text-white/40 text-[11px] leading-relaxed">
+            I confirm this item is legal to sell, not counterfeit, and I accept the 10% platform fee and HOTMESS Seller Terms.
+          </span>
+        </label>
+
         <div className="flex items-center gap-2 mb-3 text-white/30 text-xs">
           <Package className="w-3.5 h-3.5 flex-shrink-0" />
           <span>HOTMESS takes 10% on each sale · Payouts within 3 business days</span>
         </div>
         <Button
           onClick={handleSubmit}
-          disabled={!form.title.trim() || !form.price || !form.category || loading}
+          disabled={!form.title.trim() || !form.price || !form.category || !termsAccepted || loading}
           className={cn(
             'w-full py-4 font-black uppercase tracking-wide rounded-2xl text-sm transition-all',
-            form.title.trim() && form.price && form.category
+            form.title.trim() && form.price && form.category && termsAccepted
               ? 'bg-[#C8962C] text-black hover:bg-[#D4A84B]'
               : 'bg-white/5 text-white/20 cursor-not-allowed'
           )}

@@ -7,9 +7,10 @@
  * 
  * L0: Globe (z-0)           — Always visible, never unmounts
  * L1: HUD (z-50)            — Bottom nav, status indicators
- * L2: Sheets (z-80)         — Slide-up content panels
- * L3: Interrupts (z-100)    — Toasts, alerts, confirmations
- * L4: PIN Lock (z-200)      — Security overlay
+ * L2: Sheets (z-100)        — Slide-up content panels
+ * L3: Higher sheets (z-150) — Persona switcher, filters
+ * Interrupts (z-180–200)    — IncomingCallBanner, SOSButton, SOSOverlay
+ * PIN Lock (z-200+)         — Security overlay
  * 
  * ═══════════════════════════════════════════════════════════════════════════
  * SHEET LAWS (Immutable Rules)
