@@ -33,7 +33,6 @@ import {
   Radio,
   Calendar,
   Sparkles,
-  TrendingUp,
   Clock,
   MessageSquare,
   Heart,
@@ -743,7 +742,23 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="px-5 pt-4 pb-36 space-y-6">
+        <div className="pb-36 space-y-6">
+
+          {/* ── Hero Banner ── */}
+          <div className="relative w-full h-40 overflow-hidden">
+            <img
+              src="/assets/hero-storm.jpg"
+              alt="HOTMESS London"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/60 to-transparent" />
+            <div className="absolute bottom-3 left-5 right-5">
+              <h2 className="font-black text-2xl text-white tracking-wider uppercase leading-none drop-shadow-lg">HOTMESS</h2>
+              <p className="text-white/50 text-xs mt-0.5">Always too much, yet never enough</p>
+            </div>
+          </div>
+
+          <div className="px-5 space-y-6">
 
           {/* ── Section 1: Right Now ── */}
           <AnimatedSection index={0}>
@@ -992,6 +1007,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             <RadioBanner onNavigate={() => navigate('/radio')} />
           </AnimatedSection>
 
+          </div>{/* end px-5 */}
         </div>
       </div>
 

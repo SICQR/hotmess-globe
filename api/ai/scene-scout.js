@@ -75,12 +75,12 @@ export default async function handler(req, res) {
     dayEnd.setHours(8, 0, 0); // Until 8am next day
 
     const { data: events, error: eventsError } = await getSupabase()
-      .from('Beacon')
+      .from('beacons')
       .select('*')
-      .eq('beacon_type', 'event')
-      .gte('start_date', dayStart.toISOString())
-      .lte('start_date', dayEnd.toISOString())
-      .order('start_date', { ascending: true });
+      .eq('kind', 'event')
+      .gte('event_start', dayStart.toISOString())
+      .lte('event_start', dayEnd.toISOString())
+      .order('event_start', { ascending: true });
 
     if (eventsError) {
     }
@@ -117,7 +117,7 @@ export default async function handler(req, res) {
         description: event.description?.slice(0, 100),
         score,
         reasons,
-        start_time: event.start_date,
+        start_time: event.event_start,
         metadata: {
           area: event.location_area || event.metadata?.area,
           venue: event.location_name,
@@ -214,7 +214,7 @@ function calculateEventScore(event, user, activity) {
   }
 
   // Time bonus (after 10pm)
-  const startHour = new Date(event.start_date).getHours();
+  const startHour = new Date(event.event_start).getHours();
   if (startHour >= 22 || startHour < 6) {
     score += SCORING.TIME_BONUS;
   }

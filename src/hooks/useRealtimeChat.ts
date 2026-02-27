@@ -147,7 +147,7 @@ export function useRealtimeChat({
 
             // Get sender info for notification
             const { data: senderData } = await supabase
-              .from('User')
+              .from('profiles')
               .select('full_name, avatar_url')
               .eq('email', newMessage.sender_email)
               .single();

@@ -291,12 +291,12 @@ async function findEvents({ query, city = 'London', dateRange, type }, userConte
   }
 
   let queryBuilder = getSupabase()
-    .from('Beacon')
-    .select('id, title, description, start_date, end_date, location_name, location_area, beacon_type, metadata')
-    .eq('beacon_type', 'event')
-    .gte('start_date', startDate.toISOString())
-    .lte('start_date', endDate.toISOString())
-    .order('start_date', { ascending: true })
+    .from('beacons')
+    .select('id, title, description, event_start, event_end, venue_name, city, kind, metadata')
+    .eq('kind', 'event')
+    .gte('event_start', startDate.toISOString())
+    .lte('event_start', endDate.toISOString())
+    .order('event_start', { ascending: true })
     .limit(10);
 
   if (query) {
@@ -317,8 +317,8 @@ async function findEvents({ query, city = 'London', dateRange, type }, userConte
       id: e.id,
       title: e.title,
       description: e.description?.slice(0, 150),
-      date: e.start_date,
-      location: e.location_name || e.location_area,
+      date: e.event_start,
+      location: e.venue_name || e.city,
       type: e.metadata?.event_type
     })) || [],
     count: data?.length || 0,

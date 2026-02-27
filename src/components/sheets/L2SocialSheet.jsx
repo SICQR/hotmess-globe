@@ -71,7 +71,7 @@ export default function L2SocialSheet() {
     queryFn: async () => {
       try {
         const { data } = await supabase
-          .from('User')
+          .from('profiles')
           .select('id, full_name, avatar_url, email, city')
           .eq('is_online', true)
           .limit(20);

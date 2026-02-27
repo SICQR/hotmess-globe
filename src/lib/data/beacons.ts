@@ -81,7 +81,7 @@ export async function getBeacons(filters: BeaconFilters = {}): Promise<Beacon[]>
     query = query.limit(filters.limit);
   }
 
-  const { data, error } = await query.order('created_at', { ascending: false });
+  const { data, error } = await query.order('starts_at', { ascending: false });
 
   if (error) {
     console.error('[beacons] getBeacons error:', error.message);
@@ -177,7 +177,7 @@ export async function getSafetyAlerts(
     .select('*')
     .eq('type', 'safety')
     .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
-    .order('created_at', { ascending: false });
+    .order('starts_at', { ascending: false });
 
   if (error) {
     console.error('[beacons] getSafetyAlerts error:', error.message);

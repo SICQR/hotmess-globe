@@ -16,6 +16,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircle, MapPin } from 'lucide-react';
+import { PresenceIndicator } from '@/components/social/PresenceIndicator';
 
 interface SimpleProfileCardProps {
   id: string;
@@ -84,12 +85,11 @@ export function SimpleProfileCard({
       {/* Gradient overlay for text readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
 
-      {/* Status indicator */}
+      {/* Status indicator — using PresenceIndicator for gold pulsing dot */}
       {status !== 'offline' && (
-        <div 
-          className="absolute top-3 right-3 w-3 h-3 rounded-full border-2 border-black"
-          style={{ backgroundColor: STATUS_COLORS[status] }}
-        />
+        <div className="absolute top-3 right-3">
+          <PresenceIndicator isOnline={status === 'online'} size="md" />
+        </div>
       )}
 
       {/* Match badge */}

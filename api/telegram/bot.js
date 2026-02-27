@@ -266,9 +266,9 @@ async function handleEvents(chatId, telegramUserId) {
 
   // Get upcoming events
   const { data: events } = await supabase
-    .from('Beacon')
+    .from('beacons')
     .select('event_title, venue_name, event_start, ticket_url')
-    .eq('beacon_type', 'event')
+    .eq('kind', 'event')
     .gt('beacon_expires_at', new Date().toISOString())
     .order('event_start', { ascending: true })
     .limit(5);

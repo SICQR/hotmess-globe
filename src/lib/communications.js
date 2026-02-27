@@ -642,7 +642,7 @@ export async function sendPushNotification({ userId, title, message, link, metad
 
 async function getUserById(userId) {
   const { data } = await supabase
-    .from('User')
+    .from('profiles')
     .select('id, email, display_name, full_name')
     .eq('id', userId)
     .single();
