@@ -19,9 +19,6 @@ import { supabase } from '@/components/utils/supabaseClient';
 // ── Colour constants (THREE.js hex) ─────────────────────────────────────────
 
 const GOLD   = 0xC8962C;
-const RED    = 0xFF3B30;
-const PURPLE = 0xB026FF;
-const LIME   = 0x39FF14;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
