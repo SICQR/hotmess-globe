@@ -91,7 +91,7 @@ function normalizePrelovedProduct(listing: PrelovedListing): Product {
 export async function getPrelovedProducts(filters: ProductFilters = {}): Promise<Product[]> {
   let query = supabase
     .from('preloved_listings')
-    .select('*, seller:profiles(display_name)')
+    .select('*')
     .eq('status', 'active');
 
   if (filters.category) {
@@ -132,7 +132,7 @@ export async function getPrelovedProducts(filters: ProductFilters = {}): Promise
 export async function getPrelovedProductById(id: string): Promise<Product | null> {
   const { data, error } = await supabase
     .from('preloved_listings')
-    .select('*, seller:profiles(display_name)')
+    .select('*')
     .eq('id', id)
     .single();
 
@@ -179,8 +179,8 @@ function normalizeShopifyProduct(product: ShopifyProduct): Product {
     source: 'shopify',
     title: product.title,
     description: product.description,
-    price: parseFloat(product.priceRange.minVariantPrice.amount),
-    currency: product.priceRange.minVariantPrice.currencyCode,
+    price: parseFloat(product.priceRange?.minVariantPrice?.amount || '0'),
+    currency: product.priceRange?.minVariantPrice?.currencyCode || 'GBP',
     compareAtPrice: product.compareAtPriceRange?.minVariantPrice
       ? parseFloat(product.compareAtPriceRange.minVariantPrice.amount)
       : undefined,
@@ -331,7 +331,7 @@ export async function createListing(input: CreateListingInput): Promise<Product 
       images: input.images || [],
       status: 'active',
     })
-    .select('*, seller:profiles(display_name)')
+    .select('*')
     .single();
 
   if (error) {
@@ -350,7 +350,7 @@ export async function updateListing(
     .from('preloved_listings')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', listingId)
-    .select('*, seller:profiles(display_name)')
+    .select('*')
     .single();
 
   if (error) {

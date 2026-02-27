@@ -824,7 +824,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         .from('beacons')
         .select('id, metadata, starts_at, end_at, lat, lng, kind, type, intensity')
         .or('end_at.is.null,end_at.gte.' + now)
-        .order('created_at', { ascending: false })
+        .order('starts_at', { ascending: false })
         .limit(50);
       if (error) {
         console.error('[pulse] beacons query error:', error.message);
@@ -864,7 +864,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         .select('id, metadata, starts_at, end_at, lat, lng, kind, type')
         .or(`type.eq.safety,kind.eq.safety`)
         .or('end_at.is.null,end_at.gte.' + now)
-        .order('created_at', { ascending: false })
+        .order('starts_at', { ascending: false })
         .limit(10);
       if (error) {
         console.error('[pulse] safety query error:', error.message);

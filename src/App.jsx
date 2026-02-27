@@ -41,6 +41,7 @@ import { PinLockProvider } from '@/contexts/PinLockContext';
 import PinLockOverlay from '@/components/auth/PinLockScreen';
 import { OSBottomNav } from '@/modes/OSBottomNav';
 import { RadioProvider } from '@/contexts/RadioContext';
+import { PersonaProvider } from '@/contexts/PersonaContext';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import AuthCallback from '@/pages/auth/callback';
@@ -627,7 +628,9 @@ function App() {
                             - Router only handles URL sync, not page mounts
                           */}
                           <RadioProvider>
-                            <OSArchitecture />
+                            <PersonaProvider>
+                              <OSArchitecture />
+                            </PersonaProvider>
                           </RadioProvider>
                         </BootRouter>
                         {/* L2 Sheet System - Renders over everything, outside route remount boundary */}
