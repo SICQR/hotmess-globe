@@ -24,8 +24,9 @@ export default function L2ScheduleSheet() {
 
   useEffect(() => {
     supabase
-      .from('events')
-      .select('id, title, name, starts_at, venue, image_url')
+      .from('beacons')
+      .select('id, title, event_title, starts_at, venue_name, image_url')
+      .eq('kind', 'event')
       .gte('starts_at', new Date().toISOString())
       .order('starts_at', { ascending: true })
       .limit(20)
@@ -117,9 +118,9 @@ export default function L2ScheduleSheet() {
                             </div>}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white font-bold text-sm truncate">{e.title || e.name}</p>
+                        <p className="text-white font-bold text-sm truncate">{e.title || e.event_title}</p>
                         <p className="text-[#C8962C] text-xs mt-0.5">{formatDate(e.starts_at)}</p>
-                        {e.venue && <p className="text-white/40 text-[10px] mt-0.5 truncate">{e.venue}</p>}
+                        {e.venue_name && <p className="text-white/40 text-[10px] mt-0.5 truncate">{e.venue_name}</p>}
                       </div>
                       <Clock className="w-4 h-4 text-white/20 flex-shrink-0" />
                     </button>
