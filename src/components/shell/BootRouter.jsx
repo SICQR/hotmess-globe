@@ -15,15 +15,32 @@ const getLocalAgeVerified = () => {
   }
 };
 
-// Branded splash screen shown during boot auth check
+// Branded loading — cinematic pulse
 const LoadingSpinner = () => (
   <div className="fixed inset-0 bg-black flex flex-col items-center justify-center">
-    <div className="flex flex-col items-center gap-4">
-      <p className="text-4xl font-black tracking-tight select-none">
-        <span className="text-white">HOT</span><span className="text-[#C8962C]">MESS</span>
-      </p>
-      <div className="w-5 h-5 border-2 border-[#C8962C]/30 border-t-[#C8962C] rounded-full animate-spin" />
+    <p className="text-lg font-black italic text-white/25 tracking-tight select-none mb-6">
+      HOT<span className="text-[#C8962C]/40">MESS</span>
+    </p>
+    <div className="relative w-10 h-10">
+      {/* Breathing gold ring */}
+      <div
+        className="absolute inset-0 rounded-full border-2 border-[#C8962C]/30"
+        style={{
+          animation: 'goldPulse 1.4s ease-in-out infinite',
+        }}
+      />
+      {/* Spinning accent */}
+      <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#C8962C] animate-spin" />
     </div>
+    <p className="mt-5 text-[8px] uppercase tracking-[0.4em] text-white/10 font-medium">
+      Loading
+    </p>
+    <style>{`
+      @keyframes goldPulse {
+        0%, 100% { transform: scale(0.88); opacity: 1; }
+        50% { transform: scale(1.12); opacity: 0.25; }
+      }
+    `}</style>
   </div>
 );
 

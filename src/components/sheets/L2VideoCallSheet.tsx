@@ -61,8 +61,17 @@ export default function L2VideoCallSheet({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // ---- Video calls coming soon flag ----
+  const [comingSoon] = useState(true);
+
   // ---- Initialize call ----
   const initializeCall = useCallback(async () => {
+    // Video calls require WebRTC signaling (post-launch feature)
+    if (comingSoon) {
+      setCallStatus('connecting');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -75,16 +84,15 @@ export default function L2VideoCallSheet({
         localVideoRef.current.srcObject = stream;
       }
 
-      // Simulate connection (production: use WebRTC signaling via rtc_signals table)
+      // Production: use WebRTC signaling via rtc_signals table
       setTimeout(() => {
         setCallStatus('connected');
       }, 2000);
     } catch (error) {
       console.error('[VideoCall] Failed to initialize:', error);
-      // Close the sheet on camera failure
       closeSheet();
     }
-  }, [closeSheet]);
+  }, [closeSheet, comingSoon]);
 
   // ---- Cleanup: stop all media tracks ----
   const stopAllTracks = useCallback(() => {
@@ -213,7 +221,7 @@ export default function L2VideoCallSheet({
           className="w-full h-full object-cover"
         />
 
-        {/* Avatar placeholder when no remote stream */}
+        {/* Avatar placeholder / Coming Soon overlay */}
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0D0D0D]">
           {calleeAvatar ? (
             <img
@@ -229,9 +237,23 @@ export default function L2VideoCallSheet({
             </div>
           )}
           <p className="text-xl font-semibold text-white">{calleeName}</p>
-          {callStatus === 'connecting' && (
+          {comingSoon ? (
+            <div className="mt-4 text-center px-8">
+              <p className="text-[#C8962C] font-black text-sm uppercase tracking-wider">Coming Soon</p>
+              <p className="text-white/40 text-xs mt-2 leading-relaxed">
+                Video calls are being built with end-to-end encryption.
+                Use chat to connect for now.
+              </p>
+              <button
+                onClick={endCall}
+                className="mt-6 bg-[#C8962C] text-black font-black text-sm rounded-2xl px-6 py-3"
+              >
+                Go Back
+              </button>
+            </div>
+          ) : callStatus === 'connecting' ? (
             <p className="text-sm text-[#8E8E93] mt-2">Connecting...</p>
-          )}
+          ) : null}
         </div>
 
         {/* Connecting spinner overlay */}

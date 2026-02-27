@@ -355,7 +355,9 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
       }
 
       if (activeTab === 'events') {
-        if (!profile.attending_tonight && !profile.has_event_tonight) return false;
+        // Events Tonight: requires event RSVP integration (post-launch)
+        // For now, no profiles match — shows empty state
+        return false;
       }
 
       return true;
