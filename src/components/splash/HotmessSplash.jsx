@@ -9,10 +9,10 @@
  * 5. DONE    — Branded transition into OS
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, ArrowRight, Eye, EyeOff, Loader2, Mail, ArrowLeft } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Loader2, Mail, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
@@ -41,10 +41,8 @@ export default function HotmessSplash() {
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [audioPlaying, setAudioPlaying] = useState(false);
   const [showLegal, setShowLegal] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
-  const audioRef = useRef(null);
 
   // Skip splash if already authenticated
   useEffect(() => {
@@ -53,34 +51,10 @@ export default function HotmessSplash() {
     });
   }, []);
 
-  // Audio setup
-  useEffect(() => {
-    const audio = new Audio('/audio/radio-in.mp3');
-    audio.loop = true;
-    audio.volume = 0.25;
-    audioRef.current = audio;
-    return () => { audio.pause(); audio.src = ''; };
-  }, []);
-
-  const toggleAudio = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (audioPlaying) {
-      audio.pause();
-    } else {
-      audio.play().catch(() => {});
-    }
-    setAudioPlaying(p => !p);
-  };
-
   const handleEnter = () => {
     try {
       localStorage.setItem('hm_age_confirmed_v1', 'true');
     } catch {}
-    if (audioRef.current && !audioPlaying) {
-      audioRef.current.play().catch(() => {});
-      setAudioPlaying(true);
-    }
     setStage('auth');
   };
 
@@ -123,7 +97,6 @@ export default function HotmessSplash() {
         toast.success('Welcome back!');
       }
       setStage('done');
-      audioRef.current?.pause();
       setTimeout(() => navigate('/', { replace: true }), 800);
     } catch (err) {
       toast.error(err.message || 'Authentication failed');
@@ -158,16 +131,6 @@ export default function HotmessSplash() {
           filter: 'blur(60px)',
         }}
       />
-
-      {/* Audio toggle — minimal, top right */}
-      <button
-        onClick={toggleAudio}
-        className="absolute top-6 right-6 z-50 p-2.5 rounded-full bg-white/5 border border-white/8 hover:border-white/20 transition-all"
-      >
-        {audioPlaying
-          ? <Volume2 className="w-4 h-4 text-[#C8962C]" />
-          : <VolumeX className="w-4 h-4 text-white/30" />}
-      </button>
 
       <AnimatePresence mode="wait">
 

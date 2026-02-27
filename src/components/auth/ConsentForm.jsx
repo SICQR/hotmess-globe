@@ -29,7 +29,7 @@ const SECTIONS = [
   {
     icon: Shield,
     title: 'Safety & Responsibility',
-    body: 'Use Care Beacons for health resources. Report inappropriate behaviour immediately. Respect all members\' boundaries. Comply with local laws.',
+    body: 'Use Care Beacons for health resources. Report inappropriate behaviour immediately. Respect all members\' boundaries. Comply with UK laws.',
   },
 ];
 
@@ -154,8 +154,9 @@ export default function ConsentForm({ user, onAccepted }) {
             <div className="flex items-start gap-3">
               <Lock className="w-4 h-4 text-[#C8962C]/60 mt-0.5 shrink-0" />
               <p className="text-xs text-white/50 leading-relaxed">
-                This platform contains adult content (18+). Sexual orientation data is treated as
-                Special Category data under GDPR Article 9 with enhanced protection.
+                This platform contains adult content (18+). Sexual orientation data is Special
+                Category data under GDPR Article 9 and receives enhanced protection. We process
+                this data only with your explicit consent.
               </p>
             </div>
           </div>
@@ -168,9 +169,8 @@ export default function ConsentForm({ user, onAccepted }) {
               className="mt-0.5 w-5 h-5 border-2 border-white/20 shrink-0 data-[state=checked]:bg-[#C8962C] data-[state=checked]:border-[#C8962C]"
             />
             <span className="text-xs text-white/50 leading-relaxed">
-              I confirm I am 18+, have read the above, and agree to join HOTMESS as a private
-              member — including consent to processing of Special Category data under GDPR
-              Article 9.
+              I confirm I am 18+, have read the above, and agree to join as a private member
+              — including consent to processing of Special Category data under GDPR Article 9.
             </span>
           </label>
 

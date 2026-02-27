@@ -38,6 +38,7 @@ export * from './market';
 export {
   getAllProducts,
   getProductById,
+  getProductsByBrand,
   getPrelovedProducts,
   getShopifyProducts,
   getCategories,

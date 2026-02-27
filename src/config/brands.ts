@@ -36,6 +36,7 @@ export const BRAND_CONFIG: Record<string, BrandConfig> = {
     name: 'HOTMESS RADIO',
     visible: true,
     description: 'Live radio layer — Wake The Mess, Dial A Daddy, Hand N Hand',
+    shopifyCollection: 'hotmess-radio',
     routes: ['/radio'],
   },
 
@@ -79,7 +80,7 @@ export const BRAND_CONFIG: Record<string, BrandConfig> = {
   superhung: {
     key: 'superhung',
     name: 'SUPERHUNG',
-    visible: false,
+    visible: true,
     description: 'Ultra-limited drops',
     shopifyCollection: 'superhung',
     routes: ['/market/superhung'],
@@ -88,7 +89,7 @@ export const BRAND_CONFIG: Record<string, BrandConfig> = {
   superraw: {
     key: 'superraw',
     name: 'SUPERRAW',
-    visible: false,
+    visible: true,
     description: 'Ultra-limited RAW drops',
     shopifyCollection: 'superraw',
     routes: ['/market/superraw'],
@@ -99,31 +100,34 @@ export const BRAND_CONFIG: Record<string, BrandConfig> = {
     name: 'HUNGMESS',
     visible: false,
     description: 'Editorial fashion line',
+    shopifyCollection: 'hungmess',
     routes: ['/editorial'],
   },
 
   rawConvictRecords: {
     key: 'rawConvictRecords',
     name: 'RAW CONVICT RECORDS',
-    visible: false,
+    visible: true,
     description: 'The record label',
+    shopifyCollection: 'raw-convict-records',
     routes: ['/music'],
   },
 
   smashDaddys: {
     key: 'smashDaddys',
     name: 'SMASH DADDYS',
-    visible: false,
+    visible: true,
     description: 'In-house music production',
+    shopifyCollection: 'smash-daddys',
     routes: ['/production'],
   },
 
   hnhMess: {
     key: 'hnhMess',
     name: 'HNH MESS',
-    visible: false,
+    visible: true,
     description: 'Lube brand',
-    shopifyCollection: 'hnh',
+    shopifyCollection: 'hnh-mess',
     routes: ['/market/hnh'],
   },
 };

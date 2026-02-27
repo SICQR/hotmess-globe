@@ -429,8 +429,11 @@ export default function OnboardingGate() {
             </div>
 
             <h2 className="text-2xl font-black text-white mb-2">Verify Your Age</h2>
-            <p className="text-sm text-white/40 mb-8">
-              HOTMESS is an 18+ private members club.
+            <p className="text-sm text-white/40 mb-2">
+              HOTMESS is an 18+ private members club for men.
+            </p>
+            <p className="text-[10px] text-white/25 mb-8 leading-relaxed">
+              Operating under Equality Act 2010 {'\u00A7'}193.
             </p>
 
             <div className="mb-6">
@@ -445,7 +448,7 @@ export default function OnboardingGate() {
                     } catch {}
                   }
                 }}
-                label="I confirm I am 18 years or older"
+                label="I confirm I am 18 years or older and understand this is a private members club for men"
               />
             </div>
 
@@ -497,8 +500,8 @@ export default function OnboardingGate() {
                   GDPR Notice
                 </p>
                 <p className="text-xs text-white/45 leading-relaxed">
-                  Sexual orientation data is treated as Special Category data under GDPR Article
-                  9 with enhanced protection. We process this only with your explicit consent.
+                  Sexual orientation data is Special Category data under GDPR Article 9 and
+                  receives enhanced protection. We process this data only with your explicit consent.
                 </p>
               </div>
             </div>
@@ -798,10 +801,14 @@ export default function OnboardingGate() {
               className="bg-[#0D0D0D] border border-[#C8962C]/15 rounded-2xl p-5 mb-6 text-left relative z-10"
             >
               <p className="text-sm text-white/70 leading-relaxed">
-                HOTMESS is built for gay and bisexual men, 18+.
+                HOTMESS is a private members club for gay and bisexual men, 18+.
               </p>
               <p className="text-sm text-white/40 leading-relaxed mt-3">
-                By continuing, you confirm you&apos;re entering this space as such.
+                By continuing, you confirm you&apos;re entering this space as such and consent
+                to the processing of Special Category data under GDPR Article 9.
+              </p>
+              <p className="text-[10px] text-white/20 leading-relaxed mt-3">
+                Operating under Equality Act 2010 {'\u00A7'}193.
               </p>
             </motion.div>
 
@@ -823,7 +830,7 @@ export default function OnboardingGate() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8, duration: 0.3 }}
               onClick={() => {
-                window.location.href = 'about:blank';
+                window.location.href = 'https://www.google.com';
               }}
               className="text-white/15 text-xs mt-3 hover:text-white/30 transition-colors relative z-10"
             >
