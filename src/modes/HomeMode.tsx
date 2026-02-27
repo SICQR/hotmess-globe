@@ -33,7 +33,6 @@ import {
   Radio,
   Calendar,
   Sparkles,
-  TrendingUp,
   Clock,
   MessageSquare,
   Heart,
