@@ -15,17 +15,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { SheetSection, SheetActions, SheetDivider } from './L2SheetContainer';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
-import { openCartDrawer } from '@/utils/cartEvents';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { toast } from 'sonner';
 
-export default function L2ShopSheet({ handle, product, seller }) {
+export default function L2ShopSheet({ handle, product, seller, source }) {
   const { openSheet, updateSheetProps } = useSheet();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [addingToCart, setAddingToCart] = useState(false);
   const { addItem } = useShopCart();
 
-  // Fetch featured products
+  // Fetch featured products (hooks must be called unconditionally)
   const { data: shopData, isLoading, error } = useQuery({
     queryKey: ['shopify', 'featured-products'],
     queryFn: async () => {
@@ -43,7 +42,7 @@ export default function L2ShopSheet({ handle, product, seller }) {
   });
 
   // Fetch single product if handle provided
-  const { data: singleProduct, isLoading: productLoading } = useQuery({
+  const { data: singleProduct } = useQuery({
     queryKey: ['shopify', 'product', handle],
     queryFn: async () => {
       if (!handle) return null;
@@ -57,6 +56,110 @@ export default function L2ShopSheet({ handle, product, seller }) {
   const products = shopData?.products || [];
   const notConfigured = !!shopData?.notConfigured;
   const displayProduct = singleProduct || selectedProduct;
+
+  // ---- Preloved product detail view ----
+  // When source='preloved' or product has seller_id, render P2P detail
+  const isPreloved = source === 'preloved' || product?.seller_id;
+  if (isPreloved && product) {
+    const img = Array.isArray(product.images) ? product.images[0] : product.images;
+    const conditionLabels = {
+      new: 'New with tags',
+      like_new: 'Like new',
+      good: 'Good',
+      fair: 'Fair',
+    };
+    return (
+      <div className="pb-24">
+        {img && (
+          <div className="aspect-square bg-black overflow-hidden">
+            <img src={img} alt={product.title} className="w-full h-full object-cover" />
+          </div>
+        )}
+
+        <SheetSection>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="px-2 py-0.5 bg-[#C8962C]/15 text-[#C8962C] text-[10px] font-black uppercase rounded-full">
+              Preloved
+            </span>
+            {product.condition && (
+              <span className="px-2 py-0.5 bg-white/10 text-white/60 text-[10px] font-bold rounded-full">
+                {conditionLabels[product.condition] || product.condition}
+              </span>
+            )}
+          </div>
+          <h2 className="text-2xl font-black text-white mb-2">{product.title}</h2>
+          <span className="text-2xl font-black text-[#C8962C]">
+            £{parseFloat(product.price || 0).toFixed(2)}
+          </span>
+
+          {product.description && (
+            <p className="text-white/70 text-sm leading-relaxed mt-3">{product.description}</p>
+          )}
+        </SheetSection>
+
+        <SheetDivider />
+
+        {/* Seller info */}
+        <SheetSection title="Seller">
+          <div className="flex items-center gap-3 p-3 bg-[#1C1C1E] rounded-xl">
+            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/60 font-bold text-sm">
+              {(seller?.name || 'S').charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1">
+              <p className="text-white font-bold text-sm">{seller?.name || 'HOTMESS Seller'}</p>
+              <p className="text-white/40 text-xs">Verified seller</p>
+            </div>
+          </div>
+        </SheetSection>
+
+        <SheetDivider />
+
+        <SheetActions>
+          <Button
+            onClick={() => {
+              openSheet('chat', { recipientId: product.seller_id });
+            }}
+            variant="outline"
+            className="flex-1 h-12 border-white/20"
+          >
+            <ChevronRight className="w-4 h-4 mr-2 rotate-180" />
+            Message Seller
+          </Button>
+          <Button
+            onClick={() => {
+              // Add preloved item to localStorage cart
+              try {
+                const existing = JSON.parse(localStorage.getItem('hm_cart') || '[]');
+                const already = existing.find((i) => i.id === product.id);
+                if (already) {
+                  already.qty = (already.qty || 1) + 1;
+                } else {
+                  existing.push({
+                    id: product.id,
+                    title: product.title,
+                    price: parseFloat(product.price || 0),
+                    image: img,
+                    seller_id: product.seller_id,
+                    source: 'preloved',
+                    qty: 1,
+                  });
+                }
+                localStorage.setItem('hm_cart', JSON.stringify(existing));
+                toast.success('Added to cart');
+                openSheet('cart');
+              } catch {
+                toast.error('Failed to add to cart');
+              }
+            }}
+            className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 font-black"
+          >
+            <ShoppingBag className="w-4 h-4 mr-2" />
+            Add to Cart
+          </Button>
+        </SheetActions>
+      </div>
+    );
+  }
 
   // View product detail
   const handleViewProduct = (prod) => {
@@ -72,7 +175,7 @@ export default function L2ShopSheet({ handle, product, seller }) {
 
   // Open cart
   const handleOpenCart = () => {
-    openCartDrawer('shopify');
+    openSheet('cart');
   };
 
   // Product Detail View
@@ -174,7 +277,7 @@ export default function L2ShopSheet({ handle, product, seller }) {
               try {
                 await addItem({ variantId: variant.id, quantity: 1 });
                 toast.success('Added to cart');
-                openCartDrawer('shopify');
+                openSheet('cart');
               } catch (err) {
                 toast.error(err?.message || 'Failed to add to cart');
               } finally {
