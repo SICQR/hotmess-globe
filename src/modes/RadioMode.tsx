@@ -71,29 +71,57 @@ const STATIC_SHOWS: ShowData[] = [
     id: 'wake',
     name: 'Wake the Mess',
     host: 'DJ Chaos',
-    time: 'Mon-Fri 9am',
+    time: 'Mon\u2013Fri 7\u201310am',
     emoji: '\u{1F305}',
-    description: 'Start your morning with the hottest beats.',
+    description: 'Start your morning with the hottest beats and queer wellness.',
   },
   {
     id: 'dial',
-    name: 'Dial-a-Daddy',
+    name: 'Dial-a-Daddy / Dial-a-Darling',
     host: 'Papa Bear',
-    time: 'Mon/Wed/Fri 7pm',
+    time: 'Mon\u2013Fri 3\u20135pm',
     emoji: '\u{1F4DE}',
-    description: 'Evening vibes with the community.',
+    description: 'Afternoon advice, confessions and community call-ins.',
+  },
+  {
+    id: 'drive',
+    name: 'Drive Time Mess',
+    host: 'The Collective',
+    time: 'Mon\u2013Fri 5\u20137pm',
+    emoji: '\u{1F697}',
+    description: 'Rush hour bangers to get you home safe.',
+  },
+  {
+    id: 'nights',
+    name: 'HOTMESS Nights',
+    host: 'SMASH DADDYS',
+    time: 'Fri\u2013Sat 7\u201311pm',
+    emoji: '\u{1F30C}',
+    description: 'Weekend club sets, live DJs and pre-party energy.',
   },
   {
     id: 'hnh',
-    name: 'Hand N Hand',
-    host: 'The Collective',
-    time: 'Sun 8pm',
+    name: 'Hand-in-Hand',
+    host: 'HNH Collective',
+    time: 'Sun 6\u20138pm',
     emoji: '\u{1F91D}',
-    description: 'Sunday deep house session.',
+    description: 'Sunday wind-down. Deep house, mental health check-ins and chill.',
   },
 ];
 
 const SOUNDCLOUD_URL = 'https://soundcloud.com/rawconvictrecords';
+
+// RAW CONVICT RECORDS — label releases (from Playlist.m3u)
+const PLAYLIST_TRACKS = [
+  { id: 'rcr-01', title: 'Another Half', artist: 'glenmccarty', duration: '3:50' },
+  { id: 'rcr-02', title: 'Gone Under', artist: 'glenmccarty', duration: '2:59' },
+  { id: 'rcr-03', title: 'HNH Mess 2', artist: 'glenmccarty', duration: '3:05' },
+  { id: 'rcr-04', title: 'Hotline (Extended)', artist: 'glenmccarty', duration: '4:19' },
+  { id: 'rcr-05', title: "It's Not G, It's You", artist: 'glenmccarty', duration: '3:31' },
+  { id: 'rcr-06', title: 'Love You, Hate You', artist: 'glenmccarty', duration: '2:15' },
+  { id: 'rcr-07', title: 'New Way, Same Us', artist: 'glenmccarty', duration: '2:29' },
+  { id: 'rcr-08', title: 'Walking Red Flag', artist: 'glenmccarty', duration: '3:41' },
+];
 
 // -- Component ------------------------------------------------------------------
 
@@ -582,18 +610,33 @@ export function RadioMode({ className = '' }: RadioModeProps) {
           </AnimatePresence>
         </section>
 
-        {/* == PAST SHOWS (SoundCloud) == */}
+        {/* == SOUNDCLOUD / RAW CONVICT RECORDS == */}
         <section className="px-4 pb-5">
           <h2 className="text-[11px] font-black text-[#8E8E93] uppercase tracking-widest mb-3">
-            Past Shows
+            Raw Convict Records on SoundCloud
           </h2>
+
+          {/* SoundCloud embed */}
+          <div className="rounded-2xl overflow-hidden mb-3 border border-white/5">
+            <iframe
+              title="Raw Convict Records on SoundCloud"
+              width="100%"
+              height="166"
+              scrolling="no"
+              frameBorder="0"
+              allow="autoplay"
+              src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/rawconvictrecords&color=%23C8962C&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false"
+              style={{ background: '#1C1C1E' }}
+            />
+          </div>
+
+          {/* Fallback link */}
           <a
             href={SOUNDCLOUD_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-4 bg-[#1C1C1E] rounded-2xl p-4 border border-white/5 active:bg-white/5 transition-colors group"
           >
-            {/* SoundCloud-style icon */}
             <div className="w-12 h-12 rounded-xl bg-[#FF5500]/10 flex items-center justify-center flex-shrink-0">
               <svg
                 viewBox="0 0 24 24"
@@ -606,14 +649,37 @@ export function RadioMode({ className = '' }: RadioModeProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-white text-sm leading-tight">
-                Listen to past shows
+                Past Shows &amp; Releases
               </p>
               <p className="text-xs text-[#8E8E93] mt-0.5">
-                Catch up on SoundCloud
+                Stream on SoundCloud \u00b7 Raw Convict Records
               </p>
             </div>
             <ExternalLink className="w-5 h-5 text-white/20 flex-shrink-0 group-hover:text-white/40 transition-colors" />
           </a>
+        </section>
+
+        {/* == RAW CONVICT RECORDS == */}
+        <section className="px-4 pb-5">
+          <h2 className="text-[11px] font-black text-[#8E8E93] uppercase tracking-widest mb-3">
+            Raw Convict Records
+          </h2>
+          <div className="space-y-2">
+            {PLAYLIST_TRACKS.map((track) => (
+              <div
+                key={track.id}
+                className="flex items-center gap-3 bg-[#1C1C1E] rounded-xl px-3 py-2.5 border border-white/5"
+              >
+                <div className="w-8 h-8 rounded-lg bg-[#C8962C]/10 flex items-center justify-center flex-shrink-0">
+                  <Music className="w-4 h-4 text-[#C8962C]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-semibold truncate">{track.title}</p>
+                  <p className="text-[#8E8E93] text-[10px]">{track.artist} \u00b7 {track.duration}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* == ABOUT STRIP == */}
