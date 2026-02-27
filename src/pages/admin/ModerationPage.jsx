@@ -35,12 +35,6 @@ const PRIORITY_COLORS = {
   standard: '#C8962C',
 };
 
-const STATUS_LABELS = {
-  pending: 'Pending',
-  approved: 'Approved',
-  actioned: 'Actioned',
-  dismissed: 'Dismissed',
-};
 
 // ── Priority badge ─────────────────────────────────────────────────────────────
 
@@ -220,7 +214,6 @@ export default function ModerationPage() {
   const loadReports = useCallback(async () => {
     setLoading(true);
     try {
-      const statusFilter = tab === 'pending' ? 'pending' : ['approved', 'actioned', 'dismissed'];
       const q = supabase
         .from('moderation_queue')
         .select('*')

@@ -8,18 +8,22 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { 
-  ShoppingBag, ShoppingCart, Loader2, 
+import {
+  ShoppingBag, ShoppingCart, Loader2,
   ChevronRight, Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SheetSection, SheetActions, SheetDivider } from './L2SheetContainer';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { openCartDrawer } from '@/utils/cartEvents';
+import { useShopCart } from '@/features/shop/cart/ShopCartContext';
+import { toast } from 'sonner';
 
 export default function L2ShopSheet({ handle, product, seller }) {
   const { openSheet, updateSheetProps } = useSheet();
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const { addItem } = useShopCart();
 
   // Fetch featured products
   const { data: shopData, isLoading, error } = useQuery({
@@ -158,14 +162,31 @@ export default function L2ShopSheet({ handle, product, seller }) {
             View Cart
           </Button>
           <Button
-            onClick={() => {
-              // Add to cart logic would go here
-              openCartDrawer('shopify');
+            disabled={addingToCart}
+            onClick={async () => {
+              const variants = displayProduct.variants?.nodes || [];
+              const variant = variants.find(v => v.availableForSale) || variants[0];
+              if (!variant?.id) {
+                toast.error('No variant available');
+                return;
+              }
+              setAddingToCart(true);
+              try {
+                await addItem({ variantId: variant.id, quantity: 1 });
+                toast.success('Added to cart');
+                openCartDrawer('shopify');
+              } catch (err) {
+                toast.error(err?.message || 'Failed to add to cart');
+              } finally {
+                setAddingToCart(false);
+              }
             }}
             className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 font-black"
           >
-            <ShoppingBag className="w-4 h-4 mr-2" />
-            Add to Cart
+            {addingToCart
+              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              : <ShoppingBag className="w-4 h-4 mr-2" />}
+            {addingToCart ? 'Adding...' : 'Add to Cart'}
           </Button>
         </SheetActions>
       </div>

@@ -1,53 +1,47 @@
 /**
- * L2ProfileSheet — Profile as a sheet overlay
- * 
- * Replaces: /profile page navigation
- * Extracted from Profile.jsx (1,219 lines)
+ * L2ProfileSheet — Full-bleed profile with content cards
+ *
+ * Matches the design mockup:
+ *   - Hero photo (top 45vh) with gradient overlay
+ *   - Persona name + travel icon + visiting city + distance/ETA
+ *   - Content cards stack: Hookup / For Sale / Creator
+ *   - Bottom actions: Message + more menu
  */
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
-import { 
-  User, MessageCircle, Calendar, MapPin, Shield, 
-  Instagram, Twitter, Music, ChevronRight,
-  Loader2, MoreVertical, Flag, Ban, X
+import {
+  MessageCircle, MapPin, Shield, Plane,
+  Loader2, MoreVertical, Flag, Ban, X, ChevronLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SheetSection, SheetActions, SheetDivider } from './L2SheetContainer';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
-import MembershipBadge from '@/components/membership/MembershipBadge';
+import ProfileContentCard from '@/components/cards/ProfileContentCard';
 
 export default function L2ProfileSheet({ email, uid }) {
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { openSheet, closeSheet } = useSheet();
-  const [activeTab, setActiveTab] = useState('about');
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [isBlocking, setIsBlocking] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
 
-  // Fetch current user
+  // ── Data queries ────────────────────────────────────────────────────────
+
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me(),
   });
 
-  // Fetch profile user
   const { data: profileUser, isLoading } = useQuery({
     queryKey: ['profile-sheet', email, uid],
     queryFn: async () => {
-      // If no params, show current user
-      if (!email && !uid) {
-        return await base44.auth.me();
-      }
-      
-      // Try API lookup first
+      if (!email && !uid) return await base44.auth.me();
+
       const qs = new URLSearchParams();
       if (email) qs.set('email', email);
       else if (uid) qs.set('uid', uid);
@@ -55,18 +49,15 @@ export default function L2ProfileSheet({ email, uid }) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
-        
         const res = await fetch(`/api/profile?${qs.toString()}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
-        
         if (res.ok) {
           const payload = await res.json();
           return payload?.user || null;
         }
       } catch {}
 
-      // Fallback to direct query
       if (email) {
         const users = await base44.entities.User.filter({ email });
         return users?.[0] || null;
@@ -79,55 +70,52 @@ export default function L2ProfileSheet({ email, uid }) {
     },
   });
 
-  // Check if viewing own profile
-  const isOwnProfile = !email && !uid || 
+  const isOwnProfile = !email && !uid ||
     (currentUser?.email && profileUser?.email === currentUser.email);
 
-  // Fetch user's events (RSVPs)
-  const { data: userEvents = [] } = useQuery({
-    queryKey: ['user-events', profileUser?.email],
-    queryFn: async () => {
-      if (!profileUser?.email) return [];
-      const rsvps = await base44.entities.EventRSVP.filter({ user_email: profileUser.email });
-      return rsvps.slice(0, 5);
-    },
-    enabled: !!profileUser?.email,
-  });
-
-  // Fetch Right Now status
+  // Right Now status
   const { data: rightNowStatus } = useQuery({
     queryKey: ['right-now-status', profileUser?.email],
     queryFn: async () => {
       if (!profileUser?.email) return null;
-      const statuses = await base44.entities.RightNowStatus.filter({ 
-        user_email: profileUser.email, 
-        active: true 
-      });
-      const valid = statuses.find(s => new Date(s.expires_at) > new Date());
-      return valid || null;
+      const { data } = await supabase
+        .from('right_now_status')
+        .select('*')
+        .eq('user_email', profileUser.email)
+        .eq('active', true)
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle();
+      return data || null;
     },
     enabled: !!profileUser?.email,
   });
 
-  // Message user
+  // Preloved listings (For Sale)
+  const { data: listings = [] } = useQuery({
+    queryKey: ['profile-listings', profileUser?.email],
+    queryFn: async () => {
+      if (!profileUser?.email) return [];
+      const { data } = await supabase
+        .from('preloved_listings')
+        .select('id, title, description, price, currency, images, delivery_type')
+        .eq('seller_email', profileUser.email)
+        .eq('status', 'active')
+        .limit(3);
+      return data || [];
+    },
+    enabled: !!profileUser?.email,
+  });
+
+  // ── Handlers ────────────────────────────────────────────────────────────
+
   const handleMessage = () => {
     if (!profileUser?.email) return;
-    openSheet(SHEET_TYPES.CHAT, { 
+    openSheet(SHEET_TYPES.CHAT, {
       to: profileUser.email,
-      title: `Chat with ${profileUser.full_name || profileUser.username}`
+      title: `Chat with ${profileUser.full_name || profileUser.username}`,
     });
   };
 
-  // View on Globe
-  const handleViewOnGlobe = () => {
-    closeSheet();
-    // TODO: Zoom globe to user location
-    if (profileUser?.city) {
-      toast.info(`Viewing ${profileUser.full_name || 'user'} in ${profileUser.city}`);
-    }
-  };
-
-  // Block user
   const handleBlock = async () => {
     if (!currentUser || !profileUser) return;
     setIsBlocking(true);
@@ -135,7 +123,6 @@ export default function L2ProfileSheet({ email, uid }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Get target user's auth ID
       const { data: targetProfile } = await supabase
         .from('profiles')
         .select('id')
@@ -153,18 +140,16 @@ export default function L2ProfileSheet({ email, uid }) {
         });
 
       if (error) throw error;
-
       toast.success(`${profileUser.full_name || 'User'} blocked`);
       setShowMoreMenu(false);
       closeSheet();
-    } catch (err) {
+    } catch {
       toast.error('Failed to block user');
     } finally {
       setIsBlocking(false);
     }
   };
 
-  // Report user
   const handleReport = async () => {
     if (!currentUser || !profileUser || !reportReason.trim()) return;
     setIsReporting(true);
@@ -180,17 +165,18 @@ export default function L2ProfileSheet({ email, uid }) {
         });
 
       if (error) throw error;
-
       toast.success('Report submitted. Our team will review it.');
       setShowReportModal(false);
       setReportReason('');
       setShowMoreMenu(false);
-    } catch (err) {
+    } catch {
       toast.error('Failed to submit report');
     } finally {
       setIsReporting(false);
     }
   };
+
+  // ── Loading / empty states ──────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -203,359 +189,240 @@ export default function L2ProfileSheet({ email, uid }) {
   if (!profileUser) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center px-4">
-        <User className="w-12 h-12 text-white/20 mb-4" />
+        <MapPin className="w-12 h-12 text-white/20 mb-4" />
         <p className="text-white/60 mb-4">Profile not found</p>
         <Button variant="outline" onClick={closeSheet}>Close</Button>
       </div>
     );
   }
 
-  const membershipTier = profileUser.membership_tier || 'free';
+  // ── Derived data ────────────────────────────────────────────────────────
+
+  const name = profileUser.full_name || profileUser.username || 'Anonymous';
+  const avatarUrl = profileUser.avatar_url || profileUser.photos?.[0];
+  const isTravel = profileUser.persona === 'TRAVEL' || profileUser.persona === 'travel';
+  const visitingCity = profileUser.city || profileUser.visiting_city;
+  const distance = profileUser.distance_km || profileUser.distance;
+  const etaMin = profileUser.eta_min || (distance ? Math.ceil(distance * 1.2) : null);
   const isVerified = profileUser.is_verified;
+  const isCreator = profileUser.is_creator || profileUser.radio_show_url || profileUser.soundcloud;
+  const intentLabel = rightNowStatus?.intent
+    ? rightNowStatus.intent.charAt(0).toUpperCase() + rightNowStatus.intent.slice(1)
+    : null;
 
   return (
-    <div className="pb-24">
-      {/* Header with Avatar */}
-      <div className="relative">
-        {/* Cover gradient */}
-        <div className="h-24 bg-gradient-to-br from-[#C8962C]/30 via-[#B026FF]/20 to-black" />
-        
-        {/* Avatar */}
-        <div className="absolute -bottom-12 left-4">
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full border-4 border-black bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden">
-              {profileUser.avatar_url ? (
-                <img 
-                  src={profileUser.avatar_url} 
-                  alt="" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-3xl font-black text-white">
-                  {profileUser.full_name?.[0] || profileUser.username?.[0] || '?'}
-                </span>
-              )}
-            </div>
-            
-            {/* Verified badge */}
-            {isVerified && (
-              <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#00D9FF] rounded-full flex items-center justify-center border-2 border-black">
-                <Shield className="w-4 h-4 text-black" />
-              </div>
-            )}
-
-            {/* Right Now indicator */}
-            {rightNowStatus && (
-              <div className="absolute -top-1 -right-1">
-                <span className="flex h-4 w-4">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#39FF14] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-4 w-4 bg-[#39FF14]" />
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Membership badge */}
-        {membershipTier !== 'free' && (
-          <div className="absolute top-4 right-4">
-            <MembershipBadge tier={membershipTier} size="sm" />
+    <div className="pb-20 -mt-4">
+      {/* ── Hero photo (full-bleed, 45vh) ─────────────────────────────── */}
+      <div className="relative" style={{ height: '45vh', minHeight: 280 }}>
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-[#C8962C]/40 via-[#1C1C1E] to-black flex items-center justify-center">
+            <span className="text-6xl font-black text-white/20">{name[0]}</span>
           </div>
         )}
 
-        {/* More menu (Block/Report) - only show for other users */}
-        {!isOwnProfile && (
-          <div className="absolute top-4 right-4">
-            <button
-              onClick={() => setShowMoreMenu(!showMoreMenu)}
-              className="p-2 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 transition-colors"
-              aria-label="More options"
-            >
-              <MoreVertical className="w-5 h-5 text-white" />
-            </button>
+        {/* Gradient overlay at bottom */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-2/3"
+          style={{ background: 'linear-gradient(to top, #050507 0%, transparent 100%)' }}
+        />
 
-            {/* Dropdown menu */}
-            {showMoreMenu && (
-              <>
-                <div 
-                  className="fixed inset-0 z-40" 
-                  onClick={() => setShowMoreMenu(false)} 
-                />
-                <div className="absolute right-0 top-12 z-50 w-48 bg-[#1C1C1E] border border-white/10 rounded-xl overflow-hidden shadow-xl">
-                  <button
-                    onClick={() => {
-                      setShowMoreMenu(false);
-                      setShowReportModal(true);
-                    }}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors text-left"
-                  >
-                    <Flag className="w-4 h-4 text-[#C8962C]" />
-                    <span className="text-white text-sm font-medium">Report User</span>
-                  </button>
-                  <button
-                    onClick={handleBlock}
-                    disabled={isBlocking}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors text-left border-t border-white/5"
-                  >
-                    {isBlocking ? (
-                      <Loader2 className="w-4 h-4 text-red-500 animate-spin" />
-                    ) : (
-                      <Ban className="w-4 h-4 text-red-500" />
-                    )}
-                    <span className="text-red-500 text-sm font-medium">Block User</span>
-                  </button>
-                </div>
-              </>
+        {/* Back button */}
+        <button
+          onClick={closeSheet}
+          className="absolute top-4 left-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70 z-10"
+          style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
+        >
+          <ChevronLeft className="w-5 h-5 text-white" />
+        </button>
+
+        {/* More menu button */}
+        {!isOwnProfile && (
+          <button
+            onClick={() => setShowMoreMenu(!showMoreMenu)}
+            className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm active:bg-black/70 z-10"
+            style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
+          >
+            <MoreVertical className="w-5 h-5 text-white" />
+          </button>
+        )}
+
+        {/* Name + persona overlay at bottom of hero */}
+        <div className="absolute bottom-4 left-4 right-4 z-10">
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-black text-white">{name}</h2>
+            {isTravel && <Plane className="w-5 h-5 text-white/70 -rotate-45" />}
+            {isVerified && (
+              <div className="w-5 h-5 bg-[#00D9FF] rounded-full flex items-center justify-center">
+                <Shield className="w-3 h-3 text-black" />
+              </div>
             )}
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
+            {visitingCity && (
+              <span className="text-white/60 text-sm">
+                {isTravel ? 'Visiting' : ''} {visitingCity}
+                {profileUser.country_flag ? ` ${profileUser.country_flag}` : ''}
+              </span>
+            )}
+            {(distance || etaMin) && (
+              <span className="text-white/40 text-sm">
+                {distance ? `${distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1)} km`} away` : ''}
+                {etaMin ? ` · ${etaMin} min` : ''}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Content cards stack ────────────────────────────────────────── */}
+      <div className="px-4 space-y-3 -mt-2">
+
+        {/* Hookup card (if Right Now active) */}
+        {rightNowStatus && (
+          <ProfileContentCard
+            variant="hookup"
+            intent={intentLabel || 'Hookup'}
+            boundaries={rightNowStatus.preferences?.boundaries || rightNowStatus.logistics?.join(' & ')}
+            meetingArea={rightNowStatus.meeting_area || visitingCity}
+            yourEta={etaMin || 7}
+            theirEta={rightNowStatus.their_eta || 4}
+            theirName={name.split(' ')[0]}
+            lat={rightNowStatus.lat || profileUser.geoLat}
+            lng={rightNowStatus.lng || profileUser.geoLng}
+            imageUrl={avatarUrl}
+          />
+        )}
+
+        {/* For Sale cards */}
+        {listings.map((listing) => (
+          <ProfileContentCard
+            key={listing.id}
+            variant="for-sale"
+            title={listing.title}
+            subtitle={listing.delivery_type === 'same_day' ? 'Same Day Delivery' : listing.delivery_type || ''}
+            price={listing.price ? `${listing.currency || '£'}${listing.price}` : undefined}
+            imageUrl={listing.images?.[0]}
+            onView={() => openSheet('product', { id: listing.id, source: 'preloved' })}
+            onBuy={() => openSheet('product', { id: listing.id, source: 'preloved', action: 'buy' })}
+          />
+        ))}
+
+        {/* Creator card */}
+        {isCreator && (
+          <ProfileContentCard
+            variant="creator"
+            title={profileUser.creator_title || 'HotMess Radio DJ'}
+            subtitle={profileUser.creator_subtitle || profileUser.radio_show_url ? 'Tap to listen' : ''}
+            imageUrl={avatarUrl}
+            onListen={() => {
+              if (profileUser.radio_show_url) {
+                window.open(profileUser.radio_show_url, '_blank');
+              } else if (profileUser.soundcloud) {
+                window.open(profileUser.soundcloud, '_blank');
+              } else {
+                navigate('/radio');
+                closeSheet();
+              }
+            }}
+            onFollow={() => toast.success(`Following ${name}`)}
+          />
+        )}
+
+        {/* Bio section (if no content cards) */}
+        {!rightNowStatus && listings.length === 0 && !isCreator && profileUser.bio && (
+          <div
+            className="rounded-2xl p-4"
+            style={{ background: '#1C1C1E', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <p className="text-white/70 text-sm leading-relaxed">{profileUser.bio}</p>
           </div>
         )}
       </div>
 
-      {/* Name & Username */}
-      <SheetSection className="pt-14">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-2xl font-black text-white">
-              {profileUser.full_name || profileUser.username || 'Anonymous'}
-            </h2>
-            {profileUser.username && (
-              <p className="text-[#00D9FF] text-sm font-medium">@{profileUser.username}</p>
-            )}
-            {profileUser.city && (
-              <p className="text-white/40 text-sm flex items-center gap-1 mt-1">
-                <MapPin className="w-3 h-3" />
-                {profileUser.city}
-              </p>
-            )}
-          </div>
-
-          {/* Quick actions */}
-          {!isOwnProfile && (
-            <Button
-              onClick={handleMessage}
-              size="sm"
-              className="bg-[#C8962C] hover:bg-[#C8962C]/90"
-            >
-              <MessageCircle className="w-4 h-4 mr-1" />
-              Message
-            </Button>
-          )}
-        </div>
-
-        {/* Right Now status */}
-        {rightNowStatus && (
-          <div className="mt-3 p-3 bg-[#39FF14]/10 border border-[#39FF14]/30 rounded-lg">
-            <p className="text-[#39FF14] text-sm font-bold flex items-center gap-2">
-              <span className="w-2 h-2 bg-[#39FF14] rounded-full animate-pulse" />
-              RIGHT NOW
-            </p>
-            {rightNowStatus.logistics?.length > 0 && (
-              <p className="text-white/60 text-xs mt-1">
-                {rightNowStatus.logistics.join(' • ')}
-              </p>
-            )}
-          </div>
-        )}
-      </SheetSection>
-
-      <SheetDivider />
-
-      {/* Stats Bar */}
-      <SheetSection>
-        <div className="grid grid-cols-2 gap-2 text-center">
-          <div className="p-2 bg-white/5 rounded-lg">
-            <p className="text-xl font-black text-[#39FF14]">{profileUser.events_attended || 0}</p>
-            <p className="text-[10px] text-white/40 uppercase">Events</p>
-          </div>
-          <div className="p-2 bg-white/5 rounded-lg">
-            <p className="text-xl font-black text-[#C8962C]">{profileUser.connections_count || 0}</p>
-            <p className="text-[10px] text-white/40 uppercase">Links</p>
-          </div>
-        </div>
-      </SheetSection>
-
-      <SheetDivider />
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full bg-white/5 border-b border-white/10 rounded-none p-0">
-          <TabsTrigger 
-            value="about" 
-            className="flex-1 rounded-none data-[state=active]:bg-white/10 data-[state=active]:text-[#C8962C]"
-          >
-            About
-          </TabsTrigger>
-          <TabsTrigger 
-            value="events" 
-            className="flex-1 rounded-none data-[state=active]:bg-white/10 data-[state=active]:text-[#C8962C]"
-          >
-            Events
-          </TabsTrigger>
-          {(profileUser.is_seller || profileUser.is_creator) && (
-            <TabsTrigger 
-              value="shop" 
-              className="flex-1 rounded-none data-[state=active]:bg-white/10 data-[state=active]:text-[#C8962C]"
-            >
-              Shop
-            </TabsTrigger>
-          )}
-        </TabsList>
-
-        <TabsContent value="about" className="mt-0">
-          <SheetSection>
-            {/* Bio */}
-            {profileUser.bio ? (
-              <p className="text-white/80 text-sm leading-relaxed">{profileUser.bio}</p>
-            ) : (
-              <p className="text-white/40 text-sm italic">No bio yet</p>
-            )}
-
-            {/* Social links */}
-            {(profileUser.instagram || profileUser.twitter || profileUser.soundcloud) && (
-              <div className="flex gap-3 mt-4">
-                {profileUser.instagram && (
-                  <a 
-                    href={`https://instagram.com/${profileUser.instagram}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    <Instagram className="w-5 h-5 text-[#E4405F]" />
-                  </a>
-                )}
-                {profileUser.twitter && (
-                  <a 
-                    href={`https://twitter.com/${profileUser.twitter}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    <Twitter className="w-5 h-5 text-[#1DA1F2]" />
-                  </a>
-                )}
-                {profileUser.soundcloud && (
-                  <a 
-                    href={profileUser.soundcloud}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    <Music className="w-5 h-5 text-[#FF5500]" />
-                  </a>
-                )}
-              </div>
-            )}
-
-            {/* Persona type */}
-            {profileUser.persona && (
-              <div className="mt-4 p-3 bg-white/5 rounded-lg">
-                <p className="text-xs text-white/40 uppercase mb-1">Persona</p>
-                <p className="text-white font-medium capitalize">{profileUser.persona}</p>
-              </div>
-            )}
-          </SheetSection>
-        </TabsContent>
-
-        <TabsContent value="events" className="mt-0">
-          <SheetSection>
-            {userEvents.length === 0 ? (
-              <p className="text-white/40 text-sm text-center py-8">No events yet</p>
-            ) : (
-              <div className="space-y-2">
-                {userEvents.map((rsvp) => (
-                  <button
-                    key={rsvp.id}
-                    onClick={() => openSheet(SHEET_TYPES.EVENT, { id: rsvp.beacon_id })}
-                    className="w-full p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-left flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Calendar className="w-5 h-5 text-[#00D9FF]" />
-                      <span className="text-white text-sm">Event RSVP</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-white/40" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </SheetSection>
-        </TabsContent>
-
-        <TabsContent value="shop" className="mt-0">
-          <SheetSection>
-            <button
-              onClick={() => openSheet(SHEET_TYPES.SHOP, { seller: profileUser.email })}
-              className="w-full p-4 bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-lg text-center"
-            >
-              <p className="text-[#FFD700] font-bold">View Shop</p>
-              <p className="text-white/40 text-xs mt-1">See items for sale</p>
-            </button>
-          </SheetSection>
-        </TabsContent>
-      </Tabs>
-
-      {/* Actions */}
-      <SheetActions>
+      {/* ── Bottom action bar ──────────────────────────────────────────── */}
+      <div
+        className="fixed bottom-0 left-0 right-0 px-4 py-3 z-10 flex gap-3"
+        style={{
+          background: 'rgba(5,5,7,0.95)',
+          backdropFilter: 'blur(16px)',
+          paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
         {isOwnProfile ? (
           <Button
-            onClick={() => {
-              closeSheet();
-              navigate('/settings');
-            }}
-            className="flex-1 h-12 bg-white/10 hover:bg-white/20"
+            onClick={() => { closeSheet(); navigate('/profile'); }}
+            className="flex-1 h-12 bg-white/10 hover:bg-white/20 rounded-xl font-bold"
           >
             Edit Profile
           </Button>
         ) : (
-          <>
-            <Button
-              onClick={handleViewOnGlobe}
-              variant="outline"
-              className="flex-1 h-12 border-white/20"
-            >
-              <MapPin className="w-4 h-4 mr-2" />
-              View on Globe
-            </Button>
-            <Button
-              onClick={handleMessage}
-              className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90"
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Message
-            </Button>
-          </>
+          <Button
+            onClick={handleMessage}
+            className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 rounded-xl font-bold"
+          >
+            <MessageCircle className="w-5 h-5 mr-2" />
+            Message
+          </Button>
         )}
-      </SheetActions>
+      </div>
 
-      {/* Report Modal */}
+      {/* ── More menu dropdown ─────────────────────────────────────────── */}
+      {showMoreMenu && !isOwnProfile && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
+          <div
+            className="fixed top-16 right-4 z-50 w-48 rounded-xl overflow-hidden shadow-xl"
+            style={{ background: '#1C1C1E', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            <button
+              onClick={() => { setShowMoreMenu(false); setShowReportModal(true); }}
+              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 text-left"
+            >
+              <Flag className="w-4 h-4 text-[#C8962C]" />
+              <span className="text-white text-sm font-medium">Report User</span>
+            </button>
+            <button
+              onClick={handleBlock}
+              disabled={isBlocking}
+              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 text-left border-t border-white/5"
+            >
+              {isBlocking ? (
+                <Loader2 className="w-4 h-4 text-red-500 animate-spin" />
+              ) : (
+                <Ban className="w-4 h-4 text-red-500" />
+              )}
+              <span className="text-red-500 text-sm font-medium">Block User</span>
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* ── Report modal ───────────────────────────────────────────────── */}
       {showReportModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="w-full max-w-sm bg-[#1C1C1E] border border-white/10 rounded-2xl overflow-hidden">
             <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-white font-bold">Report User</h3>
               <button
-                onClick={() => {
-                  setShowReportModal(false);
-                  setReportReason('');
-                }}
-                className="p-1 rounded-full hover:bg-white/10 transition-colors"
+                onClick={() => { setShowReportModal(false); setReportReason(''); }}
+                className="p-1 rounded-full hover:bg-white/10"
               >
                 <X className="w-5 h-5 text-white/60" />
               </button>
             </div>
-            
             <div className="p-4 space-y-4">
               <p className="text-white/60 text-sm">
-                Why are you reporting {profileUser?.full_name || 'this user'}?
+                Why are you reporting {name}?
               </p>
-              
               <div className="space-y-2">
-                {[
-                  'Harassment or bullying',
-                  'Spam or scam',
-                  'Inappropriate content',
-                  'Fake profile',
-                  'Other',
-                ].map((reason) => (
+                {['Harassment or bullying', 'Spam or scam', 'Inappropriate content', 'Fake profile', 'Other'].map((reason) => (
                   <button
                     key={reason}
                     onClick={() => setReportReason(reason)}
@@ -569,17 +436,12 @@ export default function L2ProfileSheet({ email, uid }) {
                   </button>
                 ))}
               </div>
-
               <Button
                 onClick={handleReport}
                 disabled={!reportReason || isReporting}
-                className="w-full h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 disabled:opacity-50"
+                className="w-full h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 disabled:opacity-50 rounded-xl font-bold"
               >
-                {isReporting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  'Submit Report'
-                )}
+                {isReporting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Submit Report'}
               </Button>
             </div>
           </div>
