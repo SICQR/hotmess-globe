@@ -64,6 +64,7 @@ interface ShowData {
   time: string;
   emoji: string;
   description: string;
+  blurb: string;
 }
 
 const STATIC_SHOWS: ShowData[] = [
@@ -74,6 +75,7 @@ const STATIC_SHOWS: ShowData[] = [
     time: 'Mon\u2013Fri 7\u201310am',
     emoji: '\u{1F305}',
     description: 'Start your morning with the hottest beats and queer wellness.',
+    blurb: 'Coffee, chaos and community. Wake the Mess is London\u2019s queer alarm clock\u2014three hours of bangers, wellness segments and sponsored drops from coffee brands and skincare.',
   },
   {
     id: 'dial',
@@ -82,6 +84,7 @@ const STATIC_SHOWS: ShowData[] = [
     time: 'Mon\u2013Fri 3\u20135pm',
     emoji: '\u{1F4DE}',
     description: 'Afternoon advice, confessions and community call-ins.',
+    blurb: 'The original call-in show. Confessions, dating disasters and daddy advice. Listeners phone in anonymously; Papa Bear keeps it real. Sponsored by HNH MESS.',
   },
   {
     id: 'drive',
@@ -90,6 +93,7 @@ const STATIC_SHOWS: ShowData[] = [
     time: 'Mon\u2013Fri 5\u20137pm',
     emoji: '\u{1F697}',
     description: 'Rush hour bangers to get you home safe.',
+    blurb: 'End-of-day energy for the commute. High tempo, pep talks and a \u201Cget home safe\u201D QR for ride-share discounts. From boardrooms to bar boys.',
   },
   {
     id: 'nights',
@@ -98,6 +102,7 @@ const STATIC_SHOWS: ShowData[] = [
     time: 'Fri\u2013Sat 7\u201311pm',
     emoji: '\u{1F30C}',
     description: 'Weekend club sets, live DJs and pre-party energy.',
+    blurb: 'The main event. SMASH DADDYS takes over with live club sets, guest DJs and a full \u201CLive Now\u201D glow bar on the app. Sponsored by clubs, DJs and drink brands.',
   },
   {
     id: 'hnh',
@@ -106,6 +111,7 @@ const STATIC_SHOWS: ShowData[] = [
     time: 'Sun 6\u20138pm',
     emoji: '\u{1F91D}',
     description: 'Sunday wind-down. Deep house, mental health check-ins and chill.',
+    blurb: 'After the weekend, we regroup. Deep house, mental health check-ins, and gentle vibes with the HNH Collective. Partners: HNH MESS, Uber Eats and mental health allies.',
   },
 ];
 
@@ -604,6 +610,11 @@ export function RadioMode({ className = '' }: RadioModeProps) {
                   <p className="text-xs text-white/40 leading-relaxed">
                     {selectedShow.description}
                   </p>
+                  {selectedShow.blurb && (
+                    <p className="text-xs text-white/30 leading-relaxed mt-2 border-t border-white/5 pt-2">
+                      {selectedShow.blurb}
+                    </p>
+                  )}
                 </div>
               </motion.div>
             )}
