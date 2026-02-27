@@ -263,11 +263,20 @@ export function RadioMode({ className = '' }: RadioModeProps) {
         <section
           className="relative min-h-[60vh] flex flex-col items-center justify-center px-6 pt-[max(60px,env(safe-area-inset-top))]"
           style={{
-            background: isPlaying
-              ? 'linear-gradient(to bottom, rgba(200,150,44,0.20) 0%, #0D0D0D 50%, #000000 100%)'
-              : 'linear-gradient(to bottom, rgba(200,150,44,0.06) 0%, #0D0D0D 50%, #000000 100%)',
+            backgroundImage: 'url(/assets/hero-radio.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center top',
           }}
         >
+          {/* Dark overlay for readability */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: isPlaying
+                ? 'linear-gradient(to bottom, rgba(0,0,0,0.40) 0%, rgba(13,13,13,0.85) 50%, #000000 100%)'
+                : 'linear-gradient(to bottom, rgba(0,0,0,0.60) 0%, rgba(13,13,13,0.90) 50%, #000000 100%)',
+            }}
+          />
           {/* Ambient pulse rings -- only when playing */}
           <AnimatePresence>
             {isPlaying && (
