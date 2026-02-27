@@ -10,22 +10,29 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Shield, 
-  AlertTriangle, 
-  Phone, 
-  MapPin, 
-  X, 
+import {
+  Shield,
+  AlertTriangle,
+  Phone,
+  MapPin,
+  X,
   Send,
   Users,
   CheckCircle,
-  Loader2
+  Loader2,
+  Clock,
+  Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { useTonightModeContext } from '@/hooks/useTonightMode';
+import FakeCallGenerator from '@/components/safety/FakeCallGenerator';
+import CheckInTimerModal from '@/components/safety/CheckInTimerModal';
+import { useCheckinTimer } from '@/hooks/useCheckinTimer';
+import { useShakeSOS } from '@/hooks/useShakeSOS';
+import { useSOSContext } from '@/contexts/SOSContext';
 
 /**
  * Emergency Mode Overlay - Full screen red theme safety UI
@@ -251,28 +258,15 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
 export default function SafetyFAB() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showEmergencyMode, setShowEmergencyMode] = useState(false);
+  const [showFakeCall, setShowFakeCall] = useState(false);
+  const [showCheckinTimer, setShowCheckinTimer] = useState(false);
   const tonightMode = useTonightModeContext();
+  const { isActive: timerActive, secondsLeft } = useCheckinTimer();
+  const { triggerSOS } = useSOSContext();
+  const { enabled: shakeEnabled, toggle: toggleShake } = useShakeSOS(triggerSOS);
 
   // More prominent during Tonight hours
   const isTonight = tonightMode?.isTonight ?? false;
-
-  const triggerFakeCall = () => {
-    // Simple fake call - vibrate and show notification
-    if (navigator.vibrate) {
-      navigator.vibrate([200, 100, 200, 100, 200]);
-    }
-    toast('📱 Incoming call...', {
-      duration: 5000,
-      description: 'Tap to answer',
-      action: {
-        label: 'Answer',
-        onClick: () => {
-          window.open('tel:+441onal', '_self');
-        },
-      },
-    });
-    setIsExpanded(false);
-  };
 
   return (
     <>
@@ -303,10 +297,36 @@ export default function SafetyFAB() {
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-white hover:bg-cyan-500/20 hover:text-cyan-400"
-                  onClick={triggerFakeCall}
+                  onClick={() => { setShowFakeCall(true); setIsExpanded(false); }}
                 >
                   <Phone className="w-4 h-4 mr-3 text-cyan-500" />
                   Fake Call
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start transition-colors ${
+                    timerActive
+                      ? 'text-[#00D9FF] bg-[#00D9FF]/10 hover:bg-[#00D9FF]/20'
+                      : 'text-white hover:bg-[#00D9FF]/10 hover:text-[#00D9FF]'
+                  }`}
+                  onClick={() => { setShowCheckinTimer(true); setIsExpanded(false); }}
+                >
+                  <Clock className="w-4 h-4 mr-3 text-[#00D9FF]" />
+                  {timerActive
+                    ? `Check-in: ${Math.floor(secondsLeft / 60)}m left`
+                    : 'Check-in Timer'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start transition-colors ${
+                    shakeEnabled
+                      ? 'text-red-400 bg-red-500/10 hover:bg-red-500/20'
+                      : 'text-white hover:bg-red-500/10 hover:text-red-400'
+                  }`}
+                  onClick={() => { toggleShake(); setIsExpanded(false); }}
+                >
+                  <Smartphone className="w-4 h-4 mr-3 text-red-400" />
+                  {shakeEnabled ? 'Shake SOS: ON' : 'Shake SOS: OFF'}
                 </Button>
                 <Button
                   variant="ghost"
@@ -323,26 +343,68 @@ export default function SafetyFAB() {
           )}
         </AnimatePresence>
 
-        <Button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className={`rounded-full w-14 h-14 shadow-lg transition-all ${
-            isTonight 
-              ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
-              : 'bg-white/10 hover:bg-white/20 border border-white/20'
-          }`}
-        >
-          <Shield className={`w-6 h-6 ${isTonight ? 'text-white' : 'text-white/80'}`} />
-        </Button>
+        <div className="relative">
+          {/* Active timer ring */}
+          {timerActive && (
+            <motion.div
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{ border: '2px solid #00D9FF' }}
+              animate={{ scale: [1, 1.5], opacity: [0.7, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+            />
+          )}
+          <Button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={`rounded-full w-14 h-14 shadow-lg transition-all ${
+              isTonight
+                ? 'bg-red-500 hover:bg-red-600 animate-pulse'
+                : timerActive
+                ? 'bg-[#00D9FF]/20 hover:bg-[#00D9FF]/30 border border-[#00D9FF]'
+                : 'bg-white/10 hover:bg-white/20 border border-white/20'
+            }`}
+          >
+            <Shield className={`w-6 h-6 ${isTonight ? 'text-white' : timerActive ? 'text-[#00D9FF]' : 'text-white/80'}`} />
+          </Button>
+        </div>
       </div>
 
       {/* Emergency Mode Overlay */}
       <AnimatePresence>
         {showEmergencyMode && (
-          <EmergencyModeOverlay 
+          <EmergencyModeOverlay
             onDismiss={() => setShowEmergencyMode(false)}
           />
         )}
       </AnimatePresence>
+
+      {/* Fake Call Overlay */}
+      <AnimatePresence>
+        {showFakeCall && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[190] bg-black/70 backdrop-blur-md flex items-end justify-center pb-8 px-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowFakeCall(false); }}
+          >
+            <motion.div
+              initial={{ y: 80, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 80, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="w-full max-w-sm"
+            >
+              <FakeCallGenerator onClose={() => setShowFakeCall(false)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Check-in Timer Modal */}
+      <CheckInTimerModal
+        isOpen={showCheckinTimer}
+        onClose={() => setShowCheckinTimer(false)}
+      />
     </>
   );
 }

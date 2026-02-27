@@ -13,8 +13,15 @@
  *     during the AI Trigger Wiring session via Supabase Realtime channels).
  */
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+
+// ── Colour constants (THREE.js hex) ─────────────────────────────────────────
+
+const GOLD   = 0xC8962C;
+const RED    = 0xFF3B30;
+const PURPLE = 0xB026FF;
+const LIME   = 0x39FF14;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -102,8 +109,120 @@ function timeOfDayIntensity(peakStart: number, peakEnd: number): number {
 
 export function useGlobeActivity(liveBeaconCount: number): GlobeActivityData {
   const [venueGlows, setVenueGlows] = useState<VenueGlow[]>([]);
-  const [activityEvents] = useState<GlobeActivityEvent[]>([]);
+  const [activityEvents, setActivityEvents] = useState<GlobeActivityEvent[]>([]);
   const fetchTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const MAX_EVENTS = 50;
+
+  // ── Push a new activity flash (auto-pruned by duration + cap) ───────────
+
+  const pushEvent = useCallback((evt: GlobeActivityEvent) => {
+    setActivityEvents(prev => {
+      const next = [...prev, evt];
+      // Hard cap — oldest first
+      return next.length > MAX_EVENTS ? next.slice(next.length - MAX_EVENTS) : next;
+    });
+  }, []);
+
+  // ── Prune expired events every second ──────────────────────────────────
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const now = Date.now();
+      setActivityEvents(prev => {
+        const alive = prev.filter(e => now - e.createdAt < e.duration);
+        return alive.length === prev.length ? prev : alive;
+      });
+    }, 1_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // ── Realtime Layer C: Subscribe to platform events ─────────────────────
+
+  useEffect(() => {
+    // Default London coordinates for events without location data
+    const DEFAULT_LAT = 51.51;
+    const DEFAULT_LNG = -0.12;
+
+    // 1. Purchases — shopify_orders INSERT
+    const ordersChannel = supabase
+      .channel('globe-orders')
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'shopify_orders',
+      }, (payload) => {
+        const row = payload.new as Record<string, unknown>;
+        pushEvent({
+          id: `purchase-${row.id || Date.now()}`,
+          type: 'purchase',
+          lat: (row.lat as number) || DEFAULT_LAT + (Math.random() - 0.5) * 0.05,
+          lng: (row.lng as number) || DEFAULT_LNG + (Math.random() - 0.5) * 0.05,
+          color: GOLD,
+          intensity: 0.9,
+          createdAt: Date.now(),
+          duration: 3_000,
+        });
+      })
+      .subscribe();
+
+    // 2. Messages — messages INSERT → faint arc
+    const messagesChannel = supabase
+      .channel('globe-messages')
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'messages',
+      }, () => {
+        // Messages don't carry lat/lng, use random London scatter
+        pushEvent({
+          id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          type: 'message',
+          lat: DEFAULT_LAT + (Math.random() - 0.5) * 0.06,
+          lng: DEFAULT_LNG + (Math.random() - 0.5) * 0.06,
+          targetLat: DEFAULT_LAT + (Math.random() - 0.5) * 0.06,
+          targetLng: DEFAULT_LNG + (Math.random() - 0.5) * 0.06,
+          color: GOLD,
+          intensity: 0.3,
+          createdAt: Date.now(),
+          duration: 2_000,
+        });
+      })
+      .subscribe();
+
+    // 3. Preloved listings — preloved_listings INSERT → sparkle
+    const listingsChannel = supabase
+      .channel('globe-listings')
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'preloved_listings',
+      }, () => {
+        pushEvent({
+          id: `listing-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          type: 'listing',
+          lat: DEFAULT_LAT + (Math.random() - 0.5) * 0.05,
+          lng: DEFAULT_LNG + (Math.random() - 0.5) * 0.05,
+          color: GOLD,
+          intensity: 0.5,
+          createdAt: Date.now(),
+          duration: 2_000,
+        });
+      })
+      .subscribe();
+
+    // 4. Venue check-ins — venue_kings UPDATE (scan_count change)
+    const venueKingsChannel = supabase
+      .channel('globe-venue-kings')
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'venue_kings',
+      }, () => {
+        // Trigger a venue glow refresh on next cycle (venues are fetched every 60s,
+        // but a check-in should update faster — force a re-fetch)
+        setVenueGlows(prev => [...prev]); // trigger re-render
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(listingsChannel);
+      supabase.removeChannel(venueKingsChannel);
+    };
+  }, [pushEvent]);
 
   // ── Seed zones (recomputed every minute) ─────────────────────────────────
 

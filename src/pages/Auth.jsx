@@ -61,6 +61,34 @@ export default function Auth() {
   const nextUrl = searchParams.get('next');
   const mode = searchParams.get('mode');
 
+  // Handle Stripe return (success or cancel)
+  useEffect(() => {
+    const stripeParam = searchParams.get('stripe');
+    const tierParam = searchParams.get('tier');
+    if (stripeParam === 'success') {
+      // Clean URL, mark tier as pending activation (webhook will confirm), move to profile
+      window.history.replaceState({}, '', window.location.pathname);
+      if (tierParam) {
+        // Optimistically write tier so profile step is reachable before webhook fires
+        supabase.auth.getUser().then(({ data: { user } }) => {
+          if (!user) return;
+          const tier = tierParam === 'plus' ? 'plus' : 'pro';
+          supabase.from('profiles')
+            .update({ membership_tier: tier, subscription_status: 'active' })
+            .eq('account_id', user.id)
+            .then(() => {});
+          supabase.auth.updateUser({ data: { membership_tier: tier, subscription_status: 'active' } });
+        });
+      }
+      toast.success("Payment successful! Let's finish your profile.");
+      setStep('profile');
+    } else if (stripeParam === 'cancel') {
+      window.history.replaceState({}, '', window.location.pathname);
+      toast('Payment cancelled. Start free or try again anytime.');
+      setStep('membership');
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Helper function to check if user profile is complete
   const checkProfileComplete = async (userId) => {
     try {
@@ -311,29 +339,55 @@ export default function Auth() {
   const handleMembership = async () => {
     setLoading(true);
     try {
-      // Write to auth user metadata (legacy) + profiles table
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      if (!user) { toast.error('Not logged in'); return; }
+
+      // Free tier: write locally and proceed to profile
+      if (selectedTier === 'basic') {
         await supabase
           .from('profiles')
-          .update({
-            membership_tier: selectedTier,
-            subscription_status: selectedTier === 'basic' ? 'active' : 'trial',
-          })
+          .update({ membership_tier: 'basic', subscription_status: 'active' })
           .eq('account_id', user.id);
+        await supabase.auth.updateUser({ data: { membership_tier: 'basic', subscription_status: 'active' } });
+        toast.success('Free plan selected!');
+        setStep('profile');
+        return;
       }
-      // Also persist to auth metadata as fallback
-      await supabase.auth.updateUser({
-        data: {
-          membership_tier: selectedTier,
-          subscription_status: selectedTier === 'basic' ? 'active' : 'trial',
-        },
+
+      // Paid tiers: redirect to Stripe Checkout
+      const priceId = selectedTier === 'plus'
+        ? import.meta.env.VITE_STRIPE_PLUS_PRICE_ID
+        : import.meta.env.VITE_STRIPE_CHROME_PRICE_ID;
+
+      if (!priceId) {
+        toast.error('Payment not configured — contact support or choose Free.');
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) { toast.error('Session expired — please sign in again'); return; }
+
+      const origin = window.location.origin;
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          priceId,
+          tierId: selectedTier,
+          successUrl: `${origin}/auth?stripe=success&tier=${selectedTier}`,
+          cancelUrl: `${origin}/auth?stripe=cancel`,
+        }),
       });
-      toast.success('Membership selected!');
-      setStep('profile');
-    } catch (error) {
-      toast.error('Failed to set membership');
-      console.error('[Auth] handleMembership error:', error);
+
+      const body = await res.json();
+      if (!res.ok || !body.url) throw new Error(body.error || 'Failed to start checkout');
+
+      // Redirect to Stripe hosted checkout
+      window.location.href = body.url;
+    } catch (err) {
+      toast.error(err?.message || 'Failed to process membership');
+      console.error('[Auth] handleMembership error:', err);
     } finally {
       setLoading(false);
     }
@@ -878,7 +932,7 @@ export default function Auth() {
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                   <>
-                    Continue
+                    {selectedTier === 'basic' ? 'Continue Free' : 'Continue to Payment'}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </>
                 )}
