@@ -31,15 +31,21 @@ export function RadioMiniPlayer({ hidden = false }: RadioMiniPlayerProps) {
         <Radio className="w-4 h-4 text-black" />
       </div>
 
-      {/* Middle: station + show name */}
+      {/* Middle: station + show name + LIVE badge */}
       <div className="flex-1 min-w-0">
-        <p className="text-[#C8962C] font-black text-xs leading-tight tracking-wide">
-          HOTMESS RADIO
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-[#C8962C] font-black text-xs leading-tight tracking-wide">
+            HOTMESS RADIO
+          </p>
+          <span className="flex items-center gap-1 px-1.5 py-0.5 bg-red-500/20 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-red-400 text-[8px] font-black uppercase tracking-wider">Live</span>
+          </span>
+        </div>
         {currentShowName ? (
           <p className="text-white/40 text-[10px] leading-tight truncate">{currentShowName}</p>
         ) : (
-          <p className="text-white/40 text-[10px] leading-tight">Live</p>
+          <p className="text-white/40 text-[10px] leading-tight">Streaming via RadioKing</p>
         )}
       </div>
 

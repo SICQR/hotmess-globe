@@ -28,8 +28,8 @@ export default function L2MarketplaceSheet() {
     queryFn: async () => {
       try {
         let query = supabase
-          .from('products')
-          .select('id, title, price, images, seller_email, category, created_at, status')
+          .from('preloved_listings')
+          .select('id, title, price, images, seller_id, category, condition, created_at, status')
           .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(30);
@@ -115,7 +115,7 @@ export default function L2MarketplaceSheet() {
                 >
                   {/* Image */}
                   <button
-                    onClick={() => openSheet('product', { id: product.id })}
+                    onClick={() => openSheet('shop', { product, source: 'preloved' })}
                     className="relative block w-full aspect-square overflow-hidden bg-black/40 flex-shrink-0"
                   >
                     {img ? (
@@ -149,10 +149,10 @@ export default function L2MarketplaceSheet() {
                       )}
                     </div>
                     <button
-                      onClick={() => openSheet('product', { id: product.id })}
+                      onClick={() => openSheet('shop', { product, source: 'preloved' })}
                       className="w-full py-1.5 bg-[#C8962C] text-black text-[10px] font-black uppercase tracking-wide rounded-lg"
                     >
-                      Buy
+                      View
                     </button>
                   </div>
                 </motion.div>
