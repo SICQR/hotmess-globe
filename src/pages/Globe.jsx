@@ -71,39 +71,32 @@ export default function GlobePage() {
   const { data: rightNowUsers = [] } = useQuery({
     queryKey: ['right-now-users-globe'],
     queryFn: async () => {
-      const statuses = await base44.entities.RightNowStatus.filter({ active: true });
-      const validStatuses = statuses.filter(s => new Date(s.expires_at) > new Date());
-      
-      // Fetch users and cities
-      const users = await base44.entities.User.list();
-      const cities = await base44.entities.City.list();
-      
-      // Map to beacon format
-      return validStatuses.map(status => {
-        const user = users.find(u => u.email === status.user_email);
-        if (!user || !user.city) return null;
-        
-        const city = cities.find(c => c.name === user.city);
-        if (!city) return null;
-        
-        return {
-          id: `rightnow-${status.id}`,
-          title: `${user.full_name} is Right Now`,
-          description: status.logistics?.join(', ') || 'Available now',
-          lat: city.lat,
-          lng: city.lng,
-          city: city.name,
+      // Read directly from Supabase — this is where RightNowModal writes
+      const { data: statuses, error } = await supabase
+        .from('right_now_status')
+        .select('*')
+        .eq('active', true)
+        .gt('expires_at', new Date().toISOString())
+        .limit(100);
+      if (error) throw error;
+
+      return (statuses || [])
+        .filter(s => s.location?.lat && s.location?.lng)
+        .map(s => ({
+          id: `rightnow-${s.id}`,
+          title: 'Right Now',
+          description: s.preferences?.logistics?.join(', ') || 'Available now',
+          lat: s.location.lat,
+          lng: s.location.lng,
           mode: 'hookup',
           kind: 'hookup',
           intensity: 1,
           active: true,
           isRightNow: true,
-          user_email: user.email,
-          avatar_url: user.avatar_url
-        };
-      }).filter(Boolean);
+          user_email: s.user_email,
+        }));
     },
-    refetchInterval: 15000 // Refresh every 15 seconds
+    refetchInterval: 30000,
   });
 
   // Real-time subscriptions for beacons
@@ -147,6 +140,17 @@ export default function GlobePage() {
     return () => {
       supabase.removeChannel(channel);
     };
+  }, [queryClient]);
+
+  // Real-time: right_now_status changes → immediately re-fetch Right Now beacons
+  useEffect(() => {
+    const channel = supabase
+      .channel('right-now-status-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'right_now_status' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['right-now-users-globe'] });
+      })
+      .subscribe();
+    return () => supabase.removeChannel(channel);
   }, [queryClient]);
 
   // Real-time subscriptions for user activities
