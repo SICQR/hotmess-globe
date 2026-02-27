@@ -34,6 +34,7 @@ import SheetRouter from '@/components/sheets/SheetRouter';
 import { SOSProvider, useSOSContext } from '@/contexts/SOSContext';
 import { SOSButton } from '@/components/sos/SOSButton';
 import SOSOverlay from '@/components/interrupts/SOSOverlay';
+import ShakeSOS from '@/components/sos/ShakeSOS';
 import IncomingCallBanner from '@/components/calls/IncomingCallBanner';
 import { useViewportHeight } from '@/hooks/useMobileDynamics';
 import { PinLockProvider } from '@/contexts/PinLockContext';
@@ -53,6 +54,7 @@ const MarketMode = lazy(() => import('@/modes/MarketMode').then(m => ({ default:
 const EventsMode  = lazy(() => import('@/modes/EventsMode'));
 const VaultMode   = lazy(() => import('@/modes/VaultMode'));
 const ChatMeetupPage = lazy(() => import('@/pages/ChatMeetupPage'));
+const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
 
 // Example screens (design system demos)
 const ChatWithMapExample = lazy(() => import('@/examples/ChatWithMapExample'));
@@ -545,6 +547,7 @@ const AuthenticatedApp = () => {
       
       {/* Admin dashboard */}
       <Route path="/admin" element={<PageRoute pageKey="AdminDashboard" />} />
+      <Route path="/admin/moderation" element={<Suspense fallback={null}><ModerationPage /></Suspense>} />
       <Route path="/admin/*" element={<PageRoute pageKey="AdminDashboard" />} />
 
       {/* Business dashboard */}
@@ -684,6 +687,9 @@ function OSArchitecture() {
         className="fixed bottom-24 right-4 z-[190]"
         onTrigger={triggerSOS}
       />
+
+      {/* L3: Shake-to-SOS — invisible when idle, banner at Z-195 when counting down */}
+      <ShakeSOS />
 
       {/* L3: SOS Overlay — blocks entire OS, stops all sharing (Z-200) */}
       {sosActive && <SOSOverlay onClose={clearSOS} />}

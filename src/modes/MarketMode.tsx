@@ -1,6 +1,9 @@
 /**
  * MarketMode - Unified Commerce Engine (/market)
  *
+ * Brand visibility is controlled by src/config/brands.ts — hidden brands
+ * are excluded from navigation and collections automatically.
+ *
  * Three commerce streams merged into one premium dark marketplace:
  *   1. Shop (Shopify headless) -- official HOTMESS merch
  *   2. Preloved (Supabase)     -- user-to-user listings
@@ -48,6 +51,7 @@ import {
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
+import { isBrandVisible } from '@/config/brands';
 import {
   getAllProducts,
   getCategories,
@@ -826,7 +830,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
                         { key: 'high', label: 'HIGH' },
                         { key: 'hungmess', label: 'HUNGMESS' },
                       ] as const
-                    ).map((b) => (
+                    ).filter((b) => isBrandVisible(b.key)).map((b) => (
                       <button
                         key={b.key}
                         onClick={() => openSheet('brand', { brand: b.key })}

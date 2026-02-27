@@ -193,6 +193,25 @@ function localApiRoutes() {
             });
         }
 
+        if ((path === '/api/shopify/products' || path.startsWith('/api/shopify/products/')) && method === 'GET') {
+          // Pass handle from path as query param for /api/shopify/products/:handle
+          if (path.startsWith('/api/shopify/products/')) {
+            const handle = path.split('/api/shopify/products/')[1];
+            if (handle) {
+              const u = new URL(req.url, 'http://localhost');
+              u.searchParams.set('handle', handle);
+              req.url = '/api/shopify/products?' + u.searchParams.toString();
+            }
+          }
+          return importFresh('./api/shopify/products.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load products handler' }));
+            });
+        }
+
         if (path === '/api/shopify/featured' && method === 'GET') {
           return importFresh('./api/shopify/featured.js')
             .then((handler) => handler(req, res))

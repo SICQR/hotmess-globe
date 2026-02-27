@@ -35,7 +35,9 @@ const MAX_TOKENS = 1000;
 
 export default async function handler(req, res) {
   // CORS
-  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://hotmess-globe-fix.vercel.app');
+  const origin = req.headers?.origin || '';
+  const allowedOrigin = process.env.ALLOWED_ORIGIN || (origin.endsWith('.vercel.app') ? origin : '*');
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 

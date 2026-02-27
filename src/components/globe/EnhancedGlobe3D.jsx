@@ -1,5 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import {
+  createSeedHeatGroup,
+  createVenueGlowGroup,
+  createActivityFlashGroup,
+  animateSeedHeat,
+  animateVenueGlow,
+  animateActivityFlashes,
+  disposeActivityGroup,
+} from './GlobeActivityLayer';
 
 // Convert lat/lng to 3D position
 function latLngToVector3(lat, lng, radius) {
@@ -43,6 +52,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   userActivities = [],
   userIntents = [],
   routesData = [],
+  globeActivity = null,
   onBeaconClick,
   onCityClick,
   selectedCity = null,
@@ -189,6 +199,21 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     });
     const atmosphere = new THREE.Mesh(atmosphereGeo, atmosphereMat);
     globe.add(atmosphere);
+
+    // ── Living Globe: Activity Layer (seed heat + venue glow) ──────────────
+    let seedHeatGroup = new THREE.Group();
+    let venueGlowGroup = new THREE.Group();
+    let activityFlashGroup = new THREE.Group();
+
+    if (globeActivity) {
+      const { seedZones = [], venueGlows = [], activityEvents = [] } = globeActivity;
+      seedHeatGroup = createSeedHeatGroup(globeRadius, seedZones);
+      venueGlowGroup = createVenueGlowGroup(globeRadius, venueGlows);
+      activityFlashGroup = createActivityFlashGroup(globeRadius, activityEvents);
+      globe.add(seedHeatGroup);
+      globe.add(venueGlowGroup);
+      globe.add(activityFlashGroup);
+    }
 
     // Subtle grid lines overlay
     const gridMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05 });
@@ -1037,6 +1062,11 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         }
       });
 
+      // Animate Living Globe activity layers
+      animateSeedHeat(seedHeatGroup, time);
+      animateVenueGlow(venueGlowGroup, time);
+      animateActivityFlashes(activityFlashGroup, time);
+
       // Pulse Right Now beacons and mood blobs
       scene.traverse(obj => {
         if (obj.userData?.isPulse) {
@@ -1128,6 +1158,11 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           if (child.material) child.material.dispose();
         });
       }
+
+      // Dispose activity layer groups
+      disposeActivityGroup(seedHeatGroup);
+      disposeActivityGroup(venueGlowGroup);
+      disposeActivityGroup(activityFlashGroup);
       
       // Dispose city group
       if (cityGroup) {
@@ -1187,7 +1222,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       // Clear references
       scene.clear();
     };
-  }, [beacons, cities, activeLayers, highlightedIds, userActivities, routesData, onBeaconClick, onCityClick]);
+  }, [beacons, cities, activeLayers, highlightedIds, userActivities, routesData, globeActivity, onBeaconClick, onCityClick]);
 
   // Rotate to selected city
   useEffect(() => {
