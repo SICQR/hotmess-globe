@@ -184,7 +184,9 @@ function normalizeShopifyProduct(product: ShopifyProduct): Product {
     compareAtPrice: product.compareAtPriceRange?.minVariantPrice
       ? parseFloat(product.compareAtPriceRange.minVariantPrice.amount)
       : undefined,
-    images: product.images.map(img => img.url),
+    images: Array.isArray(product.images)
+      ? product.images.map(img => typeof img === 'string' ? img : img.url)
+      : (product.images as any)?.nodes?.map((img: any) => img.url) || [],
     category: product.productType,
     tags: product.tags,
     available: product.availableForSale,

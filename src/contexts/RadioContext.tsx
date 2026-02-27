@@ -63,8 +63,9 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
       audio.load();
       await audio.play();
       setIsPlaying(true);
-    } catch (err) {
-      console.error('[radio] play failed:', err);
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return; // Browser interrupted play for new source — ignore
+      console.warn('[radio] play failed:', err);
       setIsPlaying(false);
     }
   }, []);
