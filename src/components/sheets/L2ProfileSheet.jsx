@@ -21,6 +21,16 @@ import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import ProfileContentCard from '@/components/cards/ProfileContentCard';
 
+/**
+ * Renders a full-bleed profile sheet with hero image, persona details, content cards, and bottom actions.
+ *
+ * Displays the profile for the provided `email` or `uid` (or the current authenticated user when neither is provided),
+ * and supports messaging, reporting, and blocking actions via UI controls.
+ *
+ * @param {Object} props
+ * @param {string} [props.email] - Email of the profile to display; when omitted and `uid` is also omitted, shows the current user.
+ * @param {string} [props.uid] - Auth user id of the profile to display; used when `email` is not provided.
+ * @returns {JSX.Element} The profile sheet UI element.
 export default function L2ProfileSheet({ email, uid }) {
   const navigate = useNavigate();
   const { openSheet, closeSheet } = useSheet();
