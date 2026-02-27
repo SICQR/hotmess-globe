@@ -12,6 +12,15 @@ import { format } from 'date-fns';
 
 const TABS = ['All', 'People', 'Events', 'Market'];
 
+/**
+ * Render a search sheet that performs global searches across people, events, and market listings and displays categorized, tab-filtered results.
+ *
+ * Performs a debounced (300ms) search when the query is at least 2 characters, queries profiles, event beacons, and preloved listings in parallel, and presents results with tabs, loading, empty, and prompt states. Clicking a result opens the corresponding detail sheet via the surrounding sheet context.
+ *
+ * @param {{ q?: string }} props
+ * @param {string} [props.q] - Optional initial query to prefill the search input.
+ * @returns {JSX.Element} The search sheet UI element.
+ */
 export default function L2SearchSheet({ q: initialQ = '' }) {
   const [query, setQuery] = useState(initialQ);
   const [tab, setTab] = useState('All');
