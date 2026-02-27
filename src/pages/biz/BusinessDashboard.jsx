@@ -32,6 +32,7 @@ export default function BusinessDashboard() {
       try {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
+        const userId = currentUser.auth_user_id || currentUser.id;
 
         // Check if user has business account
         if (!currentUser.is_business && !currentUser.is_organizer) {
@@ -41,12 +42,12 @@ export default function BusinessDashboard() {
 
         // Fetch business stats
         const { data: events } = await supabase
-          .from('Beacon')
+          .from('beacons')
           .select('*')
-          .eq('created_by', currentUser.email);
+          .eq('owner_id', userId);
 
         const { data: rsvps } = await supabase
-          .from('EventRSVP')
+          .from('event_rsvps')
           .select('*')
           .in('beacon_id', events?.map(e => e.id) || []);
 
@@ -54,7 +55,7 @@ export default function BusinessDashboard() {
         const totalEvents = events?.length || 0;
         const totalRSVPs = rsvps?.length || 0;
         const upcomingEvents = events?.filter(e => 
-          new Date(e.start_time) > new Date()
+          new Date(e.starts_at) > new Date()
         ).length || 0;
 
         setStats({
@@ -292,14 +293,14 @@ export default function BusinessDashboard() {
                             <div>
                               <div className="font-semibold">{event.title}</div>
                               <div className="text-sm text-white/60">
-                                {event.city} • {new Date(event.start_time).toLocaleDateString()}
+                                {event.city} • {new Date(event.starts_at).toLocaleDateString()}
                               </div>
                             </div>
                           </div>
                           <div className="text-right">
                             <div className="text-sm font-semibold">{event.rsvp_count || 0} RSVPs</div>
                             <div className="text-xs text-white/40">
-                              {new Date(event.start_time) > new Date() ? 'Upcoming' : 'Past'}
+                              {new Date(event.starts_at) > new Date() ? 'Upcoming' : 'Past'}
                             </div>
                           </div>
                         </div>

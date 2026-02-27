@@ -83,7 +83,7 @@ export default function PersonaSwitcher({
       try {
         // Get main profile and all secondary profiles
         const { data, error } = await supabase
-          .from('User')
+          .from('profiles')
           .select('id, display_name, avatar_url, persona_type, persona_visibility, parent_profile_id')
           .or(`id.eq.${user.id},parent_profile_id.eq.${user.id}`)
           .order('persona_type', { ascending: true });
@@ -92,7 +92,7 @@ export default function PersonaSwitcher({
         if (error?.code === '42703') {
           // Column doesn't exist - show basic profile only
           const { data: basicData } = await supabase
-            .from('User')
+            .from('profiles')
             .select('id, display_name, avatar_url')
             .eq('account_id', user.id)
             .single();
@@ -152,7 +152,7 @@ export default function PersonaSwitcher({
     try {
       // Update user's active persona in DB
       await supabase
-        .from('User')
+        .from('profiles')
         .update({ active_persona_id: persona.id })
         .eq('account_id', user.id);
 

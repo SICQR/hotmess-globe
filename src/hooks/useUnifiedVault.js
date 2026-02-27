@@ -87,10 +87,10 @@ export function useUnifiedVault(user) {
       
       const now = new Date().toISOString();
       const { data, error } = await supabase
-        .from('Beacon')
-        .select('id, kind, title, city, created_date, expires_at')
-        .eq('promoter_id', userId)
-        .or(`expires_at.is.null,expires_at.gt.${now}`)
+        .from('beacons')
+        .select('id, kind, title, city, created_date, beacon_expires_at')
+        .eq('owner_id', userId)
+        .or(`beacon_expires_at.is.null,beacon_expires_at.gt.${now}`)
         .order('created_date', { ascending: false });
 
       if (error) {
@@ -104,7 +104,7 @@ export function useUnifiedVault(user) {
         title: b.title || b.city || 'Signal',
         city: b.city,
         created_date: b.created_date,
-        expires_at: b.expires_at,
+        expires_at: b.beacon_expires_at,
       }));
     },
     enabled: !!userId,
@@ -123,7 +123,7 @@ export function useUnifiedVault(user) {
       // Try to get from user profile or gamification table
       try {
         const { data } = await supabase
-          .from('User')
+          .from('profiles')
           .select('xp_points, level')
           .eq('id', userId)
           .single();

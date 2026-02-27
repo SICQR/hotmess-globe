@@ -39,7 +39,7 @@ export function useGPS(autoUpdate = true): UseGPSResult {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
-          .from('User')
+          .from('profiles')
           .update({
             last_lat: newPosition.lat,
             last_lng: newPosition.lng,

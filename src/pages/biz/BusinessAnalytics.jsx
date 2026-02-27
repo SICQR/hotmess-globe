@@ -25,7 +25,8 @@ export default function BusinessAnalytics() {
     const fetchAnalytics = async () => {
       try {
         const currentUser = await base44.auth.me();
-        
+        const userId = currentUser.auth_user_id || currentUser.id;
+
         // Calculate date range
         const days = parseInt(dateRange) || 30;
         const startDate = new Date();
@@ -33,15 +34,15 @@ export default function BusinessAnalytics() {
 
         // Fetch events
         const { data: events } = await supabase
-          .from('Beacon')
+          .from('beacons')
           .select('*')
-          .eq('created_by', currentUser.email)
-          .gte('created_at', startDate.toISOString());
+          .eq('owner_id', userId)
+          .gte('created_date', startDate.toISOString());
 
         // Fetch RSVPs
         const eventIds = events?.map(e => e.id) || [];
         const { data: rsvps } = await supabase
-          .from('EventRSVP')
+          .from('event_rsvps')
           .select('*')
           .in('beacon_id', eventIds);
 

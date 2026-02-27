@@ -111,7 +111,7 @@ export function useGamification() {
       const newLevel = calculateLevel(newXP);
 
       const { error } = await supabase
-        .from('User')
+        .from('profiles')
         .update({ 
           xp_balance: newXP,
           level: newLevel
