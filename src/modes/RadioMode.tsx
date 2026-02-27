@@ -63,6 +63,7 @@ interface ShowData {
   host: string;
   time: string;
   emoji: string;
+  image?: string;
   description: string;
   blurb: string;
 }
@@ -74,6 +75,7 @@ const STATIC_SHOWS: ShowData[] = [
     host: 'DJ Chaos',
     time: 'Mon\u2013Fri 7\u201310am',
     emoji: '\u{1F305}',
+    image: '/assets/shows/wake-the-mess.jpg',
     description: 'Start your morning with the hottest beats and queer wellness.',
     blurb: 'Coffee, chaos and community. Wake the Mess is London\u2019s queer alarm clock\u2014three hours of bangers, wellness segments and sponsored drops from coffee brands and skincare.',
   },
@@ -83,6 +85,7 @@ const STATIC_SHOWS: ShowData[] = [
     host: 'Papa Bear',
     time: 'Mon\u2013Fri 3\u20135pm',
     emoji: '\u{1F4DE}',
+    image: '/assets/shows/dial-a-daddy.jpg',
     description: 'Afternoon advice, confessions and community call-ins.',
     blurb: 'The original call-in show. Confessions, dating disasters and daddy advice. Listeners phone in anonymously; Papa Bear keeps it real. Sponsored by HNH MESS.',
   },
@@ -92,6 +95,7 @@ const STATIC_SHOWS: ShowData[] = [
     host: 'The Collective',
     time: 'Mon\u2013Fri 5\u20137pm',
     emoji: '\u{1F697}',
+    image: '/assets/shows/drive-time-mess.jpg',
     description: 'Rush hour bangers to get you home safe.',
     blurb: 'End-of-day energy for the commute. High tempo, pep talks and a \u201Cget home safe\u201D QR for ride-share discounts. From boardrooms to bar boys.',
   },
@@ -101,6 +105,7 @@ const STATIC_SHOWS: ShowData[] = [
     host: 'SMASH DADDYS',
     time: 'Fri\u2013Sat 7\u201311pm',
     emoji: '\u{1F30C}',
+    image: '/assets/shows/hotmess-nights.jpg',
     description: 'Weekend club sets, live DJs and pre-party energy.',
     blurb: 'The main event. SMASH DADDYS takes over with live club sets, guest DJs and a full \u201CLive Now\u201D glow bar on the app. Sponsored by clubs, DJs and drink brands.',
   },
@@ -110,6 +115,7 @@ const STATIC_SHOWS: ShowData[] = [
     host: 'HNH Collective',
     time: 'Sun 6\u20138pm',
     emoji: '\u{1F91D}',
+    image: '/assets/shows/hand-in-hand.jpg',
     description: 'Sunday wind-down. Deep house, mental health check-ins and chill.',
     blurb: 'After the weekend, we regroup. Deep house, mental health check-ins, and gentle vibes with the HNH Collective. Partners: HNH MESS, Uber Eats and mental health allies.',
   },
@@ -119,14 +125,14 @@ const SOUNDCLOUD_URL = 'https://soundcloud.com/rawconvictrecords';
 
 // RAW CONVICT RECORDS — label releases (from Playlist.m3u)
 const PLAYLIST_TRACKS = [
-  { id: 'rcr-01', title: 'Another Half', artist: 'glenmccarty', duration: '3:50' },
-  { id: 'rcr-02', title: 'Gone Under', artist: 'glenmccarty', duration: '2:59' },
-  { id: 'rcr-03', title: 'HNH Mess 2', artist: 'glenmccarty', duration: '3:05' },
-  { id: 'rcr-04', title: 'Hotline (Extended)', artist: 'glenmccarty', duration: '4:19' },
-  { id: 'rcr-05', title: "It's Not G, It's You", artist: 'glenmccarty', duration: '3:31' },
-  { id: 'rcr-06', title: 'Love You, Hate You', artist: 'glenmccarty', duration: '2:15' },
-  { id: 'rcr-07', title: 'New Way, Same Us', artist: 'glenmccarty', duration: '2:29' },
-  { id: 'rcr-08', title: 'Walking Red Flag', artist: 'glenmccarty', duration: '3:41' },
+  { id: 'rcr-01', title: 'Another Half', artist: 'glenmccarty', duration: '3:50', href: 'https://soundcloud.com/rawconvictrecords/another-half' },
+  { id: 'rcr-02', title: 'Gone Under', artist: 'glenmccarty', duration: '2:59', href: 'https://soundcloud.com/rawconvictrecords/gone-under' },
+  { id: 'rcr-03', title: 'HNH Mess 2', artist: 'glenmccarty', duration: '3:05', href: 'https://soundcloud.com/rawconvictrecords/hnh-mess-2' },
+  { id: 'rcr-04', title: 'Hotline (Extended)', artist: 'glenmccarty', duration: '4:19', href: 'https://soundcloud.com/rawconvictrecords/hotline-extended' },
+  { id: 'rcr-05', title: "It's Not G, It's You", artist: 'glenmccarty', duration: '3:31', href: 'https://soundcloud.com/rawconvictrecords/its-not-g-its-you' },
+  { id: 'rcr-06', title: 'Love You, Hate You', artist: 'glenmccarty', duration: '2:15', href: 'https://soundcloud.com/rawconvictrecords/love-you-hate-you' },
+  { id: 'rcr-07', title: 'New Way, Same Us', artist: 'glenmccarty', duration: '2:29', href: 'https://soundcloud.com/rawconvictrecords/new-way-same-us' },
+  { id: 'rcr-08', title: 'Walking Red Flag', artist: 'glenmccarty', duration: '3:41', href: 'https://soundcloud.com/rawconvictrecords/walking-red-flag' },
 ];
 
 // -- Component ------------------------------------------------------------------
@@ -549,16 +555,28 @@ export function RadioMode({ className = '' }: RadioModeProps) {
                   }`}
                   aria-label={`Show: ${show.name}, ${show.time}`}
                 >
-                  {/* Artwork placeholder with gradient */}
-                  <div
-                    className="h-20 flex items-center justify-center relative"
-                    style={{
-                      background: isActive
-                        ? 'linear-gradient(135deg, rgba(200,150,44,0.3) 0%, rgba(200,150,44,0.05) 100%)'
-                        : 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
-                    }}
-                  >
-                    <span className="text-3xl">{show.emoji}</span>
+                  {/* Show artwork */}
+                  <div className="h-20 relative overflow-hidden">
+                    {show.image ? (
+                      <img
+                        src={show.image}
+                        alt={show.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
+                        }}
+                      >
+                        <span className="text-3xl">{show.emoji}</span>
+                      </div>
+                    )}
+                    {isActive && (
+                      <div className="absolute inset-0 bg-[#C8962C]/20" />
+                    )}
                     {isActive && isPlaying && (
                       <div className="absolute top-2 right-2">
                         <span className="inline-flex items-center gap-1 bg-[#C8962C] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase">
@@ -677,9 +695,12 @@ export function RadioMode({ className = '' }: RadioModeProps) {
           </h2>
           <div className="space-y-2">
             {PLAYLIST_TRACKS.map((track) => (
-              <div
+              <a
                 key={track.id}
-                className="flex items-center gap-3 bg-[#1C1C1E] rounded-xl px-3 py-2.5 border border-white/5"
+                href={track.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-[#1C1C1E] rounded-xl px-3 py-2.5 border border-white/5 hover:border-[#C8962C]/30 transition-colors"
               >
                 <div className="w-8 h-8 rounded-lg bg-[#C8962C]/10 flex items-center justify-center flex-shrink-0">
                   <Music className="w-4 h-4 text-[#C8962C]" />
@@ -688,7 +709,8 @@ export function RadioMode({ className = '' }: RadioModeProps) {
                   <p className="text-white text-sm font-semibold truncate">{track.title}</p>
                   <p className="text-[#8E8E93] text-[10px]">{track.artist} \u00b7 {track.duration}</p>
                 </div>
-              </div>
+                <ExternalLink className="w-3.5 h-3.5 text-white/20 flex-shrink-0" />
+              </a>
             ))}
           </div>
         </section>
