@@ -998,7 +998,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       }
 
       const { data: profile } = await supabase
-        .from('User')
+        .from('profiles')
         .select('subscription_tier')
         .eq('email', authUser.email)
         .single();

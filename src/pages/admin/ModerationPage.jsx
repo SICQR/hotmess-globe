@@ -201,7 +201,7 @@ export default function ModerationPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.email) { setIsAdmin(false); return; }
       const { data } = await supabase
-        .from('User')
+        .from('profiles')
         .select('is_admin')
         .eq('email', user.email)
         .single();
@@ -282,7 +282,7 @@ export default function ModerationPage() {
       actionTaken = 'banned';
       const report = reports.find(r => r.id === reportId);
       if (report?.reported_by) {
-        await supabase.from('User').update({ is_banned: true }).eq('id', report.reported_by);
+        await supabase.from('profiles').update({ is_banned: true }).eq('id', report.reported_by);
         await supabase.from('user_strikes').insert({
           user_id: report.reported_by,
           reason: 'Banned: ' + (report.report_reason || 'Severe violation'),

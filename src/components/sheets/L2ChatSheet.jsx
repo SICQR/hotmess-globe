@@ -377,7 +377,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser?.email) {
         const { data: profile } = await supabase
-          .from('User')
+          .from('profiles')
           .select('subscription_tier')
           .eq('email', authUser.email)
           .single();
