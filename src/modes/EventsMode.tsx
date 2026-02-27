@@ -46,8 +46,9 @@ export default function EventsMode() {
     queryFn: async () => {
       const now = new Date();
       let query = supabase
-        .from('events')
+        .from('beacons')
         .select('*')
+        .eq('kind', 'event')
         .order('starts_at', { ascending: true })
         .limit(50);
 
@@ -205,10 +206,10 @@ export default function EventsMode() {
                         <p className="text-[11px] text-[#C8962C] mt-0.5 font-semibold">
                           {formatEventDate((event.starts_at || event.date) as string)}
                         </p>
-                        {(event.venue || event.location) && (
+                        {(event.venue_name || event.venue_address) && (
                           <p className="text-[10px] text-white/40 flex items-center gap-1 mt-0.5">
                             <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
-                            <span className="truncate">{(event.venue || event.location) as string}</span>
+                            <span className="truncate">{(event.venue_name || event.venue_address) as string}</span>
                           </p>
                         )}
                         {event.rsvp_count != null && (
