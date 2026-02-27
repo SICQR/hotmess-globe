@@ -190,110 +190,24 @@ export function animateVenueGlow(group: THREE.Group, time: number): void {
   }
 }
 
-// ── Sub-layer C: Activity Flashes ────────────────────────────────────────────
+// ── Sub-layer C: Activity Flashes (stub) ────────────────────────────────────
 
 /**
- * Create ephemeral flash effects for platform activity.
- *
- * - Purchase/listing: expanding gold ring that fades over duration
- * - Message: small gold dot flash (arcs deferred — expensive)
- * - SOS: large red pulse ring
- *
- * Each event gets a mesh with userData tracking its lifecycle.
- * `animateActivityFlashes` scales/fades them each frame.
+ * Placeholder for ephemeral flash effects (purchases, messages, SOS).
+ * Will be wired during the AI Trigger Wiring session.
  */
 export function createActivityFlashGroup(
-  globeRadius: number,
-  events: GlobeActivityEvent[],
+  _globeRadius: number,
+  _events: GlobeActivityEvent[],
 ): THREE.Group {
   const group = new THREE.Group();
   group.name = 'activityFlashes';
-
-  const ringGeo = new THREE.RingGeometry(0.8, 1, 32);
-
-  for (const evt of events) {
-    if (!Number.isFinite(evt.lat) || !Number.isFinite(evt.lng)) continue;
-
-    const isPurchase = evt.type === 'purchase' || evt.type === 'listing';
-    const isSOS = evt.type === 'sos';
-    const isMessage = evt.type === 'message';
-
-    const color = evt.color ?? GOLD;
-    const baseSize = isSOS ? 0.03 : isPurchase ? 0.015 : 0.008;
-    const maxScale = isSOS ? 0.06 : isPurchase ? 0.04 : 0.015;
-
-    const mat = new THREE.MeshBasicMaterial({
-      color,
-      transparent: true,
-      opacity: evt.intensity * (isMessage ? 0.25 : 0.5),
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-
-    const mesh = new THREE.Mesh(isPurchase || isSOS ? ringGeo : new THREE.CircleGeometry(1, 24), mat);
-    const pos = latLngToVector3(evt.lat, evt.lng, globeRadius * 1.01);
-    mesh.position.copy(pos);
-    mesh.lookAt(pos.clone().multiplyScalar(2));
-
-    const startSize = baseSize * globeRadius;
-    mesh.scale.set(startSize, startSize, startSize);
-
-    mesh.userData = {
-      isFlash: true,
-      eventType: evt.type,
-      createdAt: evt.createdAt,
-      duration: evt.duration,
-      baseSize: startSize,
-      maxSize: maxScale * globeRadius,
-      baseOpacity: evt.intensity * (isMessage ? 0.25 : 0.5),
-    };
-
-    group.add(mesh);
-  }
-
+  // Layer C implementation deferred
   return group;
 }
 
-/**
- * Animate activity flashes — expand + fade over their lifetime.
- * Called once per frame from the animation loop.
- */
-export function animateActivityFlashes(group: THREE.Group, _time: number): void {
-  const now = Date.now();
-
-  for (let i = group.children.length - 1; i >= 0; i--) {
-    const child = group.children[i];
-    if (!(child instanceof THREE.Mesh)) continue;
-    const ud = child.userData;
-    if (!ud.isFlash) continue;
-
-    const elapsed = now - ud.createdAt;
-    const progress = Math.min(1, elapsed / ud.duration); // 0→1
-
-    if (progress >= 1) {
-      // Expired — dispose and remove
-      child.geometry?.dispose();
-      const mat = child.material;
-      if (mat) {
-        if (Array.isArray(mat)) mat.forEach(m => m.dispose());
-        else mat.dispose();
-      }
-      group.remove(child);
-      continue;
-    }
-
-    // Scale: expand from baseSize → maxSize
-    const s = ud.baseSize + (ud.maxSize - ud.baseSize) * progress;
-    child.scale.set(s, s, s);
-
-    // Opacity: fade out in last 40% of life
-    const fadeStart = 0.6;
-    const opacity = progress > fadeStart
-      ? ud.baseOpacity * (1 - (progress - fadeStart) / (1 - fadeStart))
-      : ud.baseOpacity;
-    (child.material as THREE.MeshBasicMaterial).opacity = Math.max(0, opacity);
-  }
+export function animateActivityFlashes(_group: THREE.Group, _time: number): void {
+  // Layer C implementation deferred
 }
 
 // ── Disposal ────────────────────────────────────────────────────────────────

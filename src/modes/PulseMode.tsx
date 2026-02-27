@@ -23,8 +23,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import RightNowModal from '@/components/globe/RightNowModal';
-import { motion, useMotionValue, useAnimation } from 'framer-motion';
-import type { PanInfo } from 'framer-motion';
+import { motion, useMotionValue, useAnimation, PanInfo } from 'framer-motion';
 import {
   MapPin,
   ChevronDown,
@@ -38,6 +37,8 @@ import {
   Radio as RadioIcon,
   Zap,
   Sparkles,
+  ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -822,7 +823,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         .from('beacons')
         .select('id, metadata, starts_at, end_at, lat, lng, kind, type, intensity')
         .or('end_at.is.null,end_at.gte.' + now)
-        .order('starts_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(50);
       if (error) {
         console.error('[pulse] beacons query error:', error.message);
@@ -862,7 +863,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         .select('id, metadata, starts_at, end_at, lat, lng, kind, type')
         .or(`type.eq.safety,kind.eq.safety`)
         .or('end_at.is.null,end_at.gte.' + now)
-        .order('starts_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(10);
       if (error) {
         console.error('[pulse] safety query error:', error.message);
@@ -998,7 +999,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       }
 
       const { data: profile } = await supabase
-        .from('profiles')
+        .from('User')
         .select('subscription_tier')
         .eq('email', authUser.email)
         .single();
@@ -1151,7 +1152,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       )}
 
       {/* Amplify pill (bottom-right, above FAB) */}
-      <div className="fixed right-4 z-[45] pointer-events-auto" style={{ bottom: 'calc(250px + env(safe-area-inset-bottom, 0px))' }}>
+      <div className="fixed right-4 z-50 pointer-events-auto" style={{ bottom: 'calc(250px + env(safe-area-inset-bottom, 0px))' }}>
         <button
           onClick={handleAmplify}
           className="flex items-center gap-1.5 px-3.5 h-10 rounded-full text-xs font-bold transition-all active:scale-95"
@@ -1170,7 +1171,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       </div>
 
       {/* Right Now FAB (bottom-left, lime) */}
-      <div className="fixed left-4 z-[45] pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
+      <div className="fixed left-4 z-50 pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
         <div className="relative">
           {rightNowCount > 0 && (
             <motion.div
@@ -1197,7 +1198,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       </div>
 
       {/* Beacon FAB (bottom-right, above drawer) */}
-      <div className="fixed right-4 z-[45] pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
+      <div className="fixed right-4 z-50 pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
         <BeaconFAB
           onTap={handleCreateBeacon}
           onLongPress={handleCreateBeacon}
