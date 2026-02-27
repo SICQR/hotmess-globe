@@ -92,7 +92,6 @@ const STATIC_CATEGORIES = [
   'Clothing',
   'Accessories',
   'Art',
-  'Music',
   'Equipment',
   'Other',
 ];

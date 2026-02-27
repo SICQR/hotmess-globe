@@ -477,7 +477,7 @@ export default function Auth() {
       {/* Hero background */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <img
-          src="/assets/hero-bokeh-1.jpg"
+          src="/assets/hero-editorial.jpg"
           alt=""
           className="w-full h-full object-cover"
           style={{ opacity: 0.22 }}

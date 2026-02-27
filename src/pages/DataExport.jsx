@@ -30,7 +30,7 @@ const DATA_CATEGORIES = [
     name: 'Profile Information', 
     icon: User,
     description: 'Your account details, preferences, and settings',
-    tables: ['User']
+    tables: ['profiles']
   },
   { 
     id: 'messages', 
@@ -44,7 +44,7 @@ const DATA_CATEGORIES = [
     name: 'Events & RSVPs', 
     icon: Calendar,
     description: 'Events you created or attended',
-    tables: ['Beacon', 'EventRSVP']
+    tables: ['beacons', 'event_rsvps']
   },
   { 
     id: 'marketplace', 
@@ -116,7 +116,7 @@ export default function DataExport() {
       // Export profile data
       setExportProgress(10);
       const { data: userData } = await supabase
-        .from('User')
+        .from('profiles')
         .select('*')
         .eq('email', user.email)
         .single();
@@ -140,10 +140,11 @@ export default function DataExport() {
 
       // Export events/beacons created by user
       setExportProgress(40);
+      const userId = user.auth_user_id || user.id;
       const { data: beacons } = await supabase
-        .from('Beacon')
+        .from('beacons')
         .select('*')
-        .eq('created_by', user.email);
+        .eq('owner_id', userId);
       
       if (beacons) {
         exportData.events = beacons;
@@ -152,7 +153,7 @@ export default function DataExport() {
       // Export RSVPs
       setExportProgress(55);
       const { data: rsvps } = await supabase
-        .from('EventRSVP')
+        .from('event_rsvps')
         .select('*')
         .eq('user_email', user.email);
       

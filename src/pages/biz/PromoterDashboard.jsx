@@ -54,11 +54,11 @@ export default function PromoterDashboard() {
 
       // Fetch beacons
       const { data: beaconsData, error: beaconsError } = await supabase
-        .from('Beacon')
+        .from('beacons')
         .select('*, event_rsvps(count)')
         .eq('promoter_id', user.id)
-        .eq('beacon_type', 'event')
-        .order('created_at', { ascending: false });
+        .eq('kind', 'event')
+        .order('created_date', { ascending: false });
 
       if (beaconsError) {
         console.error('Error fetching beacons:', beaconsError);

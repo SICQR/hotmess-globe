@@ -66,7 +66,7 @@ const linkTelegramAccount = async (telegramUser) => {
   if (user) {
     // User is logged in - link Telegram to existing account
     const { error } = await supabase
-      .from('User')
+      .from('profiles')
       .update({
         telegram_id: telegramUser.id,
         telegram_username: telegramUser.username,
@@ -83,7 +83,7 @@ const linkTelegramAccount = async (telegramUser) => {
   // No user logged in - try to find or create account
   // First, check if this Telegram ID is already linked to an account
   const { data: existingUser } = await supabase
-    .from('User')
+    .from('profiles')
     .select('email, auth_user_id')
     .eq('telegram_id', telegramUser.id)
     .maybeSingle();

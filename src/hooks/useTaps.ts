@@ -36,8 +36,14 @@ export function useTaps(myEmail: string | null) {
       .from('taps')
       .select('tapped_email, tap_type')
       .eq('tapper_email', myEmail)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (cancelled) return;
+        // If the table doesn't exist (404/PGRST), silently degrade
+        if (error) {
+          console.warn('[useTaps] taps table unavailable:', error.message);
+          setIsLoading(false);
+          return;
+        }
         const keys = new Set<TapKey>(
           (data || []).map((row: { tapped_email: string; tap_type: string }) =>
             makeTapKey(myEmail, row.tapped_email, row.tap_type as TapType)
@@ -87,13 +93,14 @@ export function useTaps(myEmail: string | null) {
           return next;
         });
 
-        await supabase
+        const { error: delErr } = await supabase
           .from('taps')
           .delete()
           .eq('tapper_email', myEmail)
           .eq('tapped_email', tappedEmail)
           .eq('tap_type', tapType);
 
+        if (delErr) console.warn('[useTaps] delete failed:', delErr.message);
         return false;
       }
 
@@ -116,7 +123,7 @@ export function useTaps(myEmail: string | null) {
         return false;
       }
 
-      // Fire notification to the tapped user (best-effort)
+      // Fire notification to the tapped user (best-effort, table may not exist yet)
       const myName = myEmail.split('@')[0] ?? 'Someone';
       supabase
         .from('notifications')
@@ -127,7 +134,9 @@ export function useTaps(myEmail: string | null) {
           message: `${tappedName ? tappedName : myName} sent you a ${tapType}!`,
           read: false,
         })
-        .then(() => {})
+        .then(({ error: notifErr }) => {
+          if (notifErr) console.warn('[useTaps] notification insert failed:', notifErr.message);
+        })
         .catch(() => {});
 
       return true;

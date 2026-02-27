@@ -32,7 +32,7 @@ export async function insertBeaconForP2PListing(product, promoterId) {
     const lng = product.lng ?? product.location?.lng ?? -0.1278;
 
     const beaconData = {
-      promoter_id: promoterId,
+      owner_id: promoterId,
       kind: 'marketplace',
       title: product.title || product.name || 'P2P Listing',
       city: product.city || 'London',
@@ -44,11 +44,11 @@ export async function insertBeaconForP2PListing(product, promoterId) {
         color: BEACON_COLOR.marketplace,
       },
       // Beacons expire after 30 days by default for listings
-      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      beacon_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     };
 
     const { data, error } = await supabase
-      .from('Beacon')
+      .from('beacons')
       .insert(beaconData)
       .select()
       .single();
@@ -80,7 +80,7 @@ export async function deleteBeaconForP2PListing(productId) {
   try {
     // Delete beacons where metadata contains this product_id
     const { error } = await supabase
-      .from('Beacon')
+      .from('beacons')
       .delete()
       .eq('kind', 'marketplace')
       .contains('metadata', { product_id: productId });

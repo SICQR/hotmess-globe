@@ -65,7 +65,7 @@ export function useUserContext() {
 
       try {
         const { data, error: fetchError } = await supabase
-          .from('User')
+          .from('profiles')
           .select(`
             id,
             email,
@@ -173,7 +173,7 @@ export function useUserContext() {
 
     try {
       const { data, error: updateError } = await supabase
-        .from('User')
+        .from('profiles')
         .update(updates)
         .eq('id', userData.id)
         .select()
@@ -196,7 +196,7 @@ export function useUserContext() {
     setLoading(true);
     try {
       const { data, error: fetchError } = await supabase
-        .from('User')
+        .from('profiles')
         .select('*')
         .eq('email', authUser.email)
         .single();

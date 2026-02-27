@@ -28,12 +28,12 @@ export function useRightNowBeacon({ userId, userLat = null, userLng = null }) {
     }
     const now = new Date().toISOString();
     supabase
-      .from('Beacon')
+      .from('beacons')
       .select('id')
-      .eq('promoter_id', userId)
+      .eq('owner_id', userId)
       .eq('kind', 'social')
       .eq('active', true)
-      .or(`end_at.gte.${now},end_at.is.null`)
+      .or(`ends_at.gte.${now},ends_at.is.null`)
       .maybeSingle()
       .then(({ data }) => setActiveBeaconId(data?.id ?? null));
   }, [userId]);
@@ -53,7 +53,7 @@ export function useRightNowBeacon({ userId, userLat = null, userLng = null }) {
           const endAt = new Date();
           endAt.setHours(endAt.getHours() + RIGHT_NOW_EXPIRY_HOURS);
           const { data, error: insertErr } = await supabase
-            .from('Beacon')
+            .from('beacons')
             .insert({
               kind: 'social',
               active: true,
@@ -62,8 +62,8 @@ export function useRightNowBeacon({ userId, userLat = null, userLng = null }) {
               lng,
               city: 'London',
               title: 'Right Now',
-              promoter_id: userId,
-              end_at: endAt.toISOString(),
+              owner_id: userId,
+              ends_at: endAt.toISOString(),
             })
             .select('id')
             .single();
@@ -72,9 +72,9 @@ export function useRightNowBeacon({ userId, userLat = null, userLng = null }) {
           return true;
         } else {
           const { error: deleteErr } = await supabase
-            .from('Beacon')
+            .from('beacons')
             .delete()
-            .eq('promoter_id', userId)
+            .eq('owner_id', userId)
             .eq('kind', 'social');
           if (deleteErr) throw deleteErr;
           setActiveBeaconId(null);

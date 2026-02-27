@@ -21,7 +21,7 @@ export default function EventCurationQueue() {
     queryKey: ['admin-events', statusFilter],
     queryFn: async () => {
       const query = supabase
-        .from('Beacon')
+        .from('beacons')
         .select('*')
         .eq('kind', 'event')
         .order('created_date', { ascending: false })
@@ -42,7 +42,7 @@ export default function EventCurationQueue() {
   const approveMutation = useMutation({
     mutationFn: async (eventId) => {
       const { error } = await supabase
-        .from('Beacon')
+        .from('beacons')
         .update({ status: 'published', updated_date: new Date().toISOString() })
         .eq('id', eventId);
       if (error) throw error;
@@ -60,7 +60,7 @@ export default function EventCurationQueue() {
   const rejectMutation = useMutation({
     mutationFn: async (eventId) => {
       const { error } = await supabase
-        .from('Beacon')
+        .from('beacons')
         .update({ status: 'rejected', active: false, updated_date: new Date().toISOString() })
         .eq('id', eventId);
       if (error) throw error;

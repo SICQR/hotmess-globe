@@ -61,7 +61,7 @@ export default function BusinessOnboarding() {
       
       // Update user with business status
       await supabase
-        .from('User')
+        .from('profiles')
         .update({
           is_business: true,
           is_organizer: businessType === 'promoter',

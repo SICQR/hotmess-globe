@@ -74,8 +74,8 @@ export function useGlobeBeacons(options = {}) {
   const fetchBeacons = useCallback(async () => {
     try {
       let q = supabase
-        .from('Beacon')
-        .select('id, kind, lat, lng, city, title, intensity, end_at, promoter_id, created_date')
+        .from('beacons')
+        .select('id, kind, type, lat, lng, city, title, intensity, end_at, promoter_id, created_date, metadata')
         .eq('active', true);
 
       if (kindFilter) {

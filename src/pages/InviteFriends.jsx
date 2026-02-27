@@ -45,7 +45,7 @@ export default function InviteFriends() {
         // Save referral code if new
         if (!currentUser.referral_code) {
           await supabase
-            .from('User')
+            .from('profiles')
             .update({ referral_code: code })
             .eq('email', currentUser.email);
         }

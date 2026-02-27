@@ -83,16 +83,17 @@ export default function CreateBeacon() {
 
       // Create beacon
       const { data: beacon, error: beaconError } = await supabase
-        .from('Beacon')
+        .from('beacons')
         .insert({
-          beacon_type: 'event',
+          kind: 'event',
+          type: 'event',
           promoter_id: user.id,
           event_title: formData.title,
           event_description: formData.description,
           venue_name: formData.venueName,
           venue_address: formData.venueAddress,
-          latitude: formData.latitude,
-          longitude: formData.longitude,
+          lat: formData.latitude,
+          lng: formData.longitude,
           event_start: `${formData.eventDate}T${formData.eventTime}:00`,
           ticket_url: formData.ticketUrl,
           ticket_price_cents: ticketPriceCents,

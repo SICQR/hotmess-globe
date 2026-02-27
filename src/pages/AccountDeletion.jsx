@@ -61,13 +61,16 @@ export default function AccountDeletion() {
     setDeletionProgress(0);
     
     try {
+      const userId = user.auth_user_id || user.id;
+
       // Step 1: Delete messages
       setDeletionStep('Removing messages...');
       setDeletionProgress(10);
-      await supabase
+      const { error: msgErr } = await supabase
         .from('message')
         .delete()
         .eq('sender_email', user.email);
+      if (msgErr) console.warn('Messages cleanup:', msgErr.message);
 
       // Step 2: Delete conversations
       setDeletionStep('Removing conversations...');
@@ -77,74 +80,83 @@ export default function AccountDeletion() {
       // Step 3: Delete RSVPs
       setDeletionStep('Removing event RSVPs...');
       setDeletionProgress(30);
-      await supabase
-        .from('EventRSVP')
+      const { error: rsvpErr } = await supabase
+        .from('event_rsvps')
         .delete()
         .eq('user_email', user.email);
+      if (rsvpErr) console.warn('RSVPs cleanup:', rsvpErr.message);
 
-      // Step 4: Anonymize or delete beacons
+      // Step 4: Anonymize beacons (set owner to null)
       setDeletionStep('Removing beacons...');
       setDeletionProgress(40);
-      await supabase
-        .from('Beacon')
-        .update({ created_by: 'deleted_user' })
-        .eq('created_by', user.email);
+      const { error: beaconErr } = await supabase
+        .from('beacons')
+        .update({ owner_id: null })
+        .eq('owner_id', userId);
+      if (beaconErr) console.warn('Beacons cleanup:', beaconErr.message);
 
       // Step 5: Delete social connections
       setDeletionStep('Removing social connections...');
       setDeletionProgress(50);
-      await supabase
+      const { error: followErr } = await supabase
         .from('user_follows')
         .delete()
         .or(`follower_email.eq.${user.email},following_email.eq.${user.email}`);
+      if (followErr) console.warn('Follows cleanup:', followErr.message);
 
       // Step 6: Delete handshakes
       setDeletionStep('Removing handshakes...');
       setDeletionProgress(60);
-      await supabase
+      const { error: handshakeErr } = await supabase
         .from('handshake')
         .delete()
         .or(`initiator_email.eq.${user.email},recipient_email.eq.${user.email}`);
+      if (handshakeErr) console.warn('Handshakes cleanup:', handshakeErr.message);
 
       // Step 7: Delete notifications
       setDeletionStep('Removing notifications...');
       setDeletionProgress(70);
-      await supabase
+      const { error: notifErr } = await supabase
         .from('notification')
         .delete()
         .eq('user_email', user.email);
+      if (notifErr) console.warn('Notifications cleanup:', notifErr.message);
 
       // Step 8: Delete push subscriptions
       setDeletionStep('Removing push subscriptions...');
       setDeletionProgress(75);
-      await supabase
+      const { error: pushErr } = await supabase
         .from('push_subscriptions')
         .delete()
         .eq('user_email', user.email);
+      if (pushErr) console.warn('Push subs cleanup:', pushErr.message);
 
       // Step 9: Delete marketplace data
       setDeletionStep('Removing marketplace data...');
       setDeletionProgress(80);
-      await supabase
+      const { error: cartErr } = await supabase
         .from('cart_items')
         .delete()
         .eq('user_email', user.email);
+      if (cartErr) console.warn('Cart cleanup:', cartErr.message);
 
       // Step 10: Delete user vibes
       setDeletionStep('Removing user preferences...');
       setDeletionProgress(85);
-      await supabase
+      const { error: vibesErr } = await supabase
         .from('user_vibes')
         .delete()
         .eq('user_email', user.email);
+      if (vibesErr) console.warn('Vibes cleanup:', vibesErr.message);
 
       // Step 11: Delete activity logs
       setDeletionStep('Removing activity logs...');
       setDeletionProgress(90);
-      await supabase
+      const { error: activityErr } = await supabase
         .from('user_activity')
         .delete()
         .eq('user_email', user.email);
+      if (activityErr) console.warn('Activity cleanup:', activityErr.message);
 
       // Step 12: Log deletion request
       setDeletionStep('Recording deletion request...');
@@ -160,10 +172,11 @@ export default function AccountDeletion() {
       // Step 13: Delete user record
       setDeletionStep('Finalizing account deletion...');
       setDeletionProgress(98);
-      await supabase
-        .from('User')
+      const { error: userErr } = await supabase
+        .from('profiles')
         .delete()
         .eq('email', user.email);
+      if (userErr) throw userErr;
 
       setDeletionProgress(100);
       setDeletionStep('Account deleted successfully');
