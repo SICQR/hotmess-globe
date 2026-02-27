@@ -1152,7 +1152,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       )}
 
       {/* Amplify pill (bottom-right, above FAB) */}
-      <div className="fixed right-4 z-50 pointer-events-auto" style={{ bottom: 'calc(250px + env(safe-area-inset-bottom, 0px))' }}>
+      <div className="fixed right-4 z-[45] pointer-events-auto" style={{ bottom: 'calc(250px + env(safe-area-inset-bottom, 0px))' }}>
         <button
           onClick={handleAmplify}
           className="flex items-center gap-1.5 px-3.5 h-10 rounded-full text-xs font-bold transition-all active:scale-95"
@@ -1171,7 +1171,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       </div>
 
       {/* Right Now FAB (bottom-left, lime) */}
-      <div className="fixed left-4 z-50 pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
+      <div className="fixed left-4 z-[45] pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
         <div className="relative">
           {rightNowCount > 0 && (
             <motion.div
@@ -1198,7 +1198,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       </div>
 
       {/* Beacon FAB (bottom-right, above drawer) */}
-      <div className="fixed right-4 z-50 pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
+      <div className="fixed right-4 z-[45] pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
         <BeaconFAB
           onTap={handleCreateBeacon}
           onLongPress={handleCreateBeacon}
