@@ -45,9 +45,10 @@ export default function L2SearchSheet({ q: initialQ = '' }) {
           .eq('is_visible', true)
           .limit(10),
         supabase
-          .from('events')
-          .select('id, title, name, starts_at, venue, image_url')
-          .or(`title.ilike.%${q}%,name.ilike.%${q}%,venue.ilike.%${q}%`)
+          .from('beacons')
+          .select('id, title, event_title, starts_at, venue_name, image_url')
+          .eq('kind', 'event')
+          .or(`title.ilike.%${q}%,event_title.ilike.%${q}%,venue_name.ilike.%${q}%`)
           .gte('starts_at', new Date().toISOString())
           .limit(10),
         supabase
@@ -183,10 +184,10 @@ export default function L2SearchSheet({ q: initialQ = '' }) {
                       </div>}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-white font-bold text-sm truncate">{e.title || e.name}</p>
+                  <p className="text-white font-bold text-sm truncate">{e.title || e.event_title}</p>
                   <p className="text-[#C8962C] text-xs mt-0.5">
                     {e.starts_at ? format(new Date(e.starts_at), 'EEE d MMM') : ''}
-                    {e.venue ? ` · ${e.venue}` : ''}
+                    {e.venue_name ? ` · ${e.venue_name}` : ''}
                   </p>
                 </div>
               </button>

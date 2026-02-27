@@ -32,8 +32,9 @@ export default function L2EventsSheet() {
     queryFn: async () => {
       try {
         let query = supabase
-          .from('events')
+          .from('beacons')
           .select('*')
+          .eq('kind', 'event')
           .order('starts_at', { ascending: true })
           .limit(30);
 
@@ -178,14 +179,14 @@ export default function L2EventsSheet() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm text-white truncate">{event.title || event.name}</p>
+                      <p className="font-bold text-sm text-white truncate">{event.title || event.event_title}</p>
                       <p className="text-[11px] text-[#C8962C] mt-0.5">
-                        {formatEventDate(event.starts_at || event.date)}
+                        {formatEventDate(event.starts_at || event.event_start)}
                       </p>
-                      {(event.venue || event.location) && (
+                      {(event.venue_name || event.venue_address) && (
                         <p className="text-[11px] text-white/40 flex items-center gap-1 mt-0.5">
                           <MapPin className="w-2.5 h-2.5" />
-                          {event.venue || event.location}
+                          {event.venue_name || event.venue_address}
                         </p>
                       )}
                       {event.rsvp_count != null && (

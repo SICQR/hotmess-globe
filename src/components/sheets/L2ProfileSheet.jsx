@@ -98,7 +98,7 @@ export default function L2ProfileSheet({ email, uid }) {
       const { data } = await supabase
         .from('preloved_listings')
         .select('id, title, description, price, currency, images, delivery_type')
-        .eq('seller_email', profileUser.email)
+        .eq('seller_id', profileUser.id)
         .eq('status', 'active')
         .limit(3);
       return data || [];

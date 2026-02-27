@@ -1,6 +1,6 @@
 /**
  * L2CreateEventSheet — Create a new event
- * Writes to the events table.
+ * Writes to the beacons table with kind='event'.
  */
 
 import { useState } from 'react';
@@ -39,18 +39,21 @@ export default function L2CreateEventSheet() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Please log in to create events');
 
-      const { error } = await supabase.from('events').insert({
+      const { error } = await supabase.from('beacons').insert({
         title: form.title.trim(),
         description: form.description.trim() || null,
-        venue: form.venue.trim() || null,
+        venue_name: form.venue.trim() || null,
         starts_at: form.starts_at,
-        ends_at: form.ends_at || null,
-        max_attendees: form.max_attendees ? parseInt(form.max_attendees) : null,
+        end_at: form.ends_at || null,
+        capacity: form.max_attendees ? parseInt(form.max_attendees) : null,
         image_url: form.image_url || null,
-        is_free: form.is_free,
-        price: form.is_free ? 0 : parseFloat(form.price) || 0,
-        creator_id: user.id,
+        ticket_price_cents: form.is_free ? 0 : Math.round((parseFloat(form.price) || 0) * 100),
+        promoter_id: user.id,
+        owner_email: user.email,
+        kind: 'event',
+        type: 'event',
         status: 'active',
+        active: true,
       });
 
       if (error) throw error;
