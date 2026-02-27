@@ -20,8 +20,9 @@
  * Animations: Framer Motion spring physics on drawer.
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import RightNowModal from '@/components/globe/RightNowModal';
 import { motion, useMotionValue, useAnimation, PanInfo } from 'framer-motion';
 import {
   MapPin,
@@ -35,17 +36,37 @@ import {
   AlertTriangle,
   Radio as RadioIcon,
   Zap,
+  Sparkles,
+  ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { useLongPress } from '@/hooks/useLongPress';
+import { toast } from 'sonner';
 
 // ---- Brand constants --------------------------------------------------------
 const AMBER = '#C8962C';
 const MUTED = '#8E8E93';
 const GLASS = 'bg-black/50 backdrop-blur-xl';
 const GLASS_BORDER = 'border border-white/10';
+
+// ---- Scene Scout types ------------------------------------------------------
+interface SceneScoutPick {
+  id: string;
+  type: 'event' | 'venue';
+  title: string;
+  description?: string;
+  score: number;
+  reasons: string[];
+  metadata?: { area?: string; type?: string; vibe?: string };
+}
+
+interface SceneScoutData {
+  narrative: string | null;
+  picks: SceneScoutPick[];
+}
 
 // ---- Types ------------------------------------------------------------------
 type FilterType = 'all' | 'events' | 'hotspots' | 'safety';
@@ -126,12 +147,14 @@ function TopHUD({
   city,
   beaconCount,
   safetyCount,
+  rightNowCount,
   onSafetyTap,
   onCityTap,
 }: {
   city: string;
   beaconCount: number;
   safetyCount: number;
+  rightNowCount: number;
   onSafetyTap: () => void;
   onCityTap: () => void;
 }) {
@@ -154,6 +177,14 @@ function TopHUD({
         <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: AMBER }} />
         <span className="text-white font-bold text-sm truncate">{city}</span>
         <span className="text-white/40 text-xs flex-shrink-0">{beaconCount} active</span>
+        {rightNowCount > 0 && (
+          <span
+            className="flex-shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-full"
+            style={{ background: '#39FF1430', color: '#39FF14', border: '1px solid #39FF1440' }}
+          >
+            {rightNowCount} live
+          </span>
+        )}
         <ChevronDown className="w-3 h-3 text-white/30 flex-shrink-0" />
       </button>
 
@@ -473,6 +504,7 @@ function BottomDrawer({
   onBeaconTap,
   onSafetyTap,
   onSeeAllEvents,
+  sceneScoutSection,
 }: {
   events: BeaconItem[];
   beacons: BeaconItem[];
@@ -483,6 +515,7 @@ function BottomDrawer({
   onBeaconTap: (id: string) => void;
   onSafetyTap: (id: string) => void;
   onSeeAllEvents: () => void;
+  sceneScoutSection?: React.ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
   const controls = useAnimation();
@@ -527,7 +560,7 @@ function BottomDrawer({
     }
   }, [expanded, controls, getExpandedOffset]);
 
-  const hasContent = events.length > 0 || beacons.length > 0 || safetyAlerts.length > 0 || eventsLoading || beaconsLoading;
+  const hasContent = events.length > 0 || beacons.length > 0 || safetyAlerts.length > 0 || eventsLoading || beaconsLoading || !!sceneScoutSection;
 
   if (!hasContent && !eventsLoading && !beaconsLoading) return null;
 
@@ -589,6 +622,9 @@ function BottomDrawer({
           WebkitOverflowScrolling: 'touch',
         }}
       >
+        {/* Scene Scout section */}
+        {sceneScoutSection}
+
         {/* Events section */}
         {(eventsLoading || events.length > 0) && (
           <section className="mb-5">
@@ -709,11 +745,18 @@ function BottomDrawer({
 // =============================================================================
 export function PulseMode({ className = '' }: PulseModeProps) {
   const { openSheet } = useSheet();
+  const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [city, setCity] = useState(() => localStorage.getItem('hm_city') || 'London');
   const [legendDismissed, setLegendDismissed] = useState(
     () => localStorage.getItem('hm_legend_dismissed') === 'true'
   );
+  const [rightNowOpen, setRightNowOpen] = useState(false);
+
+  // ---- Scene Scout state ----------------------------------------------------
+  const [sceneScoutLoading, setSceneScoutLoading] = useState(false);
+  const [sceneScoutData, setSceneScoutData] = useState<SceneScoutData | null>(null);
+  const [sceneScoutOpen, setSceneScoutOpen] = useState(false);
 
   // City cycling
   const handleCityTap = useCallback(() => {
@@ -844,24 +887,47 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     refetchInterval: 30_000,
   });
 
-  // ---- Realtime beacon subscription -----------------------------------------
+  // ---- Data: Right Now count ------------------------------------------------
+  const { data: rightNowCount = 0 } = useQuery({
+    queryKey: ['pulse-right-now-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('right_now_status')
+        .select('*', { count: 'exact', head: true })
+        .eq('active', true)
+        .gt('expires_at', new Date().toISOString());
+      if (error) return 0;
+      return count ?? 0;
+    },
+    refetchInterval: 30_000,
+  });
+
+  // ---- Realtime subscriptions -----------------------------------------------
   useEffect(() => {
-    const channel = supabase
+    // Beacons realtime — immediately invalidate queries so new beacons appear
+    const beaconsChannel = supabase
       .channel('pulse-beacons-live')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'beacons' },
-        () => {
-          // TanStack Query will handle refetch automatically via invalidation
-          // We just want to trigger it sooner on realtime changes
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'beacons' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['pulse-beacons'] });
+        queryClient.invalidateQueries({ queryKey: ['pulse-events'] });
+        queryClient.invalidateQueries({ queryKey: ['pulse-safety'] });
+      })
+      .subscribe();
+
+    // Right Now realtime
+    const rightNowChannel = supabase
+      .channel('pulse-right-now-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'right_now_status' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['pulse-right-now-count'] });
+        queryClient.invalidateQueries({ queryKey: ['right-now-users-globe'] });
+      })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(beaconsChannel);
+      supabase.removeChannel(rightNowChannel);
     };
-  }, []);
+  }, [queryClient]);
 
   // ---- Filtered beacons for drawer list -------------------------------------
   const nonEventBeacons = allBeacons.filter(
@@ -920,6 +986,136 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     }
   }, [safetyAlerts.length]);
 
+  // ---- Scene Scout handler (CHROME gated) -----------------------------------
+  const handleSceneScout = useCallback(async () => {
+    if (sceneScoutLoading) return;
+
+    // CHROME tier gate
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser?.email) {
+        toast('Sign in to use Scene Scout');
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('User')
+        .select('subscription_tier')
+        .eq('email', authUser.email)
+        .single();
+
+      const tier = (profile?.subscription_tier || 'FREE').toUpperCase();
+      if (tier !== 'CHROME' && tier !== 'ELITE') {
+        toast('Upgrade to CHROME to unlock Scene Scout', {
+          style: { background: '#1C1C1E', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
+        });
+        return;
+      }
+
+      setSceneScoutLoading(true);
+      setSceneScoutOpen(true);
+      setSceneScoutData(null);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/ai/scene-scout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ userEmail: authUser.email }),
+      });
+
+      if (!res.ok) throw new Error('Scene Scout error');
+      const data = await res.json();
+      setSceneScoutData({ narrative: data.narrative, picks: data.picks || [] });
+    } catch {
+      toast.error('Scene Scout is resting. Try again later.');
+      setSceneScoutOpen(false);
+    } finally {
+      setSceneScoutLoading(false);
+    }
+  }, [sceneScoutLoading]);
+
+  // ---- Scene Scout section JSX (passed into BottomDrawer) -------------------
+  const sceneScoutSection = (
+    <section className="mb-5">
+      <div className="flex items-center justify-between mb-2.5">
+        <h3 className="text-white/70 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5" style={{ color: AMBER }} />
+          Scene Scout
+          <span className="text-[10px] font-normal px-1.5 py-0.5 rounded" style={{ background: `${AMBER}20`, color: AMBER }}>CHROME</span>
+        </h3>
+        {sceneScoutOpen && (
+          <button
+            onClick={() => { setSceneScoutOpen(false); setSceneScoutData(null); }}
+            className="text-white/30 active:text-white/60 transition-colors"
+            aria-label="Close Scene Scout"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {!sceneScoutOpen ? (
+        <button
+          onClick={handleSceneScout}
+          className="w-full py-3 rounded-xl text-sm font-semibold active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          style={{
+            background: `${AMBER}15`,
+            border: `1px solid ${AMBER}40`,
+            color: AMBER,
+          }}
+          aria-label="Get AI nightlife recommendations"
+        >
+          <Sparkles className="w-4 h-4" />
+          Where should I go tonight?
+        </button>
+      ) : sceneScoutLoading ? (
+        <div className="space-y-2">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="h-12 rounded-xl animate-pulse" style={{ background: 'rgba(200,150,44,0.08)' }} />
+          ))}
+        </div>
+      ) : sceneScoutData ? (
+        <div className="space-y-2">
+          {sceneScoutData.narrative && (
+            <p className="text-white/60 text-xs leading-relaxed mb-3">{sceneScoutData.narrative}</p>
+          )}
+          {sceneScoutData.picks.length === 0 ? (
+            <p className="text-white/30 text-sm text-center py-4">Nothing matched tonight. Drop a beacon!</p>
+          ) : (
+            sceneScoutData.picks.slice(0, 3).map((pick) => (
+              <div
+                key={pick.id}
+                className="px-3 py-2.5 rounded-xl"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-semibold truncate">{pick.title}</p>
+                    {pick.metadata?.area && (
+                      <p className="text-white/40 text-xs">{pick.metadata.area}</p>
+                    )}
+                    {pick.reasons?.[0] && (
+                      <p className="text-xs mt-1" style={{ color: AMBER }}>{pick.reasons[0]}</p>
+                    )}
+                  </div>
+                  <span
+                    className="flex-shrink-0 text-xs font-black px-1.5 py-0.5 rounded"
+                    style={{ background: `${AMBER}20`, color: AMBER }}
+                  >
+                    {pick.type === 'event' ? '📅' : '📍'}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      ) : null}
+    </section>
+  );
+
   // ---- Render ---------------------------------------------------------------
   return (
     <div className={`h-full w-full relative pointer-events-none ${className}`}>
@@ -936,6 +1132,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
             city={city}
             beaconCount={allBeacons.length}
             safetyCount={safetyAlerts.length}
+            rightNowCount={rightNowCount}
             onSafetyTap={handleSafetyIndicatorTap}
             onCityTap={handleCityTap}
           />
@@ -955,7 +1152,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       )}
 
       {/* Amplify pill (bottom-right, above FAB) */}
-      <div className="fixed right-4 z-50 pointer-events-auto" style={{ bottom: 'calc(250px + env(safe-area-inset-bottom, 0px))' }}>
+      <div className="fixed right-4 z-[45] pointer-events-auto" style={{ bottom: 'calc(250px + env(safe-area-inset-bottom, 0px))' }}>
         <button
           onClick={handleAmplify}
           className="flex items-center gap-1.5 px-3.5 h-10 rounded-full text-xs font-bold transition-all active:scale-95"
@@ -973,14 +1170,44 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         </button>
       </div>
 
+      {/* Right Now FAB (bottom-left, lime) */}
+      <div className="fixed left-4 z-[45] pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="relative">
+          {rightNowCount > 0 && (
+            <motion.div
+              className="absolute inset-0 rounded-full"
+              style={{ border: '2px solid #39FF14' }}
+              animate={{ scale: [1, 1.7], opacity: [0.6, 0] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
+            />
+          )}
+          <button
+            onClick={() => setRightNowOpen(true)}
+            className="w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-transform"
+            style={{ background: '#39FF1415', border: '1.5px solid #39FF14', boxShadow: '0 4px 24px #39FF1430' }}
+            aria-label="Go Right Now"
+          >
+            <Zap className="w-5 h-5" style={{ color: '#39FF14' }} />
+            {rightNowCount > 0 && (
+              <span className="text-[8px] font-black leading-none" style={{ color: '#39FF14' }}>
+                {rightNowCount}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
       {/* Beacon FAB (bottom-right, above drawer) */}
-      <div className="fixed right-4 z-50 pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
+      <div className="fixed right-4 z-[45] pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
         <BeaconFAB
           onTap={handleCreateBeacon}
           onLongPress={handleCreateBeacon}
           showPulse={allBeacons.length === 0 && !beaconsLoading}
         />
       </div>
+
+      {/* Right Now Modal */}
+      <RightNowModal isOpen={rightNowOpen} onClose={() => setRightNowOpen(false)} />
 
       {/* Bottom Drawer */}
       <div
@@ -997,6 +1224,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           onBeaconTap={handleBeaconTap}
           onSafetyTap={handleSafetyTap}
           onSeeAllEvents={handleSeeAllEvents}
+          sceneScoutSection={sceneScoutSection}
         />
       </div>
     </div>

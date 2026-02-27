@@ -43,6 +43,7 @@ serve(async (req) => {
         const tierId = session.metadata?.tier_id
 
         if (userId && tierId) {
+          // Update legacy User table
           await supabaseAdmin
             .from('User')
             .update({
@@ -51,6 +52,15 @@ serve(async (req) => {
               subscription_status: 'active',
             })
             .eq('auth_user_id', userId)
+
+          // Update profiles table (primary app source)
+          await supabaseAdmin
+            .from('profiles')
+            .update({
+              membership_tier: tierId,
+              subscription_status: 'active',
+            })
+            .eq('account_id', userId)
 
           console.log(`User ${userId} upgraded to ${tierId}`)
         }
@@ -63,16 +73,19 @@ serve(async (req) => {
 
         if (userId) {
           const status = subscription.cancel_at_period_end ? 'canceling' : subscription.status
-          
+          const endsAt = subscription.cancel_at_period_end
+            ? new Date(subscription.current_period_end * 1000).toISOString()
+            : null
+
           await supabaseAdmin
             .from('User')
-            .update({
-              subscription_status: status,
-              subscription_ends_at: subscription.cancel_at_period_end
-                ? new Date(subscription.current_period_end * 1000).toISOString()
-                : null,
-            })
+            .update({ subscription_status: status, subscription_ends_at: endsAt })
             .eq('auth_user_id', userId)
+
+          await supabaseAdmin
+            .from('profiles')
+            .update({ subscription_status: status })
+            .eq('account_id', userId)
 
           console.log(`Subscription updated for user ${userId}: ${status}`)
         }
@@ -94,6 +107,11 @@ serve(async (req) => {
             })
             .eq('auth_user_id', userId)
 
+          await supabaseAdmin
+            .from('profiles')
+            .update({ membership_tier: 'basic', subscription_status: 'canceled' })
+            .eq('account_id', userId)
+
           console.log(`Subscription canceled for user ${userId}`)
         }
         break
@@ -107,12 +125,13 @@ serve(async (req) => {
         if (userId) {
           await supabaseAdmin
             .from('User')
-            .update({
-              subscription_status: 'past_due',
-            })
+            .update({ subscription_status: 'past_due' })
             .eq('auth_user_id', userId)
 
-          // TODO: Send payment failed email notification
+          await supabaseAdmin
+            .from('profiles')
+            .update({ subscription_status: 'past_due' })
+            .eq('account_id', userId)
 
           console.log(`Payment failed for user ${userId}`)
         }
@@ -127,10 +146,13 @@ serve(async (req) => {
         if (userId) {
           await supabaseAdmin
             .from('User')
-            .update({
-              subscription_status: 'active',
-            })
+            .update({ subscription_status: 'active' })
             .eq('auth_user_id', userId)
+
+          await supabaseAdmin
+            .from('profiles')
+            .update({ subscription_status: 'active' })
+            .eq('account_id', userId)
 
           console.log(`Invoice paid for user ${userId}`)
         }
