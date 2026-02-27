@@ -34,6 +34,8 @@ export type ProfilesGridProps = {
   cols?: 2 | 3;
   /** Caller-provided viewer email (used for taps/woofs). Falls back to base44.auth.me(). */
   viewerEmail?: string | null;
+  /** Called on long-press of a profile card (for quick action menu). */
+  onLongPress?: (profile: Profile, position: { x: number; y: number }) => void;
 };
 
 const normalizeEmail = (value: unknown) => String(value || '').trim().toLowerCase();
@@ -77,6 +79,7 @@ export default function ProfilesGrid({
   onNavigateUrl,
   cols,
   viewerEmail: viewerEmailProp,
+  onLongPress,
 }: ProfilesGridProps) {
   const navigate = useNavigate();
   const { openProfile } = useProfileOpener();
@@ -337,6 +340,7 @@ export default function ProfilesGrid({
                   onNavigateUrl={handleNavigateUrl}
                   isTapped={isTapped}
                   onSendTap={sendTap}
+                  onLongPress={onLongPress}
                 />
               </div>
             ) : (
@@ -349,6 +353,7 @@ export default function ProfilesGrid({
                 onNavigateUrl={handleNavigateUrl}
                 isTapped={isTapped}
                 onSendTap={sendTap}
+                onLongPress={onLongPress}
               />
             )
           ))}

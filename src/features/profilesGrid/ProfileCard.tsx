@@ -20,6 +20,8 @@ type Props = {
   isTapped?: (email: string, tapType: TapType) => boolean;
   /** Send or toggle a tap/woof */
   onSendTap?: (email: string, name: string, tapType: TapType) => Promise<boolean>;
+  /** Called on long-press with profile and pointer position (for quick action menu) */
+  onLongPress?: (profile: Profile, position: { x: number; y: number }) => void;
 };
 
 const getPhotoUrls = (profile: Profile): string[] => {
@@ -156,6 +158,7 @@ function ProfileCardInner({
   onNavigateUrl,
   isTapped,
   onSendTap,
+  onLongPress,
 }: Props) {
   const cardStyle = getProfileCardStyle();
   const useReactBits = cardStyle === 'react-bits';
@@ -345,12 +348,26 @@ function ProfileCardInner({
   const headline = profile.title;
   const locationLine = profile.locationLabel;
 
-  const { isLongPressActive, didLongPress, handlers: longPressHandlers } = useLongPress({ delayMs: 300 });
+  const { isLongPressActive, didLongPress, handlers: baseLongPressHandlers } = useLongPress({ delayMs: 300 });
+  const lastPointerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const longPressHandlers = useMemo(() => ({
+    ...baseLongPressHandlers,
+    onPointerDown: (e: React.PointerEvent) => {
+      lastPointerRef.current = { x: e.clientX, y: e.clientY };
+      baseLongPressHandlers.onPointerDown(e);
+    },
+  }), [baseLongPressHandlers]);
 
   useEffect(() => {
     if (isLongPressActive) setIsActive(true);
     else if (!supportsHover()) setIsActive(false);
   }, [isLongPressActive]);
+
+  useEffect(() => {
+    if (didLongPress && onLongPress) {
+      onLongPress(profile, lastPointerRef.current);
+    }
+  }, [didLongPress, onLongPress, profile]);
 
   const openProfile = useCallback(() => {
     onOpenProfile(profile);
