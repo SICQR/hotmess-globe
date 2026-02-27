@@ -57,7 +57,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // ── Wingman AI state ─────────────────────────────────────────────────────
   const [wingmanLoading, setWingmanLoading] = useState(false);
   const [wingmanSuggestions, setWingmanSuggestions] = useState(null); // { openers: [{text, type}], targetName }
-  const [, setWingmanError] = useState(false);
+  const [wingmanError, setWingmanError] = useState(false);
+
   // ── Typing indicator ───────────────────────────────────────────────────────
   const { typingUsers, sendTyping } = useTypingIndicator(
     selectedThread && !selectedThread._new ? selectedThread.id : null,
@@ -65,6 +66,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   );
 
   const messagesEndRef  = useRef(null);
+  const cameraRef       = useRef(null);
   const photoInputRef   = useRef(null);
   const inputRef        = useRef(null);
   const realtimeRef     = useRef(null);
@@ -358,17 +360,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     loadThreads();
   };
 
-  // ── Helper: extract other party's email from thread ────────────────────────
-  const getOtherEmail = (thread) =>
-    thread.participant_emails?.find(e => e !== currentUser?.email) || '';
-  const getProfile = (email) => profiles[email] || null;
-
   // ── Wingman AI handler ─────────────────────────────────────────────────────
-  // ── Derive other-party info (needed by Wingman + chat view) ───────────────
-  const otherEmail = selectedThread ? getOtherEmail(selectedThread) : '';
-  const otherProfile = otherEmail ? getProfile(otherEmail) : null;
-  const otherName = otherProfile?.display_name || otherEmail || title || 'Chat';
-
   const handleWingmanTap = useCallback(async () => {
     if (wingmanLoading) return;
 
@@ -377,7 +369,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser?.email) {
         const { data: profile } = await supabase
-          .from('profiles')
+          .from('User')
           .select('subscription_tier')
           .eq('email', authUser.email)
           .single();
@@ -480,6 +472,11 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     }
   };
 
+  const getOtherEmail = (thread) =>
+    thread.participant_emails?.find(e => e !== currentUser?.email) || '';
+
+  const getProfile = (email) => profiles[email] || null;
+
   const isUnread = (thread) => {
     if (!thread.last_message_at) return false;
     return new Date(thread.last_message_at).getTime() > getLastRead(thread.id);
@@ -491,6 +488,11 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     const p = getProfile(email);
     return (p?.display_name || email).toLowerCase().includes(searchQuery.toLowerCase());
   });
+
+  // ── Derive other-party info (needed by Wingman + chat view) ───────────────
+  const otherEmail = selectedThread ? getOtherEmail(selectedThread) : '';
+  const otherProfile = otherEmail ? getProfile(otherEmail) : null;
+  const otherName = otherProfile?.display_name || otherEmail || title || 'Chat';
 
   // ── Thread list ────────────────────────────────────────────────────────────
   if (!selectedThread) {
