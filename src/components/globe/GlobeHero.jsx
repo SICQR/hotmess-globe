@@ -26,7 +26,7 @@ const latLngToXY = (lat, lng, width, height) => {
 
 // Visual language colors
 const COLORS = {
-  heat: { base: '#C8962C', glow: 'rgba(255,20,147,0.4)' },
+  heat: { base: '#C8962C', glow: 'rgba(200,150,44,0.4)' },
   pulse: { base: '#FFD700', glow: 'rgba(255,215,0,0.4)' },
   wave: { base: '#00FF88', glow: 'rgba(0,255,136,0.3)' },
   sparkle: { base: '#FFFFFF', glow: 'rgba(255,255,255,0.2)' },
@@ -113,8 +113,8 @@ export default function GlobeHero() {
           width / 4, height / 4, 0,
           width / 4, height / 4, Math.min(width, height) / 3
         );
-        glowGradient.addColorStop(0, 'rgba(255, 20, 147, 0.15)');
-        glowGradient.addColorStop(0.5, 'rgba(255, 20, 147, 0.05)');
+        glowGradient.addColorStop(0, 'rgba(200, 150, 44, 0.12)');
+        glowGradient.addColorStop(0.5, 'rgba(200, 150, 44, 0.04)');
         glowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = glowGradient;
         ctx.fillRect(0, 0, width / 2, height / 2);
@@ -122,7 +122,7 @@ export default function GlobeHero() {
 
       // Draw grid lines (fades at higher zoom)
       const gridOpacity = zoomState === ZOOM_STATES.WORLD ? 0.05 : 0.02;
-      ctx.strokeStyle = `rgba(255, 20, 147, ${gridOpacity})`;
+      ctx.strokeStyle = `rgba(200, 150, 44, ${gridOpacity})`;
       ctx.lineWidth = 0.5;
       for (let i = 0; i < 20; i++) {
         ctx.beginPath();
@@ -222,7 +222,7 @@ export default function GlobeHero() {
 
       // Draw connections between nearby cities
       if (visualConfig.cities) {
-        ctx.strokeStyle = 'rgba(255, 20, 147, 0.08)';
+        ctx.strokeStyle = 'rgba(200, 150, 44, 0.06)';
         ctx.lineWidth = 1;
         CITIES.forEach((city1, i) => {
           if (isDisabled(city1.id)) return;

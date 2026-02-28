@@ -124,20 +124,26 @@ export default function MeetpointCard({ title, address, lat, lng, distanceM, eta
   const tileUrl = `https://tile.openstreetmap.org/${zoom}/${tileX}/${tileY}.png`;
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-white/10 bg-[#1C1C1E] w-full max-w-xs">
-      {/* Real map tile */}
-      <div className="relative h-28 overflow-hidden bg-[#0d1a2e]">
+    <div className="rounded-2xl overflow-hidden border border-[#C8962C]/20 bg-[#1C1C1E] w-full max-w-xs shadow-lg shadow-black/30">
+      {/* Dark satellite-style map tile */}
+      <div className="relative h-32 overflow-hidden bg-[#0a0f18]">
         <img
           src={tileUrl}
           alt="Map"
-          className="w-full h-full object-cover opacity-80"
+          className="w-full h-full object-cover"
           crossOrigin="anonymous"
+          style={{ filter: 'brightness(0.4) saturate(0.3) contrast(1.2)', opacity: 0.85 }}
         />
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/30" />
-        {/* Center pin */}
+        {/* Gold radial glow at center */}
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 50% 50%, rgba(200,150,44,0.12) 0%, transparent 50%)' }} />
+        {/* Vignette overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1C1C1E] via-transparent to-[#0a0f18]/60" />
+        {/* Gold pin with glow */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <MapPin className="w-7 h-7 text-red-500 drop-shadow-lg" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' }} />
+          <div className="relative">
+            <div className="absolute inset-0 w-8 h-8 -m-0.5 rounded-full bg-[#C8962C]/30 blur-md animate-pulse" />
+            <MapPin className="w-7 h-7 text-[#C8962C] drop-shadow-lg relative" style={{ filter: 'drop-shadow(0 0 8px rgba(200,150,44,0.6))' }} />
+          </div>
         </div>
       </div>
 
@@ -172,25 +178,26 @@ export default function MeetpointCard({ title, address, lat, lng, distanceM, eta
           </span>
         </div>
 
-        {/* CTAs */}
+        {/* CTAs — premium gold primary, glass secondaries */}
         <div className="flex gap-2">
           <button
             onClick={handleRoute}
-            className="flex-1 py-2 rounded-full bg-[#C8962C] text-black text-xs font-black flex items-center justify-center gap-1"
+            className="flex-1 py-2.5 rounded-full text-black text-xs font-black flex items-center justify-center gap-1 active:scale-95 transition-transform shadow-md"
+            style={{ background: 'linear-gradient(135deg, #C8962C 0%, #D4A853 100%)', boxShadow: '0 4px 16px rgba(200,150,44,0.3)' }}
           >
             <Navigation className="w-3 h-3" />
             Route
           </button>
           <button
             onClick={handleBookRide}
-            className="flex-1 py-2 rounded-full bg-[#1C1C1E] border border-white/15 text-white text-xs font-bold"
+            className="flex-1 py-2.5 rounded-full bg-white/[0.06] border border-white/10 text-white text-xs font-bold active:scale-95 transition-transform"
           >
             Uber
           </button>
           <button
             onClick={handleShareLive}
             disabled={sharePending}
-            className="flex-1 py-2 rounded-full bg-[#1C1C1E] border border-white/15 text-white text-xs font-bold disabled:opacity-50"
+            className="flex-1 py-2.5 rounded-full bg-white/[0.06] border border-white/10 text-white text-xs font-bold disabled:opacity-50 active:scale-95 transition-transform"
           >
             Share
           </button>
