@@ -25,7 +25,6 @@ const CITIES = [
   { name: 'SF',        lat: 37.77,  lng: -122.42, energy: 0.72 },
 ];
 
-const GOLD = '#C8962C';
 const GOLD_GLOW = 'rgba(200,150,44,';   // append opacity + ')'
 const WHITE_DIM = 'rgba(255,255,255,';
 
