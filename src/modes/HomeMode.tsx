@@ -60,8 +60,8 @@ const MUTED = '#8E8E93';
 // ---- Intent color mapping ---------------------------------------------------
 const INTENT_COLORS: Record<string, { bg: string; text: string }> = {
   hookup:  { bg: AMBER, text: '#000' },
-  hang:    { bg: '#7C3AED', text: '#fff' },
-  explore: { bg: '#14B8A6', text: '#fff' },
+  hang:    { bg: '#D4A853', text: '#000' },
+  explore: { bg: '#8E8E93', text: '#000' },
 };
 
 function getIntentStyle(intent: string) {
@@ -686,8 +686,8 @@ export function HomeMode({ className = '' }: HomeModeProps) {
   return (
     <div className={`h-full w-full flex flex-col overflow-hidden ${className}`} style={{ background: ROOT_BG }}>
 
-      {/* ---- Top Bar (sticky, glassmorphic) ---- */}
-      <header className="flex-shrink-0 z-20 flex items-center justify-between h-14 px-5" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      {/* ---- Top Bar (sticky, noir glass) ---- */}
+      <header className="flex-shrink-0 z-20 flex items-center justify-between h-14 px-5 border-b border-white/[0.04]" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', background: 'rgba(5,5,7,0.85)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
         {/* City pill */}
         <button
           onClick={handleCityTap}
@@ -744,17 +744,29 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       >
         <div className="pb-36 space-y-6">
 
-          {/* ── Hero Banner ── */}
-          <div className="relative w-full h-40 overflow-hidden">
+          {/* ── Hero Banner — atmospheric noir with radial gold glow ── */}
+          <div className="relative w-full h-48 overflow-hidden">
             <img
               src="/assets/hero-storm.jpg"
               alt="HOTMESS London"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover opacity-60"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/60 to-transparent" />
-            <div className="absolute bottom-3 left-5 right-5">
-              <h2 className="font-black text-2xl text-white tracking-wider uppercase leading-none drop-shadow-lg">HOTMESS</h2>
-              <p className="text-white/50 text-xs mt-0.5">Always too much, yet never enough</p>
+            {/* Radial gold glow overlay */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `radial-gradient(ellipse 70% 60% at 50% 70%, rgba(200,150,44,0.15) 0%, transparent 70%)`,
+              }}
+            />
+            {/* Bottom fade to root bg */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/50 to-[#050507]/20" />
+            {/* Noise texture overlay for cinematic grain */}
+            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.5\'/%3E%3C/svg%3E")', backgroundSize: '128px 128px' }} />
+            <div className="absolute bottom-4 left-5 right-5">
+              <h2 className="font-black text-3xl tracking-[0.15em] uppercase leading-none drop-shadow-lg">
+                <span className="text-white">HOT</span><span style={{ color: AMBER }}>MESS</span>
+              </h2>
+              <p className="text-white/40 text-xs mt-1 tracking-wide">Always too much, yet never enough</p>
             </div>
           </div>
 
@@ -957,11 +969,11 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             <AnimatedSection index={5}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" style={{ color: '#B026FF' }} />
+                  <Sparkles className="w-4 h-4" style={{ color: AMBER }} />
                   <h2 className="text-white font-bold text-base">Tonight's Picks</h2>
                   <span
                     className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider"
-                    style={{ background: '#B026FF20', color: '#B026FF' }}
+                    style={{ background: `${AMBER}20`, color: AMBER }}
                   >
                     AI
                   </span>
