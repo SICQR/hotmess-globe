@@ -56,7 +56,7 @@ Sentry.ErrorBoundary → ErrorBoundary → OSProvider
 
 | Layer | Z-index | What lives here |
 |-------|---------|-----------------|
-| L0 | 0 | `UnifiedGlobe` (Three.js — **only renders on `/pulse`**, null elsewhere) |
+| L0 | 0 | `UnifiedGlobe` — **persistent on ALL routes**: full 3D `GlobePage` on `/pulse`, lightweight 2D `AmbientGlobe` canvas elsewhere |
 | L1 | 50 | `OSBottomNav`, `RadioMiniPlayer` |
 | L2 | 100 | Content sheets (`SheetRouter`) |
 | L3 | 150 | Higher sheets: persona switcher, filters |
@@ -171,7 +171,7 @@ Each brand/channel is sovereign. They share an OS but they do NOT merge unless a
 | Use `#C8962C` gold for all CTAs and accents | Use pink (`#FF1493`) anywhere |
 | Gate chat/video/travel sheets with `canOpenSheet()` | Open chat/video/travel sheets without policy check |
 | Write to `right_now_status` **TABLE** | Write to `profiles.right_now_status` JSONB (column does not exist — split-brain bug) |
-| Return `null` from `UnifiedGlobe` on non-`/pulse` routes | Render the globe outside `/pulse` |
+| Render `AmbientGlobe` (2D canvas) on non-`/pulse` routes, full `GlobePage` on `/pulse` | Remove the globe from any route — it's the persistent OS backbone |
 | Use `SOSContext.triggerSOS()` for SOS activation | Bypass the SOS context |
 | Keep sheets at z-100/z-150, interrupts at z-180+ | Mix interrupt z-indices with sheet z-indices |
 | Keep XP DB columns intact | Add any XP/gamification UI |

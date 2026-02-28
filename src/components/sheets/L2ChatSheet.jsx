@@ -536,7 +536,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     className="w-full p-4 hover:bg-white/5 transition-colors text-left flex items-center gap-3 active:bg-white/10"
                   >
                     <div className="relative flex-shrink-0">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8962C] to-[#8B6914] flex items-center justify-center overflow-hidden ring-1 ring-white/10">
                         {p?.avatar_url ? (
                           <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -572,9 +572,11 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // ── Chat view ──────────────────────────────────────────────────────────────
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-black/80 backdrop-blur-sm flex-shrink-0">
-        <button onClick={handleBack} className="text-white/60 p-1">
+      {/* Header — noir glass with gold accent line */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[#C8962C]/20 flex-shrink-0 relative overflow-hidden" style={{ background: 'rgba(5,5,7,0.92)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
+        {/* Subtle gold shimmer line at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C8962C]/40 to-transparent" />
+        <button onClick={handleBack} className="text-white/60 p-1 active:scale-90 transition-transform">
           <ArrowLeft className="w-5 h-5" />
         </button>
 
@@ -582,16 +584,20 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           onClick={() => otherEmail && openSheet(SHEET_TYPES.PROFILE, { email: otherEmail })}
           className="flex items-center gap-3 flex-1 min-w-0"
         >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden flex-shrink-0">
-            {otherProfile?.avatar_url ? (
-              <img src={otherProfile.avatar_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-sm font-black text-white">{otherName[0]?.toUpperCase() || '?'}</span>
-            )}
+          <div className="relative flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#8B6914] flex items-center justify-center overflow-hidden ring-2 ring-[#C8962C]/30">
+              {otherProfile?.avatar_url ? (
+                <img src={otherProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-black text-white">{otherName[0]?.toUpperCase() || '?'}</span>
+              )}
+            </div>
+            {/* Online indicator */}
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#34C759] rounded-full border-2 border-[#050507]" />
           </div>
           <div className="min-w-0">
             <p className="text-white font-bold truncate">{otherName}</p>
-            <p className="text-white/30 text-xs">Tap to view profile</p>
+            <p className="text-[#8E8E93] text-xs">Tap to view profile</p>
           </div>
         </button>
       </div>
@@ -645,11 +651,12 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 ) : (
                   <div
                     className={cn(
-                      'max-w-[80%] px-4 py-2.5 rounded-2xl',
+                      'max-w-[80%] px-4 py-2.5 rounded-2xl shadow-lg',
                       isMe
-                        ? 'bg-[#C8962C] text-white rounded-br-sm'
-                        : 'bg-[#1C1C1E] text-white rounded-bl-sm'
+                        ? 'text-white rounded-br-sm'
+                        : 'bg-[#1C1C1E] text-white rounded-bl-sm border border-white/[0.06]'
                     )}
+                    style={isMe ? { background: 'linear-gradient(135deg, #C8962C 0%, #A07722 100%)' } : undefined}
                   >
                     <p className="text-sm leading-relaxed">{msg.content}</p>
                     {msg.created_date && (
@@ -733,8 +740,9 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         )}
       </AnimatePresence>
 
-      {/* Composer */}
-      <div className="border-t border-white/10 bg-black/80 backdrop-blur-sm flex-shrink-0">
+      {/* Composer — noir glass with gold top accent */}
+      <div className="border-t border-[#C8962C]/15 flex-shrink-0 relative" style={{ background: 'rgba(5,5,7,0.92)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C8962C]/30 to-transparent" />
         {/* Action bar */}
         <div className="flex items-center gap-3 px-4 pt-3 pb-1">
           {/* Camera / Attach */}
@@ -812,7 +820,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             onChange={e => { setNewMessage(e.target.value); sendTyping(true); }}
             onKeyDown={handleKeyDown}
             placeholder="Message..."
-            className="flex-1 bg-[#1C1C1E] border-0 rounded-full text-sm text-white placeholder-white/30"
+            className="flex-1 bg-[#1C1C1E] border border-white/[0.06] rounded-full text-sm text-white placeholder-white/30 focus:border-[#C8962C]/40 focus:ring-1 focus:ring-[#C8962C]/20 transition-all"
             disabled={sending}
           />
           <Button
