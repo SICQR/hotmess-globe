@@ -70,7 +70,7 @@ export default function PayoutManager({ payouts, orders, sellerEmail, stripeConn
   return (
     <div className="space-y-6">
       {/* Balance Card */}
-      <div className="bg-gradient-to-br from-[#00D9FF]/20 to-[#B026FF]/20 border-2 border-[#00D9FF] rounded-xl p-6">
+      <div className="bg-gradient-to-br from-[#00D9FF]/20 to-[#C8962C]/20 border-2 border-[#00D9FF] rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-sm text-white/60 uppercase tracking-wider mb-1">Available Balance</p>
