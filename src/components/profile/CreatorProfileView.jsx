@@ -148,7 +148,7 @@ export default function CreatorProfileView({ user, currentUser }) {
           )}
           
           {/* Creator Badge Overlay */}
-          <div className="absolute top-3 left-3 px-3 py-1.5 bg-[#B026FF] text-white text-xs font-black uppercase flex items-center gap-1.5">
+          <div className="absolute top-3 left-3 px-3 py-1.5 bg-[#C8962C] text-white text-xs font-black uppercase flex items-center gap-1.5">
             <Mic2 className="w-3 h-3" />
             Creator
           </div>
@@ -191,8 +191,8 @@ export default function CreatorProfileView({ user, currentUser }) {
 
       {/* Creator Bio */}
       {(user?.creator_bio || user?.bio) && (
-        <div className="bg-gradient-to-br from-[#B026FF]/10 to-[#C8962C]/10 border border-[#B026FF]/30 rounded-xl p-6">
-          <h3 className="text-sm uppercase tracking-wider text-[#B026FF] mb-3 flex items-center gap-2">
+        <div className="bg-gradient-to-br from-[#C8962C]/10 to-[#C8962C]/10 border border-[#C8962C]/30 rounded-xl p-6">
+          <h3 className="text-sm uppercase tracking-wider text-[#C8962C] mb-3 flex items-center gap-2">
             <Mic2 className="w-4 h-4" />
             About the Artist
           </h3>
@@ -205,7 +205,7 @@ export default function CreatorProfileView({ user, currentUser }) {
       {/* Creator Stats */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-          <Disc3 className="w-6 h-6 mx-auto mb-2 text-[#B026FF]" />
+          <Disc3 className="w-6 h-6 mx-auto mb-2 text-[#C8962C]" />
           <div className="text-2xl font-black">{musicReleases.length}</div>
           <div className="text-xs text-white/40 uppercase">Releases</div>
         </div>
@@ -226,12 +226,12 @@ export default function CreatorProfileView({ user, currentUser }) {
         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-black uppercase flex items-center gap-2">
-              <Music className="w-5 h-5 text-[#B026FF]" />
+              <Music className="w-5 h-5 text-[#C8962C]" />
               Releases
             </h3>
             <Link 
               to="/music"
-              className="text-xs text-[#B026FF] hover:text-white uppercase font-bold"
+              className="text-xs text-[#C8962C] hover:text-white uppercase font-bold"
             >
               View All →
             </Link>
@@ -242,9 +242,9 @@ export default function CreatorProfileView({ user, currentUser }) {
               <Link 
                 key={release.id}
                 to={`/music/releases/${release.release_slug || release.id}`}
-                className="flex items-center gap-4 p-3 bg-black/30 border border-white/10 hover:border-[#B026FF]/50 transition-colors group"
+                className="flex items-center gap-4 p-3 bg-black/30 border border-white/10 hover:border-[#C8962C]/50 transition-colors group"
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-[#B026FF]/30 to-[#C8962C]/30 flex items-center justify-center flex-shrink-0">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#C8962C]/30 to-[#C8962C]/30 flex items-center justify-center flex-shrink-0">
                   {release.cover_image || release.image_url ? (
                     <img 
                       src={release.cover_image || release.image_url} 
@@ -252,18 +252,18 @@ export default function CreatorProfileView({ user, currentUser }) {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <Disc3 className="w-8 h-8 text-[#B026FF]" />
+                    <Disc3 className="w-8 h-8 text-[#C8962C]" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-black text-white group-hover:text-[#B026FF] transition-colors truncate">
+                  <h4 className="font-black text-white group-hover:text-[#C8962C] transition-colors truncate">
                     {release.release_title || release.title}
                   </h4>
                   <p className="text-xs text-white/50 uppercase">
                     {release.release_at ? format(new Date(release.release_at), 'MMM d, yyyy') : 'Unreleased'}
                   </p>
                 </div>
-                <PlayCircle className="w-8 h-8 text-white/30 group-hover:text-[#B026FF] transition-colors flex-shrink-0" />
+                <PlayCircle className="w-8 h-8 text-white/30 group-hover:text-[#C8962C] transition-colors flex-shrink-0" />
               </Link>
             ))}
           </div>
@@ -272,7 +272,7 @@ export default function CreatorProfileView({ user, currentUser }) {
 
       {/* Upcoming Shows */}
       {upcomingShows.length > 0 && (
-        <div className="bg-gradient-to-br from-[#00D9FF]/10 to-[#B026FF]/10 border border-[#00D9FF]/30 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#00D9FF]/10 to-[#C8962C]/10 border border-[#00D9FF]/30 rounded-xl p-6">
           <h3 className="text-lg font-black uppercase flex items-center gap-2 mb-4">
             <Calendar className="w-5 h-5 text-[#00D9FF]" />
             Upcoming Shows
@@ -404,7 +404,7 @@ export default function CreatorProfileView({ user, currentUser }) {
             {user.music_taste.map((genre, idx) => (
               <span 
                 key={idx} 
-                className="px-3 py-1 bg-[#B026FF]/15 border border-[#B026FF]/35 text-[#D7B8FF] text-xs font-bold uppercase"
+                className="px-3 py-1 bg-[#C8962C]/15 border border-[#C8962C]/35 text-[#D7B8FF] text-xs font-bold uppercase"
               >
                 {genre}
               </span>
@@ -432,12 +432,12 @@ export default function CreatorProfileView({ user, currentUser }) {
 
       {/* Collaboration CTA */}
       {user?.email !== currentUser?.email && (
-        <div className="bg-gradient-to-r from-[#B026FF]/20 to-[#C8962C]/20 border border-[#B026FF]/40 rounded-xl p-6 text-center">
+        <div className="bg-gradient-to-r from-[#C8962C]/20 to-[#C8962C]/20 border border-[#C8962C]/40 rounded-xl p-6 text-center">
           <h3 className="text-lg font-black uppercase mb-2">Want to Collaborate?</h3>
           <p className="text-white/60 text-sm mb-4">
             Reach out to discuss bookings, features, or collaborations
           </p>
-          <Button className="bg-[#B026FF] hover:bg-white hover:text-black text-white font-black uppercase">
+          <Button className="bg-[#C8962C] hover:bg-white hover:text-black text-white font-black uppercase">
             Send Message
           </Button>
         </div>
