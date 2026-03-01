@@ -210,7 +210,7 @@ const CATEGORY_COLORS = {
   general: '#C8962C',
   events: '#00D9FF',
   marketplace: '#FFEB3B',
-  beacons: '#B026FF',
+  beacons: '#C8962C',
   squads: '#39FF14',
   achievements: '#FF6B35',
 };
@@ -241,7 +241,7 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
       )}
 
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center flex-shrink-0">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center flex-shrink-0">
           <span className="font-bold">{post.user_name?.[0] || 'U'}</span>
         </div>
         <div className="flex-1 min-w-0">
