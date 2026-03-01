@@ -11,7 +11,7 @@ import {
 const CITIES = [
   { id: 'london', name: 'London', flag: '🇬🇧', color: '#C8962C' },
   { id: 'berlin', name: 'Berlin', flag: '🇩🇪', color: '#00D9FF' },
-  { id: 'paris', name: 'Paris', flag: '🇫🇷', color: '#B026FF' },
+  { id: 'paris', name: 'Paris', flag: '🇫🇷', color: '#C8962C' },
   { id: 'tokyo', name: 'Tokyo', flag: '🇯🇵', color: '#FF6B35' },
   { id: 'nyc', name: 'New York', flag: '🇺🇸', color: '#39FF14' },
   { id: 'los_angeles', name: 'Los Angeles', flag: '🇺🇸', color: '#FFD700' },
