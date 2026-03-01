@@ -24,7 +24,7 @@ import {
 const MODES = [
   { id: 'ghosted', path: '/', label: 'Ghosted', icon: LayoutGrid, color: '#C8962C' },
   { id: 'pulse', path: '/pulse', label: 'Pulse', icon: Globe, color: '#00D9FF' },
-  { id: 'market', path: '/market', label: 'Market', icon: ShoppingBag, color: '#B026FF' },
+  { id: 'market', path: '/market', label: 'Market', icon: ShoppingBag, color: '#C8962C' },
   { id: 'radio', path: '/radio', label: 'Radio', icon: Radio, color: '#39FF14', hasLive: true },
   { id: 'profile', path: '/profile', label: 'Profile', icon: User, color: '#FFFFFF' },
 ];
