@@ -29,7 +29,7 @@ const BADGE_CONFIG: Record<SocialProofType, Omit<SocialProofBadge, 'type'>> = {
     label: 'Hot',
     icon: Zap,
     color: '#C8962C',
-    bgColor: 'rgba(255, 20, 147, 0.2)',
+    bgColor: 'rgba(200, 150, 44, 0.2)',
   },
   online: {
     label: 'Online',
@@ -40,8 +40,8 @@ const BADGE_CONFIG: Record<SocialProofType, Omit<SocialProofBadge, 'type'>> = {
   new: {
     label: 'New',
     icon: Sparkles,
-    color: '#B026FF',
-    bgColor: 'rgba(176, 38, 255, 0.2)',
+    color: '#C8962C',
+    bgColor: 'rgba(200, 150, 44, 0.2)',
   },
   verified: {
     label: 'Verified',
