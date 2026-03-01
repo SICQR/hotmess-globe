@@ -171,7 +171,7 @@ export default function RecordManager() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-black uppercase mb-2">
-            <span className="text-[#B026FF]">RAW</span> CONVICT RECORDS
+            <span className="text-[#C8962C]">RAW</span> CONVICT RECORDS
           </h1>
           <p className="text-sm text-white/60 uppercase tracking-wider">
             Headless Label Terminal - Admin Only
@@ -233,10 +233,10 @@ export default function RecordManager() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/5 border-2 border-[#B026FF] p-8 mb-8"
+          className="bg-white/5 border-2 border-[#C8962C] p-8 mb-8"
         >
           <h2 className="text-2xl font-black uppercase mb-6 flex items-center gap-2">
-            <Upload className="w-6 h-6 text-[#B026FF]" />
+            <Upload className="w-6 h-6 text-[#C8962C]" />
             Drop New Track
           </h2>
 
@@ -318,8 +318,8 @@ export default function RecordManager() {
                   file:mr-4 file:py-2 file:px-4
                   file:border-0
                   file:text-sm file:font-bold
-                  file:bg-[#B026FF] file:text-white
-                  hover:file:bg-[#B026FF]/80
+                  file:bg-[#C8962C] file:text-white
+                  hover:file:bg-[#C8962C]/80
                   file:cursor-pointer"
                 required
               />
@@ -333,7 +333,7 @@ export default function RecordManager() {
             <Button
               type="submit"
               disabled={uploading}
-              className="w-full bg-[#B026FF] hover:bg-[#B026FF]/90 text-white font-black text-lg py-6"
+              className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-white font-black text-lg py-6"
             >
               {uploading ? (
                 <>
@@ -360,7 +360,7 @@ export default function RecordManager() {
                 className="flex items-center justify-between p-3 bg-white/5 border border-white/10"
               >
                 <div className="flex items-center gap-3">
-                  <Music className="w-5 h-5 text-[#B026FF]" />
+                  <Music className="w-5 h-5 text-[#C8962C]" />
                   <div>
                     <p className="font-bold">{beacon.title}</p>
                     <p className="text-xs text-white/60">{beacon.city}</p>
