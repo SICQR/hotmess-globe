@@ -19,7 +19,7 @@ const STATUS_CONFIG = {
   pending: { color: '#FFEB3B', icon: Clock },
   escrow: { color: '#00D9FF', icon: Clock },
   processing: { color: '#00D9FF', icon: Package },
-  shipped: { color: '#B026FF', icon: Package },
+  shipped: { color: '#C8962C', icon: Package },
   delivered: { color: '#39FF14', icon: CheckCircle },
   cancelled: { color: '#FF073A', icon: XCircle },
   refunded: { color: '#FF6B35', icon: XCircle },
