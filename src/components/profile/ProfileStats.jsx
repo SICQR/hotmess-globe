@@ -15,7 +15,7 @@ export default function ProfileStats({
     { icon: Users, label: 'Following', value: followingCount, color: '#00D9FF' },
     { icon: MapPin, label: 'Check-ins', value: checkInsCount, color: '#39FF14' },
     // Only show badges/achievements when gamification is enabled
-    ...(isGamificationEnabled() ? [{ icon: Trophy, label: 'Badges', value: achievementsCount, color: '#B026FF' }] : []),
+    ...(isGamificationEnabled() ? [{ icon: Trophy, label: 'Badges', value: achievementsCount, color: '#C8962C' }] : []),
   ];
 
   return (
