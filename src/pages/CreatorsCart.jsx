@@ -88,7 +88,7 @@ export default function CreatorsCart() {
             <ShoppingBag className="w-10 h-10 text-white/30 mx-auto mb-3" />
             <p className="text-white/70">Your creators cart is empty.</p>
             <div className="mt-4">
-              <Button asChild className="bg-[#B026FF] text-white hover:bg-white hover:text-black font-black uppercase">
+              <Button asChild className="bg-[#C8962C] text-white hover:bg-white hover:text-black font-black uppercase">
                 <Link to="/market/creators">Browse creators</Link>
               </Button>
             </div>
