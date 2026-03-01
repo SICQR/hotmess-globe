@@ -184,7 +184,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
                   <Calendar className="w-3 h-3 mr-1" />
                   Event
                 </TabsTrigger>
-                <TabsTrigger value="squad" className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-white font-black uppercase text-xs">
+                <TabsTrigger value="squad" className="data-[state=active]:bg-[#C8962C] data-[state=active]:text-white font-black uppercase text-xs">
                   <MapPin className="w-3 h-3 mr-1" />
                   Squad
                 </TabsTrigger>
@@ -210,7 +210,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
                             : 'bg-black border-white/20 hover:border-white/40'
                         }`}
                       >
-                        <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center border-2 border-white">
+                        <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center border-2 border-white">
                           {user.avatar_url ? (
                             <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
                           ) : (
@@ -261,7 +261,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
                           : 'bg-black border-white/20 hover:border-white/40'
                       }`}
                     >
-                      <div className="w-10 h-10 bg-gradient-to-br from-[#00D9FF] to-[#B026FF] flex items-center justify-center border-2 border-white">
+                      <div className="w-10 h-10 bg-gradient-to-br from-[#00D9FF] to-[#C8962C] flex items-center justify-center border-2 border-white">
                         <span className="font-bold text-sm">{user.full_name?.[0] || 'U'}</span>
                       </div>
                       <div className="flex-1 text-left">
@@ -303,7 +303,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
                       onClick={() => setSelectedSquad(squad)}
                       className={`w-full text-left p-4 border-2 transition-all ${
                         selectedSquad?.id === squad.id
-                          ? 'bg-[#B026FF]/20 border-[#B026FF]'
+                          ? 'bg-[#C8962C]/20 border-[#C8962C]'
                           : 'bg-black border-white/20 hover:border-white/40'
                       }`}
                     >
