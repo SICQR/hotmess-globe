@@ -229,7 +229,7 @@ export default function AIMatchmaker({ currentUser }) {
                   style={{
                     background: match.vibe?.vibe_color 
                       ? `linear-gradient(135deg, ${match.vibe.vibe_color}, #000)`
-                      : 'linear-gradient(135deg, #C8962C, #B026FF)',
+                      : 'linear-gradient(135deg, #C8962C, #C8962C)',
                     borderColor: match.vibe?.vibe_color || '#C8962C'
                   }}
                 >
@@ -253,11 +253,11 @@ export default function AIMatchmaker({ currentUser }) {
                 className="px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-1"
                 style={{
                   background: match.score >= 80 
-                    ? 'linear-gradient(135deg, #C8962C, #B026FF)'
+                    ? 'linear-gradient(135deg, #C8962C, #C8962C)'
                     : match.score >= 60
-                    ? 'rgba(255, 20, 147, 0.3)'
-                    : 'rgba(255, 20, 147, 0.2)',
-                  border: `2px solid ${match.score >= 80 ? '#C8962C' : 'rgba(255, 20, 147, 0.3)'}`
+                    ? 'rgba(200, 150, 44, 0.3)'
+                    : 'rgba(200, 150, 44, 0.2)',
+                  border: `2px solid ${match.score >= 80 ? '#C8962C' : 'rgba(200, 150, 44, 0.3)'}`
                 }}
               >
                 {match.score >= 80 && <Flame className="w-3 h-3" />}
