@@ -35,7 +35,7 @@ const COLORS: Record<BeaconType, [number, number, number]> = {
   SOCIAL: [0.224, 1.0, 0.078],     // #39FF14 - Lime green
   EVENT: [0.0, 0.851, 1.0],        // #00D9FF - Cyan
   MARKET: [1.0, 0.843, 0.0],       // #FFD700 - Gold
-  RADIO: [0.69, 0.149, 1.0],       // #B026FF - Purple
+  RADIO: [0.69, 0.149, 1.0],       // #C8962C - Purple
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
