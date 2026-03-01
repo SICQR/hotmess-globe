@@ -122,7 +122,7 @@ const BusinessInsights = () => {
         {/* Key Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard icon={Eye} value={metrics.impressions.toLocaleString()} label="Impressions" change={12} color="#00D9FF" />
-          <StatCard icon={Users} value={metrics.reach.toLocaleString()} label="Unique Reach" change={8} color="#B026FF" />
+          <StatCard icon={Users} value={metrics.reach.toLocaleString()} label="Unique Reach" change={8} color="#C8962C" />
           <StatCard icon={MousePointer} value={metrics.taps.toLocaleString()} label="Taps" change={15} color="#C8962C" />
           <StatCard icon={Target} value={metrics.conversions.toLocaleString()} label="Conversions" change={23} color="#39FF14" />
         </div>
