@@ -100,7 +100,7 @@ export const ProfileBadges = {
         <Music className="w-3 h-3 mr-1" />
         DJ
       </Badge>
-      <Badge className="bg-[#B026FF]/20 text-[#B026FF] border border-[#B026FF]/40">
+      <Badge className="bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C]/40">
         <Calendar className="w-3 h-3 mr-1" />
         Organizer
       </Badge>
@@ -133,7 +133,7 @@ export const PriceBadges = {
       <Badge className="bg-[#39FF14] text-black font-black">FREE</Badge>
       <Badge className="bg-white text-black font-bold">£10</Badge>
       <Badge className="bg-[#C8962C] text-black font-bold">£25 VIP</Badge>
-      <Badge className="bg-gradient-to-r from-[#C8962C] to-[#B026FF] text-white font-bold">SOLD OUT</Badge>
+      <Badge className="bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-white font-bold">SOLD OUT</Badge>
     </div>
   ),
 };
@@ -178,14 +178,14 @@ export const BrandColors = {
         <Badge className="bg-[#C8962C] text-black">Hot Pink</Badge>
         <Badge className="bg-[#00D9FF] text-black">Cyan</Badge>
         <Badge className="bg-[#39FF14] text-black">Neon Green</Badge>
-        <Badge className="bg-[#B026FF] text-white">Purple</Badge>
+        <Badge className="bg-[#C8962C] text-white">Purple</Badge>
         <Badge className="bg-[#FFEB3B] text-black">Yellow</Badge>
       </div>
       <div className="flex flex-wrap gap-4">
         <Badge className="bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C]/40">Hot Pink Light</Badge>
         <Badge className="bg-[#00D9FF]/20 text-[#00D9FF] border border-[#00D9FF]/40">Cyan Light</Badge>
         <Badge className="bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/40">Neon Green Light</Badge>
-        <Badge className="bg-[#B026FF]/20 text-[#B026FF] border border-[#B026FF]/40">Purple Light</Badge>
+        <Badge className="bg-[#C8962C]/20 text-[#C8962C] border border-[#C8962C]/40">Purple Light</Badge>
       </div>
     </div>
   ),
