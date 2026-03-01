@@ -37,10 +37,10 @@ const PERSONA_CONFIGS = {
   },
   seller: {
     label: 'Seller',
-    color: '#B026FF',
-    gradient: 'from-[#B026FF]/30 to-[#B026FF]/5',
+    color: '#C8962C',
+    gradient: 'from-[#C8962C]/30 to-[#C8962C]/5',
     icon: ShoppingBag,
-    borderColor: 'border-[#B026FF]/50',
+    borderColor: 'border-[#C8962C]/50',
   },
   creator: {
     label: 'Creator',
@@ -228,7 +228,7 @@ export default function PersonaCard({
 
           {/* Match score - if high */}
           {matchScore && matchScore >= 70 && (
-            <div className="absolute top-14 right-3 px-2 py-1 bg-gradient-to-r from-[#C8962C] to-[#B026FF] text-white text-xs font-black">
+            <div className="absolute top-14 right-3 px-2 py-1 bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-white text-xs font-black">
               {matchScore}% MATCH
             </div>
           )}
