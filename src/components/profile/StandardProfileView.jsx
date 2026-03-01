@@ -209,7 +209,7 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
           <h3 className="text-sm uppercase tracking-wider text-white/40 mb-3">Skills</h3>
           <div className="flex flex-wrap gap-2">
             {skills.slice(0, 10).map((skill, idx) => (
-              <span key={idx} className="px-3 py-1 bg-[#B026FF]/15 border border-[#B026FF]/35 text-[#D7B8FF] text-xs font-bold uppercase">
+              <span key={idx} className="px-3 py-1 bg-[#C8962C]/15 border border-[#C8962C]/35 text-[#D7B8FF] text-xs font-bold uppercase">
                 {String(skill)}
               </span>
             ))}
