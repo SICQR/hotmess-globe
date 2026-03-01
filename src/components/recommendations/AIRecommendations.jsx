@@ -99,8 +99,8 @@ Return ONLY an array of beacon IDs in order of recommendation strength.`;
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-br from-[#B026FF]/10 to-[#C8962C]/10 border border-[#B026FF]/30 rounded-xl p-6 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-[#B026FF] animate-spin mr-2" />
+      <div className="bg-gradient-to-br from-[#C8962C]/10 to-[#C8962C]/10 border border-[#C8962C]/30 rounded-xl p-6 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin mr-2" />
         <span className="text-white/60">Generating personalized recommendations...</span>
       </div>
     );
@@ -115,14 +115,14 @@ Return ONLY an array of beacon IDs in order of recommendation strength.`;
     venue: '#C8962C',
     hookup: '#FF073A',
     drop: '#FF6B35',
-    popup: '#B026FF',
+    popup: '#C8962C',
     private: '#00D9FF',
   };
 
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-[#B026FF]" />
+        <Sparkles className="w-5 h-5 text-[#C8962C]" />
         <h2 className="text-xl font-black uppercase tracking-tight">AI Picks For You</h2>
       </div>
 
@@ -134,10 +134,10 @@ Return ONLY an array of beacon IDs in order of recommendation strength.`;
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
               whileHover={{ scale: 1.02 }}
-              className="bg-gradient-to-br from-[#B026FF]/10 to-[#C8962C]/10 border border-[#B026FF]/30 rounded-xl p-5 hover:border-[#B026FF]/50 transition-all cursor-pointer relative overflow-hidden"
+              className="bg-gradient-to-br from-[#C8962C]/10 to-[#C8962C]/10 border border-[#C8962C]/30 rounded-xl p-5 hover:border-[#C8962C]/50 transition-all cursor-pointer relative overflow-hidden"
             >
               <div className="absolute top-2 right-2">
-                <Sparkles className="w-4 h-4 text-[#B026FF]" />
+                <Sparkles className="w-4 h-4 text-[#C8962C]" />
               </div>
               <div className="flex items-start justify-between mb-3">
                 <span
