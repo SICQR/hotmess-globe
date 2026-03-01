@@ -51,10 +51,10 @@ export default function VibeSynthesisCard({ userEmail, compact = false }) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-[#B026FF]/20 to-[#C8962C]/20 border-2 border-[#B026FF] rounded-xl p-6"
+        className="bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border-2 border-[#C8962C] rounded-xl p-6"
       >
         <div className="flex items-center gap-3 mb-4">
-          <Sparkles className="w-6 h-6 text-[#B026FF]" />
+          <Sparkles className="w-6 h-6 text-[#C8962C]" />
           <h3 className="text-xl font-black uppercase">DISCOVER YOUR VIBE</h3>
         </div>
         <p className="text-sm text-white/60 mb-4">
@@ -63,7 +63,7 @@ export default function VibeSynthesisCard({ userEmail, compact = false }) {
         <Button
           onClick={handleSynthesize}
           disabled={synthesizing}
-          className="w-full bg-[#B026FF] hover:bg-[#B026FF]/80 text-white font-black"
+          className="w-full bg-[#C8962C] hover:bg-[#C8962C]/80 text-white font-black"
         >
           {synthesizing ? (
             <>
