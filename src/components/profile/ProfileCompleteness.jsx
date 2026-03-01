@@ -26,7 +26,7 @@ export default function ProfileCompleteness({ user }) {
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border-2 border-[#C8962C]/40 p-6 mb-6"
+      className="bg-gradient-to-r from-[#C8962C]/20 to-[#C8962C]/20 border-2 border-[#C8962C]/40 p-6 mb-6"
     >
       <div className="flex items-start justify-between mb-4">
         <div>
@@ -48,7 +48,7 @@ export default function ProfileCompleteness({ user }) {
       {/* Progress Bar */}
       <div className="w-full h-2 bg-white/10 mb-4">
         <motion.div
-          className="h-full bg-gradient-to-r from-[#C8962C] to-[#B026FF]"
+          className="h-full bg-gradient-to-r from-[#C8962C] to-[#C8962C]"
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5 }}
