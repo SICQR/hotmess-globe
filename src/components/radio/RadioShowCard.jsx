@@ -141,7 +141,7 @@ export default function RadioShowCard({
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${show.color || 'from-[#C8962C] to-[#B026FF]'}`} />
+          <div className={`w-full h-full bg-gradient-to-br ${show.color || 'from-[#C8962C] to-[#C8962C]'}`} />
         )}
         
         {/* Gradient overlay */}
