@@ -957,11 +957,11 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             <AnimatedSection index={5}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" style={{ color: '#B026FF' }} />
+                  <Sparkles className="w-4 h-4" style={{ color: '#C8962C' }} />
                   <h2 className="text-white font-bold text-base">Tonight's Picks</h2>
                   <span
                     className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider"
-                    style={{ background: '#B026FF20', color: '#B026FF' }}
+                    style={{ background: '#C8962C20', color: '#C8962C' }}
                   >
                     AI
                   </span>
