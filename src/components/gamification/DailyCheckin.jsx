@@ -60,7 +60,7 @@ function celebrate(isMilestone = false) {
     particleCount: count,
     spread: spread,
     origin: { y: 0.6 },
-    colors: ['#FF1493', '#B026FF', '#00D9FF', '#FFD700'],
+    colors: ['#C8962C', '#C8962C', '#00D9FF', '#FFD700'],
   });
 }
 
@@ -69,7 +69,7 @@ function celebrate(isMilestone = false) {
  */
 function getStreakTier(streak) {
   if (streak >= 100) return { color: '#FFD700', bg: 'from-yellow-500/20 to-amber-500/20', border: 'border-yellow-500/50' };
-  if (streak >= 30) return { color: '#FF1493', bg: 'from-pink-500/20 to-rose-500/20', border: 'border-pink-500/50' };
+  if (streak >= 30) return { color: '#C8962C', bg: 'from-amber-500/20 to-rose-500/20', border: 'border-amber-500/50' };
   if (streak >= 7) return { color: '#f97316', bg: 'from-orange-500/20 to-red-500/20', border: 'border-orange-500/50' };
   return { color: '#00D9FF', bg: 'from-cyan-500/20 to-blue-500/20', border: 'border-cyan-500/50' };
 }
@@ -213,13 +213,13 @@ export function DailyCheckinCard({ className = '', onCheckin }) {
 
   // Can check in - main CTA
   return (
-    <div className={`relative overflow-hidden rounded-xl border-2 border-[#FF1493] bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 p-5 ${className}`}>
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#FF1493]/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
+    <div className={`relative overflow-hidden rounded-xl border-2 border-[#C8962C] bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 p-5 ${className}`}>
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#C8962C]/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
       
       <div className="relative">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-[#FF1493]/30 flex items-center justify-center animate-pulse">
-            <Gift className="w-6 h-6 text-[#FF1493]" />
+          <div className="w-12 h-12 rounded-full bg-[#C8962C]/30 flex items-center justify-center animate-pulse">
+            <Gift className="w-6 h-6 text-[#C8962C]" />
           </div>
           <div>
             <div className="text-lg font-black">Daily Check-in</div>
@@ -251,7 +251,7 @@ export function DailyCheckinCard({ className = '', onCheckin }) {
         <button
           onClick={handleClaim}
           disabled={claiming}
-          className="w-full py-3 rounded-lg bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white font-black uppercase tracking-wider text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-lg bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-white font-black uppercase tracking-wider text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {claiming ? (
             <>
@@ -277,8 +277,8 @@ export function DailyCheckinCard({ className = '', onCheckin }) {
                   key={day}
                   className={`
                     w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold
-                    ${isCompleted ? 'bg-[#FF1493] text-white' : ''}
-                    ${isToday && !status.todayCheckedIn ? 'bg-white/20 text-white border-2 border-[#FF1493] animate-pulse' : ''}
+                    ${isCompleted ? 'bg-[#C8962C] text-white' : ''}
+                    ${isToday && !status.todayCheckedIn ? 'bg-white/20 text-white border-2 border-[#C8962C] animate-pulse' : ''}
                     ${!isCompleted && !isToday ? 'bg-white/5 text-white/30' : ''}
                   `}
                 >
@@ -317,7 +317,7 @@ export function DailyCheckinButton({ className = '' }) {
         relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider
         transition-all
         ${canCheckIn 
-          ? 'bg-gradient-to-r from-[#FF1493] to-[#B026FF] text-white animate-pulse' 
+          ? 'bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-white animate-pulse' 
           : 'bg-white/10 text-white/60'
         }
         ${className}
