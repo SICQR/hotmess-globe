@@ -439,7 +439,7 @@ function BeaconViewer({ beaconId }) {
   const imageUrl = meta.image_url || null;
 
   const kindColor = beacon.kind === 'event' ? '#C8962C'
-    : beacon.kind === 'broadcast' ? '#B026FF'
+    : beacon.kind === 'broadcast' ? '#C8962C'
     : '#00FF87';
 
   return (
