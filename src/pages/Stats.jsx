@@ -77,7 +77,7 @@ export default function Stats() {
     value: count,
   }));
 
-  const COLORS = ['#C8962C', '#B026FF', '#00D9FF', '#FFEB3B', '#39FF14'];
+  const COLORS = ['#C8962C', '#C8962C', '#00D9FF', '#FFEB3B', '#39FF14'];
 
   // Profile engagement radar
   const engagementData = [
@@ -136,7 +136,7 @@ export default function Stats() {
     { label: 'Check-ins', value: checkIns.length, icon: MapPin, color: '#00D9FF' },
     { label: 'Purchases', value: purchases.length, icon: ShoppingBag, color: '#C8962C' },
     { label: 'Achievements', value: achievements.length, icon: Trophy, color: '#C8962C' },
-    { label: 'Profile Views', value: profileViews.length, icon: Eye, color: '#B026FF' },
+    { label: 'Profile Views', value: profileViews.length, icon: Eye, color: '#C8962C' },
     { label: 'Activities', value: activities.length, icon: TrendingUp, color: '#39FF14' },
   ];
 
@@ -171,7 +171,7 @@ export default function Stats() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/30 rounded-xl p-6 mb-8"
+          className="bg-gradient-to-r from-[#C8962C]/20 to-[#C8962C]/20 border border-[#C8962C]/30 rounded-xl p-6 mb-8"
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
@@ -294,7 +294,7 @@ export default function Stats() {
                   {[
                     { label: '10 Check-ins', target: 10, current: checkIns.length, icon: MapPin, color: '#00D9FF' },
                     { label: '5 Achievements', target: 5, current: achievements.length, icon: Trophy, color: '#C8962C' },
-                    { label: '100 Profile Views', target: 100, current: profileViews.length, icon: Eye, color: '#B026FF' },
+                    { label: '100 Profile Views', target: 100, current: profileViews.length, icon: Eye, color: '#C8962C' },
                   ].map((milestone) => {
                     const current = milestone.current ?? 0;
                     const progress = Math.min((current / milestone.target) * 100, 100);
@@ -375,12 +375,12 @@ export default function Stats() {
               <div className="bg-white/5 border border-white/10 rounded-xl p-6">
                 <h3 className="text-xl font-black uppercase mb-4">Who's Viewing You</h3>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#B026FF]/20 to-transparent rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#C8962C]/20 to-transparent rounded-lg">
                     <div>
-                      <p className="text-3xl font-black text-[#B026FF]">{profileViews.length}</p>
+                      <p className="text-3xl font-black text-[#C8962C]">{profileViews.length}</p>
                       <p className="text-xs text-white/40">Total Profile Views</p>
                     </div>
-                    <Eye className="w-10 h-10 text-[#B026FF]/50" />
+                    <Eye className="w-10 h-10 text-[#C8962C]/50" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-white/5 rounded-lg text-center">
