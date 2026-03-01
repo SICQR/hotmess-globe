@@ -203,7 +203,7 @@ function UpsellModal({ trigger, onDismiss, onUpgrade }) {
         className="w-full max-w-md bg-black border-2 border-[#C8962C] overflow-hidden"
       >
         {/* Gradient header */}
-        <div className="bg-gradient-to-br from-[#C8962C]/30 via-[#B026FF]/20 to-black p-8 text-center relative">
+        <div className="bg-gradient-to-br from-[#C8962C]/30 via-[#C8962C]/20 to-black p-8 text-center relative">
           <button
             onClick={onDismiss}
             className="absolute top-4 right-4 text-white/40 hover:text-white"
@@ -215,7 +215,7 @@ function UpsellModal({ trigger, onDismiss, onUpgrade }) {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring' }}
-            className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-[#C8962C] to-[#B026FF] rounded-full flex items-center justify-center"
+            className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-[#C8962C] to-[#C8962C] rounded-full flex items-center justify-center"
           >
             <Icon className="w-10 h-10 text-white" />
           </motion.div>
@@ -255,7 +255,7 @@ function UpsellModal({ trigger, onDismiss, onUpgrade }) {
           {/* CTA */}
           <Button
             onClick={onUpgrade}
-            className="w-full bg-gradient-to-r from-[#C8962C] to-[#B026FF] hover:opacity-90 text-white font-black uppercase py-6 text-lg"
+            className="w-full bg-gradient-to-r from-[#C8962C] to-[#C8962C] hover:opacity-90 text-white font-black uppercase py-6 text-lg"
           >
             {trigger.cta}
             <ChevronRight className="w-5 h-5 ml-2" />
@@ -295,7 +295,7 @@ export function UpsellBanner({
       <button
         onClick={() => navigate('/membership')}
         className={cn(
-          "flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/30 rounded-lg text-sm hover:border-[#C8962C]/50 transition-colors",
+          "flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#C8962C]/20 to-[#C8962C]/20 border border-[#C8962C]/30 rounded-lg text-sm hover:border-[#C8962C]/50 transition-colors",
           className
         )}
       >
@@ -308,7 +308,7 @@ export function UpsellBanner({
 
   return (
     <div className={cn(
-      "p-4 bg-gradient-to-r from-[#C8962C]/10 to-[#B026FF]/10 border border-[#C8962C]/30 rounded-lg",
+      "p-4 bg-gradient-to-r from-[#C8962C]/10 to-[#C8962C]/10 border border-[#C8962C]/30 rounded-lg",
       className
     )}>
       <div className="flex items-start gap-4">
