@@ -185,7 +185,7 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
           <motion.div
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="w-32 h-32 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center mb-6 border-4 border-white/20"
+            className="w-32 h-32 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center mb-6 border-4 border-white/20"
           >
             <User className="w-16 h-16 text-white" />
           </motion.div>
