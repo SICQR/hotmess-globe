@@ -36,7 +36,7 @@ export default function Beacons() {
     venue: '#C8962C',
     hookup: '#FF073A',
     drop: '#FF6B35',
-    popup: '#B026FF',
+    popup: '#C8962C',
     private: BEACON_COLOR.event,
   })[kind] || '#C8962C';
 
