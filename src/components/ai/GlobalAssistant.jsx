@@ -104,7 +104,7 @@ export default function GlobalAssistant() {
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-[#C8962C] to-[#B026FF] rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_20px_rgba(255,20,147,0.5)] hover:shadow-[0_0_30px_rgba(255,20,147,0.8)] transition-all"
+            className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-[#C8962C] to-[#C8962C] rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_20px_rgba(255,20,147,0.5)] hover:shadow-[0_0_30px_rgba(255,20,147,0.8)] transition-all"
           >
             <Bot className="w-6 h-6 text-white" />
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#39FF14] rounded-full border-2 border-black animate-pulse" />
@@ -123,7 +123,7 @@ export default function GlobalAssistant() {
             className="fixed bottom-6 right-6 w-full md:w-[420px] h-[600px] bg-black border-2 border-[#C8962C] z-[80] flex flex-col shadow-[0_0_40px_rgba(255,20,147,0.3)]"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#C8962C] to-[#B026FF] border-b-2 border-white p-4">
+            <div className="bg-gradient-to-r from-[#C8962C] to-[#C8962C] border-b-2 border-white p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-black flex items-center justify-center border-2 border-white">
@@ -179,7 +179,7 @@ export default function GlobalAssistant() {
                     className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     {msg.role === 'assistant' && (
-                      <div className="w-8 h-8 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
+                      <div className="w-8 h-8 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center flex-shrink-0 border-2 border-white">
                         <Bot className="w-4 h-4" />
                       </div>
                     )}
