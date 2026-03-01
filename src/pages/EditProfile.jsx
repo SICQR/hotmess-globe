@@ -31,7 +31,7 @@ const ACTIVITY_STATUSES = [
 const SKILLS = ['DJ', 'Producer', 'Designer', 'Photographer', 'Videographer', 'Promoter', 'Artist', 'Performer'];
 
 const PROFILE_THEMES = [
-  { id: 'default', label: 'Default', gradient: 'from-[#C8962C] to-[#B026FF]' },
+  { id: 'default', label: 'Default', gradient: 'from-[#C8962C] to-[#C8962C]' },
   { id: 'cyber', label: 'Cyber', gradient: 'from-[#00D9FF] to-[#39FF14]' },
   { id: 'sunset', label: 'Sunset', gradient: 'from-[#FF6B35] to-[#FFEB3B]' },
   { id: 'midnight', label: 'Midnight', gradient: 'from-[#1a1a2e] to-[#16213e]' },
@@ -556,7 +556,7 @@ export default function EditProfile() {
             {/* Avatar & Bio */}
             <div className="bg-black border-2 border-white p-6">
               <div className="flex items-center gap-6 mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden border-2 border-white">
+                <div className="w-24 h-24 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center overflow-hidden border-2 border-white">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
