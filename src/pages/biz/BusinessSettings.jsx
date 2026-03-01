@@ -355,7 +355,7 @@ export default function BusinessSettings() {
                 className="bg-white/5 border border-white/10 p-6"
               >
                 <h2 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-[#B026FF]" />
+                  <Users className="w-5 h-5 text-[#C8962C]" />
                   Team Members
                 </h2>
                 
