@@ -134,7 +134,7 @@ export function getReputationLevel(score) {
   if (score >= 400) return { name: 'Legendary', color: '#FFD700', tier: 5 };
   if (score >= 300) return { name: 'Trusted', color: '#39FF14', tier: 4 };
   if (score >= 200) return { name: 'Established', color: '#00D9FF', tier: 3 };
-  if (score >= 100) return { name: 'Active', color: '#B026FF', tier: 2 };
+  if (score >= 100) return { name: 'Active', color: '#C8962C', tier: 2 };
   if (score >= 50) return { name: 'New', color: '#C8962C', tier: 1 };
   return { name: 'Unverified', color: '#666', tier: 0 };
 }
