@@ -102,7 +102,7 @@ export default function Community() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/40 rounded-xl p-4 text-center"
+            className="bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border border-[#C8962C]/40 rounded-xl p-4 text-center"
           >
             <Users className="w-6 h-6 text-[#C8962C] mx-auto mb-2" />
             <div className="text-2xl font-black">2.4K</div>
