@@ -163,7 +163,7 @@ export default function SquadChat() {
               <h1 className="text-3xl font-black uppercase mb-2">{squad.name}</h1>
               <p className="text-white/60 text-sm mb-2">{squad.description}</p>
               <div className="flex items-center gap-4 text-sm">
-                <span className="text-[#B026FF] uppercase font-bold">{squad.interest}</span>
+                <span className="text-[#C8962C] uppercase font-bold">{squad.interest}</span>
                 <span className="text-white/40">{members.length} members</span>
               </div>
             </div>
@@ -203,7 +203,7 @@ export default function SquadChat() {
                         >
                           {/* Avatar for others */}
                           {!isOwn && showAvatar && (
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] mr-2 flex-shrink-0 overflow-hidden">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] mr-2 flex-shrink-0 overflow-hidden">
                               {msgUser?.avatar_url ? (
                                 <img src={msgUser.avatar_url} alt="" className="w-full h-full object-cover" />
                               ) : (
@@ -368,7 +368,7 @@ export default function SquadChat() {
                 {memberUsers.slice(0, 10).map((user) => (
                   <Link key={user.email} to={createPageUrl(`Profile?email=${user.email}`)}>
                     <div className="flex items-center gap-3 p-2 hover:bg-white/5 transition-colors">
-                      <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] border border-white flex items-center justify-center">
+                      <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#C8962C] border border-white flex items-center justify-center">
                         {user.avatar_url ? (
                           <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
                         ) : (
