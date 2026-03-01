@@ -23,7 +23,7 @@ import { useAuth } from '@/lib/AuthContext';
 
 const OPENER_TYPES = {
   personal: { label: 'Personal', icon: Heart, color: '#C8962C' },
-  flirty: { label: 'Flirty', icon: Sparkles, color: '#B026FF' },
+  flirty: { label: 'Flirty', icon: Sparkles, color: '#C8962C' },
   question: { label: 'Question', icon: MessageSquare, color: '#00D9FF' }
 };
 
@@ -110,7 +110,7 @@ export default function WingmanPanel({
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-white/10">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#B026FF]" />
+          <Sparkles className="w-4 h-4 text-[#C8962C]" />
           <span className="font-bold text-sm text-white">Wingman</span>
         </div>
         <Button
