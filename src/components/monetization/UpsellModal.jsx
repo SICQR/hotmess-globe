@@ -97,7 +97,7 @@ const TIERS = [
     name: 'Elite',
     price: '£19.99',
     period: '/month',
-    color: '#B026FF',
+    color: '#C8962C',
     popular: true,
     features: [
       'Everything in Premium',
@@ -140,7 +140,7 @@ export default function UpsellModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-black border-2 border-white/20 text-white max-w-lg p-0 overflow-hidden">
         {/* Header with gradient */}
-        <div className="relative p-6 bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20">
+        <div className="relative p-6 bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-1 hover:bg-white/10 transition-colors"
@@ -193,7 +193,7 @@ export default function UpsellModal({
                 }}
               >
                 {tier.popular && (
-                  <span className="absolute -top-2 right-2 px-2 py-0.5 bg-[#B026FF] text-[10px] text-white font-bold">
+                  <span className="absolute -top-2 right-2 px-2 py-0.5 bg-[#C8962C] text-[10px] text-white font-bold">
                     BEST VALUE
                   </span>
                 )}
@@ -229,7 +229,7 @@ export default function UpsellModal({
           {/* CTA */}
           <Button
             onClick={handleUpgrade}
-            className="w-full mt-6 h-14 bg-gradient-to-r from-[#C8962C] to-[#B026FF] hover:opacity-90 text-lg font-black"
+            className="w-full mt-6 h-14 bg-gradient-to-r from-[#C8962C] to-[#C8962C] hover:opacity-90 text-lg font-black"
           >
             {triggerData.cta}
             <ArrowRight className="w-5 h-5 ml-2" />
