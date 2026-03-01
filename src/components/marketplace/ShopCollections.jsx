@@ -20,7 +20,7 @@ const COLLECTIONS = [
     id: 'high',
     name: 'HIGH',
     tagline: 'Club armour. Daylight optional.',
-    color: '#B026FF',
+    color: '#C8962C',
     textColor: '#FFFFFF',
   },
   {
