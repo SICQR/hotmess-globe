@@ -91,7 +91,7 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
           onMouseLeave={() => setIsHovering(false)}
         >
           {/* Avatar/Photo */}
-          <div className="aspect-square bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center text-6xl font-black overflow-hidden relative">
+          <div className="aspect-square bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center text-6xl font-black overflow-hidden relative">
             {primaryPhotoUrl ? (
               <LazyImage
                 src={primaryPhotoUrl}
@@ -204,7 +204,7 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
                 {meetAt.slice(0, 2).map((item, idx) => (
                   <span
                     key={`${item}-${idx}`}
-                    className="px-2 py-0.5 bg-[#B026FF]/20 text-white text-[9px] font-bold uppercase border border-white/20"
+                    className="px-2 py-0.5 bg-[#C8962C]/20 text-white text-[9px] font-bold uppercase border border-white/20"
                   >
                     {item}
                   </span>
