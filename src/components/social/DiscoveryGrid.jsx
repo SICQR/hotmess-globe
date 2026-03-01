@@ -252,7 +252,7 @@ export default function DiscoveryGrid({ currentUser }) {
                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center">
+                  <div className="w-full h-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center">
                     <span className="text-4xl font-black">
                       {user.full_name?.[0] || user.email[0].toUpperCase()}
                     </span>
