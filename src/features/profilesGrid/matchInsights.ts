@@ -215,10 +215,10 @@ export function getMatchTier(matchProbability: number): {
     return { label: 'Excellent Match', color: '#22c55e', bgColor: 'rgba(34, 197, 94, 0.2)' };
   }
   if (matchProbability >= 70) {
-    return { label: 'Great Match', color: '#C8962C', bgColor: 'rgba(255, 20, 147, 0.2)' };
+    return { label: 'Great Match', color: '#C8962C', bgColor: 'rgba(200, 150, 44, 0.2)' };
   }
   if (matchProbability >= 55) {
-    return { label: 'Good Match', color: '#B026FF', bgColor: 'rgba(176, 38, 255, 0.2)' };
+    return { label: 'Good Match', color: '#C8962C', bgColor: 'rgba(200, 150, 44, 0.2)' };
   }
   if (matchProbability >= 40) {
     return { label: 'Potential', color: '#00D9FF', bgColor: 'rgba(0, 217, 255, 0.2)' };
@@ -249,7 +249,7 @@ export function getBreakdownPercentages(breakdown: MatchBreakdown): {
       label: 'Roles',
       percentage: (breakdown.roleCompat / 15) * 100,
       maxPoints: 15,
-      color: '#B026FF',
+      color: '#C8962C',
     },
     {
       category: 'kinkOverlap',
