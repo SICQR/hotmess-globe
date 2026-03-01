@@ -18,10 +18,10 @@ const RARITY_CONFIG = {
     borderColor: '#00D9FF'
   },
   epic: {
-    color: '#B026FF',
+    color: '#C8962C',
     label: 'Epic',
     icon: Sparkles,
-    borderColor: '#B026FF'
+    borderColor: '#C8962C'
   },
   legendary: {
     color: '#FFEB3B',
@@ -50,8 +50,8 @@ export default function AchievementUnlockModal({
       const colors = {
         common: ['#9CA3AF', '#D1D5DB'],
         rare: ['#00D9FF', '#0EA5E9'],
-        epic: ['#B026FF', '#A855F7'],
-        legendary: ['#FFEB3B', '#FCD34D', '#FF1493']
+        epic: ['#C8962C', '#A855F7'],
+        legendary: ['#FFEB3B', '#FCD34D', '#C8962C']
       }[rarity] || ['#9CA3AF'];
 
       confetti({
