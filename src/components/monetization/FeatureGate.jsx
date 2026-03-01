@@ -162,7 +162,7 @@ export function PremiumBadge({ tier = 'PREMIUM', size = 'sm', className = '' }) 
 
   const colors = {
     PREMIUM: { bg: 'bg-[#C8962C]/20', text: 'text-[#C8962C]', border: 'border-[#C8962C]' },
-    ELITE: { bg: 'bg-[#B026FF]/20', text: 'text-[#B026FF]', border: 'border-[#B026FF]' }
+    ELITE: { bg: 'bg-[#C8962C]/20', text: 'text-[#C8962C]', border: 'border-[#C8962C]' }
   };
 
   const style = colors[tier] || colors.PREMIUM;
