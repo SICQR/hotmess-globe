@@ -59,7 +59,7 @@ const FEATURE_CATEGORIES = [
     id: 'events',
     title: 'EVENTS',
     subtitle: 'Never miss a moment',
-    color: '#B026FF',
+    color: '#C8962C',
     icon: Calendar,
     href: '/events',
     features: [
@@ -201,7 +201,7 @@ export default function Features() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border-2 border-[#C8962C] p-6 md:p-8 mb-16"
+          className="bg-gradient-to-r from-[#C8962C]/20 to-[#C8962C]/20 border-2 border-[#C8962C] p-6 md:p-8 mb-16"
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
