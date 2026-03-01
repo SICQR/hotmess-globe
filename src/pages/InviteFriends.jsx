@@ -214,7 +214,7 @@ export default function InviteFriends() {
           </Link>
           
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-[#C8962C] to-[#B026FF] rounded-xl flex items-center justify-center">
+            <div className="w-14 h-14 bg-gradient-to-br from-[#C8962C] to-[#C8962C] rounded-xl flex items-center justify-center">
               <Gift className="w-8 h-8 text-white" />
             </div>
             <div>
@@ -250,7 +250,7 @@ export default function InviteFriends() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border-2 border-[#C8962C] rounded-xl p-6 mb-6"
+          className="bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border-2 border-[#C8962C] rounded-xl p-6 mb-6"
         >
           <div className="flex items-center gap-4">
             <Zap className="w-10 h-10 text-[#C8962C]" />
@@ -368,7 +368,7 @@ export default function InviteFriends() {
           className="bg-white/5 border border-white/10 rounded-xl p-6"
         >
           <h3 className="font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-[#B026FF]" />
+            <QrCode className="w-5 h-5 text-[#C8962C]" />
             Share QR Code
           </h3>
           
