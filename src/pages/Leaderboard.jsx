@@ -209,7 +209,7 @@ export default function Leaderboard() {
                   {idx + 1}
                 </div>
                 <Link to={createPageUrl(`Profile?email=${user.email}`)} className="flex-1 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] border border-white flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#C8962C] border border-white flex items-center justify-center">
                     {user.avatar_url ? (
                       <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
                     ) : (
@@ -243,7 +243,7 @@ export default function Leaderboard() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.03 }}
-                  className="bg-white/5 border border-white/10 p-4 hover:border-[#B026FF] transition-colors"
+                  className="bg-white/5 border border-white/10 p-4 hover:border-[#C8962C] transition-colors"
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-12 h-12 flex items-center justify-center font-black text-lg ${
@@ -256,7 +256,7 @@ export default function Leaderboard() {
                     </div>
                     <div className="flex-1">
                       <Link to={createPageUrl(`SquadChat?id=${data.squad.id}`)}>
-                        <h3 className="font-black uppercase hover:text-[#B026FF] transition-colors">{data.squad.name}</h3>
+                        <h3 className="font-black uppercase hover:text-[#C8962C] transition-colors">{data.squad.name}</h3>
                       </Link>
                       <p className="text-xs text-white/60">
                         {data.memberCount} members • {data.squad.interest}
