@@ -40,8 +40,8 @@ const glowVariants = {
     glowColor: "hover:shadow-[0_0_30px_rgba(255,235,59,0.4)]",
   },
   purple: {
-    borderColor: "border-[#B026FF]/30",
-    hoverBorder: "hover:border-[#B026FF]",
+    borderColor: "border-[#C8962C]/30",
+    hoverBorder: "hover:border-[#C8962C]",
     glowColor: "hover:shadow-[0_0_30px_rgba(176,38,255,0.4)]",
   },
 };
