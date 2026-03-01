@@ -110,7 +110,7 @@ export default function MyEvents() {
 
               <div className="bg-white/5 p-3 rounded">
                 <div className="flex items-center gap-2 mb-1">
-                  <Eye className="w-4 h-4 text-[#B026FF]" />
+                  <Eye className="w-4 h-4 text-[#C8962C]" />
                   <span className="text-xs text-white/60">Interested</span>
                 </div>
                 <div className="text-xl font-black">{interested}</div>
