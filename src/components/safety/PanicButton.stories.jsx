@@ -79,8 +79,8 @@ export const SafetyFeaturesOverview = {
           </div>
         </div>
 
-        <div className="flex items-start gap-3 p-4 bg-[#B026FF]/10 border border-[#B026FF]/40 rounded-lg">
-          <Phone className="w-5 h-5 text-[#B026FF] mt-0.5" />
+        <div className="flex items-start gap-3 p-4 bg-[#C8962C]/10 border border-[#C8962C]/40 rounded-lg">
+          <Phone className="w-5 h-5 text-[#C8962C] mt-0.5" />
           <div>
             <h3 className="text-white font-bold">Check-In System</h3>
             <p className="text-white/60 text-sm">
