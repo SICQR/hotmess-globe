@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Users, ShoppingBag, MapPin, Zap } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const COLORS = ['#C8962C', '#00D9FF', '#B026FF', '#FFEB3B', '#39FF14', '#FF6B35'];
+const COLORS = ['#C8962C', '#00D9FF', '#C8962C', '#FFEB3B', '#39FF14', '#FF6B35'];
 
 export default function AdvancedAnalytics() {
   const [timeRange, setTimeRange] = useState('7d'); // 7d, 30d, 90d
@@ -91,12 +91,12 @@ export default function AdvancedAnalytics() {
     <div className="space-y-8">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border-2 border-[#C8962C] p-6">
+        <div className="bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border-2 border-[#C8962C] p-6">
           <Users className="w-6 h-6 text-[#C8962C] mb-2" />
           <div className="text-3xl font-black">{users.length}</div>
           <div className="text-xs text-white/60 uppercase">Total Users</div>
         </div>
-        <div className="bg-gradient-to-br from-[#00D9FF]/20 to-[#B026FF]/20 border-2 border-[#00D9FF] p-6">
+        <div className="bg-gradient-to-br from-[#00D9FF]/20 to-[#C8962C]/20 border-2 border-[#00D9FF] p-6">
           <Zap className="w-6 h-6 text-[#00D9FF] mb-2" />
           <div className="text-3xl font-black">{activeUsers}</div>
           <div className="text-xs text-white/60 uppercase">Active Users</div>
