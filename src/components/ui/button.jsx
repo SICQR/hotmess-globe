@@ -39,7 +39,7 @@ const buttonVariants = cva(
         cyan:
           "bg-[#00D9FF] text-black shadow hover:bg-white hover:shadow-lg",
         purple:
-          "bg-[#B026FF] text-white shadow hover:bg-white hover:text-black hover:shadow-lg",
+          "bg-[#C8962C] text-white shadow hover:bg-white hover:text-black hover:shadow-lg",
         gold:
           "bg-[#FFD700] text-black shadow hover:bg-white hover:shadow-lg",
         green:
@@ -50,7 +50,7 @@ const buttonVariants = cva(
         cyanGradient:
           "bg-gradient-to-r from-[#00D9FF] to-[#0891B2] text-white shadow-lg hover:brightness-110 hover:shadow-glow-cyan border-0",
         purpleGradient:
-          "bg-gradient-to-r from-[#B026FF] to-[#C8962C] text-white shadow-lg hover:brightness-110 hover:shadow-glow-purple border-0",
+          "bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-white shadow-lg hover:brightness-110 hover:shadow-glow-purple border-0",
         goldGradient:
           "bg-gradient-to-r from-[#FFD700] to-[#FF6B35] text-black shadow-lg hover:brightness-110 hover:shadow-glow-gold border-0",
         premium:
@@ -63,7 +63,7 @@ const buttonVariants = cva(
         cyanGlow:
           "bg-[#00D9FF] text-black shadow-glow-cyan hover:shadow-glow-cyan-lg hover:brightness-110",
         purpleGlow:
-          "bg-[#B026FF] text-white shadow-glow-purple hover:shadow-glow-purple-lg hover:brightness-110",
+          "bg-[#C8962C] text-white shadow-glow-purple hover:shadow-glow-purple-lg hover:brightness-110",
         // Glass variants
         glass:
           "bg-white/5 backdrop-blur-sm text-white border border-white/10 hover:bg-white/10 hover:border-white/20",
@@ -72,7 +72,7 @@ const buttonVariants = cva(
         glassCyan:
           "bg-[#00D9FF]/10 backdrop-blur-sm text-[#00D9FF] border border-[#00D9FF]/30 hover:bg-[#00D9FF]/20 hover:border-[#00D9FF]/50",
         glassPurple:
-          "bg-[#B026FF]/10 backdrop-blur-sm text-[#B026FF] border border-[#B026FF]/30 hover:bg-[#B026FF]/20 hover:border-[#B026FF]/50",
+          "bg-[#C8962C]/10 backdrop-blur-sm text-[#C8962C] border border-[#C8962C]/30 hover:bg-[#C8962C]/20 hover:border-[#C8962C]/50",
         // Outline variants
         outline:
           "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
@@ -81,7 +81,7 @@ const buttonVariants = cva(
         outlineCyan:
           "border-2 border-[#00D9FF] text-[#00D9FF] bg-transparent hover:bg-[#00D9FF] hover:text-black",
         outlinePurple:
-          "border-2 border-[#B026FF] text-[#B026FF] bg-transparent hover:bg-[#B026FF] hover:text-white",
+          "border-2 border-[#C8962C] text-[#C8962C] bg-transparent hover:bg-[#C8962C] hover:text-white",
         outlineWhite:
           "border-2 border-white text-white bg-transparent hover:bg-white hover:text-black",
         outlineGold:
