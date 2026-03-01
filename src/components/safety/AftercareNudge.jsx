@@ -120,7 +120,7 @@ export default function AftercareNudge({
             className="w-full max-w-md bg-black border-2 border-[#C8962C] overflow-hidden"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 p-6 border-b border-white/10">
+            <div className="bg-gradient-to-r from-[#C8962C]/20 to-[#C8962C]/20 p-6 border-b border-white/10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-[#C8962C]/20 rounded-full flex items-center justify-center">
