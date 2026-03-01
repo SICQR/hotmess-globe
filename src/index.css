@@ -207,7 +207,7 @@
   }
   
   .text-gradient-purple {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#B026FF] to-[#E879F9];
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#C8962C] to-[#E879F9];
   }
   
   .text-gradient-gold {
@@ -220,15 +220,15 @@
 
   /* Animated gradient backgrounds */
   .bg-gradient-animated {
-    background: linear-gradient(-45deg, #C8962C, #B026FF, #00D9FF, #39FF14);
+    background: linear-gradient(-45deg, #C8962C, #C8962C, #00D9FF, #39FF14);
     background-size: 400% 400%;
     animation: gradient-shift 8s ease infinite;
   }
   
   .bg-gradient-mesh {
     background: 
-      radial-gradient(at 40% 20%, rgba(255, 20, 147, 0.3) 0px, transparent 50%),
-      radial-gradient(at 80% 0%, rgba(176, 38, 255, 0.2) 0px, transparent 50%),
+      radial-gradient(at 40% 20%, rgba(200, 150, 44, 0.3) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(200, 150, 44, 0.2) 0px, transparent 50%),
       radial-gradient(at 0% 50%, rgba(0, 217, 255, 0.2) 0px, transparent 50%),
       radial-gradient(at 80% 50%, rgba(57, 255, 20, 0.1) 0px, transparent 50%),
       radial-gradient(at 0% 100%, rgba(255, 215, 0, 0.2) 0px, transparent 50%);
@@ -236,7 +236,7 @@
 
   /* Glow effects */
   .glow-hot {
-    box-shadow: 0 0 20px rgba(255, 20, 147, 0.5), 0 0 40px rgba(255, 20, 147, 0.3);
+    box-shadow: 0 0 20px rgba(200, 150, 44, 0.5), 0 0 40px rgba(200, 150, 44, 0.3);
   }
   
   .glow-cyan {
@@ -244,7 +244,7 @@
   }
   
   .glow-purple {
-    box-shadow: 0 0 20px rgba(176, 38, 255, 0.5), 0 0 40px rgba(176, 38, 255, 0.3);
+    box-shadow: 0 0 20px rgba(200, 150, 44, 0.5), 0 0 40px rgba(200, 150, 44, 0.3);
   }
   
   .glow-gold {
@@ -257,7 +257,7 @@
 
   /* Text glow */
   .text-glow-hot {
-    text-shadow: 0 0 10px rgba(255, 20, 147, 0.8), 0 0 30px rgba(255, 20, 147, 0.5);
+    text-shadow: 0 0 10px rgba(200, 150, 44, 0.8), 0 0 30px rgba(200, 150, 44, 0.5);
   }
   
   .text-glow-cyan {
@@ -299,7 +299,7 @@
   /* Border gradient */
   .border-gradient {
     position: relative;
-    background: linear-gradient(135deg, #C8962C, #B026FF, #00D9FF);
+    background: linear-gradient(135deg, #C8962C, #C8962C, #00D9FF);
     padding: 2px;
     border-radius: 1rem;
   }
