@@ -154,8 +154,8 @@ const modeConfig: Record<TravelMode, {
   transit: {
     icon: Navigation,
     label: 'Transit',
-    color: 'text-[#B026FF]',
-    bgColor: 'bg-[#B026FF]',
+    color: 'text-[#C8962C]',
+    bgColor: 'bg-[#C8962C]',
   },
 };
 
