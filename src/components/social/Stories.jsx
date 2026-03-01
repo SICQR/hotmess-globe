@@ -148,7 +148,7 @@ export function StoriesBar({ currentUser, className }) {
               <div className={cn(
                 "w-16 h-16 rounded-full p-0.5",
                 userStories.hasUnviewed
-                  ? "bg-gradient-to-br from-[#C8962C] via-[#B026FF] to-[#00D9FF]"
+                  ? "bg-gradient-to-br from-[#C8962C] via-[#C8962C] to-[#00D9FF]"
                   : "bg-white/20"
               )}>
                 <div className="w-full h-full rounded-full overflow-hidden bg-black">
