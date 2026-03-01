@@ -152,7 +152,7 @@ export default function MusicRelease() {
                 rel="noreferrer"
                 className="inline-block"
               >
-                <Button className="bg-[#B026FF] hover:bg-white text-black font-black uppercase">
+                <Button className="bg-[#C8962C] hover:bg-white text-black font-black uppercase">
                   {isPreLaunch ? 'View on SoundCloud' : 'Play on SoundCloud'}
                 </Button>
               </a>
