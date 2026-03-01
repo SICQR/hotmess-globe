@@ -159,7 +159,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
       {/* Header */}
       <div className="bg-black/95 backdrop-blur-xl border-b border-white/10 p-4 md:p-6">
         <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#B026FF] to-[#C8962C] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center">
             <Sparkles className="w-6 h-6" />
           </div>
           <div>
@@ -184,7 +184,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
                 <div className={`max-w-[80%] ${message.role === 'user' ? 'order-2' : 'order-1'}`}>
                   <div className={`rounded-2xl p-4 ${
                     message.role === 'user'
-                      ? 'bg-gradient-to-br from-[#C8962C] to-[#B026FF] text-white'
+                      ? 'bg-gradient-to-br from-[#C8962C] to-[#C8962C] text-white'
                       : 'bg-white/5 border border-white/10'
                   }`}>
                     {message.role === 'assistant' ? (
@@ -234,7 +234,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
             >
               <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
                 <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-[#B026FF]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[#C8962C]" />
                   <span className="text-sm text-white/60">Thinking...</span>
                 </div>
               </div>
@@ -278,7 +278,7 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
           <Button
             onClick={() => handleSend()}
             disabled={!input.trim() || isTyping}
-            className="bg-gradient-to-r from-[#B026FF] to-[#C8962C] hover:opacity-90 text-white"
+            className="bg-gradient-to-r from-[#C8962C] to-[#C8962C] hover:opacity-90 text-white"
           >
             <Send className="w-4 h-4" />
           </Button>
