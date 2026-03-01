@@ -129,7 +129,7 @@ export default function CommentsSection({ beaconId }) {
           >
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center text-sm font-bold">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center text-sm font-bold">
                   {c.user_name?.[0] || 'U'}
                 </div>
                 <div>
