@@ -146,7 +146,7 @@ export default function Care() {
           className="mb-20"
         >
           <div className="flex items-center gap-4 mb-8">
-            <Users className="w-8 h-8 text-[#B026FF]" />
+            <Users className="w-8 h-8 text-[#C8962C]" />
             <h2 className="text-4xl font-black italic">COMMUNITY RESOURCES</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -160,7 +160,7 @@ export default function Care() {
                 className="bg-white/5 border-2 border-white/10 p-6 rounded-xl"
               >
                 <h3 className="font-black text-xl mb-2">{resource.name}</h3>
-                <a href={`tel:${resource.contact}`} className="text-[#B026FF] font-mono block mb-2">
+                <a href={`tel:${resource.contact}`} className="text-[#C8962C] font-mono block mb-2">
                   {resource.contact}
                 </a>
                 <a
