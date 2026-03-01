@@ -14,7 +14,7 @@ export const ACTIVITY_TYPES = {
   message_sent: {
     label: 'Message',
     color: '#C8962C',
-    glowColor: 'rgba(255, 20, 147, 0.6)',
+    glowColor: 'rgba(200, 150, 44, 0.6)',
     icon: '💬',
     pulseSize: 1.2,
     arcEnabled: true,
@@ -31,8 +31,8 @@ export const ACTIVITY_TYPES = {
   },
   follow: {
     label: 'New Follow',
-    color: '#B026FF',
-    glowColor: 'rgba(176, 38, 255, 0.6)',
+    color: '#C8962C',
+    glowColor: 'rgba(200, 150, 44, 0.6)',
     icon: '➕',
     pulseSize: 1.0,
     arcEnabled: true,
@@ -98,8 +98,8 @@ export const ACTIVITY_TYPES = {
   },
   product_listed: {
     label: 'New Listing',
-    color: '#B026FF',
-    glowColor: 'rgba(176, 38, 255, 0.6)',
+    color: '#C8962C',
+    glowColor: 'rgba(200, 150, 44, 0.6)',
     icon: '🏷️',
     pulseSize: 1.2,
     arcEnabled: false,
@@ -128,8 +128,8 @@ export const ACTIVITY_TYPES = {
   // Music Actions
   track_play: {
     label: 'Track Playing',
-    color: '#B026FF',
-    glowColor: 'rgba(176, 38, 255, 0.7)',
+    color: '#C8962C',
+    glowColor: 'rgba(200, 150, 44, 0.7)',
     icon: '🎵',
     pulseSize: 1.0,
     arcEnabled: false,
@@ -138,7 +138,7 @@ export const ACTIVITY_TYPES = {
   radio_tune_in: {
     label: 'Radio Tune-in',
     color: '#C8962C',
-    glowColor: 'rgba(255, 20, 147, 0.6)',
+    glowColor: 'rgba(200, 150, 44, 0.6)',
     icon: '📻',
     pulseSize: 1.1,
     arcEnabled: false,
