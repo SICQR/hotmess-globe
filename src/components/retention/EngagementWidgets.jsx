@@ -60,7 +60,7 @@ export function DailyCheckIn({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/30 rounded-2xl p-6 ${className}`}
+      className={`bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border border-[#C8962C]/30 rounded-2xl p-6 ${className}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
@@ -183,7 +183,7 @@ export function ActiveChallenges({
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
-                  className={`h-full ${isComplete ? 'bg-[#39FF14]' : 'bg-[#B026FF]'}`}
+                  className={`h-full ${isComplete ? 'bg-[#39FF14]' : 'bg-[#C8962C]'}`}
                 />
               </div>
               
@@ -233,10 +233,10 @@ export function ReferralProgress({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-gradient-to-br from-[#B026FF]/20 to-[#C8962C]/20 border border-[#B026FF]/30 rounded-2xl p-6 ${className}`}
+      className={`bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border border-[#C8962C]/30 rounded-2xl p-6 ${className}`}
     >
       <div className="flex items-center gap-2 mb-4">
-        <Users className="w-5 h-5 text-[#B026FF]" />
+        <Users className="w-5 h-5 text-[#C8962C]" />
         <span className="font-black uppercase text-white">Referral Program</span>
       </div>
       
@@ -259,7 +259,7 @@ export function ReferralProgress({
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(progress, 100)}%` }}
-              className="h-full bg-gradient-to-r from-[#B026FF] to-[#C8962C]"
+              className="h-full bg-gradient-to-r from-[#C8962C] to-[#C8962C]"
             />
           </div>
           <div className="text-center text-xs text-white/40 mt-2">
@@ -273,7 +273,7 @@ export function ReferralProgress({
         <div className="text-xs text-white/60 mb-1">Your Code:</div>
         <div className="flex items-center justify-between">
           <code className="text-lg font-mono font-bold text-white">{referralCode}</code>
-          <Button size="sm" className="bg-[#B026FF] hover:bg-[#B026FF]/90 text-white">
+          <Button size="sm" className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-white">
             Copy
           </Button>
         </div>
