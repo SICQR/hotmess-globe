@@ -25,7 +25,7 @@ const TOUR_STEPS = [
     title: 'Explore the Globe',
     description: 'See real-time events, beacons, and activity happening around the world. Click to explore.',
     icon: GlobeIcon,
-    color: '#B026FF',
+    color: '#C8962C',
     link: 'Globe'
   },
   {
