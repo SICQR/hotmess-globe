@@ -138,7 +138,7 @@ const calculateMatchInsights = (profile, currentUser) => {
     insights.push({
       icon: Music,
       text: `Similar music taste: ${sharedVibes.slice(0, 2).join(', ')}`,
-      color: '#B026FF',
+      color: '#C8962C',
     });
   }
   
