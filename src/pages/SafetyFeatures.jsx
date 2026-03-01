@@ -108,7 +108,7 @@ const SAFETY_FEATURES = [
     icon: Users,
     title: 'TRUSTED CONTACTS',
     tagline: 'Your safety network',
-    color: '#B026FF',
+    color: '#C8962C',
     description: 'Build your safety network with trusted contacts who receive your emergency alerts and can track your location when you share it.',
     benefits: [
       'Add unlimited contacts',
@@ -249,10 +249,10 @@ export default function SafetyFeatures() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative overflow-hidden bg-gradient-to-br from-[#C8962C]/30 via-black to-[#B026FF]/20 border-2 border-[#C8962C] p-8 md:p-12 mb-12"
+          className="relative overflow-hidden bg-gradient-to-br from-[#C8962C]/30 via-black to-[#C8962C]/20 border-2 border-[#C8962C] p-8 md:p-12 mb-12"
         >
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#C8962C]/10 blur-3xl rounded-full" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#B026FF]/10 blur-3xl rounded-full" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#C8962C]/10 blur-3xl rounded-full" />
           
           <div className="relative z-10 max-w-2xl">
             <div className="flex items-center gap-3 mb-4">
