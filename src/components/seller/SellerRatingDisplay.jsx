@@ -106,7 +106,7 @@ export default function SellerRatingDisplay({ sellerEmail, compact = false }) {
 
           {rating?.avg_response_time_hours !== undefined && (
             <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-[#B026FF]" />
+              <Clock className="w-5 h-5 text-[#C8962C]" />
               <div className="flex-1">
                 <p className="text-sm font-bold">Avg Response Time</p>
                 <p className="text-xs text-white/60">
