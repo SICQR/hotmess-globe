@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 const REWARD_TIERS = [
   { referrals: 3, reward: 'FREE PLUS Month', icon: Star, color: '#C8962C', unlocked: false },
-  { referrals: 10, reward: 'Badge', icon: Trophy, color: '#B026FF', unlocked: false },
+  { referrals: 10, reward: 'Badge', icon: Trophy, color: '#C8962C', unlocked: false },
   { referrals: 25, reward: 'Lifetime VIP Status', icon: Gift, color: '#00D9FF', unlocked: false },
 ];
 
@@ -91,7 +91,7 @@ export default function ReferralProgram() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/30 rounded-xl p-6 mb-8"
+          className="bg-gradient-to-r from-[#C8962C]/20 to-[#C8962C]/20 border border-[#C8962C]/30 rounded-xl p-6 mb-8"
         >
           <div className="grid grid-cols-3 gap-6 text-center">
             <div>
@@ -216,7 +216,7 @@ export default function ReferralProgram() {
           className="bg-white/5 border border-white/10 rounded-xl p-6"
         >
           <h2 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#B026FF]" /> Your Referrals
+            <Users className="w-5 h-5 text-[#C8962C]" /> Your Referrals
           </h2>
 
           {referrals.length === 0 ? (
@@ -230,7 +230,7 @@ export default function ReferralProgram() {
               {referrals.map((ref, idx) => (
                 <div key={idx} className="flex items-center justify-between p-3 bg-black/40 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF]" />
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C]" />
                     <div>
                       <div className="font-bold text-sm">{ref.name || 'Anonymous'}</div>
                       <div className="text-xs text-white/40">{new Date(ref.created_at).toLocaleDateString()}</div>
