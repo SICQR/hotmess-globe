@@ -553,7 +553,7 @@ export default function Marketplace() {
             <TabsTrigger value="official" className="shrink-0 data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
               Official Shop
             </TabsTrigger>
-            <TabsTrigger value="p2p" className="shrink-0 data-[state=active]:bg-[#B026FF] data-[state=active]:text-white">
+            <TabsTrigger value="p2p" className="shrink-0 data-[state=active]:bg-[#C8962C] data-[state=active]:text-white">
               P2P Market
             </TabsTrigger>
             <TabsTrigger value="physical" className="shrink-0 data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black">
