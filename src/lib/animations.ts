@@ -154,13 +154,13 @@ export const pageTransition = {
 // Glow pulse animation for special elements
 export const glowPulse = {
   initial: { 
-    boxShadow: "0 0 15px rgba(255, 20, 147, 0.4)" 
+    boxShadow: "0 0 15px rgba(200, 150, 44, 0.4)" 
   },
   animate: {
     boxShadow: [
-      "0 0 15px rgba(255, 20, 147, 0.4)",
-      "0 0 30px rgba(255, 20, 147, 0.7)",
-      "0 0 15px rgba(255, 20, 147, 0.4)",
+      "0 0 15px rgba(200, 150, 44, 0.4)",
+      "0 0 30px rgba(200, 150, 44, 0.7)",
+      "0 0 15px rgba(200, 150, 44, 0.4)",
     ],
     transition: {
       duration: 2,
