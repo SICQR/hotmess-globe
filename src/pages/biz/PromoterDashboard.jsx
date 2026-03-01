@@ -32,7 +32,7 @@ const TIER_COLORS = {
   'standard_6h': '#00D9FF',
   'premium_9h': '#C8962C',
   'featured_12h': '#C8962C',
-  'spotlight_24h': '#B026FF'
+  'spotlight_24h': '#C8962C'
 };
 
 export default function PromoterDashboard() {
