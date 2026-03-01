@@ -18,7 +18,7 @@ const TYPE_ICONS = {
 
 const TYPE_COLORS = {
   physical: '#00D9FF',
-  digital: '#B026FF',
+  digital: '#C8962C',
   service: '#39FF14',
   ticket: '#FFEB3B',
   badge: '#FF6B35',
