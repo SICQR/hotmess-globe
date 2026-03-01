@@ -623,7 +623,7 @@ function ProfileCardInner({
             enableTilt={true}
             enableMobileTilt={false}
             behindGlowEnabled={true}
-            behindGlowColor={isSeller ? 'rgba(255, 20, 147, 0.55)' : 'rgba(0, 217, 255, 0.55)'}
+            behindGlowColor={isSeller ? 'rgba(200, 150, 44, 0.55)' : 'rgba(0, 217, 255, 0.55)'}
             behindGlowSize="60%"
             name={String(profile.profileName || 'HOTMESS')}
             title={String(headline || '')}
