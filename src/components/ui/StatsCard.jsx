@@ -47,10 +47,10 @@ const variants = {
     valueColor: "text-[#FFEB3B]",
   },
   purple: {
-    border: "border-[#B026FF]/30",
-    iconBg: "bg-[#B026FF]/20",
-    iconColor: "text-[#B026FF]",
-    valueColor: "text-[#B026FF]",
+    border: "border-[#C8962C]/30",
+    iconBg: "bg-[#C8962C]/20",
+    iconColor: "text-[#C8962C]",
+    valueColor: "text-[#C8962C]",
   },
 };
 
