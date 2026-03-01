@@ -102,7 +102,7 @@ export default function VideoCallModal({
 
           {/* Person */}
           <div className="flex flex-col items-center mb-6">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center mb-3 border-2 border-[#C8962C]/40">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center mb-3 border-2 border-[#C8962C]/40">
               {remoteUserPhoto ? (
                 <img src={remoteUserPhoto} alt="" className="w-full h-full object-cover" />
               ) : (
