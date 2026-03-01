@@ -57,7 +57,7 @@ Use a fun, energetic tone that matches HOTMESS LONDON's nightlife culture.`;
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/40 rounded-xl p-6 mb-6"
+      className="bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border border-[#C8962C]/40 rounded-xl p-6 mb-6"
     >
       <div className="flex items-center gap-2 mb-3">
         <TrendingUp className="w-5 h-5 text-[#C8962C]" />
