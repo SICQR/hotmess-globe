@@ -223,7 +223,7 @@ export default function BusinessBilling() {
         <div className="bg-white/5 border border-white/10 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-black uppercase flex items-center gap-2">
-              <Receipt className="w-5 h-5 text-[#B026FF]" />
+              <Receipt className="w-5 h-5 text-[#C8962C]" />
               Invoice History
             </h3>
             <Button variant="outline" size="sm">
