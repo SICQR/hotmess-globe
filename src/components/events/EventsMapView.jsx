@@ -101,7 +101,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
       crowd: '#C8962C',
       hookup: '#FF073A',
       drop: '#FF6B35',
-      ticket: '#B026FF',
+      ticket: '#C8962C',
       radio: '#00D9FF',
       default: '#FFEB3B'
     };
@@ -149,7 +149,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
           height: 40px;
           border-radius: 50%;
           border: 3px solid ${color};
-          background: linear-gradient(135deg, #C8962C, #B026FF);
+          background: linear-gradient(135deg, #C8962C, #C8962C);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -363,7 +363,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
               <Popup>
                 <div className="min-w-[180px]">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center overflow-hidden">
                       {user.avatar_url ? (
                         <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
                       ) : (
@@ -409,7 +409,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
           </button>
 
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden border-2 border-white">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center overflow-hidden border-2 border-white">
               {selectedUser.avatar_url ? (
                 <img src={selectedUser.avatar_url} alt={selectedUser.full_name} className="w-full h-full object-cover" />
               ) : (
