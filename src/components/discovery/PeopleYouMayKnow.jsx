@@ -126,7 +126,7 @@ export default function PeopleYouMayKnow({ currentUser, limit = 6 }) {
   return (
     <div className="mb-8">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-[#B026FF]" />
+        <Sparkles className="w-5 h-5 text-[#C8962C]" />
         <h2 className="text-xl font-black uppercase">People You May Know</h2>
       </div>
 
@@ -139,7 +139,7 @@ export default function PeopleYouMayKnow({ currentUser, limit = 6 }) {
             transition={{ delay: idx * 0.05 }}
           >
             <Link to={createPageUrl(`Profile?email=${suggestion.user.email}`)}>
-              <div className="group bg-black border-2 border-white hover:border-[#B026FF] transition-all overflow-hidden">
+              <div className="group bg-black border-2 border-white hover:border-[#C8962C] transition-all overflow-hidden">
                 {/* Profile Image */}
                 <div className="aspect-square relative overflow-hidden">
                   <img
@@ -150,7 +150,7 @@ export default function PeopleYouMayKnow({ currentUser, limit = 6 }) {
                   
                   {/* Mutual Badge */}
                   {suggestion.mutualCount > 0 && (
-                      <div className="absolute top-2 left-2 px-2 py-1 bg-[#B026FF] text-white text-[9px] font-black uppercase border-2 border-white">
+                      <div className="absolute top-2 left-2 px-2 py-1 bg-[#C8962C] text-white text-[9px] font-black uppercase border-2 border-white">
                       <Users className="w-2.5 h-2.5 inline mr-1" />
                       {suggestion.mutualCount} Mutual
                     </div>
@@ -159,7 +159,7 @@ export default function PeopleYouMayKnow({ currentUser, limit = 6 }) {
 
                 {/* User Info */}
                 <div className="p-3 space-y-2">
-                  <h3 className="font-black text-sm truncate group-hover:text-[#B026FF] transition-colors">
+                  <h3 className="font-black text-sm truncate group-hover:text-[#C8962C] transition-colors">
                     {suggestion.user.full_name}
                   </h3>
 
@@ -187,7 +187,7 @@ export default function PeopleYouMayKnow({ currentUser, limit = 6 }) {
                   {/* Preview Vibe */}
                   {suggestion.user.preferred_vibes && suggestion.user.preferred_vibes[0] && (
                     <div className="pt-2">
-                      <span className="text-[9px] px-2 py-1 bg-[#B026FF]/20 border border-[#B026FF] text-[#B026FF] uppercase font-bold">
+                      <span className="text-[9px] px-2 py-1 bg-[#C8962C]/20 border border-[#C8962C] text-[#C8962C] uppercase font-bold">
                         {suggestion.user.preferred_vibes[0]}
                       </span>
                     </div>
