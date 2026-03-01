@@ -136,11 +136,11 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
         {/* Header */}
         <div className="text-center mb-12">
           <motion.div
-            className="w-20 h-20 bg-gradient-to-br from-[#B026FF] to-[#C8962C] mx-auto mb-6 flex items-center justify-center"
+            className="w-20 h-20 bg-gradient-to-br from-[#C8962C] to-[#C8962C] mx-auto mb-6 flex items-center justify-center"
             animate={{
               boxShadow: [
-                '0 0 0 0 rgba(176, 38, 255, 0)',
-                '0 0 0 20px rgba(176, 38, 255, 0)',
+                '0 0 0 0 rgba(200, 150, 44, 0)',
+                '0 0 0 20px rgba(200, 150, 44, 0)',
               ]
             }}
             transition={{ duration: 1.5, repeat: Infinity }}
@@ -163,7 +163,7 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
           </div>
           <div className="h-1 bg-white/10 overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-[#B026FF] to-[#C8962C]"
+              className="h-full bg-gradient-to-r from-[#C8962C] to-[#C8962C]"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.3 }}
@@ -200,8 +200,8 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
 
               {hasAnswer && (
                 <div className="text-center">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#B026FF]/20 border border-[#B026FF] rounded-lg">
-                    <Sparkles className="w-4 h-4 text-[#B026FF]" />
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#C8962C]/20 border border-[#C8962C] rounded-lg">
+                    <Sparkles className="w-4 h-4 text-[#C8962C]" />
                     <span className="text-sm font-bold">
                       {answers[currentQuestion.id]}/100
                     </span>
@@ -226,7 +226,7 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
           <Button
             onClick={handleNext}
             disabled={!hasAnswer || analyzing}
-            className="flex-1 bg-gradient-to-r from-[#B026FF] to-[#C8962C] hover:opacity-90 text-white font-black"
+            className="flex-1 bg-gradient-to-r from-[#C8962C] to-[#C8962C] hover:opacity-90 text-white font-black"
           >
             {analyzing ? (
               <>
