@@ -396,7 +396,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
         <div className="flex items-center gap-3 flex-1">
           {!isGroupChat ? (
             <>
-              <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center border-2 border-white">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center border-2 border-white">
                 {otherUsers[0]?.avatar_url ? (
                   <img src={otherUsers[0].avatar_url} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -547,7 +547,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
               >
                 <div className={`flex gap-3 max-w-[70%] ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
                   {!isOwn && (
-                    <div className="w-8 h-8 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
+                    <div className="w-8 h-8 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center flex-shrink-0 border-2 border-white">
                       {sender?.avatar_url ? (
                         <img src={sender.avatar_url} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -705,7 +705,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
             className="flex justify-start"
           >
             <div className="flex gap-3 items-center">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
+              <div className="w-8 h-8 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center flex-shrink-0 border-2 border-white">
                 <span className="text-xs font-bold">...</span>
               </div>
               <div className="bg-black border-2 border-white px-4 py-2.5">
