@@ -327,7 +327,7 @@ export default function L2EventSheet({ id }) {
               className="flex items-center justify-between w-full p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#C8962C] rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-sm">
                     {event.organizer_name?.[0] || 'O'}
                   </span>
