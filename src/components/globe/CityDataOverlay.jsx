@@ -236,11 +236,11 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
           border-radius: 2px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 20, 147, 0.5);
+          background: rgba(200, 150, 44, 0.5);
           border-radius: 2px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 20, 147, 0.8);
+          background: rgba(200, 150, 44, 0.8);
         }
       `}</style>
     </div>
