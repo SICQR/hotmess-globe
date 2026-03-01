@@ -161,7 +161,7 @@ function CreatorsCartPanel({ currentUser, enabled }) {
         <div className="border border-white/10 bg-white/5 p-4">
           <p className="text-white/70 text-sm">Your creators cart is empty.</p>
           <div className="mt-3 flex gap-3">
-            <Link to="/market/creators" className="text-[#B026FF] hover:underline text-sm font-bold">
+            <Link to="/market/creators" className="text-[#C8962C] hover:underline text-sm font-bold">
               Browse creators
             </Link>
           </div>
@@ -273,7 +273,7 @@ function CreatorsCartPanel({ currentUser, enabled }) {
           <SheetClose asChild>
             <Button
               asChild
-              className="w-full bg-[#B026FF] text-white hover:bg-white hover:text-black font-black uppercase py-6"
+              className="w-full bg-[#C8962C] text-white hover:bg-white hover:text-black font-black uppercase py-6"
             >
               <Link to="/market/creators/checkout">Checkout</Link>
             </Button>
@@ -401,7 +401,7 @@ export default function UnifiedCartDrawer({ currentUser }) {
               <TabsTrigger value="shopify" className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
                 Shop ({shopifyCount})
               </TabsTrigger>
-              <TabsTrigger value="creators" className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-white">
+              <TabsTrigger value="creators" className="data-[state=active]:bg-[#C8962C] data-[state=active]:text-white">
                 Creators ({Number(creatorsCount) || 0})
               </TabsTrigger>
             </TabsList>
