@@ -59,7 +59,7 @@ export default function LevelUpModal({ isOpen, onClose, level, rewards = [] }) {
             animate={{ scale: 1, opacity: 1, rotate: 0 }}
             exit={{ scale: 0.5, opacity: 0, rotate: 10 }}
             transition={{ type: 'spring', duration: 0.5 }}
-            className="relative bg-gradient-to-br from-[#FF1493]/20 to-[#B026FF]/20 border-4 border-[#FFEB3B] p-8 md:p-12 max-w-md w-full mx-4 text-center"
+            className="relative bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border-4 border-[#FFEB3B] p-8 md:p-12 max-w-md w-full mx-4 text-center"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Animated background stars */}
@@ -161,7 +161,7 @@ export default function LevelUpModal({ isOpen, onClose, level, rewards = [] }) {
             >
               <Button
                 onClick={onClose}
-                className="bg-[#FF1493] hover:bg-[#FF1493]/80 text-white font-black uppercase tracking-wider px-8 py-6 text-lg"
+                className="bg-[#C8962C] hover:bg-[#C8962C]/80 text-white font-black uppercase tracking-wider px-8 py-6 text-lg"
               >
                 CONTINUE
               </Button>
