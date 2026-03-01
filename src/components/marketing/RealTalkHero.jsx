@@ -41,7 +41,7 @@ const CATEGORY_COLORS = {
   lifestyle: '#00D9FF',
   health: '#39FF14',
   values: '#C8962C',
-  dynamic: '#B026FF',
+  dynamic: '#C8962C',
   relationship: '#FFEB3B'
 };
 
