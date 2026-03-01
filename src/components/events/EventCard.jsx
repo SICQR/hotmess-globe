@@ -24,7 +24,7 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
     crowd: '#C8962C',
     hookup: '#FF073A',
     drop: '#FF6B35',
-    ticket: '#B026FF',
+    ticket: '#C8962C',
     radio: '#00D9FF'
   };
 
