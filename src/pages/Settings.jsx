@@ -238,7 +238,7 @@ export default function Settings() {
                 Profile Picture
               </label>
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center overflow-hidden">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
@@ -395,7 +395,7 @@ export default function Settings() {
           className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
         >
           <div className="flex items-center gap-3 mb-6">
-            <Database className="w-5 h-5 text-[#B026FF]" />
+            <Database className="w-5 h-5 text-[#C8962C]" />
             <h2 className="text-xl font-bold uppercase tracking-wider">Data & Privacy</h2>
           </div>
 
