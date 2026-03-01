@@ -89,7 +89,7 @@ export const PERSONA_TYPES = {
   MAIN: { label: 'Main', color: '#FFFFFF', icon: 'User' },
   TRAVEL: { label: 'Travel', color: '#00D9FF', icon: 'Plane' },
   WEEKEND: { label: 'Weekend', color: '#C8962C', icon: 'PartyPopper' },
-  CUSTOM: { label: 'Custom', color: '#B026FF', icon: 'Sparkles' }
+  CUSTOM: { label: 'Custom', color: '#C8962C', icon: 'Sparkles' }
 };
 
 // Content ratings
@@ -97,7 +97,7 @@ export const CONTENT_RATINGS = {
   sfw: { label: 'Safe for Work', color: '#39FF14', restricted: false },
   suggestive: { label: 'Suggestive', color: '#C8962C', restricted: false },
   nsfw: { label: 'NSFW', color: '#C8962C', restricted: true },
-  xxx: { label: 'Explicit', color: '#B026FF', restricted: true, requires2257: true }
+  xxx: { label: 'Explicit', color: '#C8962C', restricted: true, requires2257: true }
 };
 
 // Beacon tiers
@@ -106,7 +106,7 @@ export const BEACON_TIERS = {
   standard_6h: { name: 'Standard', hours: 6, price: 1999, reach: 50, color: '#00D9FF' },
   premium_9h: { name: 'Premium', hours: 9, price: 3999, reach: 100, color: '#C8962C' },
   featured_12h: { name: 'Featured', hours: 12, price: 7999, reach: 200, color: '#C8962C' },
-  spotlight_24h: { name: 'Spotlight', hours: 24, price: 14999, reach: 500, color: '#B026FF' }
+  spotlight_24h: { name: 'Spotlight', hours: 24, price: 14999, reach: 500, color: '#C8962C' }
 };
 
 // Platform fee (creator economy)
@@ -124,7 +124,7 @@ export const MATCH_LEVELS = {
 // Colors (brand)
 export const COLORS = {
   primary: '#C8962C',
-  secondary: '#B026FF',
+  secondary: '#C8962C',
   success: '#39FF14',
   warning: '#C8962C',
   info: '#00D9FF',
