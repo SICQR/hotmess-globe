@@ -400,7 +400,7 @@ export default function Auth() {
     const first = parts[0]?.[0] || 'H';
     const last = parts.length > 1 ? parts[parts.length - 1]?.[0] : 'M';
     const initials = `${first}${last}`.toUpperCase();
-    const palette = [['#C8962C', '#B026FF'], ['#00D9FF', '#1E3A8A'], ['#22C55E', '#0F766E']];
+    const palette = [['#C8962C', '#C8962C'], ['#00D9FF', '#1E3A8A'], ['#22C55E', '#0F766E']];
     const idx = (initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % palette.length;
     const [c1, c2] = palette[idx];
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="512" height="512" rx="64" fill="url(#g)"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-family="system-ui" font-size="190" font-weight="900" fill="rgba(255,255,255,0.92)">${initials}</text></svg>`;
@@ -888,7 +888,7 @@ export default function Auth() {
                     }`}
                   >
                     {tier.popular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-[#C8962C] to-[#B026FF] text-white text-xs font-black uppercase rounded-full shadow-glow-hot">
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-white text-xs font-black uppercase rounded-full shadow-glow-hot">
                         POPULAR
                       </div>
                     )}
@@ -957,7 +957,7 @@ export default function Auth() {
             <div className="bg-[#1C1C1E] border border-white/10 rounded-3xl p-8 space-y-6">
               {/* Avatar Upload */}
               <div className="flex flex-col items-center gap-4">
-                <div className="w-28 h-28 bg-gradient-to-br from-[#C8962C] to-[#B026FF] border-2 border-white flex items-center justify-center overflow-hidden">
+                <div className="w-28 h-28 bg-gradient-to-br from-[#C8962C] to-[#C8962C] border-2 border-white flex items-center justify-center overflow-hidden">
                   {avatarFile ? (
                     <img
                       src={URL.createObjectURL(avatarFile)}
@@ -1092,7 +1092,7 @@ export default function Auth() {
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="w-32 h-32 bg-gradient-to-br from-[#C8962C] via-[#B026FF] to-[#00D9FF] flex items-center justify-center mx-auto mb-8 rounded-2xl shadow-glow-hot animate-glow-pulse"
+              className="w-32 h-32 bg-gradient-to-br from-[#C8962C] via-[#C8962C] to-[#00D9FF] flex items-center justify-center mx-auto mb-8 rounded-2xl shadow-glow-hot animate-glow-pulse"
             >
               <Check className="w-16 h-16 text-white" />
             </motion.div>
@@ -1129,7 +1129,7 @@ export default function Auth() {
               className="flex justify-center gap-3"
             >
               <div className="w-3 h-3 rounded-full bg-[#C8962C] animate-bounce" style={{ animationDelay: '0ms' }} />
-              <div className="w-3 h-3 rounded-full bg-[#B026FF] animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-3 h-3 rounded-full bg-[#C8962C] animate-bounce" style={{ animationDelay: '150ms' }} />
               <div className="w-3 h-3 rounded-full bg-[#00D9FF] animate-bounce" style={{ animationDelay: '300ms' }} />
             </motion.div>
           </motion.div>
