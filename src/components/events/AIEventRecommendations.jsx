@@ -35,7 +35,7 @@ export default function AIEventRecommendations({ currentUser }) {
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-6 h-6 text-[#B026FF]" />
+          <Sparkles className="w-6 h-6 text-[#C8962C]" />
           <h2 className="text-2xl font-black uppercase">
             AI PICKS FOR YOU
           </h2>
@@ -45,7 +45,7 @@ export default function AIEventRecommendations({ currentUser }) {
           disabled={loading}
           variant="outline"
           size="sm"
-          className="border-[#B026FF] text-[#B026FF] hover:bg-[#B026FF]/10"
+          className="border-[#C8962C] text-[#C8962C] hover:bg-[#C8962C]/10"
         >
           <Sparkles className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -71,13 +71,13 @@ export default function AIEventRecommendations({ currentUser }) {
               transition={{ delay: idx * 0.1 }}
               className={`bg-gradient-to-br ${
                 isHighMatch 
-                  ? 'from-[#B026FF]/20 to-[#C8962C]/20 border-2 border-[#B026FF]' 
+                  ? 'from-[#C8962C]/20 to-[#C8962C]/20 border-2 border-[#C8962C]' 
                   : 'from-white/5 to-white/5 border border-white/10'
               } rounded-xl p-4 relative overflow-hidden`}
             >
               {isHighMatch && (
                 <motion.div
-                  className="absolute top-2 right-2 bg-gradient-to-r from-[#C8962C] to-[#B026FF] px-3 py-1 rounded-full text-xs font-black flex items-center gap-1"
+                  className="absolute top-2 right-2 bg-gradient-to-r from-[#C8962C] to-[#C8962C] px-3 py-1 rounded-full text-xs font-black flex items-center gap-1"
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
@@ -116,7 +116,7 @@ export default function AIEventRecommendations({ currentUser }) {
                   <span 
                     className="text-sm font-black"
                     style={{ 
-                      color: rec.score >= 80 ? '#B026FF' : rec.score >= 60 ? '#C8962C' : '#00D9FF' 
+                      color: rec.score >= 80 ? '#C8962C' : rec.score >= 60 ? '#C8962C' : '#00D9FF' 
                     }}
                   >
                     {rec.score}%
@@ -124,7 +124,7 @@ export default function AIEventRecommendations({ currentUser }) {
                 </div>
                 <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-[#B026FF] to-[#C8962C]"
+                    className="h-full bg-gradient-to-r from-[#C8962C] to-[#C8962C]"
                     initial={{ width: 0 }}
                     animate={{ width: `${rec.score}%` }}
                     transition={{ duration: 1, delay: idx * 0.1 }}
@@ -133,8 +133,8 @@ export default function AIEventRecommendations({ currentUser }) {
               </div>
 
               {rec.ai_explanation && (
-                <div className="bg-[#B026FF]/10 border border-[#B026FF]/30 p-3 rounded-lg mb-3">
-                  <p className="text-xs text-[#B026FF] font-bold">
+                <div className="bg-[#C8962C]/10 border border-[#C8962C]/30 p-3 rounded-lg mb-3">
+                  <p className="text-xs text-[#C8962C] font-bold">
                     {rec.ai_explanation}
                   </p>
                 </div>
@@ -157,7 +157,7 @@ export default function AIEventRecommendations({ currentUser }) {
                 <Button 
                   className={`w-full ${
                     isHighMatch 
-                      ? 'bg-gradient-to-r from-[#B026FF] to-[#C8962C] hover:opacity-90' 
+                      ? 'bg-gradient-to-r from-[#C8962C] to-[#C8962C] hover:opacity-90' 
                       : 'bg-white/10 hover:bg-white/20'
                   } text-white font-black`}
                 >
