@@ -367,7 +367,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
       </div>
 
       {marketingCopy && (
-        <div className="bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/40 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border border-[#C8962C]/40 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-5 h-5 text-[#C8962C]" />
             <h3 className="font-bold">AI Marketing Copy</h3>
@@ -391,7 +391,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
           variant="outline"
           onClick={generateMarketingCopy}
           disabled={generatingMarketing || !formData.name || !formData.description}
-          className="border-[#B026FF] text-[#B026FF] hover:bg-[#B026FF]/10"
+          className="border-[#C8962C] text-[#C8962C] hover:bg-[#C8962C]/10"
         >
           {generatingMarketing ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
