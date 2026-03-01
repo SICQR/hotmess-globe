@@ -23,7 +23,7 @@ export default function XPGainAnimation({ amount, targetSelector = '.xp-counter'
 
   // Color based on XP amount
   const getColor = (xp) => {
-    if (xp >= 100) return '#B026FF'; // Purple for large amounts
+    if (xp >= 100) return '#C8962C'; // Purple for large amounts
     if (xp >= 50) return '#FFEB3B'; // Yellow for medium
     return '#39FF14'; // Green for small
   };
