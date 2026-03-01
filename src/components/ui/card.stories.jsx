@@ -63,7 +63,7 @@ export const EventCard = {
 export const ProfileCard = {
   render: () => (
     <Card className="w-[300px] bg-black text-white border-white/10 overflow-hidden">
-      <div className="aspect-square bg-gradient-to-br from-[#C8962C] to-[#B026FF]" />
+      <div className="aspect-square bg-gradient-to-br from-[#C8962C] to-[#C8962C]" />
       <CardHeader>
         <CardTitle className="text-white">Alex Thompson</CardTitle>
         <CardDescription className="text-white/60">DJ / Producer</CardDescription>
