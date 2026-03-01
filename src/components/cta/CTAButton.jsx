@@ -26,10 +26,10 @@ const ICONS = {
 // Variant styles
 const VARIANT_STYLES = {
   'hot': 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-white',
-  'hot-gradient': 'bg-gradient-to-r from-[#C8962C] to-[#B026FF] hover:opacity-90 text-white',
+  'hot-gradient': 'bg-gradient-to-r from-[#C8962C] to-[#C8962C] hover:opacity-90 text-white',
   'cyan': 'bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black',
   'cyan-gradient': 'bg-gradient-to-r from-[#00D9FF] to-[#0066FF] hover:opacity-90 text-white',
-  'purple': 'bg-[#B026FF] hover:bg-[#B026FF]/90 text-white',
+  'purple': 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-white',
   'gold': 'bg-[#FFD700] hover:bg-[#FFD700]/90 text-black',
   'lime': 'bg-[#39FF14] hover:bg-[#39FF14]/90 text-black',
   'black': 'bg-black hover:bg-black/90 text-white border border-white/20',
@@ -128,7 +128,7 @@ export default function CTAButton({
           ? '0 0 20px rgba(0, 217, 255, 0.5)'
           : variant.includes('gold')
             ? '0 0 20px rgba(255, 215, 0, 0.5)'
-            : '0 0 20px rgba(255, 20, 147, 0.5)',
+            : '0 0 20px rgba(200, 150, 44, 0.5)',
       } : {}}
     >
       {/* Pulse animation */}
