@@ -532,7 +532,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { to: '/social', icon: Users, title: 'Connect', desc: 'Find your people tonight', color: 'from-pink-500 to-red-500' },
+              { to: '/social', icon: Users, title: 'Connect', desc: 'Find your people tonight', color: 'from-amber-500 to-red-500' },
               { to: '/events', icon: Zap, title: 'Events', desc: 'What\'s happening now', color: 'from-yellow-500 to-orange-500' },
               { to: '/music/live', icon: Radio, title: 'Radio', desc: 'Live sets & culture', color: 'from-green-500 to-emerald-500' },
               { to: '/market', icon: ShoppingBag, title: 'Market', desc: 'Drops & P2P commerce', color: 'from-purple-500 to-violet-500' },
@@ -560,7 +560,7 @@ export default function Home() {
       </section>
 
       {/* BUSINESS / CREATOR STRIP */}
-      <section className="py-12 px-6 bg-gradient-to-r from-pink-950/30 via-black to-purple-950/30 border-y border-white/10">
+      <section className="py-12 px-6 bg-gradient-to-r from-amber-950/30 via-black to-purple-950/30 border-y border-white/10">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Link to="/creator" className="group">
@@ -627,7 +627,7 @@ export default function Home() {
 
               <div className="flex flex-wrap gap-3">
                 <Link to="/hnhmess">
-                  <Button className="bg-[#B026FF] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg">
+                  <Button className="bg-[#C8962C] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg">
                     Buy now
                   </Button>
                 </Link>
@@ -674,7 +674,7 @@ export default function Home() {
 
               <div className="flex flex-wrap gap-3">
                 <Link to={`/music/releases/${HNHMESS_RELEASE_SLUG}`}>
-                  <Button className="bg-[#B026FF] hover:bg-white text-white hover:text-black font-black uppercase">
+                  <Button className="bg-[#C8962C] hover:bg-white text-white hover:text-black font-black uppercase">
                     {isHnhmessPreLaunch ? 'Open release' : 'Play'}
                   </Button>
                 </Link>
@@ -709,18 +709,18 @@ export default function Home() {
                 </div>
                 <div className="text-right">
                   {featuredRelease.state === 'upcoming' ? (
-                    <div className="text-3xl md:text-5xl font-mono font-black text-[#B026FF]">
+                    <div className="text-3xl md:text-5xl font-mono font-black text-[#C8962C]">
                       {formatCountdown(new Date(featuredRelease.beacon.release_at))}
                     </div>
                   ) : (
-                    <div className="text-3xl md:text-5xl font-black text-[#B026FF]">LIVE</div>
+                    <div className="text-3xl md:text-5xl font-black text-[#C8962C]">LIVE</div>
                   )}
                 </div>
               </div>
 
               <div className="mt-8">
                 <Link to={`/music/releases/${encodeURIComponent(featuredRelease.beacon.release_slug)}`}>
-                  <Button className="bg-[#B026FF] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg">
+                  <Button className="bg-[#C8962C] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-6 text-lg">
                     OPEN RELEASE
                   </Button>
                 </Link>
@@ -922,7 +922,7 @@ export default function Home() {
             alt="Radio"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#B026FF]/85 to-black/70" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#C8962C]/85 to-black/70" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
