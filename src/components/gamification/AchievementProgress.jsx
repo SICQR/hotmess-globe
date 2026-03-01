@@ -20,7 +20,7 @@ export default function AchievementProgress({
       className={`
         relative p-4 border-2 transition-all
         ${isCompleted ? 'border-[#39FF14] bg-[#39FF14]/10' : 'border-white/20 bg-black/40'}
-        ${isLocked ? 'opacity-50' : 'hover:border-[#FF1493]'}
+        ${isLocked ? 'opacity-50' : 'hover:border-[#C8962C]'}
       `}
     >
       {isLocked && (
