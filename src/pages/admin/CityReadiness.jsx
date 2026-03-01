@@ -235,7 +235,7 @@ const CityReadiness = () => {
             className="bg-white/5 border border-white/10 rounded-xl p-6"
           >
             <h2 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-[#B026FF]" />
+              <MapPin className="w-5 h-5 text-[#C8962C]" />
               Calculate New Cities
             </h2>
             <div className="flex flex-wrap gap-2">
