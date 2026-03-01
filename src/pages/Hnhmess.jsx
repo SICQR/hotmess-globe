@@ -220,7 +220,7 @@ export default function Hnhmess() {
 
             <div className="flex flex-wrap gap-3 items-center mb-10">
               <Link to={`/music/releases/${RELEASE_SLUG}`}>
-                <Button className="bg-[#B026FF] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg">
+                <Button className="bg-[#C8962C] hover:bg-white text-black font-black uppercase px-8 py-6 text-lg">
                   <Play className="w-5 h-5 mr-2" />
                   {isPreLaunch ? `Listen (${formatCountdown(releaseAt)})` : 'Listen now'}
                 </Button>
@@ -308,11 +308,11 @@ export default function Hnhmess() {
                   </div>
                   <div className="text-right">
                     {isPreLaunch ? (
-                      <div className="text-2xl md:text-3xl font-mono font-black text-[#B026FF]">
+                      <div className="text-2xl md:text-3xl font-mono font-black text-[#C8962C]">
                         {formatCountdown(releaseAt)}
                       </div>
                     ) : (
-                      <div className="text-2xl md:text-3xl font-black text-[#B026FF]">LIVE</div>
+                      <div className="text-2xl md:text-3xl font-black text-[#C8962C]">LIVE</div>
                     )}
                   </div>
                 </div>
