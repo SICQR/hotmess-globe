@@ -13,7 +13,7 @@ const LIVE_STREAM_URL = 'https://listen.radioking.com/radio/736103/stream/802454
 const SHOWS = [
   { ...schedule.shows[0], accent: '#C8962C', shadow: 'rgba(255,20,147,0.4)',  icon: Mic2  },
   { ...schedule.shows[1], accent: '#00D9FF', shadow: 'rgba(0,217,255,0.4)',   icon: RadioIcon },
-  { ...schedule.shows[2], accent: '#B026FF', shadow: 'rgba(176,38,255,0.4)', icon: Rss   },
+  { ...schedule.shows[2], accent: '#C8962C', shadow: 'rgba(176,38,255,0.4)', icon: Rss   },
 ];
 
 function LiveBadge() {
@@ -109,7 +109,7 @@ function ReleaseCard({ beacon }) {
       <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/5 shrink-0 flex items-center justify-center">
         {beacon.image_url
           ? <img src={beacon.image_url} alt={beacon.title} className="w-full h-full object-cover" />
-          : <Disc3 className="w-7 h-7 text-[#B026FF]" />
+          : <Disc3 className="w-7 h-7 text-[#C8962C]" />
         }
       </div>
       <div className="flex-1 min-w-0">
