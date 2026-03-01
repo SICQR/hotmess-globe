@@ -92,7 +92,7 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
 
         <div className="space-y-6 mt-4">
           {/* Album Art */}
-          <div className="w-full aspect-square bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center border-2 border-white">
+          <div className="w-full aspect-square bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center border-2 border-white">
             <Music className="w-24 h-24 text-white" />
           </div>
 
