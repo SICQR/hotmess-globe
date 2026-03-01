@@ -81,7 +81,7 @@ export default function MapPage() {
             transition={{ delay: 0.5 }}
             className="absolute left-1/4 top-1/2"
           >
-            <FaMapMarkerAlt className="text-accent text-3xl drop-shadow-[0_0_10px_#FF149380]" />
+            <FaMapMarkerAlt className="text-accent text-3xl drop-shadow-[0_0_10px_#C8962C80]" />
           </motion.div>
 
           {/* Third marker */}
