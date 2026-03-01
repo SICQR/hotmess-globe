@@ -181,8 +181,8 @@ export default function BusinessDashboard() {
             <Card className="bg-white/5 border-white/10">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-[#B026FF]/20 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-[#B026FF]" />
+                  <div className="w-10 h-10 bg-[#C8962C]/20 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-[#C8962C]" />
                   </div>
                   <span className="text-white/60 text-sm">Avg Attendance</span>
                 </div>
@@ -239,7 +239,7 @@ export default function BusinessDashboard() {
                 <Link to={createPageUrl('BusinessBilling')}>
                   <div className="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
                     <div className="flex items-center gap-3">
-                      <DollarSign className="w-5 h-5 text-[#B026FF]" />
+                      <DollarSign className="w-5 h-5 text-[#C8962C]" />
                       <span>Billing & Payouts</span>
                     </div>
                     <ChevronRight className="w-4 h-4 text-white/40" />
@@ -283,7 +283,7 @@ export default function BusinessDashboard() {
                       >
                         <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-[#C8962C] to-[#B026FF] rounded-lg flex items-center justify-center">
+                            <div className="w-12 h-12 bg-gradient-to-br from-[#C8962C] to-[#C8962C] rounded-lg flex items-center justify-center">
                               {event.image_url ? (
                                 <img src={event.image_url} alt="" className="w-full h-full object-cover rounded-lg" />
                               ) : (
