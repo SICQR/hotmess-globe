@@ -41,7 +41,7 @@ const RELEASES = [
   {
     id: 'hotmess-original',
     src: '/images/RCR001 Paul King ft Stewart Who - Hotmess.JPEG',
-    color: '#B026FF',
+    color: '#C8962C',
     title: 'HOTMESS',
     artist: 'Paul King ft Stewart Who',
     label: 'ORIGINAL',
@@ -278,7 +278,7 @@ export default function AlbumCarousel({
         <div className="mt-10 text-center">
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/music/releases/hotmess">
-              <Button className="bg-[#B026FF] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-4">
+              <Button className="bg-[#C8962C] hover:bg-white text-white hover:text-black font-black uppercase px-8 py-4">
                 <Play className="w-5 h-5 mr-2" />
                 LISTEN NOW
               </Button>
