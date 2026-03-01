@@ -134,7 +134,7 @@ export default function L2SocialSheet() {
                   transition={{ delay: i * 0.02 }}
                   className="flex items-center gap-3 p-4 hover:bg-white/5 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center overflow-hidden flex-shrink-0">
                     {item.actor_avatar ? (
                       <img src={item.actor_avatar} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -182,7 +182,7 @@ export default function L2SocialSheet() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.03 }}
                   onClick={() => openSheet('profile', { email: user.email })}
-                  className="aspect-square relative overflow-hidden bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20"
+                  className="aspect-square relative overflow-hidden bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20"
                 >
                   {user.avatar_url ? (
                     <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
