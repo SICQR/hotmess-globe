@@ -12,7 +12,7 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
   const navigate = useNavigate();
   const profileType = user?.profile_type || 'standard';
   const themeGradient = {
-    'default': 'from-[#C8962C] to-[#B026FF]',
+    'default': 'from-[#C8962C] to-[#C8962C]',
     'cyber': 'from-[#00D9FF] to-[#39FF14]',
     'sunset': 'from-[#FF6B35] to-[#FFEB3B]',
     'midnight': 'from-[#1a1a2e] to-[#16213e]',
@@ -34,7 +34,7 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
     'creator': { 
       icon: <Palette className="w-5 h-5" />, 
       badge: '🎨 CREATOR',
-      color: '#B026FF'
+      color: '#C8962C'
     }
   };
 
