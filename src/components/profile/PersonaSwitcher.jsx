@@ -48,7 +48,7 @@ const PERSONA_TYPES = {
   CUSTOM: {
     icon: Sparkles,
     label: 'Custom',
-    color: '#B026FF',
+    color: '#C8962C',
     description: 'Your custom persona'
   }
 };
