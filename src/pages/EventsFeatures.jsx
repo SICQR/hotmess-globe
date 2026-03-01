@@ -20,7 +20,7 @@ const EVENT_FEATURES = [
     icon: Globe,
     title: 'GLOBAL EVENT MAP',
     tagline: 'See what\'s happening everywhere',
-    color: '#B026FF',
+    color: '#C8962C',
     description: 'Our interactive 3D globe shows you events happening around the world. Zoom in on any city to discover local nightlife, parties, and community gatherings.',
     benefits: [
       'Interactive 3D globe visualization',
@@ -175,13 +175,13 @@ export default function EventsFeatures() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-[#B026FF]/30 via-black to-[#C8962C]/20 border-2 border-[#B026FF] p-8 md:p-12 mb-12"
+          className="bg-gradient-to-br from-[#C8962C]/30 via-black to-[#C8962C]/20 border-2 border-[#C8962C] p-8 md:p-12 mb-12"
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <Calendar className="w-8 h-8 text-[#B026FF]" />
-                <span className="text-[#B026FF] font-black uppercase tracking-wider">Events</span>
+                <Calendar className="w-8 h-8 text-[#C8962C]" />
+                <span className="text-[#C8962C] font-black uppercase tracking-wider">Events</span>
               </div>
               <h2 className="text-2xl md:text-3xl font-black uppercase mb-2">
                 Your nightlife, organized
@@ -191,7 +191,7 @@ export default function EventsFeatures() {
               </p>
             </div>
             <Link to="/events">
-              <Button variant="outline" size="lg" className="font-black uppercase border-[#B026FF] text-[#B026FF] hover:bg-[#B026FF] hover:text-black">
+              <Button variant="outline" size="lg" className="font-black uppercase border-[#C8962C] text-[#C8962C] hover:bg-[#C8962C] hover:text-black">
                 <Calendar className="w-4 h-4 mr-2" />
                 Browse Events
               </Button>
@@ -214,7 +214,7 @@ export default function EventsFeatures() {
               transition={{ delay: i * 0.1 }}
               className="bg-white/5 border border-white/10 p-4 text-center"
             >
-              <div className="text-2xl font-black text-[#B026FF]">{stat.value}</div>
+              <div className="text-2xl font-black text-[#C8962C]">{stat.value}</div>
               <div className="text-xs text-white/60 uppercase">{stat.label}</div>
             </motion.div>
           ))}
@@ -232,7 +232,7 @@ export default function EventsFeatures() {
           viewport={{ once: true }}
           className="text-center mt-16 pt-16 border-t border-white/10"
         >
-          <Calendar className="w-16 h-16 text-[#B026FF] mx-auto mb-6" />
+          <Calendar className="w-16 h-16 text-[#C8962C] mx-auto mb-6" />
           <h2 className="text-3xl font-black uppercase mb-4">Find Your Next Event</h2>
           <p className="text-white/60 mb-8 max-w-md mx-auto">
             Thousands of events happening every week. What are you waiting for?
