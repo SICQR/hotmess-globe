@@ -40,7 +40,7 @@ export const BRAND = {
     HUNG: {
       name: 'HUNG',
       tagline: 'Statement pieces. Maximum impact.',
-      color: '#B026FF',
+      color: '#C8962C',
       description: 'Luxury streetwear that demands attention.',
     },
     HIGH: {
@@ -163,7 +163,7 @@ export const BRAND = {
   colors: {
     hot: '#C8962C',
     cyan: '#00D9FF',
-    purple: '#B026FF',
+    purple: '#C8962C',
     gold: '#FFD700',
     lime: '#39FF14',
     orange: '#FF6B35',
