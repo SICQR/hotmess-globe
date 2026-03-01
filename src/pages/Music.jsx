@@ -468,7 +468,7 @@ export default function Music() {
             alt="Music"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-[#B026FF]/40 to-black" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-[#C8962C]/40 to-black" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto text-center">
           <RadioIcon className="w-20 h-20 mx-auto mb-6 drop-shadow-2xl" />
@@ -530,7 +530,7 @@ export default function Music() {
 
           <TabsContent value="live">
             <div className="bg-white/5 border-2 border-white/10 p-8 text-center">
-              <div className="w-32 h-32 bg-[#B026FF] flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <div className="w-32 h-32 bg-[#C8962C] flex items-center justify-center mx-auto mb-6 animate-pulse">
                 <RadioIcon className="w-16 h-16" />
               </div>
               <h3 className="text-3xl font-black uppercase mb-3">ON AIR NOW</h3>
@@ -561,7 +561,7 @@ export default function Music() {
               <div className="grid gap-4">
                 {nextUp.length > 0 ? (
                   nextUp.map(({ show, nextEpisode }) => (
-                    <div key={`${show.id}:${nextEpisode.date.toISOString()}`} className="bg-white/5 border-l-4 border-[#B026FF] p-4">
+                    <div key={`${show.id}:${nextEpisode.date.toISOString()}`} className="bg-white/5 border-l-4 border-[#C8962C] p-4">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-black uppercase text-lg truncate">{show.title}</p>
@@ -570,7 +570,7 @@ export default function Music() {
 
                         <div className="flex items-center gap-3 sm:justify-end">
                           <div className="text-right">
-                            <p className="text-2xl font-mono font-bold text-[#B026FF] leading-none">
+                            <p className="text-2xl font-mono font-bold text-[#C8962C] leading-none">
                               {nextEpisode.startTime}
                             </p>
                             <p className="text-xs text-white/60 uppercase tracking-wider">
@@ -631,21 +631,21 @@ export default function Music() {
                       to={showUrlFromSlug(show.slug)}
                       className="group"
                     >
-                      <div className="relative bg-white/5 border-2 border-white/10 hover:border-[#B026FF] transition-all p-6 h-full">
+                      <div className="relative bg-white/5 border-2 border-white/10 hover:border-[#C8962C] transition-all p-6 h-full">
                         <div className="flex items-center justify-between mb-4">
-                          <div className="px-2 py-1 bg-[#B026FF] text-white text-xs font-black uppercase">
+                          <div className="px-2 py-1 bg-[#C8962C] text-white text-xs font-black uppercase">
                             SHOW
                           </div>
                           <ExternalLink className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
                         </div>
-                        <h4 className="text-2xl font-black uppercase mb-2 group-hover:text-[#B026FF] transition-colors">
+                        <h4 className="text-2xl font-black uppercase mb-2 group-hover:text-[#C8962C] transition-colors">
                           {show.title}
                         </h4>
                         <p className="text-white/60 mb-4 text-sm">
                           {show.tagline}
                         </p>
                         <div className="flex items-start gap-2 text-sm">
-                          <Calendar className="w-4 h-4 text-[#B026FF] flex-shrink-0 mt-0.5" />
+                          <Calendar className="w-4 h-4 text-[#C8962C] flex-shrink-0 mt-0.5" />
                           <span className="text-white/80">{show.schedule?.length ? `${show.schedule.length} weekly slot${show.schedule.length === 1 ? '' : 's'}` : 'Schedule coming soon'}</span>
                         </div>
                       </div>
@@ -681,7 +681,7 @@ export default function Music() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {musicEvents.map((event) => (
                     <Link key={event.id} to={`/events/${encodeURIComponent(event.id)}`}>
-                      <div className="group relative aspect-[4/3] overflow-hidden bg-white/5 border-2 border-white/10 hover:border-[#B026FF] transition-all">
+                      <div className="group relative aspect-[4/3] overflow-hidden bg-white/5 border-2 border-white/10 hover:border-[#C8962C] transition-all">
                         {event.image_url && (
                           <img 
                             src={event.image_url} 
@@ -692,7 +692,7 @@ export default function Music() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent" />
                         <div className="absolute inset-0 flex flex-col justify-end p-6">
                           <div className="flex items-center gap-2 mb-3">
-                            <div className="px-2 py-1 bg-[#B026FF] text-white text-xs font-black uppercase">
+                            <div className="px-2 py-1 bg-[#C8962C] text-white text-xs font-black uppercase">
                               MUSIC EVENT
                             </div>
                             {event.audio_url && (
@@ -877,7 +877,7 @@ export default function Music() {
                     </div>
                     <div>
                       <label className="text-xs uppercase tracking-widest text-white/60 mb-2 block">WAV File</label>
-                      <div className="border-2 border-dashed border-white/20 p-4 text-center hover:border-[#B026FF] transition-colors">
+                      <div className="border-2 border-dashed border-white/20 p-4 text-center hover:border-[#C8962C] transition-colors">
                         <input
                           type="file"
                           accept=".wav"
@@ -1016,10 +1016,10 @@ export default function Music() {
                   {combinedReleases.map((release) => (
                     <div 
                       key={release.track_id}
-                      className="group relative bg-white/5 border-2 border-white/10 hover:border-[#B026FF] transition-all p-4"
+                      className="group relative bg-white/5 border-2 border-white/10 hover:border-[#C8962C] transition-all p-4"
                     >
-                      <div className="aspect-square bg-gradient-to-br from-[#B026FF]/20 to-black/40 mb-4 flex items-center justify-center">
-                        <Disc className="w-16 h-16 text-[#B026FF] group-hover:animate-spin" style={{ animationDuration: '3s' }} />
+                      <div className="aspect-square bg-gradient-to-br from-[#C8962C]/20 to-black/40 mb-4 flex items-center justify-center">
+                        <Disc className="w-16 h-16 text-[#C8962C] group-hover:animate-spin" style={{ animationDuration: '3s' }} />
                       </div>
 
                       {(release.soundcloud_urn || release.soundcloud_url) && (
@@ -1036,7 +1036,7 @@ export default function Music() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           {release.mood && (
-                            <span className="px-2 py-0.5 bg-[#B026FF] text-white text-[10px] font-black uppercase">
+                            <span className="px-2 py-0.5 bg-[#C8962C] text-white text-[10px] font-black uppercase">
                               {release.mood}
                             </span>
                           )}
