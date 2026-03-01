@@ -566,7 +566,7 @@ export const USPS = {
       headline: 'See The World Live',
       subline: 'Interactive 3D globe showing people, events, and energy worldwide.',
       icon: 'Globe',
-      color: '#B026FF',
+      color: '#C8962C',
     },
     {
       id: 'ai_wingman',
