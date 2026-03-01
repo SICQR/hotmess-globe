@@ -247,7 +247,7 @@ export default function L2GhostedSheet() {
                       onClick={() => handleViewProfile(user.email)}
                       className="relative flex-shrink-0"
                     >
-                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center overflow-hidden">
                         {user.avatar_url ? (
                           <img 
                             src={user.avatar_url} 
