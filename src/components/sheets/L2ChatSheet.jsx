@@ -536,7 +536,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     className="w-full p-4 hover:bg-white/5 transition-colors text-left flex items-center gap-3 active:bg-white/10"
                   >
                     <div className="relative flex-shrink-0">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center overflow-hidden">
                         {p?.avatar_url ? (
                           <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -582,7 +582,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           onClick={() => otherEmail && openSheet(SHEET_TYPES.PROFILE, { email: otherEmail })}
           className="flex items-center gap-3 flex-1 min-w-0"
         >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center overflow-hidden flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center overflow-hidden flex-shrink-0">
             {otherProfile?.avatar_url ? (
               <img src={otherProfile.avatar_url} alt="" className="w-full h-full object-cover" />
             ) : (
