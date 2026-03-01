@@ -13,7 +13,7 @@ const LAYER_OPTIONS = [
 
 const MODE_OPTIONS = [
   { id: 'hookup', label: 'HOOKUP', color: '#FF073A' },
-  { id: 'crowd', label: 'CROWD', color: '#B026FF' },
+  { id: 'crowd', label: 'CROWD', color: '#C8962C' },
   { id: 'drop', label: 'DROP', color: '#FF6B35' },
   { id: 'ticket', label: 'TICKET', color: '#FFEB3B' },
   { id: 'radio', label: 'RADIO', color: '#00D9FF' },
@@ -25,7 +25,7 @@ const BEACON_TYPE_OPTIONS = [
   { id: 'venue', label: 'VENUE', color: '#C8962C' },
   { id: 'hookup', label: 'HOOKUP', color: '#FF073A' },
   { id: 'drop', label: 'DROP', color: '#FF6B35' },
-  { id: 'popup', label: 'POPUP', color: '#B026FF' },
+  { id: 'popup', label: 'POPUP', color: '#C8962C' },
   { id: 'private', label: 'PRIVATE', color: '#00D9FF' },
 ];
 
