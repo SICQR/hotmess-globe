@@ -90,7 +90,7 @@ export function InstallPrompt() {
         exit={{ opacity: 0, y: 100 }}
         className="fixed bottom-20 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50"
       >
-        <div className="bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 backdrop-blur-xl border-2 border-[#C8962C] rounded-xl p-5 shadow-2xl">
+        <div className="bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 backdrop-blur-xl border-2 border-[#C8962C] rounded-xl p-5 shadow-2xl">
           <button
             onClick={handleDismiss}
             className="absolute top-3 right-3 text-white/60 hover:text-white"
