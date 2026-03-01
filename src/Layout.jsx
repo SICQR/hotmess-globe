@@ -381,7 +381,7 @@ function LayoutInner({ children, currentPageName }) {
                 {isMarketRoute ? <UnifiedCartDrawer currentUser={user} /> : null}
                 <button
                   onClick={toggleRadio}
-                  className={`p-2 rounded-lg transition-colors ${isRadioOpen ? 'bg-[#B026FF] text-white' : 'bg-white/5 hover:bg-white/10'}`}
+                  className={`p-2 rounded-lg transition-colors ${isRadioOpen ? 'bg-[#C8962C] text-white' : 'bg-white/5 hover:bg-white/10'}`}
                   aria-label="Toggle radio"
                 >
                   <RadioIcon className="w-5 h-5" />
@@ -529,7 +529,7 @@ function LayoutInner({ children, currentPageName }) {
                   {isMarketRoute ? <UnifiedCartDrawer currentUser={user} /> : null}
                   <button
                     onClick={toggleRadio}
-                    className={`p-1.5 rounded-lg transition-colors ${isRadioOpen ? 'bg-[#B026FF] text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                    className={`p-1.5 rounded-lg transition-colors ${isRadioOpen ? 'bg-[#C8962C] text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
                     aria-label="Toggle radio"
                   >
                     <RadioIcon className="w-4 h-4" />
@@ -609,7 +609,7 @@ function LayoutInner({ children, currentPageName }) {
               {user ? (
                 <>
                   <Link to={createPageUrl('Settings')} className="flex items-center gap-2 hover:opacity-80 transition-opacity mb-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
+                    <div className="w-8 h-8 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center flex-shrink-0 border-2 border-white">
                       <span className="text-xs font-bold">{user.full_name?.[0] || 'U'}</span>
                     </div>
                     <div className="flex-1 min-w-0">
