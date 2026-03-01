@@ -49,7 +49,7 @@ export default function EventInsights({ event, scoreBreakdown }) {
             </div>
             <div className="h-2 bg-white/10 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-[#C8962C] to-[#B026FF]"
+                className="h-full bg-gradient-to-r from-[#C8962C] to-[#C8962C]"
                 style={{ width: `${Math.min(total, 100)}%` }}
               />
             </div>
