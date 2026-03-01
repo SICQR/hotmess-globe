@@ -208,7 +208,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
 
       {/* Organizer Bio */}
       {(user?.organizer_bio || user?.bio) && (
-        <div className="bg-gradient-to-br from-[#00D9FF]/10 to-[#B026FF]/10 border border-[#00D9FF]/30 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#00D9FF]/10 to-[#C8962C]/10 border border-[#00D9FF]/30 rounded-xl p-6">
           <h3 className="text-sm uppercase tracking-wider text-[#00D9FF] mb-3 flex items-center gap-2">
             <PartyPopper className="w-4 h-4" />
             About the Organizer
@@ -247,7 +247,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
 
       {/* Upcoming Events */}
       {upcomingEvents.length > 0 && (
-        <div className="bg-gradient-to-br from-[#C8962C]/10 to-[#B026FF]/10 border border-[#C8962C]/30 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#C8962C]/10 to-[#C8962C]/10 border border-[#C8962C]/30 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-black uppercase flex items-center gap-2">
               <Clock className="w-5 h-5 text-[#C8962C]" />
@@ -276,7 +276,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
                       className="w-20 h-20 object-cover flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-20 h-20 bg-gradient-to-br from-[#C8962C]/30 to-[#B026FF]/30 flex items-center justify-center flex-shrink-0">
+                    <div className="w-20 h-20 bg-gradient-to-br from-[#C8962C]/30 to-[#C8962C]/30 flex items-center justify-center flex-shrink-0">
                       <PartyPopper className="w-8 h-8 text-[#C8962C]" />
                     </div>
                   )}
