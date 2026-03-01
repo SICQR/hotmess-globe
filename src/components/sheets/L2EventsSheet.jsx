@@ -167,7 +167,7 @@ export default function L2EventsSheet() {
                   <div className="flex gap-3">
                     {/* Event image */}
                     <div
-                      className="w-16 h-16 rounded-xl flex-shrink-0 bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 overflow-hidden"
+                      className="w-16 h-16 rounded-xl flex-shrink-0 bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 overflow-hidden"
                     >
                       {event.image_url ? (
                         <img src={event.image_url} alt="" className="w-full h-full object-cover" />
