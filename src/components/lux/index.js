@@ -5,7 +5,7 @@
  * - Chrome Red (#C8962C) as primary accent
  * - Gold (#FFD700) for premium elements
  * - Cyan (#00D9FF) for interactive elements
- * - Purple (#B026FF) for creator/music elements
+ * - Purple (#C8962C) for creator/music elements
  * - Neon Green (#39FF14) for success states
  * 
  * Features:
