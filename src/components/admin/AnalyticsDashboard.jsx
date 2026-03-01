@@ -156,13 +156,13 @@ export default function AnalyticsDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-black border-2 border-[#B026FF] p-6"
+          className="bg-black border-2 border-[#C8962C] p-6"
         >
           <div className="flex items-center gap-3 mb-2">
-            <DollarSign className="w-5 h-5 text-[#B026FF]" />
+            <DollarSign className="w-5 h-5 text-[#C8962C]" />
             <p className="text-[10px] text-white/40 uppercase tracking-widest">EST. MRR</p>
           </div>
-          <p className="text-3xl font-black text-[#B026FF]">£{estimatedMRR.toFixed(2)}</p>
+          <p className="text-3xl font-black text-[#C8962C]">£{estimatedMRR.toFixed(2)}</p>
           <p className="text-xs text-white/60 uppercase font-mono">{totalSubscribers} SUBSCRIBERS</p>
         </motion.div>
 
@@ -213,7 +213,7 @@ export default function AnalyticsDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-black border-2 border-white p-6">
           <div className="flex items-center gap-3 mb-2">
-            <MapPin className="w-5 h-5 text-[#B026FF]" />
+            <MapPin className="w-5 h-5 text-[#C8962C]" />
             <p className="text-[10px] text-white/40 uppercase tracking-widest">BEACONS</p>
           </div>
           <p className="text-3xl font-black">{beacons.length}</p>
@@ -261,7 +261,7 @@ export default function AnalyticsDashboard() {
               transition={{ delay: idx * 0.05 }}
               className="flex items-center gap-4 bg-white/5 border-2 border-white/10 p-4"
             >
-              <div className="w-12 h-12 bg-[#B026FF] border-2 border-white flex items-center justify-center font-black text-xl">
+              <div className="w-12 h-12 bg-[#C8962C] border-2 border-white flex items-center justify-center font-black text-xl">
                 {idx + 1}
               </div>
               <div className="flex-1">
