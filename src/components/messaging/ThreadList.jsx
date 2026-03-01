@@ -17,7 +17,7 @@ const THREAD_TYPE_COLORS = {
   dm: '#00D9FF',
   order: '#FFEB3B',
   connect: '#C8962C',
-  squad: '#B026FF',
+  squad: '#C8962C',
   event: '#FF6B35',
   beacon: '#39FF14',
 };
@@ -64,7 +64,7 @@ export default function ThreadList({ threads, currentUser, allUsers, onSelectThr
           >
             <div className="flex items-start gap-3">
               {!isGroupChat && otherUsers[0] ? (
-                <div className="w-12 h-12 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center flex-shrink-0 border-2 border-white">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center flex-shrink-0 border-2 border-white">
                   {otherUsers[0].avatar_url ? (
                     <img src={otherUsers[0].avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
