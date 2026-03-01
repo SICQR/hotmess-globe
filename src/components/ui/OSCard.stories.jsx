@@ -140,7 +140,7 @@ export const EventWithPrice = {
         </div>
         <div className="flex items-center gap-2 mt-3">
           <OSCardBadge color="#00D9FF">Saturday</OSCardBadge>
-          <OSCardBadge color="#B026FF">18+</OSCardBadge>
+          <OSCardBadge color="#C8962C">18+</OSCardBadge>
           <span className="text-white/40 text-xs ml-auto">120 attending</span>
         </div>
         <Button variant="cyan" className="w-full mt-4">
@@ -181,7 +181,7 @@ export const AchievementCard = {
   render: () => (
     <OSCard className="w-[200px]" hoverGlow={true}>
       <div className="p-6 text-center">
-        <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center">
           <Zap className="w-8 h-8 text-white" />
         </div>
         <h3 className="text-white font-black text-sm uppercase tracking-wider">First Event</h3>
