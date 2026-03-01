@@ -51,7 +51,7 @@ const SOCIAL_FEATURES = [
     icon: Camera,
     title: '24-HOUR STORIES',
     tagline: 'Share your moments',
-    color: '#B026FF',
+    color: '#C8962C',
     description: 'Share photos and videos that disappear after 24 hours. See who\'s out, what they\'re doing, and join the conversation.',
     benefits: [
       'Photo & video stories',
