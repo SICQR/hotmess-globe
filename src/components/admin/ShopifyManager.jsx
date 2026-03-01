@@ -110,7 +110,7 @@ export default function ShopifyManager() {
 
         <Card className="bg-white/5 border-white/10 p-6">
           <div className="flex items-center gap-3 mb-2">
-            <RefreshCw className="w-5 h-5 text-[#B026FF]" />
+            <RefreshCw className="w-5 h-5 text-[#C8962C]" />
             <span className="text-sm text-white/60 uppercase">Last Sync</span>
           </div>
           <div className="text-sm">
@@ -161,7 +161,7 @@ export default function ShopifyManager() {
 
         <Card className="bg-white/5 border-white/10 p-6">
           <h3 className="font-black uppercase mb-2 flex items-center gap-2">
-            <RefreshCw className="w-5 h-5 text-[#B026FF]" />
+            <RefreshCw className="w-5 h-5 text-[#C8962C]" />
             Sync Inventory
           </h3>
           <p className="text-sm text-white/60 mb-4">
@@ -170,7 +170,7 @@ export default function ShopifyManager() {
           <Button
             onClick={() => syncMutation.mutate()}
             disabled={syncMutation.isPending}
-            className="w-full bg-[#B026FF] hover:bg-[#B026FF]/90 text-white font-black"
+            className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-white font-black"
           >
             {syncMutation.isPending ? (
               <>
