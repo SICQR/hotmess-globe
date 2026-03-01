@@ -26,7 +26,7 @@ const formatDistance = (km) => {
 const getModeColor = (mode) => {
   const colors = {
     hookup: '#FF073A',
-    crowd: '#B026FF',
+    crowd: '#C8962C',
     drop: '#FF6B35',
     ticket: '#FFEB3B',
     radio: '#00D9FF',
