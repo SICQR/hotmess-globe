@@ -11,7 +11,7 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
 
   const kindColors = {
     event: '#00D9FF',
-    venue: '#B026FF',
+    venue: '#C8962C',
     hookup: '#C8962C',
     drop: '#FFEB3B',
     popup: '#39FF14',
