@@ -129,7 +129,7 @@ export function ReplacementGrid({ className = '' }) {
       </motion.div>
       
       {/* Summary */}
-      <div className="mt-8 p-6 bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/30 rounded-2xl text-center">
+      <div className="mt-8 p-6 bg-gradient-to-r from-[#C8962C]/20 to-[#C8962C]/20 border border-[#C8962C]/30 rounded-2xl text-center">
         <p className="text-xl md:text-2xl font-black uppercase">
           <span className="text-[#39FF14]">✓</span> ONE PLATFORM.{' '}
           <span className="text-[#C8962C]">EVERYTHING.</span>
