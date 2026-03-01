@@ -71,7 +71,7 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
       {!showCreate ? (
         <Button
           onClick={() => setShowCreate(true)}
-          className="bg-[#B026FF] hover:bg-[#B026FF]/90 text-white"
+          className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-white"
         >
           <Users className="w-4 h-4 mr-2" />
           Create Group Chat
@@ -126,7 +126,7 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
                     : 'bg-white/5 hover:bg-white/10'
                 }`}
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center">
                   <span className="font-bold text-sm">{user.full_name?.[0] || 'U'}</span>
                 </div>
                 <div className="flex-1 text-left">
