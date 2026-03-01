@@ -88,7 +88,7 @@ export default function BeaconDetail() {
     venue: '#C8962C',
     hookup: '#FF073A',
     drop: '#FF6B35',
-    popup: '#B026FF',
+    popup: '#C8962C',
     private: BEACON_COLOR.event,
   })[kind] || '#C8962C';
 
@@ -133,7 +133,7 @@ export default function BeaconDetail() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Hero */}
-      <div className="relative h-64 bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border-b border-white/10">
+      <div className="relative h-64 bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border-b border-white/10">
         <div className="absolute inset-0 flex items-end">
           <div className="w-full p-6 md:p-8">
             <div className="flex items-center gap-2 mb-4">
@@ -225,7 +225,7 @@ export default function BeaconDetail() {
             {beacon.mode === 'radio' && beacon.audio_url && (
               <Button
                 onClick={() => setShowConvictPlayer(true)}
-                className="w-full bg-[#B026FF] hover:bg-[#B026FF]/90 text-white font-black py-6 border-2 border-white"
+                className="w-full bg-[#C8962C] hover:bg-[#C8962C]/90 text-white font-black py-6 border-2 border-white"
               >
                 <Music className="w-5 h-5 mr-2" />
                 PLAY RAW TRACK
