@@ -8,7 +8,7 @@ const BEACON_KIND_CONFIG = {
   venue: { label: 'VENUE', color: '#C8962C', icon: MapPin },
   hookup: { label: 'HOOKUP', color: '#FF073A', icon: Users },
   drop: { label: 'DROP', color: '#FF6B35', icon: TrendingUp },
-  popup: { label: 'POPUP', color: '#B026FF', icon: MapPin },
+  popup: { label: 'POPUP', color: '#C8962C', icon: MapPin },
   private: { label: 'PRIVATE', color: '#00D9FF', icon: Users },
   ticket: { label: 'TICKET', color: '#FFEB3B', icon: MapPin },
   care: { label: 'CARE', color: '#39FF14', icon: MapPin },
