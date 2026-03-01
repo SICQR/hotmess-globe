@@ -58,11 +58,11 @@ export default function Feed() {
     check_in: '#00D9FF',
     purchase: '#C8962C',
     achievement: '#FFEB3B',
-    squad_join: '#B026FF',
+    squad_join: '#C8962C',
     beacon_create: '#39FF14',
     king_crowned: '#FFEB3B',
     war_declared: '#FF073A',
-    track_drop: '#B026FF',
+    track_drop: '#C8962C',
     level_up: '#39FF14',
     follow: '#00D9FF',
   };
@@ -83,7 +83,7 @@ export default function Feed() {
       >
         <div className="flex items-start gap-3">
           <Link to={createPageUrl(`Profile?email=${user.email}`)}>
-            <div className="w-12 h-12 bg-gradient-to-br from-[#C8962C] to-[#B026FF] border border-white flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#C8962C] to-[#C8962C] border border-white flex items-center justify-center flex-shrink-0">
               {user.avatar_url ? (
                 <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
               ) : (
@@ -138,7 +138,7 @@ export default function Feed() {
       case 'achievement':
         return <span className="text-sm">unlocked <span className="text-[#FFEB3B]">{data.achievement_title}</span></span>;
       case 'squad_join':
-        return <span className="text-sm">joined <span className="text-[#B026FF]">{data.squad_name}</span></span>;
+        return <span className="text-sm">joined <span className="text-[#C8962C]">{data.squad_name}</span></span>;
       case 'beacon_create':
         return <span className="text-sm">created beacon <span className="text-[#39FF14]">{data.beacon_title}</span></span>;
       case 'king_crowned':
@@ -146,7 +146,7 @@ export default function Feed() {
       case 'war_declared':
         return <span className="text-sm">declared WAR at <span className="text-[#FF073A]">{data.venue_name}</span></span>;
       case 'track_drop':
-        return <span className="text-sm">dropped track <span className="text-[#B026FF]">{data.track_title}</span></span>;
+        return <span className="text-sm">dropped track <span className="text-[#C8962C]">{data.track_title}</span></span>;
       case 'level_up':
         return <span className="text-sm">reached <span className="text-[#39FF14]">Level {data.level}</span></span>;
       case 'follow':
