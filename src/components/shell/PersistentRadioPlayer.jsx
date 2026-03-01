@@ -122,13 +122,13 @@ export default function PersistentRadioPlayer() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-screen sm:w-96 bg-black/95 backdrop-blur-xl border-l-2 border-[#B026FF] z-[100] shadow-2xl"
+              className="fixed top-0 right-0 bottom-0 w-screen sm:w-96 bg-black/95 backdrop-blur-xl border-l-2 border-[#C8962C] z-[100] shadow-2xl"
             >
               <div className="flex flex-col h-full p-6">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
-                    <Radio className="w-5 h-5 text-[#B026FF]" />
+                    <Radio className="w-5 h-5 text-[#C8962C]" />
                     <h3 className="font-black uppercase text-sm">RAW CONVICT RADIO</h3>
                   </div>
                   <button 
@@ -153,7 +153,7 @@ export default function PersistentRadioPlayer() {
                 <div className="flex items-center gap-4 mb-6">
                   <button
                     onClick={handlePlayPause}
-                    className="w-14 h-14 bg-[#B026FF] rounded-full flex items-center justify-center hover:bg-[#B026FF]/80 transition-colors shadow-lg"
+                    className="w-14 h-14 bg-[#C8962C] rounded-full flex items-center justify-center hover:bg-[#C8962C]/80 transition-colors shadow-lg"
                   >
                     {isPlaying ? <Pause className="w-6 h-6 text-white" /> : <Play className="w-6 h-6 text-white ml-0.5" />}
                   </button>
@@ -181,7 +181,7 @@ export default function PersistentRadioPlayer() {
                     step="0.01"
                     value={volume}
                     onChange={(e) => setVolume(parseFloat(e.target.value))}
-                    className="w-full accent-[#B026FF]"
+                    className="w-full accent-[#C8962C]"
                   />
                 </div>
 
@@ -232,7 +232,7 @@ export default function PersistentRadioPlayer() {
                         onClick={() => setCurrentTrack(beacon)}
                         className={`w-full text-left p-3 rounded-lg transition-colors ${
                           currentTrack?.id === beacon.id
-                            ? 'bg-[#B026FF]/20 border border-[#B026FF]'
+                            ? 'bg-[#C8962C]/20 border border-[#C8962C]'
                             : 'bg-white/5 hover:bg-white/10'
                         }`}
                       >
