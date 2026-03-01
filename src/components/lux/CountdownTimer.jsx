@@ -213,8 +213,8 @@ export function LuxCountdownTimer({
         className={cn(
           'flex items-center justify-center gap-4 px-6 py-4 bg-gradient-to-r transition-all',
           isUrgent
-            ? 'from-[#C8962C] to-[#B026FF] animate-pulse'
-            : 'from-[#B026FF] to-[#C8962C]',
+            ? 'from-[#C8962C] to-[#C8962C] animate-pulse'
+            : 'from-[#C8962C] to-[#C8962C]',
           className
         )}
       >
