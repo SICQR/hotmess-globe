@@ -59,7 +59,7 @@ const FEATURE_PAGES = [
     title: 'EVENTS FEATURES',
     route: '/features/events',
     icon: Calendar,
-    color: '#B026FF',
+    color: '#C8962C',
     description: 'Never miss a moment with our comprehensive events platform. Features include global event map, Right Now live activity feed, ticket marketplace, smart RSVP, AI recommendations, and organizer tools.',
     highlights: [
       'Interactive 3D globe',
@@ -296,10 +296,10 @@ export default function FeaturesManifesto() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative overflow-hidden bg-gradient-to-br from-[#C8962C]/20 via-black to-[#B026FF]/20 border-2 border-[#C8962C] p-8 md:p-12 mb-12"
+          className="relative overflow-hidden bg-gradient-to-br from-[#C8962C]/20 via-black to-[#C8962C]/20 border-2 border-[#C8962C] p-8 md:p-12 mb-12"
         >
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#C8962C]/10 blur-3xl rounded-full" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#B026FF]/10 blur-3xl rounded-full" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#C8962C]/10 blur-3xl rounded-full" />
           
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-4">
@@ -389,7 +389,7 @@ export default function FeaturesManifesto() {
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-gradient-to-r from-[#00D9FF]/10 to-[#B026FF]/10 border border-white/10 p-8 mb-16"
+          className="bg-gradient-to-r from-[#00D9FF]/10 to-[#C8962C]/10 border border-white/10 p-8 mb-16"
         >
           <h2 className="text-xl font-black uppercase mb-6">
             Technical Implementation
@@ -438,7 +438,7 @@ export default function FeaturesManifesto() {
             <div className="space-y-1 text-white/60">
               <div><span className="text-[#C8962C]">/features</span> — Overview of all features</div>
               <div><span className="text-[#FF0000]">/features/safety</span> — Safety features detail</div>
-              <div><span className="text-[#B026FF]">/features/events</span> — Events features detail</div>
+              <div><span className="text-[#C8962C]">/features/events</span> — Events features detail</div>
               <div><span className="text-[#00D9FF]">/features/social</span> — Social features detail</div>
               <div><span className="text-[#FF6B35]">/features/radio</span> — Music & Radio features detail</div>
               <div><span className="text-[#FFD700]">/features/personas</span> — Persona features detail</div>
