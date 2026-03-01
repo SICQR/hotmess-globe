@@ -677,7 +677,7 @@ export function LuxProductCarousel({
               onClick={() => onProductClick?.(product)}
               className="flex-shrink-0 w-[240px] snap-start cursor-pointer group/card"
             >
-              <div className="relative aspect-square overflow-hidden bg-white/5 border-2 border-white/10 hover:border-[#B026FF] transition-all duration-300">
+              <div className="relative aspect-square overflow-hidden bg-white/5 border-2 border-white/10 hover:border-[#C8962C] transition-all duration-300">
                 {product.image && (
                   <img
                     src={product.image}
@@ -693,7 +693,7 @@ export function LuxProductCarousel({
                     <h4 className="text-sm font-black text-white mb-1 line-clamp-1">{product.name}</h4>
                   )}
                   {product.price && (
-                    <p className="text-lg font-black text-[#B026FF]">{product.price}</p>
+                    <p className="text-lg font-black text-[#C8962C]">{product.price}</p>
                   )}
                 </div>
 
