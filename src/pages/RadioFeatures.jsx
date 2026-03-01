@@ -37,7 +37,7 @@ const RADIO_FEATURES = [
     icon: Mic,
     title: 'ORIGINAL SHOWS',
     tagline: 'More than just music',
-    color: '#B026FF',
+    color: '#C8962C',
     description: 'Exclusive shows from our resident DJs and hosts. From music discovery to community discussions, there\'s always something on.',
     benefits: [
       'Weekly scheduled shows',
@@ -197,7 +197,7 @@ export default function RadioFeatures() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-[#FF6B35]/30 via-black to-[#B026FF]/20 border-2 border-[#FF6B35] p-8 md:p-12 mb-12"
+          className="bg-gradient-to-br from-[#FF6B35]/30 via-black to-[#C8962C]/20 border-2 border-[#FF6B35] p-8 md:p-12 mb-12"
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
