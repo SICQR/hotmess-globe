@@ -50,7 +50,7 @@ export function LuxPageBanner({
     info: 'bg-[#00D9FF] text-black',
     warning: 'bg-[#FFEB3B] text-black',
     success: 'bg-[#39FF14] text-black',
-    promo: 'bg-gradient-to-r from-[#C8962C] to-[#B026FF] text-white',
+    promo: 'bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-white',
     urgent: 'bg-[#C8962C] text-white animate-pulse',
   };
 
@@ -341,7 +341,7 @@ export function LuxPromoBanner({
   return (
     <div
       className={cn(
-        'lux-promo-banner relative overflow-hidden bg-gradient-to-r from-[#C8962C] via-[#B026FF] to-[#C8962C] bg-[length:200%_100%] animate-gradient',
+        'lux-promo-banner relative overflow-hidden bg-gradient-to-r from-[#C8962C] via-[#C8962C] to-[#C8962C] bg-[length:200%_100%] animate-gradient',
         className
       )}
     >
@@ -498,7 +498,7 @@ export function LuxFeatureBanner({
 }) {
   const variantStyles = {
     default: 'bg-white/5 border-white/10',
-    gradient: 'bg-gradient-to-r from-[#C8962C]/20 to-[#B026FF]/20 border-[#C8962C]/30',
+    gradient: 'bg-gradient-to-r from-[#C8962C]/20 to-[#C8962C]/20 border-[#C8962C]/30',
     dark: 'bg-black border-white/20',
   };
 
