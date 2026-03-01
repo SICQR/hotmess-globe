@@ -5,7 +5,7 @@
  * - Antique Gold: #C8962C (primary)
  * - Gold: #FFD700 (premium)
  * - Cyan: #00D9FF (interactive)
- * - Purple: #B026FF (creator)
+ * - Amber: #C8962C (creator)
  * - Neon Green: #39FF14 (success)
  * - Yellow: #FFEB3B (warning)
  */
@@ -17,7 +17,7 @@
   --lux-chrome-red: #C8962C;  /* Updated: antique gold */
   --lux-gold: #FFD700;
   --lux-cyan: #00D9FF;
-  --lux-purple: #B026FF;
+  --lux-purple: #C8962C;
   --lux-neon-green: #39FF14;
   --lux-yellow: #FFEB3B;
   --lux-black: #000000;
@@ -30,10 +30,10 @@
   --lux-gradient-success: linear-gradient(135deg, var(--lux-neon-green), var(--lux-cyan));
   
   /* Shadows */
-  --lux-glow-pink: 0 0 20px rgba(255, 20, 147, 0.5);
+  --lux-glow-gold-warm: 0 0 20px rgba(200, 150, 44, 0.5);
   --lux-glow-gold: 0 0 20px rgba(255, 215, 0, 0.5);
   --lux-glow-cyan: 0 0 20px rgba(0, 217, 255, 0.5);
-  --lux-glow-purple: 0 0 20px rgba(176, 38, 255, 0.5);
+  --lux-glow-amber: 0 0 20px rgba(200, 150, 44, 0.4);
   --lux-glow-green: 0 0 20px rgba(57, 255, 20, 0.5);
 }
 
@@ -238,7 +238,7 @@
   background: white;
   color: black;
   border-color: white;
-  box-shadow: var(--lux-glow-pink);
+  box-shadow: var(--lux-glow-gold-warm);
 }
 
 .lux-btn-secondary {
@@ -285,7 +285,7 @@
 
 .lux-card-premium {
   @apply border-[var(--lux-gold)]/30;
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(255, 20, 147, 0.05));
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(200, 150, 44, 0.05));
 }
 
 .lux-card-premium:hover {
@@ -300,9 +300,9 @@
   @apply px-2 py-1 text-xs font-black uppercase tracking-wider;
 }
 
-.lux-badge-pink {
-  background: rgba(255, 20, 147, 0.2);
-  border: 1px solid rgba(255, 20, 147, 0.4);
+.lux-badge-gold-warm {
+  background: rgba(200, 150, 44, 0.2);
+  border: 1px solid rgba(200, 150, 44, 0.4);
   color: var(--lux-chrome-red);
 }
 
@@ -319,8 +319,8 @@
 }
 
 .lux-badge-purple {
-  background: rgba(176, 38, 255, 0.2);
-  border: 1px solid rgba(176, 38, 255, 0.4);
+  background: rgba(200, 150, 44, 0.2);
+  border: 1px solid rgba(200, 150, 44, 0.4);
   color: var(--lux-purple);
 }
 
