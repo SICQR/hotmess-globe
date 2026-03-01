@@ -340,10 +340,10 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: idx * 0.03 }}
-                          className="bg-black border-l-4 border-[#B026FF] p-3"
+                          className="bg-black border-l-4 border-[#C8962C] p-3"
                         >
                           <Link to={createPageUrl(`Profile?email=${post.user_email}`)}>
-                            <p className="font-bold text-sm mb-1 hover:text-[#B026FF] transition-colors">
+                            <p className="font-bold text-sm mb-1 hover:text-[#C8962C] transition-colors">
                               {post.user_name}
                             </p>
                           </Link>
