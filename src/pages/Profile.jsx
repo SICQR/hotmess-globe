@@ -118,7 +118,7 @@ export default function Profile() {
 
     // Simple deterministic colors so avatars feel consistent.
     const palette = [
-      ['#C8962C', '#B026FF'],
+      ['#C8962C', '#C8962C'],
       ['#00D9FF', '#1E3A8A'],
       ['#22C55E', '#0F766E'],
       ['#F97316', '#7C2D12'],
@@ -586,7 +586,7 @@ export default function Profile() {
 
           <form onSubmit={handleSetupSubmit} className="bg-white/5 border-2 border-white p-8 space-y-6">
             <div className="flex flex-col items-center gap-4">
-              <div className="w-32 h-32 bg-gradient-to-br from-[#C8962C] to-[#B026FF] border-2 border-white flex items-center justify-center overflow-hidden">
+              <div className="w-32 h-32 bg-gradient-to-br from-[#C8962C] to-[#C8962C] border-2 border-white flex items-center justify-center overflow-hidden">
                 {avatarFile ? (
                   <img
                     src={URL.createObjectURL(avatarFile)}
@@ -956,7 +956,7 @@ export default function Profile() {
                     return (
                       <Link key={idx} to={createPageUrl(`Profile?email=${viewer.email}`)}>
                         <div className="flex items-center gap-3 p-2 hover:bg-white/5 transition-colors">
-                          <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] border border-white flex items-center justify-center">
+                          <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#C8962C] border border-white flex items-center justify-center">
                             {viewer.avatar_url ? (
                               <img src={viewer.avatar_url} alt={viewer.full_name} className="w-full h-full object-cover" />
                             ) : (
@@ -1016,7 +1016,7 @@ export default function Profile() {
                         <span className="text-xs text-[#00D9FF] font-bold uppercase">Check-in</span>
                       )}
                       {highlight.item_type === 'squad' && squad && (
-                        <span className="text-xs text-[#B026FF] font-bold uppercase">Squad</span>
+                        <span className="text-xs text-[#C8962C] font-bold uppercase">Squad</span>
                       )}
                       {highlight.item_type === 'achievement' && achievement && (
                         <span className="text-xs text-[#FFEB3B] font-bold uppercase">Badge</span>
@@ -1188,7 +1188,7 @@ export default function Profile() {
                 >
                   <h3 className="font-black text-lg mb-2">{squad.name}</h3>
                   <p className="text-sm text-white/60 mb-3">{squad.description}</p>
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-[#B026FF]">
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-[#C8962C]">
                     <Users className="w-4 h-4" />
                     <span>{squad.interest}</span>
                   </div>
