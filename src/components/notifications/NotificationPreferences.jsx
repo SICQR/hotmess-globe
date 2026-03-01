@@ -43,7 +43,7 @@ const NOTIFICATION_CATEGORIES = [
     name: 'Social',
     description: 'New followers, handshakes, and connections',
     icon: Users,
-    color: '#B026FF',
+    color: '#C8962C',
     defaultEnabled: true,
   },
   {
@@ -332,10 +332,10 @@ export default function NotificationPreferences() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  preferences.quietHours.enabled ? 'bg-[#B026FF]/20' : 'bg-white/10'
+                  preferences.quietHours.enabled ? 'bg-[#C8962C]/20' : 'bg-white/10'
                 }`}>
                   <Moon className={`w-5 h-5 ${
-                    preferences.quietHours.enabled ? 'text-[#B026FF]' : 'text-white/40'
+                    preferences.quietHours.enabled ? 'text-[#C8962C]' : 'text-white/40'
                   }`} />
                 </div>
                 <div>
