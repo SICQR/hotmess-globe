@@ -14,7 +14,7 @@ const LAYER_OPTIONS = [
 
 const MODE_OPTIONS = [
   { id: 'hookup', label: 'Hookup', color: '#FF073A' },
-  { id: 'crowd', label: 'Crowd', color: '#B026FF' },
+  { id: 'crowd', label: 'Crowd', color: '#C8962C' },
   { id: 'drop', label: 'Drop', color: '#FF6B35' },
   { id: 'ticket', label: 'Ticket', color: '#FFEB3B' },
   { id: 'radio', label: 'Radio', color: '#00D9FF' },
