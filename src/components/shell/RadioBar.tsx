@@ -31,7 +31,7 @@ export function RadioBar({
       <div className="flex-1 min-w-0">
         <div className="text-xs text-[#A1A1AA]">
           {isLive ? (
-            <span className="text-[#B026FF]">● LIVE</span>
+            <span className="text-[#C8962C]">● LIVE</span>
           ) : (
             'NOW PLAYING'
           )}
