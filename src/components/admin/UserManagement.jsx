@@ -95,7 +95,7 @@ export default function UserManagement() {
               className="p-4 grid grid-cols-12 gap-4 items-center hover:bg-white/5 transition-colors"
             >
               <div className="col-span-3 flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center border-2 border-white">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center border-2 border-white">
                   {user.avatar_url ? (
                     <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
