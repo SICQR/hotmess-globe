@@ -4,7 +4,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { TrendingUp, Package, Users, DollarSign } from 'lucide-react';
 import { format, subDays, startOfDay } from 'date-fns';
 
-const COLORS = ['#C8962C', '#B026FF', '#00D9FF', '#FFEB3B', '#FF6B35'];
+const COLORS = ['#C8962C', '#C8962C', '#00D9FF', '#FFEB3B', '#FF6B35'];
 
 export default function SalesAnalytics({ orders, products, allUsers }) {
   const analytics = useMemo(() => {
@@ -73,7 +73,7 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
   const stats = [
     { label: 'Revenue', value: `£${analytics.totalRevenueGBP.toFixed(2)}`, icon: DollarSign, color: '#C8962C' },
     { label: 'Total Orders', value: analytics.totalOrders, icon: Package, color: '#00D9FF' },
-    { label: 'Customers', value: analytics.uniqueCustomers, icon: Users, color: '#B026FF' },
+    { label: 'Customers', value: analytics.uniqueCustomers, icon: Users, color: '#C8962C' },
   ];
 
   return (
@@ -142,8 +142,8 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
         {/* Unique Customers */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-6 flex items-center justify-center">
           <div className="text-center">
-            <Users className="w-8 h-8 text-[#B026FF] mx-auto mb-2" />
-            <p className="text-3xl font-black text-[#B026FF]">{analytics.uniqueCustomers}</p>
+            <Users className="w-8 h-8 text-[#C8962C] mx-auto mb-2" />
+            <p className="text-3xl font-black text-[#C8962C]">{analytics.uniqueCustomers}</p>
             <p className="text-xs uppercase tracking-wider text-white/40 mt-1">Unique Customers</p>
           </div>
         </div>
