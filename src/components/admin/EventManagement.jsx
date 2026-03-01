@@ -107,7 +107,7 @@ export default function EventManagement() {
                   )}
                 </div>
                 <div className="col-span-2">
-                  <span className="px-2 py-1 text-xs font-black uppercase border-2 bg-[#B026FF]/20 border-[#B026FF] text-[#B026FF]">
+                  <span className="px-2 py-1 text-xs font-black uppercase border-2 bg-[#C8962C]/20 border-[#C8962C] text-[#C8962C]">
                     {beacon.kind}
                   </span>
                 </div>
