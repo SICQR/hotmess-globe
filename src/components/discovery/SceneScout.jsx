@@ -185,7 +185,7 @@ export default function SceneScout({
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
