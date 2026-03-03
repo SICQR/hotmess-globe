@@ -28,6 +28,13 @@ function formatEventDate(dateStr: string | undefined): string {
   return format(d, 'EEE d MMM · h:mm a');
 }
 
+/**
+ * Render the events browsing interface with filter tabs, an event list, RSVP controls, and a create-event action.
+ *
+ * Displays events (filtered by "Tonight", "This Week", or "All"), shows the current user's RSVP status, allows toggling RSVPs, and opens modal sheets for event details and event creation.
+ *
+ * @returns The component's JSX for the EventsMode UI.
+ */
 export default function EventsMode() {
   const [filter, setFilter] = useState<Filter>('Tonight');
   const queryClient = useQueryClient();
