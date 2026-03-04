@@ -354,9 +354,10 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
     {
       title: 'SAFETY',
       items: [
-        { icon: AlertTriangle, label: 'SOS & Emergency Contacts', action: () => openSheet('emergency-contact', {}), iconColor: AMBER },
-        { icon: Eye, label: 'Privacy', action: () => openSheet('privacy', {}) },
-        { icon: Lock, label: 'Blocked Users', action: () => openSheet('blocked', {}) },
+        { icon: Shield,        label: 'Safety Centre',             action: () => openSheet('safety', {}),             iconColor: AMBER },
+        { icon: AlertTriangle, label: 'SOS & Emergency Contacts',  action: () => openSheet('emergency-contact', {}),  iconColor: AMBER },
+        { icon: Eye,           label: 'Privacy',                   action: () => openSheet('privacy', {}) },
+        { icon: Lock,          label: 'Blocked Users',             action: () => openSheet('blocked', {}) },
       ],
     },
     {
