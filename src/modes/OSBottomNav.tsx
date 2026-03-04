@@ -31,11 +31,13 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const currentMode = getModeFromPath(location.pathname);
-  const { unreadCount } = useUnreadCount();
+  const { unreadCount, clearTapsBadge } = useUnreadCount();
   const [showSwitcher, setShowSwitcher] = useState(false);
 
   const handleModeChange = (mode: OSMode) => {
     if (mode === currentMode) return;
+    // Clear the taps badge whenever user navigates to Ghosted
+    if (mode === 'ghosted') clearTapsBadge();
     navigate(MODES[mode].path);
   };
 

@@ -163,10 +163,10 @@ function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClos
           onClick={handleTap}
           disabled={!hasTapSupport}
           className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors disabled:opacity-40"
-          aria-label={tappedTap ? 'Untap this person' : 'Tap this person'}
+          aria-label={tappedTap ? 'Un-boo this person' : 'Boo this person'}
         >
-          <span className="text-base">{tappedTap ? '👋' : '✋'}</span>
-          <span className={tappedTap ? 'text-[#C8962C]' : 'text-white'}>{tappedTap ? 'Tapped' : 'Tap'}</span>
+          <span className="text-base">{tappedTap ? '👻' : '👻'}</span>
+          <span className={tappedTap ? 'text-[#C8962C]' : 'text-white'}>{tappedTap ? 'Boo\'d' : 'Boo'}</span>
         </button>
 
         <button
@@ -322,6 +322,50 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
   // ---- Active tab ----
   const [activeTab, setActiveTab] = useState<TabKey>('all');
 
+  // ---- Events Tonight: load user IDs of people with tonight RSVPs ----
+  const [tonightUserIds, setTonightUserIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (activeTab !== 'events') return;
+
+    const fetchTonightRsvps = async () => {
+      // Build today's date range in UTC
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      try {
+        // Get beacon IDs for events happening today
+        const { data: beacons } = await supabase
+          .from('Beacon')
+          .select('id')
+          .gte('event_start', todayStart.toISOString())
+          .lte('event_start', todayEnd.toISOString())
+          .not('event_start', 'is', null);
+
+        if (!beacons || beacons.length === 0) return;
+
+        const beaconIds = beacons.map((b: any) => b.id);
+
+        // Get user IDs who RSVPed for those beacons
+        const { data: rsvps } = await supabase
+          .from('event_rsvps')
+          .select('user_id')
+          .in('beacon_id', beaconIds)
+          .in('status', ['going', 'interested']);
+
+        if (rsvps && rsvps.length > 0) {
+          setTonightUserIds(new Set(rsvps.map((r: any) => r.user_id)));
+        }
+      } catch {
+        // Non-fatal — Events Tonight tab will show empty state
+      }
+    };
+
+    fetchTonightRsvps();
+  }, [activeTab]);
+
   // ---- Combined filter predicate (filters + tab) ----
   const filterProfiles = useCallback(
     (profile: any) => {
@@ -355,14 +399,14 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
       }
 
       if (activeTab === 'events') {
-        // Events Tonight: requires event RSVP integration (post-launch)
-        // For now, no profiles match — shows empty state
-        return false;
+        // Show profiles who have RSVPed for tonight's events
+        // Falls back to empty state if no RSVPs loaded yet
+        return tonightUserIds.has(profile.id);
       }
 
       return true;
     },
-    [filters, activeTab],
+    [filters, activeTab, tonightUserIds],
   );
 
   // ---- Profile tap handler ----

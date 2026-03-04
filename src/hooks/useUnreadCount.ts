@@ -1,46 +1,43 @@
 /**
  * useUnreadCount
  *
- * Returns the total number of unread messages for the current user.
+ * Returns the total unread count for the Ghosted tab badge:
+ *   - Unread chat messages (from chat_threads.unread_count JSONB, or localStorage fallback)
+ *   - Unseen taps/woofs (taps received since localStorage key "ghosted_taps_seen_at")
  *
- * Schema notes:
- * - messages table uses: thread_id, sender_email, content, message_type,
- *   created_date — there is NO recipient_id column and NO read_at column.
- * - chat_threads has: participant_emails[], last_message_at, unread_count (JSONB keyed by email)
- *
- * Strategy:
- *   1. Primary: sum chat_threads.unread_count[userEmail] for all threads
- *      the user participates in (same approach as useRealtimeChat).
- *   2. Fallback: count threads where last_message_at is newer than the
- *      localStorage "last read" timestamp we write on openThread.
- *   3. If both fail, return 0 silently.
- *
- * Live updates come via Supabase Realtime on the chat_threads table.
+ * Call clearTapsBadge() when the user opens the Ghosted tab to reset the taps badge.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { showLocalNotification } from '@/lib/notifications/showNotification';
 
-export function useUnreadCount(): { unreadCount: number } {
-  const [unreadCount, setUnreadCount] = useState(0);
+const TAPS_SEEN_KEY = 'ghosted_taps_seen_at';
+
+export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => void } {
+  const [chatCount, setChatCount]   = useState(0);
+  const [tapsCount, setTapsCount]   = useState(0);
   const mountedRef = useRef(true);
+
+  const unreadCount = chatCount + tapsCount;
+
+  const clearTapsBadge = useCallback(() => {
+    localStorage.setItem(TAPS_SEEN_KEY, Date.now().toString());
+    if (mountedRef.current) setTapsCount(0);
+  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
 
-    const fetchCount = async () => {
+    // ── Fetch chat unread count ────────────────────────────────────────────
+    const fetchChatCount = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
+        const { data: { user } } = await supabase.auth.getUser();
         if (!user || !mountedRef.current) return;
-
         const userEmail = user.email;
         if (!userEmail) return;
 
-        // ── Primary: unread_count JSONB field on chat_threads ──────────────
+        // Primary: unread_count JSONB field on chat_threads
         try {
           const { data: threads, error } = await supabase
             .from('chat_threads')
@@ -49,7 +46,6 @@ export function useUnreadCount(): { unreadCount: number } {
             .eq('active', true);
 
           if (!error && threads) {
-            // Try summing unread_count[userEmail] if the field exists
             const hasUnreadCountField = threads.some(
               (t) => t.unread_count !== undefined && t.unread_count !== null
             );
@@ -63,67 +59,73 @@ export function useUnreadCount(): { unreadCount: number } {
                     : 0;
                 return sum + count;
               }, 0);
-
-              if (mountedRef.current) setUnreadCount(total);
+              if (mountedRef.current) setChatCount(total);
               return;
             }
 
-            // ── Fallback: localStorage-based last-read comparison ───────────
+            // Fallback: localStorage-based last-read comparison
             const unreadThreads = threads.filter((t) => {
               if (!t.last_message_at) return false;
               try {
-                const lastRead = parseInt(
-                  localStorage.getItem(`chat_read_${t.id}`) || '0',
-                  10
-                );
+                const lastRead = parseInt(localStorage.getItem(`chat_read_${t.id}`) || '0', 10);
                 return new Date(t.last_message_at).getTime() > lastRead;
-              } catch {
-                return false;
-              }
+              } catch { return false; }
             });
-
-            if (mountedRef.current) setUnreadCount(unreadThreads.length);
+            if (mountedRef.current) setChatCount(unreadThreads.length);
             return;
           }
-        } catch {
-          // fall through to 0
-        }
+        } catch { /* fall through */ }
 
-        // If all queries failed, leave count at 0
-        if (mountedRef.current) setUnreadCount(0);
+        if (mountedRef.current) setChatCount(0);
       } catch {
-        // Non-fatal: leave count at 0
-        if (mountedRef.current) setUnreadCount(0);
+        if (mountedRef.current) setChatCount(0);
       }
+    };
+
+    // ── Fetch taps/woofs unread count ──────────────────────────────────────
+    const fetchTapsCount = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !mountedRef.current) return;
+        const userEmail = user.email;
+        if (!userEmail) return;
+
+        const seenAt = parseInt(localStorage.getItem(TAPS_SEEN_KEY) || '0', 10);
+        const seenAtISO = seenAt > 0
+          ? new Date(seenAt).toISOString()
+          : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(); // 7-day window max
+
+        const { count, error } = await supabase
+          .from('taps')
+          .select('id', { count: 'exact', head: true })
+          .eq('tapped_email', userEmail)
+          .gt('created_at', seenAtISO);
+
+        if (!error && count !== null && mountedRef.current) setTapsCount(count);
+      } catch {
+        // Non-fatal
+      }
+    };
+
+    const fetchCount = () => {
+      fetchChatCount();
+      fetchTapsCount();
     };
 
     fetchCount();
 
-    // ── Realtime: re-fetch on any chat_threads change ──────────────────────
+    // ── Realtime: re-fetch on chat_threads, messages, and taps changes ────
     const channel = supabase
       .channel('unread-count-watcher')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_threads' },
-        fetchCount
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'chat_threads' },
-        fetchCount
-      )
-      // Also watch messages inserts so the badge reacts when a new message lands
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_threads' }, fetchChatCount)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_threads' }, fetchChatCount)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload) => {
-          fetchCount();
-          // Fire a local push notification when the tab is backgrounded
+          fetchChatCount();
           if (document.hidden) {
-            const msg = payload.new as {
-              sender_name?: string;
-              content?: string;
-            };
+            const msg = payload.new as { sender_name?: string; content?: string };
             const senderLabel = msg.sender_name || 'New message';
             const preview = msg.content?.slice(0, 60) ?? '';
             showLocalNotification(
@@ -131,6 +133,23 @@ export function useUnreadCount(): { unreadCount: number } {
               preview ? `${senderLabel}: ${preview}` : senderLabel,
               '/ghosted',
               'hotmess-chat'
+            );
+          }
+        }
+      )
+      // Watch taps for live badge updates
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'taps' },
+        (payload) => {
+          fetchTapsCount();
+          if (document.hidden) {
+            const tap = payload.new as { tap_type?: string };
+            showLocalNotification(
+              tap.tap_type === 'woof' ? 'New Woof 🐾' : 'Someone Boo\'d you 👻',
+              'Check it out on Ghosted',
+              '/ghosted',
+              'hotmess-tap'
             );
           }
         }
@@ -143,7 +162,7 @@ export function useUnreadCount(): { unreadCount: number } {
     };
   }, []);
 
-  return { unreadCount };
+  return { unreadCount, clearTapsBadge };
 }
 
 export default useUnreadCount;
