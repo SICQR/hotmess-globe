@@ -14,7 +14,7 @@
  * Animation: Framer Motion stagger on mount, amber ring on avatar long-press.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLongPress } from '@/hooks/useLongPress';
@@ -130,6 +130,7 @@ interface MenuRow {
   label: string;
   action: () => void;
   iconColor?: string;
+  sublabel?: string;
 }
 
 interface MenuSection {
@@ -146,6 +147,7 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
   const [showSwitcher, setShowSwitcher] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [viewCount, setViewCount] = useState(0);
   const { openSheet } = useSheet();
   const { activePersona } = usePersona();
 
@@ -255,6 +257,22 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
     staleTime: 60_000,
   });
 
+
+  // Load profile view count (last 7 days)
+  useEffect(() => {
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { count } = await supabase
+        .from('profile_views')
+        .select('id', { count: 'exact', head: true })
+        .eq('viewed_id', user.id)
+        .gte('viewed_at', since);
+      setViewCount(count || 0);
+    };
+    load().catch(() => setViewCount(0)); // Silent fail
+  }, []);
   // ---- Handlers -------------------------------------------------------------
 
   const handleSignOut = useCallback(async () => {
@@ -349,6 +367,18 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
         { icon: ShoppingBag, label: 'My Orders', action: () => openSheet('my-orders', {}) },
         { icon: Ticket, label: 'Vault (Tickets & Passes)', action: () => openSheet('vault', {}) },
         { icon: Heart, label: 'Favourites', action: () => openSheet('favorites', {}) },
+      ],
+    },
+    {
+      title: 'SOCIAL',
+      items: [
+        {
+          icon: Eye,
+          label: 'Who Viewed You',
+          sublabel: viewCount > 0 ? `${viewCount} recent` : undefined,
+          action: () => openSheet('profile-views', {}),
+          iconColor: AMBER,
+        },
       ],
     },
     {
@@ -555,6 +585,7 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
                     icon={item.icon}
                     label={item.label}
                     iconColor={item.iconColor}
+                    sublabel={item.sublabel}
                     onTap={item.action}
                   />
                 ))}
@@ -646,11 +677,13 @@ function StatCell({ label, value }: { label: string; value: number }) {
 function SettingsRow({
   icon: Icon,
   label,
+  sublabel,
   iconColor,
   onTap,
 }: {
   icon: LucideIcon;
   label: string;
+  sublabel?: string;
   iconColor?: string;
   onTap: () => void;
 }) {
@@ -670,8 +703,11 @@ function SettingsRow({
         <Icon className="w-[18px] h-[18px]" style={{ color: iconColor || AMBER }} />
       </div>
 
-      {/* Label */}
-      <span className="flex-1 text-[15px] font-semibold text-white">{label}</span>
+      {/* Label and sublabel */}
+      <div className="flex-1 flex flex-col">
+        <span className="text-[15px] font-semibold text-white">{label}</span>
+        {sublabel && <span className="text-[12px] text-white/50">{sublabel}</span>}
+      </div>
 
       {/* Chevron */}
       <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: `${MUTED}60` }} />

@@ -8,7 +8,7 @@
  *   - Bottom actions: Message + more menu
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
@@ -73,7 +73,40 @@ export default function L2ProfileSheet({ email, uid }) {
   const isOwnProfile = !email && !uid ||
     (currentUser?.email && profileUser?.email === currentUser.email);
 
-  // Right Now status
+  // Record profile view when profile loads (fire and forget)
+  useEffect(() => {
+    if (!profileUser?.id || isOwnProfile) return;
+
+    const recordView = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || user.id === profileUser.id) return;
+
+        await supabase.from('profile_views').insert({
+          viewer_id: user.id,
+          viewed_id: profileUser.id,
+        }).then(() => {}); // ignore errors
+      } catch (err) {
+        // Silently ignore view recording errors
+        console.debug('[ProfileSheet] View recording skipped:', err);
+      }
+    };
+
+    recordView();
+  }, [profileUser?.id, isOwnProfile]);
+
+  // Fetch user's events (RSVPs)
+  const { data: userEvents = [] } = useQuery({
+    queryKey: ['user-events', profileUser?.email],
+    queryFn: async () => {
+      if (!profileUser?.email) return [];
+      const rsvps = await base44.entities.EventRSVP.filter({ user_email: profileUser.email });
+      return rsvps.slice(0, 5);
+    },
+    enabled: !!profileUser?.email,
+  });
+
+  // Fetch Right Now status
   const { data: rightNowStatus } = useQuery({
     queryKey: ['right-now-status', profileUser?.email],
     queryFn: async () => {
