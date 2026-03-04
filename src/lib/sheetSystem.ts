@@ -108,6 +108,13 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: ['id', 'email', 'handle'],
   },
+  'profile-views': {
+    id: 'profile-views',
+    title: 'Who Viewed You',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
   'event': {
     id: 'event',
     title: 'Event',

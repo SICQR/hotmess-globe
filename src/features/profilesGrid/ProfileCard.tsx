@@ -358,9 +358,24 @@ function ProfileCardInner({
     },
   }), [baseLongPressHandlers]);
 
+  // Track pointer position so we can pass it to onLongPress callback
+  const pressPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const wrappedLongPressHandlers = {
+    ...longPressHandlers,
+    onPointerDown: (e: React.PointerEvent) => {
+      pressPositionRef.current = { x: e.clientX, y: e.clientY };
+      longPressHandlers.onPointerDown(e);
+    },
+  };
+
   useEffect(() => {
-    if (isLongPressActive) setIsActive(true);
-    else if (!supportsHover()) setIsActive(false);
+    if (isLongPressActive) {
+      setIsActive(true);
+      onLongPress?.(profile, pressPositionRef.current);
+    } else if (!supportsHover()) {
+      setIsActive(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLongPressActive]);
 
   useEffect(() => {
@@ -610,7 +625,7 @@ function ProfileCardInner({
           if (target?.closest?.('.pc-contact-btn')) return;
           onClick(e);
         }}
-        {...longPressHandlers}
+        {...wrappedLongPressHandlers}
       >
         <div className="relative w-full aspect-[4/5] overflow-hidden rounded-2xl">
           <ReactBitsProfileCard

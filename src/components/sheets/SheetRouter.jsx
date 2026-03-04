@@ -20,6 +20,7 @@ import { Loader2, Construction, Sparkles } from 'lucide-react';
 
 const L2EventSheet = lazy(() => import('./L2EventSheet'));
 const L2ProfileSheet = lazy(() => import('./L2ProfileSheet'));
+const L2ProfileViewsSheet = lazy(() => import('./L2ProfileViewsSheet'));
 const L2ChatSheet = lazy(() => import('./L2ChatSheet'));
 const L2VaultSheet = lazy(() => import('./L2VaultSheet'));
 const L2ShopSheet = lazy(() => import('./L2ShopSheet'));
@@ -112,6 +113,7 @@ function SheetLoading() {
 const SHEET_COMPONENTS = {
   // Core implemented sheets
   'profile': L2ProfileSheet,
+  'profile-views': L2ProfileViewsSheet,
   'event': L2EventSheet,
   'chat': L2ChatSheet,
   'vault': L2VaultSheet,
