@@ -262,12 +262,12 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user?.email) return;
       const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { count } = await supabase
         .from('profile_views')
         .select('id', { count: 'exact', head: true })
-        .eq('viewed_id', user.id)
+        .eq('viewed_email', user.email)
         .gte('viewed_at', since);
       setViewCount(count || 0);
     };
