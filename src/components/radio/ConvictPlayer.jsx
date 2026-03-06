@@ -24,10 +24,7 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
       
-      // Award 2x XP after listening for 30 seconds
-      if (!hasAwarded && audio.currentTime >= 30 && currentUser) {
-        awardXP();
-      }
+      // (XP removed)
     };
 
     const handleEnded = () => {
@@ -55,11 +52,6 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
     };
   }, [beacon, hasAwarded, currentUser]);
 
-  const awardXP = async () => {
-    if (!currentUser) return;
-    
-    setHasAwarded(true);
-  };
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -151,9 +143,7 @@ export default function ConvictPlayer({ beacon, isOpen, onClose, currentUser }) 
 
           {/* Info */}
           <p className="text-xs text-white/40 text-center">
-            {currentUser 
-              ? 'Listen for 30s to earn XP. Headless label, no algorithm.'
-              : 'Log in to earn XP while listening. Headless label, no algorithm.'}
+            Headless label, no algorithm.
           </p>
         </div>
       </DialogContent>

@@ -112,7 +112,7 @@ export function DailyCheckinCard({ className = '', onCheckin }) {
       if (result.badgeAwarded) {
         toast.success(`${result.badgeAwarded.icon} Badge unlocked: ${result.badgeAwarded.name}!`);
       } else {
-        toast.success(`+${result.xpAwarded} XP earned!`);
+        toast.success(`Check-in complete!`);
       }
 
       onCheckin?.(result);
@@ -155,7 +155,7 @@ export function DailyCheckinCard({ className = '', onCheckin }) {
             <div>
               <div className="text-lg font-black">Checked In!</div>
               <div className="text-sm text-white/60">
-                +{claimResult.xpAwarded} XP earned
+                Checked in today
               </div>
             </div>
           </div>
@@ -231,10 +231,10 @@ export function DailyCheckinCard({ className = '', onCheckin }) {
 
         <div className="flex items-center justify-between mb-4 p-3 bg-black/30 rounded-lg">
           <div>
-            <div className="text-xs text-white/50 uppercase tracking-wider">Reward</div>
-            <div className="flex items-center gap-1 text-yellow-400 font-black">
-              <Sparkles className="w-4 h-4" />
-              <span>+{status.nextReward} XP</span>
+            <div className="text-xs text-white/50 uppercase tracking-wider">Streak</div>
+            <div className="flex items-center gap-1 text-[#C8962C] font-black">
+              <Flame className="w-4 h-4" />
+              <span>{status.currentStreak} days</span>
             </div>
           </div>
           {status.currentStreak > 0 && (
