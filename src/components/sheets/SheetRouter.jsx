@@ -87,7 +87,7 @@ function GamificationComingSoonSheet({ sheetType }) {
     <div className="flex flex-col items-center justify-center h-64 px-6 text-center">
       <Sparkles className="w-12 h-12 text-[#C8962C] mb-4 animate-pulse" />
       <h3 className="text-lg font-bold text-white mb-2">{config?.title || 'Coming Soon'}</h3>
-      <p className="text-sm text-white/60 mb-4">XP, achievements, and rewards are launching soon.</p>
+      <p className="text-sm text-white/60 mb-4">This feature is launching soon.</p>
       <span className="text-xs text-[#C8962C] bg-[#C8962C]/10 px-3 py-1 rounded-full">COMING SOON</span>
     </div>
   );

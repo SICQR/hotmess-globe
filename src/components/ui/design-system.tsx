@@ -350,14 +350,13 @@ TextInput.displayName = 'TextInput';
 
 interface BadgeProps {
   children: ReactNode;
-  variant?: 'gold' | 'pink' | 'green' | 'gray';
+  variant?: 'gold' | 'green' | 'gray';
   pulse?: boolean;
 }
 
 export function Badge({ children, variant = 'gold', pulse = false }: BadgeProps) {
   const variants = {
     gold: 'bg-gold text-dark',
-    pink: 'bg-accent text-white',
     green: 'bg-online text-dark',
     gray: 'bg-chatGray text-light',
   };
@@ -805,7 +804,7 @@ interface LiveRadioBarProps {
 export function LiveRadioBar({ show, isLive = true, onListen, onFollow, className }: LiveRadioBarProps) {
   return (
     <div className={cn('bg-darkest border-t border-borderGlow shadow-gold flex items-center px-4 py-3 gap-4', className)}>
-      {isLive && <Badge variant="pink" pulse>LIVE</Badge>}
+      {isLive && <Badge variant="gold" pulse>LIVE</Badge>}
       <span className="font-bold text-gold flex-1 truncate">{show}</span>
       <Button variant="primary" size="sm" onClick={onListen}>Listen</Button>
       {onFollow && (

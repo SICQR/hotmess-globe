@@ -56,7 +56,7 @@ export const BRAND = {
     SUPERHUNG: {
       name: 'SUPERHUNG',
       tagline: 'Limited. Legendary.',
-      color: '#FFD700',
+      color: '#C8962C',
       description: 'Ultra-limited drops. When they\'re gone, they\'re gone.',
     },
     SUPERRAW: {
@@ -161,10 +161,8 @@ export const BRAND = {
 
   // Colors
   colors: {
-    hot: '#C8962C',
+    gold: '#C8962C',
     cyan: '#00D9FF',
-    purple: '#C8962C',
-    gold: '#FFD700',
     lime: '#39FF14',
     orange: '#FF6B35',
   },

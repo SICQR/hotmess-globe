@@ -13,7 +13,7 @@ const TUTORIAL_STEPS = {
     { id: 'connect-2', target: 'compatibility', content: 'Green badges mean high compatibility' }
   ],
   'marketplace': [
-    { id: 'market-1', target: 'xp', content: 'Products can be purchased with XP' },
+    { id: 'market-1', target: 'cart', content: 'Browse and buy from the community market' },
     { id: 'market-2', target: 'cart', content: 'Add items to cart and checkout' }
   ]
 };

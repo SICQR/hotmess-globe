@@ -222,16 +222,6 @@ export default function AchievementUnlockModal({
               {achievement.description}
             </motion.p>
 
-            {achievement.reward_xp && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.9, type: 'spring' }}
-                className="inline-flex items-center gap-2 bg-[#FFEB3B] text-black px-4 py-2 font-black mb-6"
-              >
-                +{achievement.reward_xp} XP
-              </motion.div>
-            )}
 
             <motion.div
               initial={{ y: 20, opacity: 0 }}
