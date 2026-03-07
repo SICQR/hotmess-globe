@@ -30,20 +30,8 @@
   "routes": [
     {
       "src": "/(.*)",
-      "has": [{ "type": "host", "value": "hotmessldn.com" }],
-      "dest": "https://hotmess.app/$1",
-      "status": 301
-    },
-    {
-      "src": "/(.*)",
       "has": [{ "type": "host", "value": "www.hotmessldn.com" }],
-      "dest": "https://hotmess.app/$1",
-      "status": 301
-    },
-    {
-      "src": "/(.*)",
-      "has": [{ "type": "host", "value": "www.hotmess.app" }],
-      "dest": "https://hotmess.app/$1",
+      "dest": "https://hotmessldn.com/$1",
       "status": 301
     },
     {
