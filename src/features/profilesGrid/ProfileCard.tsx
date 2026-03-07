@@ -532,7 +532,10 @@ function ProfileCardInner({
     };
 
     return (
-      <div ref={attachRef as unknown as React.Ref<HTMLDivElement>} className="relative">
+      <div
+        ref={attachRef as unknown as React.Ref<HTMLDivElement>}
+        className={`relative transition-all duration-300 ${tappedTap ? 'ring-2 ring-[#C8962C]' : ''}`}
+      >
         <SimpleProfileCard
           id={String(profile.id)}
           name={profileName}
@@ -553,10 +556,10 @@ function ProfileCardInner({
         {/* Tap / Woof overlay buttons */}
         {hasTapSupport && (
           <div className="absolute top-2 left-2 flex flex-col gap-1.5 pointer-events-auto z-10">
-            {/* Tap button */}
+            {/* Boo button */}
             <button
               type="button"
-              aria-label="Tap"
+              aria-label="Boo"
               onClick={handleTapClick}
               className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-200 active:scale-90 ${
                 tappedTap || tapAnim
@@ -564,11 +567,9 @@ function ProfileCardInner({
                   : 'bg-[#1C1C1E]/80 border-white/20 text-white/60'
               }`}
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                {/* Hand / wave icon */}
-                <path d="M18 11V6a2 2 0 0 0-4 0v5" />
-                <path d="M14 10V4a2 2 0 0 0-4 0v6" />
-                <path d="M10 10.5V6a2 2 0 0 0-4 0v8a6 6 0 0 0 6 6h1a6 6 0 0 0 6-6v-3a2 2 0 0 0-4 0" />
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                {/* Ghost icon */}
+                <path d="M12 2a8 8 0 0 0-8 8v10l3-3 3 3 3-3 3 3 3-3V10a8 8 0 0 0-8-8zm-2.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
               </svg>
             </button>
             {/* Woof button */}

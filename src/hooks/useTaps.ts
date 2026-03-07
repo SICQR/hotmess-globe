@@ -124,14 +124,26 @@ export function useTaps(myEmail: string | null) {
       }
 
       // Fire notification to the tapped user (best-effort, table may not exist yet)
-      const myName = myEmail.split('@')[0] ?? 'Someone';
+      // Fetch sender's actual display_name so the notification says who sent it
+      let myDisplayName: string = myEmail.split('@')[0] ?? 'Someone';
+      try {
+        const { data: myProfile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('email', myEmail)
+          .maybeSingle();
+        if (myProfile?.display_name) myDisplayName = myProfile.display_name;
+      } catch {
+        // best-effort — fall back to email handle
+      }
+
       supabase
         .from('notifications')
         .insert({
           user_email: tappedEmail,
-          type: tapType === 'woof' ? 'woof' : 'tap',
-          title: tapType === 'woof' ? 'New Woof!' : 'New Tap!',
-          message: `${tappedName ? tappedName : myName} sent you a ${tapType}!`,
+          type: tapType === 'woof' ? 'woof' : 'boo',
+          title: tapType === 'woof' ? 'New Woof! 🐾' : 'Boo\'d you! 👻',
+          message: `${myDisplayName} ${tapType === 'woof' ? 'woofed at you' : 'boo\'d you'}!`,
           read: false,
         })
         .then(({ error: notifErr }) => {
