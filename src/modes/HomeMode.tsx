@@ -1,19 +1,19 @@
 /**
  * HomeMode -- Dashboard (route: /)
  *
- * The default landing screen after login. A scrollable OS dashboard that
- * surfaces live/real-time nightlife activity across 6 sections:
- *
- *   1. Top bar -- City selector + wordmark + notification bell
- *   2. Right Now strip -- Active users with intent pills
- *   3. Nearby Events -- Horizontal event cards from beacons VIEW
- *   4. Active Beacons -- Compact list of closest beacons
- *   5. From the Market -- 2-col grid of preloved listings
- *   6. Radio banner -- Live radio with waveform animation
- *
- * Data: TanStack Query (useQuery) for all fetches.
- * Animation: Framer Motion staggered fade-up on mount.
- * Loading: Skeleton loaders (not spinners).
+ * 12-section scrollable OS dashboard matching HOTMESS-HomeMode-Design.html:
+ *   01. Intention Bar       — Hookup / Hang / Explore status picker
+ *   02. Pulse Globe Teaser  — Mini globe CTA → /pulse
+ *   03. Who's Out Right Now — Avatar row with intent-coloured rings
+ *   04. Tonight's Events    — Horizontal event cards
+ *   05. Live Radio          — Radio banner (channel teal)
+ *   06. Nearby (Ghost)      — 4-col mini-grid teaser → /ghosted
+ *   07. Market Picks        — Horizontal product scroll
+ *   08. Active Beacons      — Compact beacon list
+ *   09. Venue Kings         — Horizontal venue-king scroll
+ *   10. Creator Drop        — HUNG drop banner
+ *   11. Your Profile        — Profile completion card
+ *   12. Safety Strip        — SOS reminder
  */
 
 import { useState, useRef, useCallback } from 'react';
@@ -33,11 +33,9 @@ import {
   Radio,
   Calendar,
   Sparkles,
-  Clock,
-  MessageSquare,
-  Heart,
-  Ghost,
-  Wifi,
+  Search,
+  Shield,
+  Crown,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
@@ -51,210 +49,245 @@ interface HomeModeProps {
   className?: string;
 }
 
-// ---- Brand constants --------------------------------------------------------
-const AMBER = '#C8962C';
+// ── Brand constants ──────────────────────────────────────────────────────────
+const AMBER   = '#C8962C';
 const CARD_BG = '#1C1C1E';
 const ROOT_BG = '#050507';
-const MUTED = '#8E8E93';
+const MUTED   = '#8E8E93';
+const BORDER  = 'rgba(255,255,255,0.06)';
 
-// ---- Intent color mapping ---------------------------------------------------
-const INTENT_COLORS: Record<string, { bg: string; text: string }> = {
-  hookup:  { bg: AMBER, text: '#000' },
-  hang:    { bg: '#7C3AED', text: '#fff' },
-  explore: { bg: '#14B8A6', text: '#fff' },
+// ── Right-Now intent colours (per mockup) ────────────────────────────────────
+const RN_COLORS: Record<string, { ring: string; bg: string; text: string; label: string; emoji: string }> = {
+  hookup:  { ring: '#FF5500', bg: 'rgba(255,85,0,0.15)',    text: '#FF5500', label: 'HOOKUP',  emoji: '🔥' },
+  hang:    { ring: '#00C2E0', bg: 'rgba(0,194,224,0.12)',  text: '#00C2E0', label: 'HANG',    emoji: '👋' },
+  explore: { ring: '#A899D8', bg: 'rgba(168,153,216,0.12)', text: '#A899D8', label: 'EXPLORE', emoji: '🗺' },
 };
 
-function getIntentStyle(intent: string) {
-  return INTENT_COLORS[intent?.toLowerCase()] ?? { bg: AMBER, text: '#000' };
+function getRNColor(intent: string) {
+  return RN_COLORS[intent?.toLowerCase()] ?? { ring: AMBER, bg: `${AMBER}20`, text: AMBER, label: intent?.toUpperCase(), emoji: '✨' };
 }
 
-// ---- Date formatting helpers ------------------------------------------------
-function formatShortDate(dateStr: string | undefined): string {
+// ── Date helpers ─────────────────────────────────────────────────────────────
+function fmtDate(dateStr?: string): string {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  if (isToday(d)) return 'Tonight';
-  if (isTomorrow(d)) return 'Tomorrow';
-  return format(d, 'EEE d MMM');
+  if (isToday(d)) return 'TONIGHT';
+  if (isTomorrow(d)) return 'TOMORROW';
+  return format(d, 'EEE d MMM').toUpperCase();
 }
 
-// ---- Section animation wrapper ----------------------------------------------
-const sectionVariants = {
-  hidden: { opacity: 0, y: 20 },
+// ── Section animation wrapper ─────────────────────────────────────────────────
+const sectionVars = {
+  hidden:  { opacity: 0, y: 16 },
   visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.08, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.07, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] },
   }),
 };
 
-function AnimatedSection({
-  index,
-  children,
-  className = '',
-}: {
-  index: number;
-  children: React.ReactNode;
-  className?: string;
-}) {
+function Sec({ index, children, className = '' }: { index: number; children: React.ReactNode; className?: string }) {
   return (
-    <motion.section
-      custom={index}
-      initial="hidden"
-      animate="visible"
-      variants={sectionVariants}
-      className={className}
-    >
+    <motion.section custom={index} initial="hidden" animate="visible" variants={sectionVars} className={className}>
       {children}
     </motion.section>
   );
 }
 
-// ---- Section header ---------------------------------------------------------
-function SectionHeader({
-  title,
-  linkLabel,
-  onLink,
+// ── Section header ────────────────────────────────────────────────────────────
+function SH({
+  title, dot, onLink, linkLabel = 'See all',
 }: {
-  title: string;
-  linkLabel?: string;
-  onLink?: () => void;
+  title: string; dot?: string; onLink?: () => void; linkLabel?: string;
 }) {
   return (
-    <div className="flex items-center justify-between mb-3">
-      <h2 className="text-white font-bold text-base">{title}</h2>
-      {linkLabel && onLink && (
-        <button
-          onClick={onLink}
-          className="flex items-center gap-0.5 text-xs font-semibold active:opacity-70 transition-opacity"
-          style={{ color: AMBER }}
-        >
+    <div className="flex items-baseline justify-between mb-3 px-4">
+      <h2 className="font-bold leading-none" style={{ fontSize: 18, color: '#fff' }}>
+        {dot && (
+          <span className="inline-block w-1.5 h-1.5 rounded-full mr-2 relative" style={{ background: dot, top: -1 }} />
+        )}
+        {title}
+      </h2>
+      {onLink && (
+        <button onClick={onLink} className="text-[13px] font-medium active:opacity-70" style={{ color: AMBER }}>
           {linkLabel}
-          <ChevronRight className="w-3.5 h-3.5" />
         </button>
       )}
     </div>
   );
 }
 
-// ---- Skeleton primitives ----------------------------------------------------
-function ShimmerBox({ className = '' }: { className?: string }) {
+// ── Shimmer ──────────────────────────────────────────────────────────────────
+function Shimmer({ className = '' }: { className?: string }) {
   return <div className={`animate-pulse rounded-xl bg-white/[0.06] ${className}`} />;
 }
 
-function RightNowSkeleton() {
-  return (
-    <div className="flex gap-3 overflow-hidden">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex flex-col items-center gap-2 w-20 flex-shrink-0">
-          <ShimmerBox className="w-14 h-14 rounded-full" />
-          <ShimmerBox className="w-12 h-3" />
-          <ShimmerBox className="w-10 h-4 rounded-full" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function EventCardSkeleton() {
-  return (
-    <div className="w-[260px] flex-shrink-0">
-      <div className={`rounded-2xl overflow-hidden border border-white/5`} style={{ background: CARD_BG }}>
-        <ShimmerBox className="w-full h-36 rounded-none" />
-        <div className="p-3 space-y-2">
-          <ShimmerBox className="w-3/4 h-4" />
-          <ShimmerBox className="w-1/2 h-3" />
-          <ShimmerBox className="w-20 h-5 rounded-full" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function BeaconRowSkeleton() {
-  return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <ShimmerBox className="w-9 h-9 rounded-xl" />
-      <div className="flex-1 space-y-1.5">
-        <ShimmerBox className="w-2/3 h-4" />
-        <ShimmerBox className="w-1/3 h-3" />
-      </div>
-      <ShimmerBox className="w-12 h-3" />
-    </div>
-  );
-}
-
-function ProductCardSkeleton() {
-  return (
-    <div className={`rounded-2xl overflow-hidden border border-white/5`} style={{ background: CARD_BG }}>
-      <ShimmerBox className="w-full aspect-square rounded-none" />
-      <div className="p-3 space-y-2">
-        <ShimmerBox className="w-3/4 h-3.5" />
-        <ShimmerBox className="w-1/3 h-4" />
-      </div>
-    </div>
-  );
-}
-
-// ---- Right Now card ---------------------------------------------------------
-function RightNowCard({
-  avatarUrl,
-  name,
-  intent,
-  onTap,
+// ── 01. Intention Bar ─────────────────────────────────────────────────────────
+function IntentionBar({
+  activeIntent,
+  onSelect,
 }: {
-  avatarUrl?: string;
-  name: string;
-  intent: string;
-  onTap: () => void;
+  activeIntent: string | null;
+  onSelect: (intent: string) => void;
 }) {
-  const style = getIntentStyle(intent);
+  const intents: Array<{ key: string; emoji: string; label: string }> = [
+    { key: 'hookup',  emoji: '🔥', label: 'HOOKUP'  },
+    { key: 'hang',    emoji: '👋', label: 'HANG'    },
+    { key: 'explore', emoji: '🗺', label: 'EXPLORE' },
+  ];
+  return (
+    <div className="mx-4 rounded-2xl p-4" style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}>
+      <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: MUTED }}>
+        What are you up to?
+      </p>
+      <div className="flex gap-2">
+        {intents.map(({ key, emoji, label }) => {
+          const c = RN_COLORS[key];
+          const isActive = activeIntent === key;
+          return (
+            <button
+              key={key}
+              onClick={() => onSelect(key)}
+              className="flex-1 py-2.5 rounded-xl border-[1.5px] flex flex-col items-center gap-1 active:scale-95 transition-all"
+              style={{
+                borderColor: c.ring,
+                background: isActive ? c.bg : 'transparent',
+              }}
+            >
+              <span style={{ fontSize: 16 }}>{emoji}</span>
+              <span className="text-[10px] font-bold" style={{ color: c.text }}>{label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── 02. Globe Teaser ──────────────────────────────────────────────────────────
+function GlobeTeaser({ liveCount, onTap }: { liveCount: number; onTap: () => void }) {
   return (
     <button
       onClick={onTap}
-      className="w-20 flex-shrink-0 snap-start flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
-      aria-label={`View ${name}'s profile`}
+      className="mx-4 rounded-2xl overflow-hidden relative active:scale-[0.98] transition-transform"
+      style={{
+        height: 140,
+        background: 'linear-gradient(135deg, #0D1520 0%, #050507 60%)',
+        border: `1px solid rgba(200,150,44,0.2)`,
+      }}
+      aria-label="Open Pulse globe"
     >
-      <div className="relative">
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt={name}
-            className="w-14 h-14 rounded-full object-cover border-2"
-            style={{ borderColor: style.bg }}
-          />
-        ) : (
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center border-2"
-            style={{ borderColor: style.bg, background: `${style.bg}20` }}
-          >
-            <span className="font-black text-lg" style={{ color: style.bg }}>
-              {name[0]?.toUpperCase() ?? '?'}
-            </span>
-          </div>
-        )}
-        {/* Online dot */}
-        <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#34C759] rounded-full border-2 border-[#050507]" />
+      {/* Orb */}
+      <div
+        className="absolute"
+        style={{
+          top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          width: 80, height: 80, borderRadius: '50%',
+          background: 'radial-gradient(ellipse at 35% 35%, #1a2840 0%, #0a1525 60%, #050b15 100%)',
+          boxShadow: '0 0 40px rgba(200,150,44,0.15), 0 0 80px rgba(200,150,44,0.06)',
+        }}
+      />
+      {/* Orbit rings */}
+      {[54, 78, 100].map((sz, i) => (
+        <div
+          key={sz}
+          className="absolute rounded-full"
+          style={{
+            top: '50%', left: '50%',
+            width: sz, height: sz * 0.3,
+            marginLeft: -(sz / 2), marginTop: -(sz * 0.3 / 2),
+            border: `1px solid rgba(200,150,44,${0.25 - i * 0.06})`,
+            borderRadius: '50%',
+            transform: `rotateX(70deg)`,
+          }}
+        />
+      ))}
+      {/* Nodes */}
+      {[
+        { top: '30%', left: '28%' },
+        { top: '55%', left: '62%' },
+        { top: '42%', left: '54%' },
+      ].map((pos, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full"
+          style={{ ...pos, width: 6, height: 6, background: AMBER, boxShadow: `0 0 8px ${AMBER}` }}
+        />
+      ))}
+      {/* Stats */}
+      <div className="absolute bottom-3.5 left-4 flex gap-5">
+        <div>
+          <p className="font-extrabold leading-none" style={{ fontSize: 18, color: AMBER }}>{liveCount}</p>
+          <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: MUTED }}>LIVE NOW</p>
+        </div>
+        <div>
+          <p className="font-extrabold leading-none" style={{ fontSize: 18, color: AMBER }}>3</p>
+          <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: MUTED }}>EVENTS</p>
+        </div>
       </div>
-      <span className="text-white text-[11px] font-medium truncate w-full text-center leading-tight">
-        {name}
-      </span>
-      <span
-        className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full leading-tight"
-        style={{ background: style.bg, color: style.text }}
+      {/* CTA pill */}
+      <div
+        className="absolute top-3.5 right-3.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
+        style={{ background: AMBER, color: '#000' }}
       >
-        {intent}
+        PULSE →
+      </div>
+    </button>
+  );
+}
+
+// ── 03. Right Now user card ────────────────────────────────────────────────────
+function RNCard({
+  name, intent, avatarUrl, onTap,
+}: { name: string; intent: string; avatarUrl?: string; onTap: () => void }) {
+  const c = getRNColor(intent);
+  return (
+    <button
+      onClick={onTap}
+      className="flex-shrink-0 flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
+      style={{ width: 72 }}
+    >
+      <div className="relative" style={{ width: 56, height: 56 }}>
+        {/* Coloured ring */}
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{ padding: 2.5, background: `conic-gradient(${c.ring}, ${c.ring})` }}
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={name} className="w-full h-full rounded-full object-cover" style={{ border: `2px solid ${ROOT_BG}` }} />
+          ) : (
+            <div
+              className="w-full h-full rounded-full flex items-center justify-center font-black text-lg"
+              style={{ background: CARD_BG, border: `2px solid ${ROOT_BG}`, color: c.ring }}
+            >
+              {name[0]?.toUpperCase() ?? '?'}
+            </div>
+          )}
+        </div>
+        {/* RN badge bottom-right */}
+        <div
+          className="absolute bottom-0 right-0 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-black"
+          style={{ background: c.ring, border: `2px solid ${ROOT_BG}`, color: '#000', zIndex: 2 }}
+        >
+          {c.emoji}
+        </div>
+      </div>
+      <span className="text-[11px] font-medium truncate w-full text-center" style={{ color: MUTED }}>
+        {name}
       </span>
     </button>
   );
 }
 
-// ---- Right Now empty state --------------------------------------------------
-function RightNowEmpty({ onGoLive }: { onGoLive: () => void }) {
+// ── 03. Right Now empty ───────────────────────────────────────────────────────
+function RNEmpty({ onGoLive }: { onGoLive: () => void }) {
   return (
-    <div className="flex flex-col items-center py-6 px-4 rounded-2xl border border-dashed border-white/10" style={{ background: `${CARD_BG}80` }}>
-      <Zap className="w-10 h-10 mb-2" style={{ color: MUTED }} />
-      <p className="text-white text-sm font-semibold mb-1">Be first to share your vibe tonight</p>
-      <p className="text-xs mb-3" style={{ color: MUTED }}>Let people nearby know you're out</p>
+    <div
+      className="mx-4 flex flex-col items-center py-5 px-4 rounded-2xl border border-dashed border-white/10"
+      style={{ background: `${CARD_BG}80` }}
+    >
+      <Zap className="w-8 h-8 mb-2" style={{ color: MUTED }} />
+      <p className="text-white text-sm font-semibold mb-1">Be first to share your vibe</p>
+      <p className="text-xs mb-3" style={{ color: MUTED }}>Let nearby people know you're out</p>
       <button
         onClick={onGoLive}
         className="h-10 px-5 rounded-full font-bold text-sm flex items-center gap-1.5 active:scale-95 transition-transform"
@@ -267,56 +300,187 @@ function RightNowEmpty({ onGoLive }: { onGoLive: () => void }) {
   );
 }
 
-// ---- Event card -------------------------------------------------------------
+// ── 04. Event card ─────────────────────────────────────────────────────────────
 function EventCard({
-  title,
-  imageUrl,
-  venue,
-  startsAt,
-  onTap,
-}: {
-  title: string;
-  imageUrl?: string;
-  venue?: string;
-  startsAt?: string;
-  onTap: () => void;
-}) {
-  const datePill = formatShortDate(startsAt);
+  title, imageUrl, venue, startsAt, onTap,
+}: { title: string; imageUrl?: string; venue?: string; startsAt?: string; onTap: () => void }) {
+  const datePill = fmtDate(startsAt);
   return (
     <button
       onClick={onTap}
-      className="w-[260px] flex-shrink-0 snap-start text-left active:scale-[0.98] transition-transform rounded-2xl overflow-hidden border border-white/5"
-      style={{ background: CARD_BG }}
-      aria-label={`View event: ${title}`}
+      className="flex-shrink-0 rounded-2xl overflow-hidden border text-left active:scale-[0.98] transition-transform"
+      style={{ width: 200, background: CARD_BG, border: `1px solid ${BORDER}` }}
     >
-      {imageUrl ? (
-        <img src={imageUrl} alt={title} className="w-full h-36 object-cover" />
-      ) : (
-        <div className="w-full h-36 flex items-center justify-center" style={{ background: `${AMBER}15` }}>
-          <Calendar className="w-10 h-10" style={{ color: `${AMBER}60` }} />
-        </div>
-      )}
-      <div className="p-3">
-        <p className="text-white font-bold text-sm leading-tight line-clamp-1 mb-1">{title}</p>
-        {venue && (
-          <p className="text-xs leading-tight mb-2 line-clamp-1" style={{ color: MUTED }}>
-            {venue}
-          </p>
+      <div className="relative" style={{ height: 110 }}>
+        {imageUrl ? (
+          <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#1a0a0a,#2a1020)' }}>
+            <Calendar className="w-8 h-8" style={{ color: `${AMBER}40` }} />
+          </div>
         )}
         {datePill && (
           <span
-            className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: `${AMBER}20`, color: AMBER }}
+            className="absolute bottom-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-md"
+            style={{ background: AMBER, color: '#000' }}
           >
             {datePill}
           </span>
+        )}
+      </div>
+      <div className="p-2.5 pb-3">
+        <p className="text-[10px] font-bold mb-1 uppercase tracking-wide" style={{ color: AMBER }}>
+          {startsAt ? new Date(startsAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Tonight'}
+        </p>
+        <p className="text-white font-bold text-[13px] leading-tight line-clamp-2 mb-1">{title}</p>
+        {venue && <p className="text-[11px] line-clamp-1" style={{ color: MUTED }}>{venue}</p>}
+      </div>
+    </button>
+  );
+}
+
+// ── 05. Radio Banner ──────────────────────────────────────────────────────────
+const RADIO_TEAL = '#00C2E0';
+
+function RadioBanner({ onNavigate }: { onNavigate: () => void }) {
+  const { isPlaying, currentShowName, togglePlay } = useRadio();
+  return (
+    <div
+      className="mx-4 rounded-2xl p-4 cursor-pointer relative overflow-hidden active:scale-[0.98] transition-transform"
+      style={{
+        background: 'linear-gradient(135deg,#001820 0%,#003040 50%,#001828 100%)',
+        border: `1px solid rgba(0,194,224,0.25)`,
+      }}
+      onClick={onNavigate}
+    >
+      {/* Background glow */}
+      <div
+        className="absolute -top-5 -right-5 w-28 h-28 rounded-full pointer-events-none"
+        style={{ background: `radial-gradient(ellipse,rgba(0,194,224,0.1) 0%,transparent 70%)` }}
+      />
+      {/* LIVE badge */}
+      <div
+        className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-md mb-2"
+        style={{ background: 'rgba(0,194,224,0.15)', border: `1px solid rgba(0,194,224,0.3)`, color: RADIO_TEAL }}
+      >
+        <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: RADIO_TEAL }} />
+        LIVE
+      </div>
+      <p className="font-black text-base text-white mb-0.5">{currentShowName || 'HOTMESS RADIO'}</p>
+      <p className="text-xs mb-3" style={{ color: `rgba(0,194,224,0.8)` }}>On air now</p>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: RADIO_TEAL }}
+        >
+          {isPlaying ? <Pause className="w-4 h-4 text-black" /> : <Play className="w-4 h-4 text-black ml-0.5" />}
+        </button>
+        {/* Waveform */}
+        <div className="flex items-center gap-0.5 flex-1 h-6">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex-1 rounded-sm"
+              style={{
+                background: `rgba(0,194,224,0.4)`,
+                height: isPlaying ? `${20 + Math.sin(i * 0.8) * 60}%` : '20%',
+                transition: 'height 0.3s ease',
+                animationDelay: `${i * 0.04}s`,
+              }}
+            />
+          ))}
+        </div>
+        <span className="text-[11px] font-semibold flex-shrink-0" style={{ color: RADIO_TEAL }}>TUNE IN</span>
+      </div>
+    </div>
+  );
+}
+
+// ── 06. Nearby Ghosted Teaser ─────────────────────────────────────────────────
+function GhostTeaser({
+  users,
+  onNavigate,
+}: { users: Array<{ id: string; name: string; intent: string }>; onNavigate: () => void }) {
+  const mock = ['😈', '🔥', '👻', '💫', '🌙', '⚡', '🎭', '🦊'];
+  const cells = users.length >= 4 ? users.slice(0, 8) : mock.map((e, i) => ({ id: `m${i}`, name: e, intent: 'explore' }));
+  return (
+    <div>
+      <div className="grid grid-cols-4 gap-2 px-4">
+        {cells.slice(0, 8).map((u, i) => {
+          const c = getRNColor((u as { intent: string }).intent);
+          return (
+            <button
+              key={u.id || i}
+              onClick={onNavigate}
+              className="rounded-xl overflow-hidden relative aspect-square active:scale-95 transition-transform"
+              style={{ background: '#242426', border: `1px solid ${BORDER}` }}
+            >
+              <div className="w-full h-full flex items-center justify-center" style={{ fontSize: 26 }}>
+                {typeof u.name === 'string' && u.name.match(/\p{Emoji}/u) ? u.name : u.name[0]?.toUpperCase() ?? '?'}
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 rounded-b-xl" style={{ background: c.ring }} />
+              <span className="absolute top-1 right-1.5 text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                {i < users.length ? `${(i + 1) * 0.2 | 0}.${((i + 1) * 2) % 9}km` : ''}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <button
+        onClick={onNavigate}
+        className="mx-4 mt-2.5 py-3 rounded-xl text-center text-[13px] font-semibold active:opacity-70"
+        style={{
+          background: `rgba(200,150,44,0.08)`,
+          border: `1px dashed rgba(200,150,44,0.3)`,
+          color: AMBER,
+        }}
+      >
+        See everyone nearby →
+      </button>
+    </div>
+  );
+}
+
+// ── 07. Market card ───────────────────────────────────────────────────────────
+function MarketCard({
+  title, imageUrl, price, brand, onTap,
+}: { title: string; imageUrl?: string; price?: number; brand?: string; onTap: () => void }) {
+  return (
+    <button
+      onClick={onTap}
+      className="flex-shrink-0 rounded-xl overflow-hidden border text-left active:scale-95 transition-transform"
+      style={{ width: 140, background: CARD_BG, border: `1px solid ${BORDER}` }}
+    >
+      <div className="relative" style={{ height: 140 }}>
+        {imageUrl ? (
+          <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-4xl"
+            style={{ background: 'linear-gradient(135deg,#2a1a0a,#1a0a0a)' }}>
+            <Sparkles className="w-8 h-8" style={{ color: `${AMBER}40` }} />
+          </div>
+        )}
+        {brand && (
+          <span
+            className="absolute top-1.5 left-1.5 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider"
+            style={{ background: AMBER, color: '#000' }}
+          >
+            {brand}
+          </span>
+        )}
+      </div>
+      <div className="p-2.5">
+        <p className="text-white text-[12px] font-semibold leading-tight line-clamp-2 mb-1">{title}</p>
+        {price != null && (
+          <p className="font-black text-sm" style={{ color: AMBER }}>£{price}</p>
         )}
       </div>
     </button>
   );
 }
 
-// ---- Beacon row -------------------------------------------------------------
+// ── 08. Beacon row ────────────────────────────────────────────────────────────
 const BEACON_ICONS: Record<string, typeof Flame> = {
   event: Calendar,
   social: Star,
@@ -324,189 +488,202 @@ const BEACON_ICONS: Record<string, typeof Flame> = {
 };
 
 function BeaconRow({
-  title,
-  kind,
-  distance,
-  isLast,
-  onTap,
-}: {
-  title: string;
-  kind?: string;
-  distance?: string;
-  isLast: boolean;
-  onTap: () => void;
-}) {
+  title, kind, distance, isLast, onTap,
+}: { title: string; kind?: string; distance?: string; isLast: boolean; onTap: () => void }) {
   const Icon = BEACON_ICONS[kind ?? ''] ?? BEACON_ICONS.default;
   return (
     <button
       onClick={onTap}
-      className={`w-full flex items-center gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors ${
-        !isLast ? 'border-b border-white/5' : ''
-      }`}
-      aria-label={`View beacon: ${title}`}
+      className={`w-full flex items-center gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors ${!isLast ? 'border-b border-white/5' : ''}`}
     >
-      <div
-        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{ background: `${AMBER}15` }}
-      >
-        <Icon className="w-4.5 h-4.5" style={{ color: AMBER }} />
+      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `rgba(200,150,44,0.12)`, border: `1px solid rgba(200,150,44,0.25)` }}>
+        <Icon className="w-5 h-5" style={{ color: AMBER }} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-white text-sm font-semibold truncate">{title}</p>
+        <p className="text-white font-bold text-sm truncate">{title}</p>
+        {distance && <p className="text-[11px] mt-0.5 font-semibold" style={{ color: AMBER }}>{distance}</p>}
       </div>
-      {distance && (
-        <span className="text-xs font-medium flex-shrink-0" style={{ color: MUTED }}>
-          {distance}
+      <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: MUTED }} />
+    </button>
+  );
+}
+
+// ── 09. Venue King card ───────────────────────────────────────────────────────
+function VenueKingCard({
+  name, venue, emoji, onTap,
+}: { name: string; venue: string; emoji?: string; onTap: () => void }) {
+  return (
+    <button
+      onClick={onTap}
+      className="flex-shrink-0 rounded-2xl text-center p-3 active:scale-95 transition-transform"
+      style={{ width: 130, background: CARD_BG, border: `1px solid ${BORDER}` }}
+    >
+      <Crown className="w-4 h-4 mx-auto mb-1" style={{ color: AMBER }} />
+      <div
+        className="w-11 h-11 rounded-full flex items-center justify-center text-xl mx-auto mb-1.5"
+        style={{ background: '#242426', border: `2px solid ${AMBER}` }}
+      >
+        {emoji ?? '👑'}
+      </div>
+      <p className="text-white font-bold text-[12px] mb-0.5">{name}</p>
+      <p className="text-[10px] mb-2" style={{ color: MUTED }}>{venue}</p>
+      <span
+        className="text-[10px] font-bold px-2.5 py-1 rounded-lg"
+        style={{ border: `1px solid rgba(200,150,44,0.3)`, color: AMBER }}
+      >
+        King
+      </span>
+    </button>
+  );
+}
+
+// ── 10. Creator Drop Banner ───────────────────────────────────────────────────
+const HUNG = '#C41230';
+
+function CreatorDrop({ onTap }: { onTap: () => void }) {
+  return (
+    <button
+      onClick={onTap}
+      className="mx-4 rounded-2xl p-4 text-left relative overflow-hidden active:scale-[0.98] transition-transform"
+      style={{
+        background: 'linear-gradient(135deg,#1a0a0a 0%,#2a0808 50%,#1a0305 100%)',
+        border: `1px solid rgba(196,18,48,0.3)`,
+      }}
+    >
+      <p className="text-[10px] font-black tracking-widest uppercase mb-1" style={{ color: HUNG }}>NEW DROP</p>
+      <p className="font-black text-[18px] leading-tight text-white mb-0.5">HUNG SS25</p>
+      <p className="text-[12px] mb-3" style={{ color: MUTED }}>Statement pieces — limited run</p>
+      <div className="flex gap-2">
+        <span
+          className="flex-1 py-2.5 rounded-xl text-center text-[12px] font-bold"
+          style={{ background: HUNG, color: '#fff' }}
+        >
+          Shop Now
+        </span>
+        <span
+          className="px-3.5 py-2.5 rounded-xl text-[12px] font-semibold"
+          style={{ background: 'rgba(196,18,48,0.15)', border: `1px solid rgba(196,18,48,0.3)`, color: HUNG }}
+        >
+          Preview
+        </span>
+      </div>
+    </button>
+  );
+}
+
+// ── 11. Profile completion card ───────────────────────────────────────────────
+function ProfileCard({
+  name, completionPct, persona, onTap,
+}: { name: string; completionPct: number; persona?: string; onTap: () => void }) {
+  return (
+    <button
+      onClick={onTap}
+      className="mx-4 rounded-2xl p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
+      style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}
+    >
+      <div
+        className="w-12 h-12 rounded-full flex items-center justify-center text-[22px] flex-shrink-0"
+        style={{ background: '#242426', border: `2px solid ${AMBER}` }}
+      >
+        {name[0]?.toUpperCase() ?? '?'}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-white font-bold text-[15px] mb-2">{name}</p>
+        <div className="h-1 rounded-full bg-white/10 overflow-hidden mb-1">
+          <div className="h-full rounded-full" style={{ width: `${completionPct}%`, background: AMBER }} />
+        </div>
+        <p className="text-[10px]" style={{ color: MUTED }}>{completionPct}% profile complete</p>
+      </div>
+      {persona && (
+        <span
+          className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg flex-shrink-0"
+          style={{ background: `rgba(200,150,44,0.15)`, border: `1px solid rgba(200,150,44,0.3)`, color: AMBER }}
+        >
+          {persona}
         </span>
       )}
     </button>
   );
 }
 
-// ---- Product card -----------------------------------------------------------
-function ProductCard({
-  title,
-  imageUrl,
-  price,
-  onTap,
-}: {
-  title: string;
-  imageUrl?: string;
-  price?: number;
-  onTap: () => void;
-}) {
+// ── 12. Safety strip ──────────────────────────────────────────────────────────
+function SafetyStrip({ onTap }: { onTap: () => void }) {
   return (
     <button
       onClick={onTap}
-      className="text-left active:scale-[0.98] transition-transform rounded-2xl overflow-hidden border border-white/5"
-      style={{ background: CARD_BG }}
-      aria-label={`View product: ${title}`}
+      className="mx-4 rounded-xl p-3.5 flex items-center gap-3 active:opacity-80 transition-opacity"
+      style={{
+        background: 'rgba(255,59,48,0.06)',
+        border: '1px solid rgba(255,59,48,0.2)',
+      }}
     >
-      {imageUrl ? (
-        <img src={imageUrl} alt={title} className="w-full aspect-square object-cover" />
-      ) : (
-        <div className="w-full aspect-square flex items-center justify-center" style={{ background: `${AMBER}10` }}>
-          <Sparkles className="w-8 h-8" style={{ color: `${AMBER}60` }} />
-        </div>
-      )}
-      <div className="p-3">
-        <p className="text-white text-xs font-semibold leading-tight line-clamp-2 mb-1">{title}</p>
-        {price != null && (
-          <p className="text-sm font-bold" style={{ color: AMBER }}>
-            &pound;{price}
-          </p>
-        )}
-      </div>
-    </button>
-  );
-}
-
-// ---- SceneScout Tonight's Picks --------------------------------------------
-interface ScenePickProps {
-  rank: number;
-  title: string;
-  venue?: string;
-  time?: string;
-  score: number;
-  onTap: () => void;
-}
-
-function ScenePick({ rank, title, venue, time, score, onTap }: ScenePickProps) {
-  return (
-    <button
-      onClick={onTap}
-      className="w-full flex items-center gap-3 text-left active:bg-white/5 transition-colors px-4 py-3"
-      aria-label={`View event: ${title}`}
-    >
-      <span className="font-black text-2xl w-8 flex-shrink-0" style={{ color: `${AMBER}60` }}>
-        {rank}
-      </span>
-      <div className="flex-1 min-w-0">
-        <p className="text-white font-bold text-sm leading-tight truncate">{title}</p>
-        <div className="flex items-center gap-3 mt-0.5">
-          {venue && (
-            <span className="text-[11px] truncate max-w-[120px]" style={{ color: MUTED }}>
-              {venue}
-            </span>
-          )}
-          {time && (
-            <span className="flex items-center gap-0.5 text-[11px] flex-shrink-0" style={{ color: MUTED }}>
-              <Clock className="w-3 h-3" />
-              {time}
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
-        <span className="font-black text-sm" style={{ color: AMBER }}>{score}%</span>
-        <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: `${AMBER}60` }}>match</span>
-      </div>
-    </button>
-  );
-}
-
-// ---- Radio banner -----------------------------------------------------------
-function RadioBanner({ onNavigate }: { onNavigate: () => void }) {
-  const { isPlaying, currentShowName, togglePlay } = useRadio();
-
-  return (
-    <div
-      className="rounded-2xl border border-white/5 p-4 flex items-center gap-4 cursor-pointer"
-      style={{ background: CARD_BG }}
-      onClick={onNavigate}
-      role="link"
-      aria-label="Open HOTMESS Radio"
-    >
-      {/* Left: Radio icon */}
       <div
-        className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-        style={{ background: `${AMBER}15` }}
+        className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{ background: '#FF3B30' }}
       >
-        <Radio className="w-6 h-6" style={{ color: AMBER }} />
+        <Shield className="w-4 h-4 text-white" />
       </div>
+      <div className="flex-1 min-w-0 text-left">
+        <p className="text-white font-bold text-[13px]">Safety Centre</p>
+        <p className="text-[11px]" style={{ color: MUTED }}>SOS · Fake call · Location share</p>
+      </div>
+      <ChevronRight className="w-4 h-4" style={{ color: '#FF3B30' }} />
+    </button>
+  );
+}
 
-      {/* Middle: Info + waveform */}
-      <div className="flex-1 min-w-0">
-        <p className="font-black text-xs tracking-wider mb-0.5" style={{ color: AMBER }}>
-          HOTMESS RADIO
-        </p>
-        <div className="flex items-center gap-2">
-          <span className="text-white/40 text-[11px]">
-            {currentShowName || 'Live now'}
-          </span>
-          {isPlaying && (
-            <div className="waveform" style={{ height: 16 }}>
-              <span className="waveform-bar" style={{ height: 6 }} />
-              <span className="waveform-bar" style={{ height: 6 }} />
-              <span className="waveform-bar" style={{ height: 6 }} />
-              <span className="waveform-bar" style={{ height: 6 }} />
-            </div>
-          )}
+// ── Skeleton helpers ──────────────────────────────────────────────────────────
+function RNSkeleton() {
+  return (
+    <div className="flex gap-3 px-4 overflow-hidden">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0" style={{ width: 72 }}>
+          <Shimmer className="rounded-full w-14 h-14" />
+          <Shimmer className="w-10 h-3" />
         </div>
-      </div>
+      ))}
+    </div>
+  );
+}
 
-      {/* Right: Play/Pause */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          togglePlay();
-        }}
-        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
-        style={{ background: AMBER }}
-        aria-label={isPlaying ? 'Pause radio' : 'Play radio'}
-      >
-        {isPlaying ? (
-          <Pause className="w-5 h-5 text-black" />
-        ) : (
-          <Play className="w-5 h-5 text-black ml-0.5" />
-        )}
-      </button>
+function EventSkeleton() {
+  return (
+    <div className="flex-shrink-0 rounded-2xl overflow-hidden" style={{ width: 200, background: CARD_BG }}>
+      <div className="animate-pulse w-full rounded-none" style={{ height: 110, background: 'rgba(255,255,255,0.06)' }} />
+      <div className="p-2.5 space-y-2">
+        <Shimmer className="w-3/4 h-4" />
+        <Shimmer className="w-1/2 h-3" />
+      </div>
+    </div>
+  );
+}
+
+function BeaconSkeleton() {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <Shimmer className="w-11 h-11 rounded-xl" />
+      <div className="flex-1 space-y-1.5">
+        <Shimmer className="w-2/3 h-4" />
+        <Shimmer className="w-1/3 h-3" />
+      </div>
+    </div>
+  );
+}
+
+function MarketSkeleton() {
+  return (
+    <div className="flex-shrink-0 rounded-xl overflow-hidden" style={{ width: 140, background: CARD_BG }}>
+      <div className="animate-pulse w-full rounded-none" style={{ height: 140, background: 'rgba(255,255,255,0.06)' }} />
+      <div className="p-2.5 space-y-2">
+        <Shimmer className="w-3/4 h-3" />
+        <Shimmer className="w-1/3 h-4" />
+      </div>
     </div>
   );
 }
 
 // =============================================================================
-// Main HomeMode Component
+// Main Component
 // =============================================================================
 export function HomeMode({ className = '' }: HomeModeProps) {
   const navigate = useNavigate();
@@ -515,57 +692,55 @@ export function HomeMode({ className = '' }: HomeModeProps) {
   const queryClient = useQueryClient();
   const [city, setCity] = useState(() => localStorage.getItem('hm_city') || 'London');
   const [showRightNow, setShowRightNow] = useState(false);
+  const [activeIntent, setActiveIntent] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // ---- Pull-to-refresh state ------------------------------------------------
+  // ── Pull-to-refresh ──────────────────────────────────────────────────────
   const [refreshing, setRefreshing] = useState(false);
   const touchStartY = useRef(0);
   const pullDistance = useRef(0);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (scrollRef.current && scrollRef.current.scrollTop === 0) {
-      touchStartY.current = e.touches[0].clientY;
-    }
+    if (scrollRef.current?.scrollTop === 0) touchStartY.current = e.touches[0].clientY;
   }, []);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (touchStartY.current > 0 && scrollRef.current && scrollRef.current.scrollTop === 0) {
+    if (touchStartY.current > 0 && scrollRef.current?.scrollTop === 0)
       pullDistance.current = e.touches[0].clientY - touchStartY.current;
-    }
   }, []);
 
   const handleTouchEnd = useCallback(() => {
     if (pullDistance.current > 80 && !refreshing) {
       setRefreshing(true);
-      queryClient.invalidateQueries().then(() => {
-        setTimeout(() => setRefreshing(false), 600);
-      });
+      queryClient.invalidateQueries().then(() => setTimeout(() => setRefreshing(false), 600));
     }
     touchStartY.current = 0;
     pullDistance.current = 0;
   }, [refreshing, queryClient]);
 
-  // ---- City cycling ---------------------------------------------------------
+  // ── City cycling ──────────────────────────────────────────────────────────
   const handleCityTap = useCallback(() => {
     const CITIES = ['London', 'Berlin', 'New York'];
-    const idx = CITIES.indexOf(city);
-    const next = CITIES[(idx + 1) % CITIES.length];
+    const next = CITIES[(CITIES.indexOf(city) + 1) % CITIES.length];
     setCity(next);
     localStorage.setItem('hm_city', next);
   }, [city]);
 
-  // ---- Data queries ---------------------------------------------------------
+  // ── Set intention (Right Now status) ──────────────────────────────────────
+  const handleIntentSelect = useCallback((intent: string) => {
+    setActiveIntent(prev => prev === intent ? null : intent);
+    if (intent !== activeIntent) setShowRightNow(true);
+  }, [activeIntent]);
 
-  // 1. Right Now status
-  const {
-    data: rightNowUsers = [],
-    isLoading: rightNowLoading,
-  } = useQuery({
+  // ── Queries ────────────────────────────────────────────────────────────────
+
+  // Right Now users
+  const { data: rnUsers = [], isLoading: rnLoading } = useQuery({
     queryKey: ['home-right-now'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('right_now_status')
-        .select('id, user_email, intent, active, location, expires_at')
+        .select('id, user_email, intent, active')
         .eq('active', true)
         .order('updated_at', { ascending: false })
         .limit(12);
@@ -573,7 +748,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       return (data ?? []).map((r: Record<string, unknown>) => ({
         id: r.id as string,
         email: r.user_email as string,
-        intent: (r.intent as string) || 'Explore',
+        intent: (r.intent as string) || 'explore',
         name: ((r.user_email as string) ?? '').split('@')[0] ?? 'Anon',
         avatarUrl: undefined as string | undefined,
       }));
@@ -581,17 +756,14 @@ export function HomeMode({ className = '' }: HomeModeProps) {
     refetchInterval: 30_000,
   });
 
-  // 2. Nearby events from beacons VIEW
-  const {
-    data: nearbyEvents = [],
-    isLoading: eventsLoading,
-  } = useQuery({
+  // Events from beacons VIEW
+  const { data: events = [], isLoading: eventsLoading } = useQuery({
     queryKey: ['home-events'],
     queryFn: async () => {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, lat, lng, kind')
+        .select('id, metadata, starts_at, end_at, kind')
         .gte('end_at', now)
         .order('starts_at', { ascending: true })
         .limit(8);
@@ -611,20 +783,17 @@ export function HomeMode({ className = '' }: HomeModeProps) {
     refetchInterval: 60_000,
   });
 
-  // 3. Active beacons (non-event, closest)
-  const {
-    data: activeBeacons = [],
-    isLoading: beaconsLoading,
-  } = useQuery({
+  // Active beacons (non-event)
+  const { data: beacons = [], isLoading: beaconsLoading } = useQuery({
     queryKey: ['home-beacons'],
     queryFn: async () => {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, lat, lng, kind, intensity')
+        .select('id, metadata, starts_at, end_at, kind')
         .gte('end_at', now)
         .order('starts_at', { ascending: true })
-        .limit(3);
+        .limit(4);
       if (error) throw error;
       return (data ?? []).map((b: Record<string, unknown>) => {
         const meta = (b.metadata ?? {}) as Record<string, string>;
@@ -632,18 +801,14 @@ export function HomeMode({ className = '' }: HomeModeProps) {
           id: b.id as string,
           title: meta.title || 'Beacon',
           kind: b.kind as string,
-          intensity: b.intensity as number,
         };
       });
     },
     refetchInterval: 60_000,
   });
 
-  // 4. Preloved listings
-  const {
-    data: marketListings = [],
-    isLoading: marketLoading,
-  } = useQuery({
+  // Market listings
+  const { data: market = [], isLoading: marketLoading } = useQuery({
     queryKey: ['home-market'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -651,87 +816,94 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         .select('id, title, price, images, category')
         .eq('status', 'active')
         .order('created_at', { ascending: false })
-        .limit(4);
+        .limit(6);
       if (error) throw error;
       return (data ?? []).map((p: Record<string, unknown>) => ({
         id: p.id as string,
         title: (p.title as string) || 'Item',
         price: p.price as number,
         imageUrl: Array.isArray(p.images) ? (p.images[0] as string) : undefined,
+        brand: undefined as string | undefined,
       }));
     },
     refetchInterval: 120_000,
   });
 
-  // 5. Community posts preview (3 most recent)
-  const {
-    data: communityPosts = [],
-    isLoading: communityLoading,
-  } = useQuery({
-    queryKey: ['home-community'],
+  // Venue Kings
+  const { data: venueKings = [] } = useQuery({
+    queryKey: ['home-venue-kings'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('community_posts')
-        .select('id, user_name, content, category, like_count, created_at')
-        .eq('moderation_status', 'approved')
-        .order('created_at', { ascending: false })
-        .limit(3);
-      if (error) throw error;
-      return data ?? [];
+        .from('venue_kings')
+        .select('id, user_id, venue_name, claimed_at')
+        .order('claimed_at', { ascending: false })
+        .limit(6);
+      if (error) return [];
+      return (data ?? []).map((k: Record<string, unknown>) => ({
+        id: k.id as string,
+        name: ((k.user_id as string) ?? '').slice(0, 8) || 'King',
+        venue: (k.venue_name as string) || 'Unknown venue',
+      }));
     },
-    refetchInterval: 60_000,
+    refetchInterval: 300_000,
   });
 
-  // ---- Render ---------------------------------------------------------------
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className={`h-full w-full flex flex-col overflow-hidden ${className}`} style={{ background: ROOT_BG }}>
 
-      {/* ---- Top Bar (sticky, glassmorphic) ---- */}
-      <header className="flex-shrink-0 z-20 flex items-center justify-between h-14 px-5" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      {/* ── Sticky Header ── */}
+      <header
+        className="flex-shrink-0 z-20 flex items-center justify-between px-4 h-14"
+        style={{ paddingTop: 'env(safe-area-inset-top,0px)', background: 'rgba(5,5,7,0.92)', backdropFilter: 'blur(16px)', borderBottom: `1px solid ${BORDER}` }}
+      >
         {/* City pill */}
         <button
           onClick={handleCityTap}
-          className="flex items-center gap-1 bg-white/[0.06] backdrop-blur-md rounded-full px-3 py-1.5 active:scale-95 transition-transform"
-          aria-label={`Current city: ${city}. Tap to change.`}
+          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 active:scale-95 transition-transform"
+          style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}
         >
-          <MapPin className="w-3.5 h-3.5" style={{ color: AMBER }} />
-          <span className="text-white font-bold text-sm">{city}</span>
-          <ChevronDown className="w-3 h-3 text-white/40" />
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: AMBER, animationName: 'pulse', animationDuration: '2s', animationIterationCount: 'infinite' }} />
+          <span className="text-white font-bold text-[13px]">{city}</span>
+          <ChevronDown className="w-3 h-3" style={{ color: MUTED }} />
         </button>
 
-        {/* Wordmark — HOT white, MESS gold */}
-        <h1 className="text-[17px] font-black italic tracking-tight select-none leading-none">
+        {/* Wordmark */}
+        <h1 className="text-[16px] font-black italic tracking-tight select-none leading-none">
           <span className="text-white">HOT</span>
           <span style={{ color: AMBER }}>MESS</span>
         </h1>
 
-        {/* Notification bell */}
-        <button
-          onClick={() => openSheet('notifications')}
-          className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white/[0.06] active:scale-95 transition-transform"
-          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-        >
-          <Bell className="w-5 h-5 text-white/70" />
-          {unreadCount > 0 && (
-            <span
-              className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full"
-              style={{ background: AMBER }}
-            />
-          )}
-        </button>
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => openSheet('search' as Parameters<typeof openSheet>[0], {})}
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}
+          >
+            <Search className="w-4 h-4 text-white/60" />
+          </button>
+          <button
+            onClick={() => openSheet('notifications' as Parameters<typeof openSheet>[0], {})}
+            className="relative w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}
+          >
+            <Bell className="w-4 h-4 text-white/60" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ background: AMBER }} />
+            )}
+          </button>
+        </div>
       </header>
 
-      {/* ---- Pull-to-refresh indicator ---- */}
+      {/* Pull-to-refresh */}
       {refreshing && (
         <div className="flex justify-center py-2">
-          <div
-            className="w-5 h-5 border-2 rounded-full animate-spin"
-            style={{ borderColor: AMBER, borderTopColor: 'transparent' }}
-          />
+          <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: AMBER, borderTopColor: 'transparent' }} />
         </div>
       )}
 
-      {/* ---- Scrollable content ---- */}
+      {/* ── Scrollable body ── */}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto overscroll-contain"
@@ -740,145 +912,54 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="pb-36 space-y-6">
+        <div className="pb-36 space-y-6 pt-3">
 
-          {/* ── Hero Banner ── */}
-          <div className="relative w-full h-40 overflow-hidden">
-            <img
-              src="/assets/hero-storm.jpg"
-              alt="HOTMESS London"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/60 to-transparent" />
-            <div className="absolute bottom-3 left-5 right-5">
-              <h2 className="font-black text-2xl text-white tracking-wider uppercase leading-none drop-shadow-lg">HOTMESS</h2>
-              <p className="text-white/50 text-xs mt-0.5">Always too much, yet never enough</p>
-            </div>
-          </div>
+          {/* ── 01. Intention Bar ── */}
+          <Sec index={0}>
+            <IntentionBar activeIntent={activeIntent} onSelect={handleIntentSelect} />
+          </Sec>
 
-          <div className="px-5 space-y-6">
+          {/* ── 02. Pulse Globe Teaser ── */}
+          <Sec index={1}>
+            <SH title="World Pulse" dot={AMBER} onLink={() => navigate('/pulse')} linkLabel="Open globe" />
+            <GlobeTeaser liveCount={rnUsers.length} onTap={() => navigate('/pulse')} />
+          </Sec>
 
-          {/* ── Section 1: Right Now ── */}
-          <AnimatedSection index={0}>
-            <SectionHeader
-              title="Right Now"
-              linkLabel="Go live"
+          {/* ── 03. Who's Out Right Now ── */}
+          <Sec index={2}>
+            <SH
+              title="Who's Out"
+              dot="#30D158"
               onLink={() => setShowRightNow(true)}
+              linkLabel={rnUsers.length > 0 ? 'Go Live' : 'Be first'}
             />
-            {rightNowLoading ? (
-              <RightNowSkeleton />
-            ) : rightNowUsers.length === 0 ? (
-              <RightNowEmpty onGoLive={() => setShowRightNow(true)} />
+            {rnLoading ? (
+              <RNSkeleton />
+            ) : rnUsers.length === 0 ? (
+              <RNEmpty onGoLive={() => setShowRightNow(true)} />
             ) : (
-              <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
-                {rightNowUsers.map((u) => (
-                  <RightNowCard
+              <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-hide px-4">
+                {rnUsers.map((u) => (
+                  <RNCard
                     key={u.id}
-                    avatarUrl={u.avatarUrl}
                     name={u.name}
                     intent={u.intent}
+                    avatarUrl={u.avatarUrl}
                     onTap={() => openSheet('profile', { email: u.email })}
                   />
                 ))}
               </div>
             )}
-          </AnimatedSection>
+          </Sec>
 
-          {/* ── Ghosted Online Bar ── */}
-          <button
-            onClick={() => navigate('/ghosted')}
-            className="flex items-center gap-2.5 w-full rounded-2xl px-4 py-3 active:scale-[0.98] transition-transform"
-            style={{ background: CARD_BG, border: '1px solid rgba(255,255,255,0.06)' }}
-          >
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background: `${AMBER}20` }}
-            >
-              <Ghost className="w-4 h-4" style={{ color: AMBER }} />
-            </div>
-            <span className="text-white font-bold text-sm">Ghosted</span>
-            <span className="text-white/40 text-xs flex items-center gap-1">
-              <Wifi className="w-3 h-3" />
-              {rightNowUsers.length > 0 ? `${rightNowUsers.length} Online` : 'Browse'}
-            </span>
-            <ChevronRight className="w-4 h-4 text-white/20 ml-auto" />
-          </button>
-
-          {/* ── Section 2: Community ── */}
-          <AnimatedSection index={1}>
-            <SectionHeader
-              title="Community"
-              linkLabel="See all"
-              onLink={() => openSheet('community', {})}
-            />
-            {communityLoading ? (
-              <div className="space-y-2">
-                {[0, 1, 2].map(i => <ShimmerBox key={i} className="w-full h-16" />)}
-              </div>
-            ) : communityPosts.length === 0 ? (
-              <button
-                onClick={() => openSheet('community', {})}
-                className="w-full rounded-2xl border border-dashed border-white/10 p-5 flex flex-col items-center gap-2 text-center active:bg-white/5"
-                style={{ background: `${CARD_BG}80` }}
-              >
-                <MessageSquare className="w-8 h-8" style={{ color: MUTED }} />
-                <p className="text-white text-sm font-semibold">Nothing posted yet — be first</p>
-              </button>
-            ) : (
-              <div className="rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5" style={{ background: CARD_BG }}>
-                {communityPosts.map((post: Record<string, unknown>) => (
-                  <button
-                    key={post.id as string}
-                    onClick={() => openSheet('community', {})}
-                    className="w-full flex items-start gap-3 px-4 py-3 text-left active:bg-white/5 transition-colors"
-                  >
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: `${AMBER}20` }}>
-                      <span className="text-[11px] font-black" style={{ color: AMBER }}>
-                        {((post.user_name as string) || 'A')[0].toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white/90 text-sm leading-snug line-clamp-2">{post.content as string}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs" style={{ color: MUTED }}>{post.user_name as string || 'Anonymous'}</span>
-                        {(post.like_count as number) > 0 && (
-                          <span className="flex items-center gap-0.5 text-xs" style={{ color: MUTED }}>
-                            <Heart className="w-3 h-3" />{post.like_count as number}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-                <button
-                  onClick={() => openSheet('community', {})}
-                  className="w-full px-4 py-3 text-left text-xs font-semibold active:bg-white/5 transition-colors flex items-center justify-between"
-                  style={{ color: AMBER }}
-                >
-                  View all posts
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-          </AnimatedSection>
-
-          {/* ── Section 4: Nearby Events ── */}
-          {(eventsLoading || nearbyEvents.length > 0) && (
-            <AnimatedSection index={2}>
-              <SectionHeader
-                title="Happening near you"
-                linkLabel="See all"
-                onLink={() => navigate('/pulse')}
-              />
-              {eventsLoading ? (
-                <div className="flex gap-3 overflow-hidden">
-                  <EventCardSkeleton />
-                  <EventCardSkeleton />
-                </div>
-              ) : (
-                <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-hide -mx-5 px-5">
-                  {nearbyEvents.map((ev) => (
+          {/* ── 04. Tonight's Events ── */}
+          {(eventsLoading || events.length > 0) && (
+            <Sec index={3}>
+              <SH title="Tonight's Events" dot={AMBER} onLink={() => navigate('/pulse')} />
+              <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-hide px-4">
+                {eventsLoading
+                  ? [0, 1, 2].map(i => <EventSkeleton key={i} />)
+                  : events.map((ev) => (
                     <EventCard
                       key={ev.id}
                       title={ev.title}
@@ -887,129 +968,110 @@ export function HomeMode({ className = '' }: HomeModeProps) {
                       startsAt={ev.startsAt}
                       onTap={() => openSheet('event', { id: ev.id })}
                     />
-                  ))}
-                </div>
-              )}
-            </AnimatedSection>
-          )}
-
-          {/* ── Section 5: Active Beacons ── */}
-          {(beaconsLoading || activeBeacons.length > 0) && (
-            <AnimatedSection index={3}>
-              <SectionHeader title="Active Beacons" />
-              <div className="rounded-2xl overflow-hidden border border-white/5" style={{ background: CARD_BG }}>
-                {beaconsLoading ? (
-                  <>
-                    <BeaconRowSkeleton />
-                    <BeaconRowSkeleton />
-                    <BeaconRowSkeleton />
-                  </>
-                ) : (
-                  activeBeacons.map((b, i) => (
-                    <BeaconRow
-                      key={b.id}
-                      title={b.title}
-                      kind={b.kind}
-                      isLast={i === activeBeacons.length - 1}
-                      onTap={() => openSheet('beacon', { id: b.id })}
-                    />
                   ))
-                )}
+                }
               </div>
-            </AnimatedSection>
+            </Sec>
           )}
 
-          {/* ── Section 6: From the Market ── */}
-          {(marketLoading || marketListings.length > 0) && (
-            <AnimatedSection index={4}>
-              <SectionHeader
-                title="Fresh drops"
-                linkLabel="Browse market"
-                onLink={() => navigate('/market')}
-              />
-              {marketLoading ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <ProductCardSkeleton />
-                  <ProductCardSkeleton />
-                  <ProductCardSkeleton />
-                  <ProductCardSkeleton />
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {marketListings.map((p) => (
-                    <ProductCard
+          {/* ── 05. Live Radio ── */}
+          <Sec index={4}>
+            <SH title="Hotmess Radio" dot={RADIO_TEAL} onLink={() => navigate('/radio')} linkLabel="Full player" />
+            <RadioBanner onNavigate={() => navigate('/radio')} />
+          </Sec>
+
+          {/* ── 06. Nearby (Ghosted Teaser) ── */}
+          <Sec index={5}>
+            <SH title="Nearby" dot="#30D158" onLink={() => navigate('/ghosted')} />
+            <GhostTeaser users={rnUsers} onNavigate={() => navigate('/ghosted')} />
+          </Sec>
+
+          {/* ── 07. Market Picks ── */}
+          {(marketLoading || market.length > 0) && (
+            <Sec index={6}>
+              <SH title="Fresh Drops" dot={AMBER} onLink={() => navigate('/market')} />
+              <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-hide px-4">
+                {marketLoading
+                  ? [0, 1, 2].map(i => <MarketSkeleton key={i} />)
+                  : market.map((p) => (
+                    <MarketCard
                       key={p.id}
                       title={p.title}
                       imageUrl={p.imageUrl}
                       price={p.price}
+                      brand={p.brand}
                       onTap={() => openSheet('product', { id: p.id })}
                     />
-                  ))}
-                </div>
-              )}
-            </AnimatedSection>
+                  ))
+                }
+              </div>
+            </Sec>
           )}
 
-          {/* ── Section 7: Scene Scout (Tonight's Picks) ── */}
-          {nearbyEvents.length > 0 && (
-            <AnimatedSection index={5}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" style={{ color: '#C8962C' }} />
-                  <h2 className="text-white font-bold text-base">Tonight's Picks</h2>
-                  <span
-                    className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider"
-                    style={{ background: '#C8962C20', color: '#C8962C' }}
-                  >
-                    AI
-                  </span>
-                </div>
-                <button
-                  onClick={() => navigate('/pulse')}
-                  className="flex items-center gap-0.5 text-xs font-semibold active:opacity-70 transition-opacity"
-                  style={{ color: AMBER }}
-                >
-                  See all
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <div
-                className="rounded-2xl overflow-hidden border border-white/5 divide-y divide-white/5"
-                style={{ background: CARD_BG }}
-              >
-                {nearbyEvents.slice(0, 3).map((ev, i) => {
-                  // Derive a match score from position + event timing
-                  const baseScore = 97 - i * 8;
-                  const score = Math.max(baseScore, 72);
-                  const timeStr = ev.startsAt
-                    ? new Date(ev.startsAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-                    : undefined;
-                  return (
-                    <ScenePick
-                      key={ev.id}
-                      rank={i + 1}
-                      title={ev.title}
-                      venue={ev.venue}
-                      time={timeStr}
-                      score={score}
-                      onTap={() => openSheet('event', { id: ev.id })}
+          {/* ── 08. Active Beacons ── */}
+          {(beaconsLoading || beacons.length > 0) && (
+            <Sec index={7}>
+              <SH title="Active Beacons" dot={AMBER} onLink={() => navigate('/pulse')} />
+              <div className="rounded-2xl overflow-hidden border border-white/5 mx-4" style={{ background: CARD_BG }}>
+                {beaconsLoading
+                  ? [0, 1].map(i => <BeaconSkeleton key={i} />)
+                  : beacons.map((b, i) => (
+                    <BeaconRow
+                      key={b.id}
+                      title={b.title}
+                      kind={b.kind}
+                      isLast={i === beacons.length - 1}
+                      onTap={() => openSheet('beacon', { id: b.id })}
                     />
-                  );
-                })}
+                  ))
+                }
               </div>
-            </AnimatedSection>
+            </Sec>
           )}
 
-          {/* ── Section 8: Radio Banner ── */}
-          <AnimatedSection index={6}>
-            <RadioBanner onNavigate={() => navigate('/radio')} />
-          </AnimatedSection>
+          {/* ── 09. Venue Kings ── */}
+          {venueKings.length > 0 && (
+            <Sec index={8}>
+              <SH title="Venue Kings" dot={AMBER} />
+              <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide px-4">
+                {venueKings.map((k) => (
+                  <VenueKingCard
+                    key={k.id}
+                    name={k.name}
+                    venue={k.venue}
+                    onTap={() => openSheet('profile', { id: k.id })}
+                  />
+                ))}
+              </div>
+            </Sec>
+          )}
 
-          </div>{/* end px-5 */}
+          {/* ── 10. Creator Drop ── */}
+          <Sec index={9}>
+            <SH title="Creator Drop" dot={HUNG} />
+            <CreatorDrop onTap={() => navigate('/market')} />
+          </Sec>
+
+          {/* ── 11. Your Profile ── */}
+          <Sec index={10}>
+            <SH title="Your Profile" onLink={() => navigate('/profile')} linkLabel="Edit" />
+            <ProfileCard
+              name="You"
+              completionPct={65}
+              persona="MAIN"
+              onTap={() => navigate('/profile')}
+            />
+          </Sec>
+
+          {/* ── 12. Safety Strip ── */}
+          <Sec index={11}>
+            <SafetyStrip onTap={() => openSheet('safety' as Parameters<typeof openSheet>[0], {})} />
+          </Sec>
+
         </div>
       </div>
 
-      {/* Right Now modal (existing) */}
+      {/* Right Now modal */}
       <RightNowModal isOpen={showRightNow} onClose={() => setShowRightNow(false)} />
     </div>
   );
