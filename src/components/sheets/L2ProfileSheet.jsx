@@ -74,28 +74,32 @@ export default function L2ProfileSheet({ email, uid }) {
     (currentUser?.email && profileUser?.email === currentUser.email);
 
   // Record profile view when profile loads (fire and forget, dedup: skip if viewed in last 24h)
+  // profile_views uses UUID-based viewer_id / viewed_id (references auth.users.id = profiles.id)
   useEffect(() => {
-    if (!profileUser?.email || isOwnProfile) return;
+    if (!profileUser?.auth_user_id || isOwnProfile) return;
 
     const recordView = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user?.email || user.email === profileUser.email) return;
+        if (!user?.id) return;
+
+        const viewedUid = profileUser.auth_user_id;
+        if (viewedUid === user.id) return; // own profile — belt-and-suspenders check
 
         // Check if already recorded in the last 24h to avoid spam
         const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         const { count } = await supabase
           .from('profile_views')
           .select('id', { count: 'exact', head: true })
-          .eq('viewer_email', user.email)
-          .eq('viewed_email', profileUser.email)
+          .eq('viewer_id', user.id)
+          .eq('viewed_id', viewedUid)
           .gte('viewed_at', since24h);
 
         if (count && count > 0) return; // already logged today
 
         await supabase.from('profile_views').insert({
-          viewer_email: user.email,
-          viewed_email: profileUser.email,
+          viewer_id: user.id,
+          viewed_id: viewedUid,
         });
       } catch (err) {
         console.debug('[ProfileSheet] View recording skipped:', err);
@@ -103,7 +107,7 @@ export default function L2ProfileSheet({ email, uid }) {
     };
 
     recordView();
-  }, [profileUser?.email, isOwnProfile]);
+  }, [profileUser?.auth_user_id, isOwnProfile]);
 
   // Fetch user's events (RSVPs)
   const { data: userEvents = [] } = useQuery({
