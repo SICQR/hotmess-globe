@@ -40,11 +40,11 @@ export default async function handler(req, res) {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    // Fetch queued notifications (limit to 100 per run)
+    // Fetch pending/queued notifications (both status values used in codebase)
     const { data: queuedNotifications, error: fetchError } = await supabase
       .from('notification_outbox')
       .select('*')
-      .eq('status', 'queued')
+      .in('status', ['queued', 'pending'])
       .order('created_at', { ascending: true })
       .limit(100);
 
@@ -136,7 +136,9 @@ export default async function handler(req, res) {
 
 /**
  * Send web push notifications to user's subscribed devices.
- * Uses VAPID keys and push_subscriptions; env from Vercel.
+ * Supports two storage strategies in push_subscriptions:
+ *   - Flat columns: endpoint + keys (from usePushNotifications.jsx)
+ *   - JSONB column: subscription (from usePushNotifications.ts)
  */
 async function sendPushNotifications(supabase, notification) {
   const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
@@ -144,11 +146,23 @@ async function sendPushNotifications(supabase, notification) {
   if (!notification.user_email || notification.user_email === 'admin') return;
 
   try {
+    // Fetch subscription rows — support both user_email AND user_id lookup
     const { data: subs } = await supabase
       .from('push_subscriptions')
-      .select('endpoint, keys')
+      .select('id, endpoint, keys, subscription, user_id')
       .eq('user_email', notification.user_email);
-    if (!subs?.length) return;
+
+    // Fallback: look up via user_id when user_email not set on row
+    let allSubs = subs || [];
+    if (!allSubs.length && notification.user_id) {
+      const { data: subsByUid } = await supabase
+        .from('push_subscriptions')
+        .select('id, endpoint, keys, subscription, user_id')
+        .eq('user_id', notification.user_id);
+      allSubs = subsByUid || [];
+    }
+
+    if (!allSubs.length) return;
 
     const vapidPublic = process.env.VAPID_PUBLIC_KEY;
     if (!vapidPublic) return;
@@ -159,7 +173,7 @@ async function sendPushNotifications(supabase, notification) {
       return;
     }
 
-    const payload = JSON.stringify({
+    const pushPayload = JSON.stringify({
       title: notification.title || 'HOTMESS',
       body: notification.message || 'You have a new notification',
       icon: '/favicon.svg',
@@ -167,21 +181,39 @@ async function sendPushNotifications(supabase, notification) {
       data: { url: notification.metadata?.link || '/', id: notification.id },
     });
 
-    for (const row of subs) {
+    for (const row of allSubs) {
       try {
-        const keys = typeof row.keys === 'string' ? JSON.parse(row.keys) : row.keys || {};
+        // Resolve endpoint + keys from whichever storage strategy was used
+        let endpoint = row.endpoint;
+        let keys = row.keys;
+
+        if (!endpoint && row.subscription) {
+          // JSONB subscription strategy (usePushNotifications.ts)
+          const sub = typeof row.subscription === 'string'
+            ? JSON.parse(row.subscription)
+            : row.subscription;
+          endpoint = sub?.endpoint;
+          keys = sub?.keys;
+        }
+
+        if (!endpoint || !keys) continue;
+
+        const parsedKeys = typeof keys === 'string' ? JSON.parse(keys) : keys;
+
         await webPush.sendNotification(
-          { endpoint: row.endpoint, keys: { p256dh: keys.p256dh, auth: keys.auth } },
-          payload,
+          { endpoint, keys: { p256dh: parsedKeys.p256dh, auth: parsedKeys.auth } },
+          pushPayload,
           { TTL: 86400 }
         );
       } catch (err) {
         if (err?.statusCode === 410 || err?.statusCode === 404) {
-          await supabase.from('push_subscriptions').delete().eq('endpoint', row.endpoint);
+          // Subscription expired — clean it up
+          await supabase.from('push_subscriptions').delete().eq('id', row.id);
         }
       }
     }
   } catch (e) {
+    // Non-fatal
   }
 }
 
