@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { OSMode, MODES, MODE_ORDER, getModeFromPath } from '@/modes';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
 import { useLongPress } from '@/hooks/useLongPress';
+import { useSheet } from '@/contexts/SheetContext';
 import PersonaSwitcherSheet from '@/components/sheets/PersonaSwitcherSheet';
 
 const ICONS: Record<OSMode, React.FC<{ className?: string }>> = {
@@ -32,6 +33,7 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
   const navigate = useNavigate();
   const currentMode = getModeFromPath(location.pathname);
   const { unreadCount, clearTapsBadge } = useUnreadCount();
+  const { openSheet } = useSheet();
   const [showSwitcher, setShowSwitcher] = useState(false);
 
   const handleModeChange = (mode: OSMode) => {
@@ -70,18 +72,34 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                   <div className="relative w-9 h-9 rounded-full bg-[#C8962C] flex items-center justify-center">
                     <Icon className="w-5 h-5 text-black" />
                     {modeId === 'ghosted' && unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearTapsBadge();
+                          openSheet('taps');
+                        }}
+                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none"
+                        aria-label="View boos"
+                      >
                         {unreadCount > 9 ? '9+' : unreadCount}
-                      </span>
+                      </button>
                     )}
                   </div>
                 ) : (
                   <div className="relative">
                     <Icon className="w-6 h-6 text-white/40" />
                     {modeId === 'ghosted' && unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearTapsBadge();
+                          openSheet('taps');
+                        }}
+                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none"
+                        aria-label="View boos"
+                      >
                         {unreadCount > 9 ? '9+' : unreadCount}
-                      </span>
+                      </button>
                     )}
                   </div>
                 )}
