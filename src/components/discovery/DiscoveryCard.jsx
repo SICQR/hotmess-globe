@@ -111,7 +111,7 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
                   </div>
                 )}
                 {user.has_premium_content && (
-                  <div className="px-2 py-1 bg-[#FFD700]/90 text-black flex items-center gap-1">
+                  <div className="px-2 py-1 bg-[#C8962C]/90 text-black flex items-center gap-1">
                     <Crown className="w-3 h-3" />
                     <span className="text-[9px] font-bold uppercase">PREMIUM</span>
                   </div>

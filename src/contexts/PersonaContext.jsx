@@ -50,25 +50,22 @@ export function PersonaProvider({ children }) {
   const switchPersona = useCallback(async (personaId) => {
     try {
       const { error } = await supabase
-        .rpc('switch_persona', { 
-          p_user_id: activePersona?.user_id,
-          p_new_persona_id: personaId 
-        });
+        .rpc('switch_persona', { p_persona_id: personaId });
       
       if (error) throw error;
       
-      setPersonas(prev => prev.map(p => ({
-        ...p,
-        is_active: p.id === personaId,
-      })));
-      setActivePersona(personas.find(p => p.id === personaId));
+      setPersonas(prev => {
+        const updated = prev.map(p => ({ ...p, is_active: p.id === personaId }));
+        setActivePersona(updated.find(p => p.id === personaId) ?? null);
+        return updated;
+      });
       
       return true;
     } catch (err) {
       console.error('Failed to switch persona:', err);
       return false;
     }
-  }, [activePersona, personas]);
+  }, []);
 
   const value = {
     activePersona,

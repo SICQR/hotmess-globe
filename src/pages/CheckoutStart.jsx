@@ -80,7 +80,7 @@ export default function CheckoutStart() {
             <span>18+ • Consent-first • Care always.</span>
           </div>
           <div className="flex items-center gap-3 text-white/70 text-sm">
-            <ExternalLink className="w-4 h-4 text-[#B026FF]" />
+            <ExternalLink className="w-4 h-4 text-[#C8962C]" />
             <span>Opens in a new page (you can return anytime).</span>
           </div>
         </div>

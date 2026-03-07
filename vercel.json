@@ -29,6 +29,24 @@
   ],
   "routes": [
     {
+      "src": "/(.*)",
+      "has": [{ "type": "host", "value": "hotmessldn.com" }],
+      "destination": "https://hotmess.app/$1",
+      "permanent": true
+    },
+    {
+      "src": "/(.*)",
+      "has": [{ "type": "host", "value": "www.hotmessldn.com" }],
+      "destination": "https://hotmess.app/$1",
+      "permanent": true
+    },
+    {
+      "src": "/(.*)",
+      "has": [{ "type": "host", "value": "www.hotmess.app" }],
+      "destination": "https://hotmess.app/$1",
+      "permanent": true
+    },
+    {
       "src": "/assets/(.*)",
       "headers": {
         "Cache-Control": "public, max-age=31536000, immutable"

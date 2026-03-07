@@ -14,8 +14,8 @@ import { supabase } from '@/components/utils/supabaseClient';
 const BEACON_COLOR = {
   social: '#39FF14',
   event: '#00D9FF',
-  marketplace: '#FFD700',
-  release: '#B026FF',
+  marketplace: '#C8962C',
+  release: '#C8962C',
 };
 
 const DEFAULT_EXPIRY_HOURS = 4;

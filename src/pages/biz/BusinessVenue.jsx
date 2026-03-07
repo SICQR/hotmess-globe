@@ -305,7 +305,7 @@ export default function BusinessVenue() {
           className="bg-white/5 border border-white/10 p-6"
         >
           <h2 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
-            <Camera className="w-5 h-5 text-[#FFD700]" />
+            <Camera className="w-5 h-5 text-[#C8962C]" />
             Venue Photos
           </h2>
           

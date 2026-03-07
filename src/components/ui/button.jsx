@@ -41,29 +41,29 @@ const buttonVariants = cva(
         purple:
           "bg-[#C8962C] text-white shadow hover:bg-white hover:text-black hover:shadow-lg",
         gold:
-          "bg-[#FFD700] text-black shadow hover:bg-white hover:shadow-lg",
+          "bg-[#C8962C] text-black shadow hover:bg-white hover:shadow-lg",
         green:
           "bg-[#39FF14] text-black shadow hover:bg-white hover:shadow-lg",
         // Gradient variants
         hotGradient:
-          "bg-gradient-to-r from-[#C8962C] via-[#FF69B4] to-[#C8962C] text-white shadow-lg hover:brightness-110 hover:shadow-glow-hot border-0",
+          "bg-gradient-to-r from-[#C8962C] via-[#D4A84B] to-[#C8962C] text-white shadow-lg hover:brightness-110 hover:shadow-glow-hot border-0",
         cyanGradient:
           "bg-gradient-to-r from-[#00D9FF] to-[#0891B2] text-white shadow-lg hover:brightness-110 hover:shadow-glow-cyan border-0",
         purpleGradient:
-          "bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-white shadow-lg hover:brightness-110 hover:shadow-glow-purple border-0",
+          "bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-white shadow-lg hover:brightness-110 hover:shadow-glow-brand border-0",
         goldGradient:
-          "bg-gradient-to-r from-[#FFD700] to-[#FF6B35] text-black shadow-lg hover:brightness-110 hover:shadow-glow-gold border-0",
+          "bg-gradient-to-r from-[#C8962C] to-[#D4A84B] text-black shadow-lg hover:brightness-110 hover:shadow-glow-gold border-0",
         premium:
-          "bg-gradient-to-r from-[#FFD700] via-[#FF6B35] to-[#FFD700] text-black shadow-lg hover:brightness-110 hover:shadow-glow-gold border-0 font-black",
+          "bg-gradient-to-r from-[#C8962C] via-[#D4A84B] to-[#C8962C] text-black shadow-lg hover:brightness-110 hover:shadow-glow-gold border-0 font-black",
         fire:
-          "bg-gradient-to-r from-[#C8962C] via-[#FF6B35] to-[#FFD700] text-white shadow-lg hover:brightness-110 border-0",
+          "bg-gradient-to-r from-[#C8962C] via-[#D4A84B] to-[#C8962C] text-white shadow-lg hover:brightness-110 border-0",
         // Glow variants
         hotGlow:
           "bg-[#C8962C] text-white shadow-glow-hot hover:shadow-glow-hot-lg hover:brightness-110",
         cyanGlow:
           "bg-[#00D9FF] text-black shadow-glow-cyan hover:shadow-glow-cyan-lg hover:brightness-110",
         purpleGlow:
-          "bg-[#C8962C] text-white shadow-glow-purple hover:shadow-glow-purple-lg hover:brightness-110",
+          "bg-[#C8962C] text-white shadow-glow-brand hover:shadow-glow-brand-lg hover:brightness-110",
         // Glass variants
         glass:
           "bg-white/5 backdrop-blur-sm text-white border border-white/10 hover:bg-white/10 hover:border-white/20",
@@ -85,7 +85,7 @@ const buttonVariants = cva(
         outlineWhite:
           "border-2 border-white text-white bg-transparent hover:bg-white hover:text-black",
         outlineGold:
-          "border-2 border-[#FFD700] text-[#FFD700] bg-transparent hover:bg-[#FFD700] hover:text-black",
+          "border-2 border-[#C8962C] text-[#C8962C] bg-transparent hover:bg-[#C8962C] hover:text-black",
         // Standard variants
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",

@@ -201,7 +201,7 @@ export function SmartProfileCard({
         isHighMatch && 'border-[#C8962C] shadow-glow-hot',
         isNearby && !isHighMatch && 'border-[#00D9FF] shadow-glow-cyan',
         isLive && !isHighMatch && !isNearby && 'border-[#39FF14] shadow-glow-green animate-glow-pulse',
-        isPremium && !isHighMatch && !isNearby && !isLive && 'border-[#FFD700] shadow-glow-gold',
+        isPremium && !isHighMatch && !isNearby && !isLive && 'border-[#C8962C] shadow-glow-gold',
         !isHighMatch && !isNearby && !isLive && !isPremium && 'border-white/10 hover:border-white/30',
         className
       )}
@@ -222,7 +222,7 @@ export function SmartProfileCard({
         {/* High Match Animated Gradient Border */}
         {isHighMatch && (
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#C8962C]/20 via-transparent to-[#B026FF]/20 animate-gradient-shift" 
+            <div className="absolute inset-0 bg-gradient-to-r from-[#C8962C]/20 via-transparent to-[#D4A84B]/20 animate-gradient-shift" 
                  style={{ backgroundSize: '200% 100%' }} />
           </div>
         )}
@@ -394,7 +394,7 @@ export function SmartProfileCardCompact({
 
       {/* Match Score */}
       {matchScore && matchScore >= 70 && (
-        <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-[#C8962C] to-[#B026FF] text-white text-xs font-bold rounded">
+        <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-[#C8962C] to-[#D4A84B] text-white text-xs font-bold rounded">
           <Heart className="w-3 h-3" />
           {matchScore}%
         </div>

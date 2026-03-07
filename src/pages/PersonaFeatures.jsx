@@ -39,7 +39,7 @@ const PERSONA_TYPES = [
     icon: Crown,
     title: 'PREMIUM',
     tagline: 'Stand out from the crowd',
-    color: '#FFD700',
+    color: '#C8962C',
     description: 'Unlock premium profile features that make you more visible and give you advanced tools for connecting with others.',
     features: [
       'Verified badge',
@@ -69,7 +69,7 @@ const PERSONA_TYPES = [
     icon: Music,
     title: 'CREATOR',
     tagline: 'Share your art',
-    color: '#B026FF',
+    color: '#C8962C',
     description: 'For DJs, artists, and content creators. Showcase your work, share exclusive content, and connect with fans.',
     features: [
       'Music/content showcase',
@@ -179,9 +179,9 @@ export default function PersonaFeatures() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative overflow-hidden bg-gradient-to-br from-[#C8962C]/20 via-black to-[#B026FF]/20 border-2 border-[#C8962C] p-8 md:p-12 mb-12"
+          className="relative overflow-hidden bg-gradient-to-br from-[#C8962C]/20 via-black to-[#D4A84B]/20 border-2 border-[#C8962C] p-8 md:p-12 mb-12"
         >
-          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#C8962C]/10 to-[#B026FF]/10 blur-3xl rounded-full" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#C8962C]/10 to-[#D4A84B]/10 blur-3xl rounded-full" />
           
           <div className="relative z-10 max-w-2xl">
             <div className="flex items-center gap-3 mb-4">
@@ -234,7 +234,7 @@ export default function PersonaFeatures() {
                 step: '02', 
                 title: 'Add Layers', 
                 desc: 'Unlock seller, creator, or organizer features. Each adds new sections and capabilities to your profile.',
-                color: '#B026FF'
+                color: '#D4A84B'
               },
               { 
                 step: '03', 
@@ -285,9 +285,9 @@ export default function PersonaFeatures() {
           viewport={{ once: true }}
           className="mb-16"
         >
-          <div className="bg-gradient-to-r from-[#B026FF]/20 to-[#00D9FF]/20 border-2 border-[#B026FF] p-8">
+          <div className="bg-gradient-to-r from-[#C8962C]/20 to-[#00D9FF]/20 border-2 border-[#C8962C] p-8">
             <div className="flex items-center gap-3 mb-6">
-              <Sparkles className="w-6 h-6 text-[#B026FF]" />
+              <Sparkles className="w-6 h-6 text-[#C8962C]" />
               <h2 className="text-xl font-black uppercase">Profile Skin Features</h2>
             </div>
             
@@ -296,8 +296,8 @@ export default function PersonaFeatures() {
                 const Icon = feature.icon;
                 return (
                   <div key={i} className="flex gap-4">
-                    <div className="w-10 h-10 bg-[#B026FF]/20 border border-[#B026FF]/40 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-5 h-5 text-[#B026FF]" />
+                    <div className="w-10 h-10 bg-[#C8962C]/20 border border-[#C8962C]/40 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-5 h-5 text-[#C8962C]" />
                     </div>
                     <div>
                       <h4 className="font-bold mb-1">{feature.title}</h4>
@@ -341,11 +341,11 @@ export default function PersonaFeatures() {
               </ul>
             </div>
             
-            <div className="bg-gradient-to-br from-[#FFD700]/10 to-[#C8962C]/10 border-2 border-[#FFD700] p-6">
+            <div className="bg-gradient-to-br from-[#C8962C]/10 to-[#C8962C]/10 border-2 border-[#C8962C] p-6">
               <div className="flex items-center gap-3 mb-4">
-                <Crown className="w-6 h-6 text-[#FFD700]" />
+                <Crown className="w-6 h-6 text-[#C8962C]" />
                 <h3 className="font-black uppercase">Premium</h3>
-                <span className="ml-auto text-xs bg-[#FFD700] text-black px-2 py-1 font-bold">RECOMMENDED</span>
+                <span className="ml-auto text-xs bg-[#C8962C] text-black px-2 py-1 font-bold">RECOMMENDED</span>
               </div>
               <ul className="space-y-3">
                 {[
@@ -359,7 +359,7 @@ export default function PersonaFeatures() {
                   'Early access to features',
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm text-white/90">
-                    <CheckCircle className="w-4 h-4 text-[#FFD700]" />
+                    <CheckCircle className="w-4 h-4 text-[#C8962C]" />
                     {item}
                   </li>
                 ))}

@@ -189,7 +189,7 @@ export default function SellerOnboarding() {
                 onClick={() => setFormData({ ...formData, acceptsXP: !formData.acceptsXP })}
                 className={`w-full p-6 rounded-xl border-2 text-left transition-all ${
                   formData.acceptsXP
-                    ? 'border-[#FFD700] bg-[#FFD700]/10'
+                    ? 'border-[#C8962C] bg-[#C8962C]/10'
                     : 'border-white/20 hover:border-white/40'
                 }`}
               >

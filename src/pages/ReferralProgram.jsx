@@ -141,7 +141,7 @@ export default function ReferralProgram() {
 
           <div className="mt-4 p-3 bg-black/40 rounded-lg text-center">
             <span className="text-white/60 text-sm">Your code: </span>
-            <span className="font-mono font-bold text-[#FFD700]">{referralCode}</span>
+            <span className="font-mono font-bold text-[#C8962C]">{referralCode}</span>
           </div>
         </motion.div>
 
@@ -153,7 +153,7 @@ export default function ReferralProgram() {
           className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8"
         >
           <h2 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-[#FFD700]" /> Reward Tiers
+            <Trophy className="w-5 h-5 text-[#C8962C]" /> Reward Tiers
           </h2>
 
           <div className="space-y-3">

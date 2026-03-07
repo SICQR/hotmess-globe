@@ -56,7 +56,7 @@ const CityReadiness = () => {
 
   const getStatusColor = (score) => {
     if (score >= 70) return '#39FF14';
-    if (score >= 40) return '#FFD700';
+    if (score >= 40) return '#C8962C';
     return '#FF6B35';
   };
 
@@ -114,8 +114,8 @@ const CityReadiness = () => {
             </div>
             <div className="text-sm text-white/60">Launch Ready</div>
           </div>
-          <div className="bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-xl p-4 text-center">
-            <div className="text-3xl font-black text-[#FFD700]">
+          <div className="bg-[#C8962C]/10 border border-[#C8962C]/30 rounded-xl p-4 text-center">
+            <div className="text-3xl font-black text-[#C8962C]">
               {cities.filter(c => c.score >= 40 && c.score < 70).length}
             </div>
             <div className="text-sm text-white/60">Building</div>

@@ -13,7 +13,7 @@ const SIGNAL_TYPES = [
   { id: 'event', label: 'Event', icon: PartyPopper, color: '#00D9FF', description: 'Boost visibility for your upcoming event' },
   { id: 'radio_premiere', label: 'Radio Premiere', icon: Radio, color: '#C8962C', description: 'Announce a new show or track premiere' },
   { id: 'drop', label: 'Product Drop', icon: ShoppingBag, color: '#C8962C', description: 'Amplify a new product or merch release' },
-  { id: 'special', label: 'Special Offer', icon: Sparkles, color: '#FFD700', description: 'Promote a limited-time deal or offer' },
+  { id: 'special', label: 'Special Offer', icon: Sparkles, color: '#C8962C', description: 'Promote a limited-time deal or offer' },
 ];
 
 const CITIES = [
@@ -111,7 +111,7 @@ const BusinessAmplify = () => {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
         <div className="text-center max-w-md">
-          <AlertCircle className="w-16 h-16 text-[#FFD700] mx-auto mb-4" />
+          <AlertCircle className="w-16 h-16 text-[#C8962C] mx-auto mb-4" />
           <h2 className="text-2xl font-black uppercase mb-2">Business Account Required</h2>
           <p className="text-white/60 mb-6">You need a verified business profile to create amplifications.</p>
           <Link to="/biz/onboarding">
@@ -273,7 +273,7 @@ const BusinessAmplify = () => {
                       onClick={() => setForm(f => ({ ...f, budget: tier.credits }))}
                       className={`p-4 border text-center transition-all relative ${
                         form.budget === tier.credits
-                          ? 'border-[#FFD700] bg-[#FFD700]/10'
+                          ? 'border-[#C8962C] bg-[#C8962C]/10'
                           : 'border-white/10 hover:border-white/30'
                       }`}
                     >
@@ -282,7 +282,7 @@ const BusinessAmplify = () => {
                           BEST VALUE
                         </span>
                       )}
-                      <p className="text-2xl font-black text-[#FFD700]">{tier.credits}</p>
+                      <p className="text-2xl font-black text-[#C8962C]">{tier.credits}</p>
                       <p className="text-xs text-white/60">credits</p>
                       <p className="text-xs text-[#39FF14] mt-2">{tier.reach} reach</p>
                     </button>
@@ -312,7 +312,7 @@ const BusinessAmplify = () => {
                   </div>
                   <div className="border-t border-white/10 pt-3 flex justify-between">
                     <span className="text-white/60">Total Cost</span>
-                    <span className="font-black text-[#FFD700] text-lg">{form.budget} credits</span>
+                    <span className="font-black text-[#C8962C] text-lg">{form.budget} credits</span>
                   </div>
                 </div>
               </div>

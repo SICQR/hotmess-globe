@@ -18,7 +18,7 @@ const PremiumCard = React.forwardRef(({
   const glowStyles = {
     hot: "hover:shadow-glow-hot",
     cyan: "hover:shadow-glow-cyan",
-    purple: "hover:shadow-glow-purple",
+    purple: "hover:shadow-glow-brand",
     gold: "hover:shadow-glow-gold",
     green: "hover:shadow-glow-green",
   };
@@ -27,7 +27,7 @@ const PremiumCard = React.forwardRef(({
     hot: "border-[#C8962C]/30 hover:border-[#C8962C]/50",
     cyan: "border-[#00D9FF]/30 hover:border-[#00D9FF]/50",
     purple: "border-[#C8962C]/30 hover:border-[#C8962C]/50",
-    gold: "border-[#FFD700]/30 hover:border-[#FFD700]/50",
+    gold: "border-[#C8962C]/30 hover:border-[#C8962C]/50",
     green: "border-[#39FF14]/30 hover:border-[#39FF14]/50",
   };
 
@@ -155,7 +155,7 @@ const FeatureCard = React.forwardRef(({
     hot: { bg: "bg-[#C8962C]/20", text: "text-[#C8962C]", border: "border-[#C8962C]/30" },
     cyan: { bg: "bg-[#00D9FF]/20", text: "text-[#00D9FF]", border: "border-[#00D9FF]/30" },
     purple: { bg: "bg-[#C8962C]/20", text: "text-[#C8962C]", border: "border-[#C8962C]/30" },
-    gold: { bg: "bg-[#FFD700]/20", text: "text-[#FFD700]", border: "border-[#FFD700]/30" },
+    gold: { bg: "bg-[#C8962C]/20", text: "text-[#C8962C]", border: "border-[#C8962C]/30" },
     green: { bg: "bg-[#39FF14]/20", text: "text-[#39FF14]", border: "border-[#39FF14]/30" },
   };
 
@@ -189,7 +189,7 @@ const StatCard = React.forwardRef(({
     hot: "text-[#C8962C]",
     cyan: "text-[#00D9FF]",
     purple: "text-[#C8962C]",
-    gold: "text-[#FFD700]",
+    gold: "text-[#C8962C]",
     green: "text-[#39FF14]",
   };
 

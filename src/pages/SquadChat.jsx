@@ -232,7 +232,7 @@ export default function SquadChat() {
                                 <div className="text-xs font-bold mb-1 flex items-center gap-1">
                                   {msg.sender_name}
                                   {msg.sender_email === squad?.creator_email && (
-                                    <Crown className="w-3 h-3 text-[#FFD700]" />
+                                    <Crown className="w-3 h-3 text-[#C8962C]" />
                                   )}
                                 </div>
                               )}

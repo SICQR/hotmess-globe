@@ -115,6 +115,13 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: true,
     deepLinkParams: [],
   },
+  'taps': {
+    id: 'taps',
+    title: 'Taps & Woofs',
+    height: 'large',
+    auth: true,
+    deepLinkParams: [],
+  },
   'event': {
     id: 'event',
     title: 'Event',

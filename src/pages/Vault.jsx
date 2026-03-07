@@ -47,7 +47,7 @@ export default function Vault() {
   if (loadingUser || isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#FFD700] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#C8962C] animate-spin" />
       </div>
     );
   }
@@ -72,11 +72,11 @@ export default function Vault() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto"
         >
-          <p className="text-[#FFD700] font-mono text-xs uppercase tracking-[0.3em] mb-2">
+          <p className="text-[#C8962C] font-mono text-xs uppercase tracking-[0.3em] mb-2">
             Nerve Center
           </p>
           <h1 className="text-4xl md:text-6xl font-black italic tracking-tight">
-            THE VAULT<span className="text-[#FFD700]">.</span>
+            THE VAULT<span className="text-[#C8962C]">.</span>
           </h1>
           <p className="text-white/40 font-mono text-sm mt-2">
             @{currentUser.email?.split('@')[0] || 'user'}
@@ -88,7 +88,7 @@ export default function Vault() {
       <div className="border-b border-white/10 bg-white/5">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-8">
           <div className="flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-[#FFD700]" />
+            <Trophy className="w-4 h-4 text-[#C8962C]" />
             <span className="font-mono text-sm">
               <span className="text-white/40">RANK:</span>{' '}
               <span className="text-white font-bold">{stats.rank}</span>
@@ -117,7 +117,7 @@ export default function Vault() {
           >
             <div className="border-b border-white/20 p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Package className="w-5 h-5 text-[#FFD700]" />
+                <Package className="w-5 h-5 text-[#C8962C]" />
                 <h2 className="font-black uppercase tracking-wider">Inventory Log</h2>
               </div>
               <Badge variant="outline" className="border-white/30 text-white/60 font-mono text-xs">
@@ -137,7 +137,7 @@ export default function Vault() {
                     className="flex items-center justify-between p-3 border border-white/10 hover:border-white/30 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 rounded-full bg-[#FFD700]" />
+                      <div className="w-2 h-2 rounded-full bg-[#C8962C]" />
                       <div>
                         <p className="font-mono text-sm">{item.title}</p>
                         <p className="text-white/40 text-xs uppercase">
@@ -198,7 +198,7 @@ export default function Vault() {
                         className="w-2 h-2 rounded-full animate-pulse"
                         style={{ 
                           backgroundColor: beacon.kind === 'social' ? '#39FF14' 
-                            : beacon.kind === 'marketplace' ? '#FFD700' 
+                            : beacon.kind === 'marketplace' ? '#C8962C' 
                             : '#00D9FF' 
                         }}
                       />

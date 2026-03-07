@@ -332,7 +332,7 @@ export default function ProductDetail() {
                   <Link to={createPageUrl(`Profile?email=${seller.email}`)}>
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8962C] to-[#D4A84B] flex items-center justify-center">
                           <span className="font-bold">{seller.full_name?.[0] || 'S'}</span>
                         </div>
                         <div>

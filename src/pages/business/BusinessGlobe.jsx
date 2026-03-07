@@ -14,7 +14,7 @@ const CITIES = [
   { id: 'paris', name: 'Paris', flag: '🇫🇷', color: '#C8962C' },
   { id: 'tokyo', name: 'Tokyo', flag: '🇯🇵', color: '#FF6B35' },
   { id: 'nyc', name: 'New York', flag: '🇺🇸', color: '#39FF14' },
-  { id: 'los_angeles', name: 'Los Angeles', flag: '🇺🇸', color: '#FFD700' },
+  { id: 'los_angeles', name: 'Los Angeles', flag: '🇺🇸', color: '#C8962C' },
   { id: 'san_francisco', name: 'San Francisco', flag: '🇺🇸', color: '#00D9FF' },
 ];
 
@@ -64,7 +64,7 @@ const BusinessGlobe = () => {
 
   const currentCity = CITIES.find(c => c.id === selectedCity) || CITIES[0];
   const readinessScore = readiness?.score || 0;
-  const readinessColor = readinessScore >= 70 ? '#39FF14' : readinessScore >= 40 ? '#FFD700' : '#FF6B35';
+  const readinessColor = readinessScore >= 70 ? '#39FF14' : readinessScore >= 40 ? '#C8962C' : '#FF6B35';
 
   return (
     <div className="min-h-screen bg-black text-white p-6 pb-24">
@@ -174,7 +174,7 @@ const BusinessGlobe = () => {
             { icon: Activity, label: 'Heat Tiles', value: cityHeat.length, color: '#C8962C' },
             { icon: Radio, label: 'Active Signals', value: radioSignals.length, color: '#00D9FF' },
             { icon: Users, label: 'Active Users', value: Math.floor(readinessScore * 12), color: '#39FF14' },
-            { icon: Target, label: 'Hotspots', value: cityHeat.filter(t => t.intensity > 0.7).length, color: '#FFD700' },
+            { icon: Target, label: 'Hotspots', value: cityHeat.filter(t => t.intensity > 0.7).length, color: '#C8962C' },
           ].map((stat, idx) => (
             <motion.div
               key={stat.label}
@@ -227,7 +227,7 @@ const BusinessGlobe = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[#C8962C] font-bold">{(tile.intensity * 100).toFixed(0)}%</span>
-                      <Zap className="w-4 h-4 text-[#FFD700]" />
+                      <Zap className="w-4 h-4 text-[#C8962C]" />
                     </div>
                   </div>
                 ))}

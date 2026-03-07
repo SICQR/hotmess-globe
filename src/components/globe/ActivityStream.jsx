@@ -89,8 +89,8 @@ export const ACTIVITY_TYPES = {
   // Commerce Actions
   purchase: {
     label: 'Purchase',
-    color: '#FFD700',
-    glowColor: 'rgba(255, 215, 0, 0.8)',
+    color: '#C8962C',
+    glowColor: 'rgba(200, 150, 44, 0.8)',
     icon: '💰',
     pulseSize: 1.6,
     arcEnabled: true,

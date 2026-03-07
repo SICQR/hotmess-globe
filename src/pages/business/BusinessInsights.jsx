@@ -145,10 +145,10 @@ const BusinessInsights = () => {
           </div>
           <div className="bg-white/5 border border-white/10 p-6">
             <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-4 h-4 text-[#FFD700]" />
+              <Zap className="w-4 h-4 text-[#C8962C]" />
               <span className="text-xs text-white/60 uppercase">Cost per Action</span>
             </div>
-            <p className="text-2xl font-black text-[#FFD700]">£{metrics.cost_per_action}</p>
+            <p className="text-2xl font-black text-[#C8962C]">£{metrics.cost_per_action}</p>
           </div>
         </div>
 
@@ -206,7 +206,7 @@ const BusinessInsights = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-[#FFD700]">{amp.budget} credits</p>
+                    <p className="font-bold text-[#C8962C]">{amp.budget} credits</p>
                     <p className="text-xs text-white/60">
                       {amp.impressions || Math.floor(amp.budget * 50)} impressions
                     </p>

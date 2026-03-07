@@ -23,7 +23,7 @@ export default function WakeTheMess() {
     <div className="min-h-screen bg-black text-white">
       {/* Hero */}
       <div className="relative overflow-hidden border-b-2 border-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#C8962C]/20 to-[#D4A84B]/20" />
         <div className="relative max-w-4xl mx-auto px-6 py-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

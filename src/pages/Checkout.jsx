@@ -798,7 +798,7 @@ export default function Checkout() {
                       <span>Order tracking</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-[#B026FF]" />
+                      <Shield className="w-4 h-4 text-[#C8962C]" />
                       <span>Secure checkout</span>
                     </div>
                     <div className="flex items-center gap-2">

@@ -77,7 +77,7 @@ const badgeConfig: Record<BadgeType, {
     color: 'text-black',
     bgColor: 'bg-gradient-to-r from-neon-gold to-neon-orange',
     borderColor: 'border-neon-gold',
-    glow: 'shadow-[0_0_10px_rgba(255,215,0,0.4)]',
+    glow: 'shadow-[0_0_10px_rgba(200, 150, 44,0.4)]',
   },
   seller: {
     label: 'Shop',

@@ -95,7 +95,7 @@ export default function SellerDashboard() {
       const promoterId = currentUser?.auth_user_id ?? currentUser?.id;
       if (promoterId && createdProduct) {
         await insertBeaconForP2PListing(createdProduct, promoterId);
-        dispatchWorldPulse('GOLD_DROP', '#FFD700');
+        dispatchWorldPulse('GOLD_DROP', '#C8962C');
       }
     },
     onError: (error) => {
@@ -125,7 +125,7 @@ export default function SellerDashboard() {
       // Wire to Globe: Remove beacon for deleted P2P listing
       if (deletedId) {
         await deleteBeaconForP2PListing(deletedId);
-        dispatchWorldPulse('BEACON_REMOVED', '#FFD700');
+        dispatchWorldPulse('BEACON_REMOVED', '#C8962C');
       }
     },
     onError: (error) => {

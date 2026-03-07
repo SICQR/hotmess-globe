@@ -378,10 +378,10 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
       <SheetSection>
         <button
           onClick={() => openSheet(SHEET_TYPES.VAULT)}
-          className="w-full p-4 bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-xl text-center"
+          className="w-full p-4 bg-[#C8962C]/10 border border-[#C8962C]/30 rounded-xl text-center"
         >
-          <Tag className="w-6 h-6 text-[#FFD700] mx-auto mb-2" />
-          <p className="text-[#FFD700] font-bold">Creator Marketplace</p>
+          <Tag className="w-6 h-6 text-[#C8962C] mx-auto mb-2" />
+          <p className="text-[#C8962C] font-bold">Creator Marketplace</p>
           <p className="text-white/40 text-xs mt-1">Buy from community sellers</p>
         </button>
       </SheetSection>

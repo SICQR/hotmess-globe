@@ -340,7 +340,7 @@ export default function Calendar() {
                           }}
                           className={`flex-1 py-1.5 text-xs font-bold uppercase flex items-center justify-center gap-1 rounded ${
                             reminders[event.id] 
-                              ? 'bg-[#FFD700]/20 text-[#FFD700]' 
+                              ? 'bg-[#C8962C]/20 text-[#C8962C]' 
                               : 'bg-white/5 text-white/60 hover:bg-white/10'
                           }`}
                         >
