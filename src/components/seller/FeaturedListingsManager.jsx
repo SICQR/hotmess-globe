@@ -145,7 +145,7 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
 
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
-                      <div className="flex items-center justify-center gap-1 text-[#00D9FF] mb-1">
+                      <div className="flex items-center justify-center gap-1 text-white/50 mb-1">
                         <Eye className="w-4 h-4" />
                       </div>
                       <div className="text-xl font-black">{listing.impressions}</div>

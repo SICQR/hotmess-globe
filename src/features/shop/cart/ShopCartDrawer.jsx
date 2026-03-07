@@ -57,7 +57,7 @@ export function ShopCartPanel({ showTitle = true } = {}) {
         <div className="border border-white/10 bg-white/5 p-4">
           <p className="text-white/70 text-sm">Your cart is empty.</p>
           <div className="mt-3">
-            <Link to="/market" className="text-[#00D9FF] hover:underline text-sm font-bold">
+            <Link to="/market" className="text-[#C8962C] hover:underline text-sm font-bold">
               Continue shopping
             </Link>
           </div>
@@ -159,7 +159,7 @@ export function ShopCartPanel({ showTitle = true } = {}) {
         <Button
           asChild
           disabled={isLoading || lines.length === 0}
-          className="w-full bg-[#00D9FF] text-black hover:bg-white font-black uppercase py-6"
+          className="w-full bg-[#C8962C] text-black hover:bg-[#B07F1F] font-black uppercase py-6"
         >
           <Link to="/checkout/start">Checkout</Link>
         </Button>

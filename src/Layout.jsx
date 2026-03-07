@@ -495,7 +495,7 @@ function LayoutInner({ children, currentPageName }) {
                       setMobileMenuOpen(false);
                       base44.auth.redirectToLogin();
                     }}
-                    className="w-full text-left px-3 py-2 bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black text-xs uppercase tracking-wider font-bold mt-2"
+                    className="w-full text-left px-3 py-2 bg-[#C8962C] hover:bg-[#B07F1F] text-black text-xs uppercase tracking-wider font-bold mt-2"
                   >
                     Login
                   </button>
@@ -627,7 +627,7 @@ function LayoutInner({ children, currentPageName }) {
               ) : (
                 <button
                   onClick={() => base44.auth.redirectToLogin()}
-                  className="w-full px-3 py-2 bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black text-xs uppercase tracking-wider font-bold transition-all"
+                  className="w-full px-3 py-2 bg-[#C8962C] hover:bg-[#B07F1F] text-black text-xs uppercase tracking-wider font-bold transition-all"
                 >
                   Login
                 </button>
