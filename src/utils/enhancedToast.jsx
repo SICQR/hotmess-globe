@@ -47,7 +47,7 @@ export function toastNewMatch(userName) {
 export function toastEventReminder(eventName, timeUntil) {
   return sonnerToast.info(
     <div className="flex items-center gap-2">
-      <Info className="w-4 h-4 text-[#00D9FF]" />
+      <Info className="w-4 h-4 text-[#C8962C]" />
       <div>
         <p className="font-bold">{eventName}</p>
         <p className="text-sm text-white/60">Starts in {timeUntil}</p>
@@ -63,7 +63,7 @@ export function toastEventReminder(eventName, timeUntil) {
 export function toastFriendActivity(friendName, activity) {
   return sonnerToast.info(
     <div className="flex items-center gap-2">
-      <Info className="w-4 h-4 text-[#00D9FF]" />
+      <Info className="w-4 h-4 text-[#C8962C]" />
       <div>
         <p className="text-sm">{friendName} {activity}</p>
       </div>
