@@ -4,7 +4,7 @@
  * Shows a list of profiles that viewed you in the last 7 days.
  * Ordered by most recent first. Tap a row to open their profile sheet.
  *
- * Data model: profile_views uses viewer_email / viewed_email (email-based, not UUID).
+ * Data model: profile_views uses viewer_id / viewed_id (UUID-based, references auth.users.id).
  */
 
 import React, { useEffect, useState } from 'react';
@@ -20,40 +20,39 @@ const CARD_BG = '#1C1C1E';
 
 interface ViewRow {
   id: string;
-  viewer_email: string;
+  viewer_id: string;
   viewed_at: string;
   // Profile data joined in second query
   profile?: {
-    email: string;
+    id: string;
     avatar_url?: string;
     display_name?: string;
     city?: string;
-    auth_user_id?: string;
   };
 }
 
 export default function L2ProfileViewsSheet() {
   const { openSheet } = useSheet();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.email) setUserEmail(user.email);
+      if (user?.id) setUserId(user.id);
     });
   }, []);
 
   // Step 1: Fetch profile_views rows for this user (last 7 days)
   const { data: views = [], isLoading, error } = useQuery<ViewRow[]>({
-    queryKey: ['profile-views', userEmail],
+    queryKey: ['profile-views', userId],
     queryFn: async () => {
-      if (!userEmail) return [];
+      if (!userId) return [];
 
       const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
       const { data: rawViews, error: viewsError } = await supabase
         .from('profile_views')
-        .select('id, viewer_email, viewed_at')
-        .eq('viewed_email', userEmail)
+        .select('id, viewer_id, viewed_at')
+        .eq('viewed_id', userId)
         .gte('viewed_at', since)
         .order('viewed_at', { ascending: false })
         .limit(50);
@@ -64,32 +63,30 @@ export default function L2ProfileViewsSheet() {
       }
       if (!rawViews?.length) return [];
 
-      // Step 2: Fetch profile data for viewer emails
-      const viewerEmails = [...new Set(rawViews.map((v) => v.viewer_email))];
+      // Step 2: Fetch profile data for viewer UUIDs
+      // profiles.id = auth.users.id = profile_views.viewer_id
+      const viewerIds = [...new Set(rawViews.map((v) => v.viewer_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('email, avatar_url, display_name, city, auth_user_id')
-        .in('email', viewerEmails);
+        .select('id, avatar_url, display_name, city')
+        .in('id', viewerIds);
 
-      const profileByEmail: Record<string, any> = {};
+      const profileById: Record<string, any> = {};
       for (const p of profiles ?? []) {
-        if (p.email) profileByEmail[p.email] = p;
+        if (p.id) profileById[p.id] = p;
       }
 
       return rawViews.map((v) => ({
         ...v,
-        profile: profileByEmail[v.viewer_email],
+        profile: profileById[v.viewer_id],
       }));
     },
-    enabled: !!userEmail,
+    enabled: !!userId,
     staleTime: 30_000,
   });
 
-  const handleOpenProfile = (viewerEmail: string, profile: any) => {
-    openSheet('profile', {
-      email: viewerEmail,
-      uid: profile?.auth_user_id,
-    });
+  const handleOpenProfile = (viewerId: string) => {
+    openSheet('profile', { uid: viewerId });
   };
 
   if (isLoading) {
@@ -139,7 +136,7 @@ export default function L2ProfileViewsSheet() {
             style={{ background: CARD_BG }}
           >
             {views.map((view, idx) => {
-              const displayName = view.profile?.display_name || view.viewer_email.split('@')[0];
+              const displayName = view.profile?.display_name || 'Unknown';
               const avatarUrl = view.profile?.avatar_url;
               const city = view.profile?.city;
               const initial = displayName[0]?.toUpperCase() ?? '?';
@@ -150,7 +147,7 @@ export default function L2ProfileViewsSheet() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.04 }}
-                  onClick={() => handleOpenProfile(view.viewer_email, view.profile)}
+                  onClick={() => handleOpenProfile(view.viewer_id)}
                   className="w-full flex items-center gap-3 p-4 active:bg-white/5 transition-colors text-left"
                 >
                   {/* Avatar */}
