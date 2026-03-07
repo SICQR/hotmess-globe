@@ -26,8 +26,8 @@ const latLngToXY = (lat, lng, width, height) => {
 
 // Visual language colors
 const COLORS = {
-  heat: { base: '#C8962C', glow: 'rgba(255,20,147,0.4)' },
-  pulse: { base: '#FFD700', glow: 'rgba(255,215,0,0.4)' },
+  heat: { base: '#C8962C', glow: 'rgba(200,150,44,0.4)' },
+  pulse: { base: '#C8962C', glow: 'rgba(200,150,44,0.4)' },
   wave: { base: '#00FF88', glow: 'rgba(0,255,136,0.3)' },
   sparkle: { base: '#FFFFFF', glow: 'rgba(255,255,255,0.2)' },
 };

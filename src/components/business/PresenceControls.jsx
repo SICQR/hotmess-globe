@@ -48,7 +48,7 @@ export function PresenceControls({ businessId }) {
             <div className={`text-2xl font-black ${heatColor}`}>{heatLevel}%</div>
           </div>
         </div>
-        {isLandmark && <div className="px-2 py-1 rounded-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black text-[10px] font-bold uppercase">⭐ Landmark</div>}
+        {isLandmark && <div className="px-2 py-1 rounded-full bg-gradient-to-r from-[#C8962C] to-[#D4A84B] text-black text-[10px] font-bold uppercase">⭐ Landmark</div>}
       </div>
       <div className="h-2 rounded-full bg-white/10 overflow-hidden">
         <div className={`h-full transition-all ${heatLevel > 75 ? 'bg-red-500' : heatLevel > 50 ? 'bg-yellow-500' : 'bg-cyan-500'}`} style={{ width: `${heatLevel}%` }} />

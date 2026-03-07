@@ -31,7 +31,7 @@ const PLANS = [
     id: 'enterprise',
     name: 'Network',
     price: 499,
-    color: '#FFD700',
+    color: '#C8962C',
     icon: Crown,
     features: ['Multi-venue', 'Sponsor inventory', 'Custom integrations', 'Dedicated manager']
   }
@@ -204,15 +204,15 @@ export default function BusinessBilling() {
 
           <div className="bg-white/5 border border-white/10 p-6">
             <h3 className="font-black uppercase mb-4 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-[#FFD700]" />
+              <Zap className="w-5 h-5 text-[#C8962C]" />
               Amplification Credits
             </h3>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-black text-[#FFD700]">1,250</p>
+                <p className="text-3xl font-black text-[#C8962C]">1,250</p>
                 <p className="text-xs text-white/60">Available credits</p>
               </div>
-              <Button variant="outline" className="border-[#FFD700] text-[#FFD700]">
+              <Button variant="outline" className="border-[#C8962C] text-[#C8962C]">
                 Buy More
               </Button>
             </div>

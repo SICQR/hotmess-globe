@@ -76,7 +76,7 @@ export function DailyCheckIn({
         
         {/* Streak badge */}
         {currentStreak >= 7 && (
-          <div className="px-3 py-1 bg-[#FFD700] text-black text-xs font-black rounded-full">
+          <div className="px-3 py-1 bg-[#C8962C] text-black text-xs font-black rounded-full">
             🔥 ON FIRE
           </div>
         )}
@@ -154,7 +154,7 @@ export function ActiveChallenges({
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-[#FFD700]" />
+          <Trophy className="w-5 h-5 text-[#C8962C]" />
           <span className="font-black uppercase text-white">Active Challenges</span>
         </div>
         <span className="text-xs text-white/40">Resets Monday</span>
@@ -328,7 +328,7 @@ export function UpgradePrompt({
       
       <Button
         className="w-full font-black"
-        style={{ backgroundColor: tier.color, color: tier.color === '#FFD700' ? '#000' : '#FFF' }}
+        style={{ backgroundColor: tier.color, color: tier.color === '#C8962C' ? '#000' : '#FFF' }}
       >
         UPGRADE TO {tier.name}
       </Button>

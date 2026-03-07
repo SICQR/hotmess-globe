@@ -101,7 +101,7 @@ const FEATURE_CATEGORIES = [
     id: 'personas',
     title: 'PERSONAS',
     subtitle: 'Multi-layered profiles',
-    color: '#FFD700',
+    color: '#C8962C',
     icon: Layers,
     href: '/features/personas',
     features: [

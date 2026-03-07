@@ -202,7 +202,7 @@ export default function BusinessAnalytics() {
             className="bg-white/5 border border-white/10 rounded-xl p-4"
           >
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-4 h-4 text-[#B026FF]" />
+              <TrendingUp className="w-4 h-4 text-[#C8962C]" />
               <span className="text-xs text-white/60">Conversion</span>
             </div>
             <div className="text-2xl font-black">{analytics?.conversionRate || 0}%</div>

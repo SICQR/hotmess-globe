@@ -29,7 +29,7 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
     'premium': { 
       icon: <Crown className="w-5 h-5" />, 
       badge: '💎 PREMIUM',
-      gradient: 'from-[#FFD700] to-[#C8962C]'
+      gradient: 'from-[#C8962C] to-[#D4A84B]'
     },
     'creator': { 
       icon: <Palette className="w-5 h-5" />, 

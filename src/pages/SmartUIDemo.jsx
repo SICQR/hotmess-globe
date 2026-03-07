@@ -55,7 +55,7 @@ export default function SmartUIDemo() {
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-[#C8962C] via-[#00D9FF] to-[#FFD700] bg-clip-text text-transparent">
+          <h1 className="text-5xl font-black bg-gradient-to-r from-[#C8962C] via-[#00D9FF] to-[#C8962C] bg-clip-text text-transparent">
             Smart Dynamic UI System
           </h1>
           <p className="text-white/60 text-lg">
@@ -118,7 +118,7 @@ export default function SmartUIDemo() {
             <MagneticButton className="bg-gradient-to-r from-[#00D9FF] to-[#3B82F6] text-white px-6 py-3 rounded-lg font-bold">
               I Follow You
             </MagneticButton>
-            <MagneticButton className="bg-gradient-to-r from-[#FFD700] to-[#FF6B35] text-black px-6 py-3 rounded-lg font-bold">
+            <MagneticButton className="bg-gradient-to-r from-[#C8962C] to-[#FF6B35] text-black px-6 py-3 rounded-lg font-bold">
               Magnetic Effect
             </MagneticButton>
           </div>
@@ -213,7 +213,7 @@ export default function SmartUIDemo() {
                 id: '1',
                 size: '2x2',
                 content: (
-                  <div className="h-full bg-gradient-to-br from-[#C8962C] to-[#B026FF] rounded-lg p-6 flex flex-col justify-end">
+                  <div className="h-full bg-gradient-to-br from-[#C8962C] to-[#D4A84B] rounded-lg p-6 flex flex-col justify-end">
                     <div className="flex items-center gap-2 mb-2">
                       <Star className="w-5 h-5 text-white" />
                       <span className="text-sm font-bold text-white uppercase">Featured</span>
@@ -243,7 +243,7 @@ export default function SmartUIDemo() {
                 id: '3',
                 size: '1x1',
                 content: (
-                  <div className="h-full bg-gradient-to-br from-[#FFD700] to-[#FF6B35] rounded-lg p-4 flex items-center justify-center">
+                  <div className="h-full bg-gradient-to-br from-[#C8962C] to-[#D4A84B] rounded-lg p-4 flex items-center justify-center">
                     <div className="text-center">
                       <Zap className="w-8 h-8 text-black mx-auto mb-2" />
                       <p className="text-black font-bold">Standard</p>
@@ -255,7 +255,7 @@ export default function SmartUIDemo() {
                 id: '4',
                 size: '1x2',
                 content: (
-                  <div className="h-full bg-gradient-to-br from-[#B026FF] to-[#C8962C] rounded-lg p-4 flex flex-col justify-center">
+                  <div className="h-full bg-gradient-to-br from-[#D4A84B] to-[#C8962C] rounded-lg p-4 flex flex-col justify-center">
                     <h4 className="text-white font-bold mb-2">Tall Card</h4>
                     <p className="text-white/60 text-sm">Featured items get 1x2 space</p>
                   </div>

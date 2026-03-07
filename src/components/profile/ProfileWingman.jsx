@@ -215,7 +215,7 @@ export default function ProfileWingman({
         className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-[#FFD700]" />
+          <Sparkles className="w-5 h-5 text-[#C8962C]" />
           <span className="font-black text-sm uppercase tracking-wider text-white">AI Wingman</span>
           {matchScore && (
             <span className="ml-2 px-2 py-0.5 bg-[#C8962C]/20 text-[#C8962C] text-xs font-bold rounded-full">
@@ -243,7 +243,7 @@ export default function ProfileWingman({
               {insights.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Lightbulb className="w-4 h-4 text-[#FFD700]" />
+                    <Lightbulb className="w-4 h-4 text-[#C8962C]" />
                     <span className="text-xs text-white/60 uppercase tracking-wider font-bold">
                       Why You Match
                     </span>
@@ -327,8 +327,8 @@ export default function ProfileWingman({
               </div>
               
               {/* Quick tip */}
-              <div className="bg-[#FFD700]/10 border border-[#FFD700]/30 p-3 text-xs text-white/60">
-                <span className="text-[#FFD700] font-bold">TIP:</span> Personalize these openers with specific details from their profile for better responses.
+              <div className="bg-[#C8962C]/10 border border-[#C8962C]/30 p-3 text-xs text-white/60">
+                <span className="text-[#C8962C] font-bold">TIP:</span> Personalize these openers with specific details from their profile for better responses.
               </div>
             </div>
           </motion.div>
@@ -354,7 +354,7 @@ export function ProfileWingmanCompact({ profile, currentUser, onSendMessage }) {
         onClick={() => setShowOpeners(!showOpeners)}
         size="sm"
         variant="ghost"
-        className="h-8 px-2 text-[#FFD700] hover:bg-[#FFD700]/10"
+        className="h-8 px-2 text-[#C8962C] hover:bg-[#C8962C]/10"
       >
         <Sparkles className="w-4 h-4 mr-1" />
         Wingman
@@ -366,7 +366,7 @@ export function ProfileWingmanCompact({ profile, currentUser, onSendMessage }) {
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute bottom-full left-0 mb-2 w-72 bg-black border-2 border-[#FFD700]/50 p-3 z-50"
+            className="absolute bottom-full left-0 mb-2 w-72 bg-black border-2 border-[#C8962C]/50 p-3 z-50"
           >
             <p className="text-xs text-white/60 mb-2 uppercase tracking-wider font-bold">
               Quick Openers

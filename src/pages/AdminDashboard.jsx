@@ -176,7 +176,7 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="advanced" 
-              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-white font-black uppercase text-xs py-3"
+              className="data-[state=active]:bg-[#C8962C] data-[state=active]:text-white font-black uppercase text-xs py-3"
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               Advanced
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="events" 
-              className="data-[state=active]:bg-[#B026FF] data-[state=active]:text-white font-black uppercase text-xs py-3"
+              className="data-[state=active]:bg-[#C8962C] data-[state=active]:text-white font-black uppercase text-xs py-3"
             >
               <Calendar className="w-4 h-4 mr-2" />
               Events

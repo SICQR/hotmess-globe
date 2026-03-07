@@ -137,10 +137,10 @@ export default function CreatorProfileView({ user, currentUser }) {
 
         <div className="relative aspect-square overflow-hidden rounded-lg border border-white/10 bg-black/30">
           {activeIsPremium ? (
-            <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#C8962C]/15 border border-[#FFD700]/40 flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-[#C8962C]/15 to-[#C8962C]/15 border border-[#C8962C]/40 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-3xl mb-2">🔒</div>
-                <div className="text-xs text-[#FFD700] font-black uppercase">Premium</div>
+                <div className="text-xs text-[#C8962C] font-black uppercase">Premium</div>
               </div>
             </div>
           ) : (
@@ -175,8 +175,8 @@ export default function CreatorProfileView({ user, currentUser }) {
                 disabled={!url}
               >
                 {premium ? (
-                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/15 to-[#C8962C]/15 flex items-center justify-center">
-                    <div className="text-xs text-[#FFD700] font-black">🔒</div>
+                  <div className="w-full h-full bg-gradient-to-br from-[#C8962C]/15 to-[#C8962C]/15 flex items-center justify-center">
+                    <div className="text-xs text-[#C8962C] font-black">🔒</div>
                   </div>
                 ) : url ? (
                   <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />

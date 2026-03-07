@@ -131,7 +131,7 @@ export function calculateReputationScore(userData) {
  * Get reputation level from score
  */
 export function getReputationLevel(score) {
-  if (score >= 400) return { name: 'Legendary', color: '#FFD700', tier: 5 };
+  if (score >= 400) return { name: 'Legendary', color: '#C8962C', tier: 5 };
   if (score >= 300) return { name: 'Trusted', color: '#39FF14', tier: 4 };
   if (score >= 200) return { name: 'Established', color: '#00D9FF', tier: 3 };
   if (score >= 100) return { name: 'Active', color: '#C8962C', tier: 2 };

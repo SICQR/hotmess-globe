@@ -117,7 +117,7 @@ export const MEMBERSHIP_TIERS = {
       yearly: 149.99, // 37% savings
       savings: '37%',
     },
-    color: '#FFD700',
+    color: '#C8962C',
     premium: true,
     features: [
       { name: 'Everything in PLUS', included: true },

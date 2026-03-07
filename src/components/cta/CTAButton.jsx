@@ -30,7 +30,7 @@ const VARIANT_STYLES = {
   'cyan': 'bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black',
   'cyan-gradient': 'bg-gradient-to-r from-[#00D9FF] to-[#0066FF] hover:opacity-90 text-white',
   'purple': 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-white',
-  'gold': 'bg-[#FFD700] hover:bg-[#FFD700]/90 text-black',
+  'gold': 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-black',
   'lime': 'bg-[#39FF14] hover:bg-[#39FF14]/90 text-black',
   'black': 'bg-black hover:bg-black/90 text-white border border-white/20',
   'outline': 'bg-transparent hover:bg-white/10 text-white border-2 border-white/30',
@@ -153,7 +153,7 @@ export default function CTAButton({
       
       {/* Badge */}
       {badge && (
-        <span className="absolute -top-2 -right-2 px-2 py-0.5 text-[10px] font-black bg-[#FFD700] text-black rounded-full">
+        <span className="absolute -top-2 -right-2 px-2 py-0.5 text-[10px] font-black bg-[#C8962C] text-black rounded-full">
           {badge}
         </span>
       )}

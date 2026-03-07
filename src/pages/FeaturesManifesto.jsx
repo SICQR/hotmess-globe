@@ -119,7 +119,7 @@ const FEATURE_PAGES = [
     title: 'PERSONA FEATURES',
     route: '/features/personas',
     icon: Layers,
-    color: '#FFD700',
+    color: '#C8962C',
     description: 'Multi-layered profiles that adapt to context. One identity with multiple personas: Standard, Premium, Seller, Creator, and Organizer, each with unique capabilities.',
     highlights: [
       'Context-aware profiles',
@@ -441,7 +441,7 @@ export default function FeaturesManifesto() {
               <div><span className="text-[#C8962C]">/features/events</span> — Events features detail</div>
               <div><span className="text-[#00D9FF]">/features/social</span> — Social features detail</div>
               <div><span className="text-[#FF6B35]">/features/radio</span> — Music & Radio features detail</div>
-              <div><span className="text-[#FFD700]">/features/personas</span> — Persona features detail</div>
+              <div><span className="text-[#C8962C]">/features/personas</span> — Persona features detail</div>
               <div className="pt-4 border-t border-white/10 mt-4">
                 <span className="text-white/40">// All pages registered in src/pages.config.js</span>
               </div>

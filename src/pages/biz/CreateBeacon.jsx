@@ -25,7 +25,7 @@ const TIERS = [
   { id: 'standard_6h', name: 'Standard', hours: 6, price: 19.99, reach: '50km', color: '#00D9FF', popular: false },
   { id: 'premium_9h', name: 'Premium', hours: 9, price: 39.99, reach: '100km', color: '#C8962C', popular: true },
   { id: 'featured_12h', name: 'Featured', hours: 12, price: 79.99, reach: '200km', color: '#C8962C' },
-  { id: 'spotlight_24h', name: 'Spotlight', hours: 24, price: 149.99, reach: '500km', color: '#B026FF' }
+  { id: 'spotlight_24h', name: 'Spotlight', hours: 24, price: 149.99, reach: '500km', color: '#C8962C' }
 ];
 
 export default function CreateBeacon() {

@@ -20,7 +20,7 @@ export const VISUAL_TYPES = {
   PULSE: {
     id: 'pulse',
     description: 'Time-bound activity (events, shows starting)',
-    color: { base: '#FFD700', glow: 'rgba(255,215,0,0.4)' },
+    color: { base: '#C8962C', glow: 'rgba(200, 150, 44,0.4)' },
     animation: 'beat', // Sharp pulse
     duration: { min: 30, max: 180 }, // minutes
     decaysTo: 'HEAT',

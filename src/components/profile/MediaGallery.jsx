@@ -124,7 +124,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allow
                 </div>
               )}
               {photo.is_premium && (
-                <div className="px-2 py-1 bg-[#FFD700] text-black text-[10px] font-black uppercase flex items-center gap-1">
+                <div className="px-2 py-1 bg-[#C8962C] text-black text-[10px] font-black uppercase flex items-center gap-1">
                   <Crown className="w-3 h-3" />
                   PREMIUM
                 </div>
@@ -149,7 +149,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allow
                       e.stopPropagation();
                       togglePremium(idx);
                     }}
-                    className="bg-[#FFD700] text-black hover:bg-[#FFD700]/90 text-xs"
+                    className="bg-[#C8962C] text-black hover:bg-[#C8962C]/90 text-xs"
                   >
                     <Crown className="w-3 h-3" />
                   </Button>
@@ -330,10 +330,10 @@ export function PremiumVideoManager({ videos = [], onVideosChange }) {
   return (
     <div className="space-y-4">
       {videos.map((video, idx) => (
-        <div key={idx} className="bg-white/5 border-2 border-[#FFD700]/40 p-4">
+        <div key={idx} className="bg-white/5 border-2 border-[#C8962C]/40 p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Crown className="w-4 h-4 text-[#FFD700]" />
+              <Crown className="w-4 h-4 text-[#C8962C]" />
               <span className="text-sm font-bold text-white">{video.title}</span>
             </div>
             <Button
@@ -349,9 +349,9 @@ export function PremiumVideoManager({ videos = [], onVideosChange }) {
         </div>
       ))}
 
-      <div className="border-2 border-dashed border-[#FFD700]/40 p-4 space-y-3">
+      <div className="border-2 border-dashed border-[#C8962C]/40 p-4 space-y-3">
         <div className="flex items-center gap-2 mb-2">
-          <Crown className="w-5 h-5 text-[#FFD700]" />
+          <Crown className="w-5 h-5 text-[#C8962C]" />
           <span className="text-sm font-bold text-white uppercase">Add Premium Video</span>
         </div>
         
@@ -373,7 +373,7 @@ export function PremiumVideoManager({ videos = [], onVideosChange }) {
           <Button
             type="button"
             disabled={uploading || !newVideoTitle}
-            className="w-full bg-[#FFD700] text-black hover:bg-[#FFD700]/90 font-black"
+            className="w-full bg-[#C8962C] text-black hover:bg-[#C8962C]/90 font-black"
             onClick={() => document.querySelector('input[type="file"][accept="video/*"]').click()}
           >
             {uploading ? 'Uploading...' : (

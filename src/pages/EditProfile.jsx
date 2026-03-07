@@ -544,8 +544,8 @@ export default function EditProfile() {
             </div>
 
             {/* Premium Videos */}
-            <div className="bg-black border-2 border-[#FFD700] p-6">
-              <Label className="text-xs uppercase tracking-widest text-[#FFD700] mb-4 flex items-center gap-2">
+            <div className="bg-black border-2 border-[#C8962C] p-6">
+              <Label className="text-xs uppercase tracking-widest text-[#C8962C] mb-4 flex items-center gap-2">
                 <Crown className="w-4 h-4" />
                 Premium Videos (Coming Soon)
               </Label>

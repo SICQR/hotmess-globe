@@ -215,14 +215,14 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
   return (
     <div className="space-y-6">
       {/* Premium Badge Header */}
-      <div className="bg-gradient-to-r from-[#FFD700]/20 via-[#C8962C]/20 to-[#FFD700]/20 border-2 border-[#FFD700]/50 rounded-xl p-4">
+      <div className="bg-gradient-to-r from-[#C8962C]/20 via-[#D4A84B]/20 to-[#C8962C]/20 border-2 border-[#C8962C]/50 rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#FFD700] to-[#C8962C] flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#C8962C] to-[#D4A84B] flex items-center justify-center">
               <Crown className="w-6 h-6 text-black" />
             </div>
             <div>
-              <h3 className="font-black text-[#FFD700] uppercase">Premium Creator</h3>
+              <h3 className="font-black text-[#C8962C] uppercase">Premium Creator</h3>
               <p className="text-xs text-white/60">Exclusive content available</p>
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
             <Button
               onClick={() => subscribeMutation.mutate()}
               disabled={subscribeMutation.isPending}
-              className="bg-gradient-to-r from-[#FFD700] to-[#C8962C] text-black font-black uppercase hover:opacity-90"
+              className="bg-gradient-to-r from-[#C8962C] to-[#D4A84B] text-black font-black uppercase hover:opacity-90"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Subscribe
@@ -263,16 +263,16 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
                 className="w-full h-full object-cover blur-xl scale-110"
               />
               {/* Lock overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/30 to-[#C8962C]/30 backdrop-blur-sm flex items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#C8962C]/30 to-[#C8962C]/30 backdrop-blur-sm flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-[#FFD700] to-[#C8962C] flex items-center justify-center">
+                  <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center">
                     <Lock className="w-8 h-8 text-black" />
                   </div>
-                  <p className="text-[#FFD700] font-black uppercase mb-2">Premium Content</p>
+                  <p className="text-[#C8962C] font-black uppercase mb-2">Premium Content</p>
                   <p className="text-white/60 text-sm mb-4">Premium content</p>
                   <Button
                     onClick={() => handleUnlockClick(activePhotoMeta)}
-                    className="bg-gradient-to-r from-[#FFD700] to-[#C8962C] text-black font-black uppercase"
+                    className="bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-black font-black uppercase"
                   >
                     <Unlock className="w-4 h-4 mr-2" />
                     Unlock Now
@@ -286,7 +286,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
 
           {/* Premium indicator */}
           {activePhotoMeta.isPremium && hasUnlockedPhoto(activePhotoMeta.id) && (
-            <div className="absolute top-3 right-3 px-2 py-1 bg-[#FFD700] text-black text-xs font-black uppercase flex items-center gap-1">
+            <div className="absolute top-3 right-3 px-2 py-1 bg-[#C8962C] text-black text-xs font-black uppercase flex items-center gap-1">
               <Crown className="w-3 h-3" />
               Premium
             </div>
@@ -307,7 +307,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
                 className={`
                   relative aspect-square overflow-hidden rounded-md border transition-all
                   ${slotIdx === activePhotoIndex 
-                    ? 'border-[#FFD700] ring-2 ring-[#FFD700]/50' 
+                    ? 'border-[#C8962C] ring-2 ring-[#C8962C]/50' 
                     : 'border-white/10 hover:border-white/25'
                   }
                   ${!url ? 'opacity-40' : ''}
@@ -322,14 +322,14 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
                 disabled={!url}
               >
                 {meta.isPremium && !isUnlocked ? (
-                  <div className="w-full h-full bg-gradient-to-br from-[#FFD700]/20 to-[#C8962C]/20 flex items-center justify-center">
-                    <Lock className="w-4 h-4 text-[#FFD700]" />
+                  <div className="w-full h-full bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 flex items-center justify-center">
+                    <Lock className="w-4 h-4 text-[#C8962C]" />
                   </div>
                 ) : url ? (
                   <>
                     <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />
                     {meta.isPremium && (
-                      <div className="absolute top-1 right-1 w-4 h-4 bg-[#FFD700] flex items-center justify-center">
+                      <div className="absolute top-1 right-1 w-4 h-4 bg-[#C8962C] flex items-center justify-center">
                         <Crown className="w-2.5 h-2.5 text-black" />
                       </div>
                     )}
@@ -346,7 +346,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
       {/* Content Stats */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-          <ImageIcon className="w-6 h-6 mx-auto mb-2 text-[#FFD700]" />
+          <ImageIcon className="w-6 h-6 mx-auto mb-2 text-[#C8962C]" />
           <div className="text-2xl font-black">{premiumPhotos.length}</div>
           <div className="text-xs text-white/40 uppercase">Premium</div>
         </div>
@@ -364,9 +364,9 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
 
       {/* Subscription Tiers */}
       {!isOwnProfile && !isSubscribed && (
-        <div className="bg-gradient-to-br from-[#FFD700]/10 to-[#C8962C]/10 border border-[#FFD700]/30 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#C8962C]/10 to-[#C8962C]/10 border border-[#C8962C]/30 rounded-xl p-6">
           <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#FFD700]" />
+            <Sparkles className="w-5 h-5 text-[#C8962C]" />
             Subscription Benefits
           </h3>
           
@@ -400,7 +400,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
           <Button
             onClick={() => subscribeMutation.mutate()}
             disabled={subscribeMutation.isPending}
-            className="w-full bg-gradient-to-r from-[#FFD700] to-[#C8962C] text-black font-black uppercase text-lg py-6 hover:opacity-90"
+            className="w-full bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-black font-black uppercase text-lg py-6 hover:opacity-90"
           >
             <Crown className="w-5 h-5 mr-2" />
             Subscribe
@@ -454,11 +454,11 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-black border-2 border-[#FFD700]/50 rounded-xl p-6 max-w-md w-full"
+              className="bg-black border-2 border-[#C8962C]/50 rounded-xl p-6 max-w-md w-full"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-center mb-6">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-[#FFD700] to-[#C8962C] flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center">
                   <Unlock className="w-8 h-8 text-black" />
                 </div>
                 <h3 className="text-xl font-black uppercase mb-2">Unlock Premium Content</h3>
@@ -474,7 +474,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
                   Cancel
                 </Button>
                 <Button
-                  className="flex-1 bg-gradient-to-r from-[#FFD700] to-[#C8962C] text-black font-black"
+                  className="flex-1 bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-black font-black"
                   onClick={() => unlockMutation.mutate({
                     photoId: unlockingPhoto.id,
                     priceXp: unlockingPhoto.price,

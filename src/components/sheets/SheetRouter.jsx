@@ -58,6 +58,7 @@ const L2AdminSheet = lazy(() => import('./L2AdminSheet'));
 const L2AmplifySheet = lazy(() => import('./L2AmplifySheet'));
 const L2BrandSheet = lazy(() => import('./L2BrandSheet'));
 const L2TicketSheet = lazy(() => import('./L2TicketSheet'));
+const L2TapsSheet = lazy(() => import('./L2TapsSheet'));
 const L2CommunityPostSheet = lazy(() => import('./L2CommunityPostSheet'));
 const L2AchievementsSheet = lazy(() => import('./L2AchievementsSheet'));
 const L2SquadsSheet = lazy(() => import('./L2SquadsSheet'));
@@ -114,6 +115,7 @@ const SHEET_COMPONENTS = {
   // Core implemented sheets
   'profile': L2ProfileSheet,
   'profile-views': L2ProfileViewsSheet,
+  'taps': L2TapsSheet,
   'event': L2EventSheet,
   'chat': L2ChatSheet,
   'vault': L2VaultSheet,

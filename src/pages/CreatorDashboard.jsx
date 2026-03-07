@@ -429,7 +429,7 @@ function RequestRow({ request, expanded = false }) {
   const statusColors = {
     pending: '#C8962C',
     accepted: '#00D9FF',
-    in_progress: '#B026FF',
+    in_progress: '#C8962C',
     delivered: '#39FF14'
   };
 

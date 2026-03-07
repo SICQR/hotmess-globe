@@ -339,7 +339,7 @@ export default function Scan() {
                 type="button"
                 variant="outline"
                 onClick={nfcReading ? stopNfcScan : startNfcScan}
-                className={`border-white/20 py-6 ${nfcReading ? 'bg-[#B026FF]/20 border-[#B026FF]' : 'hover:bg-white/5'}`}
+                className={`border-white/20 py-6 ${nfcReading ? 'bg-[#C8962C]/20 border-[#C8962C]' : 'hover:bg-white/5'}`}
               >
                 <Nfc className={`w-5 h-5 mr-2 ${nfcReading && 'animate-pulse'}`} />
                 {nfcReading ? 'Scanning NFC...' : 'Tap NFC'}

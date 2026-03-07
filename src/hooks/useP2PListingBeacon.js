@@ -10,8 +10,8 @@ import { supabase } from '@/components/utils/supabaseClient';
 const BEACON_COLOR = {
   social: '#39FF14',      // Lime — Right Now
   event: '#00D9FF',       // Cyan — events
-  marketplace: '#FFD700', // Gold — P2P listings
-  radio: '#B026FF',       // Purple — radio
+  marketplace: '#C8962C', // Brand gold — P2P listings
+  radio: '#C8962C',       // Brand gold — radio
 };
 
 /**

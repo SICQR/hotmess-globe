@@ -99,14 +99,28 @@ module.exports = {
 				border: 'hsl(var(--sidebar-border))',
 				ring: 'hsl(var(--sidebar-ring))'
 			},
-			// Brand colors - HOTMESS design system
+			// Brand colors - HOTMESS design system (DESIGN_SYSTEM.md canonical tokens)
+			'brand':        '#C8962C',
+			'brand-light':  '#D4A84B',
+			'brand-dim':    'rgba(200,150,44,0.15)',
+			'brand-glow':   'rgba(200,150,44,0.30)',
+			'os-bg':        '#000000',
+			'os-surface':   '#0D0D0D',
+			'os-card':      '#1C1C1E',
+			'os-card-hover':'#2C2C2E',
+			'os-nav':       '#0D0D0D',
+			'text-muted':   '#8E8E93',
+			'text-dim':     '#636366',
+			'danger':       '#FF3B30',
+			'success':      '#30D158',
+			// Legacy aliases (kept for backward compatibility)
 			dark:    '#181820',
 			darkest: '#101017',
 			light:   '#ECECEC',
-			goldGlow:'#FFC940',
+			goldGlow:'rgba(200,150,44,0.45)',
 			chatGray:'#2D2D39',
-			online:  '#38E38D',
-			borderGlow: '#ffaa3b',
+			online:  '#30D158',
+			borderGlow: '#C8962C',
 			hot: {
 				DEFAULT: '#C8962C',
 				light: '#D4A84B',
@@ -127,8 +141,7 @@ module.exports = {
 			},
 			neon: {
 				green: '#39FF14',
-				purple: '#B026FF',
-				gold: '#FFD700',
+				gold: '#C8962C',
 				orange: '#FFB800',
 				yellow: '#FFEB3B'
 			},
@@ -139,15 +152,15 @@ module.exports = {
 			}
   		},
 		boxShadow: {
-			gold: "0 0 12px 2px #FFB80055",
+			gold: "0 0 12px 2px rgba(200, 150, 44, 0.35)",
 			navbar: "0 2px 18px 0 #000000e0",
 			'glow-hot': '0 0 20px rgba(200, 150, 44, 0.5), 0 0 40px rgba(200, 150, 44, 0.3)',
 			'glow-hot-lg': '0 0 30px rgba(200, 150, 44, 0.6), 0 0 60px rgba(200, 150, 44, 0.4)',
 			'glow-cyan': '0 0 20px rgba(0, 217, 255, 0.5), 0 0 40px rgba(0, 217, 255, 0.3)',
 			'glow-cyan-lg': '0 0 30px rgba(0, 217, 255, 0.6), 0 0 60px rgba(0, 217, 255, 0.4)',
-			'glow-purple': '0 0 20px rgba(176, 38, 255, 0.5), 0 0 40px rgba(176, 38, 255, 0.3)',
-			'glow-purple-lg': '0 0 30px rgba(176, 38, 255, 0.6), 0 0 60px rgba(176, 38, 255, 0.4)',
-			'glow-gold': '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3)',
+			'glow-brand': '0 0 20px rgba(200, 150, 44, 0.5), 0 0 40px rgba(200, 150, 44, 0.3)',
+			'glow-brand-lg': '0 0 30px rgba(200, 150, 44, 0.6), 0 0 60px rgba(200, 150, 44, 0.4)',
+			'glow-gold': '0 0 20px rgba(200, 150, 44, 0.5), 0 0 40px rgba(200, 150, 44, 0.3)',
 			'glow-green': '0 0 20px rgba(57, 255, 20, 0.5), 0 0 40px rgba(57, 255, 20, 0.3)',
 			'glow-white': '0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.1)',
 			'inner-glow': 'inset 0 0 20px rgba(255, 255, 255, 0.1)',
@@ -156,11 +169,11 @@ module.exports = {
 		backgroundImage: {
 			'gradient-hot': 'linear-gradient(135deg, #C8962C 0%, #9A7020 100%)',
 			'gradient-cyan': 'linear-gradient(135deg, #00D9FF 0%, #0891B2 100%)',
-			'gradient-purple': 'linear-gradient(135deg, #B026FF 0%, #7B2FBE 100%)',
+			'gradient-brand': 'linear-gradient(135deg, #C8962C 0%, #D4A84B 100%)',
 			'gradient-gold': 'linear-gradient(135deg, #C8962C 0%, #D4A84B 100%)',
-			'gradient-fire': 'linear-gradient(135deg, #C8962C 0%, #D4A84B 50%, #FFD700 100%)',
+			'gradient-fire': 'linear-gradient(135deg, #C8962C 0%, #D4A84B 50%, #C8962C 100%)',
 			'gradient-night': 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
-			'gradient-mesh': 'radial-gradient(at 40% 20%, rgba(200, 150, 44, 0.3) 0px, transparent 50%), radial-gradient(at 80% 0%, rgba(176, 38, 255, 0.2) 0px, transparent 50%), radial-gradient(at 0% 50%, rgba(0, 217, 255, 0.2) 0px, transparent 50%)',
+			'gradient-mesh': 'radial-gradient(at 40% 20%, rgba(200, 150, 44, 0.3) 0px, transparent 50%), radial-gradient(at 80% 0%, rgba(200, 150, 44, 0.2) 0px, transparent 50%), radial-gradient(at 0% 50%, rgba(0, 217, 255, 0.2) 0px, transparent 50%)',
 		},
   		keyframes: {
   			'accordion-down': {

@@ -94,7 +94,7 @@ export default function RelatedEvents({ currentEvent, userPreferences = [] }) {
                     </div>
                   )}
                   {event.mode && (
-                    <span className="px-2 py-0.5 bg-[#B026FF]/20 border border-[#B026FF] text-[#B026FF] uppercase text-[10px] font-black">
+                    <span className="px-2 py-0.5 bg-[#C8962C]/20 border border-[#C8962C] text-[#C8962C] uppercase text-[10px] font-black">
                       {event.mode}
                     </span>
                   )}

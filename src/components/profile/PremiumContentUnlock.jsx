@@ -57,10 +57,10 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-[#FFD700]/20 to-[#C8962C]/20 border-2 border-[#FFD700] p-6"
+      className="bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border-2 border-[#C8962C] p-6"
     >
       <div className="flex items-center gap-3 mb-4">
-        <Crown className="w-6 h-6 text-[#FFD700]" />
+        <Crown className="w-6 h-6 text-[#C8962C]" />
         <div>
           <h3 className="text-lg font-black uppercase text-white">Premium Content</h3>
           <p className="text-xs text-white/60">

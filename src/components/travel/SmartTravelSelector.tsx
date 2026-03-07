@@ -232,8 +232,8 @@ export function SmartTravelSelector({
           className="mb-4"
         >
           <div className="flex items-center gap-1 mb-2">
-            <Sparkles className="w-3 h-3 text-[#FFD700]" />
-            <span className="text-[10px] text-[#FFD700] font-bold uppercase tracking-wider">
+            <Sparkles className="w-3 h-3 text-[#C8962C]" />
+            <span className="text-[10px] text-[#C8962C] font-bold uppercase tracking-wider">
               Recommended
             </span>
             {recommendation.priority === 'safety' && (
@@ -286,7 +286,7 @@ export function SmartTravelSelector({
                 {recommendedOption.mode === 'uber' ? (
                   <Button
                     size="sm"
-                    className="text-xs bg-gradient-to-r from-[#C8962C] to-[#FFD700] hover:from-[#FF0080] hover:to-[#FFC700] border-none text-black font-bold"
+                    className="text-xs bg-gradient-to-r from-[#C8962C] to-[#C8962C] hover:from-[#FF0080] hover:to-[#FFC700] border-none text-black font-bold"
                     onClick={(e) => {
                       e.stopPropagation();
                       onRequestRide?.();
@@ -372,7 +372,7 @@ export function SmartTravelSelector({
                           {config.label}
                         </div>
                         {option.price && (
-                          <div className="text-[#FFD700] text-xs mt-1 font-bold">
+                          <div className="text-[#C8962C] text-xs mt-1 font-bold">
                             {formatPrice(option.price)}
                           </div>
                         )}

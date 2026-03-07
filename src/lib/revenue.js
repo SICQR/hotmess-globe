@@ -573,7 +573,7 @@ export const USPS = {
       headline: 'AI Wingman',
       subline: 'Conversation starters, match insights, profile optimization - built in.',
       icon: 'Sparkles',
-      color: '#FFD700',
+      color: '#C8962C',
     },
     {
       id: 'safety_first',

@@ -58,10 +58,10 @@ const PERSONA_CONFIGS = {
   },
   premium: {
     label: 'Premium',
-    color: '#FFD700',
-    gradient: 'from-[#FFD700]/30 to-[#FFD700]/5',
+    color: '#C8962C',
+    gradient: 'from-[#C8962C]/30 to-[#C8962C]/5',
     icon: Crown,
-    borderColor: 'border-[#FFD700]/50',
+    borderColor: 'border-[#C8962C]/50',
   },
   dj: {
     label: 'DJ',

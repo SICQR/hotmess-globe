@@ -78,7 +78,7 @@ export default function OrganizerDashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-[#C8962C]/20 to-[#B026FF]/20 border border-[#C8962C]/40 rounded-xl p-6"
+            className="bg-gradient-to-br from-[#C8962C]/20 to-[#D4A84B]/20 border border-[#C8962C]/40 rounded-xl p-6"
           >
             <TrendingUp className="w-8 h-8 text-[#C8962C] mb-2" />
             <div className="text-3xl font-black mb-1">{myBeacons.length}</div>
