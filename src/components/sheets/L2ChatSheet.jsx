@@ -149,6 +149,27 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     }
   }, [currentUser?.email, threadsLoading, initialThreadId, initialToEmail]);
 
+  // ── Mark messages as read (uses read_by[] column) ─────────────────────────
+  const markMessagesReadInDB = useCallback(async (threadId, myEmail) => {
+    if (!threadId || !myEmail) return;
+    // Add myEmail to read_by for all messages in this thread not sent by me
+    await supabase.rpc('mark_thread_messages_read', {
+      p_thread_id: threadId,
+      p_reader_email: myEmail,
+    }).then(({ error }) => {
+      if (error) {
+        // Fallback: direct update if RPC not available
+        supabase
+          .from('messages')
+          .update({ read_by: supabase.raw('array_append(read_by, ?::text)', [myEmail]) })
+          .eq('thread_id', threadId)
+          .neq('sender_email', myEmail)
+          .not('read_by', 'cs', `{${myEmail}}`)
+          .then(() => {});
+      }
+    });
+  }, []);
+
   // ── Open thread → load messages + subscribe ───────────────────────────────
   const openThread = useCallback(async (thread) => {
     setSelectedThread(thread);
@@ -174,6 +195,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
               .then(() => {});
           }
         });
+      // Also mark via read_by column for per-message receipts
+      markMessagesReadInDB(thread.id, currentUser.email);
     }
 
     try {
@@ -189,7 +212,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       setMessagesLoading(false);
     }
 
-    // Realtime subscription for new messages
+    // Realtime subscription for new messages + read receipt updates
     if (realtimeRef.current) supabase.removeChannel(realtimeRef.current);
     realtimeRef.current = supabase
       .channel(`messages:thread:${thread.id}`)
@@ -202,10 +225,24 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             return [...prev, payload.new];
           });
           markRead(thread.id);
+          // Mark newly received message as read immediately
+          if (payload.new.sender_email !== currentUser?.email) {
+            markMessagesReadInDB(thread.id, currentUser?.email);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'messages', filter: `thread_id=eq.${thread.id}` },
+        (payload) => {
+          // Live read receipt updates
+          setMessages(prev =>
+            prev.map(m => m.id === payload.new.id ? { ...m, read_by: payload.new.read_by } : m)
+          );
         }
       )
       .subscribe();
-  }, []);
+  }, [currentUser?.email, markMessagesReadInDB]);
 
   // Cleanup realtime on unmount
   useEffect(() => () => {
@@ -606,17 +643,30 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           <div className="text-center py-8">
             <p className="text-white/40 text-sm">No messages yet. Say hi! 👋</p>
           </div>
-        ) : (
-          messages.map((msg, i) => {
+        ) : (() => {
+            // Compute lastMyMessageId once outside the map
+            const lastMyMessageId = [...messages]
+              .reverse()
+              .find(m => m.sender_email === currentUser?.email)?.id;
+
+            return messages.map((msg, i) => {
             const isMe = msg.sender_email === currentUser?.email;
             const isMeetpoint = msg.message_type === 'meetpoint';
             const isPhoto =
               msg.message_type === 'photo' ||
               /\.(jpe?g|png|gif|webp|avif|heic)(\?.*)?$/i.test(msg.content || '');
 
-            // Read receipt: show ✓✓ on my sent messages if recipient has 0 unread
+            // Per-message read receipt using read_by[] column
+            // ✓✓ (amber) = recipient has read; ✓ (dim) = sent but unread
+            // Only show on the last sent message to avoid visual clutter
+            const isLastMine = msg.id === lastMyMessageId;
+            const readByArr = msg.read_by || [];
+            const isReadByRecipient = isMe && readByArr.includes(otherEmail);
+            // Fallback to unread_count approach if read_by not populated yet
             const recipientUnread = selectedThread?.unread_count?.[otherEmail];
-            const isReadByRecipient = isMe && recipientUnread === 0;
+            const isReadFallback = isMe && recipientUnread === 0;
+            const showDoubleCheck = isMe && isLastMine && (isReadByRecipient || isReadFallback);
+            const showSingleCheck = isMe && isLastMine && !showDoubleCheck;
 
             return (
               <motion.div
@@ -638,7 +688,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-40 text-white flex items-center gap-0.5">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {isReadByRecipient && <span className="text-[10px] text-white/50 ml-1">✓✓</span>}
+                        {showDoubleCheck && <span className="text-[10px] text-[#C8962C] ml-1 font-bold">✓✓</span>}
+                        {showSingleCheck && <span className="text-[10px] text-white/40 ml-1">✓</span>}
                       </p>
                     )}
                   </div>
@@ -655,7 +706,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-50 flex items-center gap-0.5">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {isReadByRecipient && <span className="text-[10px] text-white/50 ml-1">✓✓</span>}
+                        {showDoubleCheck && <span className="text-[10px] text-white font-bold ml-1">✓✓</span>}
+                        {showSingleCheck && <span className="text-[10px] text-white/50 ml-1">✓</span>}
                       </p>
                     )}
                   </div>
@@ -663,7 +715,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
               </motion.div>
             );
           })
-        )}
+          })()}
         <div ref={messagesEndRef} />
       </div>
 
