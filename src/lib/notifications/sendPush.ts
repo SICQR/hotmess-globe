@@ -47,10 +47,23 @@ export async function sendPush(
   }
 ): Promise<void> {
   const EDGE_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-push`;
-  const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-  if (!EDGE_FN_URL || !ANON_KEY) {
+  if (!EDGE_FN_URL) {
     console.warn('[sendPush] Supabase config missing');
+    return;
+  }
+
+  // Use the user's session JWT (not anon key) — the Edge Function accepts user
+  // JWTs for self-notifications. Server-side callers use the service role key.
+  let authToken: string | null = null;
+  try {
+    const { supabase } = await import('@/components/utils/supabaseClient');
+    const { data: { session } } = await supabase.auth.getSession();
+    authToken = session?.access_token ?? null;
+  } catch { /* non-fatal */ }
+
+  if (!authToken) {
+    console.warn('[sendPush] No auth session — skipping push');
     return;
   }
 
@@ -59,7 +72,7 @@ export async function sendPush(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ANON_KEY}`,
+        'Authorization': `Bearer ${authToken}`,
       },
       body: JSON.stringify({
         user_id: userId,

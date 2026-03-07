@@ -176,22 +176,27 @@ export function usePushNotifications() {
 }
 
 /**
- * Save push subscription to database
+ * Save push subscription to database.
+ * Stores flat columns (endpoint/keys) AND full subscription jsonb so both
+ * the Vercel cron processor (process.js) and the Edge Function (send-push)
+ * can look up subscriptions regardless of which strategy they use.
  */
 async function saveSubscription(subscription) {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const subJson = subscription.toJSON();
+
     const { error } = await supabase
       .from('push_subscriptions')
       .upsert({
-        user_id: user.id,
-        user_email: user.email,
-        endpoint: subscription.endpoint,
-        keys: JSON.stringify(subscription.toJSON().keys),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        user_id:      user.id,
+        user_email:   user.email,
+        endpoint:     subscription.endpoint,
+        keys:         subJson.keys || null,
+        subscription: subJson,           // full jsonb — used by send-push Edge Function
+        updated_at:   new Date().toISOString(),
       }, {
         onConflict: 'user_id'
       });
