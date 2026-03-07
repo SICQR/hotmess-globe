@@ -699,12 +699,10 @@ export function HomeMode({ className = '' }: HomeModeProps) {
           <ChevronDown className="w-3 h-3 text-white/40" />
         </button>
 
-        {/* Wordmark */}
-        <h1
-          className="text-base font-black tracking-[0.25em] uppercase select-none"
-          style={{ color: AMBER }}
-        >
-          HOTMESS
+        {/* Wordmark — HOT white, MESS gold */}
+        <h1 className="text-[17px] font-black italic tracking-tight select-none leading-none">
+          <span className="text-white">HOT</span>
+          <span style={{ color: AMBER }}>MESS</span>
         </h1>
 
         {/* Notification bell */}
