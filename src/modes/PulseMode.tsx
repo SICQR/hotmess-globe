@@ -782,7 +782,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, lat, lng, kind, type')
+        .select('id, metadata, starts_at, end_at, lat, lng, kind, type, title, venue_address')
         .or(`type.eq.event,kind.eq.event`)
         .gte('end_at', now)
         .order('starts_at', { ascending: true })
@@ -795,9 +795,9 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         const meta = (b.metadata ?? {}) as Record<string, string>;
         return {
           id: b.id as string,
-          title: meta.title || meta.name || 'Event',
+          title: (b.title as string) || meta.title || meta.name || 'Event',
           imageUrl: meta.image_url || undefined,
-          address: meta.address || undefined,
+          address: (b.venue_address as string) || meta.address || undefined,
           startsAt: b.starts_at as string,
           endsAt: b.end_at as string,
           kind: 'event',
@@ -820,7 +820,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, lat, lng, kind, type, intensity')
+        .select('id, metadata, starts_at, end_at, lat, lng, kind, type, intensity, title, venue_address')
         .or('end_at.is.null,end_at.gte.' + now)
         .order('starts_at', { ascending: false })
         .limit(50);
@@ -833,8 +833,8 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         const kind = (b.kind as string) || (b.type as string) || 'hotspot';
         return {
           id: b.id as string,
-          title: meta.title || meta.name || 'Beacon',
-          address: meta.address || undefined,
+          title: (b.title as string) || meta.title || meta.name || 'Beacon',
+          address: (b.venue_address as string) || meta.address || undefined,
           imageUrl: meta.image_url || undefined,
           startsAt: b.starts_at as string,
           endsAt: b.end_at as string,
@@ -859,7 +859,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, lat, lng, kind, type')
+        .select('id, metadata, starts_at, end_at, lat, lng, kind, type, title, venue_address')
         .or(`type.eq.safety,kind.eq.safety`)
         .or('end_at.is.null,end_at.gte.' + now)
         .order('starts_at', { ascending: false })
@@ -872,8 +872,8 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         const meta = (b.metadata ?? {}) as Record<string, string>;
         return {
           id: b.id as string,
-          title: meta.title || 'Safety Alert',
-          address: meta.address || undefined,
+          title: (b.title as string) || meta.title || 'Safety Alert',
+          address: (b.venue_address as string) || meta.address || undefined,
           startsAt: b.starts_at as string,
           kind: 'safety',
           type: 'safety',
