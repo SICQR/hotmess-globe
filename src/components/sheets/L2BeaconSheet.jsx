@@ -89,21 +89,37 @@ function BeaconCreator({ onSuccess }) {
       const now = new Date();
       const endsAt = new Date(now.getTime() + duration.ms);
 
-      const { error } = await supabase.from('beacons').insert({
-        type: selectedType,
-        owner_id: user.id,
-        lat: coords.lat,
-        lng: coords.lng,
-        starts_at: now.toISOString(),
-        ends_at: endsAt.toISOString(),
-        intensity: intensity,
-        visibility: visibility,
-        kind: selectedType,
-        mode: 'active',
+      const titleStr = formData.title.trim() || null;
+      const descStr  = formData.description.trim() || null;
+      const addrStr  = formData.address.trim() || null;
+
+      // Insert into "Beacon" (PascalCase) — the base table.
+      // `beacons` (lowercase) is a VIEW; inserts must go to the underlying table.
+      const { error } = await supabase.from('Beacon').insert({
+        kind:        selectedType,
+        type:        selectedType,
+        owner_email: user.email,
+        lat:         coords.lat,
+        lng:         coords.lng,
+        starts_at:   now.toISOString(),
+        end_at:      endsAt.toISOString(),   // "Beacon" uses end_at, not ends_at
+        intensity:   intensity,
+        mode:        'active',
+        status:      'published',           // NOT NULL — default for user-created beacons
+        active:      true,                  // NOT NULL
+        sponsored:   false,                 // NOT NULL
+        is_shadow:   false,                 // NOT NULL
+        is_verified: false,                 // NOT NULL
+        // Store in direct columns (they exist on "Beacon")
+        title:         titleStr,
+        description:   descStr,
+        venue_address: addrStr,
+        // Also mirror into metadata for legacy code that reads metadata
         metadata: {
-          title: formData.title.trim() || null,
-          description: formData.description.trim() || null,
-          address: formData.address.trim() || null,
+          title:       titleStr,
+          description: descStr,
+          address:     addrStr,
+          visibility:  visibility,
         },
       });
 
@@ -406,7 +422,7 @@ function BeaconViewer({ beaconId }) {
     if (!beaconId) { setLoading(false); return; }
     supabase
       .from('beacons')
-      .select('id, type, kind, lat, lng, starts_at, end_at, intensity, metadata')
+      .select('id, type, kind, lat, lng, starts_at, end_at, intensity, title, description, venue_address, metadata')
       .eq('id', beaconId)
       .single()
       .then(({ data }) => {
@@ -433,10 +449,11 @@ function BeaconViewer({ beaconId }) {
   }
 
   const meta = beacon.metadata || {};
-  const title = meta.title || meta.name || `${beacon.kind || beacon.type} Beacon`;
-  const address = meta.address || null;
-  const description = meta.description || null;
-  const imageUrl = meta.image_url || null;
+  // Prefer direct columns (new inserts); fall back to metadata (legacy beacons)
+  const title       = beacon.title || meta.title || meta.name || `${beacon.kind || beacon.type} Beacon`;
+  const address     = beacon.venue_address || meta.address || meta.venue_address || null;
+  const description = beacon.description || meta.description || null;
+  const imageUrl    = meta.image_url || null;
 
   const kindColor = beacon.kind === 'event' ? '#C8962C'
     : beacon.kind === 'broadcast' ? '#C8962C'
@@ -478,7 +495,7 @@ function BeaconViewer({ beaconId }) {
             <Clock className="w-3.5 h-3.5 text-[#C8962C] flex-shrink-0" />
             <span className="text-[#C8962C] text-xs font-semibold">
               {format(new Date(beacon.starts_at), 'EEE d MMM · h:mm a')}
-              {beacon.ends_at ? ` → ${format(new Date(beacon.ends_at), 'h:mm a')}` : ''}
+              {beacon.end_at ? ` → ${format(new Date(beacon.end_at), 'h:mm a')}` : ''}
             </span>
           </div>
         )}
