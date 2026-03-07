@@ -43,6 +43,8 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
   const [fakeCallContactName, setFakeCallContactName] = useState('Mum');
   const [fakeCallTimer, setFakeCallTimer] = useState(0);
   const [showDismissPIN, setShowDismissPIN] = useState(false);
+  // showHoldDismiss gates the hold-to-confirm panel — only true when user clicks "Dismiss SOS" and has no PIN
+  const [showHoldDismiss, setShowHoldDismiss] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [holdProgress, setHoldProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
@@ -154,14 +156,14 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
       setLocationSharingActive(true);
       toast.success('Location shared with emergency contacts');
 
-      // Also update right_now_status to reflect SOS
+      // Upsert right_now_status to reflect SOS (avoids conflict if row already exists)
       if (user.email) {
-        await supabase.from('right_now_status').insert({
+        await supabase.from('right_now_status').upsert({
           user_email: user.email,
           status: 'sos',
           active: true,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        });
+        }, { onConflict: 'user_email' });
       }
     } catch (err) {
       console.error('[SOS] Location share failed:', err);
@@ -205,8 +207,9 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
   const handleShowDismissPin = () => {
     const storedHash = localStorage.getItem('hotmess_pin_hash');
     if (!storedHash) {
-      // No PIN set, show hold-to-confirm
-      setShowDismissPIN(false);
+      // No PIN set — show hold-to-confirm panel
+      setShowHoldDismiss(true);
+      setHoldProgress(0);
     } else {
       setShowDismissPIN(true);
       setPinInput('');
@@ -239,6 +242,7 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
 
   const handleDismiss = () => {
     setShowDismissPIN(false);
+    setShowHoldDismiss(false);
     setPinInput('');
     onClose();
   };
@@ -478,7 +482,7 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
 
       {/* Hold to Confirm Overlay (if no PIN) */}
       <AnimatePresence>
-        {!showDismissPIN && !localStorage.getItem('hotmess_pin_hash') && (
+        {showHoldDismiss && (
           <motion.div
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
@@ -490,7 +494,16 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
               initial={{ y: 100 }}
               animate={{ y: 0 }}
             >
-              <h3 className="text-lg font-bold text-white mb-6">Hold to Confirm Dismiss</h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-white">Dismiss SOS?</h3>
+                <button
+                  onClick={() => { setShowHoldDismiss(false); setIsHolding(false); setHoldProgress(0); }}
+                  className="p-2 hover:bg-white/5 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-white/60" />
+                </button>
+              </div>
+              <p className="text-white/40 text-sm mb-5">Hold the button for 3 seconds to confirm you're safe.</p>
               <motion.button
                 onMouseDown={() => {
                   setIsHolding(true);
@@ -498,18 +511,20 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
                 }}
                 onMouseUp={() => setIsHolding(false)}
                 onMouseLeave={() => setIsHolding(false)}
-                onTouchStart={() => {
+                onTouchStart={(e) => {
+                  e.preventDefault();
                   setIsHolding(true);
                   setHoldProgress(0);
                 }}
                 onTouchEnd={() => setIsHolding(false)}
-                className="w-full py-4 bg-[#C8962C] rounded-lg font-bold text-black relative overflow-hidden"
+                className="w-full py-4 bg-[#C8962C] rounded-xl font-bold text-black relative overflow-hidden select-none"
               >
                 <motion.div
-                  className="absolute inset-0 bg-[#C8962C]/50"
-                  style={{ width: `${holdProgress}%` }}
+                  className="absolute inset-0 bg-black/20 origin-left"
+                  style={{ scaleX: holdProgress / 100 }}
+                  transition={{ type: 'tween' }}
                 />
-                <span className="relative">Hold to Dismiss</span>
+                <span className="relative">{isHolding ? `${Math.round(holdProgress)}%` : 'Hold to Dismiss SOS'}</span>
               </motion.button>
             </motion.div>
           </motion.div>
