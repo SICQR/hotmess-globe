@@ -28,6 +28,8 @@ interface SimpleProfileCardProps {
   matchPercent?: number;
   isVerified?: boolean;
   lookingFor?: string[];
+  position?: string;
+  age?: number;
   lastSeen?: string;
   onClick?: () => void;
   onMessage?: () => void;
@@ -49,6 +51,8 @@ export function SimpleProfileCard({
   matchPercent,
   isVerified,
   lookingFor,
+  position,
+  age,
   lastSeen,
   onClick,
   onMessage,
@@ -109,9 +113,18 @@ export function SimpleProfileCard({
           )}
         </div>
 
+        {/* Age + position line */}
+        {(age || position) && (
+          <div className="flex items-center gap-1.5 mt-1 text-white/55 text-xs">
+            {age && <span>{age}</span>}
+            {age && position && <span className="text-white/20">·</span>}
+            {position && <span>{position}</span>}
+          </div>
+        )}
+
         {/* Location/distance */}
         {(location || distance) && (
-          <div className="flex items-center gap-1 mt-1 text-white/60 text-xs">
+          <div className="flex items-center gap-1 mt-1 text-white/40 text-[11px]">
             <MapPin className="w-3 h-3" />
             <span className="truncate">{distance || location}</span>
           </div>
@@ -120,10 +133,10 @@ export function SimpleProfileCard({
         {/* Looking for tags */}
         {lookingFor && lookingFor.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
-            {lookingFor.slice(0, 3).map((tag, i) => (
-              <span 
+            {lookingFor.slice(0, 2).map((tag, i) => (
+              <span
                 key={i}
-                className="px-1.5 py-0.5 bg-[#C8962C]/20 text-[#C8962C] text-[10px] font-medium uppercase tracking-wider"
+                className="px-1.5 py-0.5 bg-[#C8962C]/20 text-[#C8962C] text-[10px] font-bold uppercase tracking-wider"
               >
                 {tag}
               </span>

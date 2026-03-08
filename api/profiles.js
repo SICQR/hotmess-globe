@@ -327,10 +327,34 @@ export default async function handler(req, res) {
 
     // Attach auth user metadata (best-effort) so the grid can show multi-photo profiles,
     // even when those fields are stored in auth metadata (Base44-style).
+    const authUserIds = rows.map((r) => (r?.auth_user_id ? String(r.auth_user_id) : null)).filter(Boolean);
+
     const authMetaById = await getAuthMetaMapById({
       serviceClient,
-      authUserIds: rows.map((r) => (r?.auth_user_id ? String(r.auth_user_id) : null)).filter(Boolean),
+      authUserIds,
     });
+
+    // Attach public_attributes from profiles table (position, looking_for, age, orientation, etc.)
+    let publicAttrsById = new Map();
+    try {
+      if (authUserIds.length) {
+        const { data: profileRows } = await serviceClient
+          .from('profiles')
+          .select('auth_user_id, public_attributes')
+          .in('auth_user_id', authUserIds);
+
+        (Array.isArray(profileRows) ? profileRows : []).forEach((pr) => {
+          const uid = pr?.auth_user_id ? String(pr.auth_user_id) : null;
+          if (!uid) return;
+          const attrs = pr?.public_attributes;
+          if (attrs && typeof attrs === 'object') {
+            publicAttrsById.set(uid, attrs);
+          }
+        });
+      }
+    } catch {
+      // best-effort — grid still works without these
+    }
 
     // Attach tags (best-effort; ignore errors / missing table).
     let tagMap = new Map();
@@ -375,6 +399,7 @@ export default async function handler(req, res) {
         const emailInternal = row?.email ? String(row.email).trim() : null;
 
         const meta = authUserId ? authMetaById.get(authUserId) : null;
+        const pubAttrs = authUserId ? (publicAttrsById.get(authUserId) || {}) : {};
 
         const gender = getGenderValue({ row, meta });
         const photoPolicyAck = getPhotoPolicyAck({ row, meta });
@@ -431,7 +456,18 @@ export default async function handler(req, res) {
           // New fields for Grindr-style UI
           is_online: row?.is_online === true,
           last_seen: row?.last_seen || row?.last_loc_ts || undefined,
-          looking_for: Array.isArray(row?.looking_for) ? row.looking_for : undefined,
+          // public_attributes takes precedence over legacy row fields
+          looking_for: Array.isArray(pubAttrs?.looking_for)
+            ? pubAttrs.looking_for
+            : Array.isArray(row?.looking_for)
+              ? row.looking_for
+              : undefined,
+          position: pubAttrs?.position || row?.position || undefined,
+          orientation: pubAttrs?.orientation || row?.orientation || undefined,
+          body_type: pubAttrs?.body_type || row?.body_type || undefined,
+          pronouns: pubAttrs?.pronouns || row?.pronouns || undefined,
+          hosting: pubAttrs?.hosting || undefined,
+          age: typeof pubAttrs?.age === 'number' ? pubAttrs.age : (typeof row?.age === 'number' ? row.age : undefined),
         };
       })
       .filter(Boolean);

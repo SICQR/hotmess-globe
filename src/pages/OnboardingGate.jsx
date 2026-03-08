@@ -1,10 +1,10 @@
 /**
- * OnboardingGate — 6-step luxury onboarding
+ * OnboardingGate — 7-step luxury onboarding
  *
  * Noir-gold design. Every step unified under one brand color.
  * No cyan, no purple, no neon-green — only gold (#C8962C).
  *
- * Steps: Age → Terms → Permissions → Profile+PIN → Photo → Community
+ * Steps: Age → Terms → Permissions → Profile+PIN → Vibe → Photo → Community
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -20,7 +20,10 @@ import { toast } from 'sonner';
 const AGE_KEY = 'hm_age_confirmed_v1';
 const GOLD = '#C8962C';
 const GOLD_HOVER = '#D4A84B';
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
+
+const POSITION_OPTS = ['Top', 'Bottom', 'Versatile', 'Vers Top', 'Vers Bottom', 'Side', 'Just Looking'];
+const LOOKING_FOR_OPTS = ['Hookup', 'Dates', 'Friends', 'Relationship', 'Chat', 'Whatever'];
 
 // SHA-256 hash using Web Crypto API (browser-native)
 async function hashPin(pin) {
@@ -216,7 +219,13 @@ export default function OnboardingGate() {
   const [pinPhase, setPinPhase] = useState('enter');
   const [saving, setSaving] = useState(false);
 
-  // Step 5 — photo
+  // Step 5 — vibe
+  const [vibeAge, setVibeAge] = useState('');
+  const [vibePosition, setVibePosition] = useState('');
+  const [vibeLookingFor, setVibeLookingFor] = useState([]);
+  const [vibeSaving, setVibeSaving] = useState(false);
+
+  // Step 6 — photo
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoUploading, setPhotoUploading] = useState(false);
   const photoInputRef = useRef(null);
@@ -236,7 +245,7 @@ export default function OnboardingGate() {
     }
 
     if (profile?.onboarding_complete && !profile?.community_attested_at) {
-      setStep(6);
+      setStep(7);
       return;
     }
 
@@ -302,7 +311,7 @@ export default function OnboardingGate() {
         }
       }
 
-      setStep(5);
+      setStep(5); // → Vibe step
     } catch (err) {
       console.error('Profile save error:', err);
       toast.error('Could not save profile. Please try again.');
@@ -310,6 +319,43 @@ export default function OnboardingGate() {
       setSaving(false);
     }
   }, [displayName, pin, pinConfirm, session?.user?.id]);
+
+  // ── Step 5: vibe (age + position + looking_for) ───────────────────────────
+  const handleSaveVibe = useCallback(async () => {
+    const ageNum = parseInt(vibeAge, 10);
+    if (!vibeAge || !Number.isFinite(ageNum) || ageNum < 18 || ageNum > 99) {
+      toast.error('Please enter a valid age (18–99)');
+      return;
+    }
+
+    setVibeSaving(true);
+    try {
+      if (session?.user?.id) {
+        const publicAttributes = {
+          age: ageNum,
+          ...(vibePosition ? { position: vibePosition } : {}),
+          ...(vibeLookingFor.length ? { looking_for: vibeLookingFor } : {}),
+        };
+
+        const { error } = await supabase
+          .from('profiles')
+          .update({ public_attributes: publicAttributes })
+          .eq('id', session.user.id);
+
+        if (error) {
+          console.error('[Onboarding] Failed to save vibe:', error);
+          toast.error('Could not save your profile info. Please try again.');
+          return;
+        }
+      }
+      setStep(6); // → Photo step
+    } catch (err) {
+      console.error('Vibe save error:', err);
+      toast.error('Could not save profile info. Please try again.');
+    } finally {
+      setVibeSaving(false);
+    }
+  }, [vibeAge, vibePosition, vibeLookingFor, session?.user?.id]);
 
   // ── Step 5: photo upload ──────────────────────────────────────────────────
   const handlePhotoUpload = async (file) => {
@@ -352,7 +398,7 @@ export default function OnboardingGate() {
     }
   };
 
-  const handleFinish = useCallback(() => setStep(6), []);
+  const handleFinish = useCallback(() => setStep(7), []);
 
   // ── Step 6: community attestation ─────────────────────────────────────────
   const handleCommunityConfirm = useCallback(async () => {
@@ -661,8 +707,112 @@ export default function OnboardingGate() {
           </motion.div>
         );
 
-      // ── Step 5: Photo ────────────────────────────────────────────────────
-      case 5:
+      // ── Step 5: Vibe ─────────────────────────────────────────────────────
+      case 5: {
+        const ageNum = parseInt(vibeAge, 10);
+        const ageValid = !!vibeAge && Number.isFinite(ageNum) && ageNum >= 18 && ageNum <= 99;
+
+        return (
+          <motion.div key="step-5" {...fadeSlide}>
+            <div className="text-center mb-6">
+              <div
+                className="w-10 h-10 mx-auto mb-4 flex items-center justify-center text-2xl"
+                style={{ filter: 'drop-shadow(0 0 10px rgba(200,150,44,0.4))' }}
+              >
+                🔥
+              </div>
+              <h2 className="text-2xl font-black text-white mb-1">Your Vibe</h2>
+              <p className="text-sm text-white/40">Tell the scene who you are.</p>
+            </div>
+
+            {/* Age */}
+            <div className="mb-5">
+              <label className="text-[10px] text-white/25 uppercase tracking-[0.2em] font-black block mb-2">
+                Age <span className="text-[#C8962C]">Required</span>
+              </label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={18}
+                max={99}
+                value={vibeAge}
+                onChange={(e) => setVibeAge(e.target.value)}
+                placeholder="18"
+                className="w-full h-12 rounded-xl bg-[#0D0D0D] border border-white/10 px-4 text-white placeholder-white/15 focus:outline-none focus:border-[#C8962C]/50 focus:ring-1 focus:ring-[#C8962C]/20 transition-all text-sm"
+              />
+            </div>
+
+            {/* Position */}
+            <div className="mb-5">
+              <label className="text-[10px] text-white/25 uppercase tracking-[0.2em] font-black block mb-2">
+                Position
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {POSITION_OPTS.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setVibePosition(vibePosition === opt ? '' : opt)}
+                    className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border transition-all"
+                    style={
+                      vibePosition === opt
+                        ? { background: GOLD, borderColor: GOLD, color: '#000' }
+                        : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.55)' }
+                    }
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Looking for */}
+            <div className="mb-6">
+              <label className="text-[10px] text-white/25 uppercase tracking-[0.2em] font-black block mb-2">
+                Looking For
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {LOOKING_FOR_OPTS.map((opt) => {
+                  const active = vibeLookingFor.includes(opt);
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() =>
+                        setVibeLookingFor((prev) =>
+                          active ? prev.filter((x) => x !== opt) : [...prev, opt]
+                        )
+                      }
+                      className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border transition-all"
+                      style={
+                        active
+                          ? { background: GOLD, borderColor: GOLD, color: '#000' }
+                          : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.55)' }
+                      }
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <GoldButton onClick={handleSaveVibe} disabled={!ageValid || vibeSaving} loading={vibeSaving}>
+              Continue
+            </GoldButton>
+
+            <button
+              onClick={() => setStep(6)}
+              className="block mx-auto text-white/20 text-xs mt-3 hover:text-white/50 transition-colors"
+            >
+              Skip for now
+            </button>
+          </motion.div>
+        );
+      }
+
+      // ── Step 6: Photo ────────────────────────────────────────────────────
+      case 6:
         return (
           <motion.div key="step-5" {...fadeSlide} className="text-center">
             <Camera
@@ -741,8 +891,8 @@ export default function OnboardingGate() {
           </motion.div>
         );
 
-      // ── Step 6: Community Attestation ────────────────────────────────────
-      case 6:
+      // ── Step 7: Community Attestation ────────────────────────────────────
+      case 7:
         return (
           <motion.div key="step-6" {...fadeSlide} className="text-center relative overflow-hidden">
             {/* Ambient gold glow */}
