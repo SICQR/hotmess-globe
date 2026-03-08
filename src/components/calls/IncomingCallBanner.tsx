@@ -1,14 +1,14 @@
 /**
- * IncomingCallBanner — Fixed top banner for incoming video calls
+ * IncomingCallBanner — OS-style incoming call interrupt
  *
- * Subscribes to video_calls INSERT events where callee_id = auth.uid() and
- * status = 'ringing'. Shows a fixed top banner with Accept / Decline.
- * Auto-dismisses after 30s.
+ * Looks and feels like a real phone incoming call banner (iOS/Android compact
+ * call UI). Slides in from top, shows caller photo + name, big circular
+ * decline (red) + accept (green) buttons. Auto-dismisses as missed after 30s.
  */
 
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PhoneCall } from 'lucide-react';
+import { PhoneOff, Video } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { showLocalNotification } from '@/lib/notifications/showNotification';
@@ -16,7 +16,15 @@ import { showLocalNotification } from '@/lib/notifications/showNotification';
 interface IncomingCall {
   callId: string;
   callerName: string;
+  callerAvatar: string | null;
 }
+
+// Vibrate pattern — feels like a ringing phone
+const ringVibrate = () => {
+  if ('vibrate' in navigator) {
+    navigator.vibrate([400, 200, 400, 200, 400]);
+  }
+};
 
 export function IncomingCallBanner() {
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
@@ -24,15 +32,11 @@ export function IncomingCallBanner() {
   const { openSheet } = useSheet();
 
   useEffect(() => {
-    let userId: string | null = null;
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     const setup = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      userId = user.id;
 
       channel = supabase
         .channel('incoming-calls')
@@ -42,7 +46,7 @@ export function IncomingCallBanner() {
             event: 'INSERT',
             schema: 'public',
             table: 'video_calls',
-            filter: `callee_id=eq.${userId}`,
+            filter: `callee_id=eq.${user.id}`,
           },
           async (payload) => {
             const row = payload.new as {
@@ -55,28 +59,36 @@ export function IncomingCallBanner() {
 
             if (row.status !== 'ringing') return;
 
-            // Resolve caller name from profiles if not embedded in row
+            // Fetch caller profile (name + avatar)
             let callerName = row.caller_name || 'Unknown';
-            if (!row.caller_name) {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('display_name')
-                .eq('id', row.caller_id)
-                .single();
-              if (profile?.display_name) callerName = profile.display_name;
+            let callerAvatar: string | null = null;
+
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('display_name, avatar_url, photos')
+              .eq('id', row.caller_id)
+              .single();
+
+            if (profile) {
+              if (profile.display_name) callerName = profile.display_name;
+              callerAvatar =
+                profile.avatar_url ||
+                (Array.isArray(profile.photos) && profile.photos[0]?.url
+                  ? profile.photos[0].url
+                  : null);
             }
 
-            setIncomingCall({ callId: row.id, callerName });
+            setIncomingCall({ callId: row.id, callerName, callerAvatar });
+            ringVibrate();
 
-            // Notify even when tab is backgrounded
             showLocalNotification(
-              'Incoming call',
-              `${callerName} is calling`,
+              `📞 ${callerName} is calling`,
+              'Incoming HOTMESS Video Call',
               '/',
               'call'
             );
 
-            // Auto-dismiss after 30s — mark call as missed in DB
+            // Auto-dismiss after 30s — mark as missed
             if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
             const callId = row.id;
             dismissTimerRef.current = setTimeout(async () => {
@@ -84,7 +96,7 @@ export function IncomingCallBanner() {
                 .from('video_calls')
                 .update({ status: 'missed' })
                 .eq('id', callId)
-                .eq('status', 'ringing'); // only update if still ringing
+                .eq('status', 'ringing');
               setIncomingCall(null);
             }, 30000);
           }
@@ -111,7 +123,6 @@ export function IncomingCallBanner() {
       .from('video_calls')
       .update({ status: 'accepted' })
       .eq('id', incomingCall.callId);
-
     openSheet('video-call', { callId: incomingCall.callId });
     dismiss();
   };
@@ -122,7 +133,6 @@ export function IncomingCallBanner() {
       .from('video_calls')
       .update({ status: 'declined' })
       .eq('id', incomingCall.callId);
-
     dismiss();
   };
 
@@ -131,41 +141,92 @@ export function IncomingCallBanner() {
       {incomingCall && (
         <motion.div
           key="incoming-call-banner"
-          initial={{ y: -80 }}
-          animate={{ y: 0 }}
-          exit={{ y: -80 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          className="fixed top-0 inset-x-0 z-[180] bg-[#1C1C1E] border-b border-[#C8962C]/30 px-4 pt-[env(safe-area-inset-top)] pb-3 flex items-center gap-3"
+          initial={{ y: -120, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -120, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+          className="fixed inset-x-3 z-[180]"
+          style={{ top: 'max(env(safe-area-inset-top, 12px), 12px)' }}
         >
-          {/* Caller avatar / icon — pulsing ring for urgency */}
-          <div className="relative flex-shrink-0">
-            <div className="absolute inset-0 rounded-full bg-[#C8962C]/30 animate-ping" />
-            <div className="relative w-10 h-10 rounded-full bg-[#C8962C]/20 border border-[#C8962C]/50 flex items-center justify-center">
-              <PhoneCall className="w-5 h-5 text-[#C8962C]" />
+          {/* Frosted glass card — matches iOS dark call banner */}
+          <div
+            className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+            style={{
+              background: 'rgba(28, 28, 30, 0.96)',
+              backdropFilter: 'blur(40px)',
+              WebkitBackdropFilter: 'blur(40px)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+            }}
+          >
+            <div className="px-4 py-3.5 flex items-center gap-3.5">
+
+              {/* Caller avatar with pulsing ring */}
+              <div className="relative flex-shrink-0">
+                {/* Outer ring — pulses like a ringing phone */}
+                <div
+                  className="absolute -inset-1 rounded-full animate-ping"
+                  style={{ background: 'rgba(48, 209, 88, 0.25)' }}
+                />
+                <div
+                  className="absolute -inset-0.5 rounded-full"
+                  style={{ background: 'rgba(48, 209, 88, 0.15)' }}
+                />
+                {/* Avatar */}
+                <div className="relative w-12 h-12 rounded-full overflow-hidden border-2"
+                  style={{ borderColor: '#30D158' }}
+                >
+                  {incomingCall.callerAvatar ? (
+                    <img
+                      src={incomingCall.callerAvatar}
+                      alt={incomingCall.callerName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-[#2C2C2E]">
+                      <span className="text-lg font-black text-white">
+                        {incomingCall.callerName.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Caller info */}
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-black text-[15px] leading-tight truncate">
+                  {incomingCall.callerName}
+                </p>
+                <p className="text-[11px] font-semibold mt-0.5" style={{ color: '#C8962C' }}>
+                  HOTMESS Video
+                </p>
+              </div>
+
+              {/* Action buttons — big circles like real phone UI */}
+              <div className="flex items-center gap-3 flex-shrink-0">
+
+                {/* Decline — red circle, phone-off icon */}
+                <button
+                  onClick={handleDecline}
+                  className="w-12 h-12 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                  style={{ backgroundColor: '#FF3B30' }}
+                  aria-label="Decline call"
+                >
+                  <PhoneOff className="w-5 h-5 text-white" />
+                </button>
+
+                {/* Accept — green circle, video icon */}
+                <button
+                  onClick={handleAccept}
+                  className="w-12 h-12 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                  style={{ backgroundColor: '#30D158' }}
+                  aria-label="Accept call"
+                >
+                  <Video className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
             </div>
           </div>
-
-          {/* Caller info */}
-          <div className="flex-1 min-w-0">
-            <p className="text-white font-black text-sm truncate">{incomingCall.callerName}</p>
-            <p className="text-white/40 text-xs">Incoming video call</p>
-          </div>
-
-          {/* Decline */}
-          <button
-            onClick={handleDecline}
-            className="px-3 py-1.5 rounded-full bg-red-500/20 text-red-400 text-xs font-bold flex-shrink-0"
-          >
-            Decline
-          </button>
-
-          {/* Accept */}
-          <button
-            onClick={handleAccept}
-            className="px-3 py-1.5 rounded-full bg-[#C8962C] text-black text-xs font-bold flex-shrink-0"
-          >
-            Accept
-          </button>
         </motion.div>
       )}
     </AnimatePresence>
