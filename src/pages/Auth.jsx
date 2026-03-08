@@ -54,6 +54,8 @@ const FLOOR_CARDS = [
 export default function Auth() {
   const [showForm, setShowForm]         = useState(false);
   const [isSignUp, setIsSignUp]         = useState(false);
+  const [showReset, setShowReset]       = useState(false);
+  const [resetSent, setResetSent]       = useState(false);
   const [email, setEmail]               = useState('');
   const [password, setPassword]         = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -61,15 +63,30 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const openSignUp  = () => { setIsSignUp(true);  setShowForm(true); };
-  const openSignIn  = () => { setIsSignUp(false); setShowForm(true); };
+  const openSignUp  = () => { setIsSignUp(true);  setShowForm(true); setShowReset(false); };
+  const openSignIn  = () => { setIsSignUp(false); setShowForm(true); setShowReset(false); };
   const closeForm   = () => {
     setShowForm(false);
+    setShowReset(false);
+    setResetSent(false);
     setEmail(''); setPassword(''); setConfirmPassword('');
   };
   const switchMode  = (toSignUp) => {
     setIsSignUp(toSignUp);
+    setShowReset(false);
+    setResetSent(false);
     setEmail(''); setPassword(''); setConfirmPassword('');
+  };
+  const openReset   = () => {
+    setShowReset(true);
+    setResetSent(false);
+    setEmail('');
+  };
+  const backToSignIn = () => {
+    setShowReset(false);
+    setResetSent(false);
+    setEmail('');
+    setIsSignUp(false);
   };
 
   const handleSignIn = async (e) => {
@@ -105,7 +122,24 @@ export default function Auth() {
     }
   };
 
-  const handleForgotPassword = () => toast.info('Email reset not yet enabled');
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) { toast.error('Please enter your email'); return; }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: 'https://hotmessldn.com/auth?reset=true',
+      });
+      if (error) { toast.error(error.message || 'Reset request failed'); setLoading(false); return; }
+      setResetSent(true);
+      toast.success('Check your inbox for reset link');
+    } catch (err) {
+      toast.error(err.message || 'Reset request failed');
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen text-white overflow-x-hidden" style={{ background: BG }}>
@@ -358,18 +392,34 @@ export default function Auth() {
               {/* Close */}
               <div className="flex items-center justify-between px-5 pt-2 pb-1">
                 <AnimatePresence mode="wait">
-                  <motion.div
-                    key={isSignUp ? 'su' : 'si'}
-                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <h2 className="text-xl font-black text-white">
-                      {isSignUp ? 'Join The Mess' : 'Welcome Back'}
-                    </h2>
-                    <p className="text-xs text-white/30 mt-0.5">
-                      {isSignUp ? 'Create your account below' : 'Sign in to continue'}
-                    </p>
-                  </motion.div>
+                  {showReset && (
+                    <motion.div
+                      key="reset"
+                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <h2 className="text-xl font-black text-white">
+                        Reset Password
+                      </h2>
+                      <p className="text-xs text-white/30 mt-0.5">
+                        {resetSent ? 'Check your email' : 'Enter your email address'}
+                      </p>
+                    </motion.div>
+                  )}
+                  {!showReset && (
+                    <motion.div
+                      key={isSignUp ? 'su' : 'si'}
+                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <h2 className="text-xl font-black text-white">
+                        {isSignUp ? 'Join The Mess' : 'Welcome Back'}
+                      </h2>
+                      <p className="text-xs text-white/30 mt-0.5">
+                        {isSignUp ? 'Create your account below' : 'Sign in to continue'}
+                      </p>
+                    </motion.div>
+                  )}
                 </AnimatePresence>
                 <button
                   onClick={closeForm}
@@ -381,93 +431,176 @@ export default function Auth() {
               </div>
 
               {/* Form */}
-              <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="px-5 pb-4 pt-4 space-y-4">
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Email</label>
-                  <Input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={loading}
-                    className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl text-white placeholder:text-white/20 focus:border-[#C8962C] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 h-12 px-4"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Password</label>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                    className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl text-white placeholder:text-white/20 focus:border-[#C8962C] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 h-12 px-4"
-                  />
-                </div>
-
-                <AnimatePresence>
-                  {isSignUp && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">
-                        Confirm Password
-                      </label>
+              <AnimatePresence mode="wait">
+                {showReset ? (
+                  <motion.form
+                    key="reset-form"
+                    onSubmit={handleResetPassword}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="px-5 pb-4 pt-4 space-y-4"
+                  >
+                    {resetSent ? (
+                      <>
+                        <div className="py-8 text-center">
+                          <p className="text-lg font-black text-white mb-2">Check your inbox</p>
+                          <p className="text-sm text-white/50 leading-relaxed">
+                            We've sent a password reset link to <span className="text-white font-semibold">{email}</span>
+                          </p>
+                        </div>
+                        <motion.button
+                          type="button"
+                          onClick={backToSignIn}
+                          whileTap={{ scale: 0.97 }}
+                          className="w-full h-14 rounded-2xl font-black text-base uppercase tracking-wide mt-4 border"
+                          style={{ borderColor: `${GOLD}30`, color: 'rgba(255,255,255,0.5)' }}
+                        >
+                          Back to sign in
+                        </motion.button>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Email</label>
+                          <Input
+                            type="email"
+                            placeholder="you@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            disabled={loading}
+                            className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl text-white placeholder:text-white/20 focus:border-[#C8962C] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 h-12 px-4"
+                          />
+                        </div>
+                        <motion.button
+                          type="submit"
+                          disabled={loading}
+                          whileTap={{ scale: 0.97 }}
+                          className="w-full h-14 rounded-2xl font-black text-black text-base uppercase tracking-wide mt-4 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                          style={{ background: GOLD, boxShadow: `0 0 30px rgba(200,150,44,0.25)` }}
+                        >
+                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                            <>Send reset link<ArrowRight className="w-4 h-4" /></>
+                          )}
+                        </motion.button>
+                        <button
+                          type="button"
+                          onClick={backToSignIn}
+                          className="w-full text-sm text-white/30 hover:text-white/50 transition-colors font-medium py-2"
+                        >
+                          ← Back
+                        </button>
+                      </>
+                    )}
+                  </motion.form>
+                ) : (
+                  <motion.form
+                    key="auth-form"
+                    onSubmit={isSignUp ? handleSignUp : handleSignIn}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.2 }}
+                    className="px-5 pb-4 pt-4 space-y-4"
+                  >
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Email</label>
                       <Input
-                        type="password"
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         disabled={loading}
                         className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl text-white placeholder:text-white/20 focus:border-[#C8962C] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 h-12 px-4"
                       />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    </div>
 
-                {!isSignUp && (
-                  <div className="flex justify-end -mt-1">
-                    <button type="button" onClick={handleForgotPassword}
-                      className="text-[11px] text-white/30 hover:text-[#C8962C] transition-colors font-medium">
-                      Forgot password?
-                    </button>
-                  </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Password</label>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
+                        className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl text-white placeholder:text-white/20 focus:border-[#C8962C] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 h-12 px-4"
+                      />
+                    </div>
+
+                    <AnimatePresence>
+                      {isSignUp && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">
+                            Confirm Password
+                          </label>
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            disabled={loading}
+                            className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl text-white placeholder:text-white/20 focus:border-[#C8962C] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 h-12 px-4"
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {!isSignUp && (
+                      <div className="flex justify-end -mt-1">
+                        <button type="button" onClick={openReset}
+                          className="text-[11px] text-white/30 hover:text-[#C8962C] transition-colors font-medium">
+                          Forgot password?
+                        </button>
+                      </div>
+                    )}
+
+                    <motion.button
+                      type="submit"
+                      disabled={loading}
+                      whileTap={{ scale: 0.97 }}
+                      className="w-full h-14 rounded-2xl font-black text-black text-base uppercase tracking-wide mt-2 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                      style={{ background: GOLD, boxShadow: `0 0 30px rgba(200,150,44,0.25)` }}
+                    >
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                        <>{isSignUp ? 'Enter the mess' : 'Sign In'}<ArrowRight className="w-4 h-4" /></>
+                      )}
+                    </motion.button>
+                  </motion.form>
                 )}
-
-                <motion.button
-                  type="submit"
-                  disabled={loading}
-                  whileTap={{ scale: 0.97 }}
-                  className="w-full h-14 rounded-2xl font-black text-black text-base uppercase tracking-wide mt-2 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-                  style={{ background: GOLD, boxShadow: `0 0 30px rgba(200,150,44,0.25)` }}
-                >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                    <>{isSignUp ? 'Enter the mess' : 'Sign In'}<ArrowRight className="w-4 h-4" /></>
-                  )}
-                </motion.button>
-              </form>
+              </AnimatePresence>
 
               {/* Toggle */}
-              <div className="text-center pb-8 px-5">
-                <p className="text-sm text-white/30">
-                  {isSignUp ? (
-                    <>Already a member?{' '}
-                      <button onClick={() => switchMode(false)} className="font-black" style={{ color: GOLD }}>
-                        Sign in
-                      </button>
-                    </>
-                  ) : (
-                    <>New here?{' '}
-                      <button onClick={() => switchMode(true)} className="font-black" style={{ color: GOLD }}>
-                        Make a mess
-                      </button>
-                    </>
-                  )}
-                </p>
-              </div>
+              <AnimatePresence>
+                {!showReset && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center pb-8 px-5"
+                  >
+                    <p className="text-sm text-white/30">
+                      {isSignUp ? (
+                        <>Already a member?{' '}
+                          <button onClick={() => switchMode(false)} className="font-black" style={{ color: GOLD }}>
+                            Sign in
+                          </button>
+                        </>
+                      ) : (
+                        <>New here?{' '}
+                          <button onClick={() => switchMode(true)} className="font-black" style={{ color: GOLD }}>
+                            Make a mess
+                          </button>
+                        </>
+                      )}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </div>
         )}
