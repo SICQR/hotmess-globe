@@ -13,11 +13,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, Phone, Lock, ChevronRight, ExternalLink,
   Plus, Trash2, Loader2, User, Users, Clock,
-  CheckCircle, AlertTriangle, X,
+  CheckCircle, AlertTriangle, X, Radio,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
+import LiveLocationShare from '@/components/safety/LiveLocationShare';
 
 // ── UK Crisis lines ─────────────────────────────────────────────────────────
 const CRISIS_LINES = [
@@ -48,6 +49,7 @@ const RELATIONS = ['Friend', 'Partner', 'Family', 'Other'];
 export default function L2SafetySheet() {
   const { openSheet } = useSheet();
   const [tab, setTab] = useState('contacts');
+  const [currentUser, setCurrentUser] = useState(null);
 
   // ── Trusted contacts state ──────────────────────────────────────────────
   const [contacts, setContacts]           = useState([]);
@@ -64,8 +66,13 @@ export default function L2SafetySheet() {
   const [logging, setLogging]             = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(120);
 
-  // ── Load trusted contacts ───────────────────────────────────────────────
-  useEffect(() => { loadContacts(); }, []);
+  // ── Load user + trusted contacts ────────────────────────────────────────
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setCurrentUser(data.user);
+    });
+    loadContacts();
+  }, []);
 
   async function loadContacts() {
     setContactsLoading(true);
@@ -189,15 +196,17 @@ export default function L2SafetySheet() {
         {[
           { id: 'contacts', label: 'Contacts' },
           { id: 'checkin',  label: 'Check-in' },
-          { id: 'tips',     label: 'Tips & Lines' },
+          { id: 'live',     label: 'Live' },
+          { id: 'tips',     label: 'Tips' },
         ].map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${
+            className={`flex-1 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1 ${
               tab === t.id ? 'bg-[#C8962C] text-black' : 'bg-white/5 text-white/50'
             }`}
           >
+            {t.id === 'live' && <Radio className="w-3 h-3" />}
             {t.label}
           </button>
         ))}
@@ -441,6 +450,23 @@ export default function L2SafetySheet() {
                 <ChevronRight className="w-4 h-4 text-white/20" />
               </button>
             </div>
+          </div>
+        )}
+
+        {/* ─── LIVE LOCATION ─────────────────────────────────────────────── */}
+        {tab === 'live' && (
+          <div className="px-4 pb-6">
+            <LiveLocationShare
+              currentUser={currentUser}
+              trustedContacts={contacts.map(c => ({
+                id:    c.id,
+                name:  c.contact_name,
+                phone: c.contact_phone,
+                email: c.contact_email,
+              }))}
+              onShareStart={() => toast.success('Live location sharing started')}
+              onShareEnd={() => toast.success('Live location sharing stopped')}
+            />
           </div>
         )}
 

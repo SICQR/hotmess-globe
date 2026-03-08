@@ -10,28 +10,30 @@ This file provides guidance when working with code in this repository.
 
 ## 🔴 PICK UP HERE (Last session: 2026-03-08)
 
-**What's done:**
-- ✅ hotmessldn.com domain fixed (was redirecting to dead hotmess.app)
-- ✅ RLS security hardening complete — all blocking holes fixed
-- ✅ All 5 P1 agents shipped (Radio, Auth, Unread, Persona, XP purge)
+**What's done this sprint:**
+- ✅ hotmessldn.com domain fixed
+- ✅ RLS security hardening complete (all 7 holes patched)
+- ✅ All 5 P1 agents shipped (Radio, Auth, Unread badge, Persona, XP purge)
 - ✅ HomeMode 12-section redesign live
+- ✅ IncomingCallBanner (platform-adaptive iOS/Android) — committed ab56469
+- ✅ SOSOverlay full rewrite — 2-phase fake call (ringing→connected), iOS+Android native-feel, "Exit & clear data" — committed b5e6794
+- ✅ **LiveLocationShare wired into L2SafetySheet** — new "Live" tab (4th tab in Safety Centre)
 - ✅ DESIGN_SYSTEM.md + CLAUDE.md fully updated
 
-**Next task: Smoke test the live site end-to-end**
-URL: https://hotmessldn.com
-Test these flows in order:
-1. Age Gate → ENTER button
-2. Auth sign-in with real credentials
-3. HomeMode 12 sections render correctly
-4. Ghosted mode — proximity grid loads
-5. Pulse — globe renders on /pulse, NOT on other routes
-6. Market tab
-7. Profile tab + persona switcher (long-press avatar)
-8. Radio mini player (navigate to /radio, then back)
-9. SOS button — visible bottom-right, long-press 2s triggers overlay
-10. Sheet policy — try opening chat from outside /ghosted (should be blocked)
+**⚠️ REAL P1 STATE — most tasks were already shipped, CLAUDE.md was behind:**
+See "Active P1 Tasks" section below for accurate status.
 
-**Then:** Start P1 task #17 — Filters drawer + Taps/Woofs
+**Next task: Deploy to production + smoke test**
+URL: https://hotmessldn.com
+1. Age Gate → ENTER button
+2. Auth sign-in
+3. HomeMode 12 sections
+4. Ghosted → filter icon (badge shows active count) + woof button on cards + red tap badge in nav
+5. Pulse → globe on /pulse only, BeaconFAB creates beacon (no beaconId = create mode)
+6. Market, Profile, Radio mini player
+7. SOS long-press 2s → platform-matched fake call
+8. Safety Centre → Contacts / Check-in / **Live** / Tips tabs
+9. Chat → typing indicator visible, meetpoint card via ✈️ button
 
 ---
 
@@ -264,31 +266,39 @@ Removed sections (no longer in HomeMode): hero banner, community section, scene 
 
 ---
 
-## Active P1 Tasks (Running Agents)
+## Active P1 Tasks — TRUE STATE (audited 2026-03-08)
 
-**All 5 previously listed agents are SHIPPED and committed to main as of 2026-03-08. No agents currently running.**
+**No agents currently running.**
 
-Previously completed (now in codebase):
-1. ~~Radio Polish~~ ✅ — RadioMiniPlayer above nav, waveform animation
-2. ~~Auth Visual Redesign~~ ✅ — Luxury noir-gold auth, AgeGate, OnboardingGate
-3. ~~Unread Badge + Photo Sharing~~ ✅ — Unread dot on Ghosted tab, photo in chat
-4. ~~Persona Switcher~~ ✅ — PersonaSwitcherSheet, long-press avatar
-5. ~~XP Purge~~ ✅ — All XP UI removed (DB columns kept)
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 17 | Filters drawer + Taps/Woofs | ✅ **SHIPPED** | L2FiltersSheet wired in GhostedMode (openSheet('filters'), active count badge, localStorage). useTaps + woof button + amber ring on cards. L2TapsSheet registered. Red badge in OSBottomNav opens taps sheet. |
+| 16 | IncomingCallBanner | ✅ **SHIPPED** | Platform-adaptive iOS/Android, committed ab56469 |
+| 16 | Typing indicators | ✅ **SHIPPED** | TypingIndicator.jsx + useTypingIndicator already live in L2ChatSheet |
+| 16 | Read receipts | ⚠️ **PARTIAL** | markRead() writes to localStorage; DB-level unread_count field on chat_threads used by useUnreadCount but not fully synced server-side |
+| 20 | SOS flow polish | ✅ **SHIPPED** | 2-phase fake call (ringing→connected), iOS+Android, exit button, committed b5e6794 |
+| 18 | Beacon creation UI | ✅ **SHIPPED** | L2BeaconSheet has both viewer + full multi-step BeaconCreator. BeaconFAB in PulseMode calls openSheet('beacon', { mode: 'create' }) |
+| 21 | Video call UI | ✅ **SHIPPED** | L2VideoCallSheet — full WebRTC signaling via rtc_signals table, offer/answer/ICE flow |
+| 22 | Profile views | ✅ **SHIPPED** | L2ProfileViewsSheet.tsx exists; profile_views tracking in L2ProfileSheet on open; ProfileMode links to sheet |
+| Live Location | Wire LiveLocationShare | ✅ **SHIPPED** | Added as "Live" tab in L2SafetySheet — trusted contacts from table, watchPosition, realtime broadcast |
+| 23 | PWA push notifications | ❌ **TODO** | notifyContacts() stub in LiveLocationShare still console.log. Needs: VAPID keys, Supabase Edge Function, service worker handler |
+| 27 | VaultMode scope | ❌ **TODO** | VaultMode.tsx exists but scope undefined — tickets, orders, archive? Phil to define |
 
 ---
 
-## Pending P1 Tasks (Queued)
+## Travel & Location Micro-flows (full audit 2026-03-08)
 
-| # | Task | Ready? |
-|---|------|--------|
-| 17 | Filters drawer + Taps/Woofs | ✅ |
-| 16 | Incoming call banner + read receipts + typing | ✅ |
-| 20 | Full SOS flow polish | ✅ |
-| 18 | Beacon creation UI | ✅ |
-| 21 | Video call UI | ✅ |
-| 22 | Profile views (Who viewed you) | ✅ |
-| 23 | PWA push notifications | ⚠️ needs infra design |
-| 27 | VaultMode scope definition | ❌ user to define |
+**Built and wired:**
+- `InAppDirections.jsx` — Leaflet map, walk/bike/drive/Uber routing, wired in ProfileHeader
+- `TravelModal.jsx` — ✈️ button in chat, sends `meetpoint` message type with OSM map preview
+- `L2ChatMeetupSheet.tsx` — meetup suggestion in chat thread
+- `L2LocationSheet` — city/precision/radius settings, registered as 'location' in SheetRouter
+- `LiveLocationShare.jsx` — duration picker, contact selector, watchPosition, Supabase realtime ✅ NOW wired into L2SafetySheet
+- `useRealtimeLocations.ts`, `useLiveViewerLocation.js` — hooks for consuming shared locations
+
+**Still missing:**
+- Receiver/watcher view — a trusted contact seeing a live location pin on a map
+- `notifyContacts()` real push (blocked by #23 infra)
 
 ---
 
