@@ -39,6 +39,7 @@ const L2CartSheet = lazy(() => import('./L2CartSheet'));
 const L2CheckoutSheet = lazy(() => import('./L2CheckoutSheet'));
 const L2SafetySheet = lazy(() => import('./L2SafetySheet'));
 const L2LiveLocationWatcherSheet = lazy(() => import('./L2LiveLocationWatcherSheet'));
+const L2NotificationInboxSheet = lazy(() => import('./L2NotificationInboxSheet'));
 const L2PrivacySheet = lazy(() => import('./L2PrivacySheet'));
 const L2BlockedSheet = lazy(() => import('./L2BlockedSheet'));
 const L2NotificationsSheet = lazy(() => import('./L2NotificationsSheet'));
@@ -163,6 +164,8 @@ const SHEET_COMPONENTS = {
   'video-call': L2VideoCallSheet,
   // Live location watcher (trusted contact map view)
   'location-watcher': L2LiveLocationWatcherSheet,
+  // Notification inbox (replaces prefs-only 'notifications' sheet as entry point)
+  'notification-inbox': L2NotificationInboxSheet,
   // Admin — City Ops
   'admin': L2AdminSheet,
   // B2B — City Amplification

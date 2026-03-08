@@ -242,6 +242,13 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: true,
     deepLinkParams: ['shareId', 'sharerName'],
   },
+  'notification-inbox': {
+    id: 'notification-inbox',
+    title: 'Notifications',
+    height: 'full',
+    auth: true,
+    deepLinkParams: [],
+  },
   'privacy': {
     id: 'privacy',
     title: 'Privacy',

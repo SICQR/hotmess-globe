@@ -393,7 +393,7 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
     {
       title: 'ACCOUNT',
       items: [
-        { icon: Bell, label: 'Notifications', action: () => openSheet('notifications', {}), iconColor: MUTED },
+        { icon: Bell, label: 'Notifications', action: () => openSheet('notification-inbox', {}), iconColor: MUTED },
         { icon: Star, label: 'Membership', action: () => openSheet('membership', {}), iconColor: MUTED },
         { icon: HelpCircle, label: 'Help', action: () => openSheet('help', {}), iconColor: MUTED },
         { icon: Settings, label: 'Settings', action: () => openSheet('settings', {}), iconColor: MUTED },
