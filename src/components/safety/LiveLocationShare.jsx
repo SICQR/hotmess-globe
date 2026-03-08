@@ -335,8 +335,41 @@ export default function LiveLocationShare({
 
   // Notify contacts
   const notifyContacts = async (type) => {
-    // In production, this would send push notifications/SMS to contacts
-    console.log(`Notifying contacts: ${type}`, selectedContacts);
+    // Build list of selected contacts with emails (for in-app notifications)
+    const recipients = trustedContacts.filter(
+      (c) => selectedContacts.includes(c.id) && c.email
+    );
+
+    if (recipients.length === 0) return;
+
+    const sharerName = currentUser?.user_metadata?.display_name
+      || currentUser?.email?.split('@')[0]
+      || 'Someone';
+
+    const isStart = type === 'start';
+    const title   = isStart
+      ? `${sharerName} is sharing their live location`
+      : `${sharerName} stopped sharing their location`;
+    const message = isStart
+      ? `Tap to follow ${sharerName}'s location in real time.`
+      : `The live location share has ended.`;
+
+    // Write one notification row per contact that has an email
+    const rows = recipients.map((c) => ({
+      user_email: c.email,
+      type:       isStart ? 'location_share_started' : 'location_share_ended',
+      title,
+      message,
+      read:       false,
+      metadata:   isStart ? { share_id: shareId } : {},
+    }));
+
+    try {
+      const { error } = await supabase.from('notifications').insert(rows);
+      if (error) console.warn('[LiveLocationShare] notify insert error:', error.message);
+    } catch (err) {
+      console.warn('[LiveLocationShare] notifyContacts failed:', err);
+    }
   };
 
   // Toggle contact selection
