@@ -120,11 +120,9 @@ jobs:
           head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'HEAD' }}
 
   e2e-smoke:
-    name: E2E Smoke Tests
+    name: E2E Tests
     runs-on: ubuntu-latest
-    # continue-on-error: true until VITE_SUPABASE_ANON_KEY secret is confirmed set in repo settings.
-    # Flip to false once confirmed to make smoke failures block deploy.
-    continue-on-error: true
+    continue-on-error: false
     permissions:
       contents: read
 
@@ -141,23 +139,37 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run unit tests
+        run: npm run test:run
+        env:
+          CI: true
+          VITE_SUPABASE_URL: https://klsywpvncqqglhnhrjbh.supabase.co
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
       - name: Install Playwright Chromium
         run: npx playwright install chromium --with-deps
 
-      - name: Run smoke specs (Chromium only)
+      - name: Run E2E specs (Chromium only)
         run: |
           npx playwright test \
-            e2e/smoke.a.geolocation-allowed.spec.ts \
-            e2e/smoke.b.geolocation-denied.spec.ts \
-            e2e/navigation.spec.ts \
+            e2e/01-boot.spec.ts \
+            e2e/02-home.spec.ts \
+            e2e/03-pulse.spec.ts \
+            e2e/04-ghosted.spec.ts \
+            e2e/05-profile.spec.ts \
+            e2e/06-safety.spec.ts \
+            e2e/07-two-user.spec.ts \
+            e2e/08-navigation.spec.ts \
             --project=chromium \
             --reporter=html
         env:
           CI: true
-          # Public Supabase project URL — not secret, safe to hardcode
           VITE_SUPABASE_URL: https://klsywpvncqqglhnhrjbh.supabase.co
-          # Add VITE_SUPABASE_ANON_KEY as a GitHub repo secret to enable real API calls
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          TEST_USER_A_EMAIL: ${{ secrets.TEST_USER_A_EMAIL }}
+          TEST_USER_A_PASSWORD: ${{ secrets.TEST_USER_A_PASSWORD }}
+          TEST_USER_B_EMAIL: ${{ secrets.TEST_USER_B_EMAIL }}
+          TEST_USER_B_PASSWORD: ${{ secrets.TEST_USER_B_PASSWORD }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
@@ -181,10 +193,7 @@ jobs:
   deploy-production:
     name: Deploy to Vercel Production
     runs-on: ubuntu-latest
-    # e2e-smoke is not in needs because it's currently non-blocking (continue-on-error: true).
-    # Once VITE_SUPABASE_ANON_KEY secret is set and e2e-smoke is stable, add it here.
-    # Note: Deployment will fail gracefully if Vercel secrets are not configured
-    needs: [lint, typecheck, build, security]
+    needs: [lint, typecheck, build, security, e2e-smoke]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     continue-on-error: true
     permissions:
