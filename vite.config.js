@@ -681,6 +681,7 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: './src/test/setup.js',
       css: true,
+      include: ['src/**/*.{test,spec}.{ts,tsx,js,jsx}'],
       exclude: [
         'e2e/**',
         'node_modules/**',
