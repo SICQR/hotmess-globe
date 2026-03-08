@@ -62,8 +62,8 @@ export const BRAND_CONFIG: Record<string, BrandConfig> = {
   hung: {
     key: 'hung',
     name: 'HUNG',
-    visible: false,
-    description: 'Statement pieces clothing line',
+    visible: true,
+    description: 'Statement pieces clothing line · #C41230',
     shopifyCollection: 'hung',
     routes: ['/market/hung'],
   },
@@ -71,7 +71,7 @@ export const BRAND_CONFIG: Record<string, BrandConfig> = {
   high: {
     key: 'high',
     name: 'HIGH',
-    visible: false,
+    visible: true,
     description: 'Elevated essentials clothing line',
     shopifyCollection: 'high',
     routes: ['/market/high'],
@@ -98,7 +98,7 @@ export const BRAND_CONFIG: Record<string, BrandConfig> = {
   hungmess: {
     key: 'hungmess',
     name: 'HUNGMESS',
-    visible: false,
+    visible: true,
     description: 'Editorial fashion line',
     shopifyCollection: 'hungmess',
     routes: ['/editorial'],
