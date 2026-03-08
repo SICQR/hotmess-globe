@@ -235,6 +235,13 @@ export const SHEET_REGISTRY: Record<string, SheetDefinition> = {
     auth: false,
     deepLinkParams: [],
   },
+  'location-watcher': {
+    id: 'location-watcher',
+    title: 'Live Location',
+    height: 'full',
+    auth: true,
+    deepLinkParams: ['shareId', 'sharerName'],
+  },
   'privacy': {
     id: 'privacy',
     title: 'Privacy',
