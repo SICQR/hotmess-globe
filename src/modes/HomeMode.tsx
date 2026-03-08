@@ -538,37 +538,62 @@ function VenueKingCard({
   );
 }
 
-// ── 10. Creator Drop Banner ───────────────────────────────────────────────────
-const HUNG = '#C41230';
+// ── 10. Creator Drop Banners ──────────────────────────────────────────────────
+const HUNG_RED = '#C41230';
+const HNH_PLUM = '#8B5CF6';
 
-function CreatorDrop({ onTap }: { onTap: () => void }) {
+function HUNGDrop({ onTap }: { onTap: () => void }) {
   return (
     <button
       onClick={onTap}
-      className="mx-4 rounded-2xl p-4 text-left relative overflow-hidden active:scale-[0.98] transition-transform"
+      className="flex-1 rounded-2xl p-4 text-left relative overflow-hidden active:scale-[0.98] transition-transform"
       style={{
         background: 'linear-gradient(135deg,#1a0a0a 0%,#2a0808 50%,#1a0305 100%)',
         border: `1px solid rgba(196,18,48,0.3)`,
       }}
     >
-      <p className="text-[10px] font-black tracking-widest uppercase mb-1" style={{ color: HUNG }}>NEW DROP</p>
-      <p className="font-black text-[18px] leading-tight text-white mb-0.5">HUNG SS25</p>
-      <p className="text-[12px] mb-3" style={{ color: MUTED }}>Statement pieces — limited run</p>
-      <div className="flex gap-2">
-        <span
-          className="flex-1 py-2.5 rounded-xl text-center text-[12px] font-bold"
-          style={{ background: HUNG, color: '#fff' }}
-        >
-          Shop Now
-        </span>
-        <span
-          className="px-3.5 py-2.5 rounded-xl text-[12px] font-semibold"
-          style={{ background: 'rgba(196,18,48,0.15)', border: `1px solid rgba(196,18,48,0.3)`, color: HUNG }}
-        >
-          Preview
-        </span>
-      </div>
+      <p className="text-[10px] font-black tracking-widest uppercase mb-1" style={{ color: HUNG_RED }}>NEW DROP</p>
+      <p className="font-black text-[16px] leading-tight text-white mb-0.5">HUNG SS25</p>
+      <p className="text-[11px] mb-3" style={{ color: MUTED }}>Statement pieces</p>
+      <span
+        className="inline-block px-3 py-2 rounded-xl text-center text-[11px] font-bold w-full"
+        style={{ background: HUNG_RED, color: '#fff' }}
+      >
+        Shop Now
+      </span>
     </button>
+  );
+}
+
+function HNHDrop({ onTap }: { onTap: () => void }) {
+  return (
+    <button
+      onClick={onTap}
+      className="flex-1 rounded-2xl p-4 text-left relative overflow-hidden active:scale-[0.98] transition-transform"
+      style={{
+        background: 'linear-gradient(135deg,#08040f 0%,#150a2a 50%,#08040f 100%)',
+        border: `1px solid rgba(139,92,246,0.3)`,
+      }}
+    >
+      <p className="text-[10px] font-black tracking-widest uppercase mb-1" style={{ color: HNH_PLUM }}>CARE DROP</p>
+      <p className="font-black text-[16px] leading-tight text-white mb-0.5">HNH MESS</p>
+      <p className="text-[11px] mb-3" style={{ color: MUTED }}>Hand N Hand</p>
+      <span
+        className="inline-block px-3 py-2 rounded-xl text-center text-[11px] font-bold w-full"
+        style={{ background: HNH_PLUM, color: '#fff' }}
+      >
+        Shop Now
+      </span>
+    </button>
+  );
+}
+
+function CreatorDrop({ onHung, onHnh }: { onHung: () => void; onHnh: () => void }) {
+  return (
+    <div className="mx-4 flex gap-3">
+      <HUNGDrop onTap={onHung} />
+      <HNHDrop onTap={onHnh} />
+    </div>
   );
 }
 
@@ -1084,8 +1109,11 @@ export function HomeMode({ className = '' }: HomeModeProps) {
 
           {/* ── 10. Creator Drop ── */}
           <Sec index={9}>
-            <SH title="Creator Drop" dot={HUNG} />
-            <CreatorDrop onTap={() => navigate('/market')} />
+            <SH title="Creator Drop" dot={HUNG_RED} />
+            <CreatorDrop
+              onHung={() => openSheet('brand' as Parameters<typeof openSheet>[0], { brand: 'hung' })}
+              onHnh={() => openSheet('brand' as Parameters<typeof openSheet>[0], { brand: 'hnhMess' })}
+            />
           </Sec>
 
           {/* ── 11. Your Profile ── */}
