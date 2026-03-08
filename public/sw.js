@@ -339,11 +339,11 @@ self.addEventListener('notificationclick', (event) => {
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && 'focus' in client) {
             client.focus();
-            client.navigate(urlToOpen);
+            client.navigate(urlToOpen); // deep-link routing
             return;
           }
         }
-        
+
         // Open a new window if none exists
         if (clients.openWindow) {
           return clients.openWindow(urlToOpen);

@@ -376,13 +376,14 @@ export default function LiveLocationShare({
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
         const emails = recipients.map((c) => c.email);
+        const url = isStart ? '/?sheet=safety' : '/';
         await supabase.functions.invoke('notify-push', {
           body: {
             emails,
             title,
             body: message,
             tag:  isStart ? 'location_share_started' : 'location_share_ended',
-            url:  '/ghosted',
+            url,
           },
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
