@@ -368,7 +368,28 @@ export default function LiveLocationShare({
       const { error } = await supabase.from('notifications').insert(rows);
       if (error) console.warn('[LiveLocationShare] notify insert error:', error.message);
     } catch (err) {
-      console.warn('[LiveLocationShare] notifyContacts failed:', err);
+      console.warn('[LiveLocationShare] notifyContacts insert failed:', err);
+    }
+
+    // Fire web push to all selected contacts that have a subscription
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        const emails = recipients.map((c) => c.email);
+        await supabase.functions.invoke('notify-push', {
+          body: {
+            emails,
+            title,
+            body: message,
+            tag:  isStart ? 'location_share_started' : 'location_share_ended',
+            url:  '/ghosted',
+          },
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+      }
+    } catch (err) {
+      // Non-fatal — in-app notification already written
+      console.warn('[LiveLocationShare] push invoke failed:', err);
     }
   };
 
