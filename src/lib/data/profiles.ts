@@ -7,12 +7,21 @@
 
 import { supabase } from '@/components/utils/supabaseClient';
 
+export interface ProfilePhoto {
+  url: string;
+  caption?: string;
+  order?: number;
+  is_face?: boolean;
+  uploaded_at?: string;
+}
+
 export interface Profile {
   id: string;
   display_name: string;
   avatar_url?: string;
   bio?: string;
   location?: string;
+  city?: string;
   latitude?: number;
   longitude?: number;
   is_visible?: boolean;
@@ -23,6 +32,25 @@ export interface Profile {
   preferences?: Record<string, unknown>;
   created_at?: string;
   updated_at?: string;
+  // Photos array (profile gallery)
+  photos?: ProfilePhoto[];
+  // Public display attributes (body, position, orientation, etc.)
+  public_attributes?: Record<string, unknown>;
+  // Privacy settings
+  allow_messages_from?: 'everyone' | 'matches' | 'nobody';
+  show_distance?: boolean;
+  show_online_status?: boolean;
+  read_receipts?: boolean;
+  location_precision?: 'exact' | 'approximate' | 'hidden';
+  discovery_radius?: number;
+  // Onboarding / gates
+  age_verified?: boolean;
+  consent_accepted?: boolean;
+  onboarding_complete?: boolean;
+  community_attested_at?: string;
+  // Account
+  email?: string;
+  username?: string;
 }
 
 export interface ProfileFilters {

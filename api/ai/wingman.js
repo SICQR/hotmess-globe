@@ -1,8 +1,8 @@
 /**
  * HOTMESS AI Wingman API
- * 
+ *
  * POST /api/ai/wingman
- * 
+ *
  * Generates conversation starters based on two profiles.
  */
 
@@ -24,7 +24,7 @@ function getSupabase() {
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://hotmess-globe-fix.vercel.app');
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'https://hotmessldn.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -47,16 +47,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing viewerEmail or targetProfileId' });
     }
 
-    // Get both profiles
+    // Get both profiles from `profiles` table (not legacy `User`)
+    // public_attributes holds: position, looking_for, body_type, sexual_orientation
     const [viewerResult, targetResult] = await Promise.all([
       getSupabase()
-        .from('User')
-        .select('display_name, username, bio, interests, music_taste, tribes, looking_for')
+        .from('profiles')
+        .select('display_name, username, bio, public_attributes, city, location')
         .eq('email', viewerEmail)
         .single(),
       getSupabase()
-        .from('User')
-        .select('display_name, username, bio, interests, music_taste, tribes, looking_for')
+        .from('profiles')
+        .select('display_name, username, bio, public_attributes, city, location')
         .eq('id', targetProfileId)
         .single()
     ]);
@@ -68,40 +69,80 @@ export default async function handler(req, res) {
     const viewer = viewerResult.data;
     const target = targetResult.data;
 
-    // Find common ground
-    const commonInterests = findCommon(viewer.interests, target.interests);
-    const commonMusic = findCommon(viewer.music_taste, target.music_taste);
-    const commonTribes = findCommon(viewer.tribes, target.tribes);
+    // Extract public_attributes arrays
+    const viewerAttrs = viewer.public_attributes || {};
+    const targetAttrs = target.public_attributes || {};
 
-    // Check for shared events (both RSVPd)
-    const { data: sharedEvents } = await getSupabase()
-      .from('EventRSVP')
-      .select('event_id, Beacon(title)')
-      .in('user_email', [viewerEmail])
-      .limit(5);
+    // Find common ground across public_attributes arrays
+    const commonInterests = findCommon(
+      viewerAttrs.interests || [],
+      targetAttrs.interests || []
+    );
+    const commonMusic = findCommon(
+      viewerAttrs.music_taste || [],
+      targetAttrs.music_taste || []
+    );
+    const commonTribes = findCommon(
+      viewerAttrs.tribes || [],
+      targetAttrs.tribes || []
+    );
+    const commonLookingFor = findCommon(
+      viewerAttrs.looking_for || [],
+      targetAttrs.looking_for || []
+    );
+
+    // Check for shared events (both RSVPd to same event)
+    const { data: viewerRsvps } = await getSupabase()
+      .from('event_rsvps')
+      .select('event_id')
+      .eq('user_email', viewerEmail)
+      .limit(20);
+
+    const { data: targetRsvps } = await getSupabase()
+      .from('event_rsvps')
+      .select('event_id')
+      .eq('user_id', targetProfileId)
+      .limit(20);
+
+    const viewerEventIds = (viewerRsvps || []).map(r => r.event_id);
+    const targetEventIds = (targetRsvps || []).map(r => r.event_id);
+    const sharedEventIds = viewerEventIds.filter(id => targetEventIds.includes(id));
+
+    let sharedEventTitles = [];
+    if (sharedEventIds.length > 0) {
+      const { data: events } = await getSupabase()
+        .from('beacons')
+        .select('title')
+        .in('id', sharedEventIds.slice(0, 3));
+      sharedEventTitles = (events || []).map(e => e.title).filter(Boolean);
+    }
 
     // Build context for AI
     const context = {
       viewer: {
         name: viewer.display_name || viewer.username || 'User',
-        tribes: viewer.tribes?.join(', ') || 'not specified'
+        tribes: viewerAttrs.tribes?.join(', ') || null,
+        position: viewerAttrs.position || null,
       },
       target: {
         name: target.display_name || target.username || 'them',
-        tribes: target.tribes?.join(', ') || 'not specified',
-        bio: target.bio?.slice(0, 200) || null
+        tribes: targetAttrs.tribes?.join(', ') || null,
+        position: targetAttrs.position || null,
+        bio: target.bio?.slice(0, 200) || null,
+        looking_for: targetAttrs.looking_for?.join(', ') || null,
       },
       commonGround: {
         interests: commonInterests,
         music: commonMusic,
-        tribes: commonTribes
+        tribes: commonTribes,
+        looking_for: commonLookingFor,
       },
-      sharedEvents: sharedEvents?.map(e => e.Beacon?.title).filter(Boolean) || []
+      sharedEvents: sharedEventTitles,
     };
 
     // Generate openers with AI
     const prompt = buildWingmanPrompt(context);
-    
+
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -140,7 +181,6 @@ export default async function handler(req, res) {
         const parsed = JSON.parse(jsonMatch[0]);
         openers = parsed.openers || [];
       } else {
-        // Fallback: split by numbered list
         openers = content.split(/\d+\.\s+/).filter(Boolean).slice(0, 3);
       }
     } catch {
@@ -154,16 +194,16 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       openers: openers.slice(0, 3).map((text, i) => ({
-        text: text.trim(),
+        text: typeof text === 'string' ? text.trim() : text,
         type: ['personal', 'flirty', 'question'][i]
       })),
       commonGround: {
         interests: commonInterests,
         music: commonMusic,
         tribes: commonTribes,
-        events: context.sharedEvents
+        events: sharedEventTitles,
       },
-      targetName: context.target.name
+      targetName: context.target.name,
     });
 
   } catch (error) {
@@ -172,7 +212,7 @@ export default async function handler(req, res) {
 }
 
 function findCommon(arr1, arr2) {
-  if (!arr1 || !arr2) return [];
+  if (!Array.isArray(arr1) || !Array.isArray(arr2)) return [];
   return arr1.filter(item => arr2.includes(item));
 }
 
@@ -189,12 +229,20 @@ function buildWingmanPrompt(context) {
     parts.push(`- Their bio: "${context.target.bio}"`);
   }
 
+  if (context.target.looking_for) {
+    parts.push(`- They're looking for: ${context.target.looking_for}`);
+  }
+
   if (context.commonGround.interests.length > 0) {
     parts.push(`- Shared interests: ${context.commonGround.interests.join(', ')}`);
   }
 
   if (context.commonGround.music.length > 0) {
     parts.push(`- Shared music taste: ${context.commonGround.music.join(', ')}`);
+  }
+
+  if (context.commonGround.tribes.length > 0) {
+    parts.push(`- Same tribe(s): ${context.commonGround.tribes.join(', ')}`);
   }
 
   if (context.sharedEvents.length > 0) {
