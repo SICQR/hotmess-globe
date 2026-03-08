@@ -130,6 +130,9 @@
 
   body {
     @apply bg-background text-foreground;
+    /* HOTMESS: force deep space background regardless of shadcn theme variable */
+    background-color: #050507 !important;
+    color: #ffffff;
     /* Safe-area handled by Layout components, NOT body padding */
   }
   
