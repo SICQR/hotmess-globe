@@ -50,9 +50,11 @@ import {
   X,
   Music,
   ChevronLeft,
+  Calendar,
 } from 'lucide-react';
 import { useRadio } from '@/contexts/RadioContext';
 import { useNavigate } from 'react-router-dom';
+import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import '@/styles/radio-waveform.css';
 
@@ -144,6 +146,7 @@ interface RadioModeProps {
 export function RadioMode({ className = '' }: RadioModeProps) {
   const { isPlaying, currentShowName, togglePlay, setCurrentShowName, audioRef } = useRadio();
   const navigate = useNavigate();
+  const { openSheet } = useSheet();
 
   // Local UI state
   const [isMuted, setIsMuted] = useState(false);
@@ -537,9 +540,19 @@ export function RadioMode({ className = '' }: RadioModeProps) {
 
         {/* == SCHEDULE STRIP == */}
         <section className="px-4 pb-5">
-          <h2 className="text-[11px] font-black text-[#8E8E93] uppercase tracking-widest mb-3">
-            Up Next
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[11px] font-black text-[#8E8E93] uppercase tracking-widest">
+              Up Next
+            </h2>
+            <button
+              onClick={() => openSheet('schedule', {})}
+              className="flex items-center gap-1 text-[#C8962C] text-[11px] font-bold uppercase tracking-wider active:opacity-70 transition-opacity"
+              aria-label="View full radio schedule"
+            >
+              <Calendar className="w-3 h-3" />
+              Full Schedule
+            </button>
+          </div>
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
             {shows.map((show, idx) => {
               const isActive = idx === activeShowIndex;

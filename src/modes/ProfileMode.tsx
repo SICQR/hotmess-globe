@@ -45,6 +45,7 @@ import {
   Zap,
   Crown,
   MessageSquare,
+  Wallet,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { usePersona } from '@/contexts/PersonaContext';
@@ -375,6 +376,7 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
         ] : []),
         { icon: Package, label: 'My Listings', action: () => openSheet('my-listings', {}) },
         { icon: ShoppingBag, label: 'My Orders', action: () => openSheet('my-orders', {}) },
+        { icon: Wallet, label: 'My Earnings', action: () => openSheet('payouts', {}), iconColor: AMBER },
         { icon: Ticket, label: 'Vault (Tickets & Passes)', action: () => openSheet('vault', {}) },
         { icon: Heart, label: 'Favourites', action: () => openSheet('favorites', {}) },
       ],
