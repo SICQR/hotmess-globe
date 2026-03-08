@@ -49,11 +49,13 @@ export const loadGhostedFilters = () => {
 const saveGhostedFilters = (filters) => {
   try {
     localStorage.setItem(GHOSTED_FILTERS_KEY, JSON.stringify(filters));
-    // Dispatch storage event so GhostedMode can react
+    // Dispatch storage event so cross-tab listeners react
     window.dispatchEvent(new StorageEvent('storage', {
       key: GHOSTED_FILTERS_KEY,
       newValue: JSON.stringify(filters),
     }));
+    // Also dispatch custom event for immediate same-tab sync (GhostedMode listens for this)
+    window.dispatchEvent(new CustomEvent('hm_filters_updated'));
   } catch {
     // ignore
   }
