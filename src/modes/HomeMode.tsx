@@ -40,6 +40,7 @@ import {
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
+import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import { supabase } from '@/components/utils/supabaseClient';
 import { format, isToday, isTomorrow } from 'date-fns';
 import RightNowModal from '@/components/globe/RightNowModal';
@@ -572,36 +573,52 @@ function CreatorDrop({ onTap }: { onTap: () => void }) {
 }
 
 // ── 11. Profile completion card ───────────────────────────────────────────────
-function ProfileCard({
-  name, completionPct, persona, onTap,
-}: { name: string; completionPct: number; persona?: string; onTap: () => void }) {
+function ProfileCard({ onTap }: { onTap: () => void }) {
+  const { pct, steps, displayName, avatarUrl } = useProfileCompletion();
+  const nextStep = steps.find((s) => !s.done);
   return (
     <button
       onClick={onTap}
       className="mx-4 rounded-2xl p-4 flex items-center gap-3 active:scale-[0.98] transition-transform"
       style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}
     >
+      {/* Avatar */}
       <div
-        className="w-12 h-12 rounded-full flex items-center justify-center text-[22px] flex-shrink-0"
-        style={{ background: '#242426', border: `2px solid ${AMBER}` }}
+        className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center text-[22px]"
+        style={{ background: '#242426', border: `2px solid ${pct === 100 ? AMBER : BORDER}` }}
       >
-        {name[0]?.toUpperCase() ?? '?'}
+        {avatarUrl
+          ? <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+          : displayName[0]?.toUpperCase() ?? '?'
+        }
       </div>
+
+      {/* Progress */}
       <div className="flex-1 min-w-0">
-        <p className="text-white font-bold text-[15px] mb-2">{name}</p>
-        <div className="h-1 rounded-full bg-white/10 overflow-hidden mb-1">
-          <div className="h-full rounded-full" style={{ width: `${completionPct}%`, background: AMBER }} />
+        <p className="text-white font-bold text-[15px] mb-2">{displayName}</p>
+        <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mb-1.5">
+          <div
+            className="h-full rounded-full transition-all duration-700"
+            style={{ width: `${pct}%`, background: pct === 100 ? '#30D158' : AMBER }}
+          />
         </div>
-        <p className="text-[10px]" style={{ color: MUTED }}>{completionPct}% profile complete</p>
+        {nextStep
+          ? <p className="text-[10px]" style={{ color: AMBER }}>Next: {nextStep.label}</p>
+          : <p className="text-[10px]" style={{ color: '#30D158' }}>Profile complete ✓</p>
+        }
       </div>
-      {persona && (
-        <span
-          className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg flex-shrink-0"
-          style={{ background: `rgba(200,150,44,0.15)`, border: `1px solid rgba(200,150,44,0.3)`, color: AMBER }}
-        >
-          {persona}
-        </span>
-      )}
+
+      {/* % badge */}
+      <span
+        className="text-[11px] font-black px-2.5 py-1.5 rounded-lg flex-shrink-0"
+        style={{
+          background: pct === 100 ? 'rgba(48,209,88,0.15)' : 'rgba(200,150,44,0.15)',
+          border: `1px solid ${pct === 100 ? 'rgba(48,209,88,0.3)' : 'rgba(200,150,44,0.3)'}`,
+          color: pct === 100 ? '#30D158' : AMBER,
+        }}
+      >
+        {pct}%
+      </span>
     </button>
   );
 }
@@ -1055,12 +1072,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
           {/* ── 11. Your Profile ── */}
           <Sec index={10}>
             <SH title="Your Profile" onLink={() => navigate('/profile')} linkLabel="Edit" />
-            <ProfileCard
-              name="You"
-              completionPct={65}
-              persona="MAIN"
-              onTap={() => navigate('/profile')}
-            />
+            <ProfileCard onTap={() => navigate('/profile')} />
           </Sec>
 
           {/* ── 12. Safety Strip ── */}
