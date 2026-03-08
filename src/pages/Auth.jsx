@@ -5,7 +5,7 @@
  * Sections: Hero → Universe Grid → Live Radio → From The Floor → Enter Strip
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -56,6 +56,7 @@ export default function Auth() {
   const [isSignUp, setIsSignUp]         = useState(false);
   const [showReset, setShowReset]       = useState(false);
   const [resetSent, setResetSent]       = useState(false);
+  const [isPasswordUpdate, setIsPasswordUpdate] = useState(false);
   const [email, setEmail]               = useState('');
   const [password, setPassword]         = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -63,12 +64,35 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  // Handle password reset redirect and PASSWORD_RECOVERY event
+  useEffect(() => {
+    // Check if user landed via password reset link
+    const isResetParam = searchParams.get('reset') === 'true';
+    if (isResetParam) {
+      setShowForm(true);
+      setIsPasswordUpdate(true);
+    }
+
+    // Listen for Supabase PASSWORD_RECOVERY event (fires when reset link is clicked)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setShowForm(true);
+        setIsPasswordUpdate(true);
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [searchParams]);
+
   const openSignUp  = () => { setIsSignUp(true);  setShowForm(true); setShowReset(false); };
   const openSignIn  = () => { setIsSignUp(false); setShowForm(true); setShowReset(false); };
   const closeForm   = () => {
     setShowForm(false);
     setShowReset(false);
     setResetSent(false);
+    setIsPasswordUpdate(false);
     setEmail(''); setPassword(''); setConfirmPassword('');
   };
   const switchMode  = (toSignUp) => {
@@ -137,6 +161,27 @@ export default function Auth() {
       toast.error(err.message || 'Reset request failed');
       setLoading(false);
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    if (!password.trim() || !confirmPassword.trim()) { toast.error('Please fill in all fields'); return; }
+    if (password !== confirmPassword) { toast.error('Passwords do not match'); return; }
+    if (password.length < 6) { toast.error('Password must be at least 6 characters'); return; }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) { toast.error(error.message || 'Password update failed'); setLoading(false); return; }
+      toast.success('Password updated!');
+      setPassword('');
+      setConfirmPassword('');
+      setIsPasswordUpdate(false);
+      setShowForm(false);
+      setTimeout(() => navigate('/'), REDIRECT_DELAY_MS);
+    } catch (err) {
+      toast.error(err.message || 'Password update failed');
       setLoading(false);
     }
   };
@@ -392,7 +437,21 @@ export default function Auth() {
               {/* Close */}
               <div className="flex items-center justify-between px-5 pt-2 pb-1">
                 <AnimatePresence mode="wait">
-                  {showReset && (
+                  {isPasswordUpdate && (
+                    <motion.div
+                      key="password-update"
+                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <h2 className="text-xl font-black text-white">
+                        Set New Password
+                      </h2>
+                      <p className="text-xs text-white/30 mt-0.5">
+                        Choose a strong password
+                      </p>
+                    </motion.div>
+                  )}
+                  {showReset && !isPasswordUpdate && (
                     <motion.div
                       key="reset"
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
@@ -406,7 +465,7 @@ export default function Auth() {
                       </p>
                     </motion.div>
                   )}
-                  {!showReset && (
+                  {!showReset && !isPasswordUpdate && (
                     <motion.div
                       key={isSignUp ? 'su' : 'si'}
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
@@ -432,7 +491,53 @@ export default function Auth() {
 
               {/* Form */}
               <AnimatePresence mode="wait">
-                {showReset ? (
+                {isPasswordUpdate ? (
+                  <motion.form
+                    key="password-update-form"
+                    onSubmit={handlePasswordUpdate}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="px-5 pb-4 pt-4 space-y-4"
+                  >
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">New Password</label>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
+                        className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl text-white placeholder:text-white/20 focus:border-[#C8962C] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 h-12 px-4"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Confirm Password</label>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={loading}
+                        className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl text-white placeholder:text-white/20 focus:border-[#C8962C] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 h-12 px-4"
+                      />
+                    </div>
+
+                    <motion.button
+                      type="submit"
+                      disabled={loading}
+                      whileTap={{ scale: 0.97 }}
+                      className="w-full h-14 rounded-2xl font-black text-black text-base uppercase tracking-wide mt-4 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                      style={{ background: GOLD, boxShadow: `0 0 30px rgba(200,150,44,0.25)` }}
+                    >
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                        <>Update Password<ArrowRight className="w-4 h-4" /></>
+                      )}
+                    </motion.button>
+                  </motion.form>
+                ) : showReset ? (
                   <motion.form
                     key="reset-form"
                     onSubmit={handleResetPassword}
