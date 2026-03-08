@@ -2,7 +2,7 @@
 
 This file provides guidance when working with code in this repository.
 
-**Last updated:** 2026-03-08
+**Last updated:** 2026-03-08 (session 2)
 **Design system:** `DESIGN_SYSTEM.md` — always read before touching any styling
 **Design reference docs:** `~/Downloads/HOTMESS-PROJECT/01-ACTIVE-REFERENCE/` — all dated design reference files live here
 
@@ -43,32 +43,37 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 
 ---
 
-## 🔴 PICK UP HERE (Last session: 2026-03-08)
+## 🔴 PICK UP HERE (Last session: 2026-03-08 session 2)
 
 **What's done this sprint:**
 - ✅ hotmessldn.com domain fixed
-- ✅ RLS security hardening complete (all 7 holes patched)
+- ✅ RLS security hardening complete (all 7 holes + profile_overrides fixed)
 - ✅ All 5 P1 agents shipped (Radio, Auth, Unread badge, Persona, XP purge)
 - ✅ HomeMode 12-section redesign live
-- ✅ IncomingCallBanner (platform-adaptive iOS/Android) — committed ab56469
-- ✅ SOSOverlay full rewrite — 2-phase fake call (ringing→connected), iOS+Android native-feel, "Exit & clear data" — committed b5e6794
-- ✅ **LiveLocationShare wired into L2SafetySheet** — new "Live" tab (4th tab in Safety Centre)
-- ✅ DESIGN_SYSTEM.md + CLAUDE.md fully updated
+- ✅ IncomingCallBanner (platform-adaptive iOS/Android)
+- ✅ SOSOverlay full rewrite — 2-phase fake call, iOS+Android, "Exit & clear data"
+- ✅ LiveLocationShare wired into L2SafetySheet — "Live" tab in Safety Centre
+- ✅ L2LiveLocationWatcherSheet — receiver map view for live location
+- ✅ notifyContacts() writes to notifications table
+- ✅ L2NotificationInboxSheet + useNotifCount — full notification feed, amber badge on Profile tab
+- ✅ GitHub Actions CI — real e2e-smoke job (smoke.a, smoke.b, navigation specs, Chromium)
+- ✅ Co-founder mode behaviour written into CLAUDE.md
+- ✅ Profile completion card wired to real data (useProfileCompletion hook) — 32f95f1
+- ✅ profile_overrides RLS wrong FK fixed (applied to production DB)
+- ✅ notify-push Edge Function deployed — JWT-authenticated, emails→user_ids, web-push via VAPID
+- ✅ LiveLocationShare.notifyContacts() fires push + in-app notification — 41c305e
 
-**⚠️ REAL P1 STATE — most tasks were already shipped, CLAUDE.md was behind:**
-See "Active P1 Tasks" section below for accurate status.
+**What still needs doing:**
+- ❌ VAPID keys not yet set in Supabase Edge Function secrets (notify-push will return 500 until set)
+  → Dashboard: Settings → Edge Functions → notify-push → Add VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
+  → Public key: `BFWgyAvJsZf4wZavZ-6X6c934k13RiYwjeEEIgQeOK0PyrBbvcJrqLL9llzV2Phee9GDOLpSVPSvGIja5eyr5WY`
+  → Private key: held by Phil (generated 2026-03-07 alongside public key)
+- ❌ VITE_SUPABASE_ANON_KEY not yet set as GitHub repo secret (e2e-smoke will run but Supabase calls fail)
+- ❌ VaultMode scope undefined — Phil to define (tickets? orders? archive?)
+- ❌ Read receipts server-side (localStorage only, chat_threads.unread_count not synced to DB)
+- ❌ Stripe Connect redirect (one-line uncomment when live)
 
-**Next task: Deploy to production + smoke test**
-URL: https://hotmessldn.com
-1. Age Gate → ENTER button
-2. Auth sign-in
-3. HomeMode 12 sections
-4. Ghosted → filter icon (badge shows active count) + woof button on cards + red tap badge in nav
-5. Pulse → globe on /pulse only, BeaconFAB creates beacon (no beaconId = create mode)
-6. Market, Profile, Radio mini player
-7. SOS long-press 2s → platform-matched fake call
-8. Safety Centre → Contacts / Check-in / **Live** / Tips tabs
-9. Chat → typing indicator visible, meetpoint card via ✈️ button
+**Next task:** Define VaultMode scope and build it
 
 ---
 
