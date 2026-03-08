@@ -2,7 +2,7 @@
 
 This file provides guidance when working with code in this repository.
 
-**Last updated:** 2026-03-08 (session 2)
+**Last updated:** 2026-03-08 (session 3)
 **Design system:** `DESIGN_SYSTEM.md` — always read before touching any styling
 **Design reference docs:** `~/Downloads/HOTMESS-PROJECT/01-ACTIVE-REFERENCE/` — all dated design reference files live here
 
@@ -43,7 +43,7 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 
 ---
 
-## 🔴 PICK UP HERE (Last session: 2026-03-08 session 2)
+## 🔴 PICK UP HERE (Last session: 2026-03-08 session 3)
 
 **What's done this sprint:**
 - ✅ hotmessldn.com domain fixed
@@ -62,18 +62,20 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 - ✅ profile_overrides RLS wrong FK fixed (applied to production DB)
 - ✅ notify-push Edge Function deployed — JWT-authenticated, emails→user_ids, web-push via VAPID
 - ✅ LiveLocationShare.notifyContacts() fires push + in-app notification — 41c305e
+- ✅ VaultMode: OS bg, correct green, nav padding, unused imports removed — 17d0378
+- ✅ Read receipts server-side: fixed RPC call (mark_messages_read), removed duplicate manual reset — 03c15ef
+  → DB trigger increments unread_count on INSERT; RPC clears it + stamps read_by[] atomically
+- ✅ PersonaSwitcherSheet: "Add persona" now navigates to /profile?action=manage-personas — 17a37f6
 
-**What still needs doing:**
+**What still needs doing (blocked on Phil):**
 - ❌ VAPID keys not yet set in Supabase Edge Function secrets (notify-push will return 500 until set)
   → Dashboard: Settings → Edge Functions → notify-push → Add VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
   → Public key: `BFWgyAvJsZf4wZavZ-6X6c934k13RiYwjeEEIgQeOK0PyrBbvcJrqLL9llzV2Phee9GDOLpSVPSvGIja5eyr5WY`
   → Private key: held by Phil (generated 2026-03-07 alongside public key)
 - ❌ VITE_SUPABASE_ANON_KEY not yet set as GitHub repo secret (e2e-smoke will run but Supabase calls fail)
-- ❌ VaultMode scope undefined — Phil to define (tickets? orders? archive?)
-- ❌ Read receipts server-side (localStorage only, chat_threads.unread_count not synced to DB)
-- ❌ Stripe Connect redirect (one-line uncomment when live)
+- ❌ Stripe Connect redirect (one-line uncomment in PayoutManager.jsx when Stripe is live)
 
-**Next task:** Define VaultMode scope and build it
+**Next task:** Nothing blocked on code — backlog clear. Awaiting Phil's next task.
 
 ---
 
