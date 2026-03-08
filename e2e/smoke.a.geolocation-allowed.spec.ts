@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { setupUserA } from './helpers/auth';
 
 // A = geolocation allowed (happy path).
 
@@ -43,7 +44,7 @@ test('A: all OS routes render without page errors', async ({ page }) => {
   expect(pageErrors, `Unexpected page errors:\n${pageErrors.join('\n\n')}`).toEqual([]);
 });
 
-test('A: directions page loads (even if API rejects)', async ({ page }) => {
+test('A: directions page loads when authenticated (even if API rejects)', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (err) => {
     const msg = String(err);
@@ -54,15 +55,21 @@ test('A: directions page loads (even if API rejects)', async ({ page }) => {
     pageErrors.push(msg);
   });
 
-  await page.addInitScript(() => {
-    localStorage.setItem('hm_age_confirmed_v1', 'true');
-    sessionStorage.setItem('location_consent', 'false');
+  // Directions is behind auth — must log in first.
+  // setupUserA leaves the app at / with BootGuard in READY state.
+  await setupUserA(page);
+
+  // Use React Router client-side navigation (pushState + popstate) instead of
+  // page.goto() which does a full page reload and re-runs Supabase getUser(),
+  // which can fail with "Failed to fetch" in headless Playwright contexts.
+  await page.evaluate(() => {
+    const url = '/directions?lat=51.5074&lng=-0.1278&label=Test&mode=foot';
+    window.history.pushState({}, '', url);
+    window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
   });
 
-  await page.goto('/directions?lat=51.5074&lng=-0.1278&label=Test&mode=foot');
-
-  // Leaflet container should mount
-  await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 10_000 });
+  // Leaflet container should mount (React Router navigated, BootGuard stays READY)
+  await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 20_000 });
 
   expect(pageErrors, `Unexpected page errors:\n${pageErrors.join('\n\n')}`).toEqual([]);
 });

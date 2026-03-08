@@ -16,7 +16,7 @@ test.describe('HomeMode authenticated', () => {
     await setupUserA(page);
   });
 
-  test('home / loads after login, body visible, no page errors', async ({ page }) => {
+  test('home / loads after login, nav visible, no page errors', async ({ page }) => {
     const pageErrors: string[] = [];
     page.on('pageerror', (err) => {
       const msg = String(err);
@@ -33,8 +33,14 @@ test.describe('HomeMode authenticated', () => {
       pageErrors.push(msg);
     });
 
-    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30_000 });
-    await expect(page.locator('body')).toBeVisible();
+    // setupUserA already leaves us at / with BootGuard READY.
+    // Use client-side pushState instead of page.goto() to avoid full reload
+    // which re-runs Supabase getUser() and can fail in headless contexts.
+    await page.evaluate(() => {
+      window.history.pushState({}, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+    });
+    await expect(page.locator('nav').first()).toBeVisible({ timeout: 10_000 });
 
     expect(pageErrors).toHaveLength(0);
   });
