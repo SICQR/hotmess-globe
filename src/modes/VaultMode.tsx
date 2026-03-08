@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   Package, ShoppingBag, Ticket, Lock, Loader2,
-  QrCode, ChevronRight, Star, Trophy
+  QrCode, Trophy
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -127,7 +127,7 @@ export default function VaultMode() {
   const totalSpend = orders.reduce((sum, o) => sum + (o.total_gbp || 0), 0);
 
   return (
-    <div className="h-full w-full bg-black flex flex-col overflow-hidden">
+    <div className="h-full w-full bg-[#050507] flex flex-col overflow-hidden">
       {/* Header */}
       <div className="px-4 pt-6 pb-4 flex-shrink-0">
         <p className="text-[#C8962C] text-[10px] font-black uppercase tracking-widest mb-1">HOTMESS</p>
@@ -201,7 +201,7 @@ export default function VaultMode() {
             )}
           </div>
         ) : (
-          <div className="divide-y divide-white/5 pb-4">
+          <div className="divide-y divide-white/5 pb-24">
             {visibleItems.map((item, i) => (
               <motion.div
                 key={`${item.type}-${i}`}
@@ -222,7 +222,7 @@ export default function VaultMode() {
 }
 
 function OrderItem({ order, onQR }: { order: OrderRow; onQR: () => void }) {
-  const statusColor = order.status === 'delivered' ? '#00FF87' : order.status === 'shipped' ? '#C8962C' : 'white';
+  const statusColor = order.status === 'delivered' ? '#30D158' : order.status === 'shipped' ? '#C8962C' : 'white';
   return (
     <div className="p-4 flex items-center gap-3">
       <div className="w-10 h-10 rounded-xl bg-[#1C1C1E] flex items-center justify-center flex-shrink-0">
@@ -285,7 +285,7 @@ function ListingItem({ listing, onResell }: { listing: ListingRow; onResell: () 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-white font-bold text-sm truncate">{listing.title}</p>
-          <span className="flex-shrink-0 text-[9px] font-black bg-[#00FF87]/15 text-[#00FF87] border border-[#00FF87]/20 rounded px-1.5 py-0.5 uppercase">
+          <span className="flex-shrink-0 text-[9px] font-black bg-[#30D158]/15 text-[#30D158] border border-[#30D158]/20 rounded px-1.5 py-0.5 uppercase">
             SOLD
           </span>
         </div>
