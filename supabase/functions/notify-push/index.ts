@@ -103,7 +103,7 @@ Deno.serve(async (req: Request) => {
   const webpush = await import("npm:web-push@3");
   webpush.default.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
 
-  const notifData = { title, body, url, tag, icon };
+  const notifData = { title, body, tag, icon, data: { url } };
   let sent = 0;
   const expired: string[] = [];
 
