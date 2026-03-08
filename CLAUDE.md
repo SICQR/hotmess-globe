@@ -4,7 +4,7 @@ This file provides guidance when working with code in this repository.
 
 **Last updated:** 2026-03-08
 **Design system:** `DESIGN_SYSTEM.md` — always read before touching any styling
-**Design reference docs:** `~/Downloads/HOTMESS-Design-Reference.html`, `HOTMESS-HomeMode-Design.html`, `HOTMESS-Brand-Palette-v2.html`
+**Design reference docs:** `~/Downloads/HOTMESS-PROJECT/01-ACTIVE-REFERENCE/` — all dated design reference files live here
 
 ---
 
@@ -406,15 +406,21 @@ src/components/shell/BootRouter.jsx - Route orchestration
 ```
 
 ### Design Documents (Downloads)
+All files now organised in `~/Downloads/HOTMESS-PROJECT/`
 ```
-HOTMESS-Design-Reference.html    - Full mode-by-mode design spec (87KB)
-HOTMESS-HomeMode-Design.html     - Home screen mockup (implemented ✅)
-HOTMESS-Brand-Palette-v2.html    - Full brand colour palette
-HOTMESS-Gold-Rebrand-Mockup.html - Gold rebrand reference
-HOTMESS-Live-Mockup.html         - Live mockup reference
-HOTMESS-MasterBuildPlan.html     - Build plan
-HOTMESS_DESIGN_SYSTEM_PROMPT.md  - Reusable audit prompt for Claude sessions
-hotmess-os-granular-flows.md     - User flow mapping (E2E test reference)
+01-ACTIVE-REFERENCE/
+  2026-03-HOTMESS-Design-Reference.html    - Full mode-by-mode design spec (87KB)
+  2026-03-HOTMESS-HomeMode-Design.html     - Home screen mockup (implemented ✅)
+  2026-03-HOTMESS-Brand-Palette-v2.html    - Full brand colour palette
+  2026-02-HOTMESS-Gold-Rebrand-Mockup.html - Gold rebrand reference
+  2026-02-HOTMESS-Live-Mockup.html         - Live mockup reference
+  2026-02-HOTMESS-MasterBuildPlan.html     - Build plan
+  2026-03-HOTMESS_DESIGN_SYSTEM_PROMPT.md  - Reusable audit prompt for Claude sessions
+  2026-02-hotmess-os-granular-flows.md     - User flow mapping (E2E test reference)
+
+02-DOCS-AND-PLANS/  - Execution plans, audits, deployment docs
+03-ASSETS/          - Images, CSVs, JSONs, brand assets
+04-ARCHIVE-CODE/    - Old code zips + old extracted folders (safe to ignore)
 ```
 
 # currentDate
