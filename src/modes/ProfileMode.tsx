@@ -15,6 +15,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLongPress } from '@/hooks/useLongPress';
@@ -150,6 +151,15 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
   const [viewCount, setViewCount] = useState(0);
   const { openSheet } = useSheet();
   const { activePersona } = usePersona();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Auto-open persona switcher when navigated with ?action=manage-personas
+  useEffect(() => {
+    if (searchParams.get('action') === 'manage-personas') {
+      setShowSwitcher(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Long-press handler for avatar
   const avatarLongPress = useLongPress(() => {
