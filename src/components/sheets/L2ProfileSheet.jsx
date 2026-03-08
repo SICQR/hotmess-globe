@@ -21,6 +21,16 @@ import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import ProfileContentCard from '@/components/cards/ProfileContentCard';
 
+const Chip = ({ children, gold = false }) => (
+  <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+    gold
+      ? 'bg-[#C8962C]/15 text-[#C8962C] border-[#C8962C]/30'
+      : 'bg-white/8 text-white/60 border-white/10'
+  }`}>
+    {children}
+  </span>
+);
+
 export default function L2ProfileSheet({ email, uid }) {
   const navigate = useNavigate();
   const { openSheet, closeSheet } = useSheet();
@@ -108,6 +118,21 @@ export default function L2ProfileSheet({ email, uid }) {
 
     recordView();
   }, [profileUser?.auth_user_id, isOwnProfile]);
+
+  // Fetch public profile attributes (body_type, position, looking_for, etc.)
+  const { data: profileAttrs } = useQuery({
+    queryKey: ['profile-attrs', profileUser?.auth_user_id],
+    queryFn: async () => {
+      if (!profileUser?.auth_user_id) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('public_attributes')
+        .eq('id', profileUser.auth_user_id)
+        .maybeSingle();
+      return data?.public_attributes || null;
+    },
+    enabled: !!profileUser?.auth_user_id,
+  });
 
   // Fetch user's events (RSVPs)
   const { data: userEvents = [] } = useQuery({
@@ -326,6 +351,38 @@ export default function L2ProfileSheet({ email, uid }) {
           </div>
         </div>
       </div>
+
+      {/* ── Profile attribute chips ────────────────────────────────────── */}
+      {profileAttrs && Object.keys(profileAttrs).some(k => profileAttrs[k] && (Array.isArray(profileAttrs[k]) ? profileAttrs[k].length : true)) && (
+        <div className="px-4 pt-4 pb-2">
+          <div className="flex flex-wrap gap-1.5">
+            {profileAttrs.pronouns && (
+              <Chip>{profileAttrs.pronouns}</Chip>
+            )}
+            {profileAttrs.sexual_orientation && (
+              <Chip>{profileAttrs.sexual_orientation}</Chip>
+            )}
+            {profileAttrs.position && (
+              <Chip>{profileAttrs.position}</Chip>
+            )}
+            {profileAttrs.height_cm && (
+              <Chip>{profileAttrs.height_cm} cm</Chip>
+            )}
+            {profileAttrs.body_type && (
+              <Chip>{profileAttrs.body_type}</Chip>
+            )}
+            {profileAttrs.hosting && (
+              <Chip>{profileAttrs.hosting}</Chip>
+            )}
+            {(profileAttrs.looking_for || []).map(lf => (
+              <Chip key={lf} gold>{lf}</Chip>
+            ))}
+            {(profileAttrs.ethnicity || []).map(e => (
+              <Chip key={e}>{e}</Chip>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Content cards stack ────────────────────────────────────────── */}
       <div className="px-4 space-y-3 -mt-2">
