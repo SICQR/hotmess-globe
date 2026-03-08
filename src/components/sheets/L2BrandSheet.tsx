@@ -13,7 +13,7 @@
  *   hotmessRadio     -- full-bleed hero + show schedule + LISTEN LIVE CTA
  *   rawConvictRecords -- editorial artist/release cards + SoundCloud CTA
  *   smashDaddys      -- editorial production credits + beat showcase
- *   hnhMess          -- product hero + grid + "official lubricant" tagline
+ *   hnhMess          -- manifesto hero + Hand N Hand radio anchor + product grid
  *
  * Wireframe (SUPERHUNG limited-drop example):
  * +------------------------------------------+
@@ -72,6 +72,7 @@ interface L2BrandSheetProps {
 const AMBER = '#C8962C';
 const CARD_BG = '#1C1C1E';
 const MUTED = '#8E8E93';
+const HNH_PLUM = '#8B5CF6'; // HNH MESS brand colour — care, intimacy, queer wellness
 const RADIO_STREAM_URL =
   'https://listen.radioking.com/radio/736103/stream/802454';
 
@@ -191,7 +192,7 @@ interface BrandConfig {
   wordmarkColor: string;
   wordmarkStyle: string;
   taglineColor: string;
-  layout: 'grid' | 'editorial' | 'editorial-gallery' | 'limited-drop' | 'radio' | 'label' | 'production';
+  layout: 'grid' | 'editorial' | 'editorial-gallery' | 'limited-drop' | 'radio' | 'label' | 'production' | 'hnh';
   isLimitedDrop?: boolean;
 }
 
@@ -296,13 +297,13 @@ const BRAND_CONFIG: Record<BrandKey, BrandConfig> = {
   },
   hnhMess: {
     wordmark: 'HNH MESS',
-    tagline: 'THE OFFICIAL LUBRICANT OF HOTMESS',
+    tagline: 'HAND N HAND IS THE ONLY PLACE TO LAND',
     ctaLabel: 'SHOP HNH MESS',
-    headerBg: '#000000',
-    wordmarkColor: AMBER,
+    headerBg: '#0A0410',
+    wordmarkColor: HNH_PLUM,
     wordmarkStyle: 'font-black',
-    taglineColor: AMBER,
-    layout: 'grid',
+    taglineColor: HNH_PLUM,
+    layout: 'hnh',
   },
 };
 
@@ -1204,28 +1205,92 @@ export default function L2BrandSheet({ brand = 'raw' }: L2BrandSheetProps) {
             </>
           )}
 
-          {/* ---- HNH MESS: product hero + grid ----------------------------- */}
+          {/* ---- HNH MESS: manifesto + Hand N Hand anchor + product grid --- */}
           {brand === 'hnhMess' && (
             <>
-              {/* Product hero */}
+              {/* Manifesto block */}
               <motion.div
                 variants={itemVariants}
-                className="mx-4 mt-2 rounded-2xl overflow-hidden border border-white/[0.06]"
+                className="mx-4 mt-2 rounded-2xl p-5 border"
+                style={{
+                  background: `linear-gradient(135deg, rgba(139,92,246,0.15) 0%, #0A0410 60%, rgba(139,92,246,0.08) 100%)`,
+                  borderColor: `rgba(139,92,246,0.25)`,
+                }}
               >
-                <div
-                  className="w-full aspect-[16/9] flex items-center justify-center"
-                  style={{
-                    background: `linear-gradient(135deg, rgba(200,150,44,0.2) 0%, ${CARD_BG} 50%, rgba(200,150,44,0.1) 100%)`,
-                  }}
+                <p
+                  className="text-[10px] font-black uppercase tracking-[0.3em] mb-3"
+                  style={{ color: HNH_PLUM }}
                 >
-                  <Droplets className="w-20 h-20 text-[#C8962C]/30" />
-                </div>
+                  The Story
+                </p>
+                <p className="text-white font-bold text-[15px] leading-snug mb-2">
+                  HNH was the code.{'\n'}HOTMESS is the care.
+                </p>
+                <p className="text-[#8E8E93] text-[12px] leading-relaxed">
+                  In hookup culture, HnH meant High &amp; Horny — a signal passed quickly, quietly, in the language the scene built for itself. HOTMESS doesn't ignore that reality. We answer it.
+                </p>
+                <p className="text-[#8E8E93] text-[12px] leading-relaxed mt-2">
+                  Here, HNH means Hand N Hand. After the night. After the chaos. After the music fades — someone should still be there to land with.
+                </p>
+                <p
+                  className="text-[12px] font-bold italic mt-3"
+                  style={{ color: HNH_PLUM }}
+                >
+                  "Hand N Hand is the only place to land."
+                </p>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="px-4 pt-6 pb-2">
+              {/* Hand N Hand radio anchor */}
+              <motion.div variants={itemVariants} className="mx-4 mt-3">
+                <button
+                  onClick={() => openSheet('schedule', {})}
+                  className="w-full flex items-center gap-3 rounded-2xl p-4 border text-left active:scale-[0.98] transition-transform"
+                  style={{
+                    background: 'rgba(139,92,246,0.08)',
+                    borderColor: 'rgba(139,92,246,0.2)',
+                  }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'rgba(139,92,246,0.2)' }}
+                  >
+                    <Radio className="w-5 h-5" style={{ color: HNH_PLUM }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-bold text-sm">Hand N Hand</p>
+                    <p className="text-[#8E8E93] text-[11px]">Every Sunday on HOTMESS RADIO · The care show</p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 flex-shrink-0" style={{ color: HNH_PLUM }} />
+                </button>
+              </motion.div>
+
+              {/* Care principles strip */}
+              <motion.div variants={itemVariants} className="mx-4 mt-3 grid grid-cols-3 gap-2">
+                {[
+                  { label: 'Pleasure', sub: 'Without shame' },
+                  { label: 'Honesty', sub: 'Without hiding' },
+                  { label: 'Care', sub: 'After the night' },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-xl p-3 text-center border"
+                    style={{
+                      background: 'rgba(139,92,246,0.06)',
+                      borderColor: 'rgba(139,92,246,0.15)',
+                    }}
+                  >
+                    <p className="text-white font-bold text-[11px]">{item.label}</p>
+                    <p className="text-[#8E8E93] text-[9px] mt-0.5">{item.sub}</p>
+                  </div>
+                ))}
+              </motion.div>
+
+              {/* Product range */}
+              <motion.div variants={itemVariants} className="px-4 pt-6 pb-2 flex items-center justify-between">
                 <h2 className="text-white font-bold text-sm uppercase tracking-wider">
                   The Range
                 </h2>
+                <p className="text-[#8E8E93] text-[10px]">Pleasure with care</p>
               </motion.div>
               <motion.div
                 variants={containerVariants}
