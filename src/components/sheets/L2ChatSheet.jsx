@@ -706,7 +706,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-50 flex items-center gap-0.5">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {showDoubleCheck && <span className="text-[10px] text-white font-bold ml-1">✓✓</span>}
+                        {showDoubleCheck && <span className="text-[10px] text-[#C8962C] font-bold ml-1">✓✓</span>}
                         {showSingleCheck && <span className="text-[10px] text-white/50 ml-1">✓</span>}
                       </p>
                     )}
@@ -731,7 +731,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
               />
             ))}
           </div>
-          <span className="text-white/40 text-xs">{typingUsers[0]} is typing…</span>
+          <span className="text-white/40 text-xs">{profiles[typingUsers[0]]?.display_name || typingUsers[0]?.split('@')[0] || 'Someone'} is typing…</span>
         </div>
       )}
 
