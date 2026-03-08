@@ -8,7 +8,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone } from 'lucide-react';
+import { PhoneCall } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { showLocalNotification } from '@/lib/notifications/showNotification';
@@ -76,9 +76,15 @@ export function IncomingCallBanner() {
               'call'
             );
 
-            // Auto-dismiss after 30s
+            // Auto-dismiss after 30s — mark call as missed in DB
             if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
-            dismissTimerRef.current = setTimeout(() => {
+            const callId = row.id;
+            dismissTimerRef.current = setTimeout(async () => {
+              await supabase
+                .from('video_calls')
+                .update({ status: 'missed' })
+                .eq('id', callId)
+                .eq('status', 'ringing'); // only update if still ringing
               setIncomingCall(null);
             }, 30000);
           }
@@ -131,9 +137,12 @@ export function IncomingCallBanner() {
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           className="fixed top-0 inset-x-0 z-[180] bg-[#1C1C1E] border-b border-[#C8962C]/30 px-4 pt-[env(safe-area-inset-top)] pb-3 flex items-center gap-3"
         >
-          {/* Caller avatar / icon */}
-          <div className="w-10 h-10 rounded-full bg-[#C8962C]/20 border border-[#C8962C]/40 flex items-center justify-center flex-shrink-0">
-            <Phone className="w-5 h-5 text-[#C8962C]" />
+          {/* Caller avatar / icon — pulsing ring for urgency */}
+          <div className="relative flex-shrink-0">
+            <div className="absolute inset-0 rounded-full bg-[#C8962C]/30 animate-ping" />
+            <div className="relative w-10 h-10 rounded-full bg-[#C8962C]/20 border border-[#C8962C]/50 flex items-center justify-center">
+              <PhoneCall className="w-5 h-5 text-[#C8962C]" />
+            </div>
           </div>
 
           {/* Caller info */}
