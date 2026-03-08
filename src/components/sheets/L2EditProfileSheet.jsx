@@ -221,11 +221,13 @@ export default function L2EditProfileSheet() {
         ...(attrs.hosting && { hosting: attrs.hosting }),
       };
 
-      // Save to profiles
+      // Save to profiles — city mirrors location for grid filtering
+      const locationVal = pub.location.trim() || undefined;
       const result = await updateProfile({
         display_name: pub.display_name.trim(),
         bio: pub.bio.trim() || undefined,
-        location: pub.location.trim() || undefined,
+        location: locationVal,
+        city: locationVal,
         avatar_url: pub.avatar_url || undefined,
         is_visible: pub.is_visible,
         public_attributes,

@@ -6,7 +6,6 @@ import { base44 } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import SafetyFAB from '@/components/safety/SafetyFAB';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
-import GlobalAssistant from '@/components/ai/GlobalAssistant';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import GlobalSearch from '@/components/search/GlobalSearch';
 import OfflineIndicator from '@/components/ui/OfflineIndicator';
@@ -656,9 +655,6 @@ function LayoutInner({ children, currentPageName }) {
 
       {/* Safety FAB - replaces old Panic Button */}
       {user && <SafetyFAB />}
-
-      {/* Global AI Assistant */}
-      {user && <GlobalAssistant />}
 
       {/* Global Search */}
       {user && <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />}
