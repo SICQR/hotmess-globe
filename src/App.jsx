@@ -44,6 +44,7 @@ import { RadioProvider } from '@/contexts/RadioContext';
 import { PersonaProvider } from '@/contexts/PersonaContext';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useDeepLinkSheet } from '@/hooks/useDeepLinkSheet';
 import AuthCallback from '@/pages/auth/callback';
 
 const HomeMode = lazy(() => import('@/modes/HomeMode'));
@@ -663,6 +664,8 @@ function OSArchitecture() {
   useViewportHeight();
   // Register service worker + request push permission on first load
   usePushNotifications();
+  // Auto-open sheets from push notification deep links (?sheet=...)
+  useDeepLinkSheet();
   const { sosActive, triggerSOS, clearSOS } = useSOSContext();
   const location = useLocation();
 
