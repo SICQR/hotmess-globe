@@ -153,20 +153,11 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const markMessagesReadInDB = useCallback(async (threadId, myEmail) => {
     if (!threadId || !myEmail) return;
     // Add myEmail to read_by for all messages in this thread not sent by me
-    await supabase.rpc('mark_thread_messages_read', {
+    // mark_messages_read: appends user to read_by[] on each message
+    // AND removes their key from chat_threads.unread_count JSONB
+    await supabase.rpc('mark_messages_read', {
       p_thread_id: threadId,
-      p_reader_email: myEmail,
-    }).then(({ error }) => {
-      if (error) {
-        // Fallback: direct update if RPC not available
-        supabase
-          .from('messages')
-          .update({ read_by: supabase.raw('array_append(read_by, ?::text)', [myEmail]) })
-          .eq('thread_id', threadId)
-          .neq('sender_email', myEmail)
-          .not('read_by', 'cs', `{${myEmail}}`)
-          .then(() => {});
-      }
+      p_user_email: myEmail,
     });
   }, []);
 
@@ -178,24 +169,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     setMessagesLoading(true);
     markRead(thread.id);
 
-    // Reset unread_count for current user in this thread
+    // Mark messages read: updates read_by[] on messages + clears unread_count key on thread
     if (currentUser?.email) {
-      supabase
-        .from('chat_threads')
-        .select('unread_count')
-        .eq('id', thread.id)
-        .single()
-        .then(({ data: threadRow }) => {
-          if (threadRow) {
-            const updated = { ...(threadRow.unread_count || {}), [currentUser.email]: 0 };
-            supabase
-              .from('chat_threads')
-              .update({ unread_count: updated })
-              .eq('id', thread.id)
-              .then(() => {});
-          }
-        });
-      // Also mark via read_by column for per-message receipts
       markMessagesReadInDB(thread.id, currentUser.email);
     }
 
