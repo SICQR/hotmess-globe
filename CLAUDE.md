@@ -2,7 +2,7 @@
 
 This file provides guidance when working with code in this repository.
 
-**Last updated:** 2026-03-08 (session 4)
+**Last updated:** 2026-03-08 (session 5)
 **Design system:** `DESIGN_SYSTEM.md` — always read before touching any styling
 **Design reference docs:** `~/Downloads/HOTMESS-PROJECT/01-ACTIVE-REFERENCE/` — all dated design reference files live here
 
@@ -43,7 +43,7 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 
 ---
 
-## 🔴 PICK UP HERE (Last session: 2026-03-08 session 4)
+## 🔴 PICK UP HERE (Last session: 2026-03-08 session 5)
 
 **What's done this sprint:**
 - ✅ hotmessldn.com domain fixed
@@ -71,6 +71,18 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 - ✅ SimpleProfileCard + ProfileCard: now show age + position — c510ee5
 - ✅ Profile → My Earnings entry point → L2PayoutsSheet (seller balance + payout request) — c4224d1
 - ✅ RadioMode: Full Schedule button in Up Next strip → L2ScheduleSheet — c4224d1
+- ✅ HomeMode: dual HUNG/HNH creator drop banners + correct callsite props — d61d51c
+- ✅ L2BrandSheet: `hnh` added to layout union — d61d51c
+- ✅ Auth.jsx: full HOTMESS universe landing page — hero, ecosystem grid, radio module, From The Floor energy feed, auth as bottom sheet — 3345f68
+  - CTAs: "Make a mess" (signup) / "I'm already filthy" (signin)
+  - Universe grid: 6 channels (Listen/Meet/Care/Trade/Play/Signal) with brand colours
+  - Live Radio module: waveform, 3 shows schedule, Hand N Hand HNH feature pill
+  - From The Floor: 6-card horizontal scroll energy feed
+  - Auth form: AnimatePresence spring bottom sheet z-200 overlay
+- ✅ App.jsx: ?tg_token=&tg_user= URL handler in OSArchitecture — 3345f68
+- ✅ TelegramPanel.tsx: full branded rewrite (was stub toast) — 3345f68
+  - Bot-referral detection, welcome @tgUser, stats row, join CTA, focus trap
+- ✅ SellerProfileView.jsx: real preloved_listings Supabase query (was base44 + "coming soon") — 3345f68
 
 **What still needs doing (blocked on Phil):**
 - ❌ VAPID keys not yet set in Supabase Edge Function secrets (notify-push will return 500 until set)
