@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check, Plus, User } from 'lucide-react';
 import { usePersona } from '@/contexts/PersonaContext';
@@ -23,6 +24,7 @@ interface PersonaSwitcherSheetProps {
 }
 
 export default function PersonaSwitcherSheet({ onClose }: PersonaSwitcherSheetProps) {
+  const navigate = useNavigate();
   const { personas, activePersona, loadPersonas, switchPersona, isLoading } = usePersona();
   const { session } = useBootGuard();
 
@@ -125,7 +127,7 @@ export default function PersonaSwitcherSheet({ onClose }: PersonaSwitcherSheetPr
         {personas.length < 5 && (
           <button
             className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/4 border border-dashed border-white/15 text-white/40"
-            onClick={() => { onClose(); /* TODO: open create persona flow */ }}
+            onClick={() => { onClose(); navigate('/profile?action=manage-personas'); }}
           >
             <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5">
               <Plus className="w-4 h-4" />
