@@ -751,24 +751,41 @@ export function HomeMode({ className = '' }: HomeModeProps) {
 
   // ── Queries ────────────────────────────────────────────────────────────────
 
-  // Right Now users
+  // Right Now users (two-step join: status → profiles for names + avatars)
   const { data: rnUsers = [], isLoading: rnLoading } = useQuery({
     queryKey: ['home-right-now'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: statusRows, error } = await supabase
         .from('right_now_status')
         .select('id, user_email, intent, active')
         .eq('active', true)
         .order('updated_at', { ascending: false })
         .limit(12);
       if (error) throw error;
-      return (data ?? []).map((r: Record<string, unknown>) => ({
-        id: r.id as string,
-        email: r.user_email as string,
-        intent: (r.intent as string) || 'explore',
-        name: ((r.user_email as string) ?? '').split('@')[0] ?? 'Anon',
-        avatarUrl: undefined as string | undefined,
-      }));
+      if (!statusRows || statusRows.length === 0) return [];
+
+      const emails = statusRows.map((r: Record<string, unknown>) => r.user_email as string).filter(Boolean);
+      const { data: profileRows } = await supabase
+        .from('profiles')
+        .select('id, email, display_name, photos')
+        .in('email', emails);
+
+      const profileMap = new Map<string, Record<string, unknown>>();
+      for (const p of (profileRows ?? [])) {
+        profileMap.set((p as Record<string, unknown>).email as string, p as Record<string, unknown>);
+      }
+
+      return statusRows.map((r: Record<string, unknown>) => {
+        const p = profileMap.get(r.user_email as string) ?? {};
+        const photos = Array.isArray(p.photos) ? p.photos : [];
+        return {
+          id: (p.id as string) || (r.id as string),
+          email: r.user_email as string,
+          intent: (r.intent as string) || 'explore',
+          name: (p.display_name as string) || ((r.user_email as string) ?? '').split('@')[0] || 'Anon',
+          avatarUrl: (photos[0]?.url as string | undefined) ?? undefined,
+        };
+      });
     },
     refetchInterval: 30_000,
   });
@@ -1084,7 +1101,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       </div>
 
       {/* Right Now modal */}
-      <RightNowModal isOpen={showRightNow} onClose={() => setShowRightNow(false)} />
+      <RightNowModal isOpen={showRightNow} onClose={() => setShowRightNow(false)} intent={activeIntent ?? 'explore'} />
     </div>
   );
 }
