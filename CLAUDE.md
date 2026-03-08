@@ -2,7 +2,7 @@
 
 This file provides guidance when working with code in this repository.
 
-**Last updated:** 2026-03-08 (session 3)
+**Last updated:** 2026-03-08 (session 4)
 **Design system:** `DESIGN_SYSTEM.md` — always read before touching any styling
 **Design reference docs:** `~/Downloads/HOTMESS-PROJECT/01-ACTIVE-REFERENCE/` — all dated design reference files live here
 
@@ -43,7 +43,7 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 
 ---
 
-## 🔴 PICK UP HERE (Last session: 2026-03-08 session 3)
+## 🔴 PICK UP HERE (Last session: 2026-03-08 session 4)
 
 **What's done this sprint:**
 - ✅ hotmessldn.com domain fixed
@@ -66,6 +66,11 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 - ✅ Read receipts server-side: fixed RPC call (mark_messages_read), removed duplicate manual reset — 03c15ef
   → DB trigger increments unread_count on INSERT; RPC clears it + stamps read_by[] atomically
 - ✅ PersonaSwitcherSheet: "Add persona" now navigates to /profile?action=manage-personas — 17a37f6
+- ✅ OnboardingGate Vibe step (step 5): captures age, position, looking_for → profiles.public_attributes — c510ee5
+- ✅ api/profiles.js: now joins profiles.public_attributes so age/position/looking_for reach Ghosted grid — c510ee5
+- ✅ SimpleProfileCard + ProfileCard: now show age + position — c510ee5
+- ✅ Profile → My Earnings entry point → L2PayoutsSheet (seller balance + payout request) — c4224d1
+- ✅ RadioMode: Full Schedule button in Up Next strip → L2ScheduleSheet — c4224d1
 
 **What still needs doing (blocked on Phil):**
 - ❌ VAPID keys not yet set in Supabase Edge Function secrets (notify-push will return 500 until set)
@@ -75,7 +80,42 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 - ❌ VITE_SUPABASE_ANON_KEY not yet set as GitHub repo secret (e2e-smoke will run but Supabase calls fail)
 - ❌ Stripe Connect redirect (one-line uncomment in PayoutManager.jsx when Stripe is live)
 
-**Next task:** Nothing blocked on code — backlog clear. Awaiting Phil's next task.
+**Next task:** Awaiting Phil's direction. See platform audit below for gaps.
+
+---
+
+## 🔍 PLATFORM AUDIT — USER JOURNEY STATUS (2026-03-08 session 4)
+
+| User Type | Status | Remaining gaps |
+|-----------|--------|----------------|
+| New user (first arrival) | ✅ | — 7-step onboarding → profile with age/position/looking_for on grid immediately |
+| Ghosted social user | ✅ | — Grid, taps, woofs, chat, video call, filters all wired |
+| Seller | ⚠️ | ✅ List, view listings, view earnings (payouts sheet). ❌ Preloved payment = no Stripe (arrange via chat) |
+| Buyer | ⚠️ | ✅ Shopify checkout real. ❌ Preloved = order record only, payment not moved |
+| Radio listener | ✅ | — Stream live, mini player persists, show cards, Full Schedule button → L2ScheduleSheet |
+| Event organiser | ✅ | — Create event in EventsMode → beacons |
+| Event attendee | ✅ | — RSVP → ticket in Vault → QR |
+| Telegram entry user | ❌ | ✅ Bot server-side. ❌ TelegramPanel is placeholder. No ?tg_token= URL handling frontend |
+| Safety user | ✅ | — SOS, fake call, emergency contacts, live location share, push notifications |
+
+### Brand visibility (`src/config/brands.ts` — flip `visible: true` when ready)
+| Brand | Now | Action needed |
+|-------|-----|---------------|
+| hotmess | ✅ live | — |
+| hotmessRadio | ✅ live | — |
+| raw | ✅ live | — |
+| messmarket | ✅ live | — |
+| hung | ❌ hidden | Phil to confirm → 1-line change |
+| high | ❌ hidden | Phil to confirm → 1-line change |
+| superhung / superraw | ✅ config | No Shopify products yet |
+| hungmess | ❌ hidden | Phil to confirm |
+| rawConvictRecords / smashDaddys / hnhMess | ✅ config | Confirm Shopify collections exist |
+
+### Known code gaps (not blocking core journeys)
+- `TelegramPanel` frontend = placeholder — needs telebot repo wired
+- Preloved checkout = "arrange via chat" — needs Stripe Connect (blocked on Phil)
+- VAPID keys not set → push notifications fail silently
+- Dev orphan sheets: `admin`, `ghosted`, `marketplace`, `order`, `ticket-market` — registered but harmless
 
 ---
 
