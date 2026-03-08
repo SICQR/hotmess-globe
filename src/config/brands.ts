@@ -126,7 +126,7 @@ export const BRAND_CONFIG: Record<string, BrandConfig> = {
     key: 'hnhMess',
     name: 'HNH MESS',
     visible: true,
-    description: 'Lube brand',
+    description: 'Sexual wellness brand rooted in queer care culture. HNH = Hand N Hand — pleasure, honesty, and aftercare. Anchored by the Sunday Hand N Hand show on HOTMESS RADIO. "Hand N Hand is the only place to land."',
     shopifyCollection: 'hnh-mess',
     routes: ['/market/hnh'],
   },
