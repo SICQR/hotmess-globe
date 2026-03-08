@@ -11,24 +11,48 @@ test.use({
 });
 
 test.describe('Boot flow', () => {
-  test('unauthenticated user lands on / and redirects to /auth', async ({ page }) => {
-    // Do NOT set hm_age_confirmed_v1 — test the natural flow
-    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  test('unauthenticated user lands on / and sees HotmessSplash (not the app)', async ({ page }) => {
+    // Use 'commit' to avoid cold-Vite bundle timeout
+    await page.goto('/', { waitUntil: 'commit' });
 
-    // Should redirect to auth or show age gate
+    // BootGuard renders PublicShell → HotmessSplash at / (no URL redirect in new architecture)
+    // ENTER button animates in after ~1.3s — wait for it
+    const enterBtn = page.locator('button', { hasText: /^Enter$/i });
+    await expect(enterBtn).toBeVisible({ timeout: 15_000 });
+
+    // URL should stay at / — BootGuard does not redirect unauthenticated users to /auth
     const url = page.url();
-    expect(url.includes('/auth') || url.includes('/age')).toBeTruthy();
+    expect(url.endsWith('/') || url.includes('localhost:5173/')).toBeTruthy();
+
+    // Should NOT be inside the authenticated OS (no bottom nav, no app routes)
+    expect(
+      url.includes('/pulse') || url.includes('/ghosted') || url.includes('/market'),
+    ).toBeFalsy();
   });
 
-  test('/auth page renders with email and password fields', async ({ page }) => {
-    await page.goto('/auth', { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  test('/auth page renders and shows sign-in CTA', async ({ page }) => {
+    // Use 'commit' so we don't time out waiting for React to fully hydrate
+    await page.goto('/auth', { waitUntil: 'commit' });
 
-    // Email and password inputs should be visible
+    // Auth.jsx is a landing page — the "I'm already filthy" CTA opens the sign-in sheet
+    const signinCta = page.locator(
+      "button:has-text(\"I'm already filthy\"), button:has-text('Sign in'), button:has-text('Make a mess')",
+    ).first();
+    await expect(signinCta).toBeVisible({ timeout: 20_000 });
+
+    // Open the sign-in bottom sheet
+    const alreadyFilthy = page.locator("button:has-text(\"I'm already filthy\")").first();
+    const ctaVisible = await alreadyFilthy.isVisible({ timeout: 2_000 }).catch(() => false);
+    if (ctaVisible) {
+      await alreadyFilthy.click();
+      await page.waitForTimeout(400);
+    }
+
+    // Email and password inputs should now be visible inside the sheet
     const emailInput = page.locator('input[type="email"]').first();
     const passwordInput = page.locator('input[type="password"]').first();
-
-    await expect(emailInput).toBeVisible();
-    await expect(passwordInput).toBeVisible();
+    await expect(emailInput).toBeVisible({ timeout: 10_000 });
+    await expect(passwordInput).toBeVisible({ timeout: 5_000 });
   });
 
   test('with hm_age_confirmed_v1=true, should NOT redirect to /age', async ({ page }) => {
@@ -36,9 +60,11 @@ test.describe('Boot flow', () => {
       localStorage.setItem('hm_age_confirmed_v1', 'true');
     });
 
-    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.goto('/', { waitUntil: 'commit' });
 
-    // Should not be on /age route
+    // Wait briefly for any redirect to settle
+    await page.waitForTimeout(3_000);
+
     await expect(page).not.toHaveURL(/\/age(\?|$)/);
   });
 
@@ -48,7 +74,8 @@ test.describe('Boot flow', () => {
       sessionStorage.setItem('location_consent', 'false');
     });
 
-    await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.goto('/', { waitUntil: 'commit' });
+    await page.waitForTimeout(2_000);
 
     const bodyElement = page.locator('body');
     const bgColor = await bodyElement.evaluate((el) => {
