@@ -18,7 +18,7 @@ const LOGISTICS = [
   { value: 'undecided',   label: 'Undecided',  icon: HelpCircle },
 ];
 
-export default function RightNowModal({ isOpen, onClose }) {
+export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'explore' }) {
   const [duration, setDuration]   = useState(60);
   const [logistics, setLogistics] = useState([]);
   const [coldVibe, setColdVibe]   = useState(false);
@@ -57,7 +57,7 @@ export default function RightNowModal({ isOpen, onClose }) {
         .from('right_now_status')
         .upsert({
           user_email: user.email,
-          intent: 'explore',
+          intent: intentProp,
           timeframe: duration < 60 ? `${duration}m` : `${duration/60}h`,
           active: true,
           updated_at: new Date().toISOString(),
