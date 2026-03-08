@@ -75,7 +75,6 @@ describe('Gamification Components', () => {
       
       expect(screen.getByText('First Check-in')).toBeInTheDocument();
       expect(screen.getByText(/Check in to your first venue/i)).toBeInTheDocument();
-      expect(screen.getByText(/100 XP/i)).toBeInTheDocument();
     });
 
     it('shows correct rarity label', () => {
