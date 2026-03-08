@@ -119,42 +119,61 @@ jobs:
           base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
           head: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || 'HEAD' }}
 
-  test:
-    name: Run Tests
+  e2e-smoke:
+    name: E2E Smoke Tests
     runs-on: ubuntu-latest
+    # continue-on-error: true until VITE_SUPABASE_ANON_KEY secret is confirmed set in repo settings.
+    # Flip to false once confirmed to make smoke failures block deploy.
+    continue-on-error: true
     permissions:
       contents: read
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
-      - name: Run tests
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Run smoke specs (Chromium only)
         run: |
-          if [ -f "package.json" ] && grep -q "\"test\"" package.json; then
-            npm test
-          else
-            echo "⚠️  No tests configured yet. See TEST_SETUP.md for recommendations."
-            echo "This check will be enforced once tests are implemented."
-          fi
-        continue-on-error: true
+          npx playwright test \
+            e2e/smoke.a.geolocation-allowed.spec.ts \
+            e2e/smoke.b.geolocation-denied.spec.ts \
+            e2e/navigation.spec.ts \
+            --project=chromium \
+            --reporter=html
+        env:
+          CI: true
+          # Public Supabase project URL — not secret, safe to hardcode
+          VITE_SUPABASE_URL: https://klsywpvncqqglhnhrjbh.supabase.co
+          # Add VITE_SUPABASE_ANON_KEY as a GitHub repo secret to enable real API calls
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
 
   all-checks-complete:
     name: All Checks Complete
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, build, security]
+    needs: [lint, typecheck, build, security, e2e-smoke]
     permissions:
       contents: read
-    
+
     steps:
       - name: All checks passed
         run: echo "✅ All CI checks passed successfully!"
@@ -162,8 +181,8 @@ jobs:
   deploy-production:
     name: Deploy to Vercel Production
     runs-on: ubuntu-latest
-    # Note: test job is not included in needs because it's currently non-blocking (continue-on-error: true)
-    # Once tests are fully implemented, add 'test' to the needs array
+    # e2e-smoke is not in needs because it's currently non-blocking (continue-on-error: true).
+    # Once VITE_SUPABASE_ANON_KEY secret is set and e2e-smoke is stable, add it here.
     # Note: Deployment will fail gracefully if Vercel secrets are not configured
     needs: [lint, typecheck, build, security]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -172,7 +191,7 @@ jobs:
       contents: read
     environment:
       name: production
-      url: https://hotmess.app
+      url: https://hotmessldn.com
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
