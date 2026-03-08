@@ -85,10 +85,7 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 - ✅ SellerProfileView.jsx: real preloved_listings Supabase query (was base44 + "coming soon") — 3345f68
 
 **What still needs doing (blocked on Phil):**
-- ❌ VAPID keys not yet set in Supabase Edge Function secrets (notify-push will return 500 until set)
-  → Dashboard: Settings → Edge Functions → notify-push → Add VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
-  → Public key: `BFWgyAvJsZf4wZavZ-6X6c934k13RiYwjeEEIgQeOK0PyrBbvcJrqLL9llzV2Phee9GDOLpSVPSvGIja5eyr5WY`
-  → Private key: held by Phil (generated 2026-03-07 alongside public key)
+- ✅ VAPID keys set in Supabase Edge Function secrets — notify-push live (2026-03-08)
 - ❌ VITE_SUPABASE_ANON_KEY not yet set as GitHub repo secret (e2e-smoke will run but Supabase calls fail)
 - ❌ Stripe Connect redirect (one-line uncomment in PayoutManager.jsx when Stripe is live)
 
