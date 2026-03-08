@@ -66,6 +66,7 @@ const L2AchievementsSheet = lazy(() => import('./L2AchievementsSheet'));
 const L2SquadsSheet = lazy(() => import('./L2SquadsSheet'));
 const L2SweatCoinsSheet = lazy(() => import('./L2SweatCoinsSheet'));
 const L2CreatorSubscriptionSheet = lazy(() => import('./L2CreatorSubscriptionSheet'));
+const L2CreatePersonaSheet = lazy(() => import('./L2CreatePersonaSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -154,6 +155,7 @@ const SHEET_COMPONENTS = {
   // QR & events
   'qr': L2QRSheet,
   'create-event': L2CreateEventSheet,
+  'create-persona': L2CreatePersonaSheet,
   'favorites': L2FavoritesSheet,
   'beacon': L2BeaconSheet,
   'schedule': L2ScheduleSheet,

@@ -4,14 +4,14 @@
  */
 
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Check, Plus, User } from 'lucide-react';
 import { usePersona } from '@/contexts/PersonaContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
+import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 
-// Color per persona type
+// Color per persona_type
 const PERSONA_COLORS: Record<string, string> = {
   main:    '#C8962C',
   travel:  '#00D9FF',
@@ -24,9 +24,9 @@ interface PersonaSwitcherSheetProps {
 }
 
 export default function PersonaSwitcherSheet({ onClose }: PersonaSwitcherSheetProps) {
-  const navigate = useNavigate();
   const { personas, activePersona, loadPersonas, switchPersona, isLoading } = usePersona();
   const { session } = useBootGuard();
+  const { openSheet } = useSheet();
 
   useEffect(() => {
     if (session?.user?.id) loadPersonas(session.user.id);
@@ -41,6 +41,11 @@ export default function PersonaSwitcherSheet({ onClose }: PersonaSwitcherSheetPr
     } else {
       toast.error('Could not switch persona');
     }
+  };
+
+  const handleAddPersona = () => {
+    onClose();
+    openSheet('create-persona', {});
   };
 
   return (
@@ -60,7 +65,7 @@ export default function PersonaSwitcherSheet({ onClose }: PersonaSwitcherSheetPr
       <div className="px-6 mb-4">
         <p className="text-[10px] uppercase tracking-widest text-white/40 font-mono">Active Persona</p>
         <p className="text-white font-black text-lg mt-0.5">
-          {activePersona?.name || 'Main'}
+          {activePersona?.display_name || 'Main'}
         </p>
       </div>
 
@@ -72,12 +77,13 @@ export default function PersonaSwitcherSheet({ onClose }: PersonaSwitcherSheetPr
           </div>
         ) : personas.length === 0 ? (
           <div className="text-center py-6">
-            <p className="text-white/40 text-sm">No personas yet</p>
+            <p className="text-white/40 text-sm">No secondary personas yet</p>
             <p className="text-white/20 text-xs mt-1">Your main profile is always active</p>
           </div>
         ) : (
           personas.map((persona) => {
-            const color = PERSONA_COLORS[persona.type] || '#C8962C';
+            const type = persona.persona_type || 'main';
+            const color = PERSONA_COLORS[type] || '#C8962C';
             const isActive = persona.id === activePersona?.id;
             return (
               <button
@@ -103,9 +109,11 @@ export default function PersonaSwitcherSheet({ onClose }: PersonaSwitcherSheetPr
 
                 {/* Info */}
                 <div className="flex-1 text-left">
-                  <p className="font-black text-sm text-white">{persona.name}</p>
+                  <p className="font-black text-sm text-white">
+                    {persona.display_name || type}
+                  </p>
                   <p className="text-[10px] uppercase tracking-wider" style={{ color }}>
-                    {persona.type}
+                    {type}
                   </p>
                 </div>
 
@@ -126,8 +134,8 @@ export default function PersonaSwitcherSheet({ onClose }: PersonaSwitcherSheetPr
         {/* Add persona (max 5) */}
         {personas.length < 5 && (
           <button
-            className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/4 border border-dashed border-white/15 text-white/40"
-            onClick={() => { onClose(); navigate('/profile?action=manage-personas'); }}
+            className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/4 border border-dashed border-white/15 text-white/40 hover:text-white/60 transition-colors"
+            onClick={handleAddPersona}
           >
             <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white/5">
               <Plus className="w-4 h-4" />
