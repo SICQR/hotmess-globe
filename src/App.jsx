@@ -666,6 +666,22 @@ function OSArchitecture() {
   const { sosActive, triggerSOS, clearSOS } = useSOSContext();
   const location = useLocation();
 
+  // ── Telegram deep-link handler ──────────────────────────────────────────
+  // When the Telegram bot sends a user to hotmessldn.com?tg_token=XXX
+  // we stash the token for post-auth use and strip it from the URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tgToken = params.get('tg_token');
+    const tgUser  = params.get('tg_user');
+    if (tgToken) {
+      localStorage.setItem('hm_tg_token', tgToken);
+      if (tgUser) localStorage.setItem('hm_tg_user', tgUser);
+      // Strip params from URL without reload
+      const clean = window.location.pathname + (window.location.hash || '');
+      window.history.replaceState({}, '', clean);
+    }
+  }, []);
+
   // Hide mini player when on /radio — full player is visible there
   const onRadioRoute = location.pathname === '/radio' || location.pathname.startsWith('/radio/');
 
