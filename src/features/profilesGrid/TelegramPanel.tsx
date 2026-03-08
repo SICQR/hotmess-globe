@@ -1,206 +1,220 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import { toast } from 'sonner';
+/**
+ * TelegramPanel — HOTMESS OS branded Telegram community entry point.
+ *
+ * Opens as a bottom-sheet-style panel. Handles:
+ *   1. Standard "join community" — tap → deep-link to Telegram group
+ *   2. Bot-referral flow — if hm_tg_token is in localStorage the user
+ *      arrived via the Telegram bot. We surface that context here.
+ */
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   TELEGRAM_DOMAIN,
   TELEGRAM_HTTP_URL,
-  TELEGRAM_TG_URL,
   chooseTelegramLinks,
   openTelegramGroup,
 } from './telegramLinks';
+
+const AMBER  = '#C8962C';
+const CARD   = '#1C1C1E';
+const BG     = '#050507';
+const MUTED  = '#8E8E93';
+const TG_BLUE = '#2AABEE';
 
 export type TelegramPanelProps = {
   open: boolean;
   onClose: () => void;
 };
 
+// ── Focus trap helpers ────────────────────────────────────────────────────────
 const getFocusableElements = (root: HTMLElement): HTMLElement[] => {
-  const selector = [
-    'a[href]',
-    'button:not([disabled])',
-    'textarea:not([disabled])',
-    'input:not([disabled])',
-    'select:not([disabled])',
-    '[tabindex]:not([tabindex="-1"])',
+  const sel = [
+    'a[href]', 'button:not([disabled])', 'input:not([disabled])',
+    'select:not([disabled])', '[tabindex]:not([tabindex="-1"])',
   ].join(',');
-
-  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter((el) => {
-    const style = window.getComputedStyle(el);
-    return style.visibility !== 'hidden' && style.display !== 'none';
+  return Array.from(root.querySelectorAll<HTMLElement>(sel)).filter((el) => {
+    const s = window.getComputedStyle(el);
+    return s.visibility !== 'hidden' && s.display !== 'none';
   });
 };
 
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function TelegramPanel({ open, onClose }: TelegramPanelProps) {
-  const panelRef = useRef<HTMLDivElement | null>(null);
-  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
-  const lastActiveElementRef = useRef<HTMLElement | null>(null);
-  const bodyOverflowRef = useRef<string>('');
+  const panelRef         = useRef<HTMLDivElement>(null);
+  const closeButtonRef   = useRef<HTMLButtonElement>(null);
+  const lastActiveRef    = useRef<HTMLElement | null>(null);
+  const bodyOverflowRef  = useRef('');
+  const [fromBot, setFromBot] = useState(false);
+  const [tgUser, setTgUser]   = useState<string | null>(null);
 
   const linkChoice = useMemo(() => {
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
     return chooseTelegramLinks(ua);
   }, []);
 
+  // Detect bot referral
+  useEffect(() => {
+    const token = localStorage.getItem('hm_tg_token');
+    const user  = localStorage.getItem('hm_tg_user');
+    if (token) { setFromBot(true); setTgUser(user); }
+  }, []);
+
+  // Body scroll lock + focus management
   useEffect(() => {
     if (!open) return;
-
-    lastActiveElementRef.current = (document.activeElement as HTMLElement) || null;
-    bodyOverflowRef.current = document.body.style.overflow;
+    lastActiveRef.current    = document.activeElement as HTMLElement;
+    bodyOverflowRef.current  = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-
-    // Focus close button for immediate keyboard control.
-    requestAnimationFrame(() => {
-      closeButtonRef.current?.focus();
-    });
-
+    requestAnimationFrame(() => closeButtonRef.current?.focus());
     return () => {
       document.body.style.overflow = bodyOverflowRef.current;
-      lastActiveElementRef.current?.focus?.();
+      lastActiveRef.current?.focus?.();
     };
   }, [open]);
 
+  // Escape key
   useEffect(() => {
     if (!open) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      e.preventDefault();
-      onClose();
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.preventDefault(); onClose(); } };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  if (!open) return null;
-
-  const handleEnterFeed = async () => {
-    try {
-      toast.message('Telegram bot connection placeholder', {
-        description: 'Bot integration will be enabled when the telebot repo is wired in.',
-      });
-      openTelegramGroup();
-    } catch (err: any) {
-      toast.error(err?.message || 'Could not start Telegram feed handshake');
-    }
+  const handleJoin = () => {
+    openTelegramGroup();
+    onClose();
   };
 
   const handleTrapKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
     if (e.key !== 'Tab') return;
-
     const root = panelRef.current;
     if (!root) return;
-
     const focusables = getFocusableElements(root);
-    if (!focusables.length) {
-      e.preventDefault();
-      return;
-    }
-
+    if (!focusables.length) { e.preventDefault(); return; }
     const first = focusables[0];
-    const last = focusables[focusables.length - 1];
+    const last  = focusables[focusables.length - 1];
     const active = document.activeElement as HTMLElement | null;
-
-    if (e.shiftKey) {
-      if (!active || active === first) {
-        e.preventDefault();
-        last.focus();
-      }
-      return;
-    }
-
-    if (active === last) {
-      e.preventDefault();
-      first.focus();
-    }
+    if (e.shiftKey) { if (!active || active === first) { e.preventDefault(); last.focus(); } return; }
+    if (active === last) { e.preventDefault(); first.focus(); }
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50"
-      role="dialog"
-      aria-modal="true"
-      aria-label="HOTMESS Feed"
-    >
-      <div className="absolute inset-0 bg-black/60" />
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-[160]" role="dialog" aria-modal="true" aria-label="Join HOTMESS on Telegram">
+          {/* Backdrop */}
+          <motion.div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onMouseDown={onClose}
+          />
 
-      <div
-        className="absolute inset-0 flex items-center justify-center p-4 md:justify-end md:items-stretch"
-        onMouseDown={(e) => {
-          if (e.target !== e.currentTarget) return;
-          onClose();
-        }}
-      >
-        <div
-          ref={panelRef}
-          onKeyDown={handleTrapKeyDown}
-          className="w-full max-w-md rounded-lg border border-border bg-background p-4 text-foreground shadow-lg md:h-full md:w-[420px] md:max-w-none md:rounded-none md:border-l"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-sm font-semibold">HOTMESS Feed</div>
-              <div className="text-xs text-muted-foreground">Telegram group: {TELEGRAM_DOMAIN}</div>
+          {/* Panel */}
+          <motion.div
+            ref={panelRef}
+            onKeyDown={handleTrapKeyDown}
+            className="absolute bottom-0 left-0 right-0 rounded-t-3xl overflow-hidden"
+            style={{ background: BG, borderTop: `1px solid rgba(200,150,44,0.2)` }}
+            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-white/20" />
             </div>
 
-            <button
-              ref={closeButtonRef}
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-semibold hover:bg-black/5"
-            >
-              Close
-            </button>
-          </div>
+            {/* Header */}
+            <div className="px-5 pt-2 pb-4 flex items-start justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: AMBER }}>
+                  HOTMESS COMMUNITY
+                </p>
+                <h2 className="font-black text-xl text-white leading-tight">Join the feed.</h2>
+                {fromBot ? (
+                  <p className="text-sm mt-1" style={{ color: MUTED }}>
+                    {tgUser ? `Welcome, @${tgUser} 👋` : 'Welcome from Telegram 👋'}
+                  </p>
+                ) : (
+                  <p className="text-sm mt-1" style={{ color: MUTED }}>
+                    Real-time scene updates, events & drops.
+                  </p>
+                )}
+              </div>
+              <button
+                ref={closeButtonRef}
+                onClick={onClose}
+                className="w-8 h-8 rounded-full flex items-center justify-center mt-1"
+                style={{ background: 'rgba(255,255,255,0.08)' }}
+                aria-label="Close"
+              >
+                <span className="text-white/70 text-sm leading-none">✕</span>
+              </button>
+            </div>
 
-          <div className="mt-4 space-y-3">
-            <button
-              type="button"
-              onClick={handleEnterFeed}
-              className="w-full rounded-md border border-border bg-foreground px-4 py-2 text-sm font-semibold text-background"
-            >
-              Enter HOTMESS Feed
-            </button>
-
-            <button
-              type="button"
-              onClick={() => openTelegramGroup()}
-              className="w-full rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold hover:bg-black/5"
-            >
-              Open {TELEGRAM_DOMAIN}
-            </button>
-
-            <div className="rounded-md border border-border bg-background p-3 text-sm">
-              <div className="text-xs font-semibold">Links</div>
-              <div className="mt-2 space-y-1 break-all text-xs">
+            {/* Bot referral context pill */}
+            {fromBot && (
+              <div className="mx-5 mb-3 px-4 py-3 rounded-2xl flex items-center gap-3"
+                style={{ background: `${TG_BLUE}15`, border: `1px solid ${TG_BLUE}30` }}>
+                <span className="text-xl">✈️</span>
                 <div>
-                  <span className="font-semibold">Primary:</span>{' '}
-                  <a
-                    href={TELEGRAM_HTTP_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline"
-                  >
-                    {TELEGRAM_HTTP_URL}
-                  </a>
-                </div>
-                <div>
-                  <span className="font-semibold">Deep link:</span>{' '}
-                  <a href={TELEGRAM_TG_URL} className="underline">
-                    {TELEGRAM_TG_URL}
-                  </a>
-                </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  Preferred on this device: <span className="font-semibold">{linkChoice.primaryUrl}</span>
+                  <p className="text-white font-bold text-sm">You came from the bot</p>
+                  <p className="text-[11px]" style={{ color: MUTED }}>
+                    Your account is linked. Hit Join to land in the group.
+                  </p>
                 </div>
               </div>
+            )}
+
+            {/* Stats */}
+            <div className="mx-5 mb-4 flex gap-3">
+              {[
+                { label: 'Members', value: '2.4k+' },
+                { label: 'Events posted', value: 'Weekly' },
+                { label: 'Active nights', value: '7/7' },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex-1 rounded-2xl p-3 text-center" style={{ background: CARD }}>
+                  <p className="font-black text-base text-white">{value}</p>
+                  <p className="text-[9px] uppercase tracking-wide mt-0.5" style={{ color: MUTED }}>{label}</p>
+                </div>
+              ))}
             </div>
 
-            <div className="text-xs text-muted-foreground">
-              If the group does not exist yet, an admin must create it in Telegram and set the public username to{' '}
-              <span className="font-semibold">{TELEGRAM_DOMAIN}</span>.
+            {/* What you get */}
+            <div className="mx-5 mb-4 rounded-2xl overflow-hidden" style={{ background: CARD }}>
+              {[
+                { emoji: '🔔', text: 'First to know about events & drops' },
+                { emoji: '📍', text: 'Real-time scene reports from the city' },
+                { emoji: '🎵', text: 'Show alerts from HOTMESS RADIO' },
+                { emoji: '🤝', text: 'Community-only offers & codes' },
+              ].map(({ emoji, text }, i, arr) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-3"
+                  style={{ borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.06)' : undefined }}>
+                  <span className="text-lg w-6 text-center flex-shrink-0">{emoji}</span>
+                  <p className="text-white/80 text-sm">{text}</p>
+                </div>
+              ))}
             </div>
-          </div>
+
+            {/* CTA */}
+            <div className="px-5 pb-4 flex flex-col gap-2.5">
+              <button
+                onClick={handleJoin}
+                className="w-full py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-opacity active:opacity-80"
+                style={{ background: TG_BLUE, color: '#fff' }}
+              >
+                Open in Telegram →
+              </button>
+              <p className="text-center text-[10px]" style={{ color: MUTED }}>
+                Group: <span className="font-bold">@{TELEGRAM_DOMAIN}</span> · {linkChoice.isMobile ? 'Opens Telegram app' : TELEGRAM_HTTP_URL}
+              </p>
+            </div>
+
+            {/* Safe area */}
+            <div className="h-safe-area-inset-bottom" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} />
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }
