@@ -11,6 +11,7 @@ import { Home, Activity, Ghost, ShoppingBag, User } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { OSMode, MODES, MODE_ORDER, getModeFromPath } from '@/modes';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
+import { useNotifCount } from '@/hooks/useNotifCount';
 import { useLongPress } from '@/hooks/useLongPress';
 import { useSheet } from '@/contexts/SheetContext';
 import PersonaSwitcherSheet from '@/components/sheets/PersonaSwitcherSheet';
@@ -33,6 +34,7 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
   const navigate = useNavigate();
   const currentMode = getModeFromPath(location.pathname);
   const { unreadCount, clearTapsBadge } = useUnreadCount();
+  const { notifCount, clearNotifBadge } = useNotifCount();
   const { openSheet } = useSheet();
   const [showSwitcher, setShowSwitcher] = useState(false);
 
@@ -79,9 +81,22 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                           openSheet('taps');
                         }}
                         className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none"
-                        aria-label="View boos"
+                        aria-label="View taps"
                       >
                         {unreadCount > 9 ? '9+' : unreadCount}
+                      </button>
+                    )}
+                    {modeId === 'profile' && notifCount > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearNotifBadge();
+                          openSheet('notification-inbox', {});
+                        }}
+                        className="absolute -top-1 -right-1 w-4 h-4 bg-[#C8962C] border-2 border-black text-black text-[9px] font-black rounded-full flex items-center justify-center leading-none"
+                        aria-label="View notifications"
+                      >
+                        {notifCount > 9 ? '9+' : notifCount}
                       </button>
                     )}
                   </div>
@@ -96,9 +111,22 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                           openSheet('taps');
                         }}
                         className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center leading-none"
-                        aria-label="View boos"
+                        aria-label="View taps"
                       >
                         {unreadCount > 9 ? '9+' : unreadCount}
+                      </button>
+                    )}
+                    {modeId === 'profile' && notifCount > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearNotifBadge();
+                          openSheet('notification-inbox', {});
+                        }}
+                        className="absolute -top-1 -right-1 w-4 h-4 bg-[#C8962C] text-black text-[9px] font-black rounded-full flex items-center justify-center leading-none"
+                        aria-label="View notifications"
+                      >
+                        {notifCount > 9 ? '9+' : notifCount}
                       </button>
                     )}
                   </div>
