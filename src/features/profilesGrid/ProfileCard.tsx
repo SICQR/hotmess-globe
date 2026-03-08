@@ -545,6 +545,8 @@ function ProfileCardInner({
           matchPercent={matchPercent}
           isVerified={(profile as any)?.isVerified}
           lookingFor={lookingFor}
+          position={typeof (profile as any)?.position === 'string' ? (profile as any).position : undefined}
+          age={typeof (profile as any)?.age === 'number' ? (profile as any).age : undefined}
           lastSeen={lastSeen}
           onClick={openProfile}
           onMessage={
