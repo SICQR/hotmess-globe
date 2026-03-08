@@ -77,19 +77,19 @@ export default function VaultMode() {
   });
 
   const { data: tickets = [], isLoading: ticketsLoading } = useQuery<TicketRow[]>({
-    queryKey: ['vault-tickets', user?.email],
+    queryKey: ['vault-tickets', user?.id],
     queryFn: async () => {
-      if (!user?.email) return [];
+      if (!user?.id) return [];
       const { data } = await supabase
         .from('event_rsvps')
         .select('event_id, created_at, status, events(title, name, starts_at, venue)')
-        .eq('user_email', user.email)
+        .eq('user_id', user.id)
         .eq('status', 'going')
         .order('created_at', { ascending: false })
         .limit(30);
       return (data as TicketRow[]) || [];
     },
-    enabled: !!user?.email,
+    enabled: !!user?.id,
   });
 
   const { data: listings = [], isLoading: listingsLoading } = useQuery<ListingRow[]>({

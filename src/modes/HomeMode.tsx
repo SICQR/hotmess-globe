@@ -920,7 +920,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             <Search className="w-4 h-4 text-white/60" />
           </button>
           <button
-            onClick={() => openSheet('notifications' as Parameters<typeof openSheet>[0], {})}
+            onClick={() => openSheet('notification-inbox' as Parameters<typeof openSheet>[0], {})}
             className="relative w-8 h-8 rounded-full flex items-center justify-center"
             style={{ background: CARD_BG, border: `1px solid ${BORDER}` }}
           >
