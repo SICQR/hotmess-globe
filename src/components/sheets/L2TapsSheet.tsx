@@ -141,7 +141,7 @@ export default function L2TapsSheet() {
               const displayName = profile?.display_name || profile?.username || tap.tapper_email.split('@')[0];
               const avatar = profile?.photos?.[0] ?? null;
 
-              const alreadyBoosBack = myEmail ? isTapped(tap.tapper_email, 'tap') : false;
+              const alreadyBoosBack = myEmail ? isTapped(tap.tapper_email, tap.tap_type) : false;
 
               return (
                 <motion.div
