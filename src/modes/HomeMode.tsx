@@ -767,7 +767,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       const emails = statusRows.map((r: Record<string, unknown>) => r.user_email as string).filter(Boolean);
       const { data: profileRows } = await supabase
         .from('profiles')
-        .select('id, email, display_name, photos')
+        .select('id, email, display_name, avatar_url, photos')
         .in('email', emails);
 
       const profileMap = new Map<string, Record<string, unknown>>();
@@ -778,12 +778,14 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       return statusRows.map((r: Record<string, unknown>) => {
         const p = profileMap.get(r.user_email as string) ?? {};
         const photos = Array.isArray(p.photos) ? p.photos : [];
+        // Prefer photos[0].url, fall back to avatar_url
+        const avatarUrl: string | undefined = (photos[0]?.url as string | undefined) ?? (p.avatar_url as string | undefined) ?? undefined;
         return {
           id: (p.id as string) || (r.id as string),
           email: r.user_email as string,
           intent: (r.intent as string) || 'explore',
           name: (p.display_name as string) || ((r.user_email as string) ?? '').split('@')[0] || 'Anon',
-          avatarUrl: (photos[0]?.url as string | undefined) ?? undefined,
+          avatarUrl,
         };
       });
     },
