@@ -2,9 +2,38 @@
 
 This file provides guidance when working with code in this repository.
 
-**Last updated:** 2026-03-07
+**Last updated:** 2026-03-08
 **Design system:** `DESIGN_SYSTEM.md` — always read before touching any styling
 **Design reference docs:** `~/Downloads/HOTMESS-Design-Reference.html`, `HOTMESS-HomeMode-Design.html`, `HOTMESS-Brand-Palette-v2.html`
+
+---
+
+## 🔴 PICK UP HERE (Last session: 2026-03-08)
+
+**What's done:**
+- ✅ hotmessldn.com domain fixed (was redirecting to dead hotmess.app)
+- ✅ RLS security hardening complete — all blocking holes fixed
+- ✅ All 5 P1 agents shipped (Radio, Auth, Unread, Persona, XP purge)
+- ✅ HomeMode 12-section redesign live
+- ✅ DESIGN_SYSTEM.md + CLAUDE.md fully updated
+
+**Next task: Smoke test the live site end-to-end**
+URL: https://hotmessldn.com
+Test these flows in order:
+1. Age Gate → ENTER button
+2. Auth sign-in with real credentials
+3. HomeMode 12 sections render correctly
+4. Ghosted mode — proximity grid loads
+5. Pulse — globe renders on /pulse, NOT on other routes
+6. Market tab
+7. Profile tab + persona switcher (long-press avatar)
+8. Radio mini player (navigate to /radio, then back)
+9. SOS button — visible bottom-right, long-press 2s triggers overlay
+10. Sheet policy — try opening chat from outside /ghosted (should be blocked)
+
+**Then:** Start P1 task #17 — Filters drawer + Taps/Woofs
+
+---
 
 ---
 
@@ -204,6 +233,20 @@ Removed sections (no longer in HomeMode): hero banner, community section, scene 
 - SheetContext: openSheet() gated with toast on block
 - Fixed 3 rogue callsites
 
+### P0f: Domain Fix ✅ (2026-03-08)
+- Removed broken `vercel.json` redirects sending hotmessldn.com → hotmess.app (dead domain)
+- Added correct www.hotmessldn.com → hotmessldn.com canonical redirect
+- hotmessldn.com now serves the app correctly (HTTP 200)
+- Committed: `20df177`
+
+### P0g: RLS Security Hardening ✅ (2026-03-08)
+- All 7 fixes from `20260226000080_rls_critical_fixes.sql` confirmed live in production
+- Dropped stale `emergency_locations: authenticated upsert` ALL=true override policy
+- Applied `rls_remaining_security_fixes` migration:
+  - Dropped `notifications_write_authenticated` (spam vector — any user could notify anyone)
+  - Enabled RLS on `routing_cache`, `routing_rate_limits`, `platform_knowledge`
+- Security posture: blocking issues resolved, safe to proceed to smoke test before launch
+
 ### P0d: Gold Rebrand ✅
 - All pink (#FF1493) replaced with gold (#C8962C)
 - Auth page luxury noir-gold redesign
@@ -223,11 +266,14 @@ Removed sections (no longer in HomeMode): hero banner, community section, scene 
 
 ## Active P1 Tasks (Running Agents)
 
-1. **Radio Polish** — Radio mini player bar refinement
-2. **Auth Visual Redesign** — Auth/AgeGate/OnboardingGate visual overhaul
-3. **Unread Badge + Photo Sharing** — Badge on Ghosted tab, photo uploads in chat
-4. **Persona Switcher** — Long-press avatar → PersonaSwitcherSheet
-5. **XP Purge** — Remove all remaining XP references
+**All 5 previously listed agents are SHIPPED and committed to main as of 2026-03-08. No agents currently running.**
+
+Previously completed (now in codebase):
+1. ~~Radio Polish~~ ✅ — RadioMiniPlayer above nav, waveform animation
+2. ~~Auth Visual Redesign~~ ✅ — Luxury noir-gold auth, AgeGate, OnboardingGate
+3. ~~Unread Badge + Photo Sharing~~ ✅ — Unread dot on Ghosted tab, photo in chat
+4. ~~Persona Switcher~~ ✅ — PersonaSwitcherSheet, long-press avatar
+5. ~~XP Purge~~ ✅ — All XP UI removed (DB columns kept)
 
 ---
 
