@@ -36,13 +36,14 @@ const markRead = (threadId) => {
   try { localStorage.setItem(`chat_read_${threadId}`, String(Date.now())); } catch {}
 };
 
-export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, title }) {
+export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, toUid: initialToUid, title }) {
   const { openSheet, updateSheetProps } = useSheet();
 
   const [currentUser, setCurrentUser]   = useState(null); // { id, email }
   const [threads, setThreads]           = useState([]);
   const [profiles, setProfiles]         = useState({}); // email → profile
   const [threadsLoading, setThreadsLoading] = useState(true);
+  const [resolvedToEmail, setResolvedToEmail] = useState(initialToEmail);
 
   const [selectedThread, setSelectedThread] = useState(null);
   const [messages, setMessages]         = useState([]);
@@ -75,6 +76,29 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       if (user) setCurrentUser({ id: user.id, email: user.email });
     });
   }, []);
+
+  // ── Resolve toUid to email (if toUid provided instead of email) ────────────
+  useEffect(() => {
+    if (!initialToUid || resolvedToEmail) return;
+
+    const resolveUid = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        const res = await fetch(`/api/resolve-user-email?uid=${encodeURIComponent(initialToUid)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (res.ok) {
+          const { email } = await res.json();
+          setResolvedToEmail(email);
+        }
+      } catch (err) {
+        console.error('[Chat] Failed to resolve UID to email:', err);
+      }
+    };
+
+    resolveUid();
+  }, [initialToUid, resolvedToEmail]);
 
   // ── Load threads when user is ready ───────────────────────────────────────
   useEffect(() => {
@@ -135,19 +159,19 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     if (initialThreadId) {
       const t = threads.find(th => th.id === initialThreadId);
       if (t) openThread(t);
-    } else if (initialToEmail && !selectedThread) {
+    } else if (resolvedToEmail && !selectedThread) {
       const existing = threads.find(t =>
-        t.participant_emails?.includes(initialToEmail) &&
+        t.participant_emails?.includes(resolvedToEmail) &&
         t.participant_emails?.includes(currentUser.email)
       );
       if (existing) {
         openThread(existing);
       } else {
         // Pre-select the "to" email so first send creates the thread
-        setSelectedThread({ _new: true, participant_emails: [currentUser.email, initialToEmail] });
+        setSelectedThread({ _new: true, participant_emails: [currentUser.email, resolvedToEmail] });
       }
     }
-  }, [currentUser?.email, threadsLoading, initialThreadId, initialToEmail]);
+  }, [currentUser?.email, threadsLoading, initialThreadId, resolvedToEmail]);
 
   // ── Mark messages as read (uses read_by[] column) ─────────────────────────
   const markMessagesReadInDB = useCallback(async (threadId, myEmail) => {
