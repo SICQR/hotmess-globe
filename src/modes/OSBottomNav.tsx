@@ -67,7 +67,7 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                 className="relative flex flex-col items-center justify-center flex-1 h-full touch-target"
                 aria-label={mode.label}
                 aria-current={isActive ? 'page' : undefined}
-                {...(isProfile ? longPress : {})}
+                {...(isProfile ? longPress : {})} /* Long-press profile tab from ANY mode to open PersonaSwitcher */
               >
                 {/* Icon — amber circle when active */}
                 {isActive ? (
