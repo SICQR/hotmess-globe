@@ -479,9 +479,12 @@ function ProfileCardInner({
       ? Math.round(profile.matchProbability)
       : undefined;
 
+    // Grindr pattern: online = active within 10 mins, away = within 1 hour
+    const lastSeenTs = (profile as any)?.last_seen;
+    const msSinceLastSeen = lastSeenTs ? Date.now() - new Date(lastSeenTs).getTime() : Infinity;
     const status: 'online' | 'away' | 'offline' =
-      (profile as any)?.is_online || (profile as any)?.onlineNow ? 'online' :
-      (profile as any)?.rightNow ? 'away' : 'offline';
+      (profile as any)?.is_online || (profile as any)?.onlineNow || msSinceLastSeen < 10 * 60_000 ? 'online' :
+      (profile as any)?.rightNow || msSinceLastSeen < 60 * 60_000 ? 'away' : 'offline';
 
     // Parse looking_for tags
     const lookingFor = Array.isArray((profile as any)?.looking_for)

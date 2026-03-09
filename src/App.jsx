@@ -45,6 +45,7 @@ import { PersonaProvider } from '@/contexts/PersonaContext';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useDeepLinkSheet } from '@/hooks/useDeepLinkSheet';
+import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
 import AuthCallback from '@/pages/auth/callback';
 
 const HomeMode = lazy(() => import('@/modes/HomeMode'));
@@ -666,6 +667,8 @@ function OSArchitecture() {
   usePushNotifications();
   // Auto-open sheets from push notification deep links (?sheet=...)
   useDeepLinkSheet();
+  // Update User.last_seen every 5 min — powers online presence dots on Ghosted grid
+  usePresenceHeartbeat();
   const { sosActive, triggerSOS, clearSOS } = useSOSContext();
   const location = useLocation();
 
