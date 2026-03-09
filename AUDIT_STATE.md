@@ -22,6 +22,8 @@ Each agent READS this before starting and WRITES its findings back.
 | #5: Chat flow — SheetContext state.stack typo in policy check | state.sheetStack was undefined, causing policy always to fail | 80c8cfe (agent-d) |
 | #6: Profile mode — Edit profile, photo upload, persona switcher | Code review verified all wiring correct: EditProfile→avatar upload, PhotosSheet→gallery, PersonaSwitcher→create-persona | agent-d (VERIFIED) |
 | #9: SOS long-press → overlay → PIN dismiss | FULL END-TO-END AUDIT: SOSButton/Context/Overlay all correct, location_shares table name verified, right_now_status TABLE verified, notifyContacts push wired, Edge Function deployed. 0 issues found. | agent-e (AUDIT COMPLETE) |
+| #10: Marketplace products load | Import path @/lib/data → @/lib/data/market; productId prop → full product object to L2ShopSheet | aeb46a8 (agent-c) |
+| #11: Beacon creation FAB on /pulse | FULL CODE AUDIT: PulseMode→openSheet('beacon', { mode: 'create' })→L2BeaconSheet→BeaconCreator (3-step form). All wiring correct, Beacon table INSERT verified, viewer mode verified. 0 issues found. | agent-c (VERIFIED) |
 
 ---
 
@@ -36,8 +38,8 @@ Each agent READS this before starting and WRITES its findings back.
 | 6 | Profile mode: Edit profile, photo upload, persona switcher — needs audit | VERIFIED | agent-d ✅ |
 | 8 | Radio tab — does stream play, mini player show, schedule load? | MED | ✅ CLOSED (agent-b) |
 | 9 | SOS long-press — does overlay appear, PIN dismiss work? | HIGH | ✅ CLOSED (agent-e) |
-| 10 | Marketplace (Shop/Preloved tabs) — do products load? | MED | unowned |
-| 11 | Beacon creation FAB on /pulse — does multi-step form work? | MED | unowned |
+| 10 | Marketplace (Shop/Preloved tabs) — do products load? | MED | ✅ CLOSED (agent-c) |
+| 11 | Beacon creation FAB on /pulse — does multi-step form work? | MED | ✅ CLOSED (agent-c) |
 
 ---
 
