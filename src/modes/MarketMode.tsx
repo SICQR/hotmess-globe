@@ -57,7 +57,7 @@ import {
   getCategories,
   type Product,
   type ProductFilters,
-} from '@/lib/data';
+} from '@/lib/data/market';
 
 // Safe cart item count hook — counts BOTH Shopify + preloved items
 function useCartItemCount(): number {
@@ -620,7 +620,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   // ---- Handlers -------------------------------------------------------------
   const handleProductTap = useCallback(
     (product: Product) => {
-      openSheet('product', { productId: product.id, source: product.source });
+      openSheet('product', { product, source: product.source });
     },
     [openSheet],
   );
