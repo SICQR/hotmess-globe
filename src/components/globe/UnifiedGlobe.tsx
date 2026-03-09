@@ -14,6 +14,7 @@ const GlobePage = lazy(() => import('@/pages/Globe'));
 export function UnifiedGlobe() {
   const location = useLocation();
   const isPulse = location.pathname === '/pulse' || location.pathname === '/globe';
+  const isEmbedded = location.pathname === '/pulse';
 
   if (!isPulse) return null;
 
@@ -24,7 +25,7 @@ export function UnifiedGlobe() {
           <div className="w-10 h-10 border-2 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />
         </div>
       }>
-        <GlobePage />
+        <GlobePage embedded={isEmbedded} />
       </Suspense>
     </div>
   );
