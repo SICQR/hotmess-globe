@@ -38,7 +38,7 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
     }),
     onSuccess: () => {
       queryClient.invalidateQueries(['following']);
-      toast.success(`Following ${profileUser.full_name}!`);
+      toast.success(`Following ${profileUser.display_name || profileUser.username || 'user'}!`);
     }
   });
 
@@ -66,8 +66,8 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
     if (navigator.share) {
       Promise.resolve(
         navigator.share({
-          title: `${profileUser.full_name} on HOTMESS`,
-          text: `Check out ${profileUser.full_name}'s profile`,
+          title: `${profileUser.display_name || profileUser.username || 'Someone'} on HOTMESS`,
+          text: `Check out their profile`,
           url,
         })
       ).catch((err) => {

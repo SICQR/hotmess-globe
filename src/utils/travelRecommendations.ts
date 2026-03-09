@@ -23,7 +23,7 @@ export const buildProfileRecText = (profile: any) => {
   return buildText({
     tags: profile.tags || profile.user_tags || profile.interests,
     bio: profile.bio || profile.about || profile.profile_bio,
-    title: profile.title || profile.profileName || profile.full_name,
+    title: profile.title || profile.profileName || profile.display_name,
     tagline: profile.sellerTagline || profile.seller_tagline,
   });
 };

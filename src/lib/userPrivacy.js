@@ -83,10 +83,11 @@ export function getSafeUserList(users) {
 export function getDisplayName(user) {
   if (!user) return 'Anonymous';
   
-  // Priority order: display_name > username > full_name > 'Anonymous User'
+  // IDENTITY MODEL: display_name > username > 'Anonymous User'
+  // NEVER return full_name — real names must not appear on user-facing surfaces (Grindr/Scruff pattern)
   if (user.display_name) return user.display_name;
+  if (user.profileName) return user.profileName;
   if (user.username) return `@${user.username}`;
-  if (user.full_name) return user.full_name;
   
   // Fallback - generate from user ID if available
   if (user.id) {
@@ -104,8 +105,8 @@ export function getUsername(user) {
   
   if (user.username) return user.username;
   
-  // Generate a username from display_name or full_name
-  const baseName = user.display_name || user.full_name;
+  // Generate a username from display_name (never full_name)
+  const baseName = user.display_name || user.profileName;
   if (baseName) {
     return baseName
       .toLowerCase()
