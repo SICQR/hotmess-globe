@@ -25,7 +25,7 @@ import { useGlobeActivity } from '@/hooks/useGlobeActivity';
 import { useProfileOpener } from '@/lib/profile';
 import LocationShopPanel from '../components/globe/LocationShopPanel';
 
-export default function GlobePage() {
+export default function GlobePage({ embedded = false }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { openProfile } = useProfileOpener();
@@ -667,25 +667,27 @@ export default function GlobePage() {
               <Grid3x3 className="w-5 h-5" />
             </button>
 
-            <button
-              onClick={() => {
-                const newState = !showHotmessFeed;
-                setShowHotmessFeed(newState);
-                if (newState) {
-                  setShowNearbyGrid(false);
-                  setShowControls(false);
-                  setShowPanel(false);
-                  setShowLocalBeacons(false);
-                  setPreviewBeacon(null);
-                }
-              }}
-              className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
-                showHotmessFeed ? 'bg-[#C8962C] text-black' : 'bg-black/90 border border-white/10 text-white'
-              }`}
-              aria-label="Hotmess Feed"
-            >
-              <span className="text-xs font-black">FEED</span>
-            </button>
+            {!embedded && (
+              <button
+                onClick={() => {
+                  const newState = !showHotmessFeed;
+                  setShowHotmessFeed(newState);
+                  if (newState) {
+                    setShowNearbyGrid(false);
+                    setShowControls(false);
+                    setShowPanel(false);
+                    setShowLocalBeacons(false);
+                    setPreviewBeacon(null);
+                  }
+                }}
+                className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
+                  showHotmessFeed ? 'bg-[#C8962C] text-black' : 'bg-black/90 border border-white/10 text-white'
+                }`}
+                aria-label="Hotmess Feed"
+              >
+                <span className="text-xs font-black">FEED</span>
+              </button>
+            )}
 
             <button
               onClick={() => {
