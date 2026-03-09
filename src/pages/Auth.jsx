@@ -43,7 +43,7 @@ const SHOWS = [
 
 // ── Energy feed ────────────────────────────────────────────────────────────────
 const FLOOR_CARDS = [
-  { tag: 'GHOSTED GRID',   text: 'someone left a woof at 3am last night. no message. just a woof.',             color: GOLD  },
+  { tag: 'GHOSTED GRID',   text: 'someone left a boo at 3am last night. no message. just a ghost.',             color: GOLD  },
   { tag: 'DIAL-A-DADDY',   text: 'Last night\'s set had the chat going absolutely feral. Full archive up.',      color: RADIO },
   { tag: 'RAW CONVICT',    text: 'New drop lands midnight Friday. Pre-save now or you\'re too slow.',             color: GOLD  },
   { tag: 'HAND N HAND',    text: 'Sunday circle at SE1. Harm reduction + community care. Everyone welcome.',      color: HNH   },

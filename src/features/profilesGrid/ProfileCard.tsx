@@ -18,7 +18,7 @@ type Props = {
   onNavigateUrl: (url: string) => void;
   /** Check if current user has already tapped a profile email with a given tap type */
   isTapped?: (email: string, tapType: TapType) => boolean;
-  /** Send or toggle a tap/woof */
+  /** Send or toggle a boo */
   onSendTap?: (email: string, name: string, tapType: TapType) => Promise<boolean>;
   /** Called on long-press with profile and pointer position (for quick action menu) */
   onLongPress?: (profile: Profile, position: { x: number; y: number }) => void;
@@ -200,9 +200,8 @@ function ProfileCardInner({
   const [travelTime, setTravelTime] = useState<TravelTimeResponse | null>(null);
   const [isTravelTimeLoading, setIsTravelTimeLoading] = useState(false);
 
-  // Tap / Woof animation state (hoisted to avoid hook-in-conditional violation)
+  // Boo animation state (hoisted to avoid hook-in-conditional violation)
   const [tapAnim, setTapAnim] = useState(false);
-  const [woofAnim, setWoofAnim] = useState(false);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -516,29 +515,20 @@ function ProfileCardInner({
     const profileName = String(profile.profileName || '').trim() || 'HOTMESS';
     const hasTapSupport = !!onSendTap && !!profileEmail && !!isTapped;
 
-    const tappedTap = hasTapSupport ? isTapped!(profileEmail, 'tap') : false;
-    const tappedWoof = hasTapSupport ? isTapped!(profileEmail, 'woof') : false;
+    const tappedBoo = hasTapSupport ? isTapped!(profileEmail, 'boo') : false;
 
-    const handleTapClick = async (e: React.MouseEvent) => {
+    const handleBooClick = async (e: React.MouseEvent) => {
       e.stopPropagation();
       if (!hasTapSupport) return;
       setTapAnim(true);
       setTimeout(() => setTapAnim(false), 400);
-      await onSendTap!(profileEmail, profileName, 'tap');
-    };
-
-    const handleWoofClick = async (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (!hasTapSupport) return;
-      setWoofAnim(true);
-      setTimeout(() => setWoofAnim(false), 400);
-      await onSendTap!(profileEmail, profileName, 'woof');
+      await onSendTap!(profileEmail, profileName, 'boo');
     };
 
     return (
       <div
         ref={attachRef as unknown as React.Ref<HTMLDivElement>}
-        className={`relative transition-all duration-300 ${tappedTap ? 'ring-2 ring-[#C8962C]' : ''}`}
+        className={`relative transition-all duration-300 ${tappedBoo ? 'ring-2 ring-[#C8962C]' : ''}`}
       >
         <SimpleProfileCard
           id={String(profile.id)}
@@ -559,42 +549,21 @@ function ProfileCardInner({
               : undefined
           }
         />
-        {/* Tap / Woof overlay buttons */}
+        {/* Boo overlay button */}
         {hasTapSupport && (
           <div className="absolute top-2 left-2 flex flex-col gap-1.5 pointer-events-auto z-10">
-            {/* Boo button */}
             <button
               type="button"
               aria-label="Boo"
-              onClick={handleTapClick}
+              onClick={handleBooClick}
               className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-200 active:scale-90 ${
-                tappedTap || tapAnim
+                tappedBoo || tapAnim
                   ? 'bg-[#C8962C] border-[#C8962C] text-black'
                   : 'bg-[#1C1C1E]/80 border-white/20 text-white/60'
               }`}
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                {/* Ghost icon */}
                 <path d="M12 2a8 8 0 0 0-8 8v10l3-3 3 3 3-3 3 3 3-3V10a8 8 0 0 0-8-8zm-2.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
-              </svg>
-            </button>
-            {/* Woof button */}
-            <button
-              type="button"
-              aria-label="Woof"
-              onClick={handleWoofClick}
-              className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-200 active:scale-90 ${
-                tappedWoof || woofAnim
-                  ? 'bg-[#C8962C] border-[#C8962C] text-black'
-                  : 'bg-[#1C1C1E]/80 border-white/20 text-white/60'
-              }`}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                {/* Paw / dog icon */}
-                <circle cx="11" cy="4" r="2" />
-                <circle cx="18" cy="8" r="2" />
-                <circle cx="20" cy="16" r="2" />
-                <path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" />
               </svg>
             </button>
           </div>

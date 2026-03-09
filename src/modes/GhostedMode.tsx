@@ -92,18 +92,11 @@ function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClos
   const name = String(profile.profileName || 'Someone');
   const hasTapSupport = !!myEmail && !!email;
 
-  const tappedTap = hasTapSupport ? isTapped(email, 'tap') : false;
-  const tappedWoof = hasTapSupport ? isTapped(email, 'woof') : false;
+  const tappedBoo = hasTapSupport ? isTapped(email, 'boo') : false;
 
-  const handleTap = async () => {
+  const handleBoo = async () => {
     if (!hasTapSupport) return;
-    await sendTap(email, name, 'tap');
-    onClose();
-  };
-
-  const handleWoof = async () => {
-    if (!hasTapSupport) return;
-    await sendTap(email, name, 'woof');
+    await sendTap(email, name, 'boo');
     onClose();
   };
 
@@ -160,23 +153,13 @@ function QuickActionMenu({ profile, position, myEmail, isTapped, sendTap, onClos
 
         {/* Actions */}
         <button
-          onClick={handleTap}
+          onClick={handleBoo}
           disabled={!hasTapSupport}
           className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors disabled:opacity-40"
-          aria-label={tappedTap ? 'Un-boo this person' : 'Boo this person'}
+          aria-label={tappedBoo ? 'Un-boo this person' : 'Boo this person'}
         >
-          <span className="text-base">{tappedTap ? '👻' : '👻'}</span>
-          <span className={tappedTap ? 'text-[#C8962C]' : 'text-white'}>{tappedTap ? 'Boo\'d' : 'Boo'}</span>
-        </button>
-
-        <button
-          onClick={handleWoof}
-          disabled={!hasTapSupport}
-          className="w-full px-4 py-3 text-left text-sm font-semibold flex items-center gap-3 active:bg-white/5 transition-colors border-t border-white/5 disabled:opacity-40"
-          aria-label={tappedWoof ? 'Un-woof this person' : 'Woof this person'}
-        >
-          <span className="text-base">{tappedWoof ? '🐾' : '🐕'}</span>
-          <span className={tappedWoof ? 'text-[#C8962C]' : 'text-white'}>{tappedWoof ? 'Woofed' : 'Woof'}</span>
+          <span className="text-base">👻</span>
+          <span className={tappedBoo ? 'text-[#C8962C]' : 'text-white'}>{tappedBoo ? 'Boo\'d' : 'Boo'}</span>
         </button>
 
         <button
