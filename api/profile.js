@@ -187,19 +187,26 @@ export default async function handler(req, res) {
         },
       });
 
+      // GDPR: strip email from response — never expose to other users
+      const stripEmail = (row) => {
+        if (!row) return row;
+        const { email: _email, user_email: _ue, ...safe } = row;
+        return safe;
+      };
+
       const tables = ['User', 'users'];
       for (const table of tables) {
         if (email) {
           const { data } = await fetchMaybeSingle(authedClient, table, { email });
-          if (data) return json(res, 200, { user: data });
+          if (data) return json(res, 200, { user: stripEmail(data) });
         }
 
         if (uid) {
           const { data: byAuth } = await fetchMaybeSingle(authedClient, table, { auth_user_id: uid });
-          if (byAuth) return json(res, 200, { user: byAuth });
+          if (byAuth) return json(res, 200, { user: stripEmail(byAuth) });
 
           const { data: byId } = await fetchMaybeSingle(authedClient, table, { id: uid });
-          if (byId) return json(res, 200, { user: byId });
+          if (byId) return json(res, 200, { user: stripEmail(byId) });
         }
       }
     }
