@@ -12,13 +12,14 @@ const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
 const SUPABASE_STORAGE_KEY = `sb-klsywpvncqqglhnhrjbh-auth-token`;
 
 const TEST_USER_A = {
-  email: process.env.TEST_USER_A_EMAIL ?? 'test-red@hotmessldn.com',
-  password: process.env.TEST_USER_A_PASSWORD ?? 'Hotmess2026!',
+  // Use || not ?? so empty-string secrets in CI fall through to the default
+  email: process.env.TEST_USER_A_EMAIL || 'test-red@hotmessldn.com',
+  password: process.env.TEST_USER_A_PASSWORD || 'Hotmess2026!',
 };
 
 const TEST_USER_B = {
-  email: process.env.TEST_USER_B_EMAIL ?? 'test-blue@hotmessldn.com',
-  password: process.env.TEST_USER_B_PASSWORD ?? 'Hotmess2026!',
+  email: process.env.TEST_USER_B_EMAIL || 'test-blue@hotmessldn.com',
+  password: process.env.TEST_USER_B_PASSWORD || 'Hotmess2026!',
 };
 
 /**
