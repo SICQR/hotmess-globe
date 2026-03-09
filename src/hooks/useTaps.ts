@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { pushNotify } from '@/lib/pushNotify';
 
 export type TapType = 'tap' | 'woof';
 
@@ -137,19 +138,32 @@ export function useTaps(myEmail: string | null) {
         // best-effort — fall back to email handle
       }
 
+      const notifTitle = tapType === 'woof' ? 'New Woof! 🐾' : 'Boo\'d you! 👻';
+      const notifBody = `${myDisplayName} ${tapType === 'woof' ? 'woofed at you' : 'boo\'d you'}!`;
+
+      // In-app notification
       supabase
         .from('notifications')
         .insert({
           user_email: tappedEmail,
           type: tapType === 'woof' ? 'woof' : 'boo',
-          title: tapType === 'woof' ? 'New Woof! 🐾' : 'Boo\'d you! 👻',
-          message: `${myDisplayName} ${tapType === 'woof' ? 'woofed at you' : 'boo\'d you'}!`,
+          title: notifTitle,
+          message: notifBody,
           read: false,
         })
         .then(({ error: notifErr }) => {
           if (notifErr) console.warn('[useTaps] notification insert failed:', notifErr.message);
         })
         .catch(() => {});
+
+      // Push notification (wakes device even when tab is closed)
+      pushNotify({
+        emails: [tappedEmail],
+        title: notifTitle,
+        body: notifBody,
+        tag: tapType === 'woof' ? 'woof' : 'boo',
+        url: '/ghosted',
+      });
 
       return true;
     },
