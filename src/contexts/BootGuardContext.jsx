@@ -102,9 +102,21 @@ export function BootGuardProvider({ children }) {
     initAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+    //
+    // IMPORTANT: This callback must NOT be async / must not await anything that
+    // calls supabase.auth.getSession() — including loadProfile().
+    //
+    // Why: supabase-js v2 holds the Navigator Lock inside _initialize() while
+    // calling _notifyAllSubscribers(), which awaits ALL subscriber callbacks via
+    // Promise.all().  If we await loadProfile() here, loadProfile() calls
+    // supabase.from().select() → _getAccessToken() → getSession() → tries to
+    // acquire the SAME Navigator Lock → circular deadlock, app stuck at LOADING.
+    //
+    // Fix: fire loadProfile() without awaiting (void).  The callback returns
+    // immediately, Promise.all resolves, _initialize() releases the lock, and
+    // loadProfile() can then safely acquire it for its own getSession() call.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (!mounted) return;
-
 
       if (event === 'SIGNED_OUT' || !newSession?.user?.id) {
         setSession(null);
@@ -115,7 +127,8 @@ export function BootGuardProvider({ children }) {
 
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setSession(newSession);
-        await loadProfile(newSession.user.id);
+        // Do NOT await — see comment above re: Navigator Lock deadlock.
+        void loadProfile(newSession.user.id);
       }
     });
 

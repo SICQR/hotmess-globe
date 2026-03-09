@@ -1,4 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
+import { config as loadDotenv } from 'dotenv';
+
+// Load .env.local so VITE_* vars are available in process.env for test helpers.
+// In CI these are already set as real env vars (from secrets), so this is a no-op there.
+loadDotenv({ path: '.env.local', override: false });
 
 export default defineConfig({
   testDir: './e2e',
