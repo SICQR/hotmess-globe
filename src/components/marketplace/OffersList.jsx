@@ -83,7 +83,7 @@ export default function OffersList({ userEmail, type = 'received' }) {
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <h3 className="font-bold text-white mb-1">
-                  {type === 'received' ? `Offer from ${offer.buyer_email}` : `Your offer`}
+                  {type === 'received' ? `Offer from ${offer.buyer_name || 'Buyer'}` : `Your offer`}
                 </h3>
                 <div className="text-sm text-white/60 flex items-center gap-2">
                   <Clock className="w-3 h-3" />

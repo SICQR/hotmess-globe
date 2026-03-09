@@ -213,7 +213,7 @@ export default function ReferralProgram() {
                     {referral.referred_email?.[0]?.toUpperCase() || '?'}
                   </div>
                   <div>
-                    <div className="font-semibold">{referral.referred_email}</div>
+                    <div className="font-semibold">{referral.referred_name || 'Referred user'}</div>
                     <div className="text-xs text-white/60">
                       {new Date(referral.created_at).toLocaleDateString()}
                     </div>

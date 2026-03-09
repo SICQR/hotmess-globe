@@ -16,6 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Shield, FileText, MapPin, KeyRound, Camera, Check, Loader2, Delete } from 'lucide-react';
 import { toast } from 'sonner';
+import { validateDisplayName } from '@/lib/utils';
 
 const AGE_KEY = 'hm_age_confirmed_v1';
 const GOLD = '#C8962C';
@@ -282,10 +283,13 @@ export default function OnboardingGate() {
 
   // ── Step 4: saves name + PIN ──────────────────────────────────────────────
   const handleSaveProfile = useCallback(async () => {
-    if (!displayName.trim()) {
-      toast.error('Please enter your name');
+    // Validate display_name with comprehensive rules (GDPR: no email, min length)
+    const validation = validateDisplayName(displayName);
+    if (!validation.isValid) {
+      toast.error(validation.error);
       return;
     }
+
     if (pin.length !== 4) {
       toast.error('PIN must be 4 digits');
       return;
@@ -298,11 +302,12 @@ export default function OnboardingGate() {
     setSaving(true);
     try {
       const hash = await hashPin(pin);
+      const trimmed = displayName.trim();
 
       if (session?.user?.id) {
         const { error } = await supabase
           .from('profiles')
-          .update({ pin_code_hash: hash, display_name: displayName.trim() })
+          .update({ pin_code_hash: hash, display_name: trimmed })
           .eq('id', session.user.id);
         if (error) {
           console.error('[Onboarding] Failed to save profile:', error);
@@ -661,7 +666,7 @@ export default function OnboardingGate() {
                       onClick={() => {
                         if (pin.length === 4) setPinPhase('confirm');
                       }}
-                      disabled={pin.length !== 4 || !displayName.trim()}
+                      disabled={pin.length !== 4 || !validateDisplayName(displayName).isValid}
                     >
                       Next
                     </GoldButton>

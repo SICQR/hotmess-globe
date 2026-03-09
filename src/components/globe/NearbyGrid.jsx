@@ -197,7 +197,7 @@ export default function NearbyGrid({ userLocation }) {
                     <div className="aspect-square relative overflow-hidden">
                       <img
                         src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&size=400&background=C8962C&color=000`}
-                        alt={user.full_name || user.email}
+                        alt={user.full_name || 'User'}
                         className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
                       />
                       
@@ -232,7 +232,7 @@ export default function NearbyGrid({ userLocation }) {
                     <div className="p-3 space-y-1">
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="font-black text-sm truncate group-hover:text-[#C8962C] transition-colors">
-                          {user.full_name || user.email}
+                          {user.full_name || 'Anonymous'}
                         </h3>
                         <span className="text-[10px] text-white/40 font-mono whitespace-nowrap">
                           {getTimeAgo(user.updated_date || user.updated_at)}

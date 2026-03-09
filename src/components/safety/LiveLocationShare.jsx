@@ -580,7 +580,7 @@ export default function LiveLocationShare({
                       </div>
                       <div className="flex-1 text-left">
                         <div className="font-medium">{contact.name}</div>
-                        <div className="text-xs text-white/40">{contact.phone || contact.email}</div>
+                        <div className="text-xs text-white/40">{contact.phone || 'Contact saved'}</div>
                       </div>
                       {selectedContacts.includes(contact.id) && (
                         <Check className="w-5 h-5 text-[#C8962C]" />

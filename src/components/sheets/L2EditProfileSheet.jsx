@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSheet } from '@/contexts/SheetContext';
-import { cn } from '@/lib/utils';
+import { cn, validateDisplayName } from '@/lib/utils';
 
 const PRONOUNS_OPTS = ['he/him', 'she/her', 'they/them', 'he/they', 'she/they', 'any'];
 const BODY_TYPE_OPTS = ['slim', 'athletic', 'average', 'muscular', 'stocky', 'bear', 'chubby'];
@@ -203,7 +203,8 @@ export default function L2EditProfileSheet() {
   };
 
   const handleSave = async () => {
-    if (!pub.display_name.trim()) return toast.error('Display name required');
+    const validation = validateDisplayName(pub.display_name);
+    if (!validation.isValid) return toast.error(validation.error);
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -432,12 +433,12 @@ export default function L2EditProfileSheet() {
       {/* Save bar */}
       <div className="px-4 py-4 border-t border-white/8 bg-black/70 backdrop-blur-md">
         <button type="button" onClick={handleSave}
-          disabled={!pub.display_name.trim() || saving || avatarUploading}
+          disabled={!validateDisplayName(pub.display_name).isValid || saving || avatarUploading}
           className={cn(
             'w-full py-4 font-black uppercase tracking-wide rounded-2xl text-sm transition-all',
             saved
               ? 'bg-[#30D158]/20 text-[#30D158] border border-[#30D158]/30'
-              : pub.display_name.trim()
+              : validateDisplayName(pub.display_name).isValid
                 ? 'bg-[#C8962C] text-black active:scale-[0.98]'
                 : 'bg-white/5 text-white/20 cursor-not-allowed'
           )}>

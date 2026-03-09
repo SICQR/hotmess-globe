@@ -387,8 +387,11 @@ export default async function handler(req, res) {
         const lng = Number(row?.last_lng ?? row?.lng);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
 
-        // Use display_name or username, never expose email to other users
-        const displayName = String(row?.display_name || row?.username || row?.full_name || 'Unknown').trim();
+        // GDPR: Use display_name or username, never expose email to other users
+        // display_name must be set (not empty or email-like) to appear on grid
+        const displayName = String(row?.display_name || '').trim();
+        if (!displayName) return null; // Reject profiles without a valid display_name
+
         const fullName = String(row?.full_name || displayName).trim();
         const uniqueId = row?.id ? String(row.id).trim() : null;
         const dedupeKey = String(row?.auth_user_id || uniqueId || fullName).trim();

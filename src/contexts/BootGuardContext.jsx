@@ -220,6 +220,11 @@ export function BootGuardProvider({ children }) {
         setBootState(BOOT_STATES.NEEDS_AGE);
       } else if (!profileData?.onboarding_complete) {
         setBootState(BOOT_STATES.NEEDS_ONBOARDING);
+      } else if (!profileData?.display_name?.trim()) {
+        // CRITICAL: User completed onboarding but has no display_name
+        // This catches legacy profiles created before display_name was enforced
+        logBoot('Profile missing display_name, forcing onboarding');
+        setBootState(BOOT_STATES.NEEDS_ONBOARDING);
       } else if (!profileData?.community_attested_at && !localCommunity) {
         setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
       } else {

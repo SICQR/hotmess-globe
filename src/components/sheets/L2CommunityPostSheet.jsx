@@ -222,7 +222,7 @@ export default function L2CommunityPostSheet() {
             >
               <div className="w-8 h-8 rounded-full bg-[#C8962C]/15 flex items-center justify-center flex-shrink-0">
                 <span className="text-[#C8962C] font-black text-xs">
-                  {currentUser ? (currentUser.email?.[0] || '?').toUpperCase() : '?'}
+                  {currentUser ? (currentUser.display_name?.[0] || currentUser.username?.[0] || '?').toUpperCase() : '?'}
                 </span>
               </div>
               <span className="text-white/30 text-sm flex-1">

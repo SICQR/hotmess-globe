@@ -65,7 +65,7 @@ export function UserPresenceBadge({
             <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
           ) : (
             <span className="text-white font-bold">
-              {user.full_name?.[0] || user.email?.[0] || '?'}
+              {user.full_name?.[0] || user.display_name?.[0] || '?'}
             </span>
           )}
         </div>
