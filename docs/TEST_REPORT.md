@@ -101,7 +101,7 @@ npx vitest run src/test/sheetPolicy.test.ts
 - Boot FSM state transitions (BootGuardContext)
 - Sheet router (36+ sheets — zero tests)
 - Persona switching (PersonaContext)
-- Taps/woofs system (useTaps hook)
+- Boos system (useTaps hook)
 - Push notification flow
 - Chat message sending
 - Beacon creation flow

@@ -51,7 +51,7 @@ https://klsywpvncqqglhnhrjbh.supabase.co/storage/v1/object/public/uploads/{path}
 
 | Table | Purpose | Key Columns |
 |-------|---------|-------------|
-| `taps` | Likes/Woofs | tapper_email, tapped_email, tap_type |
+| `taps` | Boos | tapper_email, tapped_email, tap_type |
 | `matches` | Mutual taps | user1_email, user2_email, matched_at |
 | `profiles_blocked` | Block list | blocker_email, blocked_email |
 | `user_favorites` | Saved profiles | user_email, favorite_email |

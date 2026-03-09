@@ -24,7 +24,7 @@ Key recent migrations:
 | `20260226000070_community_gate.sql` | `profiles.community_attested_at` column |
 | `20260226000080_rls_critical_fixes.sql` | 4 RLS holes patched + INSERT policies + user_favorites |
 | `20260226000085_emergency_contacts.sql` | `emergency_contacts` table |
-| `20260226000090_taps.sql` | `taps` / woofs system |
+| `20260226000090_taps.sql` | `taps` / boos system |
 | `20260226000095_push_subscriptions.sql` | `push_subscriptions` table |
 
 ---

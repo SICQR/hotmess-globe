@@ -296,10 +296,10 @@ Grid specs:
 
 Interaction Map:
   Cell tap          → L2ProfileSheet
-  Cell long-press   → Quick action (Woof / Chat)
+  Cell long-press   → Quick action (Boo / Chat)
   Filter chip tap   → Apply filter inline
   "Filters" chip    → L3FiltersSheet (z-150)
-  Woof/tap action   → Haptic + gold burst animation
+  Boo action   → Haptic + gold burst animation
   Chat (gated)      → L2ChatSheet (Ghosted only)
   Video (gated)     → L2VideoCallSheet (Ghosted only)
 ```
@@ -357,14 +357,14 @@ FAB:                + button → L2SellSheet (bottom-right)
 Avatar:             72px · 50% · 3px solid gold border · glow
 Name:               22px / 800 / white
 Handle:             14px / #8E8E93
-Stats row:          flex space-around · views/woofs/events
+Stats row:          flex space-around · views/boos/events
 Settings rows:      chevron right · tap → L2 sheets
 
 Interaction Map:
   Avatar long-press → L3PersonaSwitcherSheet
   Avatar tap        → Edit Profile (L2)
   Stat: Views tap   → Who viewed you (L2)
-  Stat: Woofs tap   → Taps inbox (L2)
+  Stat: Boos tap   → Boos inbox (L2)
   Personas row      → L3PersonaSwitcherSheet
   SOS Contacts row  → Emergency contacts (L2)
 ```

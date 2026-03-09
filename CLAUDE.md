@@ -24,7 +24,7 @@ You are the head of engineering and a co-founder of HOTMESS. Phil is the product
 ### Commit style
 Short, imperative, specific. No co-author lines unless it's a meaningful collaboration. Example:
 ```
-feat(ghosted): woof button + amber ring on cards, red badge in OSBottomNav
+feat(ghosted): boo button + amber ring on cards, red badge in OSBottomNav
 ```
 
 ### When Phil says "go" or "yes" or similar
@@ -98,7 +98,7 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 | User Type | Status | Remaining gaps |
 |-----------|--------|----------------|
 | New user (first arrival) | ✅ | — 7-step onboarding → profile with age/position/looking_for on grid immediately |
-| Ghosted social user | ✅ | — Grid, taps, woofs, chat, video call, filters all wired |
+| Ghosted social user | ✅ | — Grid, taps, boos, chat, video call, filters all wired |
 | Seller | ⚠️ | ✅ List, view listings, view earnings (payouts sheet). ❌ Preloved payment = no Stripe (arrange via chat) |
 | Buyer | ⚠️ | ✅ Shopify checkout real. ❌ Preloved = order record only, payment not moved |
 | Radio listener | ✅ | — Stream live, mini player persists, show cards, Full Schedule button → L2ScheduleSheet |
@@ -363,7 +363,7 @@ Removed sections (no longer in HomeMode): hero banner, community section, scene 
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| 17 | Filters drawer + Taps/Woofs | ✅ **SHIPPED** | L2FiltersSheet wired in GhostedMode (openSheet('filters'), active count badge, localStorage). useTaps + woof button + amber ring on cards. L2TapsSheet registered. Red badge in OSBottomNav opens taps sheet. |
+| 17 | Filters drawer + Boos | ✅ **SHIPPED** | L2FiltersSheet wired in GhostedMode (openSheet('filters'), active count badge, localStorage). useTaps + boo button + amber ring on cards. L2TapsSheet registered. Red badge in OSBottomNav opens boos sheet. |
 | 16 | IncomingCallBanner | ✅ **SHIPPED** | Platform-adaptive iOS/Android, committed ab56469 |
 | 16 | Typing indicators | ✅ **SHIPPED** | TypingIndicator.jsx + useTypingIndicator already live in L2ChatSheet |
 | 16 | Read receipts | ⚠️ **PARTIAL** | markRead() writes to localStorage; DB-level unread_count field on chat_threads used by useUnreadCount but not fully synced server-side |

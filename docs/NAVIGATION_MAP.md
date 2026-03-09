@@ -228,7 +228,7 @@ sequenceDiagram
     U->>G: Browse grid
     G->>P: Tap profile card
     P->>P: View profile details
-    U->>P: Tap "Woof" or "Tap"
+    U->>P: Tap "Boo"
     P-->>U: Match created
     U->>C: Open chat
     C->>C: Send messages
@@ -322,7 +322,7 @@ sequenceDiagram
 | MarketMode | "Sell" | List item | `sell` |
 | PulseMode | Beacon marker | View beacon | `beacon` |
 | PulseMode | "+" FAB | Create event | `create-event` |
-| ProfileSheet | "Woof" | Super-like | Taps table |
+| ProfileSheet | "Boo" | Ghost interest | Taps table |
 | ProfileSheet | "Tap" | Like | Taps table |
 | ProfileSheet | "Message" | Open chat | `chat` |
 | CartSheet | "Checkout" | Pay | `checkout` |
