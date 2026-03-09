@@ -56,8 +56,8 @@ export default function BulkUserInvite() {
         <div className="bg-black/50 border border-white/10 p-4">
           <p className="text-xs text-white/40 uppercase tracking-wider mb-3">Test Users ({testUsers.length})</p>
           <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-            {testUsers.map(email => (
-              <div key={email} className="text-white/60">{email}</div>
+            {testUsers.map((email, idx) => (
+              <div key={idx} className="text-white/60">Test user {idx + 1}</div>
             ))}
           </div>
         </div>
@@ -86,7 +86,7 @@ export default function BulkUserInvite() {
             <div className="space-y-2">
               {results.map((result, idx) => (
                 <div key={idx} className="flex items-center justify-between text-xs">
-                  <span className="font-mono text-white/60">{result.email}</span>
+                  <span className="font-mono text-white/60">User {idx + 1}</span>
                   {result.success ? (
                     <CheckCircle className="w-4 h-4 text-[#39FF14]" />
                   ) : (

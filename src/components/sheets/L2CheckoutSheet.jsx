@@ -150,7 +150,7 @@ export default function L2CheckoutSheet({ id, cartItems, total }) {
         <p className="text-white/50 text-sm mb-1">
           Message the seller to arrange payment
         </p>
-        <p className="text-[#C8962C] font-bold text-sm">{form.email}</p>
+        <p className="text-[#C8962C] font-bold text-sm">{form.fullName || 'Order Confirmation'}</p>
         <p className="text-white/30 text-xs mt-3">Order total: £{orderTotal.toFixed(2)}</p>
         <div className="flex gap-3 mt-6">
           <button

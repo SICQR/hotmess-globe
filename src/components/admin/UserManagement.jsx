@@ -88,7 +88,7 @@ export default function UserManagement() {
         <div className="divide-y-2 divide-white/10">
           {filteredUsers.map((user, idx) => (
             <motion.div
-              key={user.email}
+              key={user.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.02 }}
@@ -104,7 +104,7 @@ export default function UserManagement() {
                 </div>
                 <div>
                   <p className="font-black text-sm">{user.full_name}</p>
-                  <p className="text-xs text-white/40 font-mono">{user.email}</p>
+                  <p className="text-xs text-white/40 font-mono">{user.id}</p>
                 </div>
               </div>
               <div className="col-span-2">

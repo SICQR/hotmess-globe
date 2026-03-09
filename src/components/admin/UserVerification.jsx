@@ -70,7 +70,7 @@ export default function UserVerification() {
           <div className="space-y-3">
             {pendingVerifications.map((user, idx) => (
               <motion.div
-                key={user.email}
+                key={user.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
@@ -92,7 +92,7 @@ export default function UserVerification() {
                           Pending
                         </Badge>
                       </div>
-                      <p className="text-xs text-white/40">{user.email}</p>
+                      <p className="text-xs text-white/40">{user.id}</p>
                       <p className="text-xs text-white/60 mt-1">
                         {user.membership_tier || 'free'}
                       </p>
@@ -127,11 +127,11 @@ export default function UserVerification() {
         <h3 className="text-lg font-black uppercase mb-4">Verified Users ({verifiedUsers.length})</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {verifiedUsers.slice(0, 10).map((user) => (
-            <div key={user.email} className="bg-[#39FF14]/10 border border-[#39FF14]/40 rounded-xl p-4 flex items-center gap-3">
+            <div key={user.id} className="bg-[#39FF14]/10 border border-[#39FF14]/40 rounded-xl p-4 flex items-center gap-3">
               <CheckCircle className="w-5 h-5 text-[#39FF14]" />
               <div>
                 <p className="font-bold text-sm">{user.full_name}</p>
-                <p className="text-xs text-white/40">{user.email}</p>
+                <p className="text-xs text-white/40">{user.id}</p>
               </div>
             </div>
           ))}

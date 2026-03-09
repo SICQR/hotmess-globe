@@ -417,7 +417,7 @@ export default function SupportTicketManagement() {
                         <CategoryIcon className={`w-5 h-5 mt-0.5 ${PRIORITY_COLORS[ticket.priority]}`} />
                         <div className="flex-1 min-w-0">
                           <p className="font-bold truncate">{ticket.subject}</p>
-                          <p className="text-xs text-white/40 truncate">{ticket.user_email}</p>
+                          <p className="text-xs text-white/40 truncate">{ticket.user_id || 'User'}</p>
                           <p className="text-xs text-white/60 mt-1 line-clamp-2">{ticket.message}</p>
                         </div>
                       </div>
@@ -471,7 +471,7 @@ export default function SupportTicketManagement() {
               <div className="bg-white/5 border border-white/10 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <User className="w-4 h-4 text-white/40" />
-                  <span className="text-sm text-white/60">{selectedTicket.user_email}</span>
+                  <span className="text-sm text-white/60">{selectedTicket.user_id || 'User'}</span>
                 </div>
                 <h4 className="font-bold text-lg mb-2">{selectedTicket.subject}</h4>
                 <p className="text-white/80 text-sm whitespace-pre-wrap">{selectedTicket.message}</p>

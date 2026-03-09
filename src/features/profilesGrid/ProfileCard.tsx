@@ -508,8 +508,9 @@ function ProfileCardInner({
     };
     const lastSeen = formatLastSeen((profile as any)?.last_seen);
 
+    // GDPR: Use display_name only, never email
     const profileEmail = String((profile as any)?.email || '');
-    const profileName = String(profile.profileName || 'HOTMESS');
+    const profileName = String(profile.profileName || '').trim() || 'HOTMESS';
     const hasTapSupport = !!onSendTap && !!profileEmail && !!isTapped;
 
     const tappedTap = hasTapSupport ? isTapped!(profileEmail, 'tap') : false;

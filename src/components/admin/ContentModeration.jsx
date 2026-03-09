@@ -341,7 +341,7 @@ Be concise and actionable.`,
               {messages.slice(0, 30).map(msg => (
                 <div key={msg.id} className="bg-white/5 border-2 border-white/10 p-3 font-mono text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-white/60">{msg.sender_email}</span>
+                    <span className="text-white/60">{msg.sender_id || 'User'}</span>
                     <span className="text-white/40">{format(new Date(msg.created_date), 'MMM d, HH:mm')}</span>
                   </div>
                   <p className="text-white/40 mt-1">Type: {msg.message_type}</p>

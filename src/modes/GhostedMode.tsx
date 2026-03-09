@@ -369,6 +369,10 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
   // ---- Combined filter predicate (filters + tab) ----
   const filterProfiles = useCallback(
     (profile: any) => {
+      // GDPR: Exclude profiles without a display_name (safety layer)
+      const displayName = String(profile?.profileName || '').trim();
+      if (!displayName) return false;
+
       // Sheet filters first
       if (filters.onlineOnly && !profile.is_online && !profile.onlineNow) return false;
 
