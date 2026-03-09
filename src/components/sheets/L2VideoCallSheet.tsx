@@ -26,6 +26,7 @@ import { motion } from 'framer-motion';
 import { Video, VideoOff, Mic, MicOff, PhoneOff, Maximize, Shield, Loader2 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
+import { pushNotify } from '@/lib/pushNotify';
 
 interface L2VideoCallSheetProps {
   callId?: string;
@@ -273,6 +274,26 @@ export default function L2VideoCallSheet({
         if (error) throw error;
         callId = callRow.id;
         setActiveCallId(callId);
+
+        // Push notification to wake callee's device (fire-and-forget)
+        (async () => {
+          try {
+            const [{ data: calleeProfile }, { data: callerProfile }] = await Promise.all([
+              supabase.from('profiles').select('email').eq('id', calleeId).maybeSingle(),
+              supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle(),
+            ]);
+            if (calleeProfile?.email) {
+              const callerName = callerProfile?.display_name || 'Someone';
+              pushNotify({
+                emails: [calleeProfile.email],
+                title: `${callerName} is calling you`,
+                body: 'Incoming video call on HOTMESS',
+                tag: `call-${callId}`,
+                url: '/ghosted',
+              });
+            }
+          } catch { /* best-effort */ }
+        })();
 
         setStatusLabel('Ringing…');
         const pc = createPC(callId, user.id, calleeId);
