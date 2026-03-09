@@ -130,12 +130,12 @@ export function SheetProvider({ children }) {
 
   // Open a sheet — enforces UI policy (chat/video/travel gated to Ghosted context)
   const openSheet = useCallback((type, props = {}) => {
-    if (!canOpenSheet(type, location.pathname, state.stack)) {
+    if (!canOpenSheet(type, location.pathname, state.sheetStack)) {
       toast('Go to Ghosted to start a conversation', { duration: 2500 });
       return;
     }
     dispatch({ type: 'OPEN_SHEET', payload: { type, props } });
-  }, [location.pathname, state.stack]);
+  }, [location.pathname, state.sheetStack]);
 
   // Close the active sheet
   const closeSheet = useCallback(() => {
