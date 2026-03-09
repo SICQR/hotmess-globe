@@ -502,6 +502,7 @@ export default function GlobePage() {
   }, [navigate, previewBeacon]);
 
   const [selectedCity, setSelectedCity] = useState(null);
+  const [showCityOverlay, setShowCityOverlay] = useState(true);
   const globeRef = React.useRef(null);
 
   const handleCityClick = useCallback((city) => {
@@ -867,13 +868,16 @@ export default function GlobePage() {
       )}
 
       {/* Real-time City Data Overlay */}
-      <CityDataOverlay 
-        selectedCity={selectedCity?.name || null} 
-        onCitySelect={(cityName) => {
-          const city = cities.find(c => c.name === cityName);
-          if (city) handleCityClick(city);
-        }}
-      />
+      {showCityOverlay && (
+        <CityDataOverlay
+          selectedCity={selectedCity?.name || null}
+          onCitySelect={(cityName) => {
+            const city = cities.find(c => c.name === cityName);
+            if (city) handleCityClick(city);
+          }}
+          onDismiss={() => setShowCityOverlay(false)}
+        />
+      )}
 
       <TelegramPanel open={showHotmessFeed} onClose={() => setShowHotmessFeed(false)} />
       </div>

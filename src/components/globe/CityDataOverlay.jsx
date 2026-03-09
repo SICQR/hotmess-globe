@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Cloud, CloudRain, Sun, Wind, Zap, Bus, Flame } from 'lucide-react';
+import { Cloud, CloudRain, Sun, Wind, Zap, Bus, Flame, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // City data generator - uses real beacon/check-in data, weather/transit are placeholders for beta
@@ -40,7 +40,7 @@ const WeatherIcon = ({ type }) => {
   }
 };
 
-export default function CityDataOverlay({ selectedCity, onCitySelect }) {
+export default function CityDataOverlay({ selectedCity, onCitySelect, onDismiss }) {
   const { data: cities = [] } = useQuery({
     queryKey: ['cities'],
     queryFn: () => base44.entities.City.list(),
@@ -83,6 +83,15 @@ export default function CityDataOverlay({ selectedCity, onCitySelect }) {
             transition={{ duration: 2, repeat: Infinity }}
             className="ml-auto w-2 h-2 bg-red-500 rounded-full"
           />
+          {onDismiss && (
+            <button
+              onClick={onDismiss}
+              className="ml-2 text-white/40 hover:text-white/80 transition-colors"
+              aria-label="Close city data"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
         </div>
 
         <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
