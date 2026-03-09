@@ -14,12 +14,13 @@ import { useQuery } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
 import {
   MessageCircle, MapPin, Shield, Plane,
-  Loader2, MoreVertical, Flag, Ban, X, ChevronLeft,
+  Loader2, MoreVertical, Flag, Ban, X, ChevronLeft, Ghost,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import ProfileContentCard from '@/components/cards/ProfileContentCard';
+import { useTaps } from '@/hooks/useTaps';
 
 const Chip = ({ children, gold = false }) => (
   <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
@@ -39,6 +40,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
   const [reportReason, setReportReason] = useState('');
   const [isBlocking, setIsBlocking] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
+  const { isTapped, sendTap } = useTaps();
 
   // ── Data queries ────────────────────────────────────────────────────────
 
@@ -202,23 +204,25 @@ export default function L2ProfileSheet({ email, uid, id }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data: targetProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', profileUser.email)
-        .single();
-
-      if (!targetProfile) throw new Error('User not found');
-
+      // Write to user_blocks (canonical table — read by api/profiles.js for grid filtering)
       const { error } = await supabase
+        .from('user_blocks')
+        .insert({
+          blocker_email: currentUser.email,
+          blocked_email: profileUser.email || profileUser.userId,
+        });
+
+      if (error && !error.message?.includes('duplicate')) throw error;
+
+      // Also write to profile_blocklist_users (legacy — used by some older queries)
+      await supabase
         .from('profile_blocklist_users')
         .insert({
           profile_id: user.id,
-          blocked_user_id: targetProfile.id,
-          reason: 'User blocked from profile',
-        });
+          viewer_user_id: profileUser.authUserId || profileUser.userId,
+        })
+        .catch(() => {}); // best-effort legacy sync
 
-      if (error) throw error;
       toast.success(`${profileUser.display_name || profileUser.username || 'User'} blocked`);
       setShowMoreMenu(false);
       closeSheet();
@@ -336,6 +340,19 @@ export default function L2ProfileSheet({ email, uid, id }) {
         {/* Name + persona overlay at bottom of hero */}
         <div className="absolute bottom-4 left-4 right-4 z-10">
           <div className="flex items-center gap-2">
+            {/* Presence dot */}
+            {(() => {
+              const ls = profileUser.last_seen;
+              const ms = ls ? Date.now() - new Date(ls).getTime() : Infinity;
+              const isOn = profileUser.is_online || ms < 10 * 60_000;
+              const isAway = ms < 60 * 60_000;
+              return (isOn || isAway) ? (
+                <span
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ background: isOn ? '#30D158' : '#FFEB3B', boxShadow: isOn ? '0 0 6px #30D158' : undefined }}
+                />
+              ) : null;
+            })()}
             <h2 className="text-2xl font-black text-white">{name}</h2>
             {isTravel && <Plane className="w-5 h-5 text-white/70 -rotate-45" />}
             {isVerified && (
@@ -476,13 +493,45 @@ export default function L2ProfileSheet({ email, uid, id }) {
             Edit Profile
           </Button>
         ) : (
-          <Button
-            onClick={handleMessage}
-            className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 rounded-xl font-bold"
-          >
-            <MessageCircle className="w-5 h-5 mr-2" />
-            Message
-          </Button>
+          <>
+            {/* Tap/Woof buttons — Grindr-style quick actions */}
+            <button
+              onClick={() => {
+                const targetEmail = profileUser.email || profileUser.userId;
+                if (targetEmail) sendTap(targetEmail, 'boo');
+              }}
+              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                (profileUser.email || profileUser.userId) && isTapped(profileUser.email || profileUser.userId, 'boo')
+                  ? 'bg-[#C8962C] text-black' : 'bg-white/10 text-white/60 hover:bg-white/15'
+              }`}
+              title="Boo"
+            >
+              <Ghost className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => {
+                const targetEmail = profileUser.email || profileUser.userId;
+                if (targetEmail) sendTap(targetEmail, 'woof');
+              }}
+              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                (profileUser.email || profileUser.userId) && isTapped(profileUser.email || profileUser.userId, 'woof')
+                  ? 'bg-[#C8962C] text-black' : 'bg-white/10 text-white/60 hover:bg-white/15'
+              }`}
+              title="Woof"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="4" r="2" /><circle cx="18" cy="8" r="2" /><circle cx="20" cy="16" r="2" />
+                <path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" />
+              </svg>
+            </button>
+            <Button
+              onClick={handleMessage}
+              className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 rounded-xl font-bold"
+            >
+              <MessageCircle className="w-5 h-5 mr-2" />
+              Message
+            </Button>
+          </>
         )}
       </div>
 

@@ -328,23 +328,29 @@ export default async function handler(req, res) {
   let rows = Array.isArray(data) ? data : [];
 
     // Block filtering: exclude users the current user has blocked (and users who blocked them)
+    // user_blocks uses email columns (blocker_email, blocked_email)
     if (currentAuthUserId && serviceClient) {
       try {
-        const { data: blocks } = await serviceClient
-          .from('user_blocks')
-          .select('blocker_id, blocked_id')
-          .or(`blocker_id.eq.${currentAuthUserId},blocked_id.eq.${currentAuthUserId}`);
+        const { data: { user: authUser } } = await serviceClient.auth.admin.getUserById(currentAuthUserId);
+        const myEmail = authUser?.email;
 
-        if (Array.isArray(blocks) && blocks.length > 0) {
-          const blockedIds = new Set();
-          blocks.forEach((b) => {
-            if (b.blocker_id === currentAuthUserId) blockedIds.add(b.blocked_id);
-            if (b.blocked_id === currentAuthUserId) blockedIds.add(b.blocker_id);
-          });
-          rows = rows.filter((r) => {
-            const uid = r?.auth_user_id ? String(r.auth_user_id) : null;
-            return !uid || !blockedIds.has(uid);
-          });
+        if (myEmail) {
+          const { data: blocks } = await serviceClient
+            .from('user_blocks')
+            .select('blocker_email, blocked_email')
+            .or(`blocker_email.eq.${myEmail},blocked_email.eq.${myEmail}`);
+
+          if (Array.isArray(blocks) && blocks.length > 0) {
+            const blockedEmails = new Set();
+            blocks.forEach((b) => {
+              if (b.blocker_email === myEmail) blockedEmails.add(b.blocked_email);
+              if (b.blocked_email === myEmail) blockedEmails.add(b.blocker_email);
+            });
+            rows = rows.filter((r) => {
+              const email = r?.email ? String(r.email).trim().toLowerCase() : null;
+              return !email || !blockedEmails.has(email);
+            });
+          }
         }
       } catch {
         // Best-effort — grid still works without block filtering

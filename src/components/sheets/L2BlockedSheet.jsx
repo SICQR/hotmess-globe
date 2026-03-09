@@ -1,6 +1,7 @@
 /**
  * L2BlockedSheet — Blocked Users list
  * Shows who you've blocked with option to unblock.
+ * Reads from user_blocks (canonical) with fallback display from User table.
  */
 
 import { useState, useEffect } from 'react';
@@ -18,30 +19,59 @@ export default function L2BlockedSheet() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
 
-      const { data } = await supabase
-        .from('profile_blocklist_users')
-        .select('blocked_user_id, created_at, profiles!blocked_user_id(display_name, avatar_url)')
-        .eq('profile_id', user.id)
+      // Read from user_blocks (email-based, canonical table)
+      const { data: blocks } = await supabase
+        .from('user_blocks')
+        .select('id, blocked_email, created_at')
+        .eq('blocker_email', user.email)
         .order('created_at', { ascending: false });
 
-      setBlocked(data || []);
+      if (!blocks || blocks.length === 0) {
+        setBlocked([]);
+        setLoading(false);
+        return;
+      }
+
+      // Resolve blocked emails to display names (best-effort via User table)
+      const emails = blocks.map(b => b.blocked_email).filter(Boolean);
+      const { data: users } = await supabase
+        .from('User')
+        .select('email, display_name, avatar_url')
+        .in('email', emails);
+
+      const userMap = new Map((users || []).map(u => [u.email, u]));
+
+      setBlocked(blocks.map(b => ({
+        ...b,
+        profile: userMap.get(b.blocked_email) || null,
+      })));
       setLoading(false);
     };
     load();
   }, []);
 
-  const handleUnblock = async (blockedUserId) => {
-    setUnblocking(blockedUserId);
+  const handleUnblock = async (blockRow) => {
+    setUnblocking(blockRow.id);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Remove from user_blocks
       const { error } = await supabase
-        .from('profile_blocklist_users')
+        .from('user_blocks')
         .delete()
-        .eq('profile_id', user.id)
-        .eq('blocked_user_id', blockedUserId);
+        .eq('id', blockRow.id);
 
       if (error) throw error;
-      setBlocked(prev => prev.filter(b => b.blocked_user_id !== blockedUserId));
+
+      // Also clean up profile_blocklist_users (legacy, best-effort)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('profile_blocklist_users')
+          .delete()
+          .eq('profile_id', user.id)
+          .catch(() => {});
+      }
+
+      setBlocked(prev => prev.filter(b => b.id !== blockRow.id));
       toast.success('User unblocked');
     } catch {
       toast.error('Failed to unblock user');
@@ -78,9 +108,9 @@ export default function L2BlockedSheet() {
 
       <div className="flex-1 overflow-y-auto divide-y divide-white/5">
         {blocked.map(b => {
-          const profile = b.profiles;
+          const profile = b.profile;
           return (
-            <div key={b.blocked_user_id} className="px-4 py-4 flex items-center gap-3">
+            <div key={b.id} className="px-4 py-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-[#1C1C1E] flex-shrink-0 overflow-hidden">
                 {profile?.avatar_url
                   ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover opacity-50" />
@@ -94,11 +124,11 @@ export default function L2BlockedSheet() {
                 </p>
               </div>
               <button
-                onClick={() => handleUnblock(b.blocked_user_id)}
-                disabled={unblocking === b.blocked_user_id}
+                onClick={() => handleUnblock(b)}
+                disabled={unblocking === b.id}
                 className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-white/8 text-white/50 text-xs font-bold hover:bg-white/15 transition-colors disabled:opacity-50"
               >
-                {unblocking === b.blocked_user_id
+                {unblocking === b.id
                   ? <Loader2 className="w-3 h-3 animate-spin" />
                   : 'Unblock'}
               </button>
