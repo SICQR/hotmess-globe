@@ -440,6 +440,16 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/resolve-user-email' && method === 'GET') {
+          return importFresh('./api/resolve-user-email.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load resolve-user-email handler' }));
+            });
+        }
+
         if (path === '/api/viewer-location' && method === 'GET') {
           return importFresh('./api/viewer-location.js')
             .then((handler) => handler(req, res))
