@@ -425,7 +425,8 @@ export default function Connect() {
       const lat = Number(u?.last_lat ?? u?.lat);
       const lng = Number(u?.last_lng ?? u?.lng);
 
-      const name = String(u?.full_name || u?.profileName || u?.email || 'Unknown').trim();
+      // GDPR: never expose email as display name
+      const name = String(u?.full_name || u?.display_name || u?.profileName || u?.username || 'Unknown').trim();
       const city = u?.city ? String(u.city).trim() : null;
       const bio = u?.bio ? String(u.bio).trim() : '';
       const profileType = String(u?.profile_type || u?.profileType || '').trim() || undefined;
