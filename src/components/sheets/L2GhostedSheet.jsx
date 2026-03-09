@@ -256,7 +256,7 @@ export default function L2GhostedSheet() {
                           />
                         ) : (
                           <span className="text-lg font-black text-white">
-                            {user.full_name?.[0] || '?'}
+                            {user.display_name?.[0] || user.username?.[0] || '?'}
                           </span>
                         )}
                       </div>
@@ -267,7 +267,7 @@ export default function L2GhostedSheet() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-white font-bold truncate">
-                          {user.full_name || user.username || 'Anonymous'}
+                          {user.display_name || user.username || 'Anonymous'}
                         </p>
                         {user.membership_tier && user.membership_tier !== 'free' && (
                           <MembershipBadge tier={user.membership_tier} size="xs" />
@@ -300,7 +300,7 @@ export default function L2GhostedSheet() {
                       </Button>
                       <Button
                         size="sm"
-                        onClick={() => handleStartChat(user.email, user.full_name || user.username)}
+                        onClick={() => handleStartChat(user.email, user.display_name || user.username)}
                         className="bg-[#C8962C] hover:bg-[#C8962C]/90"
                       >
                         <MessageCircle className="w-4 h-4" />

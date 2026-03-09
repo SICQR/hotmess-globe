@@ -604,7 +604,7 @@ function ProfileCardInner({
     const handle =
       (profile as any)?.handle ||
       (profile as any)?.username ||
-      initialsFromName((profile as any)?.profileName || (profile as any)?.full_name || 'HM');
+      initialsFromName((profile as any)?.profileName || (profile as any)?.display_name || 'HM');
 
     const matchLabel = typeof profile.matchProbability === 'number' 
       ? `${Math.round(profile.matchProbability)}% match`

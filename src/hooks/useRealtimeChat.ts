@@ -148,11 +148,11 @@ export function useRealtimeChat({
             // Get sender info for notification
             const { data: senderData } = await supabase
               .from('profiles')
-              .select('full_name, avatar_url')
+              .select('display_name, username, avatar_url')
               .eq('email', newMessage.sender_email)
               .single();
 
-            const senderName = senderData?.full_name || 'Someone';
+            const senderName = senderData?.display_name || senderData?.username || 'Someone';
 
             // Show toast notification
             toast(senderName, {

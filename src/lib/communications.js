@@ -501,7 +501,7 @@ export async function createNotification({
           sendEmail({
             to: user.email,
             template: mapTypeToEmailTemplate(type),
-            data: { name: user.display_name || user.full_name, ...metadata },
+            data: { name: user.display_name || user.username || 'there', ...metadata },
           })
         );
       }

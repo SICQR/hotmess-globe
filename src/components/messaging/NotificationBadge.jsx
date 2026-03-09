@@ -74,11 +74,11 @@ export default function NotificationBadge({ user }) {
           // Get sender info for notification
           const { data: sender } = await supabase
             .from('profiles')
-            .select('full_name')
+            .select('display_name, username')
             .eq('email', newMessage.sender_email)
             .single();
-          
-          const senderName = sender?.full_name || 'Someone';
+
+          const senderName = sender?.display_name || sender?.username || 'Someone';
           
           // Browser notification if permitted and not focused
           if (
