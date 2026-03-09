@@ -31,7 +31,7 @@ const Chip = ({ children, gold = false }) => (
   </span>
 );
 
-export default function L2ProfileSheet({ email, uid }) {
+export default function L2ProfileSheet({ email, uid, id }) {
   const navigate = useNavigate();
   const { openSheet, closeSheet } = useSheet();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -47,14 +47,17 @@ export default function L2ProfileSheet({ email, uid }) {
     queryFn: () => base44.auth.me(),
   });
 
+  // Normalise: `id` (profile DB row id like "profile_xxx") maps to `uid`
+  const resolvedUid = uid || id || null;
+
   const { data: profileUser, isLoading } = useQuery({
-    queryKey: ['profile-sheet', email, uid],
+    queryKey: ['profile-sheet', email, resolvedUid],
     queryFn: async () => {
-      if (!email && !uid) return await base44.auth.me();
+      if (!email && !resolvedUid) return await base44.auth.me();
 
       const qs = new URLSearchParams();
       if (email) qs.set('email', email);
-      else if (uid) qs.set('uid', uid);
+      else if (resolvedUid) qs.set('uid', resolvedUid);
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -72,15 +75,15 @@ export default function L2ProfileSheet({ email, uid }) {
         const users = await base44.entities.User.filter({ email });
         return users?.[0] || null;
       }
-      if (uid) {
-        const users = await base44.entities.User.filter({ auth_user_id: uid });
+      if (resolvedUid) {
+        const users = await base44.entities.User.filter({ auth_user_id: resolvedUid });
         return users?.[0] || null;
       }
       return null;
     },
   });
 
-  const isOwnProfile = !email && !uid ||
+  const isOwnProfile = !email && !resolvedUid ||
     (currentUser?.email && profileUser?.email === currentUser.email);
 
   // Record profile view when profile loads (fire and forget, dedup: skip if viewed in last 24h)
