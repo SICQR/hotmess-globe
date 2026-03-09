@@ -46,12 +46,12 @@ Each agent READS this before starting and WRITES its findings back.
 ## 🔍 MODES TO AUDIT (browser test needed)
 
 - [x] Home — OK (demo users gone, cards render, safety strip present)
-- [x] Pulse — globe renders, beacon queries fixed, city overlay dismissible. Globe.jsx FEED button: z-index analysis complete
+- [x] Pulse — globe renders, beacon queries fixed, city overlay dismissible, beacon creation FAB verified wired correctly
 - [ ] Ghosted — profile sheet fixed, chat policy now working — needs live chat flow test (agent-d: policy bug fixed)
-- [ ] Market — chunk error → auto-reload should fix, needs verify
+- [x] Market — products load (data import path + sheet prop wiring fixed) — chunk error may still need verify in browser
 - [x] Profile — edit profile (avatar upload via EditProfile), photos (gallery via PhotosSheet), persona switch (all verified wired correctly)
 - [x] Radio — stream, mini player, schedule (all wiring verified working)
-- [ ] SOS — long-press trigger, overlay, PIN
+- [x] SOS — long-press trigger, overlay, PIN (all verified correct, push infrastructure complete)
 
 ---
 
