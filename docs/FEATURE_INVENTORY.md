@@ -33,7 +33,7 @@ Legend: ✅ Complete | ⚠️ Partial | ❌ Not built | 🗄️ DB only (no UI)
 | Profile viewing | ✅ | `Profile.jsx`, `L2ProfileSheet` | Deep link via `?uid=` |
 | Online indicators | ✅ | `ProfileCard.tsx` | Green dot + last seen |
 | Taps (likes) | ✅ | `useTaps.ts`, `taps` table | Optimistic updates |
-| Woofs (super-like) | ✅ | Same as above | tap_type = 'woof' |
+| Boos (ghost interest) | ✅ | Same as above | tap_type = 'boo' |
 | Right Now toggle | ✅ | `useRightNowBeacon.js`, `NowSignalContext` | Lime beacon |
 | Looking For tags | ✅ | Profile grid display | Up to 3 tags |
 | Persona switching | ✅ | `PersonaContext.jsx` | 5 personas, long-press avatar |

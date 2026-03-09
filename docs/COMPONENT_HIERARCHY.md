@@ -121,7 +121,7 @@ App
     │       │   └── EditButton → edit-profile sheet
     │       ├── StatsRow
     │       │   ├── TapsCount
-    │       │   ├── WoofsCount
+    │       │   ├── BoosCount
     │       │   └── MatchesCount
     │       ├── ActivitySection ← NEW
     │       │   ├── ActivityButton[community] → community sheet
@@ -279,7 +279,7 @@ L2CreatorSubscriptionSheet (285 lines)
 │ useAuth()          │ Current user, login/logout    │
 │ useSheet()         │ openSheet(), closeSheet()     │
 │ useUnreadCount()   │ Notification badge count      │
-│ useTaps()          │ Tap/Woof actions              │
+│ useTaps()          │ Boo actions              │
 │ useMatchProfiles() │ Match scoring                 │
 │ useSupabase()      │ Supabase client instance      │
 │ usePushNotifs()    │ Push subscription state       │

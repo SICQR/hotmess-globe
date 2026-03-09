@@ -116,7 +116,7 @@ HOTMESS's 131 tracked features (84 complete, 19 partial, 14 DB-only, 14 not buil
 
 **Key features:**
 - Grid + messaging (similar to Grindr)
-- "Woof" feature (express interest, equivalent to super-like)
+- Boo feature (express interest, equivalent to super-like)
 - "Venture" -- search profiles in any city worldwide
 - "Moments" -- temporary photos that disappear after 72 hours
 - Events discovery with RSVP counts
@@ -497,7 +497,7 @@ Grindr is testing "wingman" AI but it knows nothing about nightlife, events, saf
 **GHOSTED (/ghosted)** -- Social Discovery
 - 3-column proximity grid (infinite scroll)
 - Online indicators (green dot + last seen)
-- Taps (likes) and Woofs (super-likes) with optimistic updates
+- Boos with optimistic updates
 - Right Now toggle (lime beacon)
 - Looking For tags (up to 3)
 - Persona switching (5 personas, long-press avatar)
@@ -655,7 +655,7 @@ The git repository contains **1,001 commits** across all branches, with **108 da
 - RLS policies on 12 tables
 - Boot state machine (BootGuardContext)
 - PIN lock system
-- Emergency contacts, taps/woofs, push subscriptions
+- Emergency contacts, boos, push subscriptions
 - Gold rebrand (pink #FF1493 purged, replaced with #C8962C)
 - Apple PWA readiness (icons, splash screens, manifest)
 - Business operations manual written

@@ -15,7 +15,7 @@
 | **"Upgrade"** | MembershipSheet | Premium tier | 💰 Revenue |
 | **"List Item"** | SellSheet | P2P listing fee | 💰 Revenue |
 | **"RSVP"** | EventSheet | Event attendance | 📊 Engagement |
-| **"Woof"** | ProfileSheet | Super-like (limited) | 📊 Engagement |
+| **"Boo"** | ProfileSheet | Ghost interest | 📊 Engagement |
 
 ### Secondary CTAs (Engagement)
 
@@ -82,7 +82,7 @@
        │
        ▼
 ┌─────────────┐     ┌─────────────┐
-│ProfileSheet │────►│   Tap/Woof  │
+│ProfileSheet │────►│   Boo  │
 │ (View user) │     │   Action    │
 └──────┬──────┘     └──────┬──────┘
        │                   │
@@ -409,7 +409,7 @@
 
 ### Icon Buttons
 - ❤️ Like/Tap
-- 🐺 Woof
+- 👻 Boo
 - 💬 Message
 - 🔔 Notify
 - ⚙️ Settings

@@ -201,7 +201,7 @@ Long-press SOSButton (600ms) → SOSContext.triggerSOS()
 | `messages` | Chat messages (thread_id, sender_email, content) |
 | `chat_threads` | Chat threads (participant_emails, unread_count JSONB) |
 | `beacons` | **VIEW** — backed by actual table; metadata JSONB holds title/description/address/image_url |
-| `taps` | Tap/woof system (tapper_email, tapped_email, tap_type) |
+| `taps` | Boo system (tapper_email, tapped_email, tap_type) |
 | `emergency_contacts` | User emergency contacts (user_id UUID) |
 | `push_subscriptions` | Web Push subscriptions (user_id UUID, subscription JSONB) |
 | `preloved_listings` | P2P marketplace (seller_id UUID) |
