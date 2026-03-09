@@ -191,13 +191,13 @@ export default async function handler(req, res) {
         const { error: badgeError } = await serviceClient
           .from('user_badges')
           .upsert({
-            user_email: user.email,
+            user_email: userProfile.email,
             badge_name: badgeAwarded.name,
             badge_icon: badgeAwarded.icon,
             streak_achieved: newStreak,
             awarded_at: new Date().toISOString(),
           }, { onConflict: 'user_email,badge_name' });
-        
+
         if (badgeError) {
           // Non-blocking - continue even if badge fails
         }

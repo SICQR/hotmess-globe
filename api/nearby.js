@@ -67,8 +67,8 @@ const fetchProfilesForCandidateIds = async ({ serviceClient, candidateUserIds })
 
 const toPublicProfile = (row) => {
   if (!row || typeof row !== 'object') return null;
+  // GDPR: strip email from public profile response - never expose to other users
   return {
-    email: row.email ?? null,
     full_name: row.full_name ?? null,
     avatar_url: row.avatar_url ?? null,
     bio: row.bio ?? null,
