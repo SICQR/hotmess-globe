@@ -7,7 +7,8 @@ export default defineConfig({
     timeout: 10_000,
   },
   fullyParallel: true,
-  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 4 : 2,
+  retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html']] : [['list'], ['html']],
   use: {
     baseURL: 'http://127.0.0.1:5173',
