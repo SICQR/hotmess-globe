@@ -16,11 +16,29 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    // Chunk load failure = stale cached index.js after a new deploy.
+    // Auto-reload once to pick up the new asset hashes.
+    const isChunkError =
+      error?.message?.includes('Failed to fetch dynamically imported module') ||
+      error?.message?.includes('Importing a module script failed') ||
+      error?.name === 'ChunkLoadError';
+
+    if (isChunkError) {
+      const reloadKey = 'hm_chunk_reload_at';
+      const last = Number(sessionStorage.getItem(reloadKey) || 0);
+      // Guard: only auto-reload once per 30s to avoid an infinite reload loop
+      if (Date.now() - last > 30_000) {
+        sessionStorage.setItem(reloadKey, String(Date.now()));
+        window.location.reload();
+        return;
+      }
+    }
+
     this.setState({ error, errorInfo });
-    logger.error('ErrorBoundary caught error', { 
-      error: error.message, 
+    logger.error('ErrorBoundary caught error', {
+      error: error.message,
       stack: error.stack,
-      componentStack: errorInfo.componentStack 
+      componentStack: errorInfo.componentStack
     });
     
     // Send to Sentry
