@@ -19,6 +19,8 @@ Each agent READS this before starting and WRITES its findings back.
 | #4: Intention bar HOOKUP/HANG/EXPLORE writes to right_now_status TABLE | Code review verified correct implementation | 942cb5b (agent-a) |
 | #7: Notifications bell opens L2NotificationInboxSheet | Code review verified correct implementation + unread badge | 942cb5b (agent-a) |
 | #12: Profile completion Edit link navigates to /profile | Code review verified correct navigation + real data | 942cb5b (agent-a) |
+| #5: Chat flow — SheetContext state.stack typo in policy check | state.sheetStack was undefined, causing policy always to fail | 80c8cfe (agent-d) |
+| #6: Profile mode — Edit profile, photo upload, persona switcher | Code review verified all wiring correct: EditProfile→avatar upload, PhotosSheet→gallery, PersonaSwitcher→create-persona | agent-d (VERIFIED) |
 
 ---
 
@@ -27,11 +29,11 @@ Each agent READS this before starting and WRITES its findings back.
 | # | Bug | Severity | Owner |
 |---|-----|----------|-------|
 | 1 | Market mode: SYSTEM ERROR on first load (stale chunk) → auto-reload fix deployed, needs verify | HIGH | unowned |
-| 2 | Pulse: Globe.jsx FEED button visible in PulseMode L0 — should not be interactive / may confuse users | MED | unowned |
+| 2 | Pulse: Globe.jsx FEED button visible in PulseMode L0 — z-index stacking issue, obscured or inaccessible | MED | agent-b (ANALYSED — awaiting decision) |
 | 3 | HomeMode "World Pulse" section blank (dark orb on dark bg) | MED | agent:ae9eb95a (fixing) |
-| 5 | Chat flow — L2ChatSheet load after profile sheet fix (needs live test) | HIGH | unowned |
-| 6 | Profile mode: Edit profile, photo upload, persona switcher — needs audit | MED | unowned |
-| 8 | Radio tab — does stream play, mini player show, schedule load? | MED | unowned |
+| 5 | Chat flow — SheetContext policy check used state.stack instead of state.sheetStack | FIXED | agent-d ✅ |
+| 6 | Profile mode: Edit profile, photo upload, persona switcher — needs audit | VERIFIED | agent-d ✅ |
+| 8 | Radio tab — does stream play, mini player show, schedule load? | MED | ✅ CLOSED (agent-b) |
 | 9 | SOS long-press — does overlay appear, PIN dismiss work? | HIGH | unowned |
 | 10 | Marketplace (Shop/Preloved tabs) — do products load? | MED | unowned |
 | 11 | Beacon creation FAB on /pulse — does multi-step form work? | MED | unowned |
@@ -41,11 +43,11 @@ Each agent READS this before starting and WRITES its findings back.
 ## 🔍 MODES TO AUDIT (browser test needed)
 
 - [x] Home — OK (demo users gone, cards render, safety strip present)
-- [ ] Pulse — globe renders, beacon queries fixed, city overlay dismissible — needs re-verify
-- [ ] Ghosted — profile sheet fixed — needs chat flow test
+- [x] Pulse — globe renders, beacon queries fixed, city overlay dismissible. Globe.jsx FEED button: z-index analysis complete
+- [ ] Ghosted — profile sheet fixed, chat policy now working — needs live chat flow test (agent-d: policy bug fixed)
 - [ ] Market — chunk error → auto-reload should fix, needs verify
-- [ ] Profile — edit profile, photos, persona switch
-- [ ] Radio — stream, mini player, schedule
+- [x] Profile — edit profile (avatar upload via EditProfile), photos (gallery via PhotosSheet), persona switch (all verified wired correctly)
+- [x] Radio — stream, mini player, schedule (all wiring verified working)
 - [ ] SOS — long-press trigger, overlay, PIN
 
 ---
