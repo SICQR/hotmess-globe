@@ -165,6 +165,34 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify Supabase auth (pre-flight)
+        run: |
+          node -e "
+          const https = require('https');
+          const body = JSON.stringify({ email: process.env.TEST_USER_A_EMAIL, password: process.env.TEST_USER_A_PASSWORD });
+          const req = https.request({
+            hostname: 'klsywpvncqqglhnhrjbh.supabase.co',
+            path: '/auth/v1/token?grant_type=password',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': process.env.VITE_SUPABASE_ANON_KEY, 'Content-Length': Buffer.byteLength(body) }
+          }, (res) => {
+            let data = '';
+            res.on('data', d => data += d);
+            res.on('end', () => {
+              const json = JSON.parse(data);
+              if (json.error) { console.error('Auth FAILED:', json.error, json.error_description); process.exit(1); }
+              else { console.log('Auth OK — user:', json.user?.email); }
+            });
+          });
+          req.on('error', e => { console.error('Network error:', e.message); process.exit(1); });
+          req.write(body);
+          req.end();
+          "
+        env:
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          TEST_USER_A_EMAIL: ${{ secrets.TEST_USER_A_EMAIL }}
+          TEST_USER_A_PASSWORD: ${{ secrets.TEST_USER_A_PASSWORD }}
+
       - name: Install Playwright Chromium
         run: npx playwright install chromium --with-deps
 
