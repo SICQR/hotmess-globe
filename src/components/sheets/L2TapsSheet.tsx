@@ -1,14 +1,14 @@
 /**
- * L2TapsSheet — Who tapped / woofed you
+ * L2TapsSheet — Who boo'd you
  *
- * Shows received taps + woofs from the last 30 days.
+ * Shows received boos from the last 30 days.
  * Tapping a row opens the sender's profile sheet.
  */
 
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Loader2, Ghost, Zap } from 'lucide-react';
+import { Loader2, Ghost } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { useTaps } from '@/hooks/useTaps';
@@ -18,7 +18,7 @@ const AMBER = '#C8962C';
 interface TapRow {
   id: string;
   tapper_email: string;
-  tap_type: 'tap' | 'woof';
+  tap_type: string;
   created_at: string;
   profiles?: {
     display_name: string | null;
@@ -37,7 +37,6 @@ function timeAgo(iso: string): string {
 
 export default function L2TapsSheet() {
   const { openSheet } = useSheet();
-  const [tab, setTab] = useState<'all' | 'tap' | 'woof'>('all');
   const [myEmail, setMyEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -86,29 +85,19 @@ export default function L2TapsSheet() {
     staleTime: 30_000,
   });
 
-  const filtered = (taps || []).filter(t => tab === 'all' || t.tap_type === tab);
-
   const handleOpenProfile = (tapperEmail: string) => {
     openSheet('profile', { email: tapperEmail });
   };
 
   return (
     <div className="flex flex-col h-full">
-      {/* Tabs */}
-      <div className="flex gap-1 px-4 py-3 border-b border-white/8">
-        {(['all', 'tap', 'woof'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-              tab === t
-                ? 'bg-[#C8962C] text-black'
-                : 'bg-[#1C1C1E] text-white/40 border border-white/10'
-            }`}
-          >
-            {t === 'all' ? 'All' : t === 'tap' ? '👻 Boos' : '🐾 Woofs'}
-          </button>
-        ))}
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-white/8">
+        <Ghost className="w-5 h-5" style={{ color: AMBER }} />
+        <span className="text-sm font-black uppercase tracking-widest text-white">Boos</span>
+        {taps && taps.length > 0 && (
+          <span className="ml-auto text-xs text-white/30">{taps.length} received</span>
+        )}
       </div>
 
       {/* Content */}
@@ -119,29 +108,23 @@ export default function L2TapsSheet() {
           </div>
         )}
 
-        {!isLoading && (error || filtered.length === 0) && (
+        {!isLoading && (error || !taps || taps.length === 0) && (
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center gap-4">
             <Ghost className="w-12 h-12 text-white/20" />
             <p className="text-white/40 text-sm">
-              {error
-                ? 'Could not load taps right now.'
-                : tab === 'all'
-                ? 'No taps yet. Hang around Ghosted!'
-                : tab === 'tap'
-                ? 'No boos yet.'
-                : 'No woofs yet.'}
+              {error ? 'Could not load boos right now.' : 'No boos yet. Hang around Ghosted!'}
             </p>
           </div>
         )}
 
-        {!isLoading && filtered.length > 0 && (
+        {!isLoading && taps && taps.length > 0 && (
           <div className="divide-y divide-white/5">
-            {filtered.map((tap) => {
+            {taps.map((tap) => {
               const profile = tap.profiles;
               const displayName = profile?.display_name || profile?.username || tap.tapper_email.split('@')[0];
               const avatar = profile?.photos?.[0] ?? null;
 
-              const alreadyBoosBack = myEmail ? isTapped(tap.tapper_email, tap.tap_type) : false;
+              const alreadyBoodBack = myEmail ? isTapped(tap.tapper_email, 'boo') : false;
 
               return (
                 <motion.div
@@ -159,7 +142,7 @@ export default function L2TapsSheet() {
                     <div className="relative shrink-0">
                       <div
                         className="w-11 h-11 rounded-full bg-[#1C1C1E] border-2 overflow-hidden"
-                        style={{ borderColor: tap.tap_type === 'woof' ? AMBER : 'rgba(255,255,255,0.15)' }}
+                        style={{ borderColor: 'rgba(255,255,255,0.15)' }}
                       >
                         {avatar ? (
                           <img
@@ -174,9 +157,9 @@ export default function L2TapsSheet() {
                           </div>
                         )}
                       </div>
-                      {/* Tap type badge */}
+                      {/* Ghost badge */}
                       <span className="absolute -bottom-0.5 -right-0.5 text-[14px] leading-none select-none">
-                        {tap.tap_type === 'woof' ? '🐾' : '👻'}
+                        👻
                       </span>
                     </div>
 
@@ -184,26 +167,25 @@ export default function L2TapsSheet() {
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm font-bold truncate">{displayName}</p>
                       <p className="text-white/40 text-xs mt-0.5">
-                        {tap.tap_type === 'woof' ? 'Woofed at you' : 'Boo\'d you'}{' '}
-                        · {timeAgo(tap.created_at)}
+                        Boo'd you · {timeAgo(tap.created_at)}
                       </p>
                     </div>
                   </button>
 
-                  {/* Boo Back / Woof Back quick action */}
+                  {/* Boo Back quick action */}
                   {myEmail && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        sendTap(tap.tapper_email, displayName, tap.tap_type);
+                        sendTap(tap.tapper_email, displayName, 'boo');
                       }}
                       className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all active:scale-90 ${
-                        alreadyBoosBack
+                        alreadyBoodBack
                           ? 'bg-[#C8962C] text-black border border-[#C8962C]'
                           : 'bg-transparent border border-white/20 text-white/50 hover:border-[#C8962C] hover:text-[#C8962C]'
                       }`}
                     >
-                      {tap.tap_type === 'woof' ? (alreadyBoosBack ? '🐾 Woofed' : '🐾 Woof') : (alreadyBoosBack ? '👻 Boo\'d' : '👻 Boo')}
+                      {alreadyBoodBack ? '👻 Boo\'d' : '👻 Boo'}
                     </button>
                   )}
                 </motion.div>

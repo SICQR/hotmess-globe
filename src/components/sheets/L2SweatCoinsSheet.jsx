@@ -28,7 +28,7 @@ const REF_ICONS = {
   referral: '🤝',
   bonus: '🎁',
   tap: '💛',
-  woof: '🐾',
+  boo: '👻',
 };
 
 function timeAgo(dateStr) {
@@ -74,7 +74,7 @@ const EARN_WAYS = [
   { icon: '📍', label: 'Check in at a venue', coins: '+10' },
   { icon: '🎉', label: 'Attend an event', coins: '+25' },
   { icon: '🔥', label: 'Login streak (7 days)', coins: '+50' },
-  { icon: '💛', label: 'Give a tap or woof', coins: '+2' },
+  { icon: '👻', label: 'Give a boo', coins: '+2' },
   { icon: '🤝', label: 'Refer a friend', coins: '+100' },
   { icon: '🛍️', label: 'Make a purchase', coins: '+5%' },
 ];

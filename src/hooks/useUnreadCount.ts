@@ -3,7 +3,7 @@
  *
  * Returns the total unread count for the Ghosted tab badge:
  *   - Unread chat messages (from chat_threads.unread_count JSONB, or localStorage fallback)
- *   - Unseen taps/woofs (taps received since localStorage key "ghosted_taps_seen_at")
+ *   - Unseen boos (taps received since localStorage key "ghosted_taps_seen_at")
  *
  * Call clearTapsBadge() when the user opens the Ghosted tab to reset the taps badge.
  */
@@ -82,7 +82,7 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
       }
     };
 
-    // ── Fetch taps/woofs unread count ──────────────────────────────────────
+    // ── Fetch boos unread count ─────────────────────────────────────────────
     const fetchTapsCount = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -146,7 +146,7 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
           if (document.hidden) {
             const tap = payload.new as { tap_type?: string };
             showLocalNotification(
-              tap.tap_type === 'woof' ? 'New Woof 🐾' : 'Someone Boo\'d you 👻',
+              'Someone Boo\'d you 👻',
               'Check it out on Ghosted',
               '/ghosted',
               'hotmess-tap'

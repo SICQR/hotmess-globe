@@ -1,7 +1,7 @@
 /**
  * pushNotify — fire-and-forget web push delivery via notify-push Edge Function.
  *
- * Called after taps, woofs, new messages, SOS — anything that should
+ * Called after boos, new messages, SOS — anything that should
  * wake the recipient's device even when the tab is closed.
  *
  * Requires: the caller to be authenticated (JWT in Supabase session).

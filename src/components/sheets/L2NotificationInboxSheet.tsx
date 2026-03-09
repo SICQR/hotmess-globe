@@ -6,7 +6,7 @@
  * Tapping a row deep-links into the relevant sheet.
  *
  * Type → action mapping:
- *   woof / boo          → openSheet('taps')
+ *   boo                 → openSheet('taps')
  *   message             → openSheet('chat', { threadId })      metadata.thread_id
  *   event / event_reminder → openSheet('event', { id })        metadata.event_id
  *   location_share_started → openSheet('location-watcher', { shareId, sharerName })
@@ -17,7 +17,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Bell, MessageCircle, PawPrint, Ghost, MapPin, Radio,
+  Bell, MessageCircle, Ghost, MapPin, Radio,
   Calendar, CheckCheck, Loader2, Inbox,
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -40,10 +40,8 @@ interface Notif {
 // ── Icon + colour per type ────────────────────────────────────────────────────
 function typeConfig(type: string): { Icon: React.ElementType; color: string; bg: string } {
   switch (type) {
-    case 'woof':
-      return { Icon: PawPrint,       color: '#C8962C', bg: 'rgba(200,150,44,0.15)' };
     case 'boo':
-      return { Icon: Ghost,          color: '#A899D8', bg: 'rgba(168,153,216,0.15)' };
+      return { Icon: Ghost,          color: '#C8962C', bg: 'rgba(200,150,44,0.15)' };
     case 'message':
       return { Icon: MessageCircle,  color: '#00C2E0', bg: 'rgba(0,194,224,0.12)' };
     case 'event':
@@ -134,7 +132,6 @@ export default function L2NotificationInboxSheet() {
     const meta = n.metadata ?? {};
 
     switch (n.type) {
-      case 'woof':
       case 'boo':
         openSheet('taps', {});
         break;
@@ -169,7 +166,7 @@ export default function L2NotificationInboxSheet() {
 
   // ── Whether a row is tappable ───────────────────────────────────────────
   const isTappable = (type: string) =>
-    ['woof', 'boo', 'message', 'event', 'event_reminder', 'location_share_started'].includes(type);
+    ['boo', 'message', 'event', 'event_reminder', 'location_share_started'].includes(type);
 
   // ── Render ──────────────────────────────────────────────────────────────
   if (loading) {
@@ -214,7 +211,7 @@ export default function L2NotificationInboxSheet() {
         <div className="flex flex-col items-center justify-center py-20 gap-3 px-6 text-center">
           <Inbox className="w-10 h-10 text-white/15" />
           <p className="text-sm font-semibold text-white/30">All clear</p>
-          <p className="text-xs text-white/20">New woofs, messages and alerts will appear here.</p>
+          <p className="text-xs text-white/20">New boos, messages and alerts will appear here.</p>
         </div>
       )}
 

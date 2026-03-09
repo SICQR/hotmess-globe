@@ -494,11 +494,11 @@ export default function L2ProfileSheet({ email, uid, id }) {
           </Button>
         ) : (
           <>
-            {/* Tap/Woof buttons — Grindr-style quick actions */}
+            {/* Boo button — ghost-themed quick action */}
             <button
               onClick={() => {
                 const targetEmail = profileUser.email || profileUser.userId;
-                if (targetEmail) sendTap(targetEmail, 'boo');
+                if (targetEmail) sendTap(targetEmail, name, 'boo');
               }}
               className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
                 (profileUser.email || profileUser.userId) && isTapped(profileUser.email || profileUser.userId, 'boo')
@@ -507,22 +507,6 @@ export default function L2ProfileSheet({ email, uid, id }) {
               title="Boo"
             >
               <Ghost className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => {
-                const targetEmail = profileUser.email || profileUser.userId;
-                if (targetEmail) sendTap(targetEmail, 'woof');
-              }}
-              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                (profileUser.email || profileUser.userId) && isTapped(profileUser.email || profileUser.userId, 'woof')
-                  ? 'bg-[#C8962C] text-black' : 'bg-white/10 text-white/60 hover:bg-white/15'
-              }`}
-              title="Woof"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="4" r="2" /><circle cx="18" cy="8" r="2" /><circle cx="20" cy="16" r="2" />
-                <path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" />
-              </svg>
             </button>
             <Button
               onClick={handleMessage}
