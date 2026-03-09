@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
 import {
-  MessageCircle, MapPin, Shield, Plane,
+  MessageCircle, MapPin, Shield, Plane, Pencil, Share2,
   Loader2, MoreVertical, Flag, Ban, X, ChevronLeft, Ghost,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -87,8 +87,16 @@ export default function L2ProfileSheet({ email, uid, id }) {
     },
   });
 
-  const isOwnProfile = !email && !resolvedUid ||
-    (currentUser?.email && profileUser?.email === currentUser.email);
+  // Robust own-profile detection: match on email OR auth_user_id
+  const [authUid, setAuthUid] = useState(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => { if (data?.user?.id) setAuthUid(data.user.id); });
+  }, []);
+
+  const isOwnProfile =
+    (!email && !resolvedUid) ||
+    (currentUser?.email && profileUser?.email && profileUser.email === currentUser.email) ||
+    (authUid && profileUser?.auth_user_id && authUid === profileUser.auth_user_id);
 
   // Record profile view when profile loads (fire and forget, dedup: skip if viewed in last 24h)
   // profile_views uses UUID-based viewer_id / viewed_id (references auth.users.id = profiles.id)
@@ -486,12 +494,29 @@ export default function L2ProfileSheet({ email, uid, id }) {
         }}
       >
         {isOwnProfile ? (
-          <Button
-            onClick={() => { closeSheet(); navigate('/profile'); }}
-            className="flex-1 h-12 bg-white/10 hover:bg-white/20 rounded-xl font-bold"
-          >
-            Edit Profile
-          </Button>
+          <>
+            <Button
+              onClick={() => { closeSheet(); navigate('/profile'); }}
+              className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 rounded-xl font-bold"
+            >
+              <Pencil className="w-4 h-4 mr-2" />
+              Edit Profile
+            </Button>
+            <button
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({ title: name, url: window.location.origin });
+                } else {
+                  navigator.clipboard.writeText(window.location.origin);
+                  toast.success('Link copied');
+                }
+              }}
+              className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/15"
+              title="Share"
+            >
+              <Share2 className="w-5 h-5 text-white/60" />
+            </button>
+          </>
         ) : (
           <>
             {/* Boo button — ghost-themed quick action */}
