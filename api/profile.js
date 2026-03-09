@@ -235,16 +235,22 @@ export default async function handler(req, res) {
   const respondWithUser = async (row) => {
     const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : null;
     if (!authUserId || !serviceClient?.auth?.admin?.getUserById) {
-      return json(res, 200, { user: row });
+      // GDPR: strip email from response — never expose to other users
+      const { email: _email, user_email: _ue, ...safe } = row || {};
+      return json(res, 200, { user: safe });
     }
 
     try {
       const { data, error } = await serviceClient.auth.admin.getUserById(authUserId);
       const meta = error ? null : (data?.user?.user_metadata || null);
       const merged = mergeAuthMeta({ row, meta });
-      return json(res, 200, { user: merged });
+      // GDPR: strip email from response — never expose to other users
+      const { email: _email, user_email: _ue, ...safe } = merged || {};
+      return json(res, 200, { user: safe });
     } catch {
-      return json(res, 200, { user: row });
+      // GDPR: strip email from response — never expose to other users
+      const { email: _email, user_email: _ue, ...safe } = row || {};
+      return json(res, 200, { user: safe });
     }
   };
 
@@ -310,7 +316,11 @@ export default async function handler(req, res) {
       ? fallbacks.find((p) => normalizeEmail(p?.email) === email)
       : fallbacks.find((p) => normalizeId(p?.auth_user_id) === uid || normalizeId(p?.id) === uid);
 
-    if (match) return json(res, 200, { user: match });
+    if (match) {
+      // GDPR: strip email from response — never expose to other users
+      const { email: _email, user_email: _ue, ...safe } = match;
+      return json(res, 200, { user: safe });
+    }
   }
 
   return json(res, 200, {

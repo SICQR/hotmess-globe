@@ -186,9 +186,11 @@ export default function L2ProfileSheet({ email, uid, id }) {
   // ── Handlers ────────────────────────────────────────────────────────────
 
   const handleMessage = () => {
-    if (!profileUser?.email) return;
+    if (!profileUser?.auth_user_id && !profileUser?.id) return;
+    // Pass uid instead of email (email is not exposed in profile response for GDPR)
+    // ChatSheet will look up the email server-side
     openSheet(SHEET_TYPES.CHAT, {
-      to: profileUser.email,
+      toUid: profileUser.auth_user_id || profileUser.id,
       title: `Chat with ${profileUser.full_name || profileUser.username}`,
     });
   };
