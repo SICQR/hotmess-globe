@@ -16,6 +16,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { pushNotify } from '@/lib/pushNotify';
 
 const FILTERS = ['Tonight', 'This Week', 'All'] as const;
 type Filter = typeof FILTERS[number];
@@ -94,6 +95,38 @@ export default function EventsMode() {
           status: 'going',
         });
         if (error) throw error;
+
+        // Notify event organizer (fire-and-forget)
+        (async () => {
+          try {
+            const { data: beacon } = await supabase
+              .from('beacons')
+              .select('owner_id, metadata')
+              .eq('id', eventId)
+              .maybeSingle();
+            if (!beacon?.owner_id) return;
+            const { data: ownerProfile } = await supabase
+              .from('profiles')
+              .select('email')
+              .eq('id', beacon.owner_id)
+              .maybeSingle();
+            if (!ownerProfile?.email || ownerProfile.email === currentUser.email) return;
+            const eventTitle = (beacon.metadata as Record<string, string>)?.title || 'your event';
+            const { data: myProfile } = await supabase
+              .from('profiles')
+              .select('display_name')
+              .eq('email', currentUser.email)
+              .maybeSingle();
+            const myName = myProfile?.display_name || 'Someone';
+            pushNotify({
+              emails: [ownerProfile.email],
+              title: `${myName} is going!`,
+              body: `New RSVP for ${eventTitle}`,
+              tag: `rsvp-${eventId}`,
+              url: '/pulse',
+            });
+          } catch { /* best-effort */ }
+        })();
       } else {
         const { error } = await supabase
           .from('event_rsvps')
