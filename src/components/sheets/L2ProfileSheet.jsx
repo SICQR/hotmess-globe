@@ -48,7 +48,9 @@ export default function L2ProfileSheet({ email, uid, id }) {
   });
 
   // Normalise: `id` (profile DB row id like "profile_xxx") maps to `uid`
-  const resolvedUid = uid || id || null;
+  // Strip "profile_" prefix that the /api/profiles endpoint adds for grid dedup
+  const rawId = uid || id || null;
+  const resolvedUid = rawId && typeof rawId === 'string' ? rawId.replace(/^profile_/, '') : rawId;
 
   const { data: profileUser, isLoading } = useQuery({
     queryKey: ['profile-sheet', email, resolvedUid],
