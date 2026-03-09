@@ -3,7 +3,13 @@
  * Helper functions for authentication flows in E2E tests
  */
 
-import { Page, expect } from '@playwright/test';
+import { Page } from '@playwright/test';
+
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? 'https://klsywpvncqqglhnhrjbh.supabase.co';
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
+// Derived from project ref: sb-<ref>-auth-token
+// Confirmed via: createClient(url, key).auth.storageKey
+const SUPABASE_STORAGE_KEY = `sb-klsywpvncqqglhnhrjbh-auth-token`;
 
 const TEST_USER_A = {
   email: process.env.TEST_USER_A_EMAIL ?? 'test-red@hotmessldn.com',
@@ -30,54 +36,60 @@ export async function bypassGates(page: Page): Promise<void> {
 }
 
 /**
- * Navigates to /auth, opens the sign-in sheet (Auth.jsx renders a landing page;
- * the form is inside an AnimatePresence bottom sheet toggled by "I'm already filthy"),
- * fills email + password, submits, waits for redirect to /.
+ * Fetches a Supabase session token via the REST API (no browser UI interaction).
+ * Injects it directly into localStorage so BootGuard sees an authenticated session
+ * on the very first page load — no form interaction, no animation waits, no redirects.
+ *
+ * This is the CI-safe approach: avoids fragile UI form filling and network
+ * timing issues with the auth bottom sheet.
  */
 export async function loginAs(
   page: Page,
   email: string,
   password: string,
 ): Promise<void> {
-  await page.goto('/auth', { waitUntil: 'commit', timeout: 30_000 });
+  // 1. Get session token via Playwright's request API (Node.js context, not browser)
+  const response = await page.request.post(
+    `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
+    {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json',
+      },
+      data: { email, password },
+      timeout: 15_000,
+    }
+  );
 
-  // Auth.jsx is a landing page — the sign-in form is inside a bottom sheet.
-  // BootGuard starts in LOADING state; wait for Auth.jsx to fully render before interacting.
-  // isVisible() does NOT wait — use waitFor({ state: 'visible' }) instead.
-  const signinCta = page.locator(
-    "button:has-text(\"I'm already filthy\"), button:has-text('Sign in')"
-  ).first();
-  await signinCta.waitFor({ state: 'visible', timeout: 20_000 });
-  await signinCta.click();
-  // Wait for the bottom sheet spring animation to settle
-  await page.waitForTimeout(600);
+  const session = await response.json();
+  if (!session.access_token) {
+    throw new Error(`Supabase auth failed for ${email}: ${JSON.stringify(session)}`);
+  }
 
-  // Fill email field — now inside the open bottom sheet
-  const emailInput = page.locator('input[type="email"]').first();
-  await emailInput.waitFor({ state: 'visible', timeout: 10_000 });
-  await emailInput.fill(email);
+  // 2. Inject the session into localStorage before first page load.
+  //    Supabase client reads this key on init → BootGuard gets SIGNED_IN immediately.
+  const sessionPayload = {
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+    expires_at: Math.floor(Date.now() / 1000) + (session.expires_in ?? 3600),
+    expires_in: session.expires_in ?? 3600,
+    token_type: 'bearer',
+    user: session.user,
+  };
 
-  // Fill password field
-  const passwordInput = page.locator('input[type="password"]').first();
-  await passwordInput.waitFor({ state: 'visible', timeout: 5_000 });
-  await passwordInput.fill(password);
+  await page.addInitScript(({ key, value }) => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, { key: SUPABASE_STORAGE_KEY, value: sessionPayload });
 
-  // Submit — look for type=submit first, then text-based fallbacks
-  const submitButton = page.locator('button[type="submit"]').first();
-  await submitButton.waitFor({ state: 'visible', timeout: 5_000 });
-  await submitButton.click();
+  // 3. Navigate to the app — BootGuard picks up the session from localStorage
+  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30_000 });
 
-  // Wait for BootGuard to redirect to / after successful auth
-  await expect(page).toHaveURL('/', { timeout: 30_000 });
-
-  // BootGuard transitions LOADING → READY after auth; wait for the OS bottom nav
-  // to confirm the app shell is mounted before proceeding
+  // 4. Wait for BootGuard READY — nav visible = app shell fully mounted
   await page.locator('nav').first().waitFor({ state: 'visible', timeout: 30_000 });
 }
 
 /**
  * Combines bypassGates + loginAs for User A.
- * Call before starting authenticated tests.
  */
 export async function setupUserA(page: Page): Promise<void> {
   await bypassGates(page);
@@ -86,7 +98,6 @@ export async function setupUserA(page: Page): Promise<void> {
 
 /**
  * Combines bypassGates + loginAs for User B.
- * Call before starting authenticated tests with a second user.
  */
 export async function setupUserB(page: Page): Promise<void> {
   await bypassGates(page);
