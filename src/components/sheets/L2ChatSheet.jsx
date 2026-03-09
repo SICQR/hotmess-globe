@@ -10,6 +10,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
+import { pushNotify } from '@/lib/pushNotify';
 import {
   MessageCircle, Send, ArrowLeft,
   Loader2, Search, ChevronRight,
@@ -312,6 +313,19 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         })
         .eq('id', thread.id);
 
+      // Push notification to recipient (fire-and-forget)
+      const recipientEmails = (thread.participant_emails || []).filter(e => e !== currentUser.email);
+      if (recipientEmails.length) {
+        const senderName = senderProfile?.display_name || 'Someone';
+        pushNotify({
+          emails: recipientEmails,
+          title: `${senderName} messaged you`,
+          body: text.length > 60 ? text.slice(0, 57) + '...' : text,
+          tag: `chat-${thread.id}`,
+          url: `/ghosted?sheet=chat&threadId=${thread.id}`,
+        });
+      }
+
       // Refresh messages if no realtime (new thread)
       if (!realtimeRef.current || thread?._new) {
         const { data } = await supabase
@@ -374,6 +388,20 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         last_message: content.slice(0, 80),
         last_message_at: new Date().toISOString(),
       }).eq('id', thread.id);
+
+      // Push notification to recipient (fire-and-forget)
+      const recipientEmails = (thread.participant_emails || []).filter(e => e !== currentUser.email);
+      if (recipientEmails.length) {
+        const senderName = profiles[currentUser.email]?.display_name || 'Someone';
+        const typeLabel = message_type === 'photo' ? '📷 Photo' : message_type === 'meetpoint' ? '📍 Meetup' : '💬 Message';
+        pushNotify({
+          emails: recipientEmails,
+          title: `${senderName} sent ${typeLabel.toLowerCase()}`,
+          body: content?.length > 60 ? content.slice(0, 57) + '...' : (content || typeLabel),
+          tag: `chat-${thread.id}`,
+          url: `/ghosted?sheet=chat&threadId=${thread.id}`,
+        });
+      }
 
       const { data: msgs } = await supabase
         .from('messages').select('*').eq('thread_id', thread.id)
