@@ -21,6 +21,7 @@ Each agent READS this before starting and WRITES its findings back.
 | #12: Profile completion Edit link navigates to /profile | Code review verified correct navigation + real data | 942cb5b (agent-a) |
 | #5: Chat flow — SheetContext state.stack typo in policy check | state.sheetStack was undefined, causing policy always to fail | 80c8cfe (agent-d) |
 | #6: Profile mode — Edit profile, photo upload, persona switcher | Code review verified all wiring correct: EditProfile→avatar upload, PhotosSheet→gallery, PersonaSwitcher→create-persona | agent-d (VERIFIED) |
+| #9: SOS long-press → overlay → PIN dismiss | FULL END-TO-END AUDIT: SOSButton/Context/Overlay all correct, location_shares table name verified, right_now_status TABLE verified, notifyContacts push wired, Edge Function deployed. 0 issues found. | agent-e (AUDIT COMPLETE) |
 
 ---
 
@@ -34,7 +35,7 @@ Each agent READS this before starting and WRITES its findings back.
 | 5 | Chat flow — SheetContext policy check used state.stack instead of state.sheetStack | FIXED | agent-d ✅ |
 | 6 | Profile mode: Edit profile, photo upload, persona switcher — needs audit | VERIFIED | agent-d ✅ |
 | 8 | Radio tab — does stream play, mini player show, schedule load? | MED | ✅ CLOSED (agent-b) |
-| 9 | SOS long-press — does overlay appear, PIN dismiss work? | HIGH | unowned |
+| 9 | SOS long-press — does overlay appear, PIN dismiss work? | HIGH | ✅ CLOSED (agent-e) |
 | 10 | Marketplace (Shop/Preloved tabs) — do products load? | MED | unowned |
 | 11 | Beacon creation FAB on /pulse — does multi-step form work? | MED | unowned |
 
