@@ -297,12 +297,14 @@ export default async function handler(req, res) {
 
   const { error: supaErr, serviceClient, anonClient: anonClientFromEnv } = getSupabaseServerClients();
 
-  // If token provided, validate it (but don't require it)
+  // If token provided, validate it and extract user for block filtering
+  let currentAuthUserId = null;
   if (accessToken && anonClientFromEnv) {
     const { data, error } = await anonClientFromEnv.auth.getUser(accessToken);
-    // Just log validation failures, don't block the request
     if (error || !data?.user) {
       console.log('[profiles] Invalid auth token provided, continuing as anonymous');
+    } else {
+      currentAuthUserId = data.user.id;
     }
   }
 
@@ -323,7 +325,31 @@ export default async function handler(req, res) {
     return json(res, 200, { items: unique, nextCursor: offset === 0 ? String(items.length) : null });
   }
 
-  const rows = Array.isArray(data) ? data : [];
+  let rows = Array.isArray(data) ? data : [];
+
+    // Block filtering: exclude users the current user has blocked (and users who blocked them)
+    if (currentAuthUserId && serviceClient) {
+      try {
+        const { data: blocks } = await serviceClient
+          .from('user_blocks')
+          .select('blocker_id, blocked_id')
+          .or(`blocker_id.eq.${currentAuthUserId},blocked_id.eq.${currentAuthUserId}`);
+
+        if (Array.isArray(blocks) && blocks.length > 0) {
+          const blockedIds = new Set();
+          blocks.forEach((b) => {
+            if (b.blocker_id === currentAuthUserId) blockedIds.add(b.blocked_id);
+            if (b.blocked_id === currentAuthUserId) blockedIds.add(b.blocker_id);
+          });
+          rows = rows.filter((r) => {
+            const uid = r?.auth_user_id ? String(r.auth_user_id) : null;
+            return !uid || !blockedIds.has(uid);
+          });
+        }
+      } catch {
+        // Best-effort — grid still works without block filtering
+      }
+    }
 
     // Attach auth user metadata (best-effort) so the grid can show multi-photo profiles,
     // even when those fields are stored in auth metadata (Base44-style).
