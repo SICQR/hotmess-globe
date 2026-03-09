@@ -173,20 +173,32 @@ function GlobeTeaser({ liveCount, onTap }: { liveCount: number; onTap: () => voi
       style={{
         height: 140,
         background: 'linear-gradient(135deg, #0D1520 0%, #050507 60%)',
-        border: `1px solid rgba(200,150,44,0.2)`,
+        border: `1px solid rgba(200,150,44,0.3)`,
       }}
       aria-label="Open Pulse globe"
     >
+      {/* Radial glow backdrop */}
+      <div
+        className="absolute"
+        style={{
+          top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          width: 150, height: 150, borderRadius: '50%',
+          background: 'radial-gradient(ellipse,rgba(200,150,44,0.25) 0%,rgba(200,150,44,0.08) 40%,transparent 70%)',
+          pointerEvents: 'none',
+        }}
+      />
+
       {/* Orb */}
       <div
         className="absolute"
         style={{
           top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
           width: 80, height: 80, borderRadius: '50%',
-          background: 'radial-gradient(ellipse at 35% 35%, #1a2840 0%, #0a1525 60%, #050b15 100%)',
-          boxShadow: '0 0 40px rgba(200,150,44,0.15), 0 0 80px rgba(200,150,44,0.06)',
+          background: 'radial-gradient(ellipse at 35% 35%, #2a3a50 0%, #1a2840 40%, #0a1525 75%, #050b15 100%)',
+          boxShadow: '0 0 20px rgba(200,150,44,0.4), 0 0 40px rgba(200,150,44,0.25), 0 0 60px rgba(200,150,44,0.12)',
         }}
       />
+
       {/* Orbit rings */}
       {[54, 78, 100].map((sz, i) => (
         <div
@@ -196,12 +208,14 @@ function GlobeTeaser({ liveCount, onTap }: { liveCount: number; onTap: () => voi
             top: '50%', left: '50%',
             width: sz, height: sz * 0.3,
             marginLeft: -(sz / 2), marginTop: -(sz * 0.3 / 2),
-            border: `1px solid rgba(200,150,44,${0.25 - i * 0.06})`,
+            border: `1.5px solid rgba(255,255,255,${0.2 - i * 0.04})`,
             borderRadius: '50%',
             transform: `rotateX(70deg)`,
+            boxShadow: `0 0 12px rgba(200,150,44,${0.3 - i * 0.08})`,
           }}
         />
       ))}
+
       {/* Nodes */}
       {[
         { top: '30%', left: '28%' },
@@ -210,8 +224,15 @@ function GlobeTeaser({ liveCount, onTap }: { liveCount: number; onTap: () => voi
       ].map((pos, i) => (
         <div
           key={i}
-          className="absolute rounded-full"
-          style={{ ...pos, width: 6, height: 6, background: AMBER, boxShadow: `0 0 8px ${AMBER}` }}
+          className="absolute rounded-full animate-pulse"
+          style={{
+            ...pos,
+            width: 6,
+            height: 6,
+            background: AMBER,
+            boxShadow: `0 0 12px ${AMBER}, 0 0 24px rgba(200,150,44,0.6)`,
+            animationDelay: `${i * 0.3}s`,
+          }}
         />
       ))}
       {/* Stats */}
