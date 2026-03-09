@@ -221,7 +221,7 @@ export default function L2EditProfileSheet() {
         ...(attrs.hosting && { hosting: attrs.hosting }),
       };
 
-      // Save to profiles — city mirrors location for grid filtering
+      // Save core fields to profiles — city mirrors location for grid filtering
       const locationVal = pub.location.trim() || undefined;
       const result = await updateProfile({
         display_name: pub.display_name.trim(),
@@ -230,9 +230,17 @@ export default function L2EditProfileSheet() {
         city: locationVal,
         avatar_url: pub.avatar_url || undefined,
         is_visible: pub.is_visible,
-        public_attributes,
       });
       if (!result) throw new Error('Failed to save profile');
+
+      // Save public_attributes separately (column may not exist in older DB schemas)
+      if (Object.keys(public_attributes).length > 0) {
+        const { error: paError } = await supabase
+          .from('profiles')
+          .update({ public_attributes })
+          .eq('id', user.id);
+        if (paError) console.warn('[edit-profile] public_attributes save skipped:', paError.message);
+      }
 
       // Save sensitive fields to user_private_profile
       if (sensitive.sti_status || sensitive.last_tested || sensitive.condom_preference) {
