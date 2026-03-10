@@ -327,6 +327,15 @@ export default async function handler(req, res) {
 
   let rows = Array.isArray(data) ? data : [];
 
+    // Self-exclusion: the logged-in user must never appear in their own Ghosted grid
+    if (currentAuthUserId) {
+      rows = rows.filter((r) => {
+        const rowAuthId = r?.auth_user_id ? String(r.auth_user_id) : null;
+        const rowId = r?.id ? String(r.id) : null;
+        return rowAuthId !== currentAuthUserId && rowId !== currentAuthUserId;
+      });
+    }
+
     // Block filtering: exclude users the current user has blocked (and users who blocked them)
     // user_blocks uses email columns (blocker_email, blocked_email)
     if (currentAuthUserId && serviceClient) {
