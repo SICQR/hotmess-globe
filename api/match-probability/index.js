@@ -409,15 +409,14 @@ export default async function handler(req, res) {
       });
 
       // Build response profile object
-      const fullName = String(row.full_name || row.email || 'Unknown').trim();
+      const fullName = String(row.username || row.display_name || 'Unknown').trim();
       const avatar = String(row.avatar_url || '').trim();
       const city = row.city ? String(row.city).trim() : null;
       const bio = row.bio ? String(row.bio).trim() : null;
       const profileType = row.profile_type ? String(row.profile_type).trim() : null;
 
       return {
-        id: `profile_${row.auth_user_id || row.email || fullName}`,
-        email: row.email || undefined,
+        id: `profile_${row.auth_user_id || fullName}`,
         authUserId: row.auth_user_id || undefined,
         profileName: fullName,
         title: toShortHeadline(bio, 'Member'),

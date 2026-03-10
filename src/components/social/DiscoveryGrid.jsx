@@ -254,7 +254,7 @@ export default function DiscoveryGrid({ currentUser }) {
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center">
                     <span className="text-4xl font-black">
-                      {user.full_name?.[0] || user.display_name?.[0] || '?'}
+                      {user.username?.[0] || user.display_name?.[0] || '?'}
                     </span>
                   </div>
                 )}

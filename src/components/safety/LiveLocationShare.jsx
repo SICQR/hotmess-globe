@@ -342,8 +342,8 @@ export default function LiveLocationShare({
 
     if (recipients.length === 0) return;
 
-    const sharerName = currentUser?.user_metadata?.display_name
-      || currentUser?.email?.split('@')[0]
+    const sharerName = currentUser?.user_metadata?.username
+      || currentUser?.user_metadata?.display_name
       || 'Someone';
 
     const isStart = type === 'start';

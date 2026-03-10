@@ -426,7 +426,7 @@ export default function Connect() {
       const lng = Number(u?.last_lng ?? u?.lng);
 
       // GDPR: never expose email as display name
-      const name = String(u?.full_name || u?.display_name || u?.profileName || u?.username || 'Unknown').trim();
+      const name = String(u?.username || u?.profileName || u?.display_name || 'Unknown').trim();
       const city = u?.city ? String(u.city).trim() : null;
       const bio = u?.bio ? String(u.bio).trim() : '';
       const profileType = String(u?.profile_type || u?.profileType || '').trim() || undefined;

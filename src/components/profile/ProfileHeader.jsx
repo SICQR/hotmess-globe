@@ -95,7 +95,7 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
   const uberUrl = buildUberDeepLink({
     dropoffLat,
     dropoffLng,
-    dropoffNickname: user?.display_name || user?.username,
+    dropoffNickname: user?.username || user?.display_name,
   });
 
   const canDirections = Number.isFinite(dropoffLat) && Number.isFinite(dropoffLng);
@@ -104,7 +104,7 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
     const qs = new URLSearchParams();
     qs.set('lat', String(dropoffLat));
     qs.set('lng', String(dropoffLng));
-    if (user?.display_name) qs.set('label', String(user.display_name));
+    if (user?.username || user?.display_name) qs.set('label', String(user.username || user.display_name));
     qs.set('mode', mode);
     navigate(`/directions?${qs.toString()}`);
   };
@@ -129,16 +129,16 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
             className={`w-32 h-32 bg-gradient-to-br ${themeGradient} flex items-center justify-center border-4 border-white shadow-2xl overflow-hidden`}
           >
             {user?.avatar_url ? (
-              <img src={user.avatar_url} alt={user.display_name || 'Profile'} className="w-full h-full object-cover" />
+              <img src={user.avatar_url} alt={user.username || 'Profile'} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-5xl font-bold">{user?.display_name?.[0] || user?.username?.[0] || 'U'}</span>
+              <span className="text-5xl font-bold">{user?.username?.[0] || user?.display_name?.[0] || 'U'}</span>
             )}
           </motion.div>
 
           {/* Info */}
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-3 mb-2">
-              <h1 className="text-4xl md:text-6xl font-black">{user?.display_name || user?.username || 'Anonymous'}</h1>
+              <h1 className="text-4xl md:text-6xl font-black">{user?.username || user?.display_name || 'Anonymous'}</h1>
               
               {/* Profile Type Badge */}
               {config.badge && (

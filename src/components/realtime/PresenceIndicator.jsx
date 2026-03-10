@@ -65,7 +65,7 @@ export function UserPresenceBadge({
             <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
           ) : (
             <span className="text-white font-bold">
-              {user.full_name?.[0] || user.display_name?.[0] || '?'}
+              {user.username?.[0] || user.display_name?.[0] || '?'}
             </span>
           )}
         </div>
@@ -76,7 +76,7 @@ export function UserPresenceBadge({
       </div>
       
       <div>
-        <div className="font-semibold">{user.full_name || user.display_name}</div>
+        <div className="font-semibold">{user.username || user.display_name}</div>
         {showLastSeen && (
           <div className="text-xs text-white/60">
             {isOnline ? (

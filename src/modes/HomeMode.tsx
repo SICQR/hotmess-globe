@@ -813,7 +813,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       const emails = statusRows.map((r: Record<string, unknown>) => r.user_email as string).filter(Boolean);
       const { data: profileRows } = await supabase
         .from('profiles')
-        .select('id, email, display_name, avatar_url, photos')
+        .select('id, email, display_name, username, avatar_url, photos')
         .in('email', emails);
 
       const profileMap = new Map<string, Record<string, unknown>>();
@@ -830,7 +830,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
           id: (p.id as string) || (r.id as string),
           email: r.user_email as string,
           intent: (r.intent as string) || 'explore',
-          name: (p.display_name as string) || ((r.user_email as string) ?? '').split('@')[0] || 'Anon',
+          name: (p.username as string) || (p.display_name as string) || 'Anon',
           avatarUrl,
         };
       });

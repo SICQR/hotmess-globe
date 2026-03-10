@@ -141,7 +141,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const loadProfilesByEmail = async (emails) => {
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, display_name, avatar_url')
+      .select('id, email, display_name, username, avatar_url')
       .in('email', emails);
 
     if (data) {
@@ -298,7 +298,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         .insert({
           thread_id: thread.id,
           sender_email: currentUser.email,
-          sender_name: senderProfile?.display_name || 'Anonymous',
+          sender_name: senderProfile?.username || senderProfile?.display_name || 'Anonymous',
           content: text,
           message_type: 'text',
           created_date: new Date().toISOString(),
@@ -320,7 +320,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       // Push notification to recipient (fire-and-forget)
       const recipientEmails = (thread.participant_emails || []).filter(e => e !== currentUser.email);
       if (recipientEmails.length) {
-        const senderName = senderProfile?.display_name || 'Someone';
+        const senderName = senderProfile?.username || senderProfile?.display_name || 'Someone';
         pushNotify({
           emails: recipientEmails,
           title: `${senderName} messaged you`,
@@ -380,7 +380,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       const { error: msgError } = await supabase.from('messages').insert({
         thread_id: thread.id,
         sender_email: currentUser.email,
-        sender_name: profiles[currentUser.email]?.display_name || 'Anonymous',
+        sender_name: profiles[currentUser.email]?.username || profiles[currentUser.email]?.display_name || 'Anonymous',
         content,
         message_type,
         metadata,
@@ -396,7 +396,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       // Push notification to recipient (fire-and-forget)
       const recipientEmails = (thread.participant_emails || []).filter(e => e !== currentUser.email);
       if (recipientEmails.length) {
-        const senderName = profiles[currentUser.email]?.display_name || 'Someone';
+        const senderName = profiles[currentUser.email]?.username || profiles[currentUser.email]?.display_name || 'Someone';
         const typeLabel = message_type === 'photo' ? '📷 Photo' : message_type === 'meetpoint' ? '📍 Meetup' : '💬 Message';
         pushNotify({
           emails: recipientEmails,
@@ -435,8 +435,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // ── Derive other-party info (needed by Wingman + chat view) ───────────────
   const otherEmail = selectedThread ? getOtherEmail(selectedThread) : '';
   const otherProfile = otherEmail ? getProfile(otherEmail) : null;
-  // GDPR: never show email — use display_name or 'Anonymous'
-  const otherName = otherProfile?.display_name || otherProfile?.username || title || 'Anonymous';
+  // Privacy: username only — never show real name or email in public UI
+  const otherName = otherProfile?.username || otherProfile?.display_name || title || 'Anonymous';
 
   const handleWingmanTap = useCallback(async () => {
     if (wingmanLoading) return;
@@ -558,7 +558,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     if (!searchQuery) return true;
     const email = getOtherEmail(t);
     const p = getProfile(email);
-    return (p?.display_name || p?.username || 'Anonymous').toLowerCase().includes(searchQuery.toLowerCase());
+    return (p?.username || p?.display_name || 'Anonymous').toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   // ── Thread list ────────────────────────────────────────────────────────────
@@ -596,7 +596,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 const email = getOtherEmail(thread);
                 const p = getProfile(email);
                 const unread = isUnread(thread);
-                const name = p?.display_name || p?.username || 'Anonymous';
+                const name = p?.username || p?.display_name || 'Anonymous';
 
                 return (
                   <button
@@ -763,7 +763,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
               />
             ))}
           </div>
-          <span className="text-white/40 text-xs">{profiles[typingUsers[0]]?.display_name || 'Someone'} is typing…</span>
+          <span className="text-white/40 text-xs">{profiles[typingUsers[0]]?.username || profiles[typingUsers[0]]?.display_name || 'Someone'} is typing…</span>
         </div>
       )}
 

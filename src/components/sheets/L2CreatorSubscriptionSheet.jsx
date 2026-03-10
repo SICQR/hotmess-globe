@@ -35,7 +35,7 @@ function SubscriptionRow({ sub }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-white font-bold text-sm truncate">
-          {sub.creator_profile?.display_name || sub.creator_id?.slice(0, 8) || 'Creator'}
+          {sub.creator_profile?.username || sub.creator_profile?.display_name || 'Creator'}
         </p>
         <p className="text-white/40 text-xs mt-0.5">
           £{Number(sub.price_paid).toFixed(2)}/mo

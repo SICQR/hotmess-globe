@@ -40,8 +40,8 @@ export default function L2SearchSheet({ q: initialQ = '' }) {
       const [profilesRes, eventsRes, productsRes] = await Promise.all([
         supabase
           .from('profiles')
-          .select('id, display_name, avatar_url, location, bio')
-          .ilike('display_name', `%${q}%`)
+          .select('id, display_name, username, avatar_url, location, bio')
+          .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
           .eq('is_visible', true)
           .limit(10),
         supabase
@@ -155,7 +155,7 @@ export default function L2SearchSheet({ q: initialQ = '' }) {
                       </div>}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-white font-bold text-sm truncate">{p.display_name}</p>
+                  <p className="text-white font-bold text-sm truncate">{p.username || p.display_name}</p>
                   {(p.location || p.bio) && (
                     <p className="text-white/40 text-xs truncate">{p.location || p.bio}</p>
                   )}

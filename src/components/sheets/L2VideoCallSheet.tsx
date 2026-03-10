@@ -280,10 +280,10 @@ export default function L2VideoCallSheet({
           try {
             const [{ data: calleeProfile }, { data: callerProfile }] = await Promise.all([
               supabase.from('profiles').select('email').eq('id', calleeId).maybeSingle(),
-              supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle(),
+              supabase.from('profiles').select('username, display_name').eq('id', user.id).maybeSingle(),
             ]);
             if (calleeProfile?.email) {
-              const callerName = callerProfile?.display_name || 'Someone';
+              const callerName = callerProfile?.username || callerProfile?.display_name || 'Someone';
               pushNotify({
                 emails: [calleeProfile.email],
                 title: `${callerName} is calling you`,

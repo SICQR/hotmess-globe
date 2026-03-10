@@ -78,7 +78,7 @@ export default function NotificationBadge({ user }) {
             .eq('email', newMessage.sender_email)
             .single();
 
-          const senderName = sender?.display_name || sender?.username || 'Someone';
+          const senderName = sender?.username || sender?.display_name || 'Someone';
           
           // Browser notification if permitted and not focused
           if (
