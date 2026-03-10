@@ -9,9 +9,10 @@
 
 import { supabase } from '@/components/utils/supabaseClient';
 
-const SUPABASE_URL =
-  import.meta.env.VITE_SUPABASE_URL &&
-  `https://${import.meta.env.VITE_SUPABASE_URL}.supabase.co`;
+// VITE_SUPABASE_URL is already a full URL like "https://xxx.supabase.co"
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+  ? String(import.meta.env.VITE_SUPABASE_URL).replace(/^["']|["']$/g, '').replace(/\\n$/, '')
+  : null;
 
 interface PushPayload {
   emails: string[];
