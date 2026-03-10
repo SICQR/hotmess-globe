@@ -5,9 +5,8 @@
  *  - Active (tab visible):    60s interval
  *  - Background (tab hidden): 300s interval
  *
- * Writes to BOTH:
- *  - profiles.last_lat/last_lng (legacy + profile display)
- *  - User.last_lat/last_lng     (nearby_candidates RPC reads from User)
+ * Writes to profiles table (canonical).
+ * nearby_candidates_secure RPC reads from profiles + user_presence_locations.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -66,24 +65,12 @@ export function useGPS(autoUpdate = true): UseGPSResult {
         is_online: true,
       };
 
-      // Write to both tables in parallel
-      // profiles = profile display + ProfileSheet
-      // User = nearby_candidates RPC (PostGIS proximity queries)
-      await Promise.allSettled([
-        supabase
-          .from('profiles')
-          .update(locUpdate)
-          .eq('auth_user_id', user.id),
-        supabase
-          .from('User')
-          .update({
-            last_lat: newPosition.lat,
-            last_lng: newPosition.lng,
-            last_seen: new Date().toISOString(),
-            is_online: true,
-          })
-          .eq('auth_user_id', user.id),
-      ]);
+      // Write to profiles (canonical table)
+      // nearby_candidates_secure RPC reads from profiles + user_presence_locations
+      await supabase
+        .from('profiles')
+        .update(locUpdate)
+        .eq('id', user.id);
     } catch (err) {
       console.warn('[useGPS] Failed to update position:', err);
     }

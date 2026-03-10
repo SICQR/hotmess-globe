@@ -1,5 +1,5 @@
 /**
- * usePresenceHeartbeat — Updates User.last_seen every 5 minutes
+ * usePresenceHeartbeat — Updates profiles.last_seen every 5 minutes
  *
  * Grindr pattern: users seen within 10 minutes show as "online" (green dot).
  * This heartbeat ensures last_seen stays fresh while the app is open.
@@ -20,9 +20,9 @@ export function usePresenceHeartbeat() {
         if (!user?.id) return;
 
         await supabase
-          .from('User')
-          .update({ last_seen: new Date().toISOString() })
-          .eq('auth_user_id', user.id);
+          .from('profiles')
+          .update({ last_seen: new Date().toISOString(), is_online: true })
+          .eq('id', user.id);
       } catch {
         // Silently fail — presence is non-critical
       }
