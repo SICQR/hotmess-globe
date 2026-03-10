@@ -321,6 +321,7 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
       data: {
         thread_id: threadId,
         sender_email: 'test-red@hotmessldn.com',
+        sender_name: 'Test Red',
         content: testMessage,
         message_type: 'text',
       },
@@ -351,6 +352,80 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
     expect(latestMessages.length).toBeGreaterThan(0);
     expect(latestMessages[0].content).toBe(testMessage);
     expect(latestMessages[0].sender_email).toBe('test-red@hotmessldn.com');
+    expect(latestMessages[0].sender_name).toBe('Test Red');
+  });
+
+  // ── 7b. Bidirectional: User B replies, User A sees it ──────────────────
+
+  test('7b. User B sends a reply, User A receives it via Supabase', async () => {
+    const timestamp = Date.now();
+    const replyMessage = `E2E reply from B ${timestamp}`;
+
+    const supabaseUrl = 'https://klsywpvncqqglhnhrjbh.supabase.co';
+    const anonKey = process.env.VITE_SUPABASE_ANON_KEY ?? '';
+
+    const sessionA = await pageA.evaluate(() => {
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
+      return raw ? JSON.parse(raw) : null;
+    });
+    const sessionB = await pageB.evaluate(() => {
+      const raw = localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token');
+      return raw ? JSON.parse(raw) : null;
+    });
+
+    // Find the shared thread
+    const threadRes = await pageB.request.get(
+      `${supabaseUrl}/rest/v1/chat_threads?participant_emails=cs.{test-red@hotmessldn.com,test-blue@hotmessldn.com}&active=eq.true&limit=1`,
+      {
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${sessionB.access_token}`,
+        },
+      },
+    );
+    const threads = await threadRes.json();
+    expect(threads.length).toBeGreaterThan(0);
+    const threadId = threads[0].id;
+
+    // User B sends a reply
+    const sendRes = await pageB.request.post(`${supabaseUrl}/rest/v1/messages`, {
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${sessionB.access_token}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      data: {
+        thread_id: threadId,
+        sender_email: 'test-blue@hotmessldn.com',
+        sender_name: 'Test Blue',
+        content: replyMessage,
+        message_type: 'text',
+      },
+    });
+
+    const sentBody = await sendRes.json();
+    expect(sendRes.ok(), `Reply send failed (${sendRes.status()}): ${JSON.stringify(sentBody)}`).toBeTruthy();
+
+    // User A reads the reply
+    await pageA.waitForTimeout(1000);
+
+    const readRes = await pageA.request.get(
+      `${supabaseUrl}/rest/v1/messages?thread_id=eq.${threadId}&order=created_date.desc&limit=1`,
+      {
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${sessionA.access_token}`,
+        },
+      },
+    );
+
+    const latestMessages = await readRes.json();
+    expect(Array.isArray(latestMessages)).toBeTruthy();
+    expect(latestMessages.length).toBeGreaterThan(0);
+    expect(latestMessages[0].content).toBe(replyMessage);
+    expect(latestMessages[0].sender_email).toBe('test-blue@hotmessldn.com');
+    expect(latestMessages[0].sender_name).toBe('Test Blue');
   });
 
   // ── 7. Read receipts: User B marks as read, User A sees it ──────────────
@@ -602,9 +677,9 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
     if (threads.length > 0) {
       const threadId = threads[0].id;
 
-      // Delete test messages (content starts with "E2E test message")
+      // Delete test messages (content starts with "E2E")
       await pageA.request.delete(
-        `${supabaseUrl}/rest/v1/messages?thread_id=eq.${threadId}&content=like.E2E test message*`,
+        `${supabaseUrl}/rest/v1/messages?thread_id=eq.${threadId}&content=like.E2E*`,
         {
           headers: {
             apikey: anonKey,
