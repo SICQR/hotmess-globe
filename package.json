@@ -16,7 +16,6 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "node ./node_modules/typescript/bin/tsc -p ./tsconfig.json --noEmit",
     "seed:mock-profiles": "node ./scripts/seed-mock-profiles.mjs",
-    "seed:test": "node ./scripts/seed-test-accounts.js",
     "test": "vitest",
     "test:run": "vitest run",
     "test:run:verbose": "vitest run --reporter verbose",
