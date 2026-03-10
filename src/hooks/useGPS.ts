@@ -1,4 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+/**
+ * useGPS — Adaptive geolocation sync for HOTMESS OS
+ *
+ * Battery-optimised:
+ *  - Active (tab visible):    60s interval
+ *  - Background (tab hidden): 300s interval
+ *
+ * Writes to BOTH:
+ *  - profiles.last_lat/last_lng (legacy + profile display)
+ *  - User.last_lat/last_lng     (nearby_candidates RPC reads from User)
+ */
+
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 
 type Position = {
@@ -15,12 +27,15 @@ type UseGPSResult = {
   refresh: () => void;
 };
 
-const UPDATE_INTERVAL = 30000; // 30 seconds
+const ACTIVE_INTERVAL_MS = 60_000;    // 60 seconds when visible
+const BACKGROUND_INTERVAL_MS = 300_000; // 5 minutes when hidden
 
 export function useGPS(autoUpdate = true): UseGPSResult {
   const [position, setPosition] = useState<Position | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastWriteRef = useRef<number>(0);
 
   const updatePosition = useCallback(async (pos: GeolocationPosition) => {
     const newPosition: Position = {
@@ -29,26 +44,46 @@ export function useGPS(autoUpdate = true): UseGPSResult {
       accuracy: pos.coords.accuracy,
       timestamp: pos.timestamp,
     };
-    
+
     setPosition(newPosition);
     setError(null);
     setLoading(false);
 
-    // Update user's position in database
+    // Throttle DB writes — skip if last write was < 30s ago
+    const now = Date.now();
+    if (now - lastWriteRef.current < 30_000) return;
+    lastWriteRef.current = now;
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
+      if (!user) return;
+
+      const locUpdate = {
+        last_lat: newPosition.lat,
+        last_lng: newPosition.lng,
+        last_loc_ts: new Date().toISOString(),
+        loc_accuracy_m: Math.round(newPosition.accuracy),
+        is_online: true,
+      };
+
+      // Write to both tables in parallel
+      // profiles = profile display + ProfileSheet
+      // User = nearby_candidates RPC (PostGIS proximity queries)
+      await Promise.allSettled([
+        supabase
           .from('profiles')
+          .update(locUpdate)
+          .eq('auth_user_id', user.id),
+        supabase
+          .from('User')
           .update({
             last_lat: newPosition.lat,
             last_lng: newPosition.lng,
-            last_loc_ts: new Date().toISOString(),
-            loc_accuracy_m: Math.round(newPosition.accuracy),
+            last_seen: new Date().toISOString(),
             is_online: true,
           })
-          .eq('auth_user_id', user.id);
-      }
+          .eq('auth_user_id', user.id),
+      ]);
     } catch (err) {
       console.warn('[useGPS] Failed to update position:', err);
     }
@@ -86,16 +121,40 @@ export function useGPS(autoUpdate = true): UseGPSResult {
     });
   }, [updatePosition, handleError]);
 
+  // Adaptive interval based on tab visibility
+  const startInterval = useCallback((intervalMs: number) => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(refresh, intervalMs);
+  }, [refresh]);
+
   useEffect(() => {
     refresh();
 
     if (!autoUpdate) return;
 
-    // Update position every 30 seconds
-    const interval = setInterval(refresh, UPDATE_INTERVAL);
-    
-    return () => clearInterval(interval);
-  }, [refresh, autoUpdate]);
+    // Start with active interval
+    startInterval(
+      document.visibilityState === 'visible' ? ACTIVE_INTERVAL_MS : BACKGROUND_INTERVAL_MS
+    );
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Came back — refresh immediately + switch to active interval
+        refresh();
+        startInterval(ACTIVE_INTERVAL_MS);
+      } else {
+        // Gone to background — switch to slow interval
+        startInterval(BACKGROUND_INTERVAL_MS);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refresh, autoUpdate, startInterval]);
 
   return { position, error, loading, refresh };
 }
