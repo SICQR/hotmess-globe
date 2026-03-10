@@ -26,6 +26,7 @@ interface GPSSmartCardProps {
   profile: {
     id: string;
     display_name: string;
+    username?: string;
     photo_url?: string;
     latitude?: number;
     longitude?: number;
@@ -93,7 +94,7 @@ export default function GPSSmartCard({
     const pickup = userLocation 
       ? `pickup[latitude]=${userLocation.latitude}&pickup[longitude]=${userLocation.longitude}` 
       : '';
-    return `https://m.uber.com/ul/?action=setPickup&${pickup}&dropoff[latitude]=${profile.latitude}&dropoff[longitude]=${profile.longitude}&dropoff[nickname]=${encodeURIComponent(profile.display_name || 'Destination')}`;
+    return `https://m.uber.com/ul/?action=setPickup&${pickup}&dropoff[latitude]=${profile.latitude}&dropoff[longitude]=${profile.longitude}&dropoff[nickname]=${encodeURIComponent(profile.username || profile.display_name || 'Destination')}`;
   };
 
   // Get time since active
@@ -143,7 +144,7 @@ export default function GPSSmartCard({
         {/* User info */}
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-white">{profile.display_name}</span>
+            <span className="font-bold text-white">{profile.username || profile.display_name}</span>
             {activeBadge && (
               <span 
                 className="px-2 py-0.5 text-[10px] font-bold"

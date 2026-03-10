@@ -79,6 +79,7 @@ interface TicketListing {
   created_at: string;
   seller_profile?: {
     display_name: string | null;
+    username: string | null;
     avatar_url: string | null;
   };
   fraud_signals?: FraudSignal[];
@@ -184,13 +185,13 @@ export default function L2TicketSheet({ mode: initialMode = 'browse' }: L2Ticket
       if (sellerIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, display_name, avatar_url')
+          .select('id, display_name, username, avatar_url')
           .in('id', sellerIds);
 
         if (profiles) {
-          const profileMap: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
+          const profileMap: Record<string, { display_name: string | null; username: string | null; avatar_url: string | null }> = {};
           profiles.forEach(p => {
-            profileMap[p.id] = { display_name: p.display_name, avatar_url: p.avatar_url };
+            profileMap[p.id] = { display_name: p.display_name, username: (p as any).username, avatar_url: p.avatar_url };
           });
           listingData.forEach(l => {
             l.seller_profile = profileMap[l.seller_id] || null;
@@ -341,7 +342,7 @@ export default function L2TicketSheet({ mode: initialMode = 'browse' }: L2Ticket
       // The ticket_chat_threads system uses UUIDs, but the main chat uses emails.
       // We pass the seller profile context so chat can be initiated.
       openSheet('chat', {
-        to: listing.seller_profile?.display_name || listing.seller_id,
+        to: listing.seller_profile?.username || listing.seller_profile?.display_name || listing.seller_id,
         title: `Re: ${listing.event_name}`,
       });
     },
@@ -815,7 +816,7 @@ function TicketCard({ listing, index, onChatToBuy, isOwnListing }: TicketCardPro
     formattedDate = listing.event_date;
   }
 
-  const sellerName = listing.seller_profile?.display_name || 'Anonymous';
+  const sellerName = listing.seller_profile?.username || listing.seller_profile?.display_name || 'Anonymous';
 
   return (
     <motion.div

@@ -55,8 +55,8 @@ function getPhotoUrl(profile: Profile): string {
 }
 
 function getName(profile: Profile): string {
-  // IDENTITY MODEL: never show full_name (real name) — display_name/profileName only
-  return profile.display_name || profile.profileName || profile.username || 'Unknown';
+  // IDENTITY MODEL: username is the public handle — never show real name
+  return profile.username || profile.profileName || profile.display_name || 'Unknown';
 }
 
 export function SimpleGrid({ profiles, viewerLat, viewerLng, onOpenProfile, onMessage }: Props) {

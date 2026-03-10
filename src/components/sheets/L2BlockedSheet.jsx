@@ -36,7 +36,7 @@ export default function L2BlockedSheet() {
       const emails = blocks.map(b => b.blocked_email).filter(Boolean);
       const { data: users } = await supabase
         .from('User')
-        .select('email, display_name, avatar_url')
+        .select('email, display_name, username, avatar_url')
         .in('email', emails);
 
       const userMap = new Map((users || []).map(u => [u.email, u]));
@@ -120,7 +120,7 @@ export default function L2BlockedSheet() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white/50 font-bold text-sm truncate">
-                  {profile?.display_name || 'Unknown User'}
+                  {profile?.username || profile?.display_name || 'Unknown User'}
                 </p>
               </div>
               <button

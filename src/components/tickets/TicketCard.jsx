@@ -55,7 +55,7 @@ export function TicketCard({
 
         {/* Seller info */}
         <div className="flex items-center gap-2 text-xs text-white/60">
-          <span>Seller: {seller.display_name || 'Anonymous'}</span>
+          <span>Seller: {seller.username || seller.display_name || 'Anonymous'}</span>
           {seller.is_verified && (
             <Shield size={12} className="text-green-400" />
           )}

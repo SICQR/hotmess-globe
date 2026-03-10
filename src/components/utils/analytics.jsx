@@ -160,7 +160,7 @@ export function identifyUser(user) {
     window.mixpanel.identify(userId);
     window.mixpanel.people.set({
       $email: user.email,
-      $name: user.full_name || user.display_name,
+      $name: user.username || user.display_name,
       membership_tier: user.membership_tier,
       city: user.city,
     });

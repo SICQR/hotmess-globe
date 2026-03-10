@@ -201,7 +201,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
     // ChatSheet will look up the email server-side
     openSheet(SHEET_TYPES.CHAT, {
       toUid: profileUser.auth_user_id || profileUser.id,
-      title: `Chat with ${profileUser.display_name || profileUser.profileName || profileUser.username || 'Anonymous'}`,
+      title: `Chat with ${profileUser.username || profileUser.profileName || profileUser.display_name || 'Anonymous'}`,
     });
   };
 
@@ -231,7 +231,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
         })
         .catch(() => {}); // best-effort legacy sync
 
-      toast.success(`${profileUser.display_name || profileUser.username || 'User'} blocked`);
+      toast.success(`${profileUser.username || profileUser.display_name || 'User'} blocked`);
       setShowMoreMenu(false);
       closeSheet();
     } catch {
@@ -289,9 +289,8 @@ export default function L2ProfileSheet({ email, uid, id }) {
 
   // ── Derived data ────────────────────────────────────────────────────────
 
-  // IDENTITY MODEL: display_name only — never expose full_name (real name) to other users
-  // Mirrors Grindr/Scruff pattern: one user-chosen name, not legal name
-  const name = profileUser.display_name || profileUser.profileName || profileUser.username || 'Anonymous';
+  // IDENTITY MODEL: username is the public handle — never expose real name to other users
+  const name = profileUser.username || profileUser.profileName || profileUser.display_name || 'Anonymous';
   const avatarUrl = profileUser.avatar_url || profileUser.photos?.[0];
   const isTravel = profileUser.persona === 'TRAVEL' || profileUser.persona === 'travel';
   const visitingCity = profileUser.city || profileUser.visiting_city;

@@ -333,12 +333,13 @@ export function IncomingCallBanner() {
 
             const { data: profile } = await supabase
               .from('profiles')
-              .select('display_name, avatar_url, photos')
+              .select('username, display_name, avatar_url, photos')
               .eq('id', row.caller_id)
               .single();
 
             if (profile) {
-              if (profile.display_name) callerName = profile.display_name;
+              if (profile.username) callerName = profile.username;
+              else if (profile.display_name) callerName = profile.display_name;
               callerAvatar =
                 profile.avatar_url ||
                 (Array.isArray(profile.photos) && profile.photos[0]?.url

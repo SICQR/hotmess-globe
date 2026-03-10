@@ -440,7 +440,7 @@ function RequestRow({ request, expanded = false }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-white truncate">
-          {request.User?.display_name || 'User'}
+          {request.User?.username || request.User?.display_name || 'User'}
         </p>
         <p className="text-xs text-white/50 truncate">
           {request.request_description}

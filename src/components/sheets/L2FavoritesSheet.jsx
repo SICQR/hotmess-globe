@@ -20,7 +20,7 @@ export default function L2FavoritesSheet() {
 
       const { data } = await supabase
         .from('user_favorites')
-        .select('favorited_id, created_at, profiles!favorited_id(id, display_name, avatar_url, location)')
+        .select('favorited_id, created_at, profiles!favorited_id(id, display_name, username, avatar_url, location)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -85,7 +85,7 @@ export default function L2FavoritesSheet() {
                 className="flex-1 min-w-0 text-left"
               >
                 <p className="text-white font-bold text-sm truncate">
-                  {profile?.display_name || 'Unknown'}
+                  {profile?.username || profile?.display_name || 'Unknown'}
                 </p>
                 {profile?.location && (
                   <p className="text-white/40 text-xs truncate mt-0.5">

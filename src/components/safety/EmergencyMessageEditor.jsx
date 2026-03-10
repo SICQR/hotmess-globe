@@ -34,7 +34,7 @@ export default function EmergencyMessageEditor() {
   };
 
   const defaultMessage = currentUser ? 
-    `🚨 EMERGENCY ALERT from ${currentUser.display_name || currentUser.username || 'a HOTMESS user'}: I need help!` :
+    `🚨 EMERGENCY ALERT from ${currentUser.username || currentUser.display_name || 'a HOTMESS user'}: I need help!` :
     '🚨 EMERGENCY ALERT: I need help!';
 
   return (

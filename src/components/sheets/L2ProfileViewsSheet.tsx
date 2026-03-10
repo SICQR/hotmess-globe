@@ -27,6 +27,7 @@ interface ViewRow {
     id: string;
     avatar_url?: string;
     display_name?: string;
+    username?: string;
     city?: string;
   };
 }
@@ -68,7 +69,7 @@ export default function L2ProfileViewsSheet() {
       const viewerIds = [...new Set(rawViews.map((v) => v.viewer_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, avatar_url, display_name, city')
+        .select('id, avatar_url, display_name, username, city')
         .in('id', viewerIds);
 
       const profileById: Record<string, any> = {};
@@ -136,7 +137,7 @@ export default function L2ProfileViewsSheet() {
             style={{ background: CARD_BG }}
           >
             {views.map((view, idx) => {
-              const displayName = view.profile?.display_name || 'Unknown';
+              const displayName = view.profile?.username || view.profile?.display_name || 'Unknown';
               const avatarUrl = view.profile?.avatar_url;
               const city = view.profile?.city;
               const initial = displayName[0]?.toUpperCase() ?? '?';

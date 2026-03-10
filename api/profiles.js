@@ -419,17 +419,14 @@ export default async function handler(req, res) {
         const lng = Number(row?.last_lng ?? row?.lng);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
 
-        // GDPR: Use display_name or username, never expose email to other users
-        // display_name must be set (not empty or email-like) to appear on grid
-        const displayName = String(row?.display_name || '').trim();
-        if (!displayName) return null; // Reject profiles without a valid display_name
-
-        const fullName = String(row?.full_name || displayName).trim();
+        // PRIVACY: username is the public handle — never expose real name or email
+        const username = String(row?.username || '').trim();
+        const displayName = username || String(row?.display_name || '').trim();
+        if (!displayName) return null; // Reject profiles without a valid username/display_name
         const uniqueId = row?.id ? String(row.id).trim() : null;
-        const dedupeKey = String(row?.auth_user_id || uniqueId || fullName).trim();
+        const dedupeKey = String(row?.auth_user_id || uniqueId || displayName).trim();
         const avatar = String(row?.avatar_url || '').trim();
         const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : null;
-        const username = row?.username ? String(row.username).trim() : null;
         // Keep email internal for lookups but don't expose in response
         const emailInternal = row?.email ? String(row.email).trim() : null;
 
