@@ -13,84 +13,59 @@ import {
 } from './routing/_utils.js';
 import { fetchDistanceMatrix } from './routing/_google.js';
 
-const USER_TABLES = ['User', 'users'];
-
-const isMissingColumnError = (error) => {
-  const message = String(error?.message || '').toLowerCase();
-  return message.includes('column') && message.includes('does not exist');
-};
-
-const isMissingTableError = (error) => {
-  const message = String(error?.message || '').toLowerCase();
-  return (
-    error?.status === 404 ||
-    message.includes('schema cache') ||
-    message.includes('could not find the table') ||
-    message.includes('does not exist')
-  );
-};
-
 const fetchProfilesForCandidateIds = async ({ serviceClient, candidateUserIds }) => {
   const ids = Array.from(
     new Set((Array.isArray(candidateUserIds) ? candidateUserIds : []).filter(Boolean).map((v) => String(v)))
   );
-  if (!ids.length) return { table: null, map: new Map() };
+  if (!ids.length) return { table: 'profiles', map: new Map() };
 
-  for (const table of USER_TABLES) {
-    const idColumn = table === 'users' ? 'id' : 'auth_user_id';
-
-    // Use select('*') for schema-tolerance; only a safe subset is returned to the client.
-    const { data, error } = await serviceClient.from(table).select('*').in(idColumn, ids);
-    if (error) {
-      if (isMissingTableError(error)) continue;
-      if (isMissingColumnError(error) && idColumn !== 'id') {
-        // Some legacy schemas might key by id.
-        const retry = await serviceClient.from(table).select('*').in('id', ids);
-        if (!retry.error) {
-          const map = new Map(
-            (Array.isArray(retry.data) ? retry.data : []).map((row) => [String(row?.auth_user_id || row?.id), row])
-          );
-          return { table, map };
-        }
-      }
-      continue;
-    }
-
-    const map = new Map(
-      (Array.isArray(data) ? data : []).map((row) => [String(row?.auth_user_id || row?.id), row])
-    );
-    return { table, map };
+  // profiles.id = auth.uid() = the user_id returned by nearby_candidates_secure
+  const { data, error } = await serviceClient.from('profiles').select('*').in('id', ids);
+  if (error) {
+    console.warn('[nearby] fetchProfilesForCandidateIds error:', error.message);
+    return { table: 'profiles', map: new Map() };
   }
 
-  return { table: null, map: new Map() };
+  const map = new Map(
+    (Array.isArray(data) ? data : []).map((row) => [String(row?.id), row])
+  );
+  return { table: 'profiles', map };
 };
 
 const toPublicProfile = (row) => {
   if (!row || typeof row !== 'object') return null;
   // GDPR: strip email from public profile response - never expose to other users
+  // profiles columns: display_name (not full_name), no xp/preferred_vibes
   return {
-    full_name: row.full_name ?? null,
+    display_name: row.display_name ?? row.full_name ?? null,
     avatar_url: row.avatar_url ?? null,
     bio: row.bio ?? null,
-    preferred_vibes: row.preferred_vibes ?? null,
-    xp: row.xp ?? null,
-    availability_status: row.availability_status ?? null,
-    updated_date: row.updated_date ?? null,
+    username: row.username ?? null,
     updated_at: row.updated_at ?? null,
     city: row.city ?? null,
+    public_attributes: row.public_attributes ?? null,
   };
 };
 
 const getViewerProfile = async ({ serviceClient, authUserId, email }) => {
-  for (const table of USER_TABLES) {
-    const { data, error } = await serviceClient
-      .from(table)
-      .select('id, email, auth_user_id, subscription_tier, default_travel_mode, privacy_hide_proximity')
-      .or(`auth_user_id.eq.${authUserId},email.eq.${email}`)
-      .maybeSingle();
-    if (!error && data) return { table, profile: data };
+  // profiles.id = auth.uid(); membership_tier maps to subscription_tier
+  const { data, error } = await serviceClient
+    .from('profiles')
+    .select('id, email, membership_tier, privacy_hide_proximity')
+    .or(`id.eq.${authUserId},email.eq.${email}`)
+    .maybeSingle();
+  if (!error && data) {
+    return {
+      table: 'profiles',
+      profile: {
+        ...data,
+        auth_user_id: data.id,
+        // map profiles column name to what the handler expects
+        subscription_tier: data.membership_tier || null,
+      },
+    };
   }
-  return { table: 'User', profile: null };
+  return { table: 'profiles', profile: null };
 };
 
 const upsertViewerPresenceLocation = async ({ serviceClient, authUser, coords, privacyHideProximity }) => {
@@ -111,34 +86,21 @@ const upsertViewerPresenceLocation = async ({ serviceClient, authUser, coords, p
 
 const upsertViewerLocation = async ({ serviceClient, authUser, coords, privacyHideProximity }) => {
   const nowIso = new Date().toISOString();
-  const row = {
-    email: authUser.email,
-    auth_user_id: authUser.id,
+  const update = {
     is_online: !privacyHideProximity,
     last_loc_ts: nowIso,
     loc_accuracy_m: coords?.accuracy_m ?? null,
-    // keep legacy columns for any existing code paths
-    updated_date: nowIso,
+    last_lat: privacyHideProximity ? null : (coords?.lat ?? null),
+    last_lng: privacyHideProximity ? null : (coords?.lng ?? null),
   };
 
-  if (privacyHideProximity) {
-    row.last_lat = null;
-    row.last_lng = null;
-    row.lat = null;
-    row.lng = null;
-  } else {
-    row.last_lat = coords?.lat ?? null;
-    row.last_lng = coords?.lng ?? null;
-    row.lat = coords?.lat ?? null;
-    row.lng = coords?.lng ?? null;
-  }
+  // profiles.id = auth.uid()
+  const { error } = await serviceClient
+    .from('profiles')
+    .update(update)
+    .eq('id', authUser.id);
 
-  for (const table of USER_TABLES) {
-    const { error } = await serviceClient.from(table).upsert(row, { onConflict: 'email' });
-    if (!error) return { ok: true, table };
-  }
-
-  return { ok: false, table: 'User' };
+  return { ok: !error, table: 'profiles' };
 };
 
 const computeTimeSlice = ({ nowMs, ttlSeconds }) => {
@@ -181,8 +143,8 @@ export default async function handler(req, res) {
   const { profile } = await getViewerProfile({ serviceClient, authUserId: authUser.id, email: authUser.email });
   const privacyHideProximity = !!profile?.privacy_hide_proximity;
 
-  // Store precise-ish coords in the private presence table (not exposed via broad User SELECT).
-  // Keep the legacy public."User" columns updated with the bucketed version for compatibility.
+  // Store precise-ish coords in the private presence table.
+  // Also update profiles.last_lat/last_lng with the (possibly bucketed) version.
   await upsertViewerPresenceLocation({
     serviceClient,
     authUser,
