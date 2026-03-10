@@ -187,10 +187,25 @@ export function useHeartbeat(userId: string | null, intervalMs: number = 30000) 
     const interval = setInterval(updatePresence, intervalMs);
 
     const handleBeforeUnload = () => {
-      // Use sendBeacon for reliable beforeunload
+      // sendBeacon with Supabase REST API — must include apikey + auth headers
       const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/profiles?auth_user_id=eq.${userId}`;
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
+      const session = JSON.parse(localStorage.getItem('sb-klsywpvncqqglhnhrjbh-auth-token') ?? '{}');
+      const accessToken = session?.access_token ?? anonKey;
       const body = JSON.stringify({ is_online: false, last_loc_ts: new Date().toISOString() });
-      navigator.sendBeacon?.(url, new Blob([body], { type: 'application/json' }));
+      const headers = {
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+        'apikey': anonKey,
+        'Authorization': `Bearer ${accessToken}`,
+      };
+      // sendBeacon only supports body, not headers — use fetch keepalive instead
+      fetch(url, {
+        method: 'PATCH',
+        headers,
+        body,
+        keepalive: true, // survives page unload like sendBeacon
+      }).catch(() => {}); // fire-and-forget
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
