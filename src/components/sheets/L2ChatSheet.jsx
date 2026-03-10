@@ -170,6 +170,10 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       } else {
         // Pre-select the "to" email so first send creates the thread
         setSelectedThread({ _new: true, participant_emails: [currentUser.email, resolvedToEmail] });
+        // Eagerly load the other user's profile so we show display_name, not username
+        if (!profiles[resolvedToEmail]) {
+          loadProfilesByEmail([resolvedToEmail]);
+        }
       }
     }
   }, [currentUser?.email, threadsLoading, initialThreadId, resolvedToEmail]);
