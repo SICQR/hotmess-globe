@@ -10,7 +10,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
 import { Input } from '@/components/ui/input';
-import { Loader2, ArrowRight, X } from 'lucide-react';
+import { Loader2, ArrowRight, X, Mail, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const REDIRECT_DELAY_MS = 500;
@@ -57,6 +57,9 @@ export default function Auth() {
   const [showReset, setShowReset]       = useState(false);
   const [resetSent, setResetSent]       = useState(false);
   const [isPasswordUpdate, setIsPasswordUpdate] = useState(false);
+  const [confirmationPending, setConfirmationPending] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [resending, setResending]       = useState(false);
   const [email, setEmail]               = useState('');
   const [password, setPassword]         = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -93,6 +96,8 @@ export default function Auth() {
     setShowReset(false);
     setResetSent(false);
     setIsPasswordUpdate(false);
+    setConfirmationPending(false);
+    setPendingEmail('');
     setEmail(''); setPassword(''); setConfirmPassword('');
   };
   const switchMode  = (toSignUp) => {
@@ -137,12 +142,28 @@ export default function Auth() {
     try {
       const { error } = await supabase.auth.signUp({ email: email.trim(), password });
       if (error) { toast.error(error.message || 'Sign up failed'); setLoading(false); return; }
-      toast.success('Check your email to confirm your account');
-      setEmail(''); setPassword(''); setConfirmPassword('');
+      // Show confirmation pending screen — do NOT navigate or show spinner
+      setPendingEmail(email.trim());
+      setConfirmationPending(true);
+      setPassword(''); setConfirmPassword('');
     } catch (err) {
       toast.error(err.message || 'Sign up failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!pendingEmail || resending) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: pendingEmail });
+      if (error) { toast.error(error.message || 'Failed to resend'); }
+      else { toast.success('Confirmation email resent'); }
+    } catch (err) {
+      toast.error(err.message || 'Failed to resend');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -465,7 +486,21 @@ export default function Auth() {
                       </p>
                     </motion.div>
                   )}
-                  {!showReset && !isPasswordUpdate && (
+                  {confirmationPending && (
+                    <motion.div
+                      key="confirm-pending"
+                      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <h2 className="text-xl font-black text-white">
+                        Almost there
+                      </h2>
+                      <p className="text-xs text-white/30 mt-0.5">
+                        Confirm your email to continue
+                      </p>
+                    </motion.div>
+                  )}
+                  {!showReset && !isPasswordUpdate && !confirmationPending && (
                     <motion.div
                       key={isSignUp ? 'su' : 'si'}
                       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
@@ -491,7 +526,69 @@ export default function Auth() {
 
               {/* Form */}
               <AnimatePresence mode="wait">
-                {isPasswordUpdate ? (
+                {confirmationPending ? (
+                  <motion.div
+                    key="confirmation-pending"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.25 }}
+                    className="px-5 pb-6 pt-4"
+                  >
+                    {/* Mail icon */}
+                    <div className="flex justify-center mb-5">
+                      <div
+                        className="w-16 h-16 rounded-full flex items-center justify-center"
+                        style={{ background: `${GOLD}15`, border: `2px solid ${GOLD}30` }}
+                      >
+                        <Mail className="w-7 h-7" style={{ color: GOLD }} />
+                      </div>
+                    </div>
+
+                    <h3 className="text-xl font-black text-white text-center mb-2">
+                      Check your email
+                    </h3>
+                    <p className="text-sm text-white/50 text-center leading-relaxed mb-1">
+                      We've sent a confirmation link to
+                    </p>
+                    <p className="text-base font-bold text-center mb-6" style={{ color: GOLD }}>
+                      {pendingEmail}
+                    </p>
+                    <p className="text-xs text-white/30 text-center leading-relaxed mb-6">
+                      Tap the link in the email to activate your account.
+                      Once confirmed, you'll be signed in automatically.
+                    </p>
+
+                    {/* Resend button */}
+                    <button
+                      onClick={handleResendConfirmation}
+                      disabled={resending}
+                      className="w-full h-12 rounded-2xl font-black text-sm uppercase tracking-wider border flex items-center justify-center gap-2 disabled:opacity-40 transition-all"
+                      style={{ borderColor: `${GOLD}30`, color: 'rgba(255,255,255,0.5)' }}
+                    >
+                      {resending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4" />
+                          Resend confirmation email
+                        </>
+                      )}
+                    </button>
+
+                    {/* Use different email */}
+                    <button
+                      onClick={() => {
+                        setConfirmationPending(false);
+                        setPendingEmail('');
+                        setEmail('');
+                      }}
+                      className="w-full text-sm text-white/30 hover:text-white/50 transition-colors font-medium py-3 mt-2"
+                    >
+                      ← Use a different email
+                    </button>
+                  </motion.div>
+                ) : isPasswordUpdate ? (
                   <motion.form
                     key="password-update-form"
                     onSubmit={handlePasswordUpdate}
@@ -681,7 +778,7 @@ export default function Auth() {
 
               {/* Toggle */}
               <AnimatePresence>
-                {!showReset && (
+                {!showReset && !confirmationPending && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
