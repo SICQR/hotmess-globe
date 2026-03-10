@@ -175,38 +175,32 @@ export function BootGuardProvider({ children }) {
   const loadProfile = async (userId, userEmail) => {
     setIsLoading(true);
 
+    // Safety timeout — loadProfile is also called from onAuthStateChange
+    // which has NO outer timeout. Never leave user stuck at LOADING.
+    const profileTimeout = setTimeout(() => {
+      console.error('[BootGuard] loadProfile timeout — 8s, forcing NEEDS_ONBOARDING');
+      const localAge = getLocalAgeVerified();
+      setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
+      setIsLoading(false);
+    }, 8_000);
+
     try {
-      // Fetch profile - profiles table uses account_id to link to auth.users
+      // Fetch profile - profiles table uses id = auth.uid()
       let { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      // PGRST116 = no rows found
+      // PGRST116 = no rows found — NEW USER, skip straight to onboarding
       if (error && error.code === 'PGRST116') {
-        // Profile doesn't exist - create it
+        logBoot('No profile row — new user, routing to onboarding immediately');
+        setProfile(null);
         const localAge = getLocalAgeVerified();
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            email: userEmail || null,
-            age_verified: localAge,
-            onboarding_complete: false,
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Profile create error:', createError);
-          // Fall through to onboarding
-          setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
-          setIsLoading(false);
-          return;
-        }
-
-        profileData = newProfile;
+        setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
+        setIsLoading(false);
+        clearTimeout(profileTimeout);
+        return;
       } else if (error) {
         console.error('Profile fetch error:', error);
         // On error, use localStorage to decide boot state
@@ -219,6 +213,7 @@ export function BootGuardProvider({ children }) {
           setBootState(BOOT_STATES.NEEDS_AGE);
         }
         setIsLoading(false);
+        clearTimeout(profileTimeout);
         return;
       }
 
@@ -277,6 +272,7 @@ export function BootGuardProvider({ children }) {
         setBootState(BOOT_STATES.NEEDS_AGE);
       }
     } finally {
+      clearTimeout(profileTimeout);
       setIsLoading(false);
     }
   };

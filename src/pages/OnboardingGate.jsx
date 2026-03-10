@@ -231,6 +231,27 @@ export default function OnboardingGate() {
   const [photoUploading, setPhotoUploading] = useState(false);
   const photoInputRef = useRef(null);
 
+  // Ensure profile row exists — new users arrive here with no row yet.
+  // This upsert is idempotent: if the row already exists, it's a no-op.
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    const ensureProfileRow = async () => {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(
+          {
+            id: session.user.id,
+            email: session.user.email || null,
+            age_verified: false,
+            onboarding_complete: false,
+          },
+          { onConflict: 'id', ignoreDuplicates: true },
+        );
+      if (error) console.error('[Onboarding] ensureProfileRow error:', error);
+    };
+    ensureProfileRow();
+  }, [session?.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Wait for BootGuard to finish loading
   useEffect(() => {
     if (isLoading) return;
