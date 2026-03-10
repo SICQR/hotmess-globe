@@ -203,6 +203,68 @@ describe('Chat: read receipts via RPCs', () => {
   });
 });
 
+describe('Chat: read_at timestamp', () => {
+  it('mark_messages_read stamps read_at on first read', async () => {
+    // Insert a fresh message from Glen that Phil has not read
+    const { data: freshMsg } = await admin
+      .from('messages')
+      .insert({
+        thread_id: testThreadId,
+        sender_email: TEST_USERS.glen.email,
+        sender_name: 'test_glen',
+        content: 'Fresh message for read_at test',
+        message_type: 'text',
+        read_by: [TEST_USERS.glen.email],
+      })
+      .select('id')
+      .single();
+
+    if (freshMsg) messageIds.push(freshMsg.id);
+
+    // Phil marks as read
+    await admin.rpc('mark_messages_read', {
+      p_thread_id: testThreadId,
+      p_user_email: TEST_USERS.phil.email,
+    });
+
+    await wait(200);
+
+    // Verify read_at is now set
+    const { data: msg } = await admin
+      .from('messages')
+      .select('read_at, read_by')
+      .eq('id', freshMsg!.id)
+      .single();
+
+    expect(msg!.read_at).toBeDefined();
+    expect(msg!.read_at).not.toBeNull();
+    expect(msg!.read_by).toContain(TEST_USERS.phil.email);
+  });
+});
+
+describe('Chat: expires_at (ephemeral messages)', () => {
+  it('can insert a message with expires_at', async () => {
+    const expiresAt = new Date(Date.now() + 3600000).toISOString();
+    const { data, error } = await admin
+      .from('messages')
+      .insert({
+        thread_id: testThreadId,
+        sender_email: TEST_USERS.phil.email,
+        sender_name: 'test_phil',
+        content: 'This message self-destructs!',
+        message_type: 'text',
+        read_by: [TEST_USERS.phil.email],
+        expires_at: expiresAt,
+      })
+      .select('id, expires_at')
+      .single();
+
+    expect(error).toBeNull();
+    expect(data!.expires_at).toBeDefined();
+    messageIds.push(data!.id);
+  });
+});
+
 describe('Chat: message types', () => {
   it('supports meetpoint message type', async () => {
     const { data, error } = await admin
