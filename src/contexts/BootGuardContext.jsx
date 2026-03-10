@@ -52,6 +52,23 @@ const getLocalCommunityAttested = () => {
   }
 };
 
+/** Clear all hm_* localStorage keys — used on signout so a fresh signup starts clean */
+const clearHotmessStorage = () => {
+  try {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('hm_') || k.startsWith('chat_read_') || k.startsWith('ghosted_'))) {
+        keys.push(k);
+      }
+    }
+    keys.forEach(k => localStorage.removeItem(k));
+    logBoot('Cleared localStorage keys:', keys.length);
+  } catch {
+    // localStorage unavailable
+  }
+};
+
 const BootGuardContext = createContext(null);
 
 export function BootGuardProvider({ children }) {
@@ -63,11 +80,21 @@ export function BootGuardProvider({ children }) {
   // Initialize and listen to auth changes
   useEffect(() => {
     let mounted = true;
+    let bootTimeout = null;
 
     const initAuth = async () => {
       logBoot('initAuth started');
       setIsLoading(true);
       setBootState(BOOT_STATES.LOADING);
+
+      // Safety net: 10-second timeout — never leave user on LOADING forever
+      bootTimeout = setTimeout(() => {
+        if (!mounted) return;
+        console.error('[BootGuard] Boot timeout — stuck in LOADING for 10s, forcing recovery');
+        const localAge = getLocalAgeVerified();
+        setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.UNAUTHENTICATED);
+        setIsLoading(false);
+      }, 10_000);
 
       try {
         // Get current session
@@ -84,17 +111,20 @@ export function BootGuardProvider({ children }) {
           setProfile(null);
           setBootState(BOOT_STATES.UNAUTHENTICATED);
           setIsLoading(false);
+          clearTimeout(bootTimeout);
           return;
         }
 
         setSession(currentSession);
-        await loadProfile(currentSession.user.id);
+        await loadProfile(currentSession.user.id, currentSession.user.email);
+        clearTimeout(bootTimeout);
       } catch (err) {
         console.error('Auth init error:', err);
         logBoot('Auth init error:', err);
         if (mounted) {
           setBootState(BOOT_STATES.UNAUTHENTICATED);
           setIsLoading(false);
+          clearTimeout(bootTimeout);
         }
       }
     };
@@ -119,6 +149,8 @@ export function BootGuardProvider({ children }) {
       if (!mounted) return;
 
       if (event === 'SIGNED_OUT' || !newSession?.user?.id) {
+        // Clear all hm_* localStorage keys so a new user doesn't inherit state
+        clearHotmessStorage();
         setSession(null);
         setProfile(null);
         setBootState(BOOT_STATES.UNAUTHENTICATED);
@@ -128,18 +160,19 @@ export function BootGuardProvider({ children }) {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setSession(newSession);
         // Do NOT await — see comment above re: Navigator Lock deadlock.
-        void loadProfile(newSession.user.id);
+        void loadProfile(newSession.user.id, newSession.user.email);
       }
     });
 
     return () => {
       mounted = false;
+      clearTimeout(bootTimeout);
       subscription?.unsubscribe();
     };
   }, []);
 
   // Load profile and determine boot state
-  const loadProfile = async (userId) => {
+  const loadProfile = async (userId, userEmail) => {
     setIsLoading(true);
 
     try {
@@ -158,6 +191,7 @@ export function BootGuardProvider({ children }) {
           .from('profiles')
           .insert({
             id: userId,
+            email: userEmail || null,
             age_verified: localAge,
             onboarding_complete: false,
           })
@@ -250,9 +284,9 @@ export function BootGuardProvider({ children }) {
   // Refresh profile
   const refetchProfile = useCallback(async () => {
     if (session?.user?.id) {
-      await loadProfile(session.user.id);
+      await loadProfile(session.user.id, session.user.email);
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, session?.user?.email]);
 
   // Mark age verified (for authenticated users)
   const markAgeVerified = useCallback(async () => {
