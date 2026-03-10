@@ -27,6 +27,8 @@
     "test:e2e:headed": "playwright test --headed",
     "verify": "npm run lint && npm run typecheck && npm run test:run && npm run build",
     "test:ci": "npm run lint && npm run typecheck && npm run test:run && npm run test:e2e",
+    "test:integration": "vitest run --config vitest.config.integration.js",
+    "test:integration:watch": "vitest --config vitest.config.integration.js",
     "test:integrations": "node ./scripts/test-integrations.js --prod",
     "test:integrations:local": "node ./scripts/test-integrations.js",
     "preview": "vite preview"
