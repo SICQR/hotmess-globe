@@ -261,8 +261,9 @@ const getAuthMetaMapById = async ({ serviceClient, authUserIds }) => {
 };
 
 const queryUsersWithFallbackOrder = async ({ serviceClient, offset, limit }) => {
-  // Some environments don't have last_loc_ts; fall back to updated_at ordering.
-  const base = serviceClient.from('User').select('*');
+  // profiles is the canonical table (consolidated from "User" in migration 20260310000004).
+  // Fall back to updated_at ordering if last_loc_ts isn't populated yet.
+  const base = serviceClient.from('profiles').select('*');
 
   const tryOrder = async (column) => {
     return base
@@ -368,31 +369,29 @@ export default async function handler(req, res) {
 
     // Attach auth user metadata (best-effort) so the grid can show multi-photo profiles,
     // even when those fields are stored in auth metadata (Base44-style).
-    const authUserIds = rows.map((r) => (r?.auth_user_id ? String(r.auth_user_id) : null)).filter(Boolean);
+    // profiles.id = auth.uid(); older "User" rows may have auth_user_id instead.
+    const authUserIds = rows.map((r) => {
+      const uid = r?.auth_user_id || r?.id;
+      return uid ? String(uid) : null;
+    }).filter(Boolean);
 
     const authMetaById = await getAuthMetaMapById({
       serviceClient,
       authUserIds,
     });
 
-    // Attach public_attributes from profiles table (position, looking_for, age, orientation, etc.)
+    // Build public_attributes map from the rows themselves (already from profiles table).
+    // profiles.id = auth.uid(), so use r.id as the key.
     let publicAttrsById = new Map();
     try {
-      if (authUserIds.length) {
-        const { data: profileRows } = await serviceClient
-          .from('profiles')
-          .select('auth_user_id, public_attributes')
-          .in('auth_user_id', authUserIds);
-
-        (Array.isArray(profileRows) ? profileRows : []).forEach((pr) => {
-          const uid = pr?.auth_user_id ? String(pr.auth_user_id) : null;
-          if (!uid) return;
-          const attrs = pr?.public_attributes;
-          if (attrs && typeof attrs === 'object') {
-            publicAttrsById.set(uid, attrs);
-          }
-        });
-      }
+      rows.forEach((r) => {
+        const uid = r?.auth_user_id || r?.id;
+        if (!uid) return;
+        const attrs = r?.public_attributes;
+        if (attrs && typeof attrs === 'object') {
+          publicAttrsById.set(String(uid), attrs);
+        }
+      });
     } catch {
       // best-effort — grid still works without these
     }
@@ -433,9 +432,10 @@ export default async function handler(req, res) {
         const displayName = username || String(row?.display_name || '').trim();
         if (!displayName) return null; // Reject profiles without a valid username/display_name
         const uniqueId = row?.id ? String(row.id).trim() : null;
-        const dedupeKey = String(row?.auth_user_id || uniqueId || displayName).trim();
+        // profiles.id = auth.uid(); legacy "User" rows may have auth_user_id
+        const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : uniqueId;
+        const dedupeKey = String(authUserId || displayName).trim();
         const avatar = String(row?.avatar_url || '').trim();
-        const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : null;
         // Keep email internal for lookups but don't expose in response
         const emailInternal = row?.email ? String(row.email).trim() : null;
 

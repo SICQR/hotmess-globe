@@ -1,7 +1,7 @@
 /**
  * L2BlockedSheet — Blocked Users list
  * Shows who you've blocked with option to unblock.
- * Reads from user_blocks (canonical) with fallback display from User table.
+ * Reads from user_blocks (canonical) with display info from profiles table.
  */
 
 import { useState, useEffect } from 'react';
@@ -32,10 +32,10 @@ export default function L2BlockedSheet() {
         return;
       }
 
-      // Resolve blocked emails to display names (best-effort via User table)
+      // Resolve blocked emails to display names from profiles
       const emails = blocks.map(b => b.blocked_email).filter(Boolean);
       const { data: users } = await supabase
-        .from('User')
+        .from('profiles')
         .select('email, display_name, username, avatar_url')
         .in('email', emails);
 
