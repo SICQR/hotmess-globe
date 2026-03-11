@@ -39,7 +39,7 @@ export const isIframe = window.self !== window.top;
  * The result satisfies the DB constraint: lowercase alphanum + underscore, max 40 chars.
  *
  * @param {Object} params
- * @param {string|null|undefined} params.username     - Existing username (returned as-is if set)
+ * @param {string|null|undefined} params.username     - Existing username (preferred; will be normalized if set)
  * @param {string|null|undefined} params.displayName  - Display name fallback
  * @param {string|null|undefined} params.email        - Email fallback (local part used)
  * @returns {string}
