@@ -9,8 +9,15 @@ const logBoot = import.meta.env.VITE_BOOT_DEBUG === 'true'
 
 /**
  * Retry a Supabase query with exponential backoff.
- * Only retries on non-PGRST116 errors (PGRST116 = "no rows", not transient).
- * maxAttempts=3, base delay 300 ms → 300 ms, 600 ms on successive failures.
+ *
+ * @param {() => Promise<{data: unknown, error: {code: string, message: string} | null}>} queryFn
+ *   A zero-argument function that executes and returns a Supabase query result.
+ * @param {number} [maxAttempts=3] Maximum number of attempts before returning the last error.
+ * @param {number} [baseDelayMs=300] Base delay in ms; doubles on each retry (300, 600, …).
+ * @returns {Promise<{data: unknown, error: unknown}>} The first successful result, or the
+ *   result from the final attempt if all attempts fail.
+ *
+ * Only retries on non-PGRST116 errors (PGRST116 = "no rows found", not transient).
  */
 async function fetchWithRetry(queryFn, maxAttempts = 3, baseDelayMs = 300) {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -24,8 +31,10 @@ async function fetchWithRetry(queryFn, maxAttempts = 3, baseDelayMs = 300) {
     logBoot(`Supabase fetch error (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms`, result.error.message);
     await new Promise((r) => setTimeout(r, delay));
   }
-  /* istanbul ignore next */
-  return await queryFn();
+  // This line is intentionally unreachable — the loop always returns on the final attempt.
+  // The fallback satisfies TypeScript's control-flow analysis.
+  /* c8 ignore next */
+  return { data: null, error: { code: 'UNKNOWN', message: 'fetchWithRetry: loop exhausted' } };
 }
 
 /**

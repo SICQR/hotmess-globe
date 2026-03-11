@@ -94,6 +94,8 @@ test.describe('Ghosted Grid (social / proximity discovery)', () => {
     await page.evaluate(() => window.history.pushState({}, '', '/ghosted'));
     await page.waitForLoadState('domcontentloaded');
 
+    // Body must be visible and no JS errors thrown during the route change
+    await expect(page.locator('body')).toBeVisible();
     expect(pageErrors).toEqual([]);
   });
 });
