@@ -432,6 +432,14 @@ export default function OnboardingGate() {
 
   // ── Step 6: community attestation ─────────────────────────────────────────
   const handleCommunityConfirm = useCallback(async () => {
+    // Helper: always refetch after attestation so BootGuard transitions out of
+    // NEEDS_COMMUNITY_GATE. Errors are swallowed because localStorage is already
+    // set as the fallback at the top of this function.
+    const attemptRefetch = () =>
+      refetchProfile().catch((e) => {
+        console.warn('[OnboardingGate] refetchProfile failed (continuing):', e);
+      });
+
     setSaving(true);
     try {
       // 1. Set localStorage first — this is the fallback for BootGuard's
@@ -456,9 +464,7 @@ export default function OnboardingGate() {
         //    navigate. Without this, navigate('/') fires while the boot state
         //    is still NEEDS_COMMUNITY_GATE, causing BootRouter to re-render
         //    OnboardingGate and the user appears stuck on the confirmation step.
-        await refetchProfile().catch((e) => {
-          console.warn('[OnboardingGate] refetchProfile failed (continuing):', e);
-        });
+        await attemptRefetch();
       }
 
       navigate('/');
@@ -466,7 +472,7 @@ export default function OnboardingGate() {
       console.error('Community confirm error:', err);
       // Still attempt a refetch so BootGuard can pick up the localStorage
       // fallback and transition out of NEEDS_COMMUNITY_GATE.
-      await refetchProfile().catch(() => {});
+      await attemptRefetch();
       navigate('/');
     } finally {
       setSaving(false);
