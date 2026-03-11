@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Shield, FileText, MapPin, KeyRound, Camera, Check, Loader2, Delete } from 'lucide-react';
 import { toast } from 'sonner';
-import { validateDisplayName } from '@/lib/utils';
+import { validateDisplayName, deriveUsernameSlug } from '@/lib/utils';
 
 const AGE_KEY = 'hm_age_confirmed_v1';
 const GOLD = '#C8962C';
@@ -232,16 +232,20 @@ export default function OnboardingGate() {
   const photoInputRef = useRef(null);
 
   // Ensure profile row exists — new users arrive here with no row yet.
-  // This upsert is idempotent: if the row already exists, it's a no-op.
+  // This upsert is idempotent: if the row already exists, ignoreDuplicates keeps it unchanged.
   useEffect(() => {
     if (!session?.user?.id) return;
     const ensureProfileRow = async () => {
+      // Seed a username from email so DB constraints are satisfied from the start
+      const usernameSlug = deriveUsernameSlug({ email: session.user.email });
+
       const { error } = await supabase
         .from('profiles')
         .upsert(
           {
             id: session.user.id,
             email: session.user.email || null,
+            username: usernameSlug,
             age_verified: false,
             onboarding_complete: false,
           },
