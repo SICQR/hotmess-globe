@@ -78,8 +78,11 @@ export function BootGuardProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // Load profile and determine boot state.
-  // Stable reference via useCallback([]) — only closes over stable setters + external
-  // imports, never over component state. Safe to include in useEffect deps below.
+  // Stable reference via useCallback([]) — only closes over:
+  //   • stable useState setters (setIsLoading, setBootState, setProfile)
+  //   • supabase — module-level singleton, never reassigned after import
+  //   • pure module-level helpers (getLocalAgeVerified, getLocalCommunityAttested, logBoot)
+  // None of these are component state, so empty deps is correct.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadProfile = useCallback(async (userId, _userEmail) => {
     setIsLoading(true);

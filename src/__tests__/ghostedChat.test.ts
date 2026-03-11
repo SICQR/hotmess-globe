@@ -15,6 +15,22 @@ import { canOpenSheet } from '@/lib/sheetPolicy';
 
 // ── Thread participant helpers ────────────────────────────────────────────────
 
+interface ExistingThread {
+  id: string;
+  participant_emails: string[];
+}
+
+interface NewThread {
+  _new: true;
+  participant_emails: string[];
+}
+
+type ThreadResult = ExistingThread | NewThread;
+
+function isNewThread(t: ThreadResult): t is NewThread {
+  return '_new' in t && t._new === true;
+}
+
 /** Mirrors the participant matching logic in L2ChatSheet.jsx */
 function threadMatchesUsers(
   participantEmails: string[],
@@ -26,10 +42,10 @@ function threadMatchesUsers(
 
 /** Mirrors the thread deduplication logic: find existing thread or flag as new */
 function resolveThread(
-  threads: Array<{ id: string; participant_emails: string[] }>,
+  threads: ExistingThread[],
   myEmail: string,
   toEmail: string,
-): { id: string; participant_emails: string[] } | { _new: true; participant_emails: string[] } {
+): ThreadResult {
   const existing = threads.find((t) =>
     threadMatchesUsers(t.participant_emails, myEmail, toEmail),
   );
@@ -54,41 +70,43 @@ describe('Ghosted chat — thread resolution', () => {
   it('returns existing thread when alice→bob thread exists', () => {
     const threads = [{ id: 'thread-1', participant_emails: [alice, bob] }];
     const result = resolveThread(threads, alice, bob);
-    expect('id' in result).toBe(true);
-    if ('id' in result) expect(result.id).toBe('thread-1');
+    expect(isNewThread(result)).toBe(false);
+    if (!isNewThread(result)) expect(result.id).toBe('thread-1');
   });
 
   it('returns existing thread even when email order is reversed (bob→alice)', () => {
     const threads = [{ id: 'thread-1', participant_emails: [bob, alice] }];
     const result = resolveThread(threads, alice, bob);
-    expect('id' in result).toBe(true);
-    if ('id' in result) expect(result.id).toBe('thread-1');
+    expect(isNewThread(result)).toBe(false);
+    if (!isNewThread(result)) expect(result.id).toBe('thread-1');
   });
 
   it('creates new thread marker when no thread exists between alice and carol', () => {
     const threads = [{ id: 'thread-1', participant_emails: [alice, bob] }];
     const result = resolveThread(threads, alice, carol);
-    expect('_new' in result && (result as any)._new).toBe(true);
-    expect((result as any).participant_emails).toEqual([alice, carol]);
+    expect(isNewThread(result)).toBe(true);
+    if (isNewThread(result)) expect(result.participant_emails).toEqual([alice, carol]);
   });
 
   it('creates new thread marker when threads list is empty', () => {
     const result = resolveThread([], alice, bob);
-    expect('_new' in result && (result as any)._new).toBe(true);
-    expect((result as any).participant_emails).toContain(alice);
-    expect((result as any).participant_emails).toContain(bob);
+    expect(isNewThread(result)).toBe(true);
+    if (isNewThread(result)) {
+      expect(result.participant_emails).toContain(alice);
+      expect(result.participant_emails).toContain(bob);
+    }
   });
 
   it('does not pick up a thread that only includes alice (no bob)', () => {
     const threads = [{ id: 'thread-solo', participant_emails: [alice] }];
     const result = resolveThread(threads, alice, bob);
-    expect('_new' in result && (result as any)._new).toBe(true);
+    expect(isNewThread(result)).toBe(true);
   });
 
   it('does not pick up a thread between carol and bob when looking for alice→bob', () => {
     const threads = [{ id: 'thread-cb', participant_emails: [carol, bob] }];
     const result = resolveThread(threads, alice, bob);
-    expect('_new' in result && (result as any)._new).toBe(true);
+    expect(isNewThread(result)).toBe(true);
   });
 });
 

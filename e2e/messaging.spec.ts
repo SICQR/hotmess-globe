@@ -89,7 +89,8 @@ test.describe('Chat sheet (ghosted messaging)', () => {
       window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
     });
 
-    await page.waitForTimeout(1_000);
+    // Wait for the sheet URL change to settle — the sheet container or body must be stable
+    await page.waitForLoadState('domcontentloaded');
 
     // Page should still be visible and not crash
     await expect(page.locator('body')).toBeVisible();
@@ -110,7 +111,8 @@ test.describe('Chat sheet (ghosted messaging)', () => {
       window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
     });
 
-    await page.waitForTimeout(800);
+    // Wait for any toast or UI response to settle
+    await page.waitForLoadState('domcontentloaded');
 
     // URL stays on / (chat sheet should not change the path)
     const urlPath = new URL(page.url()).pathname;
@@ -131,16 +133,19 @@ test.describe('Ghosted unauthenticated state', () => {
 
     await page.goto('/ghosted', { waitUntil: 'domcontentloaded' });
 
-    // Either redirects to /auth or renders unauthenticated skeleton
-    await page.waitForTimeout(3_000);
+    // Wait for the boot state machine to resolve (LOADING → UNAUTHENTICATED → redirect or render)
+    await page.waitForFunction(
+      () => {
+        const path = window.location.pathname;
+        return path === '/auth' || path === '/ghosted' || path === '/';
+      },
+      { timeout: 10_000 },
+    ).catch(() => null); // allow timeout — the page still passes the assertions below
 
-    const url = page.url();
-    const isAuthPage = url.includes('/auth') || url.includes('auth');
     const hasBody = await page.locator('body').isVisible();
-
     expect(hasBody).toBe(true);
     // App should be stable — either on /ghosted (unauthenticated) or /auth
-    const pathname = new URL(url).pathname;
+    const pathname = new URL(page.url()).pathname;
     expect(['/ghosted', '/auth', '/']).toContain(pathname);
   });
 });
