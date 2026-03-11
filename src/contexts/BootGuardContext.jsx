@@ -77,6 +77,117 @@ export function BootGuardProvider({ children }) {
   const [session, setSession] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Load profile and determine boot state.
+  // Stable reference via useCallback([]) — only closes over stable setters + external
+  // imports, never over component state. Safe to include in useEffect deps below.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const loadProfile = useCallback(async (userId, _userEmail) => {
+    setIsLoading(true);
+
+    // Safety timeout — loadProfile is also called from onAuthStateChange
+    // which has NO outer timeout. Never leave user stuck at LOADING.
+    const profileTimeout = setTimeout(() => {
+      console.error('[BootGuard] loadProfile timeout — 8s, forcing NEEDS_ONBOARDING');
+      const localAge = getLocalAgeVerified();
+      setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
+      setIsLoading(false);
+    }, 8_000);
+
+    try {
+      // Fetch profile - profiles table uses id = auth.uid()
+      let { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      // PGRST116 = no rows found — NEW USER, skip straight to onboarding
+      if (error && error.code === 'PGRST116') {
+        logBoot('No profile row — new user, routing to onboarding immediately');
+        setProfile(null);
+        const localAge = getLocalAgeVerified();
+        setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
+        setIsLoading(false);
+        clearTimeout(profileTimeout);
+        return;
+      } else if (error) {
+        console.error('Profile fetch error:', error);
+        // On error, use localStorage to decide boot state.
+        // Trust localStorage age AND community verification even if DB fetch fails.
+        const localAge = getLocalAgeVerified();
+        const localCommunity = getLocalCommunityAttested();
+        if (localAge && localCommunity) {
+          setBootState(BOOT_STATES.READY);
+        } else if (localAge) {
+          setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
+        } else {
+          setBootState(BOOT_STATES.NEEDS_AGE);
+        }
+        setIsLoading(false);
+        clearTimeout(profileTimeout);
+        return;
+      }
+
+      // Sync localStorage age to profile if needed
+      const localAge = getLocalAgeVerified();
+
+      if (profileData && !profileData.age_verified && localAge) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ age_verified: true })
+          .eq('id', userId);
+
+        if (!updateError) {
+          profileData = { ...profileData, age_verified: true };
+        } else {
+          console.error('[BootGuard] Failed to sync age (RLS?):', updateError);
+          // IMPORTANT: Even if DB update fails, trust localStorage
+          // The user DID verify their age, RLS might just be blocking
+          profileData = { ...profileData, age_verified: true };
+        }
+      }
+
+      // Final fallback: if localStorage says verified but profile doesn't, trust localStorage
+      if (!profileData?.age_verified && localAge) {
+        profileData = { ...profileData, age_verified: true };
+      }
+
+      setProfile(profileData);
+
+      // Determine boot state from profile (trust localStorage as fallback)
+      const localCommunity = getLocalCommunityAttested();
+      if (!profileData?.age_verified) {
+        setBootState(BOOT_STATES.NEEDS_AGE);
+      } else if (!profileData?.onboarding_complete) {
+        setBootState(BOOT_STATES.NEEDS_ONBOARDING);
+      } else if (!profileData?.display_name?.trim()) {
+        // CRITICAL: User completed onboarding but has no display_name
+        // This catches legacy profiles created before display_name was enforced
+        logBoot('Profile missing display_name, forcing onboarding');
+        setBootState(BOOT_STATES.NEEDS_ONBOARDING);
+      } else if (!profileData?.community_attested_at && !localCommunity) {
+        setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
+      } else {
+        setBootState(BOOT_STATES.READY);
+      }
+    } catch (err) {
+      console.error('Profile load error:', err);
+      // On any error, trust localStorage - user experience over strictness
+      const localAge = getLocalAgeVerified();
+      const localCommunity = getLocalCommunityAttested();
+      if (localAge && localCommunity) {
+        setBootState(BOOT_STATES.READY);
+      } else if (localAge) {
+        setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
+      } else {
+        setBootState(BOOT_STATES.NEEDS_AGE);
+      }
+    } finally {
+      clearTimeout(profileTimeout);
+      setIsLoading(false);
+    }
+  }, []);
+
   // Initialize and listen to auth changes
   useEffect(() => {
     let mounted = true;
@@ -169,120 +280,14 @@ export function BootGuardProvider({ children }) {
       clearTimeout(bootTimeout);
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [loadProfile]);
 
-  // Load profile and determine boot state
-  const loadProfile = async (userId, userEmail) => {
-    setIsLoading(true);
-
-    // Safety timeout — loadProfile is also called from onAuthStateChange
-    // which has NO outer timeout. Never leave user stuck at LOADING.
-    const profileTimeout = setTimeout(() => {
-      console.error('[BootGuard] loadProfile timeout — 8s, forcing NEEDS_ONBOARDING');
-      const localAge = getLocalAgeVerified();
-      setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
-      setIsLoading(false);
-    }, 8_000);
-
-    try {
-      // Fetch profile - profiles table uses id = auth.uid()
-      let { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      // PGRST116 = no rows found — NEW USER, skip straight to onboarding
-      if (error && error.code === 'PGRST116') {
-        logBoot('No profile row — new user, routing to onboarding immediately');
-        setProfile(null);
-        const localAge = getLocalAgeVerified();
-        setBootState(localAge ? BOOT_STATES.NEEDS_ONBOARDING : BOOT_STATES.NEEDS_AGE);
-        setIsLoading(false);
-        clearTimeout(profileTimeout);
-        return;
-      } else if (error) {
-        console.error('Profile fetch error:', error);
-        // On error, use localStorage to decide boot state
-        // Trust localStorage age verification even if DB fetch fails
-        const localAge = getLocalAgeVerified();
-        if (localAge) {
-          // User verified age locally, let them through
-          setBootState(BOOT_STATES.READY);
-        } else {
-          setBootState(BOOT_STATES.NEEDS_AGE);
-        }
-        setIsLoading(false);
-        clearTimeout(profileTimeout);
-        return;
-      }
-
-      // Sync localStorage age to profile if needed
-      const localAge = getLocalAgeVerified();
-      
-      if (profileData && !profileData.age_verified && localAge) {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ age_verified: true })
-          .eq('id', userId);
-
-        if (!updateError) {
-          profileData = { ...profileData, age_verified: true };
-        } else {
-          console.error('[BootGuard] Failed to sync age (RLS?):', updateError);
-          // IMPORTANT: Even if DB update fails, trust localStorage 
-          // The user DID verify their age, RLS might just be blocking
-          profileData = { ...profileData, age_verified: true };
-        }
-      }
-
-      // Final fallback: if localStorage says verified but profile doesn't, trust localStorage
-      if (!profileData?.age_verified && localAge) {
-        profileData = { ...profileData, age_verified: true };
-      }
-
-      setProfile(profileData);
-
-      // Determine boot state from profile (trust localStorage as fallback)
-      const localCommunity = getLocalCommunityAttested();
-      if (!profileData?.age_verified) {
-        setBootState(BOOT_STATES.NEEDS_AGE);
-      } else if (!profileData?.onboarding_complete) {
-        setBootState(BOOT_STATES.NEEDS_ONBOARDING);
-      } else if (!profileData?.display_name?.trim()) {
-        // CRITICAL: User completed onboarding but has no display_name
-        // This catches legacy profiles created before display_name was enforced
-        logBoot('Profile missing display_name, forcing onboarding');
-        setBootState(BOOT_STATES.NEEDS_ONBOARDING);
-      } else if (!profileData?.community_attested_at && !localCommunity) {
-        setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
-      } else {
-        setBootState(BOOT_STATES.READY);
-      }
-    } catch (err) {
-      console.error('Profile load error:', err);
-      // On any error, trust localStorage - user experience over strictness
-      const localAge = getLocalAgeVerified();
-      const localCommunity = getLocalCommunityAttested();
-      if (localAge && localCommunity) {
-        setBootState(BOOT_STATES.READY);
-      } else if (localAge) {
-        setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
-      } else {
-        setBootState(BOOT_STATES.NEEDS_AGE);
-      }
-    } finally {
-      clearTimeout(profileTimeout);
-      setIsLoading(false);
-    }
-  };
-
-  // Refresh profile
+  // Refresh profile from DB
   const refetchProfile = useCallback(async () => {
     if (session?.user?.id) {
       await loadProfile(session.user.id, session.user.email);
     }
-  }, [session?.user?.id, session?.user?.email]);
+  }, [session?.user?.id, session?.user?.email, loadProfile]);
 
   // Mark age verified (for authenticated users)
   const markAgeVerified = useCallback(async () => {
