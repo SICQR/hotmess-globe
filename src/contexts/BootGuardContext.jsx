@@ -328,9 +328,9 @@ export function BootGuardProvider({ children }) {
         {
           id: session.user.id,
           onboarding_complete: true,
-          // Ensure username is set — required by DB constraint.
-          // Only overwrite if the field is currently empty.
-          ...(profile?.username ? {} : { username: usernameSlug }),
+          // Ensure identity is set: DB constraint allows either username OR display_name.
+          // Only derive and set username when BOTH are currently empty.
+          ...(profile?.username || profile?.display_name ? {} : { username: usernameSlug }),
           // Preserve email in case the row is being created here
           email: session.user.email || undefined,
         },
