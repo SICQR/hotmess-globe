@@ -698,6 +698,8 @@ export default defineConfig(({ mode }) => {
         'dist/**',
         'hotmess-globe/**',
         'api/**',
+        // Integration tests require SUPABASE_SERVICE_ROLE_KEY — run separately via test:integration
+        'src/__tests__/integration/**',
       ],
       coverage: {
         provider: 'v8',
