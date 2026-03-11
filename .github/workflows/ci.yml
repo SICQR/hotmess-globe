@@ -169,18 +169,27 @@ jobs:
         run: |
           node -e "
           const https = require('https');
-          const body = JSON.stringify({ email: process.env.TEST_USER_A_EMAIL, password: process.env.TEST_USER_A_PASSWORD });
+          const email = process.env.TEST_USER_A_EMAIL;
+          const password = process.env.TEST_USER_A_PASSWORD;
+          const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+          if (!email || !password || !anonKey) {
+            console.log('⚠️  E2E auth secrets not configured (TEST_USER_A_EMAIL / TEST_USER_A_PASSWORD / VITE_SUPABASE_ANON_KEY) — authenticated tests will be skipped by the test runner.');
+            process.exit(0);
+          }
+
+          const body = JSON.stringify({ email, password });
           const req = https.request({
             hostname: 'klsywpvncqqglhnhrjbh.supabase.co',
             path: '/auth/v1/token?grant_type=password',
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': process.env.VITE_SUPABASE_ANON_KEY, 'Content-Length': Buffer.byteLength(body) }
+            headers: { 'Content-Type': 'application/json', 'apikey': anonKey, 'Content-Length': Buffer.byteLength(body) }
           }, (res) => {
             let data = '';
             res.on('data', d => data += d);
             res.on('end', () => {
               const json = JSON.parse(data);
-              if (json.error) { console.error('Auth FAILED:', json.error, json.error_description); process.exit(1); }
+              if (!json.access_token) { console.error('Auth FAILED:', json.error_code ?? json.error ?? 'unknown', json.msg ?? json.error_description ?? ''); process.exit(1); }
               else { console.log('Auth OK — user:', json.user?.email); }
             });
           });
