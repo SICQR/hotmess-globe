@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { deriveUsernameSlug } from '@/lib/utils';
 
 // Debug logging for boot process — only when VITE_BOOT_DEBUG=true
 const logBoot = import.meta.env.VITE_BOOT_DEBUG === 'true'
@@ -203,12 +204,12 @@ export function BootGuardProvider({ children }) {
         return;
       } else if (error) {
         console.error('Profile fetch error:', error);
-        // On error, use localStorage to decide boot state
-        // Trust localStorage age verification even if DB fetch fails
+        // On error, use localStorage to decide boot state.
+        // Trust localStorage age verification, but never skip onboarding —
+        // we don't know whether onboarding completed if the DB is unreachable.
         const localAge = getLocalAgeVerified();
         if (localAge) {
-          // User verified age locally, let them through
-          setBootState(BOOT_STATES.READY);
+          setBootState(BOOT_STATES.NEEDS_ONBOARDING);
         } else {
           setBootState(BOOT_STATES.NEEDS_AGE);
         }
@@ -261,13 +262,12 @@ export function BootGuardProvider({ children }) {
       }
     } catch (err) {
       console.error('Profile load error:', err);
-      // On any error, trust localStorage - user experience over strictness
+      // On any exception, trust localStorage age — but never skip onboarding.
+      // We cannot know if onboarding completed if the DB threw, so route to
+      // NEEDS_ONBOARDING (safe) rather than READY (dangerous bypass).
       const localAge = getLocalAgeVerified();
-      const localCommunity = getLocalCommunityAttested();
-      if (localAge && localCommunity) {
-        setBootState(BOOT_STATES.READY);
-      } else if (localAge) {
-        setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
+      if (localAge) {
+        setBootState(BOOT_STATES.NEEDS_ONBOARDING);
       } else {
         setBootState(BOOT_STATES.NEEDS_AGE);
       }
@@ -316,22 +316,26 @@ export function BootGuardProvider({ children }) {
     // username OR display_name is set when onboarding_complete becomes true.
     // Coalesce username from display_name or email so the constraint is never
     // violated even on first-run rows that have neither field yet.
-    const usernameSlug = (
-      profile?.username ||
-      profile?.display_name ||
-      session.user.email?.split('@')[0] ||
-      'user'
-    ).toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 40);
+    const usernameSlug = deriveUsernameSlug({
+      username: profile?.username,
+      displayName: profile?.display_name,
+      email: session.user.email,
+    });
 
     const { error } = await supabase
       .from('profiles')
-      .update({
-        onboarding_complete: true,
-        // Ensure username is set — required by DB constraint.
-        // Only overwrite if the field is currently empty.
-        ...(profile?.username ? {} : { username: usernameSlug }),
-      })
-      .eq('id', session.user.id);
+      .upsert(
+        {
+          id: session.user.id,
+          onboarding_complete: true,
+          // Ensure username is set — required by DB constraint.
+          // Only overwrite if the field is currently empty.
+          ...(profile?.username ? {} : { username: usernameSlug }),
+          // Preserve email in case the row is being created here
+          email: session.user.email || undefined,
+        },
+        { onConflict: 'id' },
+      );
 
     if (!error) {
       await refetchProfile();

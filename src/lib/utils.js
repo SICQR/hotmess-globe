@@ -33,3 +33,21 @@ export function validateDisplayName(name) {
 }
 
 export const isIframe = window.self !== window.top;
+
+/**
+ * Derive a valid username slug from email, display_name, or a fallback.
+ * The result satisfies the DB constraint: lowercase alphanum + underscore, max 40 chars.
+ *
+ * @param {Object} params
+ * @param {string|null|undefined} params.username     - Existing username (returned as-is if set)
+ * @param {string|null|undefined} params.displayName  - Display name fallback
+ * @param {string|null|undefined} params.email        - Email fallback (local part used)
+ * @returns {string}
+ */
+export function deriveUsernameSlug({ username, displayName, email } = {}) {
+  const source = username || displayName || (email ? email.split('@')[0] : null) || 'user';
+  return source
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '_')
+    .slice(0, 40);
+}
