@@ -3,13 +3,21 @@
  * Helper functions for authentication flows in E2E tests
  */
 
-import { Page } from '@playwright/test';
+import { Page, test } from '@playwright/test';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? 'https://klsywpvncqqglhnhrjbh.supabase.co';
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
 // Derived from project ref: sb-<ref>-auth-token
 // Confirmed via: createClient(url, key).auth.storageKey
 const SUPABASE_STORAGE_KEY = `sb-klsywpvncqqglhnhrjbh-auth-token`;
+
+// True only when ALL required auth secrets are explicitly set (non-empty).
+// When false, authenticated tests skip themselves rather than failing.
+const E2E_AUTH_CONFIGURED = !!(
+  process.env.VITE_SUPABASE_ANON_KEY &&
+  process.env.TEST_USER_A_EMAIL &&
+  process.env.TEST_USER_A_PASSWORD
+);
 
 const TEST_USER_A = {
   // Use || not ?? so empty-string secrets in CI fall through to the default
@@ -49,6 +57,16 @@ export async function loginAs(
   email: string,
   password: string,
 ): Promise<void> {
+  // Guard: skip (not fail) when auth credentials are not configured in this environment.
+  // This prevents CI from failing on branches/forks where the test-user secrets aren't set.
+  if (!E2E_AUTH_CONFIGURED) {
+    test.skip(
+      true,
+      'Skipping authenticated test — VITE_SUPABASE_ANON_KEY / TEST_USER_A_EMAIL / TEST_USER_A_PASSWORD not configured.',
+    );
+    return;
+  }
+
   // 1. Get session token via Playwright's request API (Node.js context, not browser)
   const response = await page.request.post(
     `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
