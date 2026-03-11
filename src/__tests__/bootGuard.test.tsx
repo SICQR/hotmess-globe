@@ -8,17 +8,21 @@
  * easy to trace.
  *
  * Covered scenarios:
- * 1. No session → UNAUTHENTICATED
- * 2. Session but no profile row (PGRST116) → NEEDS_AGE (no localStorage)
- * 3. Session but no profile row + localStorage age flag → NEEDS_ONBOARDING
- * 4. Profile exists, age_verified=false → NEEDS_AGE
- * 5. Profile exists, age_verified=true, onboarding_complete=false → NEEDS_ONBOARDING
- * 6. Profile exists, all gates passed but missing display_name → NEEDS_ONBOARDING
- * 7. Profile exists, all gates passed, no community_attested_at → NEEDS_COMMUNITY_GATE
- * 8. Profile fully complete → READY
- * 9. Generic DB error + no localStorage → NEEDS_AGE
- * 10. Generic DB error + localAge in localStorage → NEEDS_ONBOARDING (not READY)
- * 11. loadProfile catch-path + localAge → NEEDS_ONBOARDING (not READY)
+ * 1.  No session → UNAUTHENTICATED
+ * 2.  Session but no profile row (PGRST116) → NEEDS_AGE (no localStorage)
+ * 3.  Session but no profile row + localStorage age flag → NEEDS_ONBOARDING
+ * 4.  Profile exists, age_verified=false → NEEDS_AGE
+ * 5.  Profile exists, age_verified=true, onboarding_complete=false → NEEDS_ONBOARDING
+ * 6.  Profile exists, all gates passed but missing display_name → NEEDS_ONBOARDING
+ * 7.  Profile exists, all gates passed, no community_attested_at → NEEDS_COMMUNITY_GATE
+ * 8.  Profile fully complete → READY
+ * 9.  Generic DB error + no localStorage → NEEDS_AGE
+ * 10. Generic DB error + localAge in localStorage → NEEDS_COMMUNITY_GATE (not READY/NEEDS_ONBOARDING)
+ * 11. community_attested_at present in localStorage bypasses NEEDS_COMMUNITY_GATE → READY
+ * 12. Generic DB error + localAge + localCommunity → READY (full localStorage fallback)
+ * 13. catch-path exception + localAge only → NEEDS_COMMUNITY_GATE
+ * 14. catch-path exception + localAge + localCommunity → READY
+ * 15. DB error retried: first attempt fails, second succeeds → READY (profile loaded correctly)
  */
 
 import React from 'react';
@@ -139,6 +143,63 @@ function setupAuthWithDbError(sessionOverride?: ReturnType<typeof makeSession>) 
         single: vi.fn().mockResolvedValue({ data: null, error: { code: 'PGRST500', message: 'Internal error' } }),
       }),
     }),
+  });
+}
+
+/** Set up mocks so the profile fetch throws an exception (network-level failure). */
+function setupAuthWithFetchThrow(sessionOverride?: ReturnType<typeof makeSession>) {
+  const session = sessionOverride ?? makeSession();
+
+  mockGetSession.mockResolvedValue({
+    data: { session },
+    error: null,
+  });
+
+  mockOnAuthStateChange.mockReturnValue({
+    data: { subscription: { unsubscribe: vi.fn() } },
+  });
+
+  mockFrom.mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        single: vi.fn().mockRejectedValue(new Error('Network failure')),
+      }),
+    }),
+  });
+}
+
+/**
+ * Set up mocks so the profile fetch fails on the first attempt (transient) and
+ * succeeds on subsequent attempts with the given profile row.
+ * Used to verify retry logic.
+ */
+function setupAuthWithTransientDbError(
+  profile: ProfileRow,
+  sessionOverride?: ReturnType<typeof makeSession>,
+) {
+  const session = sessionOverride ?? makeSession();
+
+  mockGetSession.mockResolvedValue({
+    data: { session },
+    error: null,
+  });
+
+  mockOnAuthStateChange.mockReturnValue({
+    data: { subscription: { unsubscribe: vi.fn() } },
+  });
+
+  const mockSingle = vi.fn()
+    .mockResolvedValueOnce({ data: null, error: { code: 'PGRST500', message: 'Transient error' } })
+    .mockResolvedValue({ data: profile, error: null });
+
+  mockFrom.mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({ single: mockSingle }),
+    }),
+    update: vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ data: profile, error: null }),
+    }),
+    upsert: vi.fn().mockResolvedValue({ data: profile, error: null }),
   });
 }
 
@@ -308,8 +369,11 @@ describe('BootGuardContext — boot state machine', () => {
     }, { timeout: BOOT_STATE_TIMEOUT });
   });
 
-  it('10. Generic DB error + localAge in localStorage → NEEDS_ONBOARDING (not READY)', async () => {
-    // Before fix this would set READY — now it must set NEEDS_ONBOARDING
+  it('10. Generic DB error + localAge in localStorage → NEEDS_COMMUNITY_GATE (not READY or NEEDS_ONBOARDING)', async () => {
+    // COMMUNITY-GATE BYPASS BUG FIX:
+    // Before the fix, this path went to NEEDS_ONBOARDING (or even READY).
+    // It must now go to NEEDS_COMMUNITY_GATE because the user still needs
+    // to complete community attestation before accessing the app.
     localStorage.setItem('hm_age_confirmed_v1', 'true');
     setupAuthWithDbError();
 
@@ -321,9 +385,9 @@ describe('BootGuardContext — boot state machine', () => {
 
     await waitFor(() => {
       const state = screen.getByTestId('boot-state').textContent;
-      // Must NOT skip onboarding gate
-      expect(state).toBe(BOOT_STATES.NEEDS_ONBOARDING);
+      expect(state).toBe(BOOT_STATES.NEEDS_COMMUNITY_GATE);
       expect(state).not.toBe(BOOT_STATES.READY);
+      expect(state).not.toBe(BOOT_STATES.NEEDS_ONBOARDING);
     }, { timeout: BOOT_STATE_TIMEOUT });
   });
 
@@ -335,6 +399,71 @@ describe('BootGuardContext — boot state machine', () => {
       display_name: 'Test User',
       community_attested_at: null,
     }));
+
+    render(
+      <BootGuardProvider>
+        <BootConsumer />
+      </BootGuardProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('boot-state').textContent).toBe(BOOT_STATES.READY);
+    }, { timeout: BOOT_STATE_TIMEOUT });
+  });
+
+  it('12. Generic DB error + localAge + localCommunity in localStorage → READY', async () => {
+    localStorage.setItem('hm_age_confirmed_v1', 'true');
+    localStorage.setItem('hm_community_attested_v1', 'true');
+    setupAuthWithDbError();
+
+    render(
+      <BootGuardProvider>
+        <BootConsumer />
+      </BootGuardProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('boot-state').textContent).toBe(BOOT_STATES.READY);
+    }, { timeout: BOOT_STATE_TIMEOUT });
+  });
+
+  it('13. Exception in loadProfile + localAge only → NEEDS_COMMUNITY_GATE (not NEEDS_ONBOARDING)', async () => {
+    localStorage.setItem('hm_age_confirmed_v1', 'true');
+    setupAuthWithFetchThrow();
+
+    render(
+      <BootGuardProvider>
+        <BootConsumer />
+      </BootGuardProvider>,
+    );
+
+    await waitFor(() => {
+      const state = screen.getByTestId('boot-state').textContent;
+      expect(state).toBe(BOOT_STATES.NEEDS_COMMUNITY_GATE);
+      expect(state).not.toBe(BOOT_STATES.NEEDS_ONBOARDING);
+      expect(state).not.toBe(BOOT_STATES.READY);
+    }, { timeout: BOOT_STATE_TIMEOUT });
+  });
+
+  it('14. Exception in loadProfile + localAge + localCommunity → READY', async () => {
+    localStorage.setItem('hm_age_confirmed_v1', 'true');
+    localStorage.setItem('hm_community_attested_v1', 'true');
+    setupAuthWithFetchThrow();
+
+    render(
+      <BootGuardProvider>
+        <BootConsumer />
+      </BootGuardProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('boot-state').textContent).toBe(BOOT_STATES.READY);
+    }, { timeout: BOOT_STATE_TIMEOUT });
+  });
+
+  it('15. Transient DB error on first attempt, success on retry → READY', async () => {
+    // Verifies fetchWithRetry: first call fails with PGRST500, second succeeds
+    setupAuthWithTransientDbError(makeProfile());
 
     render(
       <BootGuardProvider>

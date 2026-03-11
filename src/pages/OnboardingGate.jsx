@@ -200,7 +200,7 @@ function GoldCheckbox({ id, checked, onCheckedChange, label, description }) {
 export default function OnboardingGate() {
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
-  const { session, profile, isLoading, completeOnboarding } = useBootGuard();
+  const { session, profile, isLoading, refetchProfile, completeOnboarding } = useBootGuard();
 
   const [ageConfirmed, setAgeConfirmed] = useState(() => {
     try {
@@ -276,7 +276,7 @@ export default function OnboardingGate() {
     }
 
     setStep(ageConfirmed ? 2 : 1);
-  }, [isLoading, session, profile?.onboarding_complete, ageConfirmed]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isLoading, session, profile?.onboarding_complete, profile?.community_attested_at, ageConfirmed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Step advance ──────────────────────────────────────────────────────────
   const handleNext = useCallback(
@@ -434,6 +434,9 @@ export default function OnboardingGate() {
   const handleCommunityConfirm = useCallback(async () => {
     setSaving(true);
     try {
+      // 1. Set localStorage first — this is the fallback for BootGuard's
+      //    error path so the state machine can reach READY even if the DB
+      //    call below fails (e.g. transient network error).
       try {
         localStorage.setItem('hm_community_attested_v1', 'true');
       } catch {}
@@ -444,22 +447,31 @@ export default function OnboardingGate() {
           .update({ community_attested_at: new Date().toISOString() })
           .eq('id', session.user.id);
         if (error) {
+          // Log but continue — localStorage is the fallback so BootGuard can
+          // still reach READY via the localStorage path.
           console.warn('Community attestation DB update failed (continuing):', error);
         }
 
-        await completeOnboarding().catch((e) => {
-          console.warn('completeOnboarding failed (continuing):', e);
+        // 2. Explicitly refetch so BootGuard transitions to READY before we
+        //    navigate. Without this, navigate('/') fires while the boot state
+        //    is still NEEDS_COMMUNITY_GATE, causing BootRouter to re-render
+        //    OnboardingGate and the user appears stuck on the confirmation step.
+        await refetchProfile().catch((e) => {
+          console.warn('[OnboardingGate] refetchProfile failed (continuing):', e);
         });
       }
 
       navigate('/');
     } catch (err) {
       console.error('Community confirm error:', err);
+      // Still attempt a refetch so BootGuard can pick up the localStorage
+      // fallback and transition out of NEEDS_COMMUNITY_GATE.
+      await refetchProfile().catch(() => {});
       navigate('/');
     } finally {
       setSaving(false);
     }
-  }, [session?.user?.id, completeOnboarding, navigate]);
+  }, [session?.user?.id, refetchProfile, navigate]);
 
   // ── Render Steps ──────────────────────────────────────────────────────────
 
