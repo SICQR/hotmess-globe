@@ -10,7 +10,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
-import { pushNotify } from '@/lib/pushNotify';
 import {
   MessageCircle, Send, ArrowLeft,
   Loader2, Search, ChevronRight,
@@ -37,14 +36,24 @@ const markRead = (threadId) => {
   try { localStorage.setItem(`chat_read_${threadId}`, String(Date.now())); } catch {}
 };
 
-export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, toUid: initialToUid, title }) {
+/**
+ * Supabase-powered chat sheet UI that manages threads, messages, profiles, real-time updates, media attachments, and Wingman AI suggestions.
+ *
+ * Renders a conversation list when no thread is selected and a full chat view with messages, typing indicators, composer, and optional video/travel modals when a thread is open.
+ *
+ * @param {{ thread?: string, to?: string, title?: string }} props - Component props.
+ * @param {string} [props.thread] - Initial thread ID to open on mount.
+ * @param {string} [props.to] - Initial recipient email to preselect a new conversation (creates a new thread on first send).
+ * @param {string} [props.title] - Fallback title used when the other participant's name is unavailable.
+ * @returns {JSX.Element} The chat sheet React element.
+ */
+export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, title }) {
   const { openSheet, updateSheetProps } = useSheet();
 
   const [currentUser, setCurrentUser]   = useState(null); // { id, email }
   const [threads, setThreads]           = useState([]);
   const [profiles, setProfiles]         = useState({}); // email → profile
   const [threadsLoading, setThreadsLoading] = useState(true);
-  const [resolvedToEmail, setResolvedToEmail] = useState(initialToEmail);
 
   const [selectedThread, setSelectedThread] = useState(null);
   const [messages, setMessages]         = useState([]);
@@ -77,29 +86,6 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       if (user) setCurrentUser({ id: user.id, email: user.email });
     });
   }, []);
-
-  // ── Resolve toUid to email (if toUid provided instead of email) ────────────
-  useEffect(() => {
-    if (!initialToUid || resolvedToEmail) return;
-
-    const resolveUid = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-        const res = await fetch(`/api/resolve-user-email?uid=${encodeURIComponent(initialToUid)}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        if (res.ok) {
-          const { email } = await res.json();
-          setResolvedToEmail(email);
-        }
-      } catch (err) {
-        console.error('[Chat] Failed to resolve UID to email:', err);
-      }
-    };
-
-    resolveUid();
-  }, [initialToUid, resolvedToEmail]);
 
   // ── Load threads when user is ready ───────────────────────────────────────
   useEffect(() => {
@@ -141,7 +127,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   const loadProfilesByEmail = async (emails) => {
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, display_name, username, avatar_url')
+      .select('id, email, display_name, avatar_url')
       .in('email', emails);
 
     if (data) {
@@ -160,35 +146,19 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     if (initialThreadId) {
       const t = threads.find(th => th.id === initialThreadId);
       if (t) openThread(t);
-    } else if (resolvedToEmail && !selectedThread) {
+    } else if (initialToEmail && !selectedThread) {
       const existing = threads.find(t =>
-        t.participant_emails?.includes(resolvedToEmail) &&
+        t.participant_emails?.includes(initialToEmail) &&
         t.participant_emails?.includes(currentUser.email)
       );
       if (existing) {
         openThread(existing);
       } else {
         // Pre-select the "to" email so first send creates the thread
-        setSelectedThread({ _new: true, participant_emails: [currentUser.email, resolvedToEmail] });
-        // Eagerly load the other user's profile so we show display_name, not username
-        if (!profiles[resolvedToEmail]) {
-          loadProfilesByEmail([resolvedToEmail]);
-        }
+        setSelectedThread({ _new: true, participant_emails: [currentUser.email, initialToEmail] });
       }
     }
-  }, [currentUser?.email, threadsLoading, initialThreadId, resolvedToEmail]);
-
-  // ── Mark messages as read (uses read_by[] column) ─────────────────────────
-  const markMessagesReadInDB = useCallback(async (threadId, myEmail) => {
-    if (!threadId || !myEmail) return;
-    // Add myEmail to read_by for all messages in this thread not sent by me
-    // mark_messages_read: appends user to read_by[] on each message
-    // AND removes their key from chat_threads.unread_count JSONB
-    await supabase.rpc('mark_messages_read', {
-      p_thread_id: threadId,
-      p_user_email: myEmail,
-    });
-  }, []);
+  }, [currentUser?.email, threadsLoading, initialThreadId, initialToEmail]);
 
   // ── Open thread → load messages + subscribe ───────────────────────────────
   const openThread = useCallback(async (thread) => {
@@ -198,9 +168,23 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     setMessagesLoading(true);
     markRead(thread.id);
 
-    // Mark messages read: updates read_by[] on messages + clears unread_count key on thread
+    // Reset unread_count for current user in this thread
     if (currentUser?.email) {
-      markMessagesReadInDB(thread.id, currentUser.email);
+      supabase
+        .from('chat_threads')
+        .select('unread_count')
+        .eq('id', thread.id)
+        .single()
+        .then(({ data: threadRow }) => {
+          if (threadRow) {
+            const updated = { ...(threadRow.unread_count || {}), [currentUser.email]: 0 };
+            supabase
+              .from('chat_threads')
+              .update({ unread_count: updated })
+              .eq('id', thread.id)
+              .then(() => {});
+          }
+        });
     }
 
     try {
@@ -216,7 +200,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       setMessagesLoading(false);
     }
 
-    // Realtime subscription for new messages + read receipt updates
+    // Realtime subscription for new messages
     if (realtimeRef.current) supabase.removeChannel(realtimeRef.current);
     realtimeRef.current = supabase
       .channel(`messages:thread:${thread.id}`)
@@ -229,24 +213,10 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             return [...prev, payload.new];
           });
           markRead(thread.id);
-          // Mark newly received message as read immediately
-          if (payload.new.sender_email !== currentUser?.email) {
-            markMessagesReadInDB(thread.id, currentUser?.email);
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'messages', filter: `thread_id=eq.${thread.id}` },
-        (payload) => {
-          // Live read receipt updates
-          setMessages(prev =>
-            prev.map(m => m.id === payload.new.id ? { ...m, read_by: payload.new.read_by } : m)
-          );
         }
       )
       .subscribe();
-  }, [currentUser?.email, markMessagesReadInDB]);
+  }, []);
 
   // Cleanup realtime on unmount
   useEffect(() => () => {
@@ -298,7 +268,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         .insert({
           thread_id: thread.id,
           sender_email: currentUser.email,
-          sender_name: senderProfile?.username || senderProfile?.display_name || 'Anonymous',
+          sender_name: senderProfile?.display_name || currentUser.email,
           content: text,
           message_type: 'text',
           created_date: new Date().toISOString(),
@@ -316,19 +286,6 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           last_message_at: new Date().toISOString(),
         })
         .eq('id', thread.id);
-
-      // Push notification to recipient (fire-and-forget)
-      const recipientEmails = (thread.participant_emails || []).filter(e => e !== currentUser.email);
-      if (recipientEmails.length) {
-        const senderName = senderProfile?.username || senderProfile?.display_name || 'Someone';
-        pushNotify({
-          emails: recipientEmails,
-          title: `${senderName} messaged you`,
-          body: text.length > 60 ? text.slice(0, 57) + '...' : text,
-          tag: `chat-${thread.id}`,
-          url: `/ghosted?sheet=chat&threadId=${thread.id}`,
-        });
-      }
 
       // Refresh messages if no realtime (new thread)
       if (!realtimeRef.current || thread?._new) {
@@ -380,7 +337,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       const { error: msgError } = await supabase.from('messages').insert({
         thread_id: thread.id,
         sender_email: currentUser.email,
-        sender_name: profiles[currentUser.email]?.username || profiles[currentUser.email]?.display_name || 'Anonymous',
+        sender_name: profiles[currentUser.email]?.display_name || currentUser.email,
         content,
         message_type,
         metadata,
@@ -392,20 +349,6 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         last_message: content.slice(0, 80),
         last_message_at: new Date().toISOString(),
       }).eq('id', thread.id);
-
-      // Push notification to recipient (fire-and-forget)
-      const recipientEmails = (thread.participant_emails || []).filter(e => e !== currentUser.email);
-      if (recipientEmails.length) {
-        const senderName = profiles[currentUser.email]?.username || profiles[currentUser.email]?.display_name || 'Someone';
-        const typeLabel = message_type === 'photo' ? '📷 Photo' : message_type === 'meetpoint' ? '📍 Meetup' : '💬 Message';
-        pushNotify({
-          emails: recipientEmails,
-          title: `${senderName} sent ${typeLabel.toLowerCase()}`,
-          body: content?.length > 60 ? content.slice(0, 57) + '...' : (content || typeLabel),
-          tag: `chat-${thread.id}`,
-          url: `/ghosted?sheet=chat&threadId=${thread.id}`,
-        });
-      }
 
       const { data: msgs } = await supabase
         .from('messages').select('*').eq('thread_id', thread.id)
@@ -435,8 +378,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // ── Derive other-party info (needed by Wingman + chat view) ───────────────
   const otherEmail = selectedThread ? getOtherEmail(selectedThread) : '';
   const otherProfile = otherEmail ? getProfile(otherEmail) : null;
-  // Privacy: username only — never show real name or email in public UI
-  const otherName = otherProfile?.username || otherProfile?.display_name || title || 'Anonymous';
+  const otherName = otherProfile?.display_name || otherEmail || title || 'Chat';
 
   const handleWingmanTap = useCallback(async () => {
     if (wingmanLoading) return;
@@ -558,7 +500,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     if (!searchQuery) return true;
     const email = getOtherEmail(t);
     const p = getProfile(email);
-    return (p?.username || p?.display_name || 'Anonymous').toLowerCase().includes(searchQuery.toLowerCase());
+    return (p?.display_name || email).toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   // ── Thread list ────────────────────────────────────────────────────────────
@@ -596,7 +538,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 const email = getOtherEmail(thread);
                 const p = getProfile(email);
                 const unread = isUnread(thread);
-                const name = p?.username || p?.display_name || 'Anonymous';
+                const name = p?.display_name || email || 'Anonymous';
 
                 return (
                   <button
@@ -605,7 +547,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     className="w-full p-4 hover:bg-white/5 transition-colors text-left flex items-center gap-3 active:bg-white/10"
                   >
                     <div className="relative flex-shrink-0">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center overflow-hidden">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8962C] to-[#8B6914] flex items-center justify-center overflow-hidden ring-1 ring-white/10">
                         {p?.avatar_url ? (
                           <img src={p.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -641,9 +583,11 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
   // ── Chat view ──────────────────────────────────────────────────────────────
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-black/80 backdrop-blur-sm flex-shrink-0">
-        <button onClick={handleBack} className="text-white/60 p-1">
+      {/* Header — noir glass with gold accent line */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[#C8962C]/20 flex-shrink-0 relative overflow-hidden" style={{ background: 'rgba(5,5,7,0.92)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
+        {/* Subtle gold shimmer line at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C8962C]/40 to-transparent" />
+        <button onClick={handleBack} className="text-white/60 p-1 active:scale-90 transition-transform">
           <ArrowLeft className="w-5 h-5" />
         </button>
 
@@ -651,16 +595,20 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           onClick={() => otherEmail && openSheet(SHEET_TYPES.PROFILE, { email: otherEmail })}
           className="flex items-center gap-3 flex-1 min-w-0"
         >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center overflow-hidden flex-shrink-0">
-            {otherProfile?.avatar_url ? (
-              <img src={otherProfile.avatar_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-sm font-black text-white">{otherName[0]?.toUpperCase() || '?'}</span>
-            )}
+          <div className="relative flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8962C] to-[#8B6914] flex items-center justify-center overflow-hidden ring-2 ring-[#C8962C]/30">
+              {otherProfile?.avatar_url ? (
+                <img src={otherProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-black text-white">{otherName[0]?.toUpperCase() || '?'}</span>
+              )}
+            </div>
+            {/* Online indicator */}
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#34C759] rounded-full border-2 border-[#050507]" />
           </div>
           <div className="min-w-0">
             <p className="text-white font-bold truncate">{otherName}</p>
-            <p className="text-white/30 text-xs">Tap to view profile</p>
+            <p className="text-[#8E8E93] text-xs">Tap to view profile</p>
           </div>
         </button>
       </div>
@@ -675,30 +623,17 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
           <div className="text-center py-8">
             <p className="text-white/40 text-sm">No messages yet. Say hi! 👋</p>
           </div>
-        ) : (() => {
-            // Compute lastMyMessageId once outside the map
-            const lastMyMessageId = [...messages]
-              .reverse()
-              .find(m => m.sender_email === currentUser?.email)?.id;
-
-            return messages.map((msg, i) => {
+        ) : (
+          messages.map((msg, i) => {
             const isMe = msg.sender_email === currentUser?.email;
             const isMeetpoint = msg.message_type === 'meetpoint';
             const isPhoto =
               msg.message_type === 'photo' ||
               /\.(jpe?g|png|gif|webp|avif|heic)(\?.*)?$/i.test(msg.content || '');
 
-            // Per-message read receipt using read_by[] column
-            // ✓✓ (amber) = recipient has read; ✓ (dim) = sent but unread
-            // Only show on the last sent message to avoid visual clutter
-            const isLastMine = msg.id === lastMyMessageId;
-            const readByArr = msg.read_by || [];
-            const isReadByRecipient = isMe && readByArr.includes(otherEmail);
-            // Fallback to unread_count approach if read_by not populated yet
+            // Read receipt: show ✓✓ on my sent messages if recipient has 0 unread
             const recipientUnread = selectedThread?.unread_count?.[otherEmail];
-            const isReadFallback = isMe && recipientUnread === 0;
-            const showDoubleCheck = isMe && isLastMine && (isReadByRecipient || isReadFallback);
-            const showSingleCheck = isMe && isLastMine && !showDoubleCheck;
+            const isReadByRecipient = isMe && recipientUnread === 0;
 
             return (
               <motion.div
@@ -720,26 +655,25 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-40 text-white flex items-center gap-0.5">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {showDoubleCheck && <span className="text-[10px] text-[#C8962C] ml-1 font-bold">✓✓</span>}
-                        {showSingleCheck && <span className="text-[10px] text-white/40 ml-1">✓</span>}
+                        {isReadByRecipient && <span className="text-[10px] text-white/50 ml-1">✓✓</span>}
                       </p>
                     )}
                   </div>
                 ) : (
                   <div
                     className={cn(
-                      'max-w-[80%] px-4 py-2.5 rounded-2xl',
+                      'max-w-[80%] px-4 py-2.5 rounded-2xl shadow-lg',
                       isMe
-                        ? 'bg-[#C8962C] text-white rounded-br-sm'
-                        : 'bg-[#1C1C1E] text-white rounded-bl-sm'
+                        ? 'text-white rounded-br-sm'
+                        : 'bg-[#1C1C1E] text-white rounded-bl-sm border border-white/[0.06]'
                     )}
+                    style={isMe ? { background: 'linear-gradient(135deg, #C8962C 0%, #A07722 100%)' } : undefined}
                   >
                     <p className="text-sm leading-relaxed">{msg.content}</p>
                     {msg.created_date && (
                       <p className="text-[10px] mt-1 opacity-50 flex items-center gap-0.5">
                         {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-                        {showDoubleCheck && <span className="text-[10px] text-[#C8962C] font-bold ml-1">✓✓</span>}
-                        {showSingleCheck && <span className="text-[10px] text-white/50 ml-1">✓</span>}
+                        {isReadByRecipient && <span className="text-[10px] text-white/50 ml-1">✓✓</span>}
                       </p>
                     )}
                   </div>
@@ -747,7 +681,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
               </motion.div>
             );
           })
-          })()}
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -763,7 +697,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
               />
             ))}
           </div>
-          <span className="text-white/40 text-xs">{profiles[typingUsers[0]]?.username || profiles[typingUsers[0]]?.display_name || 'Someone'} is typing…</span>
+          <span className="text-white/40 text-xs">{typingUsers[0]} is typing…</span>
         </div>
       )}
 
@@ -817,8 +751,9 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         )}
       </AnimatePresence>
 
-      {/* Composer */}
-      <div className="border-t border-white/10 bg-black/80 backdrop-blur-sm flex-shrink-0">
+      {/* Composer — noir glass with gold top accent */}
+      <div className="border-t border-[#C8962C]/15 flex-shrink-0 relative" style={{ background: 'rgba(5,5,7,0.92)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}>
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C8962C]/30 to-transparent" />
         {/* Action bar */}
         <div className="flex items-center gap-3 px-4 pt-3 pb-1">
           {/* Camera / Attach */}
@@ -896,7 +831,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             onChange={e => { setNewMessage(e.target.value); sendTyping(true); }}
             onKeyDown={handleKeyDown}
             placeholder="Message..."
-            className="flex-1 bg-[#1C1C1E] border-0 rounded-full text-sm text-white placeholder-white/30"
+            className="flex-1 bg-[#1C1C1E] border border-white/[0.06] rounded-full text-sm text-white placeholder-white/30 focus:border-[#C8962C]/40 focus:ring-1 focus:ring-[#C8962C]/20 transition-all"
             disabled={sending}
           />
           <Button
