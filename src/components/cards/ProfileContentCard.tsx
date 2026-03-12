@@ -9,7 +9,7 @@
  * Each card: dark bg (#1C1C1E), colored badge, optional image right, action buttons.
  */
 
-import { MapPin, Navigation, Share2, Eye, ShoppingCart, Play, Heart } from 'lucide-react';
+import { MapPin, Navigation, Share2, Eye, ShoppingCart, Play, Heart, Star } from 'lucide-react';
 import { buildUberDeepLink } from '@/utils/uberDeepLink';
 import { toast } from 'sonner';
 
@@ -56,6 +56,7 @@ export interface CreatorCardProps extends BaseCardProps {
   imageUrl?: string;
   onListen: () => void;
   onFollow: () => void;
+  onSubscribe?: () => void;
 }
 
 export type ProfileContentCardProps = HookupCardProps | ForSaleCardProps | CreatorCardProps;
@@ -278,6 +279,7 @@ function CreatorCard({
   imageUrl,
   onListen,
   onFollow,
+  onSubscribe,
   className = '',
 }: Omit<CreatorCardProps, 'variant'>) {
   return (
@@ -327,6 +329,13 @@ function CreatorCard({
             icon={<Heart className="w-3.5 h-3.5" />}
             onClick={onFollow}
           />
+          {onSubscribe && (
+            <ActionBtn
+              label="Subscribe"
+              icon={<Star className="w-3.5 h-3.5" />}
+              onClick={onSubscribe}
+            />
+          )}
         </div>
       </div>
     </div>

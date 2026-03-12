@@ -476,6 +476,15 @@ export default function L2ProfileSheet({ email, uid, id }) {
               }
             }}
             onFollow={() => toast.success(`Following ${name}`)}
+            onSubscribe={
+              profileUser.userId || profileUser.authUserId
+                ? () => openSheet('creator-subscription', {
+                    creatorId:   profileUser.userId || profileUser.authUserId,
+                    creatorName: name,
+                    priceCents:  profileUser.subscription_price_cents || 499,
+                  })
+                : undefined
+            }
           />
         )}
 

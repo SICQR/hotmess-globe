@@ -13,11 +13,13 @@ import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import { snapToGrid } from '../components/utils/locationPrivacy';
 import { toUTC } from '../components/utils/dateUtils';
+import { useGlobe } from '@/contexts/GlobeContext';
 import MediaUploader from '../components/media/MediaUploader';
 
 export default function CreateBeacon() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { emitPulse } = useGlobe();
   const [step, setStep] = useState(1);
   const [uploading, setUploading] = useState(false);
 
@@ -64,6 +66,14 @@ export default function CreateBeacon() {
       }
       
       const newBeacon = await base44.entities.Beacon.create(data);
+
+      // Signal the Globe
+      emitPulse?.({
+        type: 'beacon_drop',
+        lat: data.lat,
+        lng: data.lng,
+        metadata: { kind: data.kind, title: data.title },
+      });
       
       // Notify admins of new shadow beacon
       if (data.is_shadow) {

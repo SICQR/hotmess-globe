@@ -1,13 +1,18 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { supabase } from '@/components/utils/supabaseClient';
 
 /**
  * Globe Context
  * Controls globe visualization mode and camera state
- * 
+ *
  * Modes:
  * - ambient: passive background, slow rotation
  * - explore: user-driven navigation
  * - live: event-driven pulses and signals
+ *
+ * Realtime:
+ * - Subscribes to Beacon INSERT events via Supabase Realtime
+ * - Each new Beacon emits a 'beacon_drop' pulse into pulseQueue
  */
 
 const GlobeContext = createContext(null);
@@ -29,12 +34,51 @@ export function GlobeProvider({ children }) {
   }, []);
 
   const emitPulse = useCallback((pulse) => {
-    setPulseQueue(q => [...q, { ...pulse, id: Date.now() }]);
+    setPulseQueue(q => [...q, { ...pulse, id: `${Date.now()}_${Math.random()}` }]);
   }, []);
 
   const consumePulse = useCallback(() => {
     setPulseQueue(q => q.slice(1));
   }, []);
+
+  // ── Supabase Realtime: Beacon INSERT → Globe pulse ──────────────────────
+  useEffect(() => {
+    const channel = supabase
+      .channel('globe:beacon-feed')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'Beacon' },
+        (payload) => {
+          const beacon = payload.new;
+          if (!beacon) return;
+
+          const lat = Number(beacon.lat ?? beacon.location_lat);
+          const lng = Number(beacon.lng ?? beacon.location_lng);
+
+          // Only emit if we have usable coordinates
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+          emitPulse({
+            type: 'beacon_drop',
+            lat,
+            lng,
+            metadata: {
+              beaconId: beacon.id,
+              title: beacon.title,
+              category: beacon.category,
+            },
+          });
+
+          // Switch globe to live mode so the pulse is visible
+          setMode(GLOBE_MODES.LIVE);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [emitPulse]);
 
   const value = {
     mode,
