@@ -34,6 +34,7 @@ import {
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
+import { useGlobe } from '@/contexts/GlobeContext';
 
 // ── Platform detection ─────────────────────────────────────────────────────────
 
@@ -499,6 +500,7 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
   const [showHoldDismiss, setShowHoldDismiss] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [holdProgress, setHoldProgress] = useState(0);
+  const { emitPulse } = useGlobe();
   const [isHolding, setIsHolding] = useState(false);
   const { openSheet } = useSheet();
   const platform = detectPlatform();
@@ -586,10 +588,14 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
       if (user.email) {
         await supabase.from('right_now_status').upsert({
           user_email: user.email,
+          user_id: user.id ?? null,
           status: 'sos',
           active: true,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         }, { onConflict: 'user_email' });
+
+        // Signal the Globe — safety pulse
+        emitPulse?.({ type: 'sos', metadata: { userId: user.id } });
       }
     } catch {
       toast.error('Could not get location. Please enable location access.');

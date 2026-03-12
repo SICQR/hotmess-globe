@@ -17,8 +17,11 @@ import React, {
   useEffect,
 } from 'react';
 import { SoundConsentModal, useSoundConsent } from '@/components/radio/SoundConsentModal';
+import { supabase } from '@/components/utils/supabaseClient';
 
 const STREAM_URL = 'https://listen.radioking.com/radio/736103/stream/802454';
+// Write a radio_signal to DB at most once per 5 minutes per listen session
+const SIGNAL_THROTTLE_MS = 5 * 60 * 1000;
 
 export interface RadioContextValue {
   isPlaying: boolean;
@@ -35,8 +38,34 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
   const [currentShowName, setCurrentShowName] = useState('');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const pendingPlayRef = useRef(false);
+  const lastSignalWriteRef = useRef<number>(0);
   
   const { hasConsent, showModal, requestConsent, grantConsent, declineConsent } = useSoundConsent();
+
+  /** Write a radio_signal row so the globe heat loop can aggregate it */
+  const emitRadioSignal = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastSignalWriteRef.current < SIGNAL_THROTTLE_MS) return;
+    lastSignalWriteRef.current = now;
+
+    try {
+      // Best-effort — no auth required (anon signal for aggregate heat)
+      const expiresAt = new Date(now + 30 * 60 * 1000).toISOString(); // 30 min window
+      await supabase.from('radio_signals').insert({
+        signal_type: 'listener_active',
+        city: 'london', // default; will be personalised once we have user city
+        intensity: 1,
+        listener_count_bucket: '1-10',
+        starts_at: new Date(now).toISOString(),
+        expires_at: expiresAt,
+      });
+
+      // Trigger the aggregation RPC so globe_heat_tiles stays fresh
+      await supabase.rpc('aggregate_radio_city_minute');
+    } catch {
+      // Best-effort — never block playback
+    }
+  }, []);
 
   // Create audio element once on mount
   useEffect(() => {
@@ -63,12 +92,13 @@ export function RadioProvider({ children }: { children: React.ReactNode }) {
       audio.load();
       await audio.play();
       setIsPlaying(true);
+      emitRadioSignal();
     } catch (err: any) {
       if (err?.name === 'AbortError') return; // Browser interrupted play for new source — ignore
       console.warn('[radio] play failed:', err);
       setIsPlaying(false);
     }
-  }, []);
+  }, [emitRadioSignal]);
   
   // After consent granted, start playback if pending
   useEffect(() => {

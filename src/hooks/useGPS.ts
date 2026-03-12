@@ -7,6 +7,11 @@
  *
  * Writes to profiles table (canonical).
  * nearby_candidates_secure RPC reads from profiles + user_presence_locations.
+ *
+ * Persona auto-switch:
+ *  - On each position update, checks if any persona has a geo_fence in its
+ *    settings JSONB: { geo_fence: { lat, lng, radius_m } }
+ *  - If user enters a fence, switches to that persona (once per fence entry).
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -29,12 +34,25 @@ type UseGPSResult = {
 const ACTIVE_INTERVAL_MS = 60_000;    // 60 seconds when visible
 const BACKGROUND_INTERVAL_MS = 300_000; // 5 minutes when hidden
 
+/** Haversine distance in metres between two lat/lng points */
+function distanceMetres(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6_371_000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export function useGPS(autoUpdate = true): UseGPSResult {
   const [position, setPosition] = useState<Position | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastWriteRef = useRef<number>(0);
+  // Track which persona fence we last auto-switched into to avoid thrashing
+  const lastFencePersonaRef = useRef<string | null>(null);
 
   const updatePosition = useCallback(async (pos: GeolocationPosition) => {
     const newPosition: Position = {
@@ -66,11 +84,44 @@ export function useGPS(autoUpdate = true): UseGPSResult {
       };
 
       // Write to profiles (canonical table)
-      // nearby_candidates_secure RPC reads from profiles + user_presence_locations
       await supabase
         .from('profiles')
         .update(locUpdate)
         .eq('id', user.id);
+
+      // ── Persona geo-fence auto-switch ──────────────────────────────────────
+      // Load all personas for this user; check if any define a geo_fence in settings
+      const { data: personas } = await supabase
+        .from('personas')
+        .select('id, persona_type, is_active, settings')
+        .eq('user_id', user.id);
+
+      if (!personas?.length) return;
+
+      let matchedPersonaId: string | null = null;
+
+      for (const p of personas) {
+        const fence = p.settings?.geo_fence as { lat?: number; lng?: number; radius_m?: number } | undefined;
+        if (!fence?.lat || !fence?.lng || !fence?.radius_m) continue;
+
+        const dist = distanceMetres(newPosition.lat, newPosition.lng, fence.lat, fence.lng);
+        if (dist <= fence.radius_m) {
+          matchedPersonaId = p.id;
+          break; // first matching fence wins
+        }
+      }
+
+      if (matchedPersonaId && matchedPersonaId !== lastFencePersonaRef.current) {
+        // Check if we're already on this persona
+        const current = personas.find(p => p.is_active);
+        if (current?.id !== matchedPersonaId) {
+          await supabase.rpc('switch_persona', { p_persona_id: matchedPersonaId });
+          lastFencePersonaRef.current = matchedPersonaId;
+        }
+      } else if (!matchedPersonaId) {
+        // Left all fences — reset so next entry re-triggers
+        lastFencePersonaRef.current = null;
+      }
     } catch (err) {
       console.warn('[useGPS] Failed to update position:', err);
     }

@@ -17,6 +17,7 @@ import { useSheet } from '@/contexts/SheetContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { pushNotify } from '@/lib/pushNotify';
+import { useGlobe } from '@/contexts/GlobeContext';
 
 const FILTERS = ['Tonight', 'This Week', 'All'] as const;
 type Filter = typeof FILTERS[number];
@@ -33,6 +34,7 @@ export default function EventsMode() {
   const [filter, setFilter] = useState<Filter>('Tonight');
   const queryClient = useQueryClient();
   const { openSheet } = useSheet();
+  const { emitPulse } = useGlobe();
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -95,6 +97,9 @@ export default function EventsMode() {
           status: 'going',
         });
         if (error) throw error;
+
+        // Signal the Globe
+        emitPulse?.({ type: 'rsvp', metadata: { eventId } });
 
         // Notify event organizer (fire-and-forget)
         (async () => {

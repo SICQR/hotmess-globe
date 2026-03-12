@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Home, Car, Building, HelpCircle, Sparkles, X } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
+import { useGlobe } from '@/contexts/GlobeContext';
 
 const DURATIONS = [
   { value: 30,  label: '30 min' },
@@ -23,6 +24,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
   const [logistics, setLogistics] = useState([]);
   const [coldVibe, setColdVibe]   = useState(false);
   const [loading, setLoading]     = useState(false);
+  const { emitPulse } = useGlobe();
 
   const toggleLogistics = (val) =>
     setLogistics(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
@@ -57,6 +59,7 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
         .from('right_now_status')
         .upsert({
           user_email: user.email,
+          user_id: user.id ?? null,
           intent: intentProp,
           timeframe: duration < 60 ? `${duration}m` : `${duration/60}h`,
           active: true,
@@ -70,6 +73,15 @@ export default function RightNowModal({ isOpen, onClose, intent: intentProp = 'e
         }, { onConflict: 'user_email' });
 
       if (error) throw error;
+
+      // Signal the Globe
+      emitPulse?.({
+        type: 'right_now',
+        lat: location?.lat,
+        lng: location?.lng,
+        metadata: { intent: intentProp, duration },
+      });
+
       toast.success(
         location
           ? "You're live! Beacon placed on the globe."

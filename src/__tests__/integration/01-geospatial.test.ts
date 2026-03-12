@@ -20,29 +20,29 @@ let glenOriginal: { last_lat: number | null; last_lng: number | null; privacy_hi
 beforeAll(async () => {
   // Save originals
   const { data: philRow } = await admin
-    .from('User')
+    .from('profiles')
     .select('last_lat, last_lng, privacy_hide_proximity')
-    .eq('auth_user_id', TEST_USERS.phil.authId)
+    .eq('id', TEST_USERS.phil.authId)
     .single();
   philOriginal = philRow;
 
   const { data: glenRow } = await admin
-    .from('User')
+    .from('profiles')
     .select('last_lat, last_lng, privacy_hide_proximity')
-    .eq('auth_user_id', TEST_USERS.glen.authId)
+    .eq('id', TEST_USERS.glen.authId)
     .single();
   glenOriginal = glenRow;
 
   // Place Phil in Soho, Glen in Vauxhall (~2.5 km apart)
   await admin
-    .from('User')
+    .from('profiles')
     .update({ last_lat: GEO.soho.lat, last_lng: GEO.soho.lng, privacy_hide_proximity: false, is_online: true })
-    .eq('auth_user_id', TEST_USERS.phil.authId);
+    .eq('id', TEST_USERS.phil.authId);
 
   await admin
-    .from('User')
+    .from('profiles')
     .update({ last_lat: GEO.vauxhall.lat, last_lng: GEO.vauxhall.lng, privacy_hide_proximity: false, is_online: true })
-    .eq('auth_user_id', TEST_USERS.glen.authId);
+    .eq('id', TEST_USERS.glen.authId);
 
   // Also seed user_presence_locations for the _secure RPC
   await admin.from('user_presence_locations').upsert({
@@ -58,15 +58,15 @@ afterAll(async () => {
   // Restore original locations
   if (philOriginal) {
     await admin
-      .from('User')
+      .from('profiles')
       .update(philOriginal)
-      .eq('auth_user_id', TEST_USERS.phil.authId);
+      .eq('id', TEST_USERS.phil.authId);
   }
   if (glenOriginal) {
     await admin
-      .from('User')
+      .from('profiles')
       .update(glenOriginal)
-      .eq('auth_user_id', TEST_USERS.glen.authId);
+      .eq('id', TEST_USERS.glen.authId);
   }
 });
 
@@ -111,9 +111,9 @@ describe('Geospatial: nearby_candidates', () => {
   it('excludes users with privacy_hide_proximity = true', async () => {
     // Set Glen to hidden
     await admin
-      .from('User')
+      .from('profiles')
       .update({ privacy_hide_proximity: true })
-      .eq('auth_user_id', TEST_USERS.glen.authId);
+      .eq('id', TEST_USERS.glen.authId);
 
     const { data, error } = await admin.rpc('nearby_candidates', {
       p_viewer_lat: GEO.soho.lat,
@@ -129,9 +129,9 @@ describe('Geospatial: nearby_candidates', () => {
 
     // Restore
     await admin
-      .from('User')
+      .from('profiles')
       .update({ privacy_hide_proximity: false })
-      .eq('auth_user_id', TEST_USERS.glen.authId);
+      .eq('id', TEST_USERS.glen.authId);
   });
 
   it('excludes the querying user from results (p_exclude_user_id)', async () => {
@@ -206,9 +206,9 @@ describe('Geospatial: nearby_candidates_secure (fuzzy coordinates)', () => {
 
     // Also set User table timestamp to stale
     await admin
-      .from('User')
+      .from('profiles')
       .update({ updated_at: staleTime })
-      .eq('auth_user_id', TEST_USERS.glen.authId);
+      .eq('id', TEST_USERS.glen.authId);
 
     const { data, error } = await admin.rpc('nearby_candidates_secure', {
       p_viewer_lat: GEO.soho.lat,
@@ -232,9 +232,9 @@ describe('Geospatial: nearby_candidates_secure (fuzzy coordinates)', () => {
       updated_at: new Date().toISOString(),
     });
     await admin
-      .from('User')
+      .from('profiles')
       .update({ updated_at: new Date().toISOString() })
-      .eq('auth_user_id', TEST_USERS.glen.authId);
+      .eq('id', TEST_USERS.glen.authId);
   });
 });
 
@@ -259,9 +259,9 @@ describe('Geospatial: distance accuracy', () => {
   it('Manchester users not returned in 10 km London query', async () => {
     // Temporarily put Glen in Manchester
     await admin
-      .from('User')
+      .from('profiles')
       .update({ last_lat: GEO.manchester.lat, last_lng: GEO.manchester.lng })
-      .eq('auth_user_id', TEST_USERS.glen.authId);
+      .eq('id', TEST_USERS.glen.authId);
 
     const { data } = await admin.rpc('nearby_candidates', {
       p_viewer_lat: GEO.soho.lat,
@@ -276,8 +276,8 @@ describe('Geospatial: distance accuracy', () => {
 
     // Restore
     await admin
-      .from('User')
+      .from('profiles')
       .update({ last_lat: GEO.vauxhall.lat, last_lng: GEO.vauxhall.lng })
-      .eq('auth_user_id', TEST_USERS.glen.authId);
+      .eq('id', TEST_USERS.glen.authId);
   });
 });
