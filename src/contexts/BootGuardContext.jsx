@@ -158,7 +158,10 @@ export function BootGuardProvider({ children }) {
         return;
       }
 
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      // INITIAL_SESSION fires on every page load AND after email confirmation.
+      // SIGNED_IN fires after login/signup. TOKEN_REFRESHED on session refresh.
+      // All three require loadProfile to determine boot state.
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
         setSession(newSession);
         // Do NOT await — see comment above re: Navigator Lock deadlock.
         void loadProfile(newSession.user.id, newSession.user.email);
