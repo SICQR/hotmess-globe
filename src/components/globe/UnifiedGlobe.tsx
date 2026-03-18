@@ -1,48 +1,39 @@
 /**
  * UnifiedGlobe — L0 Persistent Background Layer
  *
- * The globe is the OS backbone — persistent on EVERY route.
+ * Only renders on /pulse or /globe — returns null everywhere else.
  *
  * On /pulse or /globe: renders full interactive GlobePage (3D WebGL canvas + UI).
- * On ALL other routes:  renders AmbientGlobe (lightweight 2D canvas, non-interactive,
- *                       dimmed) — giving the signature atmospheric backdrop everywhere.
- *
- * This ensures the "Pulse Globe = OS Backbone" design law is honoured:
- * every screen feels connected to the living, breathing global network.
+ * On ALL other routes:  returns null (no rendering overhead outside Pulse).
  */
 
 import React, { Suspense, lazy } from 'react';
 import { useLocation } from 'react-router-dom';
-import AmbientGlobe from '@/components/globe/AmbientGlobe';
 
 const GlobePage = lazy(() => import('@/pages/Globe'));
 
 /**
- * Render the application's globe background: show the full interactive 3D globe for the Pulse routes and the lightweight ambient 2D globe for all other routes.
+ * Render the application's globe background on the Pulse route only.
  *
- * @returns The globe background element: an absolutely positioned interactive `GlobePage` when the current path is `/pulse` or `/globe`, otherwise the `AmbientGlobe` component.
+ * @returns The full interactive `GlobePage` container when the current path is `/pulse` or `/globe`, otherwise `null`.
  */
 export function UnifiedGlobe() {
   const location = useLocation();
   const isPulse = location.pathname === '/pulse' || location.pathname === '/globe';
 
-  // Full interactive 3D globe on Pulse route
-  if (isPulse) {
-    return (
-      <div className="absolute inset-0 z-0">
-        <Suspense fallback={
-          <div className="w-full h-full bg-black flex items-center justify-center">
-            <div className="w-10 h-10 border-2 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />
-          </div>
-        }>
-          <GlobePage />
-        </Suspense>
-      </div>
-    );
-  }
+  if (!isPulse) return null;
 
-  // Ambient 2D globe on every other route — the OS heartbeat
-  return <AmbientGlobe />;
+  return (
+    <div className="absolute inset-0 z-0">
+      <Suspense fallback={
+        <div className="w-full h-full bg-black flex items-center justify-center">
+          <div className="w-10 h-10 border-2 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />
+        </div>
+      }>
+        <GlobePage />
+      </Suspense>
+    </div>
+  );
 }
 
 export default UnifiedGlobe;
