@@ -61,6 +61,7 @@ function AmbientGlobe() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     // Size canvas to container (2x for retina)
     const resize = () => {
