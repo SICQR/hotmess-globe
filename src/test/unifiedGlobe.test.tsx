@@ -1,16 +1,17 @@
 /**
  * UnifiedGlobe — route-gating tests
  *
- * Verifies the component returns null on non-/pulse routes and
- * renders (at minimum a container element) on /pulse.
+ * Verifies that UnifiedGlobe correctly switches between GlobePage and
+ * AmbientGlobe based on route: GlobePage on /pulse, AmbientGlobe on all
+ * other routes.
  *
- * Three.js and the full Globe page are mocked so this runs in jsdom
- * without a WebGL context.
+ * Three.js, GlobePage, AmbientGlobe, and supabaseClient are all mocked so
+ * this runs in jsdom without WebGL or canvas support.
  */
 
 import React, { Suspense } from 'react';
-import { describe, it, expect, vi, beforeAll } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 // ---------------------------------------------------------------------------
@@ -82,6 +83,12 @@ vi.mock('@/pages/Globe', () => ({
   default: () => <div data-testid="globe-page">Globe</div>,
 }));
 
+// Stub AmbientGlobe — jsdom has no canvas support, so the real component
+// would crash. The stub just renders a sentinel div.
+vi.mock('@/components/globe/AmbientGlobe', () => ({
+  default: () => <div data-testid="ambient-globe" />,
+}));
+
 // Stub supabaseClient so no real network calls happen.
 vi.mock('@/components/utils/supabaseClient', () => ({
   supabase: {
@@ -113,25 +120,25 @@ function renderAt(path: string) {
 // Tests
 // ---------------------------------------------------------------------------
 describe('UnifiedGlobe route-gating', () => {
-  it('renders null (nothing in DOM) on / (home)', () => {
+  it('renders AmbientGlobe (non-null) on / (home)', () => {
     const { container } = renderAt('/');
-    // UnifiedGlobe returns null → nothing rendered by the component itself.
-    expect(container.firstChild).toBeNull();
+    // UnifiedGlobe renders AmbientGlobe on non-pulse routes.
+    expect(container.firstChild).not.toBeNull();
   });
 
-  it('renders null on /market', () => {
+  it('renders AmbientGlobe (non-null) on /market', () => {
     const { container } = renderAt('/market');
-    expect(container.firstChild).toBeNull();
+    expect(container.firstChild).not.toBeNull();
   });
 
-  it('renders null on /profile', () => {
+  it('renders AmbientGlobe (non-null) on /profile', () => {
     const { container } = renderAt('/profile');
-    expect(container.firstChild).toBeNull();
+    expect(container.firstChild).not.toBeNull();
   });
 
-  it('renders null on /ghosted', () => {
+  it('renders AmbientGlobe (non-null) on /ghosted', () => {
     const { container } = renderAt('/ghosted');
-    expect(container.firstChild).toBeNull();
+    expect(container.firstChild).not.toBeNull();
   });
 
   it('renders a container element on /pulse', () => {
