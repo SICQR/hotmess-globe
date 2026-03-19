@@ -168,19 +168,28 @@ jobs:
       - name: Verify Supabase auth (pre-flight)
         run: |
           node -e "
+          // Skip preflight when secrets are not configured — avoids false-positive
+          // failures caused by blank credentials being sent to Supabase.
+          const email    = process.env.TEST_USER_A_EMAIL    || '';
+          const password = process.env.TEST_USER_A_PASSWORD || '';
+          const anonKey  = process.env.VITE_SUPABASE_ANON_KEY || '';
+          if (!email || !password || !anonKey) {
+            console.warn('WARNING: Auth preflight skipped - TEST_USER_A_EMAIL / TEST_USER_A_PASSWORD / VITE_SUPABASE_ANON_KEY not set. Authenticated E2E tests will be skipped.');
+            process.exit(0);
+          }
           const https = require('https');
-          const body = JSON.stringify({ email: process.env.TEST_USER_A_EMAIL, password: process.env.TEST_USER_A_PASSWORD });
+          const body = JSON.stringify({ email, password });
           const req = https.request({
             hostname: 'klsywpvncqqglhnhrjbh.supabase.co',
             path: '/auth/v1/token?grant_type=password',
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': process.env.VITE_SUPABASE_ANON_KEY, 'Content-Length': Buffer.byteLength(body) }
+            headers: { 'Content-Type': 'application/json', 'apikey': anonKey, 'Content-Length': Buffer.byteLength(body) }
           }, (res) => {
             let data = '';
             res.on('data', d => data += d);
             res.on('end', () => {
               const json = JSON.parse(data);
-              if (json.error) { console.error('Auth FAILED:', json.error, json.error_description); process.exit(1); }
+              if (!json.access_token) { console.error('Auth FAILED - error_code:', json.error_code, 'msg:', json.msg); process.exit(1); }
               else { console.log('Auth OK — user:', json.user?.email); }
             });
           });
