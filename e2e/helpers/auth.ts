@@ -3,7 +3,7 @@
  * Helper functions for authentication flows in E2E tests
  */
 
-import { Page } from '@playwright/test';
+import { Page, test } from '@playwright/test';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? 'https://klsywpvncqqglhnhrjbh.supabase.co';
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
@@ -21,6 +21,16 @@ const TEST_USER_B = {
   email: process.env.TEST_USER_B_EMAIL || 'test-blue@hotmessldn.com',
   password: process.env.TEST_USER_B_PASSWORD || '***REMOVED_PASSWORD***',
 };
+
+/**
+ * True only when all three secrets required for authenticated tests are
+ * present and non-empty.  Without them every loginAs() call would send
+ * blank/default credentials to Supabase and hard-fail with 400.
+ */
+export const E2E_AUTH_CONFIGURED =
+  !!(process.env.VITE_SUPABASE_ANON_KEY?.trim()) &&
+  !!(process.env.TEST_USER_A_EMAIL?.trim()) &&
+  !!(process.env.TEST_USER_A_PASSWORD?.trim());
 
 /**
  * Sets localStorage flags to bypass age gate and onboarding.
@@ -43,12 +53,22 @@ export async function bypassGates(page: Page): Promise<void> {
  *
  * This is the CI-safe approach: avoids fragile UI form filling and network
  * timing issues with the auth bottom sheet.
+ *
+ * When E2E auth secrets are not configured the test is skipped cleanly rather
+ * than hard-failing with a 400 from Supabase.
  */
 export async function loginAs(
   page: Page,
   email: string,
   password: string,
 ): Promise<void> {
+  // Skip gracefully when auth secrets are missing — avoids hard CI failures
+  // caused by blank/default credentials being sent to Supabase.
+  if (!E2E_AUTH_CONFIGURED) {
+    test.skip(true, 'Skipping authenticated test - VITE_SUPABASE_ANON_KEY / TEST_USER_A_EMAIL / TEST_USER_A_PASSWORD not configured.');
+    return;
+  }
+
   // 1. Get session token via Playwright's request API (Node.js context, not browser)
   const response = await page.request.post(
     `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
