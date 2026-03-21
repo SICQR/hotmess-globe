@@ -37,7 +37,8 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 - Full stack: React + Vite + TypeScript + Tailwind + Supabase + Framer Motion + Vercel
 - Brand: `#C8962C` gold, `#050507` bg, dark only, no pink, no XP
 - All 45 sheets, the boot state machine, sheet policy, persona system, SOS system
-- Supabase project: `klsywpvncqqglhnhrjbh`
+- Supabase project (production): `axxwdjmbwkvqhcpwters` (supabase-purple-queen, East US)
+- Supabase project (dev/staging): `klsywpvncqqglhnhrjbh` (HOTMESS BASE44, ap-northeast-1)
 - Repo: `SICQR/hotmess-globe`, live at `hotmessldn.com`
 - You have write access. Use it.
 
