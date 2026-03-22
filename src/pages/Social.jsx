@@ -90,14 +90,14 @@ export default function Social() {
           <TabsList className="grid w-full grid-cols-2 bg-white/5 mb-6 h-auto">
             <TabsTrigger
               value="discover"
-              className="min-h-[44px] data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black py-3"
+              className="min-h-[44px] data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black py-3"
             >
               <Users className="w-4 h-4 mr-2 shrink-0" />
               <span className="text-sm">DISCOVER</span>
             </TabsTrigger>
             <TabsTrigger
               value="inbox"
-              className="min-h-[44px] data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black py-3 relative"
+              className="min-h-[44px] data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black py-3 relative"
             >
               <MessageCircle className="w-4 h-4 mr-2 shrink-0" />
               <span className="text-sm">INBOX</span>

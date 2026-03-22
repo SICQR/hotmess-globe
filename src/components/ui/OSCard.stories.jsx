@@ -49,7 +49,7 @@ export const Default = {
         <p className="text-white/60 text-sm mt-1">Warehouse District, London</p>
         <div className="flex items-center gap-2 mt-3">
           <OSCardBadge color="#C8962C">Tonight</OSCardBadge>
-          <OSCardBadge color="#00D9FF">Techno</OSCardBadge>
+          <OSCardBadge color="#00C2E0">Techno</OSCardBadge>
         </div>
       </div>
     </OSCard>
@@ -139,7 +139,7 @@ export const EventWithPrice = {
           </div>
         </div>
         <div className="flex items-center gap-2 mt-3">
-          <OSCardBadge color="#00D9FF">Saturday</OSCardBadge>
+          <OSCardBadge color="#00C2E0">Saturday</OSCardBadge>
           <OSCardBadge color="#C8962C">18+</OSCardBadge>
           <span className="text-white/40 text-xs ml-auto">120 attending</span>
         </div>

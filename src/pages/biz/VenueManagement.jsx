@@ -234,8 +234,8 @@ export default function VenueManagement() {
           
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#00D9FF]/20 border border-[#00D9FF]/40 rounded-lg flex items-center justify-center">
-                <MapPin className="w-6 h-6 text-[#00D9FF]" />
+              <div className="w-12 h-12 bg-[#00C2E0]/20 border border-[#00C2E0]/40 rounded-lg flex items-center justify-center">
+                <MapPin className="w-6 h-6 text-[#00C2E0]" />
               </div>
               <div>
                 <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight">

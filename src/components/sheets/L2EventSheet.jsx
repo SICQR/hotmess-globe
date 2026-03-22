@@ -238,11 +238,11 @@ export default function L2EventSheet({ id }) {
         
         <div className="flex flex-wrap gap-4 text-sm text-white/60">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-[#00D9FF]" />
+            <Calendar className="w-4 h-4 text-[#00C2E0]" />
             <span>{format(eventDate, 'EEE, MMM d, yyyy')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-[#00D9FF]" />
+            <Clock className="w-4 h-4 text-[#00C2E0]" />
             <span>{format(eventDate, 'h:mm a')}</span>
           </div>
         </div>
@@ -276,7 +276,7 @@ export default function L2EventSheet({ id }) {
                 href={`https://maps.google.com/?q=${event.lat},${event.lng}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 flex items-center gap-2 text-[#00D9FF] text-sm hover:underline"
+                className="mt-3 flex items-center gap-2 text-[#00C2E0] text-sm hover:underline"
               >
                 <ExternalLink className="w-4 h-4" />
                 Get Directions

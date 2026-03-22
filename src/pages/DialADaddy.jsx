@@ -23,14 +23,14 @@ export default function DialADaddy() {
     <div className="min-h-screen bg-black text-white">
       {/* Hero */}
       <div className="relative overflow-hidden border-b-2 border-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#00D9FF]/20 to-[#39FF14]/20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#00C2E0]/20 to-[#39FF14]/20" />
         <div className="relative max-w-4xl mx-auto px-6 py-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center gap-3 mb-4">
-              <RadioIcon className="w-8 h-8 text-[#00D9FF]" />
+              <RadioIcon className="w-8 h-8 text-[#00C2E0]" />
               <Link
                 to={createPageUrl('RadioSchedule')}
                 className="text-xs uppercase tracking-widest text-white/60 font-bold hover:text-white"
@@ -47,7 +47,7 @@ export default function DialADaddy() {
             <div className="flex flex-wrap gap-4">
               <Button
                 onClick={openRadio}
-                className="bg-[#00D9FF] hover:bg-white text-black hover:text-black font-black px-8 py-6 border-2 border-white uppercase"
+                className="bg-[#00C2E0] hover:bg-white text-black hover:text-black font-black px-8 py-6 border-2 border-white uppercase"
               >
                 <ExternalLink className="w-5 h-5 mr-2" />
                 Listen Live
@@ -75,7 +75,7 @@ export default function DialADaddy() {
             className="bg-white/5 border-2 border-white p-6"
           >
             <div className="flex items-center gap-2 mb-3">
-              <Clock className="w-5 h-5 text-[#00D9FF]" />
+              <Clock className="w-5 h-5 text-[#00C2E0]" />
               <h2 className="text-lg font-black uppercase">Next Episode</h2>
             </div>
             <p className="text-2xl font-bold">
@@ -146,13 +146,13 @@ export default function DialADaddy() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-black border-2 border-[#00D9FF] p-6 space-y-4"
+          className="bg-black border-2 border-[#00C2E0] p-6 space-y-4"
         >
-          <h2 className="text-xl font-black uppercase text-[#00D9FF]">Stingers & VO</h2>
+          <h2 className="text-xl font-black uppercase text-[#00C2E0]">Stingers & VO</h2>
           
           <div className="space-y-2">
             {show.stingers.map((stinger, idx) => (
-              <p key={idx} className="text-white/90 pl-4 border-l-2 border-[#00D9FF]">
+              <p key={idx} className="text-white/90 pl-4 border-l-2 border-[#00C2E0]">
                 {stinger}
               </p>
             ))}
@@ -183,10 +183,10 @@ export default function DialADaddy() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-black border-2 border-[#00D9FF] p-6"
+          className="bg-black border-2 border-[#00C2E0] p-6"
         >
           <div className="flex items-start gap-3">
-            <Heart className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-1" />
+            <Heart className="w-5 h-5 text-[#00C2E0] flex-shrink-0 mt-1" />
             <p className="text-white/90">
               Consent and respect are non-negotiable. Aftercare is real. If you need support, land in Care.
             </p>

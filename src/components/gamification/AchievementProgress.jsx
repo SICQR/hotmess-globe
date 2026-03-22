@@ -56,7 +56,7 @@ export default function AchievementProgress({
                 <span className="text-white/80">
                   Progress: {currentProgress} / {maxProgress}
                 </span>
-                <span className="text-[#00D9FF] font-bold">
+                <span className="text-[#00C2E0] font-bold">
                   {Math.round(progressPercentage)}%
                 </span>
               </div>

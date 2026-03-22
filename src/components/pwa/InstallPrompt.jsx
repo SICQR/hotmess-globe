@@ -47,7 +47,7 @@ export function InstallPrompt() {
       setIsInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
-      console.log('[PWA] App installed successfully');
+      void('[PWA] App installed successfully');
     });
     
     return () => {
@@ -64,7 +64,7 @@ export function InstallPrompt() {
     // Wait for user response
     const { outcome } = await deferredPrompt.userChoice;
     
-    console.log('[PWA] User response:', outcome);
+    void('[PWA] User response:', outcome);
     
     if (outcome === 'accepted') {
       setShowPrompt(false);
@@ -118,7 +118,7 @@ export function InstallPrompt() {
                 </div>
                 <div className="text-center">
                   <div className="w-8 h-8 bg-white/10 rounded-lg mx-auto mb-1 flex items-center justify-center">
-                    <Bell className="w-4 h-4 text-[#00D9FF]" />
+                    <Bell className="w-4 h-4 text-[#00C2E0]" />
                   </div>
                   <span className="text-xs text-white/60">Notifications</span>
                 </div>
@@ -208,15 +208,15 @@ export function IOSInstallInstructions({ onDismiss }) {
           <div className="space-y-3 text-sm">
             <div className="flex items-center gap-3">
               <span className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center font-bold">1</span>
-              <span>Tap the <span className="text-[#00D9FF]">Share</span> button in Safari</span>
+              <span>Tap the <span className="text-[#00C2E0]">Share</span> button in Safari</span>
             </div>
             <div className="flex items-center gap-3">
               <span className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center font-bold">2</span>
-              <span>Scroll down and tap <span className="text-[#00D9FF]">"Add to Home Screen"</span></span>
+              <span>Scroll down and tap <span className="text-[#00C2E0]">"Add to Home Screen"</span></span>
             </div>
             <div className="flex items-center gap-3">
               <span className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center font-bold">3</span>
-              <span>Tap <span className="text-[#00D9FF]">"Add"</span> in the top right</span>
+              <span>Tap <span className="text-[#00C2E0]">"Add"</span> in the top right</span>
             </div>
           </div>
           

@@ -82,7 +82,7 @@ export function ProductCard({
         )}
 
         <div className="flex items-center justify-between mt-3">
-          <span className="text-lg font-black text-[#00D9FF]">
+          <span className="text-lg font-black text-[#00C2E0]">
             £{product.price?.toFixed(2) || '0.00'}
           </span>
 

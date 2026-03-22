@@ -246,10 +246,10 @@ export default function Calendar() {
                       aspect-square border-2 p-2 transition-all relative
                       ${isSelected ? 'border-[#C8962C] bg-[#C8962C]/20' : 'border-white/10 hover:border-white/30'}
                       ${!isCurrentMonth && 'opacity-40'}
-                      ${isToday && 'border-[#00D9FF]'}
+                      ${isToday && 'border-[#00C2E0]'}
                     `}
                   >
-                    <div className={`text-sm font-bold ${isToday && 'text-[#00D9FF]'}`}>
+                    <div className={`text-sm font-bold ${isToday && 'text-[#00C2E0]'}`}>
                       {format(day, 'd')}
                     </div>
                     {hasEvents && (
@@ -283,7 +283,7 @@ export default function Calendar() {
                 <span className="text-white/60">Other Events</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 border-2 border-[#00D9FF]" />
+                <div className="w-3 h-3 border-2 border-[#00C2E0]" />
                 <span className="text-white/60">Today</span>
               </div>
             </div>

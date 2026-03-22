@@ -213,11 +213,11 @@ export function useSystemState(): SystemState {
 // DEBUG
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function debugSystemState(): void {
-  console.log('[SystemState]', {
+export function debugSystemState() {
+  return {
     current: store.state,
     previous: store.previousState,
     emergency: store.emergencyTriggeredAt,
     blocked: store.blockReason,
-  });
+  };
 }

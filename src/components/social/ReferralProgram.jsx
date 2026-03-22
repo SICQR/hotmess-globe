@@ -176,7 +176,7 @@ export default function ReferralProgram() {
         className="grid grid-cols-3 gap-4"
       >
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-          <Users className="w-6 h-6 mx-auto mb-2 text-[#00D9FF]" />
+          <Users className="w-6 h-6 mx-auto mb-2 text-[#00C2E0]" />
           <div className="text-2xl font-black">{stats.total}</div>
           <div className="text-xs text-white/60">Total Invited</div>
         </div>

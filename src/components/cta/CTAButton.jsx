@@ -27,15 +27,15 @@ const ICONS = {
 const VARIANT_STYLES = {
   'hot': 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-white',
   'hot-gradient': 'bg-gradient-to-r from-[#C8962C] to-[#C8962C] hover:opacity-90 text-white',
-  'cyan': 'bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black',
-  'cyan-gradient': 'bg-gradient-to-r from-[#00D9FF] to-[#0066FF] hover:opacity-90 text-white',
+  'cyan': 'bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black',
+  'cyan-gradient': 'bg-gradient-to-r from-[#00C2E0] to-[#0066FF] hover:opacity-90 text-white',
   'purple': 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-white',
   'gold': 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-black',
   'lime': 'bg-[#39FF14] hover:bg-[#39FF14]/90 text-black',
   'black': 'bg-black hover:bg-black/90 text-white border border-white/20',
   'outline': 'bg-transparent hover:bg-white/10 text-white border-2 border-white/30',
   'outline-hot': 'bg-transparent hover:bg-[#C8962C]/10 text-[#C8962C] border-2 border-[#C8962C]',
-  'outline-cyan': 'bg-transparent hover:bg-[#00D9FF]/10 text-[#00D9FF] border-2 border-[#00D9FF]',
+  'outline-cyan': 'bg-transparent hover:bg-[#00C2E0]/10 text-[#00C2E0] border-2 border-[#00C2E0]',
   'destructive': 'bg-red-600 hover:bg-red-700 text-white',
   'ghost': 'bg-transparent hover:bg-white/10 text-white',
 };

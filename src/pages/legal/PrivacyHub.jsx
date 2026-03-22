@@ -14,12 +14,12 @@ export default function PrivacyHub() {
           <div>
             <p className="text-xs text-white/60 uppercase tracking-wider font-bold">Export</p>
             <p className="text-sm text-white/80 mt-1">Request a copy of your personal data.</p>
-            <Link to="/account/data/export" className="text-sm text-[#00D9FF] hover:underline">Go to export</Link>
+            <Link to="/account/data/export" className="text-sm text-[#00C2E0] hover:underline">Go to export</Link>
           </div>
           <div>
             <p className="text-xs text-white/60 uppercase tracking-wider font-bold">Delete</p>
             <p className="text-sm text-white/80 mt-1">Request deletion of your personal data.</p>
-            <Link to="/account/data/delete" className="text-sm text-[#00D9FF] hover:underline">Go to delete</Link>
+            <Link to="/account/data/delete" className="text-sm text-[#00C2E0] hover:underline">Go to delete</Link>
           </div>
         </div>
 

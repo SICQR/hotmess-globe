@@ -116,7 +116,7 @@ export default function AIEventRecommendations({ currentUser }) {
                   <span 
                     className="text-sm font-black"
                     style={{ 
-                      color: rec.score >= 80 ? '#C8962C' : rec.score >= 60 ? '#C8962C' : '#00D9FF' 
+                      color: rec.score >= 80 ? '#C8962C' : rec.score >= 60 ? '#C8962C' : '#00C2E0' 
                     }}
                   >
                     {rec.score}%

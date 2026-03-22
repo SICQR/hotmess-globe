@@ -27,7 +27,7 @@ const COLLECTIONS = [
     id: 'super',
     name: 'SUPER',
     tagline: 'Limited. Unapologetic. Gone fast.',
-    color: '#00D9FF',
+    color: '#00C2E0',
     textColor: '#000000',
   },
 ];

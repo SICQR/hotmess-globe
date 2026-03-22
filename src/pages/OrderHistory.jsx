@@ -17,8 +17,8 @@ import MarketplaceReviewModal from '../components/marketplace/MarketplaceReviewM
 
 const STATUS_CONFIG = {
   pending: { color: '#FFEB3B', icon: Clock },
-  escrow: { color: '#00D9FF', icon: Clock },
-  processing: { color: '#00D9FF', icon: Package },
+  escrow: { color: '#00C2E0', icon: Clock },
+  processing: { color: '#00C2E0', icon: Package },
   shipped: { color: '#C8962C', icon: Package },
   delivered: { color: '#39FF14', icon: CheckCircle },
   cancelled: { color: '#FF073A', icon: XCircle },
@@ -262,10 +262,10 @@ export default function OrderHistory() {
         {/* Escrow Release for Buyer */}
         {!isSeller && order.status === 'escrow' && (
           <div className="mt-4 pt-4 border-t border-white/10">
-            <div className="bg-[#00D9FF]/20 border border-[#00D9FF]/40 rounded-lg p-4 mb-3">
+            <div className="bg-[#00C2E0]/20 border border-[#00C2E0]/40 rounded-lg p-4 mb-3">
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-[#00D9FF]" />
-                <p className="text-sm font-bold uppercase text-[#00D9FF]">Payment in Escrow</p>
+                <Clock className="w-4 h-4 text-[#00C2E0]" />
+                <p className="text-sm font-bold uppercase text-[#00C2E0]">Payment in Escrow</p>
               </div>
               <p className="text-xs text-white/60 mb-3">
                 Your payment is held securely. Release it once you receive the item.
@@ -278,7 +278,7 @@ export default function OrderHistory() {
                 }
               }}
               disabled={releaseEscrowMutation.isPending}
-              className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black"
+              className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-black"
             >
               <Unlock className="w-4 h-4 mr-2" />
               {releaseEscrowMutation.isPending ? 'Releasing...' : 'Release Payment'}
@@ -326,7 +326,7 @@ export default function OrderHistory() {
             {canReview && (
               <Button
                 onClick={() => setReviewingOrder(order)}
-                className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black"
+                className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-black"
               >
                 Leave Review
               </Button>

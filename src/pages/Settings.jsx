@@ -109,7 +109,7 @@ function PinLockSettings() {
         {/* Biometric (future) */}
         <div className="flex items-center justify-between opacity-50">
           <div className="flex items-center gap-3">
-            <Fingerprint className="w-5 h-5 text-[#00D9FF]" />
+            <Fingerprint className="w-5 h-5 text-[#00C2E0]" />
             <div>
               <p className="font-semibold">Biometric Unlock</p>
               <p className="text-sm text-white/60">Use Face ID or fingerprint</p>
@@ -314,7 +314,7 @@ export default function Settings() {
           className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
         >
           <div className="flex items-center gap-3 mb-6">
-            <Bell className="w-5 h-5 text-[#00D9FF]" />
+            <Bell className="w-5 h-5 text-[#00C2E0]" />
             <h2 className="text-xl font-bold uppercase tracking-wider">Notifications</h2>
           </div>
 
@@ -369,7 +369,7 @@ export default function Settings() {
               <Switch checked={publicProfile} onCheckedChange={setPublicProfile} />
             </div>
 
-            <div className="bg-[#00D9FF]/10 border border-[#00D9FF]/40 rounded-lg p-4">
+            <div className="bg-[#00C2E0]/10 border border-[#00C2E0]/40 rounded-lg p-4">
               <p className="text-xs text-white/80 leading-relaxed">
                 🔒 <span className="font-bold">Social Links Privacy:</span> Your social media links are only visible to mutual follows. Edit them in your full profile.
               </p>
@@ -436,7 +436,7 @@ export default function Settings() {
           className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
         >
           <div className="flex items-center gap-3 mb-6">
-            <HelpCircle className="w-5 h-5 text-[#00D9FF]" />
+            <HelpCircle className="w-5 h-5 text-[#00C2E0]" />
             <h2 className="text-xl font-bold uppercase tracking-wider">Help & Support</h2>
           </div>
 
@@ -444,7 +444,7 @@ export default function Settings() {
             <Link to={createPageUrl('HelpCenter')}>
               <div className="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors cursor-pointer">
                 <div className="flex items-center gap-3">
-                  <HelpCircle className="w-5 h-5 text-[#00D9FF]" />
+                  <HelpCircle className="w-5 h-5 text-[#00C2E0]" />
                   <div>
                     <p className="font-semibold">Help Center</p>
                     <p className="text-sm text-white/60">Search FAQs and guides</p>

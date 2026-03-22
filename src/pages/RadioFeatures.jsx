@@ -72,7 +72,7 @@ const RADIO_FEATURES = [
     icon: Music,
     title: 'MUSIC DISCOVERY',
     tagline: 'Find your new favorite',
-    color: '#00D9FF',
+    color: '#00C2E0',
     description: 'Our AI learns what you love and surfaces new tracks you\'ll obsess over. Save tracks, build playlists, and share with friends.',
     benefits: [
       'Personalized recommendations',

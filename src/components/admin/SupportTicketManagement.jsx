@@ -493,7 +493,7 @@ export default function SupportTicketManagement() {
                     className={`p-3 border-l-4 ${
                       response.responder_type === 'admin'
                         ? 'border-[#C8962C] bg-[#C8962C]/5'
-                        : 'border-[#00D9FF] bg-[#00D9FF]/5'
+                        : 'border-[#00C2E0] bg-[#00C2E0]/5'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">

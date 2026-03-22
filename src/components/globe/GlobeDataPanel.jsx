@@ -9,7 +9,7 @@ const BEACON_KIND_CONFIG = {
   hookup: { label: 'HOOKUP', color: '#FF073A', icon: Users },
   drop: { label: 'DROP', color: '#FF6B35', icon: TrendingUp },
   popup: { label: 'POPUP', color: '#C8962C', icon: MapPin },
-  private: { label: 'PRIVATE', color: '#00D9FF', icon: Users },
+  private: { label: 'PRIVATE', color: '#00C2E0', icon: Users },
   ticket: { label: 'TICKET', color: '#FFEB3B', icon: MapPin },
   care: { label: 'CARE', color: '#39FF14', icon: MapPin },
 };

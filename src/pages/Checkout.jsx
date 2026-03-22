@@ -651,7 +651,7 @@ export default function Checkout() {
                   ) : (
                     <button
                       onClick={() => setShowPromoInput(true)}
-                      className="flex items-center gap-2 text-[#00D9FF] text-sm hover:underline"
+                      className="flex items-center gap-2 text-[#00C2E0] text-sm hover:underline"
                     >
                       <Percent className="w-4 h-4" /> Have a promo code?
                     </button>
@@ -794,7 +794,7 @@ export default function Checkout() {
                       <span>Secure checkout</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-[#00D9FF]" />
+                      <Clock className="w-4 h-4 text-[#00C2E0]" />
                       <span>Order tracking</span>
                     </div>
                     <div className="flex items-center gap-2">

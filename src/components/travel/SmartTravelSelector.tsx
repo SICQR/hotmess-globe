@@ -136,8 +136,8 @@ const modeConfig: Record<TravelMode, {
   bike: {
     icon: Bike,
     label: 'Bike',
-    color: 'text-[#00D9FF]',
-    bgColor: 'bg-[#00D9FF]',
+    color: 'text-[#00C2E0]',
+    bgColor: 'bg-[#00C2E0]',
   },
   drive: {
     icon: Car,
@@ -390,7 +390,7 @@ export function SmartTravelSelector({
       {destination.name && (
         <div className="mt-4 pt-4 border-t border-white/10">
           <div className="flex items-start gap-2">
-            <Navigation className="w-4 h-4 text-[#00D9FF] mt-0.5" />
+            <Navigation className="w-4 h-4 text-[#00C2E0] mt-0.5" />
             <div>
               <p className="text-white font-bold">{destination.name}</p>
               {destination.address && (

@@ -45,7 +45,7 @@ export default function BulkUserInvite() {
   return (
     <div className="bg-white/5 border-2 border-white/10 p-6">
       <div className="flex items-center gap-3 mb-6">
-        <UserPlus className="w-6 h-6 text-[#00D9FF]" />
+        <UserPlus className="w-6 h-6 text-[#00C2E0]" />
         <div>
           <h2 className="text-xl font-black uppercase">Bulk User Invite</h2>
           <p className="text-xs text-white/60">Quick setup for testing</p>
@@ -65,7 +65,7 @@ export default function BulkUserInvite() {
         <Button
           onClick={handleBulkInvite}
           disabled={inviting}
-          className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black"
+          className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-black"
         >
           {inviting ? (
             <>

@@ -45,7 +45,7 @@ const SAFETY_FEATURES = [
     icon: Phone,
     title: 'FAKE CALL GENERATOR',
     tagline: 'Your escape route',
-    color: '#00D9FF',
+    color: '#00C2E0',
     description: 'Need an excuse to leave? Generate a realistic incoming call with customizable caller name and timing. Perfect for escaping awkward or uncomfortable situations.',
     benefits: [
       'Realistic incoming call simulation',
@@ -336,7 +336,7 @@ export default function SafetyFeatures() {
                 transition={{ delay: i * 0.1 }}
                 className="bg-white/5 border border-white/10 p-6 text-center"
               >
-                <item.icon className="w-8 h-8 text-[#00D9FF] mx-auto mb-4" />
+                <item.icon className="w-8 h-8 text-[#00C2E0] mx-auto mb-4" />
                 <h3 className="font-black uppercase mb-2">{item.title}</h3>
                 <p className="text-white/60 text-sm">{item.desc}</p>
               </motion.div>

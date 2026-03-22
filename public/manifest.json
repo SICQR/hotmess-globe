@@ -5,7 +5,7 @@
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#000000",
+  "background_color": "#050507",
   "theme_color": "#C8962C",
   "categories": ["social", "lifestyle", "entertainment"],
   "lang": "en",
@@ -40,32 +40,32 @@
   ],
   "shortcuts": [
     {
-      "name": "Events",
-      "short_name": "Events",
-      "description": "Browse upcoming events",
-      "url": "/events",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+      "name": "Pulse",
+      "short_name": "Pulse",
+      "description": "Events and beacons on the globe",
+      "url": "/pulse",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
-      "name": "Connect",
-      "short_name": "Connect",
+      "name": "Ghosted",
+      "short_name": "Ghosted",
       "description": "Find people nearby",
-      "url": "/social",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+      "url": "/ghosted",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Market",
       "short_name": "Market",
       "description": "Shop the marketplace",
       "url": "/market",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
-      "name": "Messages",
-      "short_name": "Messages",
-      "description": "View your messages",
-      "url": "/social/inbox",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+      "name": "Radio",
+      "short_name": "Radio",
+      "description": "Listen to HOTMESS Radio",
+      "url": "/radio",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
   "related_applications": [],

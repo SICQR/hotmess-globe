@@ -10,12 +10,12 @@ import {
 
 const CITIES = [
   { id: 'london', name: 'London', flag: '🇬🇧', color: '#C8962C' },
-  { id: 'berlin', name: 'Berlin', flag: '🇩🇪', color: '#00D9FF' },
+  { id: 'berlin', name: 'Berlin', flag: '🇩🇪', color: '#00C2E0' },
   { id: 'paris', name: 'Paris', flag: '🇫🇷', color: '#C8962C' },
   { id: 'tokyo', name: 'Tokyo', flag: '🇯🇵', color: '#FF6B35' },
   { id: 'nyc', name: 'New York', flag: '🇺🇸', color: '#39FF14' },
   { id: 'los_angeles', name: 'Los Angeles', flag: '🇺🇸', color: '#C8962C' },
-  { id: 'san_francisco', name: 'San Francisco', flag: '🇺🇸', color: '#00D9FF' },
+  { id: 'san_francisco', name: 'San Francisco', flag: '🇺🇸', color: '#00C2E0' },
 ];
 
 const BusinessGlobe = () => {
@@ -172,7 +172,7 @@ const BusinessGlobe = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { icon: Activity, label: 'Heat Tiles', value: cityHeat.length, color: '#C8962C' },
-            { icon: Radio, label: 'Active Signals', value: radioSignals.length, color: '#00D9FF' },
+            { icon: Radio, label: 'Active Signals', value: radioSignals.length, color: '#00C2E0' },
             { icon: Users, label: 'Active Users', value: Math.floor(readinessScore * 12), color: '#39FF14' },
             { icon: Target, label: 'Hotspots', value: cityHeat.filter(t => t.intensity > 0.7).length, color: '#C8962C' },
           ].map((stat, idx) => (
@@ -243,7 +243,7 @@ const BusinessGlobe = () => {
             className="bg-white/5 border border-white/10 rounded-xl p-6"
           >
             <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-              <Radio className="w-5 h-5 text-[#00D9FF]" />
+              <Radio className="w-5 h-5 text-[#00C2E0]" />
               Radio Signals
             </h3>
             {loading ? (
@@ -262,7 +262,7 @@ const BusinessGlobe = () => {
                 {radioSignals.slice(0, 8).map((signal, idx) => (
                   <div key={signal.id || idx} className="flex items-center justify-between p-3 bg-black/40 rounded-lg">
                     <div className="flex items-center gap-3">
-                      <Radio className="w-4 h-4 text-[#00D9FF] animate-pulse" />
+                      <Radio className="w-4 h-4 text-[#00C2E0] animate-pulse" />
                       <div>
                         <span className="font-bold text-sm">{signal.signal_type || 'Signal'}</span>
                         {signal.expires_at && (
@@ -272,7 +272,7 @@ const BusinessGlobe = () => {
                         )}
                       </div>
                     </div>
-                    <span className="text-[#00D9FF] font-bold">{(signal.intensity * 100).toFixed(0)}%</span>
+                    <span className="text-[#00C2E0] font-bold">{(signal.intensity * 100).toFixed(0)}%</span>
                   </div>
                 ))}
               </div>

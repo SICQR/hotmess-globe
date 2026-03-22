@@ -573,7 +573,7 @@ export function LuxEventCarousel({
               onClick={() => onEventClick?.(event)}
               className="flex-shrink-0 w-[360px] snap-start cursor-pointer group/card"
             >
-              <div className="relative aspect-video overflow-hidden bg-white/5 border-2 border-white/10 hover:border-[#00D9FF] transition-all duration-300">
+              <div className="relative aspect-video overflow-hidden bg-white/5 border-2 border-white/10 hover:border-[#00C2E0] transition-all duration-300">
                 {event.image && (
                   <img
                     src={event.image}
@@ -586,7 +586,7 @@ export function LuxEventCarousel({
                 {/* Event Info */}
                 <div className="absolute bottom-0 left-0 right-0 p-4">
                   {event.date && (
-                    <p className="text-xs text-[#00D9FF] font-bold uppercase tracking-wider mb-1">{event.date}</p>
+                    <p className="text-xs text-[#00C2E0] font-bold uppercase tracking-wider mb-1">{event.date}</p>
                   )}
                   {event.title && (
                     <h4 className="text-xl font-black text-white mb-1 line-clamp-1">{event.title}</h4>

@@ -206,7 +206,7 @@
   }
   
   .text-gradient-cyan {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#00D9FF] to-[#67E8F9];
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#00C2E0] to-[#67E8F9];
   }
   
   .text-gradient-purple {
@@ -223,7 +223,7 @@
 
   /* Animated gradient backgrounds */
   .bg-gradient-animated {
-    background: linear-gradient(-45deg, #C8962C, #C8962C, #00D9FF, #39FF14);
+    background: linear-gradient(-45deg, #C8962C, #C8962C, #00C2E0, #39FF14);
     background-size: 400% 400%;
     animation: gradient-shift 8s ease infinite;
   }
@@ -302,7 +302,7 @@
   /* Border gradient */
   .border-gradient {
     position: relative;
-    background: linear-gradient(135deg, #C8962C, #C8962C, #00D9FF);
+    background: linear-gradient(135deg, #C8962C, #C8962C, #00C2E0);
     padding: 2px;
     border-radius: 1rem;
   }

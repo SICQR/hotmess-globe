@@ -50,7 +50,7 @@ const EVENT_FEATURES = [
     icon: Ticket,
     title: 'TICKET MARKETPLACE',
     tagline: 'Buy, sell, transfer',
-    color: '#00D9FF',
+    color: '#00C2E0',
     description: 'Secure ticket marketplace with verified sellers and buyer protection. Transfer tickets to friends or resell safely within the community.',
     benefits: [
       'Verified ticket authenticity',

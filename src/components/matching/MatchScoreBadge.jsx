@@ -21,7 +21,7 @@ import { useAuth } from '@/lib/AuthContext';
 // Score level colors
 const LEVEL_COLORS = {
   exceptional: '#39FF14',
-  great: '#00D9FF',
+  great: '#00C2E0',
   good: '#C8962C',
   moderate: '#C8962C',
   low: '#FFFFFF'

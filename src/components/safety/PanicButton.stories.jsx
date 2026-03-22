@@ -59,8 +59,8 @@ export const SafetyFeaturesOverview = {
           </div>
         </div>
 
-        <div className="flex items-start gap-3 p-4 bg-[#00D9FF]/10 border border-[#00D9FF]/40 rounded-lg">
-          <Users className="w-5 h-5 text-[#00D9FF] mt-0.5" />
+        <div className="flex items-start gap-3 p-4 bg-[#00C2E0]/10 border border-[#00C2E0]/40 rounded-lg">
+          <Users className="w-5 h-5 text-[#00C2E0] mt-0.5" />
           <div>
             <h3 className="text-white font-bold">Trusted Contacts</h3>
             <p className="text-white/60 text-sm">

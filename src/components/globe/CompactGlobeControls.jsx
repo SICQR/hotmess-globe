@@ -17,7 +17,7 @@ const MODE_OPTIONS = [
   { id: 'crowd', label: 'Crowd', color: '#C8962C' },
   { id: 'drop', label: 'Drop', color: '#FF6B35' },
   { id: 'ticket', label: 'Ticket', color: '#FFEB3B' },
-  { id: 'radio', label: 'Radio', color: '#00D9FF' },
+  { id: 'radio', label: 'Radio', color: '#00C2E0' },
   { id: 'care', label: 'Care', color: '#39FF14' },
 ];
 
@@ -104,7 +104,7 @@ export default function CompactGlobeControls({
         variant="ghost"
         size="sm"
         className={`w-full justify-between ${
-          activityVisibility ? 'text-[#00D9FF]' : 'text-white/40'
+          activityVisibility ? 'text-[#00C2E0]' : 'text-white/40'
         }`}
       >
         <span className="text-[10px] uppercase tracking-wider">My Activity</span>

@@ -102,7 +102,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
       hookup: '#FF073A',
       drop: '#FF6B35',
       ticket: '#C8962C',
-      radio: '#00D9FF',
+      radio: '#00C2E0',
       default: '#FFEB3B'
     };
     return colors[mode] || colors.default;
@@ -130,12 +130,12 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
   // Create user avatar icon
   const createUserIcon = (user) => {
     const statusColors = {
-      online: '#00D9FF',
+      online: '#00C2E0',
       busy: '#FF6B35',
       looking_for_collabs: '#39FF14',
       at_event: '#C8962C'
     };
-    const color = statusColors[user.activity_status] || '#00D9FF';
+    const color = statusColors[user.activity_status] || '#00C2E0';
     
     const avatarHtml = user.avatar_url 
       ? `<img src="${user.avatar_url}" style="width: 100%; height: 100%; object-fit: cover;" />`
@@ -278,8 +278,8 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
                 center={[userLocation.lat, userLocation.lng]}
                 radius={radius * 1000}
                 pathOptions={{
-                  color: '#00D9FF',
-                  fillColor: '#00D9FF',
+                  color: '#00C2E0',
+                  fillColor: '#00C2E0',
                   fillOpacity: 0.1,
                   weight: 2
                 }}
@@ -289,12 +289,12 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
                 icon={L.divIcon({
                   className: 'user-location-marker',
                   html: `<div style="
-                    background-color: #00D9FF;
+                    background-color: #00C2E0;
                     width: 16px;
                     height: 16px;
                     border-radius: 50%;
                     border: 3px solid white;
-                    box-shadow: 0 0 20px #00D9FF;
+                    box-shadow: 0 0 20px #00C2E0;
                   "></div>`,
                   iconSize: [16, 16],
                   iconAnchor: [8, 8]
@@ -382,7 +382,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
                     <span>{user.city || ''}</span>
                   </div>
                   <Link to={createPageUrl(`Profile?email=${user.email}`)}>
-                    <button className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black text-xs py-2 px-3 uppercase">
+                    <button className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-black text-xs py-2 px-3 uppercase">
                       View Profile
                     </button>
                   </Link>
@@ -399,7 +399,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
-          className="fixed right-0 top-32 bottom-0 w-full md:w-80 bg-black border-l-2 border-[#00D9FF] p-6 overflow-y-auto z-[80]"
+          className="fixed right-0 top-32 bottom-0 w-full md:w-80 bg-black border-l-2 border-[#00C2E0] p-6 overflow-y-auto z-[80]"
         >
           <button
             onClick={() => setSelectedUser(null)}
@@ -419,8 +419,8 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
             <div>
               <h2 className="text-xl font-black">{selectedUser.full_name}</h2>
               <div className="flex items-center gap-2 mt-1">
-                <div className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse" />
-                <span className="text-xs uppercase font-bold text-[#00D9FF]">
+                <div className="w-2 h-2 rounded-full bg-[#00C2E0] animate-pulse" />
+                <span className="text-xs uppercase font-bold text-[#00C2E0]">
                   {selectedUser.activity_status?.replace('_', ' ')}
                 </span>
               </div>
@@ -452,7 +452,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
           )}
 
           <Link to={createPageUrl(`Profile?email=${selectedUser.email}`)}>
-            <Button className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black">
+            <Button className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-black">
               View Full Profile
             </Button>
           </Link>

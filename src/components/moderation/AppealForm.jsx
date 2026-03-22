@@ -142,7 +142,7 @@ export default function AppealForm({
           </div>
         </div>
 
-        <div className="bg-[#00D9FF]/10 border border-[#00D9FF]/40 rounded-lg p-4">
+        <div className="bg-[#00C2E0]/10 border border-[#00C2E0]/40 rounded-lg p-4">
           <p className="text-sm text-white/80">
             Appeals are typically reviewed within 24-48 hours. You will receive a notification 
             when a decision has been made. Please note that submitting false appeals may result 

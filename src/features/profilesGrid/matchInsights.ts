@@ -221,7 +221,7 @@ export function getMatchTier(matchProbability: number): {
     return { label: 'Good Match', color: '#C8962C', bgColor: 'rgba(200, 150, 44, 0.2)' };
   }
   if (matchProbability >= 40) {
-    return { label: 'Potential', color: '#00D9FF', bgColor: 'rgba(0, 217, 255, 0.2)' };
+    return { label: 'Potential', color: '#00C2E0', bgColor: 'rgba(0, 217, 255, 0.2)' };
   }
   return { label: 'Explore', color: '#94a3b8', bgColor: 'rgba(148, 163, 184, 0.2)' };
 }
@@ -256,7 +256,7 @@ export function getBreakdownPercentages(breakdown: MatchBreakdown): {
       label: 'Interests',
       percentage: (breakdown.kinkOverlap / 15) * 100,
       maxPoints: 15,
-      color: '#00D9FF',
+      color: '#00C2E0',
     },
     {
       category: 'intent',

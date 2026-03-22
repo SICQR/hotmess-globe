@@ -10,7 +10,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
 const SIGNAL_TYPES = [
-  { id: 'event', label: 'Event', icon: PartyPopper, color: '#00D9FF', description: 'Boost visibility for your upcoming event' },
+  { id: 'event', label: 'Event', icon: PartyPopper, color: '#00C2E0', description: 'Boost visibility for your upcoming event' },
   { id: 'radio_premiere', label: 'Radio Premiere', icon: Radio, color: '#C8962C', description: 'Announce a new show or track premiere' },
   { id: 'drop', label: 'Product Drop', icon: ShoppingBag, color: '#C8962C', description: 'Amplify a new product or merch release' },
   { id: 'special', label: 'Special Offer', icon: Sparkles, color: '#C8962C', description: 'Promote a limited-time deal or offer' },

@@ -231,7 +231,7 @@ function UpsellModal({ trigger, onDismiss, onUpgrade }) {
             <span className={cn(
               "px-4 py-1 rounded-full text-sm font-black uppercase",
               trigger.tier === 'CHROME' 
-                ? "bg-[#00D9FF]/20 text-[#00D9FF]" 
+                ? "bg-[#00C2E0]/20 text-[#00C2E0]" 
                 : "bg-[#C8962C]/20 text-[#C8962C]"
             )}>
               {trigger.tier}

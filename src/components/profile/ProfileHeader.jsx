@@ -13,10 +13,10 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
   const profileType = user?.profile_type || 'standard';
   const themeGradient = {
     'default': 'from-[#C8962C] to-[#C8962C]',
-    'cyber': 'from-[#00D9FF] to-[#39FF14]',
+    'cyber': 'from-[#00C2E0] to-[#39FF14]',
     'sunset': 'from-[#FF6B35] to-[#FFEB3B]',
     'midnight': 'from-[#1a1a2e] to-[#16213e]',
-    'neon': 'from-[#C8962C] to-[#00D9FF]'
+    'neon': 'from-[#C8962C] to-[#00C2E0]'
   }[user?.profile_theme || 'default'];
 
   const profileTypeConfig = {
@@ -24,7 +24,7 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
     'seller': { 
       icon: <ShoppingBag className="w-5 h-5" />, 
       badge: user?.verified_seller ? '✓ VERIFIED SELLER' : 'SELLER',
-      color: '#00D9FF'
+      color: '#00C2E0'
     },
     'premium': { 
       icon: <Crown className="w-5 h-5" />, 
@@ -162,7 +162,7 @@ export default function ProfileHeader({ user, isOwnProfile, currentUser, travelE
 
             {/* Seller Tagline */}
             {profileType === 'seller' && user?.seller_tagline && (
-              <p className="text-[#00D9FF] text-lg font-bold mb-2">{user.seller_tagline}</p>
+              <p className="text-[#00C2E0] text-lg font-bold mb-2">{user.seller_tagline}</p>
             )}
 
             {/* Stats */}

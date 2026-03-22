@@ -49,7 +49,7 @@ export function initAnalytics() {
   initialized = true;
   
   if (config.debug) {
-    console.log('[Analytics] Initialized with:', {
+    void('[Analytics] Initialized with:', {
       ga: !!config.gaId,
       mixpanel: !!config.mixpanelToken,
       sentry: !!config.sentryDsn,
@@ -175,7 +175,7 @@ export function identifyUser(user) {
   }
   
   if (config.debug) {
-    console.log('[Analytics] Identified user:', userId);
+    void('[Analytics] Identified user:', userId);
   }
 }
 
@@ -203,7 +203,7 @@ export function trackPageView(pageName, properties = {}) {
   }
   
   if (config.debug) {
-    console.log('[Analytics] Page View:', pageName, pageData);
+    void('[Analytics] Page View:', pageName, pageData);
   }
 }
 
@@ -229,7 +229,7 @@ export function trackEvent(eventName, properties = {}) {
   }
   
   if (config.debug) {
-    console.log('[Analytics] Event:', eventName, eventData);
+    void('[Analytics] Event:', eventName, eventData);
   }
 }
 
@@ -290,7 +290,7 @@ export function trackPerformance(metricName, value, unit = 'ms') {
   }
   
   if (config.debug) {
-    console.log('[Performance]', metricName, `${value}${unit}`);
+    void('[Performance]', metricName, `${value}${unit}`);
   }
 }
 

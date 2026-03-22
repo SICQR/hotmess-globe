@@ -13,7 +13,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 
 const BEACON_COLOR = {
   social: '#39FF14',
-  event: '#00D9FF',
+  event: '#00C2E0',
   marketplace: '#C8962C',
   release: '#C8962C',
 };

@@ -322,11 +322,11 @@ export function useNavigation() {
 // DEBUG
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function debugNavigation(): void {
-  console.log('[Navigation]', {
+export function debugNavigation() {
+  return {
     mode: store.mode,
     overlay: store.overlay,
     stack: store.overlayStack,
     history: store.history,
-  });
+  };
 }

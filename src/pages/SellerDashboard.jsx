@@ -206,7 +206,7 @@ export default function SellerDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <div className="bg-white/5 border border-white/10 rounded-xl p-6">
               <div className="flex items-center justify-between mb-2">
-                <Package className="w-5 h-5 text-[#00D9FF]" />
+                <Package className="w-5 h-5 text-[#00C2E0]" />
                 <span className="text-xs text-white/40 uppercase">Products</span>
               </div>
               <div className="text-3xl font-black">{products.length}</div>

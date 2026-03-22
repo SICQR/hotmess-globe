@@ -97,7 +97,7 @@ export default function EventCurationQueue() {
     <div className="bg-white/5 border border-white/10 rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-[#00D9FF]" />
+          <Calendar className="w-5 h-5 text-[#00C2E0]" />
           <h3 className="text-lg font-black uppercase">Event Curation</h3>
         </div>
         <Button 
@@ -118,7 +118,7 @@ export default function EventCurationQueue() {
             variant={statusFilter === status ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setStatusFilter(status)}
-            className={statusFilter === status ? 'bg-[#00D9FF] text-black' : 'text-white/60'}
+            className={statusFilter === status ? 'bg-[#00C2E0] text-black' : 'text-white/60'}
           >
             {status === 'draft' ? 'Pending' : status.charAt(0).toUpperCase() + status.slice(1)}
             {status !== 'all' && statusCounts[status] > 0 && (

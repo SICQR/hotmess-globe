@@ -366,7 +366,7 @@ export default function Directions() {
   const etaLabel = minutesLabel(directions?.duration_seconds);
 
   const originIcon = useMemo(
-    () => makePinIcon({ label: 'YOU', color: '#00D9FF', glow: 'rgba(0,217,255,0.75)' }),
+    () => makePinIcon({ label: 'YOU', color: '#00C2E0', glow: 'rgba(0,217,255,0.75)' }),
     []
   );
   const destinationIcon = useMemo(
@@ -471,7 +471,7 @@ export default function Directions() {
                       <>
                         <Polyline
                           positions={polylinePoints}
-                          pathOptions={{ color: '#00D9FF', weight: 11, opacity: 0.35 }}
+                          pathOptions={{ color: '#00C2E0', weight: 11, opacity: 0.35 }}
                         />
                         <Polyline
                           positions={polylinePoints}

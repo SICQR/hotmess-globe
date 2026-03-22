@@ -33,7 +33,7 @@ export interface ShaderUniforms {
 const COLORS: Record<BeaconType, [number, number, number]> = {
   SAFETY: [1.0, 0.165, 0.165],     // #FF2A2A - Emergency red
   SOCIAL: [0.224, 1.0, 0.078],     // #39FF14 - Lime green
-  EVENT: [0.0, 0.851, 1.0],        // #00D9FF - Cyan
+  EVENT: [0.0, 0.851, 1.0],        // #00C2E0 - Cyan
   MARKET: [0.784, 0.588, 0.173],   // #C8962C - Brand gold
   RADIO: [0.784, 0.588, 0.173],    // #C8962C - Brand gold
 };

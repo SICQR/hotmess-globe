@@ -183,10 +183,10 @@ export default function WakeTheMess() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-black border-2 border-[#00D9FF] p-6"
+          className="bg-black border-2 border-[#00C2E0] p-6"
         >
           <div className="flex items-start gap-3">
-            <Heart className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-1" />
+            <Heart className="w-5 h-5 text-[#00C2E0] flex-shrink-0 mt-1" />
             <p className="text-white/90">
               Consent and respect are non-negotiable. Aftercare is real. If you need support, land in Care.
             </p>

@@ -59,7 +59,7 @@ export default function EventManagement() {
         </div>
         <div className="bg-black border-2 border-white p-6">
           <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">ACTIVE</p>
-          <p className="text-4xl font-black text-[#00D9FF]">{activeEvents.length}</p>
+          <p className="text-4xl font-black text-[#00C2E0]">{activeEvents.length}</p>
         </div>
         <div className="bg-black border-2 border-white p-6">
           <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">TOTAL RSVPS</p>
@@ -131,7 +131,7 @@ export default function EventManagement() {
                 </div>
                 <div className="col-span-1">
                   <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-[#00D9FF]" />
+                    <Users className="w-4 h-4 text-[#00C2E0]" />
                     <span className="font-bold">{beaconRsvps.length}</span>
                   </div>
                 </div>

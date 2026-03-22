@@ -101,7 +101,7 @@ export function usePushNotifications() {
       // Save subscription to database
       await saveSubscription(sub);
 
-      console.log('[PushNotifications] Subscribed successfully');
+      void('[PushNotifications] Subscribed successfully');
       return true;
     } catch (err) {
       console.error('[PushNotifications] Subscribe error:', err);
@@ -130,7 +130,7 @@ export function usePushNotifications() {
       setSubscription(null);
       setIsSubscribed(false);
 
-      console.log('[PushNotifications] Unsubscribed successfully');
+      void('[PushNotifications] Unsubscribed successfully');
       return true;
     } catch (err) {
       console.error('[PushNotifications] Unsubscribe error:', err);

@@ -356,7 +356,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
           <div className="text-xs text-white/40 uppercase">Subscribers</div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-          <Eye className="w-6 h-6 mx-auto mb-2 text-[#00D9FF]" />
+          <Eye className="w-6 h-6 mx-auto mb-2 text-[#00C2E0]" />
           <div className="text-2xl font-black">{publicPhotos}</div>
           <div className="text-xs text-white/40 uppercase">Free</div>
         </div>
@@ -418,7 +418,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
 
       {/* Exclusive Perks (for subscribers) */}
       {isSubscribed && !isOwnProfile && (
-        <div className="bg-gradient-to-r from-[#39FF14]/10 to-[#00D9FF]/10 border border-[#39FF14]/30 rounded-xl p-6">
+        <div className="bg-gradient-to-r from-[#39FF14]/10 to-[#00C2E0]/10 border border-[#39FF14]/30 rounded-xl p-6">
           <h3 className="text-sm uppercase tracking-wider text-[#39FF14] mb-4 flex items-center gap-2">
             <Gift className="w-4 h-4" />
             Your Subscriber Perks

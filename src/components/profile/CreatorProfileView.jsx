@@ -210,7 +210,7 @@ export default function CreatorProfileView({ user, currentUser }) {
           <div className="text-xs text-white/40 uppercase">Releases</div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-          <Calendar className="w-6 h-6 mx-auto mb-2 text-[#00D9FF]" />
+          <Calendar className="w-6 h-6 mx-auto mb-2 text-[#00C2E0]" />
           <div className="text-2xl font-black">{hostedEvents.length}</div>
           <div className="text-xs text-white/40 uppercase">Shows</div>
         </div>
@@ -272,9 +272,9 @@ export default function CreatorProfileView({ user, currentUser }) {
 
       {/* Upcoming Shows */}
       {upcomingShows.length > 0 && (
-        <div className="bg-gradient-to-br from-[#00D9FF]/10 to-[#C8962C]/10 border border-[#00D9FF]/30 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-[#00C2E0]/10 to-[#C8962C]/10 border border-[#00C2E0]/30 rounded-xl p-6">
           <h3 className="text-lg font-black uppercase flex items-center gap-2 mb-4">
-            <Calendar className="w-5 h-5 text-[#00D9FF]" />
+            <Calendar className="w-5 h-5 text-[#00C2E0]" />
             Upcoming Shows
           </h3>
           
@@ -283,7 +283,7 @@ export default function CreatorProfileView({ user, currentUser }) {
               <Link
                 key={event.id}
                 to={`/events/${event.id}`}
-                className="block p-4 bg-black/30 border border-white/10 hover:border-[#00D9FF]/50 transition-colors"
+                className="block p-4 bg-black/30 border border-white/10 hover:border-[#00C2E0]/50 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -296,7 +296,7 @@ export default function CreatorProfileView({ user, currentUser }) {
                       <p className="text-xs text-white/40 mt-1">{event.venue_name}</p>
                     )}
                   </div>
-                  <Button size="sm" className="bg-[#00D9FF] text-black font-bold uppercase text-xs">
+                  <Button size="sm" className="bg-[#00C2E0] text-black font-bold uppercase text-xs">
                     RSVP
                   </Button>
                 </div>

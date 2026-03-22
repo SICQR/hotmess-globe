@@ -84,7 +84,7 @@ export default function MarketplaceReviewModal({ isOpen, onClose, order, current
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-black border-2 border-[#00D9FF] max-w-md w-full p-6"
+        className="bg-black border-2 border-[#00C2E0] max-w-md w-full p-6"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -145,7 +145,7 @@ export default function MarketplaceReviewModal({ isOpen, onClose, order, current
                   onClick={() => toggleTag(tag.id)}
                   className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all border-2 ${
                     selectedTags.includes(tag.id)
-                      ? 'bg-[#00D9FF] text-black border-[#00D9FF]'
+                      ? 'bg-[#00C2E0] text-black border-[#00C2E0]'
                       : 'bg-white/5 text-white/60 border-white/20 hover:border-white/40'
                   }`}
                 >
@@ -181,7 +181,7 @@ export default function MarketplaceReviewModal({ isOpen, onClose, order, current
             <Button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black"
+              className="flex-1 bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-black"
             >
               {loading ? 'Submitting...' : 'Submit Review'}
             </Button>

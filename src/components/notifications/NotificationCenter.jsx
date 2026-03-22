@@ -59,7 +59,7 @@ export default function NotificationCenter({ currentUser }) {
           filter: `user_email=eq.${currentUser.email}`,
         },
         (payload) => {
-          console.log('[NotificationCenter] New notification:', payload);
+          void('[NotificationCenter] New notification:', payload);
           // Invalidate queries to refetch notifications
           queryClient.invalidateQueries(['notifications']);
           

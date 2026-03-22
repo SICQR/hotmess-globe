@@ -9,7 +9,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 
 const BEACON_COLOR = {
   social: '#39FF14',      // Lime — Right Now
-  event: '#00D9FF',       // Cyan — events
+  event: '#00C2E0',       // Cyan — events
   marketplace: '#C8962C', // Brand gold — P2P listings
   radio: '#C8962C',       // Brand gold — radio
 };
@@ -58,7 +58,7 @@ export async function insertBeaconForP2PListing(product, promoterId) {
       return null;
     }
 
-    console.log('[useP2PListingBeacon] Created Gold beacon for product:', product.id);
+    void('[useP2PListingBeacon] Created Gold beacon for product:', product.id);
     return data;
   } catch (err) {
     console.error('[useP2PListingBeacon] Exception:', err);
@@ -90,7 +90,7 @@ export async function deleteBeaconForP2PListing(productId) {
       return false;
     }
 
-    console.log('[useP2PListingBeacon] Deleted beacon for product:', productId);
+    void('[useP2PListingBeacon] Deleted beacon for product:', productId);
     return true;
   } catch (err) {
     console.error('[useP2PListingBeacon] Delete exception:', err);

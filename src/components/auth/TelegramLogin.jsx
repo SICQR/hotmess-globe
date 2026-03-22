@@ -125,7 +125,7 @@ export default function TelegramLogin({
 
   // Handle Telegram auth callback
   const handleTelegramAuth = useCallback(async (user) => {
-    console.log('[TelegramAuth] Received user:', user);
+    void('[TelegramAuth] Received user:', user);
     setLoading(true);
     setError('');
     
