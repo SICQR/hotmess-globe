@@ -273,7 +273,7 @@ export default function BusinessOnboarding() {
                 </div>
               </div>
 
-              <div className="bg-[#00D9FF]/10 border border-[#00D9FF]/40 rounded-lg p-4 mb-8">
+              <div className="bg-[#00C2E0]/10 border border-[#00C2E0]/40 rounded-lg p-4 mb-8">
                 <p className="text-sm text-white/80">
                   By creating a business account, you agree to our Business Terms of Service 
                   and acknowledge that you're authorized to represent this business.

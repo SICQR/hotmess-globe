@@ -67,7 +67,7 @@ export default function CommentsSection({ beaconId }) {
     <div className="bg-white/5 border border-white/10 rounded-xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <MessageCircle className="w-5 h-5 text-[#00D9FF]" />
+          <MessageCircle className="w-5 h-5 text-[#00C2E0]" />
           <h2 className="text-xl font-bold uppercase tracking-wider">Reviews</h2>
         </div>
         {comments.length > 0 && (
@@ -110,7 +110,7 @@ export default function CommentsSection({ beaconId }) {
           <Button
             type="submit"
             disabled={!comment.trim() || createCommentMutation.isPending}
-            className="bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black"
+            className="bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black"
           >
             {createCommentMutation.isPending ? 'Posting...' : 'Post Review'}
           </Button>

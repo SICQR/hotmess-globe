@@ -46,7 +46,7 @@ const BADGE_CONFIG: Record<SocialProofType, Omit<SocialProofBadge, 'type'>> = {
   verified: {
     label: 'Verified',
     icon: Star,
-    color: '#00D9FF',
+    color: '#00C2E0',
     bgColor: 'rgba(0, 217, 255, 0.2)',
   },
   responsive: {

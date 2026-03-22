@@ -77,7 +77,7 @@ export default function Stats() {
     value: count,
   }));
 
-  const COLORS = ['#C8962C', '#C8962C', '#00D9FF', '#FFEB3B', '#39FF14'];
+  const COLORS = ['#C8962C', '#C8962C', '#00C2E0', '#FFEB3B', '#39FF14'];
 
   // Profile engagement radar
   const engagementData = [
@@ -133,7 +133,7 @@ export default function Stats() {
   };
 
   const stats = [
-    { label: 'Check-ins', value: checkIns.length, icon: MapPin, color: '#00D9FF' },
+    { label: 'Check-ins', value: checkIns.length, icon: MapPin, color: '#00C2E0' },
     { label: 'Purchases', value: purchases.length, icon: ShoppingBag, color: '#C8962C' },
     { label: 'Achievements', value: achievements.length, icon: Trophy, color: '#C8962C' },
     { label: 'Profile Views', value: profileViews.length, icon: Eye, color: '#C8962C' },
@@ -150,7 +150,7 @@ export default function Stats() {
         >
           <div>
             <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-2">
-              YOUR <span className="text-[#00D9FF]">STATS</span>
+              YOUR <span className="text-[#00C2E0]">STATS</span>
             </h1>
             <p className="text-white/60 uppercase text-sm tracking-wider">
               Performance analytics. Track your journey.
@@ -182,7 +182,7 @@ export default function Stats() {
             </div>
             <div className="mt-4 md:mt-0 flex gap-6">
               <div className="text-center">
-                <div className="text-2xl font-black text-[#00D9FF]">{dailyActivity.reduce((sum, d) => sum + d.count, 0)}</div>
+                <div className="text-2xl font-black text-[#00C2E0]">{dailyActivity.reduce((sum, d) => sum + d.count, 0)}</div>
                 <div className="text-xs text-white/40">Activities</div>
               </div>
               <div className="text-center">
@@ -282,7 +282,7 @@ export default function Stats() {
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#000', border: '1px solid #C8962C' }}
                     />
-                    <Bar dataKey="count" fill="#00D9FF" name="Activities" />
+                    <Bar dataKey="count" fill="#00C2E0" name="Activities" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -292,7 +292,7 @@ export default function Stats() {
                 <h3 className="text-xl font-black uppercase mb-4">Next Milestones</h3>
                 <div className="space-y-4">
                   {[
-                    { label: '10 Check-ins', target: 10, current: checkIns.length, icon: MapPin, color: '#00D9FF' },
+                    { label: '10 Check-ins', target: 10, current: checkIns.length, icon: MapPin, color: '#00C2E0' },
                     { label: '5 Achievements', target: 5, current: achievements.length, icon: Trophy, color: '#C8962C' },
                     { label: '100 Profile Views', target: 100, current: profileViews.length, icon: Eye, color: '#C8962C' },
                   ].map((milestone) => {
@@ -334,7 +334,7 @@ export default function Stats() {
                       contentStyle={{ backgroundColor: '#000', border: '1px solid #C8962C' }}
                       labelStyle={{ color: '#fff' }}
                     />
-                    <Bar dataKey="count" fill="#00D9FF" />
+                    <Bar dataKey="count" fill="#00C2E0" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -344,7 +344,7 @@ export default function Stats() {
                 <div className="space-y-3 max-h-[300px] overflow-y-auto">
                   {checkIns.slice(0, 10).map((ci, idx) => (
                     <div key={ci.id || idx} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
-                      <MapPin className="w-5 h-5 text-[#00D9FF]" />
+                      <MapPin className="w-5 h-5 text-[#00C2E0]" />
                       <div className="flex-1">
                         <p className="font-bold text-sm">{ci.beacon_title || 'Unknown Venue'}</p>
                         <p className="text-xs text-white/40">{new Date(ci.created_date).toLocaleString()}</p>
@@ -384,7 +384,7 @@ export default function Stats() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-white/5 rounded-lg text-center">
-                      <p className="text-xl font-black text-[#00D9FF]">
+                      <p className="text-xl font-black text-[#00C2E0]">
                         {profileViews.filter(v => new Date(v.created_date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}
                       </p>
                       <p className="text-xs text-white/40">This Week</p>

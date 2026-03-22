@@ -38,7 +38,7 @@ export function EventSheet({
       <div>
         <div className="flex items-center gap-2 mb-1">
           {isLive && (
-            <span className="px-2 py-0.5 rounded-full bg-[#00D9FF] text-black text-xs font-medium">
+            <span className="px-2 py-0.5 rounded-full bg-[#00C2E0] text-black text-xs font-medium">
               LIVE NOW
             </span>
           )}
@@ -51,7 +51,7 @@ export function EventSheet({
       {/* RSVP count */}
       {rsvpCount > 0 && (
         <div className="flex items-center gap-2 text-sm text-[#A1A1AA]">
-          <span className="h-2 w-2 rounded-full bg-[#00D9FF]" />
+          <span className="h-2 w-2 rounded-full bg-[#00C2E0]" />
           {rsvpCount} going
         </div>
       )}
@@ -61,7 +61,7 @@ export function EventSheet({
         {isLive ? (
           <button 
             onClick={onCheckIn}
-            className="w-full h-11 rounded-xl bg-[#00D9FF] text-black font-medium"
+            className="w-full h-11 rounded-xl bg-[#00C2E0] text-black font-medium"
           >
             Check In
           </button>
@@ -70,8 +70,8 @@ export function EventSheet({
             onClick={onRsvp}
             className={`w-full h-11 rounded-xl font-medium ${
               hasRsvp 
-                ? 'border border-[#00D9FF] text-[#00D9FF]' 
-                : 'bg-[#00D9FF] text-black'
+                ? 'border border-[#00C2E0] text-[#00C2E0]' 
+                : 'bg-[#00C2E0] text-black'
             }`}
           >
             {hasRsvp ? "You're Going ✓" : 'RSVP'}

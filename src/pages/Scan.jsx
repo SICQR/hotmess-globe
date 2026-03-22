@@ -244,7 +244,7 @@ export default function Scan() {
           onClick={() => setScanMode('batch')}
           className={`flex-1 py-3 px-4 rounded-xl font-bold uppercase text-sm flex items-center justify-center gap-2 transition-all ${
             scanMode === 'batch'
-              ? 'bg-[#00D9FF] text-black'
+              ? 'bg-[#00C2E0] text-black'
               : 'bg-white/5 border border-white/20 text-white/60 hover:bg-white/10'
           }`}
         >
@@ -259,11 +259,11 @@ export default function Scan() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-[#00D9FF]/10 border border-[#00D9FF]/30 rounded-xl p-4 mb-6 overflow-hidden"
+            className="bg-[#00C2E0]/10 border border-[#00C2E0]/30 rounded-xl p-4 mb-6 overflow-hidden"
           >
             <div className="flex items-center justify-between mb-3">
               <div>
-                <span className="text-[#00D9FF] font-black text-xl">{batchScans.length}</span>
+                <span className="text-[#00C2E0] font-black text-xl">{batchScans.length}</span>
                 <span className="text-white/60 ml-2">scans collected</span>
               </div>
             </div>
@@ -285,7 +285,7 @@ export default function Scan() {
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-[#39FF14]/20 to-[#00D9FF]/20 border border-[#39FF14]/40 rounded-2xl p-8 mb-8 text-center"
+          className="bg-gradient-to-br from-[#39FF14]/20 to-[#00C2E0]/20 border border-[#39FF14]/40 rounded-2xl p-8 mb-8 text-center"
         >
           <CheckCircle className="w-16 h-16 text-[#39FF14] mx-auto mb-4" />
           <h2 className="text-2xl font-black mb-2">Success!</h2>

@@ -102,7 +102,7 @@ export default function MyEvents() {
             <div className="grid grid-cols-3 gap-4 mb-4">
               <div className="bg-white/5 p-3 rounded">
                 <div className="flex items-center gap-2 mb-1">
-                  <Users className="w-4 h-4 text-[#00D9FF]" />
+                  <Users className="w-4 h-4 text-[#00C2E0]" />
                   <span className="text-xs text-white/60">Going</span>
                 </div>
                 <div className="text-xl font-black">{attendees}</div>

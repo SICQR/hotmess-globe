@@ -92,7 +92,7 @@ export default function ShopifyManager() {
 
         <Card className="bg-white/5 border-white/10 p-6">
           <div className="flex items-center gap-3 mb-2">
-            <Download className="w-5 h-5 text-[#00D9FF]" />
+            <Download className="w-5 h-5 text-[#00C2E0]" />
             <span className="text-sm text-white/60 uppercase">Last Import</span>
           </div>
           <div className="text-sm">
@@ -134,7 +134,7 @@ export default function ShopifyManager() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="bg-white/5 border-white/10 p-6">
           <h3 className="font-black uppercase mb-2 flex items-center gap-2">
-            <Download className="w-5 h-5 text-[#00D9FF]" />
+            <Download className="w-5 h-5 text-[#00C2E0]" />
             Import Products
           </h3>
           <p className="text-sm text-white/60 mb-4">
@@ -143,7 +143,7 @@ export default function ShopifyManager() {
           <Button
             onClick={() => importMutation.mutate()}
             disabled={importMutation.isPending}
-            className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black"
+            className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-black"
           >
             {importMutation.isPending ? (
               <>

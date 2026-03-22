@@ -236,7 +236,7 @@ export const LoginForm = {
         Sign In
       </Button>
       <p className="text-center text-xs text-white/40">
-        Don't have an account? <a href="#" className="text-[#00D9FF]">Sign up</a>
+        Don't have an account? <a href="#" className="text-[#00C2E0]">Sign up</a>
       </p>
     </div>
   ),

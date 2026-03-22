@@ -306,12 +306,12 @@ export default function SafetyFAB() {
                   variant="ghost"
                   className={`w-full justify-start transition-colors ${
                     timerActive
-                      ? 'text-[#00D9FF] bg-[#00D9FF]/10 hover:bg-[#00D9FF]/20'
-                      : 'text-white hover:bg-[#00D9FF]/10 hover:text-[#00D9FF]'
+                      ? 'text-[#00C2E0] bg-[#00C2E0]/10 hover:bg-[#00C2E0]/20'
+                      : 'text-white hover:bg-[#00C2E0]/10 hover:text-[#00C2E0]'
                   }`}
                   onClick={() => { setShowCheckinTimer(true); setIsExpanded(false); }}
                 >
-                  <Clock className="w-4 h-4 mr-3 text-[#00D9FF]" />
+                  <Clock className="w-4 h-4 mr-3 text-[#00C2E0]" />
                   {timerActive
                     ? `Check-in: ${Math.floor(secondsLeft / 60)}m left`
                     : 'Check-in Timer'}
@@ -348,7 +348,7 @@ export default function SafetyFAB() {
           {timerActive && (
             <motion.div
               className="absolute inset-0 rounded-full pointer-events-none"
-              style={{ border: '2px solid #00D9FF' }}
+              style={{ border: '2px solid #00C2E0' }}
               animate={{ scale: [1, 1.5], opacity: [0.7, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
             />
@@ -359,11 +359,11 @@ export default function SafetyFAB() {
               isTonight
                 ? 'bg-red-500 hover:bg-red-600 animate-pulse'
                 : timerActive
-                ? 'bg-[#00D9FF]/20 hover:bg-[#00D9FF]/30 border border-[#00D9FF]'
+                ? 'bg-[#00C2E0]/20 hover:bg-[#00C2E0]/30 border border-[#00C2E0]'
                 : 'bg-white/10 hover:bg-white/20 border border-white/20'
             }`}
           >
-            <Shield className={`w-6 h-6 ${isTonight ? 'text-white' : timerActive ? 'text-[#00D9FF]' : 'text-white/80'}`} />
+            <Shield className={`w-6 h-6 ${isTonight ? 'text-white' : timerActive ? 'text-[#00C2E0]' : 'text-white/80'}`} />
           </Button>
         </div>
       </div>

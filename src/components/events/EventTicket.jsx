@@ -82,7 +82,7 @@ export default function EventTicket({ rsvp, event }) {
         ctx.drawImage(img, 200, 400, 400, 400);
         
         // Ticket Info
-        ctx.fillStyle = '#00D9FF';
+        ctx.fillStyle = '#00C2E0';
         ctx.font = '16px monospace';
         ctx.fillText(`TICKET #${rsvp.id.slice(-8).toUpperCase()}`, 50, 900);
         ctx.fillText(rsvp.user_email, 50, 930);
@@ -148,7 +148,7 @@ export default function EventTicket({ rsvp, event }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-[#C8962C]/10 to-[#00D9FF]/10 border-2 border-[#C8962C] p-6 space-y-4"
+      className="bg-gradient-to-br from-[#C8962C]/10 to-[#00C2E0]/10 border-2 border-[#C8962C] p-6 space-y-4"
     >
       <div className="flex items-center gap-2 mb-4">
         <Ticket className="w-6 h-6 text-[#C8962C]" />
@@ -157,17 +157,17 @@ export default function EventTicket({ rsvp, event }) {
 
       <div className="space-y-2 text-sm">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-[#00D9FF]" />
+          <Calendar className="w-4 h-4 text-[#00C2E0]" />
           <span>{format(new Date(event.event_date), 'PPP p')}</span>
         </div>
         {event.venue_name && (
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-[#00D9FF]" />
+            <MapPin className="w-4 h-4 text-[#00C2E0]" />
             <span>{event.venue_name}</span>
           </div>
         )}
         <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-[#00D9FF]" />
+          <Clock className="w-4 h-4 text-[#00C2E0]" />
           <span>Status: {rsvp.status.toUpperCase()}</span>
         </div>
       </div>

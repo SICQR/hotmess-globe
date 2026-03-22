@@ -4,7 +4,7 @@
  * Color Palette:
  * - Antique Gold: #C8962C (primary)
  * - Gold: #FFD700 (premium)
- * - Cyan: #00D9FF (interactive)
+ * - Cyan: #00C2E0 (interactive)
  * - Amber: #C8962C (creator)
  * - Neon Green: #39FF14 (success)
  * - Yellow: #FFEB3B (warning)
@@ -16,7 +16,7 @@
 :root {
   --lux-chrome-red: #C8962C;  /* Updated: antique gold */
   --lux-gold: #FFD700;
-  --lux-cyan: #00D9FF;
+  --lux-cyan: #00C2E0;
   --lux-purple: #C8962C;
   --lux-neon-green: #39FF14;
   --lux-yellow: #FFEB3B;

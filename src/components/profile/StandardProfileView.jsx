@@ -171,7 +171,7 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
                 className={
                   tag.isSensitive
                     ? 'px-3 py-1 bg-[#C8962C]/15 border border-[#C8962C]/40 text-[#C8962C] text-xs font-bold uppercase'
-                    : 'px-3 py-1 bg-[#00D9FF]/15 border border-[#00D9FF]/35 text-[#00D9FF] text-xs font-bold uppercase'
+                    : 'px-3 py-1 bg-[#00C2E0]/15 border border-[#00C2E0]/35 text-[#00C2E0] text-xs font-bold uppercase'
                 }
               >
                 {tag.label}
@@ -233,7 +233,7 @@ export default function StandardProfileView({ user, currentUser, isHandshakeConn
           <h3 className="text-sm uppercase tracking-wider text-white/40 mb-3">Interests</h3>
           <div className="flex flex-wrap gap-2">
             {user.interests.map((interest, idx) => (
-              <span key={idx} className="px-3 py-1 bg-[#00D9FF]/20 border border-[#00D9FF]/40 text-[#00D9FF] text-xs font-bold uppercase">
+              <span key={idx} className="px-3 py-1 bg-[#00C2E0]/20 border border-[#00C2E0]/40 text-[#00C2E0] text-xs font-bold uppercase">
                 {interest}
               </span>
             ))}

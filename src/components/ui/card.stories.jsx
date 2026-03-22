@@ -150,7 +150,7 @@ export const CardGrid = {
           <CardTitle className="text-white text-sm">Followers</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-black text-[#00D9FF]">1.4k</div>
+          <div className="text-2xl font-black text-[#00C2E0]">1.4k</div>
         </CardContent>
       </Card>
       <Card className="bg-black text-white border-white/10">

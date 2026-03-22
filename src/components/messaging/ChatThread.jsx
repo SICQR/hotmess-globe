@@ -410,8 +410,8 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
                   {isTelegramEncrypted && (
                     <>
                       <span>•</span>
-                      <Lock className="w-3 h-3 text-[#00D9FF]" />
-                      <span className="text-[#00D9FF]">E2E</span>
+                      <Lock className="w-3 h-3 text-[#00C2E0]" />
+                      <span className="text-[#00C2E0]">E2E</span>
                     </>
                   )}
                 </p>
@@ -432,8 +432,8 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
                   {isTelegramEncrypted && (
                     <>
                       <span>•</span>
-                      <Lock className="w-3 h-3 text-[#00D9FF]" />
-                      <span className="text-[#00D9FF]">E2E</span>
+                      <Lock className="w-3 h-3 text-[#00C2E0]" />
+                      <span className="text-[#00C2E0]">E2E</span>
                     </>
                   )}
                 </p>
@@ -635,7 +635,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
                           {msg.read_by.length === 1 ? (
                             <Check className="w-3 h-3 text-white/40" title="Sent" />
                           ) : msg.read_by.length === thread.participant_emails.length ? (
-                            <CheckCheck className="w-3 h-3 text-[#00D9FF]" title="Read by all" />
+                            <CheckCheck className="w-3 h-3 text-[#00C2E0]" title="Read by all" />
                           ) : (
                             <CheckCheck className="w-3 h-3 text-[#FFEB3B]" title={`Read by ${msg.read_by.length - 1}/${thread.participant_emails.length - 1}`} />
                           )}

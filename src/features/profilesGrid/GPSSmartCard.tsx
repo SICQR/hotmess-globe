@@ -199,7 +199,7 @@ export default function GPSSmartCard({
               {/* Walking */}
               {walkingTime && walkingTime <= 60 && (
                 <div className="flex items-center gap-2 p-2 bg-white/5 border border-white/10">
-                  <Footprints className="w-4 h-4 text-[#00D9FF]" />
+                  <Footprints className="w-4 h-4 text-[#00C2E0]" />
                   <div>
                     <p className="text-xs text-white/60">Walk</p>
                     <p className="font-bold text-white">{walkingTime} min</p>

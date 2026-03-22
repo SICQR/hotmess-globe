@@ -24,7 +24,7 @@ import { useAuth } from '@/lib/AuthContext';
 const OPENER_TYPES = {
   personal: { label: 'Personal', icon: Heart, color: '#C8962C' },
   flirty: { label: 'Flirty', icon: Sparkles, color: '#C8962C' },
-  question: { label: 'Question', icon: MessageSquare, color: '#00D9FF' }
+  question: { label: 'Question', icon: MessageSquare, color: '#00C2E0' }
 };
 
 export default function WingmanPanel({ 
@@ -135,7 +135,7 @@ export default function WingmanPanel({
               </span>
             ))}
             {commonGround.music?.map((genre, i) => (
-              <span key={`music-${i}`} className="px-2 py-0.5 bg-[#00D9FF]/20 text-[#00D9FF] text-[10px] rounded-full flex items-center gap-1">
+              <span key={`music-${i}`} className="px-2 py-0.5 bg-[#00C2E0]/20 text-[#00C2E0] text-[10px] rounded-full flex items-center gap-1">
                 <Music className="w-2 h-2" /> {genre}
               </span>
             ))}

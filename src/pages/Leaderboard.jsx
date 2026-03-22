@@ -304,7 +304,7 @@ export default function Leaderboard() {
                         <div>
                           <h3 className="font-black uppercase text-lg">{king.venue_name}</h3>
                           <Link to={createPageUrl(`Profile?email=${king.king_email}`)}>
-                            <p className="text-sm text-[#00D9FF] hover:underline">{king.king_name}</p>
+                            <p className="text-sm text-[#00C2E0] hover:underline">{king.king_name}</p>
                           </Link>
                         </div>
                       </div>

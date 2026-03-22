@@ -50,7 +50,7 @@ const RELEASES = [
   {
     id: 'ghosted',
     src: '/images/ghosted-cover.jpg',
-    color: '#00D9FF',
+    color: '#00C2E0',
     title: 'GHOSTED',
     artist: 'RAW CONVICT',
     label: 'SINGLE',

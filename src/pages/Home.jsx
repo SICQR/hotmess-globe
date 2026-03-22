@@ -355,7 +355,7 @@ export default function Home() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-2xl font-black uppercase">
-              TONIGHT<span className="text-[#00D9FF]">.</span>
+              TONIGHT<span className="text-[#00C2E0]">.</span>
             </h2>
             <p className="text-white/50 text-xs uppercase tracking-wider">Events near you</p>
           </div>
@@ -375,7 +375,7 @@ export default function Home() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-4">
-                <p className="text-[10px] uppercase tracking-wider text-[#00D9FF] font-bold mb-1">
+                <p className="text-[10px] uppercase tracking-wider text-[#00C2E0] font-bold mb-1">
                   {tonightEvent.venue || 'LONDON'}
                 </p>
                 <h3 className="text-lg font-black uppercase leading-tight">{tonightEvent.title}</h3>
@@ -832,7 +832,7 @@ export default function Home() {
           >
             <p className="text-xs uppercase tracking-[0.4em] text-white/40 mb-4">EVENTS</p>
             <h2 className="text-6xl md:text-8xl font-black italic mb-6 text-white">
-              TONIGHT<span className="text-[#00D9FF]">.</span>
+              TONIGHT<span className="text-[#00C2E0]">.</span>
             </h2>
             <p className="text-xl uppercase tracking-wider text-white/60 max-w-2xl">
               Three moves you can actually make.
@@ -847,7 +847,7 @@ export default function Home() {
             >
               <div className="bg-white/5 border-2 border-white/10 p-6 h-full">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-[#00D9FF] text-black flex items-center justify-center">
+                  <div className="w-12 h-12 bg-[#00C2E0] text-black flex items-center justify-center">
                     <Calendar className="w-6 h-6" />
                   </div>
                   <h3 className="text-2xl font-black uppercase">RSVP</h3>
@@ -859,7 +859,7 @@ export default function Home() {
                     <p className="text-2xl font-black mb-2">{tonightEvent.title}</p>
                     <p className="text-white/70 text-sm mb-6 line-clamp-2">{tonightEvent.description}</p>
                     <Link to={`/events/${encodeURIComponent(tonightEvent.id)}`}>
-                      <Button className="bg-[#00D9FF] hover:bg-white text-black font-black uppercase w-full">
+                      <Button className="bg-[#00C2E0] hover:bg-white text-black font-black uppercase w-full">
                         RSVP
                       </Button>
                     </Link>
@@ -870,7 +870,7 @@ export default function Home() {
                       Find what’s on and lock it in.
                     </p>
                     <Link to="/events">
-                      <Button className="bg-[#00D9FF] hover:bg-white text-black font-black uppercase w-full">
+                      <Button className="bg-[#00C2E0] hover:bg-white text-black font-black uppercase w-full">
                         VIEW EVENTS
                       </Button>
                     </Link>
@@ -906,7 +906,7 @@ export default function Home() {
 
           <div className="text-center">
             <Link to="/events">
-              <Button className="bg-[#00D9FF] hover:bg-white text-black font-black uppercase px-8 py-4 text-lg shadow-2xl">
+              <Button className="bg-[#00C2E0] hover:bg-white text-black font-black uppercase px-8 py-4 text-lg shadow-2xl">
                 VIEW ALL EVENTS
               </Button>
             </Link>

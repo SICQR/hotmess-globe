@@ -115,7 +115,7 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
           handleMessage();
         }}
         size="sm"
-        className="bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black border-2 border-white"
+        className="bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-black border-2 border-white"
       >
         <MessageCircle className="w-4 h-4 mr-2" />
         MESSAGE

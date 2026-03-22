@@ -69,7 +69,7 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
         </div>
         {isChromeMemeber && (
           <div className="ml-auto">
-            <Crown className="w-5 h-5 text-[#00D9FF]" title="CHROME members get free access" />
+            <Crown className="w-5 h-5 text-[#00C2E0]" title="CHROME members get free access" />
           </div>
         )}
       </div>
@@ -139,8 +139,8 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
             One-time unlock
           </p>
           
-          <div className="mt-4 p-3 bg-[#00D9FF]/10 border border-[#00D9FF]/30">
-            <p className="text-xs text-[#00D9FF] font-bold uppercase text-center flex items-center justify-center gap-2">
+          <div className="mt-4 p-3 bg-[#00C2E0]/10 border border-[#00C2E0]/30">
+            <p className="text-xs text-[#00C2E0] font-bold uppercase text-center flex items-center justify-center gap-2">
               <Crown className="w-3 h-3" />
               CHROME members get instant access to all premium content
             </p>

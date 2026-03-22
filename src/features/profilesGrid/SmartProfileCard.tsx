@@ -199,7 +199,7 @@ export function SmartProfileCard({
         // Border styling based on context
         'border-2',
         isHighMatch && 'border-[#C8962C] shadow-glow-hot',
-        isNearby && !isHighMatch && 'border-[#00D9FF] shadow-glow-cyan',
+        isNearby && !isHighMatch && 'border-[#00C2E0] shadow-glow-cyan',
         isLive && !isHighMatch && !isNearby && 'border-[#39FF14] shadow-glow-green animate-glow-pulse',
         isPremium && !isHighMatch && !isNearby && !isLive && 'border-[#C8962C] shadow-glow-gold',
         !isHighMatch && !isNearby && !isLive && !isPremium && 'border-white/10 hover:border-white/30',
@@ -387,7 +387,7 @@ export function SmartProfileCardCompact({
         <div className="flex items-center gap-2 text-xs text-white/60">
           {profile.city && <span>{profile.city}</span>}
           {distanceMinutes !== undefined && distanceMinutes < 60 && (
-            <span className="text-[#00D9FF]">• {distanceMinutes} min</span>
+            <span className="text-[#00C2E0]">• {distanceMinutes} min</span>
           )}
         </div>
       </div>

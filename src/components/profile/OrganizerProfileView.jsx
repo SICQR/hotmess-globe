@@ -158,7 +158,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
           )}
           
           {/* Organizer Badge Overlay */}
-          <div className="absolute top-3 left-3 px-3 py-1.5 bg-[#00D9FF] text-black text-xs font-black uppercase flex items-center gap-1.5">
+          <div className="absolute top-3 left-3 px-3 py-1.5 bg-[#00C2E0] text-black text-xs font-black uppercase flex items-center gap-1.5">
             <PartyPopper className="w-3 h-3" />
             Event Organizer
           </div>
@@ -208,8 +208,8 @@ export default function OrganizerProfileView({ user, currentUser }) {
 
       {/* Organizer Bio */}
       {(user?.organizer_bio || user?.bio) && (
-        <div className="bg-gradient-to-br from-[#00D9FF]/10 to-[#C8962C]/10 border border-[#00D9FF]/30 rounded-xl p-6">
-          <h3 className="text-sm uppercase tracking-wider text-[#00D9FF] mb-3 flex items-center gap-2">
+        <div className="bg-gradient-to-br from-[#00C2E0]/10 to-[#C8962C]/10 border border-[#00C2E0]/30 rounded-xl p-6">
+          <h3 className="text-sm uppercase tracking-wider text-[#00C2E0] mb-3 flex items-center gap-2">
             <PartyPopper className="w-4 h-4" />
             About the Organizer
           </h3>
@@ -222,7 +222,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
       {/* Organizer Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-          <Calendar className="w-6 h-6 mx-auto mb-2 text-[#00D9FF]" />
+          <Calendar className="w-6 h-6 mx-auto mb-2 text-[#00C2E0]" />
           <div className="text-2xl font-black">{organizedEvents.length}</div>
           <div className="text-xs text-white/40 uppercase">Events</div>
         </div>
@@ -346,7 +346,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
             {eventCategories.map((category, idx) => (
               <span 
                 key={idx} 
-                className="px-3 py-1 bg-[#00D9FF]/15 border border-[#00D9FF]/35 text-[#00D9FF] text-xs font-bold uppercase"
+                className="px-3 py-1 bg-[#00C2E0]/15 border border-[#00C2E0]/35 text-[#00C2E0] text-xs font-bold uppercase"
               >
                 {category}
               </span>
@@ -369,7 +369,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
                 key={idx}
                 className="p-3 bg-black/30 border border-white/10 text-center"
               >
-                <Building className="w-6 h-6 mx-auto mb-2 text-[#00D9FF]" />
+                <Building className="w-6 h-6 mx-auto mb-2 text-[#00C2E0]" />
                 <p className="text-sm font-bold text-white">{venue.name || venue}</p>
                 {venue.location && (
                   <p className="text-xs text-white/40 mt-1">{venue.location}</p>
@@ -382,7 +382,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
 
       {/* Contact for Booking */}
       {user?.email !== currentUser?.email && (
-        <div className="bg-gradient-to-r from-[#00D9FF]/20 to-[#C8962C]/20 border border-[#00D9FF]/40 rounded-xl p-6">
+        <div className="bg-gradient-to-r from-[#00C2E0]/20 to-[#C8962C]/20 border border-[#00C2E0]/40 rounded-xl p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h3 className="text-lg font-black uppercase mb-1">Book an Event</h3>
@@ -399,7 +399,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
                 Contact
               </Button>
               <Link to={`/messages?to=${user?.email}`}>
-                <Button className="bg-[#00D9FF] text-black font-black uppercase">
+                <Button className="bg-[#00C2E0] text-black font-black uppercase">
                   Send Message
                 </Button>
               </Link>

@@ -60,7 +60,7 @@ function celebrate(isMilestone = false) {
     particleCount: count,
     spread: spread,
     origin: { y: 0.6 },
-    colors: ['#C8962C', '#C8962C', '#00D9FF', '#C8962C'],
+    colors: ['#C8962C', '#C8962C', '#00C2E0', '#C8962C'],
   });
 }
 
@@ -71,7 +71,7 @@ function getStreakTier(streak) {
   if (streak >= 100) return { color: '#C8962C', bg: 'from-yellow-500/20 to-amber-500/20', border: 'border-yellow-500/50' };
   if (streak >= 30) return { color: '#C8962C', bg: 'from-amber-500/20 to-rose-500/20', border: 'border-amber-500/50' };
   if (streak >= 7) return { color: '#f97316', bg: 'from-orange-500/20 to-red-500/20', border: 'border-orange-500/50' };
-  return { color: '#00D9FF', bg: 'from-cyan-500/20 to-blue-500/20', border: 'border-cyan-500/50' };
+  return { color: '#00C2E0', bg: 'from-cyan-500/20 to-blue-500/20', border: 'border-cyan-500/50' };
 }
 
 /**

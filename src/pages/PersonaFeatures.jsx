@@ -84,7 +84,7 @@ const PERSONA_TYPES = [
     icon: Calendar,
     title: 'ORGANIZER',
     tagline: 'Build your events empire',
-    color: '#00D9FF',
+    color: '#00C2E0',
     description: 'Event organizers get powerful tools to create, promote, and manage events. Sell tickets, track attendance, and grow your following.',
     features: [
       'Event creation tools',
@@ -240,7 +240,7 @@ export default function PersonaFeatures() {
                 step: '03', 
                 title: 'Context Adapts', 
                 desc: 'Your profile automatically shows relevant info based on where someone finds you - social, market, or events.',
-                color: '#00D9FF'
+                color: '#00C2E0'
               },
             ].map((item, i) => (
               <motion.div
@@ -285,7 +285,7 @@ export default function PersonaFeatures() {
           viewport={{ once: true }}
           className="mb-16"
         >
-          <div className="bg-gradient-to-r from-[#C8962C]/20 to-[#00D9FF]/20 border-2 border-[#C8962C] p-8">
+          <div className="bg-gradient-to-r from-[#C8962C]/20 to-[#00C2E0]/20 border-2 border-[#C8962C] p-8">
             <div className="flex items-center gap-3 mb-6">
               <Sparkles className="w-6 h-6 text-[#C8962C]" />
               <h2 className="text-xl font-black uppercase">Profile Skin Features</h2>

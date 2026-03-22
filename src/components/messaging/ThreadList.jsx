@@ -14,7 +14,7 @@ const THREAD_TYPE_ICONS = {
 };
 
 const THREAD_TYPE_COLORS = {
-  dm: '#00D9FF',
+  dm: '#00C2E0',
   order: '#FFEB3B',
   connect: '#C8962C',
   squad: '#C8962C',

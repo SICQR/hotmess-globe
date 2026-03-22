@@ -11,8 +11,8 @@ export default function ProfileStats({
   city
 }) {
   const stats = [
-    { icon: Users, label: 'Followers', value: followersCount, color: '#00D9FF' },
-    { icon: Users, label: 'Following', value: followingCount, color: '#00D9FF' },
+    { icon: Users, label: 'Followers', value: followersCount, color: '#00C2E0' },
+    { icon: Users, label: 'Following', value: followingCount, color: '#00C2E0' },
     { icon: MapPin, label: 'Check-ins', value: checkInsCount, color: '#39FF14' },
     // Only show badges/achievements when gamification is enabled
     ...(isGamificationEnabled() ? [{ icon: Trophy, label: 'Badges', value: achievementsCount, color: '#C8962C' }] : []),

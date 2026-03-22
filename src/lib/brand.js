@@ -46,7 +46,7 @@ export const BRAND = {
     HIGH: {
       name: 'HIGH',
       tagline: 'Elevated essentials.',
-      color: '#00D9FF',
+      color: '#00C2E0',
       description: 'Premium elevated basics.',
     },
   },
@@ -162,7 +162,7 @@ export const BRAND = {
   // Colors
   colors: {
     gold: '#C8962C',
-    cyan: '#00D9FF',
+    cyan: '#00C2E0',
     lime: '#39FF14',
     orange: '#FF6B35',
   },

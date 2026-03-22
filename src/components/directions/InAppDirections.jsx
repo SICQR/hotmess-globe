@@ -42,7 +42,7 @@ L.Icon.Default.mergeOptions({
 
 const TRAVEL_MODES = [
   { id: 'foot', label: 'Walk', icon: Footprints, apiMode: 'WALK', color: '#39FF14' },
-  { id: 'bike', label: 'Bike', icon: Bike, apiMode: 'BICYCLE', color: '#00D9FF' },
+  { id: 'bike', label: 'Bike', icon: Bike, apiMode: 'BICYCLE', color: '#00C2E0' },
   { id: 'drive', label: 'Drive', icon: Car, apiMode: 'DRIVE', color: '#C8962C' },
 ];
 
@@ -183,7 +183,7 @@ export default function InAppDirections({
   
   // Marker icons
   const originIcon = useMemo(
-    () => makePinIcon({ label: 'YOU', color: '#00D9FF', glow: 'rgba(0,217,255,0.6)' }),
+    () => makePinIcon({ label: 'YOU', color: '#00C2E0', glow: 'rgba(0,217,255,0.6)' }),
     []
   );
   const destinationIcon = useMemo(

@@ -127,7 +127,7 @@ export default function Safety() {
       <PageShell
         title={
           <>
-            <span className="text-[#00D9FF]">Safety</span> Hub
+            <span className="text-[#00C2E0]">Safety</span> Hub
           </>
         }
         subtitle="Care-first. Your safety matters."
@@ -163,7 +163,7 @@ export default function Safety() {
             ) : (
               <div className="bg-white/5 border border-white/10 p-6 mb-6">
                 <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-[#00D9FF]" />
+                  <Clock className="w-5 h-5 text-[#00C2E0]" />
                   Start Safety Check-In
                 </h3>
                 <p className="text-sm text-white/60 mb-4">
@@ -219,7 +219,7 @@ export default function Safety() {
           <TabsContent value="contacts">
             <div className="bg-white/5 border border-white/10 p-6 mb-6">
               <h3 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-[#00D9FF]" />
+                <UserPlus className="w-5 h-5 text-[#00C2E0]" />
                 Add Trusted Contact
               </h3>
               
@@ -289,7 +289,7 @@ export default function Safety() {
                         {contact.contact_email && (
                           <p className="text-xs text-white/40">{contact.contact_email}</p>
                         )}
-                        <span className="inline-block mt-2 px-2 py-1 bg-[#00D9FF]/20 text-[#00D9FF] text-xs font-bold uppercase">
+                        <span className="inline-block mt-2 px-2 py-1 bg-[#00C2E0]/20 text-[#00C2E0] text-xs font-bold uppercase">
                           {contact.relationship}
                         </span>
                       </div>
@@ -327,7 +327,7 @@ export default function Safety() {
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
-                    <Clock className="w-4 h-4 text-[#00D9FF] mt-0.5 flex-shrink-0" />
+                    <Clock className="w-4 h-4 text-[#00C2E0] mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-white font-bold">Check-In Timer</p>
                       <p className="text-xs">Set expected return time. Trusted contacts get notified if you're overdue.</p>

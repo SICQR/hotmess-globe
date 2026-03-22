@@ -9,7 +9,7 @@
  * Design principles:
  * - Minimal: photo, name, status, one action
  * - Brutalist: sharp edges, high contrast
- * - HOTMESS colors: hot pink (#C8962C), cyan (#00D9FF)
+ * - HOTMESS colors: hot pink (#C8962C), cyan (#00C2E0)
  * - Mobile-first: 44px touch targets
  */
 
@@ -81,7 +81,7 @@ export function SimpleProfileCard({
           loading="lazy"
         />
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#C8962C]/20 to-[#00D9FF]/20 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#C8962C]/20 to-[#00C2E0]/20 flex items-center justify-center">
           <span className="text-3xl font-black text-white/60">{initials}</span>
         </div>
       )}
@@ -98,7 +98,7 @@ export function SimpleProfileCard({
 
       {/* Match badge */}
       {matchPercent && matchPercent > 0 && (
-        <div className="absolute top-3 left-3 px-2 py-1 bg-gradient-to-r from-[#C8962C] to-[#00D9FF] text-black text-[10px] font-black uppercase">
+        <div className="absolute top-3 left-3 px-2 py-1 bg-gradient-to-r from-[#C8962C] to-[#00C2E0] text-black text-[10px] font-black uppercase">
           {matchPercent}% MATCH
         </div>
       )}
@@ -109,7 +109,7 @@ export function SimpleProfileCard({
         <div className="flex items-center gap-2">
           <h3 className="text-white font-black text-sm truncate">{name}</h3>
           {isVerified && (
-            <span className="text-[#00D9FF] text-xs">✓</span>
+            <span className="text-[#00C2E0] text-xs">✓</span>
           )}
         </div>
 

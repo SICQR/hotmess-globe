@@ -89,8 +89,8 @@ const CityReadiness = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-black uppercase flex items-center gap-3">
-                <Globe className="w-10 h-10 text-[#00D9FF]" />
-                City <span className="text-[#00D9FF]">Readiness</span>
+                <Globe className="w-10 h-10 text-[#00C2E0]" />
+                City <span className="text-[#00C2E0]">Readiness</span>
               </h1>
               <p className="text-white/60">Monitor launch readiness across all cities</p>
             </div>

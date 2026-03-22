@@ -22,7 +22,7 @@ import logger from '@/utils/logger';
 const VIBE_OPTIONS = ['techno', 'house', 'drag', 'indie', 'late_night', 'chill', 'wild', 'artsy'];
 const EVENT_VIBES = ['techno', 'house', 'drag', 'late_night', 'underground', 'warehouse', 'rooftop', 'intimate'];
 const ACTIVITY_STATUSES = [
-  { value: 'online', label: 'Online', color: '#00D9FF' },
+  { value: 'online', label: 'Online', color: '#00C2E0' },
   { value: 'busy', label: 'Busy', color: '#FF6B35' },
   { value: 'looking_for_collabs', label: 'Looking for Collaborators', color: '#39FF14' },
   { value: 'at_event', label: 'At Event', color: '#C8962C' },
@@ -32,10 +32,10 @@ const SKILLS = ['DJ', 'Producer', 'Designer', 'Photographer', 'Videographer', 'P
 
 const PROFILE_THEMES = [
   { id: 'default', label: 'Default', gradient: 'from-[#C8962C] to-[#C8962C]' },
-  { id: 'cyber', label: 'Cyber', gradient: 'from-[#00D9FF] to-[#39FF14]' },
+  { id: 'cyber', label: 'Cyber', gradient: 'from-[#00C2E0] to-[#39FF14]' },
   { id: 'sunset', label: 'Sunset', gradient: 'from-[#FF6B35] to-[#FFEB3B]' },
   { id: 'midnight', label: 'Midnight', gradient: 'from-[#1a1a2e] to-[#16213e]' },
-  { id: 'neon', label: 'Neon', gradient: 'from-[#C8962C] to-[#00D9FF]' }
+  { id: 'neon', label: 'Neon', gradient: 'from-[#C8962C] to-[#00C2E0]' }
 ];
 
 export default function EditProfile() {
@@ -415,8 +415,8 @@ export default function EditProfile() {
 
             {/* Seller-specific fields */}
             {profileType === 'seller' && (
-              <div className="bg-black border-2 border-[#00D9FF] p-6">
-                <Label className="text-xs uppercase tracking-widest text-[#00D9FF] mb-4 block">Seller Profile Details</Label>
+              <div className="bg-black border-2 border-[#00C2E0] p-6">
+                <Label className="text-xs uppercase tracking-widest text-[#00C2E0] mb-4 block">Seller Profile Details</Label>
                 <div className="space-y-4">
                   <div>
                     <Label className="text-xs text-white/60 mb-2 block">Shop Tagline</Label>
@@ -654,7 +654,7 @@ export default function EditProfile() {
                     onClick={() => toggleEventVibe(vibe)}
                     className={`px-4 py-2 text-xs font-black uppercase border-2 transition-all ${
                       eventPreferences.includes(vibe)
-                        ? 'bg-[#00D9FF] border-[#00D9FF] text-black'
+                        ? 'bg-[#00C2E0] border-[#00C2E0] text-black'
                         : 'bg-white/5 border-white/20 text-white/60 hover:border-white/40'
                     }`}
                   >
@@ -724,7 +724,7 @@ export default function EditProfile() {
                       setNewInterest('');
                     }
                   }}
-                  className="bg-[#00D9FF] text-black hover:bg-[#00D9FF]/90"
+                  className="bg-[#00C2E0] text-black hover:bg-[#00C2E0]/90"
                 >
                   <Plus className="w-4 h-4" />
                 </Button>
@@ -802,7 +802,7 @@ export default function EditProfile() {
                     }}
                     className={`px-4 py-2 text-xs font-black uppercase border-2 transition-all ${
                       preferredCommunication.includes(method)
-                        ? 'bg-[#00D9FF] border-[#00D9FF] text-black'
+                        ? 'bg-[#00C2E0] border-[#00C2E0] text-black'
                         : 'bg-white/5 border-white/20 text-white/60 hover:border-white/40'
                     }`}
                   >
@@ -959,7 +959,7 @@ export default function EditProfile() {
                       disabled={!tribes.includes(tribe.id) && tribes.length >= 3}
                       className={`px-3 py-2 text-xs font-bold uppercase border-2 transition-all ${
                         tribes.includes(tribe.id)
-                          ? 'bg-[#00D9FF] border-[#00D9FF] text-black'
+                          ? 'bg-[#00C2E0] border-[#00C2E0] text-black'
                           : 'bg-white/5 border-white/20 text-white/60 hover:border-white/40 disabled:opacity-30'
                       }`}
                     >

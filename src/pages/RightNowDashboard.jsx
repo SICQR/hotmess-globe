@@ -66,7 +66,7 @@ export default function RightNowDashboard() {
             </div>
 
             <div className="bg-white/5 border-2 border-white/10 p-6">
-              <Clock className="w-8 h-8 text-[#00D9FF] mb-3" />
+              <Clock className="w-8 h-8 text-[#00C2E0] mb-3" />
               <h3 className="text-xs uppercase tracking-widest text-white/40 mb-2">Auto-Expires</h3>
               <p className="text-xs text-white/60">
                 Set 30min–Tonight, automatically ends when time's up

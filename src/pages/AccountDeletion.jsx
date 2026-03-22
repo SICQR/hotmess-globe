@@ -285,18 +285,18 @@ export default function AccountDeletion() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-[#00D9FF]/10 border border-[#00D9FF]/40 rounded-xl p-6 mb-6"
+          className="bg-[#00C2E0]/10 border border-[#00C2E0]/40 rounded-xl p-6 mb-6"
         >
           <div className="flex items-start gap-3">
-            <Shield className="w-6 h-6 text-[#00D9FF] flex-shrink-0" />
+            <Shield className="w-6 h-6 text-[#00C2E0] flex-shrink-0" />
             <div>
-              <h3 className="font-bold text-[#00D9FF] mb-2">Export Your Data First</h3>
+              <h3 className="font-bold text-[#00C2E0] mb-2">Export Your Data First</h3>
               <p className="text-sm text-white/80 mb-4">
                 Before deleting your account, we recommend downloading a copy of your data. 
                 Once deleted, we cannot recover any information.
               </p>
               <Link to={createPageUrl('DataExport')}>
-                <Button variant="outline" className="border-[#00D9FF]/40 text-[#00D9FF] hover:bg-[#00D9FF]/20">
+                <Button variant="outline" className="border-[#00C2E0]/40 text-[#00C2E0] hover:bg-[#00C2E0]/20">
                   Export My Data First
                 </Button>
               </Link>

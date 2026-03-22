@@ -10,13 +10,13 @@ export default function BeaconPreviewPanel({ beacon, onClose, onViewFull }) {
   if (!beacon) return null;
 
   const kindColors = {
-    event: '#00D9FF',
+    event: '#00C2E0',
     venue: '#C8962C',
     hookup: '#C8962C',
     drop: '#FFEB3B',
     popup: '#39FF14',
     private: '#FF6B35',
-    person: '#00D9FF',
+    person: '#00C2E0',
   };
 
   const color = kindColors[beacon.kind] || '#C8962C';

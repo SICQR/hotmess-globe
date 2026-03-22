@@ -35,7 +35,7 @@ const NOTIFICATION_CATEGORIES = [
     name: 'Events',
     description: 'Event reminders, updates, and nearby events',
     icon: Calendar,
-    color: '#00D9FF',
+    color: '#00C2E0',
     defaultEnabled: true,
   },
   {
@@ -389,7 +389,7 @@ export default function NotificationPreferences() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {preferences.sound ? (
-                    <Volume2 className="w-5 h-5 text-[#00D9FF]" />
+                    <Volume2 className="w-5 h-5 text-[#00C2E0]" />
                   ) : (
                     <VolumeX className="w-5 h-5 text-white/40" />
                   )}

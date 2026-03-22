@@ -15,7 +15,7 @@ const PERSONA_OPTIONS = [
     type: PERSONA_TYPES.TRAVEL,
     label: 'Travel',
     description: "Who you are when you're away from home",
-    color: '#00D9FF',
+    color: '#00C2E0',
   },
   {
     type: PERSONA_TYPES.WEEKEND,

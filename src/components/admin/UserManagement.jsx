@@ -70,7 +70,7 @@ export default function UserManagement() {
         </div>
         <div className="bg-black border-2 border-white p-6">
           <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">ACTIVE TODAY</p>
-          <p className="text-4xl font-black text-[#00D9FF]">
+          <p className="text-4xl font-black text-[#00C2E0]">
             {users.filter(u => u.activity_status && u.activity_status !== 'offline').length}
           </p>
         </div>
@@ -124,8 +124,8 @@ export default function UserManagement() {
               <div className="col-span-3">
                 {user.activity_status && user.activity_status !== 'offline' ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-[#00D9FF] animate-pulse" />
-                    <span className="text-xs uppercase font-bold text-[#00D9FF]">{user.activity_status}</span>
+                    <div className="w-2 h-2 rounded-full bg-[#00C2E0] animate-pulse" />
+                    <span className="text-xs uppercase font-bold text-[#00C2E0]">{user.activity_status}</span>
                   </div>
                 ) : (
                   <span className="text-xs uppercase font-mono text-white/40">Offline</span>

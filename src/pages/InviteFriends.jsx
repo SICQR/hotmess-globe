@@ -234,7 +234,7 @@ export default function InviteFriends() {
           className="grid grid-cols-3 gap-4 mb-8"
         >
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <Users className="w-6 h-6 mx-auto mb-2 text-[#00D9FF]" />
+            <Users className="w-6 h-6 mx-auto mb-2 text-[#00C2E0]" />
             <div className="text-2xl font-black">{stats.sent}</div>
             <div className="text-xs text-white/60">Invited</div>
           </div>
@@ -308,7 +308,7 @@ export default function InviteFriends() {
             <Button
               onClick={shareViaSMS}
               variant="outline"
-              className="border-[#00D9FF]/40 text-[#00D9FF] hover:bg-[#00D9FF]/10"
+              className="border-[#00C2E0]/40 text-[#00C2E0] hover:bg-[#00C2E0]/10"
             >
               <Smartphone className="w-4 h-4 mr-2" />
               SMS
@@ -330,7 +330,7 @@ export default function InviteFriends() {
           className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6"
         >
           <h3 className="font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
-            <Mail className="w-5 h-5 text-[#00D9FF]" />
+            <Mail className="w-5 h-5 text-[#00C2E0]" />
             Invite by Email
           </h3>
           
@@ -344,7 +344,7 @@ export default function InviteFriends() {
           <Button
             onClick={sendEmailInvites}
             disabled={sendingInvites || !emails.trim()}
-            className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-bold"
+            className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-bold"
           >
             {sendingInvites ? (
               <>

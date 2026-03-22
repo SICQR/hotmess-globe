@@ -25,7 +25,7 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
     hookup: '#FF073A',
     drop: '#FF6B35',
     ticket: '#C8962C',
-    radio: '#00D9FF'
+    radio: '#00C2E0'
   };
 
   const color = MODE_COLORS[event.mode] || '#C8962C';
@@ -69,7 +69,7 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
                 </div>
               )}
               {isRsvpd && !isPast && (
-                <div className="absolute top-3 right-3 bg-[#00D9FF] text-black px-3 py-1 text-xs font-black uppercase">
+                <div className="absolute top-3 right-3 bg-[#00C2E0] text-black px-3 py-1 text-xs font-black uppercase">
                   GOING
                 </div>
               )}
@@ -138,7 +138,7 @@ export default function EventCard({ event, isRsvpd, attendeeCount, delay = 0, re
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="mt-4 flex items-center gap-2 text-xs text-[#00D9FF] hover:text-white transition-colors"
+                className="mt-4 flex items-center gap-2 text-xs text-[#00C2E0] hover:text-white transition-colors"
               >
                 <ExternalLink className="w-3 h-3" />
                 Get Tickets

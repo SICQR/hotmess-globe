@@ -29,10 +29,10 @@ const variants = {
     valueColor: "text-[#C8962C]",
   },
   cyan: {
-    border: "border-[#00D9FF]/30",
-    iconBg: "bg-[#00D9FF]/20",
-    iconColor: "text-[#00D9FF]",
-    valueColor: "text-[#00D9FF]",
+    border: "border-[#00C2E0]/30",
+    iconBg: "bg-[#00C2E0]/20",
+    iconColor: "text-[#00C2E0]",
+    valueColor: "text-[#00C2E0]",
   },
   green: {
     border: "border-[#39FF14]/30",

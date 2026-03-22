@@ -76,7 +76,7 @@ export default function CheckInTimerModal({ isOpen, onClose }) {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-[#00D9FF]" />
+                <Clock className="w-5 h-5 text-[#00C2E0]" />
                 <span className="text-white font-black text-lg uppercase">Check-In Timer</span>
               </div>
               <button
@@ -99,8 +99,8 @@ export default function CheckInTimerModal({ isOpen, onClose }) {
                   </p>
                 </div>
 
-                <div className="bg-[#00D9FF]/10 border border-[#00D9FF]/20 rounded-2xl p-3 mb-5 flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-[#00D9FF] flex-shrink-0 mt-0.5" />
+                <div className="bg-[#00C2E0]/10 border border-[#00C2E0]/20 rounded-2xl p-3 mb-5 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-[#00C2E0] flex-shrink-0 mt-0.5" />
                   <p className="text-[11px] text-white/60">
                     When this timer reaches zero, your trusted contacts will be
                     automatically alerted with your last known location.
@@ -133,7 +133,7 @@ export default function CheckInTimerModal({ isOpen, onClose }) {
                       onClick={() => setSelected(minutes)}
                       className={`py-3 rounded-2xl text-sm font-black transition-all ${
                         selected === minutes
-                          ? 'bg-[#00D9FF] text-black'
+                          ? 'bg-[#00C2E0] text-black'
                           : 'bg-black/40 border border-white/10 text-white/60'
                       }`}
                     >
@@ -155,7 +155,7 @@ export default function CheckInTimerModal({ isOpen, onClose }) {
                 <button
                   onClick={handleStart}
                   disabled={loading}
-                  className="w-full py-4 bg-[#00D9FF] text-black font-black rounded-2xl uppercase disabled:opacity-60"
+                  className="w-full py-4 bg-[#00C2E0] text-black font-black rounded-2xl uppercase disabled:opacity-60"
                 >
                   {loading ? 'Setting…' : 'Set Timer'}
                 </button>

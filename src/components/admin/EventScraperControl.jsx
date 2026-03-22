@@ -185,7 +185,7 @@ export default function EventScraperControl() {
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-6">
       <div className="flex items-center gap-2 mb-4">
-        <RefreshCw className="w-5 h-5 text-[#00D9FF]" />
+        <RefreshCw className="w-5 h-5 text-[#00C2E0]" />
         <h3 className="text-lg font-black uppercase">Event Scraper</h3>
       </div>
 
@@ -209,7 +209,7 @@ export default function EventScraperControl() {
         <Button
           onClick={handleScrape}
           disabled={loading}
-          className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black"
+          className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-black"
         >
           {loading ? (
             <>
@@ -284,7 +284,7 @@ export default function EventScraperControl() {
         {/* Scrape Run History */}
         <div className="border-t border-white/10 pt-4 mt-4">
           <div className="flex items-center gap-2 mb-3">
-            <History className="w-4 h-4 text-[#00D9FF]" />
+            <History className="w-4 h-4 text-[#00C2E0]" />
             <h4 className="text-sm font-bold uppercase">Recent Runs</h4>
           </div>
           <ScrapeRunHistory onRefresh={historyRefresh} />

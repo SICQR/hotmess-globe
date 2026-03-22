@@ -141,7 +141,7 @@ export default function MediaUploader({
             className={`p-4 rounded-lg border-2 ${
               progress.stage === 'complete' ? 'bg-[#39FF14]/20 border-[#39FF14]' :
               progress.stage === 'rejected' || progress.stage === 'error' ? 'bg-[#FF073A]/20 border-[#FF073A]' :
-              'bg-[#00D9FF]/20 border-[#00D9FF]'
+              'bg-[#00C2E0]/20 border-[#00C2E0]'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -150,7 +150,7 @@ export default function MediaUploader({
               ) : progress.stage === 'rejected' || progress.stage === 'error' ? (
                 <AlertCircle className="w-5 h-5 text-[#FF073A]" />
               ) : (
-                <Loader2 className="w-5 h-5 text-[#00D9FF] animate-spin" />
+                <Loader2 className="w-5 h-5 text-[#00C2E0] animate-spin" />
               )}
               <div className="flex-1">
                 <p className="text-sm font-bold uppercase">{progress.stage}</p>

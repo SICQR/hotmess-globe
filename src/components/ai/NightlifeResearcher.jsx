@@ -140,7 +140,7 @@ Focus exclusively on LGBT venues and events. Prioritise accuracy by cross-checki
                 )}
               </div>
 
-              <div className="text-xs text-[#00D9FF] bg-[#00D9FF]/10 rounded px-2 py-1 inline-block">
+              <div className="text-xs text-[#00C2E0] bg-[#00C2E0]/10 rounded px-2 py-1 inline-block">
                 ✨ {venue.match_reason}
               </div>
             </motion.div>

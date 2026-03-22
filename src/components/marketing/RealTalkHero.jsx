@@ -38,7 +38,7 @@ const HONEST_TAGS = [
 
 // Category colors
 const CATEGORY_COLORS = {
-  lifestyle: '#00D9FF',
+  lifestyle: '#00C2E0',
   health: '#39FF14',
   values: '#C8962C',
   dynamic: '#C8962C',
@@ -143,7 +143,7 @@ export default function RealTalkHero({ className = '' }) {
           </div>
           
           <div className="p-6 border border-white/10 bg-white/5 text-center">
-            <Sparkles className="w-8 h-8 mx-auto mb-3 text-[#00D9FF]" />
+            <Sparkles className="w-8 h-8 mx-auto mb-3 text-[#00C2E0]" />
             <h4 className="font-bold text-white mb-2">Better Matches</h4>
             <p className="text-sm text-white/60">
               Honest tags = fewer awkward conversations, more real connections

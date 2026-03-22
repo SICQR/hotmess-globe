@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 const STATUS_CONFIG = {
   pending: { icon: Clock, color: '#FFEB3B', label: 'Pending' },
-  in_transit: { icon: TrendingUp, color: '#00D9FF', label: 'In Transit' },
+  in_transit: { icon: TrendingUp, color: '#00C2E0', label: 'In Transit' },
   paid: { icon: CheckCircle2, color: '#39FF14', label: 'Paid' },
   failed: { icon: AlertCircle, color: '#FF073A', label: 'Failed' },
   cancelled: { icon: AlertCircle, color: '#FF6B35', label: 'Cancelled' },
@@ -70,14 +70,14 @@ export default function PayoutManager({ payouts, orders, sellerEmail, stripeConn
   return (
     <div className="space-y-6">
       {/* Balance Card */}
-      <div className="bg-gradient-to-br from-[#00D9FF]/20 to-[#C8962C]/20 border-2 border-[#00D9FF] rounded-xl p-6">
+      <div className="bg-gradient-to-br from-[#00C2E0]/20 to-[#C8962C]/20 border-2 border-[#00C2E0] rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-sm text-white/60 uppercase tracking-wider mb-1">Available Balance</p>
-            <p className="text-4xl font-black text-[#00D9FF]">£{availableBalance.toFixed(2)}</p>
+            <p className="text-4xl font-black text-[#00C2E0]">£{availableBalance.toFixed(2)}</p>
             <p className="text-xs text-white/40 mt-1">{unpaidOrders.length} orders ready for payout</p>
           </div>
-          <DollarSign className="w-12 h-12 text-[#00D9FF]" />
+          <DollarSign className="w-12 h-12 text-[#00C2E0]" />
         </div>
 
         {!stripeConnectId ? (
@@ -93,7 +93,7 @@ export default function PayoutManager({ payouts, orders, sellerEmail, stripeConn
           <Button
             onClick={() => requestPayoutMutation.mutate()}
             disabled={availableBalance === 0 || requestPayoutMutation.isPending}
-            className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-bold"
+            className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-bold"
           >
             Request Payout
           </Button>

@@ -293,7 +293,7 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
             size="sm"
             onClick={generateTags}
             disabled={generatingTags || !formData.name || !formData.description}
-            className="text-[#00D9FF] hover:text-[#00D9FF]/90"
+            className="text-[#00C2E0] hover:text-[#00C2E0]/90"
           >
             {generatingTags ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
