@@ -12,7 +12,7 @@
  * 2. Session but no profile row (PGRST116) → NEEDS_AGE (no localStorage)
  * 3. Session but no profile row + localStorage age flag → NEEDS_ONBOARDING
  * 4. Profile exists, age_verified=false → NEEDS_AGE
- * 5. Profile exists, age_verified=true, onboarding_complete=false → NEEDS_ONBOARDING
+ * 5. Profile exists, age_verified=true, onboarding_completed=false → NEEDS_ONBOARDING
  * 6. Profile exists, all gates passed but missing display_name → NEEDS_ONBOARDING
  * 7. Profile exists, all gates passed, no community_attested_at → NEEDS_COMMUNITY_GATE
  * 8. Profile fully complete → READY
@@ -67,7 +67,7 @@ function makeSession(userId = 'user-123', email = 'test@example.com') {
 type ProfileRow = {
   id: string;
   age_verified?: boolean;
-  onboarding_complete?: boolean;
+  onboarding_completed?: boolean;
   display_name?: string | null;
   community_attested_at?: string | null;
   [key: string]: unknown;
@@ -77,7 +77,7 @@ function makeProfile(overrides: Partial<ProfileRow> = {}): ProfileRow {
   return {
     id: 'user-123',
     age_verified: true,
-    onboarding_complete: true,
+    onboarding_completed: true,
     display_name: 'Test User',
     community_attested_at: new Date().toISOString(),
     ...overrides,
@@ -215,7 +215,7 @@ describe('BootGuardContext — boot state machine', () => {
   });
 
   it('4. Profile exists but age_verified=false → NEEDS_AGE', async () => {
-    setupAuthWithProfile(makeProfile({ age_verified: false, onboarding_complete: false }));
+    setupAuthWithProfile(makeProfile({ age_verified: false, onboarding_completed: false }));
 
     render(
       <BootGuardProvider>
@@ -228,8 +228,8 @@ describe('BootGuardContext — boot state machine', () => {
     }, { timeout: BOOT_STATE_TIMEOUT });
   });
 
-  it('5. Profile exists, age verified, onboarding_complete=false → NEEDS_ONBOARDING', async () => {
-    setupAuthWithProfile(makeProfile({ age_verified: true, onboarding_complete: false }));
+  it('5. Profile exists, age verified, onboarding_completed=false → NEEDS_ONBOARDING', async () => {
+    setupAuthWithProfile(makeProfile({ age_verified: true, onboarding_completed: false }));
 
     render(
       <BootGuardProvider>
@@ -242,10 +242,10 @@ describe('BootGuardContext — boot state machine', () => {
     }, { timeout: BOOT_STATE_TIMEOUT });
   });
 
-  it('6. Profile onboarding_complete=true but display_name empty → NEEDS_ONBOARDING', async () => {
+  it('6. Profile onboarding_completed=true but display_name empty → NEEDS_ONBOARDING', async () => {
     setupAuthWithProfile(makeProfile({
       age_verified: true,
-      onboarding_complete: true,
+      onboarding_completed: true,
       display_name: '',
       community_attested_at: new Date().toISOString(),
     }));
@@ -264,7 +264,7 @@ describe('BootGuardContext — boot state machine', () => {
   it('7. Profile complete but no community_attested_at and no localStorage → NEEDS_COMMUNITY_GATE', async () => {
     setupAuthWithProfile(makeProfile({
       age_verified: true,
-      onboarding_complete: true,
+      onboarding_completed: true,
       display_name: 'Test User',
       community_attested_at: null,
     }));
@@ -331,7 +331,7 @@ describe('BootGuardContext — boot state machine', () => {
     localStorage.setItem('hm_community_attested_v1', 'true');
     setupAuthWithProfile(makeProfile({
       age_verified: true,
-      onboarding_complete: true,
+      onboarding_completed: true,
       display_name: 'Test User',
       community_attested_at: null,
     }));

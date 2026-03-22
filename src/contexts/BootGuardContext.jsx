@@ -14,7 +14,7 @@ const logBoot = import.meta.env.VITE_BOOT_DEBUG === 'true'
  * - LOADING: Initial state, checking auth
  * - UNAUTHENTICATED: No session (valid state, not error)
  * - NEEDS_AGE: Authenticated but age_verified = false
- * - NEEDS_ONBOARDING: Authenticated but onboarding_complete = false
+ * - NEEDS_ONBOARDING: Authenticated but onboarding_completed = false
  * - READY: All gates passed, mount OS
  * 
  * KEY RULE: UNAUTHENTICATED users are allowed to access public routes.
@@ -251,7 +251,7 @@ export function BootGuardProvider({ children }) {
       const localCommunity = getLocalCommunityAttested();
       if (!profileData?.age_verified) {
         setBootState(BOOT_STATES.NEEDS_AGE);
-      } else if (!profileData?.onboarding_complete) {
+      } else if (!profileData?.onboarding_completed) {
         setBootState(BOOT_STATES.NEEDS_ONBOARDING);
       } else if (!profileData?.display_name?.trim()) {
         // CRITICAL: User completed onboarding but has no display_name
@@ -316,7 +316,7 @@ export function BootGuardProvider({ children }) {
 
     // Build the update payload.
     // The profiles_onboarding_requires_identity constraint demands that either
-    // username OR display_name is set when onboarding_complete becomes true.
+    // username OR display_name is set when onboarding_completed becomes true.
     // Coalesce username from display_name or email so the constraint is never
     // violated even on first-run rows that have neither field yet.
     const usernameSlug = deriveUsernameSlug({
@@ -330,7 +330,8 @@ export function BootGuardProvider({ children }) {
       .upsert(
         {
           id: session.user.id,
-          onboarding_complete: true,
+          onboarding_completed: true,
+          onboarding_completed_at: new Date().toISOString(),
           // Ensure identity is set: DB constraint allows either username OR display_name.
           // Only derive and set username when BOTH are currently empty.
           ...(profile?.username || profile?.display_name ? {} : { username: usernameSlug }),

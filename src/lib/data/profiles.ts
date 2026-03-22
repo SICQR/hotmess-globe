@@ -46,7 +46,7 @@ export interface Profile {
   // Onboarding / gates
   age_verified?: boolean;
   consent_accepted?: boolean;
-  onboarding_complete?: boolean;
+  onboarding_completed?: boolean;
   community_attested_at?: string;
   // Account
   email?: string;

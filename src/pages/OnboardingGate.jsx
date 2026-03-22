@@ -247,7 +247,7 @@ export default function OnboardingGate() {
             email: session.user.email || null,
             username: usernameSlug,
             age_verified: false,
-            onboarding_complete: false,
+            onboarding_completed: false,
           },
           { onConflict: 'id', ignoreDuplicates: true },
         );
@@ -265,18 +265,18 @@ export default function OnboardingGate() {
       return;
     }
 
-    if (profile?.onboarding_complete && profile?.community_attested_at) {
+    if (profile?.onboarding_completed && profile?.community_attested_at) {
       navigate('/', { replace: true });
       return;
     }
 
-    if (profile?.onboarding_complete && !profile?.community_attested_at) {
+    if (profile?.onboarding_completed && !profile?.community_attested_at) {
       setStep(7);
       return;
     }
 
     setStep(ageConfirmed ? 2 : 1);
-  }, [isLoading, session, profile?.onboarding_complete, ageConfirmed]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isLoading, session, profile?.onboarding_completed, ageConfirmed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Step advance ──────────────────────────────────────────────────────────
   const handleNext = useCallback(

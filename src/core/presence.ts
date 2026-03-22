@@ -36,7 +36,7 @@ export interface GoLiveOptions {
 /**
  * Go Live — Insert/upsert presence row with TTL
  * Uses rpc_go_live on server to enforce capabilities
- * REQUIRES: onboarding_complete + is_verified + location_opt_in
+ * REQUIRES: onboarding_completed + is_verified + location_opt_in
  */
 export async function goLive(
   supabase: SupabaseClient,
