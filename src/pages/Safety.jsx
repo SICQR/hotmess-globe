@@ -84,7 +84,7 @@ export default function Safety() {
             venue_name: currentUser.city || 'Unknown'
           };
         } catch (error) {
-          console.log('Location access denied');
+          void('Location access denied');
         }
       }
 

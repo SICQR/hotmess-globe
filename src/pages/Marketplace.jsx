@@ -251,7 +251,7 @@ export default function Marketplace() {
             expires_at: expiresAt,
           });
         } catch (error) {
-          console.log('Failed to create P2P beacon:', error);
+          void('Failed to create P2P beacon:', error);
         }
       }
 

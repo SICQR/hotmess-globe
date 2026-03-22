@@ -58,7 +58,7 @@ export async function insertBeaconForP2PListing(product, promoterId) {
       return null;
     }
 
-    console.log('[useP2PListingBeacon] Created Gold beacon for product:', product.id);
+    void('[useP2PListingBeacon] Created Gold beacon for product:', product.id);
     return data;
   } catch (err) {
     console.error('[useP2PListingBeacon] Exception:', err);
@@ -90,7 +90,7 @@ export async function deleteBeaconForP2PListing(productId) {
       return false;
     }
 
-    console.log('[useP2PListingBeacon] Deleted beacon for product:', productId);
+    void('[useP2PListingBeacon] Deleted beacon for product:', productId);
     return true;
   } catch (err) {
     console.error('[useP2PListingBeacon] Delete exception:', err);

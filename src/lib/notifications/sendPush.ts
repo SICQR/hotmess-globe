@@ -85,19 +85,12 @@ export async function sendPush(
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.debug('[sendPush] Failed:', response.status, error);
       return;
     }
 
-    const result = await response.json();
-    if (result.ok) {
-      console.debug('[sendPush] Sent successfully');
-    } else {
-      console.debug('[sendPush] Error:', result.error);
-    }
-  } catch (error) {
-    console.debug('[sendPush] Network error:', error);
+    await response.json();
+  } catch {
+    // Network error — fire-and-forget push
   }
 }
 

@@ -39,7 +39,7 @@ export default function MediaUploader({
             format: 'webp'
           });
           file = result.optimized;
-          console.log(`Image optimized: ${result.savedPercent}% smaller`);
+          void(`Image optimized: ${result.savedPercent}% smaller`);
         } catch (err) {
           console.warn('Image optimization failed, using original:', err);
         }

@@ -84,7 +84,7 @@ export function useProfileOpener() {
     
     // Log for analytics (could be enhanced with proper analytics)
     if (import.meta.env.DEV) {
-      console.log(`[Profile] Opening ${userId} from ${source}${shouldUseSheet ? ' (sheet)' : ' (route)'}`);
+      void(`[Profile] Opening ${userId} from ${source}${shouldUseSheet ? ' (sheet)' : ' (route)'}`);
     }
     
     if (shouldUseSheet) {

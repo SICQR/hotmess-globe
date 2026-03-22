@@ -206,9 +206,9 @@ export function useRealtimeLocations(currentUserId: string | null, radiusKm: num
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Realtime locations connected');
+          // connected
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Realtime locations channel error');
+          console.error('[RealtimeLocations] channel error');
           setError('Failed to connect to realtime updates');
         }
       });

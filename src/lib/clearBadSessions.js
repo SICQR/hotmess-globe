@@ -19,7 +19,7 @@ export function clearBadSupabaseSessions() {
       // Check if it's NOT the correct project
       if (!key.includes(CORRECT_PROJECT_REF)) {
         keysToRemove.push(key);
-        console.log('[clearBadSessions] Removing wrong project session:', key);
+        void('[clearBadSessions] Removing wrong project session:', key);
       }
     }
     
@@ -32,7 +32,7 @@ export function clearBadSupabaseSessions() {
         value.includes('klbmalzhmxnelyuabawk')
       )) {
         keysToRemove.push(key);
-        console.log('[clearBadSessions] Removing wrong project data:', key);
+        void('[clearBadSessions] Removing wrong project data:', key);
       }
     }
   }
@@ -40,7 +40,7 @@ export function clearBadSupabaseSessions() {
   // Remove all bad keys
   keysToRemove.forEach(key => {
     localStorage.removeItem(key);
-    console.log('[clearBadSessions] Removed:', key);
+    void('[clearBadSessions] Removed:', key);
   });
   
   if (keysToRemove.length > 0) {

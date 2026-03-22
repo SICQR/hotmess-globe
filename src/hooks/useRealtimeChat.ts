@@ -191,7 +191,7 @@ export function useRealtimeChat({
         )
         .subscribe((status) => {
           setIsConnected(status === 'SUBSCRIBED');
-          console.log('[useRealtimeChat] Subscription status:', status);
+          // status tracked via setIsConnected above
         });
     };
 
