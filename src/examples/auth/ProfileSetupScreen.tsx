@@ -55,7 +55,7 @@ export function ProfileSetupScreen({ onSave, onSkip, initialData }: ProfileSetup
             display_name: displayName,
             bio,
             avatar_url: avatar,
-            onboarding_complete: true,
+            onboarding_completed: true,
             updated_at: new Date().toISOString(),
           }, { onConflict: 'account_id' });
 
