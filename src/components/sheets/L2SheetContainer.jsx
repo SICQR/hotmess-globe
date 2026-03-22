@@ -157,9 +157,9 @@ export default function L2SheetContainer({
               'flex flex-col',
               // Scanner corner effect - brutalist 0px radius
               'before:absolute before:top-0 before:left-0 before:w-8 before:h-8',
-              'before:border-t-2 before:border-l-2 before:border-[#00D9FF]',
+              'before:border-t-2 before:border-l-2 before:border-[#C8962C]/60',
               'after:absolute after:top-0 after:right-0 after:w-8 after:h-8',
-              'after:border-t-2 after:border-r-2 after:border-[#00D9FF]',
+              'after:border-t-2 after:border-r-2 after:border-[#C8962C]/60',
               className
             )}
             role="dialog"
