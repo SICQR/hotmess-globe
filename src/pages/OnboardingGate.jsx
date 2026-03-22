@@ -433,29 +433,44 @@ export default function OnboardingGate() {
   // ── Step 6: community attestation ─────────────────────────────────────────
   const handleCommunityConfirm = useCallback(async () => {
     setSaving(true);
+
+    // Failsafe: if nothing resolves within 3s, hard-redirect to break any loop
+    const failsafe = setTimeout(() => {
+      window.location.href = '/';
+    }, 3000);
+
     try {
+      // Set localStorage flags FIRST — these are the fallback the boot guard trusts
       try {
         localStorage.setItem('hm_community_attested_v1', 'true');
       } catch {}
 
       if (session?.user?.id) {
+        // Single combined update: community attestation + onboarding completion
         const { error } = await supabase
           .from('profiles')
-          .update({ community_attested_at: new Date().toISOString() })
+          .update({
+            community_attested_at: new Date().toISOString(),
+            onboarding_completed: true,
+            onboarding_completed_at: new Date().toISOString(),
+          })
           .eq('id', session.user.id);
         if (error) {
-          console.warn('Community attestation DB update failed (continuing):', error);
+          console.warn('Community confirm DB update failed (continuing):', error);
         }
 
-        await completeOnboarding().catch((e) => {
-          console.warn('completeOnboarding failed (continuing):', e);
-        });
+        // Fire-and-forget profile refresh — do NOT await.
+        // Awaiting refetchProfile triggers setIsLoading(true) which unmounts us
+        // via BootRouter before we can navigate, causing a loop.
+        void completeOnboarding().catch(() => {});
       }
 
-      navigate('/');
+      clearTimeout(failsafe);
+      navigate('/', { replace: true });
     } catch (err) {
       console.error('Community confirm error:', err);
-      navigate('/');
+      clearTimeout(failsafe);
+      navigate('/', { replace: true });
     } finally {
       setSaving(false);
     }
