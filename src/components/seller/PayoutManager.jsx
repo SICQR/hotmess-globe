@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { DollarSign, TrendingUp, Clock, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -34,7 +34,7 @@ export default function PayoutManager({ payouts, orders, sellerEmail, stripeConn
         throw new Error('No orders to pay out');
       }
 
-      return await base44.entities.SellerPayout.create({
+      const { data, error } = await supabase.from('seller_payouts').insert({
         seller_email: sellerEmail,
         amount_gbp: availableBalance,
         stripe_connect_account_id: stripeConnectId,
@@ -43,7 +43,9 @@ export default function PayoutManager({ payouts, orders, sellerEmail, stripeConn
         period_start: format(new Date(unpaidOrders[0].created_date), 'yyyy-MM-dd'),
         period_end: format(new Date(), 'yyyy-MM-dd'),
         order_ids: unpaidOrders.map(o => o.id)
-      });
+      }).select().single();
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['seller-payouts']);

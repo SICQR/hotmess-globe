@@ -170,7 +170,7 @@ export function subscribeToBeacons(callback, cityFilter = null) {
  */
 function handleDisconnect(key) {
   setConnectionStatus(ConnectionStatus.DISCONNECTED);
-  console.log('[Realtime] Disconnected:', key);
+  void('[Realtime] Disconnected:', key);
 }
 
 /**
@@ -187,7 +187,7 @@ async function handleReconnect(key) {
   setConnectionStatus(ConnectionStatus.RECONNECTING);
   
   const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-  console.log(`[Realtime] Reconnecting in ${delay}ms (attempt ${reconnectAttempts})`);
+  void(`[Realtime] Reconnecting in ${delay}ms (attempt ${reconnectAttempts})`);
   
   await new Promise(resolve => setTimeout(resolve, delay));
   

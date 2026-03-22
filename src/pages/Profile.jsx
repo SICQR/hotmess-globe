@@ -364,7 +364,7 @@ export default function Profile() {
           viewed_at: new Date().toISOString(),
         });
       } catch {
-        console.log('Failed to track profile view');
+        void('Failed to track profile view');
       }
     };
     

@@ -135,7 +135,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
           viewed_id: viewedUid,
         });
       } catch (err) {
-        console.debug('[ProfileSheet] View recording skipped:', err);
+        void('[ProfileSheet] View recording skipped:', err);
       }
     };
 

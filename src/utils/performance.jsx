@@ -40,7 +40,7 @@ function reportWebVital(metric, value) {
   // Log in development
   if (import.meta.env.DEV) {
     const color = rating === 'good' ? 'green' : rating === 'needs-improvement' ? 'orange' : 'red';
-    console.log(
+    void(
       `%c[Web Vital] ${metric}: ${value.toFixed(2)}ms (${rating})`,
       `color: ${color}`
     );
