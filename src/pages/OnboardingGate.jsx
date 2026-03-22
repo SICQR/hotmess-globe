@@ -369,7 +369,10 @@ export default function OnboardingGate() {
 
         const { error } = await supabase
           .from('profiles')
-          .update({ public_attributes: publicAttributes })
+          .update({
+            public_attributes: publicAttributes,
+            ...(vibeLookingFor.length ? { tags: vibeLookingFor } : {}),
+          })
           .eq('id', session.user.id);
 
         if (error) {
@@ -397,22 +400,16 @@ export default function OnboardingGate() {
       if (!user) throw new Error('Not logged in');
 
       const ext = file.name.split('.').pop();
-      const path = `profile-photos/${user.id}/${Date.now()}.${ext}`;
+      // RLS policy requires folder name = auth.uid()
+      const path = `${user.id}/${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
-        .from('uploads')
-        .upload(path, file, { upsert: false });
+        .from('avatars')
+        .upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
 
       const {
         data: { publicUrl },
-      } = supabase.storage.from('uploads').getPublicUrl(path);
-
-      await supabase.from('profile_photos').insert({
-        profile_id: user.id,
-        url: publicUrl,
-        position: 0,
-        is_primary: true,
-      });
+      } = supabase.storage.from('avatars').getPublicUrl(path);
 
       await supabase
         .from('profiles')
@@ -433,29 +430,50 @@ export default function OnboardingGate() {
   // ── Step 6: community attestation ─────────────────────────────────────────
   const handleCommunityConfirm = useCallback(async () => {
     setSaving(true);
+
+    // Failsafe: if nothing resolves within 3s, hard-redirect to break any loop
+    const failsafe = setTimeout(() => {
+      window.location.href = '/';
+    }, 3000);
+
     try {
+      // Set localStorage flags FIRST — these are the fallback the boot guard trusts
       try {
         localStorage.setItem('hm_community_attested_v1', 'true');
       } catch {}
 
       if (session?.user?.id) {
+        // Single combined update: community attestation + consent + onboarding completion
         const { error } = await supabase
           .from('profiles')
-          .update({ community_attested_at: new Date().toISOString() })
+          .update({
+            community_attested_at: new Date().toISOString(),
+            consent_accepted: true,
+            onboarding_completed: true,
+            onboarding_completed_at: new Date().toISOString(),
+          })
           .eq('id', session.user.id);
         if (error) {
-          console.warn('Community attestation DB update failed (continuing):', error);
+          console.warn('Community confirm DB update failed (continuing):', error);
         }
 
-        await completeOnboarding().catch((e) => {
-          console.warn('completeOnboarding failed (continuing):', e);
-        });
+        // Record formal consent in user_consents table via RPC
+        await supabase.rpc('grant_user_consent', {
+          p_details: { community_attestation: true, timestamp: new Date().toISOString() },
+        }).catch((e) => console.warn('grant_user_consent failed (continuing):', e));
+
+        // Fire-and-forget profile refresh — do NOT await.
+        // Awaiting refetchProfile triggers setIsLoading(true) which unmounts us
+        // via BootRouter before we can navigate, causing a loop.
+        void completeOnboarding().catch(() => {});
       }
 
-      navigate('/');
+      clearTimeout(failsafe);
+      navigate('/', { replace: true });
     } catch (err) {
       console.error('Community confirm error:', err);
-      navigate('/');
+      clearTimeout(failsafe);
+      navigate('/', { replace: true });
     } finally {
       setSaving(false);
     }
