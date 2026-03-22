@@ -79,7 +79,7 @@ const FEATURE_PAGES = [
     title: 'SOCIAL FEATURES',
     route: '/features/social',
     icon: Users,
-    color: '#00D9FF',
+    color: '#00C2E0',
     description: 'Connect with your community through global discovery, real-time messaging, 24-hour stories, presence indicators, vibe matching, and comprehensive privacy controls.',
     highlights: [
       'Distance-based discovery',
@@ -274,7 +274,7 @@ const ManifestoSection = ({ section, index }) => (
     <ul className="space-y-3">
       {section.content.map((item, i) => (
         <li key={i} className="flex items-start gap-3">
-          <CheckCircle className="w-4 h-4 text-[#00D9FF] mt-0.5 flex-shrink-0" />
+          <CheckCircle className="w-4 h-4 text-[#00C2E0] mt-0.5 flex-shrink-0" />
           <span className="text-white/70 text-sm">{item}</span>
         </li>
       ))}
@@ -389,7 +389,7 @@ export default function FeaturesManifesto() {
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-gradient-to-r from-[#00D9FF]/10 to-[#C8962C]/10 border border-white/10 p-8 mb-16"
+          className="bg-gradient-to-r from-[#00C2E0]/10 to-[#C8962C]/10 border border-white/10 p-8 mb-16"
         >
           <h2 className="text-xl font-black uppercase mb-6">
             Technical Implementation
@@ -439,7 +439,7 @@ export default function FeaturesManifesto() {
               <div><span className="text-[#C8962C]">/features</span> — Overview of all features</div>
               <div><span className="text-[#FF0000]">/features/safety</span> — Safety features detail</div>
               <div><span className="text-[#C8962C]">/features/events</span> — Events features detail</div>
-              <div><span className="text-[#00D9FF]">/features/social</span> — Social features detail</div>
+              <div><span className="text-[#00C2E0]">/features/social</span> — Social features detail</div>
               <div><span className="text-[#FF6B35]">/features/radio</span> — Music & Radio features detail</div>
               <div><span className="text-[#C8962C]">/features/personas</span> — Persona features detail</div>
               <div className="pt-4 border-t border-white/10 mt-4">

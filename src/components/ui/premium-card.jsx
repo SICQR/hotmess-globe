@@ -25,7 +25,7 @@ const PremiumCard = React.forwardRef(({
 
   const borderStyles = {
     hot: "border-[#C8962C]/30 hover:border-[#C8962C]/50",
-    cyan: "border-[#00D9FF]/30 hover:border-[#00D9FF]/50",
+    cyan: "border-[#00C2E0]/30 hover:border-[#00C2E0]/50",
     purple: "border-[#C8962C]/30 hover:border-[#C8962C]/50",
     gold: "border-[#C8962C]/30 hover:border-[#C8962C]/50",
     green: "border-[#39FF14]/30 hover:border-[#39FF14]/50",
@@ -126,7 +126,7 @@ PremiumCardDescription.displayName = "PremiumCardDescription";
 const GradientBorderCard = React.forwardRef(({ 
   className, 
   children, 
-  gradient = "from-[#C8962C] via-[#C8962C] to-[#00D9FF]",
+  gradient = "from-[#C8962C] via-[#C8962C] to-[#00C2E0]",
   ...props 
 }, ref) => (
   <div ref={ref} className={cn("relative p-[2px] rounded-xl", className)} {...props}>
@@ -153,7 +153,7 @@ const FeatureCard = React.forwardRef(({
 }, ref) => {
   const colors = {
     hot: { bg: "bg-[#C8962C]/20", text: "text-[#C8962C]", border: "border-[#C8962C]/30" },
-    cyan: { bg: "bg-[#00D9FF]/20", text: "text-[#00D9FF]", border: "border-[#00D9FF]/30" },
+    cyan: { bg: "bg-[#00C2E0]/20", text: "text-[#00C2E0]", border: "border-[#00C2E0]/30" },
     purple: { bg: "bg-[#C8962C]/20", text: "text-[#C8962C]", border: "border-[#C8962C]/30" },
     gold: { bg: "bg-[#C8962C]/20", text: "text-[#C8962C]", border: "border-[#C8962C]/30" },
     green: { bg: "bg-[#39FF14]/20", text: "text-[#39FF14]", border: "border-[#39FF14]/30" },
@@ -187,7 +187,7 @@ const StatCard = React.forwardRef(({
 }, ref) => {
   const colors = {
     hot: "text-[#C8962C]",
-    cyan: "text-[#00D9FF]",
+    cyan: "text-[#00C2E0]",
     purple: "text-[#C8962C]",
     gold: "text-[#C8962C]",
     green: "text-[#39FF14]",

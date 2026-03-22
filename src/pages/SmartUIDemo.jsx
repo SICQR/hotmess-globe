@@ -55,7 +55,7 @@ export default function SmartUIDemo() {
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-5xl font-black bg-gradient-to-r from-[#C8962C] via-[#00D9FF] to-[#C8962C] bg-clip-text text-transparent">
+          <h1 className="text-5xl font-black bg-gradient-to-r from-[#C8962C] via-[#00C2E0] to-[#C8962C] bg-clip-text text-transparent">
             Smart Dynamic UI System
           </h1>
           <p className="text-white/60 text-lg">
@@ -115,7 +115,7 @@ export default function SmartUIDemo() {
             <MagneticButton className="bg-[#C8962C] text-white px-6 py-3 rounded-lg font-bold">
               Hover Me!
             </MagneticButton>
-            <MagneticButton className="bg-gradient-to-r from-[#00D9FF] to-[#3B82F6] text-white px-6 py-3 rounded-lg font-bold">
+            <MagneticButton className="bg-gradient-to-r from-[#00C2E0] to-[#3B82F6] text-white px-6 py-3 rounded-lg font-bold">
               I Follow You
             </MagneticButton>
             <MagneticButton className="bg-gradient-to-r from-[#C8962C] to-[#FF6B35] text-black px-6 py-3 rounded-lg font-bold">
@@ -231,7 +231,7 @@ export default function SmartUIDemo() {
                 id: '2',
                 size: '1x1',
                 content: (
-                  <div className="h-full bg-gradient-to-br from-[#00D9FF] to-[#3B82F6] rounded-lg p-4 flex items-center justify-center">
+                  <div className="h-full bg-gradient-to-br from-[#00C2E0] to-[#3B82F6] rounded-lg p-4 flex items-center justify-center">
                     <div className="text-center">
                       <Heart className="w-8 h-8 text-white mx-auto mb-2" />
                       <p className="text-white font-bold">Standard</p>
@@ -289,7 +289,7 @@ export default function SmartUIDemo() {
             />
             {selectedTravel && (
               <p className="mt-4 text-white/60 text-sm">
-                Selected: <span className="text-[#00D9FF] font-bold">{selectedTravel}</span>
+                Selected: <span className="text-[#00C2E0] font-bold">{selectedTravel}</span>
               </p>
             )}
           </div>

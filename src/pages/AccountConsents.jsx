@@ -114,7 +114,7 @@ export default function AccountConsents() {
 
             <div className="bg-white/5 border-2 border-white/20 p-6">
               <div className="flex items-start gap-4">
-                <MapPin className="w-6 h-6 text-[#00D9FF] flex-shrink-0 mt-1" />
+                <MapPin className="w-6 h-6 text-[#00C2E0] flex-shrink-0 mt-1" />
                 <div className="flex-1">
                   <h3 className="font-black uppercase text-lg mb-2">LOCATION SERVICES</h3>
                   <p className="text-white/60 text-sm mb-4">
@@ -124,7 +124,7 @@ export default function AccountConsents() {
                     <Checkbox
                       checked={locationConsent}
                       onCheckedChange={setLocationConsent}
-                      className="border-white data-[state=checked]:bg-[#00D9FF] data-[state=checked]:border-[#00D9FF]"
+                      className="border-white data-[state=checked]:bg-[#00C2E0] data-[state=checked]:border-[#00C2E0]"
                     />
                     <span className="text-sm font-bold uppercase">I consent to location services</span>
                   </label>

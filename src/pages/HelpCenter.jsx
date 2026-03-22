@@ -233,12 +233,12 @@ export default function HelpCenter() {
               href="mailto:support@hotmess.app"
               className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-colors"
             >
-              <Mail className="w-8 h-8 text-[#00D9FF] mb-3" />
+              <Mail className="w-8 h-8 text-[#00C2E0] mb-3" />
               <h3 className="font-bold mb-1">Email Support</h3>
               <p className="text-sm text-white/60 mb-3">
                 Get help via email. We typically respond within 24 hours.
               </p>
-              <span className="text-[#00D9FF] text-sm flex items-center gap-1">
+              <span className="text-[#00C2E0] text-sm flex items-center gap-1">
                 support@hotmess.app
                 <ExternalLink className="w-3 h-3" />
               </span>

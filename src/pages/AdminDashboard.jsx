@@ -183,7 +183,7 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="support" 
-              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black font-black uppercase text-xs py-3"
+              className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black font-black uppercase text-xs py-3"
             >
               <MessageSquare className="w-4 h-4 mr-2" />
               Support
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger 
               value="users" 
-              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black font-black uppercase text-xs py-3"
+              className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black font-black uppercase text-xs py-3"
             >
               <Users className="w-4 h-4 mr-2" />
               Users

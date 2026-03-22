@@ -104,7 +104,7 @@ Return ONLY a JSON array of product IDs, like: ["id1", "id2", "id3", "id4"]`;
     return (
       <div className="mt-12">
         <div className="flex items-center gap-2 mb-6">
-          <Sparkles className="w-5 h-5 text-[#00D9FF] animate-pulse" />
+          <Sparkles className="w-5 h-5 text-[#00C2E0] animate-pulse" />
           <h2 className="text-2xl font-black uppercase">You Might Also Like</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -125,7 +125,7 @@ Return ONLY a JSON array of product IDs, like: ["id1", "id2", "id3", "id4"]`;
       className="mt-12"
     >
       <div className="flex items-center gap-2 mb-6">
-        <Sparkles className="w-5 h-5 text-[#00D9FF]" />
+        <Sparkles className="w-5 h-5 text-[#00C2E0]" />
         <h2 className="text-2xl font-black uppercase">You Might Also Like</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

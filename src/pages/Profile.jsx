@@ -119,7 +119,7 @@ export default function Profile() {
     // Simple deterministic colors so avatars feel consistent.
     const palette = [
       ['#C8962C', '#C8962C'],
-      ['#00D9FF', '#1E3A8A'],
+      ['#00C2E0', '#1E3A8A'],
       ['#22C55E', '#0F766E'],
       ['#F97316', '#7C2D12'],
     ];
@@ -364,7 +364,7 @@ export default function Profile() {
           viewed_at: new Date().toISOString(),
         });
       } catch {
-        console.log('Failed to track profile view');
+        void('Failed to track profile view');
       }
     };
     
@@ -691,9 +691,9 @@ export default function Profile() {
             </div>
 
             {profileType === 'seller' && (
-              <div className="border-2 border-[#00D9FF] p-4 bg-black">
+              <div className="border-2 border-[#00C2E0] p-4 bg-black">
                 <div className="mb-3">
-                  <p className="text-xs uppercase tracking-widest text-[#00D9FF] font-black">Seller Details</p>
+                  <p className="text-xs uppercase tracking-widest text-[#00C2E0] font-black">Seller Details</p>
                   <p className="text-xs text-white/50">These show up on your card and help cross-sell.</p>
                 </div>
                 <div className="space-y-4">
@@ -722,7 +722,7 @@ export default function Profile() {
                       placeholder="What you sell, shipping/pickup, collaborations…"
                       rows={4}
                       maxLength={500}
-                      className="w-full bg-white/5 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#00D9FF] focus:outline-none"
+                      className="w-full bg-white/5 border-2 border-white/20 p-3 text-white placeholder:text-white/40 focus:border-[#00C2E0] focus:outline-none"
                     />
                     <p className="text-xs text-white/40 mt-1">{sellerBio.length}/500</p>
                   </div>
@@ -836,7 +836,7 @@ export default function Profile() {
               {isConnection ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 mb-3">
-                    <Lock className="w-4 h-4 text-[#00D9FF]" />
+                    <Lock className="w-4 h-4 text-[#00C2E0]" />
                     <p className="text-xs text-white/40 uppercase">Social Links (Connected)</p>
                   </div>
                   <div className="flex flex-wrap gap-3">
@@ -940,10 +940,10 @@ export default function Profile() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-[#00D9FF]" />
+                  <User className="w-5 h-5 text-[#00C2E0]" />
                   <h2 className="text-xl font-black uppercase">Profile Views</h2>
                 </div>
-                <span className="text-2xl font-black text-[#00D9FF]">{viewCount}</span>
+                <span className="text-2xl font-black text-[#00C2E0]">{viewCount}</span>
               </div>
               
               {canSeeViewers ? (
@@ -1013,7 +1013,7 @@ export default function Profile() {
                     <div className="flex items-start justify-between mb-2">
                       <Star className="w-5 h-5 text-[#FFEB3B]" />
                       {highlight.item_type === 'checkin' && checkIn && (
-                        <span className="text-xs text-[#00D9FF] font-bold uppercase">Check-in</span>
+                        <span className="text-xs text-[#00C2E0] font-bold uppercase">Check-in</span>
                       )}
                       {highlight.item_type === 'squad' && squad && (
                         <span className="text-xs text-[#C8962C] font-bold uppercase">Squad</span>

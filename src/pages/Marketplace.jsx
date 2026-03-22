@@ -251,7 +251,7 @@ export default function Marketplace() {
             expires_at: expiresAt,
           });
         } catch (error) {
-          console.log('Failed to create P2P beacon:', error);
+          void('Failed to create P2P beacon:', error);
         }
       }
 
@@ -420,7 +420,7 @@ export default function Marketplace() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-3xl md:text-4xl font-black italic uppercase tracking-tight mb-2">
-                THE <span className="text-[#00D9FF]">SHOP</span>
+                THE <span className="text-[#00C2E0]">SHOP</span>
               </h1>
               <p className="text-white/60 uppercase text-sm tracking-wider">
                 Official Gear + P2P Mess Market (10% Platform Fee)
@@ -550,7 +550,7 @@ export default function Marketplace() {
             <TabsTrigger value="all" className="shrink-0 data-[state=active]:bg-[#C8962C] data-[state=active]:text-black">
               All ({uniqueProducts.length})
             </TabsTrigger>
-            <TabsTrigger value="official" className="shrink-0 data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
+            <TabsTrigger value="official" className="shrink-0 data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black">
               Official Shop
             </TabsTrigger>
             <TabsTrigger value="p2p" className="shrink-0 data-[state=active]:bg-[#C8962C] data-[state=active]:text-white">

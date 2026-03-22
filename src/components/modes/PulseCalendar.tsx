@@ -24,14 +24,14 @@ export function PulseCalendar({ selectedDate, dates = [], onDateSelect }: PulseC
             onClick={() => onDateSelect?.(date)}
             className={`
               flex flex-col items-center justify-center min-w-10 h-10 rounded-lg
-              ${isSelected ? 'bg-[#00D9FF] text-black' : 'text-white'}
-              ${isToday && !isSelected ? 'border border-[#00D9FF]' : ''}
+              ${isSelected ? 'bg-[#00C2E0] text-black' : 'text-white'}
+              ${isToday && !isSelected ? 'border border-[#00C2E0]' : ''}
             `}
           >
             <span className="text-[10px] uppercase">{dayName}</span>
             <span className="text-sm font-medium">{dayNum}</span>
             {hasEvents && !isSelected && (
-              <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#00D9FF]" />
+              <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#00C2E0]" />
             )}
           </button>
         );

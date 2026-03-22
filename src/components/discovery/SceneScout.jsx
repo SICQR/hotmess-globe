@@ -29,9 +29,9 @@ const TYPE_STYLES = {
     label: 'Event'
   },
   venue: {
-    bg: 'bg-[#00D9FF]/20',
-    border: 'border-[#00D9FF]',
-    text: 'text-[#00D9FF]',
+    bg: 'bg-[#00C2E0]/20',
+    border: 'border-[#00C2E0]',
+    text: 'text-[#00C2E0]',
     label: 'Venue'
   }
 };

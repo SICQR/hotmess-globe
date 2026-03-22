@@ -24,7 +24,7 @@ export function PersonaPreviewCard({ persona, isActive = false, className }) {
     <div className={cn(
       'relative rounded-xl overflow-hidden border transition-all',
       isActive 
-        ? 'border-[#00D9FF]/50 shadow-lg shadow-[#00D9FF]/20'
+        ? 'border-[#00C2E0]/50 shadow-lg shadow-[#00C2E0]/20'
         : 'border-white/10',
       className
     )}>
@@ -46,16 +46,16 @@ export function PersonaPreviewCard({ persona, isActive = false, className }) {
       <div className="absolute top-2 left-2">
         <div className={cn(
           'p-1.5 rounded-full',
-          isActive ? 'bg-[#00D9FF]/30' : 'bg-black/50'
+          isActive ? 'bg-[#00C2E0]/30' : 'bg-black/50'
         )}>
-          <Icon size={14} className={isActive ? 'text-[#00D9FF]' : 'text-white/60'} />
+          <Icon size={14} className={isActive ? 'text-[#00C2E0]' : 'text-white/60'} />
         </div>
       </div>
 
       {/* Active badge */}
       {isActive && (
         <div className="absolute top-2 right-2">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-[#00D9FF] bg-black/50 px-1.5 py-0.5 rounded">
+          <span className="text-[9px] font-bold uppercase tracking-wider text-[#00C2E0] bg-black/50 px-1.5 py-0.5 rounded">
             Active
           </span>
         </div>

@@ -36,7 +36,7 @@ export default function MutualConnections({ profileUserEmail, currentUserEmail }
   return (
     <div className="bg-black border-2 border-white/20 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Users className="w-4 h-4 text-[#00D9FF]" />
+        <Users className="w-4 h-4 text-[#00C2E0]" />
         <h3 className="text-xs uppercase tracking-widest text-white/60 font-black">
           {mutualUsers.length} Mutual Connection{mutualUsers.length !== 1 ? 's' : ''}
         </h3>

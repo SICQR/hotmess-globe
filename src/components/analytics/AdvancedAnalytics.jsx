@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Users, ShoppingBag, MapPin, Zap } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const COLORS = ['#C8962C', '#00D9FF', '#C8962C', '#FFEB3B', '#39FF14', '#FF6B35'];
+const COLORS = ['#C8962C', '#00C2E0', '#C8962C', '#FFEB3B', '#39FF14', '#FF6B35'];
 
 export default function AdvancedAnalytics() {
   const [timeRange, setTimeRange] = useState('7d'); // 7d, 30d, 90d
@@ -96,8 +96,8 @@ export default function AdvancedAnalytics() {
           <div className="text-3xl font-black">{users.length}</div>
           <div className="text-xs text-white/60 uppercase">Total Users</div>
         </div>
-        <div className="bg-gradient-to-br from-[#00D9FF]/20 to-[#C8962C]/20 border-2 border-[#00D9FF] p-6">
-          <Zap className="w-6 h-6 text-[#00D9FF] mb-2" />
+        <div className="bg-gradient-to-br from-[#00C2E0]/20 to-[#C8962C]/20 border-2 border-[#00C2E0] p-6">
+          <Zap className="w-6 h-6 text-[#00C2E0] mb-2" />
           <div className="text-3xl font-black">{activeUsers}</div>
           <div className="text-xs text-white/60 uppercase">Active Users</div>
         </div>
@@ -106,7 +106,7 @@ export default function AdvancedAnalytics() {
           <div className="text-3xl font-black">{beacons.length}</div>
           <div className="text-xs text-white/60 uppercase">Beacons</div>
         </div>
-        <div className="bg-gradient-to-br from-[#39FF14]/20 to-[#00D9FF]/20 border-2 border-[#39FF14] p-6">
+        <div className="bg-gradient-to-br from-[#39FF14]/20 to-[#00C2E0]/20 border-2 border-[#39FF14] p-6">
           <ShoppingBag className="w-6 h-6 text-[#39FF14] mb-2" />
           <div className="text-3xl font-black">{orders.length}</div>
           <div className="text-xs text-white/60 uppercase">Orders</div>
@@ -169,7 +169,7 @@ export default function AdvancedAnalytics() {
             <Tooltip 
               contentStyle={{ backgroundColor: '#000', border: '1px solid #fff3' }}
             />
-            <Bar dataKey="value" fill="#00D9FF" />
+            <Bar dataKey="value" fill="#00C2E0" />
           </BarChart>
         </ResponsiveContainer>
       </div>

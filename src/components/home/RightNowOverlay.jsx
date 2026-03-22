@@ -175,7 +175,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
                       onClick={() => setCityFilter('all')}
                       className={`px-3 py-1 text-xs font-mono uppercase border ${
                         cityFilter === 'all'
-                          ? 'bg-[#00D9FF] text-black border-[#00D9FF]'
+                          ? 'bg-[#00C2E0] text-black border-[#00C2E0]'
                           : 'bg-black text-white/60 border-white/20 hover:border-white/40'
                       }`}
                     >
@@ -187,7 +187,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
                         onClick={() => setCityFilter(city)}
                         className={`px-3 py-1 text-xs font-mono uppercase border ${
                           cityFilter === city
-                            ? 'bg-[#00D9FF] text-black border-[#00D9FF]'
+                            ? 'bg-[#00C2E0] text-black border-[#00C2E0]'
                             : 'bg-black text-white/60 border-white/20 hover:border-white/40'
                         }`}
                       >
@@ -301,12 +301,12 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: idx * 0.03 }}
-                          className="bg-black border-l-4 border-[#00D9FF] p-3"
+                          className="bg-black border-l-4 border-[#00C2E0] p-3"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
                               <Link to={createPageUrl(`Profile?email=${checkIn.user_email}`)}>
-                                <p className="font-bold text-sm hover:text-[#00D9FF] transition-colors">
+                                <p className="font-bold text-sm hover:text-[#00C2E0] transition-colors">
                                   {checkIn.user_name}
                                 </p>
                               </Link>

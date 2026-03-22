@@ -89,9 +89,9 @@ export default function OrganizerDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-[#00D9FF]/20 to-[#39FF14]/20 border border-[#00D9FF]/40 rounded-xl p-6"
+            className="bg-gradient-to-br from-[#00C2E0]/20 to-[#39FF14]/20 border border-[#00C2E0]/40 rounded-xl p-6"
           >
-            <Eye className="w-8 h-8 text-[#00D9FF] mb-2" />
+            <Eye className="w-8 h-8 text-[#00C2E0] mb-2" />
             <div className="text-3xl font-black mb-1">{totalScans}</div>
             <div className="text-sm text-white/60">Total Scans</div>
           </motion.div>
@@ -127,7 +127,7 @@ export default function OrganizerDashboard() {
                 labelStyle={{ color: '#fff' }}
               />
               <Bar dataKey="scans" fill="#C8962C" />
-              <Bar dataKey="visits" fill="#00D9FF" />
+              <Bar dataKey="visits" fill="#00C2E0" />
               <Bar dataKey="likes" fill="#FFEB3B" />
             </BarChart>
           </ResponsiveContainer>
@@ -172,7 +172,7 @@ export default function OrganizerDashboard() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-white/60">Check-ins</span>
-                      <span className="text-[#00D9FF] font-bold">{beaconCheckIns}</span>
+                      <span className="text-[#00C2E0] font-bold">{beaconCheckIns}</span>
                     </div>
                   </div>
                   

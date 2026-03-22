@@ -171,7 +171,7 @@ export default function TicketChat() {
 
       {/* Purchase banner (when unlocked) */}
       {canPurchase && (
-        <div className="border-t border-white/10 bg-gradient-to-r from-[#C8962C]/10 to-[#00D9FF]/10 p-4">
+        <div className="border-t border-white/10 bg-gradient-to-r from-[#C8962C]/10 to-[#00C2E0]/10 p-4">
           <div className="mx-auto max-w-2xl flex items-center justify-between">
             <div>
               <div className="text-sm text-white/60">Ready to buy?</div>

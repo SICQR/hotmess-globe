@@ -188,7 +188,7 @@ export default function TicketScanner({ event, onClose }) {
                   className="w-full h-full object-cover"
                   playsInline
                 />
-                <div className="absolute inset-0 border-4 border-[#00D9FF] m-12 pointer-events-none" />
+                <div className="absolute inset-0 border-4 border-[#00C2E0] m-12 pointer-events-none" />
               </div>
               <p className="text-center text-sm text-white/60 uppercase">
                 Position QR code within frame
@@ -212,14 +212,14 @@ export default function TicketScanner({ event, onClose }) {
               animate={{ opacity: 1, y: 0 }}
               className={`p-6 border-2 ${
                 result.status === 'success' 
-                  ? 'bg-[#00D9FF]/10 border-[#00D9FF]' 
+                  ? 'bg-[#00C2E0]/10 border-[#00C2E0]' 
                   : result.status === 'warning'
                   ? 'bg-[#FFEB3B]/10 border-[#FFEB3B]'
                   : 'bg-[#FF073A]/10 border-[#FF073A]'
               }`}
             >
               <div className="flex items-center gap-3 mb-3">
-                {result.status === 'success' && <CheckCircle className="w-6 h-6 text-[#00D9FF]" />}
+                {result.status === 'success' && <CheckCircle className="w-6 h-6 text-[#00C2E0]" />}
                 {result.status === 'warning' && <AlertCircle className="w-6 h-6 text-[#FFEB3B]" />}
                 {result.status === 'error' && <XCircle className="w-6 h-6 text-[#FF073A]" />}
                 <span className="font-black uppercase">{result.message}</span>

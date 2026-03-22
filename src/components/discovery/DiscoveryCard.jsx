@@ -162,7 +162,7 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
                 {topTribes.map(tribe => (
                   <span
                     key={tribe.tribe_id}
-                    className="px-2 py-0.5 bg-[#00D9FF] text-black text-[10px] font-bold uppercase"
+                    className="px-2 py-0.5 bg-[#00C2E0] text-black text-[10px] font-bold uppercase"
                   >
                     {tribe.tribe_label}
                   </span>
@@ -218,7 +218,7 @@ export default function DiscoveryCard({ user, userTags = [], userTribes = [], cu
                 {communicationStyle.slice(0, 2).map((item, idx) => (
                   <span
                     key={`${item}-${idx}`}
-                    className="px-2 py-0.5 bg-[#00D9FF]/20 text-[#00D9FF] text-[9px] font-bold uppercase border border-[#00D9FF]/40"
+                    className="px-2 py-0.5 bg-[#00C2E0]/20 text-[#00C2E0] text-[9px] font-bold uppercase border border-[#00C2E0]/40"
                   >
                     {item}
                   </span>

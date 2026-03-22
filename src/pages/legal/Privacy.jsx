@@ -14,7 +14,7 @@ export default function Privacy() {
           <p className="text-sm text-white/80">
             Data rights: access, export, deletion, and retention requests.
           </p>
-          <Link to="/legal/privacy-hub" className="text-sm font-black uppercase tracking-wider text-[#00D9FF] hover:underline">
+          <Link to="/legal/privacy-hub" className="text-sm font-black uppercase tracking-wider text-[#00C2E0] hover:underline">
             Open Privacy Hub
           </Link>
         </div>

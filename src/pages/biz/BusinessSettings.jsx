@@ -279,7 +279,7 @@ export default function BusinessSettings() {
                 className="bg-white/5 border border-white/10 p-6"
               >
                 <h2 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-[#00D9FF]" />
+                  <Bell className="w-5 h-5 text-[#00C2E0]" />
                   Notification Preferences
                 </h2>
                 

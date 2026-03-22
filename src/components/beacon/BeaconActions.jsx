@@ -166,7 +166,7 @@ export default function BeaconActions({ beacon }) {
                 className="w-full text-sm text-white/60 file:mr-4 file:py-2 file:px-4 file:border-2 file:border-white file:bg-[#C8962C] file:text-black file:font-black file:uppercase file:text-xs hover:file:bg-white file:cursor-pointer"
               />
               {photoFile && (
-                <p className="text-xs text-[#00D9FF] mt-2 font-mono">
+                <p className="text-xs text-[#00C2E0] mt-2 font-mono">
                   ✓ {photoFile.name}
                 </p>
               )}
@@ -182,7 +182,7 @@ export default function BeaconActions({ beacon }) {
             <Button
               onClick={handleCheckIn}
               disabled={checkInMutation.isPending || uploading}
-              className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black border-2 border-white"
+              className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-black border-2 border-white"
             >
               {uploading ? 'UPLOADING PHOTO...' : checkInMutation.isPending ? 'CHECKING IN...' : 'CHECK IN'}
             </Button>

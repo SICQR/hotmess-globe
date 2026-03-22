@@ -47,7 +47,7 @@ export function LuxPageBanner({
   };
 
   const typeStyles = {
-    info: 'bg-[#00D9FF] text-black',
+    info: 'bg-[#00C2E0] text-black',
     warning: 'bg-[#FFEB3B] text-black',
     success: 'bg-[#39FF14] text-black',
     promo: 'bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-white',

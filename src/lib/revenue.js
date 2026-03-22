@@ -72,7 +72,7 @@ export const MEMBERSHIP_TIERS = {
     price: 1999, // pence
     priceDisplay: '£19.99/mo',
     stripePriceId: 'price_chrome_monthly',
-    color: '#00D9FF',
+    color: '#00C2E0',
     icon: 'Crown',
     badge: 'CHROME',
     features: [
@@ -551,7 +551,7 @@ export const USPS = {
       headline: '87% Match Accuracy',
       subline: '8-dimension AI matching based on real data, not random swiping.',
       icon: 'Brain',
-      color: '#00D9FF',
+      color: '#00C2E0',
       stat: '87%',
     },
     {
@@ -580,7 +580,7 @@ export const USPS = {
       headline: 'Safety Built-In',
       subline: 'Check-ins, panic button, fake calls, aftercare. Because care matters.',
       icon: 'Shield',
-      color: '#00D9FF',
+      color: '#00C2E0',
     },
   ],
   

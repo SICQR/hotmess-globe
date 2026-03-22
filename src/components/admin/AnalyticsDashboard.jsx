@@ -117,15 +117,15 @@ export default function AnalyticsDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-black border-2 border-[#00D9FF] p-8"
+          className="bg-black border-2 border-[#00C2E0] p-8"
         >
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-[#00D9FF] border-2 border-white flex items-center justify-center">
+            <div className="w-16 h-16 bg-[#00C2E0] border-2 border-white flex items-center justify-center">
               <Users className="w-8 h-8 text-black" />
             </div>
             <div>
               <p className="text-[10px] text-white/40 uppercase tracking-widest">ACTIVE USERS</p>
-              <p className="text-4xl font-black text-[#00D9FF]">{activeUsers}</p>
+              <p className="text-4xl font-black text-[#00C2E0]">{activeUsers}</p>
             </div>
           </div>
           <p className="text-xs text-white/60 uppercase font-mono">{users.length} TOTAL USERS</p>
@@ -269,7 +269,7 @@ export default function AnalyticsDashboard() {
                 <p className="text-xs text-white/60">{event.city}</p>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-black text-[#00D9FF]">{event.checkInCount}</p>
+                <p className="text-2xl font-black text-[#00C2E0]">{event.checkInCount}</p>
                 <p className="text-xs text-white/40 uppercase">CHECK-INS</p>
               </div>
             </motion.div>
@@ -300,12 +300,12 @@ export default function AnalyticsDashboard() {
             <p className="text-3xl font-black text-[#C8962C]">{plusSubscribers}</p>
             <p className="text-xs text-white/40 mt-1">£9.99/month • £{(plusSubscribers * PLUS_PRICE).toFixed(2)}/mo</p>
           </div>
-          <div className="bg-[#00D9FF]/10 border-2 border-[#00D9FF]/40 p-4">
+          <div className="bg-[#00C2E0]/10 border-2 border-[#00C2E0]/40 p-4">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-4 h-4 bg-[#00D9FF] rounded-full" />
-              <span className="text-sm font-bold uppercase text-[#00D9FF]">CHROME</span>
+              <div className="w-4 h-4 bg-[#00C2E0] rounded-full" />
+              <span className="text-sm font-bold uppercase text-[#00C2E0]">CHROME</span>
             </div>
-            <p className="text-3xl font-black text-[#00D9FF]">{chromeSubscribers}</p>
+            <p className="text-3xl font-black text-[#00C2E0]">{chromeSubscribers}</p>
             <p className="text-xs text-white/40 mt-1">£19.99/month • £{(chromeSubscribers * CHROME_PRICE).toFixed(2)}/mo</p>
           </div>
         </div>
@@ -318,7 +318,7 @@ export default function AnalyticsDashboard() {
           <div className="space-y-3">
             <div className="flex justify-between items-center border-b-2 border-white/10 pb-2">
               <span className="text-white/60 uppercase text-xs font-mono">Online</span>
-              <span className="font-black text-[#00D9FF]">
+              <span className="font-black text-[#00C2E0]">
                 {users.filter(u => u.activity_status === 'online').length}
               </span>
             </div>

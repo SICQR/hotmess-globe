@@ -12,7 +12,7 @@ const LIVE_STREAM_URL = 'https://listen.radioking.com/radio/736103/stream/802454
 
 const SHOWS = [
   { ...schedule.shows[0], accent: '#C8962C', shadow: 'rgba(255,20,147,0.4)',  icon: Mic2  },
-  { ...schedule.shows[1], accent: '#00D9FF', shadow: 'rgba(0,217,255,0.4)',   icon: RadioIcon },
+  { ...schedule.shows[1], accent: '#00C2E0', shadow: 'rgba(0,217,255,0.4)',   icon: RadioIcon },
   { ...schedule.shows[2], accent: '#C8962C', shadow: 'rgba(176,38,255,0.4)', icon: Rss   },
 ];
 
@@ -177,7 +177,7 @@ export default function Radio() {
               <button
                 onClick={openRadio}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-black uppercase text-sm text-black transition-all active:scale-95"
-                style={{ background: '#00D9FF', boxShadow: '0 0 20px rgba(0,217,255,0.4)' }}
+                style={{ background: '#00C2E0', boxShadow: '0 0 20px rgba(0,217,255,0.4)' }}
               >
                 <ExternalLink className="w-4 h-4" /> Open Player
               </button>

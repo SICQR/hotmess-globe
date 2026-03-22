@@ -77,7 +77,7 @@ async function getViewerStateFallback(
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('age_verified, consent_accepted, onboarding_complete')
+    .select('age_verified, consent_accepted, onboarding_completed')
     .eq('account_id', user.id)
     .single();
 
@@ -87,7 +87,7 @@ async function getViewerStateFallback(
 
   if (!profile.age_verified) return 'AGE_REQUIRED';
   if (!profile.consent_accepted) return 'CONSENT_REQUIRED';
-  if (!profile.onboarding_complete) return 'ONBOARDING_REQUIRED';
+  if (!profile.onboarding_completed) return 'ONBOARDING_REQUIRED';
   
   return 'OS_READY';
 }
@@ -219,7 +219,7 @@ export async function markOnboardingComplete(
 
   const { error } = await supabase
     .from('profiles')
-    .update({ onboarding_complete: true })
+    .update({ onboarding_completed: true })
     .eq('account_id', user.id);
 
   if (error) return { success: false, error: error.message };

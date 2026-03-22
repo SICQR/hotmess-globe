@@ -136,7 +136,7 @@ export default function LevelUpModal({ isOpen, onClose, level, rewards = [] }) {
                 transition={{ delay: 0.6 }}
                 className="mb-6 space-y-2"
               >
-                <p className="text-[#00D9FF] font-bold uppercase text-sm tracking-wider">
+                <p className="text-[#00C2E0] font-bold uppercase text-sm tracking-wider">
                   Rewards Unlocked:
                 </p>
                 {rewards.map((reward, idx) => (

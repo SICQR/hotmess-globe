@@ -112,9 +112,9 @@ export default function Community() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="bg-gradient-to-br from-[#00D9FF]/20 to-[#39FF14]/20 border border-[#00D9FF]/40 rounded-xl p-4 text-center"
+            className="bg-gradient-to-br from-[#00C2E0]/20 to-[#39FF14]/20 border border-[#00C2E0]/40 rounded-xl p-4 text-center"
           >
-            <Sparkles className="w-6 h-6 text-[#00D9FF] mx-auto mb-2" />
+            <Sparkles className="w-6 h-6 text-[#00C2E0] mx-auto mb-2" />
             <div className="text-2xl font-black">{posts.length}</div>
             <div className="text-xs text-white/60 uppercase tracking-wider">Total Posts</div>
           </motion.div>

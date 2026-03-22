@@ -93,7 +93,7 @@ export default function SellerRatingDisplay({ sellerEmail, compact = false }) {
         <div className="space-y-4">
           {rating?.response_rate !== undefined && (
             <div className="flex items-start gap-3">
-              <MessageCircle className="w-5 h-5 text-[#00D9FF] flex-shrink-0 mt-0.5" />
+              <MessageCircle className="w-5 h-5 text-[#00C2E0] flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-bold">Response Rate</span>

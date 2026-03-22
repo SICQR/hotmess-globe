@@ -22,7 +22,7 @@ export const ACTIVITY_TYPES = {
   },
   profile_view: {
     label: 'Profile View',
-    color: '#00D9FF',
+    color: '#00C2E0',
     glowColor: 'rgba(0, 217, 255, 0.6)',
     icon: '👁️',
     pulseSize: 0.8,
@@ -69,7 +69,7 @@ export const ACTIVITY_TYPES = {
   },
   event_rsvp: {
     label: 'Event RSVP',
-    color: '#00D9FF',
+    color: '#00C2E0',
     glowColor: 'rgba(0, 217, 255, 0.6)',
     icon: '🎫',
     pulseSize: 1.2,
@@ -148,7 +148,7 @@ export const ACTIVITY_TYPES = {
   // Safety Actions
   safety_checkin: {
     label: 'Safety Check',
-    color: '#00D9FF',
+    color: '#00C2E0',
     glowColor: 'rgba(0, 217, 255, 0.6)',
     icon: '🛡️',
     pulseSize: 1.0,

@@ -565,7 +565,7 @@ export default function Connect() {
                   <span className="text-[10px] opacity-60">Available now. Auto-expires.</span>
                 </div>
               </TabsTrigger>
-              <TabsTrigger value="browse" className="flex-1 data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
+              <TabsTrigger value="browse" className="flex-1 data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black">
                 <div className="flex flex-col items-center py-2">
                   <Users className="w-5 h-5 mb-1" />
                   <span className="font-black uppercase text-xs">Browse</span>
@@ -634,7 +634,7 @@ export default function Connect() {
         <div className="mb-4 text-sm text-white/60">
           {reorderedUsers.length} {reorderedUsers.length === 1 ? 'result' : 'results'}
           {Object.keys(aiMatchExplanations).length > 0 && (
-            <span className="ml-2 text-[#00D9FF]">• Top {Object.keys(aiMatchExplanations).length} AI matches promoted</span>
+            <span className="ml-2 text-[#00C2E0]">• Top {Object.keys(aiMatchExplanations).length} AI matches promoted</span>
           )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

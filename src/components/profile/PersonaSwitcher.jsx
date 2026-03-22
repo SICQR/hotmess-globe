@@ -36,7 +36,7 @@ const PERSONA_TYPES = {
   TRAVEL: {
     icon: Plane,
     label: 'Travel',
-    color: '#00D9FF',
+    color: '#00C2E0',
     description: 'For when you\'re exploring'
   },
   WEEKEND: {

@@ -79,7 +79,7 @@ export function enqueue(item) {
   // Request background sync if available
   requestBackgroundSync();
   
-  console.log('[OfflineQueue] Enqueued item:', queueItem.id);
+  void('[OfflineQueue] Enqueued item:', queueItem.id);
   return queueItem.id;
 }
 
@@ -90,7 +90,7 @@ export function enqueue(item) {
 export function dequeue(id) {
   const queue = getQueue().filter(item => item.id !== id);
   saveQueue(queue);
-  console.log('[OfflineQueue] Dequeued item:', id);
+  void('[OfflineQueue] Dequeued item:', id);
 }
 
 /**
@@ -110,7 +110,7 @@ export function updateQueueItem(id, updates) {
  */
 export function clearQueue() {
   localStorage.removeItem(QUEUE_KEY);
-  console.log('[OfflineQueue] Queue cleared');
+  void('[OfflineQueue] Queue cleared');
 }
 
 /**
@@ -144,9 +144,9 @@ async function requestBackgroundSync() {
     try {
       const registration = await navigator.serviceWorker.ready;
       await registration.sync.register(SYNC_TAG);
-      console.log('[OfflineQueue] Background sync registered');
+      void('[OfflineQueue] Background sync registered');
     } catch (error) {
-      console.log('[OfflineQueue] Background sync not available:', error);
+      void('[OfflineQueue] Background sync not available:', error);
     }
   }
 }
@@ -163,7 +163,7 @@ export async function processQueue(processor) {
     return { success: 0, failed: 0, remaining: 0 };
   }
   
-  console.log(`[OfflineQueue] Processing ${queue.length} items...`);
+  void(`[OfflineQueue] Processing ${queue.length} items...`);
   
   let success = 0;
   let failed = 0;
@@ -173,7 +173,7 @@ export async function processQueue(processor) {
       await processor(item);
       dequeue(item.id);
       success++;
-      console.log(`[OfflineQueue] Successfully processed: ${item.id}`);
+      void(`[OfflineQueue] Successfully processed: ${item.id}`);
     } catch (error) {
       failed++;
       
@@ -193,7 +193,7 @@ export async function processQueue(processor) {
   
   const remaining = getQueue().length;
   
-  console.log(`[OfflineQueue] Processed: ${success} success, ${failed} failed, ${remaining} remaining`);
+  void(`[OfflineQueue] Processed: ${success} success, ${failed} failed, ${remaining} remaining`);
   
   return { success, failed, remaining };
 }
@@ -204,7 +204,7 @@ export async function processQueue(processor) {
 export function setupOfflineSync(processor) {
   // Process when coming back online
   window.addEventListener('online', async () => {
-    console.log('[OfflineQueue] Online - processing queue...');
+    void('[OfflineQueue] Online - processing queue...');
     await processQueue(processor);
   });
   

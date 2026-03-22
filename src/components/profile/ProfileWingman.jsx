@@ -147,7 +147,7 @@ const calculateMatchInsights = (profile, currentUser) => {
     insights.push({
       icon: MapPin,
       text: `Both in ${profile.city}`,
-      color: '#00D9FF',
+      color: '#00C2E0',
     });
   }
   
@@ -272,7 +272,7 @@ export default function ProfileWingman({
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <MessageCircle className="w-4 h-4 text-[#00D9FF]" />
+                    <MessageCircle className="w-4 h-4 text-[#00C2E0]" />
                     <span className="text-xs text-white/60 uppercase tracking-wider font-bold">
                       Conversation Starters
                     </span>
@@ -315,7 +315,7 @@ export default function ProfileWingman({
                             onClick={() => handleUseOpener(opener.text)}
                             size="sm"
                             variant="ghost"
-                            className="h-6 px-2 text-xs text-[#00D9FF] hover:bg-[#00D9FF]/10"
+                            className="h-6 px-2 text-xs text-[#00C2E0] hover:bg-[#00C2E0]/10"
                           >
                             Use
                           </Button>

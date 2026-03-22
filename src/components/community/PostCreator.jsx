@@ -267,7 +267,7 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           variant={postType === 'poll' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setPostType('poll')}
-          className={postType === 'poll' ? 'bg-[#00D9FF] text-black' : 'border-white/20'}
+          className={postType === 'poll' ? 'bg-[#00C2E0] text-black' : 'border-white/20'}
         >
           <BarChart3 className="w-4 h-4 mr-2" />
           Poll

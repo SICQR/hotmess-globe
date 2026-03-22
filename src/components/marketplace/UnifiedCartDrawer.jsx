@@ -398,7 +398,7 @@ export default function UnifiedCartDrawer({ currentUser }) {
         <SheetContent className="bg-black text-white border-l border-white/10 w-full sm:max-w-md">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="bg-white/5 border border-white/10 w-full justify-start">
-              <TabsTrigger value="shopify" className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black">
+              <TabsTrigger value="shopify" className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black">
                 Shop ({shopifyCount})
               </TabsTrigger>
               <TabsTrigger value="creators" className="data-[state=active]:bg-[#C8962C] data-[state=active]:text-white">

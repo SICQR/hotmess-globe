@@ -106,7 +106,7 @@ export function useOfflineSync() {
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data?.type === 'SYNC_OFFLINE_QUEUE') {
-        console.log('[OfflineSync] Received sync message from SW');
+        void('[OfflineSync] Received sync message from SW');
         syncNow();
       }
     };
@@ -125,7 +125,7 @@ export function useOfflineSync() {
   // Setup automatic sync on online event
   useEffect(() => {
     const handleOnline = () => {
-      console.log('[OfflineSync] Online - triggering sync');
+      void('[OfflineSync] Online - triggering sync');
       syncNow();
     };
 

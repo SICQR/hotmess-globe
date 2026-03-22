@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 const REWARD_TIERS = [
   { referrals: 3, reward: 'FREE PLUS Month', icon: Star, color: '#C8962C', unlocked: false },
   { referrals: 10, reward: 'Badge', icon: Trophy, color: '#C8962C', unlocked: false },
-  { referrals: 25, reward: 'Lifetime VIP Status', icon: Gift, color: '#00D9FF', unlocked: false },
+  { referrals: 25, reward: 'Lifetime VIP Status', icon: Gift, color: '#00C2E0', unlocked: false },
 ];
 
 export default function ReferralProgram() {
@@ -99,7 +99,7 @@ export default function ReferralProgram() {
               <div className="text-xs text-white/60 uppercase">Referrals</div>
             </div>
             <div>
-              <div className="text-3xl font-black text-[#00D9FF]">{Math.floor(completedReferrals / 3)}</div>
+              <div className="text-3xl font-black text-[#00C2E0]">{Math.floor(completedReferrals / 3)}</div>
               <div className="text-xs text-white/60 uppercase">Rewards</div>
             </div>
           </div>
@@ -113,7 +113,7 @@ export default function ReferralProgram() {
           className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8"
         >
           <h2 className="text-xl font-black uppercase mb-4 flex items-center gap-2">
-            <Share2 className="w-5 h-5 text-[#00D9FF]" /> Your Referral Link
+            <Share2 className="w-5 h-5 text-[#00C2E0]" /> Your Referral Link
           </h2>
           
           <div className="flex gap-3 mb-4">

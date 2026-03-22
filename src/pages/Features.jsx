@@ -45,7 +45,7 @@ const FEATURE_CATEGORIES = [
     id: 'social',
     title: 'CONNECT',
     subtitle: 'Find your people',
-    color: '#00D9FF',
+    color: '#00C2E0',
     icon: Users,
     href: '/social',
     features: [

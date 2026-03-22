@@ -88,7 +88,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allow
             type="button"
             onClick={() => setUploadType('regular')}
             variant={uploadType === 'regular' ? 'default' : 'outline'}
-            className={uploadType === 'regular' ? 'bg-[#00D9FF] text-black' : ''}
+            className={uploadType === 'regular' ? 'bg-[#00C2E0] text-black' : ''}
           >
             Regular Photos
           </Button>

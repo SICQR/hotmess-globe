@@ -50,7 +50,7 @@ export default function L2PayoutsSheet() {
         .eq('seller_email', user.email)
         .in('status', ['delivered', 'completed'])
         .order('created_at', { ascending: false });
-      if (error) { console.warn('[payouts] orders query:', error); return []; }
+      if (error) { toast.error('Failed to load completed orders'); return []; }
       return data || [];
     },
     enabled: !!user?.email,
@@ -67,7 +67,7 @@ export default function L2PayoutsSheet() {
         .eq('seller_email', user.email)
         .in('status', ['paid', 'shipped'])
         .order('created_at', { ascending: false });
-      if (error) { console.warn('[payouts] pending orders query:', error); return []; }
+      if (error) { toast.error('Failed to load pending orders'); return []; }
       return data || [];
     },
     enabled: !!user?.email,
@@ -84,7 +84,7 @@ export default function L2PayoutsSheet() {
         .eq('seller_email', user.email)
         .order('created_at', { ascending: false })
         .limit(20);
-      if (error) { console.warn('[payouts] payouts query:', error); return []; }
+      if (error) { toast.error('Failed to load payout history'); return []; }
       return data || [];
     },
     enabled: !!user?.email,

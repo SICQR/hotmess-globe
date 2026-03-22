@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { DollarSign, TrendingUp, Clock, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 const STATUS_CONFIG = {
   pending: { icon: Clock, color: '#FFEB3B', label: 'Pending' },
-  in_transit: { icon: TrendingUp, color: '#00D9FF', label: 'In Transit' },
+  in_transit: { icon: TrendingUp, color: '#00C2E0', label: 'In Transit' },
   paid: { icon: CheckCircle2, color: '#39FF14', label: 'Paid' },
   failed: { icon: AlertCircle, color: '#FF073A', label: 'Failed' },
   cancelled: { icon: AlertCircle, color: '#FF6B35', label: 'Cancelled' },
@@ -34,7 +34,7 @@ export default function PayoutManager({ payouts, orders, sellerEmail, stripeConn
         throw new Error('No orders to pay out');
       }
 
-      return await base44.entities.SellerPayout.create({
+      const { data, error } = await supabase.from('seller_payouts').insert({
         seller_email: sellerEmail,
         amount_gbp: availableBalance,
         stripe_connect_account_id: stripeConnectId,
@@ -43,7 +43,9 @@ export default function PayoutManager({ payouts, orders, sellerEmail, stripeConn
         period_start: format(new Date(unpaidOrders[0].created_date), 'yyyy-MM-dd'),
         period_end: format(new Date(), 'yyyy-MM-dd'),
         order_ids: unpaidOrders.map(o => o.id)
-      });
+      }).select().single();
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['seller-payouts']);
@@ -70,14 +72,14 @@ export default function PayoutManager({ payouts, orders, sellerEmail, stripeConn
   return (
     <div className="space-y-6">
       {/* Balance Card */}
-      <div className="bg-gradient-to-br from-[#00D9FF]/20 to-[#C8962C]/20 border-2 border-[#00D9FF] rounded-xl p-6">
+      <div className="bg-gradient-to-br from-[#00C2E0]/20 to-[#C8962C]/20 border-2 border-[#00C2E0] rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-sm text-white/60 uppercase tracking-wider mb-1">Available Balance</p>
-            <p className="text-4xl font-black text-[#00D9FF]">£{availableBalance.toFixed(2)}</p>
+            <p className="text-4xl font-black text-[#00C2E0]">£{availableBalance.toFixed(2)}</p>
             <p className="text-xs text-white/40 mt-1">{unpaidOrders.length} orders ready for payout</p>
           </div>
-          <DollarSign className="w-12 h-12 text-[#00D9FF]" />
+          <DollarSign className="w-12 h-12 text-[#00C2E0]" />
         </div>
 
         {!stripeConnectId ? (
@@ -93,7 +95,7 @@ export default function PayoutManager({ payouts, orders, sellerEmail, stripeConn
           <Button
             onClick={() => requestPayoutMutation.mutate()}
             disabled={availableBalance === 0 || requestPayoutMutation.isPending}
-            className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-bold"
+            className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-bold"
           >
             Request Payout
           </Button>

@@ -104,7 +104,7 @@ export default function TagSelector({
         <div className="flex flex-wrap gap-2 p-3 bg-white/5 border border-white/10 rounded">
           {selectedTags.map(tag => (
             <div key={tag.id} className="flex items-center gap-2">
-              <Badge className="bg-[#00D9FF] text-black font-bold">
+              <Badge className="bg-[#00C2E0] text-black font-bold">
                 {tag.label}
                 <button
                   onClick={() => handleToggleTag(tag.id)}
@@ -169,7 +169,7 @@ export default function TagSelector({
                     disabled={!isSelected && selectedTagIds.length >= maxTags}
                     className={`px-3 py-1.5 text-xs font-bold uppercase border transition-all ${
                       isSelected
-                        ? 'bg-[#00D9FF] border-[#00D9FF] text-black'
+                        ? 'bg-[#00C2E0] border-[#00C2E0] text-black'
                         : 'border-white/20 text-white hover:border-white/40'
                     } ${isSensitive ? 'flex items-center gap-1' : ''}`}
                   >

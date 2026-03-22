@@ -135,7 +135,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
           viewed_id: viewedUid,
         });
       } catch (err) {
-        console.debug('[ProfileSheet] View recording skipped:', err);
+        void('[ProfileSheet] View recording skipped:', err);
       }
     };
 
@@ -371,7 +371,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
             <h2 className="text-2xl font-black text-white">{name}</h2>
             {isTravel && <Plane className="w-5 h-5 text-white/70 -rotate-45" />}
             {isVerified && (
-              <div className="w-5 h-5 bg-[#00D9FF] rounded-full flex items-center justify-center">
+              <div className="w-5 h-5 bg-[#00C2E0] rounded-full flex items-center justify-center">
                 <Shield className="w-3 h-3 text-black" />
               </div>
             )}

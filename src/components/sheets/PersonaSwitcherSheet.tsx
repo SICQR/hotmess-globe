@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 // Color per persona_type
 const PERSONA_COLORS: Record<string, string> = {
   main:    '#C8962C',
-  travel:  '#00D9FF',
+  travel:  '#00C2E0',
   weekend: '#C8962C',
   custom:  '#39FF14',
 };
