@@ -87,7 +87,7 @@ export const ACHIEVEMENTS = {
 // Persona types
 export const PERSONA_TYPES = {
   MAIN: { label: 'Main', color: '#FFFFFF', icon: 'User' },
-  TRAVEL: { label: 'Travel', color: '#00D9FF', icon: 'Plane' },
+  TRAVEL: { label: 'Travel', color: '#00C2E0', icon: 'Plane' },
   WEEKEND: { label: 'Weekend', color: '#C8962C', icon: 'PartyPopper' },
   CUSTOM: { label: 'Custom', color: '#C8962C', icon: 'Sparkles' }
 };
@@ -103,7 +103,7 @@ export const CONTENT_RATINGS = {
 // Beacon tiers
 export const BEACON_TIERS = {
   basic_3h: { name: 'Basic', hours: 3, price: 999, reach: 25, color: '#FFFFFF' },
-  standard_6h: { name: 'Standard', hours: 6, price: 1999, reach: 50, color: '#00D9FF' },
+  standard_6h: { name: 'Standard', hours: 6, price: 1999, reach: 50, color: '#00C2E0' },
   premium_9h: { name: 'Premium', hours: 9, price: 3999, reach: 100, color: '#C8962C' },
   featured_12h: { name: 'Featured', hours: 12, price: 7999, reach: 200, color: '#C8962C' },
   spotlight_24h: { name: 'Spotlight', hours: 24, price: 14999, reach: 500, color: '#C8962C' }
@@ -115,7 +115,7 @@ export const PLATFORM_FEE_PERCENT = 20;
 // Match score thresholds
 export const MATCH_LEVELS = {
   exceptional: { min: 85, color: '#39FF14', label: 'Exceptional' },
-  great: { min: 70, color: '#00D9FF', label: 'Great' },
+  great: { min: 70, color: '#00C2E0', label: 'Great' },
   good: { min: 55, color: '#C8962C', label: 'Good' },
   moderate: { min: 40, color: '#C8962C', label: 'Moderate' },
   low: { min: 0, color: '#FFFFFF', label: 'Low' }
@@ -127,7 +127,7 @@ export const COLORS = {
   secondary: '#C8962C',
   success: '#39FF14',
   warning: '#C8962C',
-  info: '#00D9FF',
+  info: '#00C2E0',
   danger: '#FF0000',
   background: '#000000',
   surface: '#111111',

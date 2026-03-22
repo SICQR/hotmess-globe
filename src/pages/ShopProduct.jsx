@@ -169,8 +169,8 @@ export default function ShopProduct() {
                           type="button"
                           onClick={() => setSelectedImageUrl(img.url)}
                           className={
-                            "aspect-square overflow-hidden border bg-black focus:outline-none focus:ring-2 focus:ring-[#00D9FF] " +
-                            (isActive ? "border-[#00D9FF]" : "border-white/10 hover:border-white/30")
+                            "aspect-square overflow-hidden border bg-black focus:outline-none focus:ring-2 focus:ring-[#00C2E0] " +
+                            (isActive ? "border-[#00C2E0]" : "border-white/10 hover:border-white/30")
                           }
                           aria-label="View product image"
                         >
@@ -243,7 +243,7 @@ export default function ShopProduct() {
                   <div className="mt-6 border-t border-white/10 pt-6">
                     <p className="text-xs text-white/60 uppercase tracking-wider font-bold mb-2">Details</p>
                     <div
-                      className="prose prose-invert max-w-none prose-a:text-[#00D9FF]"
+                      className="prose prose-invert max-w-none prose-a:text-[#00C2E0]"
                       dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
                     />
                   </div>

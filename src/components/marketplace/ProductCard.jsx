@@ -17,7 +17,7 @@ const TYPE_ICONS = {
 };
 
 const TYPE_COLORS = {
-  physical: '#00D9FF',
+  physical: '#00C2E0',
   digital: '#C8962C',
   service: '#39FF14',
   ticket: '#FFEB3B',
@@ -111,7 +111,7 @@ export default function ProductCard({ product, index = 0 }) {
             {/* Corner Ribbon for 3rd Party */}
             {!isOfficial && (
               <div className="absolute top-3 right-3">
-                <OSCardBadge color="#00D9FF">STREET DROP</OSCardBadge>
+                <OSCardBadge color="#00C2E0">STREET DROP</OSCardBadge>
               </div>
             )}
             

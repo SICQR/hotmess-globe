@@ -16,7 +16,7 @@ export default function BrandBackground() {
       />
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-3xl opacity-10 animate-pulse"
-        style={{ background: '#00D9FF', animationDelay: '2.4s' }}
+        style={{ background: '#00C2E0', animationDelay: '2.4s' }}
       />
     </div>
   );

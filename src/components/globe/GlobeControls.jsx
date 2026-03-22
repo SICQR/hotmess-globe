@@ -16,7 +16,7 @@ const MODE_OPTIONS = [
   { id: 'crowd', label: 'CROWD', color: '#C8962C' },
   { id: 'drop', label: 'DROP', color: '#FF6B35' },
   { id: 'ticket', label: 'TICKET', color: '#FFEB3B' },
-  { id: 'radio', label: 'RADIO', color: '#00D9FF' },
+  { id: 'radio', label: 'RADIO', color: '#00C2E0' },
   { id: 'care', label: 'CARE', color: '#39FF14' },
 ];
 
@@ -26,7 +26,7 @@ const BEACON_TYPE_OPTIONS = [
   { id: 'hookup', label: 'HOOKUP', color: '#FF073A' },
   { id: 'drop', label: 'DROP', color: '#FF6B35' },
   { id: 'popup', label: 'POPUP', color: '#C8962C' },
-  { id: 'private', label: 'PRIVATE', color: '#00D9FF' },
+  { id: 'private', label: 'PRIVATE', color: '#00C2E0' },
 ];
 
 const RECENCY_OPTIONS = [
@@ -310,7 +310,7 @@ export default function GlobeControls({
           className={`
             w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all
             ${activityVisibility 
-              ? 'bg-[#00D9FF]/20 border border-[#00D9FF]/40 text-[#00D9FF]' 
+              ? 'bg-[#00C2E0]/20 border border-[#00C2E0]/40 text-[#00C2E0]' 
               : 'bg-white/5 border border-white/10 text-white/50'
             }
           `}

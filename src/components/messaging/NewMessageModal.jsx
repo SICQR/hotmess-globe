@@ -176,7 +176,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
                   <MessageCircle className="w-3 h-3 mr-1" />
                   DM
                 </TabsTrigger>
-                <TabsTrigger value="group" className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black font-black uppercase text-xs">
+                <TabsTrigger value="group" className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black font-black uppercase text-xs">
                   <Users className="w-3 h-3 mr-1" />
                   Group
                 </TabsTrigger>
@@ -240,7 +240,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
                     {selectedUsers.map(email => {
                       const user = allUsers.find(u => u.email === email);
                       return (
-                        <div key={email} className="flex items-center gap-2 px-3 py-1.5 bg-[#00D9FF]/20 border-2 border-[#00D9FF]">
+                        <div key={email} className="flex items-center gap-2 px-3 py-1.5 bg-[#00C2E0]/20 border-2 border-[#00C2E0]">
                           <span className="text-xs font-bold uppercase">{user?.full_name || email}</span>
                           <button onClick={() => toggleUser(email)}>
                             <X className="w-3 h-3" />
@@ -257,11 +257,11 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
                       onClick={() => toggleUser(user.email)}
                       className={`w-full flex items-center gap-3 p-3 border-2 transition-all ${
                         selectedUsers.includes(user.email)
-                          ? 'bg-[#00D9FF]/20 border-[#00D9FF]'
+                          ? 'bg-[#00C2E0]/20 border-[#00C2E0]'
                           : 'bg-black border-white/20 hover:border-white/40'
                       }`}
                     >
-                      <div className="w-10 h-10 bg-gradient-to-br from-[#00D9FF] to-[#C8962C] flex items-center justify-center border-2 border-white">
+                      <div className="w-10 h-10 bg-gradient-to-br from-[#00C2E0] to-[#C8962C] flex items-center justify-center border-2 border-white">
                         <span className="font-bold text-sm">{user.full_name?.[0] || 'U'}</span>
                       </div>
                       <div className="flex-1 text-left">

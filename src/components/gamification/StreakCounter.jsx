@@ -47,7 +47,7 @@ function getStreakTier(streak) {
   if (streak >= 100) return { label: 'Legend', color: '#C8962C', icon: '👑' };
   if (streak >= 30) return { label: 'Fire', color: '#C8962C', icon: '🔥' };
   if (streak >= 7) return { label: 'Hot', color: '#f97316', icon: '⚡' };
-  if (streak >= 3) return { label: 'Warming', color: '#00D9FF', icon: '✨' };
+  if (streak >= 3) return { label: 'Warming', color: '#00C2E0', icon: '✨' };
   return { label: 'Start', color: '#64748b', icon: '💫' };
 }
 

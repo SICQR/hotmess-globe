@@ -14,7 +14,7 @@ const PLANS = [
     id: 'starter',
     name: 'Starter',
     price: 49,
-    color: '#00D9FF',
+    color: '#00C2E0',
     icon: Building2,
     features: ['1 Event listing/month', 'Basic analytics', 'Email support']
   },
@@ -185,7 +185,7 @@ export default function BusinessBilling() {
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white/5 border border-white/10 p-6">
             <h3 className="font-black uppercase mb-4 flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-[#00D9FF]" />
+              <CreditCard className="w-5 h-5 text-[#00C2E0]" />
               Payment Method
             </h3>
             <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10">

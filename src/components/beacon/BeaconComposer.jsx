@@ -68,7 +68,7 @@ export function BeaconComposer({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Friday night at..."
-          className="mt-2 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/30 focus:border-[#00D9FF]/50 focus:outline-none"
+          className="mt-2 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/30 focus:border-[#00C2E0]/50 focus:outline-none"
         />
       </div>
 
@@ -160,7 +160,7 @@ export function DurationPicker({ value, onChange }) {
           className={cn(
             'flex-1 py-2 rounded-lg text-sm font-bold transition-all',
             value === hours
-              ? 'bg-[#00D9FF] text-black'
+              ? 'bg-[#00C2E0] text-black'
               : 'bg-white/5 text-white/60 hover:bg-white/10'
           )}
         >

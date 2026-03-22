@@ -52,8 +52,8 @@ function PollDisplay({ post, currentUser }) {
   return (
     <div className="mt-4 space-y-2">
       <div className="flex items-center gap-2 mb-3">
-        <BarChart3 className="w-4 h-4 text-[#00D9FF]" />
-        <span className="text-xs font-bold uppercase text-[#00D9FF]">Poll</span>
+        <BarChart3 className="w-4 h-4 text-[#00C2E0]" />
+        <span className="text-xs font-bold uppercase text-[#00C2E0]">Poll</span>
         {isPollExpired && (
           <span className="text-xs text-white/40 uppercase">• Ended</span>
         )}
@@ -71,14 +71,14 @@ function PollDisplay({ post, currentUser }) {
             disabled={!!userVote || isPollExpired || !currentUser || voting}
             className={`w-full p-3 border-2 transition-all relative overflow-hidden ${
               isSelected
-                ? 'bg-[#00D9FF]/20 border-[#00D9FF]'
+                ? 'bg-[#00C2E0]/20 border-[#00C2E0]'
                 : userVote || isPollExpired
                 ? 'bg-white/5 border-white/20 cursor-default'
                 : 'bg-white/5 border-white/20 hover:border-white hover:bg-white/10 cursor-pointer'
             }`}
           >
             <div
-              className="absolute inset-0 bg-[#00D9FF]/10 transition-all"
+              className="absolute inset-0 bg-[#00C2E0]/10 transition-all"
               style={{ width: `${userVote || isPollExpired ? percentage : 0}%` }}
             />
             <div className="relative flex items-center justify-between">
@@ -194,7 +194,7 @@ function EventDisplay({ post, currentUser }) {
           {event.beacon_id && (
             <Link
               to={createPageUrl(`BeaconDetail?id=${event.beacon_id}`)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#00D9FF]/20 hover:bg-[#00D9FF]/30 border border-[#00D9FF] text-[#00D9FF] font-bold rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#00C2E0]/20 hover:bg-[#00C2E0]/30 border border-[#00C2E0] text-[#00C2E0] font-bold rounded-lg transition-colors"
             >
               <MapPin className="w-4 h-4" />
               View on Globe
@@ -208,7 +208,7 @@ function EventDisplay({ post, currentUser }) {
 
 const CATEGORY_COLORS = {
   general: '#C8962C',
-  events: '#00D9FF',
+  events: '#00C2E0',
   marketplace: '#FFEB3B',
   beacons: '#C8962C',
   squads: '#39FF14',

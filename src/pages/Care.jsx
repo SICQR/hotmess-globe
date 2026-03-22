@@ -40,15 +40,15 @@ export default function Care() {
     <div className="min-h-screen bg-black text-white">
       {/* Hero */}
       <section className="relative py-32 px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#00D9FF]/20 to-black" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#00C2E0]/20 to-black" />
         <div className="relative z-10 max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Heart className="w-20 h-20 mx-auto mb-6 text-[#00D9FF]" />
+            <Heart className="w-20 h-20 mx-auto mb-6 text-[#00C2E0]" />
             <h1 className="text-6xl md:text-8xl font-black italic mb-6">
-              CARE<span className="text-[#00D9FF]">.</span>
+              CARE<span className="text-[#00C2E0]">.</span>
             </h1>
             <p className="text-2xl uppercase tracking-wider text-white/80 mb-4">
               PREPARATION ISN'T PARANOIA
@@ -86,7 +86,7 @@ export default function Care() {
                 <h3 className="font-black text-xl mb-2 group-hover:text-[#C8962C] transition-colors">
                   {contact.name}
                 </h3>
-                <p className="text-[#00D9FF] font-mono text-2xl mb-2">{contact.number}</p>
+                <p className="text-[#00C2E0] font-mono text-2xl mb-2">{contact.number}</p>
                 <p className="text-white/60 text-sm uppercase tracking-wide">{contact.description}</p>
               </motion.a>
             ))}

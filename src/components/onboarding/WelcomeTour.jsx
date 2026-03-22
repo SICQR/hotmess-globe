@@ -17,7 +17,7 @@ const TOUR_STEPS = [
     title: 'Discover People',
     description: 'Use Connect to find your tribe. Filter by interests, tags, and activity. Go "Right Now" when you\'re available.',
     icon: Users,
-    color: '#00D9FF',
+    color: '#00C2E0',
     link: 'Connect'
   },
   {

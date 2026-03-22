@@ -80,12 +80,12 @@ export function PersonaSwitcher({ className }) {
               className={cn(
                 'flex items-center gap-3 p-3 rounded-xl border transition-all',
                 isActive
-                  ? 'bg-gradient-to-r from-[#C8962C]/20 to-[#00D9FF]/20 border-white/30'
+                  ? 'bg-gradient-to-r from-[#C8962C]/20 to-[#00C2E0]/20 border-white/30'
                   : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10',
                 isSwitching && 'opacity-50'
               )}
             >
-              <Icon size={20} className={isActive ? 'text-[#00D9FF]' : 'text-white/60'} />
+              <Icon size={20} className={isActive ? 'text-[#00C2E0]' : 'text-white/60'} />
               <div className="text-left">
                 <div className={cn(
                   'text-sm font-semibold',
@@ -98,7 +98,7 @@ export function PersonaSwitcher({ className }) {
                 </div>
               </div>
               {isActive && (
-                <span className="ml-auto text-[10px] font-bold text-[#00D9FF] uppercase">
+                <span className="ml-auto text-[10px] font-bold text-[#00C2E0] uppercase">
                   Active
                 </span>
               )}

@@ -51,10 +51,10 @@ const PERSONA_CONFIGS = {
   },
   organizer: {
     label: 'Organizer',
-    color: '#00D9FF',
-    gradient: 'from-[#00D9FF]/30 to-[#00D9FF]/5',
+    color: '#00C2E0',
+    gradient: 'from-[#00C2E0]/30 to-[#00C2E0]/5',
     icon: Calendar,
-    borderColor: 'border-[#00D9FF]/50',
+    borderColor: 'border-[#00C2E0]/50',
   },
   premium: {
     label: 'Premium',
@@ -270,7 +270,7 @@ export default function PersonaCard({
 
               {/* Verified badge */}
               {user?.is_verified && (
-                <div className="w-8 h-8 bg-[#00D9FF] rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-[#00C2E0] rounded-full flex items-center justify-center">
                   <Verified className="w-5 h-5 text-black" />
                 </div>
               )}
@@ -297,7 +297,7 @@ export default function PersonaCard({
             {onNavigate && eta && (
               <button 
                 onClick={onNavigate}
-                className="py-2 px-3 bg-[#00D9FF] text-black text-sm font-bold uppercase hover:bg-white transition-colors"
+                className="py-2 px-3 bg-[#00C2E0] text-black text-sm font-bold uppercase hover:bg-white transition-colors"
               >
                 <Navigation className="w-4 h-4" />
               </button>
@@ -367,8 +367,8 @@ export default function PersonaCard({
               <div 
                 className="text-xs font-black px-1.5 py-0.5"
                 style={{ 
-                  backgroundColor: matchScore >= 80 ? '#C8962C' : matchScore >= 60 ? '#00D9FF20' : '#ffffff10',
-                  color: matchScore >= 80 ? '#000' : matchScore >= 60 ? '#00D9FF' : '#ffffff60'
+                  backgroundColor: matchScore >= 80 ? '#C8962C' : matchScore >= 60 ? '#00C2E020' : '#ffffff10',
+                  color: matchScore >= 80 ? '#000' : matchScore >= 60 ? '#00C2E0' : '#ffffff60'
                 }}
               >
                 {matchScore}%

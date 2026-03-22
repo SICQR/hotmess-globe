@@ -507,21 +507,21 @@ export default function Music() {
           <TabsList className="grid w-full grid-cols-3 bg-white/5 mb-12">
             <TabsTrigger 
               value="live"
-              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black"
+              className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black"
             >
               <RadioIcon className="w-4 h-4 mr-2" />
               LIVE
             </TabsTrigger>
             <TabsTrigger 
               value="shows"
-              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black"
+              className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black"
             >
               <Music2 className="w-4 h-4 mr-2" />
               SHOWS
             </TabsTrigger>
             <TabsTrigger 
               value="releases"
-              className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black"
+              className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black"
             >
               <Disc className="w-4 h-4 mr-2" />
               RELEASES
@@ -696,7 +696,7 @@ export default function Music() {
                               MUSIC EVENT
                             </div>
                             {event.audio_url && (
-                              <div className="px-2 py-1 bg-[#00D9FF] text-black text-xs font-black uppercase flex items-center gap-1">
+                              <div className="px-2 py-1 bg-[#00C2E0] text-black text-xs font-black uppercase flex items-center gap-1">
                                 <Play className="w-3 h-3" />
                                 AUDIO
                               </div>

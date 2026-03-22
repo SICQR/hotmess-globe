@@ -53,8 +53,8 @@ export default function More() {
                   to={createPageUrl(tool.path)}
                   className="group"
                 >
-                  <div className="bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-[#00D9FF] p-6 transition-all h-full">
-                    <Icon className="w-8 h-8 mb-3 text-white/60 group-hover:text-[#00D9FF] transition-colors" />
+                  <div className="bg-white/5 hover:bg-white/10 border-2 border-white/10 hover:border-[#00C2E0] p-6 transition-all h-full">
+                    <Icon className="w-8 h-8 mb-3 text-white/60 group-hover:text-[#00C2E0] transition-colors" />
                     <h3 className="font-black uppercase text-sm mb-1">{tool.name}</h3>
                     <p className="text-xs text-white/50">{tool.desc}</p>
                   </div>
@@ -76,7 +76,7 @@ export default function More() {
                   to={createPageUrl(item.path)}
                   className="block"
                 >
-                  <div className="bg-white/5 hover:bg-white/10 border-l-4 border-[#00D9FF] p-4 transition-all flex items-center gap-3">
+                  <div className="bg-white/5 hover:bg-white/10 border-l-4 border-[#00C2E0] p-4 transition-all flex items-center gap-3">
                     <Icon className="w-5 h-5" />
                     <span className="font-black uppercase text-sm">{item.name}</span>
                   </div>

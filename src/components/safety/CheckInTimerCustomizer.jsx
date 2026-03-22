@@ -59,7 +59,7 @@ export default function CheckInTimerCustomizer() {
   return (
     <div className="bg-white/5 border border-white/10 p-6">
       <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
-        <Clock className="w-5 h-5 text-[#00D9FF]" />
+        <Clock className="w-5 h-5 text-[#00C2E0]" />
         Custom Check-In Timers
       </h3>
 
@@ -83,7 +83,7 @@ export default function CheckInTimerCustomizer() {
         </div>
         <Button
           onClick={addTimer}
-          className="w-full bg-[#00D9FF] hover:bg-white text-black font-black"
+          className="w-full bg-[#00C2E0] hover:bg-white text-black font-black"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Custom Timer

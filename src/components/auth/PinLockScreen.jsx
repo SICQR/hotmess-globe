@@ -279,7 +279,7 @@ export function PinSetupScreen() {
 
       {/* Header */}
       <div className="mb-8">
-        <Shield className="w-12 h-12 text-[#00D9FF] mx-auto mb-4" />
+        <Shield className="w-12 h-12 text-[#00C2E0] mx-auto mb-4" />
         <h1 className="text-2xl font-black text-white text-center">
           {step === 'enter' ? 'Create PIN' : 'Confirm PIN'}
         </h1>

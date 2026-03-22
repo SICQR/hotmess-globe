@@ -49,7 +49,7 @@ const TIERS = [
     price: '£19.99/mo',
     priceAmount: 1999,
     icon: Crown,
-    color: '#00D9FF',
+    color: '#00C2E0',
     stripePriceId: STRIPE_PRICES.pro,
     features: [
       'Everything in PLUS',

@@ -124,7 +124,7 @@ export default function SavedSearches({ onSearch }) {
             <div className="flex items-center justify-between pt-3 border-t border-white/10">
               <div className="flex items-center gap-2 text-sm text-white/60">
                 {alerts[search.query] ? (
-                  <Bell className="w-4 h-4 text-[#00D9FF]" />
+                  <Bell className="w-4 h-4 text-[#00C2E0]" />
                 ) : (
                   <BellOff className="w-4 h-4" />
                 )}
@@ -140,9 +140,9 @@ export default function SavedSearches({ onSearch }) {
       </div>
       
       {/* Info */}
-      <div className="bg-[#00D9FF]/10 border border-[#00D9FF]/40 rounded-lg p-4 text-sm">
+      <div className="bg-[#00C2E0]/10 border border-[#00C2E0]/40 rounded-lg p-4 text-sm">
         <div className="flex items-start gap-2">
-          <Bell className="w-4 h-4 text-[#00D9FF] mt-0.5" />
+          <Bell className="w-4 h-4 text-[#00C2E0] mt-0.5" />
           <p className="text-white/80">
             Enable alerts to get notified when new events or content matches your saved searches.
           </p>

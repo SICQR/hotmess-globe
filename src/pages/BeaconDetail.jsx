@@ -265,7 +265,7 @@ export default function BeaconDetail() {
                 {beacon.created_by === currentUser.email && (
                   <Button
                     onClick={() => setShowScanner(true)}
-                    className="w-full bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black font-black"
+                    className="w-full bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black font-black"
                   >
                     SCAN TICKETS
                   </Button>

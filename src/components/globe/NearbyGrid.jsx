@@ -204,7 +204,7 @@ export default function NearbyGrid({ userLocation }) {
                       {/* Online Indicator */}
                       <div className="absolute top-2 right-2">
                         <div className={`w-3 h-3 rounded-full border-2 border-white animate-pulse ${
-                          user.rightNowStatus ? 'bg-[#C8962C]' : 'bg-[#00D9FF]'
+                          user.rightNowStatus ? 'bg-[#C8962C]' : 'bg-[#00C2E0]'
                         }`} />
                       </div>
                       

@@ -170,7 +170,7 @@ Be concise and actionable.`,
           <TabsTrigger value="all-posts" className="data-[state=active]:bg-[#C8962C] data-[state=active]:text-black font-black uppercase text-xs">
             All Posts ({posts.length})
           </TabsTrigger>
-          <TabsTrigger value="messages" className="data-[state=active]:bg-[#00D9FF] data-[state=active]:text-black font-black uppercase text-xs">
+          <TabsTrigger value="messages" className="data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black font-black uppercase text-xs">
             <MessageCircle className="w-3 h-3 mr-2" />
             Messages ({messages.length})
           </TabsTrigger>

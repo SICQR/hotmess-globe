@@ -22,7 +22,7 @@ const STEPS = [
 const SELLER_BENEFITS = [
   { icon: Zap, text: 'Low platform fees', color: '#C8962C' },
   { icon: Star, text: 'Featured in marketplace', color: '#C8962C' },
-  { icon: Shield, text: 'Secure escrow payments', color: '#00D9FF' },
+  { icon: Shield, text: 'Secure escrow payments', color: '#00C2E0' },
   { icon: Store, text: 'Your own storefront', color: '#39FF14' },
 ];
 
@@ -284,8 +284,8 @@ export default function SellerOnboarding() {
                     />
                   </div>
                 </div>
-                <div className="p-4 bg-[#00D9FF]/10 border border-[#00D9FF]/30 rounded-lg flex items-start gap-3">
-                  <Shield className="w-5 h-5 text-[#00D9FF] mt-0.5" />
+                <div className="p-4 bg-[#00C2E0]/10 border border-[#00C2E0]/30 rounded-lg flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-[#00C2E0] mt-0.5" />
                   <p className="text-sm text-white/80">
                     Your bank details are encrypted and stored securely. We use Stripe for all GBP payouts.
                   </p>

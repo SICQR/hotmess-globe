@@ -4,7 +4,7 @@
  * A brutalist-meets-luxury component library with:
  * - Chrome Red (#C8962C) as primary accent
  * - Gold (#C8962C) for premium elements
- * - Cyan (#00D9FF) for interactive elements
+ * - Cyan (#00C2E0) for interactive elements
  * - Purple (#C8962C) for creator/music elements
  * - Neon Green (#39FF14) for success states
  * 

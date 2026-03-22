@@ -29,7 +29,7 @@ const getModeColor = (mode) => {
     crowd: '#C8962C',
     drop: '#FF6B35',
     ticket: '#FFEB3B',
-    radio: '#00D9FF',
+    radio: '#00C2E0',
     care: '#39FF14'
   };
   return colors[mode] || '#C8962C';
@@ -143,7 +143,7 @@ export default function LocalBeaconsView({ centerBeacon, allBeacons, onClose, on
                     {/* Distance Badge */}
                     <div className="flex-shrink-0 mt-1">
                       <div className="flex items-center gap-1 px-2 py-1 rounded bg-black/60 border border-white/20">
-                        <Navigation className="w-3 h-3 text-[#00D9FF]" />
+                        <Navigation className="w-3 h-3 text-[#00C2E0]" />
                         <span className="text-xs font-bold">{formatDistance(beacon.distance)}</span>
                       </div>
                     </div>

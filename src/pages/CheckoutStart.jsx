@@ -76,7 +76,7 @@ export default function CheckoutStart() {
 
         <div className="grid grid-cols-1 gap-3">
           <div className="flex items-center gap-3 text-white/70 text-sm">
-            <ShieldCheck className="w-4 h-4 text-[#00D9FF]" />
+            <ShieldCheck className="w-4 h-4 text-[#00C2E0]" />
             <span>18+ • Consent-first • Care always.</span>
           </div>
           <div className="flex items-center gap-3 text-white/70 text-sm">

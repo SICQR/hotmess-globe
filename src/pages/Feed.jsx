@@ -55,7 +55,7 @@ export default function Feed() {
   };
 
   const ACTIVITY_COLORS = {
-    check_in: '#00D9FF',
+    check_in: '#00C2E0',
     purchase: '#C8962C',
     achievement: '#FFEB3B',
     squad_join: '#C8962C',
@@ -64,7 +64,7 @@ export default function Feed() {
     war_declared: '#FF073A',
     track_drop: '#C8962C',
     level_up: '#39FF14',
-    follow: '#00D9FF',
+    follow: '#00C2E0',
   };
 
   const renderActivity = (activity) => {
@@ -132,7 +132,7 @@ export default function Feed() {
     
     switch (activity.activity_type) {
       case 'check_in':
-        return <span className="text-sm">checked in at <span className="text-[#00D9FF]">{data.beacon_title}</span></span>;
+        return <span className="text-sm">checked in at <span className="text-[#00C2E0]">{data.beacon_title}</span></span>;
       case 'purchase':
         return <span className="text-sm">bought <span className="text-[#C8962C]">{data.product_name}</span></span>;
       case 'achievement':
@@ -150,7 +150,7 @@ export default function Feed() {
       case 'level_up':
         return <span className="text-sm">reached <span className="text-[#39FF14]">Level {data.level}</span></span>;
       case 'follow':
-        return <span className="text-sm">started following <span className="text-[#00D9FF]">{data.target_name}</span></span>;
+        return <span className="text-sm">started following <span className="text-[#00C2E0]">{data.target_name}</span></span>;
       default:
         return <span className="text-sm">{activity.activity_type}</span>;
     }

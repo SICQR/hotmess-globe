@@ -169,9 +169,9 @@ export const InfoDialog = {
           Learn More
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-black border-[#00D9FF]/40 text-white">
+      <DialogContent className="bg-black border-[#00C2E0]/40 text-white">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-[#00D9FF]">
+          <DialogTitle className="flex items-center gap-2 text-[#00C2E0]">
             <Info className="w-5 h-5" />
             About HOTMESS
           </DialogTitle>

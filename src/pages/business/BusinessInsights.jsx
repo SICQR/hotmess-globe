@@ -121,7 +121,7 @@ const BusinessInsights = () => {
       <div className="max-w-7xl mx-auto p-6">
         {/* Key Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <StatCard icon={Eye} value={metrics.impressions.toLocaleString()} label="Impressions" change={12} color="#00D9FF" />
+          <StatCard icon={Eye} value={metrics.impressions.toLocaleString()} label="Impressions" change={12} color="#00C2E0" />
           <StatCard icon={Users} value={metrics.reach.toLocaleString()} label="Unique Reach" change={8} color="#C8962C" />
           <StatCard icon={MousePointer} value={metrics.taps.toLocaleString()} label="Taps" change={15} color="#C8962C" />
           <StatCard icon={Target} value={metrics.conversions.toLocaleString()} label="Conversions" change={23} color="#39FF14" />
@@ -131,10 +131,10 @@ const BusinessInsights = () => {
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-white/5 border border-white/10 p-6">
             <div className="flex items-center gap-2 mb-2">
-              <Activity className="w-4 h-4 text-[#00D9FF]" />
+              <Activity className="w-4 h-4 text-[#00C2E0]" />
               <span className="text-xs text-white/60 uppercase">Engagement Rate</span>
             </div>
-            <p className="text-2xl font-black text-[#00D9FF]">{metrics.engagement_rate}%</p>
+            <p className="text-2xl font-black text-[#00C2E0]">{metrics.engagement_rate}%</p>
           </div>
           <div className="bg-white/5 border border-white/10 p-6">
             <div className="flex items-center gap-2 mb-2">

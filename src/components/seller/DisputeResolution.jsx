@@ -178,7 +178,7 @@ export default function DisputeResolution({ sellerEmail, isBuyer = false }) {
                     <Button
                       onClick={() => handleSubmitResponse(dispute.id)}
                       disabled={!response.trim() || uploading || respondMutation.isPending}
-                      className="bg-[#00D9FF] hover:bg-white text-black font-black"
+                      className="bg-[#00C2E0] hover:bg-white text-black font-black"
                     >
                       {uploading ? 'Uploading...' : 'Submit Response'}
                     </Button>

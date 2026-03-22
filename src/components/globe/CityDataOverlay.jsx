@@ -34,7 +34,7 @@ const generateCityData = (city, beacons, checkIns) => {
 const WeatherIcon = ({ type }) => {
   switch (type) {
     case 'sunny': return <Sun className="w-4 h-4 text-[#FFEB3B]" />;
-    case 'rainy': return <CloudRain className="w-4 h-4 text-[#00D9FF]" />;
+    case 'rainy': return <CloudRain className="w-4 h-4 text-[#00C2E0]" />;
     case 'windy': return <Wind className="w-4 h-4 text-white/60" />;
     default: return <Cloud className="w-4 h-4 text-white/40" />;
   }
@@ -210,7 +210,7 @@ export default function CityDataOverlay({ selectedCity, onCitySelect, onDismiss 
 
                   <div className="flex items-center justify-between">
                     <span className="text-white/60">Check-ins (1h)</span>
-                    <span className="font-black text-[#00D9FF]">{selected.recentCheckIns}</span>
+                    <span className="font-black text-[#00C2E0]">{selected.recentCheckIns}</span>
                   </div>
 
                   <div>

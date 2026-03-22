@@ -213,7 +213,7 @@ export default function Tickets() {
                             onClick={() => setPriceFilter(filter.value)}
                             className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                               priceFilter === filter.value
-                                ? 'bg-[#00D9FF] text-black'
+                                ? 'bg-[#00C2E0] text-black'
                                 : 'bg-white/10 text-white/60 hover:bg-white/20'
                             }`}
                           >

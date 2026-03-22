@@ -4,7 +4,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { TrendingUp, Package, Users, DollarSign } from 'lucide-react';
 import { format, subDays, startOfDay } from 'date-fns';
 
-const COLORS = ['#C8962C', '#C8962C', '#00D9FF', '#FFEB3B', '#FF6B35'];
+const COLORS = ['#C8962C', '#C8962C', '#00C2E0', '#FFEB3B', '#FF6B35'];
 
 export default function SalesAnalytics({ orders, products, allUsers }) {
   const analytics = useMemo(() => {
@@ -72,7 +72,7 @@ export default function SalesAnalytics({ orders, products, allUsers }) {
 
   const stats = [
     { label: 'Revenue', value: `£${analytics.totalRevenueGBP.toFixed(2)}`, icon: DollarSign, color: '#C8962C' },
-    { label: 'Total Orders', value: analytics.totalOrders, icon: Package, color: '#00D9FF' },
+    { label: 'Total Orders', value: analytics.totalOrders, icon: Package, color: '#00C2E0' },
     { label: 'Customers', value: analytics.uniqueCustomers, icon: Users, color: '#C8962C' },
   ];
 

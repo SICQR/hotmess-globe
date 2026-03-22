@@ -52,7 +52,7 @@ export function CommerceGate({ children, onProceed, productType }) {
     <div className="relative">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl">
         <div className="text-center p-6 max-w-sm">
-          <ShieldCheck className="mx-auto mb-3 text-[#00D9FF]" size={32} />
+          <ShieldCheck className="mx-auto mb-3 text-[#00C2E0]" size={32} />
           <h3 className="text-lg font-bold text-white mb-2">
             Commerce Safety Check
           </h3>

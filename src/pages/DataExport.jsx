@@ -338,12 +338,12 @@ export default function DataExport() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-[#00D9FF]/10 border border-[#00D9FF]/40 rounded-xl p-6 mb-6"
+          className="bg-[#00C2E0]/10 border border-[#00C2E0]/40 rounded-xl p-6 mb-6"
         >
           <div className="flex items-start gap-3">
-            <Shield className="w-6 h-6 text-[#00D9FF] mt-0.5" />
+            <Shield className="w-6 h-6 text-[#00C2E0] mt-0.5" />
             <div>
-              <h3 className="font-bold text-[#00D9FF] mb-2">Your Data Rights (GDPR)</h3>
+              <h3 className="font-bold text-[#00C2E0] mb-2">Your Data Rights (GDPR)</h3>
               <p className="text-sm text-white/80 leading-relaxed">
                 Under the General Data Protection Regulation (GDPR), you have the right to access 
                 and receive a copy of your personal data. This export includes all data we store 

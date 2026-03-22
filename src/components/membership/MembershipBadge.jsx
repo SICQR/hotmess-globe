@@ -27,16 +27,16 @@ const TIER_CONFIG = {
   pro: {
     name: 'CHROME',
     icon: Crown,
-    color: 'text-[#00D9FF]',
-    bgColor: 'bg-[#00D9FF]/20',
-    borderColor: 'border-[#00D9FF]',
+    color: 'text-[#00C2E0]',
+    bgColor: 'bg-[#00C2E0]/20',
+    borderColor: 'border-[#00C2E0]',
   },
   chrome: {
     name: 'CHROME',
     icon: Crown,
-    color: 'text-[#00D9FF]',
-    bgColor: 'bg-[#00D9FF]/20',
-    borderColor: 'border-[#00D9FF]',
+    color: 'text-[#00C2E0]',
+    bgColor: 'bg-[#00C2E0]/20',
+    borderColor: 'border-[#00C2E0]',
   },
 };
 

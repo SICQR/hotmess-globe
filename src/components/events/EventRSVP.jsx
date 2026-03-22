@@ -77,7 +77,7 @@ export default function EventRSVP({ event, currentUser }) {
           disabled={rsvpMutation.isPending || (isAtCapacity && myRsvp?.status !== 'going')}
           className={`flex-1 font-black uppercase ${
             myRsvp?.status === 'going'
-              ? 'bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black'
+              ? 'bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black'
               : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
           }`}
         >
@@ -126,7 +126,7 @@ export default function EventRSVP({ event, currentUser }) {
       <div className="flex items-center justify-between text-sm">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-[#00D9FF]" />
+            <Users className="w-4 h-4 text-[#00C2E0]" />
             <span className="text-white/80">{goingCount} going</span>
           </div>
           <div className="flex items-center gap-2">

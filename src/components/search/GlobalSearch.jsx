@@ -543,7 +543,7 @@ export default function GlobalSearch({ isOpen, onClose }) {
                     }}
                     className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
                   >
-                    <MapPin className="w-5 h-5 text-[#00D9FF]" />
+                    <MapPin className="w-5 h-5 text-[#00C2E0]" />
                     <div>
                       <div className="font-bold">{beacon.title}</div>
                       <div className="text-xs text-white/60">{beacon.city}</div>

@@ -116,7 +116,7 @@ Return ONLY an array of beacon IDs in order of recommendation strength.`;
     hookup: '#FF073A',
     drop: '#FF6B35',
     popup: '#C8962C',
-    private: '#00D9FF',
+    private: '#00C2E0',
   };
 
   return (

@@ -37,7 +37,7 @@ const buttonVariants = cva(
         hot:
           "bg-[#C8962C] text-black shadow hover:bg-white hover:shadow-lg",
         cyan:
-          "bg-[#00D9FF] text-black shadow hover:bg-white hover:shadow-lg",
+          "bg-[#00C2E0] text-black shadow hover:bg-white hover:shadow-lg",
         purple:
           "bg-[#C8962C] text-white shadow hover:bg-white hover:text-black hover:shadow-lg",
         gold:
@@ -48,7 +48,7 @@ const buttonVariants = cva(
         hotGradient:
           "bg-gradient-to-r from-[#C8962C] via-[#D4A84B] to-[#C8962C] text-white shadow-lg hover:brightness-110 hover:shadow-glow-hot border-0",
         cyanGradient:
-          "bg-gradient-to-r from-[#00D9FF] to-[#0891B2] text-white shadow-lg hover:brightness-110 hover:shadow-glow-cyan border-0",
+          "bg-gradient-to-r from-[#00C2E0] to-[#0891B2] text-white shadow-lg hover:brightness-110 hover:shadow-glow-cyan border-0",
         purpleGradient:
           "bg-gradient-to-r from-[#C8962C] to-[#C8962C] text-white shadow-lg hover:brightness-110 hover:shadow-glow-brand border-0",
         goldGradient:
@@ -61,7 +61,7 @@ const buttonVariants = cva(
         hotGlow:
           "bg-[#C8962C] text-white shadow-glow-hot hover:shadow-glow-hot-lg hover:brightness-110",
         cyanGlow:
-          "bg-[#00D9FF] text-black shadow-glow-cyan hover:shadow-glow-cyan-lg hover:brightness-110",
+          "bg-[#00C2E0] text-black shadow-glow-cyan hover:shadow-glow-cyan-lg hover:brightness-110",
         purpleGlow:
           "bg-[#C8962C] text-white shadow-glow-brand hover:shadow-glow-brand-lg hover:brightness-110",
         // Glass variants
@@ -70,7 +70,7 @@ const buttonVariants = cva(
         glassHot:
           "bg-[#C8962C]/10 backdrop-blur-sm text-[#C8962C] border border-[#C8962C]/30 hover:bg-[#C8962C]/20 hover:border-[#C8962C]/50",
         glassCyan:
-          "bg-[#00D9FF]/10 backdrop-blur-sm text-[#00D9FF] border border-[#00D9FF]/30 hover:bg-[#00D9FF]/20 hover:border-[#00D9FF]/50",
+          "bg-[#00C2E0]/10 backdrop-blur-sm text-[#00C2E0] border border-[#00C2E0]/30 hover:bg-[#00C2E0]/20 hover:border-[#00C2E0]/50",
         glassPurple:
           "bg-[#C8962C]/10 backdrop-blur-sm text-[#C8962C] border border-[#C8962C]/30 hover:bg-[#C8962C]/20 hover:border-[#C8962C]/50",
         // Outline variants
@@ -79,7 +79,7 @@ const buttonVariants = cva(
         outlineHot:
           "border-2 border-[#C8962C] text-[#C8962C] bg-transparent hover:bg-[#C8962C] hover:text-white",
         outlineCyan:
-          "border-2 border-[#00D9FF] text-[#00D9FF] bg-transparent hover:bg-[#00D9FF] hover:text-black",
+          "border-2 border-[#00C2E0] text-[#00C2E0] bg-transparent hover:bg-[#00C2E0] hover:text-black",
         outlinePurple:
           "border-2 border-[#C8962C] text-[#C8962C] bg-transparent hover:bg-[#C8962C] hover:text-white",
         outlineWhite:
@@ -96,7 +96,7 @@ const buttonVariants = cva(
         ghostHot:
           "hover:bg-[#C8962C]/10 hover:text-[#C8962C]",
         ghostCyan:
-          "hover:bg-[#00D9FF]/10 hover:text-[#00D9FF]",
+          "hover:bg-[#00C2E0]/10 hover:text-[#00C2E0]",
         link: 
           "text-primary underline-offset-4 hover:underline",
         linkHot:

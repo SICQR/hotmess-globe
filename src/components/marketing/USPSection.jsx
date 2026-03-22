@@ -147,7 +147,7 @@ export function ReplacementGrid({ className = '' }) {
  */
 export function MembershipUSPs({ tier = 'plus', className = '' }) {
   const usps = USPS.membership[tier] || [];
-  const color = tier === 'chrome' ? '#00D9FF' : '#C8962C';
+  const color = tier === 'chrome' ? '#00C2E0' : '#C8962C';
   
   return (
     <div className={`space-y-3 ${className}`}>
@@ -190,9 +190,9 @@ export function SafetyUSPs({ className = '' }) {
         <motion.div
           key={usp.id}
           variants={itemVariants}
-          className="p-4 bg-[#00D9FF]/10 border border-[#00D9FF]/30 rounded-xl"
+          className="p-4 bg-[#00C2E0]/10 border border-[#00C2E0]/30 rounded-xl"
         >
-          <h4 className="font-black uppercase text-[#00D9FF] mb-1">
+          <h4 className="font-black uppercase text-[#00C2E0] mb-1">
             {usp.headline}
           </h4>
           <p className="text-sm text-white/70">
@@ -232,7 +232,7 @@ export function StatsRow({ className = '' }) {
   const stats = [
     { value: '87%', label: 'Match Rate', color: '#39FF14' },
     { value: '24/7', label: 'Live Radio', color: '#C8962C' },
-    { value: '0', label: 'Ghosting', color: '#00D9FF' },
+    { value: '0', label: 'Ghosting', color: '#00C2E0' },
   ];
   
   return (
@@ -282,7 +282,7 @@ export function FeatureComparison({ className = '' }) {
               <span className="text-[#C8962C] font-black">PLUS</span>
             </th>
             <th className="text-center py-3 px-4">
-              <span className="text-[#00D9FF] font-black">CHROME</span>
+              <span className="text-[#00C2E0] font-black">CHROME</span>
             </th>
           </tr>
         </thead>
@@ -292,7 +292,7 @@ export function FeatureComparison({ className = '' }) {
               <td className="py-3 px-4 text-white">{feature.name}</td>
               <td className="py-3 px-4 text-center text-white/60">{feature.free}</td>
               <td className="py-3 px-4 text-center text-white">{feature.plus}</td>
-              <td className="py-3 px-4 text-center text-[#00D9FF] font-bold">{feature.chrome}</td>
+              <td className="py-3 px-4 text-center text-[#00C2E0] font-bold">{feature.chrome}</td>
             </tr>
           ))}
         </tbody>

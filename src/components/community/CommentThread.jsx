@@ -85,7 +85,7 @@ export default function CommentThread({ post, currentUser, onCommentCountChange 
     <div>
       <button
         onClick={() => setShowComments(!showComments)}
-        className="flex items-center gap-2 text-sm text-white/60 hover:text-[#00D9FF] transition-colors"
+        className="flex items-center gap-2 text-sm text-white/60 hover:text-[#00C2E0] transition-colors"
       >
         <MessageCircle className="w-4 h-4" />
         <span>{post.comments_count || 0}</span>
@@ -113,7 +113,7 @@ export default function CommentThread({ post, currentUser, onCommentCountChange 
                   type="submit"
                   size="icon"
                   disabled={!commentText.trim() || addCommentMutation.isPending}
-                  className="bg-[#00D9FF] hover:bg-[#00D9FF]/90 text-black"
+                  className="bg-[#00C2E0] hover:bg-[#00C2E0]/90 text-black"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -137,7 +137,7 @@ export default function CommentThread({ post, currentUser, onCommentCountChange 
                   >
                     <div className="flex items-start justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#00D9FF] to-[#39FF14] flex items-center justify-center flex-shrink-0">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#00C2E0] to-[#39FF14] flex items-center justify-center flex-shrink-0">
                           <span className="text-xs font-bold">{comment.user_name?.[0] || 'U'}</span>
                         </div>
                         <span className="text-xs font-bold">{comment.user_name}</span>

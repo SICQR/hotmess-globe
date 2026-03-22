@@ -29,7 +29,7 @@ import { useNavigate } from 'react-router-dom';
 // Tier display info
 const TIER_COLORS = {
   'basic_3h': '#FFFFFF',
-  'standard_6h': '#00D9FF',
+  'standard_6h': '#00C2E0',
   'premium_9h': '#C8962C',
   'featured_12h': '#C8962C',
   'spotlight_24h': '#C8962C'
@@ -163,7 +163,7 @@ export default function PromoterDashboard() {
             icon={Eye} 
             label="Total Views" 
             value={stats?.totalViews || 0}
-            color="#00D9FF"
+            color="#00C2E0"
           />
           <StatCard 
             icon={MousePointer} 

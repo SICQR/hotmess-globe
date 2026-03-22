@@ -145,8 +145,8 @@ export default function BusinessDashboard() {
             <Card className="bg-white/5 border-white/10">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-[#00D9FF]/20 rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5 text-[#00D9FF]" />
+                  <div className="w-10 h-10 bg-[#00C2E0]/20 rounded-lg flex items-center justify-center">
+                    <Users className="w-5 h-5 text-[#00C2E0]" />
                   </div>
                   <span className="text-white/60 text-sm">Total RSVPs</span>
                 </div>
@@ -219,7 +219,7 @@ export default function BusinessDashboard() {
                 <Link to={createPageUrl('BusinessVenue')}>
                   <div className="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
                     <div className="flex items-center gap-3">
-                      <MapPin className="w-5 h-5 text-[#00D9FF]" />
+                      <MapPin className="w-5 h-5 text-[#00C2E0]" />
                       <span>Manage Venues</span>
                     </div>
                     <ChevronRight className="w-4 h-4 text-white/40" />
@@ -320,14 +320,14 @@ export default function BusinessDashboard() {
           transition={{ delay: 0.4 }}
           className="mt-6"
         >
-          <Card className="bg-[#00D9FF]/10 border-[#00D9FF]/40">
+          <Card className="bg-[#00C2E0]/10 border-[#00C2E0]/40">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-[#00D9FF]/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <AlertCircle className="w-5 h-5 text-[#00D9FF]" />
+                <div className="w-10 h-10 bg-[#00C2E0]/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="w-5 h-5 text-[#00C2E0]" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-[#00D9FF] mb-2">Pro Tips</h3>
+                  <h3 className="font-bold text-[#00C2E0] mb-2">Pro Tips</h3>
                   <ul className="text-sm text-white/80 space-y-2">
                     <li>• Add high-quality images to your events to increase engagement by 3x</li>
                     <li>• Events with detailed descriptions get 40% more RSVPs</li>

@@ -21,7 +21,7 @@ const SOCIAL_FEATURES = [
     icon: Globe,
     title: 'GLOBAL DISCOVERY',
     tagline: 'Find your people anywhere',
-    color: '#00D9FF',
+    color: '#00C2E0',
     description: 'Browse profiles from around the world or filter by distance. Our smart matching shows you compatible people based on interests, vibe, and location.',
     benefits: [
       'Distance-based filtering',
@@ -176,13 +176,13 @@ export default function SocialFeatures() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-br from-[#00D9FF]/30 via-black to-[#C8962C]/20 border-2 border-[#00D9FF] p-8 md:p-12 mb-12"
+          className="bg-gradient-to-br from-[#00C2E0]/30 via-black to-[#C8962C]/20 border-2 border-[#00C2E0] p-8 md:p-12 mb-12"
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <Users className="w-8 h-8 text-[#00D9FF]" />
-                <span className="text-[#00D9FF] font-black uppercase tracking-wider">Social</span>
+                <Users className="w-8 h-8 text-[#00C2E0]" />
+                <span className="text-[#00C2E0] font-black uppercase tracking-wider">Social</span>
               </div>
               <h2 className="text-2xl md:text-3xl font-black uppercase mb-2">
                 Find your tribe
@@ -215,7 +215,7 @@ export default function SocialFeatures() {
               transition={{ delay: i * 0.1 }}
               className="bg-white/5 border border-white/10 p-4 text-center"
             >
-              <div className="text-2xl font-black text-[#00D9FF]">{stat.value}</div>
+              <div className="text-2xl font-black text-[#00C2E0]">{stat.value}</div>
               <div className="text-xs text-white/60 uppercase">{stat.label}</div>
             </motion.div>
           ))}
@@ -233,7 +233,7 @@ export default function SocialFeatures() {
           viewport={{ once: true }}
           className="text-center mt-16 pt-16 border-t border-white/10"
         >
-          <Users className="w-16 h-16 text-[#00D9FF] mx-auto mb-6" />
+          <Users className="w-16 h-16 text-[#00C2E0] mx-auto mb-6" />
           <h2 className="text-3xl font-black uppercase mb-4">Start Connecting</h2>
           <p className="text-white/60 mb-8 max-w-md mx-auto">
             Join thousands of people making real connections every day.

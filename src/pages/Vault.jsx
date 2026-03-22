@@ -95,7 +95,7 @@ export default function Vault() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Signal className="w-4 h-4 text-[#00D9FF]" />
+            <Signal className="w-4 h-4 text-[#00C2E0]" />
             <span className="font-mono text-sm">
               <span className="text-white/40">SIGNALS:</span>{' '}
               <span className="text-white font-bold">{counts.activeSignals}</span>
@@ -199,7 +199,7 @@ export default function Vault() {
                         style={{ 
                           backgroundColor: beacon.kind === 'social' ? '#39FF14' 
                             : beacon.kind === 'marketplace' ? '#C8962C' 
-                            : '#00D9FF' 
+                            : '#00C2E0' 
                         }}
                       />
                       <div>

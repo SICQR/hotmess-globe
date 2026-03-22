@@ -169,7 +169,7 @@ export default function CreatorDashboard() {
             icon={Eye} 
             label="Content Views" 
             value={content.reduce((sum, c) => sum + (c.view_count || 0), 0)}
-            color="#00D9FF"
+            color="#00C2E0"
           />
           <StatCard 
             icon={MessageSquare} 
@@ -428,7 +428,7 @@ function ContentRow({ content, expanded = false }) {
 function RequestRow({ request, expanded = false }) {
   const statusColors = {
     pending: '#C8962C',
-    accepted: '#00D9FF',
+    accepted: '#00C2E0',
     in_progress: '#C8962C',
     delivered: '#39FF14'
   };

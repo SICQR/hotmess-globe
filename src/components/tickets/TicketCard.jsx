@@ -48,7 +48,7 @@ export function TicketCard({
           <span className="text-xs text-white/50 uppercase tracking-wider">
             {ticket.ticket_type || 'General'}
           </span>
-          <span className="text-lg font-black text-[#00D9FF]">
+          <span className="text-lg font-black text-[#00C2E0]">
             £{ticket.price?.toFixed(2) || '0.00'}
           </span>
         </div>
@@ -124,8 +124,8 @@ export function TicketDemandIndicator({ level = 'normal' }) {
  */
 export function TicketChatBanner() {
   return (
-    <div className="bg-[#00D9FF]/10 border-t border-[#00D9FF]/20 px-4 py-2">
-      <p className="text-[10px] text-[#00D9FF]/80 text-center">
+    <div className="bg-[#00C2E0]/10 border-t border-[#00C2E0]/20 px-4 py-2">
+      <p className="text-[10px] text-[#00C2E0]/80 text-center">
         Chat with seller required before purchase • Fraud protection enabled
       </p>
     </div>

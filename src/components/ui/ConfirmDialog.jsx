@@ -21,7 +21,7 @@ export default function ConfirmDialog({
   const colors = {
     danger: { bg: 'bg-red-600', border: 'border-red-600', text: 'text-red-400' },
     warning: { bg: 'bg-[#FFEB3B]', border: 'border-[#FFEB3B]', text: 'text-[#FFEB3B]' },
-    info: { bg: 'bg-[#00D9FF]', border: 'border-[#00D9FF]', text: 'text-[#00D9FF]' },
+    info: { bg: 'bg-[#00C2E0]', border: 'border-[#00C2E0]', text: 'text-[#00C2E0]' },
   }[variant];
 
   if (!isOpen) return null;

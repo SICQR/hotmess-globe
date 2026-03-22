@@ -204,7 +204,7 @@ export default function GlobalAssistant() {
                                 <code className="bg-white/10 px-1 py-0.5 text-xs">{children}</code>
                               ),
                               a: ({ children, ...props }) => (
-                                <a {...props} className="text-[#00D9FF] underline" target="_blank" rel="noopener noreferrer">
+                                <a {...props} className="text-[#00C2E0] underline" target="_blank" rel="noopener noreferrer">
                                   {children}
                                 </a>
                               ),
