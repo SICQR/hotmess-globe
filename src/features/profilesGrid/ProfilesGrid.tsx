@@ -326,7 +326,7 @@ export default function ProfilesGrid({
         )}
 
         <div className={cols === 3
-          ? 'grid grid-cols-3 gap-0.5'
+          ? 'grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5'
           : 'grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4'
         }>
           {displayItems.map((profile) => (
