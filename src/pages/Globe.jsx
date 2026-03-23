@@ -46,18 +46,33 @@ export default function GlobePage({ embedded = false }) {
     queryFn: () => base44.auth.me(),
   });
 
-  // Fetch beacons and cities from Supabase
+  // Fetch beacons from Supabase beacons table (not base44 entity)
   const { data: beacons = [], isLoading: beaconsLoading } = useQuery({
     queryKey: ['beacons'],
     queryFn: async () => {
-      // Be tolerant of schema drift:
-      // - some DBs have created_at (not created_date)
-      // - some DBs may not have status/active columns
-      // Avoid orderBy/filter assumptions here; we filter/sort client-side.
-      const rows = await base44.entities.Beacon.filter({}, null, 500);
-      return Array.isArray(rows) ? rows : [];
+      const { data, error } = await supabase
+        .from('beacons')
+        .select('id, code, type, beacon_category, title, status, geo_lat, geo_lng, city_slug, globe_color, globe_pulse_type, globe_size_base, intensity, checkin_count, venue_id, ends_at, owner_id, starts_at, description, active')
+        .eq('status', 'active')
+        .not('geo_lat', 'is', null);
+      if (error) {
+        console.warn('[Globe] beacons query error:', error.message);
+        return [];
+      }
+      // Normalize to shape expected by EnhancedGlobe3D
+      const now = new Date();
+      return (data ?? [])
+        .filter((b) => !b.ends_at || new Date(b.ends_at) > now)
+        .map((b) => ({
+          ...b,
+          lat: Number(b.geo_lat),
+          lng: Number(b.geo_lng),
+          kind: b.type,
+          mode: b.beacon_category === 'venue' ? 'venue' : 'user',
+          active: true,
+        }));
     },
-    refetchInterval: 30000 // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
   // Live city heat from night_pulse_realtime (polled every 60s)
