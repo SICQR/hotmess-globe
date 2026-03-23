@@ -20,14 +20,31 @@ const fetchProfilesForCandidateIds = async ({ serviceClient, candidateUserIds })
   if (!ids.length) return { table: 'profiles', map: new Map() };
 
   // profiles.id = auth.uid() = the user_id returned by nearby_candidates_secure
-  const { data, error } = await serviceClient.from('profiles').select('*').in('id', ids);
-  if (error) {
-    console.warn('[nearby] fetchProfilesForCandidateIds error:', error.message);
+  // Also fetch user_presence to determine online status
+  const [profilesResult, presenceResult] = await Promise.all([
+    serviceClient.from('profiles').select('*').in('id', ids),
+    serviceClient.from('user_presence').select('user_id, status, last_seen_at').in('user_id', ids),
+  ]);
+
+  if (profilesResult.error) {
+    console.warn('[nearby] fetchProfilesForCandidateIds error:', profilesResult.error.message);
     return { table: 'profiles', map: new Map() };
   }
 
+  // Build a presence lookup: user_id → { status, last_seen_at }
+  const presenceMap = new Map(
+    (Array.isArray(presenceResult.data) ? presenceResult.data : [])
+      .map((row) => [String(row?.user_id), row])
+  );
+
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+
   const map = new Map(
-    (Array.isArray(data) ? data : []).map((row) => [String(row?.id), row])
+    (Array.isArray(profilesResult.data) ? profilesResult.data : []).map((row) => {
+      const presence = presenceMap.get(String(row?.id));
+      const isOnline = presence?.status === 'online' && presence?.last_seen_at > fiveMinAgo;
+      return [String(row?.id), { ...row, is_online: isOnline }];
+    })
   );
   return { table: 'profiles', map };
 };
@@ -44,6 +61,7 @@ const toPublicProfile = (row) => {
     updated_at: row.updated_at ?? null,
     city: row.city ?? null,
     public_attributes: row.public_attributes ?? null,
+    is_online: row.is_online ?? false,
   };
 };
 
