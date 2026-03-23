@@ -784,8 +784,9 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     // Interaction
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
-    let targetRotationY = 0;
-    let targetRotationX = 0;
+    // Default rotation: centre on London (51.5°N, 0.1°W)
+    let targetRotationY = -1.5690;
+    let targetRotationX = 0.8988;
     let velocity = { x: 0, y: 0 };
     let targetCameraZ = 4.5;
     
