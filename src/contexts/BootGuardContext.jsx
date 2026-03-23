@@ -53,6 +53,13 @@ const getLocalCommunityAttested = () => {
   }
 };
 
+/** Keys that survive signout — user prefs that are not auth-scoped */
+const PERSIST_KEYS = new Set([
+  'hm_cookie_consent_v1',
+  'hm_age_confirmed_v1',
+  'hm_community_attested_v1',
+]);
+
 /** Clear all hm_* localStorage keys — used on signout so a fresh signup starts clean */
 const clearHotmessStorage = () => {
   try {
@@ -60,7 +67,7 @@ const clearHotmessStorage = () => {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (k && (k.startsWith('hm_') || k.startsWith('chat_read_') || k.startsWith('ghosted_'))) {
-        keys.push(k);
+        if (!PERSIST_KEYS.has(k)) keys.push(k);
       }
     }
     keys.forEach(k => localStorage.removeItem(k));
