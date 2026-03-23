@@ -51,6 +51,7 @@ import {
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
+import { useBootGuard } from '@/contexts/BootGuardContext';
 import { isBrandVisible } from '@/config/brands';
 import {
   getAllProducts,
@@ -492,9 +493,18 @@ interface MarketModeProps {
   className?: string;
 }
 
+/**
+ * Renders the unified "Market" interface that merges Shopify merch, preloved listings, and creator drops into a single scrollable marketplace with URL-synced filters, category and source chips, debounced search, infinite-scroll pagination, and contextual actions (cart, filters, brand pages).
+ *
+ * The component displays a featured banner when no filters are active, a responsive product grid, loading/error/empty states, and a sell floating action button that is shown only for authenticated users.
+ *
+ * @param className - Optional additional container CSS classes to apply to the root element
+ * @returns A React element representing the marketplace UI
+ */
 export function MarketMode({ className = '' }: MarketModeProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { openSheet } = useSheet();
+  const { isAuthenticated } = useBootGuard();
 
   // Cart item count for badge
   const cartItemCount = useCartItemCount();
@@ -890,19 +900,21 @@ export function MarketMode({ className = '' }: MarketModeProps) {
       </div>
 
       {/* ================================================================== */}
-      {/* SELL FAB                                                             */}
+      {/* SELL FAB — auth only                                                */}
       {/* ================================================================== */}
-      <button
-        onClick={() => openSheet('sell', {})}
-        className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C] focus:ring-offset-2 focus:ring-offset-[#050507]"
-        style={{
-          backgroundColor: AMBER,
-          boxShadow: `0 8px 24px rgba(200, 150, 44, 0.35)`,
-        }}
-        aria-label="Sell an item"
-      >
-        <Plus className="w-6 h-6 text-black" strokeWidth={2.5} />
-      </button>
+      {isAuthenticated && (
+        <button
+          onClick={() => openSheet('sell', {})}
+          className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform focus:outline-none focus:ring-2 focus:ring-[#C8962C] focus:ring-offset-2 focus:ring-offset-[#050507]"
+          style={{
+            backgroundColor: AMBER,
+            boxShadow: `0 8px 24px rgba(200, 150, 44, 0.35)`,
+          }}
+          aria-label="Sell an item"
+        >
+          <Plus className="w-6 h-6 text-black" strokeWidth={2.5} />
+        </button>
+      )}
     </div>
   );
 }

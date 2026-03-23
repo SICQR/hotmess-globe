@@ -18,6 +18,174 @@ import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { toast } from 'sonner';
 
+/**
+ * Render a full-screen age confirmation modal for 18+ products.
+ *
+ * @param {Object} props
+ * @param {() => void} props.onConfirm - Called when the user confirms they are 18 or older.
+ * @param {() => void} props.onCancel - Called when the user cancels or closes the modal.
+ * @returns {import('react').ReactElement} A React element that presents an age verification dialog with confirm and cancel actions.
+ */
+function AgeGateModal({ onConfirm, onCancel }) {
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-[#1C1C1E] rounded-2xl p-6 mx-6 max-w-sm w-full border border-white/10"
+      >
+        <div className="text-center">
+          <div className="w-14 h-14 rounded-full bg-[#C8962C]/15 flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl font-black text-[#C8962C]">18+</span>
+          </div>
+          <h3 className="text-white text-lg font-bold mb-2">Age Verification</h3>
+          <p className="text-white/60 text-sm mb-6">
+            This product is restricted to customers aged 18 and over. By proceeding, you confirm you meet this requirement.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              className="flex-1 h-12 rounded-xl font-semibold text-white/60 bg-white/10 active:scale-95 transition-transform"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 h-12 rounded-xl font-bold text-black bg-[#C8962C] active:scale-95 transition-transform"
+            >
+              I confirm I am 18+
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/**
+ * Render the internal product detail view and handle purchase flow with optional age verification.
+ *
+ * Displays product information (image, title, price, description) and a Buy Now action that:
+ * - if the product is age-restricted, prompts an age-confirmation modal and persists confirmation to localStorage under `hnhmess_age_confirmed`;
+ * - otherwise or after confirmation, opens the Shopify storefront cart for the configured variant in a new browser tab; if Shopify env variables are missing, shows a toast and does not open checkout.
+ *
+ * @param {Object} props
+ * @param {Object} props.product - Product data from the internal products table. Expected fields used by the component include:
+ *   `title` (string), `price` (number), `description` (string, optional), `images` (array, optional), and `metadata.ageVerifiedOnly` (boolean, optional).
+ */
+function InternalProductDetail({ product }) {
+  const [showAgeGate, setShowAgeGate] = useState(false);
+  const isAgeRestricted = product?.metadata?.ageVerifiedOnly === true;
+  const shopifyStoreUrl = import.meta.env.VITE_SHOPIFY_STORE_URL;
+  const shopifyVariantId = import.meta.env.VITE_SHOPIFY_LUBE_VARIANT_ID;
+
+  const isAgeConfirmed = () => {
+    try { return localStorage.getItem('hnhmess_age_confirmed') === 'true'; } catch { return false; }
+  };
+
+  const handleBuyNow = () => {
+    if (isAgeRestricted && !isAgeConfirmed()) {
+      setShowAgeGate(true);
+      return;
+    }
+    proceedToCheckout();
+  };
+
+  const proceedToCheckout = () => {
+    if (!shopifyStoreUrl || !shopifyVariantId) {
+      toast('Shop coming soon — check back shortly', { icon: '🛍️' });
+      return;
+    }
+    const checkoutUrl = `https://${shopifyStoreUrl}/cart/${shopifyVariantId}:1`;
+    window.open(checkoutUrl, '_blank', 'noopener');
+  };
+
+  const handleAgeConfirm = () => {
+    try { localStorage.setItem('hnhmess_age_confirmed', 'true'); } catch {}
+    setShowAgeGate(false);
+    proceedToCheckout();
+  };
+
+  const img = product?.images?.[0];
+
+  return (
+    <div className="pb-24">
+      {showAgeGate && (
+        <AgeGateModal
+          onConfirm={handleAgeConfirm}
+          onCancel={() => setShowAgeGate(false)}
+        />
+      )}
+
+      {/* Product Image */}
+      {img ? (
+        <div className="aspect-square bg-black overflow-hidden">
+          <img src={img} alt={product.title} className="w-full h-full object-cover" />
+        </div>
+      ) : (
+        <div className="aspect-square bg-[#0D0D0D] flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-20 h-20 mx-auto rounded-2xl bg-[#C8962C]/10 border border-[#C8962C]/30 flex items-center justify-center mb-3">
+              <ShoppingBag className="w-10 h-10 text-[#C8962C]/60" />
+            </div>
+            <p className="text-xs uppercase tracking-widest text-[#C8962C]/40 font-bold">HNH MESS London</p>
+          </div>
+        </div>
+      )}
+
+      <SheetSection>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="px-2 py-0.5 bg-[#C8962C]/15 text-[#C8962C] text-[10px] font-black uppercase rounded-full">
+            HNH MESS
+          </span>
+          {isAgeRestricted && (
+            <span className="px-2 py-0.5 bg-white/10 text-white/60 text-[10px] font-bold rounded-full">
+              18+
+            </span>
+          )}
+        </div>
+        <h2 className="text-2xl font-black text-white mb-2">{product.title}</h2>
+        <span className="text-2xl font-black text-[#C8962C]">
+          £{product.price.toFixed(2)}
+        </span>
+
+        {product.description && (
+          <p className="text-white/70 text-sm leading-relaxed mt-3">{product.description}</p>
+        )}
+      </SheetSection>
+
+      <SheetDivider />
+
+      <SheetSection title="About HNH MESS">
+        <p className="text-white/50 text-sm leading-relaxed">
+          Premium personal care from HNH MESS London. Body-safe, long-lasting formula.
+        </p>
+      </SheetSection>
+
+      <SheetDivider />
+
+      <SheetActions>
+        <Button
+          onClick={handleBuyNow}
+          className="flex-1 h-14 bg-[#C8962C] hover:bg-[#C8962C]/90 font-black text-base"
+        >
+          <ShoppingBag className="w-5 h-5 mr-2" />
+          Buy Now — £{product.price.toFixed(2)}
+        </Button>
+      </SheetActions>
+    </div>
+  );
+}
+
+/**
+ * Renders the shop sheet overlay that displays featured products, a single Shopify product, preloved product details, or an internal product detail depending on props and state.
+ *
+ * @param {Object} props - Component props.
+ * @param {string} [props.handle] - Optional Shopify product handle used to fetch and show a single product detail.
+ * @param {Object} [props.product] - Optional product object; when its id starts with `internal_` the internal product detail is shown, and when it contains `seller_id` or `source === 'preloved'` the preloved (P2P) detail is shown.
+ * @param {Object} [props.seller] - Seller information used when rendering a preloved product detail.
+ * @param {string} [props.source] - Optional source hint (e.g., `'preloved'`) that forces the preloved detail flow.
+ * @returns {JSX.Element} The sheet UI for browsing featured products, viewing product details, or interacting with preloved/internal product flows.
 export default function L2ShopSheet({ handle, product, seller, source }) {
   const { openSheet, updateSheetProps } = useSheet();
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -56,6 +224,11 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
   const products = shopData?.products || [];
   const notConfigured = !!shopData?.notConfigured;
   const displayProduct = singleProduct || selectedProduct;
+
+  // ---- Internal product (from products table) ----
+  if (product?.id?.startsWith('internal_')) {
+    return <InternalProductDetail product={product} />;
+  }
 
   // ---- Preloved product detail view ----
   // When source='preloved' or product has seller_id, render P2P detail
