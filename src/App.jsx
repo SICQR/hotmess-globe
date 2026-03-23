@@ -654,11 +654,11 @@ function App() {
 }
 
 /**
- * OSArchitecture - The layered OS structure
- * L0: Globe (Z-0) - persistent background
- * L1: HUD/Navigation (Z-50) - always visible
- * L2: Sheets (Z-80) - slide-up content
- * L3: Interrupts (Z-100) - blocking overlays
+ * Render the application's layered OS UI shell and initialize OS-level side effects.
+ *
+ * Initializes dynamic viewport height, push notifications, deep-link sheet handling, and presence heartbeat; parses and strips Telegram deep-link tokens from the URL. Renders a persistent globe background, the authenticated app routes overlay, radio mini player (hidden on radio routes), bottom navigation, cookie banner, and interrupt-layer UI such as the SOS long-press button, shake-to-SOS, incoming call banner (each shown only when authenticated), and the SOS overlay when active.
+ *
+ * @returns {JSX.Element} The layered OS shell containing globe, app routes, mini player, navigation, interrupts, and cookie banner.
  */
 function OSArchitecture() {
   // Initialize dynamic viewport height for mobile browsers
@@ -670,6 +670,7 @@ function OSArchitecture() {
   // Update User.last_seen every 5 min — powers online presence dots on Ghosted grid
   usePresenceHeartbeat();
   const { sosActive, triggerSOS, clearSOS } = useSOSContext();
+  const { isAuthenticated } = useBootGuard();
   const location = useLocation();
 
   // ── Telegram deep-link handler ──────────────────────────────────────────
@@ -707,20 +708,22 @@ function OSArchitecture() {
       {/* L1: OS Bottom Nav — amber-circle 5-tab nav */}
       <OSBottomNav />
 
-      {/* L3: SOS long-press trigger — above nav, below overlays (Z-190) */}
-      <SOSButton
-        className="fixed bottom-24 right-4 z-[190]"
-        onTrigger={triggerSOS}
-      />
+      {/* L3: SOS long-press trigger — auth only (Z-190) */}
+      {isAuthenticated && (
+        <SOSButton
+          className="fixed bottom-24 right-4 z-[190]"
+          onTrigger={triggerSOS}
+        />
+      )}
 
-      {/* L3: Shake-to-SOS — invisible when idle, banner at Z-195 when counting down */}
-      <ShakeSOS />
+      {/* L3: Shake-to-SOS — auth only */}
+      {isAuthenticated && <ShakeSOS />}
 
       {/* L3: SOS Overlay — blocks entire OS, stops all sharing (Z-200) */}
       {sosActive && <SOSOverlay onClose={clearSOS} />}
 
-      {/* Incoming call banner — fixed top, z-[180], below SOS z-200 */}
-      <IncomingCallBanner />
+      {/* Incoming call banner — auth only */}
+      {isAuthenticated && <IncomingCallBanner />}
 
       {/* GDPR Cookie Banner — shows once, persists choice */}
       <CookieBanner />

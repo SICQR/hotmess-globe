@@ -15,7 +15,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLongPress } from '@/hooks/useLongPress';
@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { usePersona } from '@/contexts/PersonaContext';
+import { useBootGuard } from '@/contexts/BootGuardContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 import type { LucideIcon } from 'lucide-react';
@@ -144,8 +145,62 @@ interface ProfileModeProps {
   className?: string;
 }
 
-// ---- Component --------------------------------------------------------------
+/**
+ * Renders the unauthenticated profile prompt with a sign-in call-to-action.
+ *
+ * @param className - Optional additional Tailwind CSS classes applied to the root container
+ * @returns A React element containing an avatar placeholder, explanatory text, and a button that navigates to the authentication screen
+ */
+function ProfileSignInPrompt({ className = '' }: { className?: string }) {
+  const nav = useNavigate();
+  return (
+    <div className={`h-full w-full flex flex-col items-center justify-center gap-6 px-8 ${className}`} style={{ background: ROOT_BG }}>
+      <div className="w-20 h-20 rounded-full bg-white/[0.06] flex items-center justify-center">
+        <User className="w-10 h-10 text-white/20" />
+      </div>
+      <div className="text-center">
+        <h2 className="text-white text-xl font-bold mb-2">Sign in to HOTMESS</h2>
+        <p className="text-sm" style={{ color: MUTED }}>
+          Create your profile, chat, and unlock the full experience.
+        </p>
+      </div>
+      <button
+        onClick={() => nav('/auth')}
+        className="h-12 px-10 rounded-xl font-bold text-black active:scale-95 transition-transform"
+        style={{ background: AMBER }}
+      >
+        Sign In / Join
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Render either the unauthenticated sign-in prompt or the authenticated profile UI
+ * depending on the boot guard's authentication state.
+ *
+ * @param className - Optional CSS class names applied to the rendered component's root
+ * @returns The sign-in prompt when the user is not authenticated, otherwise the authenticated profile mode
+ */
 export function ProfileMode({ className = '' }: ProfileModeProps) {
+  const { isAuthenticated } = useBootGuard();
+
+  // Anon users see a sign-in prompt instead of the profile settings
+  if (!isAuthenticated) {
+    return <ProfileSignInPrompt className={className} />;
+  }
+
+  return <AuthenticatedProfileMode className={className} />;
+}
+
+/**
+ * Render the authenticated user's profile and settings screen with persona controls and quick stats.
+ *
+ * Displays the user's avatar, persona badge, intent status, quick activity statistics, grouped settings navigation, and sign-out/version controls; it also fetches profile and related counts, supports opening the persona switcher (including via the URL action parameter), and exposes long-press avatar behavior to invoke persona switching.
+ *
+ * @returns A JSX element rendering the full authenticated profile/settings UI for the current user
+ */
+function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
   const [showSwitcher, setShowSwitcher] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
