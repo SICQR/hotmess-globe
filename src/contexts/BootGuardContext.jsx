@@ -150,6 +150,14 @@ export function BootGuardProvider({ children }) {
       if (!mounted) return;
 
       if (event === 'SIGNED_OUT' || !newSession?.user?.id) {
+        // Mark presence offline before clearing state (fire-and-forget)
+        if (newSession?.user?.id) {
+          void supabase.from('user_presence').upsert({
+            user_id: newSession.user.id,
+            status: 'offline',
+            last_seen_at: new Date().toISOString(),
+          }, { onConflict: 'user_id' }).catch(() => {});
+        }
         // Clear all hm_* localStorage keys so a new user doesn't inherit state
         clearHotmessStorage();
         setSession(null);
@@ -163,14 +171,36 @@ export function BootGuardProvider({ children }) {
       // All three require loadProfile to determine boot state.
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
         setSession(newSession);
+        // Mark presence online (fire-and-forget — do NOT await)
+        void supabase.from('user_presence').upsert({
+          user_id: newSession.user.id,
+          status: 'online',
+          last_seen_at: new Date().toISOString(),
+          metadata: {},
+        }, { onConflict: 'user_id' }).catch(() => {});
         // Do NOT await — see comment above re: Navigator Lock deadlock.
         void loadProfile(newSession.user.id, newSession.user.email);
       }
     });
 
+    // Presence heartbeat — keeps user_presence.last_seen_at fresh (every 60s)
+    const heartbeatInterval = setInterval(() => {
+      if (!mounted) return;
+      supabase.auth.getSession().then(({ data }) => {
+        const uid = data?.session?.user?.id;
+        if (!uid) return;
+        void supabase.from('user_presence').upsert({
+          user_id: uid,
+          status: 'online',
+          last_seen_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' }).catch(() => {});
+      }).catch(() => {});
+    }, 60_000);
+
     return () => {
       mounted = false;
       clearTimeout(bootTimeout);
+      clearInterval(heartbeatInterval);
       subscription?.unsubscribe();
     };
   }, []);
