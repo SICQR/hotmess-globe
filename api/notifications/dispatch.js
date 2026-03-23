@@ -53,8 +53,10 @@ export default async function handler(req, res) {
 
   // If no secret is configured: block in production, allow in dev/preview
   if (!secret && !allowVercelCron) {
-    const env = process.env.VERCEL_ENV || '';
-    if (env === 'production') {
+    const vercelEnv = process.env.VERCEL_ENV || '';
+    const nodeEnv = process.env.NODE_ENV || '';
+    const isProduction = vercelEnv === 'production' || nodeEnv === 'production';
+    if (isProduction) {
       return json(res, 401, { error: 'CRON_SECRET not configured' });
     }
     // Dev/preview without secret — allow through for testing
