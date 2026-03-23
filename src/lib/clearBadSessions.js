@@ -28,7 +28,7 @@ export function clearBadSupabaseSessions() {
       const value = localStorage.getItem(key);
       // Check if the value contains a JWT from wrong project
       if (value && (
-        value.includes('axxwdjmbwkvqhcpwters') ||
+        value.includes('rfoftonnlwudilafhfkl') ||
         value.includes('klbmalzhmxnelyuabawk')
       )) {
         keysToRemove.push(key);
