@@ -53,6 +53,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   userIntents = [],
   routesData = [],
   globeActivity = null,
+  globeEvents = [],
   onBeaconClick,
   onCityClick,
   selectedCity = null,
@@ -1007,6 +1008,132 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     let animationId;
     const clock = new THREE.Clock();
 
+    // ── Globe Events Layer: transient visual effects from globe_events ─────
+    const globeEventsGroup = new THREE.Group();
+    globe.add(globeEventsGroup);
+    const activeEffects = new Map(); // id → { mesh, startTime, duration }
+
+    function addGlobeEffect(evt) {
+      if (!evt || !Number.isFinite(evt.lat) || !Number.isFinite(evt.lng)) return;
+      if (activeEffects.has(evt.id)) return;
+
+      const pos = latLngToVector3(evt.lat, evt.lng, globeRadius * 1.005);
+      const color = new THREE.Color(evt.color || '#C8962C');
+      const intensity = Math.min(evt.intensity || 1, 10) / 10; // normalize 0-1
+      const size = (evt.metadata?.size ?? 1.0) * 0.02;
+
+      // All effects use a circle sprite facing the camera direction from that point
+      const geo = new THREE.CircleGeometry(size, 32);
+      const mat = new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: intensity * 0.8,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.copy(pos);
+      mesh.lookAt(pos.clone().multiplyScalar(2)); // face outward
+
+      // Add a glow ring for flare/ripple types
+      if (evt.pulse_type === 'flare' || evt.pulse_type === 'ripple') {
+        const ringGeo = new THREE.RingGeometry(size * 0.8, size * 1.5, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color,
+          transparent: true,
+          opacity: intensity * 0.4,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.position.copy(pos);
+        ring.lookAt(pos.clone().multiplyScalar(2));
+        mesh.userData.ring = ring;
+        mesh.userData.ringMat = ringMat;
+        mesh.userData.ringGeo = ringGeo;
+        globeEventsGroup.add(ring);
+      }
+
+      globeEventsGroup.add(mesh);
+      activeEffects.set(evt.id, {
+        mesh,
+        startTime: clock.getElapsedTime(),
+        duration: (evt.duration_ms || 3000) / 1000,
+        pulseType: evt.pulse_type,
+        intensity,
+      });
+    }
+
+    function animateGlobeEffects(time) {
+      for (const [id, effect] of activeEffects) {
+        const elapsed = time - effect.startTime;
+        const progress = Math.min(elapsed / effect.duration, 1);
+
+        if (progress >= 1) {
+          // Cleanup expired effect
+          globeEventsGroup.remove(effect.mesh);
+          effect.mesh.geometry.dispose();
+          effect.mesh.material.dispose();
+          if (effect.mesh.userData.ring) {
+            globeEventsGroup.remove(effect.mesh.userData.ring);
+            effect.mesh.userData.ringGeo.dispose();
+            effect.mesh.userData.ringMat.dispose();
+          }
+          activeEffects.delete(id);
+          continue;
+        }
+
+        const fadeOut = 1 - progress;
+
+        switch (effect.pulseType) {
+          case 'steady':
+            // Persistent soft glow — no fade
+            effect.mesh.material.opacity = effect.intensity * 0.6 * (0.8 + Math.sin(time * 2) * 0.2);
+            break;
+          case 'standard':
+            // Gold pulse: scale up then fade
+            effect.mesh.scale.setScalar(1 + progress * 0.5);
+            effect.mesh.material.opacity = effect.intensity * 0.8 * fadeOut;
+            break;
+          case 'flare': {
+            // Bright flash expanding then dimming
+            const flareScale = 1 + progress * 2;
+            effect.mesh.scale.setScalar(flareScale);
+            effect.mesh.material.opacity = effect.intensity * (progress < 0.2 ? progress * 5 : fadeOut);
+            if (effect.mesh.userData.ring) {
+              effect.mesh.userData.ring.scale.setScalar(1 + progress * 3);
+              effect.mesh.userData.ringMat.opacity = effect.intensity * 0.3 * fadeOut;
+            }
+            break;
+          }
+          case 'ripple': {
+            // Expanding ring
+            const rippleScale = 1 + progress * 4;
+            effect.mesh.scale.setScalar(rippleScale);
+            effect.mesh.material.opacity = effect.intensity * 0.5 * fadeOut;
+            if (effect.mesh.userData.ring) {
+              effect.mesh.userData.ring.scale.setScalar(1 + progress * 5);
+              effect.mesh.userData.ringMat.opacity = effect.intensity * 0.3 * fadeOut;
+            }
+            break;
+          }
+          case 'shimmer':
+            // Quick shimmer flash
+            effect.mesh.material.opacity = effect.intensity * 0.7 * fadeOut * (0.5 + Math.sin(time * 12) * 0.5);
+            effect.mesh.scale.setScalar(1 + progress * 0.3);
+            break;
+          default:
+            effect.mesh.material.opacity = effect.intensity * 0.6 * fadeOut;
+        }
+      }
+    }
+
+    // Process initial globe events
+    const safeGlobeEvents = Array.isArray(globeEvents) ? globeEvents : [];
+    safeGlobeEvents.forEach(addGlobeEffect);
+
     // Adaptive quality: drop pixel ratio when sustained FPS < 30
     let fpsFrames = 0;
     let fpsWindowStart = performance.now();
@@ -1066,6 +1193,13 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       animateSeedHeat(seedHeatGroup, time);
       animateVenueGlow(venueGlowGroup, time);
       animateActivityFlashes(activityFlashGroup, time);
+
+      // Animate transient globe events (realtime visual effects)
+      animateGlobeEffects(time);
+
+      // Process any new globe events that arrived since last frame
+      const safeNewEvents = Array.isArray(globeEvents) ? globeEvents : [];
+      safeNewEvents.forEach(addGlobeEffect);
 
       // Pulse Right Now beacons and mood blobs
       scene.traverse(obj => {
@@ -1159,6 +1293,18 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         });
       }
 
+      // Dispose globe events effects
+      activeEffects.forEach((effect) => {
+        effect.mesh.geometry.dispose();
+        effect.mesh.material.dispose();
+        if (effect.mesh.userData.ring) {
+          effect.mesh.userData.ringGeo?.dispose();
+          effect.mesh.userData.ringMat?.dispose();
+        }
+      });
+      activeEffects.clear();
+      disposeActivityGroup(globeEventsGroup);
+
       // Dispose activity layer groups
       disposeActivityGroup(seedHeatGroup);
       disposeActivityGroup(venueGlowGroup);
@@ -1222,7 +1368,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       // Clear references
       scene.clear();
     };
-  }, [beacons, cities, activeLayers, highlightedIds, userActivities, routesData, globeActivity, onBeaconClick, onCityClick]);
+  }, [beacons, cities, activeLayers, highlightedIds, userActivities, routesData, globeActivity, globeEvents, onBeaconClick, onCityClick]);
 
   // Rotate to selected city
   useEffect(() => {

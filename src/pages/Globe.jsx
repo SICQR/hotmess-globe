@@ -22,6 +22,7 @@ import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { useRealtimeBeacons, useRightNowCount, useRealtimeLocations, useRealtimeRoutes } from '../components/globe/useRealtimeBeacons';
 import { useGlobeActivity } from '@/hooks/useGlobeActivity';
+import { useGlobeRealtime } from '@/hooks/useGlobeRealtime';
 import { useProfileOpener } from '@/lib/profile';
 import LocationShopPanel from '../components/globe/LocationShopPanel';
 
@@ -57,11 +58,21 @@ export default function GlobePage({ embedded = false }) {
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
-  const { data: cities = [], isLoading: citiesLoading } = useQuery({
-    queryKey: ['cities'],
-    queryFn: () => base44.entities.City.list(),
-    refetchInterval: 60000 // Refresh every minute
-  });
+  // Live city heat from night_pulse_realtime (polled every 60s)
+  // and globe_events realtime subscription for visual effects
+  const { cityHeat, globeEvents } = useGlobeRealtime();
+
+  // Map city heat to the cities format the globe expects
+  const cities = cityHeat.map((c) => ({
+    id: c.city_id,
+    name: c.city_name,
+    lat: c.lat,
+    lng: c.lng,
+    active_beacons: c.active_beacons,
+    heat_intensity: c.heat_intensity,
+    scans_last_hour: c.scans_last_hour,
+  }));
+  const citiesLoading = false;
 
   const { data: userIntents = [] } = useQuery({
     queryKey: ['user-intents-globe'],
@@ -610,6 +621,7 @@ export default function GlobePage({ embedded = false }) {
           userIntents={userIntents}
           routesData={realtimeRoutes}
           globeActivity={globeActivity}
+          globeEvents={globeEvents}
           onBeaconClick={handleBeaconClick}
           onCityClick={handleCityClick}
           selectedCity={selectedCity}

@@ -93,34 +93,37 @@ function BeaconCreator({ onSuccess }) {
       const descStr  = formData.description.trim() || null;
       const addrStr  = formData.address.trim() || null;
 
-      // Insert into "Beacon" (PascalCase) — the base table.
-      // `beacons` (lowercase) is a VIEW; inserts must go to the underlying table.
-      const { error } = await supabase.from('Beacon').insert({
-        kind:        selectedType,
-        type:        selectedType,
-        owner_email: user.email,
-        lat:         coords.lat,
-        lng:         coords.lng,
-        starts_at:   now.toISOString(),
-        end_at:      endsAt.toISOString(),   // "Beacon" uses end_at, not ends_at
-        intensity:   intensity,
-        mode:        'active',
-        status:      'published',           // NOT NULL — default for user-created beacons
-        active:      true,                  // NOT NULL
-        sponsored:   false,                 // NOT NULL
-        is_shadow:   false,                 // NOT NULL
-        is_verified: false,                 // NOT NULL
-        // Store in direct columns (they exist on "Beacon")
-        title:         titleStr,
-        description:   descStr,
-        venue_address: addrStr,
-        // Also mirror into metadata for legacy code that reads metadata
-        metadata: {
-          title:       titleStr,
-          description: descStr,
-          address:     addrStr,
-          visibility:  visibility,
-        },
+      // Determine globe visual config from beacon type
+      const beaconCategory = 'user'; // all user-created beacons
+      const globeVisuals = {
+        checkin:  { color: '#C8962C', pulse: 'standard', size: 1.0 },
+        event:   { color: '#FF4F9A', pulse: 'flare',    size: 2.5 },
+        drop:    { color: '#C8962C', pulse: 'standard', size: 1.0 },
+        chat:    { color: '#C8962C', pulse: 'ripple',   size: 1.5 },
+        party:   { color: '#FF4F9A', pulse: 'flare',    size: 2.0 },
+        meetup:  { color: '#C8962C', pulse: 'standard', size: 1.5 },
+        cruising:{ color: '#C8962C', pulse: 'standard', size: 1.0 },
+        safety:  { color: '#FF3B30', pulse: 'private',  size: 0   },
+      };
+      const vis = globeVisuals[selectedType] || globeVisuals.checkin;
+
+      const { error } = await supabase.from('beacons').insert({
+        type:             selectedType,
+        beacon_category:  beaconCategory,
+        owner_id:         user.id,
+        geo_lat:          coords.lat,
+        geo_lng:          coords.lng,
+        starts_at:        now.toISOString(),
+        ends_at:          endsAt.toISOString(),
+        intensity:        intensity,
+        status:           'active',
+        active:           true,
+        title:            titleStr,
+        description:      descStr,
+        // Globe visual config
+        globe_color:      vis.color,
+        globe_pulse_type: vis.pulse,
+        globe_size_base:  vis.size,
       });
 
       if (error) throw error;
