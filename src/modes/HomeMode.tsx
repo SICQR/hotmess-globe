@@ -534,6 +534,9 @@ export function HomeMode({ className = '' }: HomeModeProps) {
   const [city, setCity] = useState(() => localStorage.getItem('hm_city') || 'London');
   const [showRightNow, setShowRightNow] = useState(false);
   const [nightMode, setNightMode] = useState(() => localStorage.getItem('hm_night_mode') === 'true');
+  const [nightModeBeaconId, setNightModeBeaconId] = useState<string | null>(
+    () => localStorage.getItem('hm_night_beacon_id') || null
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // ---- Pull-to-refresh state ------------------------------------------------
@@ -595,8 +598,8 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         // Try to get location for beacon
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              void supabase.from('beacons').insert({
+            async (pos) => {
+              const { data: beacon } = await supabase.from('beacons').insert({
                 code: nanoid(8),
                 type: 'checkin',
                 beacon_category: 'user',
@@ -613,31 +616,38 @@ export function HomeMode({ className = '' }: HomeModeProps) {
                 globe_pulse_type: 'standard',
                 globe_size_base: 1.0,
                 intensity: 3,
-              }).catch(() => {});
+              }).select('id').single().catch(() => ({ data: null }));
+              if (beacon?.id) {
+                setNightModeBeaconId(beacon.id);
+                localStorage.setItem('hm_night_beacon_id', beacon.id);
+              }
             },
             () => {}, // location denied — still activate night mode
             { enableHighAccuracy: false, timeout: 5000 },
           );
         }
       } else {
-        // OFF: set presence offline + expire active check-in beacons
+        // OFF: set presence offline + expire only the Night Mode beacon
         void supabase.from('user_presence').upsert({
           user_id: user.id,
           status: 'offline',
           last_seen_at: new Date().toISOString(),
         }, { onConflict: 'user_id' }).catch(() => {});
 
-        void supabase.from('beacons')
-          .update({ status: 'expired' })
-          .eq('owner_id', user.id)
-          .eq('type', 'checkin')
-          .eq('status', 'active')
-          .catch(() => {});
+        const beaconId = nightModeBeaconId || localStorage.getItem('hm_night_beacon_id');
+        if (beaconId) {
+          void supabase.from('beacons')
+            .update({ status: 'expired' })
+            .eq('id', beaconId)
+            .catch(() => {});
+        }
+        setNightModeBeaconId(null);
+        localStorage.removeItem('hm_night_beacon_id');
       }
     } catch {
       // non-critical
     }
-  }, [nightMode, city]);
+  }, [nightMode, nightModeBeaconId, city]);
 
   // ---- Data queries ---------------------------------------------------------
 
