@@ -564,14 +564,15 @@ export function HomeMode({ className = '' }: HomeModeProps) {
     pullDistance.current = 0;
   }, [refreshing, queryClient]);
 
-  // ---- City cycling ---------------------------------------------------------
-  const handleCityTap = useCallback(() => {
-    const CITIES = ['London', 'Berlin', 'New York'];
-    const idx = CITIES.indexOf(city);
-    const next = CITIES[(idx + 1) % CITIES.length];
-    setCity(next);
-    localStorage.setItem('hm_city', next);
-  }, [city]);
+  // ---- City picker ----------------------------------------------------------
+  const [showCityPicker, setShowCityPicker] = useState(false);
+  const CITIES = ['London', 'Berlin', 'New York'];
+  const handleCityTap = useCallback(() => setShowCityPicker(true), []);
+  const selectCity = useCallback((c: string) => {
+    setCity(c);
+    localStorage.setItem('hm_city', c);
+    setShowCityPicker(false);
+  }, []);
 
   // ---- Night Mode toggle ----------------------------------------------------
   const toggleNightMode = useCallback(async () => {
@@ -1120,6 +1121,48 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       </div>
 
       {/* Right Now modal (existing) */}
+      {/* City Picker */}
+      <AnimatePresence>
+        {showCityPicker && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-end justify-center"
+            onClick={() => setShowCityPicker(false)}
+          >
+            <div className="absolute inset-0 bg-black/60" />
+            <motion.div
+              initial={{ y: 300 }}
+              animate={{ y: 0 }}
+              exit={{ y: 300 }}
+              transition={{ type: 'spring', damping: 25 }}
+              className="relative w-full max-w-md rounded-t-2xl p-6 pb-10"
+              style={{ background: '#1C1C1E' }}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            >
+              <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#8E8E93' }}>Select city</p>
+              <div className="space-y-1">
+                {CITIES.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => selectCity(c)}
+                    className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-left transition-colors"
+                    style={{
+                      background: c === city ? 'rgba(200,150,44,0.15)' : 'transparent',
+                      color: c === city ? '#C8962C' : '#fff',
+                    }}
+                  >
+                    <span className="font-semibold">{c}</span>
+                    {c === city && <span style={{ color: '#C8962C' }}>\u2713</span>}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <RightNowModal isOpen={showRightNow} onClose={() => setShowRightNow(false)} />
     </div>
   );
