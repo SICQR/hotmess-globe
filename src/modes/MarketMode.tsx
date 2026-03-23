@@ -493,6 +493,14 @@ interface MarketModeProps {
   className?: string;
 }
 
+/**
+ * Renders the unified "Market" interface that merges Shopify merch, preloved listings, and creator drops into a single scrollable marketplace with URL-synced filters, category and source chips, debounced search, infinite-scroll pagination, and contextual actions (cart, filters, brand pages).
+ *
+ * The component displays a featured banner when no filters are active, a responsive product grid, loading/error/empty states, and a sell floating action button that is shown only for authenticated users.
+ *
+ * @param className - Optional additional container CSS classes to apply to the root element
+ * @returns A React element representing the marketplace UI
+ */
 export function MarketMode({ className = '' }: MarketModeProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { openSheet } = useSheet();

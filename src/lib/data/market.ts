@@ -222,6 +222,12 @@ export async function getShopifyProducts(filters: ProductFilters = {}): Promise<
   }
 }
 
+/**
+ * Retrieves a Shopify product by its storefront handle and returns it as a normalized Product.
+ *
+ * @param handle - The Shopify product handle (URL/slug identifying the product)
+ * @returns The normalized `Product` for the requested handle, or `null` if the product could not be fetched or normalized
+ */
 export async function getShopifyProductById(handle: string): Promise<Product | null> {
   try {
     const response = await fetch(`/api/shopify/products/${handle}`);
@@ -258,6 +264,12 @@ interface InternalProduct {
   updated_at?: string;
 }
 
+/**
+ * Normalize a Supabase `products` row into the unified `Product` model used by the marketplace.
+ *
+ * @param row - The internal product row from the `products` table to convert
+ * @returns A `Product` whose `id` is prefixed with `internal_`, `source` is set to `shopify`, `currency` is `GBP`, `images` come from `image_urls` (or `[]`), and `metadata` contains internal identifiers and verification flags; `available` is `true` when `row.status === 'active'` and `(row.inventory_count ?? 1) > 0`, `false` otherwise.
+ */
 function normalizeInternalProduct(row: InternalProduct): Product {
   return {
     id: `internal_${row.id}`,
@@ -280,6 +292,12 @@ function normalizeInternalProduct(row: InternalProduct): Product {
   };
 }
 
+/**
+ * Fetches active internal products from the Supabase `products` table and returns them in the unified `Product` shape.
+ *
+ * @param filters - Optional filters to apply: `category` for exact category match and `search` for a case-insensitive partial match against the product `name`.
+ * @returns An array of normalized `Product` objects ordered by `createdAt` descending (most recent first).
+ */
 export async function getInternalProducts(filters: ProductFilters = {}): Promise<Product[]> {
   let query = supabase
     .from('products')
@@ -308,7 +326,12 @@ export async function getInternalProducts(filters: ProductFilters = {}): Promise
 // ============================================
 
 /**
- * Get all products from all sources
+ * Fetches products from the requested source(s) and returns them merged and ordered by creation date.
+ *
+ * When `filters.source` is `"preloved"`, only Preloved listings are returned. When `filters.source` is `"shopify"`, internal products are included alongside Shopify products (internal first). For other values or when omitted, products from all sources (internal, Preloved, Shopify) are combined.
+ *
+ * @param filters - Optional filter options; `filters.source` may be `"preloved" | "shopify" | "all"` to scope which origins are queried.
+ * @returns An array of `Product` objects from the selected sources, sorted by `createdAt` in descending order (most recent first).
  */
 export async function getAllProducts(filters: ProductFilters = {}): Promise<Product[]> {
   const source = filters.source || 'all';

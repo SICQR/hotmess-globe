@@ -72,6 +72,13 @@ const clearHotmessStorage = () => {
 
 const BootGuardContext = createContext(null);
 
+/**
+ * Provides BootGuard context that manages authentication, profile-derived gating, and boot state for the application.
+ *
+ * Exposes state: `bootState`, `profile`, `session`, `isLoading`; computed flags: `isAuthenticated`, `canMountOS`, `canBrowse`; and actions: `refetchProfile`, `markAgeVerified`, `completeOnboarding`.
+ * The provider controls route gating and application mount readiness based on Supabase auth state and profile flags (age verification, onboarding, community attestation).
+ * @returns {JSX.Element} The BootGuardContext provider element containing the supplied children.
+ */
 export function BootGuardProvider({ children }) {
   const [bootState, setBootState] = useState(BOOT_STATES.LOADING);
   const [profile, setProfile] = useState(null);

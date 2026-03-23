@@ -18,7 +18,14 @@ import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { toast } from 'sonner';
 
-// ---- Age Gate Modal for age-verified products ----
+/**
+ * Render a full-screen age confirmation modal for 18+ products.
+ *
+ * @param {Object} props
+ * @param {() => void} props.onConfirm - Called when the user confirms they are 18 or older.
+ * @param {() => void} props.onCancel - Called when the user cancels or closes the modal.
+ * @returns {import('react').ReactElement} A React element that presents an age verification dialog with confirm and cancel actions.
+ */
 function AgeGateModal({ onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm">
@@ -55,7 +62,17 @@ function AgeGateModal({ onConfirm, onCancel }) {
   );
 }
 
-// ---- Internal product detail (from products table) ----
+/**
+ * Render the internal product detail view and handle purchase flow with optional age verification.
+ *
+ * Displays product information (image, title, price, description) and a Buy Now action that:
+ * - if the product is age-restricted, prompts an age-confirmation modal and persists confirmation to localStorage under `hnhmess_age_confirmed`;
+ * - otherwise or after confirmation, opens the Shopify storefront cart for the configured variant in a new browser tab; if Shopify env variables are missing, shows a toast and does not open checkout.
+ *
+ * @param {Object} props
+ * @param {Object} props.product - Product data from the internal products table. Expected fields used by the component include:
+ *   `title` (string), `price` (number), `description` (string, optional), `images` (array, optional), and `metadata.ageVerifiedOnly` (boolean, optional).
+ */
 function InternalProductDetail({ product }) {
   const [showAgeGate, setShowAgeGate] = useState(false);
   const isAgeRestricted = product?.metadata?.ageVerifiedOnly === true;
@@ -160,6 +177,16 @@ function InternalProductDetail({ product }) {
   );
 }
 
+/**
+ * Renders the shop sheet overlay that displays featured products, a single Shopify product, preloved product details, or an internal product detail depending on props and state.
+ *
+ * @param {Object} props - Component props.
+ * @param {string} [props.handle] - Optional Shopify product handle used to fetch and show a single product detail.
+ * @param {Object} [props.product] - Optional product object; when its id starts with `internal_` the internal product detail is shown, and when it contains `seller_id` or `source === 'preloved'` the preloved (P2P) detail is shown.
+ * @param {Object} [props.seller] - Seller information used when rendering a preloved product detail.
+ * @param {string} [props.source] - Optional source hint (e.g., `'preloved'`) that forces the preloved detail flow.
+ * @returns {JSX.Element} The sheet UI for browsing featured products, viewing product details, or interacting with preloved/internal product flows.
+ */
 export default function L2ShopSheet({ handle, product, seller, source }) {
   const { openSheet, updateSheetProps } = useSheet();
   const [selectedProduct, setSelectedProduct] = useState(null);
