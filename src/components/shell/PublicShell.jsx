@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Public pages (no auth required)
 const HotmessSplash = lazy(() => import('@/components/splash/HotmessSplash'));
+const HNHMessLubePage = lazy(() => import('@/pages/shop/HNHMessLubePage'));
 import AgeGate from '@/pages/AgeGate';
 import Auth from '@/pages/Auth';
 import ResetPassword from '@/pages/ResetPassword';
@@ -43,6 +44,13 @@ export default function PublicShell({ startAt = '/' }) {
 
         {/* Password reset — linked from Supabase reset email */}
         <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Shop — public, no auth required */}
+        <Route path="/shop/lube" element={
+          <Suspense fallback={<Spinner />}>
+            <HNHMessLubePage />
+          </Suspense>
+        } />
 
         {/* Legal */}
         <Route path="/legal/privacy" element={<Privacy />} />

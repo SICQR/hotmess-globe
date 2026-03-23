@@ -68,6 +68,11 @@ export default function BootRouter({ children }) {
     return <PublicShell />;
   }
 
+  // Public shop pages — no auth required (e.g. HNH MESS Lube)
+  if (location.pathname.startsWith('/shop/')) {
+    return <PublicShell />;
+  }
+
   // DEV BYPASS: uncomment to skip all auth gates for local testing
   // if (import.meta.env.DEV) return <>{children}</>;
 
