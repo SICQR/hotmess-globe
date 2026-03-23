@@ -23,7 +23,7 @@ const Spinner = () => (
  */
 export default function PublicShell({ startAt = '/' }) {
   return (
-    <div className="min-h-screen bg-black">
+    <div className="relative z-10 min-h-screen bg-black">
       <Routes>
         {/* Main entry — splash + auth combined */}
         <Route path="/" element={
