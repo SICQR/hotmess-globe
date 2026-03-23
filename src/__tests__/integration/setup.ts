@@ -2,7 +2,7 @@
 /**
  * Integration test setup — shared Supabase clients and test helpers.
  *
- * Uses the REAL production Supabase (axxwdjmbwkvqhcpwters) via service-role
+ * Uses the REAL production Supabase (rfoftonnlwudilafhfkl) via service-role
  * for admin operations and per-user JWTs for RLS assertions.
  *
  * ⚠️  These tests mutate real data — they clean up after themselves but should
@@ -13,7 +13,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 // ---------------------------------------------------------------------------
 // Environment
 // ---------------------------------------------------------------------------
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://axxwdjmbwkvqhcpwters.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rfoftonnlwudilafhfkl.supabase.co';
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
 

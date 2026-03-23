@@ -14,7 +14,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { admin, TEST_USERS, wait } from './setup';
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://axxwdjmbwkvqhcpwters.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rfoftonnlwudilafhfkl.supabase.co';
 const ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
 
 // ---------------------------------------------------------------------------
