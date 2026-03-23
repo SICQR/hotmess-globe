@@ -62,7 +62,11 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
 }, ref) {
   const mountRef = useRef(null);
   const hoveredArcRef = useRef(null);
+  const globeEventsRef = useRef(globeEvents);
   const [arcTooltip, setArcTooltip] = React.useState(null);
+
+  // Keep ref in sync so the animate loop can read latest events without re-init
+  useEffect(() => { globeEventsRef.current = globeEvents; }, [globeEvents]);
   
   const showPins = activeLayers.includes('pins');
   const showHeat = activeLayers.includes('heat');
@@ -1130,10 +1134,6 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       }
     }
 
-    // Process initial globe events
-    const safeGlobeEvents = Array.isArray(globeEvents) ? globeEvents : [];
-    safeGlobeEvents.forEach(addGlobeEffect);
-
     // Adaptive quality: drop pixel ratio when sustained FPS < 30
     let fpsFrames = 0;
     let fpsWindowStart = performance.now();
@@ -1197,8 +1197,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       // Animate transient globe events (realtime visual effects)
       animateGlobeEffects(time);
 
-      // Process any new globe events that arrived since last frame
-      const safeNewEvents = Array.isArray(globeEvents) ? globeEvents : [];
+      // Process any new globe events that arrived since last frame (via ref)
+      const safeNewEvents = Array.isArray(globeEventsRef.current) ? globeEventsRef.current : [];
       safeNewEvents.forEach(addGlobeEffect);
 
       // Pulse Right Now beacons and mood blobs
@@ -1368,7 +1368,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       // Clear references
       scene.clear();
     };
-  }, [beacons, cities, activeLayers, highlightedIds, userActivities, routesData, globeActivity, globeEvents, onBeaconClick, onCityClick]);
+  }, [beacons, cities, activeLayers, highlightedIds, userActivities, routesData, globeActivity, onBeaconClick, onCityClick]);
 
   // Rotate to selected city
   useEffect(() => {
