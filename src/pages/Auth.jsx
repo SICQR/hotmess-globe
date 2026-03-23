@@ -99,21 +99,25 @@ export default function Auth() {
     setIsPasswordUpdate(false);
     setConfirmationPending(false);
     setPendingEmail('');
+    setAuthError('');
     setEmail(''); setPassword(''); setConfirmPassword('');
   };
   const switchMode  = (toSignUp) => {
     setIsSignUp(toSignUp);
     setShowReset(false);
+    setAuthError('');
     setResetSent(false);
     setEmail(''); setPassword(''); setConfirmPassword('');
   };
   const openReset   = () => {
     setShowReset(true);
     setResetSent(false);
+    setAuthError('');
     setEmail('');
   };
   const backToSignIn = () => {
     setShowReset(false);
+    setAuthError('');
     setResetSent(false);
     setEmail('');
     setIsSignUp(false);
@@ -775,7 +779,7 @@ export default function Auth() {
                     )}
 
                     {authError && (
-                      <p className="text-[#FF3B30] text-xs font-medium text-center -mt-1">{authError}</p>
+                      <p role="alert" className="text-[#FF3B30] text-xs font-medium text-center -mt-1">{authError}</p>
                     )}
 
                     <motion.button
