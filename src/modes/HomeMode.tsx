@@ -37,12 +37,14 @@ import {
   MessageSquare,
   Heart,
   Ghost,
+  Moon,
   Wifi,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
 import { supabase } from '@/components/utils/supabaseClient';
+import { nanoid } from 'nanoid';
 import { format, isToday, isTomorrow } from 'date-fns';
 import RightNowModal from '@/components/globe/RightNowModal';
 import '@/styles/radio-waveform.css';
@@ -531,6 +533,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
   const queryClient = useQueryClient();
   const [city, setCity] = useState(() => localStorage.getItem('hm_city') || 'London');
   const [showRightNow, setShowRightNow] = useState(false);
+  const [nightMode, setNightMode] = useState(() => localStorage.getItem('hm_night_mode') === 'true');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // ---- Pull-to-refresh state ------------------------------------------------
@@ -569,6 +572,72 @@ export function HomeMode({ className = '' }: HomeModeProps) {
     setCity(next);
     localStorage.setItem('hm_city', next);
   }, [city]);
+
+  // ---- Night Mode toggle ----------------------------------------------------
+  const toggleNightMode = useCallback(async () => {
+    const next = !nightMode;
+    setNightMode(next);
+    localStorage.setItem('hm_night_mode', String(next));
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (next) {
+        // ON: upsert presence online + create check-in beacon at current location
+        void supabase.from('user_presence').upsert({
+          user_id: user.id,
+          status: 'online',
+          last_seen_at: new Date().toISOString(),
+          metadata: { night_mode: true },
+        }, { onConflict: 'user_id' }).catch(() => {});
+
+        // Try to get location for beacon
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              void supabase.from('beacons').insert({
+                code: nanoid(8),
+                type: 'checkin',
+                beacon_category: 'user',
+                owner_id: user.id,
+                title: 'Night Mode',
+                status: 'active',
+                active: true,
+                geo_lat: pos.coords.latitude,
+                geo_lng: pos.coords.longitude,
+                city_slug: city.toLowerCase().replace(/\s+/g, '_'),
+                starts_at: new Date().toISOString(),
+                ends_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+                globe_color: '#C8962C',
+                globe_pulse_type: 'standard',
+                globe_size_base: 1.0,
+                intensity: 3,
+              }).catch(() => {});
+            },
+            () => {}, // location denied — still activate night mode
+            { enableHighAccuracy: false, timeout: 5000 },
+          );
+        }
+      } else {
+        // OFF: set presence offline + expire active check-in beacons
+        void supabase.from('user_presence').upsert({
+          user_id: user.id,
+          status: 'offline',
+          last_seen_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' }).catch(() => {});
+
+        void supabase.from('beacons')
+          .update({ status: 'expired' })
+          .eq('owner_id', user.id)
+          .eq('type', 'checkin')
+          .eq('status', 'active')
+          .catch(() => {});
+      }
+    } catch {
+      // non-critical
+    }
+  }, [nightMode, city]);
 
   // ---- Data queries ---------------------------------------------------------
 
@@ -722,6 +791,17 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         >
           HOTMESS
         </h1>
+
+        {/* Night Mode toggle */}
+        <button
+          onClick={toggleNightMode}
+          className={`relative w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition-all ${
+            nightMode ? 'bg-[#C8962C]/20 ring-1 ring-[#C8962C]/40' : 'bg-white/[0.06]'
+          }`}
+          aria-label={nightMode ? 'Night Mode ON' : 'Night Mode OFF'}
+        >
+          <Moon className="w-5 h-5" style={{ color: nightMode ? '#C8962C' : 'rgba(255,255,255,0.5)' }} />
+        </button>
 
         {/* Notification bell */}
         <button

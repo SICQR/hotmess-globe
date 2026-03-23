@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44, supabase } from '@/components/utils/supabaseClient';
+import { useSheet } from '@/contexts/SheetContext';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import CompactGlobeControls from '../components/globe/CompactGlobeControls';
 import GlobeDataPanel from '../components/globe/GlobeDataPanel';
@@ -30,6 +31,7 @@ export default function GlobePage({ embedded = false }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { openProfile } = useProfileOpener();
+  const { openSheet } = useSheet();
 
   // Realtime presence beacons from presence table (TTL-based)
   const { beacons: presenceBeacons, presenceCount } = useRealtimeBeacons();
@@ -478,8 +480,19 @@ export default function GlobePage({ embedded = false }) {
     setShowNearbyGrid(false);
     setShowLocalBeacons(false);
     setLocationShopBeacon(null);
-    
-    // Show preview panel
+
+    // Route to beacon sheet based on beacon_category
+    const category = beacon?.beacon_category || 'user';
+    if (category === 'venue' || category === 'event' || category === 'hotmess') {
+      openSheet('beacon', { beaconId: beacon.id, beacon });
+      return;
+    }
+    if (category === 'user' && beacon?.owner_id) {
+      openSheet('beacon', { beaconId: beacon.id, beacon });
+      return;
+    }
+
+    // Fallback: show preview panel for unrecognized beacons
     setPreviewBeacon(beacon);
     
     // Track activity
