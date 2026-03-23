@@ -389,6 +389,8 @@ export function BootGuardProvider({ children }) {
     // Computed
     isAuthenticated: !!session?.user?.id,
     canMountOS: bootState === BOOT_STATES.READY,
+    /** True when the user can browse the app shell (authenticated OR anonymous). */
+    canBrowse: bootState === BOOT_STATES.READY || bootState === BOOT_STATES.UNAUTHENTICATED,
 
     // Actions
     refetchProfile,

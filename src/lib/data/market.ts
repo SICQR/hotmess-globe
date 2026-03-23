@@ -238,6 +238,72 @@ export async function getShopifyProductById(handle: string): Promise<Product | n
 }
 
 // ============================================
+// INTERNAL PRODUCTS (Supabase `products` table)
+// ============================================
+
+interface InternalProduct {
+  id: string;
+  name: string;
+  description?: string;
+  price_gbp: number;
+  product_type?: string;
+  category?: string;
+  tags?: string[];
+  status: string;
+  inventory_count?: number;
+  content_rating?: string;
+  age_verified_only?: boolean;
+  image_urls?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+function normalizeInternalProduct(row: InternalProduct): Product {
+  return {
+    id: `internal_${row.id}`,
+    source: 'shopify', // Display as "Shop" in the UI
+    title: row.name,
+    description: row.description,
+    price: row.price_gbp,
+    currency: 'GBP',
+    images: row.image_urls || [],
+    category: row.category,
+    tags: row.tags,
+    available: row.status === 'active' && (row.inventory_count ?? 1) > 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    metadata: {
+      internalId: row.id,
+      ageVerifiedOnly: row.age_verified_only,
+      contentRating: row.content_rating,
+    },
+  };
+}
+
+export async function getInternalProducts(filters: ProductFilters = {}): Promise<Product[]> {
+  let query = supabase
+    .from('products')
+    .select('*')
+    .eq('status', 'active');
+
+  if (filters.category) {
+    query = query.eq('category', filters.category);
+  }
+  if (filters.search) {
+    query = query.ilike('name', `%${filters.search}%`);
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('[market] getInternalProducts error:', error.message);
+    return [];
+  }
+
+  return (data || []).map(normalizeInternalProduct);
+}
+
+// ============================================
 // UNIFIED MARKET API
 // ============================================
 
@@ -251,17 +317,23 @@ export async function getAllProducts(filters: ProductFilters = {}): Promise<Prod
     return getPrelovedProducts(filters);
   }
   if (source === 'shopify') {
-    return getShopifyProducts(filters);
+    // Include internal products alongside Shopify products
+    const [shopify, internal] = await Promise.all([
+      getShopifyProducts(filters),
+      getInternalProducts(filters),
+    ]);
+    return [...internal, ...shopify];
   }
 
   // Fetch from all sources in parallel
-  const [preloved, shopify] = await Promise.all([
+  const [preloved, shopify, internal] = await Promise.all([
     getPrelovedProducts(filters),
     getShopifyProducts(filters),
+    getInternalProducts(filters),
   ]);
 
   // Merge and sort by creation date
-  const all = [...preloved, ...shopify];
+  const all = [...internal, ...preloved, ...shopify];
   all.sort((a, b) => {
     const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;

@@ -670,6 +670,7 @@ function OSArchitecture() {
   // Update User.last_seen every 5 min — powers online presence dots on Ghosted grid
   usePresenceHeartbeat();
   const { sosActive, triggerSOS, clearSOS } = useSOSContext();
+  const { isAuthenticated } = useBootGuard();
   const location = useLocation();
 
   // ── Telegram deep-link handler ──────────────────────────────────────────
@@ -707,20 +708,22 @@ function OSArchitecture() {
       {/* L1: OS Bottom Nav — amber-circle 5-tab nav */}
       <OSBottomNav />
 
-      {/* L3: SOS long-press trigger — above nav, below overlays (Z-190) */}
-      <SOSButton
-        className="fixed bottom-24 right-4 z-[190]"
-        onTrigger={triggerSOS}
-      />
+      {/* L3: SOS long-press trigger — auth only (Z-190) */}
+      {isAuthenticated && (
+        <SOSButton
+          className="fixed bottom-24 right-4 z-[190]"
+          onTrigger={triggerSOS}
+        />
+      )}
 
-      {/* L3: Shake-to-SOS — invisible when idle, banner at Z-195 when counting down */}
-      <ShakeSOS />
+      {/* L3: Shake-to-SOS — auth only */}
+      {isAuthenticated && <ShakeSOS />}
 
       {/* L3: SOS Overlay — blocks entire OS, stops all sharing (Z-200) */}
       {sosActive && <SOSOverlay onClose={clearSOS} />}
 
-      {/* Incoming call banner — fixed top, z-[180], below SOS z-200 */}
-      <IncomingCallBanner />
+      {/* Incoming call banner — auth only */}
+      {isAuthenticated && <IncomingCallBanner />}
 
       {/* GDPR Cookie Banner — shows once, persists choice */}
       <CookieBanner />

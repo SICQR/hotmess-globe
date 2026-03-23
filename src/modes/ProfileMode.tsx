@@ -15,7 +15,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLongPress } from '@/hooks/useLongPress';
@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { usePersona } from '@/contexts/PersonaContext';
+import { useBootGuard } from '@/contexts/BootGuardContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 import type { LucideIcon } from 'lucide-react';
@@ -144,8 +145,44 @@ interface ProfileModeProps {
   className?: string;
 }
 
+// ---- Unauthenticated profile screen -----------------------------------------
+function ProfileSignInPrompt({ className = '' }: { className?: string }) {
+  const nav = useNavigate();
+  return (
+    <div className={`h-full w-full flex flex-col items-center justify-center gap-6 px-8 ${className}`} style={{ background: ROOT_BG }}>
+      <div className="w-20 h-20 rounded-full bg-white/[0.06] flex items-center justify-center">
+        <User className="w-10 h-10 text-white/20" />
+      </div>
+      <div className="text-center">
+        <h2 className="text-white text-xl font-bold mb-2">Sign in to HOTMESS</h2>
+        <p className="text-sm" style={{ color: MUTED }}>
+          Create your profile, chat, and unlock the full experience.
+        </p>
+      </div>
+      <button
+        onClick={() => nav('/auth')}
+        className="h-12 px-10 rounded-xl font-bold text-black active:scale-95 transition-transform"
+        style={{ background: AMBER }}
+      >
+        Sign In / Join
+      </button>
+    </div>
+  );
+}
+
 // ---- Component --------------------------------------------------------------
 export function ProfileMode({ className = '' }: ProfileModeProps) {
+  const { isAuthenticated } = useBootGuard();
+
+  // Anon users see a sign-in prompt instead of the profile settings
+  if (!isAuthenticated) {
+    return <ProfileSignInPrompt className={className} />;
+  }
+
+  return <AuthenticatedProfileMode className={className} />;
+}
+
+function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
   const [showSwitcher, setShowSwitcher] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
