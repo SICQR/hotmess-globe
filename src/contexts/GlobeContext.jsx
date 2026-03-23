@@ -97,10 +97,21 @@ export function GlobeProvider({ children }) {
   );
 }
 
+// No-op fallback so components that call useGlobe() outside GlobeProvider
+// (e.g. RightNowModal rendered in HomeMode for unauthenticated users) don't crash.
+const GLOBE_FALLBACK = {
+  mode: GLOBE_MODES.AMBIENT,
+  setMode: () => {},
+  focusCity: null,
+  zoomToCity: () => {},
+  pulseQueue: [],
+  emitPulse: () => {},
+  consumePulse: () => {},
+};
+
 export function useGlobe() {
   const ctx = useContext(GlobeContext);
-  if (!ctx) throw new Error('useGlobe must be used within GlobeProvider');
-  return ctx;
+  return ctx ?? GLOBE_FALLBACK;
 }
 
 export default GlobeContext;
