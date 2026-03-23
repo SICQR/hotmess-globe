@@ -108,8 +108,9 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setIsAuthenticated(false);
         mergedGuestCartRef.current = false;
-      } else if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
-        // Re-fetch the user profile to keep state fresh after a token refresh or new sign-in.
+      } else if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        // Re-fetch the user profile to keep state fresh after a token refresh,
+        // new sign-in, or initial session restore (including email confirmation).
         checkUserAuth();
       }
     });
