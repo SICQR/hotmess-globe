@@ -38,12 +38,15 @@ import {
   Radio as RadioIcon,
   Zap,
   Sparkles,
+  Send,
+  MessageSquare,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { useLongPress } from '@/hooks/useLongPress';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 // ---- Brand constants --------------------------------------------------------
 const AMBER = '#C8962C';
@@ -504,6 +507,7 @@ function BottomDrawer({
   onSafetyTap,
   onSeeAllEvents,
   sceneScoutSection,
+  pulseFeedSection,
 }: {
   events: BeaconItem[];
   beacons: BeaconItem[];
@@ -515,6 +519,7 @@ function BottomDrawer({
   onSafetyTap: (id: string) => void;
   onSeeAllEvents: () => void;
   sceneScoutSection?: React.ReactNode;
+  pulseFeedSection?: React.ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
   const controls = useAnimation();
@@ -623,6 +628,9 @@ function BottomDrawer({
       >
         {/* Scene Scout section */}
         {sceneScoutSection}
+
+        {/* Pulse feed section */}
+        {pulseFeedSection}
 
         {/* Events section */}
         {(eventsLoading || events.length > 0) && (
@@ -742,15 +750,133 @@ function BottomDrawer({
 // =============================================================================
 // Main PulseMode
 // =============================================================================
+// ---- Vibe intent mapping (UI label → DB enum value) -----------------------
+const VIBE_INTENTS: { label: string; emoji: string; value: string }[] = [
+  { label: 'OUT TONIGHT', emoji: '🔥', value: 'hookup' },
+  { label: 'LOOKING TO CHAT', emoji: '💬', value: 'crowd' },
+  { label: 'AT AN EVENT', emoji: '🎉', value: 'drop' },
+];
+
+// ---- Post Composer Component -----------------------------------------------
+function PostComposer({ onClose, city }: { onClose: () => void; city: string }) {
+  const [text, setText] = useState('');
+  const [vibe, setVibe] = useState('hookup');
+  const [showOnGlobe, setShowOnGlobe] = useState(true);
+  const [posting, setPosting] = useState(false);
+
+  const handlePost = async () => {
+    if (!text.trim()) { toast.error('Write something first'); return; }
+    setPosting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error('Please sign in'); return; }
+
+      // Try to get location
+      let locationWkt: string | null = null;
+      try {
+        const pos = await new Promise<GeolocationPosition>((res, rej) =>
+          navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: false, timeout: 5000 })
+        );
+        locationWkt = `SRID=4326;POINT(${pos.coords.longitude} ${pos.coords.latitude})`;
+      } catch {
+        // location denied — post without coords
+      }
+
+      const citySlug = city.toLowerCase().replace(/\s+/g, '_');
+      const { error } = await supabase.from('right_now_posts').insert({
+        user_id: user.id,
+        text: text.trim(),
+        intent: vibe,
+        city: citySlug,
+        country: 'GB',
+        show_on_globe: showOnGlobe,
+        expires_at: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+        ...(locationWkt ? { location: locationWkt } : {}),
+      });
+
+      if (error) throw error;
+      toast.success('Posted to Pulse');
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to post';
+      toast.error(msg);
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 40 }}
+      className="fixed inset-x-0 bottom-0 z-[200] bg-[#0D0D0D] border-t border-white/10 rounded-t-3xl p-5 pb-8 pointer-events-auto"
+      style={{ paddingBottom: 'calc(32px + env(safe-area-inset-bottom, 0px))' }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-white font-black text-sm uppercase tracking-wider">Post to Pulse</h3>
+        <button onClick={onClose} className="text-white/40 active:text-white"><X className="w-5 h-5" /></button>
+      </div>
+
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value.slice(0, 140))}
+        placeholder="What's happening right now..."
+        className="w-full bg-[#1C1C1E] border border-white/10 rounded-xl text-white text-sm p-3 h-20 resize-none focus:border-[#C8962C] focus:outline-none placeholder:text-white/20"
+        maxLength={140}
+      />
+      <p className="text-right text-[10px] text-white/20 mt-1">{text.length}/140</p>
+
+      <div className="flex gap-2 mt-3 flex-wrap">
+        {VIBE_INTENTS.map((v) => (
+          <button
+            key={v.value}
+            onClick={() => setVibe(v.value)}
+            className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-full border transition-all ${
+              vibe === v.value
+                ? 'bg-[#C8962C]/20 border-[#C8962C]/40 text-[#C8962C]'
+                : 'bg-white/5 border-white/10 text-white/40'
+            }`}
+          >
+            {v.emoji} {v.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between mt-4">
+        <label className="flex items-center gap-2 text-xs text-white/40">
+          <input
+            type="checkbox"
+            checked={showOnGlobe}
+            onChange={(e) => setShowOnGlobe(e.target.checked)}
+            className="accent-[#C8962C]"
+          />
+          Show on globe
+        </label>
+        <button
+          onClick={handlePost}
+          disabled={posting || !text.trim()}
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#C8962C] text-black font-black text-sm rounded-2xl active:scale-95 transition-transform disabled:opacity-30"
+        >
+          {posting ? <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : <Send className="w-4 h-4" />}
+          Post
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 export function PulseMode({ className = '' }: PulseModeProps) {
   const { openSheet } = useSheet();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [city, setCity] = useState(() => localStorage.getItem('hm_city') || 'London');
   const [legendDismissed, setLegendDismissed] = useState(
     () => localStorage.getItem('hm_legend_dismissed') === 'true'
   );
   const [rightNowOpen, setRightNowOpen] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
 
   // ---- Scene Scout state ----------------------------------------------------
   const [sceneScoutLoading, setSceneScoutLoading] = useState(false);
@@ -886,6 +1012,33 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     refetchInterval: 30_000,
   });
 
+  // ---- Data: Pulse feed (right_now_posts) -----------------------------------
+  const {
+    data: pulsePosts = [],
+    isLoading: postsLoading,
+  } = useQuery({
+    queryKey: ['pulse-feed-posts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('right_now_posts')
+        .select(`
+          id, text, intent, city, created_at, expires_at,
+          crowd_count, host_beacon_id, show_on_globe,
+          user_id
+        `)
+        .is('deleted_at', null)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) {
+        console.error('[pulse] posts query error:', error.message);
+        return [];
+      }
+      return data ?? [];
+    },
+    refetchInterval: 30_000,
+  });
+
   // ---- Data: Right Now count ------------------------------------------------
   const { data: rightNowCount = 0 } = useQuery({
     queryKey: ['pulse-right-now-count'],
@@ -922,9 +1075,18 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       })
       .subscribe();
 
+    // Pulse feed realtime — new posts appear immediately
+    const postsChannel = supabase
+      .channel('pulse-posts-live')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'right_now_posts' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['pulse-feed-posts'] });
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(beaconsChannel);
       supabase.removeChannel(rightNowChannel);
+      supabase.removeChannel(postsChannel);
     };
   }, [queryClient]);
 
@@ -1115,6 +1277,74 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     </section>
   );
 
+  // ---- Pulse feed section JSX (radio card + posts) --------------------------
+  const pulseFeedSection = (
+    <section className="mb-5">
+      {/* Radio card — always pinned */}
+      <button
+        onClick={() => navigate('/radio')}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 active:scale-[0.98] transition-all"
+        style={{ background: '#00C2E015', border: '1px solid #00C2E030' }}
+      >
+        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#00C2E020' }}>
+          <RadioIcon className="w-4 h-4" style={{ color: '#00C2E0' }} />
+        </div>
+        <div className="flex-1 min-w-0 text-left">
+          <p className="text-xs font-bold text-white/80 truncate">HOTMESS RADIO</p>
+          <p className="text-[10px] text-white/40 truncate">Late Night Mess · Live now</p>
+        </div>
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: '#00C2E020', color: '#00C2E0' }}>
+          ▶ LISTEN
+        </span>
+      </button>
+
+      {/* Posts feed */}
+      <h3 className="text-white/70 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 mb-2.5">
+        <MessageSquare className="w-3.5 h-3.5" style={{ color: '#A855F7' }} />
+        Pulse Feed
+      </h3>
+      {postsLoading ? (
+        <div className="space-y-2">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="h-14 rounded-xl animate-pulse" style={{ background: 'rgba(168,85,247,0.06)' }} />
+          ))}
+        </div>
+      ) : pulsePosts.length === 0 ? (
+        <p className="text-white/20 text-xs text-center py-6">
+          No pulse posts yet. Be the first — tap + to post.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {pulsePosts.map((post: Record<string, unknown>) => (
+            <div
+              key={String(post.id)}
+              className="px-3 py-2.5 rounded-xl"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 rounded-full bg-[#A855F7]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Zap className="w-3 h-3" style={{ color: '#A855F7' }} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-white/70 text-xs leading-relaxed">{String(post.text || '')}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {post.intent && (
+                      <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded" style={{ background: '#A855F720', color: '#A855F7' }}>
+                        {VIBE_INTENTS.find(v => v.value === post.intent)?.label || String(post.intent)}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-white/20">{formatTimeAgo(String(post.created_at || ''))}</span>
+                    {post.city && <span className="text-[10px] text-white/15 capitalize">{String(post.city)}</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+
   // ---- Render ---------------------------------------------------------------
   return (
     <div className={`h-full w-full relative pointer-events-none ${className}`}>
@@ -1224,8 +1454,24 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           onSafetyTap={handleSafetyTap}
           onSeeAllEvents={handleSeeAllEvents}
           sceneScoutSection={sceneScoutSection}
+          pulseFeedSection={pulseFeedSection}
         />
       </div>
+
+      {/* Post composer FAB */}
+      <div className="fixed left-1/2 -translate-x-1/2 z-[45] pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
+        <button
+          onClick={() => setComposerOpen(true)}
+          className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+          style={{ background: '#A855F7', boxShadow: '0 4px 24px #A855F730' }}
+          aria-label="Post to Pulse"
+        >
+          <Plus className="w-5 h-5 text-white" />
+        </button>
+      </div>
+
+      {/* Post composer sheet */}
+      {composerOpen && <PostComposer onClose={() => setComposerOpen(false)} city={city} />}
     </div>
   );
 }
