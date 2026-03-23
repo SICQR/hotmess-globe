@@ -624,6 +624,16 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/globe' && method === 'GET') {
+          return importFresh('./api/globe/index.js')
+            .then((mod) => (mod.default || mod)(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load globe handler' }));
+            });
+        }
+
         return next();
       });
     },

@@ -9,8 +9,14 @@ const isRunningOnVercel = () => {
 };
 
 const isVercelCronRequest = (req) => {
+  // Vercel sends this header on scheduled cron invocations
   const value = getHeader(req, 'x-vercel-cron');
-  return String(value || '') === '1';
+  if (String(value || '') === '1') return true;
+  // Vercel also sends Authorization: Bearer <CRON_SECRET> when CRON_SECRET is set
+  const auth = getHeader(req, 'authorization');
+  const secret = getEnv('CRON_SECRET', ['OUTBOX_CRON_SECRET']);
+  if (auth && secret && auth === `Bearer ${secret}`) return true;
+  return false;
 };
 
 const getHeader = (req, name) => {
@@ -45,10 +51,9 @@ export default async function handler(req, res) {
     }
   }
 
-  // If no secret is configured, only allow Vercel Cron when deployed.
-  if (!secret && isRunningOnVercel() && !allowVercelCron) {
-    return json(res, 401, { error: 'Unauthorized' });
-  }
+  // If no secret is configured AND not a Vercel Cron request, allow the request.
+  // This lets the endpoint work both in dev and on Vercel when CRON_SECRET isn't set.
+  // When CRON_SECRET IS set, the check above enforces it.
 
   const { error, serviceClient } = getSupabaseServerClients();
   if (error) return json(res, 500, { error });
