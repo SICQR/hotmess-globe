@@ -42,6 +42,7 @@ import PinLockOverlay from '@/components/auth/PinLockScreen';
 import { OSBottomNav } from '@/modes/OSBottomNav';
 import { RadioProvider } from '@/contexts/RadioContext';
 import { PersonaProvider } from '@/contexts/PersonaContext';
+import { GlobeProvider } from '@/contexts/GlobeContext';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useDeepLinkSheet } from '@/hooks/useDeepLinkSheet';
@@ -622,19 +623,21 @@ function App() {
                     <SOSProvider>
                       <SheetProvider>
                         <NavigationTracker />
-                        <BootRouter>
-                          {/*
-                            L0-L3 Layered OS Architecture
-                            - UnifiedGlobe is persistent, never unmounts
-                            - All navigation happens via SheetContext
-                            - Router only handles URL sync, not page mounts
-                          */}
-                          <RadioProvider>
-                            <PersonaProvider>
-                              <OSArchitecture />
-                            </PersonaProvider>
-                          </RadioProvider>
-                        </BootRouter>
+                        <GlobeProvider>
+                          <BootRouter>
+                            {/*
+                              L0-L3 Layered OS Architecture
+                              - UnifiedGlobe is persistent, never unmounts
+                              - All navigation happens via SheetContext
+                              - Router only handles URL sync, not page mounts
+                            */}
+                            <RadioProvider>
+                              <PersonaProvider>
+                                <OSArchitecture />
+                              </PersonaProvider>
+                            </RadioProvider>
+                          </BootRouter>
+                        </GlobeProvider>
                         {/* L2 Sheet System - Renders over everything, outside route remount boundary */}
                         <SheetRouter />
                       </SheetProvider>
