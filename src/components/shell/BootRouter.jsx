@@ -76,11 +76,11 @@ export default function BootRouter({ children }) {
     return <LoadingSpinner />;
   }
 
-  // Unauthenticated users get the public shell.
-  // If they already confirmed their age locally, drop them on /auth instead of /age.
+  // Unauthenticated users now see the full app shell (browse, radio, shop).
+  // Auth-gated features (chat, profile edit, SOS) are disabled inside each mode.
+  // Login remains accessible via Profile tab or /auth route.
   if (bootState === BOOT_STATES.UNAUTHENTICATED) {
-    // Always start at splash — it handles both 18+ and auth in one screen
-    return <PublicShell startAt="/" />;
+    return <>{children}</>;
   }
 
   // Authenticated but age not yet verified — show age gate.
