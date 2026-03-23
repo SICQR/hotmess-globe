@@ -757,6 +757,13 @@ const VIBE_INTENTS: { label: string; emoji: string; value: string }[] = [
   { label: 'AT AN EVENT', emoji: '🎉', value: 'drop' },
 ];
 
+// ---- City → Country code mapping -------------------------------------------
+const CITY_COUNTRY: Record<string, string> = {
+  london: 'GB', berlin: 'DE', amsterdam: 'NL', barcelona: 'ES',
+  paris: 'FR', new_york: 'US', los_angeles: 'US', san_francisco: 'US',
+  tokyo: 'JP', sydney: 'AU', rio: 'BR', las_vegas: 'US', mexico_city: 'MX',
+};
+
 // ---- Post Composer Component -----------------------------------------------
 function PostComposer({ onClose, city }: { onClose: () => void; city: string }) {
   const [text, setText] = useState('');
@@ -771,15 +778,17 @@ function PostComposer({ onClose, city }: { onClose: () => void; city: string }) 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error('Please sign in'); return; }
 
-      // Try to get location
+      // Only request GPS when "Show on globe" is enabled
       let locationWkt: string | null = null;
-      try {
-        const pos = await new Promise<GeolocationPosition>((res, rej) =>
-          navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: false, timeout: 5000 })
-        );
-        locationWkt = `SRID=4326;POINT(${pos.coords.longitude} ${pos.coords.latitude})`;
-      } catch {
-        // location denied — post without coords
+      if (showOnGlobe) {
+        try {
+          const pos = await new Promise<GeolocationPosition>((res, rej) =>
+            navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: false, timeout: 5000 })
+          );
+          locationWkt = `SRID=4326;POINT(${pos.coords.longitude} ${pos.coords.latitude})`;
+        } catch {
+          // location denied — post without coords
+        }
       }
 
       const citySlug = city.toLowerCase().replace(/\s+/g, '_');
@@ -788,7 +797,7 @@ function PostComposer({ onClose, city }: { onClose: () => void; city: string }) 
         text: text.trim(),
         intent: vibe,
         city: citySlug,
-        country: 'GB',
+        country: CITY_COUNTRY[citySlug] ?? 'GB',
         show_on_globe: showOnGlobe,
         expires_at: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
         ...(locationWkt ? { location: locationWkt } : {}),

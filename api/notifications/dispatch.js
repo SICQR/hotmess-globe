@@ -51,9 +51,16 @@ export default async function handler(req, res) {
     }
   }
 
-  // If no secret is configured AND not a Vercel Cron request, allow the request.
-  // This lets the endpoint work both in dev and on Vercel when CRON_SECRET isn't set.
-  // When CRON_SECRET IS set, the check above enforces it.
+  // If no secret is configured: block in production, allow in dev/preview
+  if (!secret && !allowVercelCron) {
+    const vercelEnv = process.env.VERCEL_ENV || '';
+    const nodeEnv = process.env.NODE_ENV || '';
+    const isProduction = vercelEnv === 'production' || nodeEnv === 'production';
+    if (isProduction) {
+      return json(res, 401, { error: 'CRON_SECRET not configured' });
+    }
+    // Dev/preview without secret — allow through for testing
+  }
 
   const { error, serviceClient } = getSupabaseServerClients();
   if (error) return json(res, 500, { error });
