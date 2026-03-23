@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { nanoid } from 'nanoid';
 import {
   MapPin, Clock, Radio, Loader2, Navigation, ExternalLink,
   CheckCircle, ChevronRight, ChevronLeft,
@@ -108,6 +109,7 @@ function BeaconCreator({ onSuccess }) {
       const vis = globeVisuals[selectedType] || globeVisuals.checkin;
 
       const { error } = await supabase.from('beacons').insert({
+        code:             nanoid(8),
         type:             selectedType,
         beacon_category:  beaconCategory,
         owner_id:         user.id,
@@ -416,23 +418,68 @@ function BeaconCreator({ onSuccess }) {
 // VIEWER MODE
 // ─────────────────────────────────────────────────────────────────────────────
 
-function BeaconViewer({ beaconId }) {
-  const [beacon, setBeacon] = useState(null);
-  const [loading, setLoading] = useState(true);
+function BeaconViewer({ beaconId, beacon: passedBeacon }) {
+  const [beacon, setBeacon] = useState(passedBeacon || null);
+  const [loading, setLoading] = useState(!passedBeacon);
+  const [checkinCount, setCheckinCount] = useState(0);
+  const [recentPosts, setRecentPosts] = useState([]);
+  const [checkingIn, setCheckingIn] = useState(false);
   const { openSheet } = useSheet();
 
   useEffect(() => {
+    if (passedBeacon) { setBeacon(passedBeacon); setLoading(false); }
     if (!beaconId) { setLoading(false); return; }
     supabase
       .from('beacons')
-      .select('id, type, kind, lat, lng, starts_at, end_at, intensity, title, description, venue_address, metadata')
+      .select('id, code, type, beacon_category, geo_lat, geo_lng, starts_at, ends_at, intensity, title, description, city_slug, globe_color, globe_pulse_type, globe_size_base, checkin_count, venue_id, owner_id, event_start_at, event_end_at')
       .eq('id', beaconId)
       .single()
       .then(({ data }) => {
         setBeacon(data);
         setLoading(false);
       });
-  }, [beaconId]);
+  }, [beaconId, passedBeacon]);
+
+  // Fetch venue-specific data
+  useEffect(() => {
+    if (!beacon?.venue_id) return;
+    const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+    supabase
+      .from('venue_checkins')
+      .select('*', { count: 'exact', head: true })
+      .eq('venue_id', beacon.venue_id)
+      .gte('checked_in_at', fourHoursAgo)
+      .then(({ count }) => setCheckinCount(count || beacon.checkin_count || 0));
+
+    supabase
+      .from('right_now_posts')
+      .select('id, text, intent, created_at, user_id')
+      .eq('host_beacon_id', beacon.id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(3)
+      .then(({ data }) => setRecentPosts(data || []));
+  }, [beacon?.venue_id, beacon?.id, beacon?.checkin_count]);
+
+  const handleCheckIn = async () => {
+    setCheckingIn(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error('Please sign in'); return; }
+      await supabase.from('venue_checkins').insert({
+        venue_id: beacon.venue_id || beacon.id,
+        user_id: user.id,
+        source: 'globe_tap',
+        checked_in_at: new Date().toISOString(),
+      });
+      setCheckinCount((c) => c + 1);
+      toast.success('Checked in!');
+    } catch (err) {
+      toast.error('Check-in failed');
+    } finally {
+      setCheckingIn(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -451,40 +498,25 @@ function BeaconViewer({ beaconId }) {
     );
   }
 
-  const meta = beacon.metadata || {};
-  // Prefer direct columns (new inserts); fall back to metadata (legacy beacons)
-  const title       = beacon.title || meta.title || meta.name || `${beacon.kind || beacon.type} Beacon`;
-  const address     = beacon.venue_address || meta.address || meta.venue_address || null;
-  const description = beacon.description || meta.description || null;
-  const imageUrl    = meta.image_url || null;
-
-  const kindColor = beacon.kind === 'event' ? '#C8962C'
-    : beacon.kind === 'broadcast' ? '#C8962C'
-    : '#00FF87';
+  const title       = beacon.title || `${beacon.type || 'Beacon'}`;
+  const description = beacon.description || null;
+  const category    = beacon.beacon_category || 'user';
+  const categoryColor = beacon.globe_color || (category === 'venue' ? '#00C2E0' : category === 'event' ? '#FF4F9A' : '#C8962C');
+  const lat = beacon.geo_lat ?? beacon.lat;
+  const lng = beacon.geo_lng ?? beacon.lng;
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      {imageUrl && (
-        <div className="w-full h-40 relative overflow-hidden">
-          <img src={imageUrl} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70" />
-        </div>
-      )}
-
       <div className="px-4 pt-4 pb-2">
         <div className="flex items-center gap-2 mb-2">
           <span
             className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border"
-            style={{ color: kindColor, borderColor: `${kindColor}40`, backgroundColor: `${kindColor}15` }}
+            style={{ color: categoryColor, borderColor: `${categoryColor}40`, backgroundColor: `${categoryColor}15` }}
           >
             <Radio className="w-2.5 h-2.5" />
-            {beacon.kind || beacon.type}
+            {category}
           </span>
-          {beacon.intensity && (
-            <span className="text-white/30 text-[10px]">
-              Intensity: {beacon.intensity}/5
-            </span>
-          )}
+          <span className="text-white/30 text-[10px] uppercase">{beacon.type}</span>
         </div>
 
         <h2 className="text-white font-black text-xl leading-tight">{title}</h2>
@@ -493,47 +525,94 @@ function BeaconViewer({ beaconId }) {
           <p className="text-white/50 text-sm mt-2 leading-relaxed">{description}</p>
         )}
 
-        {beacon.starts_at && (
+        {/* Venue-specific: check-in count */}
+        {category === 'venue' && checkinCount > 0 && (
+          <div className="flex items-center gap-2 mt-3">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#00C2E0]">
+              {checkinCount} checked in
+            </span>
+            <span className="text-[10px] text-white/20 uppercase">last 4 hours</span>
+          </div>
+        )}
+
+        {/* Event-specific: start/end times */}
+        {(beacon.starts_at || beacon.event_start_at) && (
           <div className="flex items-center gap-2 mt-3">
             <Clock className="w-3.5 h-3.5 text-[#C8962C] flex-shrink-0" />
             <span className="text-[#C8962C] text-xs font-semibold">
-              {format(new Date(beacon.starts_at), 'EEE d MMM · h:mm a')}
-              {beacon.end_at ? ` → ${format(new Date(beacon.end_at), 'h:mm a')}` : ''}
+              {format(new Date(beacon.event_start_at || beacon.starts_at), 'EEE d MMM · h:mm a')}
+              {(beacon.event_end_at || beacon.ends_at)
+                ? ` → ${format(new Date(beacon.event_end_at || beacon.ends_at), 'h:mm a')}`
+                : ''}
             </span>
           </div>
         )}
 
-        {address && (
+        {beacon.city_slug && (
           <div className="flex items-start gap-2 mt-2">
             <MapPin className="w-3.5 h-3.5 text-white/40 flex-shrink-0 mt-0.5" />
-            <span className="text-white/50 text-xs">{address}</span>
+            <span className="text-white/50 text-xs capitalize">{beacon.city_slug}</span>
+          </div>
+        )}
+
+        {/* Recent posts at this beacon */}
+        {recentPosts.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-white/30">Recent pulse</p>
+            {recentPosts.map((post) => (
+              <p key={post.id} className="text-white/60 text-xs leading-relaxed">
+                &ldquo;{post.text}&rdquo;
+              </p>
+            ))}
           </div>
         )}
       </div>
 
-      {(beacon.lat && beacon.lng) && (
-        <div className="px-4 py-4 flex gap-3 mt-auto">
+      <div className="px-4 py-4 flex flex-col gap-2 mt-auto">
+        {/* Venue: CHECK IN + WHO'S HERE */}
+        {category === 'venue' && (
           <button
-            onClick={() => openSheet('directions', {
-              lat: beacon.lat,
-              lng: beacon.lng,
-              label: title,
-              address,
-            })}
-            className="flex-1 bg-[#C8962C] text-black font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            onClick={handleCheckIn}
+            disabled={checkingIn}
+            className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
           >
-            <Navigation className="w-4 h-4" />
-            Directions
+            {checkingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+            Check in here
           </button>
+        )}
+
+        {/* Event: I'M GOING */}
+        {category === 'event' && (
           <button
-            onClick={() => window.open(`https://maps.google.com/?q=${beacon.lat},${beacon.lng}`, '_blank')}
-            className="flex-1 bg-[#1C1C1E] text-white font-bold text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 border border-white/10 active:scale-95 transition-transform"
+            onClick={handleCheckIn}
+            disabled={checkingIn}
+            className="w-full bg-[#FF4F9A] text-white font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
           >
-            <ExternalLink className="w-4 h-4 text-white/40" />
-            Map
+            {checkingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            I&apos;m going
           </button>
-        </div>
-      )}
+        )}
+
+        {/* Directions */}
+        {(lat && lng) && (
+          <div className="flex gap-3">
+            <button
+              onClick={() => openSheet('directions', { lat, lng, label: title })}
+              className="flex-1 bg-[#1C1C1E] text-white font-bold text-sm rounded-2xl py-3 flex items-center justify-center gap-2 border border-white/10 active:scale-95 transition-transform"
+            >
+              <Navigation className="w-4 h-4 text-white/40" />
+              Directions
+            </button>
+            <button
+              onClick={() => window.open(`https://maps.google.com/?q=${lat},${lng}`, '_blank')}
+              className="flex-1 bg-[#1C1C1E] text-white font-bold text-sm rounded-2xl py-3 flex items-center justify-center gap-2 border border-white/10 active:scale-95 transition-transform"
+            >
+              <ExternalLink className="w-4 h-4 text-white/40" />
+              Map
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -542,11 +621,11 @@ function BeaconViewer({ beaconId }) {
 // MAIN EXPORT — routes to viewer or creator
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function L2BeaconSheet({ beaconId }) {
+export default function L2BeaconSheet({ beaconId, beacon }) {
   const { closeSheet } = useSheet();
 
   if (beaconId) {
-    return <BeaconViewer beaconId={beaconId} />;
+    return <BeaconViewer beaconId={beaconId} beacon={beacon} />;
   }
 
   return <BeaconCreator onSuccess={closeSheet} />;

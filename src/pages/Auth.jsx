@@ -64,6 +64,7 @@ export default function Auth() {
   const [password, setPassword]         = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading]           = useState(false);
+  const [authError, setAuthError]       = useState('');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -120,15 +121,17 @@ export default function Auth() {
 
   const handleSignIn = async (e) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) { toast.error('Please fill in all fields'); return; }
+    setAuthError('');
+    if (!email.trim() || !password.trim()) { setAuthError('Please fill in all fields'); return; }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (error) { toast.error(error.message || 'Sign in failed'); setLoading(false); return; }
+      const sanitizedEmail = email.replace(/[^\x00-\x7F]/g, '').trim();
+      const { error } = await supabase.auth.signInWithPassword({ email: sanitizedEmail, password });
+      if (error) { setAuthError(error.message || 'Sign in failed'); setLoading(false); return; }
       toast.success('Signed in!');
       setTimeout(() => navigate(searchParams.get('redirect') || '/'), REDIRECT_DELAY_MS);
     } catch (err) {
-      toast.error(err.message || 'Sign in failed');
+      setAuthError(err.message || 'Sign in failed');
       setLoading(false);
     }
   };
@@ -668,9 +671,14 @@ export default function Auth() {
                           <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Email</label>
                           <Input
                             type="email"
+                            autoComplete="email"
+                            autoCorrect="off"
+                            autoCapitalize="none"
+                            spellCheck={false}
+                            inputMode="email"
                             placeholder="you@example.com"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => setEmail(e.target.value.replace(/[^\x00-\x7F]/g, '').trim())}
                             disabled={loading}
                             className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl text-white placeholder:text-white/20 focus:border-[#C8962C] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 h-12 px-4"
                           />
@@ -710,9 +718,14 @@ export default function Auth() {
                       <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/40 mb-2">Email</label>
                       <Input
                         type="email"
+                        autoComplete="email"
+                        autoCorrect="off"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        inputMode="email"
                         placeholder="you@example.com"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => setEmail(e.target.value.replace(/[^\x00-\x7F]/g, '').trim())}
                         disabled={loading}
                         className="w-full bg-[#1C1C1E] border border-white/8 rounded-xl text-white placeholder:text-white/20 focus:border-[#C8962C] focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50 h-12 px-4"
                       />
@@ -759,6 +772,10 @@ export default function Auth() {
                           Forgot password?
                         </button>
                       </div>
+                    )}
+
+                    {authError && (
+                      <p className="text-[#FF3B30] text-xs font-medium text-center -mt-1">{authError}</p>
                     )}
 
                     <motion.button
