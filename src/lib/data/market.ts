@@ -296,7 +296,7 @@ function normalizeInternalProduct(row: InternalProduct): Product {
  * Fetches active internal products from the Supabase `products` table and returns them in the unified `Product` shape.
  *
  * @param filters - Optional filters to apply: `category` for exact category match and `search` for a case-insensitive partial match against the product `name`.
- * @returns An array of normalized `Product` objects ordered by `createdAt` descending (most recent first). 
+ * @returns An array of normalized `Product` objects ordered by `createdAt` descending (most recent first).
  */
 export async function getInternalProducts(filters: ProductFilters = {}): Promise<Product[]> {
   let query = supabase

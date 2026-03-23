@@ -186,6 +186,7 @@ function InternalProductDetail({ product }) {
  * @param {Object} [props.seller] - Seller information used when rendering a preloved product detail.
  * @param {string} [props.source] - Optional source hint (e.g., `'preloved'`) that forces the preloved detail flow.
  * @returns {JSX.Element} The sheet UI for browsing featured products, viewing product details, or interacting with preloved/internal product flows.
+ */
 export default function L2ShopSheet({ handle, product, seller, source }) {
   const { openSheet, updateSheetProps } = useSheet();
   const [selectedProduct, setSelectedProduct] = useState(null);
