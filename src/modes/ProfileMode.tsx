@@ -145,7 +145,12 @@ interface ProfileModeProps {
   className?: string;
 }
 
-// ---- Unauthenticated profile screen -----------------------------------------
+/**
+ * Renders the unauthenticated profile prompt with a sign-in call-to-action.
+ *
+ * @param className - Optional additional Tailwind CSS classes applied to the root container
+ * @returns A React element containing an avatar placeholder, explanatory text, and a button that navigates to the authentication screen
+ */
 function ProfileSignInPrompt({ className = '' }: { className?: string }) {
   const nav = useNavigate();
   return (
@@ -170,7 +175,13 @@ function ProfileSignInPrompt({ className = '' }: { className?: string }) {
   );
 }
 
-// ---- Component --------------------------------------------------------------
+/**
+ * Render either the unauthenticated sign-in prompt or the authenticated profile UI
+ * depending on the boot guard's authentication state.
+ *
+ * @param className - Optional CSS class names applied to the rendered component's root
+ * @returns The sign-in prompt when the user is not authenticated, otherwise the authenticated profile mode
+ */
 export function ProfileMode({ className = '' }: ProfileModeProps) {
   const { isAuthenticated } = useBootGuard();
 
@@ -182,6 +193,13 @@ export function ProfileMode({ className = '' }: ProfileModeProps) {
   return <AuthenticatedProfileMode className={className} />;
 }
 
+/**
+ * Render the authenticated user's profile and settings screen with persona controls and quick stats.
+ *
+ * Displays the user's avatar, persona badge, intent status, quick activity statistics, grouped settings navigation, and sign-out/version controls; it also fetches profile and related counts, supports opening the persona switcher (including via the URL action parameter), and exposes long-press avatar behavior to invoke persona switching.
+ *
+ * @returns A JSX element rendering the full authenticated profile/settings UI for the current user
+ */
 function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
   const [showSwitcher, setShowSwitcher] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);

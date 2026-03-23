@@ -654,11 +654,11 @@ function App() {
 }
 
 /**
- * OSArchitecture - The layered OS structure
- * L0: Globe (Z-0) - persistent background
- * L1: HUD/Navigation (Z-50) - always visible
- * L2: Sheets (Z-80) - slide-up content
- * L3: Interrupts (Z-100) - blocking overlays
+ * Render the application's layered OS UI shell and initialize OS-level side effects.
+ *
+ * Initializes dynamic viewport height, push notifications, deep-link sheet handling, and presence heartbeat; parses and strips Telegram deep-link tokens from the URL. Renders a persistent globe background, the authenticated app routes overlay, radio mini player (hidden on radio routes), bottom navigation, cookie banner, and interrupt-layer UI such as the SOS long-press button, shake-to-SOS, incoming call banner (each shown only when authenticated), and the SOS overlay when active.
+ *
+ * @returns {JSX.Element} The layered OS shell containing globe, app routes, mini player, navigation, interrupts, and cookie banner.
  */
 function OSArchitecture() {
   // Initialize dynamic viewport height for mobile browsers

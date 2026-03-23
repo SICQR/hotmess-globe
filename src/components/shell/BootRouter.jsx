@@ -45,16 +45,19 @@ const LoadingSpinner = () => (
 );
 
 /**
- * BootRouter - Routes based on boot state
+ * Selects which top-level UI to render based on boot state and current route.
  *
- * State → Shell mapping:
- * - LOADING          → Spinner
- * - UNAUTHENTICATED  → PublicShell (Age gate → Auth → Legal)
- *                      If the user already completed age verification locally,
- *                      skip the age page and go straight to /auth.
- * - NEEDS_AGE        → AgeGate  (BootGuardContext already syncs localStorage)
- * - NEEDS_ONBOARDING → OnboardingGate (mandatory — never bypassed)
- * - READY            → Full app (children)
+ * Behavior:
+ * - Always allows the password reset route to render the public shell.
+ * - Shows a loading spinner while boot/auth state is loading.
+ * - For UNAUTHENTICATED, renders the provided `children` (full app shell with gated features disabled elsewhere).
+ * - For NEEDS_AGE, renders the AgeGate page.
+ * - For NEEDS_ONBOARDING or NEEDS_COMMUNITY_GATE, renders the OnboardingGate page.
+ * - Otherwise, renders the provided `children` (app ready).
+ *
+ * @param {object} props
+ * @param {import('react').ReactNode} props.children - Content to render when the app shell should be shown (unauthenticated or ready).
+ * @returns {import('react').JSX.Element} The shell or gate component appropriate for the current boot and route state.
  */
 export default function BootRouter({ children }) {
   // Hooks must be called unconditionally (Rules of Hooks)
