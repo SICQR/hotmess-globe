@@ -58,6 +58,7 @@ const AMBER = '#C8962C';
 const CARD_BG = '#1C1C1E';
 const ROOT_BG = '#050507';
 const MUTED = '#8E8E93';
+const NIGHT_BEACON_KEY = 'hm_night_beacon_id';
 
 // ---- Intent color mapping ---------------------------------------------------
 const INTENT_COLORS: Record<string, { bg: string; text: string }> = {
@@ -535,7 +536,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
   const [showRightNow, setShowRightNow] = useState(false);
   const [nightMode, setNightMode] = useState(() => localStorage.getItem('hm_night_mode') === 'true');
   const [nightModeBeaconId, setNightModeBeaconId] = useState<string | null>(
-    () => localStorage.getItem('hm_night_beacon_id') || null
+    () => localStorage.getItem(NIGHT_BEACON_KEY) || null
   );
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -619,7 +620,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
               }).select('id').single().catch(() => ({ data: null }));
               if (beacon?.id) {
                 setNightModeBeaconId(beacon.id);
-                localStorage.setItem('hm_night_beacon_id', beacon.id);
+                localStorage.setItem(NIGHT_BEACON_KEY, beacon.id);
               }
             },
             () => {}, // location denied — still activate night mode
@@ -634,7 +635,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
           last_seen_at: new Date().toISOString(),
         }, { onConflict: 'user_id' }).catch(() => {});
 
-        const beaconId = nightModeBeaconId || localStorage.getItem('hm_night_beacon_id');
+        const beaconId = nightModeBeaconId || localStorage.getItem(NIGHT_BEACON_KEY);
         if (beaconId) {
           void supabase.from('beacons')
             .update({ status: 'expired' })
@@ -642,7 +643,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
             .catch(() => {});
         }
         setNightModeBeaconId(null);
-        localStorage.removeItem('hm_night_beacon_id');
+        localStorage.removeItem(NIGHT_BEACON_KEY);
       }
     } catch {
       // non-critical
