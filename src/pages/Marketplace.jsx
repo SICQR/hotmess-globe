@@ -2,9 +2,9 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
-import { ShoppingBag, Plus, Search } from 'lucide-react';
+import { ShoppingBag, Plus, Search, MessageCircle, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ProductCard from '../components/marketplace/ProductCard';
 import AIRecommendations from '../components/marketplace/AIRecommendations';
 import ShopCollections from '../components/marketplace/ShopCollections';
+import CreatePrelovedSheet from '../components/marketplace/CreatePrelovedSheet';
 import EmptyState from '../components/ui/EmptyState';
 import { GridSkeleton } from '../components/ui/LoadingSkeleton';
 import TutorialTooltip from '../components/tutorial/TutorialTooltip';
@@ -21,9 +22,103 @@ import { addToCart } from '@/components/marketplace/cartStorage';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
 import { openCartDrawer } from '@/utils/cartEvents';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
+import OSCard, { OSCardBadge } from '@/components/ui/OSCard';
+import LazyImage from '@/components/ui/LazyImage';
+
+const BRAND_FILTERS = [
+  { key: 'all', label: 'ALL' },
+  { key: 'RAW', label: 'RAW' },
+  { key: 'HUNG', label: 'HUNG' },
+  { key: 'HOTMESS_HIGH', label: 'HOTMESS HIGH' },
+  { key: 'SUPERHUNG', label: 'SUPERHUNG' },
+  { key: 'SUPERHIGH', label: 'SUPERHIGH' },
+  { key: 'HNH_MESS', label: 'HNH MESS' },
+  { key: 'HOTMESS', label: 'HOTMESS' },
+];
+
+const CONDITION_COLORS = {
+  'New': '#39FF14',
+  'Like New': '#00C2E0',
+  'Good': '#FFEB3B',
+  'Well Loved': '#C8962C',
+};
+
+function PrelovedCard({ item, index }) {
+  const navigate = useNavigate();
+  const conditionColor = CONDITION_COLORS[item.condition] || '#C8962C';
+  const firstImage = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      whileHover={{ scale: 1.02 }}
+    >
+      <OSCard>
+        <div
+          className="h-48 flex items-center justify-center relative"
+          style={{ backgroundColor: `${conditionColor}20` }}
+        >
+          {firstImage ? (
+            <LazyImage
+              src={firstImage}
+              alt={item.title}
+              className="w-full h-full object-cover"
+              containerClassName="w-full h-full"
+            />
+          ) : (
+            <ShoppingBag className="w-20 h-20" style={{ color: conditionColor }} />
+          )}
+          {/* Condition badge */}
+          <div className="absolute top-3 right-3">
+            <OSCardBadge color={conditionColor}>{item.condition}</OSCardBadge>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="flex items-start justify-between mb-2">
+            <h3 className="text-xl font-bold">{item.title}</h3>
+            {item.brand && (
+              <span className="text-xs font-bold uppercase tracking-wider text-white/40 border border-white/20 px-2 py-0.5">
+                {item.brand}
+              </span>
+            )}
+          </div>
+
+          {item.description && (
+            <p className="text-sm text-white/60 mb-3 line-clamp-2">{item.description}</p>
+          )}
+
+          {item.size && (
+            <p className="text-xs text-white/40 mb-2">Size: {item.size}</p>
+          )}
+
+          <div className="space-y-2">
+            <div className="text-2xl font-black" style={{ color: conditionColor }}>
+              £{Number(item.price).toFixed(2)}
+            </div>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 text-black font-bold h-9 px-3 flex items-center justify-center rounded-md text-sm transition-colors cursor-pointer"
+                style={{ backgroundColor: conditionColor }}
+                onClick={() => toast.info('Messaging coming soon')}
+              >
+                <MessageCircle className="w-4 h-4 mr-1.5" />
+                Message Seller
+              </button>
+            </div>
+          </div>
+        </div>
+      </OSCard>
+    </motion.div>
+  );
+}
 
 export default function Marketplace() {
+  const [marketTab, setMarketTab] = useState('shop'); // 'shop' or 'preloved'
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedBrand, setSelectedBrand] = useState('all');
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -32,6 +127,7 @@ export default function Marketplace() {
   const [sellerEmailFilter, setSellerEmailFilter] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [page, setPage] = useState(1);
+  const [prelovedSheetOpen, setPrelovedSheetOpen] = useState(false);
   const ITEMS_PER_PAGE = 12;
   const navigate = useNavigate();
   const location = useLocation();
@@ -82,7 +178,7 @@ export default function Marketplace() {
       try {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) return;
-        
+
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
@@ -96,6 +192,20 @@ export default function Marketplace() {
     queryKey: ['marketplace-products'],
     // Some legacy rows may not use status='active'. Fetch all and filter client-side.
     queryFn: () => base44.entities.Product.filter({}, '-created_date'),
+  });
+
+  // Preloved listings query
+  const { data: prelovedItems = [], isLoading: prelovedLoading } = useQuery({
+    queryKey: ['preloved-listings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('preloved_listings')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
   });
 
   const allProducts = useMemo(() => {
@@ -222,7 +332,7 @@ export default function Marketplace() {
           const position = await new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
           });
-          
+
           // Import snap function
           const snapToGrid = (lat, lng) => {
             const GRID_SIZE = 0.0045;
@@ -231,10 +341,10 @@ export default function Marketplace() {
               lng: Math.floor(lng / GRID_SIZE) * GRID_SIZE
             };
           };
-          
+
           const snapped = snapToGrid(position.coords.latitude, position.coords.longitude);
           const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-          
+
           await base44.entities.Beacon.create({
             title: `P2P Purchase: ${product.name}`,
             description: `${currentUser.full_name || 'Someone'} just bought this!`,
@@ -334,8 +444,26 @@ export default function Marketplace() {
     purchaseMutation.mutate(product);
   };
 
+  // Handle + button click
+  const handlePlusButton = () => {
+    if (marketTab === 'preloved') {
+      // Verification gate
+      if (!currentUser) {
+        toast.error('Sign in to sell on the Preloved market');
+        return;
+      }
+      if (!currentUser.is_verified) {
+        toast.error('Only verified Hotmess members can sell. Get verified in your profile settings.');
+        return;
+      }
+      setPrelovedSheetOpen(true);
+    } else {
+      navigate(createPageUrl('SellerDashboard'));
+    }
+  };
+
   let filteredProducts = uniqueProducts;
-  
+
   if (activeTab === 'official') {
     filteredProducts = uniqueProducts.filter(p => p.seller_email === 'shopify@hotmess.london');
   } else if (activeTab === 'p2p') {
@@ -344,14 +472,19 @@ export default function Marketplace() {
     filteredProducts = uniqueProducts.filter(p => p.product_type === activeTab);
   }
 
+  // Brand filter (only when Shop tab is active)
+  if (selectedBrand !== 'all') {
+    filteredProducts = filteredProducts.filter(p => p.brand === selectedBrand);
+  }
+
   if (selectedCollection) {
-    filteredProducts = filteredProducts.filter(p => 
+    filteredProducts = filteredProducts.filter(p =>
       p.tags?.some(tag => tag.toLowerCase() === selectedCollection.toLowerCase())
     );
   }
 
   if (searchQuery) {
-    filteredProducts = filteredProducts.filter(p => 
+    filteredProducts = filteredProducts.filter(p =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -359,19 +492,19 @@ export default function Marketplace() {
   }
 
   // Price range filter
-  filteredProducts = filteredProducts.filter(p => 
+  filteredProducts = filteredProducts.filter(p =>
     p.price_xp >= priceRange.min && p.price_xp <= priceRange.max
   );
 
   // Seller filter
   if (sellerFilter === 'verified') {
-    filteredProducts = filteredProducts.filter(p => 
+    filteredProducts = filteredProducts.filter(p =>
       p.seller_verified || (p.average_rating && p.average_rating >= 4.5)
     );
   } else if (sellerFilter === 'new') {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    filteredProducts = filteredProducts.filter(p => 
+    filteredProducts = filteredProducts.filter(p =>
       new Date(p.created_date) >= thirtyDaysAgo
     );
   }
@@ -441,7 +574,7 @@ export default function Marketplace() {
               )}
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <Button 
+              <Button
                 onClick={() => openCartDrawer('creators')}
                 variant="outline"
                 className="border-[#39FF14] text-[#39FF14] w-full sm:w-auto"
@@ -449,18 +582,18 @@ export default function Marketplace() {
                 <ShoppingBag className="w-4 h-4 mr-2" />
                 Cart
               </Button>
-              <Button 
-                onClick={() => navigate(createPageUrl('SellerDashboard'))}
+              <Button
+                onClick={handlePlusButton}
                 className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black w-full sm:w-auto"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Sell Item
+                {marketTab === 'preloved' ? 'Sell Something' : 'Sell Item'}
               </Button>
             </div>
           </div>
 
           {/* Collections */}
-          <ShopCollections 
+          <ShopCollections
             onSelectCollection={(id) => {
               setSelectedCollection(id === selectedCollection ? null : id);
               setPage(1);
@@ -545,38 +678,71 @@ export default function Marketplace() {
           />
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="bg-white/5 border border-white/10 w-full justify-start overflow-x-auto">
-            <TabsTrigger value="all" className="shrink-0 data-[state=active]:bg-[#C8962C] data-[state=active]:text-black">
-              All ({uniqueProducts.length})
+        {/* ===== SHOP / PRELOVED TOP-LEVEL TABS ===== */}
+        <Tabs value={marketTab} onValueChange={(v) => { setMarketTab(v); setPage(1); }} className="mb-8">
+          <TabsList className="bg-white/5 border border-white/10 w-full justify-start">
+            <TabsTrigger value="shop" className="shrink-0 data-[state=active]:bg-[#C8962C] data-[state=active]:text-black font-black uppercase tracking-wider">
+              Shop
             </TabsTrigger>
-            <TabsTrigger value="official" className="shrink-0 data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black">
-              Official Shop
-            </TabsTrigger>
-            <TabsTrigger value="p2p" className="shrink-0 data-[state=active]:bg-[#C8962C] data-[state=active]:text-white">
-              P2P Market
-            </TabsTrigger>
-            <TabsTrigger value="physical" className="shrink-0 data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black">
-              Physical
-            </TabsTrigger>
-            <TabsTrigger value="digital" className="shrink-0 data-[state=active]:bg-[#39FF14] data-[state=active]:text-black">
-              Digital
+            <TabsTrigger value="preloved" className="shrink-0 data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black font-black uppercase tracking-wider">
+              Preloved
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value={activeTab} className="mt-6">
-            {currentUser && activeTab === 'all' && !searchQuery && (
-              <AIRecommendations 
-                currentUser={currentUser} 
+          {/* ===== SHOP TAB CONTENT ===== */}
+          <TabsContent value="shop" className="mt-4">
+            {/* Brand Filter Rail */}
+            <div className="mb-4 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-2 pb-2">
+                {BRAND_FILTERS.map((b) => (
+                  <button
+                    key={b.key}
+                    onClick={() => { setSelectedBrand(b.key); setPage(1); }}
+                    className={`shrink-0 px-4 py-1.5 text-xs font-black uppercase tracking-wider border transition-colors whitespace-nowrap ${
+                      selectedBrand === b.key
+                        ? 'bg-[#C8962C] border-[#C8962C] text-black'
+                        : 'bg-transparent border-[#C8962C]/40 text-[#C8962C]/80 hover:border-[#C8962C] hover:text-[#C8962C]'
+                    }`}
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sub-tabs for product type filtering */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+              <TabsList className="bg-white/5 border border-white/10 w-full justify-start overflow-x-auto">
+                <TabsTrigger value="all" className="shrink-0 data-[state=active]:bg-[#C8962C] data-[state=active]:text-black">
+                  All ({uniqueProducts.length})
+                </TabsTrigger>
+                <TabsTrigger value="official" className="shrink-0 data-[state=active]:bg-[#00C2E0] data-[state=active]:text-black">
+                  Official Shop
+                </TabsTrigger>
+                <TabsTrigger value="p2p" className="shrink-0 data-[state=active]:bg-[#C8962C] data-[state=active]:text-white">
+                  P2P Market
+                </TabsTrigger>
+                <TabsTrigger value="physical" className="shrink-0 data-[state=active]:bg-[#FFEB3B] data-[state=active]:text-black">
+                  Physical
+                </TabsTrigger>
+                <TabsTrigger value="digital" className="shrink-0 data-[state=active]:bg-[#39FF14] data-[state=active]:text-black">
+                  Digital
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            {currentUser && activeTab === 'all' && !searchQuery && selectedBrand === 'all' && (
+              <AIRecommendations
+                currentUser={currentUser}
                 onBuy={handleBuy}
               />
             )}
-            
+
             {paginatedProducts.length === 0 ? (
               <EmptyState
                 icon={ShoppingBag}
                 title="No products found"
-                description={searchQuery ? "Try a different search term" : "Be the first to list a product!"}
+                description={searchQuery ? "Try a different search term" : selectedBrand !== 'all' ? "No products for this brand yet" : "Be the first to list a product!"}
                 action={() => navigate(createPageUrl('SellerDashboard'))}
                 actionLabel="Start Selling"
               />
@@ -620,8 +786,44 @@ export default function Marketplace() {
               </>
             )}
           </TabsContent>
+
+          {/* ===== PRELOVED TAB CONTENT ===== */}
+          <TabsContent value="preloved" className="mt-6">
+            {/* Verification gate message for unverified users */}
+            {currentUser && !currentUser.is_verified && (
+              <div className="mb-6 p-4 border border-[#C8962C]/40 bg-[#C8962C]/10 flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-[#C8962C] shrink-0 mt-0.5" />
+                <p className="text-sm text-white/80">
+                  Only verified Hotmess members can sell. Get verified in your profile settings.
+                </p>
+              </div>
+            )}
+
+            {prelovedLoading ? (
+              <GridSkeleton count={6} />
+            ) : prelovedItems.length === 0 ? (
+              <EmptyState
+                icon={ShoppingBag}
+                title="No preloved listings yet"
+                description="Be the first to list something! Tap the + button above to sell your preloved gear."
+              />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {prelovedItems.map((item, idx) => (
+                  <PrelovedCard key={item.id} item={item} index={idx} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
+
+      {/* Create Preloved Listing Sheet */}
+      <CreatePrelovedSheet
+        open={prelovedSheetOpen}
+        onClose={() => setPrelovedSheetOpen(false)}
+        currentUser={currentUser}
+      />
 
       <TutorialTooltip page="marketplace" />
     </div>
