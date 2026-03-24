@@ -16,7 +16,6 @@ import {
 import { supabase } from '@/components/utils/supabaseClient';
 
 const GOLD = '#C8962C';
-const BG = '#050507';
 const CARD = '#1C1C1E';
 const LABEL_RED = '#9B1B2A';
 
