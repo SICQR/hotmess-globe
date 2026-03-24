@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Shield, UserPlus, Clock, MapPin, Phone, AlertTriangle, CheckCircle, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,26 +25,50 @@ export default function Safety() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const user = await base44.auth.me();
-      setCurrentUser(user);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // Build a compat object so existing code can use currentUser.email
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        setCurrentUser({
+          id: session.user.id,
+          email: session.user.email,
+          city: profile?.city || null,
+          ...profile,
+        });
+      }
     };
     fetchUser();
   }, []);
 
   const { data: trustedContacts = [] } = useQuery({
     queryKey: ['trusted-contacts', currentUser?.email],
-    queryFn: () => base44.entities.TrustedContact.filter({ user_email: currentUser.email }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('trusted_contacts')
+        .select('*')
+        .eq('user_email', currentUser.email);
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!currentUser,
   });
 
   const { data: activeCheckIn } = useQuery({
     queryKey: ['active-safety-checkin', currentUser?.email],
     queryFn: async () => {
-      const checkIns = await base44.entities.SafetyCheckIn.filter({ 
-        user_email: currentUser.email,
-        status: 'active'
-      });
-      return checkIns[0] || null;
+      const { data, error } = await supabase
+        .from('safety_checkins')
+        .select('*')
+        .eq('user_email', currentUser.email)
+        .eq('status', 'active')
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data || null;
     },
     enabled: !!currentUser,
     refetchInterval: 30000,
@@ -52,7 +76,7 @@ export default function Safety() {
 
   const addContactMutation = useMutation({
     mutationFn: async () => {
-      await base44.entities.TrustedContact.create({
+      const { error } = await supabase.from('trusted_contacts').insert({
         user_email: currentUser.email,
         contact_name: contactName,
         contact_phone: contactPhone,
@@ -60,6 +84,7 @@ export default function Safety() {
         relationship,
         notify_on_sos: true,
       });
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['trusted-contacts']);
@@ -73,7 +98,7 @@ export default function Safety() {
   const checkInMutation = useMutation({
     mutationFn: async () => {
       const checkOutTime = new Date(Date.now() + checkOutHours * 60 * 60 * 1000).toISOString();
-      
+
       let location = { venue_name: 'Unknown' };
       if (navigator.geolocation) {
         try {
@@ -90,13 +115,14 @@ export default function Safety() {
         }
       }
 
-      await base44.entities.SafetyCheckIn.create({
+      const { error } = await supabase.from('safety_checkins').insert({
         user_email: currentUser.email,
         check_in_time: new Date().toISOString(),
         expected_check_out: checkOutTime,
         location,
         status: 'active',
       });
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['active-safety-checkin']);
@@ -106,9 +132,11 @@ export default function Safety() {
 
   const checkOutMutation = useMutation({
     mutationFn: async () => {
-      await base44.entities.SafetyCheckIn.update(activeCheckIn.id, {
-        status: 'checked_out',
-      });
+      const { error } = await supabase
+        .from('safety_checkins')
+        .update({ status: 'checked_out' })
+        .eq('id', activeCheckIn.id);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['active-safety-checkin']);
@@ -117,7 +145,10 @@ export default function Safety() {
   });
 
   const deleteContactMutation = useMutation({
-    mutationFn: (id) => base44.entities.TrustedContact.delete(id),
+    mutationFn: async (id) => {
+      const { error } = await supabase.from('trusted_contacts').delete().eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['trusted-contacts']);
       toast.success('Contact removed');
@@ -152,6 +183,23 @@ export default function Safety() {
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-24">
+        {/* Quick action buttons */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <button
+            onClick={() => navigate('/sos')}
+            className="py-4 bg-red-600 text-white font-black text-base rounded-2xl active:scale-95 transition-transform"
+          >
+            🆘 SOS
+          </button>
+          <button
+            onClick={() => navigate('/fake-call')}
+            className="py-4 bg-zinc-900 text-base font-black rounded-2xl active:scale-95 transition-transform"
+            style={{ border: '1px solid rgba(0,194,224,0.4)', color: '#00C2E0' }}
+          >
+            📞 Fake Call
+          </button>
+        </div>
+
         <Tabs defaultValue="checkin">
           <TabsList className="bg-white/5 border border-white/10 mb-6">
             <TabsTrigger value="checkin">Safety Check-In</TabsTrigger>
