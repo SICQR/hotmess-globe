@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 
-const GOLD = '#C8962C';
 const CARD = '#1C1C1E';
 const LABEL_RED = '#9B1B2A';
 
