@@ -3,17 +3,17 @@ import { useLocation } from 'react-router-dom';
 import { useBootGuard, BOOT_STATES } from '@/contexts/BootGuardContext';
 import PublicShell from '@/components/shell/PublicShell';
 
-// Consistent localStorage key for age verification
-const AGE_KEY = 'hm_age_confirmed_v1';
-
-const getLocalAgeVerified = () => {
-  try {
-    const val = localStorage.getItem(AGE_KEY);
-    return val === 'true' || val === '1' || val === 'TRUE';
-  } catch {
-    return false;
-  }
-};
+// Routes that must remain accessible without auth (legal, callbacks, etc.)
+const PUBLIC_PATH_PREFIXES = [
+  '/legal',
+  '/about',
+  '/terms',
+  '/privacy',
+  '/guidelines',
+  '/contact',
+  '/accessibility',
+  '/auth/callback',
+];
 
 // Branded loading — cinematic pulse
 const LoadingSpinner = () => (
@@ -45,69 +45,52 @@ const LoadingSpinner = () => (
 );
 
 /**
- * Selects which top-level UI to render based on boot state and current route.
+ * BootRouter — gates the entire app behind onboarding.
  *
- * Behavior:
- * - Always allows the password reset route to render the public shell.
- * - Shows a loading spinner while boot/auth state is loading.
- * - For UNAUTHENTICATED, renders the provided `children` (full app shell with gated features disabled elsewhere).
- * - For NEEDS_AGE, renders the AgeGate page.
- * - For NEEDS_ONBOARDING or NEEDS_COMMUNITY_GATE, renders the OnboardingGate page.
- * - Otherwise, renders the provided `children` (app ready).
- *
- * @param {object} props
- * @param {import('react').ReactNode} props.children - Content to render when the app shell should be shown (unauthenticated or ready).
- * @returns {import('react').JSX.Element} The shell or gate component appropriate for the current boot and route state.
+ * Non-READY users see OnboardingRouter (splash -> age -> auth -> profile -> vibe -> safety -> location).
+ * READY users see the full OS. Public routes (legal, auth callback) always pass through.
  */
 export default function BootRouter({ children }) {
-  // Hooks must be called unconditionally (Rules of Hooks)
   const { bootState, isLoading } = useBootGuard();
-  const localAge = getLocalAgeVerified();
   const location = useLocation();
 
-  // Always allow the password reset page — the link from email must work
-  // regardless of auth state or onboarding status
+  // Always allow password reset page
   if (location.pathname === '/reset-password') {
     return <PublicShell />;
   }
-
-  // DEV BYPASS: uncomment to skip all auth gates for local testing
-  // if (import.meta.env.DEV) return <>{children}</>;
 
   // Show loading while checking auth
   if (isLoading || bootState === BOOT_STATES.LOADING) {
     return <LoadingSpinner />;
   }
 
-  // Unauthenticated users now see the full app shell (browse, radio, shop).
-  // Auth-gated features (chat, profile edit, SOS) are disabled inside each mode.
-  // Login remains accessible via Profile tab or /auth route.
-  if (bootState === BOOT_STATES.UNAUTHENTICATED) {
+  // READY — render full app
+  if (bootState === BOOT_STATES.READY) {
     return <>{children}</>;
   }
 
-  // Authenticated but age not yet verified — show age gate.
-  // BootGuardContext already attempts to sync localStorage → profile, so this
-  // state only appears when the DB has age_verified = false AND localStorage is empty.
-  if (bootState === BOOT_STATES.NEEDS_AGE) {
-    const AgeGate = React.lazy(() => import('@/pages/AgeGate'));
-    return (
-      <React.Suspense fallback={<LoadingSpinner />}>
-        <AgeGate />
-      </React.Suspense>
-    );
+  // Public routes pass through even for non-READY users
+  const isPublicRoute = PUBLIC_PATH_PREFIXES.some(
+    (prefix) =>
+      location.pathname === prefix ||
+      location.pathname.startsWith(prefix + '/')
+  );
+  if (isPublicRoute) {
+    return <>{children}</>;
   }
 
-  // Authenticated, age verified, but onboarding not complete — mandatory.
-  if (bootState === BOOT_STATES.NEEDS_ONBOARDING || bootState === BOOT_STATES.NEEDS_COMMUNITY_GATE) {
-    const OnboardingGate = React.lazy(() => import('@/pages/OnboardingGate'));
-    return (
-      <React.Suspense fallback={<LoadingSpinner />}>
-        <OnboardingGate />
-      </React.Suspense>
-    );
-  }
+  // All non-READY states -> OnboardingRouter handles everything:
+  // UNAUTHENTICATED -> splash / signup
+  // NEEDS_AGE -> age gate (post-auth edge case)
+  // NEEDS_ONBOARDING -> resume from onboarding_stage
+  // NEEDS_COMMUNITY_GATE -> treated as needs onboarding
+  const OnboardingRouter = React.lazy(
+    () => import('@/components/onboarding/OnboardingRouter')
+  );
 
-  // READY — render full app
-  return <>{children}</>;
+  return (
+    <React.Suspense fallback={<LoadingSpinner />}>
+      <OnboardingRouter />
+    </React.Suspense>
+  );
 }
