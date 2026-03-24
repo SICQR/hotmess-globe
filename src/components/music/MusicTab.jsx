@@ -18,7 +18,6 @@ import { supabase } from '@/components/utils/supabaseClient';
 const CARD = '#1C1C1E';
 const LABEL_RED = '#9B1B2A';
 
-
 function formatDuration(ms) {
   if (!ms) return '';
   const s = Math.floor(ms / 1000);
