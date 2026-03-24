@@ -210,8 +210,32 @@ function GhostedSkeleton() {
 // ---- Empty state ------------------------------------------------------------
 
 function GhostedEmpty({ onOpenFilters }: { onOpenFilters: () => void }) {
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchReferralCode = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('referral_code')
+            .eq('id', user.id)
+            .single();
+          if (profile?.referral_code) {
+            setReferralCode(profile.referral_code);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch referral code:', err);
+      }
+    };
+    fetchReferralCode();
+  }, []);
+
   const handleInvite = async () => {
-    const url = `https://hotmessldn.com`;
+    const baseUrl = `https://hotmessldn.com`;
+    const url = referralCode ? `${baseUrl}?invite=${referralCode}` : baseUrl;
     if (navigator.share) {
       try {
         await navigator.share({ text: "I'm on HOTMESS — meet me tonight", url });
