@@ -43,6 +43,8 @@ export default function HotmessSplash() {
   const [loading, setLoading] = useState(false);
   const [showLegal, setShowLegal] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
 
   // Skip splash if already authenticated
   useEffect(() => {
@@ -50,6 +52,16 @@ export default function HotmessSplash() {
       if (session) navigate('/', { replace: true });
     });
   }, []);
+
+  // Listen for email confirmation → navigate to app
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && newSession?.user?.email_confirmed_at) {
+        navigate('/', { replace: true });
+      }
+    });
+    return () => subscription?.unsubscribe();
+  }, [navigate]);
 
   const handleEnter = () => {
     try {
@@ -87,7 +99,10 @@ export default function HotmessSplash() {
           options: { data: { full_name: fullName.trim() || undefined } },
         });
         if (error) throw error;
-        toast.success('Welcome to HOTMESS! Check your email to confirm.');
+        setPendingEmail(email.trim());
+        setStage('confirm-pending');
+        setLoading(false);
+        return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -95,13 +110,27 @@ export default function HotmessSplash() {
         });
         if (error) throw error;
         toast.success('Welcome back!');
+        setStage('done');
+        setTimeout(() => navigate('/', { replace: true }), 800);
       }
-      setStage('done');
-      setTimeout(() => navigate('/', { replace: true }), 800);
     } catch (err) {
       toast.error(err.message || 'Authentication failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!pendingEmail) return;
+    setResendLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: pendingEmail });
+      if (error) throw error;
+      toast.success('Confirmation email resent!');
+    } catch (err) {
+      toast.error(err.message || 'Failed to resend');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -465,6 +494,65 @@ export default function HotmessSplash() {
 
               <button
                 onClick={() => { setResetEmail(''); setStage('forgot'); }}
+                className="mt-3 w-full text-white/15 text-[10px] text-center hover:text-white/30 transition-colors py-1 uppercase tracking-widest"
+              >
+                Try a different email
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════
+            CONFIRM PENDING — Wait for email confirmation
+            ═══════════════════════════════════════════════════════ */}
+        {stage === 'confirm-pending' && (
+          <motion.div
+            key="confirm-pending"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="relative z-10 flex flex-col justify-end min-h-[100dvh]"
+          >
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              transition={springSmooth}
+              className="bg-[#0D0D0D]/95 backdrop-blur-2xl border-t border-white/8 rounded-t-[28px] px-6 pt-8 pb-10"
+            >
+              <div className="w-10 h-1 bg-white/10 rounded-full mx-auto mb-6" />
+
+              <div className="text-center py-4">
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ ...springSnap, delay: 0.2 }}
+                  className="w-16 h-16 rounded-full bg-[#C8962C]/10 border-2 border-[#C8962C]/25 flex items-center justify-center mx-auto mb-5"
+                >
+                  <Mail className="w-7 h-7 text-[#C8962C]" />
+                </motion.div>
+                <h2 className="text-white font-black text-2xl mb-2">Confirm your email</h2>
+                <p className="text-white/35 text-sm leading-relaxed">
+                  We sent a confirmation link to
+                </p>
+                <p className="text-[#C8962C] text-sm font-bold mt-1 break-all">{pendingEmail}</p>
+                <p className="text-white/20 text-xs mt-3 leading-relaxed">
+                  Click the link in your email to enter HOTMESS. Check spam if needed.
+                </p>
+              </div>
+
+              <button
+                onClick={handleResend}
+                disabled={resendLoading}
+                className="mt-4 w-full bg-[#1C1C1E] border border-white/8 text-white font-black text-sm rounded-2xl h-14 flex items-center justify-center gap-2 active:scale-[0.97] transition-transform disabled:opacity-50"
+              >
+                {resendLoading
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Resending...</>
+                  : <><Mail className="w-4 h-4" /> Resend Confirmation Email</>}
+              </button>
+
+              <button
+                onClick={() => { setStage('auth'); setIsSignUp(true); }}
                 className="mt-3 w-full text-white/15 text-[10px] text-center hover:text-white/30 transition-colors py-1 uppercase tracking-widest"
               >
                 Try a different email

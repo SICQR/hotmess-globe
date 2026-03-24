@@ -293,6 +293,10 @@ export default function OnboardingGate() {
             has_agreed_terms: termsAgreed,
             has_consented_data: dataConsent,
             has_consented_gps: gpsConsent,
+            consent_accepted: termsAgreed,
+            consent_location: gpsConsent,
+            consent_safety: true,
+            consent_marketing: false,
           })
           .eq('id', session.user.id);
         if (error) {
@@ -332,7 +336,11 @@ export default function OnboardingGate() {
       if (session?.user?.id) {
         const { error } = await supabase
           .from('profiles')
-          .update({ pin_code_hash: hash, display_name: trimmed })
+          .update({
+            pin_code_hash: hash,
+            display_name: trimmed,
+            username: profile?.username || deriveUsernameSlug({ displayName: trimmed, email: session?.user?.email }),
+          })
           .eq('id', session.user.id);
         if (error) {
           console.error('[Onboarding] Failed to save profile:', error);
@@ -451,6 +459,7 @@ export default function OnboardingGate() {
             community_attested_at: new Date().toISOString(),
             consent_accepted: true,
             onboarding_completed: true,
+            onboarding_complete: true,
             onboarding_completed_at: new Date().toISOString(),
           })
           .eq('id', session.user.id);
