@@ -14,7 +14,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Shield, FileText, MapPin, KeyRound, Camera, Check, Loader2, Delete } from 'lucide-react';
+import { Shield, FileText, MapPin, KeyRound, Camera, Check, Loader2, Delete, Ghost, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { validateDisplayName, deriveUsernameSlug } from '@/lib/utils';
 import { AppBanner } from '@/components/banners/AppBanner';
@@ -22,7 +22,7 @@ import { AppBanner } from '@/components/banners/AppBanner';
 const AGE_KEY = 'hm_age_confirmed_v1';
 const GOLD = '#C8962C';
 const GOLD_HOVER = '#D4A84B';
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 8;
 
 const POSITION_OPTS = ['Top', 'Bottom', 'Versatile', 'Vers Top', 'Vers Bottom', 'Side', 'Just Looking'];
 const LOOKING_FOR_OPTS = ['Hookup', 'Dates', 'Friends', 'Relationship', 'Chat', 'Whatever'];
@@ -437,14 +437,9 @@ export default function OnboardingGate() {
 
   const handleFinish = useCallback(() => setStep(7), []);
 
-  // ── Step 6: community attestation ─────────────────────────────────────────
+  // ── Step 7: community attestation ─────────────────────────────────────────
   const handleCommunityConfirm = useCallback(async () => {
     setSaving(true);
-
-    // Failsafe: if nothing resolves within 3s, hard-redirect to break any loop
-    const failsafe = setTimeout(() => {
-      window.location.href = '/';
-    }, 3000);
 
     try {
       // Set localStorage flags FIRST — these are the fallback the boot guard trusts
@@ -473,22 +468,65 @@ export default function OnboardingGate() {
           p_details: { community_attestation: true, timestamp: new Date().toISOString() },
         }).catch((e) => console.warn('grant_user_consent failed (continuing):', e));
 
+        // ── Handle invite code referral ──────────────────────────────────────
+        // If the user was invited via deep link, record the referral
+        const inviteCode = localStorage.getItem('hm_invite_code');
+        if (inviteCode) {
+          try {
+            // Get the inviter's email from referrals table by matching the code
+            const { data: referralRecords } = await supabase
+              .from('referrals')
+              .select('referrer_email')
+              .eq('referral_code', inviteCode)
+              .limit(1);
+
+            if (referralRecords?.length > 0) {
+              const inviterEmail = referralRecords[0].referrer_email;
+              const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+              if (currentUser?.email) {
+                // Record the referral link
+                await supabase
+                  .from('referrals')
+                  .upsert(
+                    {
+                      referrer_email: inviterEmail,
+                      referred_email: currentUser.email,
+                      referral_code: inviteCode,
+                      status: 'completed',
+                      created_at: new Date().toISOString(),
+                    },
+                    { onConflict: 'referrer_email,referred_email' }
+                  )
+                  .catch((e) => console.warn('Failed to record referral:', e));
+              }
+            }
+          } catch (err) {
+            console.warn('Invite code processing failed (continuing):', err);
+          } finally {
+            // Clear the invite code after processing
+            try {
+              localStorage.removeItem('hm_invite_code');
+            } catch {}
+          }
+        }
+
         // Fire-and-forget profile refresh — do NOT await.
         // Awaiting refetchProfile triggers setIsLoading(true) which unmounts us
         // via BootRouter before we can navigate, causing a loop.
         void completeOnboarding().catch(() => {});
       }
 
-      clearTimeout(failsafe);
-      navigate('/', { replace: true });
+      // Advance to step 8 instead of navigating to /
+      setStep(8);
     } catch (err) {
       console.error('Community confirm error:', err);
-      clearTimeout(failsafe);
+      // Failsafe: navigate to home if something fails
       navigate('/', { replace: true });
     } finally {
       setSaving(false);
     }
-  }, [session?.user?.id, completeOnboarding, navigate]);
+  }, [session?.user?.id, completeOnboarding]);
 
   // ── Render Steps ──────────────────────────────────────────────────────────
 
@@ -1048,6 +1086,107 @@ export default function OnboardingGate() {
           </motion.div>
         );
 
+      // ── Step 8: What Now? Action Picker ──────────────────────────────────────
+      case 8:
+        return (
+          <motion.div key="step-7" {...fadeSlide} className="text-center relative overflow-hidden">
+            {/* Ambient gold glow */}
+            <div
+              className="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle, rgba(200,150,44,0.15) 0%, transparent 70%)',
+                filter: 'blur(40px)',
+              }}
+            />
+
+            {/* Heading */}
+            <motion.h2
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="text-3xl font-black text-white mb-2 relative z-10"
+            >
+              You&apos;re in.
+            </motion.h2>
+
+            {/* Subheading */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+              className="text-white/60 text-sm mb-8 relative z-10"
+            >
+              What do you want to do first?
+            </motion.p>
+
+            {/* Action buttons */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+              className="space-y-3 relative z-10 mb-6"
+            >
+              {/* Go Live Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/ghosted', { replace: true })}
+                className="w-full py-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-3"
+                style={{
+                  background: GOLD,
+                  color: '#000',
+                }}
+              >
+                <Ghost className="w-5 h-5" />
+                Go Live
+              </motion.button>
+
+              {/* Explore Events Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/pulse', { replace: true })}
+                className="w-full py-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-3 border"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  borderColor: 'rgba(255,255,255,0.1)',
+                  color: 'white',
+                }}
+              >
+                <Globe className="w-5 h-5" />
+                Explore Events
+              </motion.button>
+
+              {/* Set Up Safety Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/profile?action=safety', { replace: true })}
+                className="w-full py-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-3 border"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  borderColor: 'rgba(255,255,255,0.1)',
+                  color: 'white',
+                }}
+              >
+                <Shield className="w-5 h-5" />
+                Set Up Safety
+              </motion.button>
+            </motion.div>
+
+            {/* Skip link */}
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+              onClick={() => navigate('/', { replace: true })}
+              className="text-white/40 text-xs hover:text-white/60 transition-colors relative z-10"
+            >
+              Skip for now
+            </motion.button>
+          </motion.div>
+        );
+
       default:
         return null;
     }
@@ -1070,7 +1209,7 @@ export default function OnboardingGate() {
         </div>
 
         {/* Gold progress bar */}
-        {step >= 1 && step <= 6 && <ProgressBar current={step} total={TOTAL_STEPS} />}
+        {step >= 1 && step <= 7 && <ProgressBar current={step} total={7} />}
 
         {/* Step card */}
         <div className="bg-[#1C1C1E] border border-white/8 rounded-3xl p-6">
