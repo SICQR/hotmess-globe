@@ -32,7 +32,7 @@ export type ProfilesGridProps = {
   onNavigateUrl?: (url: string) => void;
   /** Number of columns. 3 = compact ghosted layout (gap-0.5, square cards). */
   cols?: 2 | 3;
-  /** Caller-provided viewer email (used for boos). Falls back to base44.auth.me(). */
+  /** Caller-provided viewer email (used for boos). Falls back to supabase.auth.getUser(). */
   viewerEmail?: string | null;
   /** Called on long-press of a profile card (for quick action menu). */
   onLongPress?: (profile: Profile, position: { x: number; y: number }) => void;
