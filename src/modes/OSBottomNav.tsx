@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Activity, Ghost, ShoppingBag, User } from 'lucide-react';
+import { Home, Activity, Ghost, ShoppingBag, User, Music } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { OSMode, MODES, MODE_ORDER, getModeFromPath } from '@/modes';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
@@ -22,6 +22,7 @@ const ICONS: Record<OSMode, React.FC<{ className?: string }>> = {
   ghosted: Ghost,
   market: ShoppingBag,
   radio: Activity, // fallback, not shown in nav
+  music: Music,
   profile: User,
 };
 
