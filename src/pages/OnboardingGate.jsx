@@ -372,6 +372,7 @@ export default function OnboardingGate() {
           .update({
             public_attributes: publicAttributes,
             ...(vibeLookingFor.length ? { tags: vibeLookingFor } : {}),
+            ...(vibePosition ? { persona_type: vibePosition.toLowerCase().replace(/\s+/g, '_') } : {}),
           })
           .eq('id', session.user.id);
 
