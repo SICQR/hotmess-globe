@@ -63,6 +63,9 @@ const VaultMode   = lazy(() => import('@/modes/VaultMode'));
 const MusicTab    = lazy(() => import('@/components/music/MusicTab'));
 const ChatMeetupPage = lazy(() => import('@/pages/ChatMeetupPage'));
 const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
+const SOSPage = lazy(() => import('@/pages/SOSPage'));
+const FakeCallPage = lazy(() => import('@/pages/FakeCallPage'));
+const SafetyPage = lazy(() => import('@/pages/Safety'));
 
 // Example screens (design system demos)
 const ChatWithMapExample = lazy(() => import('@/examples/ChatWithMapExample'));
@@ -518,9 +521,13 @@ const AuthenticatedApp = () => {
       <Route path="/settings/notifications" element={<PageRoute pageKey="Settings" />} />
       <Route path="/settings/account" element={<PageRoute pageKey="Settings" />} />
 
-      {/* Bible-friendly safety/calendar/scan subroutes */}
-      <Route path="/safety/*" element={<PageRoute pageKey="Safety" />} />
-      <Route path="/safety/report" element={<PageRoute pageKey="Safety" />} />
+      {/* SOS + Fake Call — deep-linkable safety shortcuts */}
+      <Route path="/sos" element={<Suspense fallback={null}><SOSPage /></Suspense>} />
+      <Route path="/fake-call" element={<Suspense fallback={null}><FakeCallPage /></Suspense>} />
+
+      {/* Safety — mobile-first, no desktop sidebar wrapper */}
+      <Route path="/safety/*" element={<Suspense fallback={null}><SafetyPage /></Suspense>} />
+      <Route path="/safety/report" element={<Suspense fallback={null}><SafetyPage /></Suspense>} />
       <Route path="/safety/resources" element={<PageRoute pageKey="Care" />} />
       <Route path="/calendar/*" element={<PageRoute pageKey="Calendar" />} />
       <Route path="/scan/*" element={<PageRoute pageKey="Scan" />} />
@@ -572,7 +579,7 @@ const AuthenticatedApp = () => {
       <Route path="/marketplace/p/:handle" element={<ShopProductRoute />} />
       {/* /more/beacons/* routes declared above at lines 410-413 */}
       <Route path="/age" element={<PageRoute pageKey="AgeGate" />} />
-      <Route path="/safety" element={<PageRoute pageKey="Safety" />} />
+      <Route path="/safety" element={<Suspense fallback={null}><SafetyPage /></Suspense>} />
       <Route path="/calendar" element={<PageRoute pageKey="Calendar" />} />
       <Route path="/scan" element={<PageRoute pageKey="Scan" />} />
       <Route path="/saved" element={<PageRoute pageKey="Bookmarks" />} />
