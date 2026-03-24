@@ -19,7 +19,6 @@ const GOLD = '#C8962C';
 const CARD = '#1C1C1E';
 const LABEL_RED = '#9B1B2A';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDuration(ms) {
   if (!ms) return '';
