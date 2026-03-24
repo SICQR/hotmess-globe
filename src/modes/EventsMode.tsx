@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { pushNotify } from '@/lib/pushNotify';
 import { useGlobe } from '@/contexts/GlobeContext';
+import { AppBanner } from '@/components/banners/AppBanner';
 
 const FILTERS = ['Tonight', 'This Week', 'All'] as const;
 type Filter = typeof FILTERS[number];
@@ -151,6 +152,9 @@ export default function EventsMode() {
 
   return (
     <div className="h-full w-full bg-black flex flex-col overflow-hidden">
+      {/* Dynamic Events banner */}
+      <AppBanner placement="events_top" variant="strip" />
+
       {/* Hero header */}
       <div className="relative flex-shrink-0">
         <div

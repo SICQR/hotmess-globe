@@ -44,6 +44,9 @@ import { RadioProvider } from '@/contexts/RadioContext';
 import { PersonaProvider } from '@/contexts/PersonaContext';
 import { GlobeProvider } from '@/contexts/GlobeContext';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
+import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
+import { MusicMiniPlayer } from '@/components/music/MusicMiniPlayer';
+import { GlobalTicker } from '@/components/banners/GlobalTicker';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useDeepLinkSheet } from '@/hooks/useDeepLinkSheet';
 import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
@@ -633,9 +636,11 @@ function App() {
                               - Router only handles URL sync, not page mounts
                             */}
                             <RadioProvider>
-                              <PersonaProvider>
-                                <OSArchitecture />
-                              </PersonaProvider>
+                              <MusicPlayerProvider>
+                                <PersonaProvider>
+                                  <OSArchitecture />
+                                </PersonaProvider>
+                              </MusicPlayerProvider>
                             </RadioProvider>
                           </BootRouter>
                         </GlobeProvider>
@@ -708,6 +713,12 @@ function OSArchitecture() {
 
       {/* Radio Mini Player — sits just above OSBottomNav (Z-40) */}
       <RadioMiniPlayer hidden={onRadioRoute} />
+
+      {/* Music Mini Player — sits just above OSBottomNav (Z-50) */}
+      <MusicMiniPlayer />
+
+      {/* Global Ticker — scrolling banner strip above nav */}
+      <GlobalTicker className="fixed left-0 right-0 z-[45]" style={{ bottom: '83px' }} />
 
       {/* L1: OS Bottom Nav — amber-circle 5-tab nav */}
       <OSBottomNav />

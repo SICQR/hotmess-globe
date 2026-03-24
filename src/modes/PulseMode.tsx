@@ -47,6 +47,7 @@ import { format, isToday, isTomorrow } from 'date-fns';
 import { useLongPress } from '@/hooks/useLongPress';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { AppBanner } from '@/components/banners/AppBanner';
 
 // ---- Brand constants --------------------------------------------------------
 const AMBER = '#C8962C';
@@ -1380,6 +1381,11 @@ export function PulseMode({ className = '' }: PulseModeProps) {
             counts={filterCounts}
           />
         </div>
+      </div>
+
+      {/* Dynamic Pulse banner */}
+      <div className="fixed left-4 right-4 z-30 pointer-events-auto" style={{ top: 'calc(110px + env(safe-area-inset-top, 0px))' }}>
+        <AppBanner placement="pulse_top" variant="subtle" />
       </div>
 
       {/* Legend card (bottom-left, above drawer) */}
