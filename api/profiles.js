@@ -328,6 +328,17 @@ export default async function handler(req, res) {
 
   let rows = Array.isArray(data) ? data : [];
 
+    // Exclude seeded ghost/demo profiles from the grid
+    rows = rows.filter((r) => {
+      const email = String(r?.email || '').trim().toLowerCase();
+      if (email.endsWith('@hotmess.app')) return false; // seeded ghosts
+      if (email.endsWith('@hotmess.test')) return false; // test accounts
+      if (email === 'demo@hotmessldn.com') return false;
+      if (email === 'admin@hotmessldn.com') return false;
+      if (email.includes('e2e-boot-test')) return false;
+      return true;
+    });
+
     // Self-exclusion: the logged-in user must never appear in their own Ghosted grid
     if (currentAuthUserId) {
       rows = rows.filter((r) => {
