@@ -9,20 +9,22 @@ import {
   mergeGuestCartToUser,
 } from './cartStorage';
 
-// Mock the supabase client
+// Mock the supabase client - comprehensive mock for all supabase methods used by cartStorage
 vi.mock('@/components/utils/supabaseClient', () => ({
   supabase: {
     auth: {
-      getUser: vi.fn(),
-      getSession: vi.fn(),
+      getUser: vi.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+      getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
     },
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      single: vi.fn(),
+    from: vi.fn((table) => ({
+      select: vi.fn(function() { return this; }),
+      eq: vi.fn(function() { return this; }),
+      insert: vi.fn(function() { return this; }),
+      update: vi.fn(function() { return this; }),
+      delete: vi.fn(function() { return this; }),
+      single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+      then: function(cb) { return Promise.resolve({ data: null, error: null }).then(cb); },
+      catch: function(cb) { return Promise.resolve({ data: null, error: null }).catch(cb); },
     })),
   },
 }));
@@ -143,7 +145,7 @@ describe('cartStorage - Guest Cart Persistence', () => {
   describe('Cart Operations with Persistence', () => {
     it('should add item to guest cart and persist to localStorage', async () => {
       // Mock user not authenticated
-      base44.auth.me.mockResolvedValue(null);
+      supabase.auth.getUser.mockResolvedValue(null);
 
       await addToCart({
         productId: 'test-product-123',
@@ -226,17 +228,17 @@ describe('cartStorage - Guest Cart Persistence', () => {
 
       // Mock authenticated user
       const mockUser = { email: 'test@example.com', auth_user_id: 'user-123' };
-      base44.auth.me.mockResolvedValue(mockUser);
-      base44.entities.CartItem.filter.mockResolvedValue([]);
-      base44.entities.CartItem.create.mockResolvedValue({});
+      supabase.auth.getUser.mockResolvedValue(mockUser);
+      supabase.from("cart_items").filter.mockResolvedValue([]);
+      supabase.from("cart_items").create.mockResolvedValue({});
 
       await mergeGuestCartToUser({ currentUser: mockUser });
 
       // Verify both variants were merged (2 separate DB inserts)
-      expect(base44.entities.CartItem.create).toHaveBeenCalledTimes(2);
+      expect(supabase.from("cart_items").create).toHaveBeenCalledTimes(2);
 
       // Verify first variant (Small) was created with correct data
-      const firstCall = base44.entities.CartItem.create.mock.calls[0][0];
+      const firstCall = supabase.from("cart_items").create.mock.calls[0][0];
       expect(firstCall.product_id).toBe('shirt-123');
       expect(firstCall.quantity).toBe(2);
       expect(firstCall.shopify_variant_id).toBe('variant-small');
@@ -245,7 +247,7 @@ describe('cartStorage - Guest Cart Persistence', () => {
       expect(firstCall.auth_user_id).toBe('user-123');
 
       // Verify second variant (Large) was created with correct data
-      const secondCall = base44.entities.CartItem.create.mock.calls[1][0];
+      const secondCall = supabase.from("cart_items").create.mock.calls[1][0];
       expect(secondCall.product_id).toBe('shirt-123');
       expect(secondCall.quantity).toBe(1);
       expect(secondCall.shopify_variant_id).toBe('variant-large');
@@ -284,18 +286,18 @@ describe('cartStorage - Guest Cart Persistence', () => {
         auth_user_id: 'user-456',
       };
 
-      base44.auth.me.mockResolvedValue(mockUser);
-      base44.entities.CartItem.filter.mockResolvedValue([existingCartItem]);
-      base44.entities.CartItem.update.mockResolvedValue({});
+      supabase.auth.getUser.mockResolvedValue(mockUser);
+      supabase.from("cart_items").filter.mockResolvedValue([existingCartItem]);
+      supabase.from("cart_items").update.mockResolvedValue({});
 
       await mergeGuestCartToUser({ currentUser: mockUser });
 
       // Verify update was called (not create) since item already exists
-      expect(base44.entities.CartItem.update).toHaveBeenCalledTimes(1);
-      expect(base44.entities.CartItem.create).not.toHaveBeenCalled();
+      expect(supabase.from("cart_items").update).toHaveBeenCalledTimes(1);
+      expect(supabase.from("cart_items").create).not.toHaveBeenCalled();
 
       // Verify quantity was accumulated (3 + 2 = 5)
-      const updateCall = base44.entities.CartItem.update.mock.calls[0];
+      const updateCall = supabase.from("cart_items").update.mock.calls[0];
       expect(updateCall[0]).toBe('cart-item-1');
       expect(updateCall[1].quantity).toBe(5);
 
@@ -307,7 +309,7 @@ describe('cartStorage - Guest Cart Persistence', () => {
 
   describe('Cart Persistence Across Authentication States', () => {
     it('should maintain cart in localStorage for guest users', async () => {
-      base44.auth.me.mockResolvedValue(null);
+      supabase.auth.getUser.mockResolvedValue(null);
 
       // Add items as guest
       await addToCart({ productId: 'item-1', quantity: 1, currentUser: null });
@@ -328,7 +330,7 @@ describe('cartStorage - Guest Cart Persistence', () => {
     });
 
     it('should preserve cart when user logs in (before merge)', async () => {
-      base44.auth.me.mockResolvedValue(null);
+      supabase.auth.getUser.mockResolvedValue(null);
 
       // Add items as guest
       await addToCart({ productId: 'pre-login', quantity: 3, currentUser: null });
@@ -342,7 +344,7 @@ describe('cartStorage - Guest Cart Persistence', () => {
 
       // User logs in (cart should still be in localStorage until merged)
       const mockUser = { email: 'newuser@example.com', auth_user_id: 'user-456' };
-      base44.auth.me.mockResolvedValue(mockUser);
+      supabase.auth.getUser.mockResolvedValue(mockUser);
 
       // Items should still be in guest cart
       const itemsAfterLogin = getGuestCartItems();
@@ -352,7 +354,7 @@ describe('cartStorage - Guest Cart Persistence', () => {
 
     it('should complete full auth flow: guest cart → login → merge → verify DB and clear localStorage', async () => {
       // Step 1: User adds items as guest
-      base44.auth.me.mockResolvedValue(null);
+      supabase.auth.getUser.mockResolvedValue(null);
       await addToCart({ productId: 'flow-test-1', quantity: 2, currentUser: null });
       await addToCart({ productId: 'flow-test-2', quantity: 1, currentUser: null });
 
@@ -363,31 +365,31 @@ describe('cartStorage - Guest Cart Persistence', () => {
 
       // Step 2: User logs in
       const mockUser = { email: 'flowtest@example.com', auth_user_id: 'user-flow-789' };
-      base44.auth.me.mockResolvedValue(mockUser);
+      supabase.auth.getUser.mockResolvedValue(mockUser);
 
       // Guest cart should still exist before merge
       guestItems = getGuestCartItems();
       expect(guestItems.length).toBe(2);
 
       // Step 3: Merge operation
-      base44.entities.CartItem.filter.mockResolvedValue([]);
-      base44.entities.CartItem.create.mockResolvedValue({});
+      supabase.from("cart_items").filter.mockResolvedValue([]);
+      supabase.from("cart_items").create.mockResolvedValue({});
 
       await mergeGuestCartToUser({ currentUser: mockUser });
 
       // Step 4: Verify merge results
       // Both items should be created in DB
-      expect(base44.entities.CartItem.create).toHaveBeenCalledTimes(2);
+      expect(supabase.from("cart_items").create).toHaveBeenCalledTimes(2);
 
       // Verify first item
-      const firstCreate = base44.entities.CartItem.create.mock.calls[0][0];
+      const firstCreate = supabase.from("cart_items").create.mock.calls[0][0];
       expect(firstCreate.product_id).toBe('flow-test-1');
       expect(firstCreate.quantity).toBe(2);
       expect(firstCreate.user_email).toBe('flowtest@example.com');
       expect(firstCreate.auth_user_id).toBe('user-flow-789');
 
       // Verify second item
-      const secondCreate = base44.entities.CartItem.create.mock.calls[1][0];
+      const secondCreate = supabase.from("cart_items").create.mock.calls[1][0];
       expect(secondCreate.product_id).toBe('flow-test-2');
       expect(secondCreate.quantity).toBe(1);
       expect(secondCreate.user_email).toBe('flowtest@example.com');
@@ -401,7 +403,7 @@ describe('cartStorage - Guest Cart Persistence', () => {
 
   describe('Edge Cases', () => {
     it('should handle adding same product multiple times', async () => {
-      base44.auth.me.mockResolvedValue(null);
+      supabase.auth.getUser.mockResolvedValue(null);
 
       await addToCart({ productId: 'duplicate-test', quantity: 1, currentUser: null });
       await addToCart({ productId: 'duplicate-test', quantity: 2, currentUser: null });
