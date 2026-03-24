@@ -47,6 +47,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { nanoid } from 'nanoid';
 import { format, isToday, isTomorrow } from 'date-fns';
 import RightNowModal from '@/components/globe/RightNowModal';
+import { AppBanner } from '@/components/banners/AppBanner';
 import '@/styles/radio-waveform.css';
 
 interface HomeModeProps {
@@ -851,6 +852,12 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         onTouchEnd={handleTouchEnd}
       >
         <div className="pb-36 space-y-6">
+
+          {/* ── Dynamic Home Hero Banner (from app_banners) ── */}
+          <AppBanner placement="home_hero" variant="hero" className="mx-4" />
+
+          {/* ── Dynamic Home Strip Banner ── */}
+          <AppBanner placement="home_strip" variant="strip" />
 
           {/* ── Hero Banner — atmospheric noir with radial gold glow ── */}
           <div className="relative w-full h-48 overflow-hidden">

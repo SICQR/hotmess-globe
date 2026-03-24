@@ -41,6 +41,8 @@ import { loadGhostedFilters, defaultGhostedFilters } from '@/components/sheets/L
 import { useTaps } from '@/hooks/useTaps';
 import type { Profile } from '@/features/profilesGrid/types';
 import type { TapType } from '@/hooks/useTaps';
+import { AppBanner } from '@/components/banners/AppBanner';
+import { GhostedAmbientToggle } from '@/components/music/GhostedAmbientToggle';
 
 // Lazy load the grid component
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
@@ -477,7 +479,9 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
               </p>
             </div>
 
-            {/* Right: filter icon with badge */}
+            {/* Right: ambient toggle + filter icon with badge */}
+            <div className="flex items-center gap-2">
+            <GhostedAmbientToggle />
             <button
               onClick={() => openSheet('filters')}
               className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 active:scale-95 transition-transform"
@@ -493,6 +497,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
                 </span>
               )}
             </button>
+            </div>
           </div>
 
           {/* ====== TAB STRIP ====== */}
@@ -523,6 +528,10 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
           </div>
         </div>
       </div>
+
+      {/* ====== DYNAMIC BANNERS ====== */}
+      <AppBanner placement="ghosted_top" variant="strip" />
+      <AppBanner placement="ghosted_entry" variant="subtle" className="px-4" />
 
       {/* ====== FULL-SCREEN 3-COL GRID ====== */}
       <div

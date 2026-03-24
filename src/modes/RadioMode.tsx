@@ -57,6 +57,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import '@/styles/radio-waveform.css';
+import { AppBanner } from '@/components/banners/AppBanner';
 
 // -- Static show data (fallback) -----------------------------------------------
 interface ShowData {
@@ -302,6 +303,9 @@ export function RadioMode({ className = '' }: RadioModeProps) {
 
       {/* ---- Scrollable content (hero + cards) ---- */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
+        {/* Dynamic Radio banner */}
+        <AppBanner placement="radio_top" variant="strip" />
+
         {/* == HERO SECTION == */}
         <section
           className="relative min-h-[60vh] flex flex-col items-center justify-center px-6 pt-[max(60px,env(safe-area-inset-top))]"

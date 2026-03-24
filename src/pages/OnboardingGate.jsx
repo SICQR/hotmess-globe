@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Shield, FileText, MapPin, KeyRound, Camera, Check, Loader2, Delete } from 'lucide-react';
 import { toast } from 'sonner';
 import { validateDisplayName, deriveUsernameSlug } from '@/lib/utils';
+import { AppBanner } from '@/components/banners/AppBanner';
 
 const AGE_KEY = 'hm_age_confirmed_v1';
 const GOLD = '#C8962C';
@@ -1075,6 +1076,11 @@ export default function OnboardingGate() {
         <div className="bg-[#1C1C1E] border border-white/8 rounded-3xl p-6">
           <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
         </div>
+
+        {/* Welcome banner — subtle, below step card */}
+        {step === 1 && (
+          <AppBanner placement="onboarding_welcome" variant="subtle" className="mt-4 justify-center" />
+        )}
       </motion.div>
 
       {/* Pulse animation for loading spinner */}

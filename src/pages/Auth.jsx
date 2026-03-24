@@ -12,6 +12,7 @@ import { supabase } from '@/components/utils/supabaseClient';
 import { Input } from '@/components/ui/input';
 import { Loader2, ArrowRight, X, Mail, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { AppBanner } from '@/components/banners/AppBanner';
 
 const REDIRECT_DELAY_MS = 500;
 const GOLD   = '#C8962C';
@@ -286,6 +287,9 @@ export default function Auth() {
           </p>
         </motion.div>
       </section>
+
+      {/* ── Dynamic Auth Banner ── */}
+      <AppBanner placement="auth_below_form" variant="card" className="mx-5 mb-6" />
 
       {/* ── UNIVERSE GRID ─────────────────────────────────────────────────────── */}
       <section className="px-5 py-10">

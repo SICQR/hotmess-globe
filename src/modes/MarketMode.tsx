@@ -53,6 +53,7 @@ import { useSheet } from '@/contexts/SheetContext';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { isBrandVisible } from '@/config/brands';
+import { AppBanner } from '@/components/banners/AppBanner';
 import {
   getAllProducts,
   getCategories,
@@ -795,12 +796,18 @@ export function MarketMode({ className = '' }: MarketModeProps) {
       </div>
 
       {/* ================================================================== */}
+      {/* Dynamic Market Banners */}
+      <AppBanner placement="market_top" variant="strip" />
+
       {/* SCROLLABLE CONTENT                                                   */}
       {/* ================================================================== */}
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto overscroll-y-contain pb-32"
       >
+        {/* HNH Lube banner */}
+        <AppBanner placement="market_lube" variant="card" className="mx-4 mt-4" />
+
         <AnimatePresence mode="wait">
           {/* LOADING STATE */}
           {isLoading && (
