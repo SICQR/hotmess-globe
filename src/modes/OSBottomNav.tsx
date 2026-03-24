@@ -66,6 +66,7 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
               <button
                 key={modeId}
                 onClick={() => handleModeChange(modeId)}
+                {...(isMore ? longPress : {})}
                 className="relative flex flex-col items-center justify-center flex-1 h-full touch-target"
                 aria-label={mode.label}
                 aria-current={isActive ? 'page' : undefined}
