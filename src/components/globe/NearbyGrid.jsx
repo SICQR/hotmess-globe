@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { fetchNearbyCandidates } from '@/api/connectProximity';
 import { Users, Zap, Filter, Grid3x3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -28,7 +28,14 @@ export default function NearbyGrid({ userLocation }) {
 
   const { data: rightNowStatuses = [] } = useQuery({
     queryKey: ['right-now-status-nearby'],
-    queryFn: () => base44.entities.RightNowStatus.filter({ active: true }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('right_now_status')
+        .select('*')
+        .eq('active', true);
+      if (error) throw error;
+      return data || [];
+    },
     refetchInterval: 5000
   });
 

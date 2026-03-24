@@ -11,7 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import {
   MessageCircle, MapPin, Shield, Plane,
   Loader2, MoreVertical, Flag, Ban, X, ChevronLeft, Ghost,
@@ -86,12 +86,14 @@ export default function L2ProfileSheet({ email, uid, id }) {
       } catch {}
 
       if (email) {
-        const users = await base44.entities.User.filter({ email });
-        return users?.[0] || null;
+        const { data, error } = await supabase.from('profiles').select('*').eq('email', email).maybeSingle();
+        if (error) throw error;
+        return data || null;
       }
       if (resolvedUid) {
-        const users = await base44.entities.User.filter({ auth_user_id: resolvedUid });
-        return users?.[0] || null;
+        const { data, error } = await supabase.from('profiles').select('*').eq('auth_user_id', resolvedUid).maybeSingle();
+        if (error) throw error;
+        return data || null;
       }
       return null;
     },
@@ -172,8 +174,13 @@ export default function L2ProfileSheet({ email, uid, id }) {
     queryKey: ['user-events', profileUser?.email],
     queryFn: async () => {
       if (!profileUser?.email) return [];
-      const rsvps = await base44.entities.EventRSVP.filter({ user_email: profileUser.email });
-      return rsvps.slice(0, 5);
+      const { data, error } = await supabase
+        .from('event_rsvps')
+        .select('*')
+        .eq('user_email', profileUser.email)
+        .limit(5);
+      if (error) throw error;
+      return data || [];
     },
     enabled: !!profileUser?.email,
   });

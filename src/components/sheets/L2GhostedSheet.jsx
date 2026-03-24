@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { base44, supabase } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Zap, MapPin, Clock, MessageCircle, 
   Loader2, ChevronRight, Filter
 } from 'lucide-react';
@@ -51,10 +51,13 @@ export default function L2GhostedSheet() {
     queryKey: ['my-right-now-status', currentUser?.email],
     queryFn: async () => {
       if (!currentUser?.email) return null;
-      const statuses = await base44.entities.RightNowStatus.filter({
-        user_email: currentUser.email,
-        active: true,
-      });
+      const { data, error } = await supabase
+        .from('right_now_status')
+        .select('*')
+        .eq('user_email', currentUser.email)
+        .eq('active', true);
+      if (error) throw error;
+      const statuses = data || [];
       const valid = statuses.find(s => new Date(s.expires_at) > new Date());
       return valid || null;
     },
@@ -66,10 +69,13 @@ export default function L2GhostedSheet() {
   const { data: rightNowUsers = [], isLoading: usersLoading } = useQuery({
     queryKey: ['right-now-active'],
     queryFn: async () => {
-      const statuses = await base44.entities.RightNowStatus.filter(
-        { active: true },
-        '-created_date'
-      );
+      const { data, error } = await supabase
+        .from('right_now_status')
+        .select('*')
+        .eq('active', true)
+        .order('created_date', { ascending: false });
+      if (error) throw error;
+      const statuses = data || [];
       return statuses.filter(s => new Date(s.expires_at) > new Date());
     },
     refetchInterval: 15000,
@@ -78,7 +84,11 @@ export default function L2GhostedSheet() {
   // All users for profiles
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('profiles').select('*');
+      if (error) throw error;
+      return data || [];
+    },
   });
 
   // Map statuses to users
@@ -93,21 +103,28 @@ export default function L2GhostedSheet() {
   const toggleMutation = useMutation({
     mutationFn: async () => {
       if (!currentUser?.email) throw new Error('Please log in');
-      
+
       if (myStatus) {
         // Deactivate
-        await base44.entities.RightNowStatus.update(myStatus.id, { active: false });
+        const { error } = await supabase
+          .from('right_now_status')
+          .update({ active: false })
+          .eq('id', myStatus.id);
+        if (error) throw error;
         return { action: 'off' };
       } else {
         // Activate
         const expiresAt = new Date(Date.now() + selectedDuration * 60 * 1000);
-        await base44.entities.RightNowStatus.create({
-          user_email: currentUser.email,
-          active: true,
-          expires_at: expiresAt.toISOString(),
-          created_date: new Date().toISOString(),
-          logistics: [],
-        });
+        const { error } = await supabase
+          .from('right_now_status')
+          .insert({
+            user_email: currentUser.email,
+            active: true,
+            expires_at: expiresAt.toISOString(),
+            created_date: new Date().toISOString(),
+            logistics: [],
+          });
+        if (error) throw error;
         return { action: 'on', duration: selectedDuration };
       }
     },
