@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Shield, Users, Flag, Calendar, TrendingUp, Lock, CheckCircle, Settings as SettingsIcon, User, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,7 +18,6 @@ import EventCurationQueue from '../components/admin/EventCurationQueue';
 import ModerationQueue from '../components/admin/ModerationQueue';
 import SupportTicketManagement from '../components/admin/SupportTicketManagement';
 import { createPageUrl } from '../utils';
-import { supabase } from '@/components/utils/supabaseClient';
 
 export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -30,7 +29,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const user = await base44.auth.me();
+        const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         setCurrentUser(user);
       } catch (error) {
         // Failed to fetch user - will show loading state

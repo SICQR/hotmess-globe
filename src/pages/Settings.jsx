@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Bell, Shield, LogOut, Save, Edit, Camera, Download, Trash2, Database, HelpCircle, MessageSquare, FileText, Lock, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -135,10 +135,11 @@ export default function Settings() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const currentUser = await base44.auth.me();
+        const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { currentUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); currentUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         if (!currentUser) {
           // If the session is missing/expired, bounce to Auth instead of crashing.
-          base44.auth.redirectToLogin(window.location.href);
+          window.location.href = "/auth" + (window.location.href ? `?next=${encodeURIComponent(window.location.href)}` : "");
           return;
         }
 
@@ -161,7 +162,7 @@ export default function Settings() {
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setAvatarUrl(file_url);
-      await base44.auth.updateMe({ avatar_url: file_url });
+      const updatePayload = { avatar_url: file_url }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       toast.success('Avatar updated!');
     } catch (error) {
       console.error('Upload failed:', error);
@@ -173,10 +174,10 @@ export default function Settings() {
 
   const handleSave = async () => {
     try {
-      await base44.auth.updateMe({ 
+      const updatePayload = { 
         full_name: fullName,
         location_privacy_mode: locationPrivacy
-      });
+      }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       toast.success('Settings saved successfully');
     } catch (error) {
       console.error('Failed to save:', error);
@@ -185,7 +186,7 @@ export default function Settings() {
   };
 
   const handleLogout = () => {
-    base44.auth.logout();
+    supabase.auth.signOut();
   };
 
   if (!user) {

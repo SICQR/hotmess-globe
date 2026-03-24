@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
@@ -40,7 +39,8 @@ export default function AccountDeletion() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const currentUser = await base44.auth.me();
+        const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { currentUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); currentUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         setUser(currentUser);
       } catch (error) {
         console.error('Failed to fetch user:', error);
@@ -185,7 +185,7 @@ export default function AccountDeletion() {
       
       // Sign out and redirect
       setTimeout(() => {
-        base44.auth.logout();
+        supabase.auth.signOut();
         navigate('/');
       }, 2000);
 

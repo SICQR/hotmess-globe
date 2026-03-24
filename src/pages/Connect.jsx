@@ -536,7 +536,7 @@ export default function Connect() {
               </Button>
               <Button
                 onClick={async () => {
-                  const ok = await base44.auth.requireProfile(window.location.href);
+                  const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
                   if (!ok) return;
                   setShowRightNow(true);
                 }}

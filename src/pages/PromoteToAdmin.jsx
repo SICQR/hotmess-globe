@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/components/utils/supabaseClient';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Shield, Check } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -11,7 +11,12 @@ export default function PromoteToAdmin() {
 
   const { data: currentUser, refetch } = useQuery({
     queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      return { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
+    }
   });
 
   const promoteMutation = useMutation({

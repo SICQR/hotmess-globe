@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Zap, History, Power } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -51,7 +51,7 @@ export default function RightNowManager({ currentUser }) {
         {activeStatus ? (
           <Button
             onClick={async () => {
-              const ok = await base44.auth.requireProfile(window.location.href);
+              const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
               if (!ok) return;
               endNowMutation.mutate();
             }}
@@ -66,7 +66,7 @@ export default function RightNowManager({ currentUser }) {
         ) : (
           <Button
             onClick={async () => {
-              const ok = await base44.auth.requireProfile(window.location.href);
+              const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
               if (!ok) return;
               setShowModal(true);
             }}
@@ -93,7 +93,7 @@ export default function RightNowManager({ currentUser }) {
           </ul>
           <Button
             onClick={async () => {
-              const ok = await base44.auth.requireProfile(window.location.href);
+              const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
               if (!ok) return;
               setShowModal(true);
             }}

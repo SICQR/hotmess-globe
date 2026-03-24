@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { Home, Globe as GlobeIcon, ShoppingBag, Users, Settings, Menu, X, Calendar as CalendarIcon, Search, Shield, Radio as RadioIcon } from 'lucide-react';
-import { base44 } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { updatePresence } from '@/api/presence';
 import SafetyFAB from '@/components/safety/SafetyFAB';
 import NotificationBadge from '@/components/messaging/NotificationBadge';
@@ -100,13 +100,26 @@ function LayoutInner({ children, currentPageName }) {
         // NOTE: Age verification is now handled by BootRouter/BootGuardContext
         // This Layout only runs when bootState is READY
 
-        const isAuth = await base44.auth.isAuthenticated();
+        const { data: { session } } = await supabase.auth.getSession();
+        const isAuth = !!session;
         if (!isAuth) {
           setUser(null);
           return;
         }
 
-        let currentUser = await base44.auth.me();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setUser(null);
+          return;
+        }
+
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        let currentUser = {
+          ...user,
+          ...(profile || {}),
+          auth_user_id: user.id,
+          email: user.email || profile?.email,
+        };
 
         // If we have a session but cannot load the user record, treat this as unauthenticated
         // for gating purposes (prevents redirect loops into consent/profile flows).
@@ -135,7 +148,7 @@ function LayoutInner({ children, currentPageName }) {
             !currentUser?.has_consented_gps;
 
           if (!alreadyApplied && needsConsents && ageVerifiedLocal && locationConsent && hasGrantedLocation) {
-            await base44.auth.updateMe({
+            const updateData = {
               consent_accepted: true,
               consent_age: true,
               consent_location: true,
@@ -145,10 +158,18 @@ function LayoutInner({ children, currentPageName }) {
               has_agreed_terms: true,
               has_consented_data: true,
               has_consented_gps: true,
-            });
+            };
+
+            await supabase.auth.updateUser({ data: updateData });
+            const { data: updatedProfile } = await supabase.from('profiles').update(updateData).eq('id', user.id).select().single();
 
             if (markerKey) sessionStorage.setItem(markerKey, '1');
-            currentUser = await base44.auth.me();
+            currentUser = {
+              ...user,
+              ...(updatedProfile || {}),
+              auth_user_id: user.id,
+              email: user.email || updatedProfile?.email,
+            };
           }
         } catch {
           // ignore
@@ -482,7 +503,7 @@ function LayoutInner({ children, currentPageName }) {
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      base44.auth.logout();
+                      supabase.auth.signOut();
                     }}
                     className="w-full text-left px-3 py-2 text-white/60 hover:text-white border border-white/10 text-xs uppercase tracking-wider font-bold mt-2"
                   >
@@ -492,7 +513,7 @@ function LayoutInner({ children, currentPageName }) {
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      base44.auth.redirectToLogin();
+                      window.location.href = '/auth';
                     }}
                     className="w-full text-left px-3 py-2 bg-[#C8962C] hover:bg-[#B07F1F] text-black text-xs uppercase tracking-wider font-bold mt-2"
                   >
@@ -617,7 +638,7 @@ function LayoutInner({ children, currentPageName }) {
                     <Settings className="w-3 h-3 text-white/40" />
                   </Link>
                   <button
-                    onClick={() => base44.auth.logout()}
+                    onClick={() => supabase.auth.signOut()}
                     className="w-full px-3 py-2 text-white/60 hover:text-white hover:bg-white/5 border border-white/10 text-xs uppercase tracking-wider font-bold transition-all"
                   >
                     Logout
@@ -625,7 +646,7 @@ function LayoutInner({ children, currentPageName }) {
                 </>
               ) : (
                 <button
-                  onClick={() => base44.auth.redirectToLogin()}
+                  onClick={() => { window.location.href = '/auth'; }}
                   className="w-full px-3 py-2 bg-[#C8962C] hover:bg-[#B07F1F] text-black text-xs uppercase tracking-wider font-bold transition-all"
                 >
                   Login

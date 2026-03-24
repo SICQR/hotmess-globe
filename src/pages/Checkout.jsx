@@ -61,16 +61,17 @@ export default function Checkout() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const isAuth = await base44.auth.isAuthenticated();
+        const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
         if (!isAuth) {
-          base44.auth.redirectToLogin(window.location.href);
+          window.location.href = "/auth" + (window.location.href ? `?next=${encodeURIComponent(window.location.href)}` : "");
           return;
         }
 
-        const user = await base44.auth.me();
+        const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         setCurrentUser(user);
       } catch (error) {
-        base44.auth.redirectToLogin(window.location.href);
+        window.location.href = "/auth" + (window.location.href ? `?next=${encodeURIComponent(window.location.href)}` : "");
       }
     };
     fetchUser();
@@ -256,7 +257,8 @@ export default function Checkout() {
       }
 
       // CRITICAL: Fetch fresh data and validate atomically
-      const freshUser = await base44.auth.me();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { freshUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); freshUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       const currentXP = freshUser.xp || 0;
       
       // Check user has enough XP with fresh data
@@ -311,7 +313,7 @@ export default function Checkout() {
 
         // Step 2: Deduct XP after inventory is reserved (safer order)
         const newXP = currentXP - totalXP;
-        await base44.auth.updateMe({ xp: newXP });
+        const updatePayload = { xp: newXP }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
 
         // Step 3: Create orders (safe to do now that inventory & XP are locked)
         for (const [seller, items] of Object.entries(sellers)) {
@@ -372,7 +374,7 @@ export default function Checkout() {
         
         // Rollback XP
         try {
-          await base44.auth.updateMe({ xp: currentXP });
+          const updatePayload = { xp: currentXP }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
         } catch (rollbackError) {
           console.error('XP rollback failed:', rollbackError);
         }

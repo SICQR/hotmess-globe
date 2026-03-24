@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Zap, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
@@ -58,7 +58,7 @@ export default function HandshakeButton({ targetUser, currentUser, variant = 'de
   const handleConnect = async () => {
     if (!currentUser || !targetUser) return;
 
-    const ok = await base44.auth.requireProfile(window.location.href);
+    const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
     if (!ok) return;
     
     if (currentUser.email === targetUser.email) {

@@ -29,7 +29,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { format, formatDistanceToNow, isPast, isFuture } from 'date-fns';
-import { base44 } from '@/components/utils/supabaseClient';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { SheetSection, SheetActions, SheetDivider } from './L2SheetContainer';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
@@ -55,7 +55,12 @@ export default function L2EventSheet({ id }) {
   // Fetch current user
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
-    queryFn: () => base44.auth.me(),
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      return { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
+    },
   });
 
   // Fetch RSVP status

@@ -15,13 +15,14 @@ export default function ReportButton({ itemType, itemId, variant = 'ghost' }) {
 
   const reportMutation = useMutation({
     mutationFn: async (data) => {
-      const isAuth = await base44.auth.isAuthenticated();
+      const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
       if (!isAuth) {
-        base44.auth.redirectToLogin(window.location.href);
+        window.location.href = "/auth" + (window.location.href ? `?next=${encodeURIComponent(window.location.href)}` : "");
         return;
       }
 
-      const user = await base44.auth.me();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       await base44.entities.Report.create({
         reporter_email: user.email,
         reported_item_type: itemType,

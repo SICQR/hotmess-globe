@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import { Sparkles, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -50,7 +50,8 @@ export default function PersonalityAssessment({ onComplete }) {
 
   const analyzePersonality = useMutation({
     mutationFn: async () => {
-      const user = await base44.auth.me();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
 
       // Use AI to generate personality insights
       const prompt = `You are the HOTMESS OS Personality Analyzer. Based on these trait scores, generate a nuanced personality profile:
@@ -81,7 +82,7 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
       });
 
       // Update user profile
-      await base44.auth.updateMe({
+      const updateData = {
         personality_traits: answers,
         vibe_score: analysis.vibe_score,
         completed_personality_assessment: true,
@@ -90,7 +91,10 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
           preferred_archetypes: analysis.recommended_archetypes,
           min_vibe_score: Math.max(60, analysis.vibe_score - 20)
         }
-      });
+      };
+
+      await supabase.auth.updateUser({ data: updateData });
+      await supabase.from('profiles').update(updateData).eq('id', user.id);
 
       return analysis;
     },

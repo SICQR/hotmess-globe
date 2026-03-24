@@ -66,7 +66,8 @@ const getReservedUntilIso = () => {
 const resolveCurrentUser = async (currentUser) => {
   if (currentUser?.email) return currentUser;
   try {
-    const me = await base44.auth.me();
+    const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { me = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); me = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
     return me?.email ? me : null;
   } catch {
     return null;

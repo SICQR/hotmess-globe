@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import { LAYER } from '@/lib/layerSystem';
 
 interface TopHUDProps {
@@ -29,7 +29,12 @@ export function TopHUD({ safetyStatus = 'safe', weatherText }: TopHUDProps) {
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user-hud'],
-    queryFn: () => base44.auth.me(),
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      return { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
+    },
     refetchInterval: 60000,
     staleTime: 30000,
   });

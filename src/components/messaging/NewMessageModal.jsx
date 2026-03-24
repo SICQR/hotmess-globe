@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X, Users, MessageCircle, Calendar, MapPin } from 'lucide-react';
@@ -51,7 +51,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
 
   const createThreadMutation = useMutation({
     mutationFn: async () => {
-      const ok = await base44.auth.requireProfile(window.location.href);
+      const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
       if (!ok) return null;
 
       let participantEmails = [currentUser.email];

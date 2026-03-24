@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
 import { MapPin, ArrowLeft, ArrowRight, Calendar, Image, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -59,7 +59,8 @@ export default function CreateBeacon() {
       }
       
       // Mark as shadow beacon for non-admin users
-      const user = await base44.auth.me();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       if (user.role !== 'admin') {
         data.is_shadow = true;
         data.is_verified = false;
