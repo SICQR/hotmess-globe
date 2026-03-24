@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
@@ -35,10 +35,12 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
 
       const authUserId = currentUser?.auth_user_id || null;
 
-      const items = authUserId
-        ? await base44.entities.CartItem.filter({ auth_user_id: authUserId })
-        : await base44.entities.CartItem.filter({ user_email: currentUser.email });
-      return items.filter(item => {
+      const query = authUserId
+        ? supabase.from('cart_items').select('*').eq('auth_user_id', authUserId)
+        : supabase.from('cart_items').select('*').eq('user_email', currentUser.email);
+      const { data: items, error } = await query;
+      if (error) throw error;
+      return (items || []).filter(item => {
         if (!item.reserved_until) return true;
         return new Date(item.reserved_until) > now;
       });
@@ -60,7 +62,14 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
     queryKey: ['products'],
     // Cart needs to resolve product details even if a product is sold_out/draft.
     // Product.list() is "active" only in this codebase.
-    queryFn: () => base44.entities.Product.filter({}, '-created_at')
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    }
   });
 
   const removeMutation = useMutation({

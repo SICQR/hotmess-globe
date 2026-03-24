@@ -29,7 +29,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { format, formatDistanceToNow, isPast, isFuture } from 'date-fns';
-import { base44, supabase } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { SheetSection, SheetActions, SheetDivider } from './L2SheetContainer';
 import { useSheet, SHEET_TYPES } from '@/contexts/SheetContext';
@@ -46,8 +46,13 @@ export default function L2EventSheet({ id }) {
     queryKey: ['event-detail', id],
     queryFn: async () => {
       if (!id) return null;
-      const events = await base44.entities.Beacon.filter({ id });
-      return events?.[0] || null;
+      const { data, error } = await supabase
+        .from('beacons')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (error) throw error;
+      return data || null;
     },
     enabled: !!id,
   });
@@ -68,11 +73,14 @@ export default function L2EventSheet({ id }) {
     queryKey: ['event-rsvp', id, currentUser?.email],
     queryFn: async () => {
       if (!currentUser?.email || !id) return null;
-      const rsvps = await base44.entities.EventRSVP.filter({ 
-        beacon_id: id, 
-        user_email: currentUser.email 
-      });
-      return rsvps?.[0] || null;
+      const { data, error } = await supabase
+        .from('event_rsvps')
+        .select('*')
+        .eq('beacon_id', id)
+        .eq('user_email', currentUser.email)
+        .maybeSingle();
+      if (error) throw error;
+      return data || null;
     },
     enabled: !!currentUser?.email && !!id,
   });
@@ -82,8 +90,12 @@ export default function L2EventSheet({ id }) {
     queryKey: ['event-rsvp-count', id],
     queryFn: async () => {
       if (!id) return 0;
-      const rsvps = await base44.entities.EventRSVP.filter({ beacon_id: id });
-      return rsvps?.length || 0;
+      const { count, error } = await supabase
+        .from('event_rsvps')
+        .select('*', { count: 'exact', head: true })
+        .eq('beacon_id', id);
+      if (error) throw error;
+      return count || 0;
     },
     enabled: !!id,
   });

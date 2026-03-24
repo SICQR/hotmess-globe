@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Calendar, MapPin, Users, Loader2, Ticket } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format, isToday, isTomorrow } from 'date-fns';
@@ -60,9 +60,14 @@ export default function L2EventsSheet() {
         if (error) throw error;
         return data || [];
       } catch {
-        // Fallback to base44 entity
+        // Fallback to direct query
         try {
-          return await base44.entities.EventRSVP.list('-created_date');
+          const { data, error } = await supabase
+            .from('event_rsvps')
+            .select('*')
+            .order('created_date', { ascending: false });
+          if (error) throw error;
+          return data || [];
         } catch {
           return [];
         }

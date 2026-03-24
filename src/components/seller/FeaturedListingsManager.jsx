@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Star, TrendingUp, Eye, MousePointer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,7 +15,15 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
 
   const { data: featuredListings = [] } = useQuery({
     queryKey: ['featured-listings', sellerEmail],
-    queryFn: () => base44.entities.FeaturedListing.filter({ seller_email: sellerEmail }, '-created_date'),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('featured_listings')
+        .select('*')
+        .eq('seller_email', sellerEmail)
+        .order('created_date', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!sellerEmail
   });
 
@@ -39,7 +47,7 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
       const startsAt = new Date();
       const expiresAt = new Date(Date.now() + selectedTier.hours * 60 * 60 * 1000);
 
-      await base44.entities.FeaturedListing.create({
+      const { error } = await supabase.from('featured_listings').insert({
         product_id: selectedProduct,
         seller_email: sellerEmail,
         duration_hours: selectedTier.hours,
@@ -48,6 +56,7 @@ export default function FeaturedListingsManager({ products, sellerEmail }) {
         placement: 'top_row',
         active: true
       });
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['featured-listings']);

@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Heart, MapPin, Loader2, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
@@ -51,7 +51,12 @@ export default function L2SocialSheet() {
       } catch {
         // Fallback: show follows as activity
         try {
-          const follows = await base44.entities.UserFollow.filter({ follower_email: currentUser.email });
+          const { data, error } = await supabase
+            .from('user_follows')
+            .select('*')
+            .eq('follower_email', currentUser.email);
+          if (error) throw error;
+          const follows = data || [];
           return follows.map(f => ({
             id: f.id,
             action_type: 'follow',
