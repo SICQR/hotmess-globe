@@ -8,22 +8,22 @@ import {
   removeFromCart,
   mergeGuestCartToUser,
 } from './cartStorage';
-import { base44 } from '@/components/utils/supabaseClient';
 
 // Mock the supabase client
 vi.mock('@/components/utils/supabaseClient', () => ({
-  base44: {
+  supabase: {
     auth: {
-      me: vi.fn(),
+      getUser: vi.fn(),
+      getSession: vi.fn(),
     },
-    entities: {
-      CartItem: {
-        filter: vi.fn(),
-        create: vi.fn(),
-        update: vi.fn(),
-        delete: vi.fn(),
-      },
-    },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+      single: vi.fn(),
+    })),
   },
 }));
 

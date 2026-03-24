@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { } from '@/api/base44Client';
 import { createPageUrl } from '../utils';
 import { ArrowLeft, ArrowRight, Upload, Calendar, Image, Video, Save, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

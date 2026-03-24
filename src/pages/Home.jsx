@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { MapPin, ShoppingBag, Users, Radio, Heart, Calendar, Zap, ArrowRight, Globe, Mic, Play } from 'lucide-react';
@@ -88,12 +88,15 @@ export default function Home() {
   const { data: releaseBeacons = [] } = useQuery({
     queryKey: ['release-beacons'],
     queryFn: async () => {
-      const rows = await base44.entities.Beacon.filter(
-        { active: true, status: 'published', kind: 'release' },
-        'release_at',
-        10
-      );
-      return Array.isArray(rows) ? rows : [];
+      const { data, error } = await supabase.from('beacons')
+        .select('*')
+        .eq('active', true)
+        .eq('status', 'published')
+        .eq('kind', 'release')
+        .order('release_at')
+        .limit(10);
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
     },
     refetchInterval: 60000,
   });
@@ -171,10 +174,12 @@ export default function Home() {
   const { data: recentBeacons = [] } = useQuery({
     queryKey: ['recent-beacons'],
     queryFn: async () => {
-      const allBeacons = await base44.entities.Beacon.filter({ active: true, status: 'published' });
+      const { data: allBeacons, error } = await supabase.from('beacons').select('*').eq('active', true).eq('status', 'published');
+      if (error) throw error;
+
       const today = new Date();
       // Filter to only upcoming/current events
-      const upcomingBeacons = allBeacons.filter(b => {
+      const upcomingBeacons = (allBeacons || []).filter(b => {
         if (b.kind === 'event' && b.event_date) {
           return new Date(b.event_date) >= today;
         }
@@ -210,11 +215,13 @@ export default function Home() {
   const { data: shopifyProductsForLube = [] } = useQuery({
     queryKey: ['shopify-products', 'for-home-lube'],
     queryFn: async () => {
-      const rows = await base44.entities.Product.filter(
-        { status: 'active', seller_email: 'shopify@hotmess.london' },
-        '-created_date',
-        100
-      );
+      const { data: rows, error } = await supabase.from('products')
+        .select('*')
+        .eq('status', 'active')
+        .eq('seller_email', 'shopify@hotmess.london')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (error) throw error;
       return Array.isArray(rows) ? rows : [];
     },
     refetchInterval: 10 * 60 * 1000,

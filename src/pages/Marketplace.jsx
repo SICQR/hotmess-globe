@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
 import { ShoppingBag, Plus, Search, MessageCircle, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -192,7 +192,11 @@ export default function Marketplace() {
   const { data: rawProducts = [], isLoading } = useQuery({
     queryKey: ['marketplace-products'],
     // Some legacy rows may not use status='active'. Fetch all and filter client-side.
-    queryFn: () => base44.entities.Product.filter({}, '-created_date'),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
   });
 
   // Preloved listings query
@@ -306,26 +310,29 @@ export default function Marketplace() {
       const platformFee = isP2P ? product.price_xp * 0.1 : 0;
       const sellerAmount = isP2P ? product.price_xp - platformFee : product.price_xp;
 
-      const order = await base44.entities.Order.create({
+      const { data: order, error: orderError } = await supabase.from('orders').insert({
         buyer_email: currentUser.email,
         seller_email: product.seller_email,
         total_xp: product.price_xp,
         status: isP2P ? 'escrow' : 'pending',
         payment_method: 'xp',
-      });
+      }).select().single();
+      if (orderError) throw orderError;
 
-      await base44.entities.OrderItem.create({
+      const { error: itemError } = await supabase.from('order_items').insert({
         order_id: order.id,
         product_id: product.id,
         product_name: product.name,
         quantity: 1,
         price_xp: product.price_xp,
       });
+      if (itemError) throw itemError;
 
-      await base44.entities.Product.update(product.id, {
+      const { error: updateError } = await supabase.from('products').update({
         sales_count: (product.sales_count || 0) + 1,
         inventory_count: Math.max(0, (product.inventory_count || 0) - 1),
-      });
+      }).eq('id', product.id);
+      if (updateError) throw updateError;
 
       // For P2P purchases, create a temporary beacon at buyer's fuzzy location
       if (isP2P && navigator.geolocation) {
@@ -346,7 +353,7 @@ export default function Marketplace() {
           const snapped = snapToGrid(position.coords.latitude, position.coords.longitude);
           const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-          await base44.entities.Beacon.create({
+          const { error: beaconError } = await supabase.from('beacons').insert({
             title: `P2P Purchase: ${product.name}`,
             description: `${currentUser.full_name || 'Someone'} just bought this!`,
             kind: 'drop',

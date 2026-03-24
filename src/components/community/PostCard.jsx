@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import ExpiryBadge from './ExpiryBadge';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import CommentThread from './CommentThread';
 import { toast } from 'sonner';
 import ReportButton from '../moderation/ReportButton';
@@ -31,7 +31,7 @@ function PollDisplay({ post, currentUser }) {
         [currentUser.email]: option
       };
 
-      await base44.entities.CommunityPost.update(post.id, {
+      const { error } = await supabase.from('community_posts').update({
         metadata: {
           ...post.metadata,
           poll: {
@@ -39,7 +39,9 @@ function PollDisplay({ post, currentUser }) {
             votes: updatedVotes
           }
         }
-      });
+      }).eq('id', post.id);
+
+      if (error) throw error;
 
       toast.success('Vote recorded!');
     } catch (error) {
@@ -115,7 +117,7 @@ function EventDisplay({ post, currentUser }) {
     setCreatingBeacon(true);
     try {
       // Try to geocode location (simplified - in production use Google Maps API)
-      const beacon = await base44.entities.Beacon.create({
+      const { data: beacon, error: beaconError } = await supabase.from('beacons').insert({
         title: event.title,
         description: post.content,
         kind: 'event',
@@ -126,12 +128,14 @@ function EventDisplay({ post, currentUser }) {
         venue_name: event.location,
         ticket_url: event.ticket_url,
         active: true
-      });
-      
+      }).select().single();
+
+      if (beaconError) throw beaconError;
+
       toast.success('Event beacon created!');
-      
+
       // Link beacon to post
-      await base44.entities.CommunityPost.update(post.id, {
+      const { error: postError } = await supabase.from('community_posts').update({
         metadata: {
           ...post.metadata,
           event: {
@@ -139,7 +143,9 @@ function EventDisplay({ post, currentUser }) {
             beacon_id: beacon.id
           }
         }
-      });
+      }).eq('id', post.id);
+
+      if (postError) throw postError;
     } catch (error) {
       toast.error('Failed to create beacon');
     } finally {
@@ -311,7 +317,7 @@ export default function PostCard({ post, onLike, onComment, onShare, userHasLike
               await onLike(post.id);
               // Notify post author of like
               if (post.user_email !== currentUser?.email) {
-                await base44.entities.Notification.create({
+                await supabase.from('notifications').insert({
                   user_email: post.user_email,
                   type: 'post_like',
                   title: 'New Like',

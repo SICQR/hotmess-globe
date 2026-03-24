@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { auth, base44, supabase } from '@/components/utils/supabaseClient';
+import { auth, supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -117,10 +117,17 @@ export default function Checkout() {
 
       const authUserId = currentUser?.auth_user_id || null;
 
-      const items = authUserId
-        ? await base44.entities.CartItem.filter({ auth_user_id: authUserId })
-        : await base44.entities.CartItem.filter({ user_email: currentUser.email });
-      return items.filter(item => {
+      let query = supabase.from('cart_items').select('*');
+      if (authUserId) {
+        query = query.eq('auth_user_id', authUserId);
+      } else {
+        query = query.eq('user_email', currentUser.email);
+      }
+
+      const { data: items, error } = await query;
+      if (error) throw error;
+
+      return (items || []).filter(item => {
         if (!item.reserved_until) return true;
         return new Date(item.reserved_until) > now;
       });
@@ -151,9 +158,9 @@ export default function Checkout() {
         .in('id', cartProductIds);
 
       if (error) {
-        // Fall back to the Base44 wrapper (best-effort) if the raw query fails.
-        // This may still dedupe, but it's better than hard-failing checkout.
-        const fallback = await base44.entities.Product.filter({}, '-created_at');
+        // Fall back to the direct query (best-effort) if the ID lookup fails.
+        // This may miss the exact items, but it's better than hard-failing checkout.
+        const { data: fallback } = await supabase.from('products').select('*').order('created_at', { ascending: false });
         return Array.isArray(fallback) ? fallback : [];
       }
 
@@ -267,7 +274,8 @@ export default function Checkout() {
       }
 
       // Fetch fresh product data to check inventory in real-time
-      const freshProducts = await base44.entities.Product.list();
+      const { data: freshProducts, error: productsError } = await supabase.from('products').select('*');
+      if (productsError) throw productsError;
       
       // Validate products and inventory atomically
       for (const item of xpCartItems) {
@@ -300,10 +308,11 @@ export default function Checkout() {
               throw new Error(`Only ${freshProduct.inventory_count} of "${item.product.name}" available.`);
             }
             const newInventory = freshProduct.inventory_count - item.quantity;
-            await base44.entities.Product.update(item.product.id, {
+            const { error: updateError } = await supabase.from('products').update({
               inventory_count: Math.max(0, newInventory),
               sales_count: (freshProduct.sales_count || 0) + item.quantity
-            });
+            }).eq('id', item.product.id);
+            if (updateError) throw updateError;
             inventoryUpdates.push({ 
               id: item.product.id, 
               oldCount: freshProduct.inventory_count 
@@ -317,7 +326,7 @@ export default function Checkout() {
 
         // Step 3: Create orders (safe to do now that inventory & XP are locked)
         for (const [seller, items] of Object.entries(sellers)) {
-          const order = await base44.entities.Order.create({
+          const { data: order, error: orderError } = await supabase.from('orders').insert({
             buyer_email: freshUser.email,
             seller_email: seller,
             total_xp: items.reduce((sum, i) => sum + (i.product.price_xp * i.quantity), 0),
@@ -326,11 +335,12 @@ export default function Checkout() {
             payment_method: 'xp',
             shipping_address: shippingAddress,
             notes
-          });
+          }).select().single();
+          if (orderError) throw orderError;
 
           // Create order items
           for (const item of items) {
-            await base44.entities.OrderItem.create({
+            const { error: itemError } = await supabase.from('order_items').insert({
               order_id: order.id,
               product_id: item.product.id,
               product_name: item.product.name,
@@ -338,23 +348,28 @@ export default function Checkout() {
               price_xp: item.product.price_xp,
               price_gbp: 0
             });
+            if (itemError) throw itemError;
           }
 
           // Notify seller
-          await base44.entities.Notification.create({
+          const { error: notifyError } = await supabase.from('notifications').insert({
             user_email: seller,
             type: 'order',
             title: 'New Order!',
             message: `${freshUser.full_name || freshUser.email} placed an order`,
             link: 'SellerDashboard'
           });
+          if (notifyError) {
+            console.error('Failed to notify seller:', notifyError);
+          }
         }
 
         // Step 4: Clear cart
         // Remove only the XP items from the DB cart.
         for (const item of xpCartItems) {
           if (item?.id) {
-            await base44.entities.CartItem.delete(item.id);
+            const { error: deleteError } = await supabase.from('cart_items').delete().eq('id', item.id);
+            if (deleteError) throw deleteError;
           }
         }
       } catch (error) {
@@ -364,9 +379,10 @@ export default function Checkout() {
         // Rollback inventory first (reverse order of operations)
         for (const update of inventoryUpdates) {
           try {
-            await base44.entities.Product.update(update.id, {
+            const { error: rollbackError } = await supabase.from('products').update({
               inventory_count: update.oldCount
-            });
+            }).eq('id', update.id);
+            if (rollbackError) throw rollbackError;
           } catch (rollbackError) {
             console.error('Rollback failed for product', update.id, rollbackError);
           }

@@ -36,17 +36,25 @@ export default function BeaconActions({ beacon }) {
 
   const { data: bookmarks = [] } = useQuery({
     queryKey: ['bookmarks', user?.email],
-    queryFn: () => base44.entities.BeaconBookmark.filter({ user_email: user.email }),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('beacon_bookmarks').select('*').eq('user_email', user.email);
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!user
   });
 
   const isBookmarked = bookmarks.some(b => b.beacon_id === beacon.id);
 
   const bookmarkMutation = useMutation({
-    mutationFn: () => base44.entities.BeaconBookmark.create({
-      user_email: user.email,
-      beacon_id: beacon.id
-    }),
+    mutationFn: async () => {
+      const { data, error } = await supabase.from('beacon_bookmarks').insert({
+        user_email: user.email,
+        beacon_id: beacon.id
+      }).select().single();
+      if (error) throw error;
+      return data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['bookmarks']);
       toast.success('Bookmarked!');
@@ -54,9 +62,10 @@ export default function BeaconActions({ beacon }) {
   });
 
   const unbookmarkMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const bookmark = bookmarks.find(b => b.beacon_id === beacon.id);
-      return base44.entities.BeaconBookmark.delete(bookmark.id);
+      const { error } = await supabase.from('beacon_bookmarks').delete().eq('id', bookmark.id);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['bookmarks']);
@@ -65,32 +74,46 @@ export default function BeaconActions({ beacon }) {
   });
 
   const checkInMutation = useMutation({
-    mutationFn: (data) => base44.entities.BeaconCheckIn.create(data),
+    mutationFn: async (data) => {
+      const { data: result, error } = await supabase.from('beacon_checkins').insert(data).select().single();
+      if (error) throw error;
+      return result;
+    },
     onSuccess: () => {
       toast.success('Checked in with photo!');
       setCheckInNote('');
       setPhotoFile(null);
-      
+
       // Track interaction
-      base44.entities.UserInteraction.create({
+      supabase.from('user_interactions').insert({
         user_email: user.email,
         interaction_type: 'visit',
         beacon_id: beacon.id,
         beacon_kind: beacon.kind,
         beacon_mode: beacon.mode
-      });
+      }).catch(err => console.error('Failed to track interaction:', err));
     }
   });
 
   const handleCheckIn = async () => {
     if (!user) return;
-    
+
     let photoUrl = null;
     if (photoFile) {
       setUploading(true);
       try {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: photoFile });
-        photoUrl = file_url;
+        const fileName = `${Date.now()}_${photoFile.name}`;
+        const { data, error } = await supabase.storage
+          .from('uploads')
+          .upload(fileName, photoFile);
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('uploads')
+          .getPublicUrl(fileName);
+
+        photoUrl = publicUrl;
       } catch (error) {
         toast.error('Photo upload failed');
         setUploading(false);
