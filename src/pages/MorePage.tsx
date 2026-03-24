@@ -3,7 +3,7 @@
  * Replaces Profile tab as the 5th nav item.
  */
 import { useNavigate } from 'react-router-dom';
-import { Shield, Heart, User, Lock, Settings, HelpCircle, ChevronRight } from 'lucide-react';
+import { Shield, Heart, User, Users, Lock, Settings, HelpCircle, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const GOLD = '#C8962C';
@@ -24,6 +24,7 @@ const MORE_ITEMS: MoreItem[] = [
   { id: 'safety', icon: Shield, label: 'Safety', sub: 'SOS, check-ins, trusted contacts', path: '/safety', accent: '#ef4444' },
   { id: 'care', icon: Heart, label: 'Care', sub: 'Aftercare + wellbeing', path: '/care', accent: GOLD },
   { id: 'profile', icon: User, label: 'My Profile', sub: 'Edit your profile', path: '/profile', accent: '#ffffff' },
+  { id: 'personas', icon: Users, label: 'Personas', sub: 'Switch or create identities', path: '/profile?action=manage-personas', accent: GOLD },
   { id: 'vault', icon: Lock, label: 'Vault', sub: 'Tickets, orders, archive', path: '/more/vault', accent: GOLD },
   { id: 'settings', icon: Settings, label: 'Settings', sub: 'Account + privacy', path: '/more/settings', accent: MUTED },
   { id: 'help', icon: HelpCircle, label: 'Help', sub: 'FAQs + support', path: '/help', accent: MUTED },
