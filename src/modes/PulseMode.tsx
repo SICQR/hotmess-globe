@@ -1152,10 +1152,8 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   }, [openSheet]);
 
   const handleSafetyIndicatorTap = useCallback(() => {
-    if (safetyAlerts.length > 0) {
-      setActiveFilter('safety');
-    }
-  }, [safetyAlerts.length]);
+    navigate('/safety');
+  }, [navigate]);
 
   // ---- Scene Scout handler (CHROME gated) -----------------------------------
   const handleSceneScout = useCallback(async () => {

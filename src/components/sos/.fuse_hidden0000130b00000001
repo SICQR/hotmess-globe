@@ -6,7 +6,7 @@ import { AlertTriangle, Phone, X } from 'lucide-react';
 /**
  * SOS Button
  * Long-press activated emergency button
- *
+ * 
  * Behaviour:
  * - UI freezes
  * - Globe earthquake
@@ -22,34 +22,20 @@ export function SOSButton({ className, onTrigger }) {
   const [isHolding, setIsHolding] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isTriggered, setIsTriggered] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(() => {
-    try {
-      return localStorage.getItem('hm_sos_seen') !== 'true';
-    } catch {
-      return true;
-    }
-  });
   const timerRef = useRef(null);
   const startRef = useRef(null);
 
   const startHold = useCallback(() => {
     if (isTriggered) return;
-
-    if (showTooltip) {
-      setShowTooltip(false);
-      try {
-        localStorage.setItem('hm_sos_seen', 'true');
-      } catch {}
-    }
-
+    
     setIsHolding(true);
     startRef.current = Date.now();
-
+    
     timerRef.current = requestAnimationFrame(function tick() {
       const elapsed = Date.now() - startRef.current;
       const pct = Math.min(1, elapsed / HOLD_DURATION_MS);
       setProgress(pct);
-
+      
       if (pct >= 1) {
         // Triggered
         setIsTriggered(true);
@@ -60,7 +46,7 @@ export function SOSButton({ className, onTrigger }) {
         timerRef.current = requestAnimationFrame(tick);
       }
     });
-  }, [isTriggered, tremor, onTrigger, showTooltip]);
+  }, [isTriggered, tremor, onTrigger]);
 
   const endHold = useCallback(() => {
     setIsHolding(false);
@@ -70,17 +56,6 @@ export function SOSButton({ className, onTrigger }) {
       cancelAnimationFrame(timerRef.current);
     }
   }, []);
-
-  useEffect(() => {
-    if (!showTooltip) return;
-    const timer = setTimeout(() => {
-      setShowTooltip(false);
-      try {
-        localStorage.setItem('hm_sos_seen', 'true');
-      } catch {}
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [showTooltip]);
 
   useEffect(() => {
     return () => {
@@ -97,62 +72,54 @@ export function SOSButton({ className, onTrigger }) {
   }
 
   return (
-    <>
-      {showTooltip && (
-        <div className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 bg-black/90 border border-white/10 rounded-lg text-xs text-white font-semibold shadow-lg pointer-events-none z-10">
-          Hold for SOS
-          <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 border-r border-b border-white/10 rotate-45 -mt-1" />
-        </div>
+    <button
+      onMouseDown={startHold}
+      onMouseUp={endHold}
+      onMouseLeave={endHold}
+      onTouchStart={startHold}
+      onTouchEnd={endHold}
+      className={cn(
+        'relative w-16 h-16 rounded-full flex items-center justify-center transition-all',
+        isHolding 
+          ? 'bg-red-600 scale-110' 
+          : 'bg-red-500/20 border-2 border-red-500/50 hover:bg-red-500/30',
+        className
       )}
-      <button
-        onMouseDown={startHold}
-        onMouseUp={endHold}
-        onMouseLeave={endHold}
-        onTouchStart={startHold}
-        onTouchEnd={endHold}
-        className={cn(
-          'relative w-16 h-16 rounded-full flex items-center justify-center transition-all',
-          isHolding
-            ? 'bg-red-600 scale-110'
-            : 'bg-red-600/40 border-2 border-red-500 hover:bg-red-600/60',
-          className
-        )}
+    >
+      {/* Progress ring */}
+      <svg 
+        className="absolute inset-0 w-full h-full -rotate-90"
+        viewBox="0 0 64 64"
       >
-        {/* Progress ring */}
-        <svg
-          className="absolute inset-0 w-full h-full -rotate-90"
-          viewBox="0 0 64 64"
-        >
-          <circle
-            cx="32"
-            cy="32"
-            r="28"
-            fill="none"
-            stroke="rgba(255,0,0,0.3)"
-            strokeWidth="4"
-          />
-          <circle
-            cx="32"
-            cy="32"
-            r="28"
-            fill="none"
-            stroke="#FF0000"
-            strokeWidth="4"
-            strokeDasharray={`${progress * 176} 176`}
-            strokeLinecap="round"
-            className="transition-all"
-          />
-        </svg>
-
-        <AlertTriangle
-          size={24}
-          className={cn(
-            'relative z-10 transition-colors',
-            isHolding ? 'text-white' : 'text-red-500'
-          )}
+        <circle
+          cx="32"
+          cy="32"
+          r="28"
+          fill="none"
+          stroke="rgba(255,0,0,0.3)"
+          strokeWidth="4"
         />
-      </button>
-    </>
+        <circle
+          cx="32"
+          cy="32"
+          r="28"
+          fill="none"
+          stroke="#FF0000"
+          strokeWidth="4"
+          strokeDasharray={`${progress * 176} 176`}
+          strokeLinecap="round"
+          className="transition-all"
+        />
+      </svg>
+
+      <AlertTriangle 
+        size={24} 
+        className={cn(
+          'relative z-10 transition-colors',
+          isHolding ? 'text-white' : 'text-red-500'
+        )} 
+      />
+    </button>
   );
 }
 
@@ -180,7 +147,7 @@ export function DistressModal({ onClose }) {
         <h2 className="text-2xl font-black text-white mb-2">
           You're not alone
         </h2>
-
+        
         <p className="text-white/60 mb-8">
           We're here. Take a breath. Your location is private.
         </p>

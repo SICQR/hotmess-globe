@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Activity, Ghost, ShoppingBag, User, Music } from 'lucide-react';
+import { Home, Activity, Ghost, ShoppingBag, User, Music, LayoutGrid } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { OSMode, MODES, MODE_ORDER, getModeFromPath } from '@/modes';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
@@ -24,6 +24,7 @@ const ICONS: Record<OSMode, React.FC<{ className?: string }>> = {
   radio: Activity, // fallback, not shown in nav
   music: Music,
   profile: User,
+  more: LayoutGrid,
 };
 
 interface OSBottomNavProps {
@@ -59,7 +60,7 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
             const mode = MODES[modeId];
             const Icon = ICONS[modeId];
             const isActive = currentMode === modeId;
-            const isProfile = modeId === 'profile';
+            const isMore = modeId === 'more';
 
             return (
               <button
@@ -68,7 +69,6 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                 className="relative flex flex-col items-center justify-center flex-1 h-full touch-target"
                 aria-label={mode.label}
                 aria-current={isActive ? 'page' : undefined}
-                {...(isProfile ? longPress : {})} /* Long-press profile tab from ANY mode to open PersonaSwitcher */
               >
                 {/* Icon — amber circle when active */}
                 {isActive ? (
@@ -87,7 +87,7 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </button>
                     )}
-                    {modeId === 'profile' && notifCount > 0 && (
+                    {modeId === 'more' && notifCount > 0 && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -117,7 +117,7 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </button>
                     )}
-                    {modeId === 'profile' && notifCount > 0 && (
+                    {modeId === 'more' && notifCount > 0 && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

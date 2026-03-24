@@ -66,6 +66,8 @@ const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
 const SOSPage = lazy(() => import('@/pages/SOSPage'));
 const FakeCallPage = lazy(() => import('@/pages/FakeCallPage'));
 const SafetyPage = lazy(() => import('@/pages/Safety'));
+const MorePage = lazy(() => import('@/pages/MorePage'));
+const CarePage = lazy(() => import('@/pages/CarePage'));
 
 // Example screens (design system demos)
 const ChatWithMapExample = lazy(() => import('@/examples/ChatWithMapExample'));
@@ -443,7 +445,7 @@ const AuthenticatedApp = () => {
       <Route path="/profile/:id" element={<Suspense fallback={null}><ProfileMode /></Suspense>} />
       
       <Route path="/hnhmess" element={<PageRoute pageKey="Hnhmess" />} />
-      <Route path="/more" element={<PageRoute pageKey="More" />} />
+      <Route path="/more" element={<Suspense fallback={null}><MorePage /></Suspense>} />
       <Route path="/directions" element={<PageRoute pageKey="Directions" />} />
       
       {/* Auth sub-routes */}
@@ -513,7 +515,7 @@ const AuthenticatedApp = () => {
       <Route path="/vault/*" element={<Suspense fallback={null}><VaultMode /></Suspense>} />
       <Route path="/more/challenges" element={<PageRoute pageKey="Challenges" />} />
       <Route path="/more/settings" element={<PageRoute pageKey="Settings" />} />
-      <Route path="/more/care" element={<PageRoute pageKey="Care" />} />
+      <Route path="/more/care" element={<Suspense fallback={null}><CarePage /></Suspense>} />
 
       {/* Settings */}
       <Route path="/settings" element={<PageRoute pageKey="Settings" />} />
@@ -524,6 +526,9 @@ const AuthenticatedApp = () => {
       {/* SOS + Fake Call — deep-linkable safety shortcuts */}
       <Route path="/sos" element={<Suspense fallback={null}><SOSPage /></Suspense>} />
       <Route path="/fake-call" element={<Suspense fallback={null}><FakeCallPage /></Suspense>} />
+
+      {/* Care — Hand N Hand wellbeing */}
+      <Route path="/care" element={<Suspense fallback={null}><CarePage /></Suspense>} />
 
       {/* Safety — mobile-first, no desktop sidebar wrapper */}
       <Route path="/safety/*" element={<Suspense fallback={null}><SafetyPage /></Suspense>} />
