@@ -123,7 +123,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
   const unlockMutation = useMutation({
     mutationFn: async ({ photoId, priceXp }) => {
       // Get authentication token
-      const { data: { session } } = await base44.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       
       if (!token) {
@@ -166,7 +166,7 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
   const subscribeMutation = useMutation({
     mutationFn: async () => {
       // Get authentication token
-      const { data: { session } } = await base44.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       
       if (!token) {

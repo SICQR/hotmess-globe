@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { supabase } from '@/components/utils/supabaseClient';
-import { base44 } from '@/api/base44Client';
 
 const APPEAL_REASONS = [
   { value: 'false_positive', label: 'Content was flagged incorrectly' },
@@ -42,7 +41,8 @@ export default function AppealForm({
     setSubmitting(true);
     
     try {
-      const user = await base44.auth.me();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       
       await supabase
         .from('moderation_appeals')

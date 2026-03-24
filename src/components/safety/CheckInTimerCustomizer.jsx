@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
 export default function CheckInTimerCustomizer() {
@@ -13,7 +13,8 @@ export default function CheckInTimerCustomizer() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const user = await base44.auth.me();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       setCurrentUser(user);
       setCustomTimers(user.custom_check_in_timers || []);
     };
@@ -35,7 +36,7 @@ export default function CheckInTimerCustomizer() {
     const newTimers = [...customTimers, { hours, label: newLabel.trim() }];
     
     try {
-      await base44.auth.updateMe({ custom_check_in_timers: newTimers });
+      const updatePayload = { custom_check_in_timers: newTimers }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       setCustomTimers(newTimers);
       setNewHours('');
       setNewLabel('');
@@ -48,7 +49,7 @@ export default function CheckInTimerCustomizer() {
   const removeTimer = async (index) => {
     const newTimers = customTimers.filter((_, i) => i !== index);
     try {
-      await base44.auth.updateMe({ custom_check_in_timers: newTimers });
+      const updatePayload = { custom_check_in_timers: newTimers }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       setCustomTimers(newTimers);
       toast.success('Timer removed');
     } catch (error) {

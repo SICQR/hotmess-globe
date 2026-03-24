@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Swords, Zap, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -27,7 +27,7 @@ export default function DeclareWar({ venueId, kingData, currentUser }) {
         throw new Error('Insufficient XP');
       }
 
-      await base44.auth.updateMe({ xp: newXp });
+      const updatePayload = { xp: newXp }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
 
       // Update king data to trigger war
       await base44.entities.VenueKing.update(kingData.id, {

@@ -43,7 +43,12 @@ export default function GlobePage({ embedded = false }) {
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
-    queryFn: () => base44.auth.me(),
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      return { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
+    },
   });
 
   // Fetch beacons from Supabase beacons table (not base44 entity)

@@ -24,7 +24,7 @@ import {
   Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 import { safeGetViewerLatLng } from '@/utils/geolocation';
 import { useTonightModeContext } from '@/hooks/useTonightMode';
@@ -59,7 +59,8 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
   useEffect(() => {
     const getContacts = async () => {
       try {
-        const user = await base44.auth.me();
+        const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         if (user?.email) {
           const contacts = await base44.entities.TrustedContact.filter({ 
             user_email: user.email,
@@ -77,7 +78,8 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
   const sendAlerts = async () => {
     setSending(true);
     try {
-      const user = await base44.auth.me();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       if (!user?.email) {
         toast.error('You must be logged in');
         return;

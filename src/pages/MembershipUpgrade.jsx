@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { base44, supabase } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Check, Crown, Zap, Star, ArrowLeft, Loader2, CreditCard, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -74,7 +74,8 @@ export default function MembershipUpgrade() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const user = await base44.auth.me();
+        const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         setCurrentUser(user);
       } catch (error) {
         console.error('Failed to fetch user:', error);
@@ -154,9 +155,9 @@ export default function MembershipUpgrade() {
 
       // Fallback: Update tier directly (for development/demo)
       console.warn('Stripe not configured, updating tier directly');
-      await base44.auth.updateMe({
+      const updatePayload = {
         membership_tier: tierId,
-      });
+      }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
 
       toast.success(`Upgraded to ${tierId.toUpperCase()}!`);
       navigate(createPageUrl('Profile'));
@@ -197,16 +198,23 @@ export default function MembershipUpgrade() {
       }
 
       // Update local tier to basic
-      await base44.auth.updateMe({
+      const updatePayload = {
         membership_tier: 'basic',
-      });
+      };
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.auth.updateUser({ data: updatePayload });
+      await supabase.from('profiles').update(updatePayload).eq('id', user.id);
 
       toast.success('Subscription cancelled. You will retain access until the end of your billing period.');
       setShowCancelModal(false);
-      
+
       // Refresh user data
-      const user = await base44.auth.me();
-      setCurrentUser(user);
+      const updatedUser = { ...user };
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        Object.assign(updatedUser, profile || {}, { auth_user_id: user.id, email: user.email || profile?.email });
+      }
+      setCurrentUser(updatedUser);
     } catch (error) {
       console.error('Cancel error:', error);
       toast.error('Failed to cancel subscription. Please contact support.');

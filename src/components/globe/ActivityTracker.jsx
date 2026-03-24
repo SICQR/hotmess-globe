@@ -1,4 +1,4 @@
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 
 class ActivityTracker {
   constructor() {
@@ -20,10 +20,11 @@ class ActivityTracker {
     if (!this.enabled) return;
 
     try {
-      const isAuth = await base44.auth.isAuthenticated();
+      const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
       if (!isAuth) return;
       
-      const user = await base44.auth.me();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       if (!user?.email) return;
       
       // UserActivity table may not exist - fail silently

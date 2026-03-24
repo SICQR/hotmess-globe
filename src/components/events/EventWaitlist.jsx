@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Clock, Bell, BellOff } from 'lucide-react';
 import { toast } from 'sonner';
@@ -91,7 +91,7 @@ export default function EventWaitlist({ event, currentUser }) {
 
       <Button
         onClick={async () => {
-          const ok = await base44.auth.requireProfile(window.location.href);
+          const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
           if (!ok) return;
           joinWaitlistMutation.mutate();
         }}

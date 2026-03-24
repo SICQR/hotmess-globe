@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../../utils';
 
@@ -24,7 +23,8 @@ export default function BusinessAnalytics() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const currentUser = await base44.auth.me();
+        const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { currentUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); currentUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         const userId = currentUser.auth_user_id || currentUser.id;
 
         // Calculate date range

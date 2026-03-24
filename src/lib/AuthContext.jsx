@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
-      const isAuth = await base44.auth.isAuthenticated();
+      const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
       if (!isAuth) {
         setUser(null);
         setIsAuthenticated(false);
@@ -59,7 +59,8 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const currentUser = await base44.auth.me();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { currentUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); currentUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       setUser(currentUser || null);
       setIsAuthenticated(!!currentUser);
 
@@ -93,11 +94,13 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     
     if (shouldRedirect) {
-      // Supabase-backed logout supports optional redirect.
-      base44.auth.logout(window.location.href);
+      // Supabase-backed logout with redirect
+      supabase.auth.signOut().then(() => {
+        window.location.href = '/auth';
+      });
     } else {
       // Just remove the token without redirect
-      base44.auth.logout();
+      supabase.auth.signOut();
     }
   }, []);
 
@@ -119,7 +122,7 @@ export const AuthProvider = ({ children }) => {
 
   const navigateToLogin = useCallback(() => {
     // Redirect to the app's Auth page.
-    base44.auth.redirectToLogin(window.location.href);
+    window.location.href = "/auth" + (window.location.href ? `?next=${encodeURIComponent(window.location.href)}` : "");
   }, []);
 
   return (
@@ -154,8 +157,8 @@ export const useAuth = () => {
       isAuthenticated: false,
       isLoadingAuth: false,
       authError: { type: 'auth_required', message: 'Authentication required' },
-      logout: () => base44.auth.logout(),
-      navigateToLogin: () => base44.auth.redirectToLogin(window.location.href),
+      logout: () => supabase.auth.signOut(),
+      navigateToLogin: () => window.location.href = "/auth" + (window.location.href ? `?next=${encodeURIComponent(window.location.href)}` : ""),
       checkAppState: async () => {},
     };
   }

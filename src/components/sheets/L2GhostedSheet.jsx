@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { base44 } from '@/components/utils/supabaseClient';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import { Zap, MapPin, Clock, MessageCircle, 
   Loader2, ChevronRight, Filter
 } from 'lucide-react';
@@ -38,7 +38,12 @@ export default function L2GhostedSheet() {
   // Current user
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
-    queryFn: () => base44.auth.me(),
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      return { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
+    },
   });
 
   // Current user's Right Now status

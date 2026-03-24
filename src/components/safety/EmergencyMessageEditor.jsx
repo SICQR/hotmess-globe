@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Edit, Save, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
 export default function EmergencyMessageEditor() {
@@ -13,7 +13,8 @@ export default function EmergencyMessageEditor() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const user = await base44.auth.me();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
       setCurrentUser(user);
       setMessage(user.emergency_message || '');
     };
@@ -23,7 +24,7 @@ export default function EmergencyMessageEditor() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await base44.auth.updateMe({ emergency_message: message });
+      const updatePayload = { emergency_message: message }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       toast.success('Emergency message saved');
       setEditing(false);
     } catch (error) {

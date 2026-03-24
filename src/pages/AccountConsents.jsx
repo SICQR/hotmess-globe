@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { base44 } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Shield, MapPin, Calendar } from 'lucide-react';
@@ -57,7 +57,7 @@ export default function AccountConsents() {
         // ignore
       }
 
-      await base44.auth.updateMe({
+      const updatePayload = {
         consent_accepted: true,
         consent_age: ageConsent || hasAgeAlready,
         consent_location: !!locationConsent,
@@ -67,7 +67,7 @@ export default function AccountConsents() {
         has_agreed_terms: true,
         has_consented_data: true,
         has_consented_gps: !!locationConsent,
-      });
+      }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
 
       navigate(createPageUrl('Profile'));
     } catch (error) {

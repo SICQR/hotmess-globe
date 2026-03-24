@@ -6,7 +6,7 @@ import { useVisibility } from './useVisibility';
 import { SortSelector } from './SortSelector';
 import type { Profile, SortOption } from './types';
 import type { LatLng } from './travelTime';
-import { base44 } from '@/api/base44Client';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import { createUserProfileUrl } from '@/utils';
 import { toast } from 'sonner';
 import TelegramPanel from './TelegramPanel';
@@ -119,9 +119,21 @@ export default function ProfilesGridWithMatch({
   useEffect(() => {
     let cancelled = false;
 
-    base44.auth
-      .me()
-      .then(async (me) => {
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          if (!cancelled) {
+            setViewerEmail(null);
+            setViewerProfile(null);
+            setGpsEnabled(false);
+            setViewerLocation(null);
+          }
+          return;
+        }
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        const me = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
+
         if (cancelled) return;
         const email = normalizeEmail(me?.email);
         setViewerEmail(email || null);
@@ -151,14 +163,14 @@ export default function ProfilesGridWithMatch({
         }
 
         setViewerLocation(null);
-      })
-      .catch(() => {
+      } catch {
         if (cancelled) return;
         setViewerEmail(null);
         setViewerProfile(null);
         setGpsEnabled(false);
         setViewerLocation(null);
-      });
+      }
+    })();
 
     return () => {
       cancelled = true;
@@ -236,7 +248,7 @@ export default function ProfilesGridWithMatch({
       setGpsEnabled(true);
 
       try {
-        await base44.auth.updateMe({ has_consented_gps: true });
+        const updatePayload = { has_consented_gps: true }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       } catch {
         // Non-fatal
       }

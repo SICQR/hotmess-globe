@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
 import { MapPin, Zap, Search, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -62,8 +62,11 @@ export default function Beacons() {
           <Link
             to={createPageUrl('CreateBeacon')}
             onClick={async (e) => {
-              const ok = await base44.auth.requireProfile(createPageUrl('CreateBeacon'));
-              if (!ok) e.preventDefault();
+              const { data: { session } } = await supabase.auth.getSession();
+              if (!session) {
+                e.preventDefault();
+                window.location.href = "/auth";
+              }
             }}
           >
             <Button className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black">

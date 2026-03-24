@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/utils/supabaseClient';
 import { MessageCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -51,7 +51,7 @@ export default function MessageButton({ targetUser, currentUser, threadType = 'd
       return;
     }
 
-    const ok = await base44.auth.requireProfile(window.location.href);
+    const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
     if (!ok) return;
 
     if (currentUser.email === targetUser.email) {

@@ -6,8 +6,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { supabase } from '@/components/utils/supabaseClient';
+import { base44, supabase } from '@/components/utils/supabaseClient';
 import { Heart, MapPin, Loader2, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
@@ -29,7 +28,12 @@ export default function L2SocialSheet() {
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
-    queryFn: () => base44.auth.me(),
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      return { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
+    },
   });
 
   // Social feed — activity from followed users
