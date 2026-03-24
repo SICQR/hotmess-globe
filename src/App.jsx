@@ -82,11 +82,7 @@ const ForgotPasswordScreen = lazy(() => import('@/examples/auth/ForgotPasswordSc
 const JoinCodeScreen = lazy(() => import('@/examples/auth/JoinCodeScreen'));
 const ProfileSetupScreen = lazy(() => import('@/examples/auth/ProfileSetupScreen'));
 
-// New unified design pages
-const HomePage = lazy(() => import('@/pages/HomePage'));
-const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
-const MarketPage = lazy(() => import('@/pages/MarketPage'));
-const MapPage = lazy(() => import('@/pages/MapPage'));
+// Legacy page imports
 const ChatHistoryPage = lazy(() => import('@/pages/ChatHistoryPage'));
 
 const isProdBuild = import.meta.env.MODE === 'production';
@@ -412,12 +408,6 @@ const AuthenticatedApp = () => {
       <Route path="/examples/auth/join-code" element={<Suspense fallback={null}><JoinCodeScreen /></Suspense>} />
       <Route path="/examples/auth/profile-setup" element={<Suspense fallback={null}><ProfileSetupScreen /></Suspense>} />
       
-      {/* Unified design pages (alternate views) */}
-      <Route path="/v2/home" element={<Suspense fallback={null}><HomePage /></Suspense>} />
-      <Route path="/v2/profile" element={<Suspense fallback={null}><ProfilePage /></Suspense>} />
-      <Route path="/v2/market" element={<Suspense fallback={null}><MarketPage /></Suspense>} />
-      <Route path="/v2/map" element={<Suspense fallback={null}><MapPage /></Suspense>} />
-      
       {/* RADIO - Mode (no Layout) */}
       <Route path="/radio" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
       <Route path="/radio/schedule" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
@@ -701,10 +691,22 @@ function OSArchitecture() {
     const params = new URLSearchParams(window.location.search);
     const tgToken = params.get('tg_token');
     const tgUser  = params.get('tg_user');
+    const inviteCode = params.get('invite');
+
     if (tgToken) {
       localStorage.setItem('hm_tg_token', tgToken);
       if (tgUser) localStorage.setItem('hm_tg_user', tgUser);
-      // Strip params from URL without reload
+    }
+
+    // ── Invite code deep-link handler ────────────────────────────────────
+    // When a user clicks hotmessldn.com?invite=CODE
+    // we stash the code for post-auth signup capture
+    if (inviteCode) {
+      localStorage.setItem('hm_invite_code', inviteCode);
+    }
+
+    // Strip params from URL without reload if any were handled
+    if (tgToken || inviteCode) {
       const clean = window.location.pathname + (window.location.hash || '');
       window.history.replaceState({}, '', clean);
     }
