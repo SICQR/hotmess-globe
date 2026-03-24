@@ -6,7 +6,7 @@ import { AlertTriangle, Phone, X } from 'lucide-react';
 /**
  * SOS Button
  * Long-press activated emergency button
- *
+ * 
  * Behaviour:
  * - UI freezes
  * - Globe earthquake
@@ -23,11 +23,7 @@ export function SOSButton({ className, onTrigger }) {
   const [progress, setProgress] = useState(0);
   const [isTriggered, setIsTriggered] = useState(false);
   const [showTooltip, setShowTooltip] = useState(() => {
-    try {
-      return localStorage.getItem('hm_sos_seen') !== 'true';
-    } catch {
-      return true;
-    }
+    try { return localStorage.getItem('hm_sos_seen') !== 'true'; } catch { return true; }
   });
   const timerRef = useRef(null);
   const startRef = useRef(null);
@@ -37,19 +33,17 @@ export function SOSButton({ className, onTrigger }) {
 
     if (showTooltip) {
       setShowTooltip(false);
-      try {
-        localStorage.setItem('hm_sos_seen', 'true');
-      } catch {}
+      try { localStorage.setItem('hm_sos_seen', 'true'); } catch {}
     }
 
     setIsHolding(true);
     startRef.current = Date.now();
-
+    
     timerRef.current = requestAnimationFrame(function tick() {
       const elapsed = Date.now() - startRef.current;
       const pct = Math.min(1, elapsed / HOLD_DURATION_MS);
       setProgress(pct);
-
+      
       if (pct >= 1) {
         // Triggered
         setIsTriggered(true);
@@ -60,7 +54,7 @@ export function SOSButton({ className, onTrigger }) {
         timerRef.current = requestAnimationFrame(tick);
       }
     });
-  }, [isTriggered, tremor, onTrigger, showTooltip]);
+  }, [isTriggered, tremor, onTrigger]);
 
   const endHold = useCallback(() => {
     setIsHolding(false);
@@ -75,9 +69,7 @@ export function SOSButton({ className, onTrigger }) {
     if (!showTooltip) return;
     const timer = setTimeout(() => {
       setShowTooltip(false);
-      try {
-        localStorage.setItem('hm_sos_seen', 'true');
-      } catch {}
+      try { localStorage.setItem('hm_sos_seen', 'true'); } catch {}
     }, 5000);
     return () => clearTimeout(timer);
   }, [showTooltip]);
@@ -180,7 +172,7 @@ export function DistressModal({ onClose }) {
         <h2 className="text-2xl font-black text-white mb-2">
           You're not alone
         </h2>
-
+        
         <p className="text-white/60 mb-8">
           We're here. Take a breath. Your location is private.
         </p>
