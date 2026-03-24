@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
 import { supabase } from '@/components/utils/supabaseClient';
 import { User, Users, Calendar, Award, Camera, Star, Pin, Trophy, Shield, Music, Lock, Instagram, Twitter, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -168,53 +167,89 @@ export default function Profile() {
 
   const { data: checkIns = [] } = useQuery({
     queryKey: ['check-ins', userEmail],
-    queryFn: () => base44.entities.BeaconCheckIn.filter({ user_email: userEmail }, '-created_date', 20),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('beacon_checkins').select('*').eq('user_email', userEmail).order('created_at', { ascending: false }).limit(20);
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!userEmail
   });
 
   const { data: achievements = [] } = useQuery({
     queryKey: ['user-achievements', userEmail],
-    queryFn: () => base44.entities.UserAchievement.filter({ user_email: userEmail }),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('user_achievements').select('*').eq('user_email', userEmail);
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!userEmail
   });
 
   const { data: followers = [] } = useQuery({
     queryKey: ['followers', userEmail],
-    queryFn: () => base44.entities.UserFollow.filter({ following_email: userEmail }),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('user_follows').select('*').eq('following_email', userEmail);
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!userEmail
   });
 
   const { data: following = [] } = useQuery({
     queryKey: ['following', userEmail],
-    queryFn: () => base44.entities.UserFollow.filter({ follower_email: userEmail }),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('user_follows').select('*').eq('follower_email', userEmail);
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!userEmail
   });
 
   const { data: highlights = [] } = useQuery({
     queryKey: ['highlights', userEmail],
-    queryFn: () => base44.entities.UserHighlight.filter({ user_email: userEmail }, 'order'),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('user_highlights').select('*').eq('user_email', userEmail).order('order');
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!userEmail
   });
 
   const { data: allAchievements = [] } = useQuery({
     queryKey: ['all-achievements'],
-    queryFn: () => base44.entities.Achievement.list()
+    queryFn: async () => {
+      const { data, error } = await supabase.from('achievements').select('*');
+      if (error) throw error;
+      return data || [];
+    }
   });
 
   const { data: _allBeacons = [] } = useQuery({
     queryKey: ['all-beacons'],
-    queryFn: () => base44.entities.Beacon.list()
+    queryFn: async () => {
+      const { data, error } = await supabase.from('beacons').select('*');
+      if (error) throw error;
+      return data || [];
+    }
   });
 
   const { data: squadMembers = [] } = useQuery({
     queryKey: ['squad-members-profile'],
-    queryFn: () => base44.entities.SquadMember.filter({ user_email: userEmail }),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('squad_members').select('*').eq('user_email', userEmail);
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!userEmail
   });
 
   const { data: allSquads = [] } = useQuery({
     queryKey: ['all-squads'],
-    queryFn: () => base44.entities.Squad.list()
+    queryFn: async () => {
+      const { data, error } = await supabase.from('squads').select('*');
+      if (error) throw error;
+      return data || [];
+    }
   });
 
   const _isFollowing = following.some(f => f.following_email === userEmail);
@@ -226,7 +261,9 @@ export default function Profile() {
       if (!userEmail) return [];
       try {
         // Best-effort; RLS might restrict in some environments.
-        return await base44.entities.UserTag.filter({ user_email: userEmail });
+        const { data, error } = await supabase.from('user_tags').select('*').eq('user_email', userEmail);
+        if (error) throw error;
+        return data || [];
       } catch {
         return [];
       }
@@ -315,7 +352,11 @@ export default function Profile() {
   // In-app "connection" is a mutual follow (no Telegram handshake).
   const { data: viewerFollowing = [] } = useQuery({
     queryKey: ['viewer-following', currentUser?.email],
-    queryFn: () => base44.entities.UserFollow.filter({ follower_email: currentUser.email }),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('user_follows').select('*').eq('follower_email', currentUser.email);
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!currentUser?.email,
   });
 
@@ -342,11 +383,9 @@ export default function Profile() {
   const { data: rightNowStatus } = useQuery({
     queryKey: ['right-now-profile', userEmail],
     queryFn: async () => {
-      const statuses = await base44.entities.RightNowStatus.filter({
-        user_email: userEmail,
-        active: true
-      });
-      return statuses.find(s => new Date(s.expires_at) > new Date()) || null;
+      const { data: statuses, error } = await supabase.from('right_now_status').select('*').eq('user_email', userEmail).eq('active', true);
+      if (error) throw error;
+      return (statuses || []).find(s => new Date(s.expires_at) > new Date()) || null;
     },
     enabled: !!userEmail,
     refetchInterval: 15000
@@ -358,11 +397,12 @@ export default function Profile() {
       if (!currentUser || !userEmail || isOwnProfile) return;
       
       try {
-        await base44.entities.ProfileView.create({
+        const { error } = await supabase.from('profile_views').insert({
           viewer_email: currentUser.email,
           viewed_email: userEmail,
           viewed_at: new Date().toISOString(),
         });
+        if (error) throw error;
       } catch {
         void('Failed to track profile view');
       }
@@ -374,7 +414,11 @@ export default function Profile() {
   // Fetch profile views
   const { data: profileViews = [] } = useQuery({
     queryKey: ['profile-views', userEmail],
-    queryFn: () => base44.entities.ProfileView.filter({ viewed_email: userEmail }, '-viewed_at'),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('profile_views').select('*').eq('viewed_email', userEmail).order('viewed_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!userEmail && isOwnProfile,
   });
 
@@ -385,23 +429,32 @@ export default function Profile() {
   const canSeeViewers = _tier === 'chrome';
 
   const _followMutation = useMutation({
-    mutationFn: () => base44.entities.UserFollow.create({
-      follower_email: currentUser.email,
-      following_email: userEmail
-    }),
+    mutationFn: async () => {
+      const { data, error } = await supabase.from('user_follows').insert({
+        follower_email: currentUser.email,
+        following_email: userEmail
+      }).select().single();
+      if (error) throw error;
+      return data;
+    },
     onSuccess: () => queryClient.invalidateQueries(['following', currentUser.email])
   });
 
   const _unfollowMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const followRecord = following.find(f => f.following_email === userEmail);
-      return base44.entities.UserFollow.delete(followRecord.id);
+      const { error } = await supabase.from('user_follows').delete().eq('id', followRecord.id);
+      if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries(['following', currentUser.email])
   });
 
   const pinMutation = useMutation({
-    mutationFn: (data) => base44.entities.UserHighlight.create(data),
+    mutationFn: async (data) => {
+      const { data: result, error } = await supabase.from('user_highlights').insert(data).select().single();
+      if (error) throw error;
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['highlights']);
       toast.success('Pinned!');
@@ -409,7 +462,10 @@ export default function Profile() {
   });
 
   const unpinMutation = useMutation({
-    mutationFn: (id) => base44.entities.UserHighlight.delete(id),
+    mutationFn: async (id) => {
+      const { error } = await supabase.from('user_highlights').delete().eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['highlights']);
       toast.success('Unpinned');

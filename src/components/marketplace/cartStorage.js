@@ -1,4 +1,4 @@
-import { base44 } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 
 const GUEST_CART_STORAGE_KEY = 'hotmess_guest_cart_v1';
 
@@ -177,23 +177,31 @@ export const addToCart = async ({ productId, quantity = 1, currentUser, variantI
       const authUserId = resolvedUser?.auth_user_id || null;
       const reserved_until = getReservedUntilIso();
 
-      const baseFilter = authUserId
-        ? { auth_user_id: authUserId, product_id: productId }
-        : { user_email: resolvedUser.email, product_id: productId };
-
-      const existing = normalizedVariantId
-        ? await base44.entities.CartItem.filter({ ...baseFilter, shopify_variant_id: normalizedVariantId })
-        : await base44.entities.CartItem.filter(baseFilter);
-
-      if (existing.length > 0) {
-        const item = existing[0];
-        return base44.entities.CartItem.update(item.id, {
-          quantity: (item.quantity || 0) + qty,
-          reserved_until,
-        });
+      let query = supabase.from('cart_items').select('*');
+      if (authUserId) {
+        query = query.eq('auth_user_id', authUserId).eq('product_id', productId);
+      } else {
+        query = query.eq('user_email', resolvedUser.email).eq('product_id', productId);
       }
 
-      return base44.entities.CartItem.create({
+      if (normalizedVariantId) {
+        query = query.eq('shopify_variant_id', normalizedVariantId);
+      }
+
+      const { data: existing, error: queryError } = await query;
+      if (queryError) throw queryError;
+
+      if (existing && existing.length > 0) {
+        const item = existing[0];
+        const { data, error } = await supabase.from('cart_items').update({
+          quantity: (item.quantity || 0) + qty,
+          reserved_until,
+        }).eq('id', item.id).select().single();
+        if (error) throw error;
+        return data;
+      }
+
+      const { data, error } = await supabase.from('cart_items').insert({
         user_email: resolvedUser.email,
         ...(authUserId ? { auth_user_id: authUserId } : {}),
         product_id: productId,
@@ -201,7 +209,9 @@ export const addToCart = async ({ productId, quantity = 1, currentUser, variantI
         reserved_until,
         ...(normalizedVariantId ? { shopify_variant_id: normalizedVariantId } : {}),
         ...(normalizedVariantTitle ? { variant_title: normalizedVariantTitle } : {}),
-      });
+      }).select().single();
+      if (error) throw error;
+      return data;
     } catch (error) {
       if (isCartSchemaCompatError(error)) {
         warnCartFallbackOnce(error);
@@ -235,10 +245,12 @@ export const updateCartItemQuantity = async ({ itemId, productId, quantity, curr
   if (currentUser?.email) {
     if (!itemId) throw new Error('Missing cart item id');
     try {
-      return base44.entities.CartItem.update(itemId, {
+      const { data, error } = await supabase.from('cart_items').update({
         quantity: qty,
         reserved_until: getReservedUntilIso(),
-      });
+      }).eq('id', itemId).select().single();
+      if (error) throw error;
+      return data;
     } catch (error) {
       if (isCartSchemaCompatError(error)) {
         warnCartFallbackOnce(error);
@@ -270,7 +282,8 @@ export const removeFromCart = async ({ itemId, productId, currentUser, variantId
   if (currentUser?.email) {
     if (!itemId) throw new Error('Missing cart item id');
     try {
-      return base44.entities.CartItem.delete(itemId);
+      const { error } = await supabase.from('cart_items').delete().eq('id', itemId);
+      if (error) throw error;
     } catch (error) {
       if (isCartSchemaCompatError(error)) {
         warnCartFallbackOnce(error);
@@ -344,9 +357,15 @@ export const mergeGuestCartToUser = async ({ currentUser }) => {
 
   let existingDbItems = [];
   try {
-    existingDbItems = authUserId
-      ? await base44.entities.CartItem.filter({ auth_user_id: authUserId })
-      : await base44.entities.CartItem.filter({ user_email: resolvedUser.email });
+    let query = supabase.from('cart_items').select('*');
+    if (authUserId) {
+      query = query.eq('auth_user_id', authUserId);
+    } else {
+      query = query.eq('user_email', resolvedUser.email);
+    }
+    const { data, error: queryError } = await query;
+    if (queryError) throw queryError;
+    existingDbItems = data || [];
   } catch (error) {
     if (isMissingTableError(error)) {
       warnCartFallbackOnce(error);
@@ -373,14 +392,15 @@ export const mergeGuestCartToUser = async ({ currentUser }) => {
     const existing = byKey.get(`${String(productId)}::${guestVariantId || ''}`);
     try {
       if (existing) {
-        await base44.entities.CartItem.update(existing.id, {
+        const { error } = await supabase.from('cart_items').update({
           quantity: (existing.quantity || 0) + qty,
           reserved_until,
-        });
+        }).eq('id', existing.id);
+        if (error) throw error;
         continue;
       }
 
-      await base44.entities.CartItem.create({
+      const { error } = await supabase.from('cart_items').insert({
         user_email: resolvedUser.email,
         ...(authUserId ? { auth_user_id: authUserId } : {}),
         product_id: productId,
@@ -389,6 +409,7 @@ export const mergeGuestCartToUser = async ({ currentUser }) => {
         ...(guestVariantId ? { shopify_variant_id: guestVariantId } : {}),
         ...(guestVariantTitle ? { variant_title: guestVariantTitle } : {}),
       });
+      if (error) throw error;
     } catch (error) {
       if (isMissingTableError(error)) {
         warnCartFallbackOnce(error);

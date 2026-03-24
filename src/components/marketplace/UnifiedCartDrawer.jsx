@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { ShopCartPanel } from '@/features/shop/cart/ShopCartDrawer';
-import { base44 } from '@/components/utils/supabaseClient';
+import { supabase } from '@/components/utils/supabaseClient';
 import {
   getGuestCartItems,
   updateCartItemQuantity,
@@ -47,11 +47,17 @@ function CreatorsCartPanel({ currentUser, enabled }) {
       }
 
       const authUserId = currentUser?.auth_user_id || null;
-      const items = authUserId
-        ? await base44.entities.CartItem.filter({ auth_user_id: authUserId })
-        : await base44.entities.CartItem.filter({ user_email: currentUser.email });
+      let query = supabase.from('cart_items').select('*');
+      if (authUserId) {
+        query = query.eq('auth_user_id', authUserId);
+      } else {
+        query = query.eq('user_email', currentUser.email);
+      }
 
-      return (Array.isArray(items) ? items : []).filter((item) => {
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return (Array.isArray(data) ? data : []).filter((item) => {
         if (!item?.reserved_until) return true;
         return new Date(item.reserved_until) > now;
       });
@@ -61,7 +67,11 @@ function CreatorsCartPanel({ currentUser, enabled }) {
   const { data: products = [], isLoading: isLoadingProducts } = useQuery({
     queryKey: ['creators-cart-products'],
     enabled,
-    queryFn: () => base44.entities.Product.filter({}, '-created_date'),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
   });
 
   const cartWithProducts = useMemo(() => {
@@ -128,11 +138,19 @@ function CreatorsCartPanel({ currentUser, enabled }) {
       }
 
       const authUserId = currentUser?.auth_user_id || null;
-      const items = authUserId
-        ? await base44.entities.CartItem.filter({ auth_user_id: authUserId })
-        : await base44.entities.CartItem.filter({ user_email: currentUser.email });
+      let query = supabase.from('cart_items').select('*');
+      if (authUserId) {
+        query = query.eq('auth_user_id', authUserId);
+      } else {
+        query = query.eq('user_email', currentUser.email);
+      }
 
-      await Promise.all((Array.isArray(items) ? items : []).map((item) => base44.entities.CartItem.delete(item.id)));
+      const { data: items, error: queryError } = await query;
+      if (queryError) throw queryError;
+
+      await Promise.all((Array.isArray(items) ? items : []).map((item) =>
+        supabase.from('cart_items').delete().eq('id', item.id)
+      ));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['creators-cart'] });
@@ -311,9 +329,15 @@ export default function UnifiedCartDrawer({ currentUser }) {
 
       const authUserId = currentUser?.auth_user_id || null;
       try {
-        const items = authUserId
-          ? await base44.entities.CartItem.filter({ auth_user_id: authUserId })
-          : await base44.entities.CartItem.filter({ user_email: currentUser.email });
+        let query = supabase.from('cart_items').select('*');
+        if (authUserId) {
+          query = query.eq('auth_user_id', authUserId);
+        } else {
+          query = query.eq('user_email', currentUser.email);
+        }
+
+        const { data: items, error } = await query;
+        if (error) throw error;
 
         return (Array.isArray(items) ? items : [])
           .filter((item) => {

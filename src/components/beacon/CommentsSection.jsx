@@ -35,11 +35,19 @@ export default function CommentsSection({ beaconId }) {
 
   const { data: comments = [] } = useQuery({
     queryKey: ['comments', beaconId],
-    queryFn: () => base44.entities.BeaconComment.filter({ beacon_id: beaconId }, '-created_date')
+    queryFn: async () => {
+      const { data, error } = await supabase.from('beacon_comments').select('*').eq('beacon_id', beaconId).order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    }
   });
 
   const createCommentMutation = useMutation({
-    mutationFn: (data) => base44.entities.BeaconComment.create(data),
+    mutationFn: async (data) => {
+      const { data: result, error } = await supabase.from('beacon_comments').insert(data).select().single();
+      if (error) throw error;
+      return result;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['comments', beaconId]);
       setComment('');
