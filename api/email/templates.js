@@ -6,12 +6,12 @@
  */
 
 const BRAND_COLORS = {
-  primary: '#FF1493',
-  secondary: '#00D9FF',
-  accent: '#39FF14',
-  dark: '#000000',
+  primary: '#C8962C',
+  secondary: '#050507',
+  accent: '#C8962C',
+  dark: '#050507',
   lightText: '#FFFFFF',
-  mutedText: '#999999',
+  mutedText: '#8E8E93',
 };
 
 /**

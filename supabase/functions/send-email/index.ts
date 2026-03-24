@@ -11,7 +11,7 @@ const EMAIL_TEMPLATES = {
     subject: 'Welcome to HOTMESS 🔥',
     html: (data: { name: string }) => `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px;">
-        <h1 style="color: #FF1493; font-size: 32px; margin-bottom: 20px;">Welcome to HOTMESS</h1>
+        <h1 style="color: #C8962C; font-size: 32px; margin-bottom: 20px;">Welcome to HOTMESS</h1>
         <p style="font-size: 16px; line-height: 1.6; color: #ccc;">
           Hey ${data.name || 'there'},
         </p>
@@ -19,7 +19,7 @@ const EMAIL_TEMPLATES = {
           You're now part of London's most connected nightlife community. Get ready to discover events, 
           connect with like-minded people, and unlock unforgettable experiences.
         </p>
-        <div style="background: linear-gradient(135deg, #FF1493 0%, #B026FF 100%); padding: 20px; margin: 30px 0; text-align: center;">
+        <div style="background: linear-gradient(135deg, #C8962C 0%, #A07520 100%); padding: 20px; margin: 30px 0; text-align: center;">
           <p style="font-size: 18px; margin: 0; font-weight: bold;">Start exploring now</p>
         </div>
         <p style="font-size: 14px; color: #666;">
@@ -36,7 +36,7 @@ const EMAIL_TEMPLATES = {
     subject: 'Your HOTMESS subscription is active 🎉',
     html: (data: { name: string; tier: string }) => `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px;">
-        <h1 style="color: #FF1493; font-size: 32px; margin-bottom: 20px;">Subscription Confirmed</h1>
+        <h1 style="color: #C8962C; font-size: 32px; margin-bottom: 20px;">Subscription Confirmed</h1>
         <p style="font-size: 16px; line-height: 1.6; color: #ccc;">
           Hey ${data.name || 'there'},
         </p>
@@ -57,7 +57,7 @@ const EMAIL_TEMPLATES = {
     subject: 'Your HOTMESS subscription has been cancelled',
     html: (data: { name: string; endsAt: string }) => `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px;">
-        <h1 style="color: #FF1493; font-size: 32px; margin-bottom: 20px;">Subscription Cancelled</h1>
+        <h1 style="color: #C8962C; font-size: 32px; margin-bottom: 20px;">Subscription Cancelled</h1>
         <p style="font-size: 16px; line-height: 1.6; color: #ccc;">
           Hey ${data.name || 'there'},
         </p>
@@ -78,7 +78,7 @@ const EMAIL_TEMPLATES = {
     subject: 'We received your support request [#${ticketId}]',
     html: (data: { name: string; ticketId: string; subject: string }) => `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px;">
-        <h1 style="color: #FF1493; font-size: 32px; margin-bottom: 20px;">Support Request Received</h1>
+        <h1 style="color: #C8962C; font-size: 32px; margin-bottom: 20px;">Support Request Received</h1>
         <p style="font-size: 16px; line-height: 1.6; color: #ccc;">
           Hey ${data.name || 'there'},
         </p>
@@ -102,14 +102,14 @@ const EMAIL_TEMPLATES = {
     subject: 'Reminder: ${eventName} is coming up!',
     html: (data: { name: string; eventName: string; eventDate: string; eventLocation: string }) => `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px;">
-        <h1 style="color: #FF1493; font-size: 32px; margin-bottom: 20px;">Event Reminder 📅</h1>
+        <h1 style="color: #C8962C; font-size: 32px; margin-bottom: 20px;">Event Reminder 📅</h1>
         <p style="font-size: 16px; line-height: 1.6; color: #ccc;">
           Hey ${data.name || 'there'},
         </p>
         <p style="font-size: 16px; line-height: 1.6; color: #ccc;">
           Just a reminder that <strong style="color: #00D9FF;">${data.eventName}</strong> is coming up!
         </p>
-        <div style="background: #111; padding: 20px; margin: 20px 0; border-left: 4px solid #FF1493;">
+        <div style="background: #111; padding: 20px; margin: 20px 0; border-left: 4px solid #C8962C;">
           <p style="margin: 0; color: #fff;"><strong>When:</strong> ${data.eventDate}</p>
           <p style="margin: 10px 0 0 0; color: #fff;"><strong>Where:</strong> ${data.eventLocation}</p>
         </div>
