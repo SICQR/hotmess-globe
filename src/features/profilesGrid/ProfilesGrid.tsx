@@ -36,6 +36,8 @@ export type ProfilesGridProps = {
   viewerEmail?: string | null;
   /** Called on long-press of a profile card (for quick action menu). */
   onLongPress?: (profile: Profile, position: { x: number; y: number }) => void;
+  /** Custom component to render when grid is empty. */
+  emptyComponent?: React.ReactNode;
 };
 
 const normalizeEmail = (value: unknown) => String(value || '').trim().toLowerCase();
@@ -80,6 +82,7 @@ export default function ProfilesGrid({
   cols,
   viewerEmail: viewerEmailProp,
   onLongPress,
+  emptyComponent,
 }: ProfilesGridProps) {
   const navigate = useNavigate();
   const { openProfile } = useProfileOpener();
@@ -325,14 +328,32 @@ export default function ProfilesGrid({
           </div>
         )}
 
-        <div className={cols === 3
-          ? 'grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5'
-          : 'grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4'
-        }>
-          {displayItems.map((profile) => (
-            cols === 3 ? (
-              <div key={profile.id} className="aspect-square overflow-hidden">
+        {!isLoadingInitial && displayItems.length === 0 && emptyComponent ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            {emptyComponent}
+          </div>
+        ) : (
+          <div className={cols === 3
+            ? 'grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-0.5'
+            : 'grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4'
+          }>
+            {displayItems.map((profile) => (
+              cols === 3 ? (
+                <div key={profile.id} className="aspect-square overflow-hidden">
+                  <ProfileCard
+                    profile={profile}
+                    viewerLocation={viewerLocation}
+                    viewerProfile={viewerProfile}
+                    onOpenProfile={handleOpenProfile}
+                    onNavigateUrl={handleNavigateUrl}
+                    isTapped={isTapped}
+                    onSendTap={sendTap}
+                    onLongPress={onLongPress}
+                  />
+                </div>
+              ) : (
                 <ProfileCard
+                  key={profile.id}
                   profile={profile}
                   viewerLocation={viewerLocation}
                   viewerProfile={viewerProfile}
@@ -342,26 +363,14 @@ export default function ProfilesGrid({
                   onSendTap={sendTap}
                   onLongPress={onLongPress}
                 />
-              </div>
-            ) : (
-              <ProfileCard
-                key={profile.id}
-                profile={profile}
-                viewerLocation={viewerLocation}
-                viewerProfile={viewerProfile}
-                onOpenProfile={handleOpenProfile}
-                onNavigateUrl={handleNavigateUrl}
-                isTapped={isTapped}
-                onSendTap={sendTap}
-                onLongPress={onLongPress}
-              />
-            )
-          ))}
+              )
+            ))}
 
-          {Array.from({ length: skeletonCount }).map((_, idx) => (
-            <SkeletonCard key={`sk-${idx}`} />
-          ))}
-        </div>
+            {Array.from({ length: skeletonCount }).map((_, idx) => (
+              <SkeletonCard key={`sk-${idx}`} />
+            ))}
+          </div>
+        )}
 
         {/* Infinite scroll sentinel */}
         {typeof maxItems === 'number' ? null : (

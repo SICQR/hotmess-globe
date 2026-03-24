@@ -32,6 +32,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, Ghost, ArrowRight, X } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
@@ -209,25 +210,45 @@ function GhostedSkeleton() {
 // ---- Empty state ------------------------------------------------------------
 
 function GhostedEmpty({ onOpenFilters }: { onOpenFilters: () => void }) {
+  const handleInvite = async () => {
+    const url = `https://hotmessldn.com`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ text: "I'm on HOTMESS — meet me tonight", url });
+      } catch { /* cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      // toast would be nice but keep it simple
+    }
+  };
+
   return (
     <motion.div
-      className="flex flex-col items-center justify-center px-8 py-20 text-center"
+      className="col-span-3 flex flex-col items-center justify-center py-20 text-center px-8"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <Ghost className="w-16 h-16 text-[#8E8E93] mb-6" strokeWidth={1.5} />
-      <h2 className="text-xl font-bold text-white mb-2">No one nearby right now</h2>
+      <Ghost className="w-12 h-12 mb-4" style={{ color: AMBER }} />
+      <h2 className="text-lg font-black text-white mb-2">Nobody nearby yet</h2>
       <p className="text-sm text-[#8E8E93] mb-6 max-w-[260px]">
-        Try expanding your distance or adjusting your filters to see more people.
+        HOTMESS is growing in your area. Invite a friend and go live together.
       </p>
       <button
-        onClick={onOpenFilters}
-        className="h-12 px-6 bg-[#C8962C] text-black font-bold rounded-xl flex items-center gap-2 active:scale-95 transition-transform"
-        aria-label="Open filters to expand search"
+        onClick={handleInvite}
+        className="h-12 px-6 text-black font-bold rounded-2xl flex items-center gap-2 active:scale-95 transition-transform mb-3"
+        style={{ backgroundColor: AMBER }}
+        aria-label="Invite a friend"
       >
-        <SlidersHorizontal className="w-4 h-4" />
-        Expand your search
+        Invite a friend
+      </button>
+      <button
+        onClick={onOpenFilters}
+        className="text-sm font-medium"
+        style={{ color: MUTED }}
+        aria-label="Open filters"
+      >
+        or adjust filters
       </button>
     </motion.div>
   );
@@ -240,6 +261,7 @@ interface GhostedModeProps {
 }
 
 export function GhostedMode({ className = '' }: GhostedModeProps) {
+  const navigate = useNavigate();
   const { openSheet } = useSheet();
   const onlineCount = useRightNowCount();
 
@@ -479,8 +501,16 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
               </p>
             </div>
 
-            {/* Right: ambient toggle + filter icon with badge */}
+            {/* Right: SOS + ambient toggle + filter icon with badge */}
             <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/sos')}
+              className="w-10 h-10 flex items-center justify-center rounded-full active:scale-95 transition-transform"
+              style={{ background: 'rgba(255,59,48,0.15)', border: '1px solid rgba(255,59,48,0.3)' }}
+              aria-label="SOS"
+            >
+              <span style={{ fontSize: 14 }}>🆘</span>
+            </button>
             <GhostedAmbientToggle />
             <button
               onClick={() => openSheet('filters')}
@@ -546,6 +576,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
           filterProfiles={filterProfiles}
           viewerEmail={myEmail}
           onLongPress={handleLongPress}
+          emptyComponent={<GhostedEmpty onOpenFilters={() => openSheet('filters')} />}
         />
       </div>
 
