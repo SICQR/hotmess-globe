@@ -1441,8 +1441,8 @@ export function PulseMode({ className = '' }: PulseModeProps) {
         </div>
       </div>
 
-      {/* Beacon FAB (bottom-right, above drawer) */}
-      <div className="fixed right-4 z-[45] pointer-events-auto" style={{ bottom: 'calc(180px + env(safe-area-inset-bottom, 0px))' }}>
+      {/* Beacon FAB (bottom-right, above nav) */}
+      <div className="fixed bottom-24 right-4 z-[45] pointer-events-auto">
         <BeaconFAB
           onTap={handleCreateBeacon}
           onLongPress={handleCreateBeacon}

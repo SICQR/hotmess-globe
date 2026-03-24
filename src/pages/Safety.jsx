@@ -8,11 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import PageShell from '@/components/shell/PageShell';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
 import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
 
 export default function Safety() {
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -123,16 +125,33 @@ export default function Safety() {
   });
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <PageShell
-        title={
-          <>
-            <span className="text-[#00C2E0]">Safety</span> Hub
-          </>
-        }
-        subtitle="Care-first. Your safety matters."
-        maxWidth="4xl"
+    <div className="h-full w-full flex flex-col text-white" style={{ background: '#050507' }}>
+      {/* Mobile-first sticky header */}
+      <div
+        className="sticky top-0 z-30 border-b border-white/5 px-4"
+        style={{ background: 'rgba(5,5,7,0.85)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
       >
+        <div className="pt-[env(safe-area-inset-top)]" />
+        <div className="flex items-center justify-between h-14">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 text-sm font-semibold text-white/60 active:text-white transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+          <div className="text-center">
+            <h1 className="font-black text-base tracking-[0.12em] uppercase" style={{ color: '#C8962C' }}>
+              Safety Hub
+            </h1>
+            <p className="text-[10px] text-white/30 font-medium">Care-first</p>
+          </div>
+          <div className="w-12" /> {/* spacer */}
+        </div>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 pb-24">
         <Tabs defaultValue="checkin">
           <TabsList className="bg-white/5 border border-white/10 mb-6">
             <TabsTrigger value="checkin">Safety Check-In</TabsTrigger>
@@ -352,7 +371,7 @@ export default function Safety() {
             </div>
           </TabsContent>
         </Tabs>
-      </PageShell>
+      </div>
     </div>
   );
 }

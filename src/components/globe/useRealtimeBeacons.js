@@ -18,9 +18,13 @@ const BEACON_TYPES = {
 };
 
 // Convert presence rows to beacon format for EnhancedGlobe3D
+// Presence rows may carry a `metadata` JSONB column with display_name,
+// avatar_url, bio, city baked in at upsert time. Extract those so any
+// consumer (globe pins, "Who's Out RN", etc.) can render user info
+// without a separate profiles join.
 function presenceToBeacon(presence) {
   if (!presence.geo) return null;
-  
+
   // Parse geo (could be GeoJSON or WKT)
   let lat, lng;
   if (presence.geo?.coordinates) {
@@ -32,11 +36,19 @@ function presenceToBeacon(presence) {
       lat = parseFloat(match[2]);
     }
   }
-  
+
   if (typeof lat !== 'number' || typeof lng !== 'number') return null;
+
+  // Extract metadata fields (display_name, avatar_url, bio, city)
+  const meta = presence.metadata && typeof presence.metadata === 'object' ? presence.metadata : {};
+  const displayName = String(meta.display_name || meta.username || '').trim();
+  const avatarUrl = String(meta.avatar_url || '').trim();
+  const bio = String(meta.bio || '').trim();
+  const city = String(meta.city || '').trim();
 
   return {
     id: `presence:${presence.user_id}`,
+    user_id: presence.user_id,
     lat,
     lng,
     kind: 'hookup', // For existing Globe compatibility
@@ -44,8 +56,13 @@ function presenceToBeacon(presence) {
     intensity: 0.8,
     active: true,
     isRightNow: true,
-    title: 'Live Now',
+    title: displayName || 'Live Now',
     type: BEACON_TYPES.SOCIAL,
+    // Metadata passthrough for card/avatar rendering
+    displayName: displayName || undefined,
+    avatarUrl: avatarUrl || undefined,
+    bio: bio || undefined,
+    city: city || undefined,
   };
 }
 
