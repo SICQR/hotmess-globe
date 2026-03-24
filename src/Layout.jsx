@@ -22,7 +22,7 @@ import RightNowNotifications from '@/components/discovery/RightNowNotifications'
 import PersistentRadioPlayer from '@/components/shell/PersistentRadioPlayer';
 import { useRadio } from '@/components/shell/RadioContext';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
-import CookieConsent from '@/components/legal/CookieConsent';
+// CookieConsent removed — handled by CookieBanner in App.jsx
 import UnifiedCartDrawer from '@/components/marketplace/UnifiedCartDrawer';
 import BottomNav from '@/components/navigation/BottomNav';
 import { TonightModeProvider } from '@/hooks/useTonightMode';
@@ -673,8 +673,7 @@ function LayoutInner({ children, currentPageName }) {
         <BottomNav currentPageName={currentPageName} user={user} />
       )}
 
-      {/* Cookie Consent Banner */}
-      <CookieConsent />
+      {/* Cookie consent handled by CookieBanner in App.jsx — do not duplicate */}
     </div>
         </TaxonomyProvider>
       </ErrorBoundary>

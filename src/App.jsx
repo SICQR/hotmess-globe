@@ -42,6 +42,7 @@ import PinLockOverlay from '@/components/auth/PinLockScreen';
 import { OSBottomNav } from '@/modes/OSBottomNav';
 import { RadioProvider } from '@/contexts/RadioContext';
 import { PersonaProvider } from '@/contexts/PersonaContext';
+import { GlobeProvider } from '@/contexts/GlobeContext';
 import { RadioMiniPlayer } from '@/components/radio/RadioMiniPlayer';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useDeepLinkSheet } from '@/hooks/useDeepLinkSheet';
@@ -56,6 +57,7 @@ const ProfileMode = lazy(() => import('@/modes/ProfileMode'));
 const MarketMode = lazy(() => import('@/modes/MarketMode').then(m => ({ default: m.MarketMode })));
 const EventsMode  = lazy(() => import('@/modes/EventsMode'));
 const VaultMode   = lazy(() => import('@/modes/VaultMode'));
+const MusicTab    = lazy(() => import('@/components/music/MusicTab'));
 const ChatMeetupPage = lazy(() => import('@/pages/ChatMeetupPage'));
 const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
 
@@ -412,7 +414,7 @@ const AuthenticatedApp = () => {
       <Route path="/radio" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
       <Route path="/radio/schedule" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
       <Route path="/radio/live" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
-      <Route path="/music" element={<Navigate to="/radio" replace />} />
+      <Route path="/music" element={<Suspense fallback={null}><MusicTab /></Suspense>} />
       <Route path="/music/live" element={<Navigate to="/radio" replace />} />
       <Route path="/music/shows" element={<Navigate to="/radio/schedule" replace />} />
       <Route path="/music/shows/:show/episodes" element={<Navigate to="/radio/schedule" replace />} />
@@ -622,19 +624,21 @@ function App() {
                     <SOSProvider>
                       <SheetProvider>
                         <NavigationTracker />
-                        <BootRouter>
-                          {/*
-                            L0-L3 Layered OS Architecture
-                            - UnifiedGlobe is persistent, never unmounts
-                            - All navigation happens via SheetContext
-                            - Router only handles URL sync, not page mounts
-                          */}
-                          <RadioProvider>
-                            <PersonaProvider>
-                              <OSArchitecture />
-                            </PersonaProvider>
-                          </RadioProvider>
-                        </BootRouter>
+                        <GlobeProvider>
+                          <BootRouter>
+                            {/*
+                              L0-L3 Layered OS Architecture
+                              - UnifiedGlobe is persistent, never unmounts
+                              - All navigation happens via SheetContext
+                              - Router only handles URL sync, not page mounts
+                            */}
+                            <RadioProvider>
+                              <PersonaProvider>
+                                <OSArchitecture />
+                              </PersonaProvider>
+                            </RadioProvider>
+                          </BootRouter>
+                        </GlobeProvider>
                         {/* L2 Sheet System - Renders over everything, outside route remount boundary */}
                         <SheetRouter />
                       </SheetProvider>
