@@ -369,11 +369,11 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
       try {
         // Get beacon IDs for events happening today
         const { data: beacons } = await supabase
-          .from('Beacon')
+          .from('beacons')
           .select('id')
-          .gte('event_start', todayStart.toISOString())
-          .lte('event_start', todayEnd.toISOString())
-          .not('event_start', 'is', null);
+          .gte('starts_at', todayStart.toISOString())
+          .lte('starts_at', todayEnd.toISOString())
+          .not('starts_at', 'is', null);
 
         if (!beacons || beacons.length === 0) return;
 

@@ -31,7 +31,7 @@ export default function NavigationTracker() {
         }
 
         if (isAuthenticated && pageName) {
-            // base44.appLogs.logUserInApp deprecated - logging disabled
+            // TODO: Log user navigation via Supabase or /api/logs endpoint
         }
     }, [location, isAuthenticated, Pages, mainPageKey]);
 

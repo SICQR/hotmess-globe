@@ -147,7 +147,6 @@ npm audit            # Security vulnerability check
 ### Code Standards
 
 - Use React hooks and functional components
-- Follow Base44 file structure conventions
 - Implement proper error boundaries
 - Add accessibility features (ARIA, keyboard nav)
 - Write tests for business logic
@@ -171,7 +170,7 @@ npm test -- --coverage
 ### Implemented Measures
 
 - Input sanitization (XSS prevention)
-- SQL injection protection via Base44 entities
+- SQL injection protection via Supabase RLS
 - Rate limiting on backend functions
 - Stripe webhook signature verification
 - Age gate and consent management
@@ -184,26 +183,26 @@ Run `npm audit` regularly to check for vulnerabilities.
 
 ## 🌐 Deployment
 
-### Base44 Platform
+### Vercel Platform
 
 1. Push code to GitHub
-2. Base44 auto-deploys on push to main
-3. Monitor deployments in Base44 dashboard
+2. Vercel auto-deploys on push to main
+3. Monitor deployments in Vercel dashboard
 
 ### Environment Variables
 
-Set production secrets in Base44 dashboard:
+Set production secrets in Vercel dashboard:
 - `stripe_key` - Stripe secret key
-- `supabase_key` - Supabase service role key
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
 - Additional secrets as needed
 
 ## 📊 Monitoring
 
 ### Analytics
 
-- Built-in Base44 analytics
+- Sentry error tracking
 - Custom event tracking via `components/utils/analytics.js`
-- A/B testing framework in `components/analytics/ABTestingFramework`
 
 ### Error Tracking
 
@@ -238,14 +237,14 @@ MIT License - see LICENSE file for details
 
 ## 🔗 Links
 
-- [Base44 Platform](https://base44.com)
-- [Documentation](https://docs.base44.com)
-- [GitHub Repository](https://github.com/your-org/hotmess)
-- [Issue Tracker](https://github.com/your-org/hotmess/issues)
+- [Vercel Platform](https://vercel.com)
+- [Supabase Documentation](https://supabase.com/docs)
+- [GitHub Repository](https://github.com/SICQR/hotmess-globe)
+- [Issue Tracker](https://github.com/SICQR/hotmess-globe/issues)
 
 ## 🙏 Acknowledgments
 
-- Base44 team for the platform
+- Supabase team for the backend
 - LGBT+ tech community
 - Open source contributors
 - RAW Convict Records for music integration

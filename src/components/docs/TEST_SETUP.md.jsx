@@ -80,43 +80,29 @@ global.IntersectionObserver = class IntersectionObserver {
   }
 };
 
-// Mock Base44 SDK
-vi.mock('@/api/base44Client', () => ({
-  base44: {
+// Mock Supabase client
+vi.mock('@/components/utils/supabaseClient', () => ({
+  supabase: {
     auth: {
-      me: vi.fn(() => Promise.resolve({ 
-        email: 'test@test.com', 
-        full_name: 'Test User',
-        xp: 1000,
-        role: 'user'
+      getUser: vi.fn(() => Promise.resolve({
+        data: { user: null },
+        error: null
       })),
-      isAuthenticated: vi.fn(() => Promise.resolve(true)),
-      logout: vi.fn(),
-      updateMe: vi.fn(),
+      getSession: vi.fn(() => Promise.resolve({
+        data: { session: null },
+        error: null
+      })),
     },
-    entities: {
-      User: {
-        list: vi.fn(() => Promise.resolve([])),
-        filter: vi.fn(() => Promise.resolve([])),
-        create: vi.fn(),
-        update: vi.fn(),
-        delete: vi.fn(),
-      },
-      Beacon: {
-        list: vi.fn(() => Promise.resolve([])),
-        filter: vi.fn(() => Promise.resolve([])),
-        create: vi.fn(),
-        update: vi.fn(),
-        delete: vi.fn(),
-      },
-    },
-    functions: {
-      invoke: vi.fn(),
-    },
-    integrations: {
-      Core: {
-        UploadFile: vi.fn(() => Promise.resolve({ file_url: 'https://example.com/file.jpg' })),
-      },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnValue(Promise.resolve({ data: [], error: null })),
+      insert: vi.fn().mockReturnValue(Promise.resolve({ data: [], error: null })),
+      update: vi.fn().mockReturnValue(Promise.resolve({ data: [], error: null })),
+      delete: vi.fn().mockReturnValue(Promise.resolve({ data: [], error: null })),
+    })),
+    storage: {
+      from: vi.fn(() => ({
+        upload: vi.fn(() => Promise.resolve({ data: { path: 'file.jpg' }, error: null })),
+      })),
     },
   },
 }));

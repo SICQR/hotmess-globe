@@ -51,7 +51,7 @@ export default function GlobePage({ embedded = false }) {
     },
   });
 
-  // Fetch beacons from Supabase beacons table (not base44 entity)
+  // Fetch beacons from Supabase beacons table
   const { data: beacons = [], isLoading: beaconsLoading } = useQuery({
     queryKey: ['beacons'],
     queryFn: async () => {

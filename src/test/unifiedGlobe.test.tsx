@@ -95,7 +95,6 @@ vi.mock('@/components/utils/supabaseClient', () => ({
     auth: { getUser: async () => ({ data: { user: null }, error: null }) },
     from: () => ({ select: () => ({ data: [], error: null }) }),
   },
-  base44: {},
 }));
 
 // ---------------------------------------------------------------------------

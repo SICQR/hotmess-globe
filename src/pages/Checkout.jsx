@@ -149,8 +149,8 @@ export default function Checkout() {
     queryFn: async () => {
       if (!cartProductIds.length) return [];
 
-      // IMPORTANT: do not use base44.entities.Product.list/filter here.
-      // Those methods dedupe Shopify-imported rows, which can hide the exact
+      // IMPORTANT: Use raw Supabase queries directly (no deduping).
+      // Deduping Shopify-imported rows can hide the exact
       // product id referenced by a cart item and make the cart look empty.
       const { data, error } = await supabase
         .from('products')
