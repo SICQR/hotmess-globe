@@ -2,7 +2,7 @@
 
 This file provides guidance when working with code in this repository.
 
-**Last updated:** 2026-03-08 (session 5)
+**Last updated:** 2026-03-25 (session 6)
 **Design system:** `DESIGN_SYSTEM.md` — always read before touching any styling
 **Design reference docs:** `~/Downloads/HOTMESS-PROJECT/01-ACTIVE-REFERENCE/` — all dated design reference files live here
 
@@ -40,94 +40,149 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 - Supabase project (production): `axxwdjmbwkvqhcpwters` (supabase-purple-queen, East US)
 - Supabase project (dev/staging): `klsywpvncqqglhnhrjbh` (HOTMESS BASE44, ap-northeast-1)
 - Repo: `SICQR/hotmess-globe`, live at `hotmessldn.com`
+- Vercel project: `prj_xdS5EoLRDpGhj4GOIbtSLSrCmvJO`, team: `team_ctjjRDRV1EpYKYaO9wQSwRyv`
 - You have write access. Use it.
 
 ---
 
-## 🔴 PICK UP HERE (Last session: 2026-03-08 session 5)
+## 🔴 PICK UP HERE (Last session: 2026-03-25 session 6)
 
-**What's done this sprint:**
-- ✅ hotmessldn.com domain fixed
-- ✅ RLS security hardening complete (all 7 holes + profile_overrides fixed)
-- ✅ All 5 P1 agents shipped (Radio, Auth, Unread badge, Persona, XP purge)
-- ✅ HomeMode 12-section redesign live
-- ✅ IncomingCallBanner (platform-adaptive iOS/Android)
-- ✅ SOSOverlay full rewrite — 2-phase fake call, iOS+Android, "Exit & clear data"
-- ✅ LiveLocationShare wired into L2SafetySheet — "Live" tab in Safety Centre
-- ✅ L2LiveLocationWatcherSheet — receiver map view for live location
-- ✅ notifyContacts() writes to notifications table
-- ✅ L2NotificationInboxSheet + useNotifCount — full notification feed, amber badge on Profile tab
-- ✅ GitHub Actions CI — real e2e-smoke job (smoke.a, smoke.b, navigation specs, Chromium)
-- ✅ Co-founder mode behaviour written into CLAUDE.md
-- ✅ Profile completion card wired to real data (useProfileCompletion hook) — 32f95f1
-- ✅ profile_overrides RLS wrong FK fixed (applied to production DB)
-- ✅ notify-push Edge Function deployed — JWT-authenticated, emails→user_ids, web-push via VAPID
-- ✅ LiveLocationShare.notifyContacts() fires push + in-app notification — 41c305e
-- ✅ VaultMode: OS bg, correct green, nav padding, unused imports removed — 17d0378
-- ✅ Read receipts server-side: fixed RPC call (mark_messages_read), removed duplicate manual reset — 03c15ef
-  → DB trigger increments unread_count on INSERT; RPC clears it + stamps read_by[] atomically
-- ✅ PersonaSwitcherSheet: "Add persona" now navigates to /profile?action=manage-personas — 17a37f6
-- ✅ OnboardingGate Vibe step (step 5): captures age, position, looking_for → profiles.public_attributes — c510ee5
-- ✅ api/profiles.js: now joins profiles.public_attributes so age/position/looking_for reach Ghosted grid — c510ee5
-- ✅ SimpleProfileCard + ProfileCard: now show age + position — c510ee5
-- ✅ Profile → My Earnings entry point → L2PayoutsSheet (seller balance + payout request) — c4224d1
-- ✅ RadioMode: Full Schedule button in Up Next strip → L2ScheduleSheet — c4224d1
-- ✅ HomeMode: dual HUNG/HNH creator drop banners + correct callsite props — d61d51c
-- ✅ L2BrandSheet: `hnh` added to layout union — d61d51c
-- ✅ Auth.jsx: full HOTMESS universe landing page — hero, ecosystem grid, radio module, From The Floor energy feed, auth as bottom sheet — 3345f68
-  - CTAs: "Make a mess" (signup) / "I'm already filthy" (signin)
-  - Universe grid: 6 channels (Listen/Meet/Care/Trade/Play/Signal) with brand colours
-  - Live Radio module: waveform, 3 shows schedule, Hand N Hand HNH feature pill
-  - From The Floor: 6-card horizontal scroll energy feed
-  - Auth form: AnimatePresence spring bottom sheet z-200 overlay
-- ✅ App.jsx: ?tg_token=&tg_user= URL handler in OSArchitecture — 3345f68
-- ✅ TelegramPanel.tsx: full branded rewrite (was stub toast) — 3345f68
-  - Bot-referral detection, welcome @tgUser, stats row, join CTA, focus trap
-- ✅ SellerProfileView.jsx: real preloved_listings Supabase query (was base44 + "coming soon") — 3345f68
+### What shipped this session (2026-03-25):
 
-**What still needs doing (blocked on Phil):**
-- ✅ VAPID keys set in Supabase Edge Function secrets — notify-push live (2026-03-08)
-- ❌ VITE_SUPABASE_ANON_KEY not yet set as GitHub repo secret (e2e-smoke will run but Supabase calls fail)
+**Product plan execution (P0–P6):**
+- ✅ Ghost profiles filtered from Ghosted grid — api/profiles.js filters @hotmess.app, @hotmess.test, demo, admin, e2e
+- ✅ Honest empty state on Ghosted grid when <1 real user — invite card with Web Share API
+- ✅ SOS button added to Ghosted header + Pulse Shield icon → /safety
+- ✅ SOSButton visibility improved (brighter idle state) + first-load tooltip
+- ✅ Safety.jsx fully migrated from base44 → Supabase + SOS/Fake Call buttons added
+- ✅ Email templates rebranded pink → gold (api/email/templates.js + send-email Edge Function)
+- ✅ Post-onboarding "What now?" screen added (step 8 after community attestation)
+- ✅ Invite deep link handler — `?invite=CODE` URL param capture + referral_code storage on signup
+- ✅ Profile tab → More tab in bottom nav (MorePage hub: Safety, Care, Profile, Personas, Vault, Settings, Help)
+- ✅ /care route — Hand N Hand wellbeing page (aftercare tips, crisis resources, breathing exercise)
+- ✅ Personas WIRED — More page entry point + long-press More tab opens PersonaSwitcherSheet
+
+**base44 → Supabase migration (COMPLETE):**
+- ✅ Auth layer: 84 files migrated (base44.auth.me/isAuthenticated/logout/updateMe → supabase.auth.*)
+- ✅ Entity reads: filter/list/get across 23 core user-facing files → supabase.from().select()
+- ✅ Entity writes: create/update/delete migrated alongside reads
+- ✅ Remaining 115+ files: all base44.entities.* calls replaced with direct Supabase queries
+- ✅ Final 15 files cleaned up — integrations stubbed (InvokeLLM → TODO, UploadFile → supabase.storage)
+- ✅ **ZERO base44 imports remain** — `grep -rl "from.*base44Client" src/` returns only base44Client.js itself
+- ✅ 3 files still mention "base44" in comments only (GhostedMode.tsx, supabaseClient.jsx, SellerProfileView.jsx)
+
+**Commits (unpushed — need `cd ~/hotmess-globe && git push origin main`):**
+- `f583a35` refactor: migrate base44.auth.* → supabase.auth across 80+ files
+- `b6fc6c4` docs: update JSDoc comment referencing migrated base44.auth.me()
+- `aa34442` refactor: migrate base44 entity reads → supabase.from().select() in core user components
+- `7ac23a9` refactor: migrate base44.entities → supabase queries across 14 files
+- `040e7e9` refactor: fix test mocks for cartStorage migration
+- `e281060` refactor: complete base44 → supabase migration — remove base44 dependency
+- `f882c4d` refactor: final base44 cleanup — last 15 files migrated
+
+**Already pushed + deployed to hotmessldn.com (dpl_8gxZRcxV96JxaRwsRnZr1LfSttJb):**
+- `1576578` feat(ghosted): filter ghost profiles + honest empty state + SOS button
+- `6b0a78e` migrate(Safety): base44 → Supabase + SOS/Fake Call buttons
+- `1c78416` fix(pulse): amber beacon FAB + navigate Shield to /safety, improve SOSButton visibility
+- `e82cc53` style(email): rebrand templates from pink to gold
+- `277cd1d` feat(onboarding): post-onboarding 'What now?' action picker
+- `d631d32` feat(invite): deep link handler + referral capture on onboarding
+- `e2d3dac` feat(personas): wire persona entry points — More page item + long-press More tab
+
+### What still needs doing:
+
+**IMMEDIATE — push base44 migration:**
+```bash
+cd ~/hotmess-globe && git push origin main
+```
+This deploys 7 commits (162 files changed, 1408+/1496-) completing the full base44 removal.
+
+**Blocked on Phil:**
+- ❌ VITE_SUPABASE_ANON_KEY not yet set as GitHub repo secret (e2e-smoke CI runs but Supabase calls fail)
 - ❌ Stripe Connect redirect (one-line uncomment in PayoutManager.jsx when Stripe is live)
+- ❌ Brand visibility toggles — flip `visible: true` in `src/config/brands.ts` for: hung, high, hungmess
 
-**Next task:** Awaiting Phil's direction. See platform audit below for gaps.
+**Next engineering priorities (in order):**
+1. **Delete `src/api/base44Client.js`** — the shim file itself. Now that zero files import it, safe to remove.
+2. **AI feature stubs** — InvokeLLM calls were replaced with `console.warn('[TODO]')`. Decide: remove AI features entirely, or wire to a real Claude/OpenAI endpoint.
+3. **UploadFile migration** — 18 call sites stubbed with supabase.storage. Need to create 'uploads' bucket in Supabase and test the upload flow end-to-end.
+4. **Read receipts server-side** — markRead() partially writes to localStorage. DB trigger on chat_threads.unread_count exists but full sync incomplete.
+5. **VaultMode scope** — VaultMode.tsx exists but no defined content. Phil to define: tickets, orders, archive?
+6. **PWA push notifications** — VAPID keys set, notify-push Edge Function deployed, but service worker handler not wired to display notifications in browser.
 
 ---
 
-## 🔍 PLATFORM AUDIT — USER JOURNEY STATUS (2026-03-08 session 4)
+## 🔍 PLATFORM AUDIT — USER JOURNEY STATUS (2026-03-25 session 6)
 
 | User Type | Status | Remaining gaps |
 |-----------|--------|----------------|
-| New user (first arrival) | ✅ | — 7-step onboarding → profile with age/position/looking_for on grid immediately |
-| Ghosted social user | ✅ | — Grid, taps, boos, chat, video call, filters all wired |
-| Seller | ⚠️ | ✅ List, view listings, view earnings (payouts sheet). ❌ Preloved payment = no Stripe (arrange via chat) |
-| Buyer | ⚠️ | ✅ Shopify checkout real. ❌ Preloved = order record only, payment not moved |
-| Radio listener | ✅ | — Stream live, mini player persists, show cards, Full Schedule button → L2ScheduleSheet |
-| Event organiser | ✅ | — Create event in EventsMode → beacons |
-| Event attendee | ✅ | — RSVP → ticket in Vault → QR |
-| Telegram entry user | ❌ | ✅ Bot server-side. ❌ TelegramPanel is placeholder. No ?tg_token= URL handling frontend |
-| Safety user | ✅ | — SOS, fake call, emergency contacts, live location share, push notifications |
+| New user (first arrival) | ✅ | 8-step onboarding → "What now?" action picker → profile on grid immediately |
+| Ghosted social user | ✅ | Grid (ghost-filtered), taps, boos, chat, video call, filters all wired |
+| Seller | ⚠️ | ✅ List, view, earnings. ❌ Preloved payment = no Stripe (arrange via chat) |
+| Buyer | ⚠️ | ✅ Shopify checkout real. ❌ Preloved = order record only |
+| Radio listener | ✅ | Stream live, mini player, show cards, Full Schedule |
+| Music listener | ✅ | /music tab, artist pages, inline HTML5 audio, release grid |
+| Event organiser | ✅ | Create event → beacons |
+| Event attendee | ✅ | RSVP → ticket in Vault → QR |
+| Invite referral | ✅ | ?invite=CODE → stored in localStorage → written to profiles.referral_code on signup |
+| Telegram entry | ⚠️ | ✅ Bot server-side + TelegramPanel rewrite. ❌ ?tg_token= URL handling basic |
+| Safety user | ✅ | SOS, fake call, emergency contacts, live location, push, /care wellbeing page |
+| Persona user | ✅ | Create up to 5 personas, switch via long-press More tab or ProfileMode avatar |
 
-### Brand visibility (`src/config/brands.ts` — flip `visible: true` when ready)
-| Brand | Now | Action needed |
-|-------|-----|---------------|
+### Navigation structure (current):
+```
+Bottom nav (6 tabs): Home | Pulse | Ghosted | Market | Music | More
+More page: Safety → /safety
+            Care → /care
+            My Profile → /profile
+            Personas → /profile?action=manage-personas
+            Vault → /more/vault
+            Settings → /more/settings
+            Help → /help
+```
+
+### Brand visibility (`src/config/brands.ts`)
+| Brand | Status | Action |
+|-------|--------|--------|
 | hotmess | ✅ live | — |
 | hotmessRadio | ✅ live | — |
 | raw | ✅ live | — |
 | messmarket | ✅ live | — |
-| hung | ❌ hidden | Phil to confirm → 1-line change |
-| high | ❌ hidden | Phil to confirm → 1-line change |
+| hung | ❌ hidden | Phil: 1-line `visible: true` |
+| high | ❌ hidden | Phil: 1-line `visible: true` |
 | superhung / superraw | ✅ config | No Shopify products yet |
-| hungmess | ❌ hidden | Phil to confirm |
-| rawConvictRecords / smashDaddys / hnhMess | ✅ config | Confirm Shopify collections exist |
-
-### Known code gaps (not blocking core journeys)
-- `TelegramPanel` frontend = placeholder — needs telebot repo wired
-- Preloved checkout = "arrange via chat" — needs Stripe Connect (blocked on Phil)
-- VAPID keys not set → push notifications fail silently
-- Dev orphan sheets: `admin`, `ghosted`, `marketplace`, `order`, `ticket-market` — registered but harmless
+| hungmess | ❌ hidden | Phil: 1-line `visible: true` |
+| rawConvictRecords / smashDaddys / hnhMess | ✅ config | Confirm Shopify collections |
 
 ---
+
+## DB STATE SNAPSHOT (dev/staging: klsywpvncqqglhnhrjbh)
+
+Key tables with data:
+```
+profiles:           23 rows
+beacons:             0 rows (VIEW over events with metadata)
+products:            8 rows
+community_posts:     8 rows
+chat_threads:        3 rows
+messages:            4 rows
+right_now_status:    9 rows
+preloved_listings:   5 rows
+label_artists:       7 rows
+label_releases:     16 rows
+tracks:              6 rows
+app_banners:        29 rows
+shows:               5 rows (radio)
+djs:                 2 rows
+taps:                1 row
+personas:            0 rows (table exists, persona system wired)
+trusted_contacts:    0 rows (onboarding captures them)
+badges:              9 rows
+venues:              7 rows
+cities:             13 rows
+```
+
+Production (axxwdjmbwkvqhcpwters): same schema, access restricted.
 
 ---
 
@@ -178,7 +233,8 @@ Sentry.ErrorBoundary → ErrorBoundary → OSProvider
                               └─ SheetProvider   ← sheet state
                                  └─ BootRouter
                                     └─ RadioProvider
-                                       └─ OSArchitecture
+                                       └─ PersonaProvider
+                                          └─ OSArchitecture
 ```
 
 `SheetRouter` is rendered as a sibling to `BootRouter` (inside `SheetProvider` but outside the route tree), so sheets never unmount on route changes.
@@ -193,17 +249,20 @@ Sentry.ErrorBoundary → ErrorBoundary → OSProvider
 | L3 | 150 | Higher sheets: persona switcher, filters |
 | Interrupts | 180–200 | `IncomingCallBanner` (180), `SOSButton` (190), `SOSOverlay` (200), `PinLockOverlay` (above all) |
 
-### 5-Mode OS structure
+### 6-Mode OS structure + More hub
 
 | Route | Mode | Status |
 |-------|------|--------|
-| `/` | Home — 12-section feed | ✅ Redesigned 2026-03-07 |
+| `/` | Home — 12-section feed | ✅ Active |
 | `/pulse` | Pulse — globe + events + beacon FAB | ✅ Active |
-| `/ghosted` | Ghosted — 3-col proximity grid | ✅ Active |
+| `/ghosted` | Ghosted — 3-col proximity grid (ghost-filtered) | ✅ Active |
 | `/market` | Market — Shopify headless + preloved | ✅ Active |
-| `/profile` | Profile — persona switcher, settings | ✅ Active |
+| `/music` | Music — label releases, artists, tracks | ✅ Active |
+| `/more` | More — hub to Safety, Care, Profile, Personas, Vault, Settings, Help | ✅ Active |
+| `/profile` | Profile — persona switcher, edit, settings | ✅ Active (accessed via More) |
 | `/radio` | Radio — full-screen player (mini player persists above nav) | ✅ Active |
-| `/vault` | Vault — tickets, orders, archive | ⚠️ Scope TBD |
+| `/safety` | Safety — SOS, check-ins, trusted contacts, live location | ✅ Active (accessed via More) |
+| `/care` | Care — Hand N Hand wellbeing (aftercare, crisis resources, breathing) | ✅ Active (accessed via More) |
 
 Mode components are lazy-loaded. Route-to-mode mapping is in `src/App.jsx`.
 
@@ -212,10 +271,12 @@ Mode components are lazy-loaded. Route-to-mode mapping is in `src/App.jsx`.
 ```
 LOADING → UNAUTHENTICATED    → /auth
         → NEEDS_AGE          → AgeGate
-        → NEEDS_ONBOARDING   → OnboardingGate (6 steps, step 6 = community attestation)
+        → NEEDS_ONBOARDING   → OnboardingGate (7 steps + "What now?" step 8)
         → NEEDS_COMMUNITY_GATE
         → READY
 ```
+
+Onboarding steps: 1-Age → 2-Terms → 3-Permissions → 4-Profile+PIN → 5-Vibe(age/position/looking_for) → 6-Photo → 7-Community attestation → 8-"What now?" action picker (Go Live / Explore / Set Up Safety)
 
 `localStorage` key `hm_age_confirmed_v1` can bypass age/onboarding gates even if DB sync fails.
 
@@ -229,7 +290,39 @@ New sheets: register the type in `src/lib/sheetSystem.ts` first, then add the co
 
 ### Persona system
 
-`personas` table stores up to 5 profiles per user (types: MAIN, TRAVEL, WEEKEND, custom). Each persona is a full independent profile. `switch_persona(persona_id)` RPC swaps the active persona. `PersonaContext` tracks it globally. Entry points: long-press avatar in ProfileMode, long-press Profile tab in `OSBottomNav`.
+`personas` table stores up to 5 profiles per user (types: MAIN, TRAVEL, WEEKEND, custom). Each persona is a full independent profile. `switch_persona(persona_id)` RPC swaps the active persona. `PersonaContext` tracks it globally.
+
+Entry points:
+- Long-press avatar in ProfileMode → PersonaSwitcherSheet
+- Long-press More tab in OSBottomNav → PersonaSwitcherSheet
+- More page → Personas item → /profile?action=manage-personas
+- "Add persona" button in switcher → openSheet('create-persona')
+
+### Data layer — ALL SUPABASE (base44 eliminated)
+
+As of session 6, **every data call** in the app goes directly to Supabase. The old `base44Client.js` shim file still exists but has **zero imports**. Safe to delete.
+
+```js
+// The only import pattern in the codebase:
+import { supabase } from '@/components/utils/supabaseClient';
+
+// Auth
+const { data: { user } } = await supabase.auth.getUser();
+const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+
+// Reads
+const { data, error } = await supabase.from('table').select('*').eq('field', value);
+
+// Writes
+const { data, error } = await supabase.from('table').insert(payload).select().single();
+const { data, error } = await supabase.from('table').update(payload).eq('id', id).select().single();
+const { error } = await supabase.from('table').delete().eq('id', id);
+```
+
+**Stubbed integrations (need real implementation):**
+- `InvokeLLM` → 13 call sites now `console.warn('[TODO] LLM endpoint needed')`
+- `UploadFile` → 18 call sites point to `supabase.storage.from('uploads').upload()` but bucket doesn't exist yet
+- `SendEmail` → 2 call sites now `fetch('/api/email/send', ...)`
 
 ### Marketplace (three commerce streams)
 
@@ -301,96 +394,9 @@ import X from '@/modes/...'
 08. Active Beacons    — list view → L2BeaconSheet
 09. Venue Kings       — horizontal scroll (shown when data exists)
 10. Creator Drop      — HUNG #C41230 banner
-11. Your Profile      — completion % progress card
+11. Your Profile      — completion % progress card (wired to useProfileCompletion)
 12. Safety Strip      — SOS reminder
 ```
-
-Removed sections (no longer in HomeMode): hero banner, community section, scene scout/tonight's picks.
-
----
-
-## Completed P0 Tasks
-
-### P0a: SOS Global Mount ✅
-- `SOSContext` created
-- `SOSButton` mounted globally (z-190, bottom-right, long-press trigger)
-- `SOSOverlay` (z-200, PIN-protected, no close button)
-- Fixed: location_shares table name, split-brain status writes
-
-### P0b: Community Gate ✅
-- Migration: `community_attested_at` column added to profiles
-- OnboardingGate step 6: community attestation
-- BootGuardContext: NEEDS_COMMUNITY_GATE state
-
-### P0c: UI Policy Guard ✅
-- `sheetPolicy.ts`: canOpenSheet() blocks chat/video/travel outside /ghosted
-- SheetContext: openSheet() gated with toast on block
-- Fixed 3 rogue callsites
-
-### P0f: Domain Fix ✅ (2026-03-08)
-- Removed broken `vercel.json` redirects sending hotmessldn.com → hotmess.app (dead domain)
-- Added correct www.hotmessldn.com → hotmessldn.com canonical redirect
-- hotmessldn.com now serves the app correctly (HTTP 200)
-- Committed: `20df177`
-
-### P0g: RLS Security Hardening ✅ (2026-03-08)
-- All 7 fixes from `20260226000080_rls_critical_fixes.sql` confirmed live in production
-- Dropped stale `emergency_locations: authenticated upsert` ALL=true override policy
-- Applied `rls_remaining_security_fixes` migration:
-  - Dropped `notifications_write_authenticated` (spam vector — any user could notify anyone)
-  - Enabled RLS on `routing_cache`, `routing_rate_limits`, `platform_knowledge`
-- Security posture: blocking issues resolved, safe to proceed to smoke test before launch
-
-### P0d: Gold Rebrand ✅
-- All pink (#FF1493) replaced with gold (#C8962C)
-- Auth page luxury noir-gold redesign
-- Cyan audit — accidental cyan CTAs fixed
-
-### P0e: HomeMode Redesign ✅ (2026-03-07)
-- Full 12-section layout from HOTMESS-HomeMode-Design.html
-- New intent colour system (hookup/hang/explore rings)
-- Teal radio banner, 4-col ghost teaser, horizontal market scroll
-- Venue kings, creator drop banner, profile completion card, safety strip
-
-### Other P0 Fixes ✅
-- UnifiedGlobe: returns null on non-Pulse routes (GPU optimization)
-- XP purge: removed ALL XP from UI (no profile levels, no point displays)
-
----
-
-## Active P1 Tasks — TRUE STATE (audited 2026-03-08)
-
-**No agents currently running.**
-
-| # | Task | Status | Notes |
-|---|------|--------|-------|
-| 17 | Filters drawer + Boos | ✅ **SHIPPED** | L2FiltersSheet wired in GhostedMode (openSheet('filters'), active count badge, localStorage). useTaps + boo button + amber ring on cards. L2TapsSheet registered. Red badge in OSBottomNav opens boos sheet. |
-| 16 | IncomingCallBanner | ✅ **SHIPPED** | Platform-adaptive iOS/Android, committed ab56469 |
-| 16 | Typing indicators | ✅ **SHIPPED** | TypingIndicator.jsx + useTypingIndicator already live in L2ChatSheet |
-| 16 | Read receipts | ⚠️ **PARTIAL** | markRead() writes to localStorage; DB-level unread_count field on chat_threads used by useUnreadCount but not fully synced server-side |
-| 20 | SOS flow polish | ✅ **SHIPPED** | 2-phase fake call (ringing→connected), iOS+Android, exit button, committed b5e6794 |
-| 18 | Beacon creation UI | ✅ **SHIPPED** | L2BeaconSheet has both viewer + full multi-step BeaconCreator. BeaconFAB in PulseMode calls openSheet('beacon', { mode: 'create' }) |
-| 21 | Video call UI | ✅ **SHIPPED** | L2VideoCallSheet — full WebRTC signaling via rtc_signals table, offer/answer/ICE flow |
-| 22 | Profile views | ✅ **SHIPPED** | L2ProfileViewsSheet.tsx exists; profile_views tracking in L2ProfileSheet on open; ProfileMode links to sheet |
-| Live Location | Wire LiveLocationShare | ✅ **SHIPPED** | Added as "Live" tab in L2SafetySheet — trusted contacts from table, watchPosition, realtime broadcast |
-| 23 | PWA push notifications | ❌ **TODO** | notifyContacts() stub in LiveLocationShare still console.log. Needs: VAPID keys, Supabase Edge Function, service worker handler |
-| 27 | VaultMode scope | ❌ **TODO** | VaultMode.tsx exists but scope undefined — tickets, orders, archive? Phil to define |
-
----
-
-## Travel & Location Micro-flows (full audit 2026-03-08)
-
-**Built and wired:**
-- `InAppDirections.jsx` — Leaflet map, walk/bike/drive/Uber routing, wired in ProfileHeader
-- `TravelModal.jsx` — ✈️ button in chat, sends `meetpoint` message type with OSM map preview
-- `L2ChatMeetupSheet.tsx` — meetup suggestion in chat thread
-- `L2LocationSheet` — city/precision/radius settings, registered as 'location' in SheetRouter
-- `LiveLocationShare.jsx` — duration picker, contact selector, watchPosition, Supabase realtime ✅ NOW wired into L2SafetySheet
-- `useRealtimeLocations.ts`, `useLiveViewerLocation.js` — hooks for consuming shared locations
-
-**Still missing:**
-- Receiver/watcher view — a trusted contact seeing a live location pin on a map
-- `notifyContacts()` real push (blocked by #23 infra)
 
 ---
 
@@ -441,6 +447,7 @@ Each brand/channel is sovereign. They share an OS but they do NOT merge unless a
 |----|-------|
 | Use `#C8962C` gold for all CTAs and accents | Use pink (`#FF1493`) anywhere |
 | Use `#050507` as root OS background | Use `#000000` as root bg (too flat) |
+| Import from `@/components/utils/supabaseClient` | Import from `@/api/base44Client` (DEAD — zero consumers) |
 | Gate chat/video/travel sheets with `canOpenSheet()` | Open chat/video/travel sheets without policy check |
 | Write to `right_now_status` **TABLE** | Write to `profiles.right_now_status` JSONB (column does not exist) |
 | Return `null` from `UnifiedGlobe` on non-`/pulse` routes | Render the globe outside `/pulse` |
@@ -450,6 +457,7 @@ Each brand/channel is sovereign. They share an OS but they do NOT merge unless a
 | Use `owner_id` and `starts_at`/`ends_at` on beacons | Use `user_id`, `start_time`, `end_time` (don't exist) |
 | Keep brand channel content isolated in queries | Let AI auto-merge RAW/HUNG/HIGH/RADIO/LABEL content |
 | Use intent colours (`#FF5500`, `#00C2E0`, `#A899D8`) for RN rings only | Use intent colours as CTA buttons |
+| Filter ghost profiles in /api/profiles.js | Show @hotmess.app / @hotmess.test / demo / admin / e2e accounts on grid |
 
 ---
 
@@ -463,6 +471,8 @@ Each brand/channel is sovereign. They share an OS but they do NOT merge unless a
 - `beacons` is a **VIEW** — `ALTER TABLE` will fail; `title`/`description`/`address`/`image_url` are stored in `metadata` JSONB
 - **Safety features** in `src/components/safety/` and `src/components/sos/` are safety-critical and must not regress
 - Radio channel colour `#00C2E0` is intentional — it's the HOTMESS RADIO brand colour, not an accidental cyan CTA
+- **base44Client.js still exists** as a file but has ZERO imports — safe to delete
+- **InvokeLLM stubs**: 13 components have `console.warn('[TODO] LLM endpoint needed')` — these are non-functional AI features
 
 ---
 
@@ -472,7 +482,8 @@ Each brand/channel is sovereign. They share an OS but they do NOT merge unless a
 - `20260214010000` migration has `IF EXISTS IF EXISTS` syntax error (low priority cosmetic)
 - `profile_overrides` RLS uses wrong FK (medium severity, not yet fixed)
 - Realtime subscriptions multiply on Vite hot-reload (dev-only, not a production issue)
-- HomeMode profile card (section 11) shows hardcoded completion — wire to real profile data when implementing profile completion tracking
+- Supabase storage bucket 'uploads' does not exist — file upload features will fail until bucket is created
+- Node.js deprecation warning DEP0169 on /api/profiles endpoint (cosmetic, no impact)
 
 ---
 
@@ -483,27 +494,35 @@ Each brand/channel is sovereign. They share an OS but they do NOT merge unless a
 src/contexts/BootGuardContext.jsx    - Auth state machine
 src/contexts/SheetContext.jsx        - Sheet management
 src/contexts/SOSContext.tsx          - SOS global state
-src/contexts/PersonaContext.jsx      - Multi-persona
+src/contexts/PersonaContext.jsx      - Multi-persona (CRUD + switch_persona RPC)
 src/contexts/RadioContext.jsx        - Radio player
 src/contexts/LocationContext.jsx     - Geolocation
 ```
 
-### Modes (5 main screens)
+### Modes (6 nav tabs + sub-routes)
 ```
-src/modes/HomeMode.tsx       - Home feed (12-section, redesigned 2026-03-07)
+src/modes/HomeMode.tsx       - Home feed (12-section)
 src/modes/PulseMode.tsx      - Globe + events
-src/modes/GhostedMode.tsx    - Proximity grid
+src/modes/GhostedMode.tsx    - Proximity grid (ghost-filtered)
 src/modes/MarketMode.tsx     - Commerce
-src/modes/ProfileMode.tsx    - Settings hub
+src/modes/ProfileMode.tsx    - Settings hub + persona switcher
 src/modes/RadioMode.tsx      - Full player
 src/modes/VaultMode.tsx      - Tickets + orders (scope TBD)
+src/modes/OSBottomNav.tsx    - 6-tab nav (Home/Pulse/Ghosted/Market/Music/More)
+```
+
+### Pages (accessed via More hub)
+```
+src/pages/MorePage.tsx           - Hub: Safety, Care, Profile, Personas, Vault, Settings, Help
+src/pages/CarePage.tsx           - Hand N Hand wellbeing
+src/pages/Safety.jsx             - Safety hub (Supabase-native)
 ```
 
 ### Boot Flow
 ```
 src/pages/Auth.jsx               - Login/signup (luxury noir-gold design)
 src/pages/AgeGate.jsx            - Age confirmation
-src/pages/OnboardingGate.jsx     - 6-step onboarding
+src/pages/OnboardingGate.jsx     - 8-step onboarding (7 gates + "What now?" picker)
 src/components/shell/BootRouter.jsx - Route orchestration
 ```
 
@@ -524,6 +543,3 @@ All files now organised in `~/Downloads/HOTMESS-PROJECT/`
 03-ASSETS/          - Images, CSVs, JSONs, brand assets
 04-ARCHIVE-CODE/    - Old code zips + old extracted folders (safe to ignore)
 ```
-
-# currentDate
-Today's date is 2026-03-07.
