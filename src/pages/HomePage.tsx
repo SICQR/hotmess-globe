@@ -1,12 +1,13 @@
 /**
  * HomePage — Main Dashboard
- * 
- * Unified dark/gold theme with trending events, search,
- * and consistent navigation.
+ *
+ * Unified dark/gold theme with hero banner, trending events, search,
+ * shop CTA, and consistent navigation.
  */
 
 import { motion } from 'framer-motion';
 import { FaBell, FaPlus, FaSearch, FaFire, FaUsers, FaCalendarAlt, FaBroadcastTower } from 'react-icons/fa';
+import { ShoppingBag, ArrowRight, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AppNavBar } from '@/components/nav/AppNavBar';
 
@@ -27,7 +28,7 @@ export default function HomePage() {
             <FaBell />
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full" />
           </button>
-          <button 
+          <button
             onClick={() => navigate('/more/beacons/new')}
             className="bg-gold text-dark rounded-full p-2 shadow-gold hover:shadow-[0_0_24px_#FFC94088] transition-shadow"
           >
@@ -35,6 +36,62 @@ export default function HomePage() {
           </button>
         </div>
       </header>
+
+      {/* ─────────────────────────────────────────────────────────────────────
+          HERO SECTION — Shop Promo
+      ───────────────────────────────────────────────────────────────────── */}
+      <motion.section
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="relative mx-4 mb-5 rounded-2xl overflow-hidden cursor-pointer"
+        onClick={() => navigate('/market')}
+      >
+        {/* Background image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: 'url(https://cdn.shopify.com/s/files/1/0898/3245/6517/files/upload_vfKIW_gxRluGoOwPLITLrg.png?v=1750505220)',
+          }}
+        />
+        {/* Dark gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-transparent" />
+
+        <div className="relative z-10 flex items-center gap-4 p-6 min-h-[160px]">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="bg-[#C8962C] text-black text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm">
+                New Drop
+              </span>
+              <Sparkles className="w-4 h-4 text-[#C8962C]" />
+            </div>
+            <h2 className="text-2xl font-black text-white tracking-tight leading-tight mb-1">
+              HNH MESS Lube
+            </h2>
+            <p className="text-sm text-white/70 mb-3">
+              Premium intimate lubricant. From £9.99
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="inline-flex items-center gap-2 bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-black uppercase tracking-wider text-xs px-5 py-2.5 rounded-none transition-all shadow-[0_0_20px_rgba(200,150,44,0.4)]"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Shop Now
+              <ArrowRight className="w-3.5 h-3.5" />
+            </motion.button>
+          </div>
+
+          {/* Product thumbnail */}
+          <div className="hidden sm:block w-24 h-24 flex-shrink-0">
+            <img
+              src="https://cdn.shopify.com/s/files/1/0898/3245/6517/files/bottlesmall.png?v=1751020652"
+              alt="HNH MESS Lube bottle"
+              className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(200,150,44,0.5)]"
+            />
+          </div>
+        </div>
+      </motion.section>
 
       {/* ─────────────────────────────────────────────────────────────────────
           SEARCH
@@ -165,6 +222,32 @@ export default function HomePage() {
           </button>
         </motion.section>
       </main>
+
+      {/* ─────────────────────────────────────────────────────────────────────
+          CTA BANNER — Market Strip
+      ───────────────────────────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="mx-4 mb-4 mt-2"
+      >
+        <button
+          onClick={() => navigate('/market')}
+          className="w-full flex items-center justify-between bg-gradient-to-r from-[#C8962C]/20 to-[#C8962C]/5 border border-[#C8962C]/30 rounded-lg px-4 py-3 hover:border-[#C8962C]/60 transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-[#C8962C]/20 flex items-center justify-center">
+              <ShoppingBag className="w-4 h-4 text-[#C8962C]" />
+            </div>
+            <div className="text-left">
+              <div className="text-sm font-bold text-white">Browse the Market</div>
+              <div className="text-xs text-white/50">Shop, sell preloved & discover drops</div>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-[#C8962C] group-hover:translate-x-1 transition-transform" />
+        </button>
+      </motion.div>
 
       {/* Bottom Nav */}
       <AppNavBar active="home" />
