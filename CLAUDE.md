@@ -39,7 +39,7 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 - All 45 sheets, the boot state machine, sheet policy, persona system, SOS system
 - Supabase project (production): `rfoftonnlwudilafhfkl`
 - Supabase project (dev/staging): `klsywpvncqqglhnhrjbh`
-- Supabase edge functions host: `axxwdjmbwkvqhcpwters`
+- Supabase edge functions host only (notify-push endpoint lives here): `axxwdjmbwkvqhcpwters`
 - Repo: `SICQR/hotmess-globe`, live at `hotmessldn.com`
 - Vercel project: `prj_xdS5EoLRDpGhj4GOIbtSLSrCmvJO`, team: `team_ctjjRDRV1EpYKYaO9wQSwRyv`
 - You have write access. Use it.
