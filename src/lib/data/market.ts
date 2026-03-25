@@ -153,48 +153,79 @@ interface ShopifyProduct {
   id: string;
   title: string;
   description?: string;
+  descriptionHtml?: string;
   handle: string;
-  priceRange: {
+  priceRange?: {
     minVariantPrice: { amount: string; currencyCode: string };
-    maxVariantPrice: { amount: string; currencyCode: string };
+    maxVariantPrice?: { amount: string; currencyCode: string };
   };
   compareAtPriceRange?: {
     minVariantPrice: { amount: string };
   };
-  images: { url: string }[];
+  featuredImage?: { url: string; altText?: string };
+  images: any; // Can be { url }[] or { nodes: { url }[] }
   productType?: string;
   tags?: string[];
-  availableForSale: boolean;
-  variants?: {
-    id: string;
-    title: string;
-    price: { amount: string };
-    availableForSale: boolean;
-    sku?: string;
-  }[];
+  availableForSale?: boolean;
+  variants?: any; // Can be flat array or { nodes: [...] }
 }
 
 function normalizeShopifyProduct(product: ShopifyProduct): Product {
+  // Extract variants — API returns { nodes: [...] } but interface may also be flat array
+  const variantNodes: any[] = Array.isArray(product.variants)
+    ? product.variants
+    : product.variants?.nodes || [];
+
+  // Extract price from priceRange (if present) or first variant as fallback
+  const firstVariant = variantNodes[0];
+  const price = product.priceRange?.minVariantPrice?.amount
+    ? parseFloat(product.priceRange.minVariantPrice.amount)
+    : firstVariant?.price?.amount
+      ? parseFloat(firstVariant.price.amount)
+      : 0;
+
+  const currency = product.priceRange?.minVariantPrice?.currencyCode
+    || firstVariant?.price?.currencyCode
+    || 'GBP';
+
+  // Extract compare-at price
+  const compareAtPrice = product.compareAtPriceRange?.minVariantPrice?.amount
+    ? parseFloat(product.compareAtPriceRange.minVariantPrice.amount)
+    : firstVariant?.compareAtPrice?.amount
+      ? parseFloat(firstVariant.compareAtPrice.amount)
+      : undefined;
+
+  // Extract images — handle both { url }[] and { nodes: [{ url }] } formats
+  const imageList: string[] = Array.isArray(product.images)
+    ? product.images.map((img: any) => typeof img === 'string' ? img : img.url)
+    : product.images?.nodes?.map((img: any) => img.url) || [];
+
+  // If no images from the images field, try featuredImage
+  if (imageList.length === 0 && product.featuredImage?.url) {
+    imageList.push(product.featuredImage.url);
+  }
+
+  // Determine availability — check product-level flag or any variant
+  const available = product.availableForSale !== undefined
+    ? product.availableForSale
+    : variantNodes.some((v: any) => v.availableForSale);
+
   return {
     id: `shopify_${product.id}`,
     source: 'shopify',
     title: product.title,
-    description: product.description,
-    price: parseFloat(product.priceRange?.minVariantPrice?.amount || '0'),
-    currency: product.priceRange?.minVariantPrice?.currencyCode || 'GBP',
-    compareAtPrice: product.compareAtPriceRange?.minVariantPrice
-      ? parseFloat(product.compareAtPriceRange.minVariantPrice.amount)
-      : undefined,
-    images: Array.isArray(product.images)
-      ? product.images.map(img => typeof img === 'string' ? img : img.url)
-      : (product.images as any)?.nodes?.map((img: any) => img.url) || [],
+    description: product.descriptionHtml || product.description,
+    price,
+    currency,
+    compareAtPrice,
+    images: imageList,
     category: product.productType,
     tags: product.tags,
-    available: product.availableForSale,
-    variants: product.variants?.map(v => ({
+    available,
+    variants: variantNodes.map((v: any) => ({
       id: v.id,
       title: v.title,
-      price: parseFloat(v.price.amount),
+      price: parseFloat(v.price?.amount || '0'),
       available: v.availableForSale,
       sku: v.sku,
     })),
