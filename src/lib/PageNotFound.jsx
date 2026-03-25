@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/components/utils/supabaseClient';
 
 
 export default function PageNotFound({}) {
