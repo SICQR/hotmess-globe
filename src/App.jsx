@@ -386,8 +386,8 @@ const AuthenticatedApp = () => {
       {/* Market (canonical) -> MarketMode (no Layout) */}
       <Route path="/market" element={<Suspense fallback={null}><MarketMode /></Suspense>} />
       <Route path="/market/*" element={<Suspense fallback={null}><MarketMode /></Suspense>} />
-      <Route path="/social" element={<Navigate to="/" replace />} />
-      <Route path="/social/discover" element={<Navigate to="/" replace />} />
+      <Route path="/social" element={<Navigate to="/ghosted" replace />} />
+      <Route path="/social/discover" element={<Navigate to="/ghosted" replace />} />
       <Route path="/social/inbox" element={<PageRoute pageKey="Messages" />} />
       <Route path="/social/u/:id" element={<SocialUserRedirect />} />
       <Route path="/social/t/:threadId" element={<SocialThreadRedirect />} />

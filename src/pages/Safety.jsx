@@ -12,12 +12,14 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import EmergencyMessageEditor from '../components/safety/EmergencyMessageEditor';
 import CheckInTimerCustomizer from '../components/safety/CheckInTimerCustomizer';
+import AftercareNudge from '../components/safety/AftercareNudge';
 
 export default function Safety() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
+  const [showAftercareNudge, setShowAftercareNudge] = useState(false);
   const [contactEmail, setContactEmail] = useState('');
   const [relationship, setRelationship] = useState('friend');
   const [checkOutHours, setCheckOutHours] = useState(4);
@@ -141,6 +143,7 @@ export default function Safety() {
     onSuccess: () => {
       queryClient.invalidateQueries(['active-safety-checkin']);
       toast.success('Checked out safely');
+      setTimeout(() => setShowAftercareNudge(true), 3000);
     },
   });
 
@@ -420,6 +423,7 @@ export default function Safety() {
           </TabsContent>
         </Tabs>
       </div>
+      <AftercareNudge isOpen={showAftercareNudge} onClose={() => setShowAftercareNudge(false)} />
     </div>
   );
 }

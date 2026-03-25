@@ -114,7 +114,7 @@ export function SOSButton({ className, onTrigger }) {
           'relative w-16 h-16 rounded-full flex items-center justify-center transition-all',
           isHolding
             ? 'bg-red-600 scale-110'
-            : 'bg-red-600/40 border-2 border-red-500 hover:bg-red-600/60',
+            : 'bg-red-600/50 border-2 border-red-500 hover:bg-red-600/70',
           className
         )}
       >
