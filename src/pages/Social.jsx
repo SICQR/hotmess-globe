@@ -1,9 +1,9 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Users, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
@@ -47,7 +47,7 @@ export default function Social() {
     queryKey: ['message-threads', currentUser?.email],
     queryFn: async () => {
       if (!currentUser) return [];
-      const allThreads = await base44.entities.ChatThread.filter({ active: true }, '-updated_date');
+      const allThreads = await supabase.from('chat_threads').select('*').eq({ active: true }, '-updated_date');
       return allThreads.filter(
         (t) => Array.isArray(t.participant_emails) && t.participant_emails.includes(currentUser.email)
       );

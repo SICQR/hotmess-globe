@@ -12,13 +12,13 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
 
   const { data: following = [] } = useQuery({
     queryKey: ['following', currentUser?.email],
-    queryFn: () => base44.entities.UserFollow.filter({ follower_email: currentUser.email }),
+    queryFn: () => supabase.from('user_follows').select('*').eq({ follower_email: currentUser.email }),
     enabled: !!currentUser
   });
 
   const { data: chatThreads = [] } = useQuery({
     queryKey: ['chat-threads', currentUser?.email],
-    queryFn: () => base44.entities.ChatThread.list(),
+    queryFn: () => supabase.from('chat_threads').select('*'),
     enabled: !!currentUser
   });
 
@@ -32,7 +32,7 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
   );
 
   const followMutation = useMutation({
-    mutationFn: () => base44.entities.UserFollow.create({
+    mutationFn: () => supabase.from('user_follows').insert({
       follower_email: currentUser.email,
       following_email: profileUser.email
     }),
@@ -45,7 +45,7 @@ export default function QuickActions({ profileUser, currentUser, isOwnProfile })
   const unfollowMutation = useMutation({
     mutationFn: () => {
       const followRecord = following.find(f => f.following_email === profileUser.email);
-      return base44.entities.UserFollow.delete(followRecord.id);
+      return supabase.from('user_follows').delete().eq('id', followRecord.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['following']);

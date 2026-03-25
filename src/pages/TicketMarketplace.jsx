@@ -36,18 +36,18 @@ export default function TicketMarketplace() {
 
   const { data: tickets = [] } = useQuery({
     queryKey: ['ticket-listings'],
-    queryFn: () => base44.entities.Product.filter({ product_type: 'ticket', status: 'active' }, '-created_date')
+    queryFn: () => supabase.from('products').select('*').eq({ product_type: 'ticket', status: 'active' }, '-created_date')
   });
 
   const { data: myOrders = [] } = useQuery({
     queryKey: ['my-orders', currentUser?.email],
-    queryFn: () => base44.entities.Order.filter({ buyer_email: currentUser.email }),
+    queryFn: () => supabase.from('orders').select('*').eq({ buyer_email: currentUser.email }),
     enabled: !!currentUser
   });
 
   const purchaseMutation = useMutation({
     mutationFn: async (ticket) => {
-      const order = await base44.entities.Order.create({
+      const order = await supabase.from('orders').insert({
         buyer_email: currentUser.email,
         seller_email: ticket.seller_email,
         total_xp: ticket.price_xp,
@@ -56,7 +56,7 @@ export default function TicketMarketplace() {
         payment_method: 'xp'
       });
 
-      await base44.entities.OrderItem.create({
+      await supabase.from('order_items').insert({
         order_id: order.id,
         product_id: ticket.id,
         quantity: 1,

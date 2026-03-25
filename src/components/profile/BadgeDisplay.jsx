@@ -1,13 +1,13 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Shield, Crown, Music, Calendar, Users, Award, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function BadgeDisplay({ userEmail }) {
   const { data: badges = [] } = useQuery({
     queryKey: ['profile-badges', userEmail],
-    queryFn: () => base44.entities.ProfileBadge.filter({ user_email: userEmail }),
+    queryFn: () => supabase.from('profile_badges').select('*'),
     enabled: !!userEmail,
   });
 

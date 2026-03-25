@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Plus, Tag, Trash2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +24,7 @@ export default function PromotionManager({ promotions, products, sellerEmail }) 
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Promotion.create({
+    mutationFn: (data) => supabase.from('promotions').insert({
       ...data,
       seller_email: sellerEmail,
       active: true,
@@ -48,7 +48,7 @@ export default function PromotionManager({ promotions, products, sellerEmail }) 
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Promotion.delete(id),
+    mutationFn: (id) => supabase.from('promotions').delete().eq('id', id),
     onSuccess: () => {
       queryClient.invalidateQueries(['promotions']);
       toast.success('Promotion deleted');

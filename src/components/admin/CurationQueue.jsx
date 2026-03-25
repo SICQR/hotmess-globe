@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { CheckCircle, MapPin, Calendar, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,20 +15,20 @@ export default function CurationQueue() {
   const { data: shadowBeacons = [], isLoading } = useQuery({
     queryKey: ['shadow-beacons'],
     queryFn: async () => {
-      const beacons = await base44.entities.Beacon.list();
+      const beacons = await supabase.from('beacons').select('*');
       return beacons.filter(b => b.is_shadow === true);
     }
   });
 
   const verifyMutation = useMutation({
     mutationFn: async (beacon) => {
-      await base44.entities.Beacon.update(beacon.id, {
+      await supabase.from('beacons').update({
         is_shadow: false,
         is_verified: true
       });
       
       // Notify beacon creator
-      await base44.entities.Notification.create({
+      await supabase.from('notifications').insert({
         user_email: beacon.created_by,
         type: 'admin_alert',
         title: 'Beacon Approved!',

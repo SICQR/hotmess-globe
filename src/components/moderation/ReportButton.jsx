@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
 import { Flag, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -23,7 +23,7 @@ export default function ReportButton({ itemType, itemId, variant = 'ghost' }) {
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
-      await base44.entities.Report.create({
+      await supabase.from('reports').insert({
         reporter_email: user.email,
         reported_item_type: itemType,
         reported_item_id: itemId,
@@ -32,7 +32,7 @@ export default function ReportButton({ itemType, itemId, variant = 'ghost' }) {
       });
 
       // Notify admins
-      await base44.entities.Notification.create({
+      await supabase.from('notifications').insert({
         user_email: 'admin',
         type: 'admin_alert',
         title: 'New Report',

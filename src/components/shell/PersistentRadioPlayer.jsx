@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Play, Pause, SkipForward, Volume2, VolumeX, X, Radio } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useRadio } from './RadioContext';
@@ -26,7 +26,7 @@ export default function PersistentRadioPlayer() {
     queryKey: ['audio-drops'],
     queryFn: async () => {
       try {
-        const beacons = await base44.entities.Beacon.filter({ mode: 'radio', active: true });
+        const beacons = await supabase.from('beacons').select('*').eq({ mode: 'radio', active: true });
         return beacons.filter(b => b.audio_url);
       } catch (error) {
         console.warn('Failed to fetch audio beacons:', error);

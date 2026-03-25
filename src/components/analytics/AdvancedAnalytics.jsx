@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Users, ShoppingBag, MapPin, Zap } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -11,27 +11,27 @@ export default function AdvancedAnalytics() {
 
   const { data: users = [] } = useQuery({
     queryKey: ['users-analytics'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: () => supabase.from('profiles').select('*')
   });
 
   const { data: activities = [] } = useQuery({
     queryKey: ['activities-analytics'],
-    queryFn: () => base44.entities.UserActivity.list()
+    queryFn: () => supabase.from('user_activity').select('*')
   });
 
   const { data: beacons = [] } = useQuery({
     queryKey: ['beacons-analytics'],
-    queryFn: () => base44.entities.Beacon.list()
+    queryFn: () => supabase.from('beacons').select('*')
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ['orders-analytics'],
-    queryFn: () => base44.entities.Order.list()
+    queryFn: () => supabase.from('orders').select('*')
   });
 
   const { data: posts = [] } = useQuery({
     queryKey: ['posts-analytics'],
-    queryFn: () => base44.entities.CommunityPost.list()
+    queryFn: () => supabase.from('community_posts').select('*')
   });
 
   // User Growth Over Time

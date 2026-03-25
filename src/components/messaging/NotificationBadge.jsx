@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44, supabase } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { MessageCircle } from 'lucide-react';
 
@@ -13,7 +13,7 @@ export default function NotificationBadge({ user }) {
     queryKey: ['chat-threads-notifications', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      const allThreads = await base44.entities.ChatThread.filter({ active: true });
+      const allThreads = await supabase.from('chat_threads').select('*').eq({ active: true });
       return allThreads.filter(t => 
         Array.isArray(t.participant_emails) && t.participant_emails.includes(user.email)
       );

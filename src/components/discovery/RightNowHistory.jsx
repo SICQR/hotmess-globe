@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Zap, Home, Car, Building, CheckCircle, XCircle } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -14,7 +14,7 @@ const LOGISTICS_ICONS = {
 export default function RightNowHistory({ userEmail }) {
   const { data: history = [], isLoading } = useQuery({
     queryKey: ['right-now-history', userEmail],
-    queryFn: () => base44.entities.RightNowStatus.filter({ user_email: userEmail }, '-created_date', 20),
+    queryFn: () => supabase.from('right_now_status').select('*').eq({ user_email: userEmail }, '-created_date', 20),
     enabled: !!userEmail
   });
 

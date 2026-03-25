@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Sparkles, Flame, Calendar, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -14,8 +13,8 @@ export default function AIEventRecommendations({ currentUser }) {
   const { data: recommendations, refetch } = useQuery({
     queryKey: ['ai-event-recommendations', currentUser?.email],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('getAIEventRecommendations', {});
-      return data;
+      // base44.functions deprecated - returning empty
+      return null;
     },
     enabled: !!currentUser,
     staleTime: 5 * 60 * 1000 // 5 minutes

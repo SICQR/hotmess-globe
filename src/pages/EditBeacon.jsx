@@ -1,8 +1,8 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { } from '@/api/base44Client';
 import { createPageUrl } from '../utils';
 import { ArrowLeft, ArrowRight, Upload, Calendar, Image, Video, Save, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ export default function EditBeacon() {
   const { data: beacon, isLoading } = useQuery({
     queryKey: ['beacon', beaconId],
     queryFn: async () => {
-      const beacons = await base44.entities.Beacon.list();
+      const beacons = await supabase.from('beacons').select('*');
       return beacons.find(b => b.id === beaconId);
     },
     enabled: !!beaconId
@@ -38,7 +38,7 @@ export default function EditBeacon() {
   }, [beacon]);
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.Beacon.update(beaconId, data),
+    mutationFn: (data) => supabase.from('beacons').update(data),
     onSuccess: () => {
       queryClient.invalidateQueries(['beacons']);
       queryClient.invalidateQueries(['beacon', beaconId]);
@@ -52,7 +52,7 @@ export default function EditBeacon() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => base44.entities.Beacon.delete(beaconId),
+    mutationFn: () => supabase.from('beacons').delete().eq('id', beaconId),
     onSuccess: () => {
       queryClient.invalidateQueries(['beacons']);
       toast.success('Event deleted');
@@ -66,7 +66,7 @@ export default function EditBeacon() {
     
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
       setFormData({ ...formData, image_url: file_url });
       toast.success('Image uploaded!');
     } catch (error) {
@@ -83,7 +83,7 @@ export default function EditBeacon() {
     
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
       setFormData({ ...formData, video_url: file_url });
       toast.success('Video uploaded!');
     } catch (error) {

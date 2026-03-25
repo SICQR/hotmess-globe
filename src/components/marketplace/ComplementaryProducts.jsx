@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Sparkles } from 'lucide-react';
 import ProductCard from './ProductCard';
 import logger from '@/utils/logger';
@@ -12,7 +12,7 @@ export default function ComplementaryProducts({ product, onBuy }) {
 
   const { data: allProducts = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.filter({ status: 'active' }),
+    queryFn: () => supabase.from('products').select('*').eq({ status: 'active' }),
   });
 
   useEffect(() => {
@@ -38,14 +38,12 @@ export default function ComplementaryProducts({ product, onBuy }) {
         return;
       }
 
-      const invokeLLM = base44?.integrations?.Core?.InvokeLLM;
-      if (typeof invokeLLM !== 'function') {
-        const fallback = availableProducts
-          .filter((p) => (product?.category ? p.category === product.category : true))
-          .slice(0, 4);
-        setComplementary(fallback);
-        return;
-      }
+      // LLM disabled - use category fallback
+      const fallback = availableProducts
+        .filter((p) => (product?.category ? p.category === product.category : true))
+        .slice(0, 4);
+      setComplementary(fallback);
+      return;
 
       const prompt = `You are recommending complementary products for HOTMESS LONDON marketplace.
 

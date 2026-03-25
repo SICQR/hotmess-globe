@@ -95,7 +95,7 @@ export default function CartDrawer({ isOpen, onClose, currentUser }) {
         return;
       }
 
-      await Promise.all(cartItems.map(item => base44.entities.CartItem.delete(item.id)));
+      await Promise.all(cartItems.map(item => supabase.from('cart_items').delete().eq('id', item.id)));
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);

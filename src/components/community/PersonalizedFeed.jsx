@@ -1,5 +1,5 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Sliders } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,19 +19,19 @@ export default function PersonalizedFeed({ user, posts, onFilterChange }) {
 
   const { data: userFollows = [] } = useQuery({
     queryKey: ['user-follows', user?.email],
-    queryFn: () => base44.entities.UserFollow.filter({ follower_email: user.email }),
+    queryFn: () => supabase.from('user_follows').select('*').eq({ follower_email: user.email }),
     enabled: !!user,
   });
 
   const { data: userOrders = [] } = useQuery({
     queryKey: ['user-orders-filter', user?.email],
-    queryFn: () => base44.entities.Order.filter({ buyer_email: user.email }),
+    queryFn: () => supabase.from('orders').select('*').eq({ buyer_email: user.email }),
     enabled: !!user,
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['products-filter'],
-    queryFn: () => base44.entities.Product.list(),
+    queryFn: () => supabase.from('products').select('*'),
     enabled: !!user,
   });
 

@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Calendar, Filter, Search, Map } from 'lucide-react';
@@ -67,7 +67,7 @@ export default function Events() {
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      const beacons = await base44.entities.Beacon.filter(
+      const beacons = await supabase.from('beacons').select('*').eq(
         { kind: 'event', status: 'published', active: true },
         '-event_date'
       );
@@ -77,13 +77,13 @@ export default function Events() {
 
   const { data: rsvps = [] } = useQuery({
     queryKey: ['my-rsvps', currentUser?.email],
-    queryFn: () => base44.entities.EventRSVP.filter({ user_email: currentUser?.email }),
+    queryFn: () => supabase.from('event_rsvps').select('*').eq({ user_email: currentUser?.email }),
     enabled: !!currentUser
   });
 
   const { data: allRsvps = [] } = useQuery({
     queryKey: ['all-rsvps'],
-    queryFn: () => base44.entities.EventRSVP.list()
+    queryFn: () => supabase.from('event_rsvps').select('*')
   });
 
   const filteredEvents = useMemo(() => {

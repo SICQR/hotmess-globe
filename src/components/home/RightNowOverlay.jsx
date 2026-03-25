@@ -1,9 +1,9 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, Zap, Calendar, Users, Filter, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import TacticalProfileCard from '../social/TacticalProfileCard';
@@ -16,7 +16,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
   // Fetch real-time activity data
   const { data: recentCheckIns = [] } = useQuery({
     queryKey: ['recent-checkins'],
-    queryFn: () => base44.entities.BeaconCheckIn.list('-created_date', 20),
+    queryFn: () => supabase.from('beacon_check_ins').select('*').order('-created_date', { ascending: false }).limit(20),
     enabled: isOpen,
     refetchInterval: 5000
   });
@@ -25,7 +25,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
     queryKey: ['live-events'],
     queryFn: async () => {
       const now = new Date();
-      const events = await base44.entities.Beacon.filter({ 
+      const events = await supabase.from('beacons').select('*').eq({ 
         kind: 'event', 
         active: true 
       }, '-event_date', 50);
@@ -41,7 +41,7 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
 
   const { data: recentPosts = [] } = useQuery({
     queryKey: ['recent-posts'],
-    queryFn: () => base44.entities.CommunityPost.filter({ 
+    queryFn: () => supabase.from('community_posts').select('*').eq({ 
       moderation_status: 'approved' 
     }, '-created_date', 15),
     enabled: isOpen,

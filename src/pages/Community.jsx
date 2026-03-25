@@ -32,13 +32,13 @@ export default function Community() {
 
   const { data: posts = [] } = useQuery({
     queryKey: ['community-posts'],
-    queryFn: () => base44.entities.CommunityPost.filter({ moderation_status: 'approved' }, '-created_date', 100),
+    queryFn: () => supabase.from('community_posts').select('*').eq({ moderation_status: 'approved' }, '-created_date', 100),
     refetchInterval: 5000 // Real-time feed updates every 5 seconds
   });
 
   const { data: userLikes = [] } = useQuery({
     queryKey: ['user-likes', user?.email],
-    queryFn: () => base44.entities.PostLike.filter({ user_email: user.email }),
+    queryFn: () => supabase.from('post_likes').select('*'),
     enabled: !!user,
   });
 
@@ -54,15 +54,15 @@ export default function Community() {
 
       const existingLike = userLikes.find(l => l.post_id === postId);
       if (existingLike) {
-        await base44.entities.PostLike.delete(existingLike.id);
+        await supabase.from('post_likes').delete().eq('id', existingLike.id);
         const post = posts.find(p => p.id === postId);
-        await base44.entities.CommunityPost.update(postId, {
+        await supabase.from('community_posts').update({
           likes_count: Math.max(0, (post.likes_count || 0) - 1)
         });
       } else {
-        await base44.entities.PostLike.create({ user_email: user.email, post_id: postId });
+        await supabase.from('post_likes').insert({ user_email: user.email, post_id: postId });
         const post = posts.find(p => p.id === postId);
-        await base44.entities.CommunityPost.update(postId, {
+        await supabase.from('community_posts').update({
           likes_count: (post.likes_count || 0) + 1
         });
       }

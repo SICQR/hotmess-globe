@@ -544,7 +544,7 @@ export default function Profile() {
 
       if (avatarFile) {
         try {
-          const { file_url } = await base44.integrations.Core.UploadFile({ file: avatarFile });
+          const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file: avatarFile });
           avatarUrl = file_url;
         } catch (uploadError) {
           // Non-fatal: still allow setup completion.

@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Trophy, Users, MapPin, Target, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -13,13 +13,13 @@ export default function SquadChallenges({ squadId, currentUser }) {
 
   const { data: challenges = [] } = useQuery({
     queryKey: ['squad-challenges', squadId],
-    queryFn: () => base44.entities.SquadChallenge.filter({ squad_id: squadId, status: 'active' }),
+    queryFn: () => supabase.from('squad_challenges').select('*'),
     enabled: !!squadId,
   });
 
   const claimMutation = useMutation({
     mutationFn: async (challenge) => {
-      await base44.entities.SquadChallenge.update(challenge.id, {
+      await supabase.from('squad_challenges').update({
         status: 'completed',
         completed_at: new Date().toISOString(),
       });

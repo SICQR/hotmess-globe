@@ -45,34 +45,34 @@ export default function OrderHistory() {
 
   const { data: buyerOrders = [], isLoading: loadingBuyer } = useQuery({
     queryKey: ['buyer-orders', currentUser?.email],
-    queryFn: () => base44.entities.Order.filter({ buyer_email: currentUser.email }, '-created_date'),
+    queryFn: () => supabase.from('orders').select('*').eq({ buyer_email: currentUser.email }, '-created_date'),
     enabled: !!currentUser,
   });
 
   const { data: sellerOrders = [], isLoading: loadingSeller } = useQuery({
     queryKey: ['seller-orders', currentUser?.email],
-    queryFn: () => base44.entities.Order.filter({ seller_email: currentUser.email }, '-created_date'),
+    queryFn: () => supabase.from('orders').select('*').eq({ seller_email: currentUser.email }, '-created_date'),
     enabled: !!currentUser,
   });
 
   const { data: allOrderItems = [] } = useQuery({
     queryKey: ['order-items'],
-    queryFn: () => base44.entities.OrderItem.list(),
+    queryFn: () => supabase.from('order_items').select('*'),
   });
 
   const { data: allProducts = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list(),
+    queryFn: () => supabase.from('products').select('*'),
   });
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => supabase.from('profiles').select('*'),
   });
 
   const { data: myReviews = [] } = useQuery({
     queryKey: ['my-reviews', currentUser?.email],
-    queryFn: () => base44.entities.MarketplaceReview.filter({ reviewer_email: currentUser.email }),
+    queryFn: () => supabase.from('marketplace_reviews').select('*'),
     enabled: !!currentUser
   });
 
@@ -80,10 +80,10 @@ export default function OrderHistory() {
 
   const releaseEscrowMutation = useMutation({
     mutationFn: async (order) => {
-      await base44.entities.Order.update(order.id, { status: 'processing' });
+      await supabase.from('orders').update({ status: 'processing' });
       
       // Notify seller
-      await base44.entities.Notification.create({
+      await supabase.from('notifications').insert({
         user_email: order.seller_email,
         type: 'escrow_release',
         title: 'Payment Released',
@@ -120,15 +120,15 @@ export default function OrderHistory() {
           ? { auth_user_id: currentUser.auth_user_id, product_id: item.product_id }
           : { user_email: currentUser.email, product_id: item.product_id };
 
-        const existingCartItems = await base44.entities.CartItem.filter(cartOwnerFilter);
+        const existingCartItems = await supabase.from('cart_items').select('*').eq(cartOwnerFilter);
 
         if (existingCartItems.length > 0) {
-          await base44.entities.CartItem.update(existingCartItems[0].id, {
+          await supabase.from('cart_items').update({
             quantity: existingCartItems[0].quantity + item.quantity,
             reserved_until: reservedUntil.toISOString()
           });
         } else {
-          await base44.entities.CartItem.create({
+          await supabase.from('cart_items').insert({
             ...(currentUser?.auth_user_id ? { auth_user_id: currentUser.auth_user_id } : {}),
             user_email: currentUser.email,
             product_id: item.product_id,

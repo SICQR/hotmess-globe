@@ -22,19 +22,19 @@ export default function Feed() {
 
   const { data: following = [] } = useQuery({
     queryKey: ['following', currentUser?.email],
-    queryFn: () => base44.entities.UserFollow.filter({ follower_email: currentUser.email }),
+    queryFn: () => supabase.from('user_follows').select('*').eq({ follower_email: currentUser.email }),
     enabled: !!currentUser,
   });
 
   const { data: allActivities = [] } = useQuery({
     queryKey: ['activity-feed'],
-    queryFn: () => base44.entities.ActivityFeed.list('-created_date', 100),
+    queryFn: () => supabase.from('activity_feed').select('*').order('-created_date', { ascending: false }).limit(100),
     refetchInterval: 30000,
   });
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-users'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => supabase.from('profiles').select('*'),
   });
 
   const followingEmails = following.map(f => f.following_email);

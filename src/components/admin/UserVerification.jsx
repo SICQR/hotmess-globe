@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Badge, CheckCircle, XCircle, Clock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -11,12 +11,12 @@ export default function UserVerification() {
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users-verification'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: () => supabase.from('profiles').select('*')
   });
 
   const verifyMutation = useMutation({
     mutationFn: async ({ userId, email, verified }) => {
-      await base44.entities.User.update(userId, {
+      await supabase.from('profiles').update({
         is_verified: verified,
         verification_requested: false,
       });

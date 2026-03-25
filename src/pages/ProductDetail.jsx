@@ -1,8 +1,8 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
 import { ArrowLeft, Star, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -49,7 +49,7 @@ export default function ProductDetail() {
       const key = String(productLookup ?? '').trim();
       if (!key) return null;
 
-      const products = await base44.entities.Product.list();
+      const products = await supabase.from('products').select('*');
       if (!Array.isArray(products)) return null;
 
       // 1) Canonical: UUID
@@ -117,7 +117,7 @@ export default function ProductDetail() {
 
   const { data: reviews = [] } = useQuery({
     queryKey: ['product-reviews', resolvedProductId],
-    queryFn: () => base44.entities.Review.filter({ product_id: resolvedProductId }, '-created_date'),
+    queryFn: () => supabase.from('reviews').select('*').eq({ product_id: resolvedProductId }, '-created_date'),
     enabled: !!resolvedProductId,
   });
 
@@ -127,7 +127,7 @@ export default function ProductDetail() {
       const email = String(product?.seller_email || '').trim().toLowerCase();
       if (!email) return null;
 
-      const users = await base44.entities.User.list();
+      const users = await supabase.from('profiles').select('*');
       if (!Array.isArray(users)) return null;
 
       return users.find((u) => String(u?.email || '').trim().toLowerCase() === email) || null;
@@ -137,7 +137,7 @@ export default function ProductDetail() {
 
 
   const reviewMutation = useMutation({
-    mutationFn: (data) => base44.entities.Review.create(data),
+    mutationFn: (data) => supabase.from('reviews').insert(data),
     onSuccess: () => {
       queryClient.invalidateQueries(['product-reviews']);
       setReviewText('');
@@ -152,7 +152,7 @@ export default function ProductDetail() {
 
     const trackView = async () => {
       try {
-        await base44.entities.ProductView.create({
+        await supabase.from('product_views').insert({
           user_email: currentUser.email,
           product_id: product.id,
           product_name: product.name,

@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
 import CompactGlobeControls from '../components/globe/CompactGlobeControls';
@@ -98,7 +98,7 @@ export default function GlobePage({ embedded = false }) {
 
   const { data: userIntents = [] } = useQuery({
     queryKey: ['user-intents-globe'],
-    queryFn: () => base44.entities.UserIntent.filter({ visible: true }, '-created_date', 100),
+    queryFn: () => supabase.from('user_intents').select('*').order('-created_date', { ascending: false }).limit(100),
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
@@ -192,7 +192,7 @@ export default function GlobePage({ embedded = false }) {
     // Fetch recent activities
     const fetchActivities = async () => {
       try {
-        const activities = await base44.entities.UserActivity.filter(
+        const activities = await supabase.from('user_activity').select('*').eq(
           { visible: true },
           '-created_date',
           50

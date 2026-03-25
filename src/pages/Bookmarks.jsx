@@ -33,24 +33,24 @@ export default function Bookmarks() {
 
   const { data: beaconBookmarks = [] } = useQuery({
     queryKey: ['beacon-bookmarks', user?.email],
-    queryFn: () => base44.entities.BeaconBookmark.filter({ user_email: user.email }),
+    queryFn: () => supabase.from('beacon_bookmarks').select('*'),
     enabled: !!user
   });
 
   const { data: productFavorites = [] } = useQuery({
     queryKey: ['product-favorites', user?.email],
-    queryFn: () => base44.entities.ProductFavorite.filter({ user_email: user.email }),
+    queryFn: () => supabase.from('product_favorites').select('*'),
     enabled: !!user
   });
 
   const { data: beacons = [] } = useQuery({
     queryKey: ['beacons'],
-    queryFn: () => base44.entities.Beacon.list()
+    queryFn: () => supabase.from('beacons').select('*')
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list()
+    queryFn: () => supabase.from('products').select('*')
   });
 
   const bookmarkedBeacons = beacons

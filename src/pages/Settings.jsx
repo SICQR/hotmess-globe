@@ -160,7 +160,7 @@ export default function Settings() {
 
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
       setAvatarUrl(file_url);
       const updatePayload = { avatar_url: file_url }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       toast.success('Avatar updated!');

@@ -6,11 +6,11 @@ import { useVisibility } from './useVisibility';
 import { SortSelector } from './SortSelector';
 import type { Profile, SortOption } from './types';
 import type { LatLng } from './travelTime';
-import { base44, supabase } from '@/components/utils/supabaseClient';
 import { createUserProfileUrl } from '@/utils';
 import { toast } from 'sonner';
 import TelegramPanel from './TelegramPanel';
 import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
+import { supabase } from '@/components/utils/supabaseClient';
 
 const SkeletonCard = () => {
   return (

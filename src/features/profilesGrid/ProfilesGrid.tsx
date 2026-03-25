@@ -6,13 +6,13 @@ import { useVisibility } from './useVisibility';
 import type { ViewerLocationResponse } from './types';
 import type { Profile } from './types';
 import type { LatLng } from './travelTime';
-import { base44, supabase } from '@/components/utils/supabaseClient';
 import { createUserProfileUrl } from '@/utils';
 import { toast } from 'sonner';
 import TelegramPanel from './TelegramPanel';
 import useLiveViewerLocation from '@/hooks/useLiveViewerLocation';
 import { useProfileOpener } from '@/lib/profile';
 import { useTaps } from '@/hooks/useTaps';
+import { supabase } from '@/components/utils/supabaseClient';
 
 const SkeletonCard = () => {
   return (

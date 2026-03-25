@@ -1,3 +1,4 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useMemo, useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { } from '@/components/utils/supabaseClient';
@@ -158,7 +159,7 @@ export default function Music() {
     queryKey: ['music-events'],
     queryFn: async () => {
       try {
-        const allBeacons = await base44.entities.Beacon.filter({ active: true, status: 'published' });
+        const allBeacons = await supabase.from('beacons').select('*').eq({ active: true, status: 'published' });
         const today = new Date();
         // Filter to music events with audio_url
         return allBeacons
@@ -202,14 +203,14 @@ export default function Music() {
     queryKey: ['audio-releases'],
     queryFn: async () => {
       try {
-        const metadata = await base44.entities.AudioMetadata.list('-created_date', 20);
+        const metadata = await supabase.from('audio_metadata').select('*').order('-created_date', { ascending: false }).limit(20);
         if (!metadata || metadata.length === 0) return [];
         
         const beaconIds = metadata.map(m => m.beacon_id).filter(Boolean);
         if (beaconIds.length === 0) return metadata.map(m => ({ ...m, beacon: null }));
         
         const beacons = await Promise.all(
-          beaconIds.map(id => base44.entities.Beacon.filter({ id }).then(b => b[0]).catch(() => null))
+          beaconIds.map(id => supabase.from('beacons').select('*').eq({ id }).then(b => b[0]).catch(() => null))
         );
         return metadata.map(m => ({
           ...m,
@@ -226,7 +227,7 @@ export default function Music() {
     queryKey: ['audio-drops-public'],
     queryFn: async () => {
       try {
-        return await base44.entities.Beacon.filter(
+        return await supabase.from('beacons').select('*').eq(
           { kind: 'drop', mode: 'radio', active: true, status: 'published' },
           '-created_date'
         );
@@ -354,7 +355,7 @@ export default function Music() {
         }
       }
 
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: wavFile });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file: wavFile });
 
       let soundcloudUpload = null;
       try {
@@ -367,7 +368,7 @@ export default function Music() {
         soundcloudUpload = null;
       }
 
-      const beacon = await base44.entities.Beacon.create({
+      const beacon = await supabase.from('beacons').insert({
         title: trackTitle,
         description: trackDescription,
         kind: 'drop',
@@ -383,7 +384,7 @@ export default function Music() {
       });
 
       if (soundcloudUpload?.urn || soundcloudUpload?.permalink_url) {
-        await base44.entities.Beacon.update(beacon.id, {
+        await supabase.from('beacons').update({
           soundcloud_urn: soundcloudUpload.urn || null,
           soundcloud_url: soundcloudUpload.permalink_url || null,
           metadata: {
@@ -415,7 +416,7 @@ export default function Music() {
     queryKey: ['owner-audio-drops', currentUser?.email],
     queryFn: async () => {
       if (!currentUser?.email) return [];
-      const allDrops = await base44.entities.Beacon.filter(
+      const allDrops = await supabase.from('beacons').select('*').eq(
         { kind: 'drop', mode: 'radio' },
         '-created_date'
       );
@@ -429,7 +430,7 @@ export default function Music() {
 
   const unpublishMutation = useMutation({
     mutationFn: async (beaconId) => {
-      return base44.entities.Beacon.update(beaconId, { active: false });
+      return supabase.from('beacons').update({ active: false });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['audio-drops-public'] });
@@ -444,7 +445,7 @@ export default function Music() {
 
   const deleteMutation = useMutation({
     mutationFn: async (beaconId) => {
-      await base44.entities.Beacon.delete(beaconId);
+      await supabase.from('beacons').delete().eq('id', beaconId);
       return true;
     },
     onSuccess: () => {

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { MessageCircle, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -48,7 +47,7 @@ export default function Messages() {
   const { data: threads = [], isLoading } = useQuery({
     queryKey: ['chat-threads', currentUser?.email],
     queryFn: async () => {
-      const allThreads = await base44.entities.ChatThread.filter({ active: true }, '-last_message_at');
+      const allThreads = await supabase.from('chat_threads').select('*').eq({ active: true }, '-last_message_at');
       return allThreads.filter(t => t.participant_emails.includes(currentUser.email));
     },
     enabled: !!currentUser,

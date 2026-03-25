@@ -28,14 +28,16 @@ class ActivityTracker {
       if (!user?.email) return;
       
       // UserActivity table may not exist - fail silently
-      if (typeof base44.entities.UserActivity?.create === 'function') {
-        await base44.entities.UserActivity.create({
+      try {
+        await supabase.from('user_activity').insert({
           user_email: user.email,
           action_type: actionType,
           details: details || {},
           location: location || null,
           visible: true
         });
+      } catch {
+        // silently fail if table doesn't exist
       }
     } catch {
       // Activity tracking is non-critical - fail silently

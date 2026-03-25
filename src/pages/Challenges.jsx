@@ -25,27 +25,24 @@ export default function Challenges() {
 
   const { data: todaysChallenges = [] } = useQuery({
     queryKey: ['daily-challenges', today],
-    queryFn: () => base44.entities.DailyChallenge.filter({ challenge_date: today }),
+    queryFn: () => supabase.from('daily_challenges').select('*'),
   });
 
   const { data: completions = [] } = useQuery({
     queryKey: ['challenge-completions', currentUser?.email, today],
-    queryFn: () => base44.entities.ChallengeCompletion.filter({ 
-      user_email: currentUser.email,
-      challenge_date: today
-    }),
+    queryFn: () => supabase.from('challenge_completions').select('*'),
     enabled: !!currentUser,
   });
 
   const { data: streaks = [] } = useQuery({
     queryKey: ['streaks', currentUser?.email],
-    queryFn: () => base44.entities.UserStreak.filter({ user_email: currentUser.email }),
+    queryFn: () => supabase.from('user_streaks').select('*'),
     enabled: !!currentUser,
   });
 
   const completionMutation = useMutation({
     mutationFn: async (challenge) => {
-      await base44.entities.ChallengeCompletion.create({
+      await supabase.from('challenge_completions').insert({
         user_email: currentUser.email,
         challenge_id: challenge.id,
         challenge_date: today,
@@ -61,13 +58,13 @@ export default function Challenges() {
         const dayDiff = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
         
         const newStreak = dayDiff === 1 ? streak.current_streak + 1 : 1;
-        await base44.entities.UserStreak.update(streak.id, {
+        await supabase.from('user_streaks').update({
           current_streak: newStreak,
           longest_streak: Math.max(newStreak, streak.longest_streak),
           last_activity_date: today.toISOString().split('T')[0],
         });
       } else {
-        await base44.entities.UserStreak.create({
+        await supabase.from('user_streaks').insert({
           user_email: currentUser.email,
           streak_type: 'challenge_completion',
           current_streak: 1,

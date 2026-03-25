@@ -1,10 +1,10 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { addHours } from 'date-fns';
 
@@ -19,7 +19,7 @@ export default function MakeOfferModal({ isOpen, onClose, product, currentUser }
 
     setLoading(true);
     try {
-      await base44.entities.ProductOffer.create({
+      await supabase.from('product_offers').insert({
         product_id: product.id,
         buyer_email: currentUser.email,
         seller_email: product.seller_email,
@@ -31,7 +31,7 @@ export default function MakeOfferModal({ isOpen, onClose, product, currentUser }
       });
 
       // Create notification for seller
-      await base44.entities.Notification.create({
+      await supabase.from('notifications').insert({
         user_email: product.seller_email,
         type: 'order',
         title: 'New Offer Received',

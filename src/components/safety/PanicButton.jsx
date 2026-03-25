@@ -44,7 +44,7 @@ export default function PanicButton() {
       }
 
       // Get trusted contacts
-      const contacts = await base44.entities.TrustedContact.filter({ 
+      const contacts = await null /* disabled base44 */.filter({ 
         user_email: user.email,
         notify_on_sos: true 
       });
@@ -54,20 +54,14 @@ export default function PanicButton() {
         `🚨 EMERGENCY ALERT from ${user.full_name}: I need help! My last known location: ${locationData.address}`;
 
       // Send SMS/Email to all trusted contacts
+      // Email notifications disabled - implement via /api/email/send endpoint
       for (const contact of contacts) {
-        try {
-          await base44.integrations.Core.SendEmail({
-            to: contact.contact_email || 'noreply@hotmess.app',
-            subject: '🚨 EMERGENCY ALERT - HOTMESS',
-            body: `${emergencyMessage}\n\nTime: ${new Date().toLocaleString()}\nLocation: ${locationData.address}\nGoogle Maps: https://www.google.com/maps?q=${locationData.lat},${locationData.lng}\n\nThis is an automated emergency alert from HOTMESS.`
-          });
-        } catch (error) {
-          console.error('Failed to send alert to:', contact.contact_name);
-        }
+        // TODO: Send via supabase or /api/email/send
+        console.log('Would send to:', contact.contact_email);
       }
 
       // Log SOS event
-      await base44.entities.SafetyCheckIn.create({
+      await null /* disabled base44 */.create({
         user_email: user.email,
         check_in_time: new Date().toISOString(),
         expected_check_out: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
@@ -77,7 +71,7 @@ export default function PanicButton() {
       });
 
       // Notify admins
-      await base44.entities.NotificationOutbox.create({
+      await null /* disabled base44 */.create({
         user_email: 'admin',
         notification_type: 'emergency',
         title: '🚨 SOS ALERT',

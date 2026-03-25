@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
 import { 
   Crown,
   Lock,
@@ -75,11 +75,13 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
     queryKey: ['subscription', currentUser?.email, user?.email],
     queryFn: async () => {
       if (!currentUser?.email || !user?.email) return null;
-      const subs = await base44.entities.Subscription?.filter({
-        subscriber_email: currentUser.email,
-        creator_email: user.email,
-        status: 'active'
-      }).catch(() => []);
+      const { data: subs, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('subscriber_email', currentUser.email)
+        .eq('creator_email', user.email)
+        .eq('status', 'active');
+      if (error) return null;
       return Array.isArray(subs) && subs.length > 0 ? subs[0] : null;
     },
     enabled: !!currentUser?.email && !!user?.email && !isOwnProfile,
@@ -90,10 +92,12 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
     queryKey: ['unlocked-content', currentUser?.email, user?.email],
     queryFn: async () => {
       if (!currentUser?.email || !user?.email) return [];
-      const unlocks = await base44.entities.PremiumUnlock?.filter({
-        user_email: currentUser.email,
-        owner_email: user.email,
-      }).catch(() => []);
+      const { data: unlocks, error } = await supabase
+        .from('premium_unlocks')
+        .select('*')
+        .eq('user_email', currentUser.email)
+        .eq('owner_email', user.email);
+      if (error) return [];
       return Array.isArray(unlocks) ? unlocks : [];
     },
     enabled: !!currentUser?.email && !!user?.email && !isOwnProfile,
@@ -103,10 +107,12 @@ export default function PremiumProfileView({ user, currentUser, isOwnProfile }) 
   const { data: subscriberCount = 0 } = useQuery({
     queryKey: ['subscriber-count', user?.email],
     queryFn: async () => {
-      const subs = await base44.entities.Subscription?.filter({
-        creator_email: user.email,
-        status: 'active'
-      }).catch(() => []);
+      const { data: subs, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('creator_email', user.email)
+        .eq('status', 'active');
+      if (error) return 0;
       return Array.isArray(subs) ? subs.length : 0;
     },
     enabled: !!user?.email,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
 import { LAYER } from '@/lib/layerSystem';
+import { supabase } from '@/components/utils/supabaseClient';
 
 interface TopHUDProps {
   safetyStatus?: 'safe' | 'active' | 'resolved';

@@ -1,3 +1,4 @@
+import { supabase } from '@/components/utils/supabaseClient';
 /**
  * useUnifiedVault - Single nerve center for user's inventory, beacons, and stats
  * 
@@ -9,10 +10,9 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
 
 /**
- * @param {Object} user - Current user from base44.auth.me()
+ * @param {Object} user - Current user from supabase.auth.me()
  * @returns {Object} { inventory, beacons, stats, isLoading, error }
  */
 export function useUnifiedVault(user) {
@@ -28,7 +28,7 @@ export function useUnifiedVault(user) {
     queryKey: ['vault-p2p-orders', userEmail],
     queryFn: async () => {
       if (!userEmail) return [];
-      const orders = await base44.entities.Order.filter(
+      const orders = await supabase.from('orders').select('*').eq(
         { buyer_email: userEmail },
         '-created_date'
       );

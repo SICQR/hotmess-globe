@@ -1,13 +1,12 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Image, Video, X, Clock, Loader2, BarChart3, Calendar } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { checkRateLimit } from '../utils/sanitize';
-
 export default function PostCreator({ user, onPostCreated, onCancel }) {
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('general');
@@ -28,28 +27,23 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
     location: '',
     ticket_url: ''
   });
-
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     // Strict validation
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     const maxSize = 10 * 1024 * 1024; // 10MB
-    
     if (!allowedTypes.includes(file.type)) {
       toast.error('Invalid file type. Use JPEG, PNG, WebP, or GIF.');
       return;
     }
-    
     if (file.size > maxSize) {
       toast.error('Image too large (max 10MB)');
       return;
     }
-
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
       setMediaUrl(file_url);
       setMediaType('image');
       toast.success('Image uploaded');
@@ -59,28 +53,23 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
       setUploading(false);
     }
   };
-
   const handleVideoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     // Strict validation
     const allowedTypes = ['video/mp4', 'video/quicktime', 'video/webm'];
     const maxSize = 100 * 1024 * 1024; // 100MB
-    
     if (!allowedTypes.includes(file.type)) {
       toast.error('Invalid file type. Use MP4, MOV, or WebM.');
       return;
     }
-    
     if (file.size > maxSize) {
       toast.error('Video too large (max 100MB)');
       return;
     }
-
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
       setMediaUrl(file_url);
       setMediaType('video');
       toast.success('Video uploaded');
@@ -90,7 +79,6 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
       setUploading(false);
     }
   };
-
   const addTag = () => {
     if (!tagInput.trim() || tags.length >= 5) return;
     const tag = tagInput.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -99,35 +87,29 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
       setTagInput('');
     }
   };
-
   const removeTag = (tag) => {
     setTags(tags.filter(t => t !== tag));
   };
-
   const addPollOption = () => {
     if (pollOptions.length < 6) {
       setPollOptions([...pollOptions, '']);
     }
   };
-
   const removePollOption = (index) => {
     if (pollOptions.length > 2) {
       setPollOptions(pollOptions.filter((_, i) => i !== index));
     }
   };
-
   const updatePollOption = (index, value) => {
     const newOptions = [...pollOptions];
     newOptions[index] = value;
     setPollOptions(newOptions);
   };
-
   const handlePost = async () => {
     if (postType === 'text' && !content.trim() && !mediaUrl) {
       toast.error('Please add content or media');
       return;
     }
-
     if (postType === 'poll') {
       const validOptions = pollOptions.filter(o => o.trim());
       if (!content.trim()) {
@@ -139,59 +121,38 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
         return;
       }
     }
-
     if (postType === 'event') {
       if (!content.trim() || !eventData.title || !eventData.date) {
         toast.error('Please fill in event title, description, and date');
         return;
       }
     }
-
     // Rate limit: max 5 posts per minute
     const rateCheck = checkRateLimit(`post-${user.email}`, 5, 60000);
     if (!rateCheck.allowed) {
       toast.error('Too many posts. Please wait before posting again.');
       return;
     }
-
     setPosting(true);
     try {
       // AI moderation
       const moderationPrompt = `Analyze this community post for inappropriate content:
-
 "${content}"
-
 Check for:
 - Hate speech, harassment, threats
 - Spam or promotional content
 - NSFW/explicit content
 - Misinformation
-
 Return a JSON with: approved (boolean), reason (string if not approved), sentiment (positive/neutral/negative)`;
-
-      const moderation = await base44.integrations.Core.InvokeLLM({
-        prompt: moderationPrompt,
-        add_context_from_internet: false,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            approved: { type: "boolean" },
-            reason: { type: "string" },
-            sentiment: { type: "string" }
-          }
-        }
-      });
-
+      const moderation = await null /* InvokeLLM disabled */;
       const expiresAt = expires_in_24h 
         ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         : null;
-
       const pollData = postType === 'poll' ? {
         options: pollOptions.filter(o => o.trim()),
         votes: {},
         expires_at: new Date(Date.now() + pollDuration * 24 * 60 * 60 * 1000).toISOString()
       } : null;
-
       const eventMetadata = postType === 'event' ? {
         event: {
           title: eventData.title,
@@ -201,8 +162,7 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           ticket_url: eventData.ticket_url
         }
       } : {};
-
-      const post = await base44.entities.CommunityPost.create({
+      const post = await supabase.from('community_posts').insert({
         user_email: user.email,
         user_name: user.full_name || user.email,
         content: content.trim(),
@@ -216,10 +176,9 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
         video_url: mediaType === 'video' ? mediaUrl : null,
         metadata: pollData ? { poll: pollData } : eventMetadata
       });
-      
       // Notify admins if flagged
       if (!moderation.approved) {
-        await base44.entities.Notification.create({
+        await supabase.from('notifications').insert({
           user_email: 'admin',
           type: 'flagged_post',
           title: 'Post Flagged by AI',
@@ -228,13 +187,11 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           metadata: { post_id: post.id }
         });
       }
-
       if (moderation.approved) {
         toast.success('Post published!');
       } else {
         toast.warning('Post flagged for review: ' + moderation.reason);
       }
-
       onPostCreated();
     } catch (error) {
       toast.error('Failed to create post');
@@ -242,7 +199,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
       setPosting(false);
     }
   };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -250,7 +206,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
       className="bg-white/5 border-2 border-white/10 rounded-xl p-6 mb-6"
     >
       <h3 className="font-black uppercase text-sm mb-4">Create Post</h3>
-
       {/* Post Type Toggle */}
       <div className="flex gap-2 mb-4">
         <Button
@@ -283,7 +238,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           Event
         </Button>
       </div>
-
       <Textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
@@ -296,11 +250,9 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
         className="mb-4 bg-black border-white/20 text-white placeholder:text-white/40"
         maxLength={1000}
       />
-
       <div className="text-xs text-white/40 mb-4 text-right">
         {content.length}/1000
       </div>
-
       {/* Poll Options */}
       {postType === 'poll' && (
         <div className="mb-4 space-y-3">
@@ -354,7 +306,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           </div>
         </div>
       )}
-
       {/* Event Form */}
       {postType === 'event' && (
         <div className="mb-4 space-y-3">
@@ -397,7 +348,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           />
         </div>
       )}
-
       {/* Media Preview */}
       {mediaUrl && (
         <div className="relative mb-4 border-2 border-white/20 rounded-lg overflow-hidden">
@@ -418,7 +368,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           </button>
         </div>
       )}
-
       {/* Tags */}
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
@@ -432,7 +381,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           ))}
         </div>
       )}
-
       {/* Tag Input */}
       {tags.length < 5 && (
         <div className="flex gap-2 mb-4">
@@ -450,7 +398,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           </Button>
         </div>
       )}
-
       {/* Options */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         {(postType === 'text' || postType === 'event') && (
@@ -478,7 +425,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
             </span>
           </Button>
         </label>
-
         <input
           type="file"
           accept="video/*"
@@ -504,7 +450,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
         </label>
           </>
         )}
-
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
@@ -515,7 +460,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           <Clock className="w-4 h-4 text-white/60" />
           <span className="text-xs text-white/60 uppercase">24hr post</span>
         </label>
-
         {uploading && (
           <span className="text-xs text-white/40 flex items-center gap-2">
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -523,7 +467,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
           </span>
         )}
       </div>
-
       <div className="flex items-center justify-between">
         <Select value={category} onValueChange={setCategory}>
           <SelectTrigger className="w-48 bg-black border-white/20 text-white">
@@ -538,7 +481,6 @@ Return a JSON with: approved (boolean), reason (string if not approved), sentime
             <SelectItem value="achievements">Achievements</SelectItem>
           </SelectContent>
         </Select>
-
         <div className="flex gap-2">
           <Button variant="ghost" onClick={onCancel} disabled={posting}>
             Cancel

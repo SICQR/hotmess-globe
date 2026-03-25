@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Clock, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -13,10 +13,10 @@ export default function DropBeacons() {
     queryKey: ['drop-beacons'],
     queryFn: async () => {
       // Get beacons with mode=drop that are currently active
-      const beacons = await base44.entities.Beacon.filter({ mode: 'drop', active: true });
+      const beacons = await supabase.from('beacons').select('*').eq({ mode: 'drop', active: true });
       
       // Get products associated with these drop beacons
-      const products = await base44.entities.Product.list();
+      const products = await supabase.from('products').select('*');
       
       return beacons.map(beacon => {
         const dropProducts = products.filter(p => 
@@ -41,11 +41,11 @@ export default function DropBeacons() {
       drops.forEach(drop => {
         if (drop.expires_at && new Date(drop.expires_at) < new Date()) {
           // Mark as inactive (authenticated-only)
-          base44.auth
+          supabase.auth
             .isAuthenticated()
             .then((isAuth) => {
               if (!isAuth) return;
-              base44.entities.Beacon.update(drop.id, { active: false });
+              supabase.from('beacons').update({ active: false });
             })
             .catch(() => {
               // ignore

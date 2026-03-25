@@ -25,7 +25,7 @@ export default function HandshakeButton({ targetUser, currentUser, variant = 'de
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour expiry
 
-      const session = await base44.entities.BotSession.create({
+      const session = await supabase.from('bot_sessions').insert({
         token,
         initiator_email: currentUser.email,
         target_email: targetUser.email,

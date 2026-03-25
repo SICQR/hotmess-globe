@@ -26,18 +26,18 @@ export default function OrganizerDashboard() {
 
   const { data: myBeacons = [] } = useQuery({
     queryKey: ['my-beacons', user?.email],
-    queryFn: () => base44.entities.Beacon.filter({ created_by: user.email }),
+    queryFn: () => supabase.from('beacons').select('*').eq({ created_by: user.email }),
     enabled: !!user
   });
 
   const { data: allInteractions = [] } = useQuery({
     queryKey: ['beacon-interactions'],
-    queryFn: () => base44.entities.UserInteraction.list()
+    queryFn: () => supabase.from('user_interactions').select('*')
   });
 
   const { data: allCheckIns = [] } = useQuery({
     queryKey: ['all-check-ins'],
-    queryFn: () => base44.entities.BeaconCheckIn.list()
+    queryFn: () => supabase.from('beacon_check_ins').select('*')
   });
 
   const myBeaconIds = myBeacons.map(b => b.id);

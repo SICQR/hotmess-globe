@@ -1,9 +1,9 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Star, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 const REVIEW_TAGS = [
@@ -37,7 +37,7 @@ export default function MarketplaceReviewModal({ isOpen, onClose, order, current
     setLoading(true);
 
     try {
-      await base44.entities.MarketplaceReview.create({
+      await supabase.from('marketplace_reviews').insert({
         order_id: order.id,
         product_id: order.id, // TODO: Confirm if this should be order.product_id or null for user reviews
         reviewer_email: currentUser.email,
@@ -49,7 +49,7 @@ export default function MarketplaceReviewModal({ isOpen, onClose, order, current
       });
 
       // Create notification for reviewed user
-      await base44.entities.Notification.create({
+      await supabase.from('notifications').insert({
         user_email: reviewedUserEmail,
         type: 'system',
         title: 'New Marketplace Review',

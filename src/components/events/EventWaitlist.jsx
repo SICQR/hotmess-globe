@@ -11,7 +11,7 @@ export default function EventWaitlist({ event, currentUser }) {
   const { data: waitlistEntry } = useQuery({
     queryKey: ['waitlist', event.id, currentUser?.email],
     queryFn: async () => {
-      const entries = await base44.entities.EventRSVP.filter({
+      const entries = await supabase.from('event_rsvps').select('*').eq({
         user_email: currentUser.email,
         event_id: event.id,
         status: 'waitlist'
@@ -23,7 +23,7 @@ export default function EventWaitlist({ event, currentUser }) {
 
   const { data: allWaitlist = [] } = useQuery({
     queryKey: ['waitlist-count', event.id],
-    queryFn: () => base44.entities.EventRSVP.filter({ 
+    queryFn: () => supabase.from('event_rsvps').select('*').eq({ 
       event_id: event.id, 
       status: 'waitlist' 
     })
@@ -32,11 +32,11 @@ export default function EventWaitlist({ event, currentUser }) {
   const joinWaitlistMutation = useMutation({
     mutationFn: async () => {
       if (waitlistEntry) {
-        await base44.entities.EventRSVP.delete(waitlistEntry.id);
+        await supabase.from('event_rsvps').delete().eq('id', waitlistEntry.id);
         return null;
       }
       
-      return await base44.entities.EventRSVP.create({
+      return await supabase.from('event_rsvps').insert({
         user_email: currentUser.email,
         event_id: event.id,
         event_title: event.title,
@@ -54,7 +54,7 @@ export default function EventWaitlist({ event, currentUser }) {
         toast.success('Added to waitlist - we\'ll notify you if spots open');
         
         // Create notification for user
-        base44.entities.Notification.create({
+        supabase.from('notifications').insert({
           user_email: currentUser.email,
           type: 'event_reminder',
           title: 'Joined Waitlist',
@@ -68,7 +68,7 @@ export default function EventWaitlist({ event, currentUser }) {
 
   const { data: allRsvps = [] } = useQuery({
     queryKey: ['event-rsvps', event.id],
-    queryFn: () => base44.entities.EventRSVP.filter({ event_id: event.id })
+    queryFn: () => supabase.from('event_rsvps').select('*').eq({ event_id: event.id })
   });
 
   const goingCount = allRsvps.filter(r => r.status === 'going').length;

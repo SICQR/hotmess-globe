@@ -1,3 +1,4 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import { motion } from 'framer-motion';
@@ -7,7 +8,6 @@ import { Calendar, MapPin, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -28,7 +28,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
   const { data: activeUsers = [] } = useQuery({
     queryKey: ['active-users-map'],
     queryFn: async () => {
-      const users = await base44.entities.User.list();
+      const users = await supabase.from('profiles').select('*');
       return users.filter(u => 
         u.lat && 
         u.lng && 
@@ -41,7 +41,7 @@ export default function EventsMapView({ events, userLocation, radius = 5, onClos
 
   const { data: recentCheckIns = [] } = useQuery({
     queryKey: ['recent-checkins-map'],
-    queryFn: () => base44.entities.BeaconCheckIn.list('-created_date', 50),
+    queryFn: () => supabase.from('beacon_check_ins').select('*').order('-created_date', { ascending: false }).limit(50),
     refetchInterval: 10000
   });
 

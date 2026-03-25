@@ -11,7 +11,7 @@ export default function EventRSVP({ event, currentUser }) {
   const { data: myRsvp } = useQuery({
     queryKey: ['my-rsvp', event.id, currentUser?.email],
     queryFn: async () => {
-      const rsvps = await base44.entities.EventRSVP.filter({
+      const rsvps = await supabase.from('event_rsvps').select('*').eq({
         user_email: currentUser.email,
         event_id: event.id
       });
@@ -22,7 +22,7 @@ export default function EventRSVP({ event, currentUser }) {
 
   const { data: allRsvps = [] } = useQuery({
     queryKey: ['event-rsvps', event.id],
-    queryFn: () => base44.entities.EventRSVP.filter({ event_id: event.id })
+    queryFn: () => supabase.from('event_rsvps').select('*').eq({ event_id: event.id })
   });
 
   const goingCount = allRsvps.filter(r => r.status === 'going').length;
@@ -33,12 +33,12 @@ export default function EventRSVP({ event, currentUser }) {
     mutationFn: async (status) => {
       if (myRsvp) {
         if (myRsvp.status === status) {
-          await base44.entities.EventRSVP.delete(myRsvp.id);
+          await supabase.from('event_rsvps').delete().eq('id', myRsvp.id);
           return null;
         }
-        return await base44.entities.EventRSVP.update(myRsvp.id, { status });
+        return await supabase.from('event_rsvps').update({ status });
       }
-      return await base44.entities.EventRSVP.create({
+      return await supabase.from('event_rsvps').insert({
         user_email: currentUser.email,
         event_id: event.id,
         event_title: event.title,

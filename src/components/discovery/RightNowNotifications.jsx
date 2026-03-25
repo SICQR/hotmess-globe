@@ -1,31 +1,31 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
 export default function RightNowNotifications({ currentUser }) {
   const { data: rightNowUsers = [] } = useQuery({
     queryKey: ['right-now-active'],
-    queryFn: () => base44.entities.RightNowStatus.filter({ active: true }),
+    queryFn: () => supabase.from('right_now_status').select('*').eq({ active: true }),
     enabled: !!currentUser,
     refetchInterval: 30000 // Check every 30 seconds
   });
 
   const { data: userTags = [] } = useQuery({
     queryKey: ['user-tags', currentUser?.email],
-    queryFn: () => base44.entities.UserTag.filter({ user_email: currentUser.email }),
+    queryFn: () => supabase.from('user_tags').select('*'),
     enabled: !!currentUser
   });
 
   const { data: allUserTags = [] } = useQuery({
     queryKey: ['all-user-tags'],
-    queryFn: () => base44.entities.UserTag.list(),
+    queryFn: () => supabase.from('user_tags').select('*'),
     enabled: !!currentUser,
   });
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => supabase.from('profiles').select('*'),
     enabled: !!currentUser,
   });
 

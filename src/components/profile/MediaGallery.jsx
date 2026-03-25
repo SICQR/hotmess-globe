@@ -1,8 +1,8 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Image as ImageIcon, Video as VideoIcon, Trash2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 
@@ -39,7 +39,7 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allow
     setUploading(true);
     try {
       const uploadPromises = files.map(file => 
-        base44.integrations.Core.UploadFile({ file })
+        supabase.storage.from("uploads").upload(Math.random().toString(), { file })
       );
       const results = await Promise.all(uploadPromises);
       
@@ -237,7 +237,7 @@ export function VideoUploader({ videoUrl, onVideoChange }) {
 
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
       onVideoChange(file_url);
       toast.success('Video uploaded!');
     } catch (error) {
@@ -307,7 +307,7 @@ export function PremiumVideoManager({ videos = [], onVideosChange }) {
 
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
       onVideosChange([...videos, { 
         url: file_url, 
         title: newVideoTitle || 'Untitled',

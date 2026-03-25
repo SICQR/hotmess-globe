@@ -13,7 +13,7 @@ export default function MessageButton({ targetUser, currentUser, threadType = 'd
   const createThreadMutation = useMutation({
     mutationFn: async () => {
       // Check if thread already exists
-      const existingThreads = await base44.entities.ChatThread.list();
+      const existingThreads = await supabase.from('chat_threads').select('*');
       const existing = existingThreads.find(t => 
         t.participant_emails.includes(currentUser.email) &&
         t.participant_emails.includes(targetUser.email) &&
@@ -26,7 +26,7 @@ export default function MessageButton({ targetUser, currentUser, threadType = 'd
       }
 
       // Create new thread
-      return await base44.entities.ChatThread.create({
+      return await supabase.from('chat_threads').insert({
         participant_emails: [currentUser.email, targetUser.email],
         thread_type: threadType,
         metadata: metadata,

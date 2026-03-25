@@ -1,3 +1,4 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -6,9 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X, Upload, Loader2, Sparkles } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-
 const PRODUCT_TYPES = [
   { value: 'physical', label: 'Physical Goods' },
   { value: 'digital', label: 'Digital Download' },
@@ -17,9 +16,7 @@ const PRODUCT_TYPES = [
   { value: 'badge', label: 'Achievement Badge' },
   { value: 'merch', label: 'Merch' },
 ];
-
 const CATEGORIES = ['Apparel', 'Accessories', 'Art', 'Music', 'Events', 'Experiences', 'Digital', 'Other'];
-
 export default function ProductForm({ product, onSubmit, onCancel }) {
   const [formData, setFormData] = useState(product || {
     name: '',
@@ -35,29 +32,24 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
     min_xp_level: null,
     details: {},
   });
-  
   const [tagInput, setTagInput] = useState('');
   const [uploading, setUploading] = useState(false);
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [generatingTags, setGeneratingTags] = useState(false);
   const [generatingMarketing, setGeneratingMarketing] = useState(false);
   const [marketingCopy, setMarketingCopy] = useState('');
-
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
-
     setUploading(true);
     try {
-      const uploadPromises = files.map(file => base44.integrations.Core.UploadFile({ file }));
+      const uploadPromises = files.map(file => supabase.storage.from("uploads").upload(Math.random().toString(), { file }));
       const results = await Promise.all(uploadPromises);
       const urls = results.map(r => r.file_url);
-      
       setFormData(prev => ({
         ...prev,
         image_urls: [...(prev.image_urls || []), ...urls]
       }));
-      
       toast.success(`${files.length} image(s) uploaded`);
     } catch (error) {
       console.error('Upload failed:', error);
@@ -66,14 +58,12 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
       setUploading(false);
     }
   };
-
   const removeImage = (index) => {
     setFormData(prev => ({
       ...prev,
       image_urls: prev.image_urls.filter((_, i) => i !== index)
     }));
   };
-
   const addTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
       setFormData(prev => ({
@@ -83,29 +73,21 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
       setTagInput('');
     }
   };
-
   const removeTag = (tag) => {
     setFormData(prev => ({
       ...prev,
       tags: prev.tags.filter(t => t !== tag)
     }));
   };
-
   const generateDescription = async () => {
     if (!formData.name) {
       toast.error('Please enter a product name first');
       return;
     }
-
     setGeneratingDescription(true);
     try {
       const prompt = `Generate a compelling, detailed product description for a ${formData.product_type} product called "${formData.name}"${formData.category ? ` in the ${formData.category} category` : ''}. Make it engaging, highlight key features and benefits, and use a tone that appeals to the HOTMESS LONDON audience (nightlife, creative, urban culture). Keep it 2-3 sentences.`;
-      
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        add_context_from_internet: false,
-      });
-
+      const response = await null /* InvokeLLM disabled */;
       setFormData(prev => ({ ...prev, description: response }));
       toast.success('Description generated!');
     } catch (error) {
@@ -115,22 +97,15 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
       setGeneratingDescription(false);
     }
   };
-
   const generateTags = async () => {
     if (!formData.name || !formData.description) {
       toast.error('Please enter product name and description first');
       return;
     }
-
     setGeneratingTags(true);
     try {
       const prompt = `Based on this product: "${formData.name}" - ${formData.description}. Suggest 5-8 relevant, searchable tags that would help users find this product. Return ONLY the tags as a comma-separated list, no explanations.`;
-      
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        add_context_from_internet: false,
-      });
-
+      const response = await null /* InvokeLLM disabled */;
       const tags = response.split(',').map(tag => tag.trim()).filter(tag => tag && !formData.tags.includes(tag));
       setFormData(prev => ({
         ...prev,
@@ -144,22 +119,15 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
       setGeneratingTags(false);
     }
   };
-
   const generateMarketingCopy = async () => {
     if (!formData.name || !formData.description) {
       toast.error('Please enter product name and description first');
       return;
     }
-
     setGeneratingMarketing(true);
     try {
       const prompt = `Create compelling marketing copy for a featured product listing: "${formData.name}" - ${formData.description}. Price: £${formData.price_gbp || formData.price_xp}. Write a short, punchy promotional message (1-2 sentences) that creates urgency and excitement. Use emojis and caps lock strategically for emphasis. Think Instagram/social media style.`;
-      
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        add_context_from_internet: false,
-      });
-
+      const response = await null /* InvokeLLM disabled */;
       setMarketingCopy(response);
       toast.success('Marketing copy generated!');
     } catch (error) {
@@ -169,12 +137,10 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
       setGeneratingMarketing(false);
     }
   };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
   };
-
   return (
     <motion.form
       initial={{ opacity: 0, y: 20 }}
@@ -192,7 +158,6 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
             required
           />
         </div>
-
         <div className="space-y-2">
           <Label>Product Type</Label>
           <Select value={formData.product_type} onValueChange={(value) => setFormData({ ...formData, product_type: value })}>
@@ -207,7 +172,6 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
           </Select>
         </div>
       </div>
-
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label>Description</Label>
@@ -234,7 +198,6 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
           rows={4}
         />
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="space-y-2">
           <Label>Price (Credits)</Label>
@@ -252,7 +215,6 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
             required
           />
         </div>
-
         <div className="space-y-2">
           <Label>Category</Label>
           <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
@@ -266,7 +228,6 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
             </SelectContent>
           </Select>
         </div>
-
         <div className="space-y-2">
           <Label>Stock</Label>
           <Input
@@ -283,7 +244,6 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
           />
         </div>
       </div>
-
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label>Tags</Label>
@@ -325,7 +285,6 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
           </div>
         )}
       </div>
-
       <div className="space-y-2">
         <Label>Images</Label>
         <div className="border-2 border-dashed border-white/20 rounded-xl p-6 text-center">
@@ -347,7 +306,6 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
             <p className="text-white/60">Click to upload images</p>
           </label>
         </div>
-        
         {formData.image_urls.length > 0 && (
           <div className="grid grid-cols-4 gap-4 mt-4">
             {formData.image_urls.map((url, index) => (
@@ -365,7 +323,6 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
           </div>
         )}
       </div>
-
       {marketingCopy && (
         <div className="bg-gradient-to-br from-[#C8962C]/20 to-[#C8962C]/20 border border-[#C8962C]/40 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-3">
@@ -384,7 +341,6 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
           </Button>
         </div>
       )}
-
       <div className="flex justify-between items-center">
         <Button
           type="button"

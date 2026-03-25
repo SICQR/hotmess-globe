@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Star, Clock, Package, MessageCircle, AlertTriangle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
@@ -8,7 +8,7 @@ export default function SellerRatingDisplay({ sellerEmail, compact = false }) {
   const { data: rating } = useQuery({
     queryKey: ['seller-rating', sellerEmail],
     queryFn: async () => {
-      const ratings = await base44.entities.SellerRating.filter({ seller_email: sellerEmail });
+      const ratings = await supabase.from('seller_ratings').select('*').eq({ seller_email: sellerEmail });
       return ratings[0] || null;
     },
     enabled: !!sellerEmail
@@ -16,10 +16,7 @@ export default function SellerRatingDisplay({ sellerEmail, compact = false }) {
 
   const { data: reviews = [] } = useQuery({
     queryKey: ['seller-reviews', sellerEmail],
-    queryFn: () => base44.entities.MarketplaceReview.filter({ 
-      reviewed_user_email: sellerEmail,
-      review_type: 'buyer_to_seller'
-    }),
+    queryFn: () => supabase.from('marketplace_reviews').select('*'),
     enabled: !!sellerEmail
   });
 

@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
 import { Sparkles, TrendingUp, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
 export default function TrendingSummary({ posts }) {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
-
   const generateSummary = async () => {
     if (!posts || posts.length === 0) return;
-
     setLoading(true);
     try {
       const topPosts = posts
@@ -20,23 +16,14 @@ export default function TrendingSummary({ posts }) {
           return scoreB - scoreA;
         })
         .slice(0, 10);
-
       const prompt = `Analyze these trending community posts from HOTMESS LONDON and create a brief, engaging summary of what's happening:
-
 ${topPosts.map((p, i) => `${i + 1}. ${p.content} (${p.likes_count || 0} likes, ${p.comments_count || 0} comments) [${p.category}]`).join('\n')}
-
 Create a 2-3 sentence summary highlighting:
 - Main themes/topics people are discussing
 - Most popular categories
 - Overall community vibe/sentiment
-
 Use a fun, energetic tone that matches HOTMESS LONDON's nightlife culture.`;
-
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        add_context_from_internet: false,
-      });
-
+      const response = await null /* InvokeLLM disabled */;
       setSummary(response);
     } catch (error) {
       console.error('Failed to generate summary:', error);
@@ -44,15 +31,12 @@ Use a fun, energetic tone that matches HOTMESS LONDON's nightlife culture.`;
       setLoading(false);
     }
   };
-
   useEffect(() => {
     if (posts && posts.length >= 5) {
       generateSummary();
     }
   }, [posts?.length]);
-
   if (!summary && !loading) return null;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

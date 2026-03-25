@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
 import { PAGINATION, QUERY_CONFIG } from '../components/utils/constants';
 import { Users, Zap, Heart, Filter, Grid3x3 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -65,19 +65,19 @@ export default function Connect() {
 
   const { data: userTags = [] } = useQuery({
     queryKey: ['user-tags'],
-    queryFn: () => base44.entities.UserTag.list(),
+    queryFn: () => supabase.from('user_tags').select('*'),
     enabled: !!currentUser
   });
 
   const { data: userTribes = [] } = useQuery({
     queryKey: ['user-tribes'],
-    queryFn: () => base44.entities.UserTribe.list(),
+    queryFn: () => supabase.from('user_tribes').select('*'),
     enabled: !!currentUser
   });
 
   const { data: rightNowStatuses = [] } = useQuery({
     queryKey: ['right-now-status'],
-    queryFn: () => base44.entities.RightNowStatus.filter({ active: true }),
+    queryFn: () => supabase.from('right_now_status').select('*').eq({ active: true }),
     enabled: !!currentUser,
     refetchInterval: QUERY_CONFIG.REFETCH_INTERVAL_MEDIUM
   });
@@ -393,7 +393,7 @@ export default function Connect() {
       } catch {
         // Fall back to hasProducts only (best-effort) via Base44 entity filter.
         try {
-          const rows = await base44.entities.Product.filter({ seller_email: uniq, status: 'active' }, null, 250);
+          const rows = await supabase.from('products').select('*').eq({ seller_email: uniq, status: 'active' }, null, 250);
           (Array.isArray(rows) ? rows : []).forEach((row) => {
             const email = normalizeEmail(row?.seller_email);
             if (!email) return;

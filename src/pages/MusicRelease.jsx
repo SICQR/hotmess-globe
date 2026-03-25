@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
 import { useServerNow } from '@/hooks/use-server-now';
@@ -32,7 +32,7 @@ export default function MusicRelease() {
   const { data: releases = [], isLoading, error } = useQuery({
     queryKey: ['audio-releases', 'by-slug', slug],
     queryFn: async () => {
-      const metadata = await base44.entities.AudioMetadata.list('-created_date', 50);
+      const metadata = await supabase.from('audio_metadata').select('*').order('-created_date', { ascending: false }).limit(50);
       return Array.isArray(metadata) ? metadata : [];
     },
   });
@@ -42,7 +42,7 @@ export default function MusicRelease() {
     queryFn: async () => {
       const normalizedSlug = String(slug ?? '').trim();
       if (!normalizedSlug) return null;
-      const rows = await base44.entities.Beacon.filter(
+      const rows = await supabase.from('beacons').select('*').eq(
         { active: true, status: 'published', kind: 'release', release_slug: normalizedSlug },
         'release_at',
         1
