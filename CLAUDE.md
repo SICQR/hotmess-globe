@@ -37,8 +37,9 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 - Full stack: React + Vite + TypeScript + Tailwind + Supabase + Framer Motion + Vercel
 - Brand: `#C8962C` gold, `#050507` bg, dark only, no pink, no XP
 - All 45 sheets, the boot state machine, sheet policy, persona system, SOS system
-- Supabase project (production): `axxwdjmbwkvqhcpwters` (supabase-purple-queen, East US)
-- Supabase project (dev/staging): `klsywpvncqqglhnhrjbh` (HOTMESS BASE44, ap-northeast-1)
+- Supabase project (production): `rfoftonnlwudilafhfkl`
+- Supabase project (dev/staging): `klsywpvncqqglhnhrjbh`
+- Supabase edge functions host: `axxwdjmbwkvqhcpwters`
 - Repo: `SICQR/hotmess-globe`, live at `hotmessldn.com`
 - Vercel project: `prj_xdS5EoLRDpGhj4GOIbtSLSrCmvJO`, team: `team_ctjjRDRV1EpYKYaO9wQSwRyv`
 - You have write access. Use it.
@@ -182,7 +183,7 @@ venues:              7 rows
 cities:             13 rows
 ```
 
-Production (axxwdjmbwkvqhcpwters): same schema, access restricted.
+Production (rfoftonnlwudilafhfkl): same schema, access restricted. Edge functions hosted on axxwdjmbwkvqhcpwters.
 
 ---
 

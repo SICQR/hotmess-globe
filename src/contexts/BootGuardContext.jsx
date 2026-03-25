@@ -170,7 +170,7 @@ export function BootGuardProvider({ children }) {
             user_id: newSession.user.id,
             status: 'offline',
             last_seen_at: new Date().toISOString(),
-          }, { onConflict: 'user_id' }).catch(() => {});
+          }, { onConflict: 'user_id' }).then(null, () => {});
         }
         // Clear all hm_* localStorage keys so a new user doesn't inherit state
         clearHotmessStorage();
@@ -191,7 +191,7 @@ export function BootGuardProvider({ children }) {
           status: 'online',
           last_seen_at: new Date().toISOString(),
           metadata: {},
-        }, { onConflict: 'user_id' }).catch(() => {});
+        }, { onConflict: 'user_id' }).then(null, () => {});
         // Do NOT await — see comment above re: Navigator Lock deadlock.
         void loadProfile(newSession.user.id, newSession.user.email);
       }
@@ -207,8 +207,8 @@ export function BootGuardProvider({ children }) {
           user_id: uid,
           status: 'online',
           last_seen_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' }).catch(() => {});
-      }).catch(() => {});
+        }, { onConflict: 'user_id' }).then(null, () => {});
+      }).then(null, () => {});
     }, 60_000);
 
     return () => {
