@@ -24,7 +24,7 @@ export default function GlobalAssistant() {
   useEffect(() => {
     if (!conversationId) return;
 
-    // base44.agents API deprecated - agents disabled
+    // TODO: Implement conversation subscription via Supabase realtime
     return () => {};
   }, [conversationId]);
 
@@ -34,13 +34,13 @@ export default function GlobalAssistant() {
   }, [messages]);
 
   const initializeConversation = async () => {
-    // base44.agents API deprecated - agents disabled
-    console.warn('Agents API disabled');
+    // TODO: Initialize conversation via /api/ai/conversation endpoint
+    console.warn('[TODO] AI conversation initialization not yet implemented');
   };
 
   const handleSend = async () => {
-    // base44.agents API deprecated - agents disabled
-    console.warn('Agents API disabled');
+    // TODO: Send message via /api/ai/message endpoint
+    console.warn('[TODO] AI message sending not yet implemented');
   };
 
   const handleKeyPress = (e) => {

@@ -13,14 +13,18 @@ export default function VibeSynthesisCard({ userEmail, compact = false }) {
   const { data: vibe, isLoading } = useQuery({
     queryKey: ['user-vibe', userEmail],
     queryFn: async () => {
-      const vibes = await supabase.from('user_vibes').select('*');
-      return vibes[0] || null;
+      const { data: vibes } = await supabase.from('user_vibes').select('*').eq('email', userEmail);
+      return vibes?.[0] || null;
     },
     enabled: !!userEmail
   });
 
   const synthesizeMutation = useMutation({
-    mutationFn: () => Promise.resolve(null), // base44.functions.invoke deprecated
+    mutationFn: () => {
+      // TODO: Call /api/ai/synthesize-vibe endpoint
+      console.warn('[TODO] Vibe synthesis not yet implemented');
+      return Promise.resolve(null);
+    },
     onSuccess: (response) => {
       queryClient.invalidateQueries(['user-vibe']);
       toast.error('Vibe synthesis not available');

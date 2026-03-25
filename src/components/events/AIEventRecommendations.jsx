@@ -13,7 +13,8 @@ export default function AIEventRecommendations({ currentUser }) {
   const { data: recommendations, refetch } = useQuery({
     queryKey: ['ai-event-recommendations', currentUser?.email],
     queryFn: async () => {
-      // base44.functions deprecated - returning empty
+      // TODO: Call /api/ai/event-recommendations endpoint
+      console.warn('[TODO] AI event recommendations not yet implemented');
       return null;
     },
     enabled: !!currentUser,

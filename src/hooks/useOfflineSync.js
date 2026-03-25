@@ -31,8 +31,8 @@ export function useOfflineSync() {
   const processQueueItem = useCallback(async (item) => {
     const { type, entity, data } = item;
 
-    // Offline queue processor disabled - base44 entities no longer available
-    // TODO: Implement via Supabase client instead
+    // TODO: Implement offline queue processing via Supabase client
+    // Example: use supabase.from(table).insert/update/delete based on entity type
     console.warn(`[OfflineSync] Queue processing disabled for entity: ${entity}`);
     // Still mark as processed to avoid infinite retries
   }, []);

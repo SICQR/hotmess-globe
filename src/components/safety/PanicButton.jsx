@@ -44,10 +44,11 @@ export default function PanicButton() {
       }
 
       // Get trusted contacts
-      const contacts = await null /* disabled base44 */.filter({ 
-        user_email: user.email,
-        notify_on_sos: true 
-      });
+      const { data: contacts } = await supabase
+        .from('emergency_contacts')
+        .select('*')
+        .eq('user_email', user.email)
+        .eq('notify_on_sos', true);
 
       // Get user's pre-defined emergency message
       const emergencyMessage = user.emergency_message || 
@@ -61,7 +62,7 @@ export default function PanicButton() {
       }
 
       // Log SOS event
-      await null /* disabled base44 */.create({
+      await supabase.from('safety_check_ins').insert({
         user_email: user.email,
         check_in_time: new Date().toISOString(),
         expected_check_out: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
@@ -70,9 +71,9 @@ export default function PanicButton() {
         notes: 'SOS PANIC BUTTON ACTIVATED'
       });
 
-      // Notify admins
-      await null /* disabled base44 */.create({
-        user_email: 'admin',
+      // Notify admins via notifications table
+      await supabase.from('notifications').insert({
+        user_id: user.id,
         notification_type: 'emergency',
         title: '🚨 SOS ALERT',
         message: `${user.full_name} triggered panic button`,

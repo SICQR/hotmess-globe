@@ -62,10 +62,11 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
         const { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         if (user?.email) {
-          const contacts = await null /* disabled base44 */.filter({ 
-            user_email: user.email,
-            notify_on_sos: true 
-          });
+          const { data: contacts } = await supabase
+            .from('emergency_contacts')
+            .select('*')
+            .eq('user_email', user.email)
+            .eq('notify_on_sos', true);
           setContactCount(contacts?.length || 0);
         }
       } catch (e) {
@@ -90,10 +91,11 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
         : 'Location unavailable';
 
       // Get trusted contacts
-      const contacts = await null /* disabled base44 */.filter({ 
-        user_email: user.email,
-        notify_on_sos: true 
-      });
+      const { data: contacts } = await supabase
+        .from('emergency_contacts')
+        .select('*')
+        .eq('user_email', user.email)
+        .eq('notify_on_sos', true);
 
       const emergencyMessage = user.emergency_message || 
         `🚨 EMERGENCY ALERT from ${user.full_name}: I need help! Location: ${locationStr}`;
@@ -106,7 +108,7 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
       }
 
       // Log SOS event
-      await null /* disabled base44 */.create({
+      await supabase.from('safety_check_ins').insert({
         user_email: user.email,
         check_in_time: new Date().toISOString(),
         expected_check_out: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
