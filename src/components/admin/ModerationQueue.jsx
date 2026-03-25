@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Flag, Check, X, Eye, User, MapPin, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,21 +18,21 @@ export default function ModerationQueue() {
     queryKey: ['reports', filter],
     queryFn: async () => {
       if (filter === 'pending') {
-        return base44.entities.Report.filter({ status: 'pending' }, '-created_date');
+        return supabase.from('reports').select('*').order('-created_date', { ascending: false });
       }
-      return base44.entities.Report.list('-created_date');
+      return supabase.from('reports').select('*').order('-created_date', { ascending: false });
     },
     refetchInterval: 10000
   });
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-users-moderation'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: () => supabase.from('profiles').select('*')
   });
 
   const resolveReportMutation = useMutation({
     mutationFn: async ({ reportId, action, notes }) => {
-      await base44.entities.Report.update(reportId, {
+      await supabase.from('reports').update({
         status: action === 'approve' ? 'resolved' : 'dismissed',
         admin_notes: notes,
         resolved_at: new Date().toISOString()
@@ -51,8 +51,8 @@ export default function ModerationQueue() {
         throw new Error('User not found');
       }
 
-      await base44.entities.User.update(user.id, { role: 'banned' });
-      await base44.entities.NotificationOutbox.create({
+      await supabase.from('profiles').update({ role: 'banned' });
+      await supabase.from('notification_outbox').insert({
         user_email: userEmail,
         notification_type: 'system',
         title: 'Account Suspended',

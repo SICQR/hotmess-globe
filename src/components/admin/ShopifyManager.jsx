@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { auth } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -36,7 +36,7 @@ export default function ShopifyManager() {
     queryKey: ['shopify-products'],
     queryFn: async () => {
       // Only show currently-active official Shopify items (avoid historic draft/archived imports)
-      return base44.entities.Product.filter(
+      return supabase.from('products').select('*').eq(
         { seller_email: 'shopify@hotmess.london', status: 'active' },
         '-created_date'
       );

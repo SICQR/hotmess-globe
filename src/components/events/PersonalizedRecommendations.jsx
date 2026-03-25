@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Sparkles } from 'lucide-react';
 import EventCard from './EventCard';
 import { EventRecommendationEngine } from './RecommendationEngine';
@@ -9,13 +9,13 @@ import { EventRecommendationEngine } from './RecommendationEngine';
 export default function PersonalizedRecommendations({ currentUser, allEvents, allRsvps }) {
   const { data: userCheckIns = [] } = useQuery({
     queryKey: ['user-checkins', currentUser?.email],
-    queryFn: () => base44.entities.BeaconCheckIn.filter({ user_email: currentUser.email }),
+    queryFn: () => supabase.from('beacon_check_ins').select('*'),
     enabled: !!currentUser
   });
 
   const { data: eventViews = [] } = useQuery({
     queryKey: ['event-views', currentUser?.email],
-    queryFn: () => base44.entities.EventView.filter({ user_email: currentUser.email }),
+    queryFn: () => supabase.from('event_views').select('*'),
     enabled: !!currentUser
   });
 

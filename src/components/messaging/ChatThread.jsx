@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
 import { Send, Image, Video, ArrowLeft, MoreVertical, Loader2, Lock, Users as UsersIcon, Check, CheckCheck, Smile, ZoomIn, Search, X, Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,7 +41,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
   const { data: messages = [], hasNextPage } = useQuery({
     queryKey: ['messages', thread.id, messagesPage],
     queryFn: async () => {
-      const allMessages = await base44.entities.Message.filter(
+      const allMessages = await supabase.from('chat_messages').select('*').eq(
         { thread_id: thread.id }, 
         'created_date', 
         MESSAGES_PER_PAGE * messagesPage
@@ -87,7 +87,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
   const { data: typingIndicators = [] } = useQuery({
     queryKey: ['typing', thread.id],
     queryFn: async () => {
-      const activities = await base44.entities.UserActivity.filter(
+      const activities = await supabase.from('user_activity').select('*').eq(
         { activity_type: 'typing' },
         '-created_date',
         50
@@ -107,7 +107,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
       if (!ok) return null;
 
-      const message = await base44.entities.Message.create({
+      const message = await supabase.from('chat_messages').insert({
         thread_id: thread.id,
         sender_email: currentUser.email,
         content: data.content,
@@ -124,7 +124,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
         }
       });
 
-      await base44.entities.ChatThread.update(thread.id, {
+      await supabase.from('chat_threads').update({
         last_message: data.content,
         last_message_at: new Date().toISOString(),
         unread_count: newUnreadCount,
@@ -135,7 +135,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       thread.participant_emails.forEach(async (email) => {
         if (email !== currentUser.email && !mutedBy.includes(email)) {
           try {
-            await base44.entities.Notification.create({
+            await supabase.from('notifications').insert({
               user_email: email,
               type: 'message',
               title: `New message from ${currentUser.full_name}`,
@@ -197,7 +197,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
       
       sendMutation.mutate({
         content: 'Image',
@@ -237,7 +237,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
       
       sendMutation.mutate({
         content: 'Video',
@@ -260,7 +260,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
     lastTypingEmitRef.current = now;
 
     // Broadcast typing indicator
-    base44.entities.UserActivity.create({
+    supabase.from('user_activity').insert({
       user_email: currentUser.email,
       activity_type: 'typing',
       metadata: { thread_id: thread.id }
@@ -273,7 +273,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       ? mutedBy.filter(email => email !== currentUser.email)
       : [...mutedBy, currentUser.email];
 
-    await base44.entities.ChatThread.update(thread.id, {
+    await supabase.from('chat_threads').update({
       muted_by: newMutedBy
     });
 
@@ -301,7 +301,7 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
       [currentUser.email]: newUserReactions
     };
 
-    await base44.entities.Message.update(messageId, {
+    await supabase.from('chat_messages').update({
       metadata: { ...message.metadata, reactions: newReactions }
     });
 
@@ -357,12 +357,12 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
     if (unreadMessages.length > 0) {
       unreadMessages.forEach(msg => {
-        base44.entities.Message.update(msg.id, {
+        supabase.from('chat_messages').update({
           read_by: [...msg.read_by, currentUser.email],
         });
       });
 
-      base44.entities.ChatThread.update(thread.id, {
+      supabase.from('chat_threads').update({
         unread_count: {
           ...thread.unread_count,
           [currentUser.email]: 0,

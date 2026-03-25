@@ -1,5 +1,4 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { base44 } from '@/components/utils/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
 
 

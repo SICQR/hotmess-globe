@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Ban, Edit } from 'lucide-react';
@@ -15,14 +15,14 @@ export default function UserManagement() {
 
   const { data: users = [] } = useQuery({
     queryKey: ['admin-users'],
-    queryFn: () => base44.entities.User.list('-created_date'),
+    queryFn: () => supabase.from('profiles').select('*').order('-created_date', { ascending: false }),
   });
 
   const updateUserMutation = useMutation({
     mutationFn: async ({ email, data }) => {
       // Note: Can only update custom fields, not built-in ones except through admin APIs
       const user = users.find(u => u.email === email);
-      await base44.entities.User.update(user.id, data);
+      await supabase.from('profiles').update(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-users']);

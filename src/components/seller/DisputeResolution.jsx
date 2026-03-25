@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { AlertTriangle, Upload, Check, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,26 +21,26 @@ export default function DisputeResolution({ sellerEmail, isBuyer = false }) {
       const filter = isBuyer 
         ? { initiator_email: sellerEmail }
         : { respondent_email: sellerEmail };
-      return base44.entities.OrderDispute.filter(filter, '-created_date');
+      return supabase.from('order_disputes').select('*').order('-created_date', { ascending: false });
     },
     enabled: !!sellerEmail
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ['orders-disputes'],
-    queryFn: () => base44.entities.Order.list()
+    queryFn: () => supabase.from('orders').select('*')
   });
 
   const respondMutation = useMutation({
     mutationFn: async ({ disputeId, responseText, evidenceUrl }) => {
-      await base44.entities.OrderDispute.update(disputeId, {
+      await supabase.from('order_disputes').update({
         status: 'under_review',
         admin_notes: `${response}\nEvidence: ${evidenceUrl || 'None provided'}`
-      });
-      
+      }).eq('id', disputeId);
+
       // Notify other party
       const dispute = disputes.find(d => d.id === disputeId);
-      await base44.entities.NotificationOutbox.create({
+      await supabase.from('notification_outbox').insert({
         user_email: isBuyer ? dispute.respondent_email : dispute.initiator_email,
         notification_type: 'dispute_update',
         title: 'Dispute Response',
@@ -60,7 +60,7 @@ export default function DisputeResolution({ sellerEmail, isBuyer = false }) {
     if (!evidenceFile) return null;
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: evidenceFile });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file: evidenceFile });
       return file_url;
     } catch (error) {
       toast.error('Failed to upload evidence');

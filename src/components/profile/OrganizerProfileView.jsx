@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
 import { 
   Calendar, 
   Users, 
@@ -63,7 +63,7 @@ export default function OrganizerProfileView({ user, currentUser }) {
   const { data: organizedEvents = [] } = useQuery({
     queryKey: ['organizer-events', user?.email],
     queryFn: async () => {
-      const beacons = await base44.entities.Beacon.filter({
+      const beacons = await supabase.from('beacons').select('*').eq({
         created_by: user?.email,
         kind: 'event',
         status: 'published'
@@ -85,10 +85,10 @@ export default function OrganizerProfileView({ user, currentUser }) {
       
       for (const eventId of eventIds) {
         try {
-          const rsvps = await base44.entities.EventRSVP.filter({ beacon_id: eventId });
+          const rsvps = await supabase.from('event_rsvps').select('*').eq({ beacon_id: eventId });
           totalRsvps += Array.isArray(rsvps) ? rsvps.length : 0;
           
-          const checkIns = await base44.entities.BeaconCheckIn.filter({ beacon_id: eventId });
+          const checkIns = await supabase.from('beacon_check_ins').select('*');
           totalCheckIns += Array.isArray(checkIns) ? checkIns.length : 0;
         } catch {
           // ignore

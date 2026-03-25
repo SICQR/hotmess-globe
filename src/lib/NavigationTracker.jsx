@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
-import { base44 } from '@/api/base44Client';
 import { pagesConfig } from '@/pages.config';
 
 export default function NavigationTracker() {
@@ -32,12 +31,7 @@ export default function NavigationTracker() {
         }
 
         if (isAuthenticated && pageName) {
-            const logFn = base44?.appLogs?.logUserInApp;
-            if (typeof logFn === 'function') {
-                logFn(pageName).catch(() => {
-                    // Silently fail - logging shouldn't break the app
-                });
-            }
+            // base44.appLogs.logUserInApp deprecated - logging disabled
         }
     }, [location, isAuthenticated, Pages, mainPageKey]);
 

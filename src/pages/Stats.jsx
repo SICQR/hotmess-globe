@@ -22,31 +22,31 @@ export default function Stats() {
 
   const { data: checkIns = [] } = useQuery({
     queryKey: ['my-checkins', currentUser?.email],
-    queryFn: () => base44.entities.BeaconCheckIn.filter({ user_email: currentUser.email }),
+    queryFn: () => supabase.from('beacon_check_ins').select('*'),
     enabled: !!currentUser,
   });
 
   const { data: purchases = [] } = useQuery({
     queryKey: ['my-purchases', currentUser?.email],
-    queryFn: () => base44.entities.Order.filter({ buyer_email: currentUser.email }),
+    queryFn: () => supabase.from('orders').select('*').eq({ buyer_email: currentUser.email }),
     enabled: !!currentUser,
   });
 
   const { data: achievements = [] } = useQuery({
     queryKey: ['my-achievements', currentUser?.email],
-    queryFn: () => base44.entities.UserAchievement.filter({ user_email: currentUser.email }),
+    queryFn: () => supabase.from('user_achievements').select('*'),
     enabled: !!currentUser,
   });
 
   const { data: profileViews = [] } = useQuery({
     queryKey: ['profile-views', currentUser?.email],
-    queryFn: () => base44.entities.ProfileView.filter({ viewed_email: currentUser.email }),
+    queryFn: () => supabase.from('profile_views').select('*').eq({ viewed_email: currentUser.email }),
     enabled: !!currentUser,
   });
 
   const { data: activities = [] } = useQuery({
     queryKey: ['my-activities', currentUser?.email],
-    queryFn: () => base44.entities.ActivityFeed.filter({ user_email: currentUser.email }),
+    queryFn: () => supabase.from('activity_feed').select('*'),
     enabled: !!currentUser,
   });
 

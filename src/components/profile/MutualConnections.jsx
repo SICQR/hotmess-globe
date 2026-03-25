@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
@@ -8,19 +8,19 @@ import { createPageUrl } from '../../utils';
 export default function MutualConnections({ profileUserEmail, currentUserEmail }) {
   const { data: currentUserFollowing = [] } = useQuery({
     queryKey: ['following', currentUserEmail],
-    queryFn: () => base44.entities.UserFollow.filter({ follower_email: currentUserEmail }),
+    queryFn: () => supabase.from('user_follows').select('*').eq({ follower_email: currentUserEmail }),
     enabled: !!currentUserEmail
   });
 
   const { data: profileUserFollowing = [] } = useQuery({
     queryKey: ['following', profileUserEmail],
-    queryFn: () => base44.entities.UserFollow.filter({ follower_email: profileUserEmail }),
+    queryFn: () => supabase.from('user_follows').select('*').eq({ follower_email: profileUserEmail }),
     enabled: !!profileUserEmail
   });
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: () => supabase.from('profiles').select('*')
   });
 
   // Find mutual follows

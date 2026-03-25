@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { UserPlus, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 export default function BulkUserInvite() {
@@ -28,7 +27,7 @@ export default function BulkUserInvite() {
 
     for (const email of testUsers) {
       try {
-        await base44.users.inviteUser(email, 'user');
+        await /* inviteUser disabled */ null(email, 'user');
         inviteResults.push({ email, success: true });
       } catch (error) {
         inviteResults.push({ email, success: false, error: error.message });

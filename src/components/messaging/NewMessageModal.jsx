@@ -35,18 +35,18 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
   // Fetch events for event chats
   const { data: events = [] } = useQuery({
     queryKey: ['events-for-chat'],
-    queryFn: () => base44.entities.Beacon.filter({ kind: 'event', active: true }, '-event_date', 20),
+    queryFn: () => supabase.from('beacons').select('*').eq({ kind: 'event', active: true }, '-event_date', 20),
   });
 
   // Fetch squads for squad chats
   const { data: squads = [] } = useQuery({
     queryKey: ['squads-for-chat'],
-    queryFn: () => base44.entities.Squad.list(),
+    queryFn: () => supabase.from('squads').select('*'),
   });
 
   const { data: squadMembers = [] } = useQuery({
     queryKey: ['squad-members-for-chat'],
-    queryFn: () => base44.entities.SquadMember.list(),
+    queryFn: () => supabase.from('squad_members').select('*'),
   });
 
   const createThreadMutation = useMutation({
@@ -63,7 +63,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
         const targetEmail = selectedUsers[0];
         
         // Check if thread already exists
-        const existingThreads = await base44.entities.ChatThread.filter({ active: true });
+        const existingThreads = await supabase.from('chat_threads').select('*').eq({ active: true });
         const existingThread = existingThreads.find(t => 
           t.thread_type === 'dm' &&
           t.participant_emails.length === 2 &&
@@ -82,7 +82,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
         if (!selectedEvent) throw new Error('Select an event');
         metadata = { event_id: selectedEvent.id, event_title: selectedEvent.title };
         // Add all users who RSVP'd to the event
-        const rsvps = await base44.entities.EventRSVP.filter({ event_id: selectedEvent.id });
+        const rsvps = await supabase.from('event_rsvps').select('*').eq({ event_id: selectedEvent.id });
         const attendeeEmails = rsvps.map(r => r.user_email).filter(e => e !== currentUser.email);
         participantEmails.push(...attendeeEmails);
       } else if (messageType === 'squad') {
@@ -94,7 +94,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
         participantEmails.push(...memberEmails);
       }
 
-      const thread = await base44.entities.ChatThread.create({
+      const thread = await supabase.from('chat_threads').insert({
         participant_emails: [...new Set(participantEmails)], // Remove duplicates
         thread_type: threadType,
         active: true,
@@ -104,7 +104,7 @@ export default function NewMessageModal({ currentUser, allUsers, onClose, onThre
 
       // Send welcome message for groups
       if (participantEmails.length > 2) {
-        await base44.entities.Message.create({
+        await supabase.from('chat_messages').insert({
           thread_id: thread.id,
           sender_email: currentUser.email,
           content: `${currentUser.full_name} started the conversation`,

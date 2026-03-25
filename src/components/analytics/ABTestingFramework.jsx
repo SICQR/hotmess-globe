@@ -1,5 +1,5 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
 
 const ABTestContext = createContext();
 
@@ -62,7 +62,7 @@ function assignVariant(testId, userEmail) {
  */
 async function trackEvent(testId, variant, event, userEmail) {
   try {
-    await base44.entities.UserActivity.create({
+    await supabase.from('user_activity').insert({
       user_email: userEmail,
       activity_type: 'ab_test',
       metadata: {
@@ -132,7 +132,7 @@ export function ABTestResults() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const activities = await base44.entities.UserActivity.filter(
+        const activities = await supabase.from('user_activity').select('*').eq(
           { activity_type: 'ab_test' },
           '-created_date',
           1000

@@ -16,7 +16,7 @@ export default function RightNowManager({ currentUser }) {
   const { data: activeStatus } = useQuery({
     queryKey: ['right-now-active', currentUser?.email],
     queryFn: async () => {
-      const statuses = await base44.entities.RightNowStatus.filter({
+      const statuses = await supabase.from('right_now_status').select('*').eq({
         user_email: currentUser.email,
         active: true
       });
@@ -30,7 +30,7 @@ export default function RightNowManager({ currentUser }) {
   const endNowMutation = useMutation({
     mutationFn: async () => {
       if (!activeStatus) return;
-      await base44.entities.RightNowStatus.update(activeStatus.id, { active: false });
+      await supabase.from('right_now_status').update({ active: false });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['right-now-active']);

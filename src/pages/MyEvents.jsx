@@ -31,7 +31,7 @@ export default function MyEvents() {
 
   const { data: myEvents = [] } = useQuery({
     queryKey: ['my-events', currentUser?.email],
-    queryFn: () => base44.entities.Beacon.filter({
+    queryFn: () => supabase.from('beacons').select('*').eq({
       created_by: currentUser.email,
       kind: 'event',
     }, '-created_date'),
@@ -40,11 +40,11 @@ export default function MyEvents() {
 
   const { data: allRsvps = [] } = useQuery({
     queryKey: ['all-rsvps-my-events'],
-    queryFn: () => base44.entities.EventRSVP.list()
+    queryFn: () => supabase.from('event_rsvps').select('*')
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Beacon.delete(id),
+    mutationFn: (id) => supabase.from('beacons').delete().eq('id', id),
     onSuccess: () => {
       queryClient.invalidateQueries(['my-events']);
       toast.success('Event deleted');

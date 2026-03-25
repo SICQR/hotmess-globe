@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Bot, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { base44 } from '@/components/utils/supabaseClient';
 import ReactMarkdown from 'react-markdown';
 
 export default function GlobalAssistant() {
@@ -25,11 +24,8 @@ export default function GlobalAssistant() {
   useEffect(() => {
     if (!conversationId) return;
 
-    const unsubscribe = base44.agents.subscribeToConversation(conversationId, (data) => {
-      setMessages(data.messages || []);
-    });
-
-    return () => unsubscribe();
+    // base44.agents API deprecated - agents disabled
+    return () => {};
   }, [conversationId]);
 
   // Auto-scroll to bottom
@@ -38,44 +34,13 @@ export default function GlobalAssistant() {
   }, [messages]);
 
   const initializeConversation = async () => {
-    try {
-      const conversation = await base44.agents.createConversation({
-        agent_name: 'event_assistant',
-        metadata: {
-          name: 'HOTMESS Assistant'
-        }
-      });
-
-      setConversationId(conversation.id);
-
-      // Send welcome message
-      await base44.agents.addMessage(conversation, {
-        role: 'user',
-        content: "Hello! I'm exploring events on HOTMESS."
-      });
-    } catch (error) {
-      console.error('Failed to initialize conversation:', error);
-    }
+    // base44.agents API deprecated - agents disabled
+    console.warn('Agents API disabled');
   };
 
   const handleSend = async () => {
-    if (!input.trim() || !conversationId || sending) return;
-
-    const userMessage = input.trim();
-    setInput('');
-    setSending(true);
-
-    try {
-      const conversation = await base44.agents.getConversation(conversationId);
-      await base44.agents.addMessage(conversation, {
-        role: 'user',
-        content: userMessage
-      });
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    } finally {
-      setSending(false);
-    }
+    // base44.agents API deprecated - agents disabled
+    console.warn('Agents API disabled');
   };
 
   const handleKeyPress = (e) => {

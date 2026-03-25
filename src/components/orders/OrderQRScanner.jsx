@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -21,14 +21,14 @@ export default function OrderQRScanner({ order, currentUser }) {
       }
 
       // Update order to mark QR as scanned
-      await base44.entities.Order.update(order.id, {
+      await supabase.from('orders').update({
         is_qr_scanned: true,
         qr_scanned_at: new Date().toISOString(),
         status: 'delivered'
       });
       
       // Notify seller
-      await base44.entities.Notification.create({
+      await supabase.from('notifications').insert({
         user_email: order.seller_email,
         type: 'order',
         title: 'Order Delivered',

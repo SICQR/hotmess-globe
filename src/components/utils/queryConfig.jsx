@@ -1,5 +1,5 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
 import { QUERY_CONFIG } from './constants';
 
 /**
@@ -13,7 +13,7 @@ export function useAllUsers() {
       try {
         const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
         if (!isAuth) return [];
-        return base44.entities.User.list();
+        return supabase.from('profiles').select('*');
       } catch (error) {
         console.error('Failed to fetch users:', error);
         return [];
@@ -56,7 +56,7 @@ export function useCurrentUser() {
 export function useAllBeacons() {
   return useQuery({
     queryKey: ['all-beacons-global'],
-    queryFn: () => base44.entities.Beacon.list(),
+    queryFn: () => supabase.from('beacons').select('*'),
     staleTime: QUERY_CONFIG.BEACON_STALE_TIME,
     cacheTime: QUERY_CONFIG.BEACON_CACHE_TIME,
   });

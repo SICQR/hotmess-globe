@@ -1,3 +1,4 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -45,37 +46,37 @@ export default function SellerDashboard() {
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['seller-products', currentUser?.email],
-    queryFn: () => base44.entities.Product.filter({ seller_email: currentUser.email }, '-created_date'),
+    queryFn: () => supabase.from('products').select('*').eq({ seller_email: currentUser.email }, '-created_date'),
     enabled: !!currentUser,
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ['seller-orders', currentUser?.email],
-    queryFn: () => base44.entities.Order.filter({ seller_email: currentUser.email }, '-created_date'),
+    queryFn: () => supabase.from('orders').select('*').eq({ seller_email: currentUser.email }, '-created_date'),
     enabled: !!currentUser,
   });
 
   const { data: orderItems = [] } = useQuery({
     queryKey: ['order-items'],
-    queryFn: () => base44.entities.OrderItem.list(),
+    queryFn: () => supabase.from('order_items').select('*'),
     enabled: !!currentUser,
   });
 
   const { data: promotions = [] } = useQuery({
     queryKey: ['promotions', currentUser?.email],
-    queryFn: () => base44.entities.Promotion.filter({ seller_email: currentUser.email }, '-created_date'),
+    queryFn: () => supabase.from('promotions').select('*').order('-created_date', { ascending: false }),
     enabled: !!currentUser,
   });
 
   const { data: payouts = [] } = useQuery({
     queryKey: ['seller-payouts', currentUser?.email],
-    queryFn: () => base44.entities.SellerPayout.filter({ seller_email: currentUser.email }, '-created_date'),
+    queryFn: () => supabase.from('seller_payouts').select('*').order('-created_date', { ascending: false }),
     enabled: !!currentUser,
   });
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => supabase.from('profiles').select('*'),
     enabled: !!currentUser,
   });
 
@@ -86,7 +87,7 @@ export default function SellerDashboard() {
   }));
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Product.create({ ...data, seller_email: currentUser.email }),
+    mutationFn: (data) => supabase.from('products').insert({ ...data, seller_email: currentUser.email }),
     onSuccess: async (createdProduct) => {
       queryClient.invalidateQueries(['seller-products']);
       setShowForm(false);
@@ -105,7 +106,7 @@ export default function SellerDashboard() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Product.update(id, data),
+    mutationFn: ({ id, data }) => supabase.from('products').update(data),
     onSuccess: () => {
       queryClient.invalidateQueries(['seller-products']);
       setShowForm(false);
@@ -118,7 +119,7 @@ export default function SellerDashboard() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Product.delete(id),
+    mutationFn: (id) => supabase.from('products').delete().eq('id', id),
     onSuccess: async (_, deletedId) => {
       queryClient.invalidateQueries(['seller-products']);
       toast.success('Product deleted');

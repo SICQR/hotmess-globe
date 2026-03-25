@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { MessageCircle, Send, Trash2 } from 'lucide-react';
 import ReportButton from '../moderation/ReportButton';
 import { Button } from '@/components/ui/button';
@@ -16,14 +16,14 @@ export default function CommentThread({ post, currentUser, onCommentCountChange 
 
   const { data: comments = [] } = useQuery({
     queryKey: ['post-comments', post.id],
-    queryFn: () => base44.entities.PostComment.filter({ post_id: post.id }, 'created_date'),
+    queryFn: () => supabase.from('post_comments').select('*').order('created_date', { ascending: false }),
     enabled: showComments,
     refetchInterval: showComments ? 3000 : false // Real-time polling when visible
   });
 
   const addCommentMutation = useMutation({
     mutationFn: async (content) => {
-      const comment = await base44.entities.PostComment.create({
+      const comment = await supabase.from('post_comments').insert({
         post_id: post.id,
         user_email: currentUser.email,
         user_name: currentUser.full_name || currentUser.email,
@@ -31,13 +31,13 @@ export default function CommentThread({ post, currentUser, onCommentCountChange 
       });
 
       // Update post comment count
-      await base44.entities.CommunityPost.update(post.id, {
+      await supabase.from('community_posts').update({
         comments_count: (post.comments_count || 0) + 1
       });
 
       // Notify post author
       if (post.user_email !== currentUser.email) {
-        await base44.entities.Notification.create({
+        await supabase.from('notifications').insert({
           user_email: post.user_email,
           type: 'post_comment',
           title: 'New Comment',
@@ -60,10 +60,10 @@ export default function CommentThread({ post, currentUser, onCommentCountChange 
 
   const deleteCommentMutation = useMutation({
     mutationFn: async (commentId) => {
-      await base44.entities.PostComment.delete(commentId);
+      await supabase.from('post_comments').delete().eq('id', commentId);
       
       // Update post comment count
-      await base44.entities.CommunityPost.update(post.id, {
+      await supabase.from('community_posts').update({
         comments_count: Math.max(0, (post.comments_count || 0) - 1)
       });
     },

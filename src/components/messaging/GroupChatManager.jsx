@@ -22,7 +22,7 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
 
       const participantEmails = [currentUser.email, ...selectedUsers];
       
-      const thread = await base44.entities.ChatThread.create({
+      const thread = await supabase.from('chat_threads').insert({
         participant_emails: participantEmails,
         thread_type: eventId ? 'event' : squadId ? 'squad' : 'dm',
         active: true,
@@ -34,7 +34,7 @@ export default function GroupChatManager({ currentUser, allUsers, eventId = null
       });
 
       // Send welcome message
-      await base44.entities.Message.create({
+      await supabase.from('chat_messages').insert({
         thread_id: thread.id,
         sender_email: currentUser.email,
         content: `${currentUser.full_name} created this group`,

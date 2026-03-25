@@ -1,9 +1,9 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
 import {
   getGuestCartItems,
 } from '@/components/marketplace/cartStorage';
@@ -24,7 +24,7 @@ export default function CreatorsCart() {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    base44.auth
+    supabase.auth
       .me()
       .then((me) => setCurrentUser(me || null))
       .catch(() => setCurrentUser(null));
@@ -38,8 +38,8 @@ export default function CreatorsCart() {
       const authUserId = currentUser?.auth_user_id || null;
       try {
         const items = authUserId
-          ? await base44.entities.CartItem.filter({ auth_user_id: authUserId })
-          : await base44.entities.CartItem.filter({ user_email: currentUser.email });
+          ? await supabase.from('cart_items').select('*').eq({ auth_user_id: authUserId })
+          : await supabase.from('cart_items').select('*').eq({ user_email: currentUser.email });
         return filterValid(items);
       } catch {
         return filterValid(getGuestCartItems());
@@ -49,7 +49,7 @@ export default function CreatorsCart() {
 
   const { data: products = [] } = useQuery({
     queryKey: ['creators-cart-products'],
-    queryFn: () => base44.entities.Product.filter({}, '-created_at'),
+    queryFn: () => supabase.from('products').select('*').eq({}, '-created_at'),
   });
 
   const cartWithProducts = useMemo(() => {

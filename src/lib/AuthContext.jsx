@@ -1,5 +1,4 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { base44, supabase } from '@/components/utils/supabaseClient';
 import logger from '@/utils/logger';
 import { mergeGuestCartToUser } from '@/components/marketplace/cartStorage';
 import { validateConfigOnStartup } from '@/utils/envValidation';

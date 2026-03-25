@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { MapPin, Calendar, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -10,7 +10,7 @@ export default function RelatedEvents({ currentEvent, userPreferences = [] }) {
   const { data: allEvents = [] } = useQuery({
     queryKey: ['related-events', currentEvent.id],
     queryFn: async () => {
-      const events = await base44.entities.Beacon.filter({ 
+      const events = await supabase.from('beacons').select('*').eq({ 
         kind: 'event', 
         active: true 
       }, '-event_date', 50);

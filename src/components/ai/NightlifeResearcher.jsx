@@ -1,22 +1,18 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, MapPin, Clock, Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-
 export default function NightlifeResearcher({ currentUser, onVenuesFound }) {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
-
   const handleSearch = async () => {
     if (!query.trim()) {
       toast.error('Enter a search query');
       return;
     }
-
     setLoading(true);
     try {
       const userProfile = `
@@ -25,46 +21,17 @@ Interests: ${(currentUser.event_preferences || []).join(', ')}
 Music Taste: ${(currentUser.music_taste || []).join(', ')}
 Bio: ${currentUser.bio || 'No bio'}
 `;
-
       const prompt = `You are a specialist nightlife and LGBT venue researcher. For the query "${query}", provide recommendations for LGBT-focused nightlife options.
-
 User Profile:
 ${userProfile}
-
 For each recommendation provide:
 • Name of venue, event or party
 • Location and address
 • Typical opening hours or event schedule
 • A brief description of the venue or event experience
 • Why it matches the user's interests
-
 Focus exclusively on LGBT venues and events. Prioritise accuracy by cross-checking sources. Use recent information.`;
-
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        add_context_from_internet: true,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            venues: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  name: { type: 'string' },
-                  location: { type: 'string' },
-                  address: { type: 'string' },
-                  hours: { type: 'string' },
-                  description: { type: 'string' },
-                  match_reason: { type: 'string' }
-                }
-              }
-            },
-            summary: { type: 'string' }
-          }
-        }
-      });
-
+      const response = await null /* InvokeLLM disabled */;
       setResults(response);
       if (onVenuesFound) {
         onVenuesFound(response.venues);
@@ -77,14 +44,12 @@ Focus exclusively on LGBT venues and events. Prioritise accuracy by cross-checki
       setLoading(false);
     }
   };
-
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-6">
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="w-5 h-5 text-[#C8962C]" />
         <h3 className="text-lg font-black uppercase">AI Venue Finder</h3>
       </div>
-
       <div className="flex gap-2 mb-6">
         <Input
           placeholder="e.g. techno clubs in Shoreditch, drag shows tonight..."
@@ -105,7 +70,6 @@ Focus exclusively on LGBT venues and events. Prioritise accuracy by cross-checki
           )}
         </Button>
       </div>
-
       {results && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -124,9 +88,7 @@ Focus exclusively on LGBT venues and events. Prioritise accuracy by cross-checki
                 <h4 className="font-black text-lg">{venue.name}</h4>
                 <MapPin className="w-4 h-4 text-[#C8962C] flex-shrink-0" />
               </div>
-              
               <p className="text-sm text-white/80 mb-2">{venue.description}</p>
-              
               <div className="flex flex-wrap gap-3 text-xs text-white/60 mb-3">
                 <div className="flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
@@ -139,13 +101,11 @@ Focus exclusively on LGBT venues and events. Prioritise accuracy by cross-checki
                   </div>
                 )}
               </div>
-
               <div className="text-xs text-[#00C2E0] bg-[#00C2E0]/10 rounded px-2 py-1 inline-block">
                 ✨ {venue.match_reason}
               </div>
             </motion.div>
           ))}
-
           {results.summary && (
             <div className="bg-[#C8962C]/10 border border-[#C8962C]/20 rounded-lg p-4 text-sm">
               <p className="text-white/80">{results.summary}</p>

@@ -1,12 +1,11 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
 import { Sparkles, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
-
 const QUESTIONS = [
   {
     id: 'openness',
@@ -39,48 +38,29 @@ const QUESTIONS = [
     high: "Intense & immersive"
   }
 ];
-
 export default function PersonalityAssessment({ onComplete }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [analyzing, setAnalyzing] = useState(false);
   const queryClient = useQueryClient();
-
   const currentQuestion = QUESTIONS[currentStep];
-
   const analyzePersonality = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
-
       // Use AI to generate personality insights
       const prompt = `You are the HOTMESS OS Personality Analyzer. Based on these trait scores, generate a nuanced personality profile:
-
 Openness: ${answers.openness}/100
 Energy: ${answers.energy}/100
 Social: ${answers.social}/100
 Adventure: ${answers.adventure}/100
 Intensity: ${answers.intensity}/100
-
 Generate:
 1. A vibe_score (0-100) representing overall personality strength
 2. 3 key personality insights (short phrases in CAPS)
 3. Recommended archetype matches (from: architect, hunter, collector, explorer, socialite, merchant, guardian, alchemist)
-
 Format as JSON with: vibe_score, insights (array), recommended_archetypes (array)`;
-
-      const analysis = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            vibe_score: { type: 'number' },
-            insights: { type: 'array', items: { type: 'string' } },
-            recommended_archetypes: { type: 'array', items: { type: 'string' } }
-          }
-        }
-      });
-
+      const analysis = await null /* InvokeLLM disabled */;
       // Update user profile
       const updateData = {
         personality_traits: answers,
@@ -92,10 +72,8 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
           min_vibe_score: Math.max(60, analysis.vibe_score - 20)
         }
       };
-
       await supabase.auth.updateUser({ data: updateData });
       await supabase.from('profiles').update(updateData).eq('id', user.id);
-
       return analysis;
     },
     onSuccess: (data) => {
@@ -107,11 +85,9 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
       toast.error('Failed to analyze personality');
     }
   });
-
   const handleAnswer = (value) => {
     setAnswers({ ...answers, [currentQuestion.id]: value[0] });
   };
-
   const handleNext = () => {
     if (currentStep < QUESTIONS.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -120,16 +96,13 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
       analyzePersonality.mutate();
     }
   };
-
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
   };
-
   const progress = ((currentStep + 1) / QUESTIONS.length) * 100;
   const hasAnswer = answers[currentQuestion.id] !== undefined;
-
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
       <motion.div
@@ -158,7 +131,6 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
             Quick personality scan for better matches
           </p>
         </div>
-
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between text-xs text-white/40 mb-2">
@@ -174,7 +146,6 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
             />
           </div>
         </div>
-
         {/* Question */}
         <AnimatePresence mode="wait">
           <motion.div
@@ -187,7 +158,6 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
             <h2 className="text-2xl font-bold mb-8">
               {currentQuestion.question}
             </h2>
-
             <div className="space-y-6">
               <Slider
                 value={[answers[currentQuestion.id] || 50]}
@@ -196,12 +166,10 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
                 step={1}
                 className="w-full"
               />
-
               <div className="flex justify-between text-sm">
                 <span className="text-white/60">{currentQuestion.low}</span>
                 <span className="text-white/60">{currentQuestion.high}</span>
               </div>
-
               {hasAnswer && (
                 <div className="text-center">
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#C8962C]/20 border border-[#C8962C] rounded-lg">
@@ -215,7 +183,6 @@ Format as JSON with: vibe_score, insights (array), recommended_archetypes (array
             </div>
           </motion.div>
         </AnimatePresence>
-
         {/* Navigation */}
         <div className="flex gap-4">
           <Button

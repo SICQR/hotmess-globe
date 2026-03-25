@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { Zap, MapPin, Camera, CheckCircle, XCircle, History, Clock, Nfc, Layers, QrCode, RefreshCw } from 'lucide-react';
@@ -33,7 +32,7 @@ export default function Scan() {
 
   const { data: beacons = [] } = useQuery({
     queryKey: ['beacons'],
-    queryFn: () => base44.entities.Beacon.filter({ active: true }),
+    queryFn: () => supabase.from('beacons').select('*').eq({ active: true }),
   });
 
   // Fetch user's recent check-ins

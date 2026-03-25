@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { differenceInHours, differenceInMinutes } from 'date-fns';
 
 export default function EventReminders({ currentUser }) {
@@ -9,7 +9,7 @@ export default function EventReminders({ currentUser }) {
   const { data: upcomingRsvps = [] } = useQuery({
     queryKey: ['upcoming-rsvps', currentUser?.email],
     queryFn: async () => {
-      const rsvps = await base44.entities.EventRSVP.filter({
+      const rsvps = await supabase.from('event_rsvps').select('*').eq({
         user_email: currentUser.email,
         status: 'going'
       });
@@ -21,7 +21,7 @@ export default function EventReminders({ currentUser }) {
 
   const { data: allEvents = [] } = useQuery({
     queryKey: ['events'],
-    queryFn: () => base44.entities.Beacon.filter({ kind: 'event', active: true })
+    queryFn: () => supabase.from('beacons').select('*').eq({ kind: 'event', active: true })
   });
 
   const sendReminderMutation = useMutation({
@@ -31,9 +31,9 @@ export default function EventReminders({ currentUser }) {
         ? { reminder_24h_sent: true } 
         : { reminder_1h_sent: true };
       
-      await base44.entities.EventRSVP.update(rsvp.id, updateData);
+      await supabase.from('event_rsvps').update(updateData);
 
-      await base44.entities.Notification.create({
+      await supabase.from('notifications').insert({
         user_email: currentUser.email,
         type: 'event_reminder',
         title: type === '24h' ? 'Event Tomorrow!' : 'Event Starting Soon!',

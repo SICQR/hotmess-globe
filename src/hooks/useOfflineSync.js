@@ -5,7 +5,6 @@ import {
   getQueueStats,
   setupOfflineSync,
 } from '@/utils/offlineQueue';
-import { base44 } from '@/api/base44Client';
 
 /**
  * useOfflineSync Hook
@@ -32,53 +31,10 @@ export function useOfflineSync() {
   const processQueueItem = useCallback(async (item) => {
     const { type, entity, data } = item;
 
-    // Route to appropriate API based on entity type
-    switch (entity) {
-      case 'message':
-        if (type === 'create') {
-          await base44.entities.Message?.create?.(data);
-        }
-        break;
-      
-      case 'beacon':
-        if (type === 'create') {
-          await base44.entities.Beacon?.create?.(data);
-        } else if (type === 'update') {
-          await base44.entities.Beacon?.update?.(data.id, data);
-        } else if (type === 'delete') {
-          await base44.entities.Beacon?.delete?.(data.id);
-        }
-        break;
-      
-      case 'rsvp':
-        if (type === 'create') {
-          await base44.entities.EventRSVP?.create?.(data);
-        } else if (type === 'delete') {
-          await base44.entities.EventRSVP?.delete?.(data.id);
-        }
-        break;
-      
-      case 'like':
-        if (type === 'create') {
-          await base44.entities.Like?.create?.(data);
-        } else if (type === 'delete') {
-          await base44.entities.Like?.delete?.(data.id);
-        }
-        break;
-      
-      case 'bookmark':
-        if (type === 'create') {
-          await base44.entities.Bookmark?.create?.(data);
-        } else if (type === 'delete') {
-          await base44.entities.Bookmark?.delete?.(data.id);
-        }
-        break;
-      
-      default:
-        console.warn(`[OfflineSync] Unknown entity type: ${entity}`);
-        // Still mark as processed to avoid infinite retries
-        break;
-    }
+    // Offline queue processor disabled - base44 entities no longer available
+    // TODO: Implement via Supabase client instead
+    console.warn(`[OfflineSync] Queue processing disabled for entity: ${entity}`);
+    // Still mark as processed to avoid infinite retries
   }, []);
 
   // Sync now function

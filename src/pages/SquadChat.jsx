@@ -49,7 +49,7 @@ export default function SquadChat() {
   const { data: squad } = useQuery({
     queryKey: ['squad', squadId],
     queryFn: async () => {
-      const squads = await base44.entities.Squad.list();
+      const squads = await supabase.from('squads').select('*');
       return squads.find(s => s.id === squadId);
     },
     enabled: !!squadId,
@@ -57,19 +57,19 @@ export default function SquadChat() {
 
   const { data: members = [] } = useQuery({
     queryKey: ['squad-members', squadId],
-    queryFn: () => base44.entities.SquadMember.filter({ squad_id: squadId }),
+    queryFn: () => supabase.from('squad_members').select('*'),
     enabled: !!squadId,
   });
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-users'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => supabase.from('profiles').select('*'),
   });
 
   const { data: chatThread } = useQuery({
     queryKey: ['squad-thread', squadId],
     queryFn: async () => {
-      const threads = await base44.entities.ChatThread.filter({
+      const threads = await supabase.from('chat_threads').select('*').eq({
         thread_type: 'squad',
         'metadata.squad_id': squadId
       });
@@ -80,7 +80,7 @@ export default function SquadChat() {
 
   const { data: messages = [] } = useQuery({
     queryKey: ['squad-messages', chatThread?.id],
-    queryFn: () => base44.entities.Message.filter({ thread_id: chatThread.id }, '-created_date'),
+    queryFn: () => supabase.from('chat_messages').select('*').eq({ thread_id: chatThread.id }, '-created_date'),
     enabled: !!chatThread,
     refetchInterval: 5000,
   });
@@ -91,7 +91,7 @@ export default function SquadChat() {
         throw new Error('No chat thread');
       }
 
-      await base44.entities.Message.create({
+      await supabase.from('chat_messages').insert({
         thread_id: chatThread.id,
         sender_email: currentUser.email,
         sender_name: currentUser.full_name,
@@ -99,7 +99,7 @@ export default function SquadChat() {
         message_type: 'text',
       });
 
-      await base44.entities.ChatThread.update(chatThread.id, {
+      await supabase.from('chat_threads').update({
         last_message: content,
         last_message_at: new Date().toISOString(),
       });

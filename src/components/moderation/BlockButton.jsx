@@ -29,7 +29,7 @@ export default function BlockButton({ userEmail }) {
 
   const { data: blocks = [] } = useQuery({
     queryKey: ['blocks', currentUser?.email],
-    queryFn: () => base44.entities.UserBlock.filter({ blocker_email: currentUser.email }),
+    queryFn: () => supabase.from('user_blocks').select('*'),
     enabled: !!currentUser
   });
 
@@ -37,7 +37,7 @@ export default function BlockButton({ userEmail }) {
 
   const blockMutation = useMutation({
     mutationFn: async () => {
-      await base44.entities.UserBlock.create({
+      await supabase.from('user_blocks').insert({
         blocker_email: currentUser.email,
         blocked_email: userEmail
       });
@@ -52,7 +52,7 @@ export default function BlockButton({ userEmail }) {
     mutationFn: async () => {
       const block = blocks.find(b => b.blocked_email === userEmail);
       if (block) {
-        await base44.entities.UserBlock.delete(block.id);
+        await supabase.from('user_blocks').delete().eq('id', block.id);
       }
     },
     onSuccess: () => {

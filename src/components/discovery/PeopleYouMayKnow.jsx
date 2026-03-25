@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Users, MapPin, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
@@ -9,22 +9,22 @@ import { motion } from 'framer-motion';
 export default function PeopleYouMayKnow({ currentUser, limit = 6 }) {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: () => supabase.from('profiles').select('*')
   });
 
   const { data: userTags = [] } = useQuery({
     queryKey: ['user-tags'],
-    queryFn: () => base44.entities.UserTag.list()
+    queryFn: () => supabase.from('user_tags').select('*')
   });
 
   const { data: userFollows = [] } = useQuery({
     queryKey: ['user-follows'],
-    queryFn: () => base44.entities.UserFollow.list()
+    queryFn: () => supabase.from('user_follows').select('*')
   });
 
   const { data: userActivities = [] } = useQuery({
     queryKey: ['user-activities-recent'],
-    queryFn: () => base44.entities.UserActivity.filter({ visible: true }, '-created_date', 100)
+    queryFn: () => supabase.from('user_activity').select('*').eq({ visible: true }, '-created_date', 100)
   });
 
   const suggestions = useMemo(() => {

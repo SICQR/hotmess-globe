@@ -17,7 +17,7 @@ export default function Beacons() {
 
   const { data: beacons = [], isLoading } = useQuery({
     queryKey: ['beacons'],
-    queryFn: () => base44.entities.Beacon.filter({ active: true }, '-created_date'),
+    queryFn: () => supabase.from('beacons').select('*').eq({ active: true }, '-created_date'),
   });
 
   const filteredBeacons = beacons.filter(beacon => {

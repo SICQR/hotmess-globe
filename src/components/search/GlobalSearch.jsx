@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44, supabase } from '@/api/base44Client';
 import { Search, User, MapPin, ShoppingBag, X, Clock, Loader2, Star, TrendingUp, Sliders } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -146,21 +146,21 @@ export default function GlobalSearch({ isOpen, onClose }) {
   // Fallback: Load all data for client-side filtering (when backend search unavailable or for products)
   const { data: allUsers = [], isLoading: allUsersLoading } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => supabase.from('profiles').select('*'),
     enabled: isOpen && needUsersFallback,
     staleTime: 30000,
   });
 
   const { data: allBeacons = [], isLoading: allBeaconsLoading } = useQuery({
     queryKey: ['beacons'],
-    queryFn: () => base44.entities.Beacon.list(),
+    queryFn: () => supabase.from('beacons').select('*'),
     enabled: isOpen && needBeaconsFallback,
     staleTime: 30000,
   });
 
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list(),
+    queryFn: () => supabase.from('products').select('*'),
     enabled: isOpen,
     staleTime: 30000,
   });

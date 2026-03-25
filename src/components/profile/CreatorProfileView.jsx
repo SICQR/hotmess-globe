@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
 import { 
   Music, 
   Calendar, 
@@ -63,7 +63,7 @@ export default function CreatorProfileView({ user, currentUser }) {
   const { data: musicReleases = [] } = useQuery({
     queryKey: ['creator-releases', user?.email],
     queryFn: async () => {
-      const beacons = await base44.entities.Beacon.filter({
+      const beacons = await supabase.from('beacons').select('*').eq({
         created_by: user?.email,
         kind: 'release',
         status: 'published'
@@ -77,7 +77,7 @@ export default function CreatorProfileView({ user, currentUser }) {
   const { data: hostedEvents = [] } = useQuery({
     queryKey: ['creator-events', user?.email],
     queryFn: async () => {
-      const beacons = await base44.entities.Beacon.filter({
+      const beacons = await supabase.from('beacons').select('*').eq({
         created_by: user?.email,
         kind: 'event',
         status: 'published'
@@ -99,7 +99,7 @@ export default function CreatorProfileView({ user, currentUser }) {
       let total = 0;
       for (const id of releaseIds) {
         try {
-          const checkIns = await base44.entities.BeaconCheckIn.filter({ beacon_id: id });
+          const checkIns = await supabase.from('beacon_check_ins').select('*');
           total += Array.isArray(checkIns) ? checkIns.length : 0;
         } catch {
           // ignore

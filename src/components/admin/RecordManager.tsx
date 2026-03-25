@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -79,7 +79,7 @@ export default function RecordManager() {
 
   const { data: audioBeacons = [] } = useQuery({
     queryKey: ['audio-beacons'],
-    queryFn: () => base44.entities.Beacon.filter({ mode: 'radio' })
+    queryFn: () => supabase.from('beacons').select('*').eq({ mode: 'radio' })
   });
 
   const uploadMutation = useMutation({
@@ -87,7 +87,7 @@ export default function RecordManager() {
       setUploading(true);
       
       // Step 1: Upload WAV file to storage
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: data.wavFile });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file: data.wavFile });
       
       let soundcloudTrackId = null;
       let soundcloudUrl = null;
@@ -115,7 +115,7 @@ export default function RecordManager() {
       }
       
       // Step 3: Create audio_drop beacon
-      const beacon = await base44.entities.Beacon.create({
+      const beacon = await supabase.from('beacons').insert({
         title: data.title,
         description: data.description,
         kind: 'drop',

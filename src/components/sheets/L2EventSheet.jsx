@@ -109,11 +109,11 @@ export default function L2EventSheet({ id }) {
 
       if (rsvp) {
         // Cancel RSVP
-        await base44.entities.EventRSVP.delete(rsvp.id);
+        await supabase.from('event_rsvps').delete().eq('id', rsvp.id);
         return { action: 'cancelled' };
       } else {
         // Create RSVP
-        await base44.entities.EventRSVP.create({
+        await supabase.from('event_rsvps').insert({
           beacon_id: id,
           user_email: currentUser.email,
           status: 'going',

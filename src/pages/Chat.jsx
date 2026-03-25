@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-
 const QUICK_QUERIES = [
   "Find me a techno party this Friday near Shoreditch",
   "What are the most popular queer venues tonight?",
@@ -15,35 +14,29 @@ const QUICK_QUERIES = [
   "Any drops happening this weekend?",
   "What events match my interests?"
 ];
-
 export default function Chat() {
   const [user, setUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
-
   const { data: beacons = [] } = useQuery({
     queryKey: ['beacons'],
-    queryFn: () => base44.entities.Beacon.filter({ active: true }, '-created_date'),
+    queryFn: () => supabase.from('beacons').select('*').eq({ active: true }, '-created_date'),
   });
-
   const { data: interactions = [] } = useQuery({
     queryKey: ['user-interactions-chat', user?.email],
-    queryFn: () => base44.entities.UserInteraction.filter({ user_email: user.email }, '-created_date', 50),
+    queryFn: () => supabase.from('user_interactions').select('*').order('-created_date', { ascending: false }).limit(50),
     enabled: !!user
   });
-
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const ok = await (async () => { const { data: { session } } = await supabase.auth.getSession(); if (!session) { window.location.href = "/auth"; return false; } return true; })();
         if (!ok) return;
-
         const { data: { user } } = await supabase.auth.getUser();
       if (!user) { currentUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); currentUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         setUser(currentUser);
-        
         // Welcome message
         setMessages([{
           id: 'welcome',
@@ -57,63 +50,46 @@ export default function Chat() {
     };
     fetchUser();
   }, []);
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
   const handleSend = async (queryText = input) => {
     if (!queryText.trim() || isTyping) return;
-
     const userMessage = {
       id: Date.now().toString(),
       role: 'user',
       content: queryText,
       timestamp: new Date()
     };
-
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
-
     try {
       // Build context for AI
       const interactionSummary = interactions.reduce((acc, int) => {
         acc[int.beacon_kind] = (acc[int.beacon_kind] || 0) + 1;
         return acc;
       }, {});
-
       const topInterests = Object.entries(interactionSummary)
         .sort(([, a], [, b]) => b - a)
         .slice(0, 3)
         .map(([kind]) => kind);
-
       const prompt = `You are HOTMESS AI, a friendly and knowledgeable nightlife assistant for queer cities. You help users discover events, venues, and experiences.
-
 User Profile:
 - Name: ${user?.full_name || 'User'}
 - Top interests: ${topInterests.join(', ') || 'exploring new experiences'}
 - Past interactions: ${interactions.length}
-
 Available Events/Beacons:
 ${beacons.slice(0, 30).map(b => `- ID: ${b.id}, Title: ${b.title}, Type: ${b.kind}, Mode: ${b.mode}, City: ${b.city}, Intensity: ${Math.round((b.intensity || 0.5) * 100)}%, Description: ${b.description || 'N/A'}`).join('\n')}
-
 User Query: "${queryText}"
-
 Respond in a friendly, conversational tone. If recommending specific beacons, include their IDs in your response like [BEACON:id]. Be helpful, engaging, and use inclusive language. Keep responses concise but informative.`;
-
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        add_context_from_internet: false
-      });
-
+      const response = await null /* InvokeLLM disabled */;
       const assistantMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response,
         timestamp: new Date()
       };
-
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
@@ -127,34 +103,27 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
       setIsTyping(false);
     }
   };
-
   const parseMessageContent = (content) => {
     const beaconRegex = /\[BEACON:([^\]]+)\]/g;
     const parts = [];
     let lastIndex = 0;
     let match;
-
     while ((match = beaconRegex.exec(content)) !== null) {
       if (match.index > lastIndex) {
         parts.push({ type: 'text', content: content.slice(lastIndex, match.index) });
       }
-      
       const beaconId = match[1];
       const beacon = beacons.find(b => b.id === beaconId);
       if (beacon) {
         parts.push({ type: 'beacon', beacon });
       }
-      
       lastIndex = match.index + match[0].length;
     }
-
     if (lastIndex < content.length) {
       parts.push({ type: 'text', content: content.slice(lastIndex) });
     }
-
     return parts.length > 0 ? parts : [{ type: 'text', content }];
   };
-
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
@@ -169,7 +138,6 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
           </div>
         </div>
       </div>
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6">
         <div className="max-w-4xl mx-auto space-y-4">
@@ -226,7 +194,6 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
               </motion.div>
             ))}
           </AnimatePresence>
-
           {isTyping && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -244,7 +211,6 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
           <div ref={messagesEndRef} />
         </div>
       </div>
-
       {/* Quick Queries */}
       {messages.length <= 1 && (
         <div className="p-4 border-t border-white/10">
@@ -264,7 +230,6 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
           </div>
         </div>
       )}
-
       {/* Input */}
       <div className="bg-black/95 backdrop-blur-xl border-t border-white/10 p-4">
         <div className="max-w-4xl mx-auto flex gap-2">

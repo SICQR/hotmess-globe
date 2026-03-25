@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { AlertTriangle, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 export default function InventoryAlerts({ sellerEmail }) {
   const { data: products = [] } = useQuery({
     queryKey: ['seller-products', sellerEmail],
-    queryFn: () => base44.entities.Product.filter({ seller_email: sellerEmail, status: 'active' }),
+    queryFn: () => supabase.from('products').select('*').eq({ seller_email: sellerEmail, status: 'active' }),
     enabled: !!sellerEmail,
     refetchInterval: 60000 // Check every minute
   });

@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44, supabase } from '@/api/base44Client';
 import { Bell, Check, Trash2, MessageCircle, Package, Heart, Flag, MapPin, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -31,13 +31,13 @@ export default function NotificationCenter({ currentUser }) {
     queryKey: ['notifications', currentUser?.email],
     queryFn: () => {
       if (currentUser?.role === 'admin') {
-        return base44.entities.Notification.filter(
+        return supabase.from('notifications').select('*').eq(
           { user_email: ['admin', currentUser.email] },
           '-created_date',
           50
         );
       }
-      return base44.entities.Notification.filter({ user_email: currentUser.email }, '-created_date', 50);
+      return supabase.from('notifications').select('*').eq({ user_email: currentUser.email }, '-created_date', 50);
     },
     enabled: !!currentUser,
     refetchInterval: 60000, // Fallback poll every 60 seconds (reduced since we have real-time)
@@ -117,14 +117,14 @@ export default function NotificationCenter({ currentUser }) {
   }, [currentUser?.email, currentUser?.role, queryClient, navigate]);
 
   const markReadMutation = useMutation({
-    mutationFn: (notificationId) => base44.entities.Notification.update(notificationId, { read: true }),
+    mutationFn: (notificationId) => supabase.from('notifications').update({ read: true }),
     onSuccess: () => queryClient.invalidateQueries(['notifications']),
   });
 
   const markAllReadMutation = useMutation({
     mutationFn: async () => {
       const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
-      await Promise.all(unreadIds.map(id => base44.entities.Notification.update(id, { read: true })));
+      await Promise.all(unreadIds.map(id => supabase.from('notifications').update({ read: true })));
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['notifications']);
@@ -133,7 +133,7 @@ export default function NotificationCenter({ currentUser }) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (notificationId) => base44.entities.Notification.delete(notificationId),
+    mutationFn: (notificationId) => supabase.from('notifications').delete().eq('id', notificationId),
     onSuccess: () => queryClient.invalidateQueries(['notifications']),
   });
 

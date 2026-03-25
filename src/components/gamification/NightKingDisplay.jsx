@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Crown, Swords, Zap, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
@@ -12,7 +12,7 @@ export default function NightKingDisplay({ venueId }) {
   const { data: kingData } = useQuery({
     queryKey: ['venue-king', venueId],
     queryFn: async () => {
-      const kings = await base44.entities.VenueKing.filter({ venue_id: venueId });
+      const kings = await supabase.from('venue_kings').select('*').eq({ venue_id: venueId });
       const activeKing = kings.find(k => new Date(k.expires_at) > new Date());
       return activeKing || null;
     },

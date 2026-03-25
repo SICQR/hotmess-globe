@@ -1,4 +1,3 @@
-import { base44 } from '@/api/base44Client';
 
 /**
  * AI-powered matchmaking engine
@@ -39,24 +38,7 @@ ${i + 1}. ${m.name} (ID: ${m.id})
 
 For each match, write ONE SHORT SENTENCE (max 12 words) explaining why they're compatible. Focus on shared interests, values, or complementary traits. Be genuine and specific.`;
 
-    const response = await base44.integrations.Core.InvokeLLM({
-      prompt,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          explanations: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                user_id: { type: 'string' },
-                reason: { type: 'string' }
-              }
-            }
-          }
-        }
-      }
-    });
+    const response = await null /* InvokeLLM disabled */;
 
     // Convert to lookup object
     const explanationMap = {};

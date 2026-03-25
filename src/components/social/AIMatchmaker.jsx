@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Sparkles, MapPin, Heart, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -13,30 +13,30 @@ export default function AIMatchmaker({ currentUser }) {
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list()
+    queryFn: () => supabase.from('profiles').select('*')
   });
 
   const { data: userIntents = [] } = useQuery({
     queryKey: ['user-intents'],
-    queryFn: () => base44.entities.UserIntent.filter({ visible: true }, '-created_date', 50)
+    queryFn: () => supabase.from('user_intents').select('*').order('-created_date', { ascending: false }).limit(50)
   });
 
   const { data: userInteractions = [] } = useQuery({
     queryKey: ['user-interactions', currentUser?.email],
     queryFn: () => currentUser 
-      ? base44.entities.UserInteraction.filter({ user_email: currentUser.email }, '-created_date', 100)
+      ? supabase.from('user_interactions').select('*').order('-created_date', { ascending: false }).limit(100)
       : [],
     enabled: !!currentUser
   });
 
   const { data: allInteractions = [] } = useQuery({
     queryKey: ['all-interactions'],
-    queryFn: () => base44.entities.UserInteraction.list('-created_date', 500)
+    queryFn: () => supabase.from('user_interactions').select('*').order('-created_date', { ascending: false }).limit(500)
   });
 
   const { data: allVibes = [] } = useQuery({
     queryKey: ['all-vibes'],
-    queryFn: () => base44.entities.UserVibe.list()
+    queryFn: () => supabase.from('user_vibes').select('*')
   });
 
   useEffect(() => {

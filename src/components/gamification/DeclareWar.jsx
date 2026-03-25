@@ -30,7 +30,7 @@ export default function DeclareWar({ venueId, kingData, currentUser }) {
       const updatePayload = { xp: newXp }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
 
       // Update king data to trigger war
-      await base44.entities.VenueKing.update(kingData.id, {
+      await supabase.from('venue_kings').update({
         war_active: true,
         war_started_at: new Date().toISOString(),
         war_started_by: currentUser.email,

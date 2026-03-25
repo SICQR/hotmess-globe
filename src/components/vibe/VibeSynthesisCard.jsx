@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
 import { Sparkles, RefreshCw, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -13,17 +13,17 @@ export default function VibeSynthesisCard({ userEmail, compact = false }) {
   const { data: vibe, isLoading } = useQuery({
     queryKey: ['user-vibe', userEmail],
     queryFn: async () => {
-      const vibes = await base44.entities.UserVibe.filter({ user_email: userEmail });
+      const vibes = await supabase.from('user_vibes').select('*');
       return vibes[0] || null;
     },
     enabled: !!userEmail
   });
 
   const synthesizeMutation = useMutation({
-    mutationFn: () => base44.functions.invoke('synthesizeVibe', {}),
+    mutationFn: () => Promise.resolve(null), // base44.functions.invoke deprecated
     onSuccess: (response) => {
       queryClient.invalidateQueries(['user-vibe']);
-      toast.success('Vibe synthesized!');
+      toast.error('Vibe synthesis not available');
       setSynthesizing(false);
     },
     onError: (error) => {

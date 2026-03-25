@@ -409,7 +409,7 @@ export const base44 = {
         profile = result?.data ?? null;
       } catch (profileError) {
         // If RLS/policies are missing, don't hard-fail auth; fall back to auth user + metadata.
-        console.warn('[base44.auth.me] Profile table unavailable; using auth user metadata only', profileError);
+        console.warn('[supabase.auth.me] Profile table unavailable; using auth user metadata only', profileError);
       }
 
       // Ensure a profile row exists (best-effort). This prevents downstream lookups
@@ -481,7 +481,7 @@ export const base44 = {
           email: user.email,
         };
       } catch (profileError) {
-        console.warn('[base44.auth.updateMe] Profile table update failed; kept auth metadata update', profileError);
+        console.warn('[supabase.auth.updateMe] Profile table update failed; kept auth metadata update', profileError);
         return {
           ...(updatedAuth?.user || user),
           ...((updatedAuth?.user?.user_metadata || {}) ?? {}),

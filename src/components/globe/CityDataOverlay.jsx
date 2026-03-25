@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Cloud, CloudRain, Sun, Wind, Zap, Bus, Flame, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -43,17 +43,17 @@ const WeatherIcon = ({ type }) => {
 export default function CityDataOverlay({ selectedCity, onCitySelect, onDismiss }) {
   const { data: cities = [] } = useQuery({
     queryKey: ['cities'],
-    queryFn: () => base44.entities.City.list(),
+    queryFn: () => supabase.from('cities').select('*'),
   });
 
   const { data: beacons = [] } = useQuery({
     queryKey: ['beacons'],
-    queryFn: () => base44.entities.Beacon.list(),
+    queryFn: () => supabase.from('beacons').select('*'),
   });
 
   const { data: checkIns = [] } = useQuery({
     queryKey: ['beacon-checkins'],
-    queryFn: () => base44.entities.BeaconCheckIn.list(),
+    queryFn: () => supabase.from('beacon_check_ins').select('*'),
   });
 
   const cityData = useMemo(() => {

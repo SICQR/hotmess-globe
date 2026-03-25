@@ -1,36 +1,31 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Flag, CheckCircle, XCircle, AlertTriangle, MessageCircle, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-
 export default function ContentModeration() {
   const queryClient = useQueryClient();
   const [aiSummary, setAiSummary] = useState(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
-
   const { data: posts = [] } = useQuery({
     queryKey: ['admin-posts'],
-    queryFn: () => base44.entities.CommunityPost.list('-created_date'),
+    queryFn: () => supabase.from('community_posts').select('*').order('-created_date', { ascending: false }),
   });
-
   const { data: messages = [] } = useQuery({
     queryKey: ['admin-messages'],
-    queryFn: () => base44.entities.Message.list('-created_date', 100),
+    queryFn: () => supabase.from('chat_messages').select('*').order('-created_date', { ascending: false }).limit(100),
   });
-
   const { data: comments = [] } = useQuery({
     queryKey: ['admin-comments'],
-    queryFn: () => base44.entities.PostComment.list('-created_date', 100),
+    queryFn: () => supabase.from('post_comments').select('*').order('-created_date', { ascending: false }).limit(100),
   });
-
   const updatePostMutation = useMutation({
     mutationFn: async ({ postId, status, reason }) => {
-      await base44.entities.CommunityPost.update(postId, {
+      await supabase.from('community_posts').update({
         moderation_status: status,
         moderation_reason: reason || null,
       });
@@ -40,10 +35,8 @@ export default function ContentModeration() {
       toast.success('Post moderated');
     },
   });
-
   const flaggedPosts = posts.filter(p => p.moderation_status === 'flagged');
   const pendingPosts = posts.filter(p => p.moderation_status === 'pending');
-
   const generateAISummary = async () => {
     setLoadingSummary(true);
     try {
@@ -53,31 +46,7 @@ export default function ContentModeration() {
         reason: p.moderation_reason,
         sentiment: p.ai_sentiment
       }));
-
-      const summary = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analyze these flagged community posts and provide a moderation summary:
-
-${JSON.stringify(flaggedContent, null, 2)}
-
-Provide:
-1. Common patterns or themes in flagged content
-2. Risk assessment (low/medium/high)
-3. Recommended actions
-4. Any false positives you detect
-
-Be concise and actionable.`,
-        add_context_from_internet: false,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            patterns: { type: "string" },
-            risk_level: { type: "string" },
-            recommendations: { type: "string" },
-            false_positives: { type: "string" }
-          }
-        }
-      });
-
+      const summary = await null /* InvokeLLM disabled */;
       setAiSummary(summary);
     } catch (error) {
       toast.error('Failed to generate AI summary');
@@ -85,7 +54,6 @@ Be concise and actionable.`,
       setLoadingSummary(false);
     }
   };
-
   return (
     <div className="space-y-6">
       {/* AI Moderation Summary */}
@@ -104,7 +72,6 @@ Be concise and actionable.`,
               {loadingSummary ? 'Analyzing...' : 'Generate Summary'}
             </Button>
           </div>
-
           {aiSummary && (
             <div className="space-y-3 text-sm">
               <div>
@@ -135,7 +102,6 @@ Be concise and actionable.`,
           )}
         </div>
       )}
-
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-black border-2 border-white p-6">
@@ -155,7 +121,6 @@ Be concise and actionable.`,
           <p className="text-4xl font-black">{messages.length}</p>
         </div>
       </div>
-
       {/* Content Tabs */}
       <Tabs defaultValue="flagged" className="w-full">
         <TabsList className="bg-black border-2 border-white mb-6">
@@ -175,7 +140,6 @@ Be concise and actionable.`,
             Messages ({messages.length})
           </TabsTrigger>
         </TabsList>
-
         {/* Flagged Posts */}
         <TabsContent value="flagged">
           <div className="space-y-4">
@@ -196,7 +160,6 @@ Be concise and actionable.`,
                       </span>
                     </div>
                     <p className="text-white/80 mb-2">{post.content}</p>
-                    
                     {/* AI Sentiment */}
                     {post.ai_sentiment && (
                       <div className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-bold uppercase border ${
@@ -207,7 +170,6 @@ Be concise and actionable.`,
                         {post.ai_sentiment}
                       </div>
                     )}
-                    
                     {post.moderation_reason && (
                       <div className="bg-red-600/20 border-2 border-red-600/40 p-3 mt-2">
                         <p className="text-xs text-red-400 uppercase font-bold mb-1">
@@ -251,7 +213,6 @@ Be concise and actionable.`,
             )}
           </div>
         </TabsContent>
-
         {/* Pending Posts */}
         <TabsContent value="pending">
           <div className="space-y-4">
@@ -306,7 +267,6 @@ Be concise and actionable.`,
             )}
           </div>
         </TabsContent>
-
         {/* All Posts */}
         <TabsContent value="all-posts">
           <div className="bg-black border-2 border-white divide-y-2 divide-white/10">
@@ -330,7 +290,6 @@ Be concise and actionable.`,
             ))}
           </div>
         </TabsContent>
-
         {/* Messages */}
         <TabsContent value="messages">
           <div className="bg-black border-2 border-white p-6">

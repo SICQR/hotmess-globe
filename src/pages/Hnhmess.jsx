@@ -1,3 +1,4 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -5,7 +6,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Play, ShoppingBag, Shield, Bell } from 'lucide-react';
 
-import { base44 } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import SoundCloudEmbed from '@/components/media/SoundCloudEmbed';
 import { useServerNow } from '@/hooks/use-server-now';
@@ -70,7 +70,7 @@ export default function Hnhmess() {
   const { data: releaseBeacon = null } = useQuery({
     queryKey: ['release-beacon', RELEASE_SLUG],
     queryFn: async () => {
-      const rows = await base44.entities.Beacon.filter(
+      const rows = await supabase.from('beacons').select('*').eq(
         { active: true, status: 'published', kind: 'release', release_slug: RELEASE_SLUG },
         'release_at',
         1
@@ -91,7 +91,7 @@ export default function Hnhmess() {
   const { data: releases = [] } = useQuery({
     queryKey: ['audio-releases', 'for-hnhmess'],
     queryFn: async () => {
-      const metadata = await base44.entities.AudioMetadata.list('-created_date', 50);
+      const metadata = await supabase.from('audio_metadata').select('*').order('-created_date', { ascending: false }).limit(50);
       return Array.isArray(metadata) ? metadata : [];
     },
   });
@@ -114,7 +114,7 @@ export default function Hnhmess() {
   const { data: shopifyProducts = [] } = useQuery({
     queryKey: ['shopify-products', 'for-hnhmess'],
     queryFn: async () => {
-      const rows = await base44.entities.Product.filter(
+      const rows = await supabase.from('products').select('*').eq(
         { status: 'active', seller_email: 'shopify@hotmess.london' },
         '-created_date',
         100

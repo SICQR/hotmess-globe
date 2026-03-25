@@ -1,8 +1,8 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Crown, Lock, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -16,10 +16,7 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
       return true;
     }
     
-    const unlocks = await base44.entities.ContentUnlock.filter({
-      unlocker_email: currentUser.email,
-      owner_email: profileUser.email
-    });
+    const unlocks = await supabase.from('content_unlocks').select('*');
     return unlocks.length > 0;
   };
 
@@ -30,7 +27,7 @@ export default function PremiumContentUnlock({ profileUser, currentUser }) {
   const unlockMutation = useMutation({
     mutationFn: async () => {
       // Create unlock record
-      await base44.entities.ContentUnlock.create({
+      await supabase.from('content_unlocks').insert({
         unlocker_email: currentUser.email,
         owner_email: profileUser.email,
         xp_spent: 0

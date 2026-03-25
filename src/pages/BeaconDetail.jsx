@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44, supabase } from '@/components/utils/supabaseClient';
 import { createPageUrl } from '../utils';
 import { MapPin, ArrowLeft, Users, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,13 +46,13 @@ export default function BeaconDetail() {
 
   const { data: beacons = [] } = useQuery({
     queryKey: ['beacons'],
-    queryFn: () => base44.entities.Beacon.list(),
+    queryFn: () => supabase.from('beacons').select('*'),
   });
 
   const { data: myRsvp } = useQuery({
     queryKey: ['my-rsvp', beaconId, currentUser?.email],
     queryFn: async () => {
-      const rsvps = await base44.entities.EventRSVP.filter({
+      const rsvps = await supabase.from('event_rsvps').select('*').eq({
         user_email: currentUser.email,
         event_id: beaconId
       });

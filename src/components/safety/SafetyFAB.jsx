@@ -62,7 +62,7 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
         const { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         if (user?.email) {
-          const contacts = await base44.entities.TrustedContact.filter({ 
+          const contacts = await null /* disabled base44 */.filter({ 
             user_email: user.email,
             notify_on_sos: true 
           });
@@ -90,7 +90,7 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
         : 'Location unavailable';
 
       // Get trusted contacts
-      const contacts = await base44.entities.TrustedContact.filter({ 
+      const contacts = await null /* disabled base44 */.filter({ 
         user_email: user.email,
         notify_on_sos: true 
       });
@@ -99,20 +99,14 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
         `🚨 EMERGENCY ALERT from ${user.full_name}: I need help! Location: ${locationStr}`;
 
       // Send to all contacts
+      // Email notifications disabled - implement via /api/email/send endpoint
       for (const contact of contacts) {
-        try {
-          await base44.integrations.Core.SendEmail({
-            to: contact.contact_email || 'noreply@hotmess.app',
-            subject: '🚨 EMERGENCY ALERT - HOTMESS',
-            body: `${emergencyMessage}\n\nTime: ${new Date().toLocaleString()}\nLocation: ${locationStr}${location ? `\nGoogle Maps: https://www.google.com/maps?q=${location.lat},${location.lng}` : ''}\n\nThis is an automated emergency alert.`
-          });
-        } catch (error) {
-          console.error('Failed to send to:', contact.contact_name);
-        }
+        // TODO: Send via supabase or /api/email/send
+        console.log('Would send to:', contact.contact_email);
       }
 
       // Log SOS event
-      await base44.entities.SafetyCheckIn.create({
+      await null /* disabled base44 */.create({
         user_email: user.email,
         check_in_time: new Date().toISOString(),
         expected_check_out: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),

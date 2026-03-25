@@ -66,7 +66,7 @@ export default function CreateBeacon() {
         data.is_verified = false;
       }
       
-      const newBeacon = await base44.entities.Beacon.create(data);
+      const newBeacon = await supabase.from('beacons').insert(data);
 
       // Signal the Globe
       emitPulse?.({
@@ -78,7 +78,7 @@ export default function CreateBeacon() {
       
       // Notify admins of new shadow beacon
       if (data.is_shadow) {
-        await base44.entities.Notification.create({
+        await supabase.from('notifications').insert({
           user_email: 'admin',
           type: 'shadow_beacon',
           title: 'New Beacon Pending Approval',

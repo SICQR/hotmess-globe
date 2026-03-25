@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { Clock, Check, X, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,19 +14,19 @@ export default function OffersList({ userEmail, type = 'received' }) {
     queryKey: ['product-offers', type, userEmail],
     queryFn: () => {
       if (type === 'received') {
-        return base44.entities.ProductOffer.filter({ seller_email: userEmail }, '-created_date');
+        return supabase.from('product_offers').select('*').order('-created_date', { ascending: false });
       }
-      return base44.entities.ProductOffer.filter({ buyer_email: userEmail }, '-created_date');
+      return supabase.from('product_offers').select('*').order('-created_date', { ascending: false });
     },
     enabled: !!userEmail
   });
 
   const acceptOfferMutation = useMutation({
     mutationFn: async (offer) => {
-      await base44.entities.ProductOffer.update(offer.id, { status: 'accepted' });
+      await supabase.from('product_offers').update({ status: 'accepted' });
       
       // Create order
-      await base44.entities.Order.create({
+      await supabase.from('orders').insert({
         buyer_email: offer.buyer_email,
         seller_email: offer.seller_email,
         total_xp: offer.offer_xp,
@@ -36,7 +36,7 @@ export default function OffersList({ userEmail, type = 'received' }) {
       });
 
       // Notify buyer
-      await base44.entities.Notification.create({
+      await supabase.from('notifications').insert({
         user_email: offer.buyer_email,
         type: 'order',
         title: 'Offer Accepted!',
@@ -52,8 +52,8 @@ export default function OffersList({ userEmail, type = 'received' }) {
 
   const declineOfferMutation = useMutation({
     mutationFn: async (offer) => {
-      await base44.entities.ProductOffer.update(offer.id, { status: 'declined' });
-      await base44.entities.Notification.create({
+      await supabase.from('product_offers').update({ status: 'declined' });
+      await supabase.from('notifications').insert({
         user_email: offer.buyer_email,
         type: 'order',
         title: 'Offer Declined',

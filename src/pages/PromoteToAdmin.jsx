@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { base44, supabase } from '@/components/utils/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Shield, Check } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -21,7 +21,7 @@ export default function PromoteToAdmin() {
 
   const promoteMutation = useMutation({
     mutationFn: async () => {
-      await base44.entities.User.update(currentUser.id, { role: 'admin' });
+      await supabase.from('profiles').update({ role: 'admin' });
     },
     onSuccess: () => {
       setPromoted(true);

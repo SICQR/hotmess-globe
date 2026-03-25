@@ -1,7 +1,7 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, Trash2, Eye, Users } from 'lucide-react';
 import { toast } from 'sonner';
@@ -14,17 +14,17 @@ export default function EventManagement() {
 
   const { data: beacons = [] } = useQuery({
     queryKey: ['admin-beacons'],
-    queryFn: () => base44.entities.Beacon.list('-created_date'),
+    queryFn: () => supabase.from('beacons').select('*').order('-created_date', { ascending: false }),
   });
 
   const { data: rsvps = [] } = useQuery({
     queryKey: ['admin-rsvps'],
-    queryFn: () => base44.entities.EventRSVP.list(),
+    queryFn: () => supabase.from('event_rsvps').select('*'),
   });
 
   const deleteBeaconMutation = useMutation({
     mutationFn: async (beaconId) => {
-      await base44.entities.Beacon.delete(beaconId);
+      await supabase.from('beacons').delete().eq('id', beaconId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-beacons']);
@@ -34,7 +34,7 @@ export default function EventManagement() {
 
   const toggleBeaconStatusMutation = useMutation({
     mutationFn: async ({ beaconId, active }) => {
-      await base44.entities.Beacon.update(beaconId, { active: !active });
+      await supabase.from('beacons').update({ active: !active });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-beacons']);

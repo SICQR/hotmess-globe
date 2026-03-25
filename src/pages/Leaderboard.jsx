@@ -23,27 +23,27 @@ export default function Leaderboard() {
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-users'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => supabase.from('profiles').select('*'),
   });
 
   const { data: cities = [] } = useQuery({
     queryKey: ['cities'],
-    queryFn: () => base44.entities.City.list(),
+    queryFn: () => supabase.from('cities').select('*'),
   });
 
   const { data: allSquads = [] } = useQuery({
     queryKey: ['all-squads'],
-    queryFn: () => base44.entities.Squad.list(),
+    queryFn: () => supabase.from('squads').select('*'),
   });
 
   const { data: squadMembers = [] } = useQuery({
     queryKey: ['squad-members-all'],
-    queryFn: () => base44.entities.SquadMember.list(),
+    queryFn: () => supabase.from('squad_members').select('*'),
   });
 
   const { data: venueKings = [] } = useQuery({
     queryKey: ['venue-kings'],
-    queryFn: () => base44.entities.VenueKing.list(),
+    queryFn: () => supabase.from('venue_kings').select('*'),
   });
 
   // Filter users by city — rank by scan_count (or fallback to created_date recency)

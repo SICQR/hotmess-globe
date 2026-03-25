@@ -91,13 +91,13 @@ export default function EditProfile() {
 
   const { data: userTags = [] } = useQuery({
     queryKey: ['user-tags', currentUser?.email],
-    queryFn: () => base44.entities.UserTag.filter({ user_email: currentUser.email }),
+    queryFn: () => supabase.from('user_tags').select('*'),
     enabled: !!currentUser
   });
 
   const { data: userTribes = [] } = useQuery({
     queryKey: ['user-tribes', currentUser?.email],
-    queryFn: () => base44.entities.UserTribe.filter({ user_email: currentUser.email }),
+    queryFn: () => supabase.from('user_tribes').select('*'),
     enabled: !!currentUser
   });
 
@@ -196,7 +196,7 @@ export default function EditProfile() {
 
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
       setAvatarUrl(file_url);
       toast.success('Avatar uploaded!');
     } catch (error) {
@@ -280,10 +280,10 @@ export default function EditProfile() {
 
         try {
           for (const oldTribe of uniqueOldTribes) {
-            await base44.entities.UserTribe.delete(oldTribe.id);
+            await supabase.from('user_tribes').delete().eq('id', oldTribe.id);
           }
           for (const oldTag of uniqueOldTags) {
-            await base44.entities.UserTag.delete(oldTag.id);
+            await supabase.from('user_tags').delete().eq('id', oldTag.id);
           }
 
           const uniqueTribes = Array.from(new Set((Array.isArray(tribes) ? tribes : []).filter(Boolean)));
@@ -294,7 +294,7 @@ export default function EditProfile() {
           for (const tribeId of uniqueTribes) {
             const tribe = taxonomyConfig.tribes.find(t => t.id === tribeId);
             if (tribe) {
-              await base44.entities.UserTribe.create({
+              await supabase.from('user_tribes').insert({
                 user_email: email,
                 tribe_id: tribeId,
                 tribe_label: tribe.label
@@ -305,7 +305,7 @@ export default function EditProfile() {
           for (const tagId of uniqueSelectedTagIds) {
             const tag = taxonomyConfig.tags.find(t => t.id === tagId);
             if (tag) {
-              await base44.entities.UserTag.create({
+              await supabase.from('user_tags').insert({
                 user_email: email,
                 tag_id: tagId,
                 tag_label: tag.label,

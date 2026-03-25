@@ -1,39 +1,56 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { supabase } from '@/components/utils/supabaseClient';
 import { TrendingUp, Users, ShoppingBag, MapPin, MessageCircle, Crown, UserMinus, DollarSign } from 'lucide-react';
 
 export default function AnalyticsDashboard() {
   const { data: users = [] } = useQuery({
     queryKey: ['analytics-users'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: async () => {
+      const { data } = await supabase.from('profiles').select('*');
+      return data || [];
+    },
   });
 
   const { data: beacons = [] } = useQuery({
     queryKey: ['analytics-beacons'],
-    queryFn: () => base44.entities.Beacon.list(),
+    queryFn: async () => {
+      const { data } = await supabase.from('beacons').select('*');
+      return data || [];
+    },
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ['analytics-orders'],
-    queryFn: () => base44.entities.Order.list(),
+    queryFn: async () => {
+      const { data } = await supabase.from('orders').select('*');
+      return data || [];
+    },
   });
 
   const { data: posts = [] } = useQuery({
     queryKey: ['analytics-posts'],
-    queryFn: () => base44.entities.CommunityPost.list(),
+    queryFn: async () => {
+      const { data } = await supabase.from('community_posts').select('*');
+      return data || [];
+    },
   });
 
   const { data: checkIns = [] } = useQuery({
     queryKey: ['analytics-checkins'],
-    queryFn: () => base44.entities.BeaconCheckIn.list(),
+    queryFn: async () => {
+      const { data } = await supabase.from('check_ins').select('*');
+      return data || [];
+    },
   });
 
   const { data: messages = [] } = useQuery({
     queryKey: ['analytics-messages'],
-    queryFn: () => base44.entities.Message.list(),
+    queryFn: async () => {
+      const { data } = await supabase.from('chat_messages').select('*');
+      return data || [];
+    },
   });
 
   const { data: supportTickets = [] } = useQuery({

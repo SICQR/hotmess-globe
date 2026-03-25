@@ -1,6 +1,6 @@
+import { supabase } from '@/components/utils/supabaseClient';
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/components/utils/supabaseClient';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { Users, Filter, MapPin } from 'lucide-react';
@@ -108,7 +108,7 @@ export default function DiscoveryGrid({ currentUser }) {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['discover-users', filters],
     queryFn: async () => {
-      const allUsers = await base44.entities.User.list('-created_date', 200);
+      const allUsers = await supabase.from('profiles').select('*').order('-created_date', { ascending: false }).limit(200);
       // Filter out current user
       return allUsers.filter(u => u.email !== currentUser?.email);
     },
