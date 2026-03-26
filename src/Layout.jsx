@@ -72,26 +72,14 @@ function LayoutInner({ children, currentPageName }) {
   // Enable keyboard navigation
   useKeyboardNav();
 
-  // Service worker:
-  // - Enable in production for offline support.
-  // - In dev, explicitly unregister any existing SW so stale cached bundles
-  //   can't keep showing old runtime errors after code fixes.
+  // SW registration handled by usePushNotifications (OSArchitecture).
+  // Dev only: unregister stale SWs so cached bundles don't mask code fixes.
   useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
-
-    if (import.meta.env.DEV) {
-      navigator.serviceWorker
-        .getRegistrations()
-        .then((regs) => Promise.all(regs.map((r) => r.unregister())))
-        .catch(() => {
-          // ignore
-        });
-      return;
-    }
-
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Service worker registration failed, continue without offline support
-    });
+    if (!('serviceWorker' in navigator) || !import.meta.env.DEV) return;
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((regs) => Promise.all(regs.map((r) => r.unregister())))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {

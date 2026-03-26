@@ -214,6 +214,7 @@ export default function OnboardingGate() {
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [dataConsent, setDataConsent] = useState(false);
   const [gpsConsent, setGpsConsent] = useState(false);
+  const [pushConsent, setPushConsent] = useState(false);
 
   // Step 4 — profile
   const [displayName, setDisplayName] = useState('');
@@ -305,6 +306,9 @@ export default function OnboardingGate() {
           console.error('[Onboarding] Failed to save consent flags:', error);
           toast.error('Could not save your consent settings. Please try again.');
           return;
+        }
+        if (pushConsent && 'Notification' in window && Notification.permission === 'default') {
+          await Notification.requestPermission().catch(() => {});
         }
       }
       setStep((s) => s + 1);
@@ -700,6 +704,23 @@ export default function OnboardingGate() {
                 <Checkbox
                   checked={gpsConsent}
                   onCheckedChange={setGpsConsent}
+                  className="w-5 h-5 border-2 border-white/20 mt-0.5 shrink-0 data-[state=checked]:bg-[#C8962C] data-[state=checked]:border-[#C8962C]"
+                />
+              </label>
+
+              {/* Push notifications card */}
+              <label className="flex items-start gap-4 bg-[#0D0D0D] border border-white/8 rounded-xl p-4 cursor-pointer hover:border-white/15 transition-all select-none group">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white/80 group-hover:text-white transition-colors">
+                    Push Notifications
+                  </p>
+                  <p className="text-xs text-white/35 mt-1 leading-relaxed">
+                    Get notified about boos, messages, and safety alerts.
+                  </p>
+                </div>
+                <Checkbox
+                  checked={pushConsent}
+                  onCheckedChange={setPushConsent}
                   className="w-5 h-5 border-2 border-white/20 mt-0.5 shrink-0 data-[state=checked]:bg-[#C8962C] data-[state=checked]:border-[#C8962C]"
                 />
               </label>

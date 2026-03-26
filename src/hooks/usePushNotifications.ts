@@ -1,10 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 
-// VAPID public key — generated 2026-03-07 by npx web-push generate-vapid-keys.
-// Env var takes precedence; falls back to the project key so production works
-// even if VITE_VAPID_PUBLIC_KEY hasn't been set in Vercel yet.
-// Private key is stored as VAPID_PRIVATE_KEY in Supabase Edge Function secrets.
 const VAPID_PUBLIC_KEY =
   import.meta.env.VITE_VAPID_PUBLIC_KEY ||
   'BFWgyAvJsZf4wZavZ-6X6c934k13RiYwjeEEIgQeOK0PyrBbvcJrqLL9llzV2Phee9GDOLpSVPSvGIja5eyr5WY';
@@ -19,12 +15,9 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 /**
  * usePushNotifications (auto-setup)
  *
- * Registers the service worker, requests notification permission, subscribes
- * to the Push API, and stores the subscription in Supabase for future
- * server-side push delivery. Called once from OSArchitecture — no UI needed.
- *
- * Fails silently: the push_subscriptions table may not exist until the
- * migration (20260226000095_push_subscriptions.sql) is applied.
+ * Registers the SW and — if permission is already granted (via onboarding step 3)
+ * — subscribes and stores all fields in push_subscriptions.
+ * Does NOT call requestPermission() itself; that fires from OnboardingGate step 3.
  */
 export function usePushNotifications(): void {
   const subscribed = useRef(false);
@@ -36,8 +29,11 @@ export function usePushNotifications(): void {
     const setup = async () => {
       try {
         const reg = await navigator.serviceWorker.register('/sw.js');
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') return;
+
+        if (Notification.permission !== 'granted') {
+          subscribed.current = true;
+          return;
+        }
 
         const existing = await reg.pushManager.getSubscription();
         const sub =
@@ -47,19 +43,19 @@ export function usePushNotifications(): void {
             applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
           }));
 
-        // Store subscription in Supabase so a future server-side push function
-        // can deliver messages even when the tab is closed.
         try {
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
+          const { data: { user } } = await supabase.auth.getUser();
           if (user) {
+            const subJson = sub.toJSON();
             await supabase
               .from('push_subscriptions')
               .upsert(
                 {
                   user_id: user.id,
-                  subscription: JSON.stringify(sub),
+                  user_email: user.email,
+                  endpoint: sub.endpoint,
+                  keys: subJson.keys ?? null,
+                  subscription: subJson,
                   updated_at: new Date().toISOString(),
                 },
                 { onConflict: 'user_id' }
@@ -67,13 +63,11 @@ export function usePushNotifications(): void {
               .select();
           }
         } catch (dbErr) {
-          // Table may not exist yet — non-fatal
           console.warn('[Push] push_subscriptions upsert skipped:', dbErr);
         }
 
         subscribed.current = true;
       } catch (e) {
-        // Push setup failed silently — non-critical
         console.warn('[Push] Push setup failed:', e);
       }
     };
