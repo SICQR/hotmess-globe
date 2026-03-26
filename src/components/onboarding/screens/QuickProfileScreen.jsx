@@ -4,6 +4,7 @@
  */
 import React, { useState, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import { Loader2, Camera } from 'lucide-react';
 import { ProgressDots } from './AgeGateScreen';
 import OnboardingBackButton from '../OnboardingBackButton';
@@ -45,16 +46,9 @@ export default function QuickProfileScreen({ session, onComplete, onBack }) {
       // Upload photo if provided
       let avatarUrl = null;
       if (photoFile) {
-        const ext = photoFile.name?.split('.').pop() || 'jpg';
-        const path = `${userId}.${ext}`;
-        const { error: uploadErr } = await supabase.storage
-          .from('avatars')
-          .upload(path, photoFile, { upsert: true, contentType: photoFile.type });
-
-        if (!uploadErr) {
-          const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
-          avatarUrl = urlData?.publicUrl || null;
-        } else {
+        try {
+          avatarUrl = await uploadToStorage(photoFile, 'avatars', userId);
+        } catch (uploadErr) {
           console.warn('[QuickProfile] avatar upload failed:', uploadErr);
         }
       }

@@ -11,6 +11,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -409,17 +410,7 @@ export default function OnboardingGate() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error('Not logged in');
 
-      const ext = file.name.split('.').pop();
-      // RLS policy requires folder name = auth.uid()
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(path, file, { upsert: true });
-      if (uploadError) throw uploadError;
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('avatars').getPublicUrl(path);
+      const publicUrl = await uploadToStorage(file, 'avatars', user.id);
 
       await supabase
         .from('profiles')

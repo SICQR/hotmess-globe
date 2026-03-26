@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Camera, X, Plus, Loader2, Image, Star } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -39,14 +40,7 @@ export default function L2PhotosSheet() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not logged in');
 
-      const ext = file.name.split('.').pop();
-      const path = `profile-photos/${user.id}/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from('uploads')
-        .upload(path, file, { upsert: false });
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(path);
+      const publicUrl = await uploadToStorage(file, 'media', user.id);
 
       const { error: dbError } = await supabase.from('profile_photos').insert({
         profile_id: user.id,

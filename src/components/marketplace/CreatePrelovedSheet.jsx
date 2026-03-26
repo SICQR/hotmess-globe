@@ -4,6 +4,7 @@ import { X, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import { toast } from 'sonner';
 
 const CATEGORIES = ['Clothing', 'Accessories', 'Art', 'Equipment', 'Other'];
@@ -76,25 +77,15 @@ export default function CreatePrelovedSheet({ open, onClose, currentUser }) {
       // Upload images to Supabase Storage
       const imageUrls = [];
       for (const file of photoFiles) {
-        const ext = file.name.split('.').pop();
-        const path = `${currentUser.id || Date.now()}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { data, error } = await supabase.storage
-          .from('preloved-images')
-          .upload(path, file, { cacheControl: '3600', upsert: false });
-
-        if (error) {
-          // If bucket doesn't exist, try creating it won't work via client — just use a fallback
+        try {
+          const url = await uploadToStorage(file, 'preloved-images', currentUser.id);
+          imageUrls.push(url);
+        } catch (error) {
           console.error('Upload error:', error);
           toast.error('Image upload failed. Please try again.');
           setSubmitting(false);
           return;
         }
-
-        const { data: urlData } = supabase.storage
-          .from('preloved-images')
-          .getPublicUrl(data.path);
-
-        imageUrls.push(urlData.publicUrl);
       }
 
       // Insert listing
