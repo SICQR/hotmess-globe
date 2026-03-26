@@ -7,6 +7,7 @@
 
 import React, { useState, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import { createListing } from '@/lib/data/market';
 import {
   Camera, X, Loader2, Package, CheckCircle,
@@ -45,12 +46,8 @@ export default function L2SellSheet() {
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
 
   const uploadPhoto = async (file) => {
-    const ext = file.name.split('.').pop();
-    const path = `listings/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from('uploads').upload(path, file);
-    if (error) throw error;
-    const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(path);
-    return publicUrl;
+    const { data: { user } } = await supabase.auth.getUser();
+    return uploadToStorage(file, 'preloved-images', user.id);
   };
 
   const handleSubmit = async () => {

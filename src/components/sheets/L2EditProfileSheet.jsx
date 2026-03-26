@@ -10,6 +10,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import { updateProfile } from '@/lib/data';
 import {
   Camera, Loader2, CheckCircle, Eye, EyeOff, MapPin, User,
@@ -188,11 +189,7 @@ export default function L2EditProfileSheet() {
     setAvatarUploading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const ext = file.name.split('.').pop();
-      const path = `avatars/${user.id}_${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from('uploads').upload(path, file, { upsert: true });
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(path);
+      const publicUrl = await uploadToStorage(file, 'avatars', user.id);
       setPub_('avatar_url', publicUrl);
       toast.success('Photo updated');
     } catch {
