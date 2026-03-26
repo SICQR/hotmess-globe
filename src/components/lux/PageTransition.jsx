@@ -16,41 +16,33 @@ import { cn } from '@/lib/utils';
  */
 
 const transitionVariants = {
-  wipe: {
-    initial: { x: '100%' },
-    animate: { x: 0 },
-    exit: { x: '-100%' },
-    transition: { duration: 0.4, ease: [0.43, 0.13, 0.23, 0.96] },
+  // Default — subtle slide-up fade (iOS native feel)
+  slideUp: {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    exit:    { opacity: 0, y: -6 },
+    transition: { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] },
   },
-  wipeLeft: {
-    initial: { x: '-100%' },
-    animate: { x: 0 },
-    exit: { x: '100%' },
-    transition: { duration: 0.4, ease: [0.43, 0.13, 0.23, 0.96] },
-  },
-  shutter: {
-    initial: { scaleY: 0, transformOrigin: 'top' },
-    animate: { scaleY: 1 },
-    exit: { scaleY: 0, transformOrigin: 'bottom' },
-    transition: { duration: 0.5, ease: [0.43, 0.13, 0.23, 0.96] },
-  },
-  split: {
-    initial: { clipPath: 'polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%)' },
-    animate: { clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
-    exit: { clipPath: 'polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%)' },
-    transition: { duration: 0.6, ease: [0.43, 0.13, 0.23, 0.96] },
-  },
+  // Pulse/Globe entry — drop with fade
   drop: {
-    initial: { y: '-100%', opacity: 0 },
-    animate: { y: 0, opacity: 1 },
-    exit: { y: '100%', opacity: 0 },
-    transition: { duration: 0.5, ease: [0.43, 0.13, 0.23, 0.96] },
+    initial: { opacity: 0, y: -16 },
+    animate: { opacity: 1, y: 0 },
+    exit:    { opacity: 0, y: 10 },
+    transition: { duration: 0.24, ease: [0.25, 0.1, 0.25, 1] },
   },
+  // Sheets/modals — scale up from below
+  reveal: {
+    initial: { opacity: 0, y: 20, scale: 0.98 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit:    { opacity: 0, y: 10, scale: 0.99 },
+    transition: { duration: 0.22, ease: [0.25, 0.1, 0.25, 1] },
+  },
+  // Simple fade (auth/legal)
   fade: {
     initial: { opacity: 0 },
     animate: { opacity: 1 },
     exit: { opacity: 0 },
-    transition: { duration: 0.3 },
+    transition: { duration: 0.18 },
   },
 };
 
@@ -59,25 +51,31 @@ const transitionVariants = {
  * Maps route patterns to their preferred transition type
  */
 const routeTransitionMap = {
-  '/': 'wipe',
+  '/': 'slideUp',
   '/pulse': 'drop',
   '/globe': 'drop',
-  '/social': 'wipe',
-  '/social/*': 'wipe',
-  '/market': 'shutter',
-  '/market/*': 'shutter',
-  '/marketplace': 'shutter',
-  '/marketplace/*': 'shutter',
-  '/events': 'wipe',
-  '/events/*': 'wipe',
-  '/auth': 'split',
-  '/login': 'split',
-  '/age': 'split',
-  '/profile': 'shutter',
-  '/profile/*': 'shutter',
-  '/p/*': 'shutter',
-  '/product': 'shutter',
-  '/product/*': 'shutter',
+  '/ghosted': 'slideUp',
+  '/social': 'slideUp',
+  '/social/*': 'slideUp',
+  '/market': 'slideUp',
+  '/market/*': 'reveal',
+  '/marketplace': 'slideUp',
+  '/marketplace/*': 'reveal',
+  '/events': 'slideUp',
+  '/events/*': 'slideUp',
+  '/auth': 'fade',
+  '/login': 'fade',
+  '/age': 'fade',
+  '/profile': 'reveal',
+  '/profile/*': 'reveal',
+  '/p/*': 'reveal',
+  '/product': 'reveal',
+  '/product/*': 'reveal',
+  '/radio': 'drop',
+  '/music': 'slideUp',
+  '/more': 'slideUp',
+  '/safety': 'slideUp',
+  '/care': 'slideUp',
 };
 
 /**
@@ -100,7 +98,7 @@ function getTransitionForRoute(pathname) {
   }
 
   // Default
-  return 'wipe';
+  return 'slideUp';
 }
 
 /**
@@ -111,7 +109,7 @@ export function PageTransition({ children, className }) {
   const location = useLocation();
   const pathname = location?.pathname || '/';
   const transitionType = getTransitionForRoute(pathname);
-  const variant = transitionVariants[transitionType] || transitionVariants.wipe;
+  const variant = transitionVariants[transitionType] || transitionVariants.slideUp;
 
   return (
     <AnimatePresence mode="wait" initial={false}>

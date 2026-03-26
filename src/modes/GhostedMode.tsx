@@ -65,6 +65,17 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'events', label: 'Events Tonight' },
 ];
 
+// ---- Filter presets (quick-tap chips below tabs) ----------------------------
+type PresetKey = 'nearby' | 'young' | 'hookup' | 'hang' | 'verified';
+
+const FILTER_PRESETS: { key: PresetKey; label: string; filters: Partial<ReturnType<typeof defaultGhostedFilters>> }[] = [
+  { key: 'nearby', label: 'Nearby (<1km)', filters: { distanceKm: 1 } },
+  { key: 'young', label: '18–25', filters: { ageMin: 18, ageMax: 25 } },
+  { key: 'hookup', label: 'Hookup', filters: { vibes: ['hookup'] } },
+  { key: 'hang', label: 'Hang', filters: { vibes: ['hang'] } },
+  { key: 'verified', label: 'Online only', filters: { onlineOnly: true } },
+];
+
 // ---- Filter key for localStorage sync ----------------------------------------
 const GHOSTED_FILTERS_KEY = 'hm_ghosted_filters';
 
@@ -355,6 +366,9 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
   // ---- Active tab ----
   const [activeTab, setActiveTab] = useState<TabKey>('all');
 
+  // ---- Active filter preset (quick-tap chip) ----
+  const [activePreset, setActivePreset] = useState<PresetKey | null>(null);
+
   // ---- Events Tonight: load user IDs of people with tonight RSVPs ----
   const [tonightUserIds, setTonightUserIds] = useState<Set<string>>(new Set());
 
@@ -570,7 +584,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
           </div>
 
           {/* ====== TAB STRIP ====== */}
-          <div className="flex gap-2 pb-3 overflow-x-auto scrollbar-hide -mx-4 px-4">
+          <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
             {TABS.map((tab) => {
               const isActive = activeTab === tab.key;
               return (
@@ -591,6 +605,35 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
                   aria-pressed={isActive}
                 >
                   {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ====== FILTER PRESETS (quick-tap chips) ====== */}
+          <div className="flex gap-1.5 pb-3 overflow-x-auto scrollbar-hide -mx-4 px-4">
+            {FILTER_PRESETS.map((preset) => {
+              const isActive = activePreset === preset.key;
+              return (
+                <button
+                  key={preset.key}
+                  onClick={() => {
+                    if (isActive) {
+                      setActivePreset(null);
+                      setFilters(loadGhostedFilters());
+                    } else {
+                      setActivePreset(preset.key);
+                      setFilters({ ...defaultGhostedFilters(), ...preset.filters });
+                    }
+                  }}
+                  className={`flex-shrink-0 h-7 px-3 rounded-full text-xs font-medium transition-all active:scale-95 ${
+                    isActive
+                      ? 'bg-white/15 text-white border border-white/20'
+                      : 'text-white/50 border border-white/8'
+                  }`}
+                  style={{ backgroundColor: isActive ? 'rgba(200,150,44,0.15)' : CARD_BG }}
+                >
+                  {preset.label}
                 </button>
               );
             })}

@@ -318,6 +318,23 @@ function ProductCard({ product, index, onTap }: ProductCardProps) {
         className="w-full text-left p-3 focus:outline-none"
         aria-label={`${product.title} ${symbol}${product.price.toFixed(2)}`}
       >
+        {/* Seller avatar + name for preloved */}
+        {product.source === 'preloved' && product.sellerName && (
+          <div className="flex items-center gap-1.5 mb-1.5">
+            {product.sellerAvatar ? (
+              <img
+                src={product.sellerAvatar}
+                alt={product.sellerName}
+                className="w-5 h-5 rounded-full object-cover border border-white/10"
+              />
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-white/40">
+                {product.sellerName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <span className="text-[11px] text-white/50 font-medium truncate">{product.sellerName}</span>
+          </div>
+        )}
         <h3 className="text-sm font-bold text-white leading-tight line-clamp-1">
           {product.title}
         </h3>

@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
-export default function LazyImage({ 
-  src, 
-  alt, 
-  className = '', 
+export default function LazyImage({
+  src,
+  alt,
+  className = '',
   placeholder = 'bg-white/5',
   containerClassName = '',
-  fadeIn = true 
+  fadeIn = true,
+  blurUp = false,
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -23,7 +24,7 @@ export default function LazyImage({
           observer.disconnect();
         }
       },
-      { rootMargin: '50px' }
+      { rootMargin: '100px' }
     );
 
     observer.observe(imgRef.current);
@@ -33,7 +34,20 @@ export default function LazyImage({
 
   return (
     <div ref={imgRef} className={`relative overflow-hidden ${containerClassName}`}>
-      {!isLoaded && <div className={`absolute inset-0 animate-pulse ${placeholder}`} />}
+      {/* Blur-up: show blurred tiny version or shimmer placeholder */}
+      {!isLoaded && (
+        blurUp && src ? (
+          <img
+            src={src}
+            alt=""
+            aria-hidden
+            className={`absolute inset-0 w-full h-full object-cover scale-110 ${className}`}
+            style={{ filter: 'blur(20px)', transform: 'scale(1.1)' }}
+          />
+        ) : (
+          <div className={`absolute inset-0 animate-pulse ${placeholder}`} />
+        )
+      )}
       {isInView && (
         <motion.img
           src={src}
@@ -42,7 +56,7 @@ export default function LazyImage({
           onLoad={() => setIsLoaded(true)}
           initial={fadeIn ? { opacity: 0 } : { opacity: 1 }}
           animate={{ opacity: isLoaded ? 1 : 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
         />
       )}
     </div>
