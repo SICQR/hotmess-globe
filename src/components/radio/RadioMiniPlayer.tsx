@@ -8,7 +8,10 @@
 
 import { ChevronUp, Pause, Play, Radio } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 import { useRadio } from '@/contexts/RadioContext';
+
+const DRAG_THRESHOLD = -60; // drag up 60px to expand
 
 interface RadioMiniPlayerProps {
   /** Hide the bar (used when on /radio route) */
@@ -18,13 +21,28 @@ interface RadioMiniPlayerProps {
 export function RadioMiniPlayer({ hidden = false }: RadioMiniPlayerProps) {
   const { isPlaying, currentShowName, togglePlay } = useRadio();
   const navigate = useNavigate();
+  const y = useMotionValue(0);
+  const opacity = useTransform(y, [-80, 0], [0.6, 1]);
 
   if (!isPlaying || hidden) return null;
 
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    if (info.offset.y < DRAG_THRESHOLD) {
+      navigate('/radio');
+    }
+  };
+
   return (
-    <div
-      className="fixed left-0 right-0 z-40 bg-[#0D0D0D] border-t border-[#C8962C]/20 px-4 py-2 flex items-center gap-3"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}
+    <motion.div
+      drag="y"
+      dragConstraints={{ top: -80, bottom: 0 }}
+      dragElastic={0.15}
+      onDragEnd={handleDragEnd}
+      style={{ y, opacity }}
+      className="fixed left-0 right-0 z-40 bg-[#0D0D0D] border-t border-[#C8962C]/20 px-4 py-2 flex items-center gap-3 cursor-grab active:cursor-grabbing touch-none"
+      // bottom position — above nav
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      {...{ style: { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)', y, opacity } } as any}
     >
       {/* Left: amber radio icon badge */}
       <div className="w-8 h-8 rounded-full bg-[#C8962C] flex items-center justify-center flex-shrink-0">
@@ -71,7 +89,7 @@ export function RadioMiniPlayer({ hidden = false }: RadioMiniPlayerProps) {
           <ChevronUp className="w-4 h-4 text-white/40" />
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

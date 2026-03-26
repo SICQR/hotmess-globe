@@ -7,10 +7,10 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   ShoppingBag, ShoppingCart, Loader2,
-  ChevronRight, Tag, Share2, Heart
+  ChevronRight, Tag, Share2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SheetSection, SheetActions, SheetDivider } from './L2SheetContainer';

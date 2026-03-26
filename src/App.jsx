@@ -28,6 +28,7 @@ import { CookieBanner } from '@/components/legal/CookieBanner';
 import { I18nProvider } from '@/contexts/I18nContext';
 import { WorldPulseProvider } from '@/contexts/WorldPulseContext';
 import { PageTransition } from '@/components/lux/PageTransition';
+import { PageLoadingSkeleton } from '@/components/skeletons/PageSkeletons';
 import UnifiedGlobe from '@/components/globe/UnifiedGlobe';
 import { SheetProvider } from '@/contexts/SheetContext';
 import SheetRouter from '@/components/sheets/SheetRouter';
@@ -50,6 +51,7 @@ import { GlobalTicker } from '@/components/banners/GlobalTicker';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useDeepLinkSheet } from '@/hooks/useDeepLinkSheet';
 import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
+import { useSwipeBack } from '@/hooks/useSwipeBack';
 import AuthCallback from '@/pages/auth/callback';
 
 const HomeMode = lazy(() => import('@/modes/HomeMode'));
@@ -367,9 +369,9 @@ const AuthenticatedApp = () => {
       {/* V1.5 canonical routes (Bible) - OS 5-Mode Structure */}
       
       {/* HOME - Dashboard */}
-      <Route path="/" element={<Suspense fallback={null}><HomeMode /></Suspense>} />
+      <Route path="/" element={<Suspense fallback={<PageLoadingSkeleton type="feed" />}><HomeMode /></Suspense>} />
       {/* GHOSTED - Proximity Grid */}
-      <Route path="/ghosted" element={<Suspense fallback={null}><GhostedMode /></Suspense>} />
+      <Route path="/ghosted" element={<Suspense fallback={<PageLoadingSkeleton type="profiles" />}><GhostedMode /></Suspense>} />
       
       {/* Auth & Onboarding (unchanged) */}
       <Route path="/auth" element={<PageRoute pageKey="Auth" />} />
@@ -378,14 +380,14 @@ const AuthenticatedApp = () => {
       <Route path="/onboarding/*" element={<PageRoute pageKey="OnboardingGate" />} />
       
       {/* PULSE - Mode (no Layout) */}
-      <Route path="/pulse" element={<Suspense fallback={null}><PulseMode /></Suspense>} />
+      <Route path="/pulse" element={<Suspense fallback={<PageLoadingSkeleton type="events" />}><PulseMode /></Suspense>} />
       <Route path="/globe" element={<Navigate to="/pulse" replace />} />
       <Route path="/events" element={<Suspense fallback={null}><EventsMode /></Suspense>} />
       <Route path="/events/*" element={<Suspense fallback={null}><EventsMode /></Suspense>} />
       <Route path="/events/:id" element={<EventDetailRedirect />} />
       {/* Market (canonical) -> MarketMode (no Layout) */}
-      <Route path="/market" element={<Suspense fallback={null}><MarketMode /></Suspense>} />
-      <Route path="/market/*" element={<Suspense fallback={null}><MarketMode /></Suspense>} />
+      <Route path="/market" element={<Suspense fallback={<PageLoadingSkeleton type="products" />}><MarketMode /></Suspense>} />
+      <Route path="/market/*" element={<Suspense fallback={<PageLoadingSkeleton type="products" />}><MarketMode /></Suspense>} />
       <Route path="/social" element={<Navigate to="/ghosted" replace />} />
       <Route path="/social/discover" element={<Navigate to="/ghosted" replace />} />
       <Route path="/social/inbox" element={<PageRoute pageKey="Messages" />} />
@@ -409,10 +411,10 @@ const AuthenticatedApp = () => {
       <Route path="/examples/auth/profile-setup" element={<Suspense fallback={null}><ProfileSetupScreen /></Suspense>} />
       
       {/* RADIO - Mode (no Layout) */}
-      <Route path="/radio" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
-      <Route path="/radio/schedule" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
-      <Route path="/radio/live" element={<Suspense fallback={null}><RadioMode /></Suspense>} />
-      <Route path="/music" element={<Suspense fallback={null}><MusicTab /></Suspense>} />
+      <Route path="/radio" element={<Suspense fallback={<PageLoadingSkeleton />}><RadioMode /></Suspense>} />
+      <Route path="/radio/schedule" element={<Suspense fallback={<PageLoadingSkeleton />}><RadioMode /></Suspense>} />
+      <Route path="/radio/live" element={<Suspense fallback={<PageLoadingSkeleton />}><RadioMode /></Suspense>} />
+      <Route path="/music" element={<Suspense fallback={<PageLoadingSkeleton />}><MusicTab /></Suspense>} />
       <Route path="/music/live" element={<Navigate to="/radio" replace />} />
       <Route path="/music/shows" element={<Navigate to="/radio/schedule" replace />} />
       <Route path="/music/shows/:show/episodes" element={<Navigate to="/radio/schedule" replace />} />
@@ -680,6 +682,8 @@ function OSArchitecture() {
   useDeepLinkSheet();
   // Update User.last_seen every 5 min — powers online presence dots on Ghosted grid
   usePresenceHeartbeat();
+  // iOS-style edge swipe to go back
+  useSwipeBack();
   const { sosActive, triggerSOS, clearSOS } = useSOSContext();
   const { isAuthenticated } = useBootGuard();
   const location = useLocation();

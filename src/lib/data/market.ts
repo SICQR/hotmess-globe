@@ -22,6 +22,7 @@ export interface Product {
   tags?: string[];
   sellerId?: string;
   sellerName?: string;
+  sellerAvatar?: string;
   condition?: 'new' | 'like_new' | 'good' | 'fair';
   available: boolean;
   quantity?: number;
@@ -67,7 +68,7 @@ interface PrelovedListing {
   status: string;
   created_at: string;
   updated_at?: string;
-  seller?: { display_name?: string };
+  seller?: { display_name?: string; avatar_url?: string };
 }
 
 function normalizePrelovedProduct(listing: PrelovedListing): Product {
@@ -83,6 +84,7 @@ function normalizePrelovedProduct(listing: PrelovedListing): Product {
     condition: listing.condition as Product['condition'],
     sellerId: listing.seller_id,
     sellerName: listing.seller?.display_name,
+    sellerAvatar: listing.seller?.avatar_url,
     available: listing.status === 'active',
     createdAt: listing.created_at,
     updatedAt: listing.updated_at,
@@ -92,7 +94,7 @@ function normalizePrelovedProduct(listing: PrelovedListing): Product {
 export async function getPrelovedProducts(filters: ProductFilters = {}): Promise<Product[]> {
   let query = supabase
     .from('preloved_listings')
-    .select('*')
+    .select('*, seller:profiles!seller_id(display_name, avatar_url)')
     .eq('status', 'active');
 
   if (filters.category) {

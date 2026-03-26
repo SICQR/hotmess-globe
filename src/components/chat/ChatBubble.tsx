@@ -125,7 +125,7 @@ export function ChatBubble({
           <span className="text-[10px] text-white/40">{formatTime(timestamp)}</span>
           {isMe && (
             isRead
-              ? <CheckCheck className="w-3 h-3 text-white/70" />
+              ? <CheckCheck className="w-3 h-3 text-[#30D158]" />
               : <Check className="w-3 h-3 text-white/40" />
           )}
         </div>
