@@ -1,4 +1,5 @@
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -197,12 +198,13 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
     setUploading(true);
     try {
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
-      
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const publicUrl = await uploadToStorage(file, 'chat-attachments', authUser.id);
+
       sendMutation.mutate({
         content: 'Image',
         message_type: 'image',
-        metadata: { image_url: file_url },
+        metadata: { image_url: publicUrl },
       });
       
       toast.success('Image sent');
@@ -237,12 +239,13 @@ export default function ChatThread({ thread, currentUser, onBack, readOnly = fal
 
     setUploading(true);
     try {
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
-      
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const publicUrl = await uploadToStorage(file, 'chat-attachments', authUser.id);
+
       sendMutation.mutate({
         content: 'Video',
         message_type: 'video',
-        metadata: { video_url: file_url },
+        metadata: { video_url: publicUrl },
       });
       
       toast.success('Video sent');

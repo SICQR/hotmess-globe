@@ -1,4 +1,5 @@
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -63,11 +64,12 @@ export default function EditBeacon() {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     setUploading(true);
     try {
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
-      setFormData({ ...formData, image_url: file_url });
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const publicUrl = await uploadToStorage(file, 'event-images', authUser.id);
+      setFormData({ ...formData, image_url: publicUrl });
       toast.success('Image uploaded!');
     } catch (error) {
       console.error('Upload failed:', error);
@@ -80,11 +82,12 @@ export default function EditBeacon() {
   const handleVideoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     setUploading(true);
     try {
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
-      setFormData({ ...formData, video_url: file_url });
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const publicUrl = await uploadToStorage(file, 'event-images', authUser.id);
+      setFormData({ ...formData, video_url: publicUrl });
       toast.success('Video uploaded!');
     } catch (error) {
       console.error('Upload failed:', error);

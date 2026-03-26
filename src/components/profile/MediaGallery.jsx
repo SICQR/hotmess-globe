@@ -1,4 +1,5 @@
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Image as ImageIcon, Video as VideoIcon, Trash2, Crown } from 'lucide-react';
@@ -38,13 +39,13 @@ export function PhotoGallery({ photos = [], onPhotosChange, maxPhotos = 5, allow
 
     setUploading(true);
     try {
-      const uploadPromises = files.map(file => 
-        supabase.storage.from("uploads").upload(Math.random().toString(), { file })
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const urls = await Promise.all(
+        files.map(file => uploadToStorage(file, 'media', authUser.id))
       );
-      const results = await Promise.all(uploadPromises);
-      
-      const newPhotos = results.map((result, idx) => ({
-        url: result.file_url,
+
+      const newPhotos = urls.map((url, idx) => ({
+        url,
         is_primary: photos.length === 0 && idx === 0,
         is_premium: uploadType === 'premium',
         order: photos.length + idx
@@ -237,8 +238,9 @@ export function VideoUploader({ videoUrl, onVideoChange }) {
 
     setUploading(true);
     try {
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
-      onVideoChange(file_url);
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const publicUrl = await uploadToStorage(file, 'media', authUser.id);
+      onVideoChange(publicUrl);
       toast.success('Video uploaded!');
     } catch (error) {
       console.error('Upload failed:', error);
@@ -307,9 +309,10 @@ export function PremiumVideoManager({ videos = [], onVideosChange }) {
 
     setUploading(true);
     try {
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
-      onVideosChange([...videos, { 
-        url: file_url, 
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const publicUrl = await uploadToStorage(file, 'media', authUser.id);
+      onVideosChange([...videos, {
+        url: publicUrl,
         title: newVideoTitle || 'Untitled',
         unlock_xp: newVideoXp 
       }]);

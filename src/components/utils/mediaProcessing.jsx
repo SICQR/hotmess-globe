@@ -1,4 +1,5 @@
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
@@ -93,7 +94,7 @@ Return JSON with:
 /**
  * Upload and process media through complete pipeline
  */
-export async function processAndUploadMedia(file, options = {}) {
+export async function processAndUploadMedia(file, options = {}, userId = null) {
   const {
     type = 'image',
     compress = true,
@@ -112,14 +113,18 @@ export async function processAndUploadMedia(file, options = {}) {
     processedFile = await compressImage(file, maxWidth, quality);
   }
   // Step 3: Upload
-  const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file: processedFile });
+  if (!userId) {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    userId = authUser.id;
+  }
+  const publicUrl = await uploadToStorage(processedFile, 'media', userId);
   // Step 4: Moderate
   let moderation = { approved: true };
   if (moderate) {
-    moderation = await moderateContent(file_url, type);
+    moderation = await moderateContent(publicUrl, type);
   }
   return {
-    url: file_url,
+    url: publicUrl,
     moderation,
     originalSize: file.size,
     processedSize: processedFile.size,

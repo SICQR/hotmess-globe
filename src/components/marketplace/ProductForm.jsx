@@ -1,4 +1,5 @@
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -43,9 +44,10 @@ export default function ProductForm({ product, onSubmit, onCancel }) {
     if (files.length === 0) return;
     setUploading(true);
     try {
-      const uploadPromises = files.map(file => supabase.storage.from("uploads").upload(Math.random().toString(), { file }));
-      const results = await Promise.all(uploadPromises);
-      const urls = results.map(r => r.file_url);
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const urls = await Promise.all(
+        files.map(file => uploadToStorage(file, 'uploads', authUser.id))
+      );
       setFormData(prev => ({
         ...prev,
         image_urls: [...(prev.image_urls || []), ...urls]

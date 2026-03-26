@@ -1,4 +1,5 @@
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Upload, Check, Clock } from 'lucide-react';
@@ -60,8 +61,9 @@ export default function DisputeResolution({ sellerEmail, isBuyer = false }) {
     if (!evidenceFile) return null;
     setUploading(true);
     try {
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file: evidenceFile });
-      return file_url;
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const publicUrl = await uploadToStorage(evidenceFile, 'uploads', authUser.id);
+      return publicUrl;
     } catch (error) {
       toast.error('Failed to upload evidence');
       return null;

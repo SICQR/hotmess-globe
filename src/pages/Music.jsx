@@ -1,4 +1,5 @@
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import React, { useMemo, useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { } from '@/components/utils/supabaseClient';
@@ -355,7 +356,8 @@ export default function Music() {
         }
       }
 
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file: wavFile });
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const audioUrl = await uploadToStorage(wavFile, 'audio', authUser.id);
 
       let soundcloudUpload = null;
       try {
@@ -377,7 +379,7 @@ export default function Music() {
         lng: location.lng,
         city: currentUser?.city || 'London',
         xp_scan: 200,
-        audio_url: file_url,
+        audio_url: audioUrl,
         track_id: `convict_${Date.now()}`,
         active: true,
         status: 'published',
