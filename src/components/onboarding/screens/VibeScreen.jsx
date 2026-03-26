@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { Loader2 } from 'lucide-react';
 import { ProgressDots } from './AgeGateScreen';
+import OnboardingBackButton from '../OnboardingBackButton';
 
 const GOLD = '#C8962C';
 
@@ -26,7 +27,7 @@ const SCENES = [
 
 const VIBE_LABELS = Object.fromEntries(VIBES.map((v) => [v.value, v.label]));
 
-export default function VibeScreen({ session, onComplete }) {
+export default function VibeScreen({ session, onComplete, onBack }) {
   const [selectedVibe, setSelectedVibe] = useState(null);
   const [selectedScenes, setSelectedScenes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -90,6 +91,7 @@ export default function VibeScreen({ session, onComplete }) {
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center px-6 overflow-y-auto">
+      <OnboardingBackButton onBack={onBack} />
       <div className="w-full max-w-xs py-12">
         <ProgressDots current={4} total={5} />
 

@@ -622,9 +622,18 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
   };
 
   const handleExitClearData = () => {
-    try { localStorage.clear(); } catch {}
+    // Only clear sensitive keys — preserve auth tokens so user can return
+    try {
+      const allKeys = Object.keys(localStorage);
+      for (const key of allKeys) {
+        if (key.startsWith('hm_') || key.startsWith('hm.')) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch {}
     try { sessionStorage.clear(); } catch {}
-    window.location.replace('https://www.google.com');
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(100);
+    window.location.replace('https://hotmessldn.com/safe');
   };
 
   const handleShowDismissPin = () => {

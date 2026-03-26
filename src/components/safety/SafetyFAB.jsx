@@ -128,9 +128,18 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
   };
 
   const handleExitApp = () => {
-    localStorage.clear();
+    // Clear sensitive data only — preserve auth tokens
+    try {
+      const allKeys = Object.keys(localStorage);
+      for (const key of allKeys) {
+        if (key.startsWith('hm_') || key.startsWith('hm.')) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch {}
     sessionStorage.clear();
-    window.location.replace('https://www.google.com');
+    if (navigator?.vibrate) navigator.vibrate(100);
+    window.location.replace('https://hotmessldn.com/safe');
   };
 
   return (

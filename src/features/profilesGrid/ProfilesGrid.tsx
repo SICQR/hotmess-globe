@@ -86,7 +86,14 @@ export default function ProfilesGrid({
 }: ProfilesGridProps) {
   const navigate = useNavigate();
   const { openProfile } = useProfileOpener();
-  const { items, nextCursor, isLoadingInitial, isLoadingMore, error, loadMore } = useInfiniteProfiles();
+  const { items, nextCursor, isLoadingInitial, isLoadingMore, error, loadMore, reload } = useInfiniteProfiles();
+
+  // Listen for pull-to-refresh events from parent
+  useEffect(() => {
+    const handlePullRefresh = () => { void reload(); };
+    window.addEventListener('hm_pull_refresh', handlePullRefresh);
+    return () => window.removeEventListener('hm_pull_refresh', handlePullRefresh);
+  }, [reload]);
   const { ref: sentinelRef, isVisible: sentinelVisible } = useVisibility({ rootMargin: '600px', threshold: 0.1 });
 
   const prevSentinelVisibleRef = useRef(false);
@@ -364,17 +371,18 @@ export default function ProfilesGrid({
                   />
                 </div>
               ) : (
-                <ProfileCard
-                  key={profile.id}
-                  profile={profile}
-                  viewerLocation={viewerLocation}
-                  viewerProfile={viewerProfile}
-                  onOpenProfile={handleOpenProfile}
-                  onNavigateUrl={handleNavigateUrl}
-                  isTapped={isTapped}
-                  onSendTap={sendTap}
-                  onLongPress={onLongPress}
-                />
+                <div key={profile.id} className="aspect-[3/4] overflow-hidden">
+                  <ProfileCard
+                    profile={profile}
+                    viewerLocation={viewerLocation}
+                    viewerProfile={viewerProfile}
+                    onOpenProfile={handleOpenProfile}
+                    onNavigateUrl={handleNavigateUrl}
+                    isTapped={isTapped}
+                    onSendTap={sendTap}
+                    onLongPress={onLongPress}
+                  />
+                </div>
               )
             ))}
 

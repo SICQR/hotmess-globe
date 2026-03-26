@@ -6,10 +6,11 @@ import React, { useState, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { Loader2, Camera } from 'lucide-react';
 import { ProgressDots } from './AgeGateScreen';
+import OnboardingBackButton from '../OnboardingBackButton';
 
 const GOLD = '#C8962C';
 
-export default function QuickProfileScreen({ session, onComplete }) {
+export default function QuickProfileScreen({ session, onComplete, onBack }) {
   const [displayName, setDisplayName] = useState('');
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -96,6 +97,7 @@ export default function QuickProfileScreen({ session, onComplete }) {
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center px-6 overflow-y-auto">
+      <OnboardingBackButton onBack={onBack} />
       <div className="w-full max-w-xs py-12">
         <ProgressDots current={3} total={5} />
 

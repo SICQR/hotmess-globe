@@ -5,7 +5,7 @@
  * Active icon sits inside an amber filled circle.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, Activity, Ghost, ShoppingBag, User, Music, LayoutGrid } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -14,6 +14,7 @@ import { useUnreadCount } from '@/hooks/useUnreadCount';
 import { useNotifCount } from '@/hooks/useNotifCount';
 import { useLongPress } from '@/hooks/useLongPress';
 import { useSheet } from '@/contexts/SheetContext';
+import { hapticLight } from '@/lib/haptics';
 import PersonaSwitcherSheet from '@/components/sheets/PersonaSwitcherSheet';
 
 const ICONS: Record<OSMode, React.FC<{ className?: string }>> = {
@@ -40,11 +41,33 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
   const { openSheet } = useSheet();
   const [showSwitcher, setShowSwitcher] = useState(false);
 
+  // Scroll preservation — save/restore scroll per route
+  const scrollPositions = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    // Save scroll position for current route on location change
+    return () => {
+      try {
+        scrollPositions.current[location.pathname] = window.scrollY;
+      } catch {}
+    };
+  }, [location.pathname]);
+
   const handleModeChange = (mode: OSMode) => {
     if (mode === currentMode) return;
+    hapticLight();
+    // Save current scroll position
+    try {
+      scrollPositions.current[location.pathname] = window.scrollY;
+    } catch {}
     // Clear the taps badge whenever user navigates to Ghosted
     if (mode === 'ghosted') clearTapsBadge();
     navigate(MODES[mode].path);
+    // Restore scroll position for target route
+    requestAnimationFrame(() => {
+      const saved = scrollPositions.current[MODES[mode].path];
+      if (saved) window.scrollTo(0, saved);
+    });
   };
 
   const longPress = useLongPress(() => setShowSwitcher(true));
@@ -67,13 +90,19 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                 key={modeId}
                 onClick={() => handleModeChange(modeId)}
                 {...(isMore ? longPress : {})}
-                className="relative flex flex-col items-center justify-center flex-1 h-full touch-target"
+                className="relative flex flex-col items-center justify-center flex-1 h-full min-w-[44px] min-h-[44px] active:opacity-70 transition-opacity"
                 aria-label={mode.label}
                 aria-current={isActive ? 'page' : undefined}
               >
-                {/* Icon — amber circle when active */}
+                {/* Icon — amber circle when active, 44px min touch target */}
                 {isActive ? (
-                  <div className="relative w-9 h-9 rounded-full bg-[#C8962C] flex items-center justify-center">
+                  <motion.div
+                    className="relative w-9 h-9 rounded-full bg-[#C8962C] flex items-center justify-center"
+                    initial={{ scale: 1 }}
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 0.2, type: 'spring', stiffness: 400, damping: 15 }}
+                    key={`active-${modeId}`}
+                  >
                     <Icon className="w-5 h-5 text-black" />
                     {modeId === 'ghosted' && unreadCount > 0 && (
                       <button
@@ -101,7 +130,7 @@ export function OSBottomNav({ className = '' }: OSBottomNavProps) {
                         {notifCount > 9 ? '9+' : notifCount}
                       </button>
                     )}
-                  </div>
+                  </motion.div>
                 ) : (
                   <div className="relative">
                     <Icon className="w-6 h-6 text-white/40" />

@@ -91,13 +91,21 @@ export default function PanicButton() {
 
   const handlePanic = async () => {
     await sendSOSAlerts();
-    
-    // Clear everything
-    localStorage.clear();
+
+    // Clear sensitive data only — preserve auth tokens
+    try {
+      const allKeys = Object.keys(localStorage);
+      for (const key of allKeys) {
+        if (key.startsWith('hm_') || key.startsWith('hm.')) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch {}
     sessionStorage.clear();
-    
-    // Force immediate redirect
-    window.location.replace('https://www.google.com');
+    if (navigator?.vibrate) navigator.vibrate(100);
+
+    // Redirect to safe landing page (not google.com)
+    window.location.replace('https://hotmessldn.com/safe');
   };
 
   return (

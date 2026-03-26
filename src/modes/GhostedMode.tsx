@@ -44,6 +44,8 @@ import type { Profile } from '@/features/profilesGrid/types';
 import type { TapType } from '@/hooks/useTaps';
 import { AppBanner } from '@/components/banners/AppBanner';
 import { GhostedAmbientToggle } from '@/components/music/GhostedAmbientToggle';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 
 // Lazy load the grid component
 import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
@@ -491,6 +493,19 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
+  // ---- Pull-to-refresh ----
+  const handleRefresh = useCallback(async () => {
+    // Force refetch profiles by dispatching a custom event that ProfilesGrid listens to
+    window.dispatchEvent(new CustomEvent('hm_pull_refresh'));
+    // Small delay so the user sees the spinner
+    await new Promise((r) => setTimeout(r, 800));
+  }, []);
+
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
+
   // ---- Render ----
   return (
     <div
@@ -591,7 +606,9 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto scroll-momentum pb-24"
+        {...pullHandlers}
       >
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         <ProfilesGrid
           onOpenProfile={handleProfileTap}
           containerClassName="p-0"

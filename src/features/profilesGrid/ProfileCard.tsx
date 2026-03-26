@@ -528,7 +528,7 @@ function ProfileCardInner({
     return (
       <div
         ref={attachRef as unknown as React.Ref<HTMLDivElement>}
-        className={`relative transition-all duration-300 ${tappedBoo ? 'ring-2 ring-[#C8962C]' : ''}`}
+        className={`relative h-full transition-all duration-300 ${tappedBoo ? 'ring-2 ring-[#C8962C]' : ''}`}
       >
         <SimpleProfileCard
           id={String(profile.id)}

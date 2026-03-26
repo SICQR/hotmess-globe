@@ -5,12 +5,12 @@
  * Extracted from Shop.jsx + ShopProduct.jsx
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag, ShoppingCart, Loader2,
-  ChevronRight, Tag
+  ChevronRight, Tag, Share2, Heart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SheetSection, SheetActions, SheetDivider } from './L2SheetContainer';
@@ -58,6 +58,76 @@ function AgeGateModal({ onConfirm, onCancel }) {
           </div>
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+/**
+ * ImageCarousel — Depop/Vinted-style swipeable image gallery
+ * Horizontal scroll with dot indicators and snap scrolling.
+ */
+function ImageCarousel({ images = [], alt = 'Product' }) {
+  const scrollRef = useRef(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const idx = Math.round(el.scrollLeft / el.offsetWidth);
+    setActiveIdx(Math.max(0, Math.min(idx, images.length - 1)));
+  }, [images.length]);
+
+  if (!images.length) {
+    return (
+      <div className="aspect-square bg-[#0D0D0D] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-20 h-20 mx-auto rounded-2xl bg-[#C8962C]/10 border border-[#C8962C]/30 flex items-center justify-center mb-3">
+            <ShoppingBag className="w-10 h-10 text-[#C8962C]/60" />
+          </div>
+          <p className="text-xs uppercase tracking-widest text-[#C8962C]/40 font-bold">HOTMESS Market</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (images.length === 1) {
+    return (
+      <div className="aspect-square bg-black overflow-hidden">
+        <img src={images[0]} alt={alt} className="w-full h-full object-cover" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        {images.map((url, i) => (
+          <div key={i} className="aspect-square w-full flex-shrink-0 snap-center bg-black">
+            <img
+              src={url}
+              alt={`${alt} ${i + 1}`}
+              className="w-full h-full object-cover"
+              loading={i === 0 ? 'eager' : 'lazy'}
+            />
+          </div>
+        ))}
+      </div>
+      {/* Dot indicators */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+        {images.map((_, i) => (
+          <div
+            key={i}
+            className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+              i === activeIdx ? 'bg-white w-4' : 'bg-white/40'
+            }`}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -235,7 +305,8 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
   // When source='preloved' or product has seller_id, render P2P detail
   const isPreloved = source === 'preloved' || product?.seller_id;
   if (isPreloved && product) {
-    const img = Array.isArray(product.images) ? product.images[0] : product.images;
+    const allImages = Array.isArray(product.images) ? product.images : (product.images ? [product.images] : []);
+    const img = allImages[0];
     const conditionLabels = {
       new: 'New with tags',
       like_new: 'Like new',
@@ -244,11 +315,7 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
     };
     return (
       <div className="pb-24">
-        {img && (
-          <div className="aspect-square bg-black overflow-hidden">
-            <img src={img} alt={product.title} className="w-full h-full object-cover" />
-          </div>
-        )}
+        <ImageCarousel images={allImages} alt={product.title} />
 
         <SheetSection>
           <div className="flex items-center gap-2 mb-2">
@@ -372,20 +439,32 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
           </button>
         )}
 
-        {/* Product Image */}
-        {primaryImage && (
-          <div className="aspect-square bg-black overflow-hidden">
-            <img 
-              src={primaryImage} 
-              alt={displayProduct.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
+        {/* Product Images — Depop-style carousel */}
+        <ImageCarousel
+          images={[primaryImage, ...images.map(i => i.url)].filter(Boolean)}
+          alt={displayProduct.title}
+        />
 
         {/* Product Info */}
         <SheetSection>
-          <h2 className="text-2xl font-black text-white mb-2">{displayProduct.title}</h2>
+          <div className="flex items-start justify-between mb-2">
+            <h2 className="text-2xl font-black text-white flex-1">{displayProduct.title}</h2>
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/shop/${displayProduct.handle || ''}`;
+                if (navigator.share) {
+                  navigator.share({ title: displayProduct.title, url }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(url);
+                  toast.success('Link copied');
+                }
+              }}
+              className="ml-3 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white/60 hover:text-white active:scale-95 transition-all flex-shrink-0"
+              aria-label="Share product"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+          </div>
           
           <div className="flex items-center gap-3 mb-4">
             {price && (

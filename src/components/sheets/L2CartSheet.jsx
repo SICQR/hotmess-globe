@@ -249,10 +249,18 @@ export default function L2CartSheet() {
       </div>
 
       {/* ── Total & Checkout ── */}
-      <div className="px-4 py-4 border-t border-white/8">
+      <div className="px-4 py-4 border-t border-white/10 bg-black/50 backdrop-blur-sm">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-white/40 text-xs">{totalItemCount} {totalItemCount === 1 ? 'item' : 'items'}</span>
+          {shopifyLines.length > 0 && prelovedItems.length > 0 && (
+            <span className="text-white/30 text-[10px]">
+              Shop £{shopifyTotal.toFixed(2)} + Preloved £{prelovedTotal.toFixed(2)}
+            </span>
+          )}
+        </div>
         <div className="flex items-center justify-between mb-4">
-          <span className="text-white/60 text-sm">Total</span>
-          <span className="text-white font-black text-lg">
+          <span className="text-white font-bold text-sm">Subtotal</span>
+          <span className="text-[#C8962C] font-black text-xl">
             £{combinedTotal.toFixed(2)}
           </span>
         </div>
