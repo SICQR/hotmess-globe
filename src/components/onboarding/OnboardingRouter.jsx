@@ -189,21 +189,36 @@ export default function OnboardingRouter() {
     }
   }, [session?.user?.id, profile?.onboarding_stage, resolveScreen]);
 
+  // Screen history stack for back navigation
+  const historyRef = useRef([]);
+
+  const goTo = useCallback((nextScreen) => {
+    if (screen) historyRef.current.push(screen);
+    setScreen(nextScreen);
+  }, [screen]);
+
+  const goBack = useCallback(() => {
+    const prev = historyRef.current.pop();
+    if (prev) setScreen(prev);
+  }, []);
+
+  const canGoBack = historyRef.current.length > 0;
+
   // Screen completion handlers — each advances to next screen
   const handleAgeGateComplete = () => {
-    setScreen(SCREENS.SIGNUP);
+    goTo(SCREENS.SIGNUP);
   };
 
   const handleProfileComplete = () => {
-    setScreen(SCREENS.VIBE);
+    goTo(SCREENS.VIBE);
   };
 
   const handleVibeComplete = () => {
-    setScreen(SCREENS.SAFETY);
+    goTo(SCREENS.SAFETY);
   };
 
   const handleSafetyComplete = () => {
-    setScreen(SCREENS.LOCATION);
+    goTo(SCREENS.LOCATION);
   };
 
   const handleLocationComplete = async () => {
@@ -244,36 +259,37 @@ export default function OnboardingRouter() {
     case SCREENS.SPLASH:
       return (
         <SplashScreen
-          onJoin={() => setScreen(SCREENS.AGE_GATE)}
-          onSignIn={() => setScreen(SCREENS.SIGNIN)}
+          onJoin={() => goTo(SCREENS.AGE_GATE)}
+          onSignIn={() => goTo(SCREENS.SIGNIN)}
         />
       );
 
     case SCREENS.AGE_GATE:
-      return <AgeGateScreen onComplete={handleAgeGateComplete} />;
+      return <AgeGateScreen onComplete={handleAgeGateComplete} onBack={canGoBack ? goBack : undefined} />;
 
     case SCREENS.SIGNUP:
-      return <SignUpScreen isSignIn={false} />;
+      return <SignUpScreen isSignIn={false} onBack={canGoBack ? goBack : undefined} />;
 
     case SCREENS.SIGNIN:
-      return <SignUpScreen isSignIn={true} />;
+      return <SignUpScreen isSignIn={true} onBack={canGoBack ? goBack : undefined} />;
 
     case SCREENS.PROFILE:
       return (
         <QuickProfileScreen
           session={session}
           onComplete={handleProfileComplete}
+          onBack={canGoBack ? goBack : undefined}
         />
       );
 
     case SCREENS.VIBE:
       return (
-        <VibeScreen session={session} onComplete={handleVibeComplete} />
+        <VibeScreen session={session} onComplete={handleVibeComplete} onBack={canGoBack ? goBack : undefined} />
       );
 
     case SCREENS.SAFETY:
       return (
-        <SafetySeedScreen session={session} onComplete={handleSafetyComplete} />
+        <SafetySeedScreen session={session} onComplete={handleSafetyComplete} onBack={canGoBack ? goBack : undefined} />
       );
 
     case SCREENS.LOCATION:
@@ -281,6 +297,7 @@ export default function OnboardingRouter() {
         <LocationPermissionScreen
           session={session}
           onComplete={handleLocationComplete}
+          onBack={canGoBack ? goBack : undefined}
         />
       );
 

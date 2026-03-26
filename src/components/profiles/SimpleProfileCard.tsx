@@ -66,7 +66,7 @@ export function SimpleProfileCard({
 
   return (
     <motion.div
-      className="relative w-full aspect-[3/4] overflow-hidden bg-black border border-white/10 group cursor-pointer"
+      className="relative w-full h-full min-h-0 overflow-hidden bg-black border border-white/10 group cursor-pointer"
       onClick={onClick}
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.1 }}
@@ -91,8 +91,8 @@ export function SimpleProfileCard({
 
       {/* Status indicator — using PresenceIndicator for gold pulsing dot */}
       {status !== 'offline' && (
-        <div className="absolute top-3 right-3">
-          <PresenceIndicator isOnline={status === 'online'} size="md" />
+        <div className="absolute top-2 right-2 z-10">
+          <PresenceIndicator isOnline={status === 'online'} size="lg" />
         </div>
       )}
 
@@ -105,20 +105,19 @@ export function SimpleProfileCard({
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 p-3">
-        {/* Name + verified */}
-        <div className="flex items-center gap-2">
+        {/* Name + age + verified (Grindr-style inline) */}
+        <div className="flex items-baseline gap-1.5">
           <h3 className="text-white font-black text-sm truncate">{name}</h3>
+          {age && <span className="text-white/55 text-xs flex-shrink-0">{age}</span>}
           {isVerified && (
-            <span className="text-[#00C2E0] text-xs">✓</span>
+            <span className="text-[#00C2E0] text-xs flex-shrink-0">✓</span>
           )}
         </div>
 
-        {/* Age + position line */}
-        {(age || position) && (
-          <div className="flex items-center gap-1.5 mt-1 text-white/55 text-xs">
-            {age && <span>{age}</span>}
-            {age && position && <span className="text-white/20">·</span>}
-            {position && <span>{position}</span>}
+        {/* Position line (if present) */}
+        {position && (
+          <div className="flex items-center gap-1.5 mt-0.5 text-white/55 text-xs">
+            <span>{position}</span>
           </div>
         )}
 

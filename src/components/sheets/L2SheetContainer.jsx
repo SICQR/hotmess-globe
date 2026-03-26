@@ -15,6 +15,7 @@ import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { cn } from '@/lib/utils';
+import { hapticPattern, hapticSnap } from '@/lib/haptics';
 
 // Animation variants
 const backdropVariants = {
@@ -24,27 +25,27 @@ const backdropVariants = {
 };
 
 const sheetVariants = {
-  hidden: { 
+  hidden: {
     y: '100%',
     opacity: 0.8,
   },
-  visible: { 
+  visible: {
     y: 0,
     opacity: 1,
     transition: {
       type: 'spring',
-      damping: 30,
-      stiffness: 300,
+      damping: 22,
+      stiffness: 400,
       mass: 0.8,
     },
   },
-  exit: { 
+  exit: {
     y: '100%',
     opacity: 0.8,
     transition: {
       type: 'spring',
-      damping: 30,
-      stiffness: 300,
+      damping: 22,
+      stiffness: 400,
     },
   },
 };
@@ -100,15 +101,19 @@ export default function L2SheetContainer({
     };
   }, [isOpen]);
 
-  // Swipe to dismiss handler
+  // Swipe to dismiss handler — velocity-weighted scoring
   const handleDragEnd = useCallback((event, info) => {
     const { offset, velocity } = info;
-    
-    // Close if dragged down past threshold OR with high velocity
-    if (offset.y > SWIPE_THRESHOLD || velocity.y > VELOCITY_THRESHOLD) {
+
+    // Velocity-weighted dismiss score
+    const dismissScore = offset.y + (velocity.y * 0.05);
+
+    if (dismissScore > SWIPE_THRESHOLD || velocity.y > VELOCITY_THRESHOLD) {
+      hapticPattern();
       handleClose();
     } else {
       // Snap back
+      hapticSnap();
       controls.start({ y: 0 });
     }
   }, [handleClose, controls]);
@@ -145,10 +150,7 @@ export default function L2SheetContainer({
             initial="hidden"
             animate="visible"
             exit="exit"
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.5 }}
-            onDragEnd={handleDragEnd}
+            dragListener={false}
             style={{ height }}
             className={cn(
               'fixed bottom-0 left-0 right-0 z-[80]',
@@ -166,14 +168,19 @@ export default function L2SheetContainer({
             aria-modal="true"
             aria-labelledby="sheet-title"
           >
-            {/* Drag handle — 48px tall tap zone for easy grab */}
+            {/* Drag handle — 48px tall tap zone, ONLY draggable area */}
             {showHandle && (
-              <div 
-                className="flex justify-center py-3 cursor-grab active:cursor-grabbing"
+              <motion.div
+                className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none"
                 aria-hidden="true"
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={{ top: 0, bottom: 0.5 }}
+                onDragEnd={handleDragEnd}
+                style={{ minHeight: 48 }}
               >
                 <div className="w-16 h-1.5 bg-white/30 rounded-full" />
-              </div>
+              </motion.div>
             )}
 
             {/* Header */}

@@ -5,10 +5,11 @@
 import React, { useState } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { Loader2, MapPin } from 'lucide-react';
+import OnboardingBackButton from '../OnboardingBackButton';
 
 const GOLD = '#C8962C';
 
-export default function LocationPermissionScreen({ session, onComplete }) {
+export default function LocationPermissionScreen({ session, onComplete, onBack }) {
   const [loading, setLoading] = useState(false);
 
   const userId = session?.user?.id;
@@ -92,6 +93,7 @@ export default function LocationPermissionScreen({ session, onComplete }) {
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center px-6">
+      <OnboardingBackButton onBack={onBack} />
       <div className="w-full max-w-xs text-center">
         <MapPin className="w-10 h-10 mx-auto mb-6" style={{ color: GOLD }} />
 

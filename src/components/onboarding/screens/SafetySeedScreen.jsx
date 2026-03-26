@@ -7,10 +7,11 @@ import React, { useState } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { Loader2, Shield } from 'lucide-react';
 import { ProgressDots } from './AgeGateScreen';
+import OnboardingBackButton from '../OnboardingBackButton';
 
 const GOLD = '#C8962C';
 
-export default function SafetySeedScreen({ session, onComplete }) {
+export default function SafetySeedScreen({ session, onComplete, onBack }) {
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [loading, setLoading] = useState(false);
@@ -68,6 +69,7 @@ export default function SafetySeedScreen({ session, onComplete }) {
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center px-6">
+      <OnboardingBackButton onBack={onBack} />
       <div className="w-full max-w-xs">
         <ProgressDots current={5} total={5} />
 

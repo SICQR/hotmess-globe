@@ -631,13 +631,36 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
               msg.message_type === 'photo' ||
               /\.(jpe?g|png|gif|webp|avif|heic)(\?.*)?$/i.test(msg.content || '');
 
+            // Day separator — show date label when day changes
+            let daySeparator = null;
+            if (msg.created_date) {
+              const msgDate = new Date(msg.created_date);
+              const prevDate = i > 0 && messages[i - 1]?.created_date ? new Date(messages[i - 1].created_date) : null;
+              const showSep = !prevDate || msgDate.toDateString() !== prevDate.toDateString();
+              if (showSep) {
+                const today = new Date();
+                const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+                let label = msgDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' });
+                if (msgDate.toDateString() === today.toDateString()) label = 'Today';
+                else if (msgDate.toDateString() === yesterday.toDateString()) label = 'Yesterday';
+                daySeparator = (
+                  <div className="flex items-center gap-3 py-2" key={`sep-${msg.id || i}`}>
+                    <div className="flex-1 h-px bg-white/10" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-white/30">{label}</span>
+                    <div className="flex-1 h-px bg-white/10" />
+                  </div>
+                );
+              }
+            }
+
             // Read receipt: show ✓✓ on my sent messages if recipient has 0 unread
             const recipientUnread = selectedThread?.unread_count?.[otherEmail];
             const isReadByRecipient = isMe && recipientUnread === 0;
 
             return (
+              <React.Fragment key={msg.id || i}>
+              {daySeparator}
               <motion.div
-                key={msg.id || i}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
@@ -679,6 +702,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                   </div>
                 )}
               </motion.div>
+              </React.Fragment>
             );
           })
         )}
@@ -823,16 +847,24 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
 
         </div>
 
-        {/* Text input row */}
-        <div className="flex items-center gap-2 px-3 pb-3">
-          <Input
+        {/* Text input row — auto-grow textarea (WhatsApp pattern) */}
+        <div className="flex items-end gap-2 px-3 pb-3">
+          <textarea
             ref={inputRef}
             value={newMessage}
-            onChange={e => { setNewMessage(e.target.value); sendTyping(true); }}
+            onChange={e => {
+              setNewMessage(e.target.value);
+              sendTyping(true);
+              // Auto-grow
+              e.target.style.height = 'auto';
+              e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+            }}
             onKeyDown={handleKeyDown}
             placeholder="Message..."
-            className="flex-1 bg-[#1C1C1E] border border-white/[0.06] rounded-full text-sm text-white placeholder-white/30 focus:border-[#C8962C]/40 focus:ring-1 focus:ring-[#C8962C]/20 transition-all"
+            rows={1}
+            className="flex-1 bg-[#1C1C1E] border border-white/[0.06] rounded-2xl text-sm text-white placeholder-white/30 focus:border-[#C8962C]/40 focus:ring-1 focus:ring-[#C8962C]/20 transition-all resize-none py-2.5 px-4 min-h-[40px] max-h-[120px] overflow-y-auto"
             disabled={sending}
+            style={{ height: '40px' }}
           />
           <Button
             onClick={handleSend}
