@@ -761,7 +761,7 @@ export const base44 = {
 
     ChatMessage: {
       filter: async (filters, orderBy, limit) => {
-        let query = supabase.from('messages').select('*');
+        let query = supabase.from('chat_messages').select('*');
         
         Object.entries(filters || {}).forEach(([key, value]) => {
           query = query.eq(key, value);
@@ -782,16 +782,16 @@ export const base44 = {
       
       create: async (record) => {
         const { data, error } = await supabase
-          .from('messages')
+          .from('chat_messages')
           .insert(record)
           .select()
           .single();
         if (error) throw error;
         return data;
       },
-      
+
       list: async (orderBy = '-created_at', limit = 50) => {
-        let query = supabase.from('messages').select('*');
+        let query = supabase.from('chat_messages').select('*');
         
         if (orderBy) {
           const desc = orderBy.startsWith('-');

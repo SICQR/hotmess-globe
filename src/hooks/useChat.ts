@@ -140,7 +140,7 @@ export function useChat({
 
     (async () => {
       const { data, error: fetchErr } = await supabase
-        .from('messages')
+        .from('chat_messages')
         .select('*')
         .eq('thread_id', threadId)
         .order('created_at', { ascending: true })
@@ -179,7 +179,7 @@ export function useChat({
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages',
+          table: 'chat_messages',
           filter: `thread_id=eq.${threadId}`,
         },
         (payload) => {
@@ -196,7 +196,7 @@ export function useChat({
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'messages',
+          table: 'chat_messages',
           filter: `thread_id=eq.${threadId}`,
         },
         (payload) => {
@@ -276,7 +276,7 @@ export function useChat({
       };
 
       const { data, error: insertErr } = await supabase
-        .from('messages')
+        .from('chat_messages')
         .insert(row)
         .select('*')
         .single();
@@ -307,7 +307,7 @@ export function useChat({
       const senderName = profile?.username || profile?.display_name || 'Anonymous';
 
       const { data, error: insertErr } = await supabase
-        .from('messages')
+        .from('chat_messages')
         .insert({
           thread_id: threadId,
           sender_email: userEmail,
@@ -382,7 +382,7 @@ export function useChat({
       if (!userEmail) return;
 
       const { error: updateErr } = await supabase
-        .from('messages')
+        .from('chat_messages')
         .update({
           read_by: supabase.rpc('array_append_unique' as any, {}) as any, // fallback below
           read_at: new Date().toISOString(),
@@ -393,14 +393,14 @@ export function useChat({
       if (updateErr) {
         // Fallback: read current, append, write back
         const { data: msg } = await supabase
-          .from('messages')
+          .from('chat_messages')
           .select('read_by')
           .eq('id', messageId)
           .single();
 
         if (msg && !msg.read_by.includes(userEmail)) {
           await supabase
-            .from('messages')
+            .from('chat_messages')
             .update({
               read_by: [...msg.read_by, userEmail],
               read_at: new Date().toISOString(),
@@ -431,7 +431,7 @@ export function useChat({
 
     setLoading(true);
     const { data, error: fetchErr } = await supabase
-      .from('messages')
+      .from('chat_messages')
       .select('*')
       .eq('thread_id', threadId)
       .lt('created_at', oldestMessageDate.current || new Date().toISOString())

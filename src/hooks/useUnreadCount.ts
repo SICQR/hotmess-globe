@@ -121,7 +121,7 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_threads' }, fetchChatCount)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages' },
+        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
         (payload) => {
           fetchChatCount();
           if (document.hidden) {

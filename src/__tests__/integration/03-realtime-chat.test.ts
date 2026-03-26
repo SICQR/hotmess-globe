@@ -36,7 +36,7 @@ beforeAll(async () => {
 afterAll(async () => {
   // Clean up
   if (messageIds.length > 0) {
-    await admin.from('messages').delete().in('id', messageIds);
+    await admin.from('chat_messages').delete().in('id', messageIds);
   }
   if (testThreadId) {
     await admin.from('chat_threads').delete().eq('id', testThreadId);
@@ -46,7 +46,7 @@ afterAll(async () => {
 describe('Chat: message insertion', () => {
   it('can insert a text message into a thread', async () => {
     const { data, error } = await admin
-      .from('messages')
+      .from('chat_messages')
       .insert({
         thread_id: testThreadId,
         sender_email: TEST_USERS.phil.email,
@@ -69,7 +69,7 @@ describe('Chat: message insertion', () => {
   it('can insert a second message from Glen', async () => {
     await wait(100);
     const { data, error } = await admin
-      .from('messages')
+      .from('chat_messages')
       .insert({
         thread_id: testThreadId,
         sender_email: TEST_USERS.glen.email,
@@ -87,7 +87,7 @@ describe('Chat: message insertion', () => {
 
   it('can insert a media message', async () => {
     const { data, error } = await admin
-      .from('messages')
+      .from('chat_messages')
       .insert({
         thread_id: testThreadId,
         sender_email: TEST_USERS.phil.email,
@@ -179,7 +179,7 @@ describe('Chat: read receipts via RPCs', () => {
 
   it('read_by array is updated after mark_messages_read', async () => {
     const { data: msgs } = await admin
-      .from('messages')
+      .from('chat_messages')
       .select('id, read_by, sender_email')
       .eq('thread_id', testThreadId)
       .neq('sender_email', TEST_USERS.glen.email);
@@ -207,7 +207,7 @@ describe('Chat: read_at timestamp', () => {
   it('mark_messages_read stamps read_at on first read', async () => {
     // Insert a fresh message from Glen that Phil has not read
     const { data: freshMsg } = await admin
-      .from('messages')
+      .from('chat_messages')
       .insert({
         thread_id: testThreadId,
         sender_email: TEST_USERS.glen.email,
@@ -231,7 +231,7 @@ describe('Chat: read_at timestamp', () => {
 
     // Verify read_at is now set
     const { data: msg } = await admin
-      .from('messages')
+      .from('chat_messages')
       .select('read_at, read_by')
       .eq('id', freshMsg!.id)
       .single();
@@ -246,7 +246,7 @@ describe('Chat: expires_at (ephemeral messages)', () => {
   it('can insert a message with expires_at', async () => {
     const expiresAt = new Date(Date.now() + 3600000).toISOString();
     const { data, error } = await admin
-      .from('messages')
+      .from('chat_messages')
       .insert({
         thread_id: testThreadId,
         sender_email: TEST_USERS.phil.email,
@@ -268,7 +268,7 @@ describe('Chat: expires_at (ephemeral messages)', () => {
 describe('Chat: message types', () => {
   it('supports meetpoint message type', async () => {
     const { data, error } = await admin
-      .from('messages')
+      .from('chat_messages')
       .insert({
         thread_id: testThreadId,
         sender_email: TEST_USERS.phil.email,
