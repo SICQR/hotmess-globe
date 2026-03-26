@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import { User, Users, Calendar, Award, Camera, Star, Pin, Trophy, Shield, Music, Lock, Instagram, Twitter, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -544,8 +545,8 @@ export default function Profile() {
 
       if (avatarFile) {
         try {
-          const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file: avatarFile });
-          avatarUrl = file_url;
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          avatarUrl = await uploadToStorage(avatarFile, 'avatars', authUser.id);
         } catch (uploadError) {
           // Non-fatal: still allow setup completion.
           console.warn('Avatar upload failed; falling back to placeholder', uploadError);

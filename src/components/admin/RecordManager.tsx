@@ -1,4 +1,5 @@
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
@@ -87,7 +88,8 @@ export default function RecordManager() {
       setUploading(true);
       
       // Step 1: Upload WAV file to storage
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file: data.wavFile });
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const audioUrl = await uploadToStorage(data.wavFile, 'audio', authUser.id);
       
       let soundcloudTrackId = null;
       let soundcloudUrl = null;
@@ -123,7 +125,7 @@ export default function RecordManager() {
         city: data.city,
         lat: data.lat,
         lng: data.lng,
-        audio_url: soundcloudUrl || file_url,
+        audio_url: soundcloudUrl || audioUrl,
         track_id: soundcloudTrackId || `raw_${Date.now()}`,
         xp_scan: 10,
         active: true

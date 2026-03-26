@@ -1,4 +1,5 @@
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -43,8 +44,8 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
     }
     setUploading(true);
     try {
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
-      setMediaUrl(file_url);
+      const publicUrl = await uploadToStorage(file, 'media', user.id);
+      setMediaUrl(publicUrl);
       setMediaType('image');
       toast.success('Image uploaded');
     } catch (error) {
@@ -69,8 +70,8 @@ export default function PostCreator({ user, onPostCreated, onCancel }) {
     }
     setUploading(true);
     try {
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
-      setMediaUrl(file_url);
+      const publicUrl = await uploadToStorage(file, 'media', user.id);
+      setMediaUrl(publicUrl);
       setMediaType('video');
       toast.success('Video uploaded');
     } catch (error) {

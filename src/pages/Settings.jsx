@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Bell, Shield, LogOut, Save, Edit, Camera, Download, Trash2, Database, HelpCircle, MessageSquare, FileText, Lock, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -160,9 +161,10 @@ export default function Settings() {
 
     setUploading(true);
     try {
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
-      setAvatarUrl(file_url);
-      const updatePayload = { avatar_url: file_url }; const { data: { user } } = await supabase.auth.getUser(); await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
+      const { data: { user } } = await supabase.auth.getUser();
+      const publicUrl = await uploadToStorage(file, 'avatars', user.id);
+      setAvatarUrl(publicUrl);
+      const updatePayload = { avatar_url: publicUrl }; await supabase.auth.updateUser({ data: updatePayload }); await supabase.from("profiles").update(updatePayload).eq("id", user.id);
       toast.success('Avatar updated!');
     } catch (error) {
       console.error('Upload failed:', error);

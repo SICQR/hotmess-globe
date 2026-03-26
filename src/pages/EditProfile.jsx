@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
+import { uploadToStorage } from '@/lib/uploadToStorage';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { ArrowLeft, Save, User, Upload, Plus, X, Users as UsersIcon, Image as ImageIcon, Video as VideoIcon, Crown, Palette } from 'lucide-react';
@@ -196,8 +197,9 @@ export default function EditProfile() {
 
     setUploading(true);
     try {
-      const { file_url } = await supabase.storage.from("uploads").upload(Math.random().toString(), { file });
-      setAvatarUrl(file_url);
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const publicUrl = await uploadToStorage(file, 'avatars', authUser.id);
+      setAvatarUrl(publicUrl);
       toast.success('Avatar uploaded!');
     } catch (error) {
       logger.error('Avatar upload failed in EditProfile', { error: error.message });
