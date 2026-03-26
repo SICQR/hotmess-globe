@@ -81,7 +81,7 @@ export function L2ChatMeetupSheet({
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages',
+          table: 'chat_messages',
           filter: `thread_id=eq.${threadId}`,
         },
         (payload) => {
@@ -98,7 +98,7 @@ export function L2ChatMeetupSheet({
   async function loadMessages() {
     try {
       const { data, error } = await supabase
-        .from('messages')
+        .from('chat_messages')
         .select('*')
         .eq('thread_id', threadId)
         .order('created_at', { ascending: true })
@@ -120,12 +120,12 @@ export function L2ChatMeetupSheet({
     setNewMessage('');
 
     try {
-      const { error } = await supabase.from('messages').insert({
+      const { error } = await supabase.from('chat_messages').insert({
         thread_id: threadId,
-        sender_id: user.id,
-        recipient_id: recipientId,
+        sender_email: user.email,
         content: messageContent,
-        type: 'text',
+        message_type: 'text',
+        read_by: [user.email],
       });
 
       if (error) throw error;
@@ -139,13 +139,12 @@ export function L2ChatMeetupSheet({
     if (!user || !location) return;
 
     try {
-      const { error } = await supabase.from('messages').insert({
+      const { error } = await supabase.from('chat_messages').insert({
         thread_id: threadId,
-        sender_id: user.id,
-        recipient_id: recipientId,
+        sender_email: user.email,
         content: `📍 ${location.name}`,
-        type: 'location',
-        location_data: location,
+        message_type: 'location',
+        read_by: [user.email],
       });
 
       if (error) throw error;

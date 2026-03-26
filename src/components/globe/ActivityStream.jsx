@@ -403,7 +403,7 @@ export function useActivityStream(enabled = true) {
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
-        table: 'messages',
+        table: 'chat_messages',
       }, (payload) => {
         addActivity({
           type: 'message_sent',

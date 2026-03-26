@@ -55,7 +55,7 @@ export function useEnhancedMessages(currentUserId: string | null, otherUserId: s
         setLoading(true);
 
         const { data, error: fetchError } = await supabase
-          .from('messages')
+          .from('chat_messages')
           .select('*')
           .or(
             `and(sender_id.eq.${currentUserId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${currentUserId})`
@@ -106,7 +106,7 @@ export function useEnhancedMessages(currentUserId: string | null, otherUserId: s
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages',
+          table: 'chat_messages',
         },
         (payload) => {
           const msg = payload.new as any;
@@ -146,7 +146,7 @@ export function useEnhancedMessages(currentUserId: string | null, otherUserId: s
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'messages',
+          table: 'chat_messages',
         },
         (payload) => {
           const msg = payload.new as any;
@@ -196,7 +196,7 @@ export async function sendEnhancedMessage(
   };
 
   const { data, error } = await supabase
-    .from('messages')
+    .from('chat_messages')
     .insert(messageInsert)
     .select()
     .single();
@@ -237,7 +237,7 @@ export async function addMessageReaction(
 ): Promise<void> {
   // Fetch current reactions
   const { data: message, error: fetchError } = await supabase
-    .from('messages')
+    .from('chat_messages')
     .select('reactions')
     .eq('id', messageId)
     .single();
@@ -248,7 +248,7 @@ export async function addMessageReaction(
   reactions[userId] = emoji;
 
   const { error } = await supabase
-    .from('messages')
+    .from('chat_messages')
     .update({ reactions })
     .eq('id', messageId);
 
@@ -263,7 +263,7 @@ export async function removeMessageReaction(
   userId: string
 ): Promise<void> {
   const { data: message, error: fetchError } = await supabase
-    .from('messages')
+    .from('chat_messages')
     .select('reactions')
     .eq('id', messageId)
     .single();
@@ -274,7 +274,7 @@ export async function removeMessageReaction(
   delete reactions[userId];
 
   const { error } = await supabase
-    .from('messages')
+    .from('chat_messages')
     .update({ reactions })
     .eq('id', messageId);
 

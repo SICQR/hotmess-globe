@@ -98,7 +98,7 @@ export default function AgeGateScreen({ onComplete }) {
             className="mt-1 w-5 h-5 rounded border-[#333] accent-[#C8962C] bg-black"
           />
           <span className="text-white/70 text-sm leading-tight">
-            I confirm I am male and aged 18 or over
+            I confirm I am a man aged 18 or over
           </span>
         </label>
 

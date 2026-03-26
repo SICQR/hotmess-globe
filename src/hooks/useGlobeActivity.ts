@@ -164,7 +164,7 @@ export function useGlobeActivity(liveBeaconCount: number): GlobeActivityData {
     const messagesChannel = supabase
       .channel('globe-messages')
       .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'messages',
+        event: 'INSERT', schema: 'public', table: 'chat_messages',
       }, () => {
         // Messages don't carry lat/lng, use random London scatter
         pushEvent({

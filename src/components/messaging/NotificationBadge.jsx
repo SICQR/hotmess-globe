@@ -48,7 +48,7 @@ export default function NotificationBadge({ user }) {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages',
+          table: 'chat_messages',
         },
         async (payload) => {
           const newMessage = payload.new;

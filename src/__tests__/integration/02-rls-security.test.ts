@@ -69,7 +69,7 @@ beforeAll(async () => {
   testThreadId = thread!.id;
 
   // Insert a test message in that thread
-  await admin.from('messages').insert({
+  await admin.from('chat_messages').insert({
     thread_id: testThreadId,
     sender_email: TEST_USERS.phil.email,
     sender_name: 'test_phil',
@@ -84,7 +84,7 @@ beforeAll(async () => {
 afterAll(async () => {
   // Clean up test thread and messages
   if (testThreadId) {
-    await admin.from('messages').delete().eq('thread_id', testThreadId);
+    await admin.from('chat_messages').delete().eq('thread_id', testThreadId);
     await admin.from('chat_threads').delete().eq('id', testThreadId);
   }
 });
@@ -96,7 +96,7 @@ afterAll(async () => {
 describe('RLS: Messages isolation', () => {
   it('service-role can read all messages (bypasses RLS)', async () => {
     const { data, error } = await admin
-      .from('messages')
+      .from('chat_messages')
       .select('id, content, sender_email')
       .eq('thread_id', testThreadId);
 
@@ -121,7 +121,7 @@ describe('RLS: Messages isolation', () => {
   it('verifies messages exist in test thread via service role', async () => {
     // Service role bypasses RLS — should see the test message
     const { count } = await admin
-      .from('messages')
+      .from('chat_messages')
       .select('id', { count: 'exact', head: true })
       .eq('thread_id', testThreadId);
 

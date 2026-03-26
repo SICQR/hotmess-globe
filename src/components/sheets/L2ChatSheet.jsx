@@ -189,7 +189,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
 
     try {
       const { data, error } = await supabase
-        .from('messages')
+        .from('chat_messages')
         .select('*')
         .eq('thread_id', thread.id)
         .order('created_date', { ascending: true });
@@ -206,7 +206,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       .channel(`messages:thread:${thread.id}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `thread_id=eq.${thread.id}` },
+        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${thread.id}` },
         (payload) => {
           setMessages(prev => {
             if (prev.find(m => m.id === payload.new.id)) return prev;
@@ -264,7 +264,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
 
       // Insert message
       const { error: msgError } = await supabase
-        .from('messages')
+        .from('chat_messages')
         .insert({
           thread_id: thread.id,
           sender_email: currentUser.email,
@@ -290,7 +290,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       // Refresh messages if no realtime (new thread)
       if (!realtimeRef.current || thread?._new) {
         const { data } = await supabase
-          .from('messages')
+          .from('chat_messages')
           .select('*')
           .eq('thread_id', thread.id)
           .order('created_date', { ascending: true });
@@ -334,7 +334,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         setThreads(prev => [newThread, ...prev]);
       }
 
-      const { error: msgError } = await supabase.from('messages').insert({
+      const { error: msgError } = await supabase.from('chat_messages').insert({
         thread_id: thread.id,
         sender_email: currentUser.email,
         sender_name: profiles[currentUser.email]?.display_name || currentUser.email,
@@ -351,7 +351,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       }).eq('id', thread.id);
 
       const { data: msgs } = await supabase
-        .from('messages').select('*').eq('thread_id', thread.id)
+        .from('chat_messages').select('*').eq('thread_id', thread.id)
         .order('created_date', { ascending: true });
       if (msgs) setMessages(msgs);
     } catch (err) {

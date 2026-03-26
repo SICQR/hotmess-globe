@@ -126,7 +126,7 @@ export function useRealtimeChat({
           {
             event: 'INSERT',
             schema: 'public',
-            table: 'messages',
+            table: 'chat_messages',
           },
           async (payload) => {
             const newMessage = payload.new as Message;
@@ -211,7 +211,7 @@ export function useRealtimeChat({
     try {
       // Update all unread messages in thread
       await supabase
-        .from('messages')
+        .from('chat_messages')
         .update({ read_by: supabase.sql`array_append(read_by, ${userEmail})` })
         .eq('thread_id', threadId)
         .not('read_by', 'cs', `{${userEmail}}`);

@@ -141,7 +141,7 @@ describe('Ephemeral: messages TTL (NOT YET IMPLEMENTED)', () => {
   it.skip('messages table should have expires_at column', async () => {
     // This test documents the gap — enable when TTL is implemented
     const { data } = await admin
-      .from('messages')
+      .from('chat_messages')
       .select('expires_at')
       .limit(1);
 

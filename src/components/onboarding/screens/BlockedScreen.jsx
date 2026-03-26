@@ -5,8 +5,8 @@
 import React from 'react';
 
 const MESSAGES = {
-  age: 'HOTMESS is for men 18 and over.',
-  gender: 'HOTMESS is a men-only space.',
+  age:    'HOTMESS is for men aged 18 and over.',
+  gender: 'HOTMESS is a space for men. This app is not available to you.',
 };
 
 export default function BlockedScreen({ reason = 'age' }) {
