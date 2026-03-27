@@ -375,6 +375,7 @@ export function BootGuardProvider({ children }) {
         {
           id: session.user.id,
           onboarding_completed: true,
+          onboarding_complete: true,
           onboarding_completed_at: new Date().toISOString(),
           // Ensure identity is set: DB constraint allows either username OR display_name.
           // Only derive and set username when BOTH are currently empty.

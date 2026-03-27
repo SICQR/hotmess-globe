@@ -8,7 +8,8 @@ export default function AnalyticsDashboard() {
   const { data: users = [] } = useQuery({
     queryKey: ['analytics-users'],
     queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('*');
+      // Exclude demo profiles from analytics (is_demo = true are social-proof seeds)
+      const { data } = await supabase.from('profiles').select('*').eq('is_demo', false);
       return data || [];
     },
   });

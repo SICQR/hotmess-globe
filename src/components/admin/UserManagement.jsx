@@ -15,7 +15,8 @@ export default function UserManagement() {
 
   const { data: users = [] } = useQuery({
     queryKey: ['admin-users'],
-    queryFn: () => supabase.from('profiles').select('*').order('-created_date', { ascending: false }),
+    // Exclude demo profiles (is_demo = true) — managed separately, not real users
+    queryFn: () => supabase.from('profiles').select('*').eq('is_demo', false).order('-created_date', { ascending: false }),
   });
 
   const updateUserMutation = useMutation({

@@ -11,7 +11,8 @@ export default function UserVerification() {
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users-verification'],
-    queryFn: () => supabase.from('profiles').select('*')
+    // Exclude demo profiles (is_demo = true) — they need no verification
+    queryFn: () => supabase.from('profiles').select('*').eq('is_demo', false)
   });
 
   const verifyMutation = useMutation({

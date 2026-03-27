@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AuthContainer, BrandHeader, AuthInput, PasswordInput, Button, TextLink } from '@/components/ui/design-system';
 import { supabase } from '@/components/utils/supabaseClient';
-import { FaUser, FaLock } from 'react-icons/fa';
+import { User as FaUser, Lock as FaLock } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface LoginScreenProps {
