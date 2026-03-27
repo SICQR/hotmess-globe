@@ -43,6 +43,7 @@ import {
 import { useSheet } from '@/contexts/SheetContext';
 import { useRadio } from '@/contexts/RadioContext';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
+import { useBootGuard } from '@/contexts/BootGuardContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { nanoid } from 'nanoid';
 import { format, isToday, isTomorrow } from 'date-fns';
@@ -532,7 +533,21 @@ export function HomeMode({ className = '' }: HomeModeProps) {
   const navigate = useNavigate();
   const { openSheet } = useSheet();
   const { unreadCount } = useUnreadCount();
+  const { profile } = useBootGuard();
   const queryClient = useQueryClient();
+
+  // Profile nudge — shown once per session if user completed onboarding but has no avatar/bio/display_name
+  const [nudgeDismissed, setNudgeDismissed] = useState(() => {
+    try { return !!sessionStorage.getItem('hm_nudge_dismissed'); } catch { return false; }
+  });
+  const dismissNudge = () => {
+    try { sessionStorage.setItem('hm_nudge_dismissed', '1'); } catch {}
+    setNudgeDismissed(true);
+  };
+  const showProfileNudge =
+    !nudgeDismissed &&
+    profile?.onboarding_completed &&
+    (!profile?.avatar_url || !profile?.bio || !profile?.display_name);
   const [city, setCity] = useState(() => localStorage.getItem('hm_city') || 'London');
   const [showRightNow, setShowRightNow] = useState(false);
   const [nightMode, setNightMode] = useState(() => localStorage.getItem('hm_night_mode') === 'true');
@@ -663,8 +678,8 @@ export function HomeMode({ className = '' }: HomeModeProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('right_now_status')
-        .select('id, user_email, intent, active, location, expires_at')
-        .eq('active', true)
+        .select('id, user_email, intent, location, expires_at')
+        .gte('expires_at', new Date().toISOString())
         .order('updated_at', { ascending: false })
         .limit(12);
       if (error) throw error;
@@ -689,7 +704,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, lat, lng, kind')
+        .select('id, metadata, starts_at, end_at, kind, type')
         .gte('end_at', now)
         .order('starts_at', { ascending: true })
         .limit(8);
@@ -702,7 +717,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
           imageUrl: meta.image_url || undefined,
           venue: meta.address || undefined,
           startsAt: b.starts_at as string,
-          kind: b.kind as string,
+          kind: (b.kind as string) || (b.type as string),
         };
       });
     },
@@ -719,7 +734,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, lat, lng, kind, intensity')
+        .select('id, metadata, starts_at, end_at, kind, type, intensity')
         .gte('end_at', now)
         .order('starts_at', { ascending: true })
         .limit(3);
@@ -858,6 +873,30 @@ export function HomeMode({ className = '' }: HomeModeProps) {
 
           {/* ── Dynamic Home Strip Banner ── */}
           <AppBanner placement="home_strip" variant="strip" />
+
+          {/* ── Profile nudge banner (post-onboarding, session-dismissible) ── */}
+          {showProfileNudge && (
+            <div
+              className="mx-4 flex items-center justify-between gap-3 rounded-xl px-4 py-3"
+              style={{ background: 'rgba(200,150,44,0.12)', border: '1px solid rgba(200,150,44,0.2)' }}
+            >
+              <span className="text-white/70 text-sm flex-1">Add a photo and bio to get more matches</span>
+              <button
+                onClick={() => navigate('/profile')}
+                className="text-xs font-bold flex-shrink-0 px-3 py-1.5 rounded-lg"
+                style={{ background: AMBER, color: '#000' }}
+              >
+                Complete profile
+              </button>
+              <button
+                onClick={dismissNudge}
+                className="text-white/30 text-base leading-none flex-shrink-0"
+                aria-label="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           {/* ── Hero Banner — atmospheric noir with radial gold glow ── */}
           <div className="relative w-full h-48 overflow-hidden">

@@ -16,7 +16,9 @@ export function usePresenceHeartbeat() {
   useEffect(() => {
     const updateLastSeen = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        // getSession() reads from localStorage — no network call
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
         if (!user?.id) return;
 
         await supabase

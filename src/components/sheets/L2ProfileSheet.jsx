@@ -194,7 +194,6 @@ export default function L2ProfileSheet({ email, uid, id }) {
         .from('right_now_status')
         .select('*')
         .eq('user_email', profileUser.email)
-        .eq('active', true)
         .gt('expires_at', new Date().toISOString())
         .maybeSingle();
       return data || null;

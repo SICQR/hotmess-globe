@@ -384,7 +384,7 @@ export default function Profile() {
   const { data: rightNowStatus } = useQuery({
     queryKey: ['right-now-profile', userEmail],
     queryFn: async () => {
-      const { data: statuses, error } = await supabase.from('right_now_status').select('*').eq('user_email', userEmail).eq('active', true);
+      const { data: statuses, error } = await supabase.from('right_now_status').select('*').eq('user_email', userEmail).gte('expires_at', new Date().toISOString());
       if (error) throw error;
       return (statuses || []).find(s => new Date(s.expires_at) > new Date()) || null;
     },

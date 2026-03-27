@@ -102,7 +102,7 @@ export async function extendLive(
   const newExpiry = new Date(Date.now() + additionalMinutes * 60 * 1000).toISOString();
 
   const { error } = await supabase
-    .from('presence')
+    .from('user_presence')
     .update({ expires_at: newExpiry })
     .eq('user_id', user.id);
 
@@ -124,11 +124,11 @@ export async function updateLiveLocation(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
 
-  const geo = `POINT(${lng} ${lat})`;
+  const location = `POINT(${lng} ${lat})`;
 
   const { error } = await supabase
-    .from('presence')
-    .update({ geo })
+    .from('user_presence')
+    .update({ location, last_seen_at: new Date().toISOString() })
     .eq('user_id', user.id);
 
   if (error) {

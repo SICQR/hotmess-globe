@@ -1,0 +1,18 @@
+{
+  "city": "sao_paulo",
+  "timezone": "America/Sao_Paulo",
+  "zones": [
+    { "id": "vila-madalena", "name": "Vila Madalena", "category": "nightlife", "energy": 0.9 },
+    { "id": "jardins", "name": "Jardins", "category": "nightlife", "energy": 0.85 },
+    { "id": "pinheiros", "name": "Pinheiros", "category": "nightlife", "energy": 0.82 },
+    { "id": "itaim", "name": "Itaim Bibi", "category": "nightlife", "energy": 0.8 },
+    { "id": "augusta", "name": "Rua Augusta", "category": "nightlife", "energy": 0.88 },
+    { "id": "baixo-augusta", "name": "Baixo Augusta", "category": "nightlife", "energy": 0.92 }
+  ],
+  "behaviour": {
+    "peak_windows": {
+      "vila-madalena": ["friday 23:00–05:00", "saturday 00:00–06:00"],
+      "baixo-augusta": ["friday 23:00–06:00", "saturday 00:00–07:00"]
+    }
+  }
+}

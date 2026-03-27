@@ -8,7 +8,7 @@
  * @see docs/HOTMESS-LONDON-OS-REMAP-MASTER.md §6 Data and component wire-flow
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 
 const BEACON_COLOR = {
@@ -50,8 +50,8 @@ function mapBeaconToGlobe(row) {
   return {
     id: row.id,
     type,
-    lat: row.lat,
-    lng: row.lng,
+    lat: row.latitude ?? row.lat,
+    lng: row.longitude ?? row.lng,
     city: row.city,
     color: BEACON_COLOR[type] || BEACON_COLOR.event,
     userId: row.promoter_id || row.user_id,
@@ -75,8 +75,8 @@ export function useGlobeBeacons(options = {}) {
     try {
       let q = supabase
         .from('beacons')
-        .select('id, kind, type, lat, lng, city, title, intensity, end_at, promoter_id, created_date, metadata')
-        .eq('active', true);
+        .select('id, kind, type, latitude, longitude, city, title, intensity, end_at, promoter_id, created_date, metadata')
+        .gte('end_at', new Date().toISOString());
 
       if (kindFilter) {
         q = q.eq('kind', kindFilter);
@@ -102,38 +102,55 @@ export function useGlobeBeacons(options = {}) {
     fetchBeacons();
   }, [fetchBeacons]);
 
+  const mountedRef   = useRef(true);
+  const retryRef     = useRef(0);
+  const channelRef   = useRef(null);
+
   useEffect(() => {
-    const channel = supabase
-      .channel('globe-beacons')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'Beacon',
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            const b = mapBeaconToGlobe(payload.new);
-            if (!b.expiresAt || new Date(b.expiresAt) > new Date()) {
-              setBeacons((prev) => [...prev.filter((x) => x.id !== b.id), b]);
+    mountedRef.current = true;
+
+    const subscribe = () => {
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
+      const ch = supabase
+        .channel('globe-beacons')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'Beacon' },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              const b = mapBeaconToGlobe(payload.new);
+              if (!b.expiresAt || new Date(b.expiresAt) > new Date()) {
+                setBeacons((prev) => [...prev.filter((x) => x.id !== b.id), b]);
+              }
+            } else if (payload.eventType === 'UPDATE') {
+              const b = mapBeaconToGlobe(payload.new);
+              if (!b.expiresAt || new Date(b.expiresAt) > new Date()) {
+                setBeacons((prev) => prev.map((x) => (x.id === b.id ? b : x)));
+              } else {
+                setBeacons((prev) => prev.filter((x) => x.id !== b.id));
+              }
+            } else if (payload.eventType === 'DELETE') {
+              setBeacons((prev) => prev.filter((x) => x.id !== payload.old?.id));
             }
-          } else if (payload.eventType === 'UPDATE') {
-            const b = mapBeaconToGlobe(payload.new);
-            if (payload.new.active && (!b.expiresAt || new Date(b.expiresAt) > new Date())) {
-              setBeacons((prev) => prev.map((x) => (x.id === b.id ? b : x)));
-            } else {
-              setBeacons((prev) => prev.filter((x) => x.id !== b.id));
-            }
-          } else if (payload.eventType === 'DELETE') {
-            setBeacons((prev) => prev.filter((x) => x.id !== payload.old?.id));
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            retryRef.current = 0;
+          } else if ((status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') && mountedRef.current) {
+            const delay = Math.min(1000 * Math.pow(2, retryRef.current), 30_000);
+            retryRef.current += 1;
+            setTimeout(() => { if (mountedRef.current) subscribe(); }, delay);
+          }
+        });
+      channelRef.current = ch;
+    };
+
+    subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      mountedRef.current = false;
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
     };
   }, []);
 

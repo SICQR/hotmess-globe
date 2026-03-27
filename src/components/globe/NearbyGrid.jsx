@@ -32,7 +32,7 @@ export default function NearbyGrid({ userLocation }) {
       const { data, error } = await supabase
         .from('right_now_status')
         .select('*')
-        .eq('active', true);
+        .gte('expires_at', new Date().toISOString());
       if (error) throw error;
       return data || [];
     },

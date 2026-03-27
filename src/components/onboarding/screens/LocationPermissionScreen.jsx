@@ -33,7 +33,6 @@ export default function LocationPermissionScreen({ session, onComplete, onBack }
         .from('profiles')
         .update({
           ...locationFields,
-          onboarding_complete: true,
           onboarding_completed: true,
           onboarding_completed_at: new Date().toISOString(),
           onboarding_stage: 'complete',
@@ -44,16 +43,16 @@ export default function LocationPermissionScreen({ session, onComplete, onBack }
         .eq('id', userId);
 
       // Write initial presence
-      await supabase.from('presence').upsert(
+      await supabase.from('user_presence').upsert(
         {
           user_id: userId,
-          mode: 'ghosted',
-          lat: coords?.latitude ?? 0,
-          lng: coords?.longitude ?? 0,
-          status: 'live',
-          started_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 3600000).toISOString(),
-          metadata: { onboarding: true },
+          status: 'online',
+          last_seen_at: new Date().toISOString(),
+          location: coords
+            ? `POINT(${coords.longitude ?? 0} ${coords.latitude ?? 0})`
+            : null,
+          expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          metadata: { source: 'onboarding' },
         },
         { onConflict: 'user_id' }
       );

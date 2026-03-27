@@ -32,7 +32,6 @@ export function useRightNowBeacon({ userId, userLat = null, userLng = null }) {
       .select('id')
       .eq('owner_id', userId)
       .eq('kind', 'social')
-      .eq('active', true)
       .or(`ends_at.gte.${now},ends_at.is.null`)
       .maybeSingle()
       .then(({ data }) => setActiveBeaconId(data?.id ?? null));
