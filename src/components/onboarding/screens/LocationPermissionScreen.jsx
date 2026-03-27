@@ -33,7 +33,6 @@ export default function LocationPermissionScreen({ session, onComplete, onBack }
         .from('profiles')
         .update({
           ...locationFields,
-          onboarding_complete: true,
           onboarding_completed: true,
           onboarding_completed_at: new Date().toISOString(),
           onboarding_stage: 'complete',
