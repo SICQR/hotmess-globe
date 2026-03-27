@@ -27,7 +27,8 @@ export default function ModerationQueue() {
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ['all-users-moderation'],
-    queryFn: () => supabase.from('profiles').select('*')
+    // Exclude demo profiles (is_demo = true) from moderation views
+    queryFn: () => supabase.from('profiles').select('*').eq('is_demo', false)
   });
 
   const resolveReportMutation = useMutation({

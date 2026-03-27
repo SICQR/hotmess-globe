@@ -4,53 +4,51 @@
  * Rendered by BootRouter for UNAUTHENTICATED, NEEDS_AGE, NEEDS_ONBOARDING,
  * and NEEDS_COMMUNITY_GATE states.
  *
- * New 3-step flow (as of 2026-03-27):
- *   AgeGate → SignUp (auth) → QuickSetup → /ghosted
+ * Determines the correct screen from session state + profile.onboarding_stage.
+ * Does NOT set up its own auth listener — relies on BootGuardContext's session
+ * and profile state, re-resolving whenever those change.
  *
- * SplashScreen, QuickProfileScreen, VibeScreen, SafetySeedScreen, and
- * LocationPermissionScreen are NOT deleted — just removed from router sequence.
- * Legacy onboarding_stage values (profile/vibe/safety/location) route to
- * QuickSetupScreen so in-progress users can complete via the new path.
+ * Flow:
+ *   Splash → AgeGate → SignUp (auth) → QuickProfile → Vibe → Safety → Location → /ghosted
  *
- * Resume logic (onboarding_stage → screen):
- *   null / start / age_gate → AgeGateScreen (or SignUpScreen if sessionStorage age passed)
- *   age_verified / signup / profile / vibe / safety / location → QuickSetupScreen
- *   signed_up → QuickSetupScreen
- *   complete → /ghosted (BootRouter intercepts, never reaches here)
+ * Returning user with onboarding_complete = true → handled by BootRouter (never reaches here).
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 
-// Active screens — SplashScreen removed from funnel
+// Screens
+import SplashScreen from './screens/SplashScreen';
 import AgeGateScreen from './screens/AgeGateScreen';
 import SignUpScreen from './screens/SignUpScreen';
-import QuickSetupScreen from './screens/QuickSetupScreen';
+import QuickProfileScreen from './screens/QuickProfileScreen';
+import VibeScreen from './screens/VibeScreen';
+import SafetySeedScreen from './screens/SafetySeedScreen';
+import LocationPermissionScreen from './screens/LocationPermissionScreen';
 
 // Screen keys
 const SCREENS = {
+  SPLASH: 'splash',
   AGE_GATE: 'age_gate',
   SIGNUP: 'signup',
   SIGNIN: 'signin',
-  QUICK_SETUP: 'quick_setup',
+  PROFILE: 'profile',
+  VIBE: 'vibe',
+  SAFETY: 'safety',
+  LOCATION: 'location',
 };
 
-// Map onboarding_stage → screen.
-// Legacy stages (profile/vibe/safety/location) collapse to QUICK_SETUP so
-// users who were mid-old-flow can complete via the new 3-step path.
+// Map onboarding_stage → screen
 const STAGE_TO_SCREEN = {
   start: SCREENS.AGE_GATE,
-  age_gate: SCREENS.SIGNUP,        // authed, age already verified pre-auth
-  age_verified: SCREENS.SIGNUP,    // explicit age_verified stage
-  signed_up: SCREENS.QUICK_SETUP,  // signed up, quick setup not yet done
-  // Legacy stages → QuickSetup (new minimum to unlock)
-  signup: SCREENS.QUICK_SETUP,
-  profile: SCREENS.QUICK_SETUP,
-  vibe: SCREENS.QUICK_SETUP,
-  safety: SCREENS.QUICK_SETUP,
-  location: SCREENS.QUICK_SETUP,
-  complete: null, // should not reach OnboardingRouter
+  age_gate: SCREENS.PROFILE, // if authed + age_gate stage, age was already passed pre-auth
+  signup: SCREENS.PROFILE,
+  profile: SCREENS.PROFILE,
+  vibe: SCREENS.VIBE,
+  safety: SCREENS.SAFETY,
+  location: SCREENS.LOCATION,
+  complete: null, // should not reach here
 };
 
 // Max retries when waiting for trigger-created profile row
@@ -66,27 +64,31 @@ export default function OnboardingRouter() {
 
   // Determine which screen to show
   const resolveScreen = useCallback(async () => {
+    // Check for active session
     const {
       data: { session: currentSession },
     } = await supabase.auth.getSession();
 
     if (!currentSession?.user) {
-      // Not authenticated — skip Splash, start at AgeGate
+      // Not authenticated
       const ageGatePassed = sessionStorage.getItem('hm_age_gate_passed');
       if (ageGatePassed === 'true') {
         setScreen(SCREENS.SIGNUP);
       } else {
-        setScreen(SCREENS.AGE_GATE);
+        setScreen(SCREENS.SPLASH);
       }
       setSessionReady(true);
       retryCountRef.current = 0;
       return;
     }
 
-    // Authenticated — fetch fresh profile
+    // Authenticated — check profile stage
+    // Fetch fresh profile to avoid stale state
     const { data: freshProfile } = await supabase
       .from('profiles')
-      .select('onboarding_stage, onboarding_completed, age_verified, community_attested_at')
+      .select(
+        'onboarding_stage, onboarding_complete, onboarding_completed, age_verified, community_attested_at'
+      )
       .eq('id', currentSession.user.id)
       .single();
 
@@ -98,42 +100,40 @@ export default function OnboardingRouter() {
         setTimeout(() => resolveScreen(), delay);
         return;
       }
-      // Exhausted retries — show QuickSetup and let user try manually
-      setScreen(SCREENS.QUICK_SETUP);
+      // Exhausted retries — show profile screen and let user try manually
+      setScreen(SCREENS.PROFILE);
       setSessionReady(true);
       return;
     }
 
     retryCountRef.current = 0;
 
-    // Already complete?
-    if (freshProfile.onboarding_completed) {
+    // Already complete? Navigate away
+    if (freshProfile.onboarding_complete && freshProfile.onboarding_completed) {
       navigate('/ghosted', { replace: true });
       return;
     }
 
-    // Apply age gate from sessionStorage if needed (user completed AgeGate pre-auth)
+    // Apply age gate from sessionStorage if needed
     const ageGatePassed = sessionStorage.getItem('hm_age_gate_passed');
     if (
       ageGatePassed === 'true' &&
       !freshProfile.age_verified &&
-      (!freshProfile.onboarding_stage ||
-        freshProfile.onboarding_stage === 'age_gate' ||
+      (freshProfile.onboarding_stage === 'age_gate' ||
         freshProfile.onboarding_stage === 'start')
     ) {
-      // Write age gate consent (anon-safe)
+      // Write age_gate_consents (anon-safe)
       await supabase.from('age_gate_consents').insert({
         session_id: crypto.randomUUID(),
         consented_at: new Date().toISOString(),
         ip_hash: null,
       });
 
-      // Mark age verified and advance to signed_up stage
       await supabase
         .from('profiles')
         .update({
           age_verified: true,
-          onboarding_stage: 'signed_up',
+          onboarding_stage: 'profile',
           updated_at: new Date().toISOString(),
         })
         .eq('id', currentSession.user.id);
@@ -141,25 +141,24 @@ export default function OnboardingRouter() {
       sessionStorage.removeItem('hm_age_gate_passed');
       sessionStorage.removeItem('hm_age_gate_year');
 
-      setScreen(SCREENS.QUICK_SETUP);
+      setScreen(SCREENS.PROFILE);
       setSessionReady(true);
       return;
     }
 
-    // If stage is age_gate/age_verified but already authed and age is verified, advance
+    // If stage is age_gate but we're already authed and age is verified, advance
     if (
-      (freshProfile.onboarding_stage === 'age_gate' ||
-        freshProfile.onboarding_stage === 'age_verified') &&
+      freshProfile.onboarding_stage === 'age_gate' &&
       freshProfile.age_verified
     ) {
       await supabase
         .from('profiles')
         .update({
-          onboarding_stage: 'signed_up',
+          onboarding_stage: 'profile',
           updated_at: new Date().toISOString(),
         })
         .eq('id', currentSession.user.id);
-      setScreen(SCREENS.QUICK_SETUP);
+      setScreen(SCREENS.PROFILE);
       setSessionReady(true);
       return;
     }
@@ -169,8 +168,8 @@ export default function OnboardingRouter() {
     if (targetScreen) {
       setScreen(targetScreen);
     } else {
-      // Unknown or null stage — default to QuickSetup (authenticated but no stage)
-      setScreen(SCREENS.QUICK_SETUP);
+      // Unknown stage — start from profile
+      setScreen(SCREENS.PROFILE);
     }
     setSessionReady(true);
   }, [navigate]);
@@ -181,6 +180,9 @@ export default function OnboardingRouter() {
   }, [resolveScreen]);
 
   // Re-resolve when BootGuardContext session or profile changes
+  // This is the primary mechanism for detecting post-auth state transitions —
+  // BootGuardContext's auth listener fires, updates session/profile, and this
+  // effect picks up the change. No need for a separate auth listener.
   useEffect(() => {
     if (session || profile) {
       resolveScreen();
@@ -190,13 +192,10 @@ export default function OnboardingRouter() {
   // Screen history stack for back navigation
   const historyRef = useRef([]);
 
-  const goTo = useCallback(
-    (nextScreen) => {
-      if (screen) historyRef.current.push(screen);
-      setScreen(nextScreen);
-    },
-    [screen]
-  );
+  const goTo = useCallback((nextScreen) => {
+    if (screen) historyRef.current.push(screen);
+    setScreen(nextScreen);
+  }, [screen]);
 
   const goBack = useCallback(() => {
     const prev = historyRef.current.pop();
@@ -205,16 +204,29 @@ export default function OnboardingRouter() {
 
   const canGoBack = historyRef.current.length > 0;
 
-  // Screen completion handlers
+  // Screen completion handlers — each advances to next screen
   const handleAgeGateComplete = () => {
     goTo(SCREENS.SIGNUP);
   };
 
-  const handleQuickSetupComplete = async () => {
-    // Refetch profile so BootGuardContext sees onboarding_completed = true
+  const handleProfileComplete = () => {
+    goTo(SCREENS.VIBE);
+  };
+
+  const handleVibeComplete = () => {
+    goTo(SCREENS.SAFETY);
+  };
+
+  const handleSafetyComplete = () => {
+    goTo(SCREENS.LOCATION);
+  };
+
+  const handleLocationComplete = async () => {
+    // Refetch profile so BootGuardContext sees onboarding_complete = true
     if (refetchProfile) {
       await refetchProfile();
     }
+    // Navigate to Ghosted grid
     navigate('/ghosted', { replace: true });
   };
 
@@ -244,13 +256,16 @@ export default function OnboardingRouter() {
 
   // Render the active screen
   switch (screen) {
-    case SCREENS.AGE_GATE:
+    case SCREENS.SPLASH:
       return (
-        <AgeGateScreen
-          onComplete={handleAgeGateComplete}
-          onBack={canGoBack ? goBack : undefined}
+        <SplashScreen
+          onJoin={() => goTo(SCREENS.AGE_GATE)}
+          onSignIn={() => goTo(SCREENS.SIGNIN)}
         />
       );
+
+    case SCREENS.AGE_GATE:
+      return <AgeGateScreen onComplete={handleAgeGateComplete} onBack={canGoBack ? goBack : undefined} />;
 
     case SCREENS.SIGNUP:
       return <SignUpScreen isSignIn={false} onBack={canGoBack ? goBack : undefined} />;
@@ -258,11 +273,30 @@ export default function OnboardingRouter() {
     case SCREENS.SIGNIN:
       return <SignUpScreen isSignIn={true} onBack={canGoBack ? goBack : undefined} />;
 
-    case SCREENS.QUICK_SETUP:
+    case SCREENS.PROFILE:
       return (
-        <QuickSetupScreen
+        <QuickProfileScreen
           session={session}
-          onComplete={handleQuickSetupComplete}
+          onComplete={handleProfileComplete}
+          onBack={canGoBack ? goBack : undefined}
+        />
+      );
+
+    case SCREENS.VIBE:
+      return (
+        <VibeScreen session={session} onComplete={handleVibeComplete} onBack={canGoBack ? goBack : undefined} />
+      );
+
+    case SCREENS.SAFETY:
+      return (
+        <SafetySeedScreen session={session} onComplete={handleSafetyComplete} onBack={canGoBack ? goBack : undefined} />
+      );
+
+    case SCREENS.LOCATION:
+      return (
+        <LocationPermissionScreen
+          session={session}
+          onComplete={handleLocationComplete}
           onBack={canGoBack ? goBack : undefined}
         />
       );

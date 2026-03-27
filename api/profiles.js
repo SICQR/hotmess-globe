@@ -434,9 +434,17 @@ export default async function handler(req, res) {
 
     const mapped = rows
       .map((row) => {
-        const lat = Number(row?.last_lat ?? row?.lat);
-        const lng = Number(row?.last_lng ?? row?.lng);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        // Demo profiles (is_demo = true) are intentionally included in the grid
+        // to prevent empty-grid drop-off for new users. Filter in analytics only.
+        // Coordinates: profiles table has no lat/lng columns — presence table holds
+        // PostGIS geography. For now we fall back to central London so all profiles
+        // (real and demo) render in the grid. TODO: join presence for precise coords.
+        const LONDON_LAT = 51.5074;
+        const LONDON_LNG = -0.1276;
+        const rawLat = row?.last_lat ?? row?.lat;
+        const rawLng = row?.last_lng ?? row?.lng;
+        const lat = Number.isFinite(Number(rawLat)) ? Number(rawLat) : LONDON_LAT;
+        const lng = Number.isFinite(Number(rawLng)) ? Number(rawLng) : LONDON_LNG;
 
         // PRIVACY: username is the public handle — never expose real name or email
         const username = String(row?.username || '').trim();
