@@ -2,7 +2,7 @@
 
 This file provides guidance when working with code in this repository.
 
-**Last updated:** 2026-03-25 (session 6)
+**Last updated:** 2026-03-28 (session 7)
 **Design system:** `DESIGN_SYSTEM.md` — always read before touching any styling
 **Design reference docs:** `~/Downloads/HOTMESS-PROJECT/01-ACTIVE-REFERENCE/` — all dated design reference files live here
 
@@ -46,57 +46,36 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 
 ---
 
-## 🔴 PICK UP HERE (Last session: 2026-03-25 session 6)
+## 🔴 PICK UP HERE (Last session: 2026-03-28 session 7)
 
-### What shipped this session (2026-03-25):
+### What shipped this session (2026-03-28):
 
-**Product plan execution (P0–P6):**
-- ✅ Ghost profiles filtered from Ghosted grid — api/profiles.js filters @hotmess.app, @hotmess.test, demo, admin, e2e
-- ✅ Honest empty state on Ghosted grid when <1 real user — invite card with Web Share API
-- ✅ SOS button added to Ghosted header + Pulse Shield icon → /safety
-- ✅ SOSButton visibility improved (brighter idle state) + first-load tooltip
-- ✅ Safety.jsx fully migrated from base44 → Supabase + SOS/Fake Call buttons added
-- ✅ Email templates rebranded pink → gold (api/email/templates.js + send-email Edge Function)
-- ✅ Post-onboarding "What now?" screen added (step 8 after community attestation)
-- ✅ Invite deep link handler — `?invite=CODE` URL param capture + referral_code storage on signup
-- ✅ Profile tab → More tab in bottom nav (MorePage hub: Safety, Care, Profile, Personas, Vault, Settings, Help)
-- ✅ /care route — Hand N Hand wellbeing page (aftercare tips, crisis resources, breathing exercise)
-- ✅ Personas WIRED — More page entry point + long-press More tab opens PersonaSwitcherSheet
+**Production fix pass — `7ad858d` → deployed dpl_2Y9f1hr17X2VZ3adZ9DF1hbTUnRU:**
+- ✅ **Auth flood fixed** — BootGuardContext reads Supabase token from localStorage synchronously at boot; returning users hit READY state instantly with zero network calls
+- ✅ **getUser() → getSession()** across useNotifCount, useUnreadCount, usePresenceHeartbeat — eliminates 14× auth calls per 30s
+- ✅ **Beacon DB 400s fixed** — `lat`/`lng`/`kind` → `latitude`/`longitude`/`type` in HomeMode, PulseMode, useGlobeBeacons
+- ✅ **right_now_status 400s fixed** — `.eq('active', true)` → `.gte('expires_at', now)` across 8 files (HomeMode, PulseMode, ProfileMode, Profile.jsx, L2GhostedSheet, L2ProfileSheet, NearbyGrid, SOSOverlay)
+- ✅ **Presence writes fixed** — core/presence.ts, QuickSetupScreen, LocationPermissionScreen redirected to `user_presence` TABLE (presence VIEW is read-only)
+- ✅ **Pull-to-refresh killed** — `position: fixed; overflow: hidden` on html/body/root in index.css
+- ✅ **SW navigate intercept** — sw.js serves cached index.html on all navigate requests (PWA route 404s fixed)
+- ✅ **Instant tab switching** — 6 core OS modes statically imported in App.jsx (no lazy-load on first visit)
+- ✅ **Three.js nav theft fixed** — UnifiedGlobe canvas constrained to `bottom: 83px`; nav taps no longer swallowed
+- ✅ **Android back button** — popstate handler in OSArchitecture closes top sheet before navigating back
+- ✅ **Realtime reconnect** — CHANNEL_ERROR/TIMED_OUT → exponential backoff reconnect in useUnreadCount, useNotifCount, useGlobeBeacons
 
-**base44 → Supabase migration (COMPLETE):**
-- ✅ Auth layer: 84 files migrated (base44.auth.me/isAuthenticated/logout/updateMe → supabase.auth.*)
-- ✅ Entity reads: filter/list/get across 23 core user-facing files → supabase.from().select()
-- ✅ Entity writes: create/update/delete migrated alongside reads
-- ✅ Remaining 115+ files: all base44.entities.* calls replaced with direct Supabase queries
-- ✅ Final 15 files cleaned up — integrations stubbed (InvokeLLM → TODO, UploadFile → supabase.storage)
-- ✅ **ZERO base44 imports remain** — `grep -rl "from.*base44Client" src/` returns only base44Client.js itself
-- ✅ 3 files still mention "base44" in comments only (GhostedMode.tsx, supabaseClient.jsx, SellerProfileView.jsx)
+**Also shipped (earlier in session 7, pulled from GitHub on push):**
+- ✅ base44Client.js deleted — zero imports, safe removal done
+- ✅ UploadFile migration — 18 stubs → uploadToStorage.ts utility, bucket RLS policies applied
+- ✅ Storage consolidation — 6 remaining direct storage calls migrated
+- ✅ Demo seed — 10 demo profiles + presence for Ghosted grid
+- ✅ Full onboarding router rewrite — unified OnboardingRouter (Splash → Age → Auth → Profile → Vibe → Safety → Location)
+- ✅ Music tab — MusicTab.jsx, MusicMiniPlayer, MusicPlayerContext, GhostedAmbientToggle
+- ✅ Phase 1+2+3 UX polish — haptics, spring sheets, skeleton loaders, iOS swipe-back, filter chips, blur-up images, read receipts, mini player drag
+- ✅ PWA polish — haptics.ts, safeExit.ts, PullToRefreshIndicator, useSwipeBack
 
-**Commits (unpushed — need `cd ~/hotmess-globe && git push origin main`):**
-- `f583a35` refactor: migrate base44.auth.* → supabase.auth across 80+ files
-- `b6fc6c4` docs: update JSDoc comment referencing migrated base44.auth.me()
-- `aa34442` refactor: migrate base44 entity reads → supabase.from().select() in core user components
-- `7ac23a9` refactor: migrate base44.entities → supabase queries across 14 files
-- `040e7e9` refactor: fix test mocks for cartStorage migration
-- `e281060` refactor: complete base44 → supabase migration — remove base44 dependency
-- `f882c4d` refactor: final base44 cleanup — last 15 files migrated
-
-**Already pushed + deployed to hotmessldn.com (dpl_8gxZRcxV96JxaRwsRnZr1LfSttJb):**
-- `1576578` feat(ghosted): filter ghost profiles + honest empty state + SOS button
-- `6b0a78e` migrate(Safety): base44 → Supabase + SOS/Fake Call buttons
-- `1c78416` fix(pulse): amber beacon FAB + navigate Shield to /safety, improve SOSButton visibility
-- `e82cc53` style(email): rebrand templates from pink to gold
-- `277cd1d` feat(onboarding): post-onboarding 'What now?' action picker
-- `d631d32` feat(invite): deep link handler + referral capture on onboarding
-- `e2d3dac` feat(personas): wire persona entry points — More page item + long-press More tab
+**Current prod commit:** `7ad858d` | **Deployment:** `dpl_2Y9f1hr17X2VZ3adZ9DF1hbTUnRU` | **State:** READY ✅
 
 ### What still needs doing:
-
-**IMMEDIATE — push base44 migration:**
-```bash
-cd ~/hotmess-globe && git push origin main
-```
-This deploys 7 commits (162 files changed, 1408+/1496-) completing the full base44 removal.
 
 **Blocked on Phil:**
 - ❌ VITE_SUPABASE_ANON_KEY not yet set as GitHub repo secret (e2e-smoke CI runs but Supabase calls fail)
@@ -104,12 +83,11 @@ This deploys 7 commits (162 files changed, 1408+/1496-) completing the full base
 - ❌ Brand visibility toggles — flip `visible: true` in `src/config/brands.ts` for: hung, high, hungmess
 
 **Next engineering priorities (in order):**
-1. **Delete `src/api/base44Client.js`** — the shim file itself. Now that zero files import it, safe to remove.
-2. **AI feature stubs** — InvokeLLM calls were replaced with `console.warn('[TODO]')`. Decide: remove AI features entirely, or wire to a real Claude/OpenAI endpoint.
-3. **UploadFile migration** — 18 call sites stubbed with supabase.storage. Need to create 'uploads' bucket in Supabase and test the upload flow end-to-end.
-4. **Read receipts server-side** — markRead() partially writes to localStorage. DB trigger on chat_threads.unread_count exists but full sync incomplete.
-5. **VaultMode scope** — VaultMode.tsx exists but no defined content. Phil to define: tickets, orders, archive?
-6. **PWA push notifications** — VAPID keys set, notify-push Edge Function deployed, but service worker handler not wired to display notifications in browser.
+1. **AI feature stubs** — 13 components have `console.warn('[TODO] LLM endpoint needed')`. Wire to Claude API or strip entirely.
+2. **Read receipts server-side** — markRead() partially writes to localStorage. DB trigger on chat_threads.unread_count exists but full sync incomplete.
+3. **VaultMode scope** — VaultMode.tsx exists but no defined content. Phil to define: tickets, orders, archive?
+4. **PWA push notifications** — VAPID keys set, notify-push Edge Function deployed, SW registered, but service worker `push` event handler not yet wired to display notifications in browser.
+5. **Supabase storage `uploads` bucket** — doesn't exist yet; file upload features will fail until created in prod (rfoftonnlwudilafhfkl).
 
 ---
 
