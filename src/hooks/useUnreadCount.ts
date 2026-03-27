@@ -8,7 +8,7 @@
  * Call clearTapsBadge() when the user opens the Ghosted tab to reset the taps badge.
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { showLocalNotification } from '@/lib/notifications/showNotification';
 
@@ -18,6 +18,9 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
   const [chatCount, setChatCount]   = useState(0);
   const [tapsCount, setTapsCount]   = useState(0);
   const mountedRef = useRef(true);
+  const retryRef   = useRef(0);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const uid = useId().replace(/:/g, '-');
 
   const unreadCount = chatCount + tapsCount;
 
@@ -32,7 +35,9 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
     // ── Fetch chat unread count ────────────────────────────────────────────
     const fetchChatCount = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        // getSession() reads from localStorage — no network call
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
         if (!user || !mountedRef.current) return;
         const userEmail = user.email;
         if (!userEmail) return;
@@ -85,7 +90,9 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
     // ── Fetch boos unread count ─────────────────────────────────────────────
     const fetchTapsCount = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        // getSession() reads from localStorage — no network call
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
         if (!user || !mountedRef.current) return;
         const userEmail = user.email;
         if (!userEmail) return;
@@ -115,50 +122,65 @@ export function useUnreadCount(): { unreadCount: number; clearTapsBadge: () => v
     fetchCount();
 
     // ── Realtime: re-fetch on chat_threads, messages, and taps changes ────
-    const channel = supabase
-      .channel('unread-count-watcher')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_threads' }, fetchChatCount)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_threads' }, fetchChatCount)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-        (payload) => {
-          fetchChatCount();
-          if (document.hidden) {
-            const msg = payload.new as { sender_name?: string; content?: string };
-            const senderLabel = msg.sender_name || 'New message';
-            const preview = msg.content?.slice(0, 60) ?? '';
-            showLocalNotification(
-              'New message',
-              preview ? `${senderLabel}: ${preview}` : senderLabel,
-              '/ghosted',
-              'hotmess-chat'
-            );
+    const subscribe = () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+      const ch = supabase
+        .channel(`unread-count-watcher-${uid}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_threads' }, fetchChatCount)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_threads' }, fetchChatCount)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+          (payload) => {
+            fetchChatCount();
+            if (document.hidden) {
+              const msg = payload.new as { sender_name?: string; content?: string };
+              const senderLabel = msg.sender_name || 'New message';
+              const preview = msg.content?.slice(0, 60) ?? '';
+              showLocalNotification(
+                'New message',
+                preview ? `${senderLabel}: ${preview}` : senderLabel,
+                '/ghosted',
+                'hotmess-chat'
+              );
+            }
           }
-        }
-      )
-      // Watch taps for live badge updates
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'taps' },
-        (payload) => {
-          fetchTapsCount();
-          if (document.hidden) {
-            const tap = payload.new as { tap_type?: string };
-            showLocalNotification(
-              'Someone Boo\'d you 👻',
-              'Check it out on Ghosted',
-              '/ghosted',
-              'hotmess-tap'
-            );
+        )
+        // Watch taps for live badge updates
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'taps' },
+          (payload) => {
+            fetchTapsCount();
+            if (document.hidden) {
+              showLocalNotification(
+                'Someone Boo\'d you 👻',
+                'Check it out on Ghosted',
+                '/ghosted',
+                'hotmess-tap'
+              );
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            retryRef.current = 0;
+          } else if ((status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') && mountedRef.current) {
+            const delay = Math.min(1000 * Math.pow(2, retryRef.current), 30_000);
+            retryRef.current += 1;
+            setTimeout(() => { if (mountedRef.current) subscribe(); }, delay);
+          }
+        });
+      channelRef.current = ch;
+    };
+
+    subscribe();
 
     return () => {
       mountedRef.current = false;
-      supabase.removeChannel(channel);
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
     };
   }, []);
 

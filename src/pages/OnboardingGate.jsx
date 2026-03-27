@@ -450,7 +450,6 @@ export default function OnboardingGate() {
             community_attested_at: new Date().toISOString(),
             consent_accepted: true,
             onboarding_completed: true,
-            onboarding_complete: true,
             onboarding_completed_at: new Date().toISOString(),
           })
           .eq('id', session.user.id);

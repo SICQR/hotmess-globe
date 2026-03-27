@@ -518,11 +518,12 @@ export default function SOSOverlay({ onClose }: SOSOverlayProps) {
         .eq('active', true);
 
       if (user.email) {
+        // Expire all active right_now_status for this user
         await supabase
           .from('right_now_status')
-          .update({ active: false })
+          .update({ expires_at: new Date().toISOString() })
           .eq('user_email', user.email)
-          .eq('active', true);
+          .gte('expires_at', new Date().toISOString());
       }
 
       const { data: contacts } = await supabase

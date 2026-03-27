@@ -105,6 +105,11 @@ function CreatorsCartPanel({ currentUser, enabled }) {
     [cartWithProducts]
   );
 
+  const totalGbp = useMemo(
+    () => cartWithProducts.reduce((sum, item) => sum + (Number(item.product?.price_gbp) || 0) * (Number(item.quantity) || 0), 0),
+    [cartWithProducts]
+  );
+
   const removeMutation = useMutation({
     mutationFn: ({ itemId, productId, variantId }) =>
       removeFromCart({ itemId, productId, variantId, currentUser }),
@@ -271,7 +276,9 @@ function CreatorsCartPanel({ currentUser, enabled }) {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-white/60">Subtotal</span>
-              <span className="font-black">{totalQty} item{totalQty !== 1 ? 's' : ''}</span>
+              <span className="font-black">
+                {totalGbp > 0 ? `£${totalGbp.toFixed(2)}` : `${totalQty} item${totalQty !== 1 ? 's' : ''}`}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <Button

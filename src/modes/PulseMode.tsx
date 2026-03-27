@@ -956,7 +956,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, lat, lng, kind, type, intensity, title')
+        .select('id, metadata, starts_at, end_at, latitude, longitude, kind, type, intensity, title')
         .or('end_at.is.null,end_at.gte.' + now)
         .order('starts_at', { ascending: false })
         .limit(50);
@@ -977,8 +977,8 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           kind,
           type: b.type as string,
           intensity: b.intensity as number,
-          lat: b.lat as number,
-          lng: b.lng as number,
+          lat: b.latitude as number,
+          lng: b.longitude as number,
           severity: meta.severity || undefined,
         } as BeaconItem;
       });
@@ -995,7 +995,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       const now = new Date().toISOString();
       const { data, error } = await supabase
         .from('beacons')
-        .select('id, metadata, starts_at, end_at, lat, lng, kind, type, title')
+        .select('id, metadata, starts_at, end_at, latitude, longitude, kind, type, title')
         .or(`type.eq.safety,kind.eq.safety`)
         .or('end_at.is.null,end_at.gte.' + now)
         .order('starts_at', { ascending: false })
@@ -1014,8 +1014,8 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           kind: 'safety',
           type: 'safety',
           severity: meta.severity || 'warning',
-          lat: b.lat as number,
-          lng: b.lng as number,
+          lat: b.latitude as number,
+          lng: b.longitude as number,
         } as BeaconItem;
       });
     },
@@ -1056,7 +1056,6 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       const { count, error } = await supabase
         .from('right_now_status')
         .select('*', { count: 'exact', head: true })
-        .eq('active', true)
         .gt('expires_at', new Date().toISOString());
       if (error) return 0;
       return count ?? 0;

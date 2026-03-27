@@ -27,9 +27,10 @@ export function UnifiedGlobe() {
   const isPulse = location.pathname === '/pulse' || location.pathname === '/globe';
 
   // Full interactive 3D globe on Pulse route
+  // Height stops at nav bar (83px) so Three.js canvas never steals touch events from nav
   if (isPulse) {
     return (
-      <div className="absolute inset-0 z-0">
+      <div className="absolute z-0" style={{ top: 0, left: 0, right: 0, bottom: '83px', pointerEvents: 'auto' }}>
         <Suspense fallback={
           <div className="w-full h-full bg-black flex items-center justify-center">
             <div className="w-10 h-10 border-2 border-white/20 border-t-[#C8962C] rounded-full animate-spin" />

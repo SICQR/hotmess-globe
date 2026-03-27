@@ -77,6 +77,25 @@ const clearHotmessStorage = () => {
   }
 };
 
+// ── Optimistic local-session read (synchronous — no network, no flash) ──────
+// Supabase stores the session token in localStorage under this key.
+// We read it synchronously to set initial state before any network call.
+const SESSION_KEY = 'sb-rfoftonnlwudilafhfkl-auth-token';
+
+function readLocalSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.user?.id && parsed?.expires_at) {
+      // Don't trust if expired more than 1 hour ago (refresh token will recover it)
+      if (Date.now() > (parsed.expires_at * 1000) + 3_600_000) return null;
+      return parsed;
+    }
+    return null;
+  } catch { return null; }
+}
+
 const BootGuardContext = createContext(null);
 
 /**
@@ -87,10 +106,14 @@ const BootGuardContext = createContext(null);
  * @returns {JSX.Element} The BootGuardContext provider element containing the supplied children.
  */
 export function BootGuardProvider({ children }) {
-  const [bootState, setBootState] = useState(BOOT_STATES.LOADING);
+  // ── Optimistic initialisation: returning users start at READY synchronously ──
+  // This eliminates the loading flash / LOADING state for the ~100% of returning
+  // users. The background getSession() call below corrects stale tokens silently.
+  const _localSession = readLocalSession();
+  const [bootState, setBootState] = useState(_localSession ? BOOT_STATES.READY : BOOT_STATES.LOADING);
   const [profile, setProfile] = useState(null);
-  const [session, setSession] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState(_localSession ? { user: _localSession.user } : null);
+  const [isLoading, setIsLoading] = useState(!_localSession);
 
   // Initialize and listen to auth changes
   useEffect(() => {
@@ -99,8 +122,11 @@ export function BootGuardProvider({ children }) {
 
     const initAuth = async () => {
       logBoot('initAuth started');
-      setIsLoading(true);
-      setBootState(BOOT_STATES.LOADING);
+      // Only show loading if we DON'T have a local session (first-time user)
+      if (!_localSession) {
+        setIsLoading(true);
+        setBootState(BOOT_STATES.LOADING);
+      }
 
       // Safety net: 10-second timeout — never leave user on LOADING forever
       bootTimeout = setTimeout(() => {
@@ -112,7 +138,7 @@ export function BootGuardProvider({ children }) {
       }, 10_000);
 
       try {
-        // Get current session
+        // ONE network call — silently corrects if the cached token is stale
         logBoot('Getting session...');
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         logBoot('Session result:', { hasSession: !!currentSession, error: error?.message });
@@ -137,7 +163,10 @@ export function BootGuardProvider({ children }) {
         console.error('Auth init error:', err);
         logBoot('Auth init error:', err);
         if (mounted) {
-          setBootState(BOOT_STATES.UNAUTHENTICATED);
+          // Don't regress a READY state on network error — keep showing OS
+          if (bootState !== BOOT_STATES.READY) {
+            setBootState(BOOT_STATES.UNAUTHENTICATED);
+          }
           setIsLoading(false);
           clearTimeout(bootTimeout);
         }
@@ -375,7 +404,6 @@ export function BootGuardProvider({ children }) {
         {
           id: session.user.id,
           onboarding_completed: true,
-          onboarding_complete: true,
           onboarding_completed_at: new Date().toISOString(),
           // Ensure identity is set: DB constraint allows either username OR display_name.
           // Only derive and set username when BOTH are currently empty.

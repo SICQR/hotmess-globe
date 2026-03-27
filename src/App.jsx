@@ -30,7 +30,7 @@ import { WorldPulseProvider } from '@/contexts/WorldPulseContext';
 import { PageTransition } from '@/components/lux/PageTransition';
 import { PageLoadingSkeleton } from '@/components/skeletons/PageSkeletons';
 import UnifiedGlobe from '@/components/globe/UnifiedGlobe';
-import { SheetProvider } from '@/contexts/SheetContext';
+import { SheetProvider, useSheet } from '@/contexts/SheetContext';
 import SheetRouter from '@/components/sheets/SheetRouter';
 import { SOSProvider, useSOSContext } from '@/contexts/SOSContext';
 import { SOSButton } from '@/components/sos/SOSButton';
@@ -54,22 +54,24 @@ import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
 import { useSwipeBack } from '@/hooks/useSwipeBack';
 import AuthCallback from '@/pages/auth/callback';
 
-const HomeMode = lazy(() => import('@/modes/HomeMode'));
-const GhostedMode = lazy(() => import('@/modes/GhostedMode'));
-const PulseMode = lazy(() => import('@/modes/PulseMode'));
-const RadioMode = lazy(() => import('@/modes/RadioMode'));
-const ProfileMode = lazy(() => import('@/modes/ProfileMode'));
-const MarketMode = lazy(() => import('@/modes/MarketMode').then(m => ({ default: m.MarketMode })));
+// ── 6 core OS modes: eagerly loaded so tab switching is instant ────────────
+import HomeMode    from '@/modes/HomeMode';
+import GhostedMode from '@/modes/GhostedMode';
+import PulseMode   from '@/modes/PulseMode';
+import RadioMode   from '@/modes/RadioMode';
+import ProfileMode from '@/modes/ProfileMode';
+import { MarketMode } from '@/modes/MarketMode';
+import MusicTab    from '@/components/music/MusicTab';
+// Secondary routes: keep lazy (not in primary nav, rarely accessed on first open)
 const EventsMode  = lazy(() => import('@/modes/EventsMode'));
 const VaultMode   = lazy(() => import('@/modes/VaultMode'));
-const MusicTab    = lazy(() => import('@/components/music/MusicTab'));
 const ChatMeetupPage = lazy(() => import('@/pages/ChatMeetupPage'));
 const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
 const SOSPage = lazy(() => import('@/pages/SOSPage'));
 const FakeCallPage = lazy(() => import('@/pages/FakeCallPage'));
 const SafetyPage = lazy(() => import('@/pages/Safety'));
 const SafetySeedScreen = lazy(() => import('@/components/onboarding/screens/SafetySeedScreen'));
-const MorePage = lazy(() => import('@/pages/MorePage'));
+import MorePage from '@/pages/MorePage';
 const CarePage = lazy(() => import('@/pages/CarePage'));
 
 // Example screens (design system demos)
@@ -692,6 +694,24 @@ function OSArchitecture() {
   const { sosActive, triggerSOS, clearSOS } = useSOSContext();
   const { isAuthenticated } = useBootGuard();
   const location = useLocation();
+  const { closeSheet, sheetStack } = useSheet();
+
+  // C5: Android back button — close top sheet instead of navigating back
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (sheetStack && sheetStack.length > 0) {
+        // Push a new state to replace the consumed popstate
+        window.history.pushState(null, '', window.location.href);
+        closeSheet();
+        e.preventDefault?.();
+      }
+    };
+    // Prime the history stack so the first back press is interceptable
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheetStack, closeSheet]);
 
   // ── Telegram deep-link handler ──────────────────────────────────────────
   // When the Telegram bot sends a user to hotmessldn.com?tg_token=XXX

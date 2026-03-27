@@ -141,9 +141,31 @@
     scroll-behavior: smooth;
   }
   
-  /* Prevent native pull-to-refresh on mobile browsers */
+  /* ── PWA: Prevent native pull-to-refresh + lock viewport ─────────────────
+     position:fixed + overflow:hidden on html/body is the most reliable way to
+     kill pull-to-refresh on iOS Safari and Android Chrome without breaking the
+     app's own scrollable regions (which manage overflow internally).          */
   html, body {
     overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* iOS safe area: bottom nav padding (also applied via env() in nav component) */
+  .bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   
   /* Better text rendering */

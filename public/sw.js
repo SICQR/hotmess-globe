@@ -245,9 +245,22 @@ async function staleWhileRevalidate(request, cacheName, maxItems) {
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests (they can't be cached)
   if (event.request.method !== 'GET') return;
-  
+
   // Skip chrome-extension and other non-http requests
   if (!event.request.url.startsWith('http')) return;
+
+  // ── SPA navigate handler ─────────────────────────────────────────────────
+  // All navigation requests (tab switch, back button, pull-to-refresh, deep
+  // links) must serve the cached SPA shell.  Without this, a pull-to-refresh
+  // that hits the network while offline (or during a deploy) ejects the user.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('/index.html')
+        .then(cached => cached || fetch(event.request))
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
   
   // Skip cross-origin requests that we don't want to cache
   const url = new URL(event.request.url);

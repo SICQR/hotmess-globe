@@ -258,9 +258,9 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
 
       const { data } = await supabase
         .from('right_now_status')
-        .select('intent, active')
+        .select('intent, expires_at')
         .eq('user_email', user.email)
-        .eq('active', true)
+        .gte('expires_at', new Date().toISOString())
         .maybeSingle();
 
       return data;

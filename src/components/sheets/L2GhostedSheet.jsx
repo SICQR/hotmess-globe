@@ -55,11 +55,10 @@ export default function L2GhostedSheet() {
         .from('right_now_status')
         .select('*')
         .eq('user_email', currentUser.email)
-        .eq('active', true);
+        .gte('expires_at', new Date().toISOString());
       if (error) throw error;
       const statuses = data || [];
-      const valid = statuses.find(s => new Date(s.expires_at) > new Date());
-      return valid || null;
+      return statuses[0] || null;
     },
     enabled: !!currentUser?.email,
     refetchInterval: 30000,
@@ -72,8 +71,8 @@ export default function L2GhostedSheet() {
       const { data, error } = await supabase
         .from('right_now_status')
         .select('*')
-        .eq('active', true)
-        .order('created_date', { ascending: false });
+        .gte('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false });
       if (error) throw error;
       const statuses = data || [];
       return statuses.filter(s => new Date(s.expires_at) > new Date());
@@ -108,7 +107,7 @@ export default function L2GhostedSheet() {
         // Deactivate
         const { error } = await supabase
           .from('right_now_status')
-          .update({ active: false })
+          .update({ expires_at: new Date().toISOString() })
           .eq('id', myStatus.id);
         if (error) throw error;
         return { action: 'off' };
@@ -119,10 +118,8 @@ export default function L2GhostedSheet() {
           .from('right_now_status')
           .insert({
             user_email: currentUser.email,
-            active: true,
             expires_at: expiresAt.toISOString(),
-            created_date: new Date().toISOString(),
-            logistics: [],
+            created_at: new Date().toISOString(),
           });
         if (error) throw error;
         return { action: 'on', duration: selectedDuration };
