@@ -2,19 +2,41 @@
  * SafetySeedScreen — Trusted contact + fake call caller seed.
  * Uses user_email for RLS on trusted_contacts.
  * Uses user_id for fake_call_callers.
+ *
+ * Props:
+ *   session      — Supabase session (onboarding path passes this in)
+ *   onComplete   — called when done in onboarding flow
+ *   onBack       — called to go back in onboarding flow
+ *   standalone   — true when mounted at /safety/setup (post-activation)
+ *                  In standalone mode: fetches its own session, shows a back
+ *                  button, navigates to /safety on completion, shows a toast,
+ *                  and does NOT write onboarding_stage.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
-import { Loader2, Shield } from 'lucide-react';
+import { toast } from 'sonner';
+import { Loader2, Shield, ArrowLeft } from 'lucide-react';
 import { ProgressDots } from './AgeGateScreen';
 import OnboardingBackButton from '../OnboardingBackButton';
 
 const GOLD = '#C8962C';
 
-export default function SafetySeedScreen({ session, onComplete, onBack }) {
+export default function SafetySeedScreen({ session: sessionProp, onComplete, onBack, standalone = false }) {
+  const navigate = useNavigate();
+  const [session, setSession] = useState(sessionProp || null);
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // In standalone mode we fetch our own session since no parent passes one in
+  useEffect(() => {
+    if (standalone && !sessionProp) {
+      supabase.auth.getSession().then(({ data: { session: s } }) => {
+        if (s) setSession(s);
+      });
+    }
+  }, [standalone, sessionProp]);
 
   const userId = session?.user?.id;
   const userEmail = session?.user?.email;
@@ -47,17 +69,28 @@ export default function SafetySeedScreen({ session, onComplete, onBack }) {
         });
       }
 
-      // Advance stage
-      await supabase
-        .from('profiles')
-        .update({
-          safety_opt_in: !skip,
-          onboarding_stage: 'location',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', userId);
-
-      onComplete();
+      if (standalone) {
+        // Post-activation path: no onboarding_stage write, toast + navigate
+        if (!skip) {
+          await supabase
+            .from('profiles')
+            .update({ safety_opt_in: true, updated_at: new Date().toISOString() })
+            .eq('id', userId);
+          toast.success('Safety profile updated');
+        }
+        navigate('/safety');
+      } else {
+        // Onboarding path: advance stage and call parent
+        await supabase
+          .from('profiles')
+          .update({
+            safety_opt_in: !skip,
+            onboarding_stage: 'location',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', userId);
+        onComplete();
+      }
     } catch (err) {
       console.error('[SafetySeed] error:', err);
     } finally {
@@ -69,9 +102,19 @@ export default function SafetySeedScreen({ session, onComplete, onBack }) {
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center px-6">
-      <OnboardingBackButton onBack={onBack} />
+      {standalone ? (
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-14 left-5 flex items-center gap-1 text-white/40 hover:text-white transition-colors"
+          aria-label="Back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+      ) : (
+        <OnboardingBackButton onBack={onBack} />
+      )}
       <div className="w-full max-w-xs">
-        <ProgressDots current={5} total={5} />
+        {!standalone && <ProgressDots current={5} total={5} />}
 
         {/* Safety card */}
         <div
@@ -126,12 +169,12 @@ export default function SafetySeedScreen({ session, onComplete, onBack }) {
         </button>
 
         <button
-          onClick={() => handleSubmit(true)}
+          onClick={() => standalone ? navigate('/safety') : handleSubmit(true)}
           disabled={loading}
           className="w-full py-3 text-sm font-medium"
           style={{ color: 'rgba(255,255,255,0.3)' }}
         >
-          Skip for now
+          {standalone ? 'Not now' : 'Skip for now'}
         </button>
       </div>
     </div>

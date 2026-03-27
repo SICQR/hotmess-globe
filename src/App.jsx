@@ -68,6 +68,7 @@ const ModerationPage = lazy(() => import('@/pages/admin/ModerationPage'));
 const SOSPage = lazy(() => import('@/pages/SOSPage'));
 const FakeCallPage = lazy(() => import('@/pages/FakeCallPage'));
 const SafetyPage = lazy(() => import('@/pages/Safety'));
+const SafetySeedScreen = lazy(() => import('@/components/onboarding/screens/SafetySeedScreen'));
 const MorePage = lazy(() => import('@/pages/MorePage'));
 const CarePage = lazy(() => import('@/pages/CarePage'));
 
@@ -386,6 +387,9 @@ const AuthenticatedApp = () => {
       <Route path="/events/*" element={<Suspense fallback={null}><EventsMode /></Suspense>} />
       <Route path="/events/:id" element={<EventDetailRedirect />} />
       {/* Market (canonical) -> MarketMode (no Layout) */}
+      {/* Specific sub-routes MUST come before the wildcard */}
+      <Route path="/market/creators/checkout" element={<CreatorsCheckoutRoute />} />
+      <Route path="/market/creators/checkout-success" element={<CreatorsCheckoutSuccessRoute />} />
       <Route path="/market" element={<Suspense fallback={<PageLoadingSkeleton type="products" />}><MarketMode /></Suspense>} />
       <Route path="/market/*" element={<Suspense fallback={<PageLoadingSkeleton type="products" />}><MarketMode /></Suspense>} />
       <Route path="/social" element={<Navigate to="/ghosted" replace />} />
@@ -523,6 +527,7 @@ const AuthenticatedApp = () => {
       <Route path="/care" element={<Suspense fallback={null}><CarePage /></Suspense>} />
 
       {/* Safety — mobile-first, no desktop sidebar wrapper */}
+      <Route path="/safety/setup" element={<Suspense fallback={null}><SafetySeedScreen standalone /></Suspense>} />
       <Route path="/safety/*" element={<Suspense fallback={null}><SafetyPage /></Suspense>} />
       <Route path="/safety/report" element={<Suspense fallback={null}><SafetyPage /></Suspense>} />
       <Route path="/safety/resources" element={<PageRoute pageKey="Care" />} />
