@@ -23,13 +23,15 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 
-// Active screens — SplashScreen removed from funnel
+// Active screens
+import SplashScreen from './screens/SplashScreen';
 import AgeGateScreen from './screens/AgeGateScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import QuickSetupScreen from './screens/QuickSetupScreen';
 
 // Screen keys
 const SCREENS = {
+  SPLASH: 'splash',      // ← first-ever visit
   AGE_GATE: 'age_gate',
   SIGNUP: 'signup',
   SIGNIN: 'signin',
@@ -71,12 +73,20 @@ export default function OnboardingRouter() {
     } = await supabase.auth.getSession();
 
     if (!currentSession?.user) {
-      // Not authenticated — skip Splash, start at AgeGate
       const ageGatePassed = sessionStorage.getItem('hm_age_gate_passed');
       if (ageGatePassed === 'true') {
+        // Age already confirmed this session — go straight to signup
         setScreen(SCREENS.SIGNUP);
       } else {
-        setScreen(SCREENS.AGE_GATE);
+        // Check if they've seen the splash before (localStorage persists across sessions)
+        const splashSeen = localStorage.getItem('hm_splash_seen_v1');
+        if (splashSeen === 'true') {
+          // Returning visitor — skip splash, go to age gate
+          setScreen(SCREENS.AGE_GATE);
+        } else {
+          // First ever visit — show splash
+          setScreen(SCREENS.SPLASH);
+        }
       }
       setSessionReady(true);
       retryCountRef.current = 0;
@@ -206,6 +216,11 @@ export default function OnboardingRouter() {
   const canGoBack = historyRef.current.length > 0;
 
   // Screen completion handlers
+  const handleSplashComplete = () => {
+    localStorage.setItem('hm_splash_seen_v1', 'true');
+    goTo(SCREENS.AGE_GATE);
+  };
+
   const handleAgeGateComplete = () => {
     goTo(SCREENS.SIGNUP);
   };
@@ -244,6 +259,9 @@ export default function OnboardingRouter() {
 
   // Render the active screen
   switch (screen) {
+    case SCREENS.SPLASH:
+      return <SplashScreen onComplete={handleSplashComplete} />;
+
     case SCREENS.AGE_GATE:
       return (
         <AgeGateScreen
