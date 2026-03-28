@@ -4,10 +4,15 @@ import { supabase } from '@/components/utils/supabaseClient';
 import logger from '@/utils/logger';
 
 /**
- * OAuth Callback Handler
- * 
- * This page handles OAuth redirects from providers (Google, etc.)
- * Supabase handles the token exchange automatically via the URL hash.
+ * OAuth / Magic Link Callback Handler
+ *
+ * After Supabase verifies the token:
+ * - Returning user (onboarding_completed = true) → /ghosted
+ * - New / incomplete user → /
+ * - Bot/scraper hitting a stale link (400 error) → / gracefully
+ *
+ * The BootGuardContext will handle final routing from / anyway,
+ * so /ghosted for returning users is an optimistic fast-path.
  */
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -18,62 +23,56 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Check for error in URL params (OAuth error)
+        // Gracefully handle bot/scraper 400s — wrong verification type, stale links etc.
         const errorParam = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
-        
+
         if (errorParam) {
           logger.error('OAuth error from provider', { error: errorParam, description: errorDescription });
+          // Invalid email verification type (bot hit) → silently redirect to /
+          if (
+            errorParam === 'access_denied' ||
+            errorDescription?.includes('Invalid') ||
+            errorDescription?.includes('expired')
+          ) {
+            navigate('/', { replace: true });
+            return;
+          }
           setError(errorDescription || errorParam);
           setStatus('error');
           return;
         }
 
-        // Supabase automatically handles the OAuth callback via URL hash
-        // We just need to wait for the session to be established
+        // Wait for Supabase to process the hash (magic link / OAuth token)
         const { data, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
-          logger.error('Session error during OAuth callback', { error: sessionError.message });
+          logger.error('Session error during callback', { error: sessionError.message });
           setError(sessionError.message);
           setStatus('error');
           return;
         }
 
-        if (data?.session) {
-          logger.info('OAuth callback successful, session established');
+        if (data?.session?.user?.id) {
           setStatus('success');
-          
-          // Get the intended redirect URL from localStorage or default to home
-          const redirectTo = localStorage.getItem('auth_redirect_to') || '/';
-          localStorage.removeItem('auth_redirect_to');
-          
-          // Small delay to ensure session is properly set
-          setTimeout(() => {
-            navigate(redirectTo, { replace: true });
-          }, 500);
-        } else {
-          // No session yet - Supabase may still be processing the hash
-          // The onAuthStateChange listener in AuthContext will handle this
-          logger.info('Waiting for session establishment...');
-          
-          // Set a timeout to check again
-          setTimeout(async () => {
-            const { data: retryData } = await supabase.auth.getSession();
-            if (retryData?.session) {
-              const redirectTo = localStorage.getItem('auth_redirect_to') || '/';
-              localStorage.removeItem('auth_redirect_to');
-              navigate(redirectTo, { replace: true });
-            } else {
-              setError('Authentication timed out. Please try again.');
-              setStatus('error');
-            }
-          }, 3000);
+          await routeAfterAuth(data.session.user.id, navigate);
+          return;
         }
+
+        // Retry once — hash may not be processed yet
+        setTimeout(async () => {
+          const { data: retryData } = await supabase.auth.getSession();
+          if (retryData?.session?.user?.id) {
+            await routeAfterAuth(retryData.session.user.id, navigate);
+          } else {
+            setError('Authentication timed out. Please try again.');
+            setStatus('error');
+          }
+        }, 2000);
       } catch (err) {
-        logger.error('Unexpected error in OAuth callback', { error: err.message });
-        setError('An unexpected error occurred. Please try again.');
-        setStatus('error');
+        logger.error('Unexpected error in callback', { error: err.message });
+        // Fail gracefully — BootGuardContext will recover
+        navigate('/', { replace: true });
       }
     };
 
@@ -81,30 +80,34 @@ export default function AuthCallback() {
   }, [navigate, searchParams]);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#050507' }}>
       <div className="text-center p-8">
         {status === 'processing' && (
           <>
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#00FF66] mx-auto mb-4" />
-            <p className="text-white text-lg">Completing sign in...</p>
+            <div
+              className="w-10 h-10 border-2 rounded-full animate-spin mx-auto mb-4"
+              style={{ borderColor: '#C8962C', borderTopColor: 'transparent' }}
+            />
+            <p className="text-white/60 text-sm">Signing you in…</p>
           </>
         )}
-        
+
         {status === 'success' && (
           <>
-            <div className="text-[#00FF66] text-5xl mb-4">✓</div>
-            <p className="text-white text-lg">Sign in successful! Redirecting...</p>
+            <div className="text-3xl mb-3">✓</div>
+            <p className="text-white/60 text-sm">Done. Taking you in…</p>
           </>
         )}
-        
+
         {status === 'error' && (
           <>
-            <div className="text-red-500 text-5xl mb-4">✕</div>
-            <p className="text-white text-lg mb-2">Authentication failed</p>
-            <p className="text-gray-400 text-sm mb-6">{error}</p>
+            <div className="text-red-500 text-3xl mb-3">✕</div>
+            <p className="text-white text-base mb-1">Sign in failed</p>
+            <p className="text-white/40 text-sm mb-6">{error}</p>
             <button
-              onClick={() => navigate('/auth', { replace: true })}
-              className="px-6 py-3 bg-[#00FF66] text-black font-semibold rounded-lg hover:bg-[#00cc52] transition-colors"
+              onClick={() => navigate('/', { replace: true })}
+              className="px-6 py-3 rounded-xl font-bold text-sm"
+              style={{ backgroundColor: '#C8962C', color: '#000' }}
             >
               Try Again
             </button>
@@ -113,4 +116,27 @@ export default function AuthCallback() {
       </div>
     </div>
   );
+}
+
+/**
+ * After a successful auth, check onboarding_completed and route accordingly.
+ * Returning user → /ghosted. New/incomplete user → /.
+ */
+async function routeAfterAuth(userId, navigate) {
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_completed')
+      .eq('id', userId)
+      .single();
+
+    if (profile?.onboarding_completed === true) {
+      navigate('/ghosted', { replace: true });
+    } else {
+      navigate('/', { replace: true });
+    }
+  } catch {
+    // DB unavailable — BootGuardContext will recover from /
+    navigate('/', { replace: true });
+  }
 }

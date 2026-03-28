@@ -17,7 +17,7 @@ const PRODUCTS = [
     handle: 'hnh-mess-lube-50ml',
     name: 'HNH MESS',
     size: '50ml',
-    price: '£12',
+    price: '£10',
     image:
       'https://cdn.shopify.com/s/files/1/0629/2497/4961/files/hnh-mess-50ml.png',
     featured: false,
@@ -27,7 +27,7 @@ const PRODUCTS = [
     handle: 'hnh-mess-lube-250ml',
     name: 'HNH MESS',
     size: '250ml',
-    price: '£24',
+    price: '£15',
     image:
       'https://cdn.shopify.com/s/files/1/0629/2497/4961/files/hnh-mess-250ml.png',
     featured: true,

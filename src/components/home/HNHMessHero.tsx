@@ -79,7 +79,7 @@ export function HNHMessHero({ className = '' }: { className?: string }) {
               className="text-[9px] font-black uppercase tracking-widest rounded px-2 py-1"
               style={{ background: GOLD, color: '#000' }}
             >
-              50ml · £12
+              50ml · £10
             </span>
             <span
               className="text-[9px] font-black uppercase tracking-widest rounded px-2 py-1"
@@ -89,7 +89,7 @@ export function HNHMessHero({ className = '' }: { className?: string }) {
                 color: GOLD,
               }}
             >
-              250ml · £24
+              250ml · £15
             </span>
           </div>
           <button
