@@ -1,0 +1,12 @@
+commit 6c488affb22abd5d904b3721aa5a26e1e1dea24b
+Merge: a5091575 4a594ae8
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Wed Jan 28 11:16:26 2026 +0000
+
+    chore: resolve security.yml conflict - use main's version with inline comment
+    
+    Main branch includes an inline comment explaining why continue-on-error is set,
+    which provides better context for future maintainers.
+    
+    Resolution: Accept main's version with the explanatory comment
+
