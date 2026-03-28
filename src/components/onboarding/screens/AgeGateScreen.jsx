@@ -62,9 +62,13 @@ export default function AgeGateScreen({ onComplete }) {
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-xs">
+        {/* HOTMESS wordmark */}
+        <p className="text-2xl font-black italic tracking-tight text-white mb-8 select-none">
+          HOT<span style={{ color: '#C8962C' }}>MESS</span>
+        </p>
         <ProgressDots current={1} total={5} />
-
-        <h2 className="text-white text-xl font-bold mb-8">Verify your age</h2>
+        <h2 className="text-white text-xl font-bold mb-2">Verify your age</h2>
+        <p className="text-white/40 text-sm mb-8">You must be 18+ to enter.</p>
 
         {/* Birth year dropdown */}
         <div className="mb-6">
