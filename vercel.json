@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": "vite",
-  "buildCommand": "npm install && npm run build",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "regions": ["lhr1", "iad1"],
   "crons": [
