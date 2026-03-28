@@ -347,20 +347,20 @@ export function BootGuardProvider({ children }) {
 
       setProfile(profileData);
 
-      // Determine boot state from profile (trust localStorage as fallback)
+      // Determine boot state from profile.
+      //
+      // RETURNING USER RULE: onboarding_completed === true is the ONLY gate.
+      // Do NOT check display_name, onboarding_stage, or any other field.
+      // Users who completed onboarding must never be forced back through it.
       const localCommunity = getLocalCommunityAttested();
       if (!profileData?.age_verified) {
         setBootState(BOOT_STATES.NEEDS_AGE);
       } else if (!profileData?.onboarding_completed) {
         setBootState(BOOT_STATES.NEEDS_ONBOARDING);
-      } else if (!profileData?.display_name?.trim()) {
-        // CRITICAL: User completed onboarding but has no display_name
-        // This catches legacy profiles created before display_name was enforced
-        logBoot('Profile missing display_name, forcing onboarding');
-        setBootState(BOOT_STATES.NEEDS_ONBOARDING);
       } else if (!profileData?.community_attested_at && !localCommunity) {
         setBootState(BOOT_STATES.NEEDS_COMMUNITY_GATE);
       } else {
+        // onboarding_completed === true → READY. Always. No display_name gate.
         setBootState(BOOT_STATES.READY);
       }
     } catch (err) {

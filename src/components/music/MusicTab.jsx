@@ -434,14 +434,14 @@ export default function MusicTab() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: BG }}>
+      <div className="h-full w-full flex items-center justify-center" style={{ backgroundColor: BG }}>
         <Loader2 className="w-8 h-8 animate-spin text-[#9B1B2A]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-40" style={{ backgroundColor: BG }}>
+    <div className="h-full w-full overflow-y-auto overscroll-contain pb-40" style={{ backgroundColor: BG }}>
       {/* ── Music Top Banner ── */}
       <AppBanner placement="music_top" variant="hero" className="mx-4 mt-4" />
 

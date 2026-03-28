@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOTMESS - London OS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'hot': '#FF1493',
+            'cyan': '#00D9FF',
+            'purple': '#B026FF',
+            'lime': '#39FF14',
+            'yellow': '#FFEB3B',
+          },
+          fontFamily: {
+            'sans': ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+    .text-shadow { text-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+    .glow-hot { box-shadow: 0 0 30px rgba(255, 20, 147, 0.5); }
+    .glow-cyan { box-shadow: 0 0 20px rgba(0, 217, 255, 0.4); }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+    .profile-card:hover .profile-img { transform: scale(1.05); }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .animate-pulse-slow { animation: pulse 2s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-black text-white min-h-screen">
+
+  <!-- MOBILE HEADER -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/10">
+    <div class="flex items-center justify-between px-4 py-3">
+      <div class="flex items-center gap-2">
+        <span class="text-xl font-black tracking-tight">HOT<span class="text-hot">MESS</span></span>
+        <span class="text-[8px] text-white/40 uppercase tracking-wider hidden sm:inline">London OS</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <!-- Notification Bell -->
+        <button class="p-2 rounded-lg bg-white/5 hover:bg-white/10 relative">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          <span class="absolute -top-1 -right-1 w-4 h-4 bg-hot rounded-full text-[10px] font-bold flex items-center justify-center">3</span>
+        </button>
+        <!-- Search -->
+        <button class="p-2 rounded-lg bg-white/5 hover:bg-white/10">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </button>
+        <!-- Radio Toggle -->
+        <button class="p-2 rounded-lg bg-purple text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="pt-16 pb-24">
+    
+    <!-- HERO SECTION -->
+    <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+      <!-- Background -->
+      <div class="absolute inset-0">
+        <img src="https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=1920&q=80" alt="Hero" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black"></div>
+      </div>
+      
+      <!-- Content -->
+      <div class="relative z-10 text-center px-6 max-w-4xl">
+        <h1 class="text-[18vw] md:text-[12vw] font-black italic leading-[0.85] tracking-tighter mb-6 text-shadow">
+          HOT<span class="text-hot">MESS</span>
+        </h1>
+        <p class="text-xl md:text-3xl font-black uppercase tracking-wide mb-3 text-cyan text-shadow">
+          No swiping. No ghosts.
+        </p>
+        <p class="text-sm md:text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+          Compatibility-first discovery for gay men. Real chemistry backed by real data.
+        </p>
+        <div class="flex flex-wrap gap-3 justify-center">
+          <button class="bg-hot hover:bg-white text-white hover:text-black font-black uppercase px-6 py-4 text-base glow-hot transition-all flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            SEE WHO'S ON NOW
+          </button>
+          <button class="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-6 py-4 text-base backdrop-blur-sm transition-all flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            TONIGHT'S EVENTS
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SAFETY USP STRIP (NEW - RECOMMENDED) -->
+    <section class="py-4 px-4 bg-gradient-to-r from-red-500/20 via-red-500/10 to-transparent border-y border-red-500/30">
+      <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center">
+            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <div>
+            <p class="font-black uppercase text-white text-sm">SAFETY FIRST</p>
+            <p class="text-xs text-white/60">Panic button • Fake calls • Check-ins • Aftercare</p>
+          </div>
+        </div>
+        <button class="border border-red-500/50 text-red-400 hover:bg-red-500 hover:text-white font-bold uppercase text-xs px-4 py-2 transition-all">
+          SEE SAFETY FEATURES
+        </button>
+      </div>
+    </section>
+
+    <!-- USP STRIP -->
+    <section class="py-6 px-4 bg-black border-b border-white/10">
+      <div class="max-w-5xl mx-auto grid grid-cols-3 gap-4 text-center">
+        <div>
+          <svg class="w-6 h-6 mx-auto mb-2 text-hot" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          <p class="text-xs font-black uppercase">RIGHT NOW</p>
+          <p class="text-[10px] text-white/50">Real-time availability</p>
+        </div>
+        <div>
+          <svg class="w-6 h-6 mx-auto mb-2 text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <p class="text-xs font-black uppercase">MATCH SCORE</p>
+          <p class="text-[10px] text-white/50">8-dimension compatibility</p>
+        </div>
+        <div>
+          <svg class="w-6 h-6 mx-auto mb-2 text-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+          </svg>
+          <p class="text-xs font-black uppercase">SAFETY FIRST</p>
+          <p class="text-[10px] text-white/50">Panic button + check-ins</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT NOW SECTION -->
+    <section class="py-12 px-4 bg-black">
+      <div class="max-w-6xl mx-auto">
+        <!-- Section Header -->
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <p class="text-[10px] uppercase tracking-[0.4em] text-white/40 mb-1">SOCIAL</p>
+            <h2 class="text-3xl md:text-5xl font-black italic">
+              RIGHT <span class="text-hot">NOW</span>
+            </h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-lime rounded-full animate-pulse-slow"></span>
+            <span class="text-xs text-lime font-bold uppercase">12 Online</span>
+          </div>
+        </div>
+
+        <!-- Profile Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          
+          <!-- Profile Card 1 - With Match Score -->
+          <div class="profile-card group relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/10 bg-white/5 cursor-pointer hover:border-white/20 transition-all">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80" alt="Profile" class="profile-img w-full h-full object-cover transition-transform duration-500">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+            
+            <!-- Top Badges -->
+            <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">
+              <span class="px-2 py-1 rounded-full bg-lime/20 border border-lime/50 text-lime text-[10px] font-black uppercase">87% Match</span>
+              <span class="px-2 py-1 rounded-full bg-cyan/20 border border-cyan/50 text-cyan text-[10px] font-black uppercase flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-cyan rounded-full animate-pulse"></span>
+                Online
+              </span>
+            </div>
+
+            <!-- Bottom Content -->
+            <div class="absolute inset-x-0 bottom-0 p-3">
+              <div class="glass rounded-xl p-3 border border-white/10">
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <div>
+                    <p class="font-black text-sm">Alex, 28</p>
+                    <p class="text-xs text-white/70">Gym rat, beach lover</p>
+                    <p class="text-[10px] text-white/50 mt-1">Shoreditch • 12 min walk</p>
+                  </div>
+                </div>
+                <!-- Tags -->
+                <div class="flex flex-wrap gap-1 mb-3">
+                  <span class="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-white/70">Vers</span>
+                  <span class="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-bold uppercase text-white/70">Masc</span>
+                </div>
+                <button class="w-full bg-hot hover:bg-white text-white hover:text-black font-black uppercase text-xs py-2 transition-all">
+                  MESSAGE
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Card 2 - Seller -->
+          <div class="profile-card group relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/10 bg-white/5 cursor-pointer hover:border-white/20 transition-all">
+            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80" alt="Profile" class="profile-img w-full h-full object-cover transition-transform duration-500">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+            
+            <!-- Top Badges -->
+            <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">
+              <span class="px-2 py-1 rounded-full bg-hot text-black text-[10px] font-black uppercase">Seller</span>
+              <span class="px-2 py-1 rounded-full bg-black/50 border border-white/20 text-white text-[10px] font-black uppercase">Can Host</span>
+            </div>
+
+            <!-- Bottom Content -->
+            <div class="absolute inset-x-0 bottom-0 p-3">
+              <div class="glass rounded-xl p-3 border border-white/10">
+                <div class="mb-2">
+                  <p class="font-black text-sm">Marcus, 31</p>
+                  <p class="text-xs text-white/70">Designer • DJ</p>
+                  <p class="text-[10px] text-white/50 mt-1">Dalston • 8 min cab</p>
+                </div>
+                <!-- Product Previews -->
+                <div class="flex items-center gap-2 mb-3">
+                  <div class="flex -space-x-2">
+                    <div class="w-8 h-8 rounded-md bg-white/20 border border-white/30"></div>
+                    <div class="w-8 h-8 rounded-md bg-white/20 border border-white/30"></div>
+                  </div>
+                  <span class="text-[10px] text-white/60 font-bold uppercase">3 Products</span>
+                </div>
+                <button class="w-full bg-cyan hover:bg-white text-black font-black uppercase text-xs py-2 transition-all">
+                  SHOP
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Card 3 - Creator -->
+          <div class="profile-card group relative aspect-[4/5] overflow-hidden rounded-2xl border border-white/10 bg-white/5 cursor-pointer hover:border-white/20 transition-all">
+            <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80" alt="Profile" class="profile-img w-full h-full object-cover transition-transform duration-500">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+            
+            <!-- Top Badges -->
+            <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">
+              <span class="px-2 py-1 rounded-full bg-cyan text-black text-[10px] font-black uppercase">Creator</span>
+              <span class="px-2 py-1 rounded-full bg-purple/30 border border-purple/50 text-purple text-[10px] font-black uppercase">
+                <svg class="w-3 h-3 inline" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+                Verified
+              </span>
+            </div>
+
+            <!-- Bottom Content -->
+            <div class="absolute inset-x-0 bottom-0 p-3">
+              <div class="glass rounded-xl p-3 border border-white/10">
+                <div class="mb-2">
+                  <p class="font-black text-sm">Jordan</p>
+                  <p class="text-xs text-white/70">Producer • Raw Convict</p>
+                  <p class="text-[10px] text-white/50 mt-1">Hackney • 15 min bike</p>
+                </div>
+                <button class="w-full bg-purple hover:bg-white text-white hover:text-black font-black uppercase text-xs py-2 transition-all">
+                  LISTEN
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Card 4 - Right Now Active -->
+          <div class="profile-card group relative aspect-[4/5] overflow-hidden rounded-2xl border-2 border-lime/50 bg-white/5 cursor-pointer hover:border-lime transition-all">
+            <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&q=80" alt="Profile" class="profile-img w-full h-full object-cover transition-transform duration-500">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+            
+            <!-- Top Badges -->
+            <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">
+              <span class="px-2 py-1 rounded-full bg-lime text-black text-[10px] font-black uppercase flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-black rounded-full animate-pulse"></span>
+                RIGHT NOW
+              </span>
+            </div>
+
+            <!-- Right Now Status -->
+            <div class="absolute top-3 right-3">
+              <span class="px-2 py-1 rounded-full bg-black/70 border border-lime/50 text-lime text-[10px] font-black uppercase">
+                Can Travel
+              </span>
+            </div>
+
+            <!-- Bottom Content -->
+            <div class="absolute inset-x-0 bottom-0 p-3">
+              <div class="glass rounded-xl p-3 border border-lime/30">
+                <div class="mb-2">
+                  <p class="font-black text-sm">Sam, 26</p>
+                  <p class="text-xs text-white/70">Available for 2 hours</p>
+                  <p class="text-[10px] text-lime mt-1 font-bold">Looking to meet now</p>
+                </div>
+                <button class="w-full bg-lime hover:bg-white text-black font-black uppercase text-xs py-2 transition-all">
+                  CONNECT NOW
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- View All CTA -->
+        <div class="mt-8 text-center">
+          <button class="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-8 py-4 transition-all">
+            BROWSE ALL PROFILES
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- EVENTS SECTION -->
+    <section class="py-16 px-4 bg-black">
+      <div class="max-w-6xl mx-auto">
+        <div class="mb-8">
+          <p class="text-[10px] uppercase tracking-[0.4em] text-white/40 mb-1">EVENTS</p>
+          <h2 class="text-4xl md:text-6xl font-black italic">
+            TONIGHT<span class="text-cyan">.</span>
+          </h2>
+          <p class="text-white/60 uppercase tracking-wider text-sm mt-2">Three moves you can actually make.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Event Card 1 -->
+          <div class="bg-white/5 border-2 border-white/10 p-6 hover:border-cyan/50 transition-all">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-cyan text-black flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-black uppercase">RSVP</h3>
+            </div>
+            <p class="text-xs uppercase tracking-wider text-white/50 mb-2">Tonight @ XXL</p>
+            <p class="text-lg font-black mb-2">MEAT RACK</p>
+            <p class="text-white/70 text-sm mb-4 line-clamp-2">London's biggest weekly cruise party returns.</p>
+            <button class="w-full bg-cyan hover:bg-white text-black font-black uppercase py-3 transition-all">
+              RSVP NOW
+            </button>
+          </div>
+
+          <!-- Event Card 2 -->
+          <div class="bg-white/5 border-2 border-white/10 p-6 hover:border-white/30 transition-all">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-white/10 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-black uppercase">PULSE MAP</h3>
+            </div>
+            <p class="text-white/70 text-sm mb-4">Map + layers. Find the energy.</p>
+            <button class="w-full border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase py-3 transition-all">
+              OPEN MAP
+            </button>
+          </div>
+
+          <!-- Event Card 3 -->
+          <div class="bg-white/5 border-2 border-white/10 p-6 hover:border-white/30 transition-all">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-white/10 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <h3 class="text-xl font-black uppercase">DISCOVER</h3>
+            </div>
+            <p class="text-white/70 text-sm mb-4">Right now guys near you.</p>
+            <button class="w-full bg-white text-black hover:bg-black hover:text-white font-black uppercase py-3 transition-all">
+              SEE WHO'S AVAILABLE
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SHOP SECTION -->
+    <section class="py-16 px-6 bg-white text-black">
+      <div class="max-w-6xl mx-auto">
+        <div class="mb-12">
+          <p class="text-[10px] uppercase tracking-[0.4em] text-black/40 mb-2">SHOP</p>
+          <h2 class="text-5xl md:text-7xl font-black italic">SHOP THE DROP</h2>
+          <p class="text-lg uppercase tracking-wider text-black/60 mt-3">Hardwear. Fit. Club armour. Limited runs.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Product 1 -->
+          <div class="group relative aspect-square overflow-hidden bg-black">
+            <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=800&q=80" alt="Product" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+            <div class="absolute inset-0 flex items-end p-6">
+              <div class="w-full bg-black/50 backdrop-blur-sm border border-white/20 p-4">
+                <h3 class="text-2xl font-black italic text-white">HNH MESS LUBE</h3>
+                <p class="text-xs uppercase tracking-wider text-white/70 mt-1">Tap to view</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 2 -->
+          <div class="group relative aspect-square overflow-hidden bg-black">
+            <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&q=80" alt="Product" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+            <div class="absolute inset-0 flex items-end p-6">
+              <div class="w-full bg-black/50 backdrop-blur-sm border border-white/20 p-4">
+                <h3 class="text-2xl font-black italic text-white">CLUB ARMOUR TEE</h3>
+                <p class="text-xs uppercase tracking-wider text-white/70 mt-1">Tap to view</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RADIO SECTION -->
+    <section class="relative py-20 px-6 overflow-hidden">
+      <div class="absolute inset-0">
+        <img src="https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=1920&q=80" alt="Radio" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-br from-purple/90 to-black/80"></div>
+      </div>
+      <div class="relative z-10 max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <!-- Radio -->
+          <div>
+            <div class="flex items-center gap-3 mb-6">
+              <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+              </svg>
+              <h2 class="text-4xl font-black italic text-shadow">ON AIR</h2>
+            </div>
+            <p class="text-lg mb-6 text-white/90">Live now on HOTMESS RADIO.</p>
+            <p class="text-sm uppercase tracking-wider text-white/70 mb-8">Next up: Wake the Mess • Fri 30 Jan • 09:00 (London)</p>
+            <div class="flex flex-wrap gap-3">
+              <button class="bg-black text-white hover:bg-white hover:text-black font-black uppercase px-6 py-3 transition-all">
+                LISTEN LIVE
+              </button>
+              <button class="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-6 py-3 transition-all">
+                SEE SCHEDULE
+              </button>
+            </div>
+          </div>
+
+          <!-- Safety Check -->
+          <div>
+            <div class="flex items-center gap-3 mb-6">
+              <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+              </svg>
+              <h2 class="text-4xl font-black italic text-shadow">SAFETY CHECK</h2>
+            </div>
+            <p class="text-lg mb-8 text-white/90">You good?</p>
+            <div class="flex flex-wrap gap-3">
+              <button class="bg-lime text-black hover:bg-white font-black uppercase px-6 py-3 transition-all">
+                ALL GOOD
+              </button>
+              <button class="border-2 border-white text-white hover:bg-white hover:text-black font-black uppercase px-6 py-3 transition-all">
+                NEED A MINUTE
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="py-20 px-6 bg-black text-center">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-[15vw] md:text-[10vw] font-black italic text-hot leading-[0.85] mb-6">
+          HOTMESS
+        </h2>
+        <p class="text-xl uppercase tracking-wider text-white/60 mb-10">
+          London OS. No ghost status. Right now ends automatically.
+        </p>
+        <button class="bg-hot hover:bg-white text-white hover:text-black font-black uppercase px-12 py-6 text-xl glow-hot transition-all">
+          GET STARTED FREE
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- PANIC BUTTON (Fixed - Always Visible) -->
+  <button class="fixed bottom-24 left-4 z-50 flex items-center gap-2 px-3 py-2 bg-red-500/30 hover:bg-red-500/50 border border-red-500/50 text-red-400 rounded-lg transition-all group">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+    </svg>
+    <span class="text-xs font-black uppercase">PANIC</span>
+  </button>
+
+  <!-- BOTTOM NAVIGATION (Mobile) -->
+  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
+    <div class="grid grid-cols-5 gap-1 px-2 py-2">
+      <!-- Home -->
+      <a href="#" class="flex flex-col items-center py-2 text-hot">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        <span class="text-[9px] font-black uppercase mt-1">Home</span>
+      </a>
+      
+      <!-- Events -->
+      <a href="#" class="flex flex-col items-center py-2 text-white/60 hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span class="text-[9px] font-black uppercase mt-1">Events</span>
+      </a>
+      
+      <!-- Social (Center - Highlighted) -->
+      <a href="#" class="flex flex-col items-center py-2 -mt-4">
+        <div class="w-14 h-14 bg-hot rounded-full flex items-center justify-center glow-hot">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <span class="text-[9px] font-black uppercase mt-1 text-hot">Social</span>
+      </a>
+      
+      <!-- Shop -->
+      <a href="#" class="flex flex-col items-center py-2 text-white/60 hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+        <span class="text-[9px] font-black uppercase mt-1">Shop</span>
+      </a>
+      
+      <!-- More -->
+      <a href="#" class="flex flex-col items-center py-2 text-white/60 hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <span class="text-[9px] font-black uppercase mt-1">More</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- FLOATING RADIO PLAYER (Mini) -->
+  <div class="fixed bottom-20 right-4 z-40 glass border border-purple/50 rounded-xl p-3 flex items-center gap-3">
+    <div class="w-10 h-10 bg-purple rounded-lg flex items-center justify-center">
+      <svg class="w-5 h-5 text-white animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M9 18V5l12-2v13M9 18c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3zM21 16c0 1.657-1.343 3-3 3s-3-1.343-3-3 1.343-3 3-3 3 1.343 3 3z"/>
+      </svg>
+    </div>
+    <div class="hidden sm:block">
+      <p class="text-[10px] text-white/50 uppercase">Now Playing</p>
+      <p class="text-xs font-bold text-white">Raw Convict Radio</p>
+    </div>
+    <button class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+      </svg>
+    </button>
+  </div>
+
+</body>
+</html>
