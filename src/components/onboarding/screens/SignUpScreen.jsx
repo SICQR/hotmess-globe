@@ -19,6 +19,13 @@ import { ProgressDots } from './AgeGateScreen';
 const GOLD = '#C8962C';
 
 /**
+ * Apple Sign In is disabled until the Apple OAuth app (Services ID + .p8 key)
+ * is fully configured in Supabase Dashboard → Auth → Providers → Apple.
+ * Flip to `true` once configured.
+ */
+const APPLE_ENABLED = false;
+
+/**
  * Returns true when running inside a social media in-app browser (WebView)
  * that blocks Apple's OAuth popup.
  */
@@ -167,8 +174,8 @@ export default function SignUpScreen({ isSignIn = false }) {
 
         {/* OAuth buttons */}
         <div className="flex flex-col gap-3 mb-8">
-          {/* Apple Sign In: hidden in WebViews (WKWebView blocks the popup) */}
-          {!webView && (
+          {/* Apple Sign In: hidden until configured in Supabase Dashboard */}
+          {APPLE_ENABLED && !webView && (
             <button
               onClick={() => handleOAuth('apple')}
               disabled={loading}
@@ -195,7 +202,7 @@ export default function SignUpScreen({ isSignIn = false }) {
             Continue with Google
           </button>
 
-          {webView && (
+          {APPLE_ENABLED && webView && (
             <p className="text-white/30 text-[11px] text-center -mt-1">
               Open in Safari for Apple Sign In
             </p>

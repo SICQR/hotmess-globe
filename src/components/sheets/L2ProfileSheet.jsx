@@ -194,7 +194,7 @@ export default function L2ProfileSheet({ email, uid, id }) {
         .from('right_now_status')
         .select('*')
         .eq('user_email', profileUser.email)
-        .gt('expires_at', new Date().toISOString())
+        .gte('expires_at', new Date().toISOString())
         .maybeSingle();
       return data || null;
     },

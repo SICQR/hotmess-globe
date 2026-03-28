@@ -16,7 +16,15 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
   // Fetch real-time activity data
   const { data: recentCheckIns = [] } = useQuery({
     queryKey: ['recent-checkins'],
-    queryFn: () => supabase.from('beacon_check_ins').select('*').order('-created_date', { ascending: false }).limit(20),
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase.from('beacon_check_ins').select('*').order('created_at', { ascending: false }).limit(20);
+        if (error) return [];
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
     enabled: isOpen,
     refetchInterval: 5000
   });
@@ -24,26 +32,37 @@ export default function RightNowOverlay({ isOpen, onClose, users, onUserClick })
   const { data: liveEvents = [] } = useQuery({
     queryKey: ['live-events'],
     queryFn: async () => {
-      const now = new Date();
-      const events = await supabase.from('beacons').select('*').eq({ 
-        kind: 'event', 
-        active: true 
-      }, '-event_date', 50);
-      return events.filter(e => {
-        if (!e.event_date) return false;
-        const eventDate = new Date(e.event_date);
-        const diffHours = (eventDate - now) / (1000 * 60 * 60);
-        return diffHours >= -2 && diffHours <= 6; // Events happening now or in next 6 hours
-      }).slice(0, 10);
+      try {
+        const now = new Date();
+        const { data: events, error } = await supabase.from('beacons').select('*')
+          .eq('type', 'event')
+          .gte('ends_at', new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString())
+          .lte('starts_at', new Date(now.getTime() + 6 * 60 * 60 * 1000).toISOString())
+          .order('starts_at', { ascending: true })
+          .limit(10);
+        if (error) return [];
+        return events || [];
+      } catch {
+        return [];
+      }
     },
     enabled: isOpen
   });
 
   const { data: recentPosts = [] } = useQuery({
     queryKey: ['recent-posts'],
-    queryFn: () => supabase.from('community_posts').select('*').eq({ 
-      moderation_status: 'approved' 
-    }, '-created_date', 15),
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase.from('community_posts').select('*')
+          .eq('moderation_status', 'approved')
+          .order('created_at', { ascending: false })
+          .limit(15);
+        if (error) return [];
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
     enabled: isOpen,
     refetchInterval: 10000
   });

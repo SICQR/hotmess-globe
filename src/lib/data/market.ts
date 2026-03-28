@@ -92,44 +92,62 @@ function normalizePrelovedProduct(listing: PrelovedListing): Product {
 }
 
 export async function getPrelovedProducts(filters: ProductFilters = {}): Promise<Product[]> {
-  let query = supabase
-    .from('preloved_listings')
-    .select('*, seller:profiles!seller_id(display_name, avatar_url)')
-    .eq('status', 'active');
+  try {
+    // Step 1: fetch listings
+    let query = supabase
+      .from('preloved_listings')
+      .select('*')
+      .eq('status', 'active');
 
-  if (filters.category) {
-    query = query.eq('category', filters.category);
-  }
-  if (filters.minPrice !== undefined) {
-    query = query.gte('price', filters.minPrice);
-  }
-  if (filters.maxPrice !== undefined) {
-    query = query.lte('price', filters.maxPrice);
-  }
-  if (filters.condition) {
-    query = query.eq('condition', filters.condition);
-  }
-  if (filters.sellerId) {
-    query = query.eq('seller_id', filters.sellerId);
-  }
-  if (filters.search) {
-    query = query.ilike('title', `%${filters.search}%`);
-  }
-  if (filters.limit) {
-    query = query.limit(filters.limit);
-  }
-  if (filters.offset) {
-    query = query.range(filters.offset, filters.offset + (filters.limit || 20) - 1);
-  }
+    if (filters.category) {
+      query = query.eq('category', filters.category);
+    }
+    if (filters.minPrice !== undefined) {
+      query = query.gte('price', filters.minPrice);
+    }
+    if (filters.maxPrice !== undefined) {
+      query = query.lte('price', filters.maxPrice);
+    }
+    if (filters.condition) {
+      query = query.eq('condition', filters.condition);
+    }
+    if (filters.sellerId) {
+      query = query.eq('seller_id', filters.sellerId);
+    }
+    if (filters.search) {
+      query = query.ilike('title', `%${filters.search}%`);
+    }
+    if (filters.limit) {
+      query = query.limit(filters.limit);
+    }
+    if (filters.offset) {
+      query = query.range(filters.offset, filters.offset + (filters.limit || 20) - 1);
+    }
 
-  const { data, error } = await query.order('created_at', { ascending: false });
+    const { data: listings, error } = await query.order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('[market] getPrelovedProducts error:', error.message);
+    if (error) {
+      console.error('[market] getPrelovedProducts error:', error.message);
+      return [];
+    }
+
+    // Step 2: fetch sellers
+    const ids = [...new Set((listings || []).map(l => l.seller_id).filter(Boolean))];
+    const { data: sellers } = ids.length
+      ? await supabase.from('profiles').select('id, display_name, avatar_url').in('id', ids)
+      : { data: [] };
+
+    const sellerMap = Object.fromEntries((sellers || []).map(s => [s.id, s]));
+
+    // Step 3: normalize and attach seller data
+    return (listings || []).map(l => {
+      const listing = { ...l, seller: sellerMap[l.seller_id] ?? null };
+      return normalizePrelovedProduct(listing);
+    });
+  } catch (error) {
+    console.error('[market] getPrelovedProducts exception:', error);
     return [];
   }
-
-  return (data || []).map(normalizePrelovedProduct);
 }
 
 export async function getPrelovedProductById(id: string): Promise<Product | null> {

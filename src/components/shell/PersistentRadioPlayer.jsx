@@ -26,8 +26,11 @@ export default function PersistentRadioPlayer() {
     queryKey: ['audio-drops'],
     queryFn: async () => {
       try {
-        const beacons = await supabase.from('beacons').select('*').eq({ mode: 'radio', active: true });
-        return beacons.filter(b => b.audio_url);
+        const { data, error } = await supabase.from('beacons').select('*')
+          .eq('type', 'radio')
+          .gte('ends_at', new Date().toISOString());
+        if (error) return [];
+        return (data || []).filter(b => b.audio_url);
       } catch (error) {
         console.warn('Failed to fetch audio beacons:', error);
         return [];

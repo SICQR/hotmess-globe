@@ -37,7 +37,7 @@ export function HNHMessStrip({ className = '' }: { className?: string }) {
       <div className="flex-1 text-left">
         <span className="text-white/80 text-xs font-semibold">HNH MESS</span>
         <span className="text-white/40 text-xs mx-1.5">·</span>
-        <span className="text-white/50 text-[11px]">Premium water-based lube from £12</span>
+        <span className="text-white/50 text-[11px]">Premium water-based lube from £10</span>
       </div>
 
       {/* Badge */}

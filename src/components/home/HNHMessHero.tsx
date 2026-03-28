@@ -13,7 +13,7 @@ const HNH_RED = '#C41230';
 
 // Primary product: HNH MESS 50ml
 const PRODUCT_IMG =
-  'https://cdn.shopify.com/s/files/1/0629/2497/4961/files/hnh-mess-50ml.png';
+  'https://cdn.shopify.com/s/files/1/0898/3245/6517/files/upload_vfKIW_gxRluGoOwPLITLrg.png';
 
 export function HNHMessHero({ className = '' }: { className?: string }) {
   const navigate = useNavigate();
@@ -79,7 +79,7 @@ export function HNHMessHero({ className = '' }: { className?: string }) {
               className="text-[9px] font-black uppercase tracking-widest rounded px-2 py-1"
               style={{ background: GOLD, color: '#000' }}
             >
-              50ml · £12
+              50ml · £10
             </span>
             <span
               className="text-[9px] font-black uppercase tracking-widest rounded px-2 py-1"
@@ -89,7 +89,7 @@ export function HNHMessHero({ className = '' }: { className?: string }) {
                 color: GOLD,
               }}
             >
-              250ml · £24
+              250ml · £15
             </span>
           </div>
           <button

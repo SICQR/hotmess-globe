@@ -648,7 +648,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
       {/* ====== FULL-SCREEN 3-COL GRID ====== */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto scroll-momentum pb-24"
+        className="flex-1 overflow-y-auto scroll-momentum pb-24 relative z-10"
         {...pullHandlers}
       >
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />

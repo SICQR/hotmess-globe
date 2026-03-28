@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 export default function RightNowNotifications({ currentUser }) {
   const { data: rightNowUsers = [] } = useQuery({
     queryKey: ['right-now-active'],
-    queryFn: () => supabase.from('right_now_status').select('*').eq({ active: true }),
+    queryFn: () => supabase.from('right_now_status').select('*').gte('expires_at', new Date().toISOString()),
     enabled: !!currentUser,
     refetchInterval: 30000 // Check every 30 seconds
   });

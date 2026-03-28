@@ -3,7 +3,7 @@
  * Handles: Push notifications, caching, offline support, background sync
  */
 
-const CACHE_VERSION = 'v9';
+const CACHE_VERSION = '__BUILD_TS__';
 const STATIC_CACHE = `hotmess-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `hotmess-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `hotmess-api-${CACHE_VERSION}`;

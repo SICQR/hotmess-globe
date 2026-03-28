@@ -369,6 +369,16 @@ function localApiRoutes() {
             });
         }
 
+        if (path === '/api/notifications/push' && method === 'POST') {
+          return importFresh('./api/notifications/push.js')
+            .then((handler) => handler(req, res))
+            .catch((error) => {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: error?.message || 'Failed to load push handler' }));
+            });
+        }
+
         if (path === '/api/notifications/dispatch' && (method === 'POST' || method === 'GET')) {
           return importFresh('./api/notifications/dispatch.js')
             .then((handler) => handler(req, res))
@@ -681,6 +691,19 @@ export default defineConfig(({ mode }) => {
       // Local dev handlers for /api/* endpoints.
       localApiRoutes(),
       react(),
+      // Bust SW cache on every deploy by replacing __BUILD_TS__ with build timestamp
+      {
+        name: 'sw-cache-bust',
+        closeBundle() {
+          const swPath = path.resolve(__dirname, 'dist/sw.js');
+          if (fs.existsSync(swPath)) {
+            const content = fs.readFileSync(swPath, 'utf8');
+            const ts = Date.now().toString();
+            const busted = content.replace(/'__BUILD_TS__'/g, `'${ts}'`);
+            fs.writeFileSync(swPath, busted);
+          }
+        },
+      },
       // Bundle analysis - generates stats.html on build
       // Set ANALYZE=true env var to enable: ANALYZE=true npm run build
       process.env.ANALYZE === 'true' && visualizer({

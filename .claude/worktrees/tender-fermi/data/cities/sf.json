@@ -1,0 +1,6 @@
+{
+  "city": "sf",
+  "version": "pilot_v1",
+  "zones": [],
+  "behaviour": { "peak_windows": {} }
+}

@@ -4,9 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { Bell, MessageCircle, Calendar, ShoppingBag, Heart, Loader2 } from 'lucide-react';
-import { supabase } from '@/components/utils/supabaseClient';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 function Toggle({ enabled, onToggle }) {
   return (
@@ -46,16 +44,9 @@ export default function L2NotificationsSheet() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
-      const { data } = await supabase
-        .from('profiles')
-        .select(NOTIFICATION_ROWS.map(r => r.key).join(', '))
-        .eq('id', user.id)
-        .single();
-      if (data) {
-        setPrefs(prev => ({ ...prev, ...Object.fromEntries(Object.entries(data).filter(([, v]) => v != null)) }));
-      }
+      // These columns don't exist in profiles — use hardcoded defaults
+      const prefs = { notif_messages: true, notif_events: true, notif_orders: true, notif_likes: true, notif_marketing: false };
+      setPrefs(prefs);
       setLoading(false);
     };
     load();
@@ -64,16 +55,8 @@ export default function L2NotificationsSheet() {
   const set = async (key, value) => {
     const updated = { ...prefs, [key]: value };
     setPrefs(updated);
-    setSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      await supabase.from('profiles').update({ [key]: value }).eq('id', user.id);
-    } catch {
-      toast.error('Failed to save setting');
-    } finally {
-      setSaving(false);
-    }
+    // No-op: notification columns don't exist in profiles table
+    // In production, these would be persisted to a notification_preferences table
   };
 
   if (loading) {
