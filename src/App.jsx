@@ -38,6 +38,7 @@ import SOSOverlay from '@/components/interrupts/SOSOverlay';
 import ShakeSOS from '@/components/sos/ShakeSOS';
 import IncomingCallBanner from '@/components/calls/IncomingCallBanner';
 import { useViewportHeight } from '@/hooks/useMobileDynamics';
+import { useNavigate as useNav } from 'react-router-dom';
 import { PinLockProvider } from '@/contexts/PinLockContext';
 import PinLockOverlay from '@/components/auth/PinLockScreen';
 import { OSBottomNav } from '@/modes/OSBottomNav';
@@ -695,6 +696,24 @@ function OSArchitecture() {
   const { isAuthenticated } = useBootGuard();
   const location = useLocation();
   const { closeSheet, sheetStack } = useSheet();
+
+  // ── Service Worker NOTIFICATION_CLICK message → React Router navigate ─────
+  const navigate = useNav();
+  useEffect(() => {
+    if (!navigator.serviceWorker) return;
+    const handleSWMessage = (event) => {
+      if (event.data?.type === 'NOTIFICATION_CLICK' && event.data?.url) {
+        try {
+          const url = new URL(event.data.url, window.location.origin);
+          navigate(url.pathname + url.search + url.hash, { replace: false });
+        } catch {
+          // invalid url — ignore
+        }
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', handleSWMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', handleSWMessage);
+  }, [navigate]);
 
   // C5: Android back button — close top sheet instead of navigating back
   useEffect(() => {

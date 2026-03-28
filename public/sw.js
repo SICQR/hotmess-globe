@@ -348,16 +348,17 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // Try to focus an existing window
+        // Post NOTIFICATION_CLICK so React Router can handle in-app navigation
+        const msg = { type: 'NOTIFICATION_CLICK', url: urlToOpen };
+        clientList.forEach((c) => c.postMessage(msg));
+
+        // Focus an existing window or open a new one
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && 'focus' in client) {
             client.focus();
-            client.navigate(urlToOpen); // deep-link routing
             return;
           }
         }
-
-        // Open a new window if none exists
         if (clients.openWindow) {
           return clients.openWindow(urlToOpen);
         }

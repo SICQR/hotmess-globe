@@ -96,6 +96,31 @@ function readLocalSession() {
   } catch { return null; }
 }
 
+/**
+ * Write a session-presence hint to IndexedDB so Safari doesn't purge the
+ * Supabase localStorage token when the app is backgrounded for >7 days.
+ * Fire-and-forget — never blocks boot.
+ */
+function writeIDBHint() {
+  try {
+    const req = indexedDB.open('hm_v1', 1);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('s')) {
+        db.createObjectStore('s', { keyPath: 'k' });
+      }
+    };
+    req.onsuccess = (e) => {
+      const db = e.target.result;
+      try {
+        const tx = db.transaction('s', 'readwrite');
+        tx.objectStore('s').put({ k: 'ts', v: Date.now() });
+        tx.oncomplete = () => db.close();
+      } catch { db.close(); }
+    };
+  } catch { /* IDB unavailable (private browsing) */ }
+}
+
 const BootGuardContext = createContext(null);
 
 /**
@@ -214,6 +239,8 @@ export function BootGuardProvider({ children }) {
       // All three require loadProfile to determine boot state.
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
         setSession(newSession);
+        // IDB hint: prevent Safari purging localStorage token when backgrounded
+        if (event === 'SIGNED_IN') writeIDBHint();
         // Mark presence online (fire-and-forget — do NOT await)
         void supabase.from('user_presence').upsert({
           user_id: newSession.user.id,

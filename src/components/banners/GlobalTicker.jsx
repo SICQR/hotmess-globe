@@ -62,7 +62,7 @@ export function GlobalTicker({ className = '' }) {
   return (
     <div
       className={`w-full overflow-hidden bg-[#0D0D0D]/95 backdrop-blur-sm border-t border-white/5 ${className}`}
-      style={{ height: '28px' }}
+      style={{ height: '36px', flexShrink: 0 }}
     >
       <div className="ticker-track flex items-center h-full whitespace-nowrap">
         <div className="ticker-content inline-flex items-center animate-ticker">
@@ -72,12 +72,12 @@ export function GlobalTicker({ className = '' }) {
       </div>
 
       <style>{`
-        @keyframes ticker-scroll {
+        @keyframes ticker-run {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
         .animate-ticker {
-          animation: ticker-scroll 30s linear infinite;
+          animation: ticker-run 30s linear infinite;
         }
         .animate-ticker:hover {
           animation-play-state: paused;

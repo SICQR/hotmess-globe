@@ -49,6 +49,8 @@ import { nanoid } from 'nanoid';
 import { format, isToday, isTomorrow } from 'date-fns';
 import RightNowModal from '@/components/globe/RightNowModal';
 import { AppBanner } from '@/components/banners/AppBanner';
+import { HNHMessHero } from '@/components/home/HNHMessHero';
+import { HNHMessStrip } from '@/components/home/HNHMessStrip';
 import '@/styles/radio-waveform.css';
 
 interface HomeModeProps {
@@ -867,6 +869,12 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         onTouchEnd={handleTouchEnd}
       >
         <div className="pb-36 space-y-6">
+
+          {/* ── HNH MESS Hero ── */}
+          <HNHMessHero />
+
+          {/* ── HNH MESS Strip ── */}
+          <HNHMessStrip />
 
           {/* ── Dynamic Home Hero Banner (from app_banners) ── */}
           <AppBanner placement="home_hero" variant="hero" className="mx-4" />

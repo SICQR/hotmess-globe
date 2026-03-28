@@ -85,6 +85,18 @@
     --neon-green: 110 100% 54%;
     --neon-purple: 280 100% 58%;
     --neon-gold: 51 100% 50%;
+
+    /* ── HOTMESS Design System Tokens ─────────────────────────────────────── */
+    --hm-black:   #0A0A0A;      /* splash / deepest surface */
+    --hm-root:    #050507;      /* OS root background */
+    --hm-gold:    #D4AF37;      /* premium gold (wordmark, shimmer) */
+    --hm-amber:   #C8962C;      /* interactive amber (CTAs, badges, active) */
+    --hm-white:   #FFFFFF;
+    --hm-muted:   #8E8E93;      /* secondary text */
+    --hm-surface: #1C1C1E;      /* card background */
+    --hm-nav:     #0D0D0D;      /* nav / bottom bar */
+    --hm-border:  rgba(255,255,255,0.08);
+    --hm-ease:    cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .dark {
@@ -172,6 +184,54 @@
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ========================================
+   HOTMESS DESIGN SYSTEM — Utility Classes
+   ======================================== */
+
+@layer components {
+  /* Primary CTA — amber fill */
+  .hm-btn-primary {
+    @apply inline-flex items-center justify-center font-black text-sm uppercase tracking-widest rounded-xl px-6 py-3 transition-opacity active:opacity-70;
+    background-color: var(--hm-amber);
+    color: #000;
+  }
+
+  /* Secondary CTA — ghost amber border */
+  .hm-btn-secondary {
+    @apply inline-flex items-center justify-center font-semibold text-sm tracking-wide rounded-xl px-6 py-3 border transition-opacity active:opacity-70;
+    color: var(--hm-amber);
+    border-color: rgba(200,150,44,0.35);
+    background: transparent;
+  }
+
+  /* Standard dark card */
+  .hm-card {
+    @apply rounded-2xl overflow-hidden;
+    background-color: var(--hm-surface);
+  }
+
+  /* Featured card — gold border */
+  .hm-card-featured {
+    @apply hm-card border;
+    border-color: rgba(200,150,44,0.35);
+  }
+
+  /* Compact badge — filled amber */
+  .hm-badge {
+    @apply inline-flex items-center font-black text-[9px] uppercase tracking-widest rounded px-1.5 py-0.5;
+    background-color: var(--hm-amber);
+    color: #000;
+  }
+
+  /* Outline badge */
+  .hm-badge-outline {
+    @apply inline-flex items-center font-black text-[9px] uppercase tracking-widest rounded px-1.5 py-0.5 border;
+    color: var(--hm-amber);
+    border-color: rgba(200,150,44,0.4);
+    background: rgba(200,150,44,0.1);
   }
 }
 
