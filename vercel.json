@@ -4,12 +4,6 @@
   "buildCommand": "npm install && npm run build",
   "outputDirectory": "dist",
   "regions": ["lhr1", "iad1"],
-  "functions": {
-    "api/**": {
-      "maxDuration": 10,
-      "memory": 1024
-    }
-  },
   "crons": [
     {
       "path": "/api/events/cron",
