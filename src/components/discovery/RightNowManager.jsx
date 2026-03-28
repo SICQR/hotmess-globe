@@ -14,14 +14,17 @@ export default function RightNowManager({ currentUser }) {
   const queryClient = useQueryClient();
 
   const { data: activeStatus } = useQuery({
-    queryKey: ['right-now-active', currentUser?.email],
+    queryKey: ['right-now-active', 'me'],
     queryFn: async () => {
-      const statuses = await supabase.from('right_now_status').select('*').eq({
-        user_email: currentUser.email,
-        active: true
-      });
-      const active = statuses.find(s => new Date(s.expires_at) > new Date());
-      return active || null;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return null;
+      const { data } = await supabase.from('right_now_status').select('*')
+        .eq('user_id', session.user.id)
+        .gte('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data || null;
     },
     enabled: !!currentUser,
     refetchInterval: 10000 // Check every 10s
@@ -29,8 +32,8 @@ export default function RightNowManager({ currentUser }) {
 
   const endNowMutation = useMutation({
     mutationFn: async () => {
-      if (!activeStatus) return;
-      await supabase.from('right_now_status').update({ active: false });
+      if (!activeStatus?.id) return;
+      await supabase.from('right_now_status').delete().eq('id', activeStatus.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['right-now-active']);

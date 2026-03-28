@@ -46,13 +46,35 @@ export default function SellerDashboard() {
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['seller-products', currentUser?.email],
-    queryFn: () => supabase.from('products').select('*').eq({ seller_email: currentUser.email }, '-created_date'),
+    queryFn: async () => {
+      if (!currentUser?.email) return [];
+      try {
+        const { data, error } = await supabase.from('products').select('*')
+          .eq('seller_email', currentUser.email)
+          .order('created_at', { ascending: false });
+        if (error) return [];
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
     enabled: !!currentUser,
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ['seller-orders', currentUser?.email],
-    queryFn: () => supabase.from('orders').select('*').eq({ seller_email: currentUser.email }, '-created_date'),
+    queryFn: async () => {
+      if (!currentUser?.email) return [];
+      try {
+        const { data, error } = await supabase.from('orders').select('*')
+          .eq('seller_email', currentUser.email)
+          .order('created_at', { ascending: false });
+        if (error) return [];
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
     enabled: !!currentUser,
   });
 
@@ -70,7 +92,16 @@ export default function SellerDashboard() {
 
   const { data: payouts = [] } = useQuery({
     queryKey: ['seller-payouts', currentUser?.email],
-    queryFn: () => supabase.from('seller_payouts').select('*').order('-created_date', { ascending: false }),
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase.from('seller_payouts').select('*')
+          .order('created_at', { ascending: false });
+        if (error) return [];
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
     enabled: !!currentUser,
   });
 

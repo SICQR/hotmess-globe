@@ -110,7 +110,43 @@ export default async function handler(req, res) {
         continue;
       }
 
-      // Email/push channels are intentionally not delivered here until a provider is configured.
+      if (channel === 'push') {
+        if (!item.user_email) throw new Error('user_email required for push channel');
+
+        // Resolve user_id from email
+        const { data: profile } = await serviceClient
+          .from('profiles')
+          .select('id')
+          .eq('email', item.user_email)
+          .single();
+
+        if (!profile?.id) throw new Error('User not found for push');
+
+        const pushRes = await fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173'}/api/notifications/push`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: profile.id,
+            title: item.title || 'HOTMESS',
+            body: item.message || '',
+            url: item.metadata?.link || '/',
+            tag: item.notification_type || 'hotmess',
+          }),
+        });
+
+        if (!pushRes.ok) throw new Error(`Push API returned ${pushRes.status}`);
+
+        const { error: updateError } = await serviceClient
+          .from('notification_outbox')
+          .update({ status: 'sent', sent_at: nowIso })
+          .eq('id', item.id);
+
+        if (updateError) throw updateError;
+        sent += 1;
+        continue;
+      }
+
+      // Email channel: not configured yet
       const { error: updateError } = await serviceClient
         .from('notification_outbox')
         .update({ status: 'blocked', sent_at: null, metadata: { ...(item.metadata || {}), blocked_reason: 'provider_not_configured' } })

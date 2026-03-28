@@ -602,34 +602,24 @@ export async function markAllNotificationsRead(userId) {
  */
 export async function sendPushNotification({ userId, title, message, link, metadata = {} }) {
   try {
-    // Get user's push subscription
-    const { data: subscription } = await supabase
-      .from('push_subscriptions')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('active', true);
-
-    if (!subscription || subscription.length === 0) {
-      return { success: false, error: 'No active push subscription' };
-    }
-
-    // Send via API route that handles web-push
     const response = await fetch('/api/notifications/push', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        subscriptions: subscription,
-        payload: {
-          title,
-          body: message,
-          icon: '/icons/icon-192.png',
-          badge: '/icons/badge-72.png',
-          data: { link, ...metadata },
-        },
+        user_id: userId,
+        title,
+        body: message,
+        url: link || '/',
+        tag: metadata?.tag || 'hotmess',
       }),
     });
 
-    return await response.json();
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      return { success: false, error: err?.error || 'Push failed' };
+    }
+
+    return { success: true };
   } catch (err) {
     console.error('[Communications] Push notification error:', err);
     return { success: false, error: err.message };

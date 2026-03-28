@@ -12,25 +12,34 @@ export default function DropBeacons() {
   const { data: drops = [] } = useQuery({
     queryKey: ['drop-beacons'],
     queryFn: async () => {
-      // Get beacons with mode=drop that are currently active
-      const beacons = await supabase.from('beacons').select('*').eq({ mode: 'drop', active: true });
-      
-      // Get products associated with these drop beacons
-      const products = await supabase.from('products').select('*');
-      
-      return beacons.map(beacon => {
-        const dropProducts = products.filter(p => 
-          p.details?.drop_beacon_id === beacon.id && 
-          p.status === 'active'
-        );
-        
-        return {
-          ...beacon,
-          products: dropProducts,
-          expires_at: beacon.details?.expires_at,
-          is_live: beacon.details?.is_live
-        };
-      }).filter(drop => drop.products.length > 0);
+      try {
+        // Get beacons with type=drop that are currently active
+        const { data: beacons, error: beaconsError } = await supabase.from('beacons').select('*')
+          .eq('type', 'drop')
+          .gte('ends_at', new Date().toISOString());
+        if (beaconsError) return [];
+
+        // Get products associated with these drop beacons
+        const { data: products, error: productsError } = await supabase.from('products').select('*');
+        if (productsError) return [];
+
+        return (beacons || []).map(beacon => {
+          const dropProducts = (products || []).filter(p =>
+            p.details?.drop_beacon_id === beacon.id &&
+            p.status === 'active'
+          );
+
+          return {
+            ...beacon,
+            products: dropProducts,
+            expires_at: beacon.details?.expires_at,
+            is_live: beacon.details?.is_live
+          };
+        }).filter(drop => drop.products.length > 0);
+      } catch (error) {
+        console.warn('Failed to fetch drop beacons:', error);
+        return [];
+      }
     },
     refetchInterval: 30000 // Check every 30 seconds
   });

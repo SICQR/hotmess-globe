@@ -876,9 +876,6 @@ export function HomeMode({ className = '' }: HomeModeProps) {
           {/* ── HNH MESS Strip ── */}
           <HNHMessStrip />
 
-          {/* ── Dynamic Home Hero Banner (from app_banners) ── */}
-          <AppBanner placement="home_hero" variant="hero" className="mx-4" />
-
           {/* ── Dynamic Home Strip Banner ── */}
           <AppBanner placement="home_strip" variant="strip" />
 

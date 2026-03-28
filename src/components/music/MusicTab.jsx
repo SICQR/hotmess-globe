@@ -15,6 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, ChevronDown, ChevronUp, Disc3, X, Loader2,
@@ -368,12 +369,14 @@ function ReleaseDetailSheet({ release, tracks, onClose, bannerData }) {
 // ── Main MusicTab ────────────────────────────────────────────────────────────
 
 export default function MusicTab() {
+  const navigate = useNavigate();
   const [artist, setArtist] = useState(null);
   const [releases, setReleases] = useState([]);
   const [tracks, setTracks] = useState({});       // release_id -> Track[]
   const [loading, setLoading] = useState(true);
   const [selectedRelease, setSelectedRelease] = useState(null);
   const [bannerMap, setBannerMap] = useState({});  // catalog -> banner
+  const [showMemberCTA, setShowMemberCTA] = useState(false);
   const player = useMusicPlayer();
 
   // Fetch data
@@ -434,14 +437,14 @@ export default function MusicTab() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: BG }}>
+      <div className="h-full w-full flex items-center justify-center" style={{ backgroundColor: BG }}>
         <Loader2 className="w-8 h-8 animate-spin text-[#9B1B2A]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-40" style={{ backgroundColor: BG }}>
+    <div className="h-full w-full overflow-y-auto overscroll-contain pb-40" style={{ backgroundColor: BG }}>
       {/* ── Music Top Banner ── */}
       <AppBanner placement="music_top" variant="hero" className="mx-4 mt-4" />
 
@@ -513,22 +516,28 @@ export default function MusicTab() {
 
       {/* ── Releases ── */}
       <div className="px-4 mt-2">
-        <h2 className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">
-          Releases · {releases.length}
-        </h2>
-
-        <div className="grid grid-cols-2 gap-3">
-          {releases.map((rel) => {
+        {/* Helper function to render a single release card */}
+        {(() => {
+          const renderReleaseCard = (rel) => {
             const isActive = player.currentTrack &&
               (player.currentTrack.id === rel.id ||
                tracks[rel.id]?.some((t) => t.id === player.currentTrack?.id));
             const trackCount = tracks[rel.id]?.length || 0;
+            const hasPreview = rel.preview_url && rel.preview_url !== 'PENDING_UPLOAD';
+
+            const handleCardClick = () => {
+              if (!hasPreview) {
+                setShowMemberCTA(true);
+              } else {
+                setSelectedRelease(rel);
+              }
+            };
 
             return (
               <motion.button
                 key={rel.id}
                 whileTap={{ scale: 0.97 }}
-                onClick={() => setSelectedRelease(rel)}
+                onClick={handleCardClick}
                 className={`relative overflow-hidden rounded-xl text-left transition-colors ${
                   isActive ? 'ring-1 ring-[#C8962C]/40' : ''
                 }`}
@@ -559,6 +568,12 @@ export default function MusicTab() {
                       <Lock className="w-3.5 h-3.5 text-[#C8962C]/60" />
                     </span>
                   )}
+                  {/* Locked overlay if no preview */}
+                  {!hasPreview && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <Lock className="w-8 h-8 text-white/30" />
+                    </div>
+                  )}
                   {/* Playing indicator */}
                   {isActive && player.isPlaying && (
                     <div className="absolute bottom-2 left-2">
@@ -580,8 +595,50 @@ export default function MusicTab() {
                 </div>
               </motion.button>
             );
-          })}
-        </div>
+          };
+
+          // Group releases by catalog number prefix
+          const rcrReleases = releases.filter(r => /^(RCR|RAW)/.test(r.catalog_number ?? ''));
+          const sdReleases = releases.filter(r => r.catalog_number?.startsWith('SD'));
+          const otherReleases = releases.filter(r =>
+            !/^(RCR|RAW)/.test(r.catalog_number ?? '') && !r.catalog_number?.startsWith('SD')
+          );
+
+          return (
+            <>
+              {rcrReleases.length > 0 && (
+                <>
+                  <h2 className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: '#9B1B2A' }}>
+                    Raw Convict Records · {rcrReleases.length}
+                  </h2>
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    {rcrReleases.map(renderReleaseCard)}
+                  </div>
+                </>
+              )}
+              {sdReleases.length > 0 && (
+                <>
+                  <h2 className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: '#C8962C' }}>
+                    Smash Daddys · {sdReleases.length}
+                  </h2>
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    {sdReleases.map(renderReleaseCard)}
+                  </div>
+                </>
+              )}
+              {otherReleases.length > 0 && (
+                <>
+                  <h2 className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3">
+                    Other Releases · {otherReleases.length}
+                  </h2>
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    {otherReleases.map(renderReleaseCard)}
+                  </div>
+                </>
+              )}
+            </>
+          );
+        })()}
       </div>
 
       {/* ── Release Detail Sheet ── */}
@@ -595,6 +652,32 @@ export default function MusicTab() {
           />
         )}
       </AnimatePresence>
+
+      {/* ── Member CTA Overlay ── */}
+      {showMemberCTA && (
+        <div style={{
+          position: 'fixed', bottom: 83, left: 0, right: 0, zIndex: 50,
+          background: 'linear-gradient(to top, #0A0A0A 70%, transparent)',
+          padding: '28px 20px 20px', textAlign: 'center',
+        }}>
+          <p style={{ color: '#F5F5F5', fontWeight: 700, fontSize: 16, margin: '0 0 8px' }}>Members only</p>
+          <p style={{ color: 'rgba(245,245,245,0.5)', fontSize: 13, margin: '0 0 16px' }}>
+            Join HOTMESS to unlock the full catalogue.
+          </p>
+          <button onClick={() => navigate('/more')} style={{
+            background: '#D4AF37', color: '#0A0A0A', border: 'none', borderRadius: 8,
+            padding: '14px 0', fontWeight: 700, fontSize: 14, width: '100%', cursor: 'pointer',
+          }}>
+            BECOME A MEMBER →
+          </button>
+          <button onClick={() => setShowMemberCTA(false)} style={{
+            background: 'none', border: 'none', color: 'rgba(245,245,245,0.35)',
+            fontSize: 13, marginTop: 12, cursor: 'pointer', display: 'block', margin: '12px auto 0',
+          }}>
+            Keep browsing
+          </button>
+        </div>
+      )}
     </div>
   );
 }

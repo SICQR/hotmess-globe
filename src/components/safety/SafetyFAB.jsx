@@ -62,15 +62,21 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
         const { data: { user } } = await supabase.auth.getUser();
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         if (user?.email) {
-          const { data: contacts } = await supabase
+          const { data: contacts, error } = await supabase
             .from('emergency_contacts')
             .select('*')
             .eq('user_email', user.email)
             .eq('notify_on_sos', true);
-          setContactCount(contacts?.length || 0);
+          if (error) {
+            console.warn('Failed to fetch emergency_contacts:', error);
+            setContactCount(0);
+          } else {
+            setContactCount(contacts?.length || 0);
+          }
         }
       } catch (e) {
         console.error('Failed to get contacts:', e);
+        setContactCount(0);
       }
     };
     getContacts();
@@ -91,18 +97,22 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
         : 'Location unavailable';
 
       // Get trusted contacts
-      const { data: contacts } = await supabase
+      const { data: contacts, error: contactsError } = await supabase
         .from('emergency_contacts')
         .select('*')
         .eq('user_email', user.email)
         .eq('notify_on_sos', true);
 
-      const emergencyMessage = user.emergency_message || 
+      if (contactsError) {
+        console.warn('Failed to fetch emergency_contacts:', contactsError);
+      }
+
+      const emergencyMessage = user.emergency_message ||
         `🚨 EMERGENCY ALERT from ${user.full_name}: I need help! Location: ${locationStr}`;
 
       // Send to all contacts
       // Email notifications disabled - implement via /api/email/send endpoint
-      for (const contact of contacts) {
+      for (const contact of (contacts || [])) {
         // TODO: Send via supabase or /api/email/send
         console.log('Would send to:', contact.contact_email);
       }

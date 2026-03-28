@@ -44,19 +44,23 @@ export default function PanicButton() {
       }
 
       // Get trusted contacts
-      const { data: contacts } = await supabase
+      const { data: contacts, error: contactsError } = await supabase
         .from('emergency_contacts')
         .select('*')
         .eq('user_email', user.email)
         .eq('notify_on_sos', true);
 
+      if (contactsError) {
+        console.warn('Failed to fetch emergency_contacts:', contactsError);
+      }
+
       // Get user's pre-defined emergency message
-      const emergencyMessage = user.emergency_message || 
+      const emergencyMessage = user.emergency_message ||
         `🚨 EMERGENCY ALERT from ${user.full_name}: I need help! My last known location: ${locationData.address}`;
 
       // Send SMS/Email to all trusted contacts
       // Email notifications disabled - implement via /api/email/send endpoint
-      for (const contact of contacts) {
+      for (const contact of (contacts || [])) {
         // TODO: Send via supabase or /api/email/send
         console.log('Would send to:', contact.contact_email);
       }

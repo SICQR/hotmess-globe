@@ -14,7 +14,14 @@ const LOGISTICS_ICONS = {
 export default function RightNowHistory({ userEmail }) {
   const { data: history = [], isLoading } = useQuery({
     queryKey: ['right-now-history', userEmail],
-    queryFn: () => supabase.from('right_now_status').select('*').eq({ user_email: userEmail }, '-created_date', 20),
+    queryFn: async () => {
+      if (!userEmail) return [];
+      const { data } = await supabase.from('right_now_status').select('*')
+        .eq('user_email', userEmail)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      return data || [];
+    },
     enabled: !!userEmail
   });
 

@@ -22,13 +22,31 @@ export default function Stats() {
 
   const { data: checkIns = [] } = useQuery({
     queryKey: ['my-checkins', currentUser?.email],
-    queryFn: () => supabase.from('beacon_check_ins').select('*'),
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase.from('beacon_check_ins').select('*');
+        if (error) return [];
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
     enabled: !!currentUser,
   });
 
   const { data: purchases = [] } = useQuery({
     queryKey: ['my-purchases', currentUser?.email],
-    queryFn: () => supabase.from('orders').select('*').eq({ buyer_email: currentUser.email }),
+    queryFn: async () => {
+      if (!currentUser?.email) return [];
+      try {
+        const { data, error } = await supabase.from('orders').select('*')
+          .eq('buyer_email', currentUser.email);
+        if (error) return [];
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
     enabled: !!currentUser,
   });
 
@@ -40,7 +58,17 @@ export default function Stats() {
 
   const { data: profileViews = [] } = useQuery({
     queryKey: ['profile-views', currentUser?.email],
-    queryFn: () => supabase.from('profile_views').select('*').eq({ viewed_email: currentUser.email }),
+    queryFn: async () => {
+      if (!currentUser?.email) return [];
+      try {
+        const { data, error } = await supabase.from('profile_views').select('*')
+          .eq('viewed_email', currentUser.email);
+        if (error) return [];
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
     enabled: !!currentUser,
   });
 

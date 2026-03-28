@@ -2,7 +2,7 @@
 
 This file provides guidance when working with code in this repository.
 
-**Last updated:** 2026-03-28 (session 7)
+**Last updated:** 2026-03-28 (session 9)
 **Design system:** `DESIGN_SYSTEM.md` — always read before touching any styling
 **Design reference docs:** `~/Downloads/HOTMESS-PROJECT/01-ACTIVE-REFERENCE/` — all dated design reference files live here
 
@@ -46,7 +46,32 @@ Use your product judgment. You know the stack, the brand, the DB schema. Make a 
 
 ---
 
-## 🔴 PICK UP HERE (Last session: 2026-03-28 session 7)
+## 🔴 PICK UP HERE (Last session: 2026-03-28 session 9)
+
+### What shipped sessions 8+9 (2026-03-28):
+
+**Session 8 — `bad1be6`:**
+- ✅ **HotmessWordmark** — `src/components/brand/HotmessWordmark.tsx`, letter-stagger, SS pulse, shimmer underline, 5 size variants
+- ✅ **SplashScreen redesign** — dark luxury, gold rules, wordmark hero, fast-path 900ms CTA reveal
+- ✅ **CSS design tokens** — `--hm-black`, `--hm-gold`, `--hm-amber` etc. + `.hm-btn-primary`, `.hm-card` utilities in index.css
+- ✅ **HNH MESS Hero + Strip** — `HNHMessHero.tsx` (320px, floating bottle, radial glow, £10/£15 prices) + `HNHMessStrip.tsx` (46px persistent, "from £10") wired into HomeMode
+- ✅ **HNHMarketHero** — 2-col product grid in MarketMode (£10 50ml / £15 250ml featured)
+- ✅ **GlobalTicker** — fixed to exactly 36px
+- ✅ **Apple Sign In blocked in WebViews** — `APPLE_ENABLED = false` flag + isInWebView() UA check in SignUpScreen
+- ✅ **Magic link confirmation screen** — gold icon, 60s countdown, resend button, "wrong email" escape
+- ✅ **uploadToStorage BUCKET_MAP** — code names → prod bucket names (audio→records-audio, event-images→records-covers, etc.)
+- ✅ **SW push notificationclick** — posts `NOTIFICATION_CLICK` message; App.jsx navigates via `useNavigate`
+- ✅ **markRead() DB-first** — L2ChatSheet zeroes `chat_threads.unread_count` in Supabase before localStorage
+- ✅ **IndexedDB session hint** — `writeIDBHint()` in BootGuardContext on SIGNED_IN, prevents Safari localStorage purge
+
+**Session 9 QA emergency — `95decb0` (pushed, pending deploy):**
+- ✅ **Onboarding re-loop FIXED** — removed `!display_name` gate in BootGuardContext; `onboarding_completed === true` is now the ONLY returning-user gate
+- ✅ **Canvas bleed fixed** — UnifiedGlobe returns null on all non-/pulse routes (AmbientGlobe removed)
+- ✅ **Music tab scroll fixed** — `h-full overflow-y-auto overscroll-contain` (was min-h-screen)
+- ✅ **Auth callback routing** — returning users → `/ghosted`, new users → `/`, bot 400s → `/` gracefully
+- ✅ **E2E matrix** — `e2e/11-full-qa-matrix.spec.ts`: auth flows, tab canvas bleed, HNH prices, sheet system, onboarding regression
+
+**Current prod commit:** `95decb0` (pending push/deploy) | prev deployed: `bad1be6`
 
 ### What shipped this session (2026-03-28):
 
