@@ -28,11 +28,36 @@ import VideoCallModal from '@/components/video/VideoCallModal';
 import TravelModal from '@/components/messaging/TravelModal';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 
-// ── localStorage unread tracking ─────────────────────────────────────────────
+// ── Read-state helpers ────────────────────────────────────────────────────────
+// getLastRead: kept for backward compat (returns local timestamp or 0)
 const getLastRead = (threadId) => {
   try { return parseInt(localStorage.getItem(`chat_read_${threadId}`) || '0', 10); } catch { return 0; }
 };
-const markRead = (threadId) => {
+
+/**
+ * Mark a thread as read: DB-first (unread_count → 0 for caller's email),
+ * then update local timestamp as a fallback cache key.
+ * Fire-and-forget; never blocks the UI.
+ */
+const markRead = (threadId, userEmail) => {
+  // DB write: zero out unread count for this user
+  if (userEmail && threadId) {
+    supabase
+      .from('chat_threads')
+      .select('unread_count')
+      .eq('id', threadId)
+      .single()
+      .then(({ data: row }) => {
+        if (!row) return;
+        const updated = { ...(row.unread_count || {}), [userEmail]: 0 };
+        supabase
+          .from('chat_threads')
+          .update({ unread_count: updated })
+          .eq('id', threadId)
+          .then(() => {});
+      });
+  }
+  // Local cache: still written so useUnreadCount can read optimistically
   try { localStorage.setItem(`chat_read_${threadId}`, String(Date.now())); } catch {}
 };
 
@@ -166,26 +191,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     if (thread._new) return;
 
     setMessagesLoading(true);
-    markRead(thread.id);
-
-    // Reset unread_count for current user in this thread
-    if (currentUser?.email) {
-      supabase
-        .from('chat_threads')
-        .select('unread_count')
-        .eq('id', thread.id)
-        .single()
-        .then(({ data: threadRow }) => {
-          if (threadRow) {
-            const updated = { ...(threadRow.unread_count || {}), [currentUser.email]: 0 };
-            supabase
-              .from('chat_threads')
-              .update({ unread_count: updated })
-              .eq('id', thread.id)
-              .then(() => {});
-          }
-        });
-    }
+    markRead(thread.id, currentUser?.email);
 
     try {
       const { data, error } = await supabase
@@ -212,11 +218,12 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
             if (prev.find(m => m.id === payload.new.id)) return prev;
             return [...prev, payload.new];
           });
-          markRead(thread.id);
+          markRead(thread.id, currentUser?.email);
         }
       )
       .subscribe();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.email]);
 
   // Cleanup realtime on unmount
   useEffect(() => () => {
@@ -275,8 +282,8 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
         });
       if (msgError) throw msgError;
 
-      // Record last-read timestamp locally for this thread
-      localStorage.setItem(`chat_read_${thread.id}`, String(Date.now()));
+      // Mark thread read on send (DB-first via markRead helper)
+      markRead(thread.id, currentUser?.email);
 
       // Update thread last_message
       await supabase

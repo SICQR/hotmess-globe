@@ -54,6 +54,7 @@ import { useShopCart } from '@/features/shop/cart/ShopCartContext';
 import { useBootGuard } from '@/contexts/BootGuardContext';
 import { isBrandVisible } from '@/config/brands';
 import { AppBanner } from '@/components/banners/AppBanner';
+import { HNHMarketHero } from '@/components/home/HNHMarketHero';
 import {
   getAllProducts,
   getCategories,
@@ -822,8 +823,11 @@ export function MarketMode({ className = '' }: MarketModeProps) {
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto overscroll-y-contain pb-32"
       >
-        {/* HNH Lube banner */}
-        <AppBanner placement="market_lube" variant="card" className="mx-4 mt-4" />
+        {/* HNH MESS product cards */}
+        <HNHMarketHero />
+
+        {/* HNH Lube banner (fallback / additional) */}
+        <AppBanner placement="market_lube" variant="card" className="mx-4 mt-2" />
 
         <AnimatePresence mode="wait">
           {/* LOADING STATE */}
