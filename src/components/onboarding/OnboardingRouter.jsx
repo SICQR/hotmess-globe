@@ -221,6 +221,11 @@ export default function OnboardingRouter() {
     goTo(SCREENS.AGE_GATE);
   };
 
+  const handleSignInFromSplash = () => {
+    localStorage.setItem('hm_splash_seen_v1', 'true');
+    goTo(SCREENS.SIGNIN);
+  };
+
   const handleAgeGateComplete = () => {
     goTo(SCREENS.SIGNUP);
   };
@@ -260,7 +265,12 @@ export default function OnboardingRouter() {
   // Render the active screen
   switch (screen) {
     case SCREENS.SPLASH:
-      return <SplashScreen onComplete={handleSplashComplete} />;
+      return (
+        <SplashScreen
+          onJoin={handleSplashComplete}
+          onSignIn={handleSignInFromSplash}
+        />
+      );
 
     case SCREENS.AGE_GATE:
       return (
