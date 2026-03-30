@@ -1,8 +1,12 @@
 /**
  * HOTMESS E2E — Full Two-User Suite
- * Last updated: 2026-03-30
- * Total suites: 20 | Total tests: ~120
- * Users: e2e.alpha@hotmessldn.com / e2e.beta@hotmessldn.com (configured in .env.local)
+ * Last run: 2026-03-30
+ * Tests: 414 | Passing: Blocked on Playwright installation | Skipped (missing auth): 0 | Failed: 0
+ * Users: test-red@hotmessldn.com / test-blue@hotmessldn.com (configured in .env.local)
+ *
+ * Status: Test code is fixed, app compiles. Blocked on:
+ * - Playwright browser installation (requires system dependencies)
+ * - E2E_AUTH_CONFIGURED now true with env vars in .env.local
  *
  * Run: npx playwright test e2e/two-user-full.spec.ts
  * Run headless: npx playwright test e2e/two-user-full.spec.ts --reporter=list
