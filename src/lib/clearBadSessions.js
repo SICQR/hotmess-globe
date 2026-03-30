@@ -1,9 +1,10 @@
 /**
  * Clear any cached Supabase sessions from stale/wrong projects.
- * Correct project: klsywpvncqqglhnhrjbh (active as of Feb 2026).
+ * Correct project: rfoftonnlwudilafhfkl (production as of March 2026).
+ * NOTE: klsywpvncqqglhnhrjbh is the DEV/staging project.
  */
 
-const CORRECT_PROJECT_REF = 'klsywpvncqqglhnhrjbh';
+const CORRECT_PROJECT_REF = 'rfoftonnlwudilafhfkl';
 
 export function clearBadSupabaseSessions() {
   if (typeof window === 'undefined' || !window.localStorage) return;
