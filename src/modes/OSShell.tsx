@@ -47,7 +47,8 @@ export function OSShell({ className = '' }: OSShellProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="h-full w-full"
+            style={{ overflowX: 'hidden', width: '100%' }}
+            className="h-full"
           >
             <Suspense fallback={<ModeLoadingFallback />}>
               <Routes location={location}>

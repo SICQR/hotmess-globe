@@ -834,7 +834,7 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       </header>
 
       {/* ---- Pull-to-refresh indicator ---- */}
-      {refreshing && (
+      {isRefreshing && (
         <div className="flex justify-center py-2">
           <div
             className="w-5 h-5 border-2 rounded-full animate-spin"

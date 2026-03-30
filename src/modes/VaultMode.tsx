@@ -5,13 +5,15 @@
  * Accessible via Profile → Vault or /vault deep link.
  */
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useRef, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
   Package, ShoppingBag, Ticket, Lock, Loader2,
   QrCode, Trophy
 } from 'lucide-react';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { format } from 'date-fns';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
@@ -51,7 +53,16 @@ type ListingRow = {
 
 export default function VaultMode() {
   const [tab, setTab] = useState<Tab>('all');
+  const queryClient = useQueryClient();
   const { openSheet } = useSheet();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
@@ -177,7 +188,8 @@ export default function VaultMode() {
       </div>
 
       {/* Items list */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum" {...pullHandlers}>
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />

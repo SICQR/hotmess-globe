@@ -1,0 +1,58 @@
+import { supabase } from '@/components/utils/supabaseClient';
+
+/**
+ * Maps logical code names → actual Supabase storage bucket names in production.
+ * Code uses clean names; prod buckets have context prefixes.
+ */
+const BUCKET_MAP: Record<string, string> = {
+  // Audio uploads (radio, music)
+  audio:            'records-audio',
+  // Event / venue images
+  'event-images':   'records-covers',
+  // Chat photo / file attachments
+  'chat-attachments': 'chat-uploads',
+  // General media (product photos, profile assets, misc)
+  media:            'messmarket-images',
+  // Profile avatars — same bucket in prod
+  avatars:          'avatars',
+  // Preloved listing images
+  'listing-images': 'messmarket-images',
+};
+
+/**
+ * Resolve a logical bucket name to its production bucket name.
+ * Falls through to the input if no mapping exists.
+ */
+function resolveBucket(bucket: string): string {
+  return BUCKET_MAP[bucket] ?? bucket;
+}
+
+/**
+ * Upload a file to a Supabase storage bucket and return the public URL.
+ * Bucket name is resolved via BUCKET_MAP before upload so callers can use
+ * clean logical names regardless of how buckets are named in Supabase.
+ */
+export async function uploadToStorage(
+  file: File,
+  bucket: string,
+  userId: string,
+  options?: { upsert?: boolean }
+): Promise<string> {
+  const resolvedBucket = resolveBucket(bucket);
+  const ext = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
+  const path = `${userId}/${Date.now()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from(resolvedBucket)
+    .upload(path, file, { upsert: options?.upsert ?? true });
+
+  if (error) throw error;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from(resolvedBucket)
+    .getPublicUrl(path);
+
+  return publicUrl;
+}
+
+export { BUCKET_MAP, resolveBucket };

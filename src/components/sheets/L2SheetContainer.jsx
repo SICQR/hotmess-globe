@@ -13,7 +13,10 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSheet } from '@/contexts/SheetContext';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { cn } from '@/lib/utils';
 import { hapticPattern, hapticSnap } from '@/lib/haptics';
 
@@ -54,8 +57,8 @@ const sheetVariants = {
 const SWIPE_THRESHOLD = 100;
 const VELOCITY_THRESHOLD = 500;
 
-export default function L2SheetContainer({ 
-  children, 
+export default function L2SheetContainer({
+  children,
   title,
   subtitle,
   className,
@@ -68,6 +71,15 @@ export default function L2SheetContainer({
   const { isOpen, closeSheet, onAnimationComplete, activeSheet } = useSheet();
   const sheetRef = useRef(null);
   const controls = useAnimation();
+  const queryClient = useQueryClient();
+  const sheetScrollRef = useRef(null);
+  const handleSheetRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleSheetRefresh,
+    scrollRef: sheetScrollRef,
+  });
 
   const handleClose = useCallback(() => {
     if (customOnClose) {
@@ -151,7 +163,7 @@ export default function L2SheetContainer({
             animate="visible"
             exit="exit"
             dragListener={false}
-            style={{ height }}
+            style={{ height, overflowX: 'hidden' }}
             className={cn(
               'fixed bottom-0 left-0 right-0 z-[80]',
               'bg-black border-t-2 border-x-2 border-[#C8962C]',
@@ -215,7 +227,12 @@ export default function L2SheetContainer({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+            <div
+              ref={sheetScrollRef}
+              className="flex-1 overflow-y-auto overflow-x-hidden scroll-momentum touch-pan-y"
+              {...pullHandlers}
+            >
+              <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
               {children}
             </div>
 

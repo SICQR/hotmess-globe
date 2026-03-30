@@ -7,10 +7,12 @@
  * Replaces the /events → /pulse redirect.
  */
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, MapPin, Users, Loader2, Ticket, Plus, Clock } from 'lucide-react';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { supabase } from '@/components/utils/supabaseClient';
 import { useSheet } from '@/contexts/SheetContext';
@@ -36,6 +38,14 @@ export default function EventsMode() {
   const queryClient = useQueryClient();
   const { openSheet } = useSheet();
   const { emitPulse } = useGlobe();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -196,7 +206,8 @@ export default function EventsMode() {
       </div>
 
       {/* Event list */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum" {...pullHandlers}>
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="w-6 h-6 text-[#C8962C] animate-spin" />

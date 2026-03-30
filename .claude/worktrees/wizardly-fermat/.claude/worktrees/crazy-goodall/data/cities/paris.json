@@ -1,0 +1,1 @@
+{"city":"paris","zones":[{"id":"le_marais","category":"historic_core","energy":"social_nightlife"},{"id":"pigalle","category":"after_dark","energy":"club_intensity"},{"id":"canal_st_martin","category":"social","energy":"evening_social"}],"behaviour":{"peak_windows":{"le_marais":["18:00-01:00"],"pigalle":["23:00-05:00"]}}}

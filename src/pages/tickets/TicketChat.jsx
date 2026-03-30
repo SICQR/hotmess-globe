@@ -1,15 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTicketThread, useTicketMessages, useSendTicketMessage, useInitiatePurchase } from '@/hooks/useTickets';
+import { useQueryClient } from '@tanstack/react-query';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/components/utils/supabaseClient';
 
 export default function TicketChat() {
   const { threadId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const scrollRef = useRef(null);
   const [input, setInput] = useState('');
   const [userId, setUserId] = useState(null);
   const messagesEndRef = useRef(null);
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
 
   const { thread, isLoading: threadLoading } = useTicketThread(null, threadId);
   const { messages, isLoading: messagesLoading, refetch } = useTicketMessages(threadId);
@@ -127,7 +139,8 @@ export default function TicketChat() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum p-4" {...pullHandlers}>
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         <div className="mx-auto max-w-2xl space-y-4">
           {/* System message */}
           <div className="rounded-lg bg-white/5 p-3 text-center text-sm text-white/60">

@@ -2,9 +2,13 @@
  * CarePage — Hand N Hand wellbeing page
  * Aftercare tips, resources, community care.
  */
+import { useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Phone, Shield, Wind } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 
 const GOLD = '#C8962C';
 
@@ -23,6 +27,15 @@ const RESOURCES = [
 
 export default function CarePage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const scrollRef = useRef(null);
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
 
   return (
     <div className="h-full w-full flex flex-col text-white" style={{ background: '#050507' }}>
@@ -51,7 +64,8 @@ export default function CarePage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 pb-24 space-y-8">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum px-4 py-6 pb-24 space-y-8" {...pullHandlers}>
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         {/* Intro */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}

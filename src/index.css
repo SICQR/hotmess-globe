@@ -630,7 +630,9 @@
   /* Momentum scrolling on iOS */
   .scroll-momentum {
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    overscroll-behavior-y: contain;
+    overscroll-behavior-x: none;
+    touch-action: pan-y;
   }
   
   /* Hide scrollbar but keep scrollability */
