@@ -5,10 +5,13 @@
  * Safety nudge: shown when user has 0 trusted_contacts and hasn't dismissed.
  * Safety row: shows '!' badge if setup is incomplete.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Heart, User, Users, Lock, Settings, HelpCircle, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { supabase } from '@/components/utils/supabaseClient';
 
 const GOLD = '#C8962C';
@@ -38,9 +41,18 @@ const MORE_ITEMS: MoreItem[] = [
 
 export default function MorePage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const scrollRef = useRef(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [showSafetyNudge, setShowSafetyNudge] = useState(false);
   const [hasSafetySetup, setHasSafetySetup] = useState(true); // default true until confirmed otherwise
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
 
   // Resolve current user
   useEffect(() => {
@@ -88,7 +100,8 @@ export default function MorePage() {
       </div>
 
       {/* Items */}
-      <div className="flex-1 overflow-y-auto pb-24">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum pb-24" {...pullHandlers}>
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         <div className="px-4 py-4 space-y-2">
 
           {/* Safety setup nudge card */}

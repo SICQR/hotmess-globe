@@ -1,0 +1,115 @@
+{
+  "generated": "2026-02-26",
+  "canonical_repo": {
+    "path": "/Users/philipgizzie/hotmess-globe",
+    "remote": "https://github.com/SICQR/hotmess-globe",
+    "branch": "main",
+    "deployed_to": ["hotmessldn.com", "hotmess.app"],
+    "platform": "Vercel",
+    "stack": ["Vite", "React", "TypeScript", "Tailwind", "Supabase", "Framer Motion"]
+  },
+  "github": {
+    "account": "SICQR",
+    "total_repos": 41,
+    "active_repos": ["hotmess-globe", "ghosted"],
+    "stale_branches": {
+      "copilot_prefix": "37+",
+      "cursor_prefix": "10+",
+      "other_stale": ["cleanup/mvp-build", "hotmess-london-os-master-remap", "stabilization-phase-3a", "visual-makeover-and-readme"]
+    },
+    "open_issues": 17,
+    "open_prs": 13,
+    "critical_pr": "#113 (figma-make-v2, blocking downstream PRs)",
+    "dangerous_pr": "#81 (temp/no-gate-test, bypasses consent gates, NEVER merge)"
+  },
+  "supabase": {
+    "frontend_project": "klsywpvncqqglhnhrjbh",
+    "backend_project": "axxwdjmbwkvqhcpwters",
+    "migrations_applied": 107,
+    "tables_no_ui": ["creator_subscriptions", "community_posts", "achievements", "user_checkins", "venue_kings", "squads", "squad_members", "sweat_coins", "collaboration_requests", "user_highlights", "trusted_contacts"],
+    "rpcs_no_ui": ["get_amplification_price", "calculate_business_heat"],
+    "known_issues": ["beacons is a VIEW not a table", "profile_overrides RLS wrong FK (fix in migration 20260226000100)", "right_now_status split-brain (write to TABLE not JSONB)"]
+  },
+  "vercel": {
+    "project": "hotmess-globe",
+    "org": "phils-projects-59e621aa",
+    "production_aliases": ["hotmessldn.com", "www.hotmessldn.com", "hotmess.app"],
+    "env_issues": {
+      "dead_vars": ["vite_publicSUPABASE_ANON_KEY", "vite_publicSUPABASE_URL", "vite_publicSUPABASE_PUBLISHABLE_KEY", "VITE_BASE44_APP_BASE_URL", "VITE_BASE44_APP_ID", "CLAUDE_1ST_KEY"],
+      "missing_from_preview_dev": ["VITE_SUPABASE_ANON_KEY", "VITE_SUPABASE_URL"]
+    },
+    "security_flag": "POSTGRES_PASSWORD was committed to git history (commit 321e34b) — rotate credentials"
+  },
+  "figma": {
+    "accessible_files": 2,
+    "inaccessible_files": 6,
+    "useful_file": {
+      "name": "HOTMESS OS V2 System Map",
+      "key": "CUJkrcFcDmKCaQyXniSemg",
+      "type": "FigJam whiteboard",
+      "content": "OS architecture flow diagram, 17 screen nodes"
+    },
+    "design_tokens_in_figma": false,
+    "design_system_location": "tailwind.config.js (code-first, no Figma source of truth)"
+  },
+  "local_projects": {
+    "total_found": 52,
+    "canonical": "/Users/philipgizzie/hotmess-globe",
+    "worth_recovering": [
+      {
+        "path": "~/Desktop/hotmess-overview",
+        "recover": ["src/components/radio/NowNextCard.tsx", "src/components/radio/QualityPopover.tsx", "src/components/radio/SoundConsentModal.tsx", "src/components/radio/ReminderNudge.tsx", "src/hooks/use-radio-player.ts"]
+      },
+      {
+        "path": "~/HOTMESS_OS",
+        "recover": ["src/api/ai/", "src/components/figma/"]
+      },
+      {
+        "path": "~/Downloads/hotmess-enterprise",
+        "recover": ["src/components/AIConcierge.tsx", "src/HotmessLanding.tsx"]
+      },
+      {
+        "path": "~/Downloads/hotmess-core (1)",
+        "recover": ["src/pages/About.tsx", "src/pages/AbuseSafety.tsx", "src/pages/Accessibility.tsx", "src/pages/Affiliate.tsx"]
+      },
+      {
+        "path": "~/Downloads/hotmess-core (4)",
+        "recover": ["src/components/CookieBanner.tsx", "src/components/RoleGuard.tsx", "src/lib/analytics.ts"]
+      },
+      {
+        "path": "~/hotmess-os",
+        "note": "React Native app — separate strategic track, archive only"
+      }
+    ],
+    "safe_to_delete": [
+      "~/hotmess-globe-fix",
+      "~/hotmess-globe-stabilization",
+      "~/Downloads/hotmess-core (1-9 variants)",
+      "~/Downloads/hotmess-enterprise (1-5 variants)",
+      "~/Downloads/HOTMESS OS variants",
+      "~/Downloads/HOTMESS_full_repo (x4)",
+      "~/Downloads/hotmess-bot-final-main (x5)",
+      "~/Downloads/hotmess-globe-main (x2)",
+      "~/Desktop/hotmess-nextjs",
+      "~/PROJECTS/hm15_clean",
+      "~/PROJECTS/hotmess_next15_headless"
+    ]
+  },
+  "features": {
+    "total_tracked": 131,
+    "complete": 84,
+    "partial": 19,
+    "not_built": 14,
+    "db_only_no_ui": 14
+  },
+  "tests": {
+    "main_suite": {"files": 13, "tests": 156, "status": "all passing"},
+    "api_suite": {"files": 12, "tests": 420, "failing": 169, "issue": "broken Supabase mocks in 9 new files added by Copilot agent"}
+  },
+  "security": {
+    "critical": ["POSTGRES_PASSWORD in git history — rotate now", "CLAUDE_1ST_KEY in Vercel (added by agent, not used)"],
+    "medium": ["vite_public* vars are dead but confusing", "profile_overrides RLS wrong FK (migration fix pending)"],
+    "low": ["Google Maps API not domain-restricted", "Telegram bot token in all environments"],
+    "memory_file_secrets": "Claude API key, Figma token, GitHub OAuth token in MEMORY.md plain text"
+  }
+}

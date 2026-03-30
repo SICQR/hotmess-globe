@@ -14,11 +14,13 @@
  * Animation: Framer Motion stagger on mount, amber ring on avatar long-press.
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLongPress } from '@/hooks/useLongPress';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import PersonaSwitcherSheet from '@/components/sheets/PersonaSwitcherSheet';
 import { isGamificationEnabled } from '@/lib/featureFlags';
 import {
@@ -205,9 +207,18 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
   const [isLongPressing, setIsLongPressing] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [viewCount, setViewCount] = useState(0);
+  const queryClient = useQueryClient();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const { openSheet } = useSheet();
   const { activePersona } = usePersona();
   const [searchParams, setSearchParams] = useSearchParams();
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
 
   // Auto-open persona switcher when navigated with ?action=manage-personas
   useEffect(() => {
@@ -473,9 +484,12 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
   return (
     <>
       <div
-        className={`h-full w-full overflow-y-auto pb-36 ${className}`}
+        ref={scrollRef}
+        className={`h-full w-full overflow-y-auto scroll-momentum pb-36 ${className}`}
         style={{ background: ROOT_BG }}
+        {...pullHandlers}
       >
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         {/* ---- Hero Section ------------------------------------------------- */}
         <div
           className="relative pt-10 pb-6 flex flex-col items-center"

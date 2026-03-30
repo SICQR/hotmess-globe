@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/components/utils/supabaseClient';
@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import ChatThread from '../components/messaging/ChatThread';
 import ThreadList from '../components/messaging/ThreadList';
 import NewMessageModal from '../components/messaging/NewMessageModal';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { useAllUsers, useCurrentUser } from '../components/utils/queryConfig';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -17,7 +19,15 @@ export default function Messages() {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+  const scrollRef = useRef(null);
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
+
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const { data: allUsers = [] } = useAllUsers();
 
@@ -193,7 +203,8 @@ export default function Messages() {
             </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum p-4" {...pullHandlers}>
+            <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
             <ThreadList
               threads={threads}
               currentUser={currentUser}

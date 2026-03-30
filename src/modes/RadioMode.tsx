@@ -37,7 +37,8 @@
  * States: idle (not playing) | playing (amber glow) | error (toast)
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Pause,
@@ -55,6 +56,8 @@ import {
 import { useRadio } from '@/contexts/RadioContext';
 import { useNavigate } from 'react-router-dom';
 import { useSheet } from '@/contexts/SheetContext';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { supabase } from '@/components/utils/supabaseClient';
 import '@/styles/radio-waveform.css';
 import { AppBanner } from '@/components/banners/AppBanner';
@@ -148,6 +151,15 @@ export function RadioMode({ className = '' }: RadioModeProps) {
   const { isPlaying, currentShowName, togglePlay, setCurrentShowName, audioRef } = useRadio();
   const navigate = useNavigate();
   const { openSheet } = useSheet();
+  const queryClient = useQueryClient();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
 
   // Local UI state
   const [isMuted, setIsMuted] = useState(false);
@@ -302,7 +314,8 @@ export function RadioMode({ className = '' }: RadioModeProps) {
       </div>
 
       {/* ---- Scrollable content (hero + cards) ---- */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum scrollbar-hide" {...pullHandlers}>
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         {/* Dynamic Radio banner */}
         <AppBanner placement="radio_top" variant="strip" />
 

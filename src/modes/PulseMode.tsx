@@ -623,15 +623,12 @@ function BottomDrawer({
 
       {/* Scrollable content */}
       <div
-        ref={scrollRef}
         className="overflow-y-auto scroll-momentum px-4 pb-8"
         style={{
           maxHeight: `calc(${EXPANDED_HEIGHT_VH}vh - 64px)`,
           WebkitOverflowScrolling: 'touch',
         }}
-        {...pullHandlers}
       >
-        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         {/* Scene Scout section */}
         {sceneScoutSection}
 

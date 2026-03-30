@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { supabase } from '@/components/utils/supabaseClient';
 import { Send, Sparkles, Loader2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,11 +17,20 @@ const QUICK_QUERIES = [
   "What events match my interests?"
 ];
 export default function Chat() {
+  const queryClient = useQueryClient();
+  const scrollRef = useRef(null);
   const [user, setUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
   const { data: beacons = [] } = useQuery({
     queryKey: ['beacons'],
     queryFn: () => supabase.from('beacons').select('*').eq({ active: true }, '-created_date'),
@@ -139,7 +150,8 @@ Respond in a friendly, conversational tone. If recommending specific beacons, in
         </div>
       </div>
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum p-4 md:p-6" {...pullHandlers}>
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         <div className="max-w-4xl mx-auto space-y-4">
           <AnimatePresence>
             {messages.map((message) => (

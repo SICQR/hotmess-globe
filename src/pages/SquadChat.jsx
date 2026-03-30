@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +9,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import SquadChallenges from '../components/squads/SquadChallenges';
@@ -33,7 +35,15 @@ export default function SquadChat() {
   const [typingUsers, setTypingUsers] = useState([]);
   const [muted, setMuted] = useState(false);
   const messagesEndRef = useRef(null);
+  const scrollRef = useRef(null);
   const queryClient = useQueryClient();
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -178,7 +188,8 @@ export default function SquadChat() {
           <div className="lg:col-span-2">
             <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden flex flex-col" style={{ height: '600px' }}>
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-momentum p-4 space-y-4" {...pullHandlers}>
+                <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
                 {!chatThread ? (
                   <div className="text-center py-12 text-white/40">
                     <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />

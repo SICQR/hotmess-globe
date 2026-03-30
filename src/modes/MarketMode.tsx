@@ -675,12 +675,6 @@ export function MarketMode({ className = '' }: MarketModeProps) {
     setCategoryFilter((prev) => (prev === cat ? null : cat));
   }, []);
 
-  const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['market-products'] });
-    queryClient.invalidateQueries({ queryKey: ['market-categories'] });
-    refetch();
-  }, [queryClient, refetch]);
-
   // ---- Render ---------------------------------------------------------------
   return (
     <div
@@ -836,7 +830,7 @@ export function MarketMode({ className = '' }: MarketModeProps) {
         {...pullHandlers}
       >
         <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
-        {/* HNH MESS product cards */
+        {/* HNH MESS product cards */}
         <HNHMarketHero />
 
         {/* HNH Lube banner (fallback / additional) */}
