@@ -36,6 +36,8 @@
  */
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -541,6 +543,15 @@ export function MarketMode({ className = '' }: MarketModeProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
+  // ---- Pull-to-refresh -------------------------------------------------------
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef: scrollContainerRef,
+  });
+
   // Sync search to URL
   useEffect(() => {
     setSearchParams(
@@ -821,9 +832,11 @@ export function MarketMode({ className = '' }: MarketModeProps) {
       {/* ================================================================== */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto overscroll-y-contain pb-32"
+        className="flex-1 overflow-y-auto scroll-momentum pb-32"
+        {...pullHandlers}
       >
-        {/* HNH MESS product cards */}
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
+        {/* HNH MESS product cards */
         <HNHMarketHero />
 
         {/* HNH Lube banner (fallback / additional) */}
