@@ -20,7 +20,9 @@
  * Animations: Framer Motion spring physics on drawer.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import RightNowModal from '@/components/globe/RightNowModal';
 import { motion, useMotionValue, useAnimation } from 'framer-motion';
@@ -621,12 +623,15 @@ function BottomDrawer({
 
       {/* Scrollable content */}
       <div
-        className="overflow-y-auto overscroll-contain px-4 pb-8"
+        ref={scrollRef}
+        className="overflow-y-auto scroll-momentum px-4 pb-8"
         style={{
           maxHeight: `calc(${EXPANDED_HEIGHT_VH}vh - 64px)`,
           WebkitOverflowScrolling: 'touch',
         }}
+        {...pullHandlers}
       >
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         {/* Scene Scout section */}
         {sceneScoutSection}
 
@@ -879,6 +884,16 @@ function PostComposer({ onClose, city }: { onClose: () => void; city: string }) 
 export function PulseMode({ className = '' }: PulseModeProps) {
   const { openSheet } = useSheet();
   const queryClient = useQueryClient();
+
+  // ---- Pull-to-refresh -------------------------------------------------------
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [city, setCity] = useState(() => localStorage.getItem('hm_city') || 'London');

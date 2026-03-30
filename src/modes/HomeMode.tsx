@@ -17,6 +17,8 @@
  */
 
 import { useState, useRef, useCallback } from 'react';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -558,33 +560,15 @@ export function HomeMode({ className = '' }: HomeModeProps) {
   );
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // ---- Pull-to-refresh state ------------------------------------------------
-  const [refreshing, setRefreshing] = useState(false);
-  const touchStartY = useRef(0);
-  const pullDistance = useRef(0);
+  // ---- Pull-to-refresh -------------------------------------------------------
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+  }, [queryClient]);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (scrollRef.current && scrollRef.current.scrollTop === 0) {
-      touchStartY.current = e.touches[0].clientY;
-    }
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (touchStartY.current > 0 && scrollRef.current && scrollRef.current.scrollTop === 0) {
-      pullDistance.current = e.touches[0].clientY - touchStartY.current;
-    }
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    if (pullDistance.current > 80 && !refreshing) {
-      setRefreshing(true);
-      queryClient.invalidateQueries().then(() => {
-        setTimeout(() => setRefreshing(false), 600);
-      });
-    }
-    touchStartY.current = 0;
-    pullDistance.current = 0;
-  }, [refreshing, queryClient]);
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    scrollRef,
+  });
 
   // ---- City picker ----------------------------------------------------------
   const [showCityPicker, setShowCityPicker] = useState(false);
@@ -862,12 +846,11 @@ export function HomeMode({ className = '' }: HomeModeProps) {
       {/* ---- Scrollable content ---- */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto overscroll-contain"
+        className="flex-1 overflow-y-auto scroll-momentum"
         style={{ WebkitOverflowScrolling: 'touch' }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        {...pullHandlers}
       >
+        <PullToRefreshIndicator pullDistance={pullDistance} isRefreshing={isRefreshing} />
         <div className="pb-36 space-y-6">
 
           {/* ── HNH MESS Hero ── */}
