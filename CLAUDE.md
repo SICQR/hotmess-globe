@@ -491,6 +491,18 @@ Each brand/channel is sovereign. They share an OS but they do NOT merge unless a
 
 ---
 
+## MANUAL ACTIONS REQUIRED (Phil — Supabase Dashboard)
+
+1. **OTP Expiry**: Auth → Email → OTP Expiry → set to 3600 (1 hour max)
+2. **Leaked password protection**: Auth → Password Security → Enable
+3. **Postgres security patches**: Settings → Infrastructure → upgrade available
+4. **Stripe Connect**: All 3 sellers need onboarding at dashboard.stripe.com → Connect → Accounts
+   - `stripe_onboarding_complete = false` for all sellers currently
+   - Cannot be fixed in code — Phil must complete Stripe onboarding manually
+5. **RLS policies**: migration 20260331000001 applies market_sellers/analytics_events/audit_logs/affiliate_relations policies — run migration in prod (rfoftonnlwudilafhfkl) after migration review
+
+---
+
 ## Key Files Reference
 
 ### Contexts
