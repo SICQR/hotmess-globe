@@ -566,6 +566,7 @@ export function GhostedMode({ className = '' }: GhostedModeProps) {
             </button>
             <GhostedAmbientToggle />
             <button
+              data-testid="ghosted-filter-btn"
               onClick={() => openSheet('filters')}
               className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 active:scale-95 transition-transform"
               aria-label={`Open filters${activeFilterCount > 0 ? `, ${activeFilterCount} active` : ''}`}

@@ -131,13 +131,13 @@ export async function getPrelovedProducts(filters: ProductFilters = {}): Promise
       return [];
     }
 
-    // Step 2: fetch sellers
+    // Step 2: fetch sellers from market_sellers (has display_name populated for shop identities)
     const ids = [...new Set((listings || []).map(l => l.seller_id).filter(Boolean))];
     const { data: sellers } = ids.length
-      ? await supabase.from('profiles').select('id, display_name, avatar_url').in('id', ids)
+      ? await supabase.from('market_sellers').select('owner_id, display_name, avatar_url').in('owner_id', ids)
       : { data: [] };
 
-    const sellerMap = Object.fromEntries((sellers || []).map(s => [s.id, s]));
+    const sellerMap = Object.fromEntries((sellers || []).map(s => [s.owner_id, s]));
 
     // Step 3: normalize and attach seller data
     return (listings || []).map(l => {
