@@ -154,7 +154,9 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
   // ── 3. Filters sheet opens ──────────────────────────────────────────────
 
   test('4. Filters sheet opens from Ghosted header', async () => {
-    const filterBtn = pageA.locator('button[aria-label*="filters"]');
+    // Use data-testid to target the header filter button specifically (avoids matching
+    // the "or adjust filters" button in GhostedEmpty which has same aria-label text)
+    const filterBtn = pageA.locator('[data-testid="ghosted-filter-btn"]');
     await expect(filterBtn).toBeVisible({ timeout: 5_000 });
     await filterBtn.click();
 

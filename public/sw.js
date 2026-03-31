@@ -3,14 +3,16 @@
  * Handles: Push notifications, caching, offline support, background sync
  */
 
-const CACHE_VERSION = '__BUILD_TS__';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `hotmess-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `hotmess-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `hotmess-api-${CACHE_VERSION}`;
 const IMAGE_CACHE = `hotmess-images-${CACHE_VERSION}`;
 
-// DON'T cache index.html - always fetch fresh to get latest JS bundles
+// Static assets to cache immediately
 const STATIC_ASSETS = [
+  '/',
+  '/index.html',
   '/manifest.json',
   '/favicon.svg',
 ];
@@ -55,36 +57,25 @@ self.addEventListener('activate', (event) => {
   const currentCaches = [STATIC_CACHE, DYNAMIC_CACHE, API_CACHE, IMAGE_CACHE];
   
   event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames
-            .filter((name) => name.startsWith('hotmess-') && !currentCaches.includes(name))
-            .map((name) => {
-              console.log('[SW] Deleting old cache:', name);
-              return caches.delete(name);
-            })
-        );
-      })
-      .then(() => {
-        // Take control immediately - must be called after activation is complete
-        console.log('[SW] Claiming clients...');
-        return self.clients.claim();
-      })
-      .catch((error) => {
-        console.error('[SW] Activation error:', error);
-      })
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name.startsWith('hotmess-') && !currentCaches.includes(name))
+          .map((name) => {
+            console.log('[SW] Deleting old cache:', name);
+            return caches.delete(name);
+          })
+      );
+    })
   );
+  
+  // Take control immediately
+  self.clients.claim();
 });
 
 // Determine caching strategy based on request
 function getCachingStrategy(request) {
   const url = new URL(request.url);
-  
-  // NEVER cache index.html or root - always fetch fresh for new JS bundles
-  if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.endsWith('.html')) {
-    return { strategy: 'network-only' };
-  }
   
   // Images - cache first, network fallback
   if (
@@ -177,8 +168,7 @@ async function networkFirst(request, cacheName, maxItems) {
   try {
     const networkResponse = await fetch(request);
     
-    // Only cache complete responses (skip 206 partial content like audio/video streams)
-    if (networkResponse.ok && networkResponse.status !== 206) {
+    if (networkResponse.ok) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
       
@@ -245,22 +235,9 @@ async function staleWhileRevalidate(request, cacheName, maxItems) {
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests (they can't be cached)
   if (event.request.method !== 'GET') return;
-
+  
   // Skip chrome-extension and other non-http requests
   if (!event.request.url.startsWith('http')) return;
-
-  // ── SPA navigate handler ─────────────────────────────────────────────────
-  // All navigation requests (tab switch, back button, pull-to-refresh, deep
-  // links) must serve the cached SPA shell.  Without this, a pull-to-refresh
-  // that hits the network while offline (or during a deploy) ejects the user.
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      caches.match('/index.html')
-        .then(cached => cached || fetch(event.request))
-        .catch(() => caches.match('/index.html'))
-    );
-    return;
-  }
   
   // Skip cross-origin requests that we don't want to cache
   const url = new URL(event.request.url);
@@ -294,76 +271,24 @@ self.addEventListener('fetch', (event) => {
 
 // Push notification event
 self.addEventListener('push', (event) => {
-  console.log('[SW] Push notification received');
-  
-  let data = {
-    title: 'HOTMESS',
-    body: 'You have a new notification',
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
-    tag: 'default',
-    data: {}
-  };
-
-  try {
-    if (event.data) {
-      const payload = event.data.json();
-      data = {
-        ...data,
-        ...payload,
-        data: payload.data || payload
-      };
-    }
-  } catch (error) {
-    console.error('[SW] Error parsing push data:', error);
-    if (event.data) {
-      data.body = event.data.text();
-    }
-  }
-
-  const options = {
-    body: data.body,
-    icon: data.icon || '/favicon.svg',
-    badge: data.badge || '/favicon.svg',
-    tag: data.tag || 'hotmess-notification',
-    vibrate: [200, 100, 200],
-    requireInteraction: data.requireInteraction || false,
-    data: data.data,
-    actions: data.actions || []
-  };
-
+  const data = event.data?.json() ?? {};
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    self.registration.showNotification(data.title || 'HOTMESS', {
+      body: data.body || '',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      data: data.url ? { url: data.url } : {},
+      tag: data.tag || 'hotmess-notif',
+      renotify: true,
+    })
   );
 });
 
 // Notification click handler
 self.addEventListener('notificationclick', (event) => {
-  console.log('[SW] Notification clicked:', event.notification.tag);
-  
   event.notification.close();
-
-  const urlToOpen = event.notification.data?.url || '/';
-
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        // Post NOTIFICATION_CLICK so React Router can handle in-app navigation
-        const msg = { type: 'NOTIFICATION_CLICK', url: urlToOpen };
-        clientList.forEach((c) => c.postMessage(msg));
-
-        // Focus an existing window or open a new one
-        for (const client of clientList) {
-          if (client.url.includes(self.location.origin) && 'focus' in client) {
-            client.focus();
-            return;
-          }
-        }
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
-      })
-  );
+  const url = event.notification.data?.url || '/';
+  event.waitUntil(clients.openWindow(url));
 });
 
 // Notification close handler
