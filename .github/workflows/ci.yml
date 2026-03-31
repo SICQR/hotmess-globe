@@ -51,7 +51,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Build for preview
         run: npm run build
@@ -64,6 +64,10 @@ jobs:
              sleep 3 &&
              npx playwright test --reporter=list
         env:
+          # GitHub repo → Settings → Secrets and variables → Actions
+          # Required secrets:
+          # VITE_SUPABASE_URL = https://rfoftonnlwudilafhfkl.supabase.co
+          # VITE_SUPABASE_ANON_KEY = (Supabase dashboard → Settings → API → anon key)
           # ── HOW TO ADD SECRETS ─────────────────────────────────────────────────────
           # Go to: GitHub repo → Settings → Secrets and variables → Actions
           # Click "New repository secret" for each of the following:
