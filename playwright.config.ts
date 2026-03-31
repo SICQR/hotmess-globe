@@ -16,12 +16,12 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html']] : [['list'], ['html']],
   use: {
-    baseURL: 'http://127.0.0.1:5173',
+    baseURL: process.env.PROD === 'true' ? 'https://hotmessldn.com' : 'http://127.0.0.1:5173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
-  webServer: {
+  webServer: process.env.PROD === 'true' ? undefined : {
     command: 'npm run dev:loopback',
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: !process.env.CI,
