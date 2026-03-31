@@ -16,7 +16,9 @@
       "Bash(echo \"EXIT: $?\")",
       "Bash(ls dist/*.html)",
       "Bash(echo \"exit: $?\")",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(claude mcp:*)",
+      "Bash(npx skills:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
