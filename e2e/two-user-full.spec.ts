@@ -1,16 +1,21 @@
 /**
  * HOTMESS E2E — Full Two-User Suite
- * Last run: 2026-03-30
- * Tests: 414 | Passing: Blocked on Playwright installation | Skipped (missing auth): 0 | Failed: 0
- * Users: test-red@hotmessldn.com / test-blue@hotmessldn.com (configured in .env.local)
+ * Last run: 2026-03-31
+ * Tests: 414 | Passing: 0 | Skipped (blocked): 414 | Failed: 0
+ * Users: test-red@hotmessldn.com / test-blue@hotmessldn.com (dev) OR e2e.alpha@hotmessldn.com / e2e.beta@hotmessldn.com (prod)
  *
- * Status: Test code is fixed, app compiles. Blocked on:
- * - Playwright browser installation (requires system dependencies)
- * - E2E_AUTH_CONFIGURED now true with env vars in .env.local
+ * Status: Infrastructure complete, blocked on production Supabase API key.
  *
- * Run: npx playwright test e2e/two-user-full.spec.ts
- * Run headless: npx playwright test e2e/two-user-full.spec.ts --reporter=list
- * Run single suite: npx playwright test e2e/two-user-full.spec.ts -g "Suite 1:"
+ * Required to run against production (https://hotmessldn.com):
+ * - PROD=true npx playwright test (skips webServer, uses hotmessldn.com)
+ * - PROD_SUPABASE_ANON_KEY must be set (prod project: rfoftonnlwudilafhfkl)
+ *   Test users e2e.alpha@hotmessldn.com & e2e.beta@hotmessldn.com are pre-seeded in prod.
+ *
+ * Run (dev/localhost):
+ * - npx playwright test e2e/two-user-full.spec.ts
+ *
+ * Run (prod/hotmessldn.com):
+ * - PROD=true PROD_SUPABASE_ANON_KEY=<key> npx playwright test e2e/two-user-full.spec.ts
  */
 
 import { test, expect, Page, BrowserContext, Browser } from '@playwright/test';
@@ -98,10 +103,11 @@ test.describe('Suite 1: Authentication', () => {
     await setupUserA(page);
     await waitForNav(page);
 
-    const url = page.url();
-    expect(url).not.toContain('/auth');
-    expect(url).not.toContain('/onboarding');
-    expect(url).toContain('127.0.0.1:5173');
+    const finalUrl = page.url();
+    expect(finalUrl).not.toContain('/auth');
+    expect(finalUrl).not.toContain('/onboarding');
+    // Should be on the base URL (either localhost or production)
+    expect(finalUrl).toMatch(new RegExp(`(${BASE.replace(/https?:\/\//, '')}|127\\.0\\.0\\.1)`));
   });
 
   test('Valid login — Beta lands in app independently', async ({ page }) => {

@@ -5,32 +5,45 @@
 
 import { Page, test } from '@playwright/test';
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? 'https://klsywpvncqqglhnhrjbh.supabase.co';
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
+// When PROD=true, use production Supabase project; otherwise dev
+const IS_PROD = process.env.PROD === 'true';
+
+const SUPABASE_URL = IS_PROD
+  ? 'https://rfoftonnlwudilafhfkl.supabase.co'
+  : (process.env.VITE_SUPABASE_URL ?? 'https://klsywpvncqqglhnhrjbh.supabase.co');
+
+const SUPABASE_ANON_KEY = IS_PROD
+  ? (process.env.PROD_SUPABASE_ANON_KEY ?? '')
+  : (process.env.VITE_SUPABASE_ANON_KEY ?? '');
+
 // Derived from project ref: sb-<ref>-auth-token
 // Confirmed via: createClient(url, key).auth.storageKey
-const SUPABASE_STORAGE_KEY = `sb-klsywpvncqqglhnhrjbh-auth-token`;
+const SUPABASE_STORAGE_KEY = IS_PROD
+  ? `sb-rfoftonnlwudilafhfkl-auth-token`
+  : `sb-klsywpvncqqglhnhrjbh-auth-token`;
 
 const TEST_USER_A = {
-  // Use || not ?? so empty-string secrets in CI fall through to the default
-  email: process.env.TEST_USER_A_EMAIL || 'test-red@hotmessldn.com',
-  password: process.env.TEST_USER_A_PASSWORD || '***REMOVED_PASSWORD***',
+  // When PROD=true, use the production test user; otherwise use dev test user
+  email: IS_PROD ? 'e2e.alpha@hotmessldn.com' : (process.env.TEST_USER_A_EMAIL || 'test-red@hotmessldn.com'),
+  password: IS_PROD ? '***REMOVED_PASSWORD***' : (process.env.TEST_USER_A_PASSWORD || '***REMOVED_PASSWORD***'),
 };
 
 const TEST_USER_B = {
-  email: process.env.TEST_USER_B_EMAIL || 'test-blue@hotmessldn.com',
-  password: process.env.TEST_USER_B_PASSWORD || '***REMOVED_PASSWORD***',
+  email: IS_PROD ? 'e2e.beta@hotmessldn.com' : (process.env.TEST_USER_B_EMAIL || 'test-blue@hotmessldn.com'),
+  password: IS_PROD ? '***REMOVED_PASSWORD***' : (process.env.TEST_USER_B_PASSWORD || '***REMOVED_PASSWORD***'),
 };
 
 /**
- * True only when all three secrets required for authenticated tests are
- * present and non-empty.  Without them every loginAs() call would send
- * blank/default credentials to Supabase and hard-fail with 400.
+ * True only when all secrets required for authenticated tests are present and non-empty.
+ * For PROD (rfoftonnlwudilafhfkl), check for PROD_SUPABASE_ANON_KEY env var.
+ * For DEV (klsywpvncqqglhnhrjbh), use VITE_SUPABASE_ANON_KEY.
  */
 export const E2E_AUTH_CONFIGURED =
-  !!(process.env.VITE_SUPABASE_ANON_KEY?.trim()) &&
-  !!(process.env.TEST_USER_A_EMAIL?.trim()) &&
-  !!(process.env.TEST_USER_A_PASSWORD?.trim());
+  IS_PROD
+    ? !!(process.env.PROD_SUPABASE_ANON_KEY?.trim())
+    : !!(process.env.VITE_SUPABASE_ANON_KEY?.trim()) &&
+        !!(process.env.TEST_USER_A_EMAIL?.trim()) &&
+        !!(process.env.TEST_USER_A_PASSWORD?.trim());
 
 /**
  * Sets localStorage flags to bypass age gate and onboarding.
