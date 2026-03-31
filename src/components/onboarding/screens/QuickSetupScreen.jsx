@@ -92,6 +92,7 @@ export default function QuickSetupScreen({ session, onComplete, onBack }) {
           onboarding_completed_at: new Date().toISOString(),
           onboarding_stage: 'complete',
           is_online: true,
+          is_visible: true,
           last_active_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           ...(coords

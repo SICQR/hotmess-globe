@@ -19,7 +19,7 @@ const PRODUCTS = [
     size: '50ml',
     price: '£10',
     image:
-      'https://cdn.shopify.com/s/files/1/0629/2497/4961/files/hnh-mess-50ml.png',
+      'https://cdn.shopify.com/s/files/1/0898/3245/6517/files/IMG_1401.heic?v=1751020652',
     featured: false,
     badge: null,
   },
@@ -29,7 +29,7 @@ const PRODUCTS = [
     size: '250ml',
     price: '£15',
     image:
-      'https://cdn.shopify.com/s/files/1/0629/2497/4961/files/hnh-mess-250ml.png',
+      'https://cdn.shopify.com/s/files/1/0898/3245/6517/files/upload_vfKIW_gxRluGoOwPLITLrg.png?v=1750505220',
     featured: true,
     badge: 'BEST VALUE',
   },
@@ -39,8 +39,8 @@ export function HNHMarketHero({ className = '' }: { className?: string }) {
   const navigate = useNavigate();
 
   const handleAdd = (handle: string) => {
-    // Navigate to product page — user can select variant and add from there
-    navigate(`/market/product/${handle}`);
+    // Navigate to Shopify product page — /p/:handle is the canonical route
+    navigate(`/p/${handle}`);
   };
 
   return (

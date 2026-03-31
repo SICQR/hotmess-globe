@@ -269,13 +269,12 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
 
       const senderProfile = profiles[currentUser.email];
 
-      // Insert message
+      // Insert message (sender_name not a DB column — display name resolved client-side from profiles cache)
       const { error: msgError } = await supabase
         .from('chat_messages')
         .insert({
           thread_id: thread.id,
           sender_email: currentUser.email,
-          sender_name: senderProfile?.display_name || currentUser.email,
           content: text,
           message_type: 'text',
           created_date: new Date().toISOString(),
