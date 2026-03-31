@@ -22,6 +22,8 @@ type Props = {
   onSendTap?: (email: string, name: string, tapType: TapType) => Promise<boolean>;
   /** Called on long-press with profile and pointer position (for quick action menu) */
   onLongPress?: (profile: Profile, position: { x: number; y: number }) => void;
+  /** Active venue check-in data for tonight-vibe badge */
+  checkin?: { tonight_intention: string | null; checkin_visibility: string } | null;
 };
 
 const getPhotoUrls = (profile: Profile): string[] => {
@@ -159,6 +161,7 @@ function ProfileCardInner({
   isTapped,
   onSendTap,
   onLongPress,
+  checkin,
 }: Props) {
   const cardStyle = getProfileCardStyle();
   const useReactBits = cardStyle === 'react-bits';
@@ -566,6 +569,42 @@ function ProfileCardInner({
                 <path d="M12 2a8 8 0 0 0-8 8v10l3-3 3 3 3-3 3 3 3-3V10a8 8 0 0 0-8-8zm-2.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
               </svg>
             </button>
+          </div>
+        )}
+        {/* Tonight vibe badge — shown when user has an active check-in */}
+        {checkin && (
+          <div
+            className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none"
+            style={{
+              padding: '3px 6px 4px',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)',
+            }}
+          >
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '2px 6px',
+              background: 'rgba(200,150,44,0.18)',
+              border: '1px solid rgba(200,150,44,0.4)',
+              borderRadius: 5,
+              maxWidth: '100%',
+            }}>
+              <div style={{
+                width: 5, height: 5, borderRadius: '50%',
+                background: '#C8962C', flexShrink: 0,
+              }} />
+              <span style={{
+                color: '#C8962C',
+                fontSize: 9,
+                fontWeight: 700,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}>
+                {checkin.tonight_intention || 'Out tonight'}
+              </span>
+            </div>
           </div>
         )}
       </div>

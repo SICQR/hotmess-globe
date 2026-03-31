@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ProfileCard } from './ProfileCard';
 import { useInfiniteProfiles } from './useInfiniteProfiles';
 import { useVisibility } from './useVisibility';
@@ -104,6 +105,27 @@ export default function ProfilesGrid({
   const [isTelegramOpen, setIsTelegramOpen] = useState(false);
 
   const { isTapped, sendTap } = useTaps(viewerEmail);
+
+  // Active venue check-ins for tonight-vibe badge on profile cards
+  const { data: activeCheckins = [] } = useQuery({
+    queryKey: ['ghosted-active-checkins'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('timed_checkins')
+        .select('user_id, venue_id, tonight_intention, checkin_visibility, expires_at')
+        .gt('expires_at', new Date().toISOString())
+        .in('checkin_visibility', ['connections', 'scene']);
+      return data || [];
+    },
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
+  type ActiveCheckin = { user_id: string; tonight_intention: string | null; checkin_visibility: string };
+  const checkinByUserId = useMemo<Map<string, ActiveCheckin>>(
+    () => new Map((activeCheckins as ActiveCheckin[]).map((c) => [c.user_id, c])),
+    [activeCheckins]
+  );
 
   const [gpsEnabled, setGpsEnabled] = useState(false);
 
@@ -368,6 +390,7 @@ export default function ProfilesGrid({
                     isTapped={isTapped}
                     onSendTap={sendTap}
                     onLongPress={onLongPress}
+                    checkin={checkinByUserId.get(profile.id) || null}
                   />
                 </div>
               ) : (
@@ -381,6 +404,7 @@ export default function ProfilesGrid({
                     isTapped={isTapped}
                     onSendTap={sendTap}
                     onLongPress={onLongPress}
+                    checkin={checkinByUserId.get(profile.id) || null}
                   />
                 </div>
               )
