@@ -11,6 +11,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { setupUserA, E2E_AUTH_CONFIGURED } from './helpers/auth';
 
 test.describe('Boot Stability', () => {
   test('app boots without crash', async ({ page }) => {
@@ -226,13 +227,16 @@ test.describe('Mobile App Shell (Stage 6)', () => {
   test.use({ viewport: { width: 375, height: 812 } }); // iPhone X
 
   test('bottom nav visible on mobile', async ({ page }) => {
-    await page.goto('/pulse');
-    await page.waitForLoadState('load');
-    
+    test.skip(!E2E_AUTH_CONFIGURED, 'Skipping — auth secrets not configured');
+    // Auth required: unauthenticated users see SplashScreen (no OSBottomNav)
+    await setupUserA(page);
+    await page.evaluate(() => { window.history.pushState({}, '', '/pulse'); window.dispatchEvent(new PopStateEvent('popstate', { state: null })); });
+    await page.waitForTimeout(1000);
+
     // OSBottomNav uses <button> elements (not <a href>), matched by aria-label
     const bottomNav = page.locator('nav').filter({ has: page.locator('button[aria-label="Market"]') }).first();
     const hasBottomNav = await bottomNav.count() > 0;
-    
+
     // Should have mobile navigation
     expect(hasBottomNav).toBe(true);
   });

@@ -4,7 +4,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { bypassGates, loginAs } from './helpers/auth';
+import { bypassGates, loginAs, TEST_USER_A, TEST_USER_B, E2E_AUTH_CONFIGURED } from './helpers/auth';
 
 test.use({
   geolocation: { latitude: 51.5074, longitude: -0.1278 },
@@ -13,6 +13,7 @@ test.use({
 
 test.describe('Two-user flows', () => {
   test('User A and User B can both be authenticated simultaneously', async ({ browser }) => {
+    test.skip(!E2E_AUTH_CONFIGURED, 'Skipping — auth secrets not configured');
     // Create two independent browser contexts.
     // Use mobile viewport — OSBottomNav is md:hidden (hidden at ≥768px, visible at mobile).
     const mobileViewport = { width: 390, height: 844 };
@@ -34,11 +35,11 @@ test.describe('Two-user flows', () => {
 
       // Authenticate User A
       await bypassGates(pageA);
-      await loginAs(pageA, 'test-red@hotmessldn.com', 'Hotmess2026!');
+      await loginAs(pageA, TEST_USER_A.email, TEST_USER_A.password);
 
       // Authenticate User B
       await bypassGates(pageB);
-      await loginAs(pageB, 'test-blue@hotmessldn.com', 'Hotmess2026!');
+      await loginAs(pageB, TEST_USER_B.email, TEST_USER_B.password);
 
       // Both should see the nav (BootGuard READY) — nav visible confirms auth succeeded.
       // Don't assert exact URL: Supabase may briefly visit /AccountConsents during OAuth flows.
@@ -51,6 +52,7 @@ test.describe('Two-user flows', () => {
   });
 
   test('User A on /ghosted can open a profile sheet (simulated)', async ({ browser }) => {
+    test.skip(!E2E_AUTH_CONFIGURED, 'Skipping — auth secrets not configured');
     const contextA = await browser.newContext({
       viewport: { width: 390, height: 844 },
       geolocation: { latitude: 51.5074, longitude: -0.1278 },
@@ -62,7 +64,7 @@ test.describe('Two-user flows', () => {
 
       // Authenticate User A — loginAs leaves us at / with nav visible
       await bypassGates(pageA);
-      await loginAs(pageA, 'test-red@hotmessldn.com', 'Hotmess2026!');
+      await loginAs(pageA, TEST_USER_A.email, TEST_USER_A.password);
 
       // Client-side navigation to /ghosted — avoids full reload + Supabase failure
       await pageA.evaluate(() => {
@@ -80,6 +82,7 @@ test.describe('Two-user flows', () => {
   });
 
   test('sheet policy: chat sheet opens on /ghosted, blocked on /', async ({ browser }) => {
+    test.skip(!E2E_AUTH_CONFIGURED, 'Skipping — auth secrets not configured');
     const contextA = await browser.newContext({
       viewport: { width: 390, height: 844 },
       geolocation: { latitude: 51.5074, longitude: -0.1278 },
@@ -91,7 +94,7 @@ test.describe('Two-user flows', () => {
 
       // Authenticate User A
       await bypassGates(pageA);
-      await loginAs(pageA, 'test-red@hotmessldn.com', 'Hotmess2026!');
+      await loginAs(pageA, TEST_USER_A.email, TEST_USER_A.password);
 
       // Client-side navigate to /ghosted
       await pageA.evaluate(() => {

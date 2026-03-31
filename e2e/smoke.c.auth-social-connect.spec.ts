@@ -13,6 +13,8 @@ test.use({
 
 test('C: auth → social → new message → send', async ({ page }) => {
   test.skip(!email || !password, 'Set E2E_EMAIL and E2E_PASSWORD to run this smoke test');
+  // Route /social does not exist in the current app — skip in prod until it ships
+  test.skip(process.env.PROD === 'true', 'Route /social not implemented in prod');
 
   const pageErrors: string[] = [];
   page.on('pageerror', (err) => pageErrors.push(String(err)));

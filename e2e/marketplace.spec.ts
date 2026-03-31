@@ -29,13 +29,15 @@ test.describe('Marketplace', () => {
   });
 
   test('marketplace displays product grid or empty state', async ({ page }) => {
+    // Unauthenticated /market shows SplashScreen (no grid). Needs auth to see MarketMode.
+    test.skip(true, 'Requires auth to reach MarketMode — use e2e/market-page.spec.ts for auth tests');
     await page.goto('/market');
-    
+
     // Should show either products or an empty state
     const hasProducts = await page.locator('[data-testid="product-card"]').first().isVisible().catch(() => false);
     const hasEmptyState = await page.getByText(/no products|browse|coming soon/i).first().isVisible().catch(() => false);
     const hasGrid = await page.locator('.grid').first().isVisible().catch(() => false);
-    
+
     expect(hasProducts || hasEmptyState || hasGrid).toBe(true);
   });
 
