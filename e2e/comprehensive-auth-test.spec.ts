@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 
+// These tests hardcode http://localhost:5173 — skip them in production mode.
 test.describe('Comprehensive Auth Flow Tests', () => {
-  
+  test.skip(process.env.PROD === 'true', 'Dev-only tests (hardcode localhost URLs)');
+
   test.beforeEach(async ({ page }) => {
     // Set age verification in localStorage
     await page.addInitScript(() => {

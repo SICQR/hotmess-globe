@@ -15,10 +15,9 @@ test.describe('Boot flow', () => {
     // Use 'commit' to avoid cold-Vite bundle timeout
     await page.goto('/', { waitUntil: 'commit' });
 
-    // BootGuard renders PublicShell → HotmessSplash at / (no URL redirect in new architecture)
-    // ENTER button animates in after ~1.3s — wait for it
-    const enterBtn = page.locator('button', { hasText: /^Enter$/i });
-    await expect(enterBtn).toBeVisible({ timeout: 15_000 });
+    // SplashScreen (session-8 redesign) has "Join" and "Sign In" CTAs that animate in ~900ms
+    const splashCta = page.locator('button').filter({ hasText: /^(Join|Sign In)$/i }).first();
+    await expect(splashCta).toBeVisible({ timeout: 15_000 });
 
     // URL should stay at / — BootGuard does not redirect unauthenticated users to /auth
     const url = page.url();
@@ -34,25 +33,32 @@ test.describe('Boot flow', () => {
     // Use 'commit' so we don't time out waiting for React to fully hydrate
     await page.goto('/auth', { waitUntil: 'commit' });
 
-    // Auth.jsx is a landing page — the "I'm already filthy" CTA opens the sign-in sheet
+    // Auth.jsx: "I'm already filthy" opens sign-in sheet. SplashScreen fallback has "Sign In".
     const signinCta = page.locator(
-      "button:has-text(\"I'm already filthy\"), button:has-text('Sign in'), button:has-text('Make a mess')",
+      'button:has-text("I\'m already filthy"), button:has-text("Sign In"), button:has-text("Make a mess")',
     ).first();
     await expect(signinCta).toBeVisible({ timeout: 20_000 });
 
-    // Open the sign-in bottom sheet
+    // Prefer "I'm already filthy" which opens the sign-in sheet with email+password fields.
+    // Fall back to any visible "Sign In" button.
     const alreadyFilthy = page.locator("button:has-text(\"I'm already filthy\")").first();
-    const ctaVisible = await alreadyFilthy.isVisible({ timeout: 2_000 }).catch(() => false);
-    if (ctaVisible) {
+    const signInBtn     = page.locator('button:has-text("Sign In")').first();
+
+    const filthyVisible = await alreadyFilthy.isVisible({ timeout: 3_000 }).catch(() => false);
+    if (filthyVisible) {
       await alreadyFilthy.click();
-      await page.waitForTimeout(400);
+    } else {
+      const siVisible = await signInBtn.isVisible({ timeout: 2_000 }).catch(() => false);
+      if (siVisible) await signInBtn.click();
     }
 
-    // Email and password inputs should now be visible inside the sheet
-    const emailInput = page.locator('input[type="email"]').first();
-    const passwordInput = page.locator('input[type="password"]').first();
+    // Spring animation settle (damping:28, stiffness:300 → ~500ms)
+    await page.waitForTimeout(1_000);
+
+    // Auth form (magic-link or email+password) should now be visible.
+    // Auth.jsx default sign-in is magic-link (email only, no password field).
+    const emailInput = page.locator('input[type="email"], input[type="text"][placeholder*="email" i]').first();
     await expect(emailInput).toBeVisible({ timeout: 10_000 });
-    await expect(passwordInput).toBeVisible({ timeout: 5_000 });
   });
 
   test('with hm_age_confirmed_v1=true, should NOT redirect to /age', async ({ page }) => {

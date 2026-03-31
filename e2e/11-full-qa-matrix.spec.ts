@@ -161,7 +161,7 @@ test.describe('Auth: Magic link confirmation screen', () => {
 
       // Fill email
       await page.fill('input[type="email"]', 'test@example.com');
-      await page.locator('text=Send magic link, button[type="submit"]').first().click();
+      await page.locator('button:has-text("Send magic link"), button[type="submit"]').first().click();
       await page.waitForTimeout(2000);
 
       // Confirmation screen should appear

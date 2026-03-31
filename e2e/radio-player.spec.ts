@@ -6,6 +6,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { setupUserA, E2E_AUTH_CONFIGURED } from './helpers/auth';
 
 // ---------------------------------------------------------------------------
 // Setup
@@ -56,12 +57,14 @@ test.describe('Radio page', () => {
   });
 
   test('radio page shows HOTMESS RADIO branding', async ({ page }) => {
-    await page.goto('/radio', { waitUntil: 'domcontentloaded', timeout: 30_000 });
-    await expect(page.locator('body')).toBeVisible();
-
-    // Check for any heading element — the radio page has a heading
+    test.skip(!E2E_AUTH_CONFIGURED, 'Skipping — auth secrets not configured');
+    // Auth required: unauthenticated users see SplashScreen (no h1/h2/h3)
+    await setupUserA(page);
+    await page.evaluate(() => { window.history.pushState({}, '', '/radio'); window.dispatchEvent(new PopStateEvent('popstate', { state: null })); });
+    await page.waitForTimeout(2000);
+    // RadioMode has two stacked h1 elements: "HOTMESS" and "RADIO"
     const heading = page.locator('h1, h2, h3').first();
-    await expect(heading).toBeVisible();
+    await expect(heading).toBeVisible({ timeout: 10_000 });
   });
 });
 

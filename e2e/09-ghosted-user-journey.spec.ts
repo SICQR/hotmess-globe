@@ -9,7 +9,7 @@
  */
 
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
-import { bypassGates, loginAs } from './helpers/auth';
+import { bypassGates, loginAs, TEST_USER_A, TEST_USER_B, E2E_AUTH_CONFIGURED } from './helpers/auth';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -73,6 +73,7 @@ async function setupUser(
 
 test.describe('Ghosted Mode — Full User-to-User Journey', () => {
   test.describe.configure({ mode: 'serial' }); // tests depend on each other
+  test.skip(!E2E_AUTH_CONFIGURED, 'Skipping — auth secrets not configured');
 
   let ctxA: BrowserContext;
   let ctxB: BrowserContext;
@@ -89,8 +90,8 @@ test.describe('Ghosted Mode — Full User-to-User Journey', () => {
 
     // Authenticate both users
     await Promise.all([
-      setupUser(pageA, 'test-red@hotmessldn.com', '***REMOVED_PASSWORD***'),
-      setupUser(pageB, 'test-blue@hotmessldn.com', '***REMOVED_PASSWORD***'),
+      setupUser(pageA, TEST_USER_A.email, TEST_USER_A.password),
+      setupUser(pageB, TEST_USER_B.email, TEST_USER_B.password),
     ]);
 
     // Dismiss cookie banners

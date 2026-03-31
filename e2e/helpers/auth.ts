@@ -22,13 +22,13 @@ const SUPABASE_STORAGE_KEY = IS_PROD
   ? `sb-rfoftonnlwudilafhfkl-auth-token`
   : `sb-klsywpvncqqglhnhrjbh-auth-token`;
 
-const TEST_USER_A = {
+export const TEST_USER_A = {
   // When PROD=true, use the production test user; otherwise use dev test user
   email: IS_PROD ? 'e2e.alpha@hotmessldn.com' : (process.env.TEST_USER_A_EMAIL || 'test-red@hotmessldn.com'),
   password: IS_PROD ? '***REMOVED_PASSWORD***' : (process.env.TEST_USER_A_PASSWORD || '***REMOVED_PASSWORD***'),
 };
 
-const TEST_USER_B = {
+export const TEST_USER_B = {
   email: IS_PROD ? 'e2e.beta@hotmessldn.com' : (process.env.TEST_USER_B_EMAIL || 'test-blue@hotmessldn.com'),
   password: IS_PROD ? '***REMOVED_PASSWORD***' : (process.env.TEST_USER_B_PASSWORD || '***REMOVED_PASSWORD***'),
 };

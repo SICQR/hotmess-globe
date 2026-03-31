@@ -10,17 +10,21 @@
  */
 
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
-import { bypassGates, loginAs } from './helpers/auth';
+import { bypassGates, loginAs, TEST_USER_A, TEST_USER_B, E2E_AUTH_CONFIGURED } from './helpers/auth';
 
 // ── Config ───────────────────────────────────────────────────────────────────
+// NOTE: This file was originally written against the dev Supabase project.
+// When PROD=true the auth helpers automatically use the prod project & credentials.
+// All tests here skip when E2E_AUTH_CONFIGURED is false.
 
 const BASE = process.env.BASE_URL || 'https://hotmessldn.com';
-const SUPABASE_URL = 'https://klsywpvncqqglhnhrjbh.supabase.co';
-const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
-const STORAGE_KEY = 'sb-klsywpvncqqglhnhrjbh-auth-token';
+const IS_PROD = process.env.PROD === 'true';
+const SUPABASE_URL = IS_PROD ? 'https://rfoftonnlwudilafhfkl.supabase.co' : 'https://klsywpvncqqglhnhrjbh.supabase.co';
+const ANON_KEY = IS_PROD ? (process.env.PROD_SUPABASE_ANON_KEY ?? '') : (process.env.VITE_SUPABASE_ANON_KEY ?? '');
+const STORAGE_KEY = IS_PROD ? 'sb-rfoftonnlwudilafhfkl-auth-token' : 'sb-klsywpvncqqglhnhrjbh-auth-token';
 
-const RED = { email: 'test-red@hotmessldn.com', password: '***REMOVED_PASSWORD***' };
-const BLUE = { email: 'test-blue@hotmessldn.com', password: '***REMOVED_PASSWORD***' };
+const RED  = TEST_USER_A;
+const BLUE = TEST_USER_B;
 
 const MOBILE = { width: 390, height: 844 };
 const GEO_LONDON = { latitude: 51.5074, longitude: -0.1278 };
@@ -85,6 +89,7 @@ function headers(token: string) {
 
 test.describe('Two-User Journey (Production)', () => {
   test.describe.configure({ mode: 'serial', timeout: 120_000 });
+  test.skip(!E2E_AUTH_CONFIGURED, 'Skipping — auth secrets not configured');
 
   let ctxRed: BrowserContext;
   let ctxBlue: BrowserContext;
