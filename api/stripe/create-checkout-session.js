@@ -1,17 +1,25 @@
 /**
- * Vercel API Route: Create Stripe Checkout Session
- * 
- * Creates a Stripe Checkout session for subscription upgrades.
+ * POST /api/stripe/create-checkout-session
+ *
+ * Creates a Stripe Checkout Session for a membership tier.
+ * Uses price_data (dynamic) — no pre-configured Stripe Price IDs required.
+ *
+ * Body: { tierId: number }
+ * Returns: { url: string }
+ *
+ * STRIPE ENV VARS required in Vercel → Settings → Environment Variables:
+ *   STRIPE_SECRET_KEY        sk_live_xxx  or  sk_test_xxx
+ *   STRIPE_WEBHOOK_SECRET    whsec_xxx  (for webhook at /api/stripe/webhook)
  */
 
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
+const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' }) : null;
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -19,89 +27,103 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (!stripe || !STRIPE_SECRET_KEY) {
-    return res.status(500).json({ error: 'Stripe not configured' });
+  if (!stripe) {
+    return res.status(503).json({
+      error: 'Stripe not configured',
+      detail: 'Add STRIPE_SECRET_KEY in Vercel → Settings → Environment Variables',
+    });
   }
 
-  // Get user from auth token
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return res.status(503).json({ error: 'Supabase not configured' });
+  }
+
+  // Auth via Bearer token
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const token = authHeader.split(' ')[1];
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
+  const token = authHeader.slice(7);
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser(token);
+
+  if (authError || !user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  const { tierId } = req.body || {};
+  if (!tierId) {
+    return res.status(400).json({ error: 'tierId required' });
+  }
+
+  // Fetch the tier
+  const { data: tier, error: tierError } = await supabase
+    .from('membership_tiers')
+    .select('id, name, price')
+    .eq('id', Number(tierId))
+    .single();
+
+  if (tierError || !tier) {
+    return res.status(404).json({ error: 'Tier not found' });
+  }
+
+  const priceInPence = Math.round(Number(tier.price));
+  if (!priceInPence || priceInPence <= 0) {
+    return res.status(400).json({ error: 'Free tier — no checkout needed' });
+  }
+
+  // Resolve origin for redirect URLs
+  const origin =
+    process.env.VITE_PUBLIC_URL ||
+    (req.headers.origin?.startsWith('http') ? req.headers.origin : null) ||
+    'https://hotmessldn.com';
+
+  // Fetch display_name for the Stripe customer description
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .single();
+
   try {
-    const { priceId, tierId, successUrl, cancelUrl } = req.body;
-
-    if (!priceId || !successUrl || !cancelUrl) {
-      return res.status(400).json({ error: 'Missing required parameters: priceId, successUrl, cancelUrl' });
-    }
-
-    // Get or create Stripe customer
-    const { data: userData } = await supabase
-      .from('User')
-      .select('stripe_customer_id, email, full_name')
-      .eq('auth_user_id', user.id)
-      .single();
-
-    let customerId = userData?.stripe_customer_id;
-
-    if (!customerId) {
-      // Create new Stripe customer
-      const customer = await stripe.customers.create({
-        email: user.email,
-        name: userData?.full_name || undefined,
-        metadata: {
-          supabase_user_id: user.id,
-        },
-      });
-      customerId = customer.id;
-
-      // Save customer ID to database (using service role would be better)
-      await supabase
-        .from('User')
-        .update({ stripe_customer_id: customerId })
-        .eq('auth_user_id', user.id);
-    }
-
-    // Create checkout session
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
       payment_method_types: ['card'],
+      mode: 'payment',
+      customer_email: user.email,
       line_items: [
         {
-          price: priceId,
+          price_data: {
+            currency: 'gbp',
+            unit_amount: priceInPence,
+            product_data: {
+              name: `HOTMESS ${tier.name.replace(/_/g, ' ').toUpperCase()} Membership`,
+              description: `One-time activation of HOTMESS ${tier.name} tier`,
+            },
+          },
           quantity: 1,
         },
       ],
-      mode: 'subscription',
-      success_url: successUrl,
-      cancel_url: cancelUrl,
       metadata: {
-        supabase_user_id: user.id,
-        tier_id: tierId,
+        user_id: user.id,
+        user_email: user.email ?? '',
+        user_name: profile?.display_name ?? '',
+        tier_id: String(tier.id),
+        tier_name: tier.name,
+        type: 'membership',
       },
-      subscription_data: {
-        metadata: {
-          supabase_user_id: user.id,
-          tier_id: tierId,
-        },
-      },
+      success_url: `${origin}/more/settings?membership=success&tier=${encodeURIComponent(tier.name)}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/more/settings?membership=cancelled`,
       allow_promotion_codes: true,
-      billing_address_collection: 'auto',
     });
 
     return res.status(200).json({ url: session.url });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error('[membership-checkout] Stripe error:', err?.message);
+    return res.status(500).json({ error: 'Failed to create checkout session', detail: err?.message });
   }
 }

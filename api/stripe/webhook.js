@@ -61,22 +61,46 @@ export default async function handler(req, res) {
 
       case 'checkout.session.completed': {
         const session = event.data.object;
-        const userId = session.metadata?.supabase_user_id;
+        // Support both metadata key styles (old: supabase_user_id, new: user_id)
+        const userId = session.metadata?.user_id || session.metadata?.supabase_user_id;
         const tierId = session.metadata?.tier_id;
+        const tierName = session.metadata?.tier_name;
+        const type = session.metadata?.type;
 
-        if (userId && tierId) {
-          const { error } = await supabase
-            .from('User')
-            .update({
-              membership_tier: tierId,
-              stripe_customer_id: session.customer,
-              stripe_subscription_id: session.subscription,
-              subscription_status: 'active',
-            })
-            .eq('auth_user_id', userId);
+        if (userId && type === 'membership' && tierId) {
+          // Upsert into memberships table — one active row per user
+          const { error: memberErr } = await supabase
+            .from('memberships')
+            .upsert(
+              {
+                user_id: userId,
+                tier: tierName || tierId,
+                status: 'active',
+                started_at: new Date().toISOString(),
+                ends_at: null,
+                metadata: {
+                  stripe_session_id: session.id,
+                  stripe_customer_id: session.customer,
+                  tier_id: tierId,
+                  paid_at: new Date().toISOString(),
+                },
+              },
+              { onConflict: 'user_id' }
+            );
 
-          if (error) {
-            console.error('[Stripe webhook] checkout.session.completed DB error:', error.message, { userId, tierId });
+          if (memberErr) {
+            console.error('[Stripe webhook] membership upsert error:', memberErr.message, { userId, tierId });
+          }
+        } else if (userId && !type) {
+          // Legacy path: session without type metadata — treat as subscription update
+          const tierId_ = session.metadata?.tier_id;
+          if (tierId_) {
+            await supabase
+              .from('memberships')
+              .upsert(
+                { user_id: userId, tier: tierId_, status: 'active', started_at: new Date().toISOString(), ends_at: null, metadata: { stripe_session_id: session.id } },
+                { onConflict: 'user_id' }
+              );
           }
         }
         break;

@@ -1,27 +1,105 @@
 /**
- * L2MembershipSheet — Membership tiers
- * Shows Free vs Premium tiers and upgrade CTA.
+ * L2MembershipSheet — Membership tiers + Stripe checkout
+ *
+ * Fetches tiers from membership_tiers table.
+ * "Upgrade" calls /api/stripe/create-checkout-session → redirects to Stripe Checkout.
+ *
+ * STRIPE KEYS: If STRIPE_SECRET_KEY is missing in Vercel env, the API returns 503
+ * and the sheet shows a "not yet available" message. Add the key in Vercel to activate.
  */
 
-import { Crown, Check, Zap, Eye, MessageCircle, Star, ShoppingBag } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Crown, Check, Zap, Eye, MessageCircle, Star, ShoppingBag, Loader2 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
+import { supabase } from '@/components/utils/supabaseClient';
+import { toast } from 'sonner';
 
-const FEATURES = [
-  { icon: Eye, free: true, premium: true, label: 'View nearby profiles' },
-  { icon: MessageCircle, free: true, premium: true, label: 'Send messages' },
-  { icon: Star, free: '3/day', premium: 'Unlimited', label: 'Profile likes' },
-  { icon: Zap, free: false, premium: true, label: 'See who liked you' },
-  { icon: Eye, free: false, premium: true, label: 'Invisible browsing mode' },
-  { icon: Crown, free: false, premium: true, label: 'Premium badge on profile' },
-  { icon: ShoppingBag, free: '5%', premium: '3%', label: 'Selling fee' },
+const FEATURE_ROWS = [
+  { icon: Eye,           label: 'View nearby profiles',    free: true,    paid: true    },
+  { icon: MessageCircle, label: 'Send messages',           free: true,    paid: true    },
+  { icon: Star,          label: 'Profile likes',           free: '3/day', paid: 'Unlimited' },
+  { icon: Zap,           label: 'See who liked you',       free: false,   paid: true    },
+  { icon: Eye,           label: 'Invisible browsing',      free: false,   paid: true    },
+  { icon: Crown,         label: 'Premium badge',           free: false,   paid: true    },
+  { icon: ShoppingBag,   label: 'Selling fee',             free: '5%',    paid: '3%'    },
 ];
+
+// Tier IDs from membership_tiers table
+const SELLER_TIER_ID = 2;    // £9.99 seller
+const PRO_TIER_ID    = 3;    // £29.99 pro_seller
+
+function penceToDisplay(pence) {
+  const pounds = Number(pence) / 100;
+  return `£${pounds % 1 === 0 ? pounds.toFixed(0) : pounds.toFixed(2)}`;
+}
 
 export default function L2MembershipSheet() {
   const { closeSheet } = useSheet();
+  const [tiers, setTiers] = useState([]);
+  const [selectedTierId, setSelectedTierId] = useState(SELLER_TIER_ID);
+  const [loading, setLoading] = useState(false);
+  const [tiersLoading, setTiersLoading] = useState(true);
 
-  const handleUpgrade = () => {
-    window.open('https://hotmess.app/premium', '_blank');
-    closeSheet();
+  // Fetch paid tiers on mount
+  useEffect(() => {
+    supabase
+      .from('membership_tiers')
+      .select('id, name, price')
+      .gt('price', 0)
+      .order('price', { ascending: true })
+      .then(({ data, error }) => {
+        if (!error && data?.length) {
+          setTiers(data);
+          setSelectedTierId(data[0].id);
+        }
+        setTiersLoading(false);
+      });
+  }, []);
+
+  const selectedTier = tiers.find((t) => t.id === selectedTierId);
+
+  const handleUpgrade = async () => {
+    if (!selectedTier || loading) return;
+    setLoading(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('Sign in to upgrade');
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ tierId: selectedTier.id }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 503) {
+          toast.info('Payments not yet active — coming soon');
+        } else {
+          toast.error(data?.error || 'Could not start checkout');
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error('[MembershipSheet] checkout error:', err);
+      toast.error('Something went wrong. Try again.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,33 +113,38 @@ export default function L2MembershipSheet() {
         <p className="text-white/50 text-sm mt-1">Unlock the full HOTMESS experience</p>
       </div>
 
-      {/* Pricing */}
+      {/* Tier selector */}
       <div className="px-4 pb-4 flex gap-3">
-        {[
-          { period: '1 Month', price: '£9.99', perMonth: '£9.99/mo' },
-          { period: '12 Months', price: '£59.99', perMonth: '£5/mo', badge: 'Best Value', highlight: true },
-        ].map(plan => (
-          <button
-            key={plan.period}
-            onClick={handleUpgrade}
-            className={`flex-1 rounded-2xl p-4 text-center border transition-all active:scale-95 ${
-              plan.highlight
-                ? 'bg-[#C8962C]/20 border-[#C8962C]/40'
-                : 'bg-[#1C1C1E] border-white/10'
-            }`}
-          >
-            {plan.badge && (
-              <span className="inline-block bg-[#C8962C] text-black text-[9px] font-black uppercase px-2 py-0.5 rounded-full mb-2">
-                {plan.badge}
-              </span>
-            )}
-            <p className={`font-black text-xl ${plan.highlight ? 'text-[#C8962C]' : 'text-white'}`}>
-              {plan.price}
-            </p>
-            <p className="text-white/40 text-xs mt-0.5">{plan.period}</p>
-            <p className="text-white/30 text-[10px] mt-1">{plan.perMonth}</p>
-          </button>
-        ))}
+        {tiersLoading ? (
+          <div className="flex-1 flex items-center justify-center py-6">
+            <Loader2 className="w-5 h-5 animate-spin text-white/30" />
+          </div>
+        ) : tiers.length === 0 ? (
+          <p className="text-white/30 text-xs text-center flex-1 py-4">Tiers loading…</p>
+        ) : (
+          tiers.slice(0, 2).map((tier) => {
+            const isSelected = tier.id === selectedTierId;
+            return (
+              <button
+                key={tier.id}
+                onClick={() => setSelectedTierId(tier.id)}
+                className={`flex-1 rounded-2xl p-4 text-center border transition-all active:scale-95 ${
+                  isSelected ? 'bg-[#C8962C]/20 border-[#C8962C]/40' : 'bg-[#1C1C1E] border-white/10'
+                }`}
+              >
+                {isSelected && (
+                  <span className="inline-block bg-[#C8962C] text-black text-[9px] font-black uppercase px-2 py-0.5 rounded-full mb-2">
+                    Selected
+                  </span>
+                )}
+                <p className={`font-black text-xl ${isSelected ? 'text-[#C8962C]' : 'text-white'}`}>
+                  {penceToDisplay(tier.price)}
+                </p>
+                <p className="text-white/40 text-xs mt-0.5 capitalize">{tier.name.replace(/_/g, ' ')}</p>
+              </button>
+            );
+          })
+        )}
       </div>
 
       {/* Feature comparison */}
@@ -73,7 +156,7 @@ export default function L2MembershipSheet() {
             <div className="w-16 text-center text-white/30 text-[10px] font-black uppercase">Free</div>
             <div className="w-16 text-center text-[#C8962C] text-[10px] font-black uppercase">Premium</div>
           </div>
-          {FEATURES.map(({ icon: Icon, free, premium, label }) => (
+          {FEATURE_ROWS.map(({ icon: Icon, label, free, paid }) => (
             <div key={label} className="flex items-center px-4 py-3 border-b border-white/5 last:border-0">
               <div className="flex-1 flex items-center gap-2.5">
                 <Icon className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
@@ -83,13 +166,13 @@ export default function L2MembershipSheet() {
                 {free === true
                   ? <Check className="w-4 h-4 text-white/40 mx-auto" />
                   : free === false
-                    ? <span className="text-white/15 text-sm">—</span>
-                    : <span className="text-white/40 text-[10px] font-bold">{free}</span>}
+                  ? <span className="text-white/15 text-sm">—</span>
+                  : <span className="text-white/40 text-[10px] font-bold">{free}</span>}
               </div>
               <div className="w-16 text-center">
-                {premium === true
+                {paid === true
                   ? <Check className="w-4 h-4 text-[#C8962C] mx-auto" />
-                  : <span className="text-[#C8962C] text-[10px] font-bold">{premium}</span>}
+                  : <span className="text-[#C8962C] text-[10px] font-bold">{paid}</span>}
               </div>
             </div>
           ))}
@@ -100,13 +183,14 @@ export default function L2MembershipSheet() {
       <div className="px-4 pb-6">
         <button
           onClick={handleUpgrade}
-          className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-4 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          disabled={loading || tiersLoading || !selectedTier}
+          className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-4 flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-40"
         >
-          <Crown className="w-4 h-4" />
-          Upgrade Now
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
+          {loading ? 'Redirecting to checkout…' : `Upgrade${selectedTier ? ` — ${penceToDisplay(selectedTier.price)}` : ''}`}
         </button>
         <p className="text-center text-white/25 text-[10px] mt-2">
-          Cancel anytime · Secure payment via Stripe
+          Secure payment via Stripe · One-off activation fee
         </p>
       </div>
     </div>
