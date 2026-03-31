@@ -33,17 +33,32 @@ function collectErrors(page: Page): string[] {
   return errors;
 }
 
+// Map tab names to expected URL path patterns (for post-click wait)
+const TAB_PATH: Record<string, RegExp> = {
+  Home: /^\/$|\/$/,
+  Pulse: /\/pulse/,
+  Ghosted: /\/ghosted/,
+  Market: /\/market/,
+  Music: /\/music/,
+  More: /\/more/,
+};
+
 /** Navigate to a tab using the bottom nav */
 async function goToTab(page: Page, tabName: string) {
   const nav = page.locator('nav').first();
   const btn = nav.locator(`button, a`).filter({ hasText: new RegExp(tabName, 'i') }).first();
-  if (await btn.isVisible()) {
+  if (await btn.isVisible({ timeout: 3000 }).catch(() => false)) {
     await btn.click();
   } else {
     // Try aria-label fallback
     await nav.locator(`[aria-label="${tabName}"]`).first().click();
   }
-  await page.waitForTimeout(1200);
+  // Wait for URL to reflect the expected route (max 5s, non-fatal)
+  const pathPattern = TAB_PATH[tabName];
+  if (pathPattern) {
+    await page.waitForURL(pathPattern, { timeout: 5_000 }).catch(() => {});
+  }
+  await page.waitForTimeout(800); // extra settle for React re-renders
 }
 
 /** Check no horizontal overflow */
@@ -229,9 +244,10 @@ test.describe('Tab navigation', () => {
 
   test('switching from Pulse back to Home: canvas gone', async ({ page }) => {
     await goToTab(page, 'Pulse');
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(2000);
     await goToTab(page, 'Home');
-    await page.waitForTimeout(1500);
+    // UnifiedGlobe returns null on non-/pulse routes — wait for React to unmount canvas
+    await page.waitForTimeout(3000);
 
     await expectNoFullscreenCanvas(page);
   });
