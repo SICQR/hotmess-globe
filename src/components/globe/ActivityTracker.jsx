@@ -24,7 +24,13 @@ class ActivityTracker {
       if (!isAuth) return;
       
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
+      if (!user) {
+        // user not found - return early or handle
+      } else {
+        const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+        const enrichedUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email };
+        Object.assign(user, enrichedUser);
+      }
       if (!user?.email) return;
       
       // UserActivity table may not exist - fail silently
@@ -45,6 +51,7 @@ class ActivityTracker {
   }
 
   pruneOldActivities(activities) {
+    if (!Array.isArray(activities)) return [];
     const now = Date.now();
     return activities.filter(activity => {
       const age = now - new Date(activity.created_date).getTime();
