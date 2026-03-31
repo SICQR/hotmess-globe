@@ -423,8 +423,15 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   const [loading, setLoading] = useState(!passedBeacon);
   const [checkinCount, setCheckinCount] = useState(0);
   const [recentPosts, setRecentPosts] = useState([]);
-  const [checkingIn, setCheckingIn] = useState(false);
   const { openSheet } = useSheet();
+
+  // Check-in modal state
+  const [showCheckinModal, setShowCheckinModal]   = useState(false);
+  const [checkinStep, setCheckinStep]             = useState(1);
+  const [checkinVisibility, setCheckinVisibility] = useState('private');
+  const [tonightIntention, setTonightIntention]   = useState('');
+  const [checkingIn, setCheckingIn]               = useState(false);
+  const [activeCheckin, setActiveCheckin]         = useState(null);
 
   useEffect(() => {
     if (passedBeacon) { setBeacon(passedBeacon); setLoading(false); }
@@ -443,13 +450,16 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   // Fetch venue-specific data
   useEffect(() => {
     if (!beacon?.venue_id) return;
-    const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+
+    // Use venue_checkin_counts view — bypasses RLS which limits direct reads to own rows
     supabase
-      .from('venue_checkins')
-      .select('*', { count: 'exact', head: true })
+      .from('venue_checkin_counts')
+      .select('checkins_last_4h')
       .eq('venue_id', beacon.venue_id)
-      .gte('checked_in_at', fourHoursAgo)
-      .then(({ count }) => setCheckinCount(count || beacon.checkin_count || 0));
+      .maybeSingle()
+      .then(({ data }) => setCheckinCount(
+        data?.checkins_last_4h || beacon.checkin_count || 0
+      ));
 
     supabase
       .from('right_now_posts')
@@ -459,25 +469,130 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
       .order('created_at', { ascending: false })
       .limit(3)
       .then(({ data }) => setRecentPosts(data || []));
+
+    // Check for existing active check-in at this venue
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase
+        .from('timed_checkins')
+        .select('id, started_at, checkin_visibility, tonight_intention, expires_at')
+        .eq('user_id', user.id)
+        .eq('venue_id', beacon.venue_id)
+        .gt('expires_at', new Date().toISOString())
+        .is('ended_at', null)
+        .maybeSingle()
+        .then(({ data }) => setActiveCheckin(data || null));
+    });
   }, [beacon?.venue_id, beacon?.id, beacon?.checkin_count]);
 
-  const handleCheckIn = async () => {
+  // Opens modal instead of immediately checking in
+  const handleCheckIn = () => {
+    setCheckinStep(1);
+    setCheckinVisibility('private');
+    setTonightIntention('');
+    setShowCheckinModal(true);
+  };
+
+  // Called when user completes the 2-step modal
+  const handleCheckinConfirm = async () => {
     setCheckingIn(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error('Please sign in'); return; }
-      await supabase.from('venue_checkins').insert({
-        venue_id: beacon.venue_id || beacon.id,
-        user_id: user.id,
-        source: 'globe_tap',
-        checked_in_at: new Date().toISOString(),
+
+      const now     = new Date();
+      const expires = new Date(now);
+      expires.setHours(6, 0, 0, 0);
+      if (expires <= now) expires.setDate(expires.getDate() + 1);
+
+      // Write venue_checkins — fires trg_checkin_beacon_count + trg_checkin_globe_event
+      const { error: vcErr } = await supabase.from('venue_checkins').insert({
+        venue_id:      beacon.venue_id || beacon.id,
+        user_id:       user.id,
+        source:        'globe_tap',
+        checked_in_at: now.toISOString(),
+        metadata: {
+          beacon_id:          beacon.id,
+          checkin_visibility: checkinVisibility,
+        },
       });
-      setCheckinCount((c) => c + 1);
-      toast.success('Checked in!');
+      if (vcErr) throw vcErr;
+
+      // Write timed_checkins — fires trg_timed_checkin_globe (globe flare)
+      const { data: tc, error: tcErr } = await supabase.from('timed_checkins').insert({
+        user_id:            user.id,
+        venue_id:           beacon.venue_id || beacon.id,
+        beacon_id:          beacon.id,
+        started_at:         now.toISOString(),
+        expires_at:         expires.toISOString(),
+        tonight_intention:  tonightIntention.trim() || null,
+        checkin_visibility: checkinVisibility,
+        metadata: { beacon_title: beacon.title, city: beacon.city_slug },
+      }).select().single();
+      if (tcErr) throw tcErr;
+
+      setCheckinCount(c => c + 1);
+      setActiveCheckin(tc);
+      notifySafetyContacts(user, beacon, now);
+
+      setShowCheckinModal(false);
+      toast.success('Checked in. Your safety contacts have been notified.');
     } catch (err) {
-      toast.error('Check-in failed');
+      console.error('[checkin]', err);
+      toast.error('Check-in failed — ' + (err.message || 'try again'));
     } finally {
       setCheckingIn(false);
+    }
+  };
+
+  const handleCheckOut = async () => {
+    if (!activeCheckin) return;
+    try {
+      await supabase
+        .from('timed_checkins')
+        .update({ ended_at: new Date().toISOString() })
+        .eq('id', activeCheckin.id);
+      setActiveCheckin(null);
+      toast.success('Checked out.');
+    } catch (err) {
+      toast.error('Check-out failed');
+    }
+  };
+
+  // Safety contact notification — non-blocking, fire and forget
+  const notifySafetyContacts = async (user, beaconData, checkinTime) => {
+    try {
+      // trusted_contacts uses user_email not user_id
+      const { data: contacts } = await supabase
+        .from('trusted_contacts')
+        .select('id, contact_name, notify_on_sos')
+        .eq('user_email', user.email)
+        .eq('notify_on_sos', true);
+
+      if (!contacts || contacts.length === 0) return;
+
+      const timeStr = checkinTime.toLocaleTimeString('en-GB', {
+        hour: '2-digit', minute: '2-digit',
+      });
+
+      const rows = contacts.map(c => ({
+        user_id: user.id,
+        type:    'safety_checkin',
+        title:   'Safe check-in',
+        body:    `${user.user_metadata?.full_name || 'Your contact'} checked into ${beaconData.title || 'a venue'} at ${timeStr}`,
+        payload: {
+          venue_name:   beaconData.title,
+          beacon_id:    beaconData.id,
+          checkin_time: checkinTime.toISOString(),
+          contact_id:   c.id,
+        },
+        read: false,
+      }));
+
+      await supabase.from('notifications').insert(rows);
+    } catch (err) {
+      console.warn('[safety-notif]', err.message);
+      // Non-fatal — never surface to user
     }
   };
 
@@ -506,7 +621,7 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
   const lng = beacon.geo_lng ?? beacon.lng;
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
+    <div className="relative flex flex-col h-full overflow-y-auto">
       <div className="px-4 pt-4 pb-2">
         <div className="flex items-center gap-2 mb-2">
           <span
@@ -569,26 +684,46 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
       </div>
 
       <div className="px-4 py-4 flex flex-col gap-2 mt-auto">
-        {/* Venue: CHECK IN + WHO'S HERE */}
+        {/* Venue check-in / active state */}
         {category === 'venue' && (
-          <button
-            onClick={handleCheckIn}
-            disabled={checkingIn}
-            className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
-          >
-            {checkingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
-            Check in here
-          </button>
+          activeCheckin ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 px-3 py-2 bg-[#C8962C]/10 border border-[#C8962C]/30 rounded-xl">
+                <div className="w-2 h-2 rounded-full bg-[#C8962C] animate-pulse flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <span className="text-[#C8962C] text-xs font-semibold">You&apos;re here</span>
+                  {activeCheckin.tonight_intention && (
+                    <p className="text-white/50 text-xs truncate mt-0.5">
+                      {activeCheckin.tonight_intention}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleCheckOut}
+                className="w-full bg-white/5 border border-white/10 text-white/60 font-bold text-sm rounded-2xl py-3 active:scale-95 transition-transform"
+              >
+                Check out
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleCheckIn}
+              className="w-full bg-[#C8962C] text-black font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            >
+              <MapPin className="w-4 h-4" />
+              Check in here
+            </button>
+          )
         )}
 
-        {/* Event: I'M GOING */}
+        {/* Event: I'm going */}
         {category === 'event' && (
           <button
             onClick={handleCheckIn}
             disabled={checkingIn}
             className="w-full bg-[#FF4F9A] text-white font-black text-sm rounded-2xl py-3.5 flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
           >
-            {checkingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             I&apos;m going
           </button>
         )}
@@ -613,6 +748,110 @@ function BeaconViewer({ beaconId, beacon: passedBeacon }) {
           </div>
         )}
       </div>
+
+      {/* 2-step check-in modal */}
+      {showCheckinModal && (
+        <div
+          className="absolute inset-0 z-50 flex flex-col justify-end"
+          style={{ background: 'rgba(0,0,0,0.75)' }}
+          onClick={() => setShowCheckinModal(false)}
+        >
+          <div
+            className="rounded-t-2xl p-5 pb-8 border-t border-white/10"
+            style={{ background: '#111116' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {checkinStep === 1 ? (
+              <>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-1">
+                  Check in to {beacon.title}
+                </p>
+                <h3 className="text-white font-black text-lg mb-1">Who can see this?</h3>
+                <p className="text-white/40 text-xs mb-5">
+                  Your safety contacts are always notified. This controls your visibility on Ghosted.
+                </p>
+                <div className="flex flex-col gap-2 mb-5">
+                  {[
+                    { value: 'private',     label: 'Private',     sub: "Safety contacts only — nothing on Ghosted", tag: 'Default' },
+                    { value: 'connections', label: 'Connections', sub: "Visible to men you've matched with", tag: null },
+                    { value: 'scene',       label: 'Scene',       sub: 'Visible to everyone at this venue tonight', tag: null },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setCheckinVisibility(opt.value)}
+                      className={`flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all active:scale-98 ${
+                        checkinVisibility === opt.value
+                          ? 'border-[#C8962C]/60 bg-[#C8962C]/10'
+                          : 'border-white/10 bg-white/5'
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0 transition-colors ${
+                        checkinVisibility === opt.value
+                          ? 'border-[#C8962C] bg-[#C8962C]'
+                          : 'border-white/30'
+                      }`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-white font-bold text-sm">{opt.label}</span>
+                          {opt.tag && (
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-[#C8962C]/20 text-[#C8962C]">
+                              {opt.tag}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-white/40 text-xs">{opt.sub}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setCheckinStep(2)}
+                  className="w-full py-3.5 rounded-xl bg-[#C8962C] text-black font-black text-sm active:scale-95 transition-transform"
+                >
+                  Next
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-1">
+                  Optional
+                </p>
+                <h3 className="text-white font-black text-lg mb-1">What&apos;s your vibe tonight?</h3>
+                <p className="text-white/40 text-xs mb-4">
+                  {checkinVisibility === 'private'
+                    ? 'Private — only you will see this.'
+                    : "This appears on your Ghosted card while you're here."}
+                </p>
+                <textarea
+                  value={tonightIntention}
+                  onChange={e => { if (e.target.value.length <= 80) setTonightIntention(e.target.value); }}
+                  placeholder="Here for the music, sweaty dancing..."
+                  rows={3}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 text-sm resize-none focus:outline-none focus:border-[#C8962C]/50 mb-1"
+                />
+                <p className="text-right text-[10px] text-white/25 mb-4">
+                  {tonightIntention.length}/80
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setCheckinStep(1)}
+                    className="flex-1 py-3.5 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-sm"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handleCheckinConfirm}
+                    disabled={checkingIn}
+                    className="flex-1 py-3.5 rounded-xl bg-[#C8962C] text-black font-black text-sm disabled:opacity-50 active:scale-95 transition-transform"
+                  >
+                    {checkingIn ? 'Checking in...' : 'Check in'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

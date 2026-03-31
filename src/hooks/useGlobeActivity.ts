@@ -231,8 +231,11 @@ export function useGlobeActivity(liveBeaconCount: number): GlobeActivityData {
   }, []);
 
   const seedZones: SeedZone[] = useMemo(() => {
-    // Fade factor: seed heat → 0 when 15+ beacons are live
-    const fadeFactor = Math.max(0, 1 - liveBeaconCount / 15);
+    // Fade factor: only fade seed heat when real dynamic check-ins are happening,
+    // not when static venue beacons are present. Globe always has min 40% glow over London.
+    const STATIC_VENUE_BASELINE = 13;
+    const activeDynamic = Math.max(0, liveBeaconCount - STATIC_VENUE_BASELINE);
+    const fadeFactor = Math.max(0.4, 1 - activeDynamic / 20);
 
     return SEED_ZONES_RAW.map(zone => ({
       ...zone,

@@ -139,11 +139,20 @@ export default function GlobePage({ embedded = false }) {
       .channel('beacons-realtime')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'Beacon' },
+        { event: 'INSERT', schema: 'public', table: 'beacons' },
         (payload) => {
           queryClient.setQueryData(['beacons'], (old = []) => {
             if (payload.new.active) {
-              return [payload.new, ...old];
+              const b = payload.new;
+              const normalized = {
+                ...b,
+                lat:    Number(b.geo_lat),
+                lng:    Number(b.geo_lng),
+                kind:   b.type,
+                mode:   b.beacon_category === 'venue' ? 'venue' : 'user',
+                active: true,
+              };
+              return [normalized, ...old];
             }
             return old;
           });
@@ -151,7 +160,7 @@ export default function GlobePage({ embedded = false }) {
       )
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'Beacon' },
+        { event: 'UPDATE', schema: 'public', table: 'beacons' },
         (payload) => {
           queryClient.setQueryData(['beacons'], (old = []) => {
             return old.map(beacon => 
@@ -162,7 +171,7 @@ export default function GlobePage({ embedded = false }) {
       )
       .on(
         'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'Beacon' },
+        { event: 'DELETE', schema: 'public', table: 'beacons' },
         (payload) => {
           queryClient.setQueryData(['beacons'], (old = []) => {
             return old.filter(beacon => beacon.id !== payload.old.id);
