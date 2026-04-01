@@ -5,7 +5,7 @@
  * Shows before auth for first-time visitors.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, MapPin } from 'lucide-react';
@@ -32,7 +32,7 @@ export default function AgeGate() {
 
   useEffect(() => {
     try {
-      const cached = sessionStorage.getItem('location_permission');
+      const cached = localStorage.getItem('location_permission');
       if (cached === 'granted' || cached === 'denied') setLocationPermissionStatus(cached);
     } catch {}
 
@@ -54,7 +54,7 @@ export default function AgeGate() {
             setLocationPermissionStatus(next);
             try {
               if (next === 'granted' || next === 'denied')
-                sessionStorage.setItem('location_permission', next);
+                localStorage.setItem('location_permission', next);
             } catch {}
           }
         };
@@ -80,13 +80,13 @@ export default function AgeGate() {
       );
       if (!loc) throw new Error('Unable to get location');
       try {
-        sessionStorage.setItem('location_permission', 'granted');
+        localStorage.setItem('location_permission', 'granted');
       } catch {}
       setLocationPermissionStatus('granted');
       return { granted: true, error: null };
     } catch (err) {
       try {
-        sessionStorage.setItem('location_permission', 'denied');
+        localStorage.setItem('location_permission', 'denied');
       } catch {}
       setLocationPermissionStatus('denied');
       return { granted: false, error: err?.message || 'denied' };
@@ -103,7 +103,7 @@ export default function AgeGate() {
 
     try {
       localStorage.setItem(AGE_KEY, 'true');
-      sessionStorage.setItem('location_consent', locationConsent ? 'true' : 'false');
+      localStorage.setItem('location_consent', locationConsent ? 'true' : 'false');
     } catch {}
 
     if (locationConsent && locationPermissionStatus !== 'granted') {
