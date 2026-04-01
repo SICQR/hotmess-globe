@@ -175,7 +175,7 @@ export default function EventsMode() {
         </div>
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
           <div>
-            <p className="text-[#C8962C] text-[10px] font-black uppercase tracking-[0.3em]">HOTMESS</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em]"><span className="text-white">HOT</span><span className="text-[#C8962C]">MESS</span></p>
             <h1 className="font-black text-2xl text-white leading-tight tracking-tight">
               {filter === 'Tonight' ? 'Happening Tonight' : filter === 'This Week' ? 'This Week' : 'All Events'}
             </h1>

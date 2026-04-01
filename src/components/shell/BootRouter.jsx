@@ -19,7 +19,7 @@ const PUBLIC_PATH_PREFIXES = [
 const LoadingSpinner = () => (
   <div className="fixed inset-0 bg-black flex flex-col items-center justify-center">
     <p className="text-lg font-black italic text-white/25 tracking-tight select-none mb-6">
-      HOT<span className="text-[#C8962C]/40">MESS</span>
+      <span className="text-white">HOT</span><span className="text-[#C8962C]">MESS</span>
     </p>
     <div className="relative w-10 h-10">
       {/* Breathing gold ring */}
