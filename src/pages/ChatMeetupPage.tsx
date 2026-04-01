@@ -46,7 +46,7 @@ export default function ChatMeetupPage() {
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-4">
         <button className="text-gold text-2xl"><FaChevronLeft /></button>
-        <div className="text-gold font-mono text-xl tracking-wide drop-shadow-[0_0_10px_#FFB80077]">HOTMESS</div>
+        <div className="font-mono text-xl tracking-wide"><span className="text-white">HOT</span><span className="text-[#C8962C] drop-shadow-[0_0_10px_#FFB80077]">MESS</span></div>
         <button className="text-gold text-2xl"><FaEllipsisV /></button>
       </header>
       

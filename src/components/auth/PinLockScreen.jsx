@@ -159,7 +159,7 @@ export function PinEntryScreen() {
       {/* Logo */}
       <div className="mb-8">
         <Lock className="w-12 h-12 text-[#C8962C] mx-auto mb-4" />
-        <h1 className="text-2xl font-black text-white text-center">HOTMESS</h1>
+        <h1 className="text-2xl font-black text-center"><span className="text-white">HOT</span><span className="text-[#C8962C]">MESS</span></h1>
         <p className="text-white/50 text-sm text-center mt-1">Enter your PIN</p>
       </div>
 

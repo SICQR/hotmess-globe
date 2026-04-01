@@ -299,7 +299,7 @@ export default function HotmessSplash() {
 
               {/* Header */}
               <div className="mb-7">
-                <p className="text-[#C8962C] text-[9px] font-black uppercase tracking-[0.3em] mb-2">HOTMESS</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-2"><span className="text-white">HOT</span><span className="text-[#C8962C]">MESS</span></p>
                 <h2 className="text-white font-black text-[28px] leading-tight">
                   {isSignUp ? 'Create account' : 'Welcome back'}
                 </h2>

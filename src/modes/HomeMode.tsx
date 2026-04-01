@@ -799,11 +799,8 @@ export function HomeMode({ className = '' }: HomeModeProps) {
         </button>
 
         {/* Wordmark */}
-        <h1
-          className="text-base font-black tracking-[0.25em] uppercase select-none"
-          style={{ color: AMBER }}
-        >
-          HOTMESS
+        <h1 className="text-base font-black tracking-[0.25em] uppercase select-none">
+          <span className="text-white">HOT</span><span style={{ color: AMBER }}>MESS</span>
         </h1>
 
         {/* Night Mode toggle */}

@@ -141,7 +141,7 @@ export default function VaultMode() {
     <div className="h-full w-full bg-[#050507] flex flex-col overflow-hidden">
       {/* Header */}
       <div className="px-4 pt-6 pb-4 flex-shrink-0">
-        <p className="text-[#C8962C] text-[10px] font-black uppercase tracking-widest mb-1">HOTMESS</p>
+        <p className="text-[10px] font-black uppercase tracking-widest mb-1"><span className="text-white">HOT</span><span className="text-[#C8962C]">MESS</span></p>
         <div className="flex items-end justify-between">
           <h1 className="font-black text-2xl text-white">Vault</h1>
           {totalSpend > 0 && (

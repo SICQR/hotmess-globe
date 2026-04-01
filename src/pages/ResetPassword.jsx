@@ -67,7 +67,7 @@ export default function ResetPassword() {
       >
         <div className="w-full bg-[#0D0D0D] border-t border-white/10 rounded-t-3xl px-6 pt-8 pb-12">
           <div className="mb-6">
-            <p className="text-[#C8962C] text-[10px] font-black uppercase tracking-widest mb-1">HOTMESS</p>
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1"><span className="text-white">HOT</span><span className="text-[#C8962C]">MESS</span></p>
             <h2 className="text-white font-black text-2xl">New password</h2>
             <p className="text-white/40 text-sm mt-1">Choose something you'll remember.</p>
           </div>

@@ -142,7 +142,7 @@ export function GlobeMobileFallback({ onRequestFullGlobe }) {
         {/* Header */}
         <div className="text-center mb-8">
           <Globe className="w-12 h-12 text-cyan-500 mx-auto mb-3" />
-          <h2 className="text-xl font-black text-white mb-1">HOTMESS</h2>
+          <h2 className="text-xl font-black mb-1"><span className="text-white">HOT</span><span className="text-[#C8962C]">MESS</span></h2>
           <p className="text-white/50 text-sm">Quick access</p>
         </div>
 
