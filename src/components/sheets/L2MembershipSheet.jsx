@@ -9,24 +9,20 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Crown, Check, Zap, Eye, MessageCircle, Star, ShoppingBag, Loader2 } from 'lucide-react';
+import { Crown, Check, Zap, Eye, MessageCircle, Loader2, Music, MapPin, Users, Radio } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 
 const FEATURE_ROWS = [
-  { icon: Eye,           label: 'View nearby profiles',    free: true,    paid: true    },
-  { icon: MessageCircle, label: 'Send messages',           free: true,    paid: true    },
-  { icon: Star,          label: 'Profile likes',           free: '3/day', paid: 'Unlimited' },
-  { icon: Zap,           label: 'See who liked you',       free: false,   paid: true    },
-  { icon: Eye,           label: 'Invisible browsing',      free: false,   paid: true    },
-  { icon: Crown,         label: 'Premium badge',           free: false,   paid: true    },
-  { icon: ShoppingBag,   label: 'Selling fee',             free: '5%',    paid: '3%'    },
+  { icon: Eye,           label: 'Full Ghosted grid',      free: '3 previews', paid: 'Unlimited' },
+  { icon: MessageCircle, label: 'Messaging & taps',       free: false,        paid: true        },
+  { icon: Zap,           label: 'Tonight intention',      free: false,        paid: true        },
+  { icon: Music,         label: 'Smash Daddys library',   free: '90s preview',paid: 'Full tracks' },
+  { icon: MapPin,        label: 'Beacon drops/month',     free: '0',          paid: '3'         },
+  { icon: Users,         label: 'Personas',               free: '1',          paid: '2'         },
+  { icon: Radio,         label: 'HOTMESS Radio',          free: true,         paid: true        },
 ];
-
-// Tier IDs from membership_tiers table
-const SELLER_TIER_ID = 2;    // £9.99 seller
-const PRO_TIER_ID    = 3;    // £29.99 pro_seller
 
 function penceToDisplay(pence) {
   const pounds = Number(pence) / 100;
@@ -36,7 +32,7 @@ function penceToDisplay(pence) {
 export default function L2MembershipSheet() {
   const { closeSheet } = useSheet();
   const [tiers, setTiers] = useState([]);
-  const [selectedTierId, setSelectedTierId] = useState(SELLER_TIER_ID);
+  const [selectedTierId, setSelectedTierId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [tiersLoading, setTiersLoading] = useState(true);
 
@@ -137,10 +133,17 @@ export default function L2MembershipSheet() {
                     Selected
                   </span>
                 )}
+                {tier.id === 2 && !isSelected && (
+                  <span className="inline-block bg-[#C8962C] text-black text-[9px] font-black uppercase px-2 py-0.5 rounded-full mb-2">
+                    Most Popular
+                  </span>
+                )}
                 <p className={`font-black text-xl ${isSelected ? 'text-[#C8962C]' : 'text-white'}`}>
                   {penceToDisplay(tier.price)}
                 </p>
-                <p className="text-white/40 text-xs mt-0.5 capitalize">{tier.name.replace(/_/g, ' ')}</p>
+                <p className="text-white/40 text-xs mt-0.5 capitalize">
+                  {tier.name.toUpperCase()}
+                </p>
               </button>
             );
           })

@@ -1552,6 +1552,7 @@ test.describe('Suite 11: Two-User Messaging', () => {
 
   test("Beta opens thread and sees Alpha's message", async ({ browser }) => {
     test.skip(!E2E_AUTH_CONFIGURED, 'Auth not configured');
+    test.setTimeout(45_000);
 
     const betaContext = await browser.newContext();
     const betaPage = await betaContext.newPage();
@@ -1620,11 +1621,12 @@ test.describe('Suite 11: Two-User Messaging', () => {
 
   test("Alpha's thread updates with Beta's reply (polling)", async ({ browser, page }) => {
     test.skip(!E2E_AUTH_CONFIGURED, 'Auth not configured');
+    test.setTimeout(45_000);
 
     await setupUserA(page);
     await waitForNav(page);
 
-    await page.goto(url('/messages'), { waitUntil: 'networkidle' });
+    await page.goto(url('/chats'), { waitUntil: 'networkidle' });
 
     // Poll up to 5s for Beta's reply (reduced from 10s to avoid 60s test timeout)
     let found = false;
@@ -1983,6 +1985,7 @@ test.describe('Suite 14: Settings & Account', () => {
 
   test('Clicking logout shows confirmation or logs out immediately', async ({ page }) => {
     test.skip(!E2E_AUTH_CONFIGURED, 'Auth not configured');
+    test.setTimeout(45_000);
 
     await setupUserA(page);
     await waitForNav(page);

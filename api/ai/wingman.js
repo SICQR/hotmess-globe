@@ -7,6 +7,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { requireAIAccess, logAIUsage } from './_auth.js';
 
 let _supabase = null;
 
@@ -40,20 +41,29 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'OpenAI API key not configured' });
   }
 
-  try {
-    const { viewerEmail, targetProfileId } = req.body;
+  // Auth gate
+  const access = await requireAIAccess(req, 'wingman');
+  if (access.error) {
+    return res.status(access.status).json({
+      error: access.error,
+      upgradeRequired: access.upgradeRequired || false
+    });
+  }
+  const { user, tier } = access;
 
-    if (!viewerEmail || !targetProfileId) {
-      return res.status(400).json({ error: 'Missing viewerEmail or targetProfileId' });
+  try {
+    const { targetProfileId } = req.body;
+
+    if (!targetProfileId) {
+      return res.status(400).json({ error: 'Missing targetProfileId' });
     }
 
-    // Get both profiles from `profiles` table (not legacy `User`)
-    // public_attributes holds: position, looking_for, body_type, sexual_orientation
+    // Get both profiles from profiles table using user.id (not viewerEmail)
     const [viewerResult, targetResult] = await Promise.all([
       getSupabase()
         .from('profiles')
         .select('display_name, username, bio, public_attributes, city, location')
-        .eq('email', viewerEmail)
+        .eq('id', user.id)
         .single(),
       getSupabase()
         .from('profiles')
@@ -69,33 +79,19 @@ export default async function handler(req, res) {
     const viewer = viewerResult.data;
     const target = targetResult.data;
 
-    // Extract public_attributes arrays
     const viewerAttrs = viewer.public_attributes || {};
     const targetAttrs = target.public_attributes || {};
 
-    // Find common ground across public_attributes arrays
-    const commonInterests = findCommon(
-      viewerAttrs.interests || [],
-      targetAttrs.interests || []
-    );
-    const commonMusic = findCommon(
-      viewerAttrs.music_taste || [],
-      targetAttrs.music_taste || []
-    );
-    const commonTribes = findCommon(
-      viewerAttrs.tribes || [],
-      targetAttrs.tribes || []
-    );
-    const commonLookingFor = findCommon(
-      viewerAttrs.looking_for || [],
-      targetAttrs.looking_for || []
-    );
+    const commonInterests = findCommon(viewerAttrs.interests || [], targetAttrs.interests || []);
+    const commonMusic = findCommon(viewerAttrs.music_taste || [], targetAttrs.music_taste || []);
+    const commonTribes = findCommon(viewerAttrs.tribes || [], targetAttrs.tribes || []);
+    const commonLookingFor = findCommon(viewerAttrs.looking_for || [], targetAttrs.looking_for || []);
 
-    // Check for shared events (both RSVPd to same event)
+    // Check for shared events
     const { data: viewerRsvps } = await getSupabase()
       .from('event_rsvps')
       .select('event_id')
-      .eq('user_email', viewerEmail)
+      .eq('user_id', user.id)
       .limit(20);
 
     const { data: targetRsvps } = await getSupabase()
@@ -117,7 +113,6 @@ export default async function handler(req, res) {
       sharedEventTitles = (events || []).map(e => e.title).filter(Boolean);
     }
 
-    // Build context for AI
     const context = {
       viewer: {
         name: viewer.display_name || viewer.username || 'User',
@@ -140,7 +135,6 @@ export default async function handler(req, res) {
       sharedEvents: sharedEventTitles,
     };
 
-    // Generate openers with AI
     const prompt = buildWingmanPrompt(context);
 
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -150,7 +144,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo-preview',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
@@ -173,7 +167,6 @@ export default async function handler(req, res) {
     const completion = await openaiResponse.json();
     const content = completion.choices[0]?.message?.content;
 
-    // Parse openers from response
     let openers;
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -187,10 +180,12 @@ export default async function handler(req, res) {
       openers = ['Hey! Your profile caught my eye.', 'Hi there! Would love to chat sometime.', 'Hey, what brings you to HOTMESS?'];
     }
 
-    // Ensure we have 3 openers
     while (openers.length < 3) {
       openers.push('Hey! Noticed we might vibe. Would love to chat.');
     }
+
+    // Log usage (non-blocking)
+    await logAIUsage(user.id, 'wingman', tier, completion.usage?.total_tokens, 'gpt-4o');
 
     return res.status(200).json({
       openers: openers.slice(0, 3).map((text, i) => ({
@@ -228,23 +223,18 @@ function buildWingmanPrompt(context) {
   if (context.target.bio) {
     parts.push(`- Their bio: "${context.target.bio}"`);
   }
-
   if (context.target.looking_for) {
     parts.push(`- They're looking for: ${context.target.looking_for}`);
   }
-
   if (context.commonGround.interests.length > 0) {
     parts.push(`- Shared interests: ${context.commonGround.interests.join(', ')}`);
   }
-
   if (context.commonGround.music.length > 0) {
     parts.push(`- Shared music taste: ${context.commonGround.music.join(', ')}`);
   }
-
   if (context.commonGround.tribes.length > 0) {
     parts.push(`- Same tribe(s): ${context.commonGround.tribes.join(', ')}`);
   }
-
   if (context.sharedEvents.length > 0) {
     parts.push(`- Both attending: ${context.sharedEvents.join(', ')}`);
   }

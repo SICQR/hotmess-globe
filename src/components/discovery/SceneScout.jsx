@@ -1,17 +1,17 @@
 /**
  * Scene Scout Component
- * 
+ *
  * AI-powered nightlife recommendations.
  * Shows personalized venue/event suggestions with match scoring.
  */
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Sparkles, 
-  MapPin, 
-  Clock, 
-  Users, 
+import {
+  Sparkles,
+  MapPin,
+  Clock,
+  Users,
   ChevronRight,
   Loader2,
   RefreshCw
@@ -19,8 +19,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/components/utils/supabaseClient';
+import { useSheet } from '@/contexts/SheetContext';
 
-// Type colors
 const TYPE_STYLES = {
   event: {
     bg: 'bg-[#C8962C]/20',
@@ -36,35 +37,44 @@ const TYPE_STYLES = {
   }
 };
 
-export default function SceneScout({ 
+export default function SceneScout({
   date,
   compact = false,
   maxPicks = 3,
-  className = '' 
+  className = ''
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { openSheet } = useSheet();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(date || new Date().toISOString().split('T')[0]);
 
-  // Fetch recommendations
   const fetchRecommendations = async () => {
-    if (!user?.email) return;
+    if (!user) return;
 
     setLoading(true);
     setError(null);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('/api/ai/scene-scout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userEmail: user.email,
-          date: selectedDate
-        })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ date: selectedDate })
       });
+
+      if (response.status === 403) {
+        const resData = await response.json();
+        if (resData.upgradeRequired) {
+          setError('upgrade_required');
+          return;
+        }
+      }
 
       if (!response.ok) throw new Error('Failed to get recommendations');
 
@@ -72,7 +82,9 @@ export default function SceneScout({
       setData(result);
     } catch (err) {
       console.error('Scene scout error:', err);
-      setError(err.message);
+      if (err.message !== 'upgrade_required') {
+        setError('failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -80,26 +92,19 @@ export default function SceneScout({
 
   useEffect(() => {
     fetchRecommendations();
-  }, [user?.email, selectedDate]);
+  }, [user?.id, selectedDate]);
 
-  // Format time
   const formatTime = (isoString) => {
     if (!isoString) return null;
-    return new Date(isoString).toLocaleTimeString('en-GB', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    return new Date(isoString).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Get score color
   const getScoreColor = (score) => {
     if (score >= 80) return '#39FF14';
     if (score >= 60) return '#FFEB3B';
-    if (score >= 40) return '#C8962C';
     return '#C8962C';
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className={`bg-black border border-white/10 p-6 ${className}`}>
@@ -111,12 +116,25 @@ export default function SceneScout({
     );
   }
 
-  // Error state
+  if (error === 'upgrade_required') {
+    return (
+      <div className={`bg-black border border-white/10 p-6 ${className}`}>
+        <div className="text-center">
+          <Sparkles className="w-8 h-8 text-[#C8962C] mx-auto mb-3" />
+          <p className="text-sm text-white/70 mb-3">Scene Scout is available from HOTMESS tier</p>
+          <Button size="sm" onClick={() => openSheet('membership')}>
+            Upgrade from £7.99/mo
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className={`bg-black border border-white/10 p-6 ${className}`}>
         <div className="text-center">
-          <p className="text-sm text-red-400 mb-3">{error}</p>
+          <p className="text-sm text-red-400 mb-3">Could not load recommendations</p>
           <Button size="sm" onClick={fetchRecommendations} variant="outline">
             Try Again
           </Button>
@@ -130,7 +148,6 @@ export default function SceneScout({
   const { picks, narrative, hotmessActivity } = data;
   const displayPicks = picks.slice(0, maxPicks);
 
-  // Compact view
   if (compact) {
     return (
       <div className={`bg-black border border-white/10 ${className}`}>
@@ -140,7 +157,7 @@ export default function SceneScout({
               <Sparkles className="w-4 h-4 text-[#C8962C]" />
               <span className="font-bold text-sm text-white">Tonight's Picks</span>
             </div>
-            <button 
+            <button
               onClick={() => navigate('/events?view=scout')}
               className="text-xs text-[#C8962C] hover:underline"
             >
@@ -149,16 +166,16 @@ export default function SceneScout({
           </div>
         </div>
         <div className="divide-y divide-white/10">
-          {displayPicks.map((pick, i) => (
-            <div 
+          {displayPicks.map((pick) => (
+            <div
               key={pick.id}
               className="p-3 flex items-center justify-between hover:bg-white/5 cursor-pointer"
               onClick={() => navigate(`/${pick.type === 'event' ? 'events' : 'venues'}/${pick.id}`)}
             >
               <div className="flex items-center gap-3">
-                <div 
+                <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{ 
+                  style={{
                     backgroundColor: `${getScoreColor(pick.score)}20`,
                     color: getScoreColor(pick.score)
                   }}
@@ -178,10 +195,8 @@ export default function SceneScout({
     );
   }
 
-  // Full view
   return (
     <div className={`bg-black border border-white/10 ${className}`}>
-      {/* Header */}
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -193,33 +208,24 @@ export default function SceneScout({
               <p className="text-xs text-white/60">AI-powered recommendations</p>
             </div>
           </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={fetchRecommendations}
-            className="text-white/60 hover:text-white"
-          >
+          <Button size="sm" variant="ghost" onClick={fetchRecommendations} className="text-white/60 hover:text-white">
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
 
-        {/* Date selector */}
         <div className="flex gap-2">
           {['today', 'tomorrow', 'weekend'].map((option) => {
             const optionDate = getDateFromOption(option);
             const isSelected = selectedDate === optionDate;
-            
             return (
               <button
                 key={option}
                 onClick={() => setSelectedDate(optionDate)}
-                className={`
-                  px-3 py-1 text-xs font-medium border transition-colors
-                  ${isSelected 
-                    ? 'bg-[#C8962C] border-[#C8962C] text-white' 
+                className={`px-3 py-1 text-xs font-medium border transition-colors ${
+                  isSelected
+                    ? 'bg-[#C8962C] border-[#C8962C] text-white'
                     : 'bg-transparent border-white/20 text-white/60 hover:border-white/40'
-                  }
-                `}
+                }`}
               >
                 {option.charAt(0).toUpperCase() + option.slice(1)}
               </button>
@@ -228,25 +234,17 @@ export default function SceneScout({
         </div>
       </div>
 
-      {/* AI Narrative */}
       {narrative && (
         <div className="p-4 bg-white/5 border-b border-white/10">
-          <p className="text-sm text-white/90 italic leading-relaxed">
-            "{narrative}"
-          </p>
+          <p className="text-sm text-white/90 italic leading-relaxed">"{narrative}"</p>
         </div>
       )}
 
-      {/* Picks */}
       <div className="p-4 space-y-3">
         {displayPicks.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-white/60 mb-2">Nothing matching your vibe tonight</p>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => navigate('/events')}
-            >
+            <Button size="sm" variant="outline" onClick={() => navigate('/events')}>
               Browse all events
             </Button>
           </div>
@@ -254,80 +252,51 @@ export default function SceneScout({
           <AnimatePresence>
             {displayPicks.map((pick, index) => {
               const style = TYPE_STYLES[pick.type];
-              
               return (
                 <motion.div
                   key={pick.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className={`
-                    border ${style.border} ${style.bg}
-                    hover:bg-white/10 transition-colors cursor-pointer
-                  `}
+                  className={`border ${style.border} ${style.bg} hover:bg-white/10 transition-colors cursor-pointer`}
                   onClick={() => navigate(`/${pick.type === 'event' ? 'events' : 'pulse'}/${pick.id}`)}
                 >
                   <div className="p-4">
-                    {/* Header */}
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-[10px] uppercase font-bold ${style.text}`}>
-                            {style.label}
-                          </span>
+                          <span className={`text-[10px] uppercase font-bold ${style.text}`}>{style.label}</span>
                           {pick.metadata?.type && (
-                            <span className="text-[10px] text-white/40">
-                              • {pick.metadata.type}
-                            </span>
+                            <span className="text-[10px] text-white/40">• {pick.metadata.type}</span>
                           )}
                         </div>
                         <h4 className="font-bold text-white">{pick.title}</h4>
                       </div>
-                      
-                      {/* Score */}
-                      <div 
+                      <div
                         className="w-12 h-12 rounded-full flex flex-col items-center justify-center ml-3"
-                        style={{ 
+                        style={{
                           backgroundColor: `${getScoreColor(pick.score)}15`,
                           border: `2px solid ${getScoreColor(pick.score)}`
                         }}
                       >
-                        <span 
-                          className="text-lg font-black leading-none"
-                          style={{ color: getScoreColor(pick.score) }}
-                        >
+                        <span className="text-lg font-black leading-none" style={{ color: getScoreColor(pick.score) }}>
                           {pick.score}
                         </span>
                         <span className="text-[8px] text-white/50">match</span>
                       </div>
                     </div>
-
-                    {/* Meta info */}
                     <div className="flex flex-wrap gap-3 text-xs text-white/60 mb-3">
                       {pick.metadata?.area && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {pick.metadata.area}
-                        </span>
+                        <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{pick.metadata.area}</span>
                       )}
                       {pick.start_time && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {formatTime(pick.start_time)}
-                        </span>
+                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatTime(pick.start_time)}</span>
                       )}
                     </div>
-
-                    {/* Reasons */}
                     {pick.reasons?.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {pick.reasons.map((reason, i) => (
-                          <span 
-                            key={i}
-                            className="px-2 py-1 bg-white/10 text-[10px] text-white/80"
-                          >
-                            {reason}
-                          </span>
+                          <span key={i} className="px-2 py-1 bg-white/10 text-[10px] text-white/80">{reason}</span>
                         ))}
                       </div>
                     )}
@@ -339,7 +308,6 @@ export default function SceneScout({
         )}
       </div>
 
-      {/* HOTMESS Activity */}
       {hotmessActivity?.length > 0 && (
         <div className="p-4 border-t border-white/10 bg-white/5">
           <div className="flex items-center gap-2 mb-2">
@@ -348,10 +316,7 @@ export default function SceneScout({
           </div>
           <div className="flex flex-wrap gap-2">
             {hotmessActivity.map((activity, i) => (
-              <span 
-                key={i}
-                className="px-2 py-1 bg-[#C8962C]/20 text-[10px] text-[#C8962C]"
-              >
+              <span key={i} className="px-2 py-1 bg-[#C8962C]/20 text-[10px] text-[#C8962C]">
                 {activity.count} @ {activity.location}
               </span>
             ))}
@@ -364,7 +329,6 @@ export default function SceneScout({
 
 function getDateFromOption(option) {
   const today = new Date();
-  
   switch (option) {
     case 'today':
       return today.toISOString().split('T')[0];

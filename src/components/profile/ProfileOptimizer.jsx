@@ -1,15 +1,15 @@
 /**
  * Profile Optimizer Component
- * 
+ *
  * Shows profile completeness and optimization suggestions.
  * Follows progressive disclosure - shows summary first, details on expand.
  */
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Sparkles, 
-  ChevronDown, 
+import {
+  Sparkles,
+  ChevronDown,
   ChevronUp,
   Camera,
   FileText,
@@ -24,8 +24,8 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/components/utils/supabaseClient';
 
-// Action icons mapping
 const ACTION_ICONS = {
   upload_photo: Camera,
   edit_bio: FileText,
@@ -37,7 +37,6 @@ const ACTION_ICONS = {
   edit_position: Target
 };
 
-// Impact colors following 60-30-10 rule
 const IMPACT_STYLES = {
   high: {
     bg: 'bg-[#C8962C]/20',
@@ -59,10 +58,10 @@ const IMPACT_STYLES = {
   }
 };
 
-export default function ProfileOptimizer({ 
+export default function ProfileOptimizer({
   compact = false,
   showOnlyIfIssues = false,
-  className = '' 
+  className = ''
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -71,18 +70,30 @@ export default function ProfileOptimizer({
   const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch profile analysis
   useEffect(() => {
     async function fetchAnalysis() {
-      if (!user?.email) return;
+      if (!user) return;
 
       setLoading(true);
       try {
+        const { data: { session } } = await supabase.auth.getSession();
         const response = await fetch('/api/ai/profile-analysis', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userEmail: user.email })
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`
+          },
+          body: JSON.stringify({})
         });
+
+        if (response.status === 403) {
+          const resData = await response.json();
+          if (resData.upgradeRequired) {
+            setError('upgrade_required');
+            setLoading(false);
+            return;
+          }
+        }
 
         if (!response.ok) throw new Error('Failed to analyze profile');
 
@@ -90,16 +101,15 @@ export default function ProfileOptimizer({
         setAnalysis(data);
       } catch (err) {
         console.error('Profile analysis error:', err);
-        setError(err.message);
+        setError('failed');
       } finally {
         setLoading(false);
       }
     }
 
     fetchAnalysis();
-  }, [user?.email]);
+  }, [user?.id]);
 
-  // Handle action click
   const handleAction = (action) => {
     const routes = {
       upload_photo: '/profile/edit#photos',
@@ -111,16 +121,13 @@ export default function ProfileOptimizer({
       edit_stats: '/profile/edit#stats',
       edit_position: '/profile/edit#position'
     };
-
     navigate(routes[action] || '/profile/edit');
   };
 
-  // Don't render if no issues and showOnlyIfIssues is true
   if (showOnlyIfIssues && analysis && analysis.issues.length === 0) {
     return null;
   }
 
-  // Loading state
   if (loading) {
     return (
       <div className={`bg-black border border-white/10 p-4 ${className}`}>
@@ -132,17 +139,25 @@ export default function ProfileOptimizer({
     );
   }
 
-  // Error state
-  if (error) {
-    return null; // Fail silently in production
+  // Show teaser for upgrade_required instead of returning null
+  if (error === 'upgrade_required') {
+    return (
+      <div className={`bg-black border border-white/10 p-4 ${className}`}>
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles className="w-4 h-4 text-[#C8962C]" />
+          <span className="text-sm font-bold text-white">Profile Strength</span>
+        </div>
+        <p className="text-xs text-white/50">
+          Available from CONNECTED tier — see how to optimise your profile.
+        </p>
+      </div>
+    );
   }
 
-  // No analysis
-  if (!analysis) return null;
+  if (error || !analysis) return null;
 
   const { completeness, strengthLevel, issues, aiSummary, highPriorityCount } = analysis;
 
-  // Compact view - just the progress bar and summary
   if (compact) {
     return (
       <div className={`bg-black border border-white/10 p-4 ${className}`}>
@@ -155,7 +170,7 @@ export default function ProfileOptimizer({
         </div>
         <Progress value={completeness} className="h-2" />
         {highPriorityCount > 0 && (
-          <button 
+          <button
             onClick={() => navigate('/profile/optimize')}
             className="mt-3 text-xs text-[#C8962C] hover:underline"
           >
@@ -166,10 +181,8 @@ export default function ProfileOptimizer({
     );
   }
 
-  // Full view
   return (
     <div className={`bg-black border border-white/10 ${className}`}>
-      {/* Header - Always visible */}
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -182,7 +195,7 @@ export default function ProfileOptimizer({
                 {strengthLevel === 'excellent' && 'Looking great!'}
                 {strengthLevel === 'good' && 'Almost there'}
                 {strengthLevel === 'needs_work' && 'Room to improve'}
-                {strengthLevel === 'incomplete' && 'Let\'s get started'}
+                {strengthLevel === 'incomplete' && "Let's get started"}
               </p>
             </div>
           </div>
@@ -191,21 +204,13 @@ export default function ProfileOptimizer({
           </div>
         </div>
 
-        {/* Progress bar */}
-        <Progress 
-          value={completeness} 
-          className="h-3 mb-3"
-        />
+        <Progress value={completeness} className="h-3 mb-3" />
 
-        {/* AI Summary */}
         {aiSummary && (
-          <p className="text-sm text-white/80 italic">
-            "{aiSummary}"
-          </p>
+          <p className="text-sm text-white/80 italic">"{aiSummary}"</p>
         )}
       </div>
 
-      {/* Issues list - Expandable */}
       {issues.length > 0 && (
         <>
           <button
@@ -216,11 +221,7 @@ export default function ProfileOptimizer({
               {issues.length} suggestion{issues.length > 1 ? 's' : ''}
               {highPriorityCount > 0 && ` (${highPriorityCount} high priority)`}
             </span>
-            {expanded ? (
-              <ChevronUp className="w-4 h-4 text-white/40" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-white/40" />
-            )}
+            {expanded ? <ChevronUp className="w-4 h-4 text-white/40" /> : <ChevronDown className="w-4 h-4 text-white/40" />}
           </button>
 
           <AnimatePresence>
@@ -236,18 +237,13 @@ export default function ProfileOptimizer({
                   {issues.map((issue, index) => {
                     const style = IMPACT_STYLES[issue.impact];
                     const ActionIcon = ACTION_ICONS[issue.action] || FileText;
-                    
                     return (
                       <motion.div
                         key={issue.id}
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: index * 0.05 }}
-                        className={`
-                          p-3 border ${style.border} ${style.bg}
-                          flex items-center justify-between group
-                          hover:bg-white/10 transition-colors cursor-pointer
-                        `}
+                        className={`p-3 border ${style.border} ${style.bg} flex items-center justify-between group hover:bg-white/10 transition-colors cursor-pointer`}
                         onClick={() => handleAction(issue.action)}
                       >
                         <div className="flex items-center gap-3">
@@ -268,7 +264,6 @@ export default function ProfileOptimizer({
         </>
       )}
 
-      {/* All good state */}
       {issues.length === 0 && (
         <div className="p-4 text-center">
           <div className="w-12 h-12 bg-[#39FF14]/20 rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-[#39FF14]">

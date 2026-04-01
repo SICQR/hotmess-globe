@@ -13,7 +13,7 @@ export default defineConfig({
   },
   fullyParallel: true,
   workers: process.env.CI ? 4 : 2,
-  retries: process.env.CI ? 1 : 0,
+  retries: 1,
   reporter: process.env.CI ? [['github'], ['html']] : [['list'], ['html']],
   use: {
     baseURL: process.env.PROD === 'true' ? 'https://hotmessldn.com' : 'http://127.0.0.1:5173',

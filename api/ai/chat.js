@@ -1,8 +1,8 @@
 /**
  * HOTMESS AI Chat Endpoint
- * 
+ *
  * POST /api/ai/chat
- * 
+ *
  * Main conversation endpoint with:
  * - Crisis detection (immediate response)
  * - RAG retrieval (context from knowledge bases)
@@ -12,6 +12,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { requireAIAccess, logAIUsage } from './_auth.js';
 import { buildSystemPrompt, detectCrisis, getCrisisResponse, buildFunctionContext } from './_system-prompt.js';
 import { smartSearch, formatKnowledgeForPrompt } from './_rag.js';
 import { TOOL_DEFINITIONS, executeTool } from './_tools.js';
@@ -30,13 +31,12 @@ function getSupabase() {
 }
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const MODEL = 'gpt-4-turbo-preview';
+const MODEL = 'gpt-4o';
 const MAX_TOKENS = 1000;
 
 export default async function handler(req, res) {
-  // CORS
   const origin = req.headers?.origin || '';
-  const allowedOrigin = process.env.ALLOWED_ORIGIN || (origin.endsWith('.vercel.app') ? origin : '*');
+  const allowedOrigin = process.env.ALLOWED_ORIGIN || (origin.endsWith('.vercel.app') ? origin : 'https://hotmessldn.com');
   res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -53,6 +53,16 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'OpenAI API key not configured' });
   }
 
+  // Auth gate
+  const access = await requireAIAccess(req, 'chat');
+  if (access.error) {
+    return res.status(access.status).json({
+      error: access.error,
+      upgradeRequired: access.upgradeRequired || false
+    });
+  }
+  const { user, tier } = access;
+
   try {
     const { message, conversationId, context } = req.body;
 
@@ -60,35 +70,32 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    // Get user from auth header
-    const authHeader = req.headers.authorization;
+    // Get user context from profiles table (not dead User table)
     let userContext = null;
-    
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.slice(7);
-      const { data: { user } } = await getSupabase().auth.getUser(token);
-      
-      if (user?.email) {
-        const { data: userData } = await getSupabase()
-          .from('User')
-          .select('id, email, display_name, username, subscription_tier, xp_balance, city, interests, music_taste, tribes, looking_for, profile_type')
-          .eq('email', user.email)
-          .single();
-        
-        userContext = userData || { email: user.email };
-      }
-    }
+    const { data: profileData } = await getSupabase()
+      .from('profiles')
+      .select('id, display_name, username, city, public_attributes, role')
+      .eq('id', user.id)
+      .single();
 
-    // 1. CRISIS DETECTION - Check immediately
+    const attrs = profileData?.public_attributes || {};
+    userContext = {
+      id: user.id,
+      email: user.email,
+      display_name: profileData?.display_name,
+      city: profileData?.city,
+      interests: attrs.interests || [],
+      music_taste: attrs.music_taste || [],
+      tribes: attrs.tribes || [],
+    };
+
+    // 1. CRISIS DETECTION
     if (detectCrisis(message)) {
       const crisisResponse = getCrisisResponse();
-      
-      // Log crisis detection
+
       await logUsage(userContext?.id, 'crisis_detected', { message: message.slice(0, 100) });
-      
-      // Save to conversation even if crisis
       const convId = await saveConversation(conversationId, userContext?.id, message, crisisResponse);
-      
+
       return res.status(200).json({
         response: crisisResponse,
         conversationId: convId,
@@ -99,7 +106,7 @@ export default async function handler(req, res) {
 
     // 2. GET OR CREATE CONVERSATION
     let activeConversationId = conversationId;
-    
+
     if (!activeConversationId) {
       const { data: newConv, error } = await getSupabase()
         .from('ai_conversations')
@@ -110,19 +117,19 @@ export default async function handler(req, res) {
         })
         .select('id')
         .single();
-      
+
       if (!error && newConv) {
         activeConversationId = newConv.id;
       }
     }
 
-    // 3. RAG RETRIEVAL - Get relevant context
+    // 3. RAG RETRIEVAL
     const searchResults = await smartSearch(message, userContext || {});
     const ragContext = formatKnowledgeForPrompt(searchResults);
 
     // 4. BUILD SYSTEM PROMPT
     const systemPrompt = buildSystemPrompt(userContext, context);
-    const fullSystemPrompt = ragContext 
+    const fullSystemPrompt = ragContext
       ? `${systemPrompt}\n\n${ragContext}`
       : systemPrompt;
 
@@ -134,9 +141,8 @@ export default async function handler(req, res) {
         .select('messages')
         .eq('id', activeConversationId)
         .single();
-      
+
       if (conv?.messages) {
-        // Keep last 10 messages for context
         conversationHistory = conv.messages.slice(-10);
       }
     }
@@ -177,29 +183,19 @@ export default async function handler(req, res) {
     // 8. HANDLE TOOL CALLS
     let action = null;
     let toolResults = [];
-    
+
     if (assistantMessage.tool_calls?.length > 0) {
       for (const toolCall of assistantMessage.tool_calls) {
         const toolName = toolCall.function.name;
         const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
-        
         const result = await executeTool(toolName, toolArgs, userContext || {});
-        toolResults.push({
-          tool: toolName,
-          args: toolArgs,
-          result
-        });
+        toolResults.push({ tool: toolName, args: toolArgs, result });
 
-        // Check if tool returns an action
         if (result.action) {
-          action = {
-            type: result.action,
-            ...result
-          };
+          action = { type: result.action, ...result };
         }
       }
 
-      // If we have tool results, call OpenAI again to get natural response
       if (toolResults.length > 0) {
         const toolResultsMessages = toolResults.map((tr, idx) => ({
           role: 'tool',
@@ -215,11 +211,7 @@ export default async function handler(req, res) {
           },
           body: JSON.stringify({
             model: MODEL,
-            messages: [
-              ...messages,
-              assistantMessage,
-              ...toolResultsMessages
-            ],
+            messages: [...messages, assistantMessage, ...toolResultsMessages],
             max_tokens: MAX_TOKENS,
             temperature: 0.7
           })
@@ -228,17 +220,16 @@ export default async function handler(req, res) {
         if (followUpResponse.ok) {
           const followUpCompletion = await followUpResponse.json();
           const finalResponse = followUpCompletion.choices[0]?.message?.content;
-          
-          // Save conversation with final response
+
           const convId = await saveConversation(
-            activeConversationId, 
-            userContext?.id, 
-            message, 
+            activeConversationId,
+            userContext?.id,
+            message,
             finalResponse,
             { toolCalls: toolResults }
           );
 
-          // Log usage
+          await logAIUsage(userContext?.id, 'chat', tier, completion.usage?.total_tokens, 'gpt-4o');
           await logUsage(userContext?.id, 'chat_with_tools', {
             intent: searchResults.intent,
             tools: toolResults.map(t => t.tool)
@@ -256,20 +247,16 @@ export default async function handler(req, res) {
 
     // 9. RETURN RESPONSE (no tool calls)
     const responseText = assistantMessage.content;
-
-    // Save to conversation
     const convId = await saveConversation(activeConversationId, userContext?.id, message, responseText);
 
-    // Log usage
+    await logAIUsage(userContext?.id, 'chat', tier, completion.usage?.total_tokens, 'gpt-4o');
     await logUsage(userContext?.id, 'chat', { intent: searchResults.intent });
 
     return res.status(200).json({
       response: responseText,
       conversationId: convId,
       action,
-      context: {
-        intent: searchResults.intent
-      }
+      context: { intent: searchResults.intent }
     });
 
   } catch (error) {
@@ -278,9 +265,6 @@ export default async function handler(req, res) {
   }
 }
 
-/**
- * Save message exchange to conversation
- */
 async function saveConversation(conversationId, userId, userMessage, assistantResponse, metadata = {}) {
   const newMessages = [
     { role: 'user', content: userMessage },
@@ -288,7 +272,6 @@ async function saveConversation(conversationId, userId, userMessage, assistantRe
   ];
 
   if (conversationId) {
-    // Update existing conversation
     const { data: existing } = await getSupabase()
       .from('ai_conversations')
       .select('messages')
@@ -299,35 +282,22 @@ async function saveConversation(conversationId, userId, userMessage, assistantRe
 
     await getSupabase()
       .from('ai_conversations')
-      .update({
-        messages: updatedMessages,
-        updated_at: new Date().toISOString()
-      })
+      .update({ messages: updatedMessages, updated_at: new Date().toISOString() })
       .eq('id', conversationId);
 
     return conversationId;
   }
 
-  // Create new conversation
   const { data: newConv, error } = await getSupabase()
     .from('ai_conversations')
-    .insert({
-      user_id: userId,
-      messages: newMessages
-    })
+    .insert({ user_id: userId, messages: newMessages })
     .select('id')
     .single();
 
-  if (error) {
-    return null;
-  }
-
+  if (error) return null;
   return newConv?.id || null;
 }
 
-/**
- * Log AI usage for analytics
- */
 async function logUsage(userId, actionType, metadata = {}) {
   try {
     await getSupabase()
@@ -339,6 +309,6 @@ async function logUsage(userId, actionType, metadata = {}) {
         created_at: new Date().toISOString()
       });
   } catch (error) {
+    // Non-blocking
   }
 }
-// Force rebuild Sun Feb 15 00:50:40 +07 2026
