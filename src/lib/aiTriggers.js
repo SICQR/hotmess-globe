@@ -137,32 +137,6 @@ export const AI_TRIGGERS = {
     cooldown: 72 * 60 * 60 * 1000
   },
 
-  // XP/Gamification triggers
-  STREAK_AT_RISK: {
-    id: 'streak_at_risk',
-    condition: (user) => {
-      if (!user?.streakLastUpdated) return false;
-      const hoursSince = (Date.now() - new Date(user.streakLastUpdated).getTime()) / (1000 * 60 * 60);
-      return hoursSince >= 20 && hoursSince < 24; // Last 4 hours of streak
-    },
-    message: `Your ${user?.currentStreak || 0}-day streak is about to end! Quick action to save it?`,
-    action: 'suggest_quick_action',
-    priority: 'medium',
-    cooldown: 4 * 60 * 60 * 1000
-  },
-
-  LEVEL_UP_CLOSE: {
-    id: 'level_up_close',
-    condition: (user) => {
-      if (!user?.xpBalance) return false;
-      const xpToNextLevel = getXPToNextLevel(user.xpBalance);
-      return xpToNextLevel <= 50;
-    },
-    message: `You're ${getXPToNextLevel(user?.xpBalance)} XP away from leveling up! 🔥`,
-    action: 'suggest_xp_actions',
-    priority: 'low',
-    cooldown: 12 * 60 * 60 * 1000
-  }
 };
 
 /**
@@ -187,25 +161,6 @@ function calculateProfileCompleteness(user) {
   return fields.reduce((score, field) => {
     return score + (field.check() ? field.weight : 0);
   }, 0);
-}
-
-/**
- * Calculate XP needed to reach next level
- */
-function getXPToNextLevel(currentXP) {
-  if (!currentXP) return 100;
-  
-  // Level thresholds: 100, 300, 600, 1000, 1500, 2100, 2800, etc.
-  const levels = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500, 5500];
-  
-  for (let i = 0; i < levels.length; i++) {
-    if (currentXP < levels[i]) {
-      return levels[i] - currentXP;
-    }
-  }
-  
-  // Beyond level 10
-  return 1000 - (currentXP % 1000);
 }
 
 /**
@@ -280,6 +235,5 @@ export default {
   getActiveTriggers,
   shouldFireTrigger,
   useAITriggers,
-  calculateProfileCompleteness,
-  getXPToNextLevel
+  calculateProfileCompleteness
 };

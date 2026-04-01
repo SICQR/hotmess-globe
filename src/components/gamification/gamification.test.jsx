@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import XPGainAnimation from '@/components/gamification/XPGainAnimation';
 import LevelUpModal from '@/components/gamification/LevelUpModal';
 import AchievementUnlockModal from '@/components/gamification/AchievementUnlockModal';
 import AchievementProgress from '@/components/gamification/AchievementProgress';
@@ -11,23 +10,6 @@ vi.mock('canvas-confetti', () => ({
 }));
 
 describe('Gamification Components', () => {
-  describe('XPGainAnimation', () => {
-    it('renders with amount', () => {
-      const { container } = render(<XPGainAnimation amount={50} />);
-      expect(container.textContent).toContain('50 XP');
-    });
-
-    it('calls onComplete after animation', () => {
-      vi.useFakeTimers();
-      const onComplete = vi.fn();
-      render(<XPGainAnimation amount={50} onComplete={onComplete} />);
-      
-      vi.advanceTimersByTime(2000);
-      expect(onComplete).toHaveBeenCalled();
-      vi.useRealTimers();
-    });
-  });
-
   describe('LevelUpModal', () => {
     it('renders when open', () => {
       render(

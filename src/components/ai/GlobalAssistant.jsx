@@ -4,6 +4,7 @@ import { X, Send, Bot, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
+import { supabase } from '@/components/utils/supabaseClient';
 
 export default function GlobalAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,27 +21,72 @@ export default function GlobalAssistant() {
     }
   }, [isOpen]);
 
-  // Subscribe to conversation updates
-  useEffect(() => {
-    if (!conversationId) return;
-
-    // TODO: Implement conversation subscription via Supabase realtime
-    return () => {};
-  }, [conversationId]);
-
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const initializeConversation = async () => {
-    // TODO: Initialize conversation via /api/ai/conversation endpoint
-    console.warn('[TODO] AI conversation initialization not yet implemented');
+    setConversationId(crypto.randomUUID());
+    setMessages([{
+      role: 'assistant',
+      content: "Hey! I'm your HOTMESS assistant. Ask me about events, profiles, safety, or anything on the platform."
+    }]);
   };
 
   const handleSend = async () => {
-    // TODO: Send message via /api/ai/message endpoint
-    console.warn('[TODO] AI message sending not yet implemented');
+    if (!input.trim() || sending) return;
+
+    const userMessage = { role: 'user', content: input.trim() };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setSending(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({
+          message: userMessage.content,
+          conversationId,
+          context: { source: 'global_assistant' }
+        })
+      });
+
+      if (response.status === 401) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: 'Sign in to use the AI assistant.'
+        }]);
+        return;
+      }
+
+      if (response.status === 403) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: 'AI chat is available from HOTMESS tier. Upgrade to unlock.'
+        }]);
+        return;
+      }
+
+      const data = await response.json();
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.response || data.message || data.reply || 'Something went wrong.'
+      }]);
+    } catch (err) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Connection error. Please try again.'
+      }]);
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -54,7 +100,6 @@ export default function GlobalAssistant() {
     "What events are happening tonight?",
     "Help me find people into techno",
     "How do I use Right Now?",
-    "What's my next challenge?",
     "Show me top-rated sellers",
     "How do safety check-ins work?"
   ];
@@ -69,7 +114,7 @@ export default function GlobalAssistant() {
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-[#C8962C] to-[#C8962C] rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_20px_rgba(255,20,147,0.5)] hover:shadow-[0_0_30px_rgba(255,20,147,0.8)] transition-all"
+            className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-[#C8962C] to-[#C8962C] rounded-full flex items-center justify-center border-2 border-white shadow-[0_0_20px_rgba(200,150,44,0.5)] hover:shadow-[0_0_30px_rgba(200,150,44,0.8)] transition-all"
           >
             <Bot className="w-6 h-6 text-white" />
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#39FF14] rounded-full border-2 border-black animate-pulse" />
@@ -85,7 +130,7 @@ export default function GlobalAssistant() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed bottom-6 right-6 w-full md:w-[420px] h-[600px] bg-black border-2 border-[#C8962C] z-[80] flex flex-col shadow-[0_0_40px_rgba(255,20,147,0.3)]"
+            className="fixed bottom-6 right-6 w-full md:w-[420px] h-[600px] bg-black border-2 border-[#C8962C] z-[80] flex flex-col shadow-[0_0_40px_rgba(200,150,44,0.3)]"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-[#C8962C] to-[#C8962C] border-b-2 border-white p-4">
@@ -122,7 +167,7 @@ export default function GlobalAssistant() {
                     Hey! I'm your HOTMESS AI assistant
                   </p>
                   <p className="text-xs text-white/60 mb-6">
-                    Ask me about events, marketplace, connections, safety, challenges, or any app feature
+                    Ask me about events, marketplace, connections, safety, or any app feature
                   </p>
                   <div className="space-y-2">
                     <p className="text-xs text-white/40 uppercase tracking-wider mb-3">Try asking:</p>
@@ -181,16 +226,6 @@ export default function GlobalAssistant() {
                           <p>{msg.content}</p>
                         )}
                       </div>
-                      {msg.tool_calls && msg.tool_calls.length > 0 && (
-                        <div className="mt-1 space-y-1">
-                          {msg.tool_calls.map((call, i) => (
-                            <div key={i} className="text-[10px] text-white/40 flex items-center gap-1">
-                              <Loader2 className={`w-3 h-3 ${call.status === 'running' ? 'animate-spin' : ''}`} />
-                              <span>{call.name?.split('.').pop()}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))
@@ -206,12 +241,12 @@ export default function GlobalAssistant() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Ask me anything..."
-                  disabled={sending || !conversationId}
+                  disabled={sending}
                   className="flex-1 bg-white/5 border-2 border-white/20 text-white placeholder:text-white/40"
                 />
                 <Button
                   onClick={handleSend}
-                  disabled={sending || !input.trim() || !conversationId}
+                  disabled={sending || !input.trim()}
                   className="bg-[#C8962C] hover:bg-white text-white hover:text-black font-black border-2 border-white"
                 >
                   {sending ? (

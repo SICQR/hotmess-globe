@@ -39,12 +39,6 @@ const UPSELL_TRIGGERS = {
     type: 'gate',
     message: "Go stealth with Elite - browse invisibly",
     feature: 'stealth_mode'
-  },
-  XP_BOOST: {
-    threshold: 0,
-    type: 'promotional',
-    message: "Earn 2x XP with Elite membership!",
-    feature: 'xp_boost'
   }
 };
 

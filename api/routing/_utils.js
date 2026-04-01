@@ -7,8 +7,8 @@ export { getBearerToken, getEnv, json, readJsonBody };
 export const getRequestIp = (req) => {
   const header = req.headers?.['x-forwarded-for'] || req.headers?.['X-Forwarded-For'];
   const raw = Array.isArray(header) ? header[0] : header;
-  if (raw && String(raw).trim()) return String(raw).split(',')[0].trm();
-  const cf = req.headers?.['cf-connecting-ip'] || req.headers?.['CF-Connecting-IP']
+  if (raw && String(raw).trim()) return String(raw).split(',')[0].trim();
+  const cf = req.headers?.['cf-connecting-ip'] || req.headers?.['CF-Connecting-IP'];
   const cfRaw = Array.isArray(cf) ? cf[0] : cf;
   if (cfRaw && String(cfRaw).trim()) return String(cfRaw).trim();
   return null;
@@ -53,7 +53,7 @@ export const toSecondsFromGoogleDuration = (duration) => {
 export const getSupabaseServerClients = () => {
   const supabaseUrl = getEnv('SUPABASE_URL', ['VITE_SUPABASE_URL']);
   const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY', ['VITE_SUPABASE_ANON_KEY']);
-  const supabaseServiceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY', ['SERVICE_ROLE_KEY', 'SUPABASE_SERVICE_KEY']);
+  const supabaseServiceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
 
   if (!supabaseUrl || !supabaseAnonKey) {
     return { error: 'Supabase server env not configured', supabaseUrl: null, anonClient: null, serviceClient: null };

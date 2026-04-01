@@ -1,15 +1,10 @@
 /**
  * Daily Check-in API
- * 
+ *
  * POST /api/daily-checkin - Claim daily check-in
  * GET /api/daily-checkin - Get check-in status
- * 
- * Rewards:
- * - Day 1: 10 XP
- * - Day 2: 15 XP
- * - Day 3: 20 XP
- * - Day 7: 50 XP bonus
- * - Day 30: 200 XP bonus + badge
+ *
+ * Rewards: streak milestone badges (no XP)
  */
 
 import {
@@ -18,30 +13,6 @@ import {
   getSupabaseServerClients,
   json,
 } from './routing/_utils.js';
-
-// XP rewards by streak day
-const XP_REWARDS = {
-  1: 10,
-  2: 15,
-  3: 20,
-  4: 25,
-  5: 30,
-  6: 35,
-  7: 50,  // Week bonus
-  14: 75,
-  21: 100,
-  30: 200, // Month bonus
-};
-
-// Get XP for a given streak day
-function getXpReward(streakDay) {
-  // Check for milestone rewards first
-  if (XP_REWARDS[streakDay]) {
-    return XP_REWARDS[streakDay];
-  }
-  // Base progression: 10 + (day * 2), capped at 50
-  return Math.min(10 + (streakDay * 2), 50);
-}
 
 // Check if two dates are the same day (UTC)
 function isSameDay(date1, date2) {
@@ -56,6 +27,14 @@ function isNextDay(date1, date2) {
   const d2 = new Date(date2);
   d1.setUTCDate(d1.getUTCDate() + 1);
   return d1.toISOString().slice(0, 10) === d2.toISOString().slice(0, 10);
+}
+
+// Get next streak milestone label
+function getNextReward(streakDay) {
+  if (streakDay < 7)  return { day: 7,   label: 'Week Warrior badge' };
+  if (streakDay < 30) return { day: 30,  label: 'Monthly Legend badge' };
+  if (streakDay < 100) return { day: 100, label: 'Century Club badge' };
+  return null;
 }
 
 export default async function handler(req, res) {
@@ -75,11 +54,11 @@ export default async function handler(req, res) {
       return json(res, 401, { error: 'Invalid auth token' });
     }
 
-    // Get user profile
+    // Get user profile from profiles table (not dead User table)
     const { data: userProfile, error: profileErr } = await serviceClient
-      .from('User')
-      .select('id, email, xp')
-      .eq('auth_user_id', authUser.id)
+      .from('profiles')
+      .select('id, email')
+      .eq('id', authUser.id)
       .single();
 
     if (profileErr || !userProfile) {
@@ -95,13 +74,13 @@ export default async function handler(req, res) {
         .maybeSingle();
 
       const today = new Date().toISOString().slice(0, 10);
-      const lastCheckin = streak?.last_activity_date 
+      const lastCheckin = streak?.last_activity_date
         ? new Date(streak.last_activity_date).toISOString().slice(0, 10)
         : null;
-      
+
       const canCheckIn = !lastCheckin || lastCheckin !== today;
       const currentStreak = streak?.current_streak || 0;
-      const nextReward = getXpReward(currentStreak + 1);
+      const nextReward = getNextReward(currentStreak + 1);
 
       return json(res, 200, {
         canCheckIn,
@@ -125,13 +104,13 @@ export default async function handler(req, res) {
         .eq('user_id', userProfile.id)
         .maybeSingle();
 
-      const lastCheckin = streak?.last_activity_date 
+      const lastCheckin = streak?.last_activity_date
         ? new Date(streak.last_activity_date)
         : null;
 
       // Check if already checked in today
       if (lastCheckin && isSameDay(lastCheckin, now)) {
-        return json(res, 400, { 
+        return json(res, 400, {
           error: 'Already checked in today',
           todayCheckedIn: true,
           currentStreak: streak.current_streak,
@@ -141,16 +120,12 @@ export default async function handler(req, res) {
       // Calculate new streak
       let newStreak = 1;
       if (lastCheckin && isNextDay(lastCheckin, now)) {
-        // Consecutive day - increment streak
         newStreak = (streak?.current_streak || 0) + 1;
       } else if (lastCheckin) {
-        // Streak broken - reset to 1
         newStreak = 1;
       }
 
-      // Calculate XP reward
-      const xpReward = getXpReward(newStreak);
-      const isMilestone = XP_REWARDS[newStreak] !== undefined;
+      const isMilestone = [7, 30, 100].includes(newStreak);
 
       // Update or create streak record
       const { error: streakErr } = await serviceClient
@@ -169,13 +144,6 @@ export default async function handler(req, res) {
         return json(res, 500, { error: 'Failed to update streak' });
       }
 
-      // Award XP
-      const newXp = (userProfile.xp || 0) + xpReward;
-      await serviceClient
-        .from('User')
-        .update({ xp: newXp })
-        .eq('id', userProfile.id);
-
       // Check for badge milestones
       let badgeAwarded = null;
       if (newStreak === 7) {
@@ -186,32 +154,30 @@ export default async function handler(req, res) {
         badgeAwarded = { name: 'Century Club', icon: '💎', streak_required: 100 };
       }
 
-      // Award badge if milestone reached
+      // Award badge if milestone reached (non-blocking — table may not exist yet)
       if (badgeAwarded) {
-        const { error: badgeError } = await serviceClient
-          .from('user_badges')
-          .upsert({
-            user_email: userProfile.email,
-            badge_name: badgeAwarded.name,
-            badge_icon: badgeAwarded.icon,
-            streak_achieved: newStreak,
-            awarded_at: new Date().toISOString(),
-          }, { onConflict: 'user_email,badge_name' });
-
-        if (badgeError) {
-          // Non-blocking - continue even if badge fails
+        try {
+          await serviceClient
+            .from('user_badges')
+            .upsert({
+              user_id: userProfile.id,
+              badge_name: badgeAwarded.name,
+              badge_icon: badgeAwarded.icon,
+              streak_achieved: newStreak,
+              awarded_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,badge_name' });
+        } catch {
+          // Non-blocking — silently fails until user_badges table is created
         }
       }
 
       return json(res, 200, {
         success: true,
-        xpAwarded: xpReward,
-        newXpTotal: newXp,
         currentStreak: newStreak,
         longestStreak: Math.max(newStreak, streak?.longest_streak || 0),
         isMilestone,
         badgeAwarded,
-        nextReward: getXpReward(newStreak + 1),
+        nextReward: getNextReward(newStreak),
       });
     }
 
