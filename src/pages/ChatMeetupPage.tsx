@@ -11,6 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { FaMapMarkerAlt, FaLocationArrow, FaUber, FaShareAlt, FaChevronLeft, FaEllipsisV, FaHome, FaCompass, FaRegComments, FaUser } from 'react-icons/fa'
+import ChatMapCard from '@/components/chat/ChatMapCard';
 
 const messages = [
   {
@@ -78,34 +79,20 @@ export default function ChatMeetupPage() {
           </motion.div>
         ))}
 
-        {/* Map Card */}
+        {/* Map Card — location-type message */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: messages.length * 0.08 + 0.3, type: 'spring', stiffness: 48 }}
-          className="bg-gray rounded-lg mt-2 shadow-gold p-4 flex flex-col gap-2 max-w-[90%] self-end"
+          className="max-w-[90%] self-end mt-2 w-72"
         >
-          <div className="w-full h-32 rounded-md bg-[url('/static/map-sample.png')] bg-cover bg-center mb-1 relative shadow-gold">
-            <FaMapMarkerAlt className="absolute text-goldGlow left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl drop-shadow-[0_0_10px_#FFC940]" />
-          </div>
-          <div className="font-semibold text-light text-lg">Soho Cluster</div>
-          <div className="flex items-center gap-2 text-muted text-xs">
-            <FaMapMarkerAlt /> 720 m &middot; 4 min
-          </div>
-          <div className="flex gap-2 mt-2">
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              className="flex-1 bg-gold text-dark font-bold rounded-md px-5 py-2 shadow-gold transition active:scale-95"
-            >
-              <FaLocationArrow className="inline mr-2" />Start
-            </motion.button>
-            <button className="flex-1 bg-dark border border-gold text-gold rounded-md px-5 py-2 flex items-center justify-center gap-1">
-              <FaUber /> Uber
-            </button>
-            <button className="flex-1 bg-dark border border-gold text-gold rounded-md px-5 py-2 flex items-center justify-center gap-1">
-              <FaShareAlt /> Share
-            </button>
-          </div>
+          <ChatMapCard
+            label="Soho Cluster"
+            distance="720 m · 4 min"
+            lat={51.5127}
+            lng={-0.1338}
+            address="Soho, London W1D"
+          />
         </motion.div>
       </main>
 

@@ -58,7 +58,10 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
   onCityClick,
   selectedCity = null,
   highlightedIds = [],
-  className = ''
+  className = '',
+  activeFilter = 'all',
+  focusedBeaconId = null,
+  amplifiedBeaconIds,
 }, ref) {
   const mountRef = useRef(null);
   const hoveredArcRef = useRef(null);
@@ -110,7 +113,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     scene.add(stars);
 
     const camera = new THREE.PerspectiveCamera(45, mount.clientWidth / mount.clientHeight, 0.1, 200);
-    camera.position.z = 4.5;
+    camera.position.set(0, 1.4, 4.2);
+    camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ 
       antialias: window.devicePixelRatio < 2, // Disable AA on high DPI
@@ -135,46 +139,39 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     // Sphere with Earth texture - LOD optimization
     const sphereGeo = new THREE.SphereGeometry(globeRadius, isMobile ? 24 : 48, isMobile ? 24 : 48);
 
-    // Load Earth textures
+    // Load Earth textures — NASA night lights
     const textureLoader = new THREE.TextureLoader();
-    const earthTexture = textureLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-blue-marble.jpg');
-    const bumpTexture = textureLoader.load('https://unpkg.com/three-globe@2.31.1/example/img/earth-topology.png');
+    const earthTexture = textureLoader.load(
+      'https://cdn.jsdelivr.net/npm/three-globe@2.31.1/example/img/earth-night.jpg'
+    );
 
-    // Day/night shader material
+    // Night city-lights shader — warm amber tint + fresnel edge darkening
     const sphereMat = new THREE.ShaderMaterial({
       uniforms: {
         dayTexture: { value: earthTexture },
-        bumpTexture: { value: bumpTexture },
-        sunDirection: { value: new THREE.Vector3(1, 0, 0.3).normalize() }
       },
       vertexShader: `
         varying vec2 vUv;
         varying vec3 vNormal;
-        varying vec3 vPosition;
         void main() {
           vUv = uv;
           vNormal = normalize(normalMatrix * normal);
-          vPosition = (modelMatrix * vec4(position, 1.0)).xyz;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
       fragmentShader: `
         uniform sampler2D dayTexture;
-        uniform sampler2D bumpTexture;
-        uniform vec3 sunDirection;
         varying vec2 vUv;
         varying vec3 vNormal;
-        varying vec3 vPosition;
-        
+
         void main() {
-          vec4 dayColor = texture2D(dayTexture, vUv);
-          float intensity = max(dot(vNormal, sunDirection), 0.0);
-          float nightMix = smoothstep(0.0, 0.2, intensity);
-          
-          vec3 nightColor = dayColor.rgb * 0.15 + vec3(0.1, 0.15, 0.2) * 0.3;
-          vec3 finalColor = mix(nightColor, dayColor.rgb, nightMix);
-          
-          gl_FragColor = vec4(finalColor, 1.0);
+          vec4 nightColor = texture2D(dayTexture, vUv);
+          // Boost warm amber city lights
+          vec3 warmed = nightColor.rgb * vec3(1.15, 1.0, 0.7);
+          // Subtle fresnel darkening at globe edge
+          float fresnel = 1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0);
+          vec3 edgeDark = mix(warmed, vec3(0.0), fresnel * 0.5);
+          gl_FragColor = vec4(edgeDark, 1.0);
         }
       `
     });
@@ -196,8 +193,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       fragmentShader: `
         varying vec3 vNormal;
         void main() {
-          float intensity = pow(0.6 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-          gl_FragColor = vec4(0.3, 0.6, 1.0, 1.0) * intensity;
+          float intensity = pow(0.5 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.5);
+          gl_FragColor = vec4(0.8, 0.55, 0.1, 1.0) * intensity * 1.2;
         }
       `,
       blending: THREE.AdditiveBlending
@@ -289,12 +286,96 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       return result;
     };
 
+    // ── Beacon type visual system ────────────────────────────────────────────
+    const BEACON_VISUALS = {
+      event:   { color: 0xFF4F9A, size: 0.025, pulseSpeed: 0.33, glowOpacity: 0.8 },
+      venue:   { color: 0x00C2E0, size: 0.022, pulseSpeed: 0,    glowOpacity: 0.6 },
+      hookup:  { color: 0x39FF14, size: 0.018, pulseSpeed: 0.83, glowOpacity: 0.9 },
+      user:    { color: 0xC8962C, size: 0.018, pulseSpeed: 0.5,  glowOpacity: 0.7 },
+      hotmess: { color: 0xB026FF, size: 0.020, pulseSpeed: 0,    glowOpacity: 0.8 },
+      safety:  { color: 0xFF3B30, size: 0.015, pulseSpeed: 0,    glowOpacity: 1.0 },
+      market:  { color: 0xFFD700, size: 0.018, pulseSpeed: 1.25, glowOpacity: 0.7 },
+      person:  { color: 0xFFFFFF, size: 0.012, pulseSpeed: 0,    glowOpacity: 0.4 },
+    };
+
+    function getBeaconVisual(beacon) {
+      const kind = beacon.kind || beacon.type || beacon.beacon_category || 'user';
+      if (kind === 'event' || beacon.type === 'event') return BEACON_VISUALS.event;
+      if (kind === 'venue' || beacon.beacon_category === 'venue') return BEACON_VISUALS.venue;
+      if (kind === 'hookup' || beacon.isRightNow) return BEACON_VISUALS.hookup;
+      if (kind === 'safety' || beacon.type === 'safety') return BEACON_VISUALS.safety;
+      if (kind === 'hotmess' || beacon.beacon_category === 'hotmess') return BEACON_VISUALS.hotmess;
+      if (kind === 'market' || beacon.type === 'market') return BEACON_VISUALS.market;
+      if (kind === 'person') return BEACON_VISUALS.person;
+      return BEACON_VISUALS.user;
+    }
+
+    function createShieldBeacon(beacon, pos) {
+      const group = new THREE.Group();
+      group.position.copy(pos);
+      group.lookAt(pos.clone().multiplyScalar(2));
+
+      const shape = new THREE.Shape();
+      const w = 0.08, h = 0.1;
+      shape.moveTo(0, h * 0.5);
+      shape.lineTo(w * 0.5, h * 0.3);
+      shape.lineTo(w * 0.5, -h * 0.15);
+      shape.lineTo(0, -h * 0.5);
+      shape.lineTo(-w * 0.5, -h * 0.15);
+      shape.lineTo(-w * 0.5, h * 0.3);
+      shape.closePath();
+
+      const extrudeSettings = {
+        depth: 0.015, bevelEnabled: true,
+        bevelThickness: 0.005, bevelSize: 0.005, bevelSegments: 3,
+      };
+      const shieldGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+      const shieldMat = new THREE.MeshStandardMaterial({
+        color: 0x8B6914, emissive: 0xC8962C,
+        emissiveIntensity: 1.5, metalness: 0.8, roughness: 0.2,
+      });
+      const shield = new THREE.Mesh(shieldGeo, shieldMat);
+      shield.userData = { type: 'beacon', beacon };
+      group.add(shield);
+
+      const light = new THREE.PointLight(0xC8962C, 2.0, 0.8);
+      light.position.set(0, 0, -0.05);
+      group.add(light);
+
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const rLen = 0.15;
+        const start = new THREE.Vector3(Math.cos(angle) * 0.06, Math.sin(angle) * 0.06, 0.01);
+        const end   = new THREE.Vector3(Math.cos(angle) * (0.06 + rLen), Math.sin(angle) * (0.06 + rLen), 0.01);
+        const rayGeo = new THREE.BufferGeometry().setFromPoints([start, end]);
+        const rayMat = new THREE.LineBasicMaterial({ color: 0xC8962C, transparent: true, opacity: 0.3 });
+        group.add(new THREE.Line(rayGeo, rayMat));
+      }
+
+      const labelCanvas = document.createElement('canvas');
+      labelCanvas.width = 128; labelCanvas.height = 48;
+      const lctx = labelCanvas.getContext('2d');
+      lctx.fillStyle = '#C8962C';
+      lctx.font = 'bold 28px Arial';
+      lctx.textAlign = 'center';
+      lctx.textBaseline = 'middle';
+      lctx.fillText((beacon.title || 'RAW').toUpperCase().slice(0, 6), 64, 24);
+      const labelSprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(labelCanvas), transparent: true })
+      );
+      labelSprite.scale.set(0.12, 0.045, 1);
+      labelSprite.position.set(0, 0.005, 0.02);
+      group.add(labelSprite);
+
+      return group;
+    }
+
     // Beacon pins layer with clustering
     const beaconGeo = new THREE.SphereGeometry(0.015, 6, 6); // Reduced for performance
     const beaconMeshes = [];
     let currentClusters = [];
     let lastClusterUpdate = 0;
-    
+
     const updateBeaconClusters = () => {
       // Clear existing beacon meshes
       beaconMeshes.forEach(mesh => {
@@ -310,51 +391,56 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       currentClusters = createClusters(asArray(beacons), camera.position.z);
 
       currentClusters.forEach(beacon => {
-        const isHighlighted = asArray(highlightedIds).includes(beacon.id);
-        const isCareBeacon = beacon.mode === 'care';
-        const isRightNow = beacon.isRightNow;
-        const isColdVibe = beacon.cold_vibe;
+        const pos = latLngToVector3(beacon.lat, beacon.lng, globeRadius * 1.01);
+
+        // Shield candidate: high-intensity venue or hotmess beacons
+        const isShieldCandidate =
+          (beacon.beacon_category === 'venue' || beacon.beacon_category === 'hotmess') &&
+          !beacon.isCluster &&
+          ((beacon.intensity || 0) > 3 || (beacon.checkin_count || 0) > 20);
+
+        if (isShieldCandidate) {
+          const shieldGroup = createShieldBeacon(beacon, pos);
+          globe.add(shieldGroup);
+          shieldGroup.children
+            .filter(c => c.userData?.type === 'beacon')
+            .forEach(c => beaconMeshes.push(c));
+          return;
+        }
+
+        const visual = getBeaconVisual(beacon);
+        const ampMultiplier = amplifiedBeaconIds?.get(beacon.id)?.multiplier || 1;
         const isCluster = beacon.isCluster;
-        const isPerson = beacon.kind === 'person';
-
-        const color = isCareBeacon
-          ? 0x00d9ff
-          : isPerson
-            ? 0x00d9ff
-            : isHighlighted
-              ? 0xffeb3b
-              : isColdVibe
-                ? 0x50C878
-                : isRightNow
-                  ? 0x39ff14
-                  : 0xC8962C;
-        const emissiveIntensity = isCareBeacon ? 1.5 : isPerson ? 1.2 : isHighlighted ? 1.2 : 0.8;
-        
-        // Scale up clusters
-        const scale = isCluster
-          ? Math.min(1 + (beacon.count * 0.1), 3)
-          : isHighlighted
-            ? 1.5
-            : isPerson
-              ? 0.9
-              : 1;
-
-        // Special styling for audio drops
-        const isAudioDrop = beacon.mode === 'radio' && beacon.audio_url;
 
         const beaconMat = new THREE.MeshStandardMaterial({
-          color: isAudioDrop ? 0xB026FF : color,
-          emissive: isAudioDrop ? 0xB026FF : color,
-          emissiveIntensity: isAudioDrop ? 1.5 : emissiveIntensity,
-          roughness: 0.4,
-          metalness: 0.2
+          color: visual.color,
+          emissive: visual.color,
+          emissiveIntensity: ampMultiplier > 1 ? 2.5 : 1.2,
+          roughness: 0.3,
+          metalness: 0.4,
         });
 
+        // Filter dimming — non-matching beacons fade to 10% opacity
+        if (activeFilter !== 'all') {
+          const matchesFilter =
+            (activeFilter === 'events'   && (beacon.type === 'event'  || beacon.kind === 'event'))  ||
+            (activeFilter === 'safety'   && (beacon.type === 'safety' || beacon.kind === 'safety')) ||
+            (activeFilter === 'hotspots' && beacon.beacon_category === 'user')                       ||
+            (activeFilter === 'nearby'   && beacon.kind === 'person');
+          if (!matchesFilter) {
+            beaconMat.opacity = 0.1;
+            beaconMat.transparent = true;
+          }
+        }
+
+        const meshScale = isCluster
+          ? Math.min(1 + (beacon.count * 0.1), 3) * ((visual.size / 0.015) * ampMultiplier)
+          : (visual.size / 0.015) * ampMultiplier;
+
         const mesh = new THREE.Mesh(beaconGeo, beaconMat);
-        const pos = latLngToVector3(beacon.lat, beacon.lng, globeRadius * 1.01);
         mesh.position.copy(pos);
-        mesh.userData = { type: 'beacon', beacon };
-        mesh.scale.setScalar(scale);
+        mesh.scale.setScalar(meshScale);
+        mesh.userData = { type: 'beacon', beacon, beaconVisual: visual, baseScale: meshScale };
 
         globe.add(mesh);
         beaconMeshes.push(mesh);
@@ -370,13 +456,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(beacon.count.toString(), 32, 32);
-
           const texture = new THREE.CanvasTexture(canvas);
-          const spriteMat = new THREE.SpriteMaterial({ 
-            map: texture,
-            transparent: true,
-            opacity: 0.9
-          });
+          const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.9 });
           const sprite = new THREE.Sprite(spriteMat);
           sprite.scale.set(0.08, 0.08, 1);
           sprite.position.copy(pos);
@@ -385,76 +466,37 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
           beaconMeshes.push(sprite);
         }
 
-        // Glow sprite for special beacons
-        if (isCareBeacon || isHighlighted || isRightNow || isPerson || isAudioDrop || isColdVibe) {
-          const spriteMat = new THREE.SpriteMaterial({
-            color,
+        // Glow sprite
+        if (visual.glowOpacity > 0) {
+          const glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+            color: visual.color,
             transparent: true,
-            opacity: isPerson ? 0.7 : isRightNow ? 1.0 : isCareBeacon ? 1.0 : 0.9,
-            blending: THREE.AdditiveBlending
-          });
-          const sprite = new THREE.Sprite(spriteMat);
-          sprite.scale.set(
-            isRightNow ? 0.06 : isPerson ? 0.035 : 0.04,
-            isRightNow ? 0.06 : isPerson ? 0.035 : 0.04,
-            1
-          );
-          sprite.position.copy(pos);
-          globe.add(sprite);
-
-          // Twinkle effect for selected special pins.
-          // Keep Right Now/Care on their existing pulse/glow so the globe stays readable.
-          const shouldTwinkle = isPerson || isAudioDrop || isHighlighted || isColdVibe;
-          if (shouldTwinkle) {
-            const twinkleColor = isAudioDrop
-              ? 0xB026FF
-              : isHighlighted
-                ? 0xFFEB3B
-                : isColdVibe
-                  ? 0x50C878
-                  : 0xffffff;
-
-            const twinkleMat = new THREE.SpriteMaterial({
-              color: twinkleColor,
-              transparent: true,
-              opacity: isHighlighted ? 0.22 : 0.18,
-              blending: THREE.AdditiveBlending,
-            });
-            const twinkle = new THREE.Sprite(twinkleMat);
-
-            const baseScale = isHighlighted ? 0.07 : isPerson ? 0.055 : isAudioDrop ? 0.06 : 0.05;
-            const speed = isHighlighted ? 1.25 : isAudioDrop ? 1.1 : isColdVibe ? 0.9 : 1.0;
-
-            twinkle.scale.set(baseScale, baseScale, 1);
-            twinkle.position.copy(pos);
-            twinkle.userData = {
-              isTwinkle: true,
-              baseScale,
-              baseOpacity: isHighlighted ? 0.16 : 0.12,
-              phase: Math.random() * Math.PI * 2,
-              speed,
-            };
-            globe.add(twinkle);
-          }
-          
-          // Pulsing effect for Right Now
-          if (isRightNow) {
-            const pulseSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-              color: 0x39ff14,
-              transparent: true,
-              opacity: 0.3,
-              blending: THREE.AdditiveBlending
-            }));
-            pulseSprite.scale.set(0.1, 0.1, 1);
-            pulseSprite.position.copy(pos);
-            pulseSprite.userData = { isPulse: true, baseScale: 0.1 };
-            globe.add(pulseSprite);
-          }
+            opacity: visual.glowOpacity * 0.4,
+            blending: THREE.AdditiveBlending,
+          }));
+          const gs = visual.size * 2.5;
+          glowSprite.scale.set(gs, gs, 1);
+          glowSprite.position.copy(pos);
+          globe.add(glowSprite);
         }
       });
     }
 
     updateBeaconClusters();
+
+    // focusedBeaconId: rotate camera + scale up the focused beacon
+    if (focusedBeaconId) {
+      const focused = currentClusters.find(b => b.id === focusedBeaconId);
+      if (focused && ref && typeof ref === 'object' && ref.current?.rotateTo) {
+        ref.current.rotateTo(focused.lat, focused.lng, 3.2);
+      }
+      beaconMeshes.forEach(mesh => {
+        if (mesh.userData?.beacon?.id === focusedBeaconId) {
+          mesh.scale.setScalar((mesh.userData.baseScale || 1) * 1.8);
+          if (mesh.material) mesh.material.emissiveIntensity = 2.5;
+        }
+      });
+    }
 
     // Heatmap layer - beacon density visualization
     const heatmapGroup = new THREE.Group();
@@ -792,7 +834,8 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     let targetRotationY = -1.5690;
     let targetRotationX = 0.8988;
     let velocity = { x: 0, y: 0 };
-    let targetCameraZ = 4.5;
+    let targetCameraZ = 4.2;
+    let lastInteractionTime = Date.now();
     
     // Touch support
     let touchStartDistance = 0;
@@ -814,6 +857,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
     const onMouseDown = (e) => {
       isDragging = true;
       previousMousePosition = { x: e.clientX, y: e.clientY };
+      lastInteractionTime = Date.now();
     };
 
     const onMouseMove = (e) => {
@@ -965,6 +1009,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
 
     // Touch handlers
     const onTouchStart = (e) => {
+      lastInteractionTime = Date.now();
       if (e.touches.length === 2) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -1129,6 +1174,16 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
             effect.mesh.material.opacity = effect.intensity * 0.7 * fadeOut * (0.5 + Math.sin(time * 12) * 0.5);
             effect.mesh.scale.setScalar(1 + progress * 0.3);
             break;
+          case 'burst': {
+            if (progress < 1) {
+              const scale = progress < 0.5
+                ? 1 + progress * 4       // expand to 3×
+                : 3 - (progress - 0.5) * 4; // settle to 1×
+              effect.mesh.scale.setScalar(Math.max(scale, 0.1));
+              effect.mesh.material.opacity = effect.intensity * (1 - Math.abs(progress - 0.5) * 1.5);
+            }
+            break;
+          }
           default:
             effect.mesh.material.opacity = effect.intensity * 0.6 * fadeOut;
         }
@@ -1157,11 +1212,14 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
         fpsWindowStart = now;
       }
 
-      // Smooth rotation
+      // Smooth rotation + idle drift after 30s
       if (!isDragging) {
-        targetRotationY += 0.0005; // Much slower auto-rotation
-        velocity.x *= 0.85; // Faster decay
+        velocity.x *= 0.85;
         velocity.y *= 0.85;
+        const idleMs = Date.now() - lastInteractionTime;
+        if (idleMs > 30000) {
+          targetRotationY += 0.0003; // gentle idle drift
+        }
       }
       
       // Smooth rotation with easing
@@ -1202,17 +1260,18 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       const safeNewEvents = Array.isArray(globeEventsRef.current) ? globeEventsRef.current : [];
       safeNewEvents.forEach(addGlobeEffect);
 
-      // Pulse Right Now beacons and mood blobs
+      // Per-type beacon pulse + mood blobs
       scene.traverse(obj => {
-        if (obj.userData?.isPulse) {
-          const scale = obj.userData.baseScale * (1 + Math.sin(time * 2) * 0.3);
-          obj.scale.set(scale, scale, 1);
-          obj.material.opacity = 0.2 + Math.sin(time * 2) * 0.15;
+        if (obj.userData?.beaconVisual) {
+          const v = obj.userData.beaconVisual;
+          if (v.pulseSpeed > 0) {
+            const pulse = 1 + Math.sin(time * v.pulseSpeed * Math.PI * 2) * 0.3;
+            obj.scale.setScalar(obj.userData.baseScale * pulse);
+          }
         }
         if (obj.userData?.isTwinkle) {
           const phase = obj.userData.phase || 0;
           const speed = obj.userData.speed || 1;
-          // Slightly irregular twinkle by mixing two frequencies.
           const t = time * speed;
           const wave = (Math.sin(t * 3.3 + phase) + 0.6 * Math.sin(t * 5.7 + phase * 1.7)) / 1.6;
           const scale = obj.userData.baseScale * (0.85 + 0.35 * (wave * 0.5 + 0.5));
@@ -1278,7 +1337,6 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       
       // Dispose textures
       if (earthTexture) earthTexture.dispose();
-      if (bumpTexture) bumpTexture.dispose();
       
       // Dispose beacon meshes and sprites
       beaconMeshes.forEach(mesh => {
@@ -1369,7 +1427,7 @@ const EnhancedGlobe3D = React.forwardRef(function EnhancedGlobe3D({
       // Clear references
       scene.clear();
     };
-  }, [beacons, cities, activeLayers, highlightedIds, userActivities, routesData, globeActivity, onBeaconClick, onCityClick]);
+  }, [beacons, cities, activeLayers, highlightedIds, userActivities, routesData, globeActivity, onBeaconClick, onCityClick, activeFilter, focusedBeaconId, amplifiedBeaconIds]);
 
   // Rotate to selected city
   useEffect(() => {
