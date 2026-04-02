@@ -72,11 +72,11 @@ export default async function handler(req, res) {
     }
 
     const attrs = profile?.public_attributes || {};
-    // Build user object using profiles data
+    // Build user object — vibe/scenes/looking_for are canonical keys from VibeScreen
     const userPref = {
-      music_taste: attrs.music_taste || [],
-      tribes: attrs.tribes || [],
-      interests: attrs.interests || [],
+      music_taste: attrs.vibe ? [attrs.vibe] : (attrs.music_taste || []),
+      tribes: attrs.scenes || attrs.tribes || [],
+      interests: attrs.looking_for || attrs.interests || [],
       city: profile?.city || 'London',
     };
 

@@ -140,16 +140,16 @@ export default async function handler(req, res) {
 
     const attrs = profileData?.public_attributes || {};
 
-    // Build enriched profile matching what OPTIMIZATION_RULES expect
+    // Build enriched profile — vibe/scenes/looking_for are canonical keys from VibeScreen
     const enrichedProfile = {
       ...profileData,
-      interests: attrs.interests || [],
-      tribes: attrs.tribes || [],
+      interests: attrs.looking_for || attrs.interests || [],
+      tribes: attrs.scenes || attrs.tribes || [],
       looking_for: attrs.looking_for || [],
       position: attrs.position,
-      height: attrs.height,
+      height: attrs.height_cm || attrs.height,
       body_type: attrs.body_type,
-      music_taste: attrs.music_taste || [],
+      music_taste: attrs.vibe ? [attrs.vibe] : (attrs.music_taste || []),
       // avatar_url proxy — if avatar_url exists, treat as having a face pic
       photos: profileData.avatar_url ? [{ is_face: true, created_at: profileData.created_at }] : [],
     };
@@ -212,8 +212,8 @@ export default async function handler(req, res) {
         photoCount: profileData.avatar_url ? 1 : 0,
         hasBio: !!profileData.bio,
         bioLength: profileData.bio?.length || 0,
-        interestsCount: attrs.interests?.length || 0,
-        tribesCount: attrs.tribes?.length || 0
+        interestsCount: (attrs.looking_for || attrs.interests || []).length,
+        tribesCount: (attrs.scenes || attrs.tribes || []).length
       }
     });
 
