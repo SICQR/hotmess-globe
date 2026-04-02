@@ -1,4 +1,5 @@
-import { Toaster, toast } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/sonner"
+import { toast } from 'sonner'
 import { useEffect, useState, Suspense, lazy } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
