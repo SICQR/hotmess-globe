@@ -59,8 +59,8 @@ function OrderCard({ order, isSeller, onMarkShipped, onMarkDelivered }) {
           </p>
           <p className="text-white/40 text-xs mt-0.5">
             {isSeller
-              ? `Buyer: ${order.buyer_email?.split('@')[0]}`
-              : `From: ${order.seller_email?.split('@')[0]}`}
+              ? `Buyer: ${order.buyer_name || 'Buyer'}`
+              : `From: ${order.seller_name || 'Seller'}`}
           </p>
           <p className="text-white/30 text-[10px] mt-0.5">
             {order.created_at && formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}

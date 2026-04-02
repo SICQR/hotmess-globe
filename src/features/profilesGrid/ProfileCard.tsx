@@ -111,13 +111,6 @@ const getProfileCardStyle = () => {
   return normalized;
 };
 
-const emailHandle = (value: unknown) => {
-  const email = String(value || '').trim().toLowerCase();
-  if (!email || !email.includes('@')) return null;
-  const handle = email.split('@')[0] || '';
-  return handle.replace(/[^a-z0-9_\-.]/g, '').slice(0, 24) || null;
-};
-
 const initialsFromName = (name: unknown) => {
   const raw = String(name || '').trim();
   if (!raw) return 'HM';

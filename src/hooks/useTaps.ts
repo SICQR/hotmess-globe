@@ -118,7 +118,7 @@ export function useTaps(myEmail: string | null) {
       }
 
       // Resolve sender display name
-      let myDisplayName: string = myEmail.split('@')[0] ?? 'Someone';
+      let myDisplayName: string = 'Someone';
       try {
         const { data: myProfile } = await supabase
           .from('profiles')

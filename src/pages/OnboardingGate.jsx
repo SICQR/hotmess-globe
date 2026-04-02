@@ -239,8 +239,8 @@ export default function OnboardingGate() {
   useEffect(() => {
     if (!session?.user?.id) return;
     const ensureProfileRow = async () => {
-      // Seed a username from email so DB constraints are satisfied from the start
-      const usernameSlug = deriveUsernameSlug({ email: session.user.email });
+      // Seed a random username so DB constraints are satisfied from the start
+      const usernameSlug = deriveUsernameSlug({});
 
       const { error } = await supabase
         .from('profiles')

@@ -80,7 +80,7 @@ export default function Vault() {
             THE VAULT<span className="text-[#C8962C]">.</span>
           </h1>
           <p className="text-white/40 font-mono text-sm mt-2">
-            @{currentUser.email?.split('@')[0] || 'user'}
+            @{currentUser.user_metadata?.display_name || 'user'}
           </p>
         </motion.div>
       </header>

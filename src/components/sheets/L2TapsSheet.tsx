@@ -121,7 +121,7 @@ export default function L2TapsSheet() {
           <div className="divide-y divide-white/5">
             {taps.map((tap) => {
               const profile = tap.profiles;
-              const displayName = profile?.username || profile?.display_name || tap.tapper_email.split('@')[0];
+              const displayName = profile?.username || profile?.display_name || 'Someone';
               const avatar = profile?.photos?.[0] ?? null;
 
               const alreadyBoodBack = myEmail ? isTapped(tap.tapper_email, 'boo') : false;

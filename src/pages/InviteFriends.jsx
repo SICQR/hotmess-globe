@@ -165,7 +165,7 @@ export default function InviteFriends() {
         body: JSON.stringify({
           type: 'invite',
           emails: emailList,
-          referrerName: user.full_name || user.email.split('@')[0],
+          referrerName: user.full_name || user.user_metadata?.display_name || 'A friend',
           referralUrl,
         }),
       });

@@ -47,7 +47,7 @@ export function useProfileCompletion(): {
     return {
       pct,
       steps,
-      displayName: profile?.display_name || profile?.email?.split('@')[0] || 'You',
+      displayName: profile?.display_name || 'You',
       avatarUrl: profile?.avatar_url ?? null,
     };
   }, [profile]);

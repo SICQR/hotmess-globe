@@ -44,8 +44,12 @@ export const isIframe = window.self !== window.top;
  * @param {string|null|undefined} params.email        - Email fallback (local part used)
  * @returns {string}
  */
-export function deriveUsernameSlug({ username, displayName, email } = {}) {
-  const source = username || displayName || (email ? email.split('@')[0] : null) || 'user';
+export function deriveUsernameSlug({ username, displayName } = {}) {
+  const source = username || displayName || null;
+  if (!source) {
+    const rand = Math.random().toString(36).substring(2, 6);
+    return `user_${rand}`;
+  }
   return source
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, '_')

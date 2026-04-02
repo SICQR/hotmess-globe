@@ -210,7 +210,7 @@ function OrderCard({ order }) {
         <div className="flex-1 min-w-0">
           <p className="text-white font-bold text-sm leading-tight truncate">{productName}</p>
           <p className="text-white/40 text-xs mt-0.5">
-            From: {order.seller_email ? order.seller_email.split('@')[0] : 'seller'}
+            From: {order.seller_name || 'Seller'}
           </p>
           {order.created_at && (
             <p className="text-white/25 text-[10px] mt-0.5 font-mono">

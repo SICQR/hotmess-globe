@@ -149,7 +149,7 @@ export default function L2CommunityPostSheet() {
       .from('community_posts')
       .insert({
         user_email: currentUser.email,
-        user_name: currentUser.user_metadata?.display_name || currentUser.email?.split('@')[0],
+        user_name: currentUser.user_metadata?.display_name || 'Anonymous',
         content: form.content.trim(),
         category: form.category,
       });

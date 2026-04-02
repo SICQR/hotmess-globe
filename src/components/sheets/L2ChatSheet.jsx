@@ -357,7 +357,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       const { error: msgError } = await supabase.from('chat_messages').insert({
         thread_id: thread.id,
         sender_email: currentUser.email,
-        sender_name: profiles[currentUser.email]?.display_name || currentUser.email,
+        sender_name: profiles[currentUser.email]?.display_name || currentUser.user_metadata?.display_name || 'Anonymous',
         content,
         message_type,
         metadata,
@@ -520,7 +520,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     if (!searchQuery) return true;
     const email = getOtherEmail(t);
     const p = getProfile(email);
-    return (p?.display_name || email).toLowerCase().includes(searchQuery.toLowerCase());
+    return (p?.display_name || 'Anonymous').toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   // ── Thread list ────────────────────────────────────────────────────────────
@@ -558,7 +558,7 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
                 const email = getOtherEmail(thread);
                 const p = getProfile(email);
                 const unread = isUnread(thread);
-                const name = p?.display_name || email || 'Anonymous';
+                const name = p?.display_name || 'Anonymous';
 
                 return (
                   <button

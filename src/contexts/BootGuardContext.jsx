@@ -428,7 +428,6 @@ export function BootGuardProvider({ children }) {
     const usernameSlug = deriveUsernameSlug({
       username: profile?.username,
       displayName: profile?.display_name,
-      email: session.user.email,
     });
 
     const { error } = await supabase
