@@ -204,7 +204,35 @@ function MemberGateBanner({ onJoin }) {
 
 function ReleaseDetailSheet({ release, tracks, onClose, bannerData }) {
   const player = useMusicPlayer();
-  const isMember = false; // TODO: wire to membership context
+  const navigate = useNavigate();
+
+  // Auth + membership state
+  const [authUser, setAuthUser] = React.useState(null);
+  const [isMember, setIsMember] = React.useState(false);
+  React.useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      setAuthUser(user);
+      // Check for active membership
+      supabase
+        .from('memberships')
+        .select('status')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .maybeSingle()
+        .then(({ data }) => setIsMember(!!data));
+    });
+  }, []);
+
+  const handleJoin = () => {
+    if (!authUser) {
+      // Not logged in → go to onboarding / free signup
+      navigate('/');
+    } else {
+      // Logged in but no membership → go to upgrade
+      navigate('/more');
+    }
+  };
 
   // Build queue from tracks or single release
   const trackList = tracks.length > 0
@@ -283,7 +311,7 @@ function ReleaseDetailSheet({ release, tracks, onClose, bannerData }) {
         {/* Member gate */}
         {release.member_only && !isMember && (
           <div className="mt-4">
-            <MemberGateBanner onJoin={() => {}} />
+            <MemberGateBanner onJoin={handleJoin} />
           </div>
         )}
 
@@ -681,3 +709,4 @@ export default function MusicTab() {
     </div>
   );
 }
+
