@@ -66,16 +66,29 @@ export default function L2LocationSheet() {
     setDetecting(true);
     navigator.geolocation?.getCurrentPosition(
       async (pos) => {
+        const { latitude, longitude } = pos.coords;
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { headers: { 'Accept-Language': 'en' } }
           );
           const data = await res.json();
-          const detected = data.address?.city || data.address?.town || data.address?.county || '';
-          setCity(detected);
-          toast.success(`Detected: ${detected}`);
+          const addr = data.address || {};
+          const detected = addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state || data.display_name?.split(',')?.[0] || '';
+          if (detected) {
+            setCity(detected);
+            toast.success(`Detected: ${detected}`);
+          } else {
+            // Fall back to coordinates display
+            const coordStr = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+            setCity(coordStr);
+            toast.success(`Location set to ${coordStr}`);
+          }
         } catch {
-          toast.error('Could not determine city');
+          // Network/parse failure — fall back to raw coordinates
+          const coordStr = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          setCity(coordStr);
+          toast('Location set from GPS coordinates', { icon: '📍' });
         } finally {
           setDetecting(false);
         }

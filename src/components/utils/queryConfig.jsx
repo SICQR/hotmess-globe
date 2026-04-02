@@ -13,7 +13,8 @@ export function useAllUsers() {
       try {
         const isAuth = await supabase.auth.getSession().then(r => !!r.data.session);
         if (!isAuth) return [];
-        return supabase.from('profiles').select('*');
+        const { data } = await supabase.from('profiles').select('*');
+        return data || [];
       } catch (error) {
         console.error('Failed to fetch users:', error);
         return [];

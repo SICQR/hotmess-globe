@@ -92,7 +92,8 @@ export default function L2ProfileSheet({ email, uid, id }) {
         return data || null;
       }
       if (resolvedUid) {
-        const { data, error } = await supabase.from('profiles').select('*').eq('auth_user_id', resolvedUid).maybeSingle();
+        // profiles.id IS the auth user UUID — no separate auth_user_id column
+        const { data, error } = await supabase.from('profiles').select('*').eq('id', resolvedUid).maybeSingle();
         if (error) throw error;
         return data || null;
       }

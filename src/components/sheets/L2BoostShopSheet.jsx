@@ -47,10 +47,18 @@ export default function L2BoostShopSheet() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({ boostKey: key }),
       });
-      const { url, error } = await r.json();
-      if (error) { toast.error(error); return; }
-      window.location.href = url;
-    } catch { toast.error('Could not start checkout'); }
+      const json = await r.json();
+      if (json.error) {
+        // Hide developer env-var errors from users
+        if (json.error.includes('env var') || json.error.includes('STRIPE_BOOST') || json.error.includes('PRICE_ID')) {
+          toast('Power-ups coming soon', { icon: '⚡' });
+        } else {
+          toast.error(json.error);
+        }
+        return;
+      }
+      window.location.href = json.url;
+    } catch { toast('Power-ups coming soon', { icon: '⚡' }); }
     finally { setBuying(null); }
   };
 
