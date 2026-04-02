@@ -48,6 +48,9 @@ import {
   Crown,
   MessageSquare,
   Wallet,
+  Calendar,
+  Building2,
+  TrendingUp,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import { usePersona } from '@/contexts/PersonaContext';
@@ -212,6 +215,7 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { openSheet } = useSheet();
   const { activePersona } = usePersona();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
@@ -420,6 +424,8 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
 
   // ---- Menu sections --------------------------------------------------------
 
+  const userTier = profile?.business_type || '';
+
   const menuSections: MenuSection[] = [
     {
       title: 'IDENTITY',
@@ -481,6 +487,32 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
       ],
     },
   ];
+
+  // Add business sections for promoter/venue tiers
+  const businessSections: MenuSection[] = [];
+
+  if (['promoter', 'venue'].includes(userTier)) {
+    businessSections.push({
+      title: 'PROMOTER',
+      items: [
+        { icon: Calendar, label: 'Create Event Beacon', action: () => navigate('/biz/create-beacon') },
+        { icon: TrendingUp, label: 'Promoter Dashboard', action: () => navigate('/biz/dashboard') },
+      ],
+    });
+  }
+
+  if (userTier === 'venue') {
+    businessSections.push({
+      title: 'VENUE',
+      items: [
+        { icon: Building2, label: 'Claim / Manage Venue', action: () => navigate('/biz/venue') },
+        { icon: TrendingUp, label: 'Venue Analytics', action: () => navigate('/biz/analytics') },
+      ],
+    });
+  }
+
+  // Combine sections
+  const allSections = [...menuSections, ...businessSections];
 
   // ---- Render ---------------------------------------------------------------
 
@@ -642,7 +674,7 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
 
         {/* ---- Settings Sections -------------------------------------------- */}
         <div className="px-4 pt-6 pb-4 space-y-6">
-          {menuSections.map((section, sectionIdx) => (
+          {allSections.map((section, sectionIdx) => (
             <motion.div
               key={section.title}
               initial="hidden"
@@ -682,7 +714,7 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
           <motion.div
             initial="hidden"
             animate="visible"
-            custom={menuSections.length + 1}
+            custom={allSections.length + 1}
             variants={groupVariants}
           >
             <button
@@ -708,7 +740,7 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
           <motion.p
             initial="hidden"
             animate="visible"
-            custom={menuSections.length + 2}
+            custom={allSections.length + 2}
             variants={groupVariants}
             className="text-center text-xs py-4"
             style={{ color: `${MUTED}40` }}

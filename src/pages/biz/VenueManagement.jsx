@@ -318,32 +318,68 @@ export default function VenueManagement() {
                     </div>
                   )}
                   
-                  {/* Actions Dropdown */}
-                  <div className="absolute top-2 right-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="bg-black/50 hover:bg-black/70 text-white h-8 w-8 p-0"
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-black border-white/20">
-                        <DropdownMenuItem onClick={() => openEditModal(venue)}>
-                          <Edit2 className="w-4 h-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => handleDelete(venue)}
-                          className="text-red-500 focus:text-red-500"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  {/* Actions Dropdown or Claim Button */}
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    {!venue.owner_id && (
+                      <Button
+                        onClick={async () => {
+                          const ok = window.confirm(`Claim ${venue.name} as your venue?`);
+                          if (!ok) return;
+                          try {
+                            const { data: { user } } = await supabase.auth.getUser();
+                            await supabase
+                              .from('venues')
+                              .update({ owner_id: user.id })
+                              .eq('id', venue.id)
+                              .is('owner_id', null);
+
+                            setVenues(prev =>
+                              prev.map(v =>
+                                v.id === venue.id ? { ...v, owner_id: user.id } : v
+                              )
+                            );
+                            toast.success('Venue claimed!');
+                          } catch (error) {
+                            console.error('Failed to claim venue:', error);
+                            toast.error('Failed to claim venue');
+                          }
+                        }}
+                        className="bg-[#C8962C] hover:bg-[#C8962C]/90 text-black h-8 px-3 text-xs font-bold"
+                      >
+                        Claim
+                      </Button>
+                    )}
+                    {venue.owner_id === user?.id && (
+                      <span className="px-3 py-1.5 bg-[#39FF14]/20 text-[#39FF14] text-xs font-black rounded">
+                        YOUR VENUE
+                      </span>
+                    )}
+                    {venue.owner_id === user?.id && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="bg-black/50 hover:bg-black/70 text-white h-8 w-8 p-0"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-black border-white/20">
+                          <DropdownMenuItem onClick={() => openEditModal(venue)}>
+                            <Edit2 className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(venue)}
+                            className="text-red-500 focus:text-red-500"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </div>
 

@@ -75,6 +75,7 @@ const SafetySeedScreen = lazy(() => import('@/components/onboarding/screens/Safe
 import MorePage from '@/pages/MorePage';
 const CarePage = lazy(() => import('@/pages/CarePage'));
 import AftercareNudge from '@/components/safety/AftercareNudge';
+import CreateBeaconBiz from '@/pages/biz/CreateBeaconBiz';
 
 // Example screens (design system demos)
 const ChatWithMapExample = lazy(() => import('@/examples/ChatWithMapExample'));
@@ -590,6 +591,8 @@ const AuthenticatedApp = () => {
       <Route path="/biz/dashboard" element={<PageRoute pageKey="BusinessDashboard" />} />
       <Route path="/biz/analytics" element={<PageRoute pageKey="BusinessAnalytics" />} />
       <Route path="/biz/onboarding" element={<PageRoute pageKey="BusinessOnboarding" />} />
+      <Route path="/biz/venue" element={<PageRoute pageKey="BusinessVenue" />} />
+      <Route path="/biz/create-beacon" element={<CreateBeaconBiz />} />
 
       {/* Legacy lowercase routes -> canonical V1.5 routes */}
       {/* /radio and /radio/schedule already declared above as PageRoutes (no duplicate needed) */}
