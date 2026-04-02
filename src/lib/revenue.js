@@ -1,8 +1,11 @@
 /**
  * HOTMESS Revenue, Retention, CTAs & USPs Configuration
- * 
+ *
  * Comprehensive monetization and engagement system for the platform.
  */
+
+// Canonical tier names
+export const TIER = { FREE:'mess', PLUS:'hotmess', CHROME:'connected', PROMOTER:'promoter', VENUE:'venue' };
 
 // =============================================================================
 // MEMBERSHIP TIERS
