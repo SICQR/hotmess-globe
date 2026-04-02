@@ -47,7 +47,7 @@ export default function L2SellSheet() {
 
   const uploadPhoto = async (file) => {
     const { data: { user } } = await supabase.auth.getUser();
-    return uploadToStorage(file, 'preloved-images', user.id);
+    return uploadToStorage(file, 'listing-images', user.id);
   };
 
   const handleSubmit = async () => {
