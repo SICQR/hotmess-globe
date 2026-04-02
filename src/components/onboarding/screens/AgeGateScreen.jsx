@@ -53,8 +53,8 @@ export default function AgeGateScreen({ onComplete }) {
     if (!canContinue) return;
     // Store in sessionStorage — will be applied after auth
     try {
-      sessionStorage.setItem('hm_age_gate_passed', 'true');
-      sessionStorage.setItem('hm_age_gate_year', birthYear);
+      localStorage.setItem('hm_age_gate_passed', 'true');
+      localStorage.setItem('hm_age_gate_year', birthYear);
     } catch {}
     onComplete();
   };
