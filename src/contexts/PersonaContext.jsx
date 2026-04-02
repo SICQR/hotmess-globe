@@ -52,7 +52,7 @@ export function PersonaProvider({ children }) {
   const switchPersona = useCallback(async (personaId) => {
     try {
       const { error } = await supabase
-        .rpc('switch_persona', { p_persona_id: personaId });
+        .rpc('switch_active_persona', { p_persona_id: personaId });
 
       if (error) throw error;
 
@@ -69,7 +69,7 @@ export function PersonaProvider({ children }) {
     }
   }, []);
 
-  const createPersona = useCallback(async ({ personaType, displayName, bio }) => {
+  const createPersona = useCallback(async ({ personaType, displayName, bio, position }) => {
     try {
       const { data: { user }, error: authErr } = await supabase.auth.getUser();
       if (authErr || !user) throw new Error('Not authenticated');
@@ -81,6 +81,7 @@ export function PersonaProvider({ children }) {
           persona_type: personaType,
           display_name: displayName,
           bio:          bio || null,
+          position:     position || null,
           is_active:    false,
         })
         .select('*')
