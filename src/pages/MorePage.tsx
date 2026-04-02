@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { supabase } from '@/components/utils/supabaseClient';
+import { useSheet } from '@/contexts/SheetContext';
 
 const GOLD = '#C8962C';
 const MUTED = '#8E8E93';
@@ -25,7 +26,8 @@ interface MoreItem {
   icon: React.FC<{ className?: string; style?: React.CSSProperties }>;
   label: string;
   sub: string;
-  path: string;
+  path?: string;
+  sheet?: string;
   accent: string;
 }
 
@@ -35,12 +37,13 @@ const MORE_ITEMS: MoreItem[] = [
   { id: 'profile', icon: User, label: 'My Profile', sub: 'Edit your profile', path: '/profile', accent: '#ffffff' },
   { id: 'personas', icon: Users, label: 'Personas', sub: 'Switch or create identities', path: '/profile?action=manage-personas', accent: GOLD },
   { id: 'vault', icon: Lock, label: 'Vault', sub: 'Tickets, orders, archive', path: '/more/vault', accent: GOLD },
-  { id: 'settings', icon: Settings, label: 'Settings', sub: 'Account + privacy', path: '/more/settings', accent: MUTED },
-  { id: 'help', icon: HelpCircle, label: 'Help', sub: 'FAQs + support', path: '/help', accent: MUTED },
+  { id: 'settings', icon: Settings, label: 'Settings', sub: 'Account + privacy', sheet: 'settings', accent: MUTED },
+  { id: 'help', icon: HelpCircle, label: 'Help', sub: 'FAQs + support', sheet: 'help', accent: MUTED },
 ];
 
 export default function MorePage() {
   const navigate = useNavigate();
+  const { openSheet } = useSheet();
   const queryClient = useQueryClient();
   const scrollRef = useRef(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -136,7 +139,7 @@ export default function MorePage() {
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                   <button
-                    onClick={() => navigate('/safety/setup')}
+                    onClick={() => navigate('/safety')}
                     style={{
                       fontSize: 13,
                       fontWeight: 600,
@@ -179,7 +182,7 @@ export default function MorePage() {
             return (
               <motion.button
                 key={item.id}
-                onClick={() => navigate(item.path)}
+                onClick={() => item.sheet ? openSheet(item.sheet, {}) : navigate(item.path!)}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}

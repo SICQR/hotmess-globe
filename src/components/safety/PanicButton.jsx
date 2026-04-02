@@ -45,13 +45,13 @@ export default function PanicButton() {
 
       // Get trusted contacts
       const { data: contacts, error: contactsError } = await supabase
-        .from('emergency_contacts')
+        .from('trusted_contacts')
         .select('*')
         .eq('user_email', user.email)
         .eq('notify_on_sos', true);
 
       if (contactsError) {
-        console.warn('Failed to fetch emergency_contacts:', contactsError);
+        console.warn('Failed to fetch trusted_contacts:', contactsError);
       }
 
       // Get user's pre-defined emergency message

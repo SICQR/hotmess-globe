@@ -63,12 +63,12 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
       if (!user) { user = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); user = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
         if (user?.email) {
           const { data: contacts, error } = await supabase
-            .from('emergency_contacts')
+            .from('trusted_contacts')
             .select('*')
             .eq('user_email', user.email)
             .eq('notify_on_sos', true);
           if (error) {
-            console.warn('Failed to fetch emergency_contacts:', error);
+            console.warn('Failed to fetch trusted_contacts:', error);
             setContactCount(0);
           } else {
             setContactCount(contacts?.length || 0);
@@ -98,13 +98,13 @@ function EmergencyModeOverlay({ onDismiss, onExit }) {
 
       // Get trusted contacts
       const { data: contacts, error: contactsError } = await supabase
-        .from('emergency_contacts')
+        .from('trusted_contacts')
         .select('*')
         .eq('user_email', user.email)
         .eq('notify_on_sos', true);
 
       if (contactsError) {
-        console.warn('Failed to fetch emergency_contacts:', contactsError);
+        console.warn('Failed to fetch trusted_contacts:', contactsError);
       }
 
       const emergencyMessage = user.emergency_message ||

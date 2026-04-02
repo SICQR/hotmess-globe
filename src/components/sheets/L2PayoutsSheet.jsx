@@ -127,6 +127,44 @@ export default function L2PayoutsSheet() {
     onError: (err) => toast.error(err.message || 'Failed to request payout'),
   });
 
+  // Check Stripe Connect status (must be before any early returns)
+  const { data: sellerData } = useQuery({
+    queryKey: ['seller-stripe-status', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('market_sellers')
+        .select('stripe_account_id, status')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+  const hasStripeConnected = !!sellerData?.stripe_account_id;
+  const [connectingStripe, setConnectingStripe] = useState(false);
+
+  const handleConnectStripe = async () => {
+    setConnectingStripe(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/stripe/connect-onboard', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.error || 'Failed to start Stripe setup');
+      }
+    } catch {
+      toast.error('Failed to connect to Stripe');
+    } finally {
+      setConnectingStripe(false);
+    }
+  };
+
   if (userLoading) {
     return (
       <div className="flex items-center justify-center h-40">
@@ -146,6 +184,29 @@ export default function L2PayoutsSheet() {
 
   return (
     <div className="overflow-y-auto h-full px-4 py-4 space-y-5">
+      {/* Stripe Connect banner */}
+      {!hasStripeConnected && (
+        <div className="bg-[#C8962C]/10 border border-[#C8962C]/25 rounded-2xl p-4">
+          <div className="flex items-start gap-3">
+            <Wallet className="w-5 h-5 text-[#C8962C] flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-white font-bold text-sm">Connect your bank account</p>
+              <p className="text-white/40 text-xs mt-1">
+                Set up Stripe to receive payouts directly to your bank account when buyers purchase your items.
+              </p>
+              <Button
+                onClick={handleConnectStripe}
+                disabled={connectingStripe}
+                className="mt-3 bg-[#C8962C] hover:bg-[#C8962C]/90 text-black font-bold text-xs h-9 px-4"
+              >
+                {connectingStripe ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                {connectingStripe ? 'Connecting...' : 'Set Up Payouts'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Balance cards */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-[#1C1C1E] rounded-2xl p-4 border border-[#C8962C]/20">

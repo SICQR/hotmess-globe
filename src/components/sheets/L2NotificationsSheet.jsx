@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, MessageCircle, Calendar, ShoppingBag, Heart, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/components/utils/supabaseClient';
 
 function Toggle({ enabled, onToggle }) {
   return (
@@ -44,9 +45,20 @@ export default function L2NotificationsSheet() {
 
   useEffect(() => {
     const load = async () => {
-      // These columns don't exist in profiles — use hardcoded defaults
-      const prefs = { notif_messages: true, notif_events: true, notif_orders: true, notif_likes: true, notif_marketing: false };
-      setPrefs(prefs);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.id) { setLoading(false); return; }
+        const { data } = await supabase
+          .from('profiles')
+          .select('notification_prefs')
+          .eq('id', session.user.id)
+          .single();
+        if (data?.notification_prefs && typeof data.notification_prefs === 'object') {
+          setPrefs(p => ({ ...p, ...data.notification_prefs }));
+        }
+      } catch {
+        // Fallback to defaults — column may not exist yet
+      }
       setLoading(false);
     };
     load();
@@ -55,8 +67,19 @@ export default function L2NotificationsSheet() {
   const set = async (key, value) => {
     const updated = { ...prefs, [key]: value };
     setPrefs(updated);
-    // No-op: notification columns don't exist in profiles table
-    // In production, these would be persisted to a notification_preferences table
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        await supabase
+          .from('profiles')
+          .update({ notification_prefs: updated })
+          .eq('id', session.user.id);
+      }
+    } catch {
+      // Silently fail — prefs are still saved locally in state
+    }
+    setSaving(false);
   };
 
   if (loading) {

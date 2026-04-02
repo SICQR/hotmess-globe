@@ -10,22 +10,23 @@ import { useSheet } from '@/contexts/SheetContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-export default function L2CreateEventSheet() {
+export default function L2CreateEventSheet({ editId, ...editProps }) {
   const { closeSheet } = useSheet();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const isEdit = !!editId;
 
   const [form, setForm] = useState({
-    title: '',
-    description: '',
-    venue: '',
-    starts_at: '',
-    ends_at: '',
-    max_attendees: '',
-    image_url: '',
-    is_free: true,
-    price: '',
+    title: editProps?.title || '',
+    description: editProps?.description || '',
+    venue: editProps?.venue_name || '',
+    starts_at: editProps?.starts_at || '',
+    ends_at: editProps?.ends_at || '',
+    max_attendees: editProps?.capacity ? String(editProps.capacity) : '',
+    image_url: editProps?.image_url || '',
+    is_free: editProps?.ticket_price_cents ? editProps.ticket_price_cents === 0 : true,
+    price: editProps?.ticket_price_cents ? String(editProps.ticket_price_cents / 100) : '',
   });
 
   const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
@@ -37,9 +38,9 @@ export default function L2CreateEventSheet() {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Please log in to create events');
+      if (!user) throw new Error('Please log in');
 
-      const { error } = await supabase.from('beacons').insert({
+      const payload = {
         title: form.title.trim(),
         description: form.description.trim() || null,
         venue_name: form.venue.trim() || null,
@@ -48,20 +49,30 @@ export default function L2CreateEventSheet() {
         capacity: form.max_attendees ? parseInt(form.max_attendees) : null,
         image_url: form.image_url || null,
         ticket_price_cents: form.is_free ? 0 : Math.round((parseFloat(form.price) || 0) * 100),
-        promoter_id: user.id,
-        owner_email: user.email,
-        kind: 'event',
-        type: 'event',
-        status: 'active',
-        active: true,
-      });
+      };
 
-      if (error) throw error;
+      if (isEdit) {
+        const { error } = await supabase.from('beacons').update(payload).eq('id', editId);
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ['event-detail', editId] });
+      } else {
+        const { error } = await supabase.from('beacons').insert({
+          ...payload,
+          promoter_id: user.id,
+          owner_email: user.email,
+          kind: 'event',
+          type: 'event',
+          status: 'active',
+          active: true,
+        });
+        if (error) throw error;
+      }
+
       setSaved(true);
       queryClient.invalidateQueries({ queryKey: ['events-mode'] });
       setTimeout(() => closeSheet(), 1200);
     } catch (err) {
-      toast.error(err.message || 'Failed to create event');
+      toast.error(err.message || `Failed to ${isEdit ? 'update' : 'create'} event`);
     } finally {
       setLoading(false);
     }

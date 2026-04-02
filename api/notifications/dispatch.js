@@ -76,7 +76,13 @@ export default async function handler(req, res) {
     .order('created_date', { ascending: true })
     .limit(25);
 
-  if (loadError) return json(res, 500, { error: loadError.message || 'Failed to load outbox' });
+  if (loadError) {
+    // If the table doesn't exist yet (42P01), return empty result instead of 500
+    if (loadError.code === '42P01' || (loadError.message && loadError.message.includes('does not exist'))) {
+      return json(res, 200, { queued: 0, sent: 0, failed: 0, note: 'notification_outbox table not created yet' });
+    }
+    return json(res, 500, { error: loadError.message || 'Failed to load outbox' });
+  }
 
   let sent = 0;
   let failed = 0;

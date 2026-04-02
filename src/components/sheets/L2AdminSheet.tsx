@@ -344,7 +344,7 @@ function IncidentsTab() {
       try {
         // Fetch from emergency_contacts as proxy for incidents
         const { data, error } = await supabase
-          .from('emergency_contacts')
+          .from('trusted_contacts')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(20);

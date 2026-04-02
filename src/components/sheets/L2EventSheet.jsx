@@ -137,6 +137,8 @@ export default function L2EventSheet({ id }) {
     },
   });
 
+  const isOwner = currentUser?.email && event?.owner_email && currentUser.email === event.owner_email;
+
   // Share event
   const handleShare = async () => {
     setIsSharing(true);
@@ -383,16 +385,74 @@ export default function L2EventSheet({ id }) {
         </div>
       </SheetSection>
 
+      {/* Event owner actions: Edit + Cancel */}
+      {isOwner && !isEventPast && (
+        <SheetSection>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => openSheet('create-event', { editId: id, ...event })}
+              className="flex-1 h-10 bg-white/10 hover:bg-white/15 text-white text-sm font-bold"
+            >
+              Edit Event
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!confirm('Cancel this event? All RSVPs will be notified.')) return;
+                await supabase.from('beacons').update({ status: 'cancelled' }).eq('id', id);
+                queryClient.invalidateQueries(['event-detail', id]);
+                toast.success('Event cancelled');
+              }}
+              className="h-10 bg-red-500/15 hover:bg-red-500/25 text-red-400 text-sm font-bold px-4"
+            >
+              Cancel
+            </Button>
+          </div>
+        </SheetSection>
+      )}
+
+      {/* Capacity indicator */}
+      {event?.capacity && event.capacity > 0 && (
+        <SheetSection>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-white/40">{rsvpCount} / {event.capacity} spots</span>
+            {rsvpCount >= event.capacity && !rsvp && (
+              <span className="text-[#FF9F0A] font-bold">FULL</span>
+            )}
+          </div>
+          <div className="w-full h-1.5 bg-white/10 rounded-full mt-1.5 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${Math.min(100, (rsvpCount / event.capacity) * 100)}%`,
+                background: rsvpCount >= event.capacity ? '#FF9F0A' : '#C8962C',
+              }}
+            />
+          </div>
+        </SheetSection>
+      )}
+
+      {/* Price display for paid events */}
+      {event?.ticket_price_cents > 0 && (
+        <SheetSection>
+          <div className="bg-[#C8962C]/10 border border-[#C8962C]/20 rounded-xl p-3 flex items-center justify-between">
+            <span className="text-sm text-white/60">Ticket price</span>
+            <span className="text-lg font-black text-[#C8962C]">
+              {'\u00A3'}{(event.ticket_price_cents / 100).toFixed(2)}
+            </span>
+          </div>
+        </SheetSection>
+      )}
+
       {/* Sticky RSVP Button */}
       <SheetActions>
         {!isEventPast ? (
           <Button
             onClick={() => rsvpMutation.mutate()}
-            disabled={rsvpMutation.isPending || !currentUser}
+            disabled={rsvpMutation.isPending || !currentUser || (event?.capacity > 0 && rsvpCount >= event.capacity && !rsvp)}
             className={cn(
               'flex-1 h-14 text-lg font-black',
-              rsvp 
-                ? 'bg-white/10 hover:bg-white/20 text-white' 
+              rsvp
+                ? 'bg-white/10 hover:bg-white/20 text-white'
                 : 'bg-[#C8962C] hover:bg-[#C8962C]/90 text-white'
             )}
           >
@@ -403,12 +463,18 @@ export default function L2EventSheet({ id }) {
                 <CheckCircle className="w-5 h-5 mr-2" />
                 Going
               </>
+            ) : event?.capacity > 0 && rsvpCount >= event.capacity ? (
+              'Event Full'
             ) : (
               <>
                 <Ticket className="w-5 h-5 mr-2" />
-                RSVP
+                {event?.ticket_price_cents > 0 ? `RSVP · ${'\u00A3'}${(event.ticket_price_cents / 100).toFixed(2)}` : 'RSVP'}
               </>
             )}
+          </Button>
+        ) : event?.status === 'cancelled' ? (
+          <Button disabled className="flex-1 h-14 text-lg font-black bg-red-500/10 text-red-400">
+            Event Cancelled
           </Button>
         ) : (
           <Button disabled className="flex-1 h-14 text-lg font-black bg-white/10">

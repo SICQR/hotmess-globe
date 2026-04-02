@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, X, ThumbsUp, Clock, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/components/utils/supabaseClient';
 
 /**
  * AftercareNudge - Post-meetup check-in modal
@@ -74,17 +75,27 @@ export default function AftercareNudge({
     setResponse(resp);
     setShowFollowUp(true);
     
-    // Track response (could send to analytics)
+    // Track response — persist to DB (best-effort) + localStorage fallback
+    const ts = new Date().toISOString();
     try {
       const history = JSON.parse(localStorage.getItem('aftercare_responses') || '[]');
-      history.push({
-        response: resp.id,
-        timestamp: new Date().toISOString(),
-      });
+      history.push({ response: resp.id, timestamp: ts });
       localStorage.setItem('aftercare_responses', JSON.stringify(history.slice(-20)));
-    } catch (e) {
-      // Storage not available
-    }
+    } catch { /* localStorage unavailable */ }
+
+    // Server-side: insert into safety_check_ins as an aftercare record
+    supabase.auth.getSession().then(({ data }) => {
+      const email = data?.session?.user?.email;
+      if (!email) return;
+      supabase.from('safety_check_ins').insert({
+        user_email: email,
+        check_in_time: ts,
+        expected_check_out: ts,
+        status: 'aftercare_response',
+        notes: `Aftercare: ${resp.id}`,
+        location: {},
+      }).then(null, () => {});
+    }).then(null, () => {});
   };
 
   const handleClose = () => {

@@ -22,7 +22,7 @@ const isVercelCronRequest = (req) => {
 };
 
 const isAuthorizedCron = (req) => {
-  const secret = getEnv('EVENT_SCRAPER_CRON_SECRET');
+  const secret = getEnv('EVENT_SCRAPER_CRON_SECRET', ['CRON_SECRET', 'OUTBOX_CRON_SECRET']);
   const onVercel = isRunningOnVercel();
   const allowVercelCron = onVercel && isVercelCronRequest(req);
 

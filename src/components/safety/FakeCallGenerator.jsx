@@ -131,14 +131,23 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
     }
   };
 
+  // Caller scripts — each preset has a natural opening line
+  const CALLER_SCRIPTS = {
+    Mum: "Hey love, just checking in — are you okay?",
+    'Best Friend': "Oi, where are you? I'm outside!",
+    Work: "Hi, sorry to call late — quick question about tomorrow.",
+    Flatmate: "Hey, you left the oven on. Are you coming back?",
+    Partner: "Babe? I'm worried, you haven't texted back.",
+  };
+
   const answerCall = () => {
     setCallAnswered(true);
     stopRinging();
-    
-    // Brief "answered" state, then redirect to safety
+
+    // Brief "answered" state with script, then redirect to safety
     setTimeout(() => {
       navigate('/safety');
-    }, 1500);
+    }, 3000);
   };
 
   const declineCall = () => {
@@ -197,25 +206,37 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
           <div className="text-center">
             <p className="text-white font-black text-3xl">{callerName}</p>
             <p className="text-[#C8962C] text-sm font-bold tracking-widest mt-1">HOTMESS</p>
-            <p className="text-white/40 text-xs mt-1">incoming call…</p>
+            {callAnswered ? (
+              <p className="text-white/60 text-sm mt-3 italic max-w-[260px] text-center">
+                "{CALLER_SCRIPTS[callerName] || "Hey, you okay? I just wanted to check in."}"
+              </p>
+            ) : (
+              <p className="text-white/40 text-xs mt-1">incoming call…</p>
+            )}
           </div>
         </div>
-        <div className="flex justify-around items-center px-12 pb-16">
-          <div className="flex flex-col items-center gap-2">
-            <button onClick={()=>{if(navigator.vibrate)navigator.vibrate([]);setShowIncomingCall(false);onClose?.();}}
-              className="w-16 h-16 rounded-full bg-[#C0392B] flex items-center justify-center">
-              <PhoneOff className="w-7 h-7 text-white" />
-            </button>
-            <span className="text-white/50 text-xs">Decline</span>
+        {!callAnswered ? (
+          <div className="flex justify-around items-center px-12 pb-16">
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={declineCall}
+                className="w-16 h-16 rounded-full bg-[#C0392B] flex items-center justify-center">
+                <PhoneOff className="w-7 h-7 text-white" />
+              </button>
+              <span className="text-white/50 text-xs">Decline</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <button onClick={answerCall}
+                className="w-16 h-16 rounded-full bg-[#39FF14] flex items-center justify-center">
+                <Phone className="w-7 h-7 text-black" />
+              </button>
+              <span className="text-white/50 text-xs">Answer</span>
+            </div>
           </div>
-          <div className="flex flex-col items-center gap-2">
-            <button onClick={()=>{if(navigator.vibrate)navigator.vibrate([]);setShowIncomingCall(false);onClose?.();}}
-              className="w-16 h-16 rounded-full bg-[#39FF14] flex items-center justify-center">
-              <Phone className="w-7 h-7 text-black" />
-            </button>
-            <span className="text-white/50 text-xs">Answer</span>
+        ) : (
+          <div className="flex justify-center items-center px-12 pb-16">
+            <p className="text-[#39FF14]/60 text-xs font-bold animate-pulse">Connected</p>
           </div>
-        </div>
+        )}
       </motion.div>,
       document.body
     );
