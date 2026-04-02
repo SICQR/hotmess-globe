@@ -64,6 +64,8 @@ const L2CommunityPostSheet = lazy(() => import('./L2CommunityPostSheet'));
 const L2CreatorSubscriptionSheet = lazy(() => import('./L2CreatorSubscriptionSheet'));
 const L2CreatePersonaSheet = lazy(() => import('./L2CreatePersonaSheet'));
 const L2UberSheet = lazy(() => import('./L2UberSheet'));
+const L2BoostShopSheet = lazy(() => import('./L2BoostShopSheet'));
+const L2ReferralSheet = lazy(() => import('./L2ReferralSheet'));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PLACEHOLDER FOR UNIMPLEMENTED SHEETS
@@ -166,6 +168,9 @@ const SHEET_COMPONENTS = {
   'community': L2CommunityPostSheet,
   // Creator subscription
   'creator-subscription': L2CreatorSubscriptionSheet,
+  // Boosts & referral
+  'boost-shop': L2BoostShopSheet,
+  'referral': L2ReferralSheet,
 };
 
 

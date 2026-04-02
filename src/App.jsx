@@ -1,4 +1,4 @@
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster, toast } from "@/components/ui/sonner"
 import { useEffect, useState, Suspense, lazy } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -367,6 +367,20 @@ const MarketCollectionRedirect = () => {
  * BootRouter handles all the gating logic now.
  */
 const AuthenticatedApp = () => {
+  // Handle Stripe redirect after successful boost purchase
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const bs = p.get('boost_success');
+    if (bs) {
+      const L = {
+        globe_glow: 'Globe Glow', profile_bump: 'Profile Bump', vibe_blast: 'Vibe Blast',
+        incognito_week: 'Incognito Mode', extra_beacon_drop: 'Extra Beacon Drop', highlighted_message: 'Highlighted Message'
+      };
+      toast.success(`${L[bs] || 'Boost'} activated! ⚡`);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   // Render the main app with LED Brutalist page transitions
   return (
     <PageTransition>

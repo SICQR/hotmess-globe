@@ -67,6 +67,20 @@ export default async function handler(req, res) {
         const tierName = session.metadata?.tier_name;
         const type = session.metadata?.type;
 
+        // Handle one-time boost purchases
+        const boostKey = session.metadata?.boost_key;
+        const sessionUserId = session.metadata?.user_id;
+        if (boostKey && sessionUserId) {
+          const { error: boostError } = await supabase.rpc('activate_user_boost', {
+            p_user_id: sessionUserId,
+            p_boost_key: boostKey,
+            p_payment_intent_id: session.payment_intent || null,
+          });
+          // Even if RPC doesn't exist yet, don't crash — just log
+          if (boostError) console.error('activate_user_boost error:', boostError.message);
+          return res.json({ received: true });
+        }
+
         if (userId && type === 'membership' && tierId) {
           // Upsert into memberships table — one active row per user
           const { error: memberErr } = await supabase

@@ -44,6 +44,12 @@ export default function SignUpScreen({ isSignIn = false }) {
   const [countdown, setCountdown] = useState(0);
   const webView = isInWebView();
 
+  // Capture referral code from URL
+  useEffect(() => {
+    const r = new URLSearchParams(window.location.search).get('ref');
+    if (r) { try { sessionStorage.setItem('hm_referral_code', r.toUpperCase()); } catch {} }
+  }, []);
+
   // Countdown timer for resend button
   useEffect(() => {
     if (countdown <= 0) return;

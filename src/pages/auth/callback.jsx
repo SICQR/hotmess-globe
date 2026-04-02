@@ -121,6 +121,7 @@ export default function AuthCallback() {
 /**
  * After a successful auth, check onboarding_completed and route accordingly.
  * Returning user → /ghosted. New/incomplete user → /.
+ * Also handles referral code capture for new users.
  */
 async function routeAfterAuth(userId, navigate) {
   try {
@@ -129,6 +130,22 @@ async function routeAfterAuth(userId, navigate) {
       .select('onboarding_completed')
       .eq('id', userId)
       .single();
+
+    // Handle referral code capture for new users
+    try {
+      const ref = sessionStorage.getItem('hm_referral_code');
+      if (ref && !profile?.onboarding_completed) {
+        const { data: referrer } = await supabase.from('profiles').select('id').eq('referral_code', ref).maybeSingle();
+        if (referrer) {
+          await supabase.from('referrals').insert({
+            referrer_id: referrer.id, referee_id: userId,
+            referral_code: ref, status: 'completed',
+            reward_granted: false, completed_at: new Date().toISOString(),
+          });
+          sessionStorage.removeItem('hm_referral_code');
+        }
+      }
+    } catch {}
 
     if (profile?.onboarding_completed === true) {
       navigate('/ghosted', { replace: true });
