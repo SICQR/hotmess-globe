@@ -2,51 +2,40 @@ import { bucketLatLng, getAuthedUser, getBearerToken, getSupabaseServerClients, 
 import { bestEffortRateLimit, minuteBucket } from '../_rateLimit.js';
 import { getRequestIp } from '../routing/_utils.js';
 
-const USER_TABLES = ['User', 'users'];
-
 const getViewerProfile = async ({ serviceClient, authUserId, email }) => {
-  for (const table of USER_TABLES) {
-    const { data, error } = await serviceClient
-      .from(table)
-      .select('id, email, auth_user_id, privacy_hide_proximity')
-      .or(`auth_user_id.eq.${authUserId},email.eq.${email}`)
-      .maybeSingle();
-    if (!error && data) return { table, profile: data };
-  }
-  return { table: 'User', profile: null };
+  const { data, error } = await serviceClient
+    .from('profiles')
+    .select('id, email, auth_user_id, privacy_hide_proximity')
+    .or(`id.eq.${authUserId},email.eq.${email}`)
+    .maybeSingle();
+  if (!error && data) return { profile: data };
+  return { profile: null };
 };
 
 const upsertViewerPresence = async ({ serviceClient, authUser, coords, privacyHideProximity }) => {
   const nowIso = new Date().toISOString();
+  // Expires 5 min from now — heartbeat should re-up before then
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
   const row = {
-    email: authUser.email,
-    auth_user_id: authUser.id,
-    is_online: !privacyHideProximity,
-    last_loc_ts: nowIso,
-    loc_accuracy_m: coords.accuracy_m,
-    // keep legacy columns for any existing code paths
-    updated_date: nowIso,
+    user_id: authUser.id,
+    status: privacyHideProximity ? 'hidden' : 'online',
+    last_seen_at: nowIso,
+    expires_at: expiresAt,
+    metadata: { accuracy_m: coords.accuracy_m },
   };
 
-  if (privacyHideProximity) {
-    row.last_lat = null;
-    row.last_lng = null;
-    row.lat = null;
-    row.lng = null;
-  } else {
-    row.last_lat = coords.lat;
-    row.last_lng = coords.lng;
-    row.lat = coords.lat;
-    row.lng = coords.lng;
+  // Store location as PostGIS point if available and not hidden
+  if (!privacyHideProximity && coords.lat != null && coords.lng != null) {
+    // Use raw SQL via RPC or store in metadata — PostGIS point needs ST_MakePoint
+    row.metadata = { ...row.metadata, lat: coords.lat, lng: coords.lng };
   }
 
-  for (const table of USER_TABLES) {
-    const { error } = await serviceClient.from(table).upsert(row, { onConflict: 'email' });
-    if (!error) return { ok: true, table };
-  }
+  const { error } = await serviceClient
+    .from('user_presence')
+    .upsert(row, { onConflict: 'user_id' });
 
-  return { ok: false, table: 'User' };
+  return { ok: !error, error };
 };
 
 const upsertViewerPresenceLocation = async ({ serviceClient, authUser, coords, privacyHideProximity }) => {
