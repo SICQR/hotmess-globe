@@ -328,14 +328,23 @@ export default async function handler(req, res) {
 
   let rows = Array.isArray(data) ? data : [];
 
-    // Exclude seeded ghost/demo profiles from the grid
+    // Exclude seeded ghost/demo/test/internal profiles from the grid
+    // GDPR: check BOTH email and username columns — username often contains emails
     rows = rows.filter((r) => {
       const email = String(r?.email || '').trim().toLowerCase();
-      if (email.endsWith('@hotmess.app')) return false; // seeded ghosts
-      if (email.endsWith('@hotmess.test')) return false; // test accounts
-      if (email === 'demo@hotmessldn.com') return false;
-      if (email === 'admin@hotmessldn.com') return false;
-      if (email.includes('e2e-boot-test')) return false;
+      const uname = String(r?.username || '').trim().toLowerCase();
+      // Check both fields for ghost patterns
+      const candidates = [email, uname].filter(Boolean);
+      for (const addr of candidates) {
+        if (addr.endsWith('@hotmess.app')) return false;
+        if (addr.endsWith('@hotmess.test')) return false;
+        if (addr.endsWith('@hotmess.internal')) return false;
+        if (addr === 'demo@hotmessldn.com') return false;
+        if (addr === 'admin@hotmessldn.com') return false;
+        if (addr.includes('e2e-boot-test')) return false;
+        if (addr.startsWith('e2e.') && addr.includes('@hotmess')) return false;
+        if (addr.startsWith('demo_')) return false;
+      }
       return true;
     });
 
@@ -447,9 +456,12 @@ export default async function handler(req, res) {
         const lng = Number.isFinite(Number(rawLng)) ? Number(rawLng) : LONDON_LNG;
 
         // PRIVACY: username is the public handle — never expose real name or email
-        const username = String(row?.username || '').trim();
-        const displayName = username || String(row?.display_name || '').trim();
-        if (!displayName) return null; // Reject profiles without a valid username/display_name
+        // GDPR FIX: if username looks like an email address, treat it as empty
+        const rawUsername = String(row?.username || '').trim();
+        const username = rawUsername.includes('@') ? '' : rawUsername;
+        const rawDisplayName = String(row?.display_name || '').trim();
+        const displayName = username || (rawDisplayName.includes('@') ? '' : rawDisplayName);
+        if (!displayName) return null; // Reject profiles without a valid non-email name
         const uniqueId = row?.id ? String(row.id).trim() : null;
         // profiles.id = auth.uid(); legacy "User" rows may have auth_user_id
         const authUserId = row?.auth_user_id ? String(row.auth_user_id).trim() : uniqueId;
