@@ -156,6 +156,20 @@ export default function OnboardingRouter() {
       return;
     }
 
+    // Safety net: age_verified=true but stage still 'start' — advance without re-gating
+    if (freshProfile.age_verified && freshProfile.onboarding_stage === 'start') {
+      await supabase
+        .from('profiles')
+        .update({
+          onboarding_stage: 'signed_up',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', currentSession.user.id);
+      setScreen(SCREENS.QUICK_SETUP);
+      setSessionReady(true);
+      return;
+    }
+
     // If stage is age_gate/age_verified but already authed and age is verified, advance
     if (
       (freshProfile.onboarding_stage === 'age_gate' ||
@@ -299,3 +313,4 @@ export default function OnboardingRouter() {
       return null;
   }
 }
+
