@@ -73,7 +73,7 @@ export default function OnboardingRouter() {
     } = await supabase.auth.getSession();
 
     if (!currentSession?.user) {
-      const ageGatePassed = sessionStorage.getItem('hm_age_gate_passed');
+      const ageGatePassed = localStorage.getItem('hm_age_gate_passed');
       if (ageGatePassed === 'true') {
         // Age already confirmed this session — go straight to signup
         setScreen(SCREENS.SIGNUP);
@@ -123,7 +123,7 @@ export default function OnboardingRouter() {
     }
 
     // Apply age gate from sessionStorage if needed (user completed AgeGate pre-auth)
-    const ageGatePassed = sessionStorage.getItem('hm_age_gate_passed');
+    const ageGatePassed = localStorage.getItem('hm_age_gate_passed');
     if (
       ageGatePassed === 'true' &&
       !freshProfile.age_verified &&
@@ -148,8 +148,8 @@ export default function OnboardingRouter() {
         })
         .eq('id', currentSession.user.id);
 
-      sessionStorage.removeItem('hm_age_gate_passed');
-      sessionStorage.removeItem('hm_age_gate_year');
+      localStorage.removeItem('hm_age_gate_passed');
+      localStorage.removeItem('hm_age_gate_year');
 
       setScreen(SCREENS.QUICK_SETUP);
       setSessionReady(true);
