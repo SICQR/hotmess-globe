@@ -74,6 +74,7 @@ const SafetyPage = lazy(() => import('@/pages/Safety'));
 const SafetySeedScreen = lazy(() => import('@/components/onboarding/screens/SafetySeedScreen'));
 import MorePage from '@/pages/MorePage';
 const CarePage = lazy(() => import('@/pages/CarePage'));
+import AftercareNudge from '@/components/safety/AftercareNudge';
 
 // Example screens (design system demos)
 const ChatWithMapExample = lazy(() => import('@/examples/ChatWithMapExample'));
@@ -697,6 +698,16 @@ function OSArchitecture() {
   const location = useLocation();
   const { closeSheet, sheetStack } = useSheet();
 
+  // Aftercare nudge state for check-in expiry
+  const [showAftercare, setShowAftercare] = useState(false);
+
+  // Listen for check-in expiry event
+  useEffect(() => {
+    const h = () => setShowAftercare(true);
+    window.addEventListener('hm:checkin-expired', h);
+    return () => window.removeEventListener('hm:checkin-expired', h);
+  }, []);
+
   // ── Service Worker NOTIFICATION_CLICK message → React Router navigate ─────
   const navigate = useNav();
   useEffect(() => {
@@ -801,6 +812,9 @@ function OSArchitecture() {
 
       {/* Incoming call banner — auth only */}
       {isAuthenticated && <IncomingCallBanner />}
+
+      {/* Aftercare nudge — triggered by check-in expiry */}
+      <AftercareNudge isOpen={showAftercare} onClose={() => setShowAftercare(false)} />
 
       {/* GDPR Cookie Banner — shows once, persists choice */}
       <CookieBanner />
