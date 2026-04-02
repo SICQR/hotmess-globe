@@ -54,11 +54,13 @@ export default function BusinessOnboarding() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { currentUser = null; } else { const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(); currentUser = { ...user, ...(profile || {}), auth_user_id: user.id, email: user.email || profile?.email }; };
-      
+      if (!user) throw new Error('No authenticated user');
+
+      const tier = businessType === 'venue' ? 'venue' : 'promoter';
+
       // Update user with business status
       await supabase
         .from('profiles')
@@ -70,10 +72,16 @@ export default function BusinessOnboarding() {
           business_description: formData.description,
           website_url: formData.website,
         })
-        .eq('email', currentUser.email);
+        .eq('id', user.id);
 
       toast.success('Business account created!');
-      navigate(createPageUrl('BusinessDashboard'));
+
+      // Navigate based on tier
+      if (tier === 'venue') {
+        navigate('/biz/venue');
+      } else {
+        navigate('/biz/dashboard');
+      }
     } catch (error) {
       console.error('Failed to create business account:', error);
       toast.error('Failed to create business account');
