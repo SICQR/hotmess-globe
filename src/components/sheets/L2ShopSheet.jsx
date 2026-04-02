@@ -425,130 +425,183 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
 
   // Product Detail View
   if (displayProduct) {
-    const images = displayProduct.images?.nodes || [];
-    const primaryImage = displayProduct.featuredImage?.url || images[0]?.url;
+    const rawImgNodes = displayProduct.images?.nodes ?? displayProduct.images ?? [];
+    const imgNodes = Array.isArray(rawImgNodes) ? rawImgNodes : [];
+    const primaryImage = displayProduct.featuredImage?.url || imgNodes[0]?.url;
+    const allImages = [primaryImage, ...imgNodes.map(i => i?.url)].filter(Boolean);
     const price = displayProduct.priceRange?.minVariantPrice;
     const comparePrice = displayProduct.compareAtPriceRange?.minVariantPrice;
+    const vendor = displayProduct.vendor || 'HOTMESS';
+
+    // Size variants
+    const rawVariants = displayProduct.variants?.nodes ?? displayProduct.variants ?? [];
+    const variants = Array.isArray(rawVariants) ? rawVariants : [];
+    const sizeOptions = variants
+      .map(v => {
+        const sizeOpt = v.selectedOptions?.find(o => o?.name?.toLowerCase() === 'size');
+        return sizeOpt ? { id: v.id, size: sizeOpt.value, available: v.availableForSale !== false } : null;
+      })
+      .filter(Boolean);
+    const hasSizes = sizeOptions.length > 0;
+    const [selectedSize, setSelectedSize] = useState(null);
+    const [descExpanded, setDescExpanded] = useState(false);
+    const [addedSuccess, setAddedSuccess] = useState(false);
+
+    const selectedVariant = hasSizes
+      ? variants.find(v => v.id === selectedSize)
+      : variants.find(v => v.availableForSale) || variants[0];
+    const canAdd = !hasSizes || !!selectedSize;
 
     return (
-      <div className="pb-24">
-        {/* Back button */}
+      <div className="pb-0 bg-[#050507]">
+        {/* Back button — floating */}
         {!handle && (
           <button
             onClick={handleBack}
-            className="flex items-center gap-2 p-4 text-white/60 hover:text-white transition-colors"
+            className="absolute top-4 left-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/60 backdrop-blur-sm text-white/80 active:scale-95 transition-transform"
           >
             <ChevronRight className="w-4 h-4 rotate-180" />
-            <span className="text-sm">Back to Shop</span>
           </button>
         )}
 
-        {/* Product Images — Depop-style carousel */}
-        <ImageCarousel
-          images={[primaryImage, ...images.map(i => i.url)].filter(Boolean)}
-          alt={displayProduct.title}
-        />
+        {/* Share — floating */}
+        <button
+          onClick={() => {
+            const url = `${window.location.origin}/shop/${displayProduct.handle || ''}`;
+            if (navigator.share) {
+              navigator.share({ title: displayProduct.title, url }).catch(() => {});
+            } else {
+              navigator.clipboard.writeText(url);
+              toast.success('Link copied');
+            }
+          }}
+          className="absolute top-4 right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/60 backdrop-blur-sm text-white/80 active:scale-95 transition-transform"
+          aria-label="Share product"
+        >
+          <Share2 className="w-4 h-4" />
+        </button>
 
-        {/* Product Info */}
-        <SheetSection>
-          <div className="flex items-start justify-between mb-2">
-            <h2 className="text-2xl font-black text-white flex-1">{displayProduct.title}</h2>
-            <button
-              onClick={() => {
-                const url = `${window.location.origin}/shop/${displayProduct.handle || ''}`;
-                if (navigator.share) {
-                  navigator.share({ title: displayProduct.title, url }).catch(() => {});
-                } else {
-                  navigator.clipboard.writeText(url);
-                  toast.success('Link copied');
-                }
-              }}
-              className="ml-3 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white/60 hover:text-white active:scale-95 transition-all flex-shrink-0"
-              aria-label="Share product"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-          </div>
-          
-          <div className="flex items-center gap-3 mb-4">
+        {/* Full bleed hero image carousel */}
+        <ImageCarousel images={allImages} alt={displayProduct.title} />
+
+        {/* Product info */}
+        <div className="px-4 pt-5 pb-4">
+          {/* Brand tag */}
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#C8962C] font-bold mb-1.5">
+            {vendor}
+          </p>
+
+          {/* Title */}
+          <h2 className="text-xl font-black text-white uppercase leading-tight mb-3">
+            {displayProduct.title}
+          </h2>
+
+          {/* Price */}
+          <div className="flex items-baseline gap-2.5 mb-4">
             {price && (
               <span className="text-2xl font-black text-[#C8962C]">
-                {price.currencyCode} {parseFloat(price.amount).toFixed(2)}
+                £{parseFloat(price.amount).toFixed(2)}
               </span>
             )}
             {comparePrice && parseFloat(comparePrice.amount) > parseFloat(price?.amount || 0) && (
-              <span className="text-lg text-white/40 line-through">
-                {comparePrice.currencyCode} {parseFloat(comparePrice.amount).toFixed(2)}
+              <span className="text-base text-white/40 line-through">
+                £{parseFloat(comparePrice.amount).toFixed(2)}
               </span>
             )}
           </div>
 
+          {/* Description */}
           {displayProduct.description && (
-            <p className="text-white/70 text-sm leading-relaxed">
-              {displayProduct.description}
-            </p>
+            <div className="mb-4">
+              <p className={`text-white/60 text-sm leading-relaxed ${!descExpanded ? 'line-clamp-4' : ''}`}>
+                {displayProduct.description}
+              </p>
+              {displayProduct.description.length > 200 && (
+                <button
+                  onClick={() => setDescExpanded(!descExpanded)}
+                  className="text-[#C8962C] text-xs font-bold mt-1"
+                >
+                  {descExpanded ? 'Show less' : 'Read more'}
+                </button>
+              )}
+            </div>
           )}
-        </SheetSection>
 
-        <SheetDivider />
-
-        {/* Tags */}
-        {displayProduct.tags?.length > 0 && (
-          <>
-            <SheetSection title="Tags">
+          {/* Size selector */}
+          {hasSizes && (
+            <div className="mb-4">
+              <p className="text-white/50 text-xs uppercase tracking-wider font-bold mb-2">Size</p>
               <div className="flex flex-wrap gap-2">
-                {displayProduct.tags.map((tag, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1 bg-white/10 rounded-full text-xs text-white/60"
+                {sizeOptions.map((opt) => (
+                  <button
+                    key={opt.id}
+                    disabled={!opt.available}
+                    onClick={() => setSelectedSize(opt.id)}
+                    className={`h-10 min-w-[44px] px-4 rounded-full text-sm font-bold transition-all active:scale-95
+                      ${selectedSize === opt.id
+                        ? 'bg-[#C8962C] text-black'
+                        : opt.available
+                          ? 'bg-white/10 text-white hover:bg-white/15'
+                          : 'bg-white/5 text-white/20 cursor-not-allowed line-through'
+                      }`}
                   >
-                    {tag}
-                  </span>
+                    {opt.size}
+                  </button>
                 ))}
               </div>
-            </SheetSection>
-            <SheetDivider />
-          </>
-        )}
+            </div>
+          )}
 
-        {/* Buy Actions */}
-        <SheetActions>
+          {/* Tags — horizontal scroll */}
+          {displayProduct.tags?.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
+              {(Array.isArray(displayProduct.tags) ? displayProduct.tags : []).map((tag, i) => (
+                <span
+                  key={i}
+                  className="px-3 py-1 bg-white/10 rounded-full text-xs text-white/60 whitespace-nowrap flex-shrink-0"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Sticky bottom bar */}
+        <div className="sticky bottom-0 left-0 right-0 p-4 bg-[#050507]/95 backdrop-blur-md border-t border-white/10">
           <Button
-            onClick={handleOpenCart}
-            variant="outline"
-            className="flex-1 h-12 border-white/20"
-          >
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            View Cart
-          </Button>
-          <Button
-            disabled={addingToCart}
+            disabled={addingToCart || !canAdd || addedSuccess}
             onClick={async () => {
-              const variants = displayProduct.variants?.nodes || [];
-              const variant = variants.find(v => v.availableForSale) || variants[0];
-              if (!variant?.id) {
-                toast.error('No variant available');
+              if (!selectedVariant?.id) {
+                toast.error('Please select a size');
                 return;
               }
               setAddingToCart(true);
               try {
-                await addItem({ variantId: variant.id, quantity: 1 });
-                toast.success('Added to cart');
-                openSheet('cart');
+                await addItem({ variantId: selectedVariant.id, quantity: 1 });
+                setAddedSuccess(true);
+                setTimeout(() => setAddedSuccess(false), 2000);
               } catch (err) {
                 toast.error(err?.message || 'Failed to add to cart');
               } finally {
                 setAddingToCart(false);
               }
             }}
-            className="flex-1 h-12 bg-[#C8962C] hover:bg-[#C8962C]/90 font-black"
+            className={`w-full h-14 font-black text-base rounded-xl transition-all active:scale-[0.98] ${
+              addedSuccess
+                ? 'bg-green-600 hover:bg-green-600'
+                : 'bg-[#C8962C] hover:bg-[#C8962C]/90'
+            } ${!canAdd ? 'opacity-50' : ''}`}
           >
-            {addingToCart
-              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              : <ShoppingBag className="w-4 h-4 mr-2" />}
-            {addingToCart ? 'Adding...' : 'Add to Cart'}
+            {addingToCart ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : addedSuccess ? (
+              'Added \u2713'
+            ) : (
+              <>Add to Bag{price ? ` — £${parseFloat(price.amount).toFixed(2)}` : ''}</>
+            )}
           </Button>
-        </SheetActions>
+        </div>
       </div>
     );
   }
