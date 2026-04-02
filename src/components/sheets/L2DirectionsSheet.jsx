@@ -4,7 +4,6 @@
  * Also supports Uber deep link and sharing.
  */
 
-import { useState, useEffect } from 'react';
 import { Share2 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
 import InAppDirections from '@/components/directions/InAppDirections';

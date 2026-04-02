@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Car, Share2, MessageCircle, Shield } from 'lucide-react';
+import { Car, MessageCircle, Shield } from 'lucide-react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
 

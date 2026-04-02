@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
-import { PhoneOff, Phone } from 'lucide-react';
 
 export default function PinSetupScreen({ onNext, onSkip }) {
   const [pin, setPin] = useState('');

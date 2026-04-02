@@ -15,7 +15,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/components/utils/supabaseClient';
 import { toast } from 'sonner';
-import { createPageUrl } from '../../utils';
 
 const BUSINESS_TYPES = [
   { id: 'venue', name: 'Venue / Club', icon: Building2, description: 'Bars, clubs, and event spaces' },
