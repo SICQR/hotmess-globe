@@ -460,10 +460,6 @@ export default function Marketplace() {
         toast.error('Sign in to sell on the Preloved market');
         return;
       }
-      if (!currentUser.is_verified) {
-        toast.error('Only verified Hotmess members can sell. Get verified in your profile settings.');
-        return;
-      }
       setPrelovedSheetOpen(true);
     } else {
       navigate(createPageUrl('SellerDashboard'));
