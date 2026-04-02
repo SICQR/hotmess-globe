@@ -173,70 +173,51 @@ export default function FakeCallGenerator({ onClose, compact = false }) {
     return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   };
 
-  // Full-screen incoming call overlay
+  // Full-screen incoming call overlay with createPortal
   if (showIncomingCall) {
-    return (
+    return createPortal(
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="fixed inset-0 z-[200] bg-gradient-to-b from-[#1a1a2e] to-black flex flex-col items-center justify-between py-16 px-6"
+        initial={{ opacity: 0, scale: 1.03 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[200] flex flex-col bg-[#0d0d0d]"
+        style={{ paddingTop: 'env(safe-area-inset-top,0px)', paddingBottom: 'env(safe-area-inset-bottom,0px)' }}
       >
-        {/* Caller Info */}
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <motion.div
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="w-32 h-32 rounded-full bg-gradient-to-br from-[#C8962C] to-[#C8962C] flex items-center justify-center mb-6 border-4 border-white/20"
-          >
-            <User className="w-16 h-16 text-white" />
-          </motion.div>
-          
-          <h1 className="text-3xl font-black text-white mb-2">{callerName}</h1>
-          <p className="text-white/60 text-lg">
-            {callAnswered ? 'Connected' : 'Incoming call...'}
-          </p>
-          
-          {callAnswered && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 text-[#39FF14] font-bold"
-            >
-              Redirecting to safety...
-            </motion.div>
-          )}
-        </div>
-
-        {/* Call Actions */}
-        {!callAnswered && (
-          <div className="flex items-center justify-center gap-16">
-            {/* Decline */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={declineCall}
-              className="w-20 h-20 rounded-full bg-red-500 flex items-center justify-center shadow-[0_0_30px_rgba(239,68,68,0.5)]"
-            >
-              <PhoneOff className="w-10 h-10 text-white" />
-            </motion.button>
-
-            {/* Answer */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-              onClick={answerCall}
-              className="w-20 h-20 rounded-full bg-[#39FF14] flex items-center justify-center shadow-[0_0_30px_rgba(57,255,20,0.5)]"
-            >
-              <Phone className="w-10 h-10 text-black" />
-            </motion.button>
+        <div className="flex-1 flex flex-col items-center justify-center gap-4">
+          <div className="relative">
+            <div className="w-28 h-28 rounded-full bg-white/10 flex items-center justify-center text-6xl">
+              {PRESET_CALLERS?.find(c=>c.name===callerName)?.emoji||'📞'}
+            </div>
+            {[1,2,3].map(i=>(
+              <motion.div key={i} initial={{scale:1,opacity:0.4}} animate={{scale:1+i*0.3,opacity:0}}
+                transition={{duration:2,repeat:Infinity,delay:i*0.5,ease:'easeOut'}}
+                className="absolute inset-0 rounded-full border-2 border-[#39FF14]" />
+            ))}
           </div>
-        )}
-
-        {/* Subtle hint */}
-        <p className="text-white/30 text-xs mt-8 text-center">
-          Answer to go to Safety Hub
-        </p>
-      </motion.div>
+          <div className="text-center">
+            <p className="text-white font-black text-3xl">{callerName}</p>
+            <p className="text-[#C8962C] text-sm font-bold tracking-widest mt-1">HOTMESS</p>
+            <p className="text-white/40 text-xs mt-1">incoming call…</p>
+          </div>
+        </div>
+        <div className="flex justify-around items-center px-12 pb-16">
+          <div className="flex flex-col items-center gap-2">
+            <button onClick={()=>{if(navigator.vibrate)navigator.vibrate([]);setShowIncomingCall(false);onClose?.();}}
+              className="w-16 h-16 rounded-full bg-[#C0392B] flex items-center justify-center">
+              <PhoneOff className="w-7 h-7 text-white" />
+            </button>
+            <span className="text-white/50 text-xs">Decline</span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <button onClick={()=>{if(navigator.vibrate)navigator.vibrate([]);setShowIncomingCall(false);onClose?.();}}
+              className="w-16 h-16 rounded-full bg-[#39FF14] flex items-center justify-center">
+              <Phone className="w-7 h-7 text-black" />
+            </button>
+            <span className="text-white/50 text-xs">Answer</span>
+          </div>
+        </div>
+      </motion.div>,
+      document.body
     );
   }
 

@@ -61,6 +61,7 @@ import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { supabase } from '@/components/utils/supabaseClient';
 import '@/styles/radio-waveform.css';
 import { AppBanner } from '@/components/banners/AppBanner';
+import { SoundConsentModal } from '@/components/radio/SoundConsentModal';
 
 // -- Static show data (fallback) -----------------------------------------------
 interface ShowData {
@@ -147,6 +148,8 @@ interface RadioModeProps {
   className?: string;
 }
 
+const CONSENT_KEY = 'hm_sound_consent_v1';
+
 export function RadioMode({ className = '' }: RadioModeProps) {
   const { isPlaying, currentShowName, togglePlay, setCurrentShowName, audioRef } = useRadio();
   const navigate = useNavigate();
@@ -167,6 +170,18 @@ export function RadioMode({ className = '' }: RadioModeProps) {
   const [shows, setShows] = useState<ShowData[]>(STATIC_SHOWS);
   const [selectedShow, setSelectedShow] = useState<ShowData | null>(null);
   const [activeShowIndex, setActiveShowIndex] = useState(0);
+
+  // Sound consent modal state
+  const [showConsent, setShowConsent] = useState(() => {
+    try { return localStorage.getItem(CONSENT_KEY) !== 'granted'; } catch { return true; }
+  });
+
+  // Listen for sound consent request event
+  useEffect(() => {
+    const h = () => setShowConsent(true);
+    window.addEventListener('hm:request-audio-consent', h);
+    return () => window.removeEventListener('hm:request-audio-consent', h);
+  }, []);
 
   // Set initial show name on mount
   useEffect(() => {
@@ -764,6 +779,16 @@ export function RadioMode({ className = '' }: RadioModeProps) {
 
       {/* ---- Volume slider custom styles ---- */}
       <style>{volumeSliderCSS}</style>
+
+      {/* Sound Consent Modal */}
+      <SoundConsentModal
+        isOpen={showConsent}
+        onConsent={() => {
+          try { localStorage.setItem(CONSENT_KEY, 'granted'); } catch {}
+          setShowConsent(false);
+        }}
+        onDecline={() => setShowConsent(false)}
+      />
     </div>
   );
 }

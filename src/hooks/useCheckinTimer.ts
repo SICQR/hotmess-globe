@@ -63,6 +63,9 @@ export function useCheckinTimer(): CheckinTimerState {
     if (firedRef.current) return;
     firedRef.current = true;
 
+    // Dispatch custom event for check-in expiry
+    window.dispatchEvent(new CustomEvent('hm:checkin-expired'));
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
