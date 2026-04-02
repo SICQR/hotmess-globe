@@ -357,25 +357,12 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
 
         <SheetActions>
           <Button
-            onClick={async () => {
-              // Look up seller email + name from profiles, then open a direct thread
-              try {
-                const { data: profile } = await supabase
-                  .from('profiles')
-                  .select('email, display_name')
-                  .eq('id', product.seller_id)
-                  .single();
-                if (!profile?.email) {
-                  toast.error('Could not reach seller right now');
-                  return;
-                }
-                openSheet('chat', {
-                  to: profile.email,
-                  title: profile.display_name || 'Seller',
-                });
-              } catch {
-                toast.error('Could not reach seller right now');
-              }
+            onClick={() => {
+              // Pass only the seller UUID — L2ChatSheet resolves identity internally
+              openSheet('chat', {
+                userId: product.seller_id,
+                title: seller?.name || 'Seller',
+              });
             }}
             variant="outline"
             className="flex-1 h-12 border-white/20"

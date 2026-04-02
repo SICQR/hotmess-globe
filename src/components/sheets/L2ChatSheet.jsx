@@ -72,7 +72,7 @@ const markRead = (threadId, userEmail) => {
  * @param {string} [props.title] - Fallback title used when the other participant's name is unavailable.
  * @returns {JSX.Element} The chat sheet React element.
  */
-export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, title }) {
+export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmail, userId: initialUserId, title }) {
   const { openSheet, updateSheetProps } = useSheet();
 
   const [currentUser, setCurrentUser]   = useState(null); // { id, email }
@@ -111,6 +111,20 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
       if (user) setCurrentUser({ id: user.id, email: user.email });
     });
   }, []);
+
+  // ── Resolve userId → email internally (GDPR: email never exposed as prop) ──
+  const [resolvedToEmail, setResolvedToEmail] = useState(initialToEmail || null);
+  useEffect(() => {
+    if (!initialUserId || resolvedToEmail) return;
+    supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', initialUserId)
+      .single()
+      .then(({ data }) => {
+        if (data?.email) setResolvedToEmail(data.email);
+      });
+  }, [initialUserId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load threads when user is ready ───────────────────────────────────────
   useEffect(() => {
@@ -171,19 +185,19 @@ export default function L2ChatSheet({ thread: initialThreadId, to: initialToEmai
     if (initialThreadId) {
       const t = threads.find(th => th.id === initialThreadId);
       if (t) openThread(t);
-    } else if (initialToEmail && !selectedThread) {
+    } else if (resolvedToEmail && !selectedThread) {
       const existing = threads.find(t =>
-        t.participant_emails?.includes(initialToEmail) &&
+        t.participant_emails?.includes(resolvedToEmail) &&
         t.participant_emails?.includes(currentUser.email)
       );
       if (existing) {
         openThread(existing);
       } else {
         // Pre-select the "to" email so first send creates the thread
-        setSelectedThread({ _new: true, participant_emails: [currentUser.email, initialToEmail] });
+        setSelectedThread({ _new: true, participant_emails: [currentUser.email, resolvedToEmail] });
       }
     }
-  }, [currentUser?.email, threadsLoading, initialThreadId, initialToEmail]);
+  }, [currentUser?.email, threadsLoading, initialThreadId, resolvedToEmail]);
 
   // ── Open thread → load messages + subscribe ───────────────────────────────
   const openThread = useCallback(async (thread) => {
