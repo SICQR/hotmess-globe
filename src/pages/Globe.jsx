@@ -1,21 +1,15 @@
 import { supabase } from '@/components/utils/supabaseClient';
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSheet } from '@/contexts/SheetContext';
+import { useGlobe } from '@/contexts/GlobeContext';
 import EnhancedGlobe3D from '../components/globe/EnhancedGlobe3D';
-import CompactGlobeControls from '../components/globe/CompactGlobeControls';
-import GlobeDataPanel from '../components/globe/GlobeDataPanel';
-import GlobeSearch from '../components/globe/GlobeSearch';
-import FloatingPanel from '../components/ui/FloatingPanel';
 import { activityTracker } from '../components/globe/ActivityTracker';
-import ProfilesGrid from '@/features/profilesGrid/ProfilesGrid';
-import TelegramPanel from '@/features/profilesGrid/TelegramPanel';
-import LocalBeaconsView from '../components/globe/LocalBeaconsView';
 import BeaconPreviewPanel from '../components/globe/BeaconPreviewPanel';
 import CityDataOverlay from '../components/globe/CityDataOverlay';
-import { Settings, BarChart3, Home, Grid3x3 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Layers } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { debounce } from 'lodash';
 import ErrorBoundary from '../components/error/ErrorBoundary';
@@ -27,11 +21,86 @@ import { useGlobeRealtime } from '@/hooks/useGlobeRealtime';
 import { useProfileOpener } from '@/lib/profile';
 import LocationShopPanel from '../components/globe/LocationShopPanel';
 
+// ── City coords for programmatic flyTo ──────────────────────────────────────
+const CITY_COORDS = {
+  'London':    { lat: 51.5074, lng: -0.1278 },
+  'Berlin':    { lat: 52.52,   lng: 13.405  },
+  'New York':  { lat: 40.7128, lng: -74.006 },
+  'Barcelona': { lat: 41.3851, lng: 2.1734  },
+  'Amsterdam': { lat: 52.3676, lng: 4.9041  },
+  'Paris':     { lat: 48.8566, lng: 2.3522  },
+  'Tokyo':     { lat: 35.6762, lng: 139.65  },
+  'Sydney':    { lat: -33.865, lng: 151.209 },
+};
+
+// ── Layers Sheet ─────────────────────────────────────────────────────────────
+const LAYER_DEFS = [
+  { key: 'events',  label: 'Events',  color: '#FF4F9A' },
+  { key: 'venues',  label: 'Venues',  color: '#00C2E0' },
+  { key: 'people',  label: 'People',  color: '#39FF14' },
+  { key: 'safety',  label: 'Safety',  color: '#FF3B30' },
+  { key: 'market',  label: 'Market',  color: '#FFD700' },
+  { key: 'radio',   label: 'Radio',   color: '#B026FF' },
+];
+
+function LayersSheet({ open, onClose, activeLayer, setActiveLayer }) {
+  if (!open) return null;
+  return (
+    <motion.div
+      initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+      transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+      className="fixed inset-x-0 bottom-0 z-[80] bg-black/95 border-t border-white/10 rounded-t-3xl"
+      style={{ padding: '16px 16px calc(20px + env(safe-area-inset-bottom, 0px))' }}
+    >
+      <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+      <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-4">Globe Layers</h3>
+      <div className="space-y-1">
+        {LAYER_DEFS.map(({ key, label, color }) => (
+          <div key={key} className="flex items-center justify-between py-2.5">
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: color }} />
+              <span className="text-white text-sm font-medium">{label}</span>
+            </div>
+            <button
+              onClick={() => setActiveLayer(prev => ({ ...prev, [key]: !prev[key] }))}
+              className={`w-12 h-6 rounded-full flex items-center px-0.5 transition-colors ${
+                activeLayer[key] ? 'justify-end bg-[#C8962C]' : 'justify-start bg-white/10'
+              }`}
+            >
+              <div className="w-5 h-5 rounded-full bg-white" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={onClose}
+        className="w-full mt-4 py-3 bg-white/5 rounded-xl text-white/50 text-sm"
+      >
+        Done
+      </button>
+    </motion.div>
+  );
+}
+
 export default function GlobePage({ embedded = false }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { openProfile } = useProfileOpener();
   const { openSheet } = useSheet();
+  const [showLayersSheet, setShowLayersSheet] = useState(false);
+
+  // ── GlobeContext bridge ──────────────────────────────────────────────────
+  const {
+    selectedCity: ctxSelectedCity,
+    setSelectedCity: ctxSetSelectedCity,
+    activeFilter,
+    focusedBeaconId,
+    setFocusedBeaconId,
+    setCameraCity,
+    activeLayer,
+    setActiveLayer,
+    amplifiedBeaconIds,
+  } = useGlobe();
 
   // Realtime presence beacons from presence table (TTL-based)
   const { beacons: presenceBeacons, presenceCount } = useRealtimeBeacons();
@@ -258,16 +327,10 @@ export default function GlobePage({ embedded = false }) {
   const [beaconType, setBeaconType] = useState(null);
   const [minIntensity, setMinIntensity] = useState(0);
   const [recencyFilter, setRecencyFilter] = useState('all');
-  const [showControls, setShowControls] = useState(false);
-  const [showPanel, setShowPanel] = useState(false);
   const [searchResults, setSearchResults] = useState(null);
   const [radiusSearch, setRadiusSearch] = useState(null);
   const [userActivities, setUserActivities] = useState([]);
   const [activityVisibility, setActivityVisibility] = useState(activityTracker.isEnabled());
-  const [showNearbyGrid, setShowNearbyGrid] = useState(false);
-  const [showHotmessFeed, setShowHotmessFeed] = useState(false);
-  const [showLocalBeacons, setShowLocalBeacons] = useState(false);
-  const [localBeaconCenter, setLocalBeaconCenter] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [previewBeacon, setPreviewBeacon] = useState(null);
   const [locationShopBeacon, setLocationShopBeacon] = useState(null);
@@ -469,8 +532,15 @@ export default function GlobePage({ embedded = false }) {
       }
     }
 
+    // Layer filtering from GlobeContext
+    if (!activeLayer.events)  filtered = filtered.filter(b => b.type !== 'event'  && b.kind !== 'event');
+    if (!activeLayer.venues)  filtered = filtered.filter(b => b.beacon_category !== 'venue');
+    if (!activeLayer.people)  filtered = filtered.filter(b => b.kind !== 'person');
+    if (!activeLayer.safety)  filtered = filtered.filter(b => b.type !== 'safety' && b.kind !== 'safety');
+    if (!activeLayer.market)  filtered = filtered.filter(b => b.type !== 'market' && b.kind !== 'market');
+
     return filtered;
-  }, [beacons, rightNowUsers, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, currentUser?.role, presenceBeacons, realtimeLocations]);
+  }, [beacons, rightNowUsers, activeMode, beaconType, minIntensity, recencyFilter, searchResults, radiusSearch, nearbyPeoplePins, showPeoplePins, currentUser?.role, presenceBeacons, realtimeLocations, activeLayer]);
 
   // Sort by most recent
   const recentActivity = useMemo(() => {
@@ -480,6 +550,9 @@ export default function GlobePage({ embedded = false }) {
   const handleBeaconClick = useCallback((beacon) => {
     // Don't handle cluster clicks
     if (beacon.isCluster) return;
+
+    // Update globe context focused beacon
+    setFocusedBeaconId(beacon.id);
 
     // People pins: use Profile Authority contract (Stage 4)
     if (beacon?.kind === 'person' && beacon?.email) {
@@ -494,20 +567,11 @@ export default function GlobePage({ embedded = false }) {
 
     // Location spikes with Shopify products → open shop panel
     if (beacon?.mode === 'location' && Array.isArray(beacon.shopify_handles) && beacon.shopify_handles.length > 0) {
-      setShowControls(false);
-      setShowPanel(false);
-      setShowNearbyGrid(false);
-      setShowLocalBeacons(false);
       setPreviewBeacon(null);
       setLocationShopBeacon(beacon);
       return;
     }
-    
-    // Close all other panels first
-    setShowControls(false);
-    setShowPanel(false);
-    setShowNearbyGrid(false);
-    setShowLocalBeacons(false);
+
     setLocationShopBeacon(null);
 
     // Route to beacon sheet based on beacon_category
@@ -558,9 +622,19 @@ export default function GlobePage({ embedded = false }) {
   const [showCityOverlay, setShowCityOverlay] = useState(true);
   const globeRef = React.useRef(null);
 
+  // Fly globe to city when context selectedCity changes
+  useEffect(() => {
+    if (ctxSelectedCity && globeRef.current?.rotateTo) {
+      const coords = CITY_COORDS[ctxSelectedCity];
+      if (coords) globeRef.current.rotateTo(coords.lat, coords.lng, 3.2);
+    }
+  }, [ctxSelectedCity]);
+
   const handleCityClick = useCallback((city) => {
     setSelectedCity(city);
-    
+    setCameraCity(city.name);
+    ctxSetSelectedCity(city.name);
+
     // Filter beacons by city
     const cityBeacons = beacons.filter(b => b.city === city.name);
     setSearchResults({
@@ -568,8 +642,7 @@ export default function GlobePage({ embedded = false }) {
       beacons: cityBeacons,
       cities: [city]
     });
-    
-    // Track city click
+
     activityTracker.trackActivity('city_click', {
       city_name: city.name,
       beacon_count: cityBeacons.length
@@ -577,13 +650,10 @@ export default function GlobePage({ embedded = false }) {
       lat: city.lat,
       lng: city.lng
     });
-  }, [beacons]);
+  }, [beacons, setCameraCity, ctxSetSelectedCity]);
 
   const handleClose = useCallback(() => {
     setSelectedBeacon(null);
-    if (window.innerWidth < 768) {
-      setShowPanel(false); // Close panel on mobile when closing beacon
-    }
   }, []);
 
   const handleSearchResults = useCallback((results) => {
@@ -602,10 +672,10 @@ export default function GlobePage({ embedded = false }) {
       } : null);
     }
     
-    // If single beacon or city, focus on it
+    // If single beacon, focus it; if single city, fly to it
     if (results.beacons.length === 1) {
       setSelectedBeacon(results.beacons[0]);
-      setShowPanel(true);
+      setFocusedBeaconId(results.beacons[0].id);
     } else if (results.cities.length === 1 && results.cities[0]) {
       setSelectedCity(results.cities[0]);
     }
@@ -655,256 +725,47 @@ export default function GlobePage({ embedded = false }) {
         {/* Globe - Full Screen */}
         <div className="relative w-full h-screen">
           <EnhancedGlobe3D
-          ref={globeRef}
-          beacons={filteredBeacons}
-          cities={cities}
-          activeLayers={debouncedLayers}
-          userActivities={userActivities}
-          userIntents={userIntents}
-          routesData={realtimeRoutes}
-          globeActivity={globeActivity}
-          globeEvents={globeEvents}
-          onBeaconClick={handleBeaconClick}
-          onCityClick={handleCityClick}
-          selectedCity={selectedCity}
-          highlightedIds={
-            (Array.isArray(searchResults?.beacons) ? searchResults.beacons.map((b) => b.id) : null) ||
-            (Array.isArray(radiusSearch?.beacons) ? radiusSearch.beacons.map((b) => b.id) : null) ||
-            []
-          }
-          className="w-full h-full"
-        />
-      </div>
-
-      {/* ── Compact Header ─────────────────────────────────────────── */}
-      {/* Row 1 on mobile: icon buttons + pill labels
-          Row 2 on mobile: search bar (full-width)
-          Single row on sm+ */}
-      <div className="absolute top-3 left-2 right-2 sm:top-4 sm:left-4 sm:right-4 z-30 flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-2">
-
-        {/* Top row: left pills + right action buttons */}
-        <div className="flex items-center justify-between gap-1.5 sm:contents">
-          {/* Left pills */}
-          <div className="flex items-center gap-1.5">
-            <Link to={createPageUrl('Home')}>
-              <button className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-black/90 border border-white/10 backdrop-blur-xl hover:bg-white/10 active:scale-95 transition-all">
-                <Home className="w-5 h-5" />
-              </button>
-            </Link>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/90 border border-white/10 rounded-xl backdrop-blur-xl min-h-[44px]">
-              <span className="text-[11px] font-black uppercase tracking-[0.22em] text-white/60">PULSE</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/90 border border-white/10 rounded-xl backdrop-blur-xl min-h-[44px]">
-              <div className="w-2 h-2 rounded-full bg-[#C8962C] animate-pulse" />
-              <span className="text-sm font-bold">{filteredBeacons.length}</span>
-            </div>
-          </div>
-
-          {/* Right action buttons */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => {
-                const newState = !showNearbyGrid;
-                setShowNearbyGrid(newState);
-                if (newState) {
-                  setShowHotmessFeed(false);
-                  setShowControls(false);
-                  setShowPanel(false);
-                  setShowLocalBeacons(false);
-                  setPreviewBeacon(null);
-                }
-              }}
-              className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
-                showNearbyGrid ? 'bg-[#C8962C] text-black' : 'bg-black/90 border border-white/10 text-white'
-              }`}
-            >
-              <Grid3x3 className="w-5 h-5" />
-            </button>
-
-            {!embedded && (
-              <button
-                onClick={() => {
-                  const newState = !showHotmessFeed;
-                  setShowHotmessFeed(newState);
-                  if (newState) {
-                    setShowNearbyGrid(false);
-                    setShowControls(false);
-                    setShowPanel(false);
-                    setShowLocalBeacons(false);
-                    setPreviewBeacon(null);
-                  }
-                }}
-                className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
-                  showHotmessFeed ? 'bg-[#C8962C] text-black' : 'bg-black/90 border border-white/10 text-white'
-                }`}
-                aria-label="Hotmess Feed"
-              >
-                <span className="text-xs font-black">FEED</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => {
-                const newState = !showControls;
-                setShowControls(newState);
-                if (newState) {
-                  setShowHotmessFeed(false);
-                  setShowPanel(false);
-                  setShowNearbyGrid(false);
-                  setShowLocalBeacons(false);
-                  setPreviewBeacon(null);
-                }
-              }}
-              className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
-                showControls ? 'bg-[#C8962C] text-black' : 'bg-black/90 border border-white/10 text-white'
-              }`}
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => {
-                const newState = !showPanel;
-                setShowPanel(newState);
-                if (newState) {
-                  setShowHotmessFeed(false);
-                  setShowControls(false);
-                  setShowNearbyGrid(false);
-                  setShowLocalBeacons(false);
-                  setPreviewBeacon(null);
-                }
-              }}
-              className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl backdrop-blur-xl active:scale-95 transition-all ${
-                showPanel ? 'bg-[#C8962C] text-black' : 'bg-black/90 border border-white/10 text-white'
-              }`}
-            >
-              <BarChart3 className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Search — full width on mobile, constrained on sm+ */}
-        <div className="w-full sm:flex-1 sm:max-w-md sm:mx-auto">
-          <GlobeSearch
-            beacons={beacons}
+            ref={globeRef}
+            beacons={filteredBeacons}
             cities={cities}
-            onSearchResults={handleSearchResults}
-            onClearSearch={handleClearSearch}
-            onRadiusSearch={handleRadiusSearch}
+            activeLayers={debouncedLayers}
+            userActivities={userActivities}
+            userIntents={userIntents}
+            routesData={realtimeRoutes}
+            globeActivity={globeActivity}
+            globeEvents={globeEvents}
+            onBeaconClick={(beacon) => {
+              handleBeaconClick(beacon);
+              setFocusedBeaconId(beacon.id);
+            }}
+            onCityClick={(city) => {
+              handleCityClick(city);
+              setCameraCity(city.name);
+              ctxSetSelectedCity(city.name);
+            }}
+            selectedCity={selectedCity}
+            highlightedIds={
+              (Array.isArray(searchResults?.beacons) ? searchResults.beacons.map((b) => b.id) : null) ||
+              (Array.isArray(radiusSearch?.beacons) ? radiusSearch.beacons.map((b) => b.id) : null) ||
+              []
+            }
+            activeFilter={activeFilter}
+            focusedBeaconId={focusedBeaconId}
+            amplifiedBeaconIds={amplifiedBeaconIds}
+            className="w-full h-full"
           />
-        </div>
       </div>
 
-      {/* Search Results Indicator */}
-      {(searchResults || radiusSearch) && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute top-16 left-4 right-4 z-30 flex items-center justify-center"
+      {/* ── Minimal header: Layers button only ──────────────────────── */}
+      <div className="absolute top-3 right-3 z-30">
+        <button
+          onClick={() => setShowLayersSheet(true)}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-black/80 border border-white/10 backdrop-blur-xl active:scale-95 transition-transform"
+          aria-label="Toggle layers"
         >
-          <div className="flex items-center gap-2 px-4 py-2 bg-[#C8962C]/20 border border-[#C8962C]/40 rounded-lg backdrop-blur-xl">
-            <span className="text-[#C8962C] text-xs font-semibold">
-              {radiusSearch 
-                ? `${radiusSearch.beacons.length} within ${radiusSearch.radiusKm}km`
-                : `${(searchResults?.beacons.length || 0) + (searchResults?.cities.length || 0)} results`
-              }
-            </span>
-            <button onClick={handleClearSearch} className="text-white/60 hover:text-white">
-              ✕
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Floating Controls Panel */}
-      {showControls && (
-        <FloatingPanel 
-          title="Controls" 
-          position="left" 
-          width="w-72"
-          onClose={() => setShowControls(false)}
-        >
-          <CompactGlobeControls
-            activeLayers={activeLayers}
-            onLayersChange={setActiveLayers}
-            activeMode={activeMode}
-            onModeChange={setActiveMode}
-            minIntensity={minIntensity}
-            onMinIntensityChange={setMinIntensity}
-            activityVisibility={activityVisibility}
-            onActivityVisibilityToggle={handleActivityVisibilityToggle}
-          />
-        </FloatingPanel>
-      )}
-
-      {/* Floating Activity Panel */}
-      {showPanel && (
-        <FloatingPanel 
-          title="Activity" 
-          position="right" 
-          width="w-80"
-          onClose={() => setShowPanel(false)}
-        >
-          <GlobeDataPanel
-            selectedBeacon={selectedBeacon}
-            recentActivity={recentActivity}
-            onClose={handleClose}
-            onBeaconSelect={handleBeaconClick}
-          />
-        </FloatingPanel>
-      )}
-
-      {/* Nearby Grid Panel */}
-      {showNearbyGrid && (
-        <FloatingPanel 
-          title="Profile Cards" 
-          position="right" 
-          width="w-96"
-          onClose={() => setShowNearbyGrid(false)}
-        >
-          <ProfilesGrid
-            showHeader={false}
-            showTelegramFeedButton
-            containerClassName="mx-0 max-w-none p-0"
-            onNavigateUrl={(url) => navigate(url)}
-            onOpenProfile={(profile) => {
-              const email = profile?.email;
-              const uid = profile?.authUserId;
-              if (email) {
-                navigate(createPageUrl(`Profile?email=${encodeURIComponent(email)}`));
-                return;
-              }
-              if (uid) {
-                navigate(createPageUrl(`Profile?uid=${encodeURIComponent(uid)}`));
-              }
-            }}
-          />
-        </FloatingPanel>
-      )}
-
-      {/* Local Beacons View */}
-      {showLocalBeacons && localBeaconCenter && !previewBeacon && (
-        <FloatingPanel 
-          title="Local Area" 
-          position="right" 
-          width="w-[480px]"
-          onClose={() => {
-            setShowLocalBeacons(false);
-            setLocalBeaconCenter(null);
-            setSelectedBeacon(null);
-          }}
-        >
-          <LocalBeaconsView 
-            centerBeacon={localBeaconCenter}
-            allBeacons={beacons}
-            onClose={() => {
-              setShowLocalBeacons(false);
-              setLocalBeaconCenter(null);
-              setSelectedBeacon(null);
-            }}
-            onBeaconSelect={handleBeaconClick}
-          />
-        </FloatingPanel>
-      )}
+          <Layers className="w-5 h-5 text-white/70" />
+        </button>
+      </div>
 
       {/* Beacon Preview Panel */}
       {previewBeacon && (
@@ -935,7 +796,15 @@ export default function GlobePage({ embedded = false }) {
         />
       )}
 
-      <TelegramPanel open={showHotmessFeed} onClose={() => setShowHotmessFeed(false)} />
+      {/* Layers sheet */}
+      <AnimatePresence>
+        <LayersSheet
+          open={showLayersSheet}
+          onClose={() => setShowLayersSheet(false)}
+          activeLayer={activeLayer}
+          setActiveLayer={setActiveLayer}
+        />
+      </AnimatePresence>
       </div>
     </ErrorBoundary>
   );

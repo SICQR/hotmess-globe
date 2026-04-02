@@ -20,7 +20,7 @@
  * Animations: Framer Motion spring physics on drawer.
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -44,6 +44,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { useSheet } from '@/contexts/SheetContext';
+import { useGlobe } from '@/contexts/GlobeContext';
 import { supabase } from '@/components/utils/supabaseClient';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { useLongPress } from '@/hooks/useLongPress';
@@ -374,10 +375,12 @@ function BeaconRow({
   beacon,
   isLast,
   onTap,
+  isFocused,
 }: {
   beacon: BeaconItem;
   isLast: boolean;
   onTap: () => void;
+  isFocused?: boolean;
 }) {
   const dotColor = getBeaconDotColor(beacon.kind);
   return (
@@ -385,7 +388,7 @@ function BeaconRow({
       onClick={onTap}
       className={`w-full flex items-center gap-3 px-3 py-3 text-left active:bg-white/5 transition-colors ${
         !isLast ? 'border-b border-white/5' : ''
-      }`}
+      } ${isFocused ? 'border-l-2 border-[#C8962C] pl-2.5' : ''}`}
       aria-label={`View beacon: ${beacon.title}`}
     >
       <div
@@ -511,12 +514,14 @@ function BottomDrawer({
   onSeeAllEvents,
   sceneScoutSection,
   pulseFeedSection,
+  focusedBeaconId,
 }: {
   events: BeaconItem[];
   beacons: BeaconItem[];
   safetyAlerts: BeaconItem[];
   eventsLoading: boolean;
   beaconsLoading: boolean;
+  focusedBeaconId?: string | null;
   onEventTap: (id: string) => void;
   onBeaconTap: (id: string) => void;
   onSafetyTap: (id: string) => void;
@@ -710,6 +715,7 @@ function BottomDrawer({
                     beacon={b}
                     isLast={i === beacons.length - 1}
                     onTap={() => onBeaconTap(b.id)}
+                    isFocused={b.id === focusedBeaconId}
                   />
                 ))}
               </div>
@@ -768,7 +774,7 @@ const CITY_COUNTRY: Record<string, string> = {
 };
 
 // ---- Post Composer Component -----------------------------------------------
-function PostComposer({ onClose, city }: { onClose: () => void; city: string }) {
+function PostComposer({ onClose, city, onPosted }: { onClose: () => void; city: string; onPosted?: () => void }) {
   const [text, setText] = useState('');
   const [vibe, setVibe] = useState('hookup');
   const [showOnGlobe, setShowOnGlobe] = useState(true);
@@ -808,6 +814,7 @@ function PostComposer({ onClose, city }: { onClose: () => void; city: string }) 
 
       if (error) throw error;
       toast.success('Posted to Pulse');
+      onPosted?.();   // caller emits globe burst
       onClose();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to post';
@@ -892,8 +899,21 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     scrollRef,
   });
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [city, setCity] = useState(() => localStorage.getItem('hm_city') || 'London');
+
+  // ---- GlobeContext — shared state drives both the Three.js canvas and this HUD
+  const {
+    selectedCity,
+    setSelectedCity,
+    activeFilter,
+    setActiveFilter,
+    focusedBeaconId,
+    setFocusedBeaconId,
+    emitPulse,
+    cameraCity,
+  } = useGlobe();
+
+  // Prefer the live camera city (auto-updates as globe rotates) over the saved picker value
+  const displayCity = cameraCity || selectedCity || 'London';
   const [legendDismissed, setLegendDismissed] = useState(
     () => localStorage.getItem('hm_legend_dismissed') === 'true'
   );
@@ -905,14 +925,16 @@ export function PulseMode({ className = '' }: PulseModeProps) {
   const [sceneScoutData, setSceneScoutData] = useState<SceneScoutData | null>(null);
   const [sceneScoutOpen, setSceneScoutOpen] = useState(false);
 
-  // City cycling
+  // City tap → opens city-picker sheet (globe flies to selected city)
   const handleCityTap = useCallback(() => {
-    const CITIES = ['London', 'Berlin', 'New York', 'Barcelona', 'Amsterdam'];
-    const idx = CITIES.indexOf(city);
-    const next = CITIES[(idx + 1) % CITIES.length];
-    setCity(next);
-    localStorage.setItem('hm_city', next);
-  }, [city]);
+    openSheet('city-picker', {
+      currentCity: selectedCity,
+      onSelect: (c: string) => {
+        setSelectedCity(c);
+        localStorage.setItem('hm_city', c);
+      },
+    });
+  }, [openSheet, selectedCity, setSelectedCity]);
 
   // Dismiss legend
   const handleDismissLegend = useCallback(() => {
@@ -1137,14 +1159,26 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     safety: safetyAlerts.length,
   };
 
+  // ---- Priority beacon — highest-intensity event starting within 24 h ------
+  const priorityBeacon = useMemo(() => {
+    const in24h = events.filter((e) => {
+      if (!e.startsAt) return false;
+      const diff = new Date(e.startsAt).getTime() - Date.now();
+      return diff > 0 && diff < 24 * 60 * 60 * 1000;
+    });
+    if (in24h.length === 0) return null;
+    return in24h.sort((a, b) => ((b.intensity ?? 0) - (a.intensity ?? 0)))[0];
+  }, [events]);
+
   // ---- Sheet navigation handlers --------------------------------------------
   const handleEventTap = useCallback((id: string) => {
     openSheet('event', { id });
   }, [openSheet]);
 
   const handleBeaconTap = useCallback((id: string) => {
+    setFocusedBeaconId(id);          // globe rotates to beacon + scales it
     openSheet('beacon', { beaconId: id });
-  }, [openSheet]);
+  }, [openSheet, setFocusedBeaconId]);
 
   const handleSafetyTap = useCallback((id: string) => {
     openSheet('beacon', { beaconId: id });
@@ -1162,9 +1196,10 @@ export function PulseMode({ className = '' }: PulseModeProps) {
     openSheet('events', {});
   }, [openSheet]);
 
+  // Safety indicator tap → toggle safety filter (globe highlights safety beacons)
   const handleSafetyIndicatorTap = useCallback(() => {
-    navigate('/safety');
-  }, [navigate]);
+    setActiveFilter(activeFilter === 'safety' ? 'all' : 'safety');
+  }, [activeFilter, setActiveFilter]);
 
   // ---- Scene Scout handler (CHROME gated) -----------------------------------
   const handleSceneScout = useCallback(async () => {
@@ -1377,13 +1412,37 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       >
         <div className="space-y-3 pt-1">
           <TopHUD
-            city={city}
+            city={displayCity}
             beaconCount={allBeacons.length}
             safetyCount={safetyAlerts.length}
             rightNowCount={rightNowCount}
             onSafetyTap={handleSafetyIndicatorTap}
             onCityTap={handleCityTap}
           />
+
+          {/* Priority alert strip — highest-intensity event starting within 24 h */}
+          {priorityBeacon && (
+            <div
+              className="mx-3 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer active:scale-[0.98] transition-transform"
+              style={{ background: 'rgba(200,150,44,0.12)', border: '1px solid rgba(200,150,44,0.25)', color: '#C8962C' }}
+              onClick={() => handleBeaconTap(priorityBeacon.id)}
+              role="button"
+              aria-label={`Priority event: ${priorityBeacon.title}`}
+            >
+              <Flame className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="truncate flex-1">{priorityBeacon.title}</span>
+              <span className="flex-shrink-0 text-white/40 font-normal">
+                {priorityBeacon.startsAt
+                  ? isToday(new Date(priorityBeacon.startsAt))
+                    ? `Tonight · ${format(new Date(priorityBeacon.startsAt), 'HH:mm')}`
+                    : isTomorrow(new Date(priorityBeacon.startsAt))
+                    ? `Tomorrow · ${format(new Date(priorityBeacon.startsAt), 'HH:mm')}`
+                    : format(new Date(priorityBeacon.startsAt), 'MMM d · HH:mm')
+                  : ''}
+              </span>
+            </div>
+          )}
+
           <FilterChipStrip
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
@@ -1479,6 +1538,7 @@ export function PulseMode({ className = '' }: PulseModeProps) {
           onSeeAllEvents={handleSeeAllEvents}
           sceneScoutSection={sceneScoutSection}
           pulseFeedSection={pulseFeedSection}
+          focusedBeaconId={focusedBeaconId}
         />
       </div>
 
@@ -1495,7 +1555,16 @@ export function PulseMode({ className = '' }: PulseModeProps) {
       </div>
 
       {/* Post composer sheet */}
-      {composerOpen && <PostComposer onClose={() => setComposerOpen(false)} city={city} />}
+      {composerOpen && (
+        <PostComposer
+          onClose={() => setComposerOpen(false)}
+          city={displayCity}
+          onPosted={() => {
+            // Emit a burst pulse into the globe so new posts ripple visually
+            emitPulse({ type: 'burst', lat: 0, lng: 0 });
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/components/utils/supabaseClient';
 
 /**
@@ -28,6 +28,63 @@ export function GlobeProvider({ children }) {
   const [focusCity, setFocusCity] = useState(null);
   const [pulseQueue, setPulseQueue] = useState([]);
 
+  // ── New context values ───────────────────────────────────────────────────
+
+  // City selector — drives TopHUD label AND globe camera
+  const [selectedCity, setSelectedCity] = useState(
+    () => localStorage.getItem('hm_city') || 'London'
+  );
+
+  // Filter — drives drawer list AND globe beacon visibility
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  // Beacon focus — tap in drawer → globe rotates; tap on globe → drawer highlights
+  const [focusedBeaconId, setFocusedBeaconId] = useState(null);
+
+  // Camera city — auto-updates as globe rotates, drives TopHUD city label
+  const [cameraCity, setCameraCity] = useState('London');
+
+  // Layer toggles — drives which beacon types render
+  const [activeLayer, setActiveLayer] = useState({
+    events: true,
+    venues: true,
+    people: false,
+    safety: true,
+    market: true,
+    radio: true,
+  });
+
+  // Amplified beacons Map<id, { multiplier, expiresAt }>
+  const [amplifiedBeaconIds, setAmplifiedBeaconIds] = useState(new Map());
+
+  // Clean expired amplifications every 60s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAmplifiedBeaconIds(prev => {
+        const now = Date.now();
+        const next = new Map();
+        prev.forEach((val, key) => {
+          if (val.expiresAt > now) next.set(key, val);
+        });
+        return next.size === prev.size ? prev : next;
+      });
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const amplifyBeacon = useCallback((id, hours) => {
+    setAmplifiedBeaconIds(prev => {
+      const next = new Map(prev);
+      next.set(id, {
+        multiplier: 3,
+        expiresAt: Date.now() + hours * 3_600_000,
+      });
+      return next;
+    });
+  }, []);
+
+  // ── Existing actions ─────────────────────────────────────────────────────
+
   const zoomToCity = useCallback((cityId, coords) => {
     setFocusCity({ id: cityId, ...coords });
     setMode(GLOBE_MODES.EXPLORE);
@@ -41,13 +98,13 @@ export function GlobeProvider({ children }) {
     setPulseQueue(q => q.slice(1));
   }, []);
 
-  // ── Supabase Realtime: Beacon INSERT → Globe pulse ──────────────────────
+  // ── Supabase Realtime: Beacon INSERT → Globe pulse ───────────────────────
   useEffect(() => {
     const channel = supabase
       .channel('globe:beacon-feed')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'Beacon' },
+        { event: 'INSERT', schema: 'public', table: 'beacons' },
         (payload) => {
           const beacon = payload.new;
           if (!beacon) return;
@@ -55,7 +112,6 @@ export function GlobeProvider({ children }) {
           const lat = Number(beacon.lat ?? beacon.location_lat);
           const lng = Number(beacon.lng ?? beacon.location_lng);
 
-          // Only emit if we have usable coordinates
           if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
           emitPulse({
@@ -69,7 +125,6 @@ export function GlobeProvider({ children }) {
             },
           });
 
-          // Switch globe to live mode so the pulse is visible
           setMode(GLOBE_MODES.LIVE);
         }
       )
@@ -81,6 +136,7 @@ export function GlobeProvider({ children }) {
   }, [emitPulse]);
 
   const value = {
+    // Existing
     mode,
     setMode,
     focusCity,
@@ -88,6 +144,19 @@ export function GlobeProvider({ children }) {
     pulseQueue,
     emitPulse,
     consumePulse,
+    // New
+    selectedCity,
+    setSelectedCity,
+    activeFilter,
+    setActiveFilter,
+    focusedBeaconId,
+    setFocusedBeaconId,
+    cameraCity,
+    setCameraCity,
+    activeLayer,
+    setActiveLayer,
+    amplifiedBeaconIds,
+    amplifyBeacon,
   };
 
   return (
@@ -106,11 +175,22 @@ const GLOBE_NOOP = {
   pulseQueue: [],
   emitPulse: () => {},
   consumePulse: () => {},
+  selectedCity: 'London',
+  setSelectedCity: () => {},
+  activeFilter: 'all',
+  setActiveFilter: () => {},
+  focusedBeaconId: null,
+  setFocusedBeaconId: () => {},
+  cameraCity: 'London',
+  setCameraCity: () => {},
+  activeLayer: { events: true, venues: true, people: false, safety: true, market: true, radio: true },
+  setActiveLayer: () => {},
+  amplifiedBeaconIds: new Map(),
+  amplifyBeacon: () => {},
 };
 
 export function useGlobe() {
   const ctx = useContext(GlobeContext);
-  // Graceful fallback instead of crash — components outside GlobeProvider get a noop
   if (!ctx) return GLOBE_NOOP;
   return ctx;
 }
