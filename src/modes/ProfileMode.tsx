@@ -136,6 +136,7 @@ interface MenuRow {
   action: () => void;
   iconColor?: string;
   sublabel?: string;
+  badge?: string;
 }
 
 interface MenuSection {
@@ -440,6 +441,8 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
           { icon: Zap, label: 'Sweat Coins', action: () => openSheet('sweat-coins', {}) },
           { icon: Crown, label: 'Creator Subscriptions', action: () => openSheet('creator-subscription', {}) },
         ] : []),
+        { icon: Zap, label: 'Power-Ups', badge: 'NEW', action: () => openSheet('boost-shop', {}) },
+        { icon: Users, label: 'Invite Friends', action: () => openSheet('referral', {}) },
         { icon: Package, label: 'My Listings', action: () => openSheet('my-listings', {}) },
         { icon: ShoppingBag, label: 'My Orders', action: () => openSheet('my-orders', {}) },
         { icon: Wallet, label: 'My Earnings', action: () => openSheet('payouts', {}), iconColor: AMBER },
@@ -667,6 +670,7 @@ function AuthenticatedProfileMode({ className = '' }: ProfileModeProps) {
                     label={item.label}
                     iconColor={item.iconColor}
                     sublabel={item.sublabel}
+                    badge={item.badge}
                     onTap={item.action}
                   />
                 ))}
@@ -760,12 +764,14 @@ function SettingsRow({
   label,
   sublabel,
   iconColor,
+  badge,
   onTap,
 }: {
   icon: LucideIcon;
   label: string;
   sublabel?: string;
   iconColor?: string;
+  badge?: string;
   onTap: () => void;
 }) {
   return (
@@ -786,7 +792,14 @@ function SettingsRow({
 
       {/* Label and sublabel */}
       <div className="flex-1 flex flex-col">
-        <span className="text-[15px] font-semibold text-white">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[15px] font-semibold text-white">{label}</span>
+          {badge && (
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ background: AMBER, color: '#000' }}>
+              {badge}
+            </span>
+          )}
+        </div>
         {sublabel && <span className="text-[12px] text-white/50">{sublabel}</span>}
       </div>
 
