@@ -288,8 +288,8 @@ export default function SafetyFAB() {
   return (
     <>
       {/* FAB */}
-      <div className={`fixed z-50 transition-all duration-300 ${
-        isTonight ? 'bottom-24 right-4' : 'bottom-20 right-4'
+      <div className={`fixed z-[60] transition-all duration-300 ${
+        isTonight ? 'bottom-24 left-4' : 'bottom-20 left-4'
       }`}>
         <AnimatePresence>
           {isExpanded && (
@@ -297,7 +297,7 @@ export default function SafetyFAB() {
               initial={{ opacity: 0, y: 20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.9 }}
-              className="absolute bottom-16 right-0 bg-black/90 border border-white/20 rounded-xl p-3 min-w-[200px]"
+              className="absolute bottom-16 left-0 bg-black/90 border border-white/20 rounded-xl p-3 min-w-[200px]"
             >
               <div className="space-y-2">
                 <Button
@@ -425,3 +425,4 @@ export default function SafetyFAB() {
     </>
   );
 }
+

@@ -357,13 +357,30 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
 
         <SheetActions>
           <Button
-            onClick={() => {
-              openSheet('chat', { recipientId: product.seller_id });
+            onClick={async () => {
+              // Look up seller email + name from profiles, then open a direct thread
+              try {
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('email, display_name')
+                  .eq('id', product.seller_id)
+                  .single();
+                if (!profile?.email) {
+                  toast.error('Could not reach seller right now');
+                  return;
+                }
+                openSheet('chat', {
+                  to: profile.email,
+                  title: profile.display_name || 'Seller',
+                });
+              } catch {
+                toast.error('Could not reach seller right now');
+              }
             }}
             variant="outline"
             className="flex-1 h-12 border-white/20"
           >
-            <ChevronRight className="w-4 h-4 mr-2 rotate-180" />
+            <MessageCircle className="w-4 h-4 mr-2" />
             Message Seller
           </Button>
           <Button
@@ -641,3 +658,4 @@ export default function L2ShopSheet({ handle, product, seller, source }) {
     </div>
   );
 }
+
